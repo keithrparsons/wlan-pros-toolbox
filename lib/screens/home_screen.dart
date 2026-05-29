@@ -21,6 +21,11 @@ class HomeScreen extends StatefulWidget {
   /// 375pt iPhone widths. (Vera F-01.)
   static const double _phoneBreakpoint = 480;
 
+  /// Narrow-phone breakpoint — covers iPhone SE 1st-gen (320pt) and other
+  /// sub-375pt logical widths. Drops tile aspect a second step so content
+  /// still clears at 320×900. (Vera F-NEW-03.)
+  static const double _narrowPhoneBreakpoint = 360;
+
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -71,11 +76,29 @@ class _HomeScreenState extends State<HomeScreen> {
                   final ToolCategory cat = kToolCategories[index];
                   return _CategoryTile(
                     category: cat,
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => CategoryScreen(category: cat),
-                      ),
-                    ),
+                    onTap: () {
+                      // Vera F-NEW-02 — the `initState` unfocus only fires on
+                      // first mount. When the user pops back from a category,
+                      // Flutter's focus traversal can leave a tile holding
+                      // primary focus, repainting the lime tint as if it were
+                      // "selected". Hook the route future so we can drop
+                      // focus once the home tree has been re-installed after
+                      // pop. Schedule the unfocus on the next frame so it
+                      // runs after Flutter rebuilds the focus tree.
+                      Navigator.of(context)
+                          .push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => CategoryScreen(category: cat),
+                            ),
+                          )
+                          .then((_) {
+                            if (!mounted) return;
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (!mounted) return;
+                              FocusManager.instance.primaryFocus?.unfocus();
+                            });
+                          });
+                    },
                   );
                 },
               ),
@@ -95,8 +118,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Tile vertical room scales with viewport. Phones (<480px) get a taller
   /// tile so the 28px icon row + 2-line H3 title (22px/1.4) + 2-line caption
-  /// (13px/1.5) fit without RenderFlex overflow at 375pt. (Vera F-01.)
+  /// (13px/1.5) fit without RenderFlex overflow at 375pt. Narrow phones
+  /// (<360px, iPhone SE 1st-gen) drop a second step so the same content
+  /// clears at 320pt. (Vera F-01, F-NEW-03.)
   double _aspectRatioFor(double width) {
+    if (width < HomeScreen._narrowPhoneBreakpoint) return 0.75;
     if (width < HomeScreen._phoneBreakpoint) return 0.85;
     return 1.05;
   }

@@ -4,6 +4,17 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<!-- Active network tools (Interface Info, Port Scan, future Ping/iperf)
+	     touch hosts on the local network. iOS 14+ requires this purpose
+	     string before granting local-network access. -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>WLAN Pros Toolbox scans and inspects devices on your local network to report interface details, open ports, and connectivity.</string>
+	<!-- network_info_plus reads the connected Wi-Fi SSID/BSSID, which iOS
+	     gates behind Location When In Use. Without this the SSID/BSSID fields
+	     return null and the UI shows "Not available" rather than the network
+	     name. -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>WLAN Pros Toolbox uses your location only to read the name (SSID) of the Wi-Fi network you are connected to. Your location is never stored or shared.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

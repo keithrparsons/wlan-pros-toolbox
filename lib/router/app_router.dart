@@ -10,6 +10,9 @@ import 'package:flutter/material.dart';
 
 import '../screens/home_screen.dart';
 import '../screens/tools/dbm_watt_converter.dart';
+import '../screens/tools/network/dns_lookup_screen.dart';
+import '../screens/tools/network/interface_info_screen.dart';
+import '../screens/tools/network/port_scan_screen.dart';
 
 class AppRouter {
   AppRouter._();
@@ -17,11 +20,21 @@ class AppRouter {
   static const String home = '/';
   static const String dbmWatt = '/tools/dbm-watt';
 
+  // Networking category — active network tools (native-only; web shows the
+  // download-the-app fallback inside each screen, so the routes are always
+  // registered and never crash on web).
+  static const String interfaceInfo = '/tools/interface-info';
+  static const String dnsLookup = '/tools/dns-lookup';
+  static const String portScan = '/tools/port-scan';
+
   /// Map of static, argument-less routes. Categories use MaterialPageRoute
   /// directly because each category screen takes a typed `ToolCategory`.
   static final Map<String, WidgetBuilder> routes = <String, WidgetBuilder>{
     home: (_) => const HomeScreen(),
     dbmWatt: (_) => const DbmWattConverterScreen(),
+    interfaceInfo: (_) => const InterfaceInfoScreen(),
+    dnsLookup: (_) => const DnsLookupScreen(),
+    portScan: (_) => const PortScanScreen(),
   };
 
   /// Fallback for any unregistered route. Sends the user back to home rather

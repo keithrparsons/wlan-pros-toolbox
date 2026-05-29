@@ -1,4 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Active network services layer (Interface Info, DNS Lookup, Port Scan). -->
+    <!-- INTERNET: TCP connect scan + DNS-over-HTTPS queries. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- ACCESS_NETWORK_STATE: read connectivity / interface state. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <!-- ACCESS_WIFI_STATE: read Wi-Fi link details via network_info_plus. -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <!-- Reading the connected SSID/BSSID on Android 8.0+ requires a location
+         permission at runtime; network_info_plus surfaces null without it and
+         the UI shows "Not available" rather than crashing. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <application
         android:label="wlan_pros_toolbox"
         android:name="${applicationName}"

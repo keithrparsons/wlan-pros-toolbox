@@ -1,6 +1,6 @@
 // Widget tests for the WLAN Pros Toolbox app shell.
 //
-// Coverage targets (post-Vera-gate fix pass, 2026-05-29):
+// Coverage targets (post-Vera-regate fix pass 2, 2026-05-29):
 // - Smoke: app mounts with the correct app-bar title.
 // - Category grid: all 8 category titles render; item count equals catalog
 //   length. (Vera F-11.)
@@ -8,9 +8,11 @@
 //   child-Text semantics leak through. (Vera F-04.)
 // - Responsive: 375x900 phone viewport renders the home grid without
 //   RenderFlex overflow. (Vera F-01.)
+// - Focus hygiene: navigating Home → Category → Home leaves no tile with
+//   primary focus. (Vera F-NEW-02.)
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
@@ -98,35 +100,136 @@ void main() {
   );
 
   testWidgets(
+    'No tile retains focus after navigating Home → Category → Home',
+    (tester) async {
+      // Vera F-NEW-02 — the `initState` unfocus only fires on first build.
+      // When the user pops back from a category, Flutter's focus traversal
+      // can land on an unpredictable tile, painting the lime hover/focus
+      // tint as if it were "selected". The fix chains an unfocus on the
+      // Navigator.push().then(...) so home returns to its cold-start focus
+      // state on every pop-back.
+      await _withViewport(tester, const Size(800, 1200), () async {
+        await _pumpApp(tester);
+
+        // Force a tile into the focused state — this is the precondition
+        // F-NEW-02 reproduces (a tile holds focus on the home tree, the
+        // user navigates away and back, and focus persists on the tile).
+        // We do it by walking the live Focus tree to the first Focus node
+        // owned by a tile InkWell and requesting focus directly.
+        final ToolCategory liveCat = kToolCategories.firstWhere(
+          (ToolCategory c) => c.hasLiveTool,
+        );
+
+        FocusNode? tileFocusNode;
+        void walk(FocusNode node) {
+          if (tileFocusNode != null) return;
+          final BuildContext? ctx = node.context;
+          if (ctx != null &&
+              ctx.findAncestorWidgetOfExactType<InkWell>() != null) {
+            tileFocusNode = node;
+            return;
+          }
+          for (final FocusNode child in node.children) {
+            walk(child);
+          }
+        }
+
+        walk(FocusManager.instance.rootScope);
+        expect(
+          tileFocusNode,
+          isNotNull,
+          reason: 'precondition: expected at least one tile-owned Focus node',
+        );
+        tileFocusNode!.requestFocus();
+        await tester.pump();
+
+        // Sanity check — primary focus is now inside a tile's InkWell.
+        final FocusNode? pre = FocusManager.instance.primaryFocus;
+        final BuildContext? preCtx = pre?.context;
+        expect(
+          preCtx != null &&
+              preCtx.findAncestorWidgetOfExactType<InkWell>() != null,
+          isTrue,
+          reason: 'precondition: focus must be on a tile InkWell before nav',
+        );
+
+        // Navigate into the category by tapping the focused tile.
+        await tester.tap(find.text(liveCat.title));
+        await tester.pumpAndSettle();
+        expect(find.widgetWithText(AppBar, liveCat.title), findsOneWidget);
+
+        // Pop back to home.
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+        // Drain the Navigator.push().then(...) microtask.
+        await tester.pumpAndSettle();
+
+        // The defining symptom of F-NEW-02: a tile-level Focus node still
+        // holds primary focus after pop-back, painting the lime tint on a
+        // grid tile. After the fix, focus must have lifted off any tile.
+        final FocusNode? primary = FocusManager.instance.primaryFocus;
+        final BuildContext? focusedContext = primary?.context;
+        final bool focusInsideTileInkWell = focusedContext != null &&
+            focusedContext.findAncestorWidgetOfExactType<InkWell>() != null;
+        expect(
+          focusInsideTileInkWell,
+          isFalse,
+          reason:
+              'After Home → Category → Home no grid tile should hold '
+              'primary focus — found focus inside an InkWell: '
+              '${primary?.debugLabel ?? primary?.toString() ?? "<none>"}',
+        );
+      });
+    },
+  );
+
+  testWidgets(
     'Home grid fits within a 375x900 iPhone viewport without overflow',
     (tester) async {
       // Vera F-01 — at 375pt iPhone width the 2-up grid previously overflowed
       // every tile with a 2-line summary. The fix drops childAspectRatio to
       // 0.85 below the phone breakpoint, restoring vertical room for the
       // icon row + 2-line H3 title + 2-line caption.
-      await _withViewport(tester, const Size(375, 900), () async {
-        final List<Object> overflowExceptions = <Object>[];
-        final FlutterExceptionHandler? previous = FlutterError.onError;
-        FlutterError.onError = (FlutterErrorDetails details) {
-          if (details.exception.toString().contains('RenderFlex overflowed') ||
-              details.exception.toString().contains('overflowed by')) {
-            overflowExceptions.add(details.exception);
-          }
-        };
-        addTearDown(() => FlutterError.onError = previous);
-
-        await _pumpApp(tester);
-
-        expect(
-          overflowExceptions,
-          isEmpty,
-          reason:
-              'Home grid must not log a RenderFlex overflow at 375x900 — '
-              'got: ${overflowExceptions.map((Object e) => e.toString()).join("; ")}',
-        );
-      });
+      await _expectNoOverflowAt(tester, const Size(375, 900));
     },
   );
+
+  testWidgets(
+    'Home grid fits within a 320x900 narrow-phone viewport without overflow',
+    (tester) async {
+      // Vera F-NEW-03 — iPhone SE 1st-gen at 320pt logical width previously
+      // edge-overflowed by ~5px on tiles with 2-line summaries. The fix adds
+      // a narrow-phone breakpoint that drops tile aspect to 0.75 below 360pt.
+      await _expectNoOverflowAt(tester, const Size(320, 900));
+    },
+  );
+}
+
+/// Helper — pump the app at [size] and assert no `RenderFlex overflowed`
+/// exception was logged. Shared by the 375pt and 320pt home-grid checks.
+Future<void> _expectNoOverflowAt(WidgetTester tester, Size size) async {
+  await _withViewport(tester, size, () async {
+    final List<Object> overflowExceptions = <Object>[];
+    final FlutterExceptionHandler? previous = FlutterError.onError;
+    FlutterError.onError = (FlutterErrorDetails details) {
+      if (details.exception.toString().contains('RenderFlex overflowed') ||
+          details.exception.toString().contains('overflowed by')) {
+        overflowExceptions.add(details.exception);
+      }
+    };
+    addTearDown(() => FlutterError.onError = previous);
+
+    await _pumpApp(tester);
+
+    expect(
+      overflowExceptions,
+      isEmpty,
+      reason:
+          'Home grid must not log a RenderFlex overflow at ${size.width.toInt()}'
+          'x${size.height.toInt()} — '
+          'got: ${overflowExceptions.map((Object e) => e.toString()).join("; ")}',
+    );
+  });
 }
 
 /// Helper — pump the real `ToolboxApp` and let async font loads settle.

@@ -111,9 +111,30 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
   ToolCategory(
     id: 'networking',
     title: 'Networking',
-    summary: 'IP subnetting, IPv6, MAC lookup',
+    summary: 'Interface info, DNS, port scan, subnetting',
     icon: Icons.lan_outlined,
     tools: <ToolEntry>[
+      ToolEntry(
+        id: 'interface-info',
+        title: 'Interface Information',
+        description: 'Local IPs, gateway, DNS, Wi-Fi link, interface type',
+        routeName: '/tools/interface-info',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'dns-lookup',
+        title: 'DNS Lookup',
+        description: 'A, AAAA, MX, TXT, NS, SOA, PTR over DNS-over-HTTPS',
+        routeName: '/tools/dns-lookup',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'port-scan',
+        title: 'Port Scan',
+        description: 'TCP connect scan — common ports preset or custom range',
+        routeName: '/tools/port-scan',
+        isLive: true,
+      ),
       ToolEntry(
         id: 'ipv4-subnet',
         title: 'IP Subnetting (IPv4)',

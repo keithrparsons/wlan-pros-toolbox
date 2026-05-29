@@ -54,6 +54,11 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.surface0,
       canvasColor: AppColors.surface0,
 
+      // §8.3 — disabled field/control text resolves to textDisabled (#7F7F7F),
+      // not the Material 3 0.38-opacity default. On disabledFill (#2A2A2A) this
+      // is 3.05:1 (passes SC 1.4.11). Closes the F-02 trap at the theme level.
+      disabledColor: AppColors.textDisabled,
+
       textTheme: textTheme,
       primaryTextTheme: textTheme,
 
@@ -96,17 +101,36 @@ class AppTheme {
       ),
 
       // Inputs — recessed within cards (§8.4).
-      // Borders use borderStrong (#5A5A5A) per §8.4 — 3.03:1 on surface1
-      // passes SC 1.4.11. Updated 2026-05-29 to close Vera F-03.
+      // Borders use borderStrong (#808080) per §8.4 — 3.83:1 on inputFill
+      // passes SC 1.4.11.
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.inputFill,
+        // §8.10 / §8.3 — disabled fields must not fall through to Material 3
+        // opacity defaults (that path produced the 2.13:1 F-02 failure).
+        // Resolve disabled fill to disabledFill (#2A2A2A); disabled field text
+        // and label resolve to textDisabled (#7F7F7F) below + via disabledColor.
+        // disabledFill #2A2A2A vs textDisabled #7F7F7F = 3.05:1 (passes SC 1.4.11).
+        fillColor: WidgetStateColor.resolveWith((states) {
+          if (states.contains(WidgetState.disabled)) {
+            return AppColors.disabledFill;
+          }
+          return AppColors.inputFill;
+        }),
         isDense: false,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.sm,
           vertical: 12,
         ),
-        labelStyle: textTheme.labelMedium,
+        // Disabled label resolves to textDisabled (#7F7F7F) on disabledFill
+        // (#2A2A2A) = 3.05:1, passes SC 1.4.11. Other states keep secondary.
+        labelStyle: WidgetStateTextStyle.resolveWith((states) {
+          final TextStyle base =
+              textTheme.labelMedium ?? const TextStyle();
+          if (states.contains(WidgetState.disabled)) {
+            return base.copyWith(color: AppColors.textDisabled);
+          }
+          return base;
+        }),
         floatingLabelStyle: textTheme.labelMedium?.copyWith(
           color: AppColors.primary,
         ),

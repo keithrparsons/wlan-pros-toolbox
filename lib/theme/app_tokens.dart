@@ -33,9 +33,11 @@ class AppColors {
   static const Color border = Color(0xFF3A3A3A);
 
   /// Required for UI-component boundaries (input outlines, focusable cards,
-  /// outlined-button borders). 3.03:1 on surface1 — passes SC 1.4.11.
-  /// Added 2026-05-29 per Iris's §8.1 update closing Vera F-03.
-  static const Color borderStrong = Color(0xFF5A5A5A);
+  /// outlined-button borders). 3.83:1 on inputFill / 3.63:1 on surface2 /
+  /// 4.41:1 on surface0 — passes SC 1.4.11 across every dark surface it sits
+  /// on. Corrected 2026-05-29 (Iris §8.1 republish closing Vera F-NEW-01);
+  /// the previous #5A5A5A regression measured 2.19–2.52:1 and failed 1.4.11.
+  static const Color borderStrong = Color(0xFF808080);
 
   static const Color inputFill = Color(0xFF262626);
 

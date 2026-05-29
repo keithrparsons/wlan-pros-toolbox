@@ -38,6 +38,17 @@ dependencies:
   # IBM Plex Sans (UI) + DM Mono (numeric outputs) per GL-003 §3 / §8.5.
   google_fonts: ^6.2.1
 
+  # Active-network services layer (lib/services/network/):
+  # network_info_plus — Wi-Fi link details (SSID/BSSID/gateway/submask/IP)
+  #   that dart:io NetworkInterface does not expose. Used by Interface Info.
+  network_info_plus: ^6.1.1
+  # basic_utils — DnsUtils.lookupRecord over DNS-over-HTTPS (Google/Cloudflare
+  #   JSON resolvers). MIT, pure-Dart, actively maintained. Used by DNS Lookup.
+  #   Chosen over raw UDP/53 so the query traverses HTTPS:443 uniformly across
+  #   iOS/Android/macOS/Windows with only the standard network-client
+  #   capability we already declare for the port scanner.
+  basic_utils: ^5.7.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

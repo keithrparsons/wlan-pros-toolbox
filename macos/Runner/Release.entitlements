@@ -4,5 +4,12 @@
 <dict>
 	<key>com.apple.security.app-sandbox</key>
 	<true/>
+	<!-- Outbound connections for the active network tools: TCP connect scan
+	     and DNS-over-HTTPS lookups. Also network.server for a future iperf
+	     server mode (brief §7). -->
+	<key>com.apple.security.network.client</key>
+	<true/>
+	<key>com.apple.security.network.server</key>
+	<true/>
 </dict>
 </plist>
