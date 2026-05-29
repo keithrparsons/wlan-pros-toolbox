@@ -48,6 +48,20 @@ dependencies:
   #   iOS/Android/macOS/Windows with only the standard network-client
   #   capability we already declare for the port scanner.
   basic_utils: ^5.7.0
+  # Real ICMP echo / TTL-walk for icmp_ping_screen + mobile_traceroute_screen,
+  # wrapped ONLY in lib/services/network/dart_ping_icmp_backend.dart (the service
+  # and screens stay package-agnostic).
+  #   dart_ping (BSD-3) — Android: spawns the system `ping`; `ttl:` maps to
+  #     `ping -t <ttl>` (Linux/Android) so a TTL-walk names each hop on the
+  #     "From <ip> ... Time to live exceeded" line. On macOS desktop it would
+  #     spawn /sbin/ping, which the macOS App Sandbox BLOCKS (GL-008) — so the
+  #     backend is never constructed on desktop (IcmpService gates it to
+  #     sandboxedDesktop) and the existing TCP-probe Ping stays the desktop path.
+  #   dart_ping_ios (BSD-3 → flutter_icmp_ping MIT, GBPing/SimplePing) — iOS:
+  #     real ICMP echo only. Its adapter drops the `ttl` arg and never decodes
+  #     ICMP Time-Exceeded, so iOS TTL-walk traceroute stays honest-unavailable.
+  dart_ping: ^9.0.1
+  dart_ping_ios: ^4.0.2
 
 dev_dependencies:
   flutter_test:

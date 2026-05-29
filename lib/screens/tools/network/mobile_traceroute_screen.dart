@@ -29,6 +29,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../router/app_router.dart';
+import '../../../services/network/dart_ping_icmp_backend.dart';
 import '../../../services/network/icmp_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../theme/app_tokens.dart';
@@ -61,7 +62,8 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
   @override
   void initState() {
     super.initState();
-    _service = widget.service ?? IcmpService();
+    _service =
+        widget.service ?? IcmpService(backend: defaultIcmpBackend());
   }
 
   @override
@@ -345,9 +347,9 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
           const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: Text(
-              'The native ICMP TTL-walk is pending on-device verification. On a '
-              'build without it wired, a run reports that plainly rather than '
-              'showing made-up hops.',
+              'Uses the device\'s real ICMP TTL-walk. The native path is wired '
+              'but still pending on-device verification; if it cannot run, a run '
+              'reports that plainly rather than showing made-up hops.',
               style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
             ),
           ),

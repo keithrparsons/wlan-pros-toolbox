@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'router/app_router.dart';
+import 'services/network/dart_ping_icmp_backend.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -16,6 +17,11 @@ void main() {
   // ensures we never depend on network access just to render typography —
   // critical for the macOS sandbox and for offline use on any platform.
   GoogleFonts.config.allowRuntimeFetching = false;
+
+  // Install the iOS ICMP factory (SimplePing/GBPing) for Real ICMP Ping. No-op
+  // off iOS and idempotent; kept behind this helper so the dart_ping_ios import
+  // stays confined to the backend file.
+  registerIcmpBackend();
 
   runApp(const ToolboxApp());
 }

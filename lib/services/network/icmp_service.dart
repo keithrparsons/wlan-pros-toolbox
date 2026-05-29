@@ -474,10 +474,11 @@ class IcmpService {
   IcmpBackend _requireBackend() {
     final IcmpBackend? b = _backend;
     if (b == null) {
-      // No real backend wired in this build. This is the device-pending seam:
-      // DartPingIcmpBackend is constructed by the screen on a supported native
-      // target. Reaching here without one is a programmer error, surfaced
-      // loudly rather than silently faking data.
+      // No backend was provided. In production the screens construct this
+      // service with defaultIcmpBackend() (a real DartPingIcmpBackend on
+      // iOS/Android, null on web/desktop where the capability gate routes away
+      // before any run). Reaching here on a supported target is a programmer
+      // error, surfaced loudly rather than silently faking data.
       throw StateError(
         'No IcmpBackend wired. The real dart_ping backend is only constructed '
         'on a supported native target; this build has none.',

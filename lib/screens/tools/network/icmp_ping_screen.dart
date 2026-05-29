@@ -26,6 +26,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../router/app_router.dart';
+import '../../../services/network/dart_ping_icmp_backend.dart';
 import '../../../services/network/icmp_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../theme/app_tokens.dart';
@@ -36,7 +37,9 @@ class IcmpPingScreen extends StatefulWidget {
   const IcmpPingScreen({super.key, this.service});
 
   /// Injected in tests. In production this is null and the screen builds an
-  /// [IcmpService] with the real (device-pending) backend on supported targets.
+  /// [IcmpService] with the real backend on supported native targets
+  /// ([defaultIcmpBackend]) — null on web/desktop, where the capability gate
+  /// routes to the unavailable/sandboxed-desktop state before any run.
   final IcmpService? service;
 
   @override
@@ -61,7 +64,8 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
   @override
   void initState() {
     super.initState();
-    _service = widget.service ?? IcmpService();
+    _service =
+        widget.service ?? IcmpService(backend: defaultIcmpBackend());
   }
 
   @override
@@ -335,9 +339,9 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
           const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: Text(
-              'The native ICMP layer is pending on-device verification. On a '
-              'build without it wired, a run reports that plainly rather than '
-              'showing made-up results.',
+              'Uses the device\'s real ICMP echo. The native path is wired but '
+              'still pending on-device verification; if it cannot run, a run '
+              'reports that plainly rather than showing made-up results.',
               style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
             ),
           ),
