@@ -58,6 +58,18 @@ class NetworkSupport {
   /// so the gate is the same `!kIsWeb` as the other socket tools.
   static bool get pingSupported => !kIsWeb;
 
+  /// SSL/TLS Certificate Inspector support. Needs a raw outbound TLS socket
+  /// (`SecureSocket.connect`), which a browser cannot open — and a browser
+  /// cannot read an arbitrary peer's certificate either. Native-only; web is
+  /// routed to the download-the-app fallback. Same `!kIsWeb` gate as the other
+  /// socket tools.
+  static bool get sslInspectSupported => !kIsWeb;
+
+  /// HTTP Header Inspector support. Needs to read arbitrary cross-origin
+  /// response headers and follow the redirect chain — both blocked in a
+  /// browser by CORS. Native-only; web is routed to the fallback.
+  static bool get httpHeadersSupported => !kIsWeb;
+
   /// Traceroute support. The *screen* is reachable off-web on every native
   /// platform (so the tool catalog can route to it), but the genuine
   /// hop-by-hop run only works on desktop where the OS traceroute binary can

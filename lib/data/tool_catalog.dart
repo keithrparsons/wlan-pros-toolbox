@@ -151,6 +151,21 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         isLive: true,
       ),
       ToolEntry(
+        id: 'ssl-inspect',
+        title: 'SSL/TLS Inspector',
+        description:
+            'Certificate fields, validity, SAN, fingerprints over TLS',
+        routeName: '/tools/ssl-inspect',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'http-headers',
+        title: 'HTTP Header Inspector',
+        description: 'Status, redirect chain, and all response headers',
+        routeName: '/tools/http-headers',
+        isLive: true,
+      ),
+      ToolEntry(
         id: 'ipv4-subnet',
         title: 'IP Subnetting (IPv4)',
         description: 'Subnet math and CIDR breakdown',
