@@ -70,6 +70,19 @@ class NetworkSupport {
   /// browser by CORS. Native-only; web is routed to the fallback.
   static bool get httpHeadersSupported => !kIsWeb;
 
+  /// WHOIS lookup support. Runs over a raw outbound TCP socket to port 43
+  /// (`Socket.connect`), the same socket capability the port scanner uses, so
+  /// it works on every native platform. A browser cannot open a TCP/43 socket
+  /// and the public RDAP endpoints are CORS-blocked, so web is routed to the
+  /// download-the-app fallback. Same `!kIsWeb` gate as the other socket tools.
+  static bool get whoisSupported => !kIsWeb;
+
+  /// Wake-on-LAN support. Sends a UDP magic packet via a broadcast datagram
+  /// socket (`RawDatagramSocket.bind` + `broadcastEnabled`). Browsers cannot
+  /// open UDP sockets or send broadcasts, so web is routed to the fallback.
+  /// Same `!kIsWeb` gate as the other socket tools.
+  static bool get wakeOnLanSupported => !kIsWeb;
+
   /// Traceroute support. The *screen* is reachable off-web on every native
   /// platform (so the tool catalog can route to it), but the genuine
   /// hop-by-hop run only works on desktop where the OS traceroute binary can

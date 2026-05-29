@@ -166,6 +166,20 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         isLive: true,
       ),
       ToolEntry(
+        id: 'whois',
+        title: 'WHOIS',
+        description: 'Domain / IP registration record over WHOIS (port 43)',
+        routeName: '/tools/whois',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'wake-on-lan',
+        title: 'Wake-on-LAN',
+        description: 'Send a magic packet to wake a host by MAC address',
+        routeName: '/tools/wake-on-lan',
+        isLive: true,
+      ),
+      ToolEntry(
         id: 'ipv4-subnet',
         title: 'IP Subnetting (IPv4)',
         description: 'Subnet math and CIDR breakdown',

@@ -17,6 +17,8 @@ import '../screens/tools/network/ping_screen.dart';
 import '../screens/tools/network/port_scan_screen.dart';
 import '../screens/tools/network/ssl_inspect_screen.dart';
 import '../screens/tools/network/traceroute_screen.dart';
+import '../screens/tools/network/wake_on_lan_screen.dart';
+import '../screens/tools/network/whois_screen.dart';
 
 class AppRouter {
   AppRouter._();
@@ -34,6 +36,8 @@ class AppRouter {
   static const String traceroute = '/tools/traceroute';
   static const String sslInspect = '/tools/ssl-inspect';
   static const String httpHeaders = '/tools/http-headers';
+  static const String whois = '/tools/whois';
+  static const String wakeOnLan = '/tools/wake-on-lan';
 
   /// Map of static, argument-less routes. Categories use MaterialPageRoute
   /// directly because each category screen takes a typed `ToolCategory`.
@@ -47,6 +51,8 @@ class AppRouter {
     traceroute: (_) => const TracerouteScreen(),
     sslInspect: (_) => const SslInspectScreen(),
     httpHeaders: (_) => const HttpHeaderScreen(),
+    whois: (_) => const WhoisScreen(),
+    wakeOnLan: (_) => const WakeOnLanScreen(),
   };
 
   /// Fallback for any unregistered route. Sends the user back to home rather
