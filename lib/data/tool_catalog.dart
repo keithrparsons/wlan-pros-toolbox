@@ -136,6 +136,21 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         isLive: true,
       ),
       ToolEntry(
+        id: 'ping',
+        title: 'Ping',
+        description:
+            'TCP round-trip probe — live RTT, min/avg/max, loss, sparkline',
+        routeName: '/tools/ping',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'traceroute',
+        title: 'Traceroute',
+        description: 'Hop-by-hop path with per-hop RTT (desktop)',
+        routeName: '/tools/traceroute',
+        isLive: true,
+      ),
+      ToolEntry(
         id: 'ipv4-subnet',
         title: 'IP Subnetting (IPv4)',
         description: 'Subnet math and CIDR breakdown',

@@ -53,6 +53,19 @@ class NetworkSupport {
   /// Port Scan support.
   static bool get portScanSupported => !kIsWeb;
 
+  /// Ping support. Implemented as a TCP-handshake RTT probe (see
+  /// PingService) — needs no raw socket and works on every native platform,
+  /// so the gate is the same `!kIsWeb` as the other socket tools.
+  static bool get pingSupported => !kIsWeb;
+
+  /// Traceroute support. The *screen* is reachable off-web on every native
+  /// platform (so the tool catalog can route to it), but the genuine
+  /// hop-by-hop run only works on desktop where the OS traceroute binary can
+  /// be spawned. The per-platform desktop-vs-mobile verdict is decided inside
+  /// TracerouteService (`isSupportedPlatform`) and surfaced in the UI; this
+  /// flag only excludes web, where no part of it can run.
+  static bool get tracerouteSupported => !kIsWeb;
+
   /// The reason active tools are unavailable, or null when they are available.
   static NetworkUnavailableReason? get unavailableReason =>
       kIsWeb ? NetworkUnavailableReason.web : null;

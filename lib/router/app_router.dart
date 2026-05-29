@@ -12,7 +12,9 @@ import '../screens/home_screen.dart';
 import '../screens/tools/dbm_watt_converter.dart';
 import '../screens/tools/network/dns_lookup_screen.dart';
 import '../screens/tools/network/interface_info_screen.dart';
+import '../screens/tools/network/ping_screen.dart';
 import '../screens/tools/network/port_scan_screen.dart';
+import '../screens/tools/network/traceroute_screen.dart';
 
 class AppRouter {
   AppRouter._();
@@ -26,6 +28,8 @@ class AppRouter {
   static const String interfaceInfo = '/tools/interface-info';
   static const String dnsLookup = '/tools/dns-lookup';
   static const String portScan = '/tools/port-scan';
+  static const String ping = '/tools/ping';
+  static const String traceroute = '/tools/traceroute';
 
   /// Map of static, argument-less routes. Categories use MaterialPageRoute
   /// directly because each category screen takes a typed `ToolCategory`.
@@ -35,6 +39,8 @@ class AppRouter {
     interfaceInfo: (_) => const InterfaceInfoScreen(),
     dnsLookup: (_) => const DnsLookupScreen(),
     portScan: (_) => const PortScanScreen(),
+    ping: (_) => const PingScreen(),
+    traceroute: (_) => const TracerouteScreen(),
   };
 
   /// Fallback for any unregistered route. Sends the user back to home rather
