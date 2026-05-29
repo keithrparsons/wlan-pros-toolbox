@@ -23,6 +23,7 @@ import 'package:flutter/services.dart';
 
 import '../../theme/app_tokens.dart';
 import '../../theme/app_typography.dart';
+import 'labeled_field.dart';
 
 class DbmWattConverterScreen extends StatefulWidget {
   const DbmWattConverterScreen({super.key});
@@ -386,46 +387,27 @@ class _ConverterField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final TextTheme text = Theme.of(context).textTheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              label,
-              style: text.labelMedium?.copyWith(
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              '($unitHint)',
-              style: text.labelSmall?.copyWith(
-                color: AppColors.textTertiary,
-              ),
-            ),
-          ],
+    return LabeledField(
+      label: label,
+      hint: '($unitHint)',
+      // Announce label + unit together so the field reads e.g. "dBm (dBm),
+      // text field" → here we name it plainly with the unit context.
+      semanticLabel: '$label in $unitHint',
+      field: TextField(
+        controller: controller,
+        focusNode: focusNode,
+        keyboardType: keyboardType,
+        inputFormatters: formatters,
+        onChanged: onChanged,
+        textInputAction: TextInputAction.done,
+        autocorrect: false,
+        enableSuggestions: false,
+        style: monoStyle.copyWith(fontSize: 20),
+        cursorColor: AppColors.primary,
+        decoration: InputDecoration(
+          hintText: _hintFor(label),
         ),
-        const SizedBox(height: AppSpacing.xs),
-        TextField(
-          controller: controller,
-          focusNode: focusNode,
-          keyboardType: keyboardType,
-          inputFormatters: formatters,
-          onChanged: onChanged,
-          textInputAction: TextInputAction.done,
-          autocorrect: false,
-          enableSuggestions: false,
-          style: monoStyle.copyWith(fontSize: 20),
-          cursorColor: AppColors.primary,
-          decoration: InputDecoration(
-            hintText: _hintFor(label),
-          ),
-        ),
-      ],
+      ),
     );
   }
 

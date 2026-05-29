@@ -21,6 +21,7 @@ import '../../../services/network/network_support.dart';
 import '../../../services/network/ssl_inspect_service.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
 import 'value_row.dart';
 
@@ -149,7 +150,6 @@ class _SslInspectScreenState extends State<SslInspectScreen> {
   }
 
   Widget _queryCard(BuildContext context) {
-    final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface1,
@@ -160,46 +160,36 @@ class _SslInspectScreenState extends State<SslInspectScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Host',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          TextField(
-            controller: _hostCtrl,
-            focusNode: _hostFocus,
-            enabled: !_loading,
-            autocorrect: false,
-            enableSuggestions: false,
-            keyboardType: TextInputType.url,
-            textInputAction: TextInputAction.next,
-            cursorColor: AppColors.primary,
-            decoration: const InputDecoration(hintText: 'example.com'),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            'Port',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          SizedBox(
-            width: 120,
-            child: TextField(
-              controller: _portCtrl,
+          LabeledField(
+            label: 'Host',
+            field: TextField(
+              controller: _hostCtrl,
+              focusNode: _hostFocus,
               enabled: !_loading,
               autocorrect: false,
               enableSuggestions: false,
-              keyboardType: TextInputType.number,
-              textInputAction: TextInputAction.go,
-              onSubmitted: (_) => _run(),
+              keyboardType: TextInputType.url,
+              textInputAction: TextInputAction.next,
               cursorColor: AppColors.primary,
-              decoration: const InputDecoration(hintText: '443'),
+              decoration: const InputDecoration(hintText: 'example.com'),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          LabeledField(
+            label: 'Port',
+            field: SizedBox(
+              width: 120,
+              child: TextField(
+                controller: _portCtrl,
+                enabled: !_loading,
+                autocorrect: false,
+                enableSuggestions: false,
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.go,
+                onSubmitted: (_) => _run(),
+                cursorColor: AppColors.primary,
+                decoration: const InputDecoration(hintText: '443'),
+              ),
             ),
           ),
           const SizedBox(height: AppSpacing.md),
@@ -576,6 +566,14 @@ class _DisclosureButton extends StatelessWidget {
       child: InkWell(
         onTap: onPressed,
         borderRadius: BorderRadius.circular(AppRadius.control),
+        // §8.9 — the app-wide §8.3 pass cleared the global `focusColor` to
+        // transparent, which removed the ambient keyboard-focus affordance
+        // from this bare InkWell. This row is a chevron + label with no
+        // bordered container to swap a ring onto, so restore a visible focus
+        // overlay locally with an explicit lime focusColor (16% alpha — the
+        // §8.3 pressed-overlay value). Keeps SC 2.4.7 without re-introducing a
+        // global non-transparent focusColor.
+        focusColor: AppColors.primary.withValues(alpha: 0.16),
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: AppSpacing.minTouchTarget),
           child: Padding(

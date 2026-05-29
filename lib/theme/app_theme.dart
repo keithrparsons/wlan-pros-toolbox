@@ -15,6 +15,46 @@ import 'app_typography.dart';
 class AppTheme {
   AppTheme._();
 
+  /// §8.3 keyboard focus ring — a 2px solid primary (lime) border drawn on
+  /// `WidgetState.focused`. This is the same lime focus treatment the input
+  /// `focusedBorder` already uses (§8.4), now applied app-wide to every
+  /// FilledButton, OutlinedButton, TextButton, and ChoiceChip/FilterChip via the
+  /// shared theme below — so keyboard focus is a visible lime ring, not
+  /// Material's default low-contrast `focusColor` overlay.
+  ///
+  /// Contrast: primary #A2CC3A measures 9.31:1 on surface0 (#1A1A1A), 8.59:1 on
+  /// surface1 (#222222), and 7.36:1 on surface2 (#2A2A2A) — every dark surface a
+  /// button or chip sits on clears the SC 1.4.11 / §8.11 3:1 non-text floor with
+  /// wide margin. (Computed per §8.12; spot-checked WebAIM.)
+  static const BorderSide _focusRingSide =
+      BorderSide(color: AppColors.primary, width: 2);
+
+  /// Shared chip border resolver — drop into a `ChoiceChip`/`FilterChip`'s
+  /// `side:` so every chip in the app carries the same §8.3 treatment:
+  ///
+  ///  - **focused** (keyboard): 2px solid primary (lime) ring — same ring as
+  ///    buttons and the input focusedBorder. 7.36–9.31:1 on the dark surface
+  ///    stack, clears SC 1.4.11.
+  ///  - **disabled**: 1px disabledFill border (recedes, stays perceivable).
+  ///  - **selected**: 1px primary border (matches the lime fill).
+  ///  - **idle/unselected**: 1px borderStrong (#808080) — the §8.1 interactive
+  ///    boundary, 3.63:1 on surface2, passes SC 1.4.11.
+  ///
+  /// Centralising this here removes the per-screen `selected ? primary :
+  /// borderStrong` ternary and guarantees the focus ring is never dropped.
+  static WidgetStateBorderSide chipSide() {
+    return WidgetStateBorderSide.resolveWith((Set<WidgetState> states) {
+      if (states.contains(WidgetState.focused)) return _focusRingSide;
+      if (states.contains(WidgetState.disabled)) {
+        return const BorderSide(color: AppColors.disabledFill, width: 1);
+      }
+      if (states.contains(WidgetState.selected)) {
+        return const BorderSide(color: AppColors.primary, width: 1);
+      }
+      return const BorderSide(color: AppColors.borderStrong, width: 1);
+    });
+  }
+
   /// The one and only `ThemeData` for the app. Apply to `MaterialApp.theme`
   /// AND to `MaterialApp.darkTheme`; lock `themeMode: ThemeMode.dark`.
   static ThemeData dark() {
@@ -193,6 +233,12 @@ class AppTheme {
           textStyle: WidgetStateProperty.all(
             textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
           ),
+          // §8.3 — keyboard focus shows the 2px lime ring; idle/hover/pressed
+          // carry no border (the fill is the affordance).
+          side: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.focused)) return _focusRingSide;
+            return null;
+          }),
           shape: WidgetStateProperty.all(
             RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.control),
@@ -217,6 +263,9 @@ class AppTheme {
             if (states.contains(WidgetState.disabled)) {
               return const BorderSide(color: AppColors.disabledFill, width: 1);
             }
+            // §8.3 — keyboard focus thickens the lime border to the 2px focus
+            // ring so focus is distinguishable from the 1.5px idle outline.
+            if (states.contains(WidgetState.focused)) return _focusRingSide;
             return const BorderSide(color: AppColors.primary, width: 1.5);
           }),
           backgroundColor: WidgetStateProperty.resolveWith((states) {
@@ -269,7 +318,48 @@ class AppTheme {
           textStyle: WidgetStateProperty.all(
             textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500),
           ),
+          // §8.3 — keyboard focus shows the 2px lime ring on the otherwise
+          // borderless text button.
+          side: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.focused)) return _focusRingSide;
+            return null;
+          }),
+          shape: WidgetStateProperty.all(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.control),
+            ),
+          ),
         ),
+      ),
+
+      // Chips (ChoiceChip / FilterChip) — §8.3.
+      // Selected = lime fill / dark text; unselected = surface2 / secondary
+      // text. The §8.3 focus ring is applied through the per-chip `side`
+      // resolver (`AppTheme.chipSide()`) at each chip's widget site, because
+      // a chip's own `side` takes precedence over this theme `side` (Flutter
+      // RawChip._getShape resolves `widget.side` before `chipTheme.side`). The
+      // theme defaults below cover fills, radius, label, and any chip that does
+      // NOT pass its own side.
+      chipTheme: ChipThemeData(
+        backgroundColor: AppColors.surface2,
+        selectedColor: AppColors.primary,
+        disabledColor: AppColors.disabledFill,
+        side: chipSide(),
+        labelStyle: textTheme.labelMedium?.copyWith(
+          color: AppColors.textSecondary,
+          fontWeight: FontWeight.w500,
+        ),
+        secondaryLabelStyle: textTheme.labelMedium?.copyWith(
+          color: AppColors.secondary,
+          fontWeight: FontWeight.w500,
+        ),
+        showCheckmark: false,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.control),
+        ),
+        // Note: ChipThemeData exposes no materialTapTargetSize — each chip sets
+        // MaterialTapTargetSize.padded at its widget site to hold the §8.3 48dp
+        // hit region.
       ),
 
       // Dividers — §8.1 hairline.
@@ -284,8 +374,12 @@ class AppTheme {
         size: 20, // §8.6 — content icon default
       ),
 
-      // Focus — §8.3 lime ring.
-      focusColor: AppColors.primary.withValues(alpha: 0.16),
+      // Focus — §8.3 lime ring. The ring (a 2px solid primary border resolved
+      // on WidgetState.focused in each button/chip theme above) is the sole
+      // keyboard-focus indicator, replacing Material's default low-contrast
+      // focusColor overlay that Vera flagged. Keep focusColor transparent so the
+      // ring isn't muddied by an overlay fill.
+      focusColor: Colors.transparent,
       hoverColor: AppColors.primary.withValues(alpha: 0.08),
       splashColor: AppColors.primary.withValues(alpha: 0.16),
       highlightColor: AppColors.primary.withValues(alpha: 0.08),

@@ -56,15 +56,38 @@ class CategoryScreen extends StatelessWidget {
   }
 }
 
-class _ToolRow extends StatelessWidget {
+class _ToolRow extends StatefulWidget {
   const _ToolRow({required this.tool});
 
   final ToolEntry tool;
 
   @override
+  State<_ToolRow> createState() => _ToolRowState();
+}
+
+class _ToolRowState extends State<_ToolRow> {
+  // §8.9 — keyboard focus must stay visible. The app-wide §8.3 pass cleared
+  // the global `focusColor` to transparent, which stripped the ambient focus
+  // affordance off this bare InkWell. Only live rows are focusable (non-live
+  // rows pass a null onTap). Track focus locally and swap the row border to
+  // the 2px primary ring on keyboard focus, matching the button/chip §8.3
+  // treatment. (Restores SC 2.4.7 / GL-003 §8.9.)
+  bool _focused = false;
+
+  @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
-    final bool live = tool.isLive;
+    final bool live = widget.tool.isLive;
+
+    // §8.3 focus ring (live + focused) vs §8.1 interactive boundary.
+    // Lime 2px on focus (8.59:1 on surface1 — clears SC 1.4.11);
+    // borderStrong 1px for live-at-rest; decorative border for non-live.
+    final Border rowBorder = (live && _focused)
+        ? Border.all(color: AppColors.primary, width: 2)
+        : Border.all(
+            color: live ? AppColors.borderStrong : AppColors.border,
+            width: 1,
+          );
 
     // Vera F-04 — collapse child semantic nodes so VoiceOver hears only the
     // curated label once.
@@ -72,8 +95,8 @@ class _ToolRow extends StatelessWidget {
       container: true,
       excludeSemantics: true,
       label: live
-          ? '${tool.title}. ${tool.description}'
-          : '${tool.title}. Coming soon. ${tool.description}',
+          ? '${widget.tool.title}. ${widget.tool.description}'
+          : '${widget.tool.title}. Coming soon. ${widget.tool.description}',
       button: true,
       enabled: live,
       child: Material(
@@ -82,17 +105,21 @@ class _ToolRow extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: live
-              ? () => Navigator.of(context).pushNamed(tool.routeName)
+              ? () => Navigator.of(context).pushNamed(widget.tool.routeName)
+              : null,
+          onFocusChange: live
+              ? (bool hasFocus) {
+                  if (hasFocus != _focused) {
+                    setState(() => _focused = hasFocus);
+                  }
+                }
               : null,
           child: Container(
             decoration: BoxDecoration(
               // Live rows are focusable UI components → borderStrong (3:1+
-              // per SC 1.4.11). Disabled rows are non-interactive, so the
-              // decorative `border` is fine.
-              border: Border.all(
-                color: live ? AppColors.borderStrong : AppColors.border,
-                width: 1,
-              ),
+              // per SC 1.4.11) at rest, 2px primary ring on focus. Disabled
+              // rows are non-interactive, so the decorative `border` is fine.
+              border: rowBorder,
               borderRadius: BorderRadius.circular(AppRadius.card),
             ),
             padding: const EdgeInsets.symmetric(
@@ -123,7 +150,7 @@ class _ToolRow extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              tool.title,
+                              widget.tool.title,
                               style: text.bodyLarge?.copyWith(
                                 fontWeight: FontWeight.w600,
                                 color: live
@@ -144,7 +171,7 @@ class _ToolRow extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        tool.description,
+                        widget.tool.description,
                         style: text.labelMedium?.copyWith(
                           color: AppColors.textTertiary,
                         ),

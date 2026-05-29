@@ -19,6 +19,7 @@ import '../../../services/network/network_support.dart';
 import '../../../services/network/whois_service.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
 
 class WhoisScreen extends StatefulWidget {
@@ -133,7 +134,6 @@ class _WhoisScreenState extends State<WhoisScreen> {
   }
 
   Widget _queryCard(BuildContext context) {
-    final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface1,
@@ -144,25 +144,20 @@ class _WhoisScreenState extends State<WhoisScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Domain or IP address',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
+          LabeledField(
+            label: 'Domain or IP address',
+            field: TextField(
+              controller: _queryCtrl,
+              focusNode: _queryFocus,
+              enabled: !_loading,
+              autocorrect: false,
+              enableSuggestions: false,
+              keyboardType: TextInputType.url,
+              textInputAction: TextInputAction.search,
+              onSubmitted: (_) => _run(),
+              cursorColor: AppColors.primary,
+              decoration: const InputDecoration(hintText: 'example.com'),
             ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          TextField(
-            controller: _queryCtrl,
-            focusNode: _queryFocus,
-            enabled: !_loading,
-            autocorrect: false,
-            enableSuggestions: false,
-            keyboardType: TextInputType.url,
-            textInputAction: TextInputAction.search,
-            onSubmitted: (_) => _run(),
-            cursorColor: AppColors.primary,
-            decoration: const InputDecoration(hintText: 'example.com'),
           ),
           const SizedBox(height: AppSpacing.md),
           FilledButton(

@@ -16,8 +16,10 @@ import 'package:flutter/semantics.dart';
 
 import '../../../services/network/dns_lookup_service.dart';
 import '../../../services/network/network_support.dart';
+import '../../../theme/app_theme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
 
 class DnsLookupScreen extends StatefulWidget {
@@ -149,26 +151,21 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            isPtr ? 'IP address' : 'Hostname',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          TextField(
-            controller: _hostCtrl,
-            focusNode: _hostFocus,
-            enabled: !_loading,
-            autocorrect: false,
-            enableSuggestions: false,
-            keyboardType: TextInputType.url,
-            textInputAction: TextInputAction.search,
-            onSubmitted: (_) => _run(),
-            cursorColor: AppColors.primary,
-            decoration: InputDecoration(
-              hintText: isPtr ? '8.8.8.8' : 'example.com',
+          LabeledField(
+            label: isPtr ? 'IP address' : 'Hostname',
+            field: TextField(
+              controller: _hostCtrl,
+              focusNode: _hostFocus,
+              enabled: !_loading,
+              autocorrect: false,
+              enableSuggestions: false,
+              keyboardType: TextInputType.url,
+              textInputAction: TextInputAction.search,
+              onSubmitted: (_) => _run(),
+              cursorColor: AppColors.primary,
+              decoration: InputDecoration(
+                hintText: isPtr ? '8.8.8.8' : 'example.com',
+              ),
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -199,12 +196,9 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
                 backgroundColor: AppColors.surface2,
                 // WCAG 2.5.8 / §8.3 — guarantee ≥48dp hit region.
                 materialTapTargetSize: MaterialTapTargetSize.padded,
-                side: BorderSide(
-                  color: selected
-                      ? AppColors.primary
-                      : AppColors.borderStrong,
-                  width: 1,
-                ),
+                // §8.3 — shared resolver: idle/selected/disabled borders plus
+                // the 2px lime keyboard-focus ring.
+                side: AppTheme.chipSide(),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.control),
                 ),
@@ -241,12 +235,9 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
                 backgroundColor: AppColors.surface2,
                 // WCAG 2.5.8 / §8.3 — guarantee ≥48dp hit region.
                 materialTapTargetSize: MaterialTapTargetSize.padded,
-                side: BorderSide(
-                  color: selected
-                      ? AppColors.primary
-                      : AppColors.borderStrong,
-                  width: 1,
-                ),
+                // §8.3 — shared resolver: idle/selected/disabled borders plus
+                // the 2px lime keyboard-focus ring.
+                side: AppTheme.chipSide(),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.control),
                 ),

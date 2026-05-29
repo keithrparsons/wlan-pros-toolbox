@@ -9,9 +9,10 @@
 //
 // PLATFORM MATRIX (surfaced honestly, never faked):
 //   - iOS / Android:  real ICMP echo via the native backend.
-//                     ⚠️ DEVICE-PENDING: the native ICMP path cannot be
-//                     verified in this environment; the backend throws until a
-//                     device pass wires dart_ping. The UI states this plainly.
+//                     ⚠️ DEVICE-PENDING: the native ICMP path is wired
+//                     (dart_ping + dart_ping_ios); live round-trip is
+//                     device-pending — unverifiable in this environment, to be
+//                     confirmed on a device pass. The UI states this plainly.
 //   - macOS/desktop:  ICMP needs a subprocess the App Sandbox blocks → honest
 //                     "not available in the sandboxed desktop build" card that
 //                     points the user at the TCP Ping tool.
@@ -29,8 +30,10 @@ import '../../../router/app_router.dart';
 import '../../../services/network/dart_ping_icmp_backend.dart';
 import '../../../services/network/icmp_service.dart';
 import '../../../services/network/network_support.dart';
+import '../../../theme/app_theme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
 
 class IcmpPingScreen extends StatefulWidget {
@@ -264,25 +267,20 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Host or IP',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
+          LabeledField(
+            label: 'Host or IP',
+            field: TextField(
+              controller: _hostCtrl,
+              focusNode: _hostFocus,
+              enabled: !_running,
+              autocorrect: false,
+              enableSuggestions: false,
+              keyboardType: TextInputType.url,
+              textInputAction: TextInputAction.go,
+              onSubmitted: (_) => _running ? null : _start(),
+              cursorColor: AppColors.primary,
+              decoration: const InputDecoration(hintText: '1.1.1.1'),
             ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          TextField(
-            controller: _hostCtrl,
-            focusNode: _hostFocus,
-            enabled: !_running,
-            autocorrect: false,
-            enableSuggestions: false,
-            keyboardType: TextInputType.url,
-            textInputAction: TextInputAction.go,
-            onSubmitted: (_) => _running ? null : _start(),
-            cursorColor: AppColors.primary,
-            decoration: const InputDecoration(hintText: '1.1.1.1'),
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
@@ -365,10 +363,9 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
       selectedColor: AppColors.primary,
       backgroundColor: AppColors.surface2,
       materialTapTargetSize: MaterialTapTargetSize.padded,
-      side: BorderSide(
-        color: selected ? AppColors.primary : AppColors.borderStrong,
-        width: 1,
-      ),
+      // §8.3 — shared resolver: idle/selected/disabled borders + 2px lime
+      // keyboard-focus ring.
+      side: AppTheme.chipSide(),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.control),
       ),

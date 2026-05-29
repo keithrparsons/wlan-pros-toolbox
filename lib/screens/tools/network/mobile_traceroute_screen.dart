@@ -9,9 +9,10 @@
 //
 //   - Android:  TTL-walk feasible — the system ping surfaces the responding hop
 //               on TimeExceeded, so each TTL names a router.
-//               ⚠️ DEVICE-PENDING: the native ICMP path is unverifiable in this
-//               environment; the backend throws until a device pass wires
-//               dart_ping. The UI states this plainly.
+//               ⚠️ DEVICE-PENDING: the native ICMP path is wired (dart_ping);
+//               live round-trip is device-pending — unverifiable in this
+//               environment, to be confirmed on a device pass. The UI states
+//               this plainly.
 //   - iOS:      ICMP echo works, but the iOS ICMP layer (GBPing) only accepts
 //               EchoReply and drops TimeExceeded, so a TTL-walk cannot name
 //               intermediate hops. Honest "not available on iOS" card → use the
@@ -34,6 +35,7 @@ import '../../../services/network/icmp_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
 
 class MobileTracerouteScreen extends StatefulWidget {
@@ -288,25 +290,20 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Host or IP',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
+          LabeledField(
+            label: 'Host or IP',
+            field: TextField(
+              controller: _hostCtrl,
+              focusNode: _hostFocus,
+              enabled: !_running,
+              autocorrect: false,
+              enableSuggestions: false,
+              keyboardType: TextInputType.url,
+              textInputAction: TextInputAction.go,
+              onSubmitted: (_) => _running ? null : _start(),
+              cursorColor: AppColors.primary,
+              decoration: const InputDecoration(hintText: 'example.com'),
             ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          TextField(
-            controller: _hostCtrl,
-            focusNode: _hostFocus,
-            enabled: !_running,
-            autocorrect: false,
-            enableSuggestions: false,
-            keyboardType: TextInputType.url,
-            textInputAction: TextInputAction.go,
-            onSubmitted: (_) => _running ? null : _start(),
-            cursorColor: AppColors.primary,
-            decoration: const InputDecoration(hintText: 'example.com'),
           ),
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.xs),

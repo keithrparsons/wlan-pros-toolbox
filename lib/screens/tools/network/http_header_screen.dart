@@ -16,8 +16,10 @@ import 'package:flutter/semantics.dart';
 
 import '../../../services/network/http_header_service.dart';
 import '../../../services/network/network_support.dart';
+import '../../../theme/app_theme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
 
 class HttpHeaderScreen extends StatefulWidget {
@@ -149,25 +151,21 @@ class _HttpHeaderScreenState extends State<HttpHeaderScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'URL',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
+          LabeledField(
+            label: 'URL',
+            field: TextField(
+              controller: _urlCtrl,
+              focusNode: _urlFocus,
+              enabled: !_loading,
+              autocorrect: false,
+              enableSuggestions: false,
+              keyboardType: TextInputType.url,
+              textInputAction: TextInputAction.go,
+              onSubmitted: (_) => _run(),
+              cursorColor: AppColors.primary,
+              decoration:
+                  const InputDecoration(hintText: 'https://example.com'),
             ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          TextField(
-            controller: _urlCtrl,
-            focusNode: _urlFocus,
-            enabled: !_loading,
-            autocorrect: false,
-            enableSuggestions: false,
-            keyboardType: TextInputType.url,
-            textInputAction: TextInputAction.go,
-            onSubmitted: (_) => _run(),
-            cursorColor: AppColors.primary,
-            decoration: const InputDecoration(hintText: 'https://example.com'),
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
@@ -194,11 +192,9 @@ class _HttpHeaderScreenState extends State<HttpHeaderScreen> {
                 selectedColor: AppColors.primary,
                 backgroundColor: AppColors.surface2,
                 materialTapTargetSize: MaterialTapTargetSize.padded,
-                side: BorderSide(
-                  color:
-                      selected ? AppColors.primary : AppColors.borderStrong,
-                  width: 1,
-                ),
+                // §8.3 — shared resolver: idle/selected/disabled borders + 2px
+                // lime keyboard-focus ring.
+                side: AppTheme.chipSide(),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.control),
                 ),

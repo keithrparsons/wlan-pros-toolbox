@@ -20,8 +20,10 @@ import 'package:flutter/semantics.dart';
 
 import '../../../services/network/network_support.dart';
 import '../../../services/network/port_scan_service.dart';
+import '../../../theme/app_theme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
 
 class PortScanScreen extends StatefulWidget {
@@ -204,24 +206,19 @@ class _PortScanScreenState extends State<PortScanScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Host or IP',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
+          LabeledField(
+            label: 'Host or IP',
+            field: TextField(
+              controller: _hostCtrl,
+              focusNode: _hostFocus,
+              enabled: !_scanning,
+              autocorrect: false,
+              enableSuggestions: false,
+              keyboardType: TextInputType.url,
+              textInputAction: TextInputAction.next,
+              cursorColor: AppColors.primary,
+              decoration: const InputDecoration(hintText: '192.168.1.1'),
             ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          TextField(
-            controller: _hostCtrl,
-            focusNode: _hostFocus,
-            enabled: !_scanning,
-            autocorrect: false,
-            enableSuggestions: false,
-            keyboardType: TextInputType.url,
-            textInputAction: TextInputAction.next,
-            cursorColor: AppColors.primary,
-            decoration: const InputDecoration(hintText: '192.168.1.1'),
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
@@ -252,15 +249,22 @@ class _PortScanScreenState extends State<PortScanScreen> {
             )
           else ...[
             const SizedBox(height: AppSpacing.xs),
-            TextField(
-              controller: _portsCtrl,
-              enabled: !_scanning,
-              autocorrect: false,
-              enableSuggestions: false,
-              keyboardType: TextInputType.text,
-              cursorColor: AppColors.primary,
-              decoration: const InputDecoration(
-                hintText: '22, 80, 443, 8000-8100',
+            // Visible "Ports" label sits above the Common/Custom chips, so it
+            // can't be the field's adjacent label — associate explicitly so the
+            // field announces its purpose ("Custom ports, text field").
+            Semantics(
+              label: 'Custom ports',
+              textField: true,
+              child: TextField(
+                controller: _portsCtrl,
+                enabled: !_scanning,
+                autocorrect: false,
+                enableSuggestions: false,
+                keyboardType: TextInputType.text,
+                cursorColor: AppColors.primary,
+                decoration: const InputDecoration(
+                  hintText: '22, 80, 443, 8000-8100',
+                ),
               ),
             ),
           ],
@@ -302,10 +306,9 @@ class _PortScanScreenState extends State<PortScanScreen> {
       backgroundColor: AppColors.surface2,
       // WCAG 2.5.8 / §8.3 — guarantee ≥48dp hit region.
       materialTapTargetSize: MaterialTapTargetSize.padded,
-      side: BorderSide(
-        color: selected ? AppColors.primary : AppColors.borderStrong,
-        width: 1,
-      ),
+      // §8.3 — shared resolver: idle/selected/disabled borders + 2px lime
+      // keyboard-focus ring.
+      side: AppTheme.chipSide(),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.control),
       ),

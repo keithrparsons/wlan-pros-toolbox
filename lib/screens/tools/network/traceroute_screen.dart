@@ -25,6 +25,7 @@ import '../../../services/network/network_support.dart';
 import '../../../services/network/traceroute_service.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
 
 class TracerouteScreen extends StatefulWidget {
@@ -236,25 +237,20 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Host or IP',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
+          LabeledField(
+            label: 'Host or IP',
+            field: TextField(
+              controller: _hostCtrl,
+              focusNode: _hostFocus,
+              enabled: !_running,
+              autocorrect: false,
+              enableSuggestions: false,
+              keyboardType: TextInputType.url,
+              textInputAction: TextInputAction.go,
+              onSubmitted: (_) => _running ? null : _start(),
+              cursorColor: AppColors.primary,
+              decoration: const InputDecoration(hintText: 'example.com'),
             ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          TextField(
-            controller: _hostCtrl,
-            focusNode: _hostFocus,
-            enabled: !_running,
-            autocorrect: false,
-            enableSuggestions: false,
-            keyboardType: TextInputType.url,
-            textInputAction: TextInputAction.go,
-            onSubmitted: (_) => _running ? null : _start(),
-            cursorColor: AppColors.primary,
-            decoration: const InputDecoration(hintText: 'example.com'),
           ),
           if (_error != null) ...[
             const SizedBox(height: AppSpacing.sm),

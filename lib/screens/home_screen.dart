@@ -128,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _CategoryTile extends StatelessWidget {
+class _CategoryTile extends StatefulWidget {
   const _CategoryTile({
     required this.category,
     required this.onTap,
@@ -138,9 +138,28 @@ class _CategoryTile extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_CategoryTile> createState() => _CategoryTileState();
+}
+
+class _CategoryTileState extends State<_CategoryTile> {
+  // §8.9 — keyboard focus must stay visible. The app-wide §8.3 pass swapped
+  // every themed button/chip to a 2px lime focus ring and cleared the global
+  // `focusColor` to transparent, which stripped the ambient focus affordance
+  // off this bare InkWell. Track focus locally and swap the tile border to the
+  // same 2px primary ring on keyboard focus so the home grid matches the
+  // button/chip treatment. (Restores SC 2.4.7 / GL-003 §8.9.)
+  bool _focused = false;
+
+  @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
-    final bool isPlaceholder = !category.hasLiveTool;
+    final bool isPlaceholder = !widget.category.hasLiveTool;
+
+    // §8.3 focus ring vs §8.1 interactive boundary. Lime 2px on focus
+    // (9.31:1 on surface1 — clears SC 1.4.11); borderStrong 1px at rest.
+    final Border tileBorder = _focused
+        ? Border.all(color: AppColors.primary, width: 2)
+        : Border.all(color: AppColors.borderStrong, width: 1);
 
     // Vera F-04 — `container: true, excludeSemantics: true` collapses the
     // child Text semantic nodes so VoiceOver hears only the curated label
@@ -148,19 +167,22 @@ class _CategoryTile extends StatelessWidget {
     return Semantics(
       container: true,
       excludeSemantics: true,
-      label: '${category.title}. '
+      label: '${widget.category.title}. '
           '${isPlaceholder ? "Coming soon. " : ""}'
-          '${category.summary}',
+          '${widget.category.summary}',
       button: true,
       child: Material(
         color: AppColors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: onTap,
+          onTap: widget.onTap,
+          onFocusChange: (bool hasFocus) {
+            if (hasFocus != _focused) setState(() => _focused = hasFocus);
+          },
           child: Container(
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.borderStrong, width: 1),
+              border: tileBorder,
               borderRadius: BorderRadius.circular(AppRadius.card),
             ),
             padding: const EdgeInsets.all(AppSpacing.sm),
@@ -171,7 +193,7 @@ class _CategoryTile extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Icon(
-                      category.icon,
+                      widget.category.icon,
                       size: 28,
                       color: isPlaceholder
                           ? AppColors.textTertiary
@@ -204,7 +226,7 @@ class _CategoryTile extends StatelessWidget {
                 ),
                 const Spacer(),
                 Text(
-                  category.title,
+                  widget.category.title,
                   style: text.headlineSmall?.copyWith(
                     color: isPlaceholder
                         ? AppColors.textSecondary
@@ -215,7 +237,7 @@ class _CategoryTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  category.summary,
+                  widget.category.summary,
                   style: text.labelMedium?.copyWith(
                     color: AppColors.textTertiary,
                   ),

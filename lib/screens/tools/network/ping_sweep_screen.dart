@@ -28,8 +28,10 @@ import 'package:flutter/semantics.dart';
 
 import '../../../services/network/network_support.dart';
 import '../../../services/network/ping_sweep_service.dart';
+import '../../../theme/app_theme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
 
 class PingSweepScreen extends StatefulWidget {
@@ -212,25 +214,20 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Subnet or range',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
+          LabeledField(
+            label: 'Subnet or range',
+            field: TextField(
+              controller: _subnetCtrl,
+              focusNode: _subnetFocus,
+              enabled: !_sweeping,
+              autocorrect: false,
+              enableSuggestions: false,
+              keyboardType: TextInputType.url,
+              textInputAction: TextInputAction.go,
+              onSubmitted: (_) => _sweeping ? null : _start(),
+              cursorColor: AppColors.primary,
+              decoration: const InputDecoration(hintText: '192.168.1.0/24'),
             ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          TextField(
-            controller: _subnetCtrl,
-            focusNode: _subnetFocus,
-            enabled: !_sweeping,
-            autocorrect: false,
-            enableSuggestions: false,
-            keyboardType: TextInputType.url,
-            textInputAction: TextInputAction.go,
-            onSubmitted: (_) => _sweeping ? null : _start(),
-            cursorColor: AppColors.primary,
-            decoration: const InputDecoration(hintText: '192.168.1.0/24'),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
@@ -295,10 +292,9 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
       backgroundColor: AppColors.surface2,
       // WCAG 2.5.8 / §8.3 — guarantee ≥48dp hit region.
       materialTapTargetSize: MaterialTapTargetSize.padded,
-      side: BorderSide(
-        color: selected ? AppColors.primary : AppColors.borderStrong,
-        width: 1,
-      ),
+      // §8.3 — shared resolver: idle/selected/disabled borders + 2px lime
+      // keyboard-focus ring.
+      side: AppTheme.chipSide(),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.control),
       ),

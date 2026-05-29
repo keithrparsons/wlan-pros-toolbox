@@ -16,6 +16,7 @@ import 'package:flutter/semantics.dart';
 import '../../../services/network/bgp_asn_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../theme/app_tokens.dart';
+import '../labeled_field.dart';
 import 'error_card.dart';
 import 'network_unavailable_view.dart';
 import 'value_row.dart';
@@ -141,25 +142,21 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'IP address or ASN',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
+          LabeledField(
+            label: 'IP address or ASN',
+            field: TextField(
+              controller: _queryCtrl,
+              focusNode: _queryFocus,
+              enabled: !_loading,
+              autocorrect: false,
+              enableSuggestions: false,
+              keyboardType: TextInputType.url,
+              textInputAction: TextInputAction.search,
+              onSubmitted: (_) => _run(),
+              cursorColor: AppColors.primary,
+              decoration:
+                  const InputDecoration(hintText: '8.8.8.8  or  AS15169'),
             ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          TextField(
-            controller: _queryCtrl,
-            focusNode: _queryFocus,
-            enabled: !_loading,
-            autocorrect: false,
-            enableSuggestions: false,
-            keyboardType: TextInputType.url,
-            textInputAction: TextInputAction.search,
-            onSubmitted: (_) => _run(),
-            cursorColor: AppColors.primary,
-            decoration: const InputDecoration(hintText: '8.8.8.8  or  AS15169'),
           ),
           const SizedBox(height: 6),
           Text(

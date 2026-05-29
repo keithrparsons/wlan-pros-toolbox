@@ -16,8 +16,10 @@ import 'package:flutter/services.dart';
 
 import '../../../services/network/network_support.dart';
 import '../../../services/network/wake_on_lan_service.dart';
+import '../../../theme/app_theme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
 
 class WakeOnLanScreen extends StatefulWidget {
@@ -147,29 +149,24 @@ class _WakeOnLanScreenState extends State<WakeOnLanScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Target MAC address',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
+          LabeledField(
+            label: 'Target MAC address',
+            field: TextField(
+              controller: _macCtrl,
+              focusNode: _macFocus,
+              enabled: !_loading,
+              autocorrect: false,
+              enableSuggestions: false,
+              keyboardType: TextInputType.text,
+              textInputAction: TextInputAction.next,
+              inputFormatters: <TextInputFormatter>[
+                // Allow only hex, separators, dots — nothing that could not be
+                // part of a MAC. Validation still happens in the service.
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9a-fA-F:\-.\s]')),
+              ],
+              cursorColor: AppColors.primary,
+              decoration: const InputDecoration(hintText: 'AA:BB:CC:DD:EE:FF'),
             ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          TextField(
-            controller: _macCtrl,
-            focusNode: _macFocus,
-            enabled: !_loading,
-            autocorrect: false,
-            enableSuggestions: false,
-            keyboardType: TextInputType.text,
-            textInputAction: TextInputAction.next,
-            inputFormatters: <TextInputFormatter>[
-              // Allow only hex, separators, dots — nothing that could not be
-              // part of a MAC. Validation still happens in the service.
-              FilteringTextInputFormatter.allow(RegExp(r'[0-9a-fA-F:\-.\s]')),
-            ],
-            cursorColor: AppColors.primary,
-            decoration: const InputDecoration(hintText: 'AA:BB:CC:DD:EE:FF'),
           ),
           const SizedBox(height: 2),
           Text(
@@ -177,25 +174,20 @@ class _WakeOnLanScreenState extends State<WakeOnLanScreen> {
             style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.sm),
-          Text(
-            'Broadcast address (optional)',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          TextField(
-            controller: _broadcastCtrl,
-            enabled: !_loading,
-            autocorrect: false,
-            enableSuggestions: false,
-            keyboardType: TextInputType.number,
-            textInputAction: TextInputAction.done,
-            onSubmitted: (_) => _run(),
-            cursorColor: AppColors.primary,
-            decoration: const InputDecoration(
-              hintText: '255.255.255.255 (default)',
+          LabeledField(
+            label: 'Broadcast address (optional)',
+            field: TextField(
+              controller: _broadcastCtrl,
+              enabled: !_loading,
+              autocorrect: false,
+              enableSuggestions: false,
+              keyboardType: TextInputType.number,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _run(),
+              cursorColor: AppColors.primary,
+              decoration: const InputDecoration(
+                hintText: '255.255.255.255 (default)',
+              ),
             ),
           ),
           const SizedBox(height: 2),
@@ -229,10 +221,9 @@ class _WakeOnLanScreenState extends State<WakeOnLanScreen> {
                 selectedColor: AppColors.primary,
                 backgroundColor: AppColors.surface2,
                 materialTapTargetSize: MaterialTapTargetSize.padded,
-                side: BorderSide(
-                  color: selected ? AppColors.primary : AppColors.borderStrong,
-                  width: 1,
-                ),
+                // §8.3 — shared resolver: idle/selected/disabled borders + 2px
+                // lime keyboard-focus ring.
+                side: AppTheme.chipSide(),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.control),
                 ),

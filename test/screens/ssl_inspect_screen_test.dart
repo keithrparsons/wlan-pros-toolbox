@@ -13,6 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/ssl_inspect_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/ssl_inspect_service.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+import 'package:wlan_pros_toolbox/theme/app_tokens.dart';
 
 const String _pem = '-----BEGIN CERTIFICATE-----\nABC123FAKEPEMBODY==\n'
     '-----END CERTIFICATE-----';
@@ -164,5 +165,42 @@ void main() {
     await _pumpAndInspect(tester, result);
 
     expect(find.text('Copy PEM'), findsNothing);
+  });
+
+  // Regression: the app-wide §8.3 a11y pass cleared the global
+  // `Theme.focusColor` to transparent, which stripped the keyboard-focus
+  // affordance from this disclosure's bare InkWell. It has no bordered
+  // container to swap a ring onto, so the fix restores a visible focus overlay
+  // locally with an explicit lime `focusColor`. This guards SC 2.4.7 / §8.9.
+  testWidgets('disclosure InkWell exposes a local lime focusColor affordance',
+      (WidgetTester tester) async {
+    final SslInspectResult result = SslInspectResult.success(
+      host: 'example.com',
+      port: 443,
+      certificate: _cert(),
+      alpn: 'h2',
+      handshakeMs: 42,
+    );
+    await _pumpAndInspect(tester, result);
+
+    // The disclosure row is the InkWell wrapping the "Show full subject" label.
+    final Finder disclosure = find.text('Show full subject');
+    await tester.ensureVisible(disclosure);
+    await tester.pumpAndSettle();
+
+    final Finder disclosureInkWell = find.ancestor(
+      of: disclosure,
+      matching: find.byType(InkWell),
+    );
+    expect(disclosureInkWell, findsWidgets);
+
+    final InkWell inkWell =
+        tester.widgetList<InkWell>(disclosureInkWell).first;
+    expect(
+      inkWell.focusColor,
+      AppColors.primary.withValues(alpha: 0.16),
+      reason: 'Disclosure must keep a visible keyboard-focus overlay after the '
+          'global focusColor was cleared to transparent.',
+    );
   });
 }
