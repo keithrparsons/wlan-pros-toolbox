@@ -108,6 +108,21 @@ class NetworkSupport {
   /// where raw sockets and the neighbor table are both inaccessible.
   static bool get arpNdpSupported => !kIsWeb;
 
+  /// Real ICMP Ping support. The *screen* is reachable off-web on every native
+  /// platform so the catalog can route to it, but the genuine ICMP-echo
+  /// capability is per-platform (available on iOS/Android, sandboxed-out on
+  /// desktop where the only ICMP path is a subprocess the macOS App Sandbox
+  /// blocks). That verdict is decided inside IcmpService (`echoCapability`) and
+  /// surfaced in the UI; this flag only excludes web, where no raw-socket /
+  /// dart:io path exists at all.
+  static bool get icmpPingSupported => !kIsWeb;
+
+  /// Mobile Traceroute (ICMP TTL-walk) support. Same web exclusion; the genuine
+  /// per-platform verdict (available on Android, unavailable-no-TimeExceeded on
+  /// iOS, sandboxed-out on desktop where the system traceroute is the path) is
+  /// decided inside IcmpService (`tracerouteCapability`) and surfaced in the UI.
+  static bool get icmpTracerouteSupported => !kIsWeb;
+
   /// Traceroute support. The *screen* is reachable off-web on every native
   /// platform (so the tool catalog can route to it), but the genuine
   /// hop-by-hop run only works on desktop where the OS traceroute binary can

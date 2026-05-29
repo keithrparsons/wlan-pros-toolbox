@@ -137,10 +137,19 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
       ),
       ToolEntry(
         id: 'ping',
-        title: 'Ping',
+        title: 'Ping (TCP)',
         description:
-            'TCP round-trip probe — live RTT, min/avg/max, loss, sparkline',
+            'TCP-handshake round-trip probe (not ICMP) — works on every '
+            'platform incl. sandboxed desktop',
         routeName: '/tools/ping',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'icmp-ping',
+        title: 'ICMP Ping',
+        description:
+            'Real ICMP echo round-trip (mobile) — live RTT, min/avg/max, loss',
+        routeName: '/tools/icmp-ping',
         isLive: true,
       ),
       ToolEntry(
@@ -153,9 +162,17 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
       ),
       ToolEntry(
         id: 'traceroute',
-        title: 'Traceroute',
-        description: 'Hop-by-hop path with per-hop RTT (desktop)',
+        title: 'Traceroute (system)',
+        description: 'Hop-by-hop path via the OS traceroute — desktop',
         routeName: '/tools/traceroute',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'mobile-traceroute',
+        title: 'Mobile Traceroute',
+        description:
+            'Hop-by-hop path via an ICMP TTL-walk — Android (iOS unsupported)',
+        routeName: '/tools/mobile-traceroute',
         isLive: true,
       ),
       ToolEntry(

@@ -9,6 +9,18 @@
 	     string before granting local-network access. -->
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>WLAN Pros Toolbox scans and inspects devices on your local network to report interface details, open ports, and connectivity.</string>
+	<!-- Real ICMP Ping (icmp_ping_screen) sends ICMP echo via SimplePing
+	     (dart_ping_ios). iOS 14+ requires both NSLocalNetworkUsageDescription
+	     (above) and a Bonjour-services declaration before it will grant the
+	     local-network access an ICMP socket to a LAN host needs. These wildcard
+	     entries cover the generic service discovery SimplePing performs for
+	     local targets. DEVICE-PENDING: this entitlement chain can only be
+	     exercised against a provisioned device. -->
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_services._dns-sd._udp</string>
+		<string>_http._tcp</string>
+	</array>
 	<!-- network_info_plus reads the connected Wi-Fi SSID/BSSID, which iOS
 	     gates behind Location When In Use. Without this the SSID/BSSID fields
 	     return null and the UI shows "Not available" rather than the network

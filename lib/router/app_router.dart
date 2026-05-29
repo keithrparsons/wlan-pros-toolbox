@@ -15,7 +15,9 @@ import '../screens/tools/network/bgp_asn_screen.dart';
 import '../screens/tools/network/dns_lookup_screen.dart';
 import '../screens/tools/network/http_header_screen.dart';
 import '../screens/tools/network/interface_info_screen.dart';
+import '../screens/tools/network/icmp_ping_screen.dart';
 import '../screens/tools/network/ip_geo_screen.dart';
+import '../screens/tools/network/mobile_traceroute_screen.dart';
 import '../screens/tools/network/ping_screen.dart';
 import '../screens/tools/network/ping_sweep_screen.dart';
 import '../screens/tools/network/port_scan_screen.dart';
@@ -37,8 +39,10 @@ class AppRouter {
   static const String dnsLookup = '/tools/dns-lookup';
   static const String portScan = '/tools/port-scan';
   static const String ping = '/tools/ping';
+  static const String icmpPing = '/tools/icmp-ping';
   static const String pingSweep = '/tools/ping-sweep';
   static const String traceroute = '/tools/traceroute';
+  static const String mobileTraceroute = '/tools/mobile-traceroute';
   static const String sslInspect = '/tools/ssl-inspect';
   static const String httpHeaders = '/tools/http-headers';
   static const String whois = '/tools/whois';
@@ -56,8 +60,10 @@ class AppRouter {
     dnsLookup: (_) => const DnsLookupScreen(),
     portScan: (_) => const PortScanScreen(),
     ping: (_) => const PingScreen(),
+    icmpPing: (_) => const IcmpPingScreen(),
     pingSweep: (_) => const PingSweepScreen(),
     traceroute: (_) => const TracerouteScreen(),
+    mobileTraceroute: (_) => const MobileTracerouteScreen(),
     sslInspect: (_) => const SslInspectScreen(),
     httpHeaders: (_) => const HttpHeaderScreen(),
     whois: (_) => const WhoisScreen(),
