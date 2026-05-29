@@ -83,6 +83,25 @@ class NetworkSupport {
   /// Same `!kIsWeb` gate as the other socket tools.
   static bool get wakeOnLanSupported => !kIsWeb;
 
+  /// BGP / ASN Lookup support. Talks to the RIPEstat Data API over HTTPS via
+  /// `dart:io HttpClient`. Because `dart:io` does not exist on web and we have
+  /// not verified the API sends permissive CORS, the tool is native-only and
+  /// web is routed to the download-the-app fallback. Same `!kIsWeb` gate.
+  static bool get bgpAsnSupported => !kIsWeb;
+
+  /// IP Geolocation support. Talks to the ipwho.is API over HTTPS via
+  /// `dart:io HttpClient`. Native-only for the same reason as [bgpAsnSupported]
+  /// (no `dart:io` on web; CORS unverified). Web → fallback.
+  static bool get ipGeoSupported => !kIsWeb;
+
+  /// ARP / NDP neighbor discovery support. The *screen* is reachable off-web on
+  /// every native platform so the catalog can route to it, but the genuine
+  /// per-platform capability (sweep-with-MAC on Linux/Android, sweep-no-MAC on
+  /// macOS/Windows, unavailable on iOS) is decided inside ArpNdpService
+  /// (`capabilityFor`) and surfaced in the UI. This flag only excludes web,
+  /// where raw sockets and the neighbor table are both inaccessible.
+  static bool get arpNdpSupported => !kIsWeb;
+
   /// Traceroute support. The *screen* is reachable off-web on every native
   /// platform (so the tool catalog can route to it), but the genuine
   /// hop-by-hop run only works on desktop where the OS traceroute binary can

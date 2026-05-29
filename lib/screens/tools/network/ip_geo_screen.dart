@@ -1,0 +1,341 @@
+// IP Geolocation tool — locate an IP (or your own public IP) via ipwho.is
+// (keyless, HTTPS — see IpGeoService).
+//
+// States (SOP-007 §5):
+//  - idle     → form only; an empty query means "my public IP".
+//  - loading  → query in flight; button shows progress, input disabled.
+//  - success  → location, coordinates, timezone, ISP/org, ASN.
+//  - error    → bad IP / timeout / rate-limit / transport, precise message.
+//  - disabled → never fully disabled (blank = my IP), but progress locks input.
+//  - web      → NetworkUnavailableView (native-only; CORS unverified).
+//
+// MAP: a full interactive map is OUT of scope this session. Coordinates render
+// as selectable mono data with a copyable "lat,long" pair and a copyable
+// OpenStreetMap URL the user can open. Interactive map = documented future item.
+
+import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
+import 'package:flutter/services.dart';
+
+import '../../../services/network/ip_geo_service.dart';
+import '../../../services/network/network_support.dart';
+import '../../../theme/app_tokens.dart';
+import '../../../theme/app_typography.dart';
+import 'error_card.dart';
+import 'network_unavailable_view.dart';
+import 'value_row.dart';
+
+class IpGeoScreen extends StatefulWidget {
+  const IpGeoScreen({super.key, this.service});
+
+  final IpGeoService? service;
+
+  @override
+  State<IpGeoScreen> createState() => _IpGeoScreenState();
+}
+
+class _IpGeoScreenState extends State<IpGeoScreen> {
+  late final IpGeoService _service;
+  final TextEditingController _queryCtrl = TextEditingController();
+  final FocusNode _queryFocus = FocusNode();
+
+  bool _loading = false;
+  IpGeoResult? _result;
+
+  @override
+  void initState() {
+    super.initState();
+    _service = widget.service ?? IpGeoService();
+  }
+
+  @override
+  void dispose() {
+    _queryCtrl.dispose();
+    _queryFocus.dispose();
+    super.dispose();
+  }
+
+  Future<void> _run() async {
+    if (_loading) return;
+    _queryFocus.unfocus();
+    setState(() => _loading = true);
+    final IpGeoResult result = await _service.lookup(rawQuery: _queryCtrl.text);
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      _result = result;
+    });
+
+    SemanticsService.sendAnnouncement(
+      View.of(context),
+      result.isError
+          ? 'Geolocation lookup failed'
+          : 'Location retrieved for ${result.locationLine ?? result.ip ?? 'the address'}',
+      TextDirection.ltr,
+    );
+  }
+
+  Future<void> _copy(String value, String label) async {
+    await Clipboard.setData(ClipboardData(text: value));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(content: Text('$label copied')));
+    // SnackBars are not reliably announced by screen readers; send an explicit
+    // polite announcement so VoiceOver/TalkBack confirm the copy. (Vera MEDIUM-2.)
+    SemanticsService.sendAnnouncement(
+      View.of(context),
+      '$label copied',
+      TextDirection.ltr,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('IP Geolocation'), toolbarHeight: 64),
+      body: SafeArea(top: false, child: _body()),
+    );
+  }
+
+  Widget _body() {
+    if (!NetworkSupport.ipGeoSupported) {
+      return NetworkUnavailableView(
+        toolName: 'IP Geolocation',
+        reason: NetworkSupport.unavailableReason ?? NetworkUnavailableReason.web,
+      );
+    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isDesktop = constraints.maxWidth >= 720;
+        final double edge = isDesktop
+            ? AppSpacing.screenEdgeDesktop
+            : AppSpacing.screenEdgeMobile;
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                edge,
+                AppSpacing.sm,
+                edge,
+                edge + AppSpacing.sm,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _queryCard(context),
+                  const SizedBox(height: AppSpacing.sm),
+                  _resultsSection(context),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _queryCard(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'IP address',
+            style: text.labelMedium?.copyWith(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          TextField(
+            controller: _queryCtrl,
+            focusNode: _queryFocus,
+            enabled: !_loading,
+            autocorrect: false,
+            enableSuggestions: false,
+            keyboardType: TextInputType.url,
+            textInputAction: TextInputAction.search,
+            onSubmitted: (_) => _run(),
+            cursorColor: AppColors.primary,
+            decoration:
+                const InputDecoration(hintText: 'Leave blank for my public IP'),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Data from the ipwho.is API. No account or key required.',
+            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          FilledButton(
+            onPressed: _loading ? null : _run,
+            child: _loading
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: Semantics(
+                      label: 'Locating…',
+                      liveRegion: true,
+                      child: const CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.secondary,
+                      ),
+                    ),
+                  )
+                : const Text('Locate'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _resultsSection(BuildContext context) {
+    final IpGeoResult? r = _result;
+    if (r == null) return const SizedBox.shrink();
+    if (r.isError) {
+      return LookupErrorCard(
+        errorKind: r.errorKind,
+        message: r.errorMessage!,
+        onRetry: _run,
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _detailsCard(context, r),
+        if (r.hasCoordinates) ...[
+          const SizedBox(height: AppSpacing.sm),
+          _coordinatesCard(context, r),
+        ],
+      ],
+    );
+  }
+
+  Widget _detailsCard(BuildContext context, IpGeoResult r) {
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.borderStrong, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Location',
+            style: text.labelMedium?.copyWith(
+              color: AppColors.textSecondary,
+              letterSpacing: 0.4,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          ValueRow(label: 'IP', value: r.ip, mono: true, emphasize: true),
+          ValueRow(label: 'IP version', value: r.ipVersion),
+          ValueRow(
+            label: 'Location',
+            value: r.locationLine,
+          ),
+          ValueRow(label: 'Postal code', value: r.postal, mono: true),
+          ValueRow(label: 'Timezone', value: r.timezone),
+          ValueRow(label: 'UTC offset', value: r.utcOffset, mono: true),
+          ValueRow(label: 'ISP', value: r.isp),
+          ValueRow(label: 'Organization', value: r.org),
+          ValueRow(label: 'ASN', value: r.asn, mono: true),
+        ],
+      ),
+    );
+  }
+
+  Widget _coordinatesCard(BuildContext context, IpGeoResult r) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final String coords = r.coordinatePair!;
+    final String? url = r.mapsUrl;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Coordinates',
+            style: text.labelMedium?.copyWith(
+              color: AppColors.textSecondary,
+              letterSpacing: 0.4,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          ValueRow(
+            label: 'Latitude',
+            value: r.latitude?.toStringAsFixed(6),
+            mono: true,
+          ),
+          ValueRow(
+            label: 'Longitude',
+            value: r.longitude?.toStringAsFixed(6),
+            mono: true,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Map link',
+            style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 4),
+          if (url != null)
+            SelectableText(
+              url,
+              style: mono.inlineCode.copyWith(
+                color: AppColors.textPrimary,
+                fontSize: AppTextSize.caption,
+              ),
+            ),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => _copy(coords, 'Coordinates'),
+                  icon: const Icon(Icons.copy, size: 18),
+                  label: const Text('Copy lat,long'),
+                ),
+              ),
+              if (url != null) ...[
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _copy(url, 'Map link'),
+                    icon: const Icon(Icons.link, size: 18),
+                    label: const Text('Copy map link'),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'An interactive in-app map is a planned future addition.',
+            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+          ),
+        ],
+      ),
+    );
+  }
+}

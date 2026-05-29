@@ -180,6 +180,27 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         isLive: true,
       ),
       ToolEntry(
+        id: 'arp-ndp',
+        title: 'ARP / NDP Lookup',
+        description: 'Discover local neighbors — IP and MAC where exposed',
+        routeName: '/tools/arp-ndp',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'bgp-asn',
+        title: 'BGP / ASN Lookup',
+        description: 'ASN, holder, prefix, registry, peers via RIPEstat',
+        routeName: '/tools/bgp-asn',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'ip-geo',
+        title: 'IP Geolocation',
+        description: 'Country, city, coordinates, timezone, ISP, ASN',
+        routeName: '/tools/ip-geo',
+        isLive: true,
+      ),
+      ToolEntry(
         id: 'ipv4-subnet',
         title: 'IP Subnetting (IPv4)',
         description: 'Subnet math and CIDR breakdown',

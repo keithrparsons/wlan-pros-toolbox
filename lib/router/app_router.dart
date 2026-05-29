@@ -10,9 +10,12 @@ import 'package:flutter/material.dart';
 
 import '../screens/home_screen.dart';
 import '../screens/tools/dbm_watt_converter.dart';
+import '../screens/tools/network/arp_ndp_screen.dart';
+import '../screens/tools/network/bgp_asn_screen.dart';
 import '../screens/tools/network/dns_lookup_screen.dart';
 import '../screens/tools/network/http_header_screen.dart';
 import '../screens/tools/network/interface_info_screen.dart';
+import '../screens/tools/network/ip_geo_screen.dart';
 import '../screens/tools/network/ping_screen.dart';
 import '../screens/tools/network/port_scan_screen.dart';
 import '../screens/tools/network/ssl_inspect_screen.dart';
@@ -38,6 +41,9 @@ class AppRouter {
   static const String httpHeaders = '/tools/http-headers';
   static const String whois = '/tools/whois';
   static const String wakeOnLan = '/tools/wake-on-lan';
+  static const String arpNdp = '/tools/arp-ndp';
+  static const String bgpAsn = '/tools/bgp-asn';
+  static const String ipGeo = '/tools/ip-geo';
 
   /// Map of static, argument-less routes. Categories use MaterialPageRoute
   /// directly because each category screen takes a typed `ToolCategory`.
@@ -53,6 +59,9 @@ class AppRouter {
     httpHeaders: (_) => const HttpHeaderScreen(),
     whois: (_) => const WhoisScreen(),
     wakeOnLan: (_) => const WakeOnLanScreen(),
+    arpNdp: (_) => const ArpNdpScreen(),
+    bgpAsn: (_) => const BgpAsnScreen(),
+    ipGeo: (_) => const IpGeoScreen(),
   };
 
   /// Fallback for any unregistered route. Sends the user back to home rather

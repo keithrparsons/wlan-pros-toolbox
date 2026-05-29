@@ -42,23 +42,23 @@ class AppColors {
   static const Color inputFill = Color(0xFF262626);
 
   /// Fill for disabled buttons / chips / toggles. Paired with
-  /// `textDisabled` (#7F7F7F) for 3.05:1 — passes SC 1.4.11.
+  /// `textDisabled` (#7F7F7F) for 3.58:1 — passes SC 1.4.11.
   /// Added 2026-05-29 per Iris's §8.1 update closing Vera F-02.
   static const Color disabledFill = Color(0xFF2A2A2A);
 
   static const Color scrim = Color(0x99000000); // rgba(0,0,0,0.6)
 
   // §8.2 — text on dark (all WCAG 2.2 AA on surface0 / surface1).
-  static const Color textPrimary = neutral0; // 19.6:1
-  static const Color textSecondary = neutral2; // 15.6:1
-  static const Color textTertiary = neutral3; // 5.7:1
+  static const Color textPrimary = neutral0; // 17.4:1
+  static const Color textSecondary = neutral2; // 13.8:1
+  static const Color textTertiary = neutral3; // 6.3:1
 
-  /// Disabled text/icon foreground. 4.4:1 on surface0; 3.05:1 on disabledFill —
+  /// Disabled text/icon foreground. 4.3:1 on surface0; 3.58:1 on disabledFill —
   /// passes SC 1.4.11. Bumped from #6B6B6B to #7F7F7F on 2026-05-29 per Iris's
   /// §8.2 update closing Vera F-02.
   static const Color textDisabled = Color(0xFF7F7F7F);
 
-  static const Color textAccent = primary; // 9.6:1
+  static const Color textAccent = primary; // 9.3:1
 }
 
 /// 8px spacing scale — §4.
