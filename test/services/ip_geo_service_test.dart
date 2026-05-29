@@ -110,7 +110,11 @@ void main() {
       expect(r.errorMessage, contains('rate'));
     });
 
-    test('success:false with other message → httpStatus error', () {
+    test('success:false (not rate-limit) → input rejection, null kind', () {
+      // ipwho.is returns 200 + success:false for an unresolvable address.
+      // That is an input problem, not a server fault: it must carry a null
+      // errorKind so the shared error card shows "Check your input", not the
+      // generic "API error".
       final IpGeoResult r = IpGeoService.parse(
         <String, dynamic>{
           'success': false,
@@ -119,8 +123,32 @@ void main() {
         query: 'bogus',
       );
       expect(r.isError, isTrue);
-      expect(r.errorKind, JsonHttpErrorKind.httpStatus);
-      expect(r.errorMessage, 'Invalid IP address');
+      expect(r.errorKind, isNull);
+      expect(r.errorMessage, contains('bogus'));
+      expect(r.errorMessage, contains('valid IP address or hostname'));
+    });
+  });
+
+  group('isPlausibleQuery — client-side pre-validation', () {
+    test('accepts IPv4, IPv6, and dotted hostnames', () {
+      expect(IpGeoService.isPlausibleQuery('8.8.8.8'), isTrue);
+      expect(IpGeoService.isPlausibleQuery('1.1.1.1'), isTrue);
+      expect(
+        IpGeoService.isPlausibleQuery('2001:4860:4860::8888'),
+        isTrue,
+      );
+      expect(IpGeoService.isPlausibleQuery('example.com'), isTrue);
+      expect(IpGeoService.isPlausibleQuery('sub.example.co.uk'), isTrue);
+      expect(IpGeoService.isPlausibleQuery('  8.8.8.8  '), isTrue);
+    });
+
+    test('rejects whitespace, junk, out-of-range octets, bare labels', () {
+      expect(IpGeoService.isPlausibleQuery('my computer'), isFalse);
+      expect(IpGeoService.isPlausibleQuery('????'), isFalse);
+      expect(IpGeoService.isPlausibleQuery('999.999.999.999'), isFalse);
+      expect(IpGeoService.isPlausibleQuery('256.1.1.1'), isFalse);
+      expect(IpGeoService.isPlausibleQuery('localhost'), isFalse);
+      expect(IpGeoService.isPlausibleQuery('8.8.8'), isFalse);
     });
   });
 
@@ -133,6 +161,23 @@ void main() {
       expect(r.isError, isFalse);
       expect(r.query, '(my IP)');
       expect(r.ip, '8.8.8.8');
+    });
+
+    test('invalid input is rejected before any network call', () async {
+      bool fetched = false;
+      final IpGeoService svc = IpGeoService(
+        client: JsonHttpClient(
+          fetcher: (Uri url, Duration timeout) async {
+            fetched = true;
+            return _fullBody();
+          },
+        ),
+      );
+      final IpGeoResult r = await svc.lookup(rawQuery: 'not an ip');
+      expect(fetched, isFalse, reason: 'must short-circuit before fetching');
+      expect(r.isError, isTrue);
+      expect(r.errorKind, isNull, reason: 'null kind = check your input');
+      expect(r.errorMessage, contains('IP address or hostname'));
     });
 
     test('transport exception → failure with transport kind', () async {

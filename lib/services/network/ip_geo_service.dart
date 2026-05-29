@@ -158,6 +158,21 @@ class IpGeoService {
   /// Never throws — failures come back as [IpGeoResult.failure].
   Future<IpGeoResult> lookup({required String rawQuery}) async {
     final String query = rawQuery.trim();
+
+    // Pre-validate non-empty input before spending a network round-trip on a
+    // value that can't be an IP or a hostname. A client-side rejection carries
+    // a null [errorKind], which the shared error card renders as the
+    // "Check your input" state — distinct from a real network/API failure.
+    if (query.isNotEmpty && !_looksLikeIpOrHost(query)) {
+      return IpGeoResult.failure(
+        query: query,
+        message: 'That does not look like an IP address or hostname. '
+            'Enter something like 8.8.8.8, 2001:4860:4860::8888, or '
+            'example.com — or leave it blank to locate your own IP.',
+        // null kind == client-side input rejection.
+      );
+    }
+
     final String url = query.isEmpty
         ? '$_base/'
         : '$_base/${Uri.encodeComponent(query)}';
@@ -183,15 +198,23 @@ class IpGeoService {
       final bool rateLimited =
           (msg ?? '').toLowerCase().contains('rate') ||
               (msg ?? '').toLowerCase().contains('limit');
+      if (rateLimited) {
+        return IpGeoResult.failure(
+          query: query,
+          message: 'The geolocation API is rate-limiting requests. Wait a '
+              'minute and try again.',
+          errorKind: JsonHttpErrorKind.rateLimited,
+        );
+      }
+      // ipwho.is answers 200 + {success:false} for an address it cannot
+      // resolve (e.g. an invalid IP / unknown host). That is an input
+      // rejection, not a server fault — surface it as the "Check your input"
+      // state (null kind) so it is not mislabelled as a generic "API error".
       return IpGeoResult.failure(
         query: query,
-        message: rateLimited
-            ? 'The geolocation API is rate-limiting requests. Wait a minute '
-                'and try again.'
-            : (msg ?? 'The geolocation API could not resolve that IP.'),
-        errorKind: rateLimited
-            ? JsonHttpErrorKind.rateLimited
-            : JsonHttpErrorKind.httpStatus,
+        message: 'The address "$query" could not be resolved. '
+            'Check that it is a valid IP address or hostname and try again.',
+        // null kind == client-side input rejection.
       );
     }
 
@@ -217,6 +240,42 @@ class IpGeoService {
       asn: asnRaw == null ? null : _asnLabel(asnRaw),
       asnName: _str(conn['org']) ?? _str(conn['isp']),
     );
+  }
+
+  /// Cheap client-side sanity check: does [query] plausibly look like an IPv4
+  /// address, an IPv6 address, or a DNS hostname? This is a pre-filter to avoid
+  /// a wasted round-trip on obvious junk (spaces, "????", "my computer"), NOT a
+  /// strict validator — ipwho.is remains the authority on resolvability, and a
+  /// value that passes here but can't be resolved still returns the in-band
+  /// "Check your input" failure from [parse]. Exposed for unit tests.
+  static bool isPlausibleQuery(String query) => _looksLikeIpOrHost(query.trim());
+
+  static bool _looksLikeIpOrHost(String q) {
+    if (q.isEmpty || q.length > 253) return false;
+    // No whitespace anywhere in a real IP or hostname.
+    if (RegExp(r'\s').hasMatch(q)) return false;
+    if (_isIpv4(q)) return true;
+    // IPv6: hex groups and colons (optionally a zone/scope id). Loose by design.
+    if (q.contains(':') && RegExp(r'^[0-9a-fA-F:]+(%[0-9a-zA-Z]+)?$').hasMatch(q)) {
+      return true;
+    }
+    // Hostname: dot-separated labels, alphanumerics + hyphen, must contain a dot
+    // (a bare single label like "localhost" isn't geolocatable via the API).
+    return RegExp(
+      r'^(?=.{1,253}$)([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+'
+      r'[a-zA-Z]{2,}$',
+    ).hasMatch(q);
+  }
+
+  static bool _isIpv4(String q) {
+    final List<String> parts = q.split('.');
+    if (parts.length != 4) return false;
+    for (final String p in parts) {
+      if (p.isEmpty || p.length > 3) return false;
+      final int? n = int.tryParse(p);
+      if (n == null || n < 0 || n > 255) return false;
+    }
+    return true;
   }
 
   static String _asnLabel(String n) {
