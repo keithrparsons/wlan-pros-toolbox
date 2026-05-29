@@ -58,6 +58,12 @@ class NetworkSupport {
   /// so the gate is the same `!kIsWeb` as the other socket tools.
   static bool get pingSupported => !kIsWeb;
 
+  /// Ping Sweep support. Discovers responsive hosts on a subnet by running the
+  /// same TCP-handshake probe as Ping across a range of addresses (see
+  /// PingSweepService) — no raw socket, no subprocess. Works on every native
+  /// platform, so the gate is the same `!kIsWeb` as the other socket tools.
+  static bool get pingSweepSupported => !kIsWeb;
+
   /// SSL/TLS Certificate Inspector support. Needs a raw outbound TLS socket
   /// (`SecureSocket.connect`), which a browser cannot open — and a browser
   /// cannot read an arbitrary peer's certificate either. Native-only; web is

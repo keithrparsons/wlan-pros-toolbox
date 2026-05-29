@@ -17,6 +17,7 @@ import '../screens/tools/network/http_header_screen.dart';
 import '../screens/tools/network/interface_info_screen.dart';
 import '../screens/tools/network/ip_geo_screen.dart';
 import '../screens/tools/network/ping_screen.dart';
+import '../screens/tools/network/ping_sweep_screen.dart';
 import '../screens/tools/network/port_scan_screen.dart';
 import '../screens/tools/network/ssl_inspect_screen.dart';
 import '../screens/tools/network/traceroute_screen.dart';
@@ -36,6 +37,7 @@ class AppRouter {
   static const String dnsLookup = '/tools/dns-lookup';
   static const String portScan = '/tools/port-scan';
   static const String ping = '/tools/ping';
+  static const String pingSweep = '/tools/ping-sweep';
   static const String traceroute = '/tools/traceroute';
   static const String sslInspect = '/tools/ssl-inspect';
   static const String httpHeaders = '/tools/http-headers';
@@ -54,6 +56,7 @@ class AppRouter {
     dnsLookup: (_) => const DnsLookupScreen(),
     portScan: (_) => const PortScanScreen(),
     ping: (_) => const PingScreen(),
+    pingSweep: (_) => const PingSweepScreen(),
     traceroute: (_) => const TracerouteScreen(),
     sslInspect: (_) => const SslInspectScreen(),
     httpHeaders: (_) => const HttpHeaderScreen(),

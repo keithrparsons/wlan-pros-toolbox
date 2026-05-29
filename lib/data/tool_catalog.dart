@@ -144,6 +144,14 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         isLive: true,
       ),
       ToolEntry(
+        id: 'ping-sweep',
+        title: 'Ping Sweep',
+        description:
+            'Discover responsive hosts on a subnet — TCP-probe sweep, no ICMP',
+        routeName: '/tools/ping-sweep',
+        isLive: true,
+      ),
+      ToolEntry(
         id: 'traceroute',
         title: 'Traceroute',
         description: 'Hop-by-hop path with per-hop RTT (desktop)',

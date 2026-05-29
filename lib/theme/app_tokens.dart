@@ -76,6 +76,13 @@ class AppSpacing {
   static const double screenEdgeMobile = sm;
   static const double screenEdgeDesktop = md;
 
+  /// §8.7 — `--app-row-padding`: vertical (top + bottom) inset for tool-result
+  /// rows, list rows, and any single-line data row inside a card. 1.5× `xs`
+  /// (8px base) = 12px — denser than card padding without crowding. Use this
+  /// token wherever a row's top/bottom inset is set; never hardcode 12px.
+  /// Horizontal row inset follows card padding (`sm`, 16px).
+  static const double rowPadding = 12;
+
   /// Calculator content cap so desktop doesn't stretch a 2000px form field.
   static const double calculatorMaxWidth = 480;
 
