@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- vertical mast -->
+    <path d="M5 4 V20"/>
+    <!-- horizontal reference from the mast -->
+    <path d="M5 8 H19"/>
+    <!-- beam angled down from the same pivot -->
+    <path d="M5 8 L18 15"/>
+    <!-- tilt-angle arc spanning reference to beam, at a readable radius -->
+    <path d="M16 8 A11 11 0 0 1 14.5 11"/>
+  </g>
+</svg>

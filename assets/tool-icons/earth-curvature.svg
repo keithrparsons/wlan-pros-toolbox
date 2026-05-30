@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- straight chord (line of sight) across the top -->
+    <path d="M3 8 H21"/>
+    <!-- earth bulge: curved arc rising under the chord -->
+    <path d="M3 18 A18 18 0 0 1 21 18"/>
+    <!-- endpoint markers on the chord -->
+    <circle cx="3" cy="8" r="1.3" fill="currentColor" stroke="none"/>
+    <circle cx="21" cy="8" r="1.3" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

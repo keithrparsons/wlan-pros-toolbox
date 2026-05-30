@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- vertical mast -->
+    <path d="M4 3 V16"/>
+    <!-- ground line -->
+    <path d="M3 20 H21"/>
+    <!-- coverage footprint: two beam edges from mast top down to a ground span -->
+    <path d="M4 5 L11 20"/>
+    <path d="M4 5 L18 20"/>
+    <!-- footprint span markers on the ground -->
+    <circle cx="11" cy="20" r="1.2" fill="currentColor" stroke="none"/>
+    <circle cx="18" cy="20" r="1.2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

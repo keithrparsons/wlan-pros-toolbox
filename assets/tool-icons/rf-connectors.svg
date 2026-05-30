@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- cable lead into the connector -->
+    <path d="M3 12 H6"/>
+    <!-- threaded coupling barrel -->
+    <rect x="6" y="8" width="9" height="8" rx="1"/>
+    <!-- thread ticks on the barrel -->
+    <path d="M9 8 V16"/>
+    <path d="M12 8 V16"/>
+    <!-- mating tip / center pin -->
+    <path d="M15 11 H19"/>
+    <path d="M15 13 H19"/>
+  </g>
+</svg>

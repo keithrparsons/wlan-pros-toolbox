@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- wall slab in the middle -->
+    <rect x="10.5" y="4" width="3" height="16" rx="1"/>
+    <!-- strong incoming signal arrow into the wall -->
+    <path d="M3 12 H9"/>
+    <path d="M6.5 9.5 L9 12 L6.5 14.5"/>
+    <!-- weakened outgoing arrow, shorter -->
+    <path d="M15 12 H19"/>
+    <path d="M17.5 10.5 L19 12 L17.5 13.5"/>
+  </g>
+</svg>
