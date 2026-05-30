@@ -11,7 +11,7 @@
          the UI shows "Not available" rather than crashing. -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <application
-        android:label="wlan_pros_toolbox"
+        android:label="WLAN Pros Toolbox"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
