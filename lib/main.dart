@@ -57,6 +57,30 @@ class ToolboxApp extends StatelessWidget {
       initialRoute: AppRouter.home,
       routes: AppRouter.routes,
       onUnknownRoute: AppRouter.onUnknownRoute,
+      // App-wide keyboard dismissal. The iOS number pad
+      // (TextInputType.number / numberWithOptions without `signed`) renders no
+      // return/Done key, so the per-field `textInputAction: TextInputAction.done`
+      // on the RF calculators is inert — there is no key to trigger it and no
+      // other affordance to drop the keyboard, which covers the results on
+      // EIRP / Link Budget / Fresnel etc. (live-device bug, 2026-05-30).
+      //
+      // The shared input primitive (LabeledField) receives its field as an
+      // opaque Widget, so `onTapOutside` cannot be attached there. Wrapping the
+      // whole app in a translucent GestureDetector that unfocuses on any tap
+      // outside a text field is the equivalent standard Flutter idiom and fixes
+      // every screen at once from one place — including any field that does not
+      // route through LabeledField. `translucent` so the tap still reaches the
+      // widgets beneath (buttons, list rows): this only adds the unfocus, it
+      // does not swallow the tap. It is additive and safe for fields that
+      // already dismiss via a return key (e.g. Lat/Long, signed number pad):
+      // tapping outside simply dismisses, matching that field's behavior.
+      builder: (BuildContext context, Widget? child) {
+        return GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+          child: child,
+        );
+      },
     );
   }
 }
