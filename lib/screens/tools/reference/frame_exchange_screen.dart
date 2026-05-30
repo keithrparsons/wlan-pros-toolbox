@@ -390,9 +390,17 @@ class _LegendItem extends StatelessWidget {
           ),
         ),
         const SizedBox(width: AppSpacing.xs),
-        Text(
-          type.legendLabel,
-          style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+        // Flexible + ellipsis so a long legend label ("Wired (RADIUS / DHCP)")
+        // shrinks within the Wrap line at 320px instead of overflowing the row
+        // (F-04). The Wrap bounds each item to the card-content width, which is
+        // the constraint the Flexible flexes against.
+        Flexible(
+          child: Text(
+            type.legendLabel,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+          ),
         ),
       ],
     );

@@ -125,6 +125,23 @@ void main() {
       expect(find.text('OWE — Opportunistic Wireless Encryption'), findsOneWidget);
     });
   });
+
+  testWidgets('renders without overflow at 320/375/768/1280 widths',
+      (tester) async {
+    // F-04 regression: WPA Security must not RenderFlex-overflow at any common
+    // breakpoint width: 320 (small phone, Vera's named gate width), 375
+    // (phone), 768 (tablet), 1280 (desktop). Tall height so vertical scroll
+    // content never false-triggers; width is what drives horizontal overflow.
+    for (final double width in <double>[320, 375, 768, 1280]) {
+      await _withViewport(tester, Size(width, 1200), () async {
+        await tester.pumpWidget(
+          MaterialApp(theme: AppTheme.dark(), home: const WpaSecurityScreen()),
+        );
+        await tester.pump();
+        expect(tester.takeException(), isNull, reason: 'overflow at ${width}px');
+      });
+    }
+  });
 }
 
 /// Run [body] with the test view sized to [size], then restore — mirrors the

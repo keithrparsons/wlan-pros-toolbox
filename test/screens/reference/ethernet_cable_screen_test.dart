@@ -99,6 +99,22 @@ void main() {
       });
     });
   });
+
+  testWidgets('renders without overflow at 320/375/768/1280 widths',
+      (tester) async {
+    for (final double width in <double>[320, 375, 768, 1280]) {
+      await _withViewport(tester, Size(width, 1200), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: const EthernetCableScreen(),
+          ),
+        );
+        await tester.pump();
+        expect(tester.takeException(), isNull, reason: 'overflow at ${width}px');
+      });
+    }
+  });
 }
 
 /// Helper — run [body] with the test view sized to [size], then restore.
