@@ -1,59 +1,67 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <!-- R8 FINAL — WLAN Pros Toolbox app icon (Concept C).
+  <!-- R9 FINAL — WLAN Pros Toolbox app icon (Concept C).
        Bold lime toolbox on charcoal; Wi-Fi fan KNOCKED OUT of the body's front
        face in charcoal. One mark. Flat lime #A2CC3A on charcoal #1A1A1A, no
        gradients / shadows (GL-003 §2 + §5).
 
-       R8 polish vs Keith-approved R7 (three precise tweaks, nothing else):
-        1. THINNER lid seam: charcoal divider reduced 24px -> 12px (finer line).
-        2. RAISED seam: top moved up from y444 to y420, so the front face (body
-           area below the seam) grows from h312 (y468..780) to h348 (y432..780).
-        3. RE-CENTERED fan: the fan's visual mass is centered in the taller front
-           face. New front face center = (432+780)/2 = y606. Fan visual extent
-           runs from the outer-arc apex (dot - 208) to the source dot; with the
-           dot at cy710 that span is y502..716, midpoint y609 ~ face center y606.
-           Whole fan shifted up 6px (dot 716 -> 710, arcs shifted to match).
-           Still dead-centered horizontally on the body midline x512.
+       R9 vs Keith-approved R8 — ONLY two changes, both at the canvas level:
+        1. ENLARGED the whole mark to ~68% of the canvas width (was 54.5%).
+        2. VERTICALLY CENTERED the mark on the canvas midline (was 27px low).
+       The internal geometry of the mark is UNCHANGED — every coordinate inside
+       the <g> below is byte-identical to approved R8. The mark is scaled and
+       repositioned only by the single group transform; no element was re-drawn,
+       re-proportioned, or moved relative to any other element.
 
-       Everything else is exactly R7 (approved): moderate Wi-Fi fan
-       (radii 80/144/208, 44px stroke, ~90° spread), squared bracket handle with
-       crisp right-angle sides, grip opening flush with the lid top (no under-
-       handle gap), no artifacts. Fan NOT enlarged.
+       Transform math (one uniform scale about the content center, then recenter):
+        approved R8 content bbox = x[232..790] (w558) y[300..778] (h478),
+          center (511, 539) — measured from the rendered 1024 master.
+        scale s = (0.68 * 1024) / 558 = 1.24789  -> new bbox w696.3 (68.0%),
+          h596.5 (58.3%).
+        recenter bbox center (511,539) onto canvas center (512,512):
+          transform = translate(tx,ty) scale(s),
+          tx = 512 - s*511 = -125.6694,  ty = 512 - s*539 = -160.6102.
+        Result: left/right clear 163.8px (16.0%) each — safely inside the iOS
+          corner-round (>10% min); top/bottom clear 213.8px (20.9%) each — equal,
+          so the mark is vertically centered on y512.
 
-       Layout math:
+       Approved-R8 internal layout (unchanged, pre-transform coordinates):
         body:        x 232..792 (w560), y 372..780 (h408)
-        lid seam:    y 420..432 (12px, thinner + raised) -> front face y432..780
-                     (h348), center y606
+        lid seam:    y 420..432 (12px) -> front face y432..780 (h348), center y606
         handle:      bracket x396..628, y300..372 (legs flush to lid top y372)
-                     grip opening (charcoal knockout) x436..588, y324..372,
-                     square, bottom edge FLUSH with lid top (y372)
-        fan:         source dot (512, 710); ~90° fan (each arc 135deg->45deg);
+                     grip opening (charcoal knockout) x436..588, y324..372, square,
+                     bottom edge flush with lid top (y372)
+        fan:         source dot (512, 710); ~90deg fan (each arc 135deg->45deg);
                      radii 80/144/208, 44px stroke, dot r30. Centered on x512. -->
 
   <rect width="1024" height="1024" fill="#1A1A1A"/>
 
-  <!-- Toolbox body: bold rounded rectangle, lime fill -->
-  <rect x="232" y="372" width="560" height="408" rx="44" fill="#A2CC3A"/>
+  <!-- The entire approved-R8 mark, enlarged to ~68% width and vertically
+       centered via ONE group transform. Internal geometry untouched. -->
+  <g transform="translate(-125.6694,-160.6102) scale(1.24789)">
 
-  <!-- Squared carry handle: solid lime bracket, legs flush to the lid top (y372),
-       square corners. One clean rectangular grip opening knocked out, its bottom
-       edge flush with the lid top at y372. -->
-  <g>
-    <rect x="396" y="300" width="232" height="72" fill="#A2CC3A"/>
-    <rect x="436" y="324" width="152" height="48" fill="#1A1A1A"/>
+    <!-- Toolbox body: bold rounded rectangle, lime fill -->
+    <rect x="232" y="372" width="560" height="408" rx="44" fill="#A2CC3A"/>
+
+    <!-- Squared carry handle: solid lime bracket, legs flush to the lid top (y372),
+         square corners. One clean rectangular grip opening knocked out, its bottom
+         edge flush with the lid top at y372. -->
+    <g>
+      <rect x="396" y="300" width="232" height="72" fill="#A2CC3A"/>
+      <rect x="436" y="324" width="152" height="48" fill="#1A1A1A"/>
+    </g>
+
+    <!-- Lid seam: thin (12px) raised (top at y420) charcoal divider -->
+    <rect x="232" y="420" width="560" height="12" fill="#1A1A1A"/>
+
+    <!-- Wi-Fi fan KNOCKED OUT of the body front face, in charcoal.
+         Source dot (512, 710). ~90deg fan (each arc 135deg->45deg about the dot),
+         concentric, equal gaps, uniform 44px stroke. Centered on x512. -->
+    <g fill="none" stroke="#1A1A1A" stroke-linecap="round" stroke-width="44">
+      <path d="M 455.4 653.4 A 80 80 0 0 1 568.6 653.4"/>
+      <path d="M 410.2 608.2 A 144 144 0 0 1 613.8 608.2"/>
+      <path d="M 364.9 562.9 A 208 208 0 0 1 659.1 562.9"/>
+    </g>
+    <circle cx="512" cy="710" r="30" fill="#1A1A1A"/>
+
   </g>
-
-  <!-- Lid seam: THINNER (12px) and RAISED (top at y420) charcoal divider -->
-  <rect x="232" y="420" width="560" height="12" fill="#1A1A1A"/>
-
-  <!-- Wi-Fi fan KNOCKED OUT of the body front face, in charcoal.
-       Source dot (512, 710). ~90deg fan (each arc 135deg->45deg about the dot),
-       concentric, equal gaps, uniform 44px stroke. Centered on x512, re-centered
-       vertically in the taller front face (face center y606). -->
-  <g fill="none" stroke="#1A1A1A" stroke-linecap="round" stroke-width="44">
-    <path d="M 455.4 653.4 A 80 80 0 0 1 568.6 653.4"/>
-    <path d="M 410.2 608.2 A 144 144 0 0 1 613.8 608.2"/>
-    <path d="M 364.9 562.9 A 208 208 0 0 1 659.1 562.9"/>
-  </g>
-  <circle cx="512" cy="710" r="30" fill="#1A1A1A"/>
 </svg>
