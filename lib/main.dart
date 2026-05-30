@@ -7,11 +7,16 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'data/tool_assets.dart';
 import 'router/app_router.dart';
 import 'services/network/dart_ping_icmp_backend.dart';
 import 'theme/app_theme.dart';
 
-void main() {
+Future<void> main() async {
+  // Binding up first so the async asset-manifest load below can run before the
+  // first frame paints.
+  WidgetsFlutterBinding.ensureInitialized();
+
   // Force `google_fonts` to use the bundled assets only (no runtime HTTP
   // fetch). The font files are declared as assets in pubspec.yaml; this flag
   // ensures we never depend on network access just to render typography —
@@ -22,6 +27,17 @@ void main() {
   // off iOS and idempotent; kept behind this helper so the dart_ping_ios import
   // stays confined to the backend file.
   registerIcmpBackend();
+
+  // Cache which per-tool icon/concept-graphic SVGs the build actually bundled,
+  // so the convention-based resolver (ToolAssets) degrades gracefully for the
+  // ~60 tools whose assets are not authored yet. A failure here must never
+  // block startup — a missing manifest just means "no custom assets", and every
+  // screen falls back cleanly (GL-003 §8.6.2 a11y: graphics are decorative).
+  try {
+    await ToolAssets.ensureLoaded();
+  } catch (_) {
+    // Manifest unavailable → has*() stays false → fallbacks render. No crash.
+  }
 
   runApp(const ToolboxApp());
 }

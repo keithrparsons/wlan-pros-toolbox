@@ -63,6 +63,13 @@ dependencies:
   dart_ping: ^9.0.1
   dart_ping_ios: ^4.0.2
 
+  # flutter_svg — renders the per-tool Tier-2 icons (assets/tool-icons/<id>.svg)
+  # and the in-tool concept graphics (assets/tool-graphics/<id>.svg) per GL-003
+  # §8.6 / §8.6.1 / §8.6.2. Icons are single-color and runtime-tinted via
+  # ColorFilter(BlendMode.srcIn); concept graphics are dark-baked two-value
+  # diagrams rendered as decorative header bands. MIT.
+  flutter_svg: ^2.0.17
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -105,6 +112,16 @@ flutter:
     # Ports tool (TICKET-007). A field-relevant subset of the IANA registry,
     # loaded + indexed once at startup. Source noted in the asset's _meta block.
     - assets/ports/well_known_ports.json
+    # Per-tool Tier-2 custom icons (GL-003 §8.6 / §8.6.1) and in-tool concept
+    # graphics (GL-003 §8.6.2). Convention-based lookup by catalog id:
+    #   icon    = assets/tool-icons/<tool-id>.svg
+    #   graphic = assets/tool-graphics/<tool-id>.svg
+    # Most files do not exist yet — the resolver degrades gracefully against the
+    # asset manifest (lib/data/tool_assets.dart), so a missing file never throws
+    # and never shows a broken-image box. Directory entries pull every file in
+    # the folder, so dropping a new <id>.svg in needs no pubspec change.
+    - assets/tool-icons/
+    - assets/tool-graphics/
 
   # Original commented-out scaffold examples removed for clarity.
 

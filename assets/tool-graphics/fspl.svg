@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- Free Space Path Loss: Tx antenna -> weakening wave over distance -> Rx antenna -->
+
+  <!-- Tx antenna (left) -->
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="34" y1="48" x2="34" y2="104"/>
+    <path d="M34 48 L24 36 M34 48 L44 36"/>
+    <line x1="22" y1="104" x2="46" y2="104"/>
+  </g>
+  <!-- Rx antenna (right) -->
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="286" y1="48" x2="286" y2="104"/>
+    <path d="M286 48 L276 36 M286 48 L296 36"/>
+    <line x1="274" y1="104" x2="298" y2="104"/>
+  </g>
+
+  <!-- Weakening signal arcs: lime accent = the loss (the measured quantity). Opacity fades with distance. -->
+  <g stroke="#A2CC3A" stroke-width="2" stroke-linecap="round" fill="none">
+    <path d="M58 62 A18 22 0 0 1 58 90" opacity="0.95"/>
+    <path d="M92 58 A24 30 0 0 1 92 94" opacity="0.72"/>
+    <path d="M134 54 A30 38 0 0 1 134 98" opacity="0.52"/>
+    <path d="M184 52 A36 44 0 0 1 184 100" opacity="0.34"/>
+    <path d="M238 52 A40 48 0 0 1 238 100" opacity="0.18"/>
+  </g>
+
+  <!-- Distance dimension line -->
+  <g stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round">
+    <line x1="34" y1="124" x2="286" y2="124"/>
+    <path d="M34 120 L34 128 M286 120 L286 128"/>
+    <path d="M40 121 L34 124 L40 127 M280 121 L286 124 L280 127"/>
+  </g>
+  <text x="160" y="140" fill="#9C9C9C" font-size="13" font-weight="500" text-anchor="middle">distance d</text>
+
+  <!-- Frequency label near Tx (below the antenna base, clear of the formula) -->
+  <text x="34" y="140" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle">freq f</text>
+
+  <!-- Formula -->
+  <text x="160" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">FSPL = 20·log f + 20·log d + 92.45</text>
+
+  <!-- "loss grows with distance" cue: small lime label on faded far arc -->
+  <text x="232" y="42" fill="#A2CC3A" font-size="12" font-weight="500" text-anchor="middle">loss &#8593;</text>
+</svg>
