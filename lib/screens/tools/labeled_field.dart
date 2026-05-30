@@ -61,8 +61,12 @@ class LabeledField extends StatelessWidget {
         // Excluded from semantics so it isn't announced separately; its text is
         // carried by the field's Semantics label below instead.
         ExcludeSemantics(
+          // MainAxisSize.max (the default) so the Row takes the full bounded
+          // width its parent card offers — that bounded width is what lets the
+          // Flexible children below actually flex. With MainAxisSize.min the
+          // Row sizes to its children's intrinsic widths, which defeats the
+          // Flexible and lets a long label+hint overflow at 320px (F-04).
           child: Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
               // Flexible so a long label (e.g. "Target coverage distance")
               // shrinks/ellipsizes instead of overflowing the bounded input
@@ -81,10 +85,17 @@ class LabeledField extends StatelessWidget {
               ),
               if (hint != null) ...[
                 const SizedBox(width: 6),
-                Text(
-                  hint!,
-                  style: text.labelSmall?.copyWith(
-                    color: AppColors.textTertiary,
+                // Flexible + ellipsis so a long hint (e.g. "port number or
+                // service name") yields rather than overflowing at narrow
+                // widths. Label keeps priority; the hint shrinks first.
+                Flexible(
+                  child: Text(
+                    hint!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: text.labelSmall?.copyWith(
+                      color: AppColors.textTertiary,
+                    ),
                   ),
                 ),
               ],

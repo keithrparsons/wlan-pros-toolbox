@@ -7,10 +7,13 @@
 // channel rule). If a value here drifts from the PWA, these break — the point.
 //
 // The widget-viewport smoke test lives in test/widget_test.dart (uses the
-// shared private `_withViewport` phone-viewport helper there).
+// shared private `_withViewport` phone-viewport helper there). A multi-width
+// overflow regression below pumps the screen at 320/375/768/1280 widths.
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/ap_placement_screen.dart';
+import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
 void main() {
   group('AP Placement dataset (verbatim from rf-tools-pwa aplace)', () {
@@ -126,5 +129,26 @@ void main() {
         }
       }
     });
+  });
+
+  testWidgets('renders without overflow at 320/375/768/1280 widths',
+      (tester) async {
+    // Multi-width overflow regression: the AP placement rule cards must not
+    // RenderFlex overflow at small phone (320), phone (375), tablet (768), or
+    // desktop (1280). Tall height so vertical scroll content never
+    // false-triggers.
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    for (final double width in <double>[320, 375, 768, 1280]) {
+      tester.view.physicalSize = Size(width, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      await tester.pumpWidget(
+        MaterialApp(theme: AppTheme.dark(), home: const ApPlacementScreen()),
+      );
+      await tester.pump();
+      expect(tester.takeException(), isNull, reason: 'overflow at ${width}px');
+    }
   });
 }
