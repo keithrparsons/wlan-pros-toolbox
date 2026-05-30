@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/cable_loss_screen.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+import 'package:wlan_pros_toolbox/widgets/app_select.dart';
 
 void main() {
   group('Cable loss per-100ft (pure) — matches PWA cableLossPer100ft', () {
@@ -93,65 +94,113 @@ void main() {
 
   group('CableLossScreen widget', () {
     testWidgets('renders title, input labels, and result unit', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.dark(),
-          home: const CableLossScreen(),
-        ),
-      );
+      await _withViewport(tester, const Size(375, 900), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: const CableLossScreen(),
+          ),
+        );
 
-      expect(find.text('Cable Loss'), findsWidgets);
-      expect(find.text('Cable type'), findsOneWidget);
-      expect(find.text('Frequency'), findsOneWidget);
-      expect(find.text('Cable length'), findsOneWidget);
-      expect(find.text('Total cable loss'), findsOneWidget);
-      // Two text inputs: frequency and length.
-      expect(find.byType(TextField), findsNWidgets(2));
+        expect(find.text('Cable Loss'), findsWidgets);
+        expect(find.text('Cable type'), findsOneWidget);
+        expect(find.text('Frequency'), findsOneWidget);
+        expect(find.text('Cable length'), findsOneWidget);
+        expect(find.text('Total cable loss'), findsOneWidget);
+        // Two text inputs: frequency and length.
+        expect(find.byType(TextField), findsNWidgets(2));
+      });
+    });
+
+    testWidgets('cable-type selector is the shared AppSelect, not a DropdownButton',
+        (tester) async {
+      // Migration guard — the hand-rolled `_cableSelectorField` DropdownButton
+      // is now the canonical AppSelect<String> (§8.14). Defaults to LMR-400.
+      await _withViewport(tester, const Size(375, 900), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: const CableLossScreen(),
+          ),
+        );
+
+        expect(find.byType(AppSelect<String>), findsOneWidget);
+        // The control shows the default cable (LMR-400 also appears in the
+        // reference card, so scope the match to the AppSelect subtree).
+        expect(
+          find.descendant(
+            of: find.byType(AppSelect<String>),
+            matching: find.text('LMR-400'),
+          ),
+          findsOneWidget,
+        );
+      });
     });
 
     testWidgets('typing valid inputs renders a finite dB result',
         (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.dark(),
-          home: const CableLossScreen(),
-        ),
-      );
+      await _withViewport(tester, const Size(375, 900), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: const CableLossScreen(),
+          ),
+        );
 
-      final Finder fields = find.byType(TextField);
-      await tester.enterText(fields.at(0), '2.4'); // GHz default
-      await tester.enterText(fields.at(1), '25'); // ft default, LMR-400 default
-      await tester.pump();
+        final Finder fields = find.byType(TextField);
+        await tester.enterText(fields.at(0), '2.4'); // GHz default
+        await tester.enterText(fields.at(1), '25'); // ft default, LMR-400 default
+        await tester.pump();
 
-      // LMR-400 at 2.4 GHz over 25 ft → 0.975 dB; IEEE-754 toStringAsFixed(2)
-      // renders 0.97 (the stored double is just under 0.975). PWA fmt(x, 2)
-      // uses JS toFixed, which rounds the same stored value identically.
-      expect(find.text('0.97'), findsOneWidget);
-      // Per-100ft coefficient at 2.4 GHz for LMR-400 is 3.90 dB.
-      expect(find.text('3.90'), findsOneWidget);
+        // LMR-400 at 2.4 GHz over 25 ft → 0.975 dB; IEEE-754 toStringAsFixed(2)
+        // renders 0.97 (the stored double is just under 0.975). PWA fmt(x, 2)
+        // uses JS toFixed, which rounds the same stored value identically.
+        expect(find.text('0.97'), findsOneWidget);
+        // Per-100ft coefficient at 2.4 GHz for LMR-400 is 3.90 dB.
+        expect(find.text('3.90'), findsOneWidget);
+      });
     });
 
     testWidgets('clearing an input blanks the result to an em-free dash',
         (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.dark(),
-          home: const CableLossScreen(),
-        ),
-      );
+      await _withViewport(tester, const Size(375, 900), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: const CableLossScreen(),
+          ),
+        );
 
-      final Finder fields = find.byType(TextField);
-      await tester.enterText(fields.at(0), '2.4');
-      await tester.enterText(fields.at(1), '25');
-      await tester.pump();
-      expect(find.text('0.97'), findsOneWidget);
+        final Finder fields = find.byType(TextField);
+        await tester.enterText(fields.at(0), '2.4');
+        await tester.enterText(fields.at(1), '25');
+        await tester.pump();
+        expect(find.text('0.97'), findsOneWidget);
 
-      // Clear the length field → output blanks (no crash, shows the dash).
-      await tester.enterText(fields.at(1), '');
-      await tester.pump();
-      expect(find.text('0.98'), findsNothing);
-      // Both total and per-100ft blank to the dash.
-      expect(find.text('—'), findsNWidgets(2));
+        // Clear the length field → output blanks (no crash, shows the dash).
+        await tester.enterText(fields.at(1), '');
+        await tester.pump();
+        expect(find.text('0.98'), findsNothing);
+        // Both total and per-100ft blank to the dash.
+        expect(find.text('—'), findsNWidgets(2));
+      });
     });
   });
+}
+
+/// Helper — run [body] with the test view sized to [size], then restore.
+/// Mirrors test/widget_test.dart _withViewport so the input-row + AppSelect
+/// layout avoids a RenderFlex overflow at phone width.
+Future<void> _withViewport(
+  WidgetTester tester,
+  Size size,
+  Future<void> Function() body,
+) async {
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+  await body();
 }

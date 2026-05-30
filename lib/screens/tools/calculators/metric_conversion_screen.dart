@@ -32,6 +32,7 @@ import 'package:flutter/services.dart';
 
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_select.dart';
 import '../labeled_field.dart';
 
 /// Length units, mirroring the PWA mc-unit select options exactly.
@@ -126,6 +127,11 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
 
   LengthUnit _fromUnit = LengthUnit.m;
   LengthUnit _toUnit = LengthUnit.ft;
+
+  /// Value→symbol pairs for the from/to unit `AppSelect`s, in enum order.
+  static final List<AppSelectItem<LengthUnit>> _unitItems = LengthUnit.values
+      .map((LengthUnit u) => (u, MetricConversionScreen.symbolFor(u)))
+      .toList();
 
   // Computed result in `_toUnit`, or null when input is empty / invalid.
   double? _result;
@@ -263,9 +269,11 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
               ),
               const SizedBox(width: AppSpacing.sm),
               Flexible(
-                child: _UnitMenu(
-                  label: 'From unit',
+                child: AppSelect<LengthUnit>(
                   value: _fromUnit,
+                  items: _unitItems,
+                  semanticLabel: 'From unit',
+                  minWidth: 88,
                   onChanged: (u) {
                     setState(() => _fromUnit = u);
                     _recompute();
@@ -282,9 +290,11 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
               Expanded(child: _resultBlock(text, mono)),
               const SizedBox(width: AppSpacing.sm),
               Flexible(
-                child: _UnitMenu(
-                  label: 'To unit',
+                child: AppSelect<LengthUnit>(
                   value: _toUnit,
+                  items: _unitItems,
+                  semanticLabel: 'To unit',
+                  minWidth: 88,
                   onChanged: (u) {
                     setState(() => _toUnit = u);
                     _recompute();
@@ -403,68 +413,3 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
   }
 }
 
-/// Dropdown unit selector. Holds the §8.3 minimum touch target and uses the
-/// same input-fill / strong-border treatment as the FSPL toggle without
-/// inventing new tokens. A menu (not a segmented toggle) because seven units
-/// would overflow a phone-width row as inline chips.
-class _UnitMenu extends StatelessWidget {
-  const _UnitMenu({
-    required this.label,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final String label;
-  final LengthUnit value;
-  final ValueChanged<LengthUnit> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme text = Theme.of(context).textTheme;
-
-    return Semantics(
-      label: label,
-      button: true,
-      value: MetricConversionScreen.symbolFor(value),
-      child: Container(
-        constraints: const BoxConstraints(
-          minHeight: AppSpacing.minTouchTarget,
-          minWidth: 88,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.inputFill,
-          borderRadius: BorderRadius.circular(AppRadius.control),
-          border: Border.all(color: AppColors.borderStrong, width: 1),
-        ),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<LengthUnit>(
-            value: value,
-            isExpanded: true,
-            borderRadius: BorderRadius.circular(AppRadius.control),
-            dropdownColor: AppColors.surface2,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            icon: const Icon(Icons.arrow_drop_down, color: AppColors.textSecondary),
-            style: text.labelLarge?.copyWith(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w500,
-            ),
-            onChanged: (LengthUnit? u) {
-              if (u != null) onChanged(u);
-            },
-            items: LengthUnit.values.map((LengthUnit u) {
-              return DropdownMenuItem<LengthUnit>(
-                value: u,
-                child: Text(
-                  MetricConversionScreen.symbolFor(u),
-                  style: text.labelLarge?.copyWith(
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-      ),
-    );
-  }
-}

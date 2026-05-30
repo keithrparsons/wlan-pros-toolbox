@@ -59,6 +59,30 @@ class AppColors {
   static const Color textDisabled = Color(0xFF7F7F7F);
 
   static const Color textAccent = primary; // 9.3:1
+
+  // §8.13 — semantic status palette (added 2026-05-29). Verdict colors only:
+  // pass / marginal / fail / info. NOT decorative accents — lime `primary`
+  // remains the only interactive/computed accent. Every value passes WCAG 2.2
+  // SC 1.4.3 AA for NORMAL text (4.5:1) on both surface1 (#222222) and
+  // surface0 (#1A1A1A), so a status word reads at body size. Ratios per §8.12.
+  // Always pair with text/icon — never color alone (SC 1.4.1).
+
+  /// Pass / good verdict. 8.66:1 on surface1 / 9.26:1 on surface0. A cool
+  /// mint-green deliberately distinct from the lime brand `primary` so
+  /// "this answer passes" never reads as "this is the computed value."
+  static const Color statusSuccess = Color(0xFF5BD68A);
+
+  /// Marginal / caution verdict. 7.12:1 on surface1 / 7.62:1 on surface0.
+  static const Color statusWarning = Color(0xFFE0A23A);
+
+  /// Fail / bad verdict; also the input error-border color (§8.4). 5.48:1 on
+  /// surface1 / 5.86:1 on surface0. Lightened from the retired v1.1 #E04646
+  /// (3.89:1 — failed normal-text AA) so status words read at body size.
+  static const Color statusDanger = Color(0xFFF26E6E);
+
+  /// Neutral informational note. 6.06:1 on surface1 / 6.49:1 on surface0.
+  /// Use only where a true non-verdict info role exists; do not default to it.
+  static const Color statusInfo = Color(0xFF4EA8E0);
 }
 
 /// 8px spacing scale — §4.

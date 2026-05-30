@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/earth_curvature_screen.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+import 'package:wlan_pros_toolbox/widgets/app_select.dart';
 
 void main() {
   group('Earth curvature math (pure) — matches PWA app.js calcEarth', () {
@@ -85,55 +86,95 @@ void main() {
 
   group('EarthCurvatureScreen widget', () {
     testWidgets('renders title, input label, and result units', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.dark(),
-          home: const EarthCurvatureScreen(),
-        ),
-      );
+      await _withViewport(tester, const Size(375, 900), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: const EarthCurvatureScreen(),
+          ),
+        );
 
-      expect(find.text('Earth Curvature'), findsWidgets);
-      expect(find.text('Path Length'), findsOneWidget);
-      expect(find.text('Earth bulge at midpoint'), findsOneWidget);
-      // One text input: path length.
-      expect(find.byType(TextField), findsOneWidget);
+        expect(find.text('Earth Curvature'), findsWidgets);
+        expect(find.text('Path Length'), findsOneWidget);
+        expect(find.text('Earth bulge at midpoint'), findsOneWidget);
+        // One text input: path length.
+        expect(find.byType(TextField), findsOneWidget);
+      });
+    });
+
+    testWidgets('K-factor selector is the shared AppSelect, not a DropdownButton',
+        (tester) async {
+      // Migration guard — the K-factor DropdownButton is now AppSelect<KFactor>
+      // (§8.14 Select case: four long labels). Defaults to the 4/3 standard.
+      await _withViewport(tester, const Size(375, 900), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: const EarthCurvatureScreen(),
+          ),
+        );
+
+        expect(find.byType(AppSelect<KFactor>), findsOneWidget);
+        expect(find.text(KFactor.fourThirds.label), findsOneWidget);
+      });
     });
 
     testWidgets('typing a valid path renders finite m and ft results',
         (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.dark(),
-          home: const EarthCurvatureScreen(),
-        ),
-      );
+      await _withViewport(tester, const Size(375, 900), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: const EarthCurvatureScreen(),
+          ),
+        );
 
-      await tester.enterText(find.byType(TextField), '20'); // km, k = 4/3
-      await tester.pump();
+        await tester.enterText(find.byType(TextField), '20'); // km, k = 4/3
+        await tester.pump();
 
-      // 20 km at k = 4/3 → 5.89 m / 19.32 ft at 2-decimal PWA formatting.
-      expect(find.text('5.89'), findsOneWidget);
-      expect(find.text('19.32'), findsOneWidget);
+        // 20 km at k = 4/3 → 5.89 m / 19.32 ft at 2-decimal PWA formatting.
+        expect(find.text('5.89'), findsOneWidget);
+        expect(find.text('19.32'), findsOneWidget);
+      });
     });
 
     testWidgets('clearing the path blanks the result to an em-free dash',
         (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.dark(),
-          home: const EarthCurvatureScreen(),
-        ),
-      );
+      await _withViewport(tester, const Size(375, 900), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: const EarthCurvatureScreen(),
+          ),
+        );
 
-      await tester.enterText(find.byType(TextField), '20');
-      await tester.pump();
-      expect(find.text('5.89'), findsOneWidget);
+        await tester.enterText(find.byType(TextField), '20');
+        await tester.pump();
+        expect(find.text('5.89'), findsOneWidget);
 
-      // Clear the field → both outputs blank to the dash (no crash).
-      await tester.enterText(find.byType(TextField), '');
-      await tester.pump();
-      expect(find.text('5.89'), findsNothing);
-      expect(find.text('—'), findsNWidgets(2));
+        // Clear the field → both outputs blank to the dash (no crash).
+        await tester.enterText(find.byType(TextField), '');
+        await tester.pump();
+        expect(find.text('5.89'), findsNothing);
+        expect(find.text('—'), findsNWidgets(2));
+      });
     });
   });
+}
+
+/// Helper — run [body] with the test view sized to [size], then restore.
+/// Mirrors test/widget_test.dart _withViewport so the path-row + AppSelect
+/// layout avoids a RenderFlex overflow at phone width.
+Future<void> _withViewport(
+  WidgetTester tester,
+  Size size,
+  Future<void> Function() body,
+) async {
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+  await body();
 }

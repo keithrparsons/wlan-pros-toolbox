@@ -96,51 +96,79 @@ void main() {
   group('EirpScreen widget', () {
     testWidgets('renders inputs, formula, and the empty-state result',
         (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.dark(),
-          home: const EirpScreen(),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await _withViewport(tester, const Size(375, 900), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: const EirpScreen(),
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      // App bar title.
-      expect(find.text('EIRP'), findsWidgets);
+        // App bar title.
+        expect(find.text('EIRP'), findsWidgets);
 
-      // Input labels.
-      expect(find.text('TX Power'), findsOneWidget);
-      expect(find.text('Cable Loss'), findsOneWidget);
-      expect(find.text('Antenna Gain'), findsOneWidget);
+        // Input labels.
+        expect(find.text('TX Power'), findsOneWidget);
+        expect(find.text('Cable Loss'), findsOneWidget);
+        expect(find.text('Antenna Gain'), findsOneWidget);
 
-      // Formula card.
-      expect(
-        find.text('EIRP = TX power − cable loss + antenna gain'),
-        findsOneWidget,
-      );
+        // TX-power unit picker is now a segmented Toggle (§8.14: dBm/W/mW is
+        // 3 short options, Toggle not Select). The three symbols render as
+        // toggle segments, matching the Link Budget TX-power control.
+        expect(find.text('dBm'), findsWidgets);
+        expect(find.text('W'), findsOneWidget);
+        expect(find.text('mW'), findsOneWidget);
 
-      // Empty state: the dBm result shows the em-dash placeholder, not a value.
-      expect(find.text('—'), findsWidgets);
+        // Formula card.
+        expect(
+          find.text('EIRP = TX power − cable loss + antenna gain'),
+          findsOneWidget,
+        );
+
+        // Empty state: the dBm result shows the em-dash placeholder, not a value.
+        expect(find.text('—'), findsWidgets);
+      });
     });
 
     testWidgets('typing valid inputs produces a finite dBm result',
         (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.dark(),
-          home: const EirpScreen(),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await _withViewport(tester, const Size(375, 900), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: const EirpScreen(),
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      final Finder fields = find.byType(TextField);
-      // Order: TX power, cable loss, antenna gain.
-      await tester.enterText(fields.at(0), '20');
-      await tester.enterText(fields.at(1), '1.5');
-      await tester.enterText(fields.at(2), '14');
-      await tester.pumpAndSettle();
+        final Finder fields = find.byType(TextField);
+        // Order: TX power, cable loss, antenna gain.
+        await tester.enterText(fields.at(0), '20');
+        await tester.enterText(fields.at(1), '1.5');
+        await tester.enterText(fields.at(2), '14');
+        await tester.pumpAndSettle();
 
-      // 20 − 1.5 + 14 = 32.5 dBm, formatted at 1 decimal.
-      expect(find.text('32.5'), findsOneWidget);
+        // 20 − 1.5 + 14 = 32.5 dBm, formatted at 1 decimal.
+        expect(find.text('32.5'), findsOneWidget);
+      });
     });
   });
+}
+
+/// Helper — run [body] with the test view sized to [size], then restore.
+/// Mirrors test/widget_test.dart _withViewport so the TX-power row (field +
+/// unit Toggle) avoids a RenderFlex overflow at phone width.
+Future<void> _withViewport(
+  WidgetTester tester,
+  Size size,
+  Future<void> Function() body,
+) async {
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+  await body();
 }

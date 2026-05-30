@@ -25,6 +25,7 @@ import 'package:flutter/services.dart';
 
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_select.dart';
 import '../labeled_field.dart';
 
 /// Path-length input units, mirroring the PWA ec-dist-unit select.
@@ -261,34 +262,17 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
-        Container(
-          decoration: BoxDecoration(
-            color: AppColors.inputFill,
-            borderRadius: BorderRadius.circular(AppRadius.control),
-            border: Border.all(color: AppColors.borderStrong, width: 1),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<KFactor>(
-              value: _kFactor,
-              isExpanded: true,
-              dropdownColor: AppColors.surface2,
-              borderRadius: BorderRadius.circular(AppRadius.control),
-              iconEnabledColor: AppColors.textSecondary,
-              style: text.bodyLarge?.copyWith(color: AppColors.textPrimary),
-              items: KFactor.values.map((k) {
-                return DropdownMenuItem<KFactor>(
-                  value: k,
-                  child: Text(k.label),
-                );
-              }).toList(),
-              onChanged: (k) {
-                if (k == null) return;
-                setState(() => _kFactor = k);
-                _recompute();
-              },
-            ),
-          ),
+        // Full-width Select — four long K-factor labels, §8.14 Select case.
+        AppSelect<KFactor>(
+          value: _kFactor,
+          semanticLabel: 'K-factor',
+          items: KFactor.values
+              .map((KFactor k) => (k, k.label))
+              .toList(),
+          onChanged: (KFactor k) {
+            setState(() => _kFactor = k);
+            _recompute();
+          },
         ),
         const SizedBox(height: AppSpacing.xs),
         Text(
