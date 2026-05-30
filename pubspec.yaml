@@ -81,6 +81,24 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
 
+  # flutter_launcher_icons — generates the iOS + Android launcher icon sets
+  # from the single brand master at assets/branding/app-icon-1024.png
+  # (the approved R8 toolbox + Wi-Fi mark, GL-003 §2/§5). Run via:
+  #   dart run flutter_launcher_icons
+  flutter_launcher_icons: ^0.14.4
+
+# flutter_launcher_icons configuration. Master is the opaque 1024 brand mark.
+# iOS gets the full opaque set (App Store requires no alpha). Android gets both
+# legacy mipmaps and an adaptive icon (charcoal background + the mark as the
+# foreground, inset into the adaptive safe zone by the generator).
+flutter_launcher_icons:
+  image_path: "assets/branding/app-icon-1024.png"
+  ios: true
+  remove_alpha_ios: true
+  android: true
+  adaptive_icon_background: "#1A1A1A"
+  adaptive_icon_foreground: "assets/branding/app-icon-1024.png"
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
