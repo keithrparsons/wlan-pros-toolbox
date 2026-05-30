@@ -1,0 +1,520 @@
+// Final Point (Destination) calculator.
+//
+// Given a start point (lat/lon in decimal degrees), an initial bearing, and a
+// distance, compute the destination point along the great-circle path. Mirrors
+// the RF Tools PWA reference (app.js destinationPt / calcFinalPoint):
+//
+//   δ  = dist_km / R          θ = bearing (rad)
+//   φ2 = asin(sinφ1·cosδ + cosφ1·sinδ·cosθ)
+//   λ2 = λ1 + atan2(sinθ·sinδ·cosφ1, cosδ - sinφ1·sinφ2)
+//
+// Earth radius constant is the PWA EARTH_KM = 6371 (spherical mean radius).
+// Distance units mirror the PWA fp-dist-unit select exactly: km (default), mi
+// (×1.60934), m (÷1000), normalized to km before the math (PWA toKm).
+// Longitude is wrapped to (-180, 180] via the PWA `((deg + 540) % 360) - 180`
+// expression. Output latitude / longitude are rounded to 6 decimals to match
+// the PWA fmtCoord `dd.toFixed(6)`.
+//
+// Validation mirrors calcFinalPoint:
+// - Any field empty / non-finite → blank both outputs (no crash).
+// - |lat| > 90 or |lon| > 180 → invalid, blank outputs.
+// - distance <= 0 → invalid, blank outputs.
+//
+// Pure, no network, no platform APIs. Math lives in static functions on the
+// public class so it is unit-testable against the PWA values.
+
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import '../../../theme/app_tokens.dart';
+import '../../../theme/app_typography.dart';
+import '../labeled_field.dart';
+
+/// Distance input units, mirroring the PWA fp-dist-unit select.
+enum FpDistUnit { km, mi, m }
+
+/// A destination latitude / longitude pair in decimal degrees.
+typedef DestinationPoint = ({double latitude, double longitude});
+
+class FinalPointScreen extends StatefulWidget {
+  const FinalPointScreen({super.key});
+
+  // ─── Math (pure) ──────────────────────────────────────────────────────────
+  // Mirrors app.js: EARTH_KM, toKm, destinationPt.
+
+  /// Spherical earth radius in km — PWA EARTH_KM.
+  static const double earthRadiusKm = 6371;
+
+  /// Normalize a distance value to km (PWA toKm).
+  static double distToKm(double value, FpDistUnit unit) {
+    switch (unit) {
+      case FpDistUnit.mi:
+        return value * 1.60934;
+      case FpDistUnit.m:
+        return value / 1000.0;
+      case FpDistUnit.km:
+        return value;
+    }
+  }
+
+  /// Destination point given a start lat/lon (decimal degrees), an initial
+  /// bearing (degrees), and a distance in km. Direct great-circle solution,
+  /// matching PWA destinationPt. Longitude wrapped to (-180, 180].
+  static DestinationPoint destination(
+    double lat,
+    double lon,
+    double bearingDeg,
+    double distKm,
+  ) {
+    final double delta = distKm / earthRadiusKm;
+    final double theta = _toRad(bearingDeg);
+    final double phi1 = _toRad(lat);
+    final double lambda1 = _toRad(lon);
+
+    final double phi2 = math.asin(
+      math.sin(phi1) * math.cos(delta) +
+          math.cos(phi1) * math.sin(delta) * math.cos(theta),
+    );
+    final double lambda2 = lambda1 +
+        math.atan2(
+          math.sin(theta) * math.sin(delta) * math.cos(phi1),
+          math.cos(delta) - math.sin(phi1) * math.sin(phi2),
+        );
+
+    final double outLat = _toDeg(phi2);
+    final double outLon = ((_toDeg(lambda2) + 540) % 360) - 180;
+    return (latitude: outLat, longitude: outLon);
+  }
+
+  static double _toRad(double d) => d * math.pi / 180.0;
+  static double _toDeg(double r) => r * 180.0 / math.pi;
+
+  @override
+  State<FinalPointScreen> createState() => _FinalPointScreenState();
+}
+
+class _FinalPointScreenState extends State<FinalPointScreen> {
+  final TextEditingController _latCtrl = TextEditingController();
+  final TextEditingController _lonCtrl = TextEditingController();
+  final TextEditingController _bearingCtrl = TextEditingController();
+  final TextEditingController _distCtrl = TextEditingController();
+
+  final FocusNode _latFocus = FocusNode();
+  final FocusNode _lonFocus = FocusNode();
+  final FocusNode _bearingFocus = FocusNode();
+  final FocusNode _distFocus = FocusNode();
+
+  FpDistUnit _distUnit = FpDistUnit.km;
+
+  // Computed destination, or null when input is empty / invalid.
+  DestinationPoint? _result;
+
+  // Lat/lon/bearing can be negative; allow a leading minus and decimal point.
+  static final List<TextInputFormatter> _signedDecimal = [
+    FilteringTextInputFormatter.allow(RegExp(r'[0-9.\-]')),
+  ];
+  // Distance is always positive — unsigned decimal only.
+  static final List<TextInputFormatter> _unsignedDecimal = [
+    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+  ];
+
+  @override
+  void dispose() {
+    _latCtrl.dispose();
+    _lonCtrl.dispose();
+    _bearingCtrl.dispose();
+    _distCtrl.dispose();
+    _latFocus.dispose();
+    _lonFocus.dispose();
+    _bearingFocus.dispose();
+    _distFocus.dispose();
+    super.dispose();
+  }
+
+  // ─── Handlers ─────────────────────────────────────────────────────────────
+
+  void _recompute() {
+    final double? lat = _tryParseDouble(_latCtrl.text);
+    final double? lon = _tryParseDouble(_lonCtrl.text);
+    final double? brng = _tryParseDouble(_bearingCtrl.text);
+    final double? dist = _tryParseDouble(_distCtrl.text);
+
+    if (lat == null || lon == null || brng == null || dist == null) {
+      setState(() => _result = null);
+      return;
+    }
+
+    final double distKm = FinalPointScreen.distToKm(dist, _distUnit);
+
+    // Validation mirrors PWA calcFinalPoint.
+    if (lat.abs() > 90 || lon.abs() > 180 || distKm <= 0) {
+      setState(() => _result = null);
+      return;
+    }
+
+    setState(() {
+      _result = FinalPointScreen.destination(lat, lon, brng, distKm);
+    });
+  }
+
+  // ─── Formatting ───────────────────────────────────────────────────────────
+
+  static double? _tryParseDouble(String raw) {
+    final String s = raw.trim();
+    if (s.isEmpty || s == '-' || s == '.' || s == '-.') return null;
+    final double? v = double.tryParse(s);
+    if (v == null || !v.isFinite) return null;
+    return v;
+  }
+
+  /// PWA fmtCoord dd.toFixed(6): fixed 6-decimal, "—" when no result.
+  static String _formatCoord(double? value) {
+    if (value == null || !value.isFinite) return '—';
+    return value.toStringAsFixed(6);
+  }
+
+  // ─── Build ────────────────────────────────────────────────────────────────
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Final Point'),
+        toolbarHeight: 64,
+      ),
+      body: SafeArea(
+        top: false,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final bool isDesktop = constraints.maxWidth >= 720;
+            final double edge = isDesktop
+                ? AppSpacing.screenEdgeDesktop
+                : AppSpacing.screenEdgeMobile;
+
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: AppSpacing.calculatorMaxWidth,
+                ),
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(
+                    edge,
+                    AppSpacing.sm,
+                    edge,
+                    edge + AppSpacing.sm,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _inputCard(text, mono),
+                      const SizedBox(height: AppSpacing.md),
+                      _formulaCard(text, mono),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _inputCard(TextTheme text, AppMonoText mono) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _field(
+            label: 'Start latitude',
+            unitHint: 'decimal degrees',
+            controller: _latCtrl,
+            focusNode: _latFocus,
+            hintText: '34.052',
+            formatters: _signedDecimal,
+            signed: true,
+            monoStyle: mono.outputLarge,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _field(
+            label: 'Start longitude',
+            unitHint: 'decimal degrees',
+            controller: _lonCtrl,
+            focusNode: _lonFocus,
+            hintText: '-118.243',
+            formatters: _signedDecimal,
+            signed: true,
+            monoStyle: mono.outputLarge,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _field(
+            label: 'Bearing',
+            unitHint: 'degrees',
+            controller: _bearingCtrl,
+            focusNode: _bearingFocus,
+            hintText: '45',
+            formatters: _signedDecimal,
+            signed: true,
+            monoStyle: mono.outputLarge,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _distanceRow(text, mono),
+          const SizedBox(height: AppSpacing.md),
+          _resultRow(text, mono),
+        ],
+      ),
+    );
+  }
+
+  Widget _field({
+    required String label,
+    required String unitHint,
+    required TextEditingController controller,
+    required FocusNode focusNode,
+    required String hintText,
+    required List<TextInputFormatter> formatters,
+    required bool signed,
+    required TextStyle monoStyle,
+  }) {
+    return LabeledField(
+      label: label,
+      hint: '($unitHint)',
+      semanticLabel: '$label in $unitHint',
+      field: TextField(
+        controller: controller,
+        focusNode: focusNode,
+        keyboardType: TextInputType.numberWithOptions(
+          decimal: true,
+          signed: signed,
+        ),
+        inputFormatters: formatters,
+        onChanged: (_) => _recompute(),
+        textInputAction: TextInputAction.done,
+        autocorrect: false,
+        enableSuggestions: false,
+        style: monoStyle.copyWith(fontSize: 20),
+        cursorColor: AppColors.primary,
+        decoration: InputDecoration(hintText: hintText),
+      ),
+    );
+  }
+
+  Widget _distanceRow(TextTheme text, AppMonoText mono) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(
+          child: LabeledField(
+            label: 'Distance',
+            hint: '(${_distUnitLabel(_distUnit)})',
+            semanticLabel: 'Distance in ${_distUnitLabel(_distUnit)}',
+            field: TextField(
+              controller: _distCtrl,
+              focusNode: _distFocus,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: _unsignedDecimal,
+              onChanged: (_) => _recompute(),
+              textInputAction: TextInputAction.done,
+              autocorrect: false,
+              enableSuggestions: false,
+              style: mono.outputLarge.copyWith(fontSize: 20),
+              cursorColor: AppColors.primary,
+              decoration: const InputDecoration(hintText: '10'),
+            ),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        _UnitToggle<FpDistUnit>(
+          value: _distUnit,
+          options: const [
+            (FpDistUnit.km, 'km'),
+            (FpDistUnit.mi, 'mi'),
+            (FpDistUnit.m, 'm'),
+          ],
+          onChanged: (u) {
+            setState(() => _distUnit = u);
+            _recompute();
+          },
+        ),
+      ],
+    );
+  }
+
+  static String _distUnitLabel(FpDistUnit u) {
+    switch (u) {
+      case FpDistUnit.km:
+        return 'km';
+      case FpDistUnit.mi:
+        return 'mi';
+      case FpDistUnit.m:
+        return 'm';
+    }
+  }
+
+  Widget _resultRow(TextTheme text, AppMonoText mono) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Destination',
+          style: text.labelMedium?.copyWith(
+            color: AppColors.textSecondary,
+            letterSpacing: 0.4,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        _coordLine('Latitude', _result?.latitude, text, mono),
+        const SizedBox(height: AppSpacing.xs),
+        _coordLine('Longitude', _result?.longitude, text, mono),
+      ],
+    );
+  }
+
+  Widget _coordLine(
+    String label,
+    double? value,
+    TextTheme text,
+    AppMonoText mono,
+  ) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        SizedBox(
+          width: 96,
+          child: Text(
+            label,
+            style: text.labelLarge?.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+        Expanded(
+          child: SelectableText(
+            _formatCoord(value),
+            style: mono.outputLarge.copyWith(
+              color: value == null
+                  ? AppColors.textTertiary
+                  : AppColors.primary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _formulaCard(TextTheme text, AppMonoText mono) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Formula',
+            style: text.labelMedium?.copyWith(
+              color: AppColors.textSecondary,
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          SelectableText(
+            'φ₂ = asin(sinφ₁·cosδ + cosφ₁·sinδ·cosθ)',
+            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+          ),
+          SelectableText(
+            'λ₂ = λ₁ + atan2(sinθ·sinδ·cosφ₁, cosδ − sinφ₁·sinφ₂)',
+            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'δ = distance / R, θ = bearing. Great-circle destination on a '
+            'sphere of radius R = 6371 km.',
+            style: text.labelMedium?.copyWith(
+              color: AppColors.textTertiary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Segmented unit toggle for an input row. Holds to the §8.3 minimum touch
+/// target and uses ChoiceChip-style selection without inventing new tokens.
+class _UnitToggle<T> extends StatelessWidget {
+  const _UnitToggle({
+    required this.value,
+    required this.options,
+    required this.onChanged,
+  });
+
+  final T value;
+  final List<(T, String)> options;
+  final ValueChanged<T> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.inputFill,
+        borderRadius: BorderRadius.circular(AppRadius.control),
+        border: Border.all(color: AppColors.borderStrong, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: options.map((opt) {
+          final bool selected = opt.$1 == value;
+          return Semantics(
+            button: true,
+            selected: selected,
+            label: opt.$2,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(AppRadius.control),
+              onTap: () => onChanged(opt.$1),
+              child: Container(
+                constraints: const BoxConstraints(
+                  minHeight: AppSpacing.minTouchTarget,
+                ),
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: selected ? AppColors.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(AppRadius.control),
+                ),
+                child: Text(
+                  opt.$2,
+                  style: text.labelLarge?.copyWith(
+                    color: selected
+                        ? AppColors.secondary
+                        : AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}

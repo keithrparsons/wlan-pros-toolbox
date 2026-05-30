@@ -19,6 +19,11 @@ import '../screens/tools/calculators/fspl_screen.dart';
 import '../screens/tools/calculators/link_budget_screen.dart';
 import '../screens/tools/calculators/rain_fade_screen.dart';
 import '../screens/tools/calculators/wavelength_screen.dart';
+import '../screens/tools/calculators/metric_conversion_screen.dart';
+import '../screens/tools/calculators/lat_long_screen.dart';
+import '../screens/tools/calculators/dist_bearing_screen.dart';
+import '../screens/tools/calculators/midpoint_screen.dart';
+import '../screens/tools/calculators/final_point_screen.dart';
 import '../screens/tools/network/arp_ndp_screen.dart';
 import '../screens/tools/network/bgp_asn_screen.dart';
 import '../screens/tools/network/dns_lookup_screen.dart';
@@ -56,6 +61,13 @@ class AppRouter {
   static const String downtilt = '/tools/downtilt';
   static const String earthCurvature = '/tools/earth-curvature';
   static const String rainFade = '/tools/rain-fade';
+
+  // GPS Tools category — pure geo-math (no network, all platforms incl. web).
+  static const String metricConversion = '/tools/metric-conversion';
+  static const String latLong = '/tools/lat-long';
+  static const String distBearing = '/tools/dist-bearing';
+  static const String midpoint = '/tools/midpoint';
+  static const String finalPoint = '/tools/final-point';
 
   // Networking category — active network tools (native-only; web shows the
   // download-the-app fallback inside each screen, so the routes are always
@@ -97,6 +109,11 @@ class AppRouter {
     downtilt: (_) => const DowntiltScreen(),
     earthCurvature: (_) => const EarthCurvatureScreen(),
     rainFade: (_) => const RainFadeScreen(),
+    metricConversion: (_) => const MetricConversionScreen(),
+    latLong: (_) => const LatLongScreen(),
+    distBearing: (_) => const DistBearingScreen(),
+    midpoint: (_) => const MidpointScreen(),
+    finalPoint: (_) => const FinalPointScreen(),
     interfaceInfo: (_) => const InterfaceInfoScreen(),
     dnsLookup: (_) => const DnsLookupScreen(),
     portScan: (_) => const PortScanScreen(),
