@@ -33,6 +33,7 @@ import 'package:flutter/services.dart';
 
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_select.dart';
 import '../labeled_field.dart';
 
 /// Frequency input units, mirroring the PWA cable-freq-unit select.
@@ -362,7 +363,7 @@ class _CableLossScreenState extends State<CableLossScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _cableSelectorField(text),
+          _cableSelectorField(),
           const SizedBox(height: AppSpacing.sm),
           _inputRow(
             label: 'Frequency',
@@ -392,44 +393,21 @@ class _CableLossScreenState extends State<CableLossScreen> {
     );
   }
 
-  Widget _cableSelectorField(TextTheme text) {
+  Widget _cableSelectorField() {
+    // Full-width Select (10 cable types, long labels) — §8.14 takes the row
+    // width and ellipsizes inside the bounded control via `isExpanded`.
     return LabeledField(
       label: 'Cable type',
-      semanticLabel: 'Cable type',
-      field: Container(
-        decoration: BoxDecoration(
-          color: AppColors.inputFill,
-          borderRadius: BorderRadius.circular(AppRadius.control),
-          border: Border.all(color: AppColors.borderStrong, width: 1),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        constraints: const BoxConstraints(
-          minHeight: AppSpacing.minTouchTarget,
-        ),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<String>(
-            value: _cable,
-            isExpanded: true,
-            icon: const Icon(Icons.expand_more),
-            iconEnabledColor: AppColors.textSecondary,
-            dropdownColor: AppColors.surface2,
-            borderRadius: BorderRadius.circular(AppRadius.control),
-            style: text.bodyLarge?.copyWith(color: AppColors.textPrimary),
-            items: CableLossScreen.cableTypes
-                .map(
-                  (type) => DropdownMenuItem<String>(
-                    value: type,
-                    child: Text(type),
-                  ),
-                )
-                .toList(),
-            onChanged: (value) {
-              if (value == null) return;
-              setState(() => _cable = value);
-              _recompute();
-            },
-          ),
-        ),
+      field: AppSelect<String>(
+        value: _cable,
+        semanticLabel: 'Cable type',
+        items: CableLossScreen.cableTypes
+            .map((String type) => (type, type))
+            .toList(),
+        onChanged: (String value) {
+          setState(() => _cable = value);
+          _recompute();
+        },
       ),
     );
   }

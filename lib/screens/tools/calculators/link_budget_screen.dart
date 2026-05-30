@@ -17,9 +17,11 @@
 // - TX power in W/mW <= 0 → log10 undefined; treated as invalid → blank output.
 //
 // Margin health follows the PWA thresholds (>=10 healthy, >=0 marginal,
-// <0 negative). GL-003 has no semantic status palette, so the live margin is
-// tinted with the lime `primary` when healthy and muted text tokens otherwise
-// rather than inventing green/blue/red inline. Flagged to Larry for Iris.
+// <0 negative). The live margin is tinted with the GL-003 §8.13 semantic status
+// palette: statusSuccess (>= 10 dB), statusWarning (0–10 dB), statusDanger
+// (< 0 dB). Per §8.13 the calculator owns the dB thresholds; the colors come
+// from AppColors. Success is the cool mint status green, not the lime brand
+// primary — lime marks "computed value", success marks "passes" (§8.13).
 //
 // Pure, no network, no platform APIs. Math lives in static functions on the
 // public class so it is unit-testable against the PWA values.
@@ -221,20 +223,26 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
     return value.toStringAsFixed(1);
   }
 
-  /// Tint for the live margin value. GL-003 has no status palette, so a healthy
-  /// margin gets the lime accent and the marginal / negative states fall back to
-  /// muted text tokens — no invented green/blue/red.
+  /// Tint for the live margin value, using the §8.13 semantic status palette.
+  /// The calculator owns the dB thresholds (§8.13 rule 4: margin ≥ 10 →
+  /// success, 0–10 → warning, < 0 → danger); the colors come from AppColors.
+  /// Success is the cool mint-green status token, NOT the lime brand primary —
+  /// lime marks "computed value", not "passes" (§8.13). The empty/invalid state
+  /// stays muted so a not-yet-computed readout never wears a verdict color.
+  /// Verdict color is never the only signal — the value and its `dB` unit
+  /// carry the number, and the §8.13-aligned Margin guide card spells out the
+  /// bands in words (§8.13 rule 2, never color-only).
   Color _marginColor() {
     if (_marginDb == null || !_marginDb!.isFinite) {
       return AppColors.textTertiary;
     }
     switch (LinkBudgetScreen.marginHealth(_marginDb!)) {
       case MarginHealth.healthy:
-        return AppColors.primary;
+        return AppColors.statusSuccess;
       case MarginHealth.marginal:
-        return AppColors.textSecondary;
+        return AppColors.statusWarning;
       case MarginHealth.negative:
-        return AppColors.textTertiary;
+        return AppColors.statusDanger;
     }
   }
 
@@ -612,7 +620,8 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
 
   Widget _referenceCard(TextTheme text, AppMonoText mono) {
     // Margin-health bands matching the PWA color thresholds, with plain-language
-    // guidance instead of color since GL-003 has no status palette yet.
+    // guidance alongside the §8.13 status tint on the live readout (§8.13 rule 2
+    // — the verdict is carried by words here, never color alone).
     final List<List<String>> refs = const [
       ['≥ 10 dB', 'Healthy, link has fade headroom'],
       ['0 to 10 dB', 'Marginal, vulnerable to fade'],

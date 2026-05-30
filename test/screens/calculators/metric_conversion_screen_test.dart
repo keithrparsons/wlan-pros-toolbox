@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/metric_conversion_screen.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+import 'package:wlan_pros_toolbox/widgets/app_select.dart';
 
 void main() {
   group('Metric conversion math (pure) — matches PWA app.js calcMetric', () {
@@ -179,6 +180,49 @@ void main() {
         await tester.pump();
         expect(find.text('3.2808'), findsNothing);
         expect(find.text('—'), findsOneWidget);
+      });
+    });
+
+    testWidgets('from/to unit pickers are the shared AppSelect, not _UnitMenu',
+        (tester) async {
+      // Migration guard — the two hand-rolled `_UnitMenu` DropdownButtons are
+      // now AppSelect<LengthUnit> (§8.14 Select case: seven units).
+      await _withViewport(tester, const Size(375, 900), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: const MetricConversionScreen(),
+          ),
+        );
+
+        expect(find.byType(AppSelect<LengthUnit>), findsNWidgets(2));
+      });
+    });
+
+    testWidgets('changing the To unit re-runs the conversion', (tester) async {
+      // Verifies the migrated AppSelect onChanged is wired to _recompute.
+      await _withViewport(tester, const Size(375, 900), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: const MetricConversionScreen(),
+          ),
+        );
+
+        // Defaults m → ft; 1 m = 3.2808 ft.
+        await tester.enterText(find.byType(TextField), '1');
+        await tester.pump();
+        expect(find.text('3.2808'), findsOneWidget);
+
+        // The To-unit select is the second AppSelect. Open it and pick cm.
+        // 1 m = 100.00 cm at the cm 2-decimal precision.
+        final Finder toSelect = find.byType(AppSelect<LengthUnit>).at(1);
+        await tester.tap(toSelect);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('cm').last);
+        await tester.pumpAndSettle();
+
+        expect(find.text('100.00'), findsOneWidget);
       });
     });
   });

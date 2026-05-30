@@ -127,9 +127,8 @@ class _EirpScreenState extends State<EirpScreen> {
     });
   }
 
-  void _onUnitChanged(EirpPowerUnit? unit) {
-    if (unit == null) return;
-    _powerUnit = unit;
+  void _onUnitChanged(EirpPowerUnit unit) {
+    setState(() => _powerUnit = unit);
     _recompute();
   }
 
@@ -286,49 +285,18 @@ class _EirpScreenState extends State<EirpScreen> {
   }
 
   Widget _unitSelector() {
-    // DropdownButton inside a control-radius container so the unit picker reads
-    // as an input sibling, not a free-floating affordance. The label is carried
-    // by Semantics so SR users hear the field purpose.
-    return Semantics(
-      label: 'TX power unit',
-      button: true,
-      child: Container(
-        height: AppSpacing.minTouchTarget,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-        decoration: BoxDecoration(
-          color: AppColors.inputFill,
-          borderRadius: BorderRadius.circular(AppRadius.control),
-          border: Border.all(color: AppColors.borderStrong, width: 1),
-        ),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<EirpPowerUnit>(
-            value: _powerUnit,
-            onChanged: _onUnitChanged,
-            isDense: true,
-            dropdownColor: AppColors.surface2,
-            focusColor: Colors.transparent,
-            iconEnabledColor: AppColors.textSecondary,
-            style: Theme.of(context)
-                .textTheme
-                .bodyLarge
-                ?.copyWith(color: AppColors.textPrimary),
-            items: const [
-              DropdownMenuItem(
-                value: EirpPowerUnit.dBm,
-                child: Text('dBm'),
-              ),
-              DropdownMenuItem(
-                value: EirpPowerUnit.w,
-                child: Text('W'),
-              ),
-              DropdownMenuItem(
-                value: EirpPowerUnit.mW,
-                child: Text('mW'),
-              ),
-            ],
-          ),
-        ),
-      ),
+    // dBm / W / mW is three short options — a segmented Toggle, not a Select
+    // (§8.14: "Use a segmented Toggle for 2–3 short options"). This matches the
+    // Link Budget TX-power selector exactly so the two calculators stay
+    // consistent. (Replaces the former 3-option DropdownButton.)
+    return _UnitToggle<EirpPowerUnit>(
+      value: _powerUnit,
+      options: const [
+        (EirpPowerUnit.dBm, 'dBm'),
+        (EirpPowerUnit.w, 'W'),
+        (EirpPowerUnit.mW, 'mW'),
+      ],
+      onChanged: _onUnitChanged,
     );
   }
 
@@ -496,6 +464,70 @@ class _EirpScreenState extends State<EirpScreen> {
             );
           }),
         ],
+      ),
+    );
+  }
+}
+
+/// Segmented unit toggle for an input row. Holds to the §8.3 minimum touch
+/// target and uses ChoiceChip-style selection without inventing new tokens.
+/// Mirrors the Link Budget TX-power toggle so the two calculators are identical
+/// (§8.14: a Toggle is the correct control for the 2–3 short dBm/W/mW options).
+class _UnitToggle<T> extends StatelessWidget {
+  const _UnitToggle({
+    required this.value,
+    required this.options,
+    required this.onChanged,
+  });
+
+  final T value;
+  final List<(T, String)> options;
+  final ValueChanged<T> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.inputFill,
+        borderRadius: BorderRadius.circular(AppRadius.control),
+        border: Border.all(color: AppColors.borderStrong, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: options.map((opt) {
+          final bool selected = opt.$1 == value;
+          return Semantics(
+            button: true,
+            selected: selected,
+            label: opt.$2,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(AppRadius.control),
+              onTap: () => onChanged(opt.$1),
+              child: Container(
+                constraints: const BoxConstraints(
+                  minHeight: AppSpacing.minTouchTarget,
+                ),
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: selected ? AppColors.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(AppRadius.control),
+                ),
+                child: Text(
+                  opt.$2,
+                  style: text.labelLarge?.copyWith(
+                    color: selected
+                        ? AppColors.secondary
+                        : AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }

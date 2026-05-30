@@ -81,8 +81,12 @@ class AppTheme {
       // to borderStrong. `outlineVariant` is the decorative divider.
       outline: AppColors.borderStrong,
       outlineVariant: AppColors.border,
-      error: const Color(0xFFE04646), // §8.4 — proposed v1.1 token. See gap note.
-      onError: AppColors.neutral0,
+      // §8.4 / §8.13 — the input error color resolves to the published status
+      // palette danger token (#F26E6E). Replaces the retired v1.1 #E04646,
+      // which never passed normal-text AA. As a 2px border it clears SC 1.4.11
+      // comfortably; paired with a text error message, never color-only.
+      error: AppColors.statusDanger,
+      onError: AppColors.secondary,
       scrim: Colors.black,
       shadow: Colors.black,
     );
@@ -176,7 +180,7 @@ class AppTheme {
         ),
         hintStyle: textTheme.bodyLarge?.copyWith(color: AppColors.textTertiary),
         helperStyle: textTheme.labelSmall,
-        errorStyle: textTheme.labelSmall?.copyWith(color: const Color(0xFFE04646)),
+        errorStyle: textTheme.labelSmall?.copyWith(color: AppColors.statusDanger),
         border: const OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(AppRadius.control)),
           borderSide: BorderSide(color: AppColors.borderStrong, width: 1),
@@ -189,13 +193,15 @@ class AppTheme {
           borderRadius: BorderRadius.all(Radius.circular(AppRadius.control)),
           borderSide: BorderSide(color: AppColors.primary, width: 2),
         ),
+        // §8.4 — error border is statusDanger (#F26E6E) at 2px, paired with a
+        // text error message (§8.13 rule 2). 2px clears SC 1.4.11.
         errorBorder: const OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(AppRadius.control)),
-          borderSide: BorderSide(color: Color(0xFFE04646), width: 1),
+          borderSide: BorderSide(color: AppColors.statusDanger, width: 2),
         ),
         focusedErrorBorder: const OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(AppRadius.control)),
-          borderSide: BorderSide(color: Color(0xFFE04646), width: 2),
+          borderSide: BorderSide(color: AppColors.statusDanger, width: 2),
         ),
         // Disabled fields still need a perceivable boundary — keep borderStrong
         // so the field reads as "present but inactive" rather than vanishing.
