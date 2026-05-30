@@ -1,0 +1,736 @@
+// Link Budget calculator.
+//
+// Full point-to-point link budget. Mirrors the RF Tools PWA reference
+// (app.js calcLinkBudget, line 404) field-for-field:
+//   received(dBm) = TxPower + TxGain - TxLoss - PathLoss - RxLoss + RxGain - misc
+//   linkMargin(dB) = received - RxSensitivity
+//
+// TX power accepts dBm (default), W, or mW. The PWA normalizes via wattsTodBm,
+// matching the dBm/Watt converter: W → 10·log10(txp·1000); mW → 10·log10(txp).
+// All other inputs are in dB / dBi / dBm directly. "Other losses" is the one
+// optional field; the PWA treats a blank value as 0.
+//
+// Edge cases:
+// - Any required field empty / invalid → blank both outputs (no crash). The
+//   PWA blocks the whole calc unless every required field is finite; we do the
+//   same so a half-filled form never shows a misleading partial number.
+// - TX power in W/mW <= 0 → log10 undefined; treated as invalid → blank output.
+//
+// Margin health follows the PWA thresholds (>=10 healthy, >=0 marginal,
+// <0 negative). GL-003 has no semantic status palette, so the live margin is
+// tinted with the lime `primary` when healthy and muted text tokens otherwise
+// rather than inventing green/blue/red inline. Flagged to Larry for Iris.
+//
+// Pure, no network, no platform APIs. Math lives in static functions on the
+// public class so it is unit-testable against the PWA values.
+
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import '../../../theme/app_tokens.dart';
+import '../../../theme/app_typography.dart';
+import '../labeled_field.dart';
+
+/// TX power input units, mirroring the PWA lb-tx-unit select.
+enum TxPowerUnit { dbm, w, mw }
+
+/// Qualitative health of a link margin, matching the PWA color thresholds.
+enum MarginHealth { healthy, marginal, negative }
+
+class LinkBudgetScreen extends StatefulWidget {
+  const LinkBudgetScreen({super.key});
+
+  // ─── Math (pure) ──────────────────────────────────────────────────────────
+  // Mirrors app.js: wattsTodBm, calcLinkBudget.
+
+  /// Watts → dBm (PWA wattsTodBm). 10·log10(w·1000).
+  static double wattsTodBm(double w) => 10 * (math.log(w * 1000) / math.ln10);
+
+  /// Normalize TX power to dBm, mirroring the PWA's unit branch:
+  ///   W  → wattsTodBm(txp)
+  ///   mW → wattsTodBm(txp / 1000)
+  ///   dBm → txp unchanged
+  static double txPowerToDbm(double value, TxPowerUnit unit) {
+    switch (unit) {
+      case TxPowerUnit.w:
+        return wattsTodBm(value);
+      case TxPowerUnit.mw:
+        return wattsTodBm(value / 1000.0);
+      case TxPowerUnit.dbm:
+        return value;
+    }
+  }
+
+  /// Received signal level in dBm.
+  /// txPower + txGain - txLoss - pathLoss - rxLoss + rxGain - misc (PWA rx_dbm).
+  /// txPowerDbm is the already-normalized TX power.
+  static double receivedDbm({
+    required double txPowerDbm,
+    required double txGain,
+    required double txLoss,
+    required double pathLoss,
+    required double rxLoss,
+    required double rxGain,
+    required double misc,
+  }) {
+    return txPowerDbm + txGain - txLoss - pathLoss - rxLoss + rxGain - misc;
+  }
+
+  /// Link margin in dB: received signal minus receiver sensitivity (PWA margin).
+  static double linkMarginDb(double receivedDbm, double rxSensitivity) {
+    return receivedDbm - rxSensitivity;
+  }
+
+  /// Margin health, matching the PWA thresholds (>=10 / >=0 / <0).
+  static MarginHealth marginHealth(double marginDb) {
+    if (marginDb >= 10) return MarginHealth.healthy;
+    if (marginDb >= 0) return MarginHealth.marginal;
+    return MarginHealth.negative;
+  }
+
+  @override
+  State<LinkBudgetScreen> createState() => _LinkBudgetScreenState();
+}
+
+class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
+  final TextEditingController _txPowerCtrl = TextEditingController();
+  final TextEditingController _txGainCtrl = TextEditingController();
+  final TextEditingController _txLossCtrl = TextEditingController();
+  final TextEditingController _pathLossCtrl = TextEditingController();
+  final TextEditingController _miscCtrl = TextEditingController();
+  final TextEditingController _rxLossCtrl = TextEditingController();
+  final TextEditingController _rxGainCtrl = TextEditingController();
+  final TextEditingController _rxSensCtrl = TextEditingController();
+
+  final FocusNode _txPowerFocus = FocusNode();
+  final FocusNode _txGainFocus = FocusNode();
+  final FocusNode _txLossFocus = FocusNode();
+  final FocusNode _pathLossFocus = FocusNode();
+  final FocusNode _miscFocus = FocusNode();
+  final FocusNode _rxLossFocus = FocusNode();
+  final FocusNode _rxGainFocus = FocusNode();
+  final FocusNode _rxSensFocus = FocusNode();
+
+  TxPowerUnit _txPowerUnit = TxPowerUnit.dbm;
+
+  // Computed outputs, or null when required input is empty / invalid.
+  double? _receivedDbm;
+  double? _marginDb;
+
+  // Gains, sensitivity, and TX power (dBm) can be negative, so these fields
+  // accept a leading minus. Losses are non-negative in the PWA (min="0") but we
+  // keep the formatter permissive and rely on the math; a stray sign just
+  // shifts the budget, never crashes.
+  static final List<TextInputFormatter> _signedDecimal = [
+    FilteringTextInputFormatter.allow(RegExp(r'[0-9.eE+\-]')),
+  ];
+  static final List<TextInputFormatter> _unsignedDecimal = [
+    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+  ];
+
+  @override
+  void dispose() {
+    _txPowerCtrl.dispose();
+    _txGainCtrl.dispose();
+    _txLossCtrl.dispose();
+    _pathLossCtrl.dispose();
+    _miscCtrl.dispose();
+    _rxLossCtrl.dispose();
+    _rxGainCtrl.dispose();
+    _rxSensCtrl.dispose();
+    _txPowerFocus.dispose();
+    _txGainFocus.dispose();
+    _txLossFocus.dispose();
+    _pathLossFocus.dispose();
+    _miscFocus.dispose();
+    _rxLossFocus.dispose();
+    _rxGainFocus.dispose();
+    _rxSensFocus.dispose();
+    super.dispose();
+  }
+
+  // ─── Handlers ─────────────────────────────────────────────────────────────
+
+  void _recompute() {
+    final double? txPower = _tryParseDouble(_txPowerCtrl.text);
+    final double? txGain = _tryParseDouble(_txGainCtrl.text);
+    final double? txLoss = _tryParseDouble(_txLossCtrl.text);
+    final double? pathLoss = _tryParseDouble(_pathLossCtrl.text);
+    final double? rxLoss = _tryParseDouble(_rxLossCtrl.text);
+    final double? rxGain = _tryParseDouble(_rxGainCtrl.text);
+    final double? rxSens = _tryParseDouble(_rxSensCtrl.text);
+    // Misc is the only optional field; blank → 0, matching the PWA's
+    // isFinite(num('lb-misc')) ? num : 0 guard.
+    final double misc = _tryParseDouble(_miscCtrl.text) ?? 0;
+
+    // PWA blocks the whole calc unless every required field is finite.
+    if (txPower == null ||
+        txGain == null ||
+        txLoss == null ||
+        pathLoss == null ||
+        rxLoss == null ||
+        rxGain == null ||
+        rxSens == null) {
+      setState(() {
+        _receivedDbm = null;
+        _marginDb = null;
+      });
+      return;
+    }
+
+    final double txPowerDbm =
+        LinkBudgetScreen.txPowerToDbm(txPower, _txPowerUnit);
+    // W/mW <= 0 yields a non-finite dBm; treat as invalid rather than render it.
+    if (!txPowerDbm.isFinite) {
+      setState(() {
+        _receivedDbm = null;
+        _marginDb = null;
+      });
+      return;
+    }
+
+    final double rx = LinkBudgetScreen.receivedDbm(
+      txPowerDbm: txPowerDbm,
+      txGain: txGain,
+      txLoss: txLoss,
+      pathLoss: pathLoss,
+      rxLoss: rxLoss,
+      rxGain: rxGain,
+      misc: misc,
+    );
+    final double margin = LinkBudgetScreen.linkMarginDb(rx, rxSens);
+    setState(() {
+      _receivedDbm = rx;
+      _marginDb = margin;
+    });
+  }
+
+  // ─── Formatting ───────────────────────────────────────────────────────────
+
+  static double? _tryParseDouble(String raw) {
+    final String s = raw.trim();
+    if (s.isEmpty || s == '-' || s == '.' || s == '-.') return null;
+    return double.tryParse(s);
+  }
+
+  /// PWA fmt(value, 1): fixed 1-decimal, "—" when not finite.
+  static String _format(double? value) {
+    if (value == null || !value.isFinite) return '—';
+    return value.toStringAsFixed(1);
+  }
+
+  /// Tint for the live margin value. GL-003 has no status palette, so a healthy
+  /// margin gets the lime accent and the marginal / negative states fall back to
+  /// muted text tokens — no invented green/blue/red.
+  Color _marginColor() {
+    if (_marginDb == null || !_marginDb!.isFinite) {
+      return AppColors.textTertiary;
+    }
+    switch (LinkBudgetScreen.marginHealth(_marginDb!)) {
+      case MarginHealth.healthy:
+        return AppColors.primary;
+      case MarginHealth.marginal:
+        return AppColors.textSecondary;
+      case MarginHealth.negative:
+        return AppColors.textTertiary;
+    }
+  }
+
+  // ─── Build ────────────────────────────────────────────────────────────────
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Link Budget'),
+        toolbarHeight: 64,
+      ),
+      body: SafeArea(
+        top: false,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final bool isDesktop = constraints.maxWidth >= 720;
+            final double edge = isDesktop
+                ? AppSpacing.screenEdgeDesktop
+                : AppSpacing.screenEdgeMobile;
+
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: AppSpacing.calculatorMaxWidth,
+                ),
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(
+                    edge,
+                    AppSpacing.sm,
+                    edge,
+                    edge + AppSpacing.sm,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _inputCard(text, mono),
+                      const SizedBox(height: AppSpacing.md),
+                      _resultCard(text, mono),
+                      const SizedBox(height: AppSpacing.md),
+                      _formulaCard(text, mono),
+                      const SizedBox(height: AppSpacing.md),
+                      _referenceCard(text, mono),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _inputCard(TextTheme text, AppMonoText mono) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _sectionTitle(text, 'Transmitter'),
+          const SizedBox(height: AppSpacing.xs),
+          // TX power is the one field with a unit toggle.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: _field(
+                  label: 'TX Power',
+                  unitHint: _txPowerUnitLabel(_txPowerUnit),
+                  controller: _txPowerCtrl,
+                  focusNode: _txPowerFocus,
+                  hintText: '23',
+                  monoStyle: mono.outputLarge,
+                  signed: true,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              _txPowerUnitSelector(),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _field(
+            label: 'TX Antenna Gain',
+            unitHint: 'dBi',
+            controller: _txGainCtrl,
+            focusNode: _txGainFocus,
+            hintText: '14',
+            monoStyle: mono.outputLarge,
+            signed: true,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _field(
+            label: 'TX Cable Loss',
+            unitHint: 'dB',
+            controller: _txLossCtrl,
+            focusNode: _txLossFocus,
+            hintText: '1.5',
+            monoStyle: mono.outputLarge,
+            signed: false,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          _sectionTitle(text, 'Path'),
+          const SizedBox(height: AppSpacing.xs),
+          _field(
+            label: 'Free Space Path Loss',
+            unitHint: 'dB',
+            controller: _pathLossCtrl,
+            focusNode: _pathLossFocus,
+            hintText: '120',
+            monoStyle: mono.outputLarge,
+            signed: false,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _field(
+            label: 'Other Losses (optional)',
+            unitHint: 'dB',
+            controller: _miscCtrl,
+            focusNode: _miscFocus,
+            hintText: '0',
+            monoStyle: mono.outputLarge,
+            signed: false,
+            helper: 'Rain fade, foliage, interference, etc.',
+            text: text,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          _sectionTitle(text, 'Receiver'),
+          const SizedBox(height: AppSpacing.xs),
+          _field(
+            label: 'RX Cable Loss',
+            unitHint: 'dB',
+            controller: _rxLossCtrl,
+            focusNode: _rxLossFocus,
+            hintText: '1.5',
+            monoStyle: mono.outputLarge,
+            signed: false,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _field(
+            label: 'RX Antenna Gain',
+            unitHint: 'dBi',
+            controller: _rxGainCtrl,
+            focusNode: _rxGainFocus,
+            hintText: '14',
+            monoStyle: mono.outputLarge,
+            signed: true,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _field(
+            label: 'RX Sensitivity',
+            unitHint: 'dBm',
+            controller: _rxSensCtrl,
+            focusNode: _rxSensFocus,
+            hintText: '-82',
+            monoStyle: mono.outputLarge,
+            signed: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionTitle(TextTheme text, String label) {
+    return Text(
+      label,
+      style: text.labelMedium?.copyWith(
+        color: AppColors.textSecondary,
+        letterSpacing: 0.4,
+        fontWeight: FontWeight.w500,
+      ),
+    );
+  }
+
+  /// One labeled numeric field. `helper` renders a muted note under the field
+  /// (used for the "Other losses" hint), `text` is required when helper is set.
+  Widget _field({
+    required String label,
+    required String unitHint,
+    required TextEditingController controller,
+    required FocusNode focusNode,
+    required String hintText,
+    required TextStyle monoStyle,
+    required bool signed,
+    String? helper,
+    TextTheme? text,
+  }) {
+    final Widget input = LabeledField(
+      label: label,
+      hint: '($unitHint)',
+      semanticLabel: '$label in $unitHint',
+      field: TextField(
+        controller: controller,
+        focusNode: focusNode,
+        keyboardType: TextInputType.numberWithOptions(
+          decimal: true,
+          signed: signed,
+        ),
+        inputFormatters: signed ? _signedDecimal : _unsignedDecimal,
+        onChanged: (_) => _recompute(),
+        textInputAction: TextInputAction.next,
+        autocorrect: false,
+        enableSuggestions: false,
+        style: monoStyle.copyWith(fontSize: 20),
+        cursorColor: AppColors.primary,
+        decoration: InputDecoration(hintText: hintText),
+      ),
+    );
+
+    if (helper == null) return input;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        input,
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          helper,
+          style: text?.labelSmall?.copyWith(color: AppColors.textTertiary),
+        ),
+      ],
+    );
+  }
+
+  Widget _txPowerUnitSelector() {
+    return _UnitToggle<TxPowerUnit>(
+      value: _txPowerUnit,
+      options: const [
+        (TxPowerUnit.dbm, 'dBm'),
+        (TxPowerUnit.w, 'W'),
+        (TxPowerUnit.mw, 'mW'),
+      ],
+      onChanged: (u) {
+        setState(() => _txPowerUnit = u);
+        _recompute();
+      },
+    );
+  }
+
+  static String _txPowerUnitLabel(TxPowerUnit u) {
+    switch (u) {
+      case TxPowerUnit.dbm:
+        return 'dBm';
+      case TxPowerUnit.w:
+        return 'W';
+      case TxPowerUnit.mw:
+        return 'mW';
+    }
+  }
+
+  Widget _resultCard(TextTheme text, AppMonoText mono) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _resultRow(
+            text: text,
+            mono: mono,
+            label: 'Received signal',
+            value: _format(_receivedDbm),
+            unit: 'dBm',
+            valueColor: _receivedDbm == null
+                ? AppColors.textTertiary
+                : AppColors.textPrimary,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Divider(height: 1, color: AppColors.border),
+          const SizedBox(height: AppSpacing.sm),
+          _resultRow(
+            text: text,
+            mono: mono,
+            label: 'Link margin',
+            value: _format(_marginDb),
+            unit: 'dB',
+            valueColor: _marginColor(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _resultRow({
+    required TextTheme text,
+    required AppMonoText mono,
+    required String label,
+    required String value,
+    required String unit,
+    required Color valueColor,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: text.labelMedium?.copyWith(
+            color: AppColors.textSecondary,
+            letterSpacing: 0.4,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            SelectableText(
+              value,
+              style: mono.outputXL.copyWith(color: valueColor),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              unit,
+              style: text.labelLarge?.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _formulaCard(TextTheme text, AppMonoText mono) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Formula',
+            style: text.labelMedium?.copyWith(
+              color: AppColors.textSecondary,
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          SelectableText(
+            'RX = Tx + Gtx − Ltx − FSPL − Lrx + Grx − Lmisc',
+            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+          ),
+          SelectableText(
+            'Margin = RX − Sensitivity',
+            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'All terms in dB except Tx (dBm or W/mW) and Sensitivity (dBm). '
+            'A positive margin means the link closes; aim for 10 dB or more.',
+            style: text.labelMedium?.copyWith(
+              color: AppColors.textTertiary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _referenceCard(TextTheme text, AppMonoText mono) {
+    // Margin-health bands matching the PWA color thresholds, with plain-language
+    // guidance instead of color since GL-003 has no status palette yet.
+    final List<List<String>> refs = const [
+      ['≥ 10 dB', 'Healthy, link has fade headroom'],
+      ['0 to 10 dB', 'Marginal, vulnerable to fade'],
+      ['< 0 dB', 'Link does not close'],
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Margin guide',
+            style: text.labelMedium?.copyWith(
+              color: AppColors.textSecondary,
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          ...refs.map((row) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Column width snaps to the 8px base unit (GL-003 §4).
+                  SizedBox(
+                    width: 96,
+                    child: Text(
+                      row[0],
+                      style: mono.inlineCode.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      row[1],
+                      style: text.labelMedium?.copyWith(
+                        color: AppColors.textTertiary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+/// Segmented unit toggle for an input row. Holds to the §8.3 minimum touch
+/// target and uses ChoiceChip-style selection without inventing new tokens.
+/// Copied from the FSPL screen pattern to keep the two calculators identical.
+class _UnitToggle<T> extends StatelessWidget {
+  const _UnitToggle({
+    required this.value,
+    required this.options,
+    required this.onChanged,
+  });
+
+  final T value;
+  final List<(T, String)> options;
+  final ValueChanged<T> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.inputFill,
+        borderRadius: BorderRadius.circular(AppRadius.control),
+        border: Border.all(color: AppColors.borderStrong, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: options.map((opt) {
+          final bool selected = opt.$1 == value;
+          return Semantics(
+            button: true,
+            selected: selected,
+            label: opt.$2,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(AppRadius.control),
+              onTap: () => onChanged(opt.$1),
+              child: Container(
+                constraints: const BoxConstraints(
+                  minHeight: AppSpacing.minTouchTarget,
+                ),
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: selected ? AppColors.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(AppRadius.control),
+                ),
+                child: Text(
+                  opt.$2,
+                  style: text.labelLarge?.copyWith(
+                    color: selected
+                        ? AppColors.secondary
+                        : AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}

@@ -64,11 +64,19 @@ class LabeledField extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                label,
-                style: text.labelMedium?.copyWith(
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w500,
+              // Flexible so a long label (e.g. "Target coverage distance")
+              // shrinks/ellipsizes instead of overflowing the bounded input
+              // row on a phone-width surface, rather than forcing a fixed
+              // intrinsic width that pushes past the available space.
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: text.labelMedium?.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
               if (hint != null) ...[
