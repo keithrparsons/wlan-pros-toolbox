@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- Wake-on-LAN: a magic packet sent to wake a host by MAC address; lime = the wake packet. Archetype C/G. -->
+
+  <!-- sender (left) -->
+  <rect x="18" y="56" width="26" height="34" rx="3" stroke="#E5E5E5" stroke-width="1.5"/>
+  <text x="31" y="104" fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="middle">sender</text>
+
+  <!-- magic packet, addressed by MAC (lime) -->
+  <rect x="62" y="46" width="118" height="22" rx="3" stroke="#A2CC3A" stroke-width="1.5"/>
+  <rect x="62" y="46" width="118" height="22" rx="3" fill="#A2CC3A" fill-opacity="0.08"/>
+  <text x="70" y="61" fill="#A2CC3A" font-size="10" font-weight="500" font-family="DM Mono, monospace">AA:BB:CC:DD:EE</text>
+  <text x="121" y="40" fill="#9C9C9C" font-size="9" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">magic packet</text>
+  <g stroke="#A2CC3A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="180" y1="73" x2="244" y2="73"/>
+    <path d="M238 69 L244 73 L238 77"/>
+  </g>
+
+  <!-- sleeping host waking up (right) -->
+  <rect x="248" y="50" width="40" height="48" rx="4" stroke="#E5E5E5" stroke-width="1.5"/>
+  <!-- power glyph lighting up (lime) -->
+  <g stroke="#A2CC3A" stroke-width="1.75" stroke-linecap="round">
+    <line x1="268" y1="62" x2="268" y2="74"/>
+    <path d="M261 68 A 9 9 0 1 0 275 68"/>
+  </g>
+  <!-- wake rays -->
+  <g stroke="#A2CC3A" stroke-width="1.5" stroke-linecap="round">
+    <line x1="293" y1="58" x2="300" y2="54"/>
+    <line x1="295" y1="74" x2="303" y2="74"/>
+    <line x1="293" y1="90" x2="300" y2="94"/>
+  </g>
+  <text x="268" y="114" fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="middle">host wakes</text>
+
+  <!-- Header -->
+  <text x="160" y="20" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">wake-on-LAN</text>
+  <!-- Footer -->
+  <text x="160" y="150" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">magic packet &#8594; wake host by MAC</text>
+</svg>

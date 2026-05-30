@@ -14,11 +14,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/wake_on_lan_service.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
 
@@ -125,6 +127,12 @@ class _WakeOnLanScreenState extends State<WakeOnLanScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  ConceptGraphicBand(
+                    toolId: 'wake-on-lan',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('wake-on-lan'))
+                    const SizedBox(height: AppSpacing.md),
                   _formCard(context),
                   const SizedBox(height: AppSpacing.sm),
                   _resultsSection(context),

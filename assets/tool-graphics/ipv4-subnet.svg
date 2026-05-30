@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- IPv4 Subnet: a 32-bit dotted-quad address split network | host by a /24 CIDR cut.
+       Lime = the network portion + usable host range. Sibling of ipv6-subnet (shorter address + /24 cue).
+       Archetype D (partition / block). -->
+
+  <!-- The 32-bit address bar, split network | host -->
+  <!-- Network portion (lime accent = the network part the /24 fixes) -->
+  <rect x="22" y="42" width="206" height="30" rx="2" fill="#A2CC3A" fill-opacity="0.08" stroke="#A2CC3A" stroke-width="2"/>
+  <!-- Host portion (neutral host part) -->
+  <rect x="228" y="42" width="70" height="30" rx="2" stroke="#E5E5E5" stroke-width="1.75"/>
+
+  <!-- Octet tick dividers inside the bar (8-bit groups, subtle so the address reads) -->
+  <g stroke="#9C9C9C" stroke-width="1" opacity="0.35">
+    <line x1="91"  y1="44" x2="91"  y2="70"/>
+    <line x1="160" y1="44" x2="160" y2="70"/>
+  </g>
+
+  <!-- Address value (DM Mono) overlaid -->
+  <text x="125" y="62" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">192.168.1</text>
+  <text x="263" y="62" fill="#E5E5E5" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">.0/24</text>
+
+  <!-- Portion labels -->
+  <text x="125" y="34" fill="#A2CC3A" font-size="12" font-weight="500" text-anchor="middle">network</text>
+  <text x="263" y="34" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle">host</text>
+
+  <!-- /24 prefix cut line at the boundary -->
+  <line x1="228" y1="36" x2="228" y2="80" stroke="#A2CC3A" stroke-width="2" stroke-dasharray="3 3"/>
+  <text x="228" y="92" fill="#A2CC3A" font-size="13" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">/24</text>
+
+  <!-- Subnet breakdown: the /24 yields a usable host range (distinguishes IPv4 by .0 / .255 anchors) -->
+  <line x1="22" y1="104" x2="298" y2="104" stroke="#9C9C9C" stroke-width="1" opacity="0.4"/>
+  <text x="22" y="126" fill="#9C9C9C" font-size="11" font-weight="500" font-family="DM Mono, monospace">range</text>
+  <g font-family="DM Mono, monospace" font-size="11" font-weight="500">
+    <rect x="78" y="114" width="64" height="16" rx="2" stroke="#9C9C9C" stroke-width="1.25"/>
+    <text x="110" y="126" fill="#9C9C9C" text-anchor="middle">.0 net</text>
+    <rect x="150" y="114" width="78" height="16" rx="2" stroke="#A2CC3A" stroke-width="1.5" fill="#A2CC3A" fill-opacity="0.08"/>
+    <text x="189" y="126" fill="#A2CC3A" text-anchor="middle">.1-.254</text>
+    <rect x="236" y="114" width="62" height="16" rx="2" stroke="#9C9C9C" stroke-width="1.25"/>
+    <text x="267" y="126" fill="#9C9C9C" text-anchor="middle">.255 bc</text>
+  </g>
+  <text x="298" y="148" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="end">254 usable hosts</text>
+</svg>

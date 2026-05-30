@@ -20,9 +20,11 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../services/network/interface_info_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../theme/app_tokens.dart';
+import '../concept_graphic_band.dart';
 import 'network_unavailable_view.dart';
 import 'value_row.dart';
 
@@ -106,7 +108,7 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen> {
             if (data == null) {
               return _ErrorState(onRetry: _load);
             }
-            return _Success(data: data, edge: edge);
+            return _Success(data: data, edge: edge, isDesktop: isDesktop);
           },
         );
       },
@@ -115,10 +117,15 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen> {
 }
 
 class _Success extends StatelessWidget {
-  const _Success({required this.data, required this.edge});
+  const _Success({
+    required this.data,
+    required this.edge,
+    required this.isDesktop,
+  });
 
   final InterfaceInfoSnapshot data;
   final double edge;
+  final bool isDesktop;
 
   @override
   Widget build(BuildContext context) {
@@ -139,6 +146,12 @@ class _Success extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              ConceptGraphicBand(
+                toolId: 'interface-info',
+                isDesktop: isDesktop,
+              ),
+              if (ToolAssets.hasGraphic('interface-info'))
+                const SizedBox(height: AppSpacing.md),
               _summaryCard(context),
               const SizedBox(height: AppSpacing.sm),
               _wifiCard(context),

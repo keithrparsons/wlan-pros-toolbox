@@ -23,11 +23,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../services/network/arp_ndp_service.dart';
 import '../../../services/network/interface_info_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../concept_graphic_band.dart';
 import 'network_unavailable_view.dart';
 
 class ArpNdpScreen extends StatefulWidget {
@@ -192,7 +194,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: _capability == ArpCapability.unavailable
                     ? <Widget>[_unavailableCard(context)]
-                    : _scanChildren(context),
+                    : _scanChildren(context, isDesktop),
               ),
             ),
           ),
@@ -201,8 +203,11 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
     );
   }
 
-  List<Widget> _scanChildren(BuildContext context) {
+  List<Widget> _scanChildren(BuildContext context, bool isDesktop) {
     return <Widget>[
+      ConceptGraphicBand(toolId: 'arp-ndp', isDesktop: isDesktop),
+      if (ToolAssets.hasGraphic('arp-ndp'))
+        const SizedBox(height: AppSpacing.md),
       _capabilityCard(context),
       const SizedBox(height: AppSpacing.sm),
       _controlCard(context),

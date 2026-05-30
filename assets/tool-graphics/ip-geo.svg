@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- IP geolocation (type G): an IP resolved to a geographic location (pin on a coordinate grid)
+       plus an ISP / location record card. Lime = the located pin + record. -->
+
+  <!-- Header -->
+  <text x="160" y="20" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">IP &#8594; geographic location</text>
+
+  <!-- IP tag (the query input, neutral) -->
+  <rect x="22" y="44" width="92" height="20" rx="2" stroke="#E5E5E5" stroke-width="1.5"/>
+  <text x="68" y="58" fill="#E5E5E5" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">8.8.8.8</text>
+
+  <!-- Coordinate-grid map panel (neutral scaffold) -->
+  <rect x="22" y="76" width="160" height="68" rx="3" stroke="#9C9C9C" stroke-width="1.5"/>
+  <g stroke="#9C9C9C" stroke-width="1" opacity="0.4">
+    <line x1="22" y1="98" x2="182" y2="98"/>
+    <line x1="22" y1="120" x2="182" y2="120"/>
+    <line x1="62" y1="76" x2="62" y2="144"/>
+    <line x1="102" y1="76" x2="102" y2="144"/>
+    <line x1="142" y1="76" x2="142" y2="144"/>
+  </g>
+
+  <!-- Schematic landmass outline on the grid (neutral) -->
+  <path d="M40 116 q14 -14 30 -8 q10 -10 26 -4 q14 -2 18 8 q12 4 6 14 q-22 8 -44 2 q-18 4 -28 -4 q-10 -4 -8 -8 z"
+        stroke="#9C9C9C" stroke-width="1.25" stroke-linejoin="round" opacity="0.7"/>
+
+  <!-- Located pin (lime = the measured/located quantity) -->
+  <path d="M104 96 C104 86 120 86 120 96 C120 105 112 116 112 116 C112 116 104 105 104 96 Z"
+        stroke="#A2CC3A" stroke-width="2" fill="#A2CC3A" fill-opacity="0.08" stroke-linejoin="round"/>
+  <circle cx="112" cy="96" r="3" fill="#A2CC3A"/>
+
+  <!-- query arrow from IP tag down into the map -->
+  <g stroke="#9C9C9C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="68" y1="64" x2="68" y2="74"/>
+    <path d="M64 69 L68 74 L72 69"/>
+  </g>
+
+  <!-- Location / ISP record card (lime = the returned record) -->
+  <rect x="198" y="44" width="100" height="100" rx="3" fill="#A2CC3A" fill-opacity="0.08" stroke="#A2CC3A" stroke-width="2"/>
+  <line x1="198" y1="64" x2="298" y2="64" stroke="#A2CC3A" stroke-width="1" opacity="0.5"/>
+  <text x="208" y="59" fill="#A2CC3A" font-size="11" font-weight="500" font-family="DM Mono, monospace">location</text>
+  <g font-family="DM Mono, monospace" font-size="11" font-weight="500">
+    <text x="208" y="82" fill="#9C9C9C">city</text>
+    <text x="290" y="82" fill="#E5E5E5" text-anchor="end">Tulsa</text>
+    <text x="208" y="100" fill="#9C9C9C">cc</text>
+    <text x="290" y="100" fill="#E5E5E5" text-anchor="end">US</text>
+    <text x="208" y="118" fill="#9C9C9C">lat</text>
+    <text x="290" y="118" fill="#E5E5E5" text-anchor="end">36.16</text>
+    <text x="208" y="136" fill="#9C9C9C">ISP</text>
+    <text x="290" y="136" fill="#E5E5E5" text-anchor="end">Google</text>
+  </g>
+</svg>

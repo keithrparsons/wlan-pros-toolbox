@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- MAC OUI lookup: a MAC address mapped to its vendor via the offline OUI table; lime = the matched vendor. Archetype G. -->
+
+  <!-- MAC address tag (left); the leading OUI segment is highlighted -->
+  <rect x="14" y="40" width="120" height="26" rx="4" stroke="#E5E5E5" stroke-width="1.5"/>
+  <g font-family="DM Mono, monospace" font-size="11" font-weight="500">
+    <text x="22" y="57" fill="#A2CC3A">3C:5A:B4</text>
+    <text x="72" y="57" fill="#9C9C9C">:11:22:33</text>
+  </g>
+  <text x="48" y="80" fill="#9C9C9C" font-size="9" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">OUI prefix</text>
+
+  <!-- match arrow into the OUI table -->
+  <g stroke="#9C9C9C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="134" y1="53" x2="162" y2="53"/>
+    <path d="M156 49 L162 53 L156 57"/>
+  </g>
+
+  <!-- offline OUI table -> vendor (right) -->
+  <g font-family="DM Mono, monospace">
+    <line x1="168" y1="42" x2="306" y2="42" stroke="#9C9C9C" stroke-width="1.25"/>
+    <text x="174" y="39" fill="#9C9C9C" font-size="10" font-weight="500">oui</text>
+    <text x="238" y="39" fill="#9C9C9C" font-size="10" font-weight="500">vendor</text>
+
+    <text x="174" y="62" fill="#E5E5E5" font-size="11" font-weight="500">001122</text>
+    <text x="238" y="62" fill="#E5E5E5" font-size="11" font-weight="500" font-family="IBM Plex Sans, sans-serif">Cisco</text>
+
+    <!-- matched row (lime) -->
+    <rect x="168" y="68" width="138" height="22" fill="#A2CC3A" fill-opacity="0.08"/>
+    <text x="174" y="84" fill="#A2CC3A" font-size="11" font-weight="500">3C5AB4</text>
+    <text x="238" y="84" fill="#A2CC3A" font-size="11" font-weight="500" font-family="IBM Plex Sans, sans-serif">Aruba</text>
+
+    <text x="174" y="106" fill="#E5E5E5" font-size="11" font-weight="500">F0992B</text>
+    <text x="238" y="106" fill="#E5E5E5" font-size="11" font-weight="500" font-family="IBM Plex Sans, sans-serif">Apple</text>
+
+    <text x="174" y="128" fill="#E5E5E5" font-size="11" font-weight="500">D8B370</text>
+    <text x="238" y="128" fill="#E5E5E5" font-size="11" font-weight="500" font-family="IBM Plex Sans, sans-serif">TP-Link</text>
+  </g>
+  <g stroke="#3A3A3A" stroke-width="1">
+    <line x1="168" y1="68" x2="306" y2="68"/>
+    <line x1="168" y1="90" x2="306" y2="90"/>
+    <line x1="168" y1="112" x2="306" y2="112"/>
+  </g>
+
+  <!-- Header -->
+  <text x="160" y="20" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">MAC OUI lookup</text>
+  <!-- Footer -->
+  <text x="160" y="150" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">MAC prefix &#8594; vendor</text>
+</svg>

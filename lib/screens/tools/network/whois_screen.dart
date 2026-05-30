@@ -15,10 +15,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/whois_service.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
 
@@ -121,6 +123,9 @@ class _WhoisScreenState extends State<WhoisScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  ConceptGraphicBand(toolId: 'whois', isDesktop: isDesktop),
+                  if (ToolAssets.hasGraphic('whois'))
+                    const SizedBox(height: AppSpacing.md),
                   _queryCard(context),
                   const SizedBox(height: AppSpacing.sm),
                   _resultsSection(context),

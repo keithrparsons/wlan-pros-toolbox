@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- MCS index: modulation steps (BPSK -> 1024-QAM) mapped to climbing data rate.
+       Lime = a representative MCS row's data rate. Archetype E (table/matrix preview). -->
+
+  <!-- Header -->
+  <text x="160" y="20" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">MCS index &#8594; data rate</text>
+
+  <!-- Rate axis (vertical, neutral) -->
+  <g stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round">
+    <line x1="38" y1="34" x2="38" y2="124"/>
+    <path d="M34 40 L38 34 L42 40"/>
+  </g>
+  <text x="26" y="38" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" transform="rotate(-90 26 38)">Mbps</text>
+  <line x1="38" y1="124" x2="298" y2="124" stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round"/>
+
+  <!-- Modulation steps (rising bars, neutral; top step lime = the representative rate) -->
+  <g text-anchor="middle" font-family="DM Mono, monospace" font-size="10" font-weight="500">
+    <!-- MCS0 BPSK -->
+    <rect x="52" y="104" width="34" height="20" stroke="#E5E5E5" stroke-width="1.75"/>
+    <text x="69" y="138" fill="#9C9C9C">0</text>
+    <text x="69" y="150" fill="#9C9C9C">BPSK</text>
+    <!-- MCS2 QPSK -->
+    <rect x="96" y="88" width="34" height="36" stroke="#E5E5E5" stroke-width="1.75"/>
+    <text x="113" y="138" fill="#9C9C9C">2</text>
+    <text x="113" y="150" fill="#9C9C9C">QPSK</text>
+    <!-- MCS4 16-QAM -->
+    <rect x="140" y="72" width="34" height="52" stroke="#E5E5E5" stroke-width="1.75"/>
+    <text x="157" y="138" fill="#9C9C9C">4</text>
+    <text x="157" y="150" fill="#9C9C9C">16QAM</text>
+    <!-- MCS7 64-QAM -->
+    <rect x="184" y="56" width="34" height="68" stroke="#E5E5E5" stroke-width="1.75"/>
+    <text x="201" y="138" fill="#9C9C9C">7</text>
+    <text x="201" y="150" fill="#9C9C9C">64QAM</text>
+    <!-- MCS11 1024-QAM (top, lime = the representative rate) -->
+    <rect x="228" y="38" width="34" height="86" stroke="#A2CC3A" stroke-width="2" fill="#A2CC3A" fill-opacity="0.08"/>
+    <text x="245" y="138" fill="#A2CC3A">11</text>
+    <text x="245" y="150" fill="#A2CC3A">1024Q</text>
+  </g>
+
+  <!-- representative data-rate callout for the lime step -->
+  <text x="245" y="32" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">143 Mbps</text>
+
+  <!-- denser modulation cue arrow alongside the climb -->
+  <g stroke="#9C9C9C" stroke-width="1" stroke-linecap="round" opacity="0.6" fill="none">
+    <path d="M280 110 L280 50"/>
+    <path d="M276 56 L280 50 L284 56"/>
+  </g>
+  <text x="290" y="92" fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="middle" transform="rotate(-90 290 92)">denser QAM</text>
+</svg>

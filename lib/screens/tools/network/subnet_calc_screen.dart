@@ -21,8 +21,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../services/network/subnet_calc_service.dart';
 import '../../../theme/app_tokens.dart';
+import '../concept_graphic_band.dart';
 import 'value_row.dart';
 import '../labeled_field.dart';
 
@@ -154,6 +156,12 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  ConceptGraphicBand(
+                    toolId: 'ipv4-subnet',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('ipv4-subnet'))
+                    const SizedBox(height: AppSpacing.md),
                   _formCard(context),
                   // WCAG 4.1.3 — the calculator live-recomputes on every
                   // keystroke and swaps the results/error card without moving

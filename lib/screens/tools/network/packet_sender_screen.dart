@@ -20,11 +20,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/packet_sender_service.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
 
@@ -161,6 +163,12 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  ConceptGraphicBand(
+                    toolId: 'packet-sender',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('packet-sender'))
+                    const SizedBox(height: AppSpacing.md),
                   _formCard(context),
                   if (_result != null) ...[
                     const SizedBox(height: AppSpacing.sm),

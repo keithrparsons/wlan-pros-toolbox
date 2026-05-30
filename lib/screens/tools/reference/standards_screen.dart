@@ -24,9 +24,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_select.dart';
+import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import '../network/value_row.dart';
 
@@ -264,6 +266,12 @@ class _StandardsScreenState extends State<StandardsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
+                  ConceptGraphicBand(
+                    toolId: '80211-standards',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('80211-standards'))
+                    const SizedBox(height: AppSpacing.md),
                   _introCard(context),
                   const SizedBox(height: AppSpacing.sm),
                   _filterCard(context),

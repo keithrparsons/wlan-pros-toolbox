@@ -20,11 +20,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/ping_service.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
 
@@ -158,6 +160,9 @@ class _PingScreenState extends State<PingScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  ConceptGraphicBand(toolId: 'ping', isDesktop: isDesktop),
+                  if (ToolAssets.hasGraphic('ping'))
+                    const SizedBox(height: AppSpacing.md),
                   _formCard(context),
                   if (_stats.sent > 0 || _running) ...[
                     const SizedBox(height: AppSpacing.sm),

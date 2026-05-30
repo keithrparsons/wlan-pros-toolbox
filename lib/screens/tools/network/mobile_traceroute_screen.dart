@@ -29,12 +29,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../router/app_router.dart';
 import '../../../services/network/dart_ping_icmp_backend.dart';
 import '../../../services/network/icmp_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
 
@@ -172,7 +174,7 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: _childrenForCapability(context),
+                children: _childrenForCapability(context, isDesktop),
               ),
             ),
           ),
@@ -181,10 +183,16 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
     );
   }
 
-  List<Widget> _childrenForCapability(BuildContext context) {
+  List<Widget> _childrenForCapability(BuildContext context, bool isDesktop) {
     switch (_service.tracerouteCapability) {
       case IcmpTracerouteCapability.available:
         return <Widget>[
+          ConceptGraphicBand(
+            toolId: 'mobile-traceroute',
+            isDesktop: isDesktop,
+          ),
+          if (ToolAssets.hasGraphic('mobile-traceroute'))
+            const SizedBox(height: AppSpacing.md),
           _formCard(context),
           if (_hops.isNotEmpty || _running) ...[
             const SizedBox(height: AppSpacing.sm),

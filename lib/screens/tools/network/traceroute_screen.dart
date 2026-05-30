@@ -21,10 +21,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/traceroute_service.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
 
@@ -161,7 +163,7 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: _service.isSupportedPlatform
-                    ? _desktopChildren(context)
+                    ? _desktopChildren(context, isDesktop)
                     : <Widget>[_mobileNotice(context)],
               ),
             ),
@@ -171,8 +173,11 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
     );
   }
 
-  List<Widget> _desktopChildren(BuildContext context) {
+  List<Widget> _desktopChildren(BuildContext context, bool isDesktop) {
     return <Widget>[
+      ConceptGraphicBand(toolId: 'traceroute', isDesktop: isDesktop),
+      if (ToolAssets.hasGraphic('traceroute'))
+        const SizedBox(height: AppSpacing.md),
       _formCard(context),
       if (_hops.isNotEmpty || _running) ...[
         const SizedBox(height: AppSpacing.sm),
