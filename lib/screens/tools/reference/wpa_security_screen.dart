@@ -18,13 +18,15 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../concept_graphic_band.dart';
 
-/// One row of the security-modes table. Verbatim from PWA `WPA_MODES`.
+/// One row of the security-modes table. Field data verbatim from PWA
+/// `WPA_MODES`; the verdict color is mapped to a GL-003 §8.13 status token.
 ///
-/// `statusColor` is the PWA's per-status hex carried over so the verdict reads
-/// at a glance; it is a deliberate exception to "lime is the only accent" — a
-/// reference table communicating a security verdict (do-not-deploy → recommended)
-/// is exactly the semantic-status case GL-003 §8.13 carves out. The status word
-/// always accompanies the color (never color-only), satisfying SC 1.4.1.
+/// `statusColor` is one of the four §8.13 semantic status tokens, chosen by the
+/// verdict's *meaning* (danger / warning / success / info) rather than reproducing
+/// the PWA's raw Material hues — those failed WCAG 2.2 SC 1.4.11 (3:1 non-text)
+/// as chip borders on the dark #222222 card (Vera F-01). All four §8.13 tokens
+/// clear 3:1 on surface1 with margin. The status word always accompanies the
+/// color (never color-only), satisfying SC 1.4.1.
 @immutable
 class WpaMode {
   const WpaMode({
@@ -83,8 +85,8 @@ class WpaSecurityScreen extends StatelessWidget {
 
   /// Security modes, in PWA order. Public-static for testing.
   ///
-  /// Status hexes are the PWA's verdict colors (`WPA_MODES` column 6), preserved
-  /// so the reference reads identically to the source tool.
+  /// Status colors are the GL-003 §8.13 semantic tokens, mapped from each row's
+  /// deployment verdict (see the per-row comments below).
   static const List<WpaMode> modes = <WpaMode>[
     WpaMode(
       mode: 'WEP',
@@ -92,7 +94,7 @@ class WpaSecurityScreen extends StatelessWidget {
       encryption: 'RC4 (broken)',
       keyMethod: 'Static key',
       pmf: 'No',
-      statusColor: Color(0xFFD32F2F),
+      statusColor: AppColors.statusDanger,
       status: 'Do not deploy',
     ),
     WpaMode(
@@ -101,7 +103,7 @@ class WpaSecurityScreen extends StatelessWidget {
       encryption: 'TKIP',
       keyMethod: 'PSK / 802.1X',
       pmf: 'No',
-      statusColor: Color(0xFFE64A19),
+      statusColor: AppColors.statusDanger,
       status: 'Deprecated',
     ),
     WpaMode(
@@ -110,7 +112,7 @@ class WpaSecurityScreen extends StatelessWidget {
       encryption: 'AES-CCMP (128-bit)',
       keyMethod: 'PSK passphrase',
       pmf: 'Opt',
-      statusColor: Color(0xFFF57C00),
+      statusColor: AppColors.statusWarning,
       status: 'Acceptable',
     ),
     WpaMode(
@@ -119,7 +121,7 @@ class WpaSecurityScreen extends StatelessWidget {
       encryption: 'AES-CCMP (128-bit)',
       keyMethod: 'SAE',
       pmf: 'Req',
-      statusColor: Color(0xFF2E7D32),
+      statusColor: AppColors.statusSuccess,
       status: 'Recommended',
     ),
     WpaMode(
@@ -128,7 +130,7 @@ class WpaSecurityScreen extends StatelessWidget {
       encryption: 'OWE (AES-CCMP)',
       keyMethod: 'None (auto)',
       pmf: 'Req',
-      statusColor: Color(0xFF1565C0),
+      statusColor: AppColors.statusInfo,
       status: 'Open networks',
     ),
     WpaMode(
@@ -137,7 +139,7 @@ class WpaSecurityScreen extends StatelessWidget {
       encryption: 'AES-CCMP (128-bit)',
       keyMethod: '802.1X + EAP',
       pmf: 'Opt',
-      statusColor: Color(0xFF1976D2),
+      statusColor: AppColors.statusInfo,
       status: 'Enterprise std',
     ),
     WpaMode(
@@ -146,7 +148,7 @@ class WpaSecurityScreen extends StatelessWidget {
       encryption: 'GCMP-256 (192-bit)',
       keyMethod: '802.1X + EAP',
       pmf: 'Req',
-      statusColor: Color(0xFF1A237E),
+      statusColor: AppColors.statusSuccess,
       status: 'Recommended',
     ),
   ];
@@ -426,9 +428,10 @@ class _Attr extends StatelessWidget {
   }
 }
 
-/// Verdict chip. Border + text take the PWA per-status hue; a subtle tint band
-/// uses the same hue at low alpha. The verdict word is always present, so the
-/// color is never the sole carrier of meaning (SC 1.4.1).
+/// Verdict chip. The 1px border takes the GL-003 §8.13 status token; a subtle
+/// tint band uses the same token at 12% alpha. The verdict word renders in
+/// textPrimary, so color is never the sole carrier of meaning (SC 1.4.1), and
+/// the §8.13 border clears SC 1.4.11 (3:1 non-text) on surface1.
 class _StatusChip extends StatelessWidget {
   const _StatusChip({required this.label, required this.color});
 
