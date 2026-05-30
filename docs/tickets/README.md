@@ -43,6 +43,21 @@ committing it, then the Moderate UI/diagnostic items.
 | 10 | [TICKET-010 — SMTP test + RBL check](TICKET-010-smtp-test-rbl-check.md) | Moderate | TCP banner/EHLO + DNS blocklist; reuses Port Scan + DoH |
 | 11 | [TICKET-011 — Ping trend chart](TICKET-011-ping-trend-chart.md) | Moderate | Charts existing ping data; needs one chart package |
 
+## Status — 2026-05-29
+
+TICKET-006 and TICKET-007 are **built and Vera-gated (PASS)** at commit `4cc7dea` on
+branch `feat/network-tools-tranche`. Suite green: 342 tests, `flutter analyze` clean.
+
+Vera follow-ups (non-blocking, backlog):
+- **TICKET-006:** NXDOMAIN vs NODATA vs SERVFAIL collapse into one "No records found"
+  empty state. Honest (never fabricated), but not distinct. Branch on the DoH `Status`
+  code if `basic_utils` exposes it: NXDOMAIN(3) → "Domain not found", SERVFAIL(2) →
+  error card. Else accept the conflation.
+- **TICKET-007:** shipped asset has **86** curated ports, not the 76 quoted mid-build
+  (data is clean; just reconcile the figure).
+- **Both screens:** four raw micro-spacing literals to tokenize (GL-003 §8.7); no
+  screen-level widget tests yet (service layer is covered).
+
 ## Codebase conventions every ticket follows
 
 - **Logic** lives in `lib/services/network/<name>_service.dart` (no Flutter imports).
