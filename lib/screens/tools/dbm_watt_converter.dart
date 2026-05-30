@@ -21,8 +21,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../data/tool_assets.dart';
 import '../../theme/app_tokens.dart';
 import '../../theme/app_typography.dart';
+import 'concept_graphic_band.dart';
 import 'labeled_field.dart';
 
 class DbmWattConverterScreen extends StatefulWidget {
@@ -179,6 +181,15 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      // §8.6.2 concept-graphic header band — first child, above
+                      // the converter card. Self-collapses when no graphic is
+                      // bundled (with the gap below it).
+                      ConceptGraphicBand(
+                        toolId: 'dbm-watt-converter',
+                        isDesktop: isDesktop,
+                      ),
+                      if (ToolAssets.hasGraphic('dbm-watt-converter'))
+                        const SizedBox(height: AppSpacing.md),
                       _converterCard(text, mono),
                       const SizedBox(height: AppSpacing.md),
                       _formulaCard(text, mono),

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- Link budget: signal level sloping down across a path, with a margin gap bracket at the receiving end. Single color. -->
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- received-level line falling from Tx (high, left) to Rx (lower, right) -->
+    <path d="M3 6 L17 14"/>
+    <!-- sensitivity floor (short baseline under the Rx end) -->
+    <path d="M13 20 L21 20"/>
+    <!-- margin bracket: vertical gap between Rx level and the floor -->
+    <path d="M17 14 V20"/>
+    <path d="M15.5 15.5 L17 14 L18.5 15.5"/>
+    <path d="M15.5 18.5 L17 20 L18.5 18.5"/>
+  </g>
+</svg>
