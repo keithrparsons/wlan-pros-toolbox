@@ -18,6 +18,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
 import 'package:wlan_pros_toolbox/main.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/noise_floor_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/reference/frame_exchange_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/reference/mcs_index_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/reference/signal_thresholds_screen.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
 void main() {
@@ -224,6 +227,76 @@ void main() {
         expect(find.text('Rx noise floor'), findsOneWidget);
         // Default 20 MHz / NF 7 / 20°C → thermal -100.9 dBm.
         expect(find.text('-100.9'), findsOneWidget);
+      });
+    },
+  );
+
+  testWidgets(
+    'MCS Index screen renders in a 375x900 phone viewport',
+    (tester) async {
+      // Phone-viewport smoke for the MCS reference table: it pumps, renders the
+      // default 802.11n table, and shows a known PWA cell (MCS 0 / 20 LGI = 6.5)
+      // without a RenderFlex overflow.
+      await _withViewport(tester, const Size(375, 900), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: const McsIndexScreen(),
+          ),
+        );
+        await tester.pump();
+
+        expect(find.text('802.11 standard'), findsOneWidget);
+        expect(find.text('20 LGI'), findsOneWidget);
+        expect(find.text('6.5'), findsOneWidget);
+      });
+    },
+  );
+
+  testWidgets(
+    'Signal Thresholds screen renders in a 375x900 phone viewport',
+    (tester) async {
+      // Phone-viewport smoke for the RSSI/SNR reference: it pumps, renders its
+      // section headings, and shows a known PWA cell (the -67 dBm VoIP RSSI
+      // target) without a RenderFlex overflow.
+      await _withViewport(tester, const Size(375, 900), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: const SignalThresholdsScreen(),
+          ),
+        );
+        await tester.pump();
+
+        expect(find.text('RSSI quality scale'), findsOneWidget);
+        expect(find.text('Minimum signal by application'), findsOneWidget);
+        // VoIP minimum RSSI cell, verbatim from the PWA rssi tool.
+        expect(find.text('-67 dBm'), findsOneWidget);
+      });
+    },
+  );
+
+  testWidgets(
+    'Frame Exchange screen renders in a 375x900 phone viewport',
+    (tester) async {
+      // Phone-viewport smoke for the frame-exchange reference: it pumps,
+      // renders the default Open/WPA2-PSK scenario heading and its first frame
+      // (Beacon Frame, verbatim from the PWA FX_SCENARIOS) without overflow.
+      await _withViewport(tester, const Size(375, 900), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: const FrameExchangeScreen(),
+          ),
+        );
+        await tester.pump();
+
+        expect(find.text('Frame Exchange'), findsOneWidget);
+        expect(
+          find.text('Open Network / WPA2-Personal Association'),
+          findsOneWidget,
+        );
+        expect(find.text('Beacon Frame'), findsOneWidget);
       });
     },
   );

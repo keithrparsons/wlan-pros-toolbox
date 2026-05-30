@@ -32,6 +32,14 @@ import '../screens/tools/calculators/throughput_calc_screen.dart';
 import '../screens/tools/calculators/rf_attenuation_screen.dart';
 import '../screens/tools/calculators/noise_floor_screen.dart';
 import '../screens/tools/calculators/poe_budget_screen.dart';
+import '../screens/tools/reference/wifi_channels_screen.dart';
+import '../screens/tools/reference/standards_screen.dart';
+import '../screens/tools/reference/mcs_index_screen.dart';
+import '../screens/tools/reference/signal_thresholds_screen.dart';
+import '../screens/tools/reference/wpa_security_screen.dart';
+import '../screens/tools/reference/reason_codes_screen.dart';
+import '../screens/tools/reference/frame_exchange_screen.dart';
+import '../screens/tools/reference/db_reference_screen.dart';
 import '../screens/tools/network/arp_ndp_screen.dart';
 import '../screens/tools/network/bgp_asn_screen.dart';
 import '../screens/tools/network/dns_lookup_screen.dart';
@@ -87,6 +95,16 @@ class AppRouter {
   static const String noiseFloor = '/tools/noise-floor';
   static const String poeBudget = '/tools/poe-budget';
 
+  // Reference tables (read-only lookup data, all platforms incl. web).
+  static const String wifiChannels = '/tools/wifi-channels';
+  static const String standards = '/tools/standards';
+  static const String mcsIndex = '/tools/mcs-index';
+  static const String signalThresholds = '/tools/signal-thresholds';
+  static const String wpaSecurity = '/tools/wpa-security';
+  static const String reasonCodes = '/tools/reason-codes';
+  static const String frameExchange = '/tools/frame-exchange';
+  static const String dbReference = '/tools/db-reference';
+
   // Networking category — active network tools (native-only; web shows the
   // download-the-app fallback inside each screen, so the routes are always
   // registered and never crash on web).
@@ -140,6 +158,14 @@ class AppRouter {
     rfAttenuation: (_) => const RfAttenuationScreen(),
     noiseFloor: (_) => const NoiseFloorScreen(),
     poeBudget: (_) => const PoeBudgetScreen(),
+    wifiChannels: (_) => const WifiChannelsScreen(),
+    standards: (_) => const StandardsScreen(),
+    mcsIndex: (_) => const McsIndexScreen(),
+    signalThresholds: (_) => const SignalThresholdsScreen(),
+    wpaSecurity: (_) => const WpaSecurityScreen(),
+    reasonCodes: (_) => const ReasonCodesScreen(),
+    frameExchange: (_) => const FrameExchangeScreen(),
+    dbReference: (_) => const DbReferenceScreen(),
     interfaceInfo: (_) => const InterfaceInfoScreen(),
     dnsLookup: (_) => const DnsLookupScreen(),
     portScan: (_) => const PortScanScreen(),
