@@ -17,6 +17,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
 import 'package:wlan_pros_toolbox/main.dart';
+import 'package:wlan_pros_toolbox/screens/tools/calculators/noise_floor_screen.dart';
+import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
 void main() {
   testWidgets('Home screen mounts with app title', (tester) async {
@@ -201,6 +203,28 @@ void main() {
       // edge-overflowed by ~5px on tiles with 2-line summaries. The fix adds
       // a narrow-phone breakpoint that drops tile aspect to 0.75 below 360pt.
       await _expectNoOverflowAt(tester, const Size(320, 900));
+    },
+  );
+
+  testWidgets(
+    'Noise Floor screen renders in a 375x900 phone viewport',
+    (tester) async {
+      // Phone-viewport smoke for the calculator: it pumps, renders its result
+      // rows, and shows the default 20 MHz thermal floor without overflow.
+      await _withViewport(tester, const Size(375, 900), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: const NoiseFloorScreen(),
+          ),
+        );
+        await tester.pump();
+
+        expect(find.text('Channel bandwidth'), findsOneWidget);
+        expect(find.text('Rx noise floor'), findsOneWidget);
+        // Default 20 MHz / NF 7 / 20°C → thermal -100.9 dBm.
+        expect(find.text('-100.9'), findsOneWidget);
+      });
     },
   );
 }
