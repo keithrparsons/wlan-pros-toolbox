@@ -26,6 +26,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../router/app_router.dart';
 import '../../../services/network/dart_ping_icmp_backend.dart';
 import '../../../services/network/icmp_service.dart';
@@ -33,6 +34,7 @@ import '../../../services/network/network_support.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
 
@@ -175,7 +177,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
                 children: _service.echoCapability ==
                         IcmpEchoCapability.sandboxedDesktop
                     ? <Widget>[_sandboxedDesktopCard(context)]
-                    : _availableChildren(context),
+                    : _availableChildren(context, isDesktop),
               ),
             ),
           ),
@@ -184,8 +186,11 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
     );
   }
 
-  List<Widget> _availableChildren(BuildContext context) {
+  List<Widget> _availableChildren(BuildContext context, bool isDesktop) {
     return <Widget>[
+      ConceptGraphicBand(toolId: 'icmp-ping', isDesktop: isDesktop),
+      if (ToolAssets.hasGraphic('icmp-ping'))
+        const SizedBox(height: AppSpacing.md),
       _formCard(context),
       if (_stats.sent > 0 || _running) ...[
         const SizedBox(height: AppSpacing.sm),

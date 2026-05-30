@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- ICMP ping: real ICMP echo with a live, repeating RTT series and min/avg/max/loss stats.
+       Lime = the live RTT series + the stats it produces. Distinct from `ping` by the stats series.
+       Archetype C (path / sequence) with a measured-series readout. -->
+
+  <!-- This device (left) + host (right), the echo loop drawn compact -->
+  <rect x="20" y="30" width="40" height="40" rx="4" stroke="#E5E5E5" stroke-width="1.75"/>
+  <rect x="260" y="30" width="40" height="40" rx="4" stroke="#E5E5E5" stroke-width="1.75"/>
+  <text x="40" y="84" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">device</text>
+  <text x="280" y="84" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">host</text>
+
+  <!-- Echo request out (neutral) + reply back (lime) -->
+  <path d="M62 42 Q160 24 258 42" stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" fill="none"/>
+  <path d="M252 37 L258 42 L249 46" stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M258 58 Q160 76 62 58" stroke="#A2CC3A" stroke-width="1.75" stroke-linecap="round" fill="none"/>
+  <path d="M68 53 L62 58 L71 62" stroke="#A2CC3A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+  <!-- Live RTT series: repeated echoes plotted as a small bar/point sparkline (lime = the series) -->
+  <line x1="22" y1="124" x2="200" y2="124" stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round"/>
+  <line x1="22" y1="98" x2="22" y2="124" stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round"/>
+  <polyline points="34,116 56,110 78,118 100,104 122,114 144,108 166,120 188,112"
+            stroke="#A2CC3A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <g fill="#A2CC3A">
+    <circle cx="34" cy="116" r="2"/><circle cx="56" cy="110" r="2"/><circle cx="78" cy="118" r="2"/>
+    <circle cx="100" cy="104" r="2"/><circle cx="122" cy="114" r="2"/><circle cx="144" cy="108" r="2"/>
+    <circle cx="166" cy="120" r="2"/><circle cx="188" cy="112" r="2"/>
+  </g>
+  <text x="34" y="140" fill="#9C9C9C" font-size="11" font-weight="500" font-family="DM Mono, monospace">live RTT</text>
+
+  <!-- Stats block (lime values) = what distinguishes ICMP ping from plain ping -->
+  <g font-family="DM Mono, monospace" font-size="11" font-weight="500">
+    <text x="218" y="104" fill="#9C9C9C">min 8</text>
+    <text x="218" y="118" fill="#9C9C9C">avg 14</text>
+    <text x="218" y="132" fill="#9C9C9C">max 31</text>
+    <text x="218" y="146" fill="#A2CC3A">loss 0%</text>
+  </g>
+</svg>

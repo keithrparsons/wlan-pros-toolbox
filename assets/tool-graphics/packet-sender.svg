@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- Packet sender: sending a custom TCP/UDP payload and reading the reply; lime = the sent payload. Archetype C/G. -->
+
+  <!-- sender host (left) -->
+  <rect x="18" y="58" width="26" height="34" rx="3" stroke="#E5E5E5" stroke-width="1.5"/>
+  <text x="31" y="106" fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="middle">sender</text>
+
+  <!-- custom payload block leaving (lime) -->
+  <rect x="62" y="46" width="86" height="22" rx="3" stroke="#A2CC3A" stroke-width="1.5"/>
+  <rect x="62" y="46" width="86" height="22" rx="3" fill="#A2CC3A" fill-opacity="0.08"/>
+  <text x="70" y="61" fill="#A2CC3A" font-size="10" font-weight="500" font-family="DM Mono, monospace">UDP 0x48490a</text>
+  <g stroke="#A2CC3A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="148" y1="57" x2="248" y2="57"/>
+    <path d="M242 53 L248 57 L242 61"/>
+  </g>
+  <text x="198" y="40" fill="#9C9C9C" font-size="9" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">payload &#8594;</text>
+
+  <!-- reply returning (neutral) -->
+  <g stroke="#9C9C9C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="248" y1="92" x2="62" y2="92"/>
+    <path d="M68 88 L62 92 L68 96"/>
+  </g>
+  <rect x="92" y="100" width="120" height="20" rx="3" stroke="#9C9C9C" stroke-width="1.25"/>
+  <text x="100" y="114" fill="#E5E5E5" font-size="10" font-weight="500" font-family="DM Mono, monospace">reply 0x4f4b</text>
+  <text x="150" y="134" fill="#9C9C9C" font-size="9" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">&#8592; response</text>
+
+  <!-- target host (right) -->
+  <rect x="252" y="58" width="26" height="34" rx="3" stroke="#E5E5E5" stroke-width="1.5"/>
+  <text x="265" y="106" fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="middle">host:port</text>
+
+  <!-- Header -->
+  <text x="160" y="20" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">packet sender</text>
+  <!-- Footer -->
+  <text x="160" y="150" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">custom TCP / UDP payload &#8594; reply</text>
+</svg>

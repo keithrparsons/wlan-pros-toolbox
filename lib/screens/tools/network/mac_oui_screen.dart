@@ -19,9 +19,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../services/network/mac_oui_service.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
 class MacOuiScreen extends StatefulWidget {
@@ -143,6 +145,12 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  ConceptGraphicBand(
+                    toolId: 'mac-oui-lookup',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('mac-oui-lookup'))
+                    const SizedBox(height: AppSpacing.md),
                   _formCard(context),
                   if (_loadError != null) ...[
                     const SizedBox(height: AppSpacing.sm),

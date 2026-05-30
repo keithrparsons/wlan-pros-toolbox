@@ -26,9 +26,11 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_select.dart';
+import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
 /// 802.11 standard shown in the MCS table, mirroring the PWA tab data-tab
@@ -255,6 +257,12 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      ConceptGraphicBand(
+                        toolId: 'mcs-index',
+                        isDesktop: isDesktop,
+                      ),
+                      if (ToolAssets.hasGraphic('mcs-index'))
+                        const SizedBox(height: AppSpacing.md),
                       _controlsCard(),
                       const SizedBox(height: AppSpacing.md),
                       _tableCard(text, mono),

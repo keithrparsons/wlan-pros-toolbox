@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- HTTP headers: a request returning a status line + response headers; lime = the status code. Archetype G. -->
+
+  <!-- request line (left) -->
+  <rect x="18" y="40" width="92" height="26" rx="4" stroke="#E5E5E5" stroke-width="1.5"/>
+  <text x="28" y="57" fill="#9C9C9C" font-size="11" font-weight="500" font-family="DM Mono, monospace">GET /</text>
+
+  <!-- request arrow into the response -->
+  <g stroke="#9C9C9C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="110" y1="53" x2="142" y2="53"/>
+    <path d="M136 49 L142 53 L136 57"/>
+  </g>
+
+  <!-- response: status line + header rows (right) -->
+  <rect x="146" y="32" width="156" height="100" rx="4" stroke="#E5E5E5" stroke-width="1.5"/>
+  <g font-family="DM Mono, monospace">
+    <!-- status line (matched, lime) -->
+    <rect x="146" y="32" width="156" height="22" fill="#A2CC3A" fill-opacity="0.08"/>
+    <text x="156" y="48" fill="#9C9C9C" font-size="10" font-weight="500">HTTP/2</text>
+    <text x="218" y="48" fill="#A2CC3A" font-size="13" font-weight="500">200</text>
+    <text x="244" y="48" fill="#A2CC3A" font-size="11" font-weight="500">OK</text>
+  </g>
+  <line x1="146" y1="54" x2="302" y2="54" stroke="#9C9C9C" stroke-width="1.25"/>
+  <g font-family="DM Mono, monospace">
+    <text x="156" y="70" fill="#9C9C9C" font-size="9.5" font-weight="500">content-type</text>
+    <text x="156" y="83" fill="#E5E5E5" font-size="10" font-weight="500">text/html</text>
+
+    <text x="156" y="100" fill="#9C9C9C" font-size="9.5" font-weight="500">server</text>
+    <text x="156" y="113" fill="#E5E5E5" font-size="10" font-weight="500">nginx</text>
+
+    <text x="156" y="127" fill="#9C9C9C" font-size="9.5" font-weight="500">cache-control: no-cache</text>
+  </g>
+  <g stroke="#3A3A3A" stroke-width="1">
+    <line x1="146" y1="88" x2="302" y2="88"/>
+    <line x1="146" y1="118" x2="302" y2="118"/>
+  </g>
+
+  <!-- Header -->
+  <text x="160" y="20" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">HTTP headers</text>
+  <!-- Footer -->
+  <text x="160" y="150" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">request &#8594; status + response headers</text>
+</svg>

@@ -14,11 +14,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../services/network/http_header_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
 
@@ -127,6 +129,12 @@ class _HttpHeaderScreenState extends State<HttpHeaderScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  ConceptGraphicBand(
+                    toolId: 'http-headers',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('http-headers'))
+                    const SizedBox(height: AppSpacing.md),
                   _queryCard(context),
                   const SizedBox(height: AppSpacing.sm),
                   _resultsSection(context),

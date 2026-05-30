@@ -20,8 +20,10 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../concept_graphic_band.dart';
 
 /// Coarse signal verdict used to tint a row with the §8.13 status palette.
 /// Always rendered alongside its label word, never as color alone.
@@ -190,6 +192,12 @@ class SignalThresholdsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  ConceptGraphicBand(
+                    toolId: 'signal-thresholds',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('signal-thresholds'))
+                    const SizedBox(height: AppSpacing.md),
                   _intro(context),
                   const SizedBox(height: AppSpacing.sm),
                   _signalScaleCard(context),

@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- Interface info: this device + its NIC, reading out its own network identity as a record card.
+       Lime = the active interface (the NIC port and its live address rows). Archetype G (lookup/record). -->
+
+  <!-- This device (left) -->
+  <rect x="22" y="50" width="58" height="62" rx="4" stroke="#E5E5E5" stroke-width="1.75"/>
+  <line x1="36" y1="104" x2="66" y2="104" stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round"/>
+  <text x="51" y="44" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">this device</text>
+
+  <!-- NIC port on the device edge (lime = the active interface) -->
+  <rect x="74" y="68" width="14" height="26" rx="2" fill="#A2CC3A" fill-opacity="0.08" stroke="#A2CC3A" stroke-width="2"/>
+  <text x="81" y="128" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="middle">en0</text>
+
+  <!-- Link from NIC to the record card -->
+  <line x1="88" y1="81" x2="118" y2="81" stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round"/>
+
+  <!-- Record card: the interface's own details -->
+  <rect x="118" y="34" width="180" height="92" rx="4" stroke="#E5E5E5" stroke-width="1.75"/>
+  <line x1="118" y1="52" x2="298" y2="52" stroke="#9C9C9C" stroke-width="1" opacity="0.5"/>
+  <text x="128" y="47" fill="#E5E5E5" font-size="12" font-weight="500">interface</text>
+
+  <!-- Rows: label (neutral) + value (lime, the live readout) -->
+  <g font-family="DM Mono, monospace" font-size="11" font-weight="500">
+    <text x="128" y="68" fill="#9C9C9C">IP</text>
+    <text x="290" y="68" fill="#A2CC3A" text-anchor="end">192.168.1.42</text>
+    <text x="128" y="84" fill="#9C9C9C">GW</text>
+    <text x="290" y="84" fill="#A2CC3A" text-anchor="end">192.168.1.1</text>
+    <text x="128" y="100" fill="#9C9C9C">DNS</text>
+    <text x="290" y="100" fill="#A2CC3A" text-anchor="end">1.1.1.1</text>
+    <text x="128" y="116" fill="#9C9C9C">MAC</text>
+    <text x="290" y="116" fill="#A2CC3A" text-anchor="end">a4:83:e7:1c:09:5f</text>
+  </g>
+
+  <!-- Header -->
+  <text x="160" y="150" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle">local interface details</text>
+</svg>

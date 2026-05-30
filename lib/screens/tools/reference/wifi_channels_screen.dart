@@ -19,8 +19,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../concept_graphic_band.dart';
 
 /// Which band's table is shown. 2.4 / 5 / 6 GHz — three short options, so a
 /// segmented toggle, not an AppSelect (GL-003 §8.14).
@@ -223,6 +225,12 @@ class _WifiChannelsScreenState extends State<WifiChannelsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  ConceptGraphicBand(
+                    toolId: 'wifi-channels',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('wifi-channels'))
+                    const SizedBox(height: AppSpacing.md),
                   _bandCard(context),
                   const SizedBox(height: AppSpacing.sm),
                   _tableCard(context, mono),

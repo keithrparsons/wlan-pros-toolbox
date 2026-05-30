@@ -13,9 +13,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../services/network/bgp_asn_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../theme/app_tokens.dart';
+import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'error_card.dart';
 import 'network_unavailable_view.dart';
@@ -118,6 +120,9 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  ConceptGraphicBand(toolId: 'bgp-asn', isDesktop: isDesktop),
+                  if (ToolAssets.hasGraphic('bgp-asn'))
+                    const SizedBox(height: AppSpacing.md),
                   _queryCard(context),
                   const SizedBox(height: AppSpacing.sm),
                   _resultsSection(context),
