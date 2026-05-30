@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- Distance & bearing (type A spatial): two pins on a globe-grid joined by a great-circle line;
+       a distance label and a bearing angle measured from north. Lime = the bearing arrow + distance. -->
+
+  <!-- Header -->
+  <text x="160" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">distance + bearing</text>
+
+  <!-- Curved graticule grid (great-circle context), neutral scaffold -->
+  <g stroke="#9C9C9C" stroke-width="1" fill="none" opacity="0.55">
+    <path d="M30 70 Q160 50 290 70"/>
+    <path d="M30 100 Q160 80 290 100"/>
+    <path d="M30 130 Q160 110 290 130"/>
+    <path d="M70 44 Q60 90 70 140"/>
+    <path d="M160 40 Q150 90 160 140"/>
+    <path d="M250 44 Q240 90 250 140"/>
+  </g>
+
+  <!-- Point A (start pin), left -->
+  <g>
+    <path d="M78 110 C78 100 92 100 92 110 C92 118 85 126 85 126 C85 126 78 118 78 110 Z"
+          stroke="#E5E5E5" stroke-width="1.75" fill="none" stroke-linejoin="round"/>
+    <circle cx="85" cy="110" r="3" fill="#E5E5E5"/>
+  </g>
+  <text x="85" y="142" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">A</text>
+
+  <!-- Point B (destination pin), right -->
+  <g>
+    <path d="M236 70 C236 60 250 60 250 70 C250 78 243 86 243 86 C243 86 236 78 236 70 Z"
+          stroke="#E5E5E5" stroke-width="1.75" fill="none" stroke-linejoin="round"/>
+    <circle cx="243" cy="70" r="3" fill="#E5E5E5"/>
+  </g>
+  <text x="243" y="102" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">B</text>
+
+  <!-- North reference at A -->
+  <g stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="85" y1="108" x2="85" y2="60"/>
+    <path d="M81 65 L85 60 L89 65"/>
+  </g>
+  <text x="85" y="54" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">N</text>
+
+  <!-- Bearing angle arc from north to the great-circle line (lime) -->
+  <path d="M85 84 A24 24 0 0 1 105 96" stroke="#A2CC3A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <text x="112" y="80" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="start" font-family="DM Mono, monospace">&#952;</text>
+
+  <!-- Great-circle line A -> B (lime, the bearing direction with arrowhead) -->
+  <g stroke="#A2CC3A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M88 107 Q165 78 240 73" fill="none"/>
+    <path d="M232 69 L240 73 L233 79"/>
+  </g>
+
+  <!-- Distance label along the path -->
+  <text x="164" y="76" fill="#A2CC3A" font-size="12" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">d (km)</text>
+</svg>

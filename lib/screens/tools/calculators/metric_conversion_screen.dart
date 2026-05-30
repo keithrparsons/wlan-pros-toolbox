@@ -30,9 +30,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_select.dart';
+import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
 /// Length units, mirroring the PWA mc-unit select options exactly.
@@ -214,6 +216,13 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      // §8.6.2 concept-graphic header band — first child, above
+                      // the input card. Self-collapses when no graphic is
+                      // bundled, so the 24px gap below it disappears too.
+                      ConceptGraphicBand(
+                          toolId: 'metric-conversion', isDesktop: isDesktop),
+                      if (ToolAssets.hasGraphic('metric-conversion'))
+                        const SizedBox(height: AppSpacing.md),
                       _converterCard(text, mono),
                       const SizedBox(height: AppSpacing.md),
                       _referenceCard(text, mono),
