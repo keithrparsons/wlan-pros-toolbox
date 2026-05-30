@@ -24,6 +24,14 @@ import '../screens/tools/calculators/lat_long_screen.dart';
 import '../screens/tools/calculators/dist_bearing_screen.dart';
 import '../screens/tools/calculators/midpoint_screen.dart';
 import '../screens/tools/calculators/final_point_screen.dart';
+import '../screens/tools/calculators/downtilt_coverage_screen.dart';
+import '../screens/tools/calculators/capacity_planner_screen.dart';
+import '../screens/tools/calculators/ptp_link_screen.dart';
+import '../screens/tools/calculators/ipv6_subnet_screen.dart';
+import '../screens/tools/calculators/throughput_calc_screen.dart';
+import '../screens/tools/calculators/rf_attenuation_screen.dart';
+import '../screens/tools/calculators/noise_floor_screen.dart';
+import '../screens/tools/calculators/poe_budget_screen.dart';
 import '../screens/tools/network/arp_ndp_screen.dart';
 import '../screens/tools/network/bgp_asn_screen.dart';
 import '../screens/tools/network/dns_lookup_screen.dart';
@@ -68,6 +76,16 @@ class AppRouter {
   static const String distBearing = '/tools/dist-bearing';
   static const String midpoint = '/tools/midpoint';
   static const String finalPoint = '/tools/final-point';
+  static const String downtiltCoverage = '/tools/downtilt-coverage';
+
+  // Planning Tools and Infrastructure calculators (pure math, all platforms).
+  static const String capacityPlanner = '/tools/capacity-planner';
+  static const String ptpLink = '/tools/ptp-link';
+  static const String ipv6Subnet = '/tools/ipv6-subnet';
+  static const String throughputCalc = '/tools/throughput-calc';
+  static const String rfAttenuation = '/tools/rf-attenuation';
+  static const String noiseFloor = '/tools/noise-floor';
+  static const String poeBudget = '/tools/poe-budget';
 
   // Networking category — active network tools (native-only; web shows the
   // download-the-app fallback inside each screen, so the routes are always
@@ -114,6 +132,14 @@ class AppRouter {
     distBearing: (_) => const DistBearingScreen(),
     midpoint: (_) => const MidpointScreen(),
     finalPoint: (_) => const FinalPointScreen(),
+    downtiltCoverage: (_) => const DowntiltCoverageScreen(),
+    capacityPlanner: (_) => const CapacityPlannerScreen(),
+    ptpLink: (_) => const PtpLinkScreen(),
+    ipv6Subnet: (_) => const Ipv6SubnetScreen(),
+    throughputCalc: (_) => const ThroughputCalcScreen(),
+    rfAttenuation: (_) => const RfAttenuationScreen(),
+    noiseFloor: (_) => const NoiseFloorScreen(),
+    poeBudget: (_) => const PoeBudgetScreen(),
     interfaceInfo: (_) => const InterfaceInfoScreen(),
     dnsLookup: (_) => const DnsLookupScreen(),
     portScan: (_) => const PortScanScreen(),
