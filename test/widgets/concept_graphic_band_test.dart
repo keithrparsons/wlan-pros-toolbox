@@ -81,10 +81,13 @@ void main() {
         (tester) async {
       ToolAssets.debugSetBundledAssets({'assets/tool-graphics/eirp.svg'});
 
+      // Assert the band's OWN full-width sizing box (width: double.infinity),
+      // not the intrinsic box flutter_svg adds for the now-bundled eirp.svg.
       await _pump(tester, toolId: 'eirp', isDesktop: false);
       expect(
         find.byWidgetPredicate(
-          (Widget w) => w is SizedBox && w.height == 140,
+          (Widget w) =>
+              w is SizedBox && w.height == 140 && w.width == double.infinity,
         ),
         findsOneWidget,
       );
@@ -92,7 +95,8 @@ void main() {
       await _pump(tester, toolId: 'eirp', isDesktop: true);
       expect(
         find.byWidgetPredicate(
-          (Widget w) => w is SizedBox && w.height == 160,
+          (Widget w) =>
+              w is SizedBox && w.height == 160 && w.width == double.infinity,
         ),
         findsOneWidget,
       );

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- Wavelength = c/f: one sine cycle with the lambda span dimensioned. Lime = the wavelength. -->
+
+  <!-- Center axis (zero crossing baseline) -->
+  <line x1="30" y1="74" x2="290" y2="74" stroke="#9C9C9C" stroke-width="1.25" stroke-dasharray="4 4"/>
+
+  <!-- Two full sine cycles (neutral wave), peak-to-peak around y=74, amplitude 34 -->
+  <path d="M30 74
+           C 62 16, 94 16, 126 74
+           C 158 132, 190 132, 222 74
+           C 246 30, 270 30, 290 60"
+        stroke="#E5E5E5" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+  <!-- One marked wavelength span (lime): crest-to-crest of the first cycle -->
+  <!-- crest1 ~ x=78, crest2 (next full cycle crest) ~ x=174 (bottom trough at 174 is a trough; use crest at start to start of next rise) -->
+  <!-- Use zero-crossing x=30 to next matching zero-crossing x=222 = one full cycle (rise-fall) -->
+  <g stroke="#A2CC3A" stroke-width="1.5" stroke-linecap="round">
+    <line x1="30" y1="36" x2="30" y2="118"/>
+    <line x1="222" y1="36" x2="222" y2="118"/>
+  </g>
+  <!-- lambda dimension line between the two markers -->
+  <g stroke="#A2CC3A" stroke-width="2" stroke-linecap="round">
+    <line x1="30" y1="118" x2="222" y2="118"/>
+    <path d="M38 114 L30 118 L38 122 M214 114 L222 118 L214 122"/>
+  </g>
+  <text x="126" y="136" fill="#A2CC3A" font-size="14" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">&#955;</text>
+
+  <!-- Formula header -->
+  <text x="160" y="20" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">&#955; = c / f</text>
+
+  <!-- Frequency label below -->
+  <text x="160" y="154" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle">higher freq f &#8594; shorter &#955;</text>
+</svg>

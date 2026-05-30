@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- Downtilt: mast at height h, beam centerline angled down to a target distance. Lime = the tilt angle arc. -->
+
+  <!-- Ground line -->
+  <line x1="16" y1="168" x2="190" y2="168" stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round"/>
+  <g stroke="#9C9C9C" stroke-width="1" stroke-linecap="round" opacity="0.7">
+    <path d="M24 168 l5 6 M40 168 l5 6 M168 168 l5 6 M184 168 l5 6"/>
+  </g>
+
+  <!-- Mast at left, height h -->
+  <line x1="44" y1="40" x2="44" y2="168" stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round"/>
+  <!-- Antenna head at top of mast -->
+  <rect x="38" y="36" width="12" height="20" rx="2" stroke="#E5E5E5" stroke-width="1.75"/>
+
+  <!-- Horizontal reference (dashed neutral) from antenna -->
+  <line x1="44" y1="46" x2="150" y2="46" stroke="#9C9C9C" stroke-width="1.25" stroke-dasharray="4 4"/>
+
+  <!-- Beam centerline angled down to target (lime) -->
+  <line x1="44" y1="46" x2="150" y2="168" stroke="#A2CC3A" stroke-width="2" stroke-linecap="round"/>
+  <!-- Target marker on ground -->
+  <circle cx="150" cy="168" r="3" fill="#A2CC3A"/>
+
+  <!-- Tilt angle arc between horizontal reference and beam (lime) -->
+  <path d="M84 46 A40 40 0 0 1 78 64" stroke="#A2CC3A" stroke-width="1.75" fill="none"/>
+  <text x="92" y="62" fill="#A2CC3A" font-size="13" font-weight="500">&#952;</text>
+
+  <!-- Height h dimension on the mast -->
+  <g stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round">
+    <line x1="24" y1="46" x2="24" y2="168"/>
+    <path d="M21 52 L24 46 L27 52 M21 162 L24 168 L27 162"/>
+  </g>
+  <text x="14" y="110" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle" transform="rotate(-90 14 110)">h</text>
+
+  <!-- Target distance d dimension on ground -->
+  <g stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round">
+    <line x1="44" y1="184" x2="150" y2="184"/>
+    <path d="M50 181 L44 184 L50 187 M144 181 L150 184 L144 187"/>
+  </g>
+  <text x="97" y="197" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle">distance d</text>
+
+  <!-- Header -->
+  <text x="100" y="22" fill="#E5E5E5" font-size="12" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">tilt &#952; = atan(h / d)</text>
+</svg>
