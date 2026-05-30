@@ -30,7 +30,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
+import '../concept_graphic_band.dart';
 
 /// Which band's fact sheet is shown. 2.4 / 5 / 6 GHz — three short options, so
 /// a segmented toggle, not an AppSelect (GL-003 §8.14).
@@ -217,6 +219,12 @@ class _SpectrumScreenState extends State<SpectrumScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  ConceptGraphicBand(
+                    toolId: 'spectrum',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('spectrum'))
+                    const SizedBox(height: AppSpacing.md),
                   _bandCard(context),
                   const SizedBox(height: AppSpacing.sm),
                   _factCard(context, _info(_band)),

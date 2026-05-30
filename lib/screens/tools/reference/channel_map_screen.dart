@@ -33,8 +33,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../concept_graphic_band.dart';
 
 /// Which band's bonding map is shown. 2.4 / 5 / 6 GHz — three short options, so
 /// a segmented toggle, not an AppSelect (GL-003 §8.14).
@@ -331,6 +333,12 @@ class _ChannelMapScreenState extends State<ChannelMapScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  ConceptGraphicBand(
+                    toolId: 'channel-map',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('channel-map'))
+                    const SizedBox(height: AppSpacing.md),
                   _intro(context),
                   const SizedBox(height: AppSpacing.sm),
                   _bandCard(context),

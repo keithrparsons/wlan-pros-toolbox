@@ -19,7 +19,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
+import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
 /// One reason or status code: the numeric code and its meaning. Immutable.
@@ -210,6 +212,12 @@ class _ReasonCodesScreenState extends State<ReasonCodesScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  ConceptGraphicBand(
+                    toolId: 'reason-codes',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('reason-codes'))
+                    const SizedBox(height: AppSpacing.md),
                   _introCard(context),
                   const SizedBox(height: AppSpacing.sm),
                   _searchCard(context),

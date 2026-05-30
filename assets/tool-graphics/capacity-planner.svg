@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- Capacity planner: a cluster of client devices x per-client demand, served by APs;
+       lime = the recommended AP count (the computed output). Archetype F (flow / transform). -->
+
+  <!-- Client cluster (left, neutral = the users x demand) -->
+  <g stroke="#E5E5E5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="34" cy="44" r="6"/>
+    <circle cx="58" cy="34" r="6"/>
+    <circle cx="30" cy="74" r="6"/>
+    <circle cx="56" cy="64" r="6"/>
+    <circle cx="36" cy="104" r="6"/>
+    <circle cx="60" cy="94" r="6"/>
+    <circle cx="34" cy="130" r="6"/>
+  </g>
+  <text x="44" y="152" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">users &#215; demand</text>
+
+  <!-- Demand flow arrows into the planner -->
+  <g stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round">
+    <path d="M72 52 L112 64 M104 60 L112 64 L103 67"/>
+    <path d="M74 80 L112 80 M104 76 L112 80 L104 84"/>
+    <path d="M72 108 L112 96 M103 93 L112 96 L104 100"/>
+  </g>
+
+  <!-- Recommended AP count: three APs, the count is the lime output -->
+  <!-- AP glyph = ceiling puck with coverage arc; never a router -->
+  <g stroke="#A2CC3A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <!-- AP 1 -->
+    <line x1="148" y1="48" x2="184" y2="48"/>
+    <path d="M154 48 A12 12 0 0 1 178 48"/>
+    <path d="M160 48 A6 6 0 0 1 172 48"/>
+    <!-- AP 2 -->
+    <line x1="148" y1="84" x2="184" y2="84"/>
+    <path d="M154 84 A12 12 0 0 1 178 84"/>
+    <path d="M160 84 A6 6 0 0 1 172 84"/>
+    <!-- AP 3 -->
+    <line x1="148" y1="120" x2="184" y2="120"/>
+    <path d="M154 120 A12 12 0 0 1 178 120"/>
+    <path d="M160 120 A6 6 0 0 1 172 120"/>
+  </g>
+
+  <!-- Count readout (lime = recommended AP count) -->
+  <rect x="214" y="56" width="78" height="48" rx="4" stroke="#A2CC3A" stroke-width="1.75"/>
+  <text x="253" y="88" fill="#A2CC3A" font-size="26" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">3</text>
+  <text x="253" y="120" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">APs needed</text>
+
+  <!-- Header -->
+  <text x="160" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">APs = demand / AP capacity</text>
+</svg>

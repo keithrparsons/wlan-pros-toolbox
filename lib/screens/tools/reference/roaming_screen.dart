@@ -26,8 +26,10 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../concept_graphic_band.dart';
 
 /// Coarse roaming verdict used to tint a scenario with the §8.13 status
 /// palette. Always rendered alongside its label word, never as color alone.
@@ -222,6 +224,12 @@ class RoamingScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  ConceptGraphicBand(
+                    toolId: 'roaming',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('roaming'))
+                    const SizedBox(height: AppSpacing.md),
                   _intro(context),
                   const SizedBox(height: AppSpacing.sm),
                   _protocolsCard(context),

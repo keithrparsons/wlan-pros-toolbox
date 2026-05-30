@@ -30,8 +30,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
 /// Result of a capacity computation. Null is used at the call site when any
@@ -208,6 +210,13 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      // §8.6.2 concept-graphic header band — first child, above
+                      // the input card. Self-collapses when no graphic is
+                      // bundled, so the 24px gap below it disappears too.
+                      ConceptGraphicBand(
+                          toolId: 'capacity-planner', isDesktop: isDesktop),
+                      if (ToolAssets.hasGraphic('capacity-planner'))
+                        const SizedBox(height: AppSpacing.md),
                       _inputCard(text, mono),
                       const SizedBox(height: AppSpacing.md),
                       _resultsCard(text, mono),

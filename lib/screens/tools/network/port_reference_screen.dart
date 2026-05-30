@@ -18,8 +18,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
+import '../../../data/tool_assets.dart';
 import '../../../services/network/port_reference_service.dart';
 import '../../../theme/app_tokens.dart';
+import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'value_row.dart';
 
@@ -116,6 +118,12 @@ class _PortReferenceScreenState extends State<PortReferenceScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  ConceptGraphicBand(
+                    toolId: 'port-reference',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('port-reference'))
+                    const SizedBox(height: AppSpacing.md),
                   _searchCard(context),
                   const SizedBox(height: AppSpacing.sm),
                   _resultsSection(context),

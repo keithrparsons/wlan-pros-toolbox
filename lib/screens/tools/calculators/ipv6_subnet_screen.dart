@@ -31,7 +31,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
+import '../concept_graphic_band.dart';
 import '../network/value_row.dart';
 import '../labeled_field.dart';
 
@@ -383,6 +385,13 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // §8.6.2 concept-graphic header band — first child, above
+                  // the input card. Self-collapses when no graphic is
+                  // bundled, so the 24px gap below it disappears too.
+                  ConceptGraphicBand(
+                      toolId: 'ipv6-subnet', isDesktop: isDesktop),
+                  if (ToolAssets.hasGraphic('ipv6-subnet'))
+                    const SizedBox(height: AppSpacing.md),
                   _formCard(context),
                   // WCAG 4.1.3 — the calculator live-recomputes and swaps the
                   // results/error card without moving focus. A liveRegion on

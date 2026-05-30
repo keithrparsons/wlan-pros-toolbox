@@ -20,8 +20,10 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../concept_graphic_band.dart';
 
 /// One Ethernet cable category row. Ported verbatim from PWA app.js ETH_DATA
 /// (`[cat, max_mhz, max_speed, dist_1g, dist_10g, poe, shielding, use]`).
@@ -172,6 +174,12 @@ class EthernetCableScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  ConceptGraphicBand(
+                    toolId: 'ethernet-cable',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('ethernet-cable'))
+                    const SizedBox(height: AppSpacing.md),
                   _tableCard(text, mono),
                   const SizedBox(height: AppSpacing.md),
                   _footnoteCard(text),

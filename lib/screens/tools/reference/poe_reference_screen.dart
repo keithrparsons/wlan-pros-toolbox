@@ -28,8 +28,10 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../concept_graphic_band.dart';
 
 /// One row of the PoE standards table. Field names + values mirror the PWA
 /// `POE_STDS` const exactly: [standard, name, pse_w, pd_w, pairs, classes].
@@ -151,6 +153,12 @@ class PoeReferenceScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  ConceptGraphicBand(
+                    toolId: 'poe-reference',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('poe-reference'))
+                    const SizedBox(height: AppSpacing.md),
                   _standardsCard(text, mono),
                   const SizedBox(height: AppSpacing.md),
                   _classesCard(text, mono),

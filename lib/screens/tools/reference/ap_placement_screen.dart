@@ -21,7 +21,9 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
+import '../concept_graphic_band.dart';
 
 /// One AP_RULES group: a category heading and its ordered guidance lines.
 /// Mirrors the PWA `{ cat, rules }` shape one-to-one.
@@ -140,6 +142,12 @@ class ApPlacementScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
+                  ConceptGraphicBand(
+                    toolId: 'ap-placement',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('ap-placement'))
+                    const SizedBox(height: AppSpacing.md),
                   _intro(context),
                   for (final ApRuleGroup group in kApRules) ...<Widget>[
                     const SizedBox(height: AppSpacing.sm),

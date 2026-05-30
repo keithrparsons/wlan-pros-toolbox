@@ -14,7 +14,9 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
+import '../concept_graphic_band.dart';
 
 /// One row of the security-modes table. Verbatim from PWA `WPA_MODES`.
 ///
@@ -228,6 +230,12 @@ class WpaSecurityScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  ConceptGraphicBand(
+                    toolId: 'wpa-security',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('wpa-security'))
+                    const SizedBox(height: AppSpacing.md),
                   _IntroText(text: _intro),
                   const SizedBox(height: AppSpacing.sm),
                   _SectionCard(

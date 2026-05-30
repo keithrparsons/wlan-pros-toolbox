@@ -22,8 +22,10 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../concept_graphic_band.dart';
 
 /// One row of the coax reference table. Field order mirrors the PWA
 /// COAX_DATA tuple: [name, impedance, vf, diameterMm, maxGhz, use].
@@ -121,6 +123,12 @@ class CoaxCableScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  ConceptGraphicBand(
+                    toolId: 'coax-cable',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('coax-cable'))
+                    const SizedBox(height: AppSpacing.md),
                   _tableCard(text, mono),
                   const SizedBox(height: AppSpacing.md),
                   _footnoteCard(text),
