@@ -10,9 +10,15 @@ import 'package:flutter/material.dart';
 
 import '../screens/home_screen.dart';
 import '../screens/tools/dbm_watt_converter.dart';
+import '../screens/tools/calculators/cable_loss_screen.dart';
+import '../screens/tools/calculators/downtilt_screen.dart';
+import '../screens/tools/calculators/earth_curvature_screen.dart';
 import '../screens/tools/calculators/eirp_screen.dart';
 import '../screens/tools/calculators/fresnel_screen.dart';
 import '../screens/tools/calculators/fspl_screen.dart';
+import '../screens/tools/calculators/link_budget_screen.dart';
+import '../screens/tools/calculators/rain_fade_screen.dart';
+import '../screens/tools/calculators/wavelength_screen.dart';
 import '../screens/tools/network/arp_ndp_screen.dart';
 import '../screens/tools/network/bgp_asn_screen.dart';
 import '../screens/tools/network/dns_lookup_screen.dart';
@@ -44,6 +50,12 @@ class AppRouter {
   static const String fspl = '/tools/fspl';
   static const String eirp = '/tools/eirp';
   static const String fresnel = '/tools/fresnel';
+  static const String cableLoss = '/tools/cable-loss';
+  static const String linkBudget = '/tools/link-budget';
+  static const String wavelength = '/tools/wavelength';
+  static const String downtilt = '/tools/downtilt';
+  static const String earthCurvature = '/tools/earth-curvature';
+  static const String rainFade = '/tools/rain-fade';
 
   // Networking category — active network tools (native-only; web shows the
   // download-the-app fallback inside each screen, so the routes are always
@@ -79,6 +91,12 @@ class AppRouter {
     fspl: (_) => const FsplScreen(),
     eirp: (_) => const EirpScreen(),
     fresnel: (_) => const FresnelScreen(),
+    cableLoss: (_) => const CableLossScreen(),
+    linkBudget: (_) => const LinkBudgetScreen(),
+    wavelength: (_) => const WavelengthScreen(),
+    downtilt: (_) => const DowntiltScreen(),
+    earthCurvature: (_) => const EarthCurvatureScreen(),
+    rainFade: (_) => const RainFadeScreen(),
     interfaceInfo: (_) => const InterfaceInfoScreen(),
     dnsLookup: (_) => const DnsLookupScreen(),
     portScan: (_) => const PortScanScreen(),
