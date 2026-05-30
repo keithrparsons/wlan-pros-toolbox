@@ -5,7 +5,9 @@
 // the disabled affordance is the message).
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
+import '../data/tool_assets.dart';
 import '../data/tool_catalog.dart';
 import '../theme/app_tokens.dart';
 
@@ -131,15 +133,40 @@ class _ToolRowState extends State<_ToolRow> {
                 Container(
                   width: 40,
                   height: 40,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: AppColors.surface2,
                     borderRadius: BorderRadius.circular(AppRadius.control),
                   ),
-                  child: Icon(
-                    live ? Icons.bolt : Icons.lock_clock_outlined,
-                    color: live ? AppColors.primary : AppColors.textTertiary,
-                    size: 20,
-                  ),
+                  // Per-tool Tier-2 icon (GL-003 §8.6.1): a single-color SVG
+                  // tinted to the row's foreground via BlendMode.srcIn. Live
+                  // rows render the tool's own glyph in lime; non-live rows show
+                  // the lock. Falls back to Icons.bolt only if the icon SVG was
+                  // not bundled for this tool id, so a missing asset never shows
+                  // a broken box.
+                  child: !live
+                      ? Icon(
+                          Icons.lock_clock_outlined,
+                          color: AppColors.textTertiary,
+                          size: 20,
+                        )
+                      : ToolAssets.hasIcon(widget.tool.id)
+                          ? SvgPicture.asset(
+                              ToolAssets.iconPath(widget.tool.id),
+                              width: 20,
+                              height: 20,
+                              colorFilter: const ColorFilter.mode(
+                                AppColors.primary,
+                                BlendMode.srcIn,
+                              ),
+                              excludeFromSemantics: true,
+                              placeholderBuilder: (_) => const SizedBox.shrink(),
+                            )
+                          : Icon(
+                              Icons.bolt,
+                              color: AppColors.primary,
+                              size: 20,
+                            ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
