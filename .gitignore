@@ -4,6 +4,15 @@
 *.pyc
 *.swp
 .DS_Store
+
+# --- spike/iperf3-ffi: vendored upstream source + build artifacts (do NOT commit) ---
+# We commit only third_party/iperf3/fetch_and_build.sh + README; everything it
+# downloads/extracts/compiles is reproducible and stays out of git.
+third_party/iperf3/iperf-*/
+third_party/iperf3/*.tar.gz
+third_party/iperf3/*.a
+third_party/iperf3/*.dylib
+third_party/iperf3/build/
 .atom/
 .build/
 .buildlog/
