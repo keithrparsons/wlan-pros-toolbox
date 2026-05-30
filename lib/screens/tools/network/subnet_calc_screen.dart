@@ -155,12 +155,23 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _formCard(context),
+                  // WCAG 4.1.3 — the calculator live-recomputes on every
+                  // keystroke and swaps the results/error card without moving
+                  // focus, so a screen reader hears nothing on its own. A
+                  // liveRegion on the results/error subtree lets the framework
+                  // announce the change AND debounce rapid keystroke recomputes
+                  // (vs. a per-keystroke sendAnnouncement, which machine-guns
+                  // the SR). The form fields carry their own label semantics via
+                  // LabeledField in a separate subtree, so there is no
+                  // double-announcement here.
                   if (_result != null) ...[
                     const SizedBox(height: AppSpacing.sm),
-                    if (_result!.isValid)
-                      _resultsCard(context, _result!)
-                    else
-                      _errorCard(context, _result!.error!),
+                    Semantics(
+                      liveRegion: true,
+                      child: _result!.isValid
+                          ? _resultsCard(context, _result!)
+                          : _errorCard(context, _result!.error!),
+                    ),
                   ],
                 ],
               ),

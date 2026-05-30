@@ -260,9 +260,18 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
           ),
           if (_inputError != null) ...[
             const SizedBox(height: AppSpacing.sm),
-            Text(
-              _inputError!,
-              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            // WCAG 4.1.3 — the synchronous validation failures (bad port, bad
+            // hex payload) return before the async send announcement, so the
+            // error text carries its own live region. Only the validation path
+            // populates _inputError; the async path clears it, so there is no
+            // double-announcement against the _send() sendAnnouncement block.
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                _inputError!,
+                style:
+                    text.labelMedium?.copyWith(color: AppColors.textTertiary),
+              ),
             ),
           ],
           const SizedBox(height: AppSpacing.md),
