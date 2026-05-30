@@ -10,6 +10,9 @@ import 'package:flutter/material.dart';
 
 import '../screens/home_screen.dart';
 import '../screens/tools/dbm_watt_converter.dart';
+import '../screens/tools/calculators/eirp_screen.dart';
+import '../screens/tools/calculators/fresnel_screen.dart';
+import '../screens/tools/calculators/fspl_screen.dart';
 import '../screens/tools/network/arp_ndp_screen.dart';
 import '../screens/tools/network/bgp_asn_screen.dart';
 import '../screens/tools/network/dns_lookup_screen.dart';
@@ -31,6 +34,12 @@ class AppRouter {
 
   static const String home = '/';
   static const String dbmWatt = '/tools/dbm-watt';
+
+  // RF Calculators category — pure-math tools (no network, all platforms incl.
+  // web). Formulas mirror the RF Tools PWA (www/app.js) to the decimal.
+  static const String fspl = '/tools/fspl';
+  static const String eirp = '/tools/eirp';
+  static const String fresnel = '/tools/fresnel';
 
   // Networking category — active network tools (native-only; web shows the
   // download-the-app fallback inside each screen, so the routes are always
@@ -56,6 +65,9 @@ class AppRouter {
   static final Map<String, WidgetBuilder> routes = <String, WidgetBuilder>{
     home: (_) => const HomeScreen(),
     dbmWatt: (_) => const DbmWattConverterScreen(),
+    fspl: (_) => const FsplScreen(),
+    eirp: (_) => const EirpScreen(),
+    fresnel: (_) => const FresnelScreen(),
     interfaceInfo: (_) => const InterfaceInfoScreen(),
     dnsLookup: (_) => const DnsLookupScreen(),
     portScan: (_) => const PortScanScreen(),
