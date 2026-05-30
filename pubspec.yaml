@@ -97,6 +97,14 @@ flutter:
     - assets/fonts/IBMPlexSans-Bold.ttf
     - assets/fonts/DMMono-Regular.ttf
     - assets/fonts/DMMono-Medium.ttf
+    # Bundled IEEE OUI / vendor table for the MAC Vendor Lookup tool
+    # (TICKET-002). Trimmed MA-L/MA-M/MA-S registries; loaded + parsed once and
+    # cached. Source + retrieval date documented in the asset header.
+    - assets/oui/oui_table.tsv
+    # Curated well-known/registered TCP/UDP port reference for the Well-Known
+    # Ports tool (TICKET-007). A field-relevant subset of the IANA registry,
+    # loaded + indexed once at startup. Source noted in the asset's _meta block.
+    - assets/ports/well_known_ports.json
 
   # Original commented-out scaffold examples removed for clarity.
 

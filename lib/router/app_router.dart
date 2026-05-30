@@ -20,10 +20,14 @@ import '../screens/tools/network/http_header_screen.dart';
 import '../screens/tools/network/interface_info_screen.dart';
 import '../screens/tools/network/icmp_ping_screen.dart';
 import '../screens/tools/network/ip_geo_screen.dart';
+import '../screens/tools/network/mac_oui_screen.dart';
 import '../screens/tools/network/mobile_traceroute_screen.dart';
+import '../screens/tools/network/packet_sender_screen.dart';
 import '../screens/tools/network/ping_screen.dart';
 import '../screens/tools/network/ping_sweep_screen.dart';
+import '../screens/tools/network/port_reference_screen.dart';
 import '../screens/tools/network/port_scan_screen.dart';
+import '../screens/tools/network/subnet_calc_screen.dart';
 import '../screens/tools/network/ssl_inspect_screen.dart';
 import '../screens/tools/network/traceroute_screen.dart';
 import '../screens/tools/network/wake_on_lan_screen.dart';
@@ -59,6 +63,13 @@ class AppRouter {
   static const String arpNdp = '/tools/arp-ndp';
   static const String bgpAsn = '/tools/bgp-asn';
   static const String ipGeo = '/tools/ip-geo';
+  static const String macOui = '/tools/mac-oui';
+  static const String packetSender = '/tools/packet-sender';
+  static const String ipv4Subnet = '/tools/ipv4-subnet';
+
+  // Quick Reference category — offline lookup tables (bundled assets, all
+  // platforms incl. web).
+  static const String portReference = '/tools/port-reference';
 
   /// Map of static, argument-less routes. Categories use MaterialPageRoute
   /// directly because each category screen takes a typed `ToolCategory`.
@@ -83,6 +94,10 @@ class AppRouter {
     arpNdp: (_) => const ArpNdpScreen(),
     bgpAsn: (_) => const BgpAsnScreen(),
     ipGeo: (_) => const IpGeoScreen(),
+    macOui: (_) => const MacOuiScreen(),
+    packetSender: (_) => const PacketSenderScreen(),
+    ipv4Subnet: (_) => const SubnetCalcScreen(),
+    portReference: (_) => const PortReferenceScreen(),
   };
 
   /// Fallback for any unregistered route. Sends the user back to home rather

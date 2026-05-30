@@ -1,11 +1,20 @@
-# Implementation Tickets — Network Toolbox "Do-First" Shortlist
+# Implementation Tickets — Network Toolbox + NetScanTools Pro Feature Gap
 
-Source: `myPKA/Deliverables/2026-05-29-network-toolbox-comparison/brief.md`
-(Pax competitor gap analysis, Network Toolbox vs WLAN Pros Toolbox).
+Sources:
+- `myPKA/Deliverables/2026-05-29-network-toolbox-comparison/brief.md`
+  (Pax: Network Toolbox vs WLAN Pros Toolbox) — TICKET-001..005.
+- `myPKA/Deliverables/2026-05-29-netscantools-pro-feature-map/brief.md`
+  (Pax: NetScanTools Pro vs WLAN Pros Toolbox) — TICKET-006..011.
 
-These five tickets are the high-value / low-to-moderate-difficulty features that
-Network Toolbox ships and we do not. They close the "show me what's on this
-network" gap that a Wi-Fi pro reaches for first.
+The first five tickets close the "show me what's on this network" gap a Wi-Fi pro
+reaches for first. Tickets 006-011 are the NetScanTools Pro features Keith approved
+for the commit list (2026-05-29). Note overlap: the NetScanTools review also surfaced
+the **MAC/OUI lookup** and **IPv4 subnet calculator** as wins — those were already
+captured as TICKET-002 and TICKET-003, so they are not duplicated.
+
+Keith's directive on 006-011: build all of them; remove any that prove too hard or
+impossible (the SNMP item in particular is library-gated by an explicit spike). Never
+ship a simulated/empty tool in place of one that cannot be made to work.
 
 ## Recommended build order
 
@@ -19,6 +28,20 @@ lookup (TICKET-002) feeds the LAN scanner's vendor column, so build it first.
 | 3 | [TICKET-005 — Packet sender (TCP/UDP)](TICKET-005-packet-sender-tcp-udp.md) | Easy | Pure-Dart sockets, no native channel |
 | 4 | [TICKET-001 — LAN / network scanner](TICKET-001-lan-network-scanner.md) | Moderate | Reuses Ping Sweep + ARP/NDP + OUI |
 | 5 | [TICKET-004 — Bonjour / mDNS discovery](TICKET-004-bonjour-mdns-discovery.md) | Moderate | Native channel + iOS Local Network permission |
+
+## NetScanTools Pro tranche (TICKET-006..011, approved 2026-05-29)
+
+Suggested order: do the Easy reference/DNS work first, then spike the UDP pair before
+committing it, then the Moderate UI/diagnostic items.
+
+| # | Ticket | Difficulty | Notes |
+|---|--------|-----------|-------|
+| 6 | [TICKET-006 — DNS advanced records](TICKET-006-dns-advanced-records.md) | Easy | Extends shipped DoH resolver (SPF/SRV/CAA/PTR) |
+| 7 | [TICKET-007 — Well-known ports reference](TICKET-007-well-known-ports-reference.md) | Easy | Offline asset + search; pairs with Port Scan |
+| 8 | [TICKET-009 — NTP query](TICKET-009-ntp-query.md) | Moderate | UDP/123, hand-rollable; relevant to 802.1X clock skew |
+| 9 | [TICKET-008 — SNMP get / walk](TICKET-008-snmp-get-walk.md) | Moderate — **spike-gated** | UDP/161; gated on a usable Dart SNMP/BER package |
+| 10 | [TICKET-010 — SMTP test + RBL check](TICKET-010-smtp-test-rbl-check.md) | Moderate | TCP banner/EHLO + DNS blocklist; reuses Port Scan + DoH |
+| 11 | [TICKET-011 — Ping trend chart](TICKET-011-ping-trend-chart.md) | Moderate | Charts existing ping data; needs one chart package |
 
 ## Codebase conventions every ticket follows
 

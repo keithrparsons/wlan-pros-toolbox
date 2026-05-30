@@ -135,5 +135,186 @@ void main() {
       expect(DnsRecordType.ptr.label, 'PTR (rDNS)');
       expect(DnsRecordType.mx.rrType, RRecordType.MX);
     });
+
+    test('advanced types carry labels and the right wire type', () {
+      expect(DnsRecordType.srv.label, 'SRV');
+      expect(DnsRecordType.caa.label, 'CAA');
+      expect(DnsRecordType.spf.label, 'SPF');
+      expect(DnsRecordType.srv.rrType, RRecordType.SRV);
+      expect(DnsRecordType.caa.rrType, RRecordType.CAA);
+      // SPF is queried as TXT (RFC 7208), not the deprecated type-99.
+      expect(DnsRecordType.spf.rrType, RRecordType.TXT);
+    });
+  });
+
+  group('SRV parsing', () {
+    test('parses priority/weight/port/target from wire form', () {
+      final SrvData? srv = SrvData.parse('10 60 5060 sipserver.example.com.');
+      expect(srv, isNotNull);
+      expect(srv!.priority, 10);
+      expect(srv.weight, 60);
+      expect(srv.port, 5060);
+      expect(srv.target, 'sipserver.example.com.');
+      expect(srv.display, contains('sipserver.example.com.:5060'));
+      expect(srv.display, contains('prio 10'));
+      expect(srv.display, contains('weight 60'));
+    });
+
+    test('tolerates extra whitespace between fields', () {
+      final SrvData? srv = SrvData.parse('  0   5   443    host.tld  ');
+      expect(srv, isNotNull);
+      expect(srv!.port, 443);
+      expect(srv.target, 'host.tld');
+    });
+
+    test('rejects malformed SRV data', () {
+      expect(SrvData.parse('10 60 5060'), isNull); // missing target
+      expect(SrvData.parse('a b c d'), isNull); // non-numeric
+      expect(SrvData.parse(''), isNull);
+    });
+
+    test('end-to-end SRV lookup keeps the wire data on the record', () async {
+      final DnsLookupService svc = DnsLookupService(
+        resolver: (name, type, {required provider}) async => <RRecord>[
+          RRecord(
+            name: '_sip._tcp.example.com',
+            rType: 33,
+            ttl: 120,
+            data: '10 60 5060 sipserver.example.com.',
+          ),
+        ],
+      );
+      final DnsLookupResult r = await svc.lookup(
+        rawQuery: '_sip._tcp.example.com',
+        type: DnsRecordType.srv,
+      );
+      expect(r.isError, isFalse);
+      expect(r.records.single.type, 'SRV');
+      expect(r.records.single.ttl, 120);
+      expect(SrvData.parse(r.records.single.data)!.port, 5060);
+    });
+  });
+
+  group('CAA parsing', () {
+    test('parses flags/tag/value with a quoted value', () {
+      final CaaData? caa = CaaData.parse('0 issue "letsencrypt.org"');
+      expect(caa, isNotNull);
+      expect(caa!.flags, 0);
+      expect(caa.tag, 'issue');
+      expect(caa.value, 'letsencrypt.org');
+      expect(caa.display, 'issue "letsencrypt.org"  (flags 0)');
+    });
+
+    test('parses a critical (flag 128) iodef record', () {
+      final CaaData? caa =
+          CaaData.parse('128 iodef "mailto:security@example.com"');
+      expect(caa, isNotNull);
+      expect(caa!.flags, 128);
+      expect(caa.tag, 'iodef');
+      expect(caa.value, 'mailto:security@example.com');
+    });
+
+    test('tolerates an unquoted value', () {
+      final CaaData? caa = CaaData.parse('0 issuewild ;');
+      expect(caa, isNotNull);
+      expect(caa!.tag, 'issuewild');
+    });
+
+    test('rejects malformed CAA data', () {
+      expect(CaaData.parse('issue "letsencrypt.org"'), isNull); // no flags int
+      expect(CaaData.parse(''), isNull);
+    });
+
+    test('end-to-end CAA lookup labels the row CAA', () async {
+      final DnsLookupService svc = DnsLookupService(
+        resolver: (name, type, {required provider}) async => <RRecord>[
+          RRecord(
+            name: 'example.com',
+            rType: 257,
+            ttl: 3600,
+            data: '0 issue "letsencrypt.org"',
+          ),
+        ],
+      );
+      final DnsLookupResult r = await svc.lookup(
+        rawQuery: 'example.com',
+        type: DnsRecordType.caa,
+      );
+      expect(r.records.single.type, 'CAA');
+      expect(CaaData.parse(r.records.single.data)!.tag, 'issue');
+    });
+  });
+
+  group('SPF (read from TXT)', () {
+    test('SPF query targets TXT and keeps only the v=spf1 line', () async {
+      RRecordType? wireType;
+      final DnsLookupService svc = DnsLookupService(
+        resolver: (name, type, {required provider}) async {
+          wireType = type;
+          return <RRecord>[
+            RRecord(
+              name: 'example.com',
+              rType: 16,
+              ttl: 300,
+              data: '"google-site-verification=abc123"',
+            ),
+            RRecord(
+              name: 'example.com',
+              rType: 16,
+              ttl: 300,
+              data: '"v=spf1 include:_spf.google.com ~all"',
+            ),
+          ];
+        },
+      );
+      final DnsLookupResult r = await svc.lookup(
+        rawQuery: 'example.com',
+        type: DnsRecordType.spf,
+      );
+      // Queried as TXT on the wire.
+      expect(wireType, RRecordType.TXT);
+      // Only the SPF policy survives the filter, unquoted, labeled SPF.
+      expect(r.records.length, 1);
+      expect(r.records.single.type, 'SPF');
+      expect(r.records.single.data, 'v=spf1 include:_spf.google.com ~all');
+    });
+
+    test('no SPF policy among TXT records → empty state, not error', () async {
+      final DnsLookupService svc = DnsLookupService(
+        resolver: (name, type, {required provider}) async => <RRecord>[
+          RRecord(
+            name: 'example.com',
+            rType: 16,
+            ttl: 300,
+            data: '"docusign=xyz"',
+          ),
+        ],
+      );
+      final DnsLookupResult r = await svc.lookup(
+        rawQuery: 'example.com',
+        type: DnsRecordType.spf,
+      );
+      expect(r.isError, isFalse);
+      expect(r.isEmpty, isTrue);
+    });
+
+    test('joins multi-chunk quoted TXT into one SPF string', () async {
+      final DnsLookupService svc = DnsLookupService(
+        resolver: (name, type, {required provider}) async => <RRecord>[
+          RRecord(
+            name: 'example.com',
+            rType: 16,
+            ttl: 300,
+            data: '"v=spf1 include:a.example " "include:b.example ~all"',
+          ),
+        ],
+      );
+      final DnsLookupResult r = await svc.lookup(
+        rawQuery: 'example.com',
+        type: DnsRecordType.spf,
+      );
+      expect(r.records.single.data,
+          'v=spf1 include:a.example include:b.example ~all');
+    });
   });
 }

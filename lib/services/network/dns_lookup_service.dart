@@ -29,8 +29,9 @@
 import 'package:basic_utils/basic_utils.dart';
 
 /// DNS record types this tool can query. Mirrors the HE.NET match target
-/// (brief §4): SOA, NS, A, AAAA, MX, TXT, plus PTR (rDNS).
-enum DnsRecordType { a, aaaa, mx, txt, ns, soa, ptr }
+/// (brief §4): SOA, NS, A, AAAA, MX, TXT, plus PTR (rDNS). Extended for the
+/// advanced-records pass with SPF (read from TXT), SRV, and CAA.
+enum DnsRecordType { a, aaaa, mx, txt, ns, soa, ptr, srv, caa, spf }
 
 extension DnsRecordTypeLabel on DnsRecordType {
   /// Human label for the UI selector.
@@ -50,10 +51,20 @@ extension DnsRecordTypeLabel on DnsRecordType {
         return 'SOA';
       case DnsRecordType.ptr:
         return 'PTR (rDNS)';
+      case DnsRecordType.srv:
+        return 'SRV';
+      case DnsRecordType.caa:
+        return 'CAA';
+      case DnsRecordType.spf:
+        return 'SPF';
     }
   }
 
-  /// The `basic_utils` enum value for this type.
+  /// The `basic_utils` enum value used on the wire for this type.
+  ///
+  /// SPF is not its own DNS query: RFC 7208 deprecated the type-99 SPF record,
+  /// and modern SPF policy lives in a TXT record whose value starts with
+  /// `v=spf1`. So SPF queries TXT and the service filters for the policy line.
   RRecordType get rrType {
     switch (this) {
       case DnsRecordType.a:
@@ -70,8 +81,85 @@ extension DnsRecordTypeLabel on DnsRecordType {
         return RRecordType.SOA;
       case DnsRecordType.ptr:
         return RRecordType.PTR;
+      case DnsRecordType.srv:
+        return RRecordType.SRV;
+      case DnsRecordType.caa:
+        return RRecordType.CAA;
+      case DnsRecordType.spf:
+        return RRecordType.TXT;
     }
   }
+}
+
+/// Parsed fields of an SRV record (`_service._proto.name` → host:port).
+/// RFC 2782 wire form in the resolver's `data` is
+/// `<priority> <weight> <port> <target>`.
+class SrvData {
+  const SrvData({
+    required this.priority,
+    required this.weight,
+    required this.port,
+    required this.target,
+  });
+
+  final int priority;
+  final int weight;
+  final int port;
+  final String target;
+
+  /// Parse the resolver `data` string. Returns null if it is not the expected
+  /// four-field form. The target's trailing root dot is preserved as the
+  /// resolver returns it (callers can trim for display).
+  static SrvData? parse(String data) {
+    final List<String> parts =
+        data.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    if (parts.length != 4) return null;
+    final int? priority = int.tryParse(parts[0]);
+    final int? weight = int.tryParse(parts[1]);
+    final int? port = int.tryParse(parts[2]);
+    if (priority == null || weight == null || port == null) return null;
+    return SrvData(
+      priority: priority,
+      weight: weight,
+      port: port,
+      target: parts[3],
+    );
+  }
+
+  /// Compact one-line display: `host:port  (prio P, weight W)`.
+  String get display => '$target:$port  (prio $priority, weight $weight)';
+}
+
+/// Parsed fields of a CAA record (RFC 8659). Wire form in the resolver's
+/// `data` is `<flags> <tag> "<value>"`, e.g. `0 issue "letsencrypt.org"`.
+class CaaData {
+  const CaaData({
+    required this.flags,
+    required this.tag,
+    required this.value,
+  });
+
+  final int flags;
+  final String tag;
+  final String value;
+
+  /// Parse the resolver `data` string. Returns null if it is not the expected
+  /// `flags tag "value"` form. The quoted value is unquoted.
+  static CaaData? parse(String data) {
+    final String trimmed = data.trim();
+    final Match? m = RegExp(r'^(\d+)\s+(\S+)\s+"?(.*?)"?$').firstMatch(trimmed);
+    if (m == null) return null;
+    final int? flags = int.tryParse(m.group(1)!);
+    if (flags == null) return null;
+    return CaaData(
+      flags: flags,
+      tag: m.group(2)!,
+      value: m.group(3)!,
+    );
+  }
+
+  /// Compact one-line display: `tag "value"  (flags F)`.
+  String get display => '$tag "$value"  (flags $flags)';
 }
 
 /// Which public DoH resolver to query. Failover target if one is blocked.
@@ -233,13 +321,36 @@ class DnsLookupService {
         );
       }
 
-      final List<DnsRecord> records = raw
+      // SPF is read from TXT (RFC 7208). Keep only the SPF policy line(s) so a
+      // domain with unrelated TXT records (verification tokens, DKIM, etc.)
+      // does not pollute the SPF view. An SPF policy is a TXT value starting
+      // with `v=spf1`.
+      Iterable<RRecord> source = raw;
+      if (type == DnsRecordType.spf) {
+        source = raw.where((RRecord r) => _isSpfTxt(r.data));
+        if (source.isEmpty) {
+          // Resolved a TXT set, but none of it was SPF: that is the empty
+          // state for an SPF query, not an error.
+          return DnsLookupResult.success(
+            records: const <DnsRecord>[],
+            queriedName: queryName,
+            type: type,
+            resolver: resolver,
+          );
+        }
+      }
+
+      final List<DnsRecord> records = source
           .map(
             (RRecord r) => DnsRecord(
-              type: _recordTypeLabel(r.rType),
+              // For an SPF query the wire type is TXT; label it SPF so the row
+              // reads true to what the user asked for.
+              type: type == DnsRecordType.spf
+                  ? 'SPF'
+                  : _recordTypeLabel(r.rType),
               name: r.name,
               ttl: r.ttl,
-              data: r.data,
+              data: type == DnsRecordType.spf ? _unquoteTxt(r.data) : r.data,
             ),
           )
           .toList(growable: false);
@@ -279,9 +390,31 @@ class DnsLookupService {
         return 'TXT';
       case 28:
         return 'AAAA';
+      case 33:
+        return 'SRV';
+      case 99:
+        return 'SPF';
+      case 257:
+        return 'CAA';
       default:
         return 'TYPE$code';
     }
+  }
+
+  /// True when a TXT value carries an SPF policy (`v=spf1 ...`), case- and
+  /// quote-insensitive.
+  static bool _isSpfTxt(String txt) =>
+      _unquoteTxt(txt).trimLeft().toLowerCase().startsWith('v=spf1');
+
+  /// DoH JSON returns TXT values wrapped in double quotes (and long records
+  /// split into multiple quoted chunks). Strip the wrapping quotes and join
+  /// adjacent chunks so the SPF policy reads as one string.
+  static String _unquoteTxt(String txt) {
+    final String t = txt.trim();
+    if (!t.contains('"')) return t;
+    final Iterable<Match> chunks = RegExp(r'"([^"]*)"').allMatches(t);
+    if (chunks.isEmpty) return t;
+    return chunks.map((m) => m.group(1)!).join();
   }
 
   static String _friendlyError(Object e) {

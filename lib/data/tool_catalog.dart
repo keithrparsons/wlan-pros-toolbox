@@ -127,7 +127,8 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
       ToolEntry(
         id: 'dns-lookup',
         title: 'DNS Lookup',
-        description: 'A, AAAA, MX, TXT, NS, SOA, PTR over DNS-over-HTTPS',
+        description:
+            'A, AAAA, MX, TXT, NS, SOA, PTR, SRV, CAA, SPF over DNS-over-HTTPS',
         routeName: '/tools/dns-lookup',
         isLive: true,
       ),
@@ -229,10 +230,26 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         isLive: true,
       ),
       ToolEntry(
+        id: 'mac-oui-lookup',
+        title: 'MAC Vendor Lookup',
+        description:
+            'MAC → vendor from a bundled IEEE OUI table, fully offline',
+        routeName: '/tools/mac-oui',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'packet-sender',
+        title: 'Packet Sender',
+        description: 'Send a custom TCP/UDP payload and read the reply',
+        routeName: '/tools/packet-sender',
+        isLive: true,
+      ),
+      ToolEntry(
         id: 'ipv4-subnet',
         title: 'IP Subnetting (IPv4)',
-        description: 'Subnet math and CIDR breakdown',
-        routeName: '',
+        description: 'Network, broadcast, host range, mask ⇄ prefix, CIDR math',
+        routeName: '/tools/ipv4-subnet',
+        isLive: true,
       ),
     ],
   ),
@@ -299,10 +316,12 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
     icon: Icons.menu_book_outlined,
     tools: <ToolEntry>[
       ToolEntry(
-        id: 'well-known-ports',
+        id: 'port-reference',
         title: 'Well-Known Ports',
-        description: 'TCP / UDP common ports lookup',
-        routeName: '',
+        description:
+            'Search common TCP/UDP ports by number or service name — offline',
+        routeName: '/tools/port-reference',
+        isLive: true,
       ),
     ],
   ),

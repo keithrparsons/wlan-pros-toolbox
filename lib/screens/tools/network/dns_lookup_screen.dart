@@ -344,7 +344,7 @@ class _RecordsCard extends StatelessWidget {
                   ),
                   Expanded(
                     child: SelectableText(
-                      rec.data,
+                      _displayData(rec),
                       style: mono.inlineCode.copyWith(
                         color: AppColors.textPrimary,
                       ),
@@ -368,6 +368,19 @@ class _RecordsCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Render the record payload. SRV and CAA carry structured wire data, so
+/// parse them into a readable one-liner; everything else shows the raw value.
+String _displayData(DnsRecord rec) {
+  if (rec.type == 'SRV') {
+    final SrvData? srv = SrvData.parse(rec.data);
+    if (srv != null) return srv.display;
+  } else if (rec.type == 'CAA') {
+    final CaaData? caa = CaaData.parse(rec.data);
+    if (caa != null) return caa.display;
+  }
+  return rec.data;
 }
 
 class _MessageCard extends StatelessWidget {
