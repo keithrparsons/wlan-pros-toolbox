@@ -24,8 +24,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
 /// Antenna height input units, mirroring the PWA dt-height-unit select.
@@ -172,6 +174,13 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      // §8.6.2 concept-graphic header band — first child, above
+                      // the input card. Self-collapses when no graphic is
+                      // bundled, so the 24px gap below it disappears too.
+                      ConceptGraphicBand(
+                          toolId: 'downtilt', isDesktop: isDesktop),
+                      if (ToolAssets.hasGraphic('downtilt'))
+                        const SizedBox(height: AppSpacing.md),
                       _inputCard(text, mono),
                       const SizedBox(height: AppSpacing.md),
                       _formulaCard(text, mono),
