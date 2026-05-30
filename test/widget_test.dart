@@ -18,8 +18,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
 import 'package:wlan_pros_toolbox/main.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/noise_floor_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/reference/ap_placement_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/reference/ethernet_pinout_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/frame_exchange_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/mcs_index_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/reference/roaming_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/signal_thresholds_screen.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
@@ -297,6 +300,83 @@ void main() {
           findsOneWidget,
         );
         expect(find.text('Beacon Frame'), findsOneWidget);
+      });
+    },
+  );
+
+  testWidgets(
+    'AP Placement screen renders in a 375x900 phone viewport',
+    (tester) async {
+      // Phone-viewport smoke for the AP-placement reference: it pumps, renders
+      // its rule-group headings and a known PWA guidance line (the 15-20% cell
+      // overlap target, verbatim from AP_RULES) without a RenderFlex overflow.
+      await _withViewport(tester, const Size(375, 900), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: const ApPlacementScreen(),
+          ),
+        );
+        await tester.pump();
+
+        expect(find.text('AP Placement'), findsOneWidget);
+        expect(find.text('Cell sizing and overlap'), findsOneWidget);
+        expect(find.text('Channel planning'), findsOneWidget);
+        // Known guidance line, verbatim from the PWA aplace AP_RULES.
+        expect(
+          find.textContaining('15-20% cell overlap'),
+          findsOneWidget,
+        );
+      });
+    },
+  );
+
+  testWidgets(
+    'Ethernet Pinout screen renders in a 375x900 phone viewport',
+    (tester) async {
+      // Phone-viewport smoke for the pinout reference: it pumps, renders the
+      // standard toggle and the default T568B pin-1 wiring (Orange / White,
+      // TX+, verbatim from the PWA PINOUT) without a RenderFlex overflow.
+      await _withViewport(tester, const Size(375, 900), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: const EthernetPinoutScreen(),
+          ),
+        );
+        await tester.pump();
+
+        expect(find.text('Ethernet Pinout'), findsWidgets);
+        expect(find.text('T568B'), findsWidgets);
+        expect(find.text('T568A'), findsWidgets);
+        // Default T568B pin 1, verbatim from the PWA pinout view.
+        expect(find.text('Orange / White'), findsWidgets);
+        expect(find.text('TX+'), findsOneWidget);
+      });
+    },
+  );
+
+  testWidgets(
+    'Roaming Parameters screen renders in a 375x900 phone viewport',
+    (tester) async {
+      // Phone-viewport smoke for the roaming reference: it pumps, renders both
+      // section headings and the 802.11r protocol heading (verbatim from the
+      // PWA ROAMING_PROTOCOLS) without a RenderFlex overflow. The 5-column
+      // threshold table scrolls horizontally, so it must not overflow.
+      await _withViewport(tester, const Size(375, 900), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: const RoamingScreen(),
+          ),
+        );
+        await tester.pump();
+
+        expect(find.text('Roaming Parameters'), findsOneWidget);
+        expect(find.text('Protocols'), findsOneWidget);
+        expect(find.text('Thresholds'), findsOneWidget);
+        // 802.11r protocol heading, verbatim from the PWA roaming tool.
+        expect(find.textContaining('802.11r'), findsWidgets);
       });
     },
   );

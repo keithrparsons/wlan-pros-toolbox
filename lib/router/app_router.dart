@@ -40,6 +40,16 @@ import '../screens/tools/reference/wpa_security_screen.dart';
 import '../screens/tools/reference/reason_codes_screen.dart';
 import '../screens/tools/reference/frame_exchange_screen.dart';
 import '../screens/tools/reference/db_reference_screen.dart';
+import '../screens/tools/reference/channel_map_screen.dart';
+import '../screens/tools/reference/ethernet_pinout_screen.dart';
+import '../screens/tools/reference/coax_cable_screen.dart';
+import '../screens/tools/reference/ethernet_cable_screen.dart';
+import '../screens/tools/reference/fiber_optic_screen.dart';
+import '../screens/tools/reference/rf_connectors_screen.dart';
+import '../screens/tools/reference/roaming_screen.dart';
+import '../screens/tools/reference/ap_placement_screen.dart';
+import '../screens/tools/reference/poe_reference_screen.dart';
+import '../screens/tools/reference/spectrum_screen.dart';
 import '../screens/tools/network/arp_ndp_screen.dart';
 import '../screens/tools/network/bgp_asn_screen.dart';
 import '../screens/tools/network/dns_lookup_screen.dart';
@@ -104,6 +114,16 @@ class AppRouter {
   static const String reasonCodes = '/tools/reason-codes';
   static const String frameExchange = '/tools/frame-exchange';
   static const String dbReference = '/tools/db-reference';
+  static const String channelMap = '/tools/channel-map';
+  static const String ethernetPinout = '/tools/ethernet-pinout';
+  static const String coaxCable = '/tools/coax-cable';
+  static const String ethernetCable = '/tools/ethernet-cable';
+  static const String fiberOptic = '/tools/fiber-optic';
+  static const String rfConnectors = '/tools/rf-connectors';
+  static const String roaming = '/tools/roaming';
+  static const String apPlacement = '/tools/ap-placement';
+  static const String poeReference = '/tools/poe-reference';
+  static const String spectrum = '/tools/spectrum';
 
   // Networking category — active network tools (native-only; web shows the
   // download-the-app fallback inside each screen, so the routes are always
@@ -166,6 +186,16 @@ class AppRouter {
     reasonCodes: (_) => const ReasonCodesScreen(),
     frameExchange: (_) => const FrameExchangeScreen(),
     dbReference: (_) => const DbReferenceScreen(),
+    channelMap: (_) => const ChannelMapScreen(),
+    ethernetPinout: (_) => const EthernetPinoutScreen(),
+    coaxCable: (_) => const CoaxCableScreen(),
+    ethernetCable: (_) => const EthernetCableScreen(),
+    fiberOptic: (_) => const FiberOpticScreen(),
+    rfConnectors: (_) => const RfConnectorsScreen(),
+    roaming: (_) => const RoamingScreen(),
+    apPlacement: (_) => const ApPlacementScreen(),
+    poeReference: (_) => const PoeReferenceScreen(),
+    spectrum: (_) => const SpectrumScreen(),
     interfaceInfo: (_) => const InterfaceInfoScreen(),
     dnsLookup: (_) => const DnsLookupScreen(),
     portScan: (_) => const PortScanScreen(),
