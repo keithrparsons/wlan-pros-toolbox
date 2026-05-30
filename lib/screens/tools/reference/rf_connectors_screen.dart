@@ -27,8 +27,10 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../concept_graphic_band.dart';
 
 /// One RF connector row. Fields mirror the PWA's RF_CONN_DATA tuple
 /// [name, impedance, maxFreq, mating, notes].
@@ -184,6 +186,12 @@ class RfConnectorsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  ConceptGraphicBand(
+                    toolId: 'rf-connectors',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('rf-connectors'))
+                    const SizedBox(height: AppSpacing.md),
                   _connectorsCard(text, mono),
                   const SizedBox(height: AppSpacing.md),
                   _footnoteCard(text),

@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- Ethernet pinout: RJ-45 plug with 8 numbered pins; T568A vs T568B wire-pair color order.
+       Wire colors are DATA glyphs (the color IS the information). Lime = the active pinout label. -->
+
+  <!-- RJ-45 plug body (neutral line-art) -->
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <!-- plug outline with the classic notched latch -->
+    <path d="M28 30 L116 30 L116 70 L88 70 L88 80 L72 80 L72 70 L28 70 Z"/>
+    <!-- contact slots (8 pin channels at the front face) -->
+    <path d="M36 30 L36 44 M46 30 L46 44 M56 30 L56 44 M66 30 L66 44 M76 30 L76 44 M86 30 L86 44 M96 30 L96 44 M106 30 L106 44"/>
+  </g>
+
+  <!-- 8 gold contact pins (data glyph: pin metal) -->
+  <g>
+    <rect x="34" y="32" width="4" height="11" rx="1" fill="#C9A227"/>
+    <rect x="44" y="32" width="4" height="11" rx="1" fill="#C9A227"/>
+    <rect x="54" y="32" width="4" height="11" rx="1" fill="#C9A227"/>
+    <rect x="64" y="32" width="4" height="11" rx="1" fill="#C9A227"/>
+    <rect x="74" y="32" width="4" height="11" rx="1" fill="#C9A227"/>
+    <rect x="84" y="32" width="4" height="11" rx="1" fill="#C9A227"/>
+    <rect x="94" y="32" width="4" height="11" rx="1" fill="#C9A227"/>
+    <rect x="104" y="32" width="4" height="11" rx="1" fill="#C9A227"/>
+  </g>
+  <!-- pin numbers 1..8 -->
+  <g fill="#9C9C9C" font-size="8" text-anchor="middle" font-family="DM Mono, monospace">
+    <text x="36" y="62">1</text><text x="46" y="62">2</text><text x="56" y="62">3</text><text x="66" y="62">4</text>
+    <text x="76" y="62">5</text><text x="86" y="62">6</text><text x="96" y="62">7</text><text x="106" y="62">8</text>
+  </g>
+
+  <!-- T568B color order strip (the common standard), wire colors as data glyphs -->
+  <text x="22" y="100" fill="#A2CC3A" font-size="11" font-weight="500" font-family="DM Mono, monospace">T568B</text>
+  <g stroke-width="1" stroke="#9C9C9C">
+    <!-- 1 wht/org  2 org  3 wht/grn  4 blu  5 wht/blu  6 grn  7 wht/brn  8 brn -->
+    <rect x="74"  y="93" width="9" height="11" fill="#F58A1F"/>
+    <rect x="84"  y="93" width="9" height="11" fill="#F58A1F"/>
+    <rect x="94"  y="93" width="9" height="11" fill="#3CA03C"/>
+    <rect x="104" y="93" width="9" height="11" fill="#2D6CDF"/>
+    <rect x="114" y="93" width="9" height="11" fill="#2D6CDF"/>
+    <rect x="124" y="93" width="9" height="11" fill="#3CA03C"/>
+    <rect x="134" y="93" width="9" height="11" fill="#7A4A22"/>
+    <rect x="144" y="93" width="9" height="11" fill="#7A4A22"/>
+  </g>
+  <!-- striped (white/) wires: a white half-band over the odd pins -->
+  <g fill="#E5E5E5">
+    <rect x="74"  y="93" width="9" height="4"/>
+    <rect x="94"  y="93" width="9" height="4"/>
+    <rect x="114" y="93" width="9" height="4"/>
+    <rect x="134" y="93" width="9" height="4"/>
+  </g>
+
+  <!-- T568A color order strip (pairs 2 & 3 swapped) -->
+  <text x="22" y="124" fill="#9C9C9C" font-size="11" font-weight="500" font-family="DM Mono, monospace">T568A</text>
+  <g stroke-width="1" stroke="#9C9C9C">
+    <!-- 1 wht/grn  2 grn  3 wht/org  4 blu  5 wht/blu  6 org  7 wht/brn  8 brn -->
+    <rect x="74"  y="117" width="9" height="11" fill="#3CA03C"/>
+    <rect x="84"  y="117" width="9" height="11" fill="#3CA03C"/>
+    <rect x="94"  y="117" width="9" height="11" fill="#F58A1F"/>
+    <rect x="104" y="117" width="9" height="11" fill="#2D6CDF"/>
+    <rect x="114" y="117" width="9" height="11" fill="#2D6CDF"/>
+    <rect x="124" y="117" width="9" height="11" fill="#F58A1F"/>
+    <rect x="134" y="117" width="9" height="11" fill="#7A4A22"/>
+    <rect x="144" y="117" width="9" height="11" fill="#7A4A22"/>
+  </g>
+  <g fill="#E5E5E5">
+    <rect x="74"  y="117" width="9" height="4"/>
+    <rect x="94"  y="117" width="9" height="4"/>
+    <rect x="114" y="117" width="9" height="4"/>
+    <rect x="134" y="117" width="9" height="4"/>
+  </g>
+
+  <!-- swap callout: pairs 2 & 3 swap between A and B (lime = the pairing that differs) -->
+  <g stroke="#A2CC3A" stroke-width="1.5" stroke-linecap="round">
+    <path d="M98 106 L98 110 M118 106 L118 110"/>
+  </g>
+  <text x="232" y="100" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="middle">pairs 2 &amp; 3</text>
+  <text x="232" y="114" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="middle">swap A&#8596;B</text>
+
+  <!-- Header -->
+  <text x="160" y="20" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">RJ-45 pinout &#183; 8 pins, 4 pairs</text>
+  <!-- Footer -->
+  <text x="160" y="150" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">straight-through = same standard both ends</text>
+</svg>

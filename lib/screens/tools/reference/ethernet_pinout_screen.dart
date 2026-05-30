@@ -29,8 +29,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../concept_graphic_band.dart';
 
 /// Which wiring standard's table is shown. Two short options → segmented
 /// toggle, not an AppSelect (GL-003 §8.14). T568B is the PWA's default tab.
@@ -169,6 +171,12 @@ class _EthernetPinoutScreenState extends State<EthernetPinoutScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  ConceptGraphicBand(
+                    toolId: 'ethernet-pinout',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('ethernet-pinout'))
+                    const SizedBox(height: AppSpacing.md),
                   _standardCard(context),
                   const SizedBox(height: AppSpacing.sm),
                   _tableCard(context, mono),

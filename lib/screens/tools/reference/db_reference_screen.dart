@@ -17,8 +17,10 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../concept_graphic_band.dart';
 
 /// One row of the dB power-ratio table.
 class DbRatio {
@@ -120,6 +122,12 @@ class DbReferenceScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  ConceptGraphicBand(
+                    toolId: 'db-reference',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('db-reference'))
+                    const SizedBox(height: AppSpacing.md),
                   _ratioCard(text, mono),
                   const SizedBox(height: AppSpacing.md),
                   _dbmCard(text, mono),

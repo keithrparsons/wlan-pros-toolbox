@@ -21,8 +21,10 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_select.dart';
+import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
 /// Categorical frame type. Mirrors the PWA `type` field (mgmt|eap|wired|dhcp).
@@ -158,6 +160,12 @@ class _FrameExchangeScreenState extends State<FrameExchangeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  ConceptGraphicBand(
+                    toolId: 'frame-exchange',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('frame-exchange'))
+                    const SizedBox(height: AppSpacing.md),
                   _introCard(context),
                   const SizedBox(height: AppSpacing.sm),
                   _selectorCard(context),

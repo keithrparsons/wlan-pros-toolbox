@@ -22,8 +22,10 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../concept_graphic_band.dart';
 
 /// One fiber type, ported verbatim from PWA app.js FIBER_DATA.
 class FiberType {
@@ -218,6 +220,12 @@ class FiberOpticScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  ConceptGraphicBand(
+                    toolId: 'fiber-optic',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('fiber-optic'))
+                    const SizedBox(height: AppSpacing.md),
                   _distanceCard(text, mono),
                   const SizedBox(height: AppSpacing.md),
                   _jacketCard(text, mono),

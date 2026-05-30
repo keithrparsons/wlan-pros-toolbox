@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- Point-to-point link: two dishes facing across a path; received level vs Rx sensitivity,
+       the fade-margin gap marked. Lime = the margin (pass when positive). PtP sibling of link-budget. -->
+
+  <!-- Tx dish (left) -->
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="28" y1="56" x2="28" y2="104"/>
+    <line x1="20" y1="104" x2="36" y2="104"/>
+    <path d="M28 56 A14 14 0 0 1 42 70"/>
+    <line x1="28" y1="63" x2="38" y2="68"/>
+  </g>
+  <!-- Rx dish (right) -->
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="292" y1="56" x2="292" y2="104"/>
+    <line x1="284" y1="104" x2="300" y2="104"/>
+    <path d="M292 56 A14 14 0 0 0 278 70"/>
+    <line x1="292" y1="63" x2="282" y2="68"/>
+  </g>
+
+  <!-- Link path across the span (neutral) -->
+  <line x1="42" y1="64" x2="278" y2="64" stroke="#E5E5E5" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Received-level bar reaching down toward the sensitivity floor -->
+  <!-- Rx sensitivity floor (neutral dashed baseline) -->
+  <line x1="120" y1="118" x2="220" y2="118" stroke="#9C9C9C" stroke-width="1.5" stroke-dasharray="4 4" stroke-linecap="round"/>
+  <text x="170" y="132" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">Rx sensitivity</text>
+
+  <!-- Received signal level (neutral tick at the top of the gap) -->
+  <line x1="120" y1="86" x2="220" y2="86" stroke="#E5E5E5" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="170" y="80" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">received level</text>
+
+  <!-- Fade-margin gap (lime = the margin, positive = pass) -->
+  <g stroke="#A2CC3A" stroke-width="1.75" stroke-linecap="round">
+    <line x1="240" y1="86" x2="240" y2="118"/>
+    <path d="M237 90 L240 86 L243 90 M237 114 L240 118 L243 114"/>
+  </g>
+  <text x="248" y="105" fill="#A2CC3A" font-size="12" font-weight="500" text-anchor="start">margin</text>
+
+  <!-- Pass cue: lime check (positive margin = link passes) -->
+  <g stroke="#A2CC3A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M70 100 L76 106 L88 92"/>
+  </g>
+  <text x="79" y="124" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="middle">pass</text>
+
+  <!-- Header -->
+  <text x="160" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">margin = Rx level &#8722; sensitivity</text>
+</svg>

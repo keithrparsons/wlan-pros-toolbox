@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- Port reference: a query field over a port->service list; lime = the matched port row. Archetype E. -->
+
+  <!-- Query field (left): a port number being looked up -->
+  <rect x="22" y="40" width="74" height="26" rx="4" stroke="#E5E5E5" stroke-width="1.5"/>
+  <text x="34" y="57" fill="#A2CC3A" font-size="13" font-weight="500" text-anchor="start" font-family="DM Mono, monospace">443</text>
+  <!-- magnifier glyph in the field -->
+  <g stroke="#9C9C9C" stroke-width="1.5" stroke-linecap="round">
+    <circle cx="78" cy="51" r="5"/>
+    <line x1="82" y1="55" x2="86" y2="59"/>
+  </g>
+  <!-- query arrow into the table -->
+  <g stroke="#A2CC3A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="96" y1="53" x2="128" y2="53"/>
+    <path d="M122 49 L128 53 L122 57"/>
+  </g>
+
+  <!-- Port -> service table (right) -->
+  <g font-family="DM Mono, monospace">
+    <!-- header rule -->
+    <line x1="134" y1="36" x2="298" y2="36" stroke="#9C9C9C" stroke-width="1.25"/>
+    <text x="140" y="33" fill="#9C9C9C" font-size="10" font-weight="500">port</text>
+    <text x="210" y="33" fill="#9C9C9C" font-size="10" font-weight="500">service</text>
+
+    <!-- row 1 -->
+    <text x="140" y="56" fill="#E5E5E5" font-size="12" font-weight="500">22</text>
+    <text x="210" y="56" fill="#E5E5E5" font-size="12" font-weight="500">SSH</text>
+    <!-- row 2 -->
+    <text x="140" y="78" fill="#E5E5E5" font-size="12" font-weight="500">80</text>
+    <text x="210" y="78" fill="#E5E5E5" font-size="12" font-weight="500">HTTP</text>
+    <!-- row 3 (matched, lime) -->
+    <rect x="134" y="84" width="164" height="22" rx="3" fill="#A2CC3A" fill-opacity="0.08"/>
+    <text x="140" y="100" fill="#A2CC3A" font-size="12" font-weight="500">443</text>
+    <text x="210" y="100" fill="#A2CC3A" font-size="12" font-weight="500">HTTPS</text>
+    <!-- row 4 -->
+    <text x="140" y="122" fill="#E5E5E5" font-size="12" font-weight="500">53</text>
+    <text x="210" y="122" fill="#E5E5E5" font-size="12" font-weight="500">DNS</text>
+  </g>
+  <!-- row dividers -->
+  <g stroke="#3A3A3A" stroke-width="1">
+    <line x1="134" y1="62" x2="298" y2="62"/>
+    <line x1="134" y1="84" x2="298" y2="84"/>
+    <line x1="134" y1="106" x2="298" y2="106"/>
+  </g>
+
+  <!-- Header -->
+  <text x="160" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">well-known TCP / UDP ports</text>
+  <!-- Footer -->
+  <text x="160" y="148" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">port number &#8594; service lookup</text>
+</svg>
