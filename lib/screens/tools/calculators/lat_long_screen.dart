@@ -30,8 +30,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
 /// Which axis a coordinate is on. Selects the hemisphere letters (N/S vs E/W)
@@ -201,6 +203,12 @@ class _LatLongScreenState extends State<LatLongScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      // §8.6.2 concept-graphic header band — first child, above
+                      // the input card. Self-collapses when no graphic is
+                      // bundled, so the 24px gap below it disappears too.
+                      ConceptGraphicBand(toolId: 'lat-long', isDesktop: isDesktop),
+                      if (ToolAssets.hasGraphic('lat-long'))
+                        const SizedBox(height: AppSpacing.md),
                       _inputCard(text, mono),
                       const SizedBox(height: AppSpacing.md),
                       _resultCard(text, mono),
