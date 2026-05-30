@@ -1,13 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
   <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <!-- line spanning the two endpoints -->
-    <line x1="5" y1="18" x2="19" y2="6"/>
-    <!-- smaller endpoint rings -->
-    <circle cx="5" cy="18" r="1.5"/>
-    <circle cx="19" cy="6" r="1.5"/>
-    <!-- perpendicular cross-tick through the exact center -->
-    <path d="M10.1 9.7 L13.9 14.3"/>
-    <!-- emphasized midpoint dot -->
-    <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/>
+    <line x1="4" y1="12" x2="20" y2="12"/>
+    <circle cx="4" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+    <circle cx="20" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+    <circle cx="12" cy="12" r="4"/>
+    <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>
   </g>
 </svg>
