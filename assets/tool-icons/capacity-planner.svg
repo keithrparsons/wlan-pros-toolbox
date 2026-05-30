@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- central AP -->
+    <circle cx="12" cy="12" r="2.4"/>
+    <!-- links from AP to each client -->
+    <path d="M12 9.6 V5.5"/>
+    <path d="M9.9 10.6 L5.5 8"/>
+    <path d="M9.9 13.4 L5.5 16.5"/>
+    <path d="M14.1 13.4 L18.5 16.5"/>
+    <path d="M14.1 10.6 L18.5 8"/>
+    <!-- client dots in a cluster around the AP -->
+    <circle cx="12" cy="4.5" r="1.2" fill="currentColor" stroke="none"/>
+    <circle cx="4.5" cy="7.5" r="1.2" fill="currentColor" stroke="none"/>
+    <circle cx="4.5" cy="17" r="1.2" fill="currentColor" stroke="none"/>
+    <circle cx="19.5" cy="17" r="1.2" fill="currentColor" stroke="none"/>
+    <circle cx="19.5" cy="7.5" r="1.2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

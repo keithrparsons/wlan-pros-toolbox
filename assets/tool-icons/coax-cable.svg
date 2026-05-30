@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- coax cross-section, end-on: outer shield -->
+    <circle cx="12" cy="12" r="9"/>
+    <!-- dielectric ring -->
+    <circle cx="12" cy="12" r="5"/>
+    <!-- center conductor core -->
+    <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

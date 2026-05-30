@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- twisted-pair run, side view, into the plug -->
+    <path d="M3 8 C5 5 6 11 8 8 C10 5 11 11 13 8"/>
+    <path d="M3 13 C5 10 6 16 8 13 C10 10 11 16 13 13"/>
+    <!-- RJ45 plug end with tab -->
+    <path d="M13 6 H20 V8 H21 V13 H20 V15 H13 Z"/>
+  </g>
+</svg>

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- signal peak rising above the floor -->
+    <path d="M3 16 H9 L12 6 L15 16 H21"/>
+    <!-- flat noise baseline floor -->
+    <path d="M3 20 H21"/>
+  </g>
+</svg>

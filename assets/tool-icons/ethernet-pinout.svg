@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- RJ45 connector face: body with a tab notch at the bottom -->
+    <path d="M4 5 H20 V15 H15 V18 H9 V15 H4 Z"/>
+    <!-- 8 pin slots across the face -->
+    <path d="M6.5 8 V12"/>
+    <path d="M8.5 8 V12"/>
+    <path d="M10.5 8 V12"/>
+    <path d="M12.5 8 V12"/>
+    <path d="M14.5 8 V12"/>
+    <path d="M16.5 8 V12"/>
+  </g>
+</svg>
