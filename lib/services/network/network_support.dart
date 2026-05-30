@@ -89,6 +89,13 @@ class NetworkSupport {
   /// Same `!kIsWeb` gate as the other socket tools.
   static bool get wakeOnLanSupported => !kIsWeb;
 
+  /// Packet Sender support. Sends a custom payload over TCP (`Socket`) or UDP
+  /// (`RawDatagramSocket`) and reads the reply. Browsers cannot open either
+  /// socket type, so web is routed to the download-the-app fallback. Same
+  /// `!kIsWeb` gate as the other socket tools. (Raw-IP/ICMP framing is out of
+  /// scope per TICKET-005 — TCP/UDP only.)
+  static bool get packetSenderSupported => !kIsWeb;
+
   /// BGP / ASN Lookup support. Talks to the RIPEstat Data API over HTTPS via
   /// `dart:io HttpClient`. Because `dart:io` does not exist on web and we have
   /// not verified the API sends permissive CORS, the tool is native-only and

@@ -55,7 +55,7 @@ class ValueRow extends StatelessWidget {
           );
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
