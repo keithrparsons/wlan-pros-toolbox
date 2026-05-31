@@ -242,13 +242,12 @@ class AppRouter {
     // assets/tool-icons/net-quality.svg is bundled, so no asset is required for
     // this row to render correctly.
     netQuality: (_) => const NetQualityScreen(),
-    // TODO(icon): bespoke 'wifi-info' tool icon owed (GL-003 §8.6); using
-    // fallback for now. The _ToolRow icon resolver (category_screen.dart) shows
-    // the category Material glyph (Icons.bolt) gracefully when no
-    // assets/tool-icons/wifi-info.svg is bundled, and the in-screen
-    // ConceptGraphicBand collapses to an empty SizedBox when no
-    // assets/tool-graphics/wifi-info.svg is bundled, so no asset is required
-    // for this row or screen to render correctly.
+    // TICKET-04: the consolidated cross-platform Wi-Fi Information tool
+    // (macOS CoreWLAN + iOS companion-Shortcut behind one screen + normalized
+    // model). The bespoke 'wifi-info' tool icon now ships at
+    // assets/tool-icons/wifi-info.svg (gauge + Wi-Fi fan). No concept graphic
+    // yet: the in-screen ConceptGraphicBand collapses to an empty SizedBox when
+    // assets/tool-graphics/wifi-info.svg is absent, so the screen still renders.
     wifiInfo: (_) => const WifiInfoScreen(),
     traceroute: (_) => const TracerouteScreen(),
     mobileTraceroute: (_) => const MobileTracerouteScreen(),
