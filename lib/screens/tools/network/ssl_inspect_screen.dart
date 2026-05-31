@@ -106,7 +106,7 @@ class _SslInspectScreenState extends State<SslInspectScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('SSL/TLS Inspector'), toolbarHeight: 64),
+      appBar: AppBar(title: const Text('Inspector (SSL/TLS)'), toolbarHeight: 64),
       body: SafeArea(top: false, child: _body()),
     );
   }

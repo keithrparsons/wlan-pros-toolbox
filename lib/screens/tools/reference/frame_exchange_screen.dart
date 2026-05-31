@@ -133,7 +133,7 @@ class _FrameExchangeScreenState extends State<FrameExchangeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Frame Exchange'), toolbarHeight: 64),
+      appBar: AppBar(title: const Text('802.11 Frame Exchange'), toolbarHeight: 64),
       body: SafeArea(top: false, child: _body()),
     );
   }

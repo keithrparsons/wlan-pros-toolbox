@@ -162,7 +162,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('ARP / NDP'), toolbarHeight: 64),
+      appBar: AppBar(title: const Text('Lookup (ARP/NDP)'), toolbarHeight: 64),
       body: SafeArea(top: false, child: _body()),
     );
   }

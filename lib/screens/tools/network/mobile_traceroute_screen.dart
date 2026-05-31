@@ -142,7 +142,7 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar:
-          AppBar(title: const Text('Mobile Traceroute'), toolbarHeight: 64),
+          AppBar(title: const Text('Traceroute (Mobile)'), toolbarHeight: 64),
       body: SafeArea(top: false, child: _body()),
     );
   }

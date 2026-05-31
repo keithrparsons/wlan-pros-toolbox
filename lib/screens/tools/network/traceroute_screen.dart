@@ -130,7 +130,7 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Traceroute'), toolbarHeight: 64),
+      appBar: AppBar(title: const Text('Traceroute (System)'), toolbarHeight: 64),
       body: SafeArea(top: false, child: _body()),
     );
   }

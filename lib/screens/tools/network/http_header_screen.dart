@@ -96,7 +96,7 @@ class _HttpHeaderScreenState extends State<HttpHeaderScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('HTTP Headers'), toolbarHeight: 64),
+      appBar: AppBar(title: const Text('Inspector (HTTP Header)'), toolbarHeight: 64),
       body: SafeArea(top: false, child: _body()),
     );
   }

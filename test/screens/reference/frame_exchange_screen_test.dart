@@ -111,8 +111,8 @@ void main() {
       );
       await tester.pump();
 
-      // App-bar title.
-      expect(find.text('Frame Exchange'), findsOneWidget);
+      // App-bar title (renamed per the LOCKED display-title pass).
+      expect(find.text('802.11 Frame Exchange'), findsOneWidget);
       // Default scenario heading + first frame label.
       expect(
         find.text('Open Network / WPA2-Personal Association'),

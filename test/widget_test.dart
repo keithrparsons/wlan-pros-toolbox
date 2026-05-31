@@ -2,8 +2,11 @@
 //
 // Coverage targets (post-Vera-regate fix pass 2, 2026-05-29):
 // - Smoke: app mounts with the correct app-bar title.
-// - Category grid: all 8 category titles render; item count equals catalog
-//   length. (Vera F-11.)
+// - Category grid: every category title in the catalog renders; item count
+//   equals catalog length. (Vera F-11.) The catalog moved from 8 to the LOCKED
+//   6-category map (2026-05-30); Command & Capture + Checklists are deferred,
+//   so 4 categories ship today. These checks iterate kToolCategories, so they
+//   track the catalog automatically.
 // - Semantics: each tile exposes a single curated label; no duplicate
 //   child-Text semantics leak through. (Vera F-04.)
 // - Responsive: 375x900 phone viewport renders the home grid without
@@ -38,7 +41,7 @@ void main() {
   ) async {
     await _pumpApp(tester);
 
-    // All 8 titles render, one tile each. (Vera F-11.)
+    // Every category title renders, one tile each. (Vera F-11.)
     for (final ToolCategory cat in kToolCategories) {
       expect(
         find.text(cat.title),
@@ -294,7 +297,7 @@ void main() {
         );
         await tester.pump();
 
-        expect(find.text('Frame Exchange'), findsOneWidget);
+        expect(find.text('802.11 Frame Exchange'), findsOneWidget);
         expect(
           find.text('Open Network / WPA2-Personal Association'),
           findsOneWidget,

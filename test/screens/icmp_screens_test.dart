@@ -47,7 +47,7 @@ void main() {
           backend: const _SilentBackend(),
         ),
       )));
-      expect(find.text('ICMP Ping'), findsOneWidget); // app bar
+      expect(find.text('Ping (ICMP)'), findsOneWidget); // app bar (renamed)
       expect(find.text('Ping'), findsOneWidget); // action button
       expect(
         find.textContaining('true ICMP, not a TCP probe'),
@@ -93,7 +93,7 @@ void main() {
           backend: const _SilentBackend(),
         ),
       )));
-      expect(find.text('Mobile Traceroute'), findsOneWidget);
+      expect(find.text('Traceroute (Mobile)'), findsOneWidget);
       expect(find.widgetWithText(FilledButton, 'Trace'), findsOneWidget);
       expect(
         find.textContaining('ICMP TTL-walk, not the system'),

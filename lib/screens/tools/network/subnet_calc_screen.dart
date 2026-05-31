@@ -129,7 +129,7 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('IPv4 Subnet Calculator'),
+        title: const Text('IP Subnetting (IPv4)'),
         toolbarHeight: 64,
       ),
       body: SafeArea(top: false, child: _body()),
