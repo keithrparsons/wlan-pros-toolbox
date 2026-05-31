@@ -1,4 +1,7 @@
-// HomeScreen — the 8-category landing grid.
+// HomeScreen — the category landing grid (the LOCKED 6-category map; Command &
+// Capture + Checklists are deferred until their tools land, so 4 categories
+// render today). The grid is data-driven from kToolCategories, so it tracks the
+// catalog automatically as deferred categories are restored.
 //
 // Layout per GL-003 §8.7: 16px screen edge on mobile, 24px on tablet+ desktop,
 // 16px grid gutter, tile titles at H3 / IBM Plex Sans 600.

@@ -183,7 +183,7 @@ class _ReasonCodesScreenState extends State<ReasonCodesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Reason & Status Codes'),
+        title: const Text('802.11 Reason Codes'),
         toolbarHeight: 64,
       ),
       body: SafeArea(top: false, child: _body()),

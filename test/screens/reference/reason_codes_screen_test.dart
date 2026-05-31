@@ -93,7 +93,7 @@ void main() {
       await tester.pump();
 
       // Title + a known code/meaning render on first paint.
-      expect(find.text('Reason & Status Codes'), findsOneWidget);
+      expect(find.text('802.11 Reason Codes'), findsOneWidget);
       expect(find.text('4-Way Handshake timeout'), findsOneWidget);
 
       // Filter to "handshake" — the two handshake-timeout meanings survive,

@@ -1,10 +1,29 @@
 // Tool catalog — single source of truth for what appears on the home grid and
 // what tools each category exposes.
 //
-// Category list sourced from Deliverables/2026-05-28-active-network-utility-
-// feasibility/brief.md §3.1–§3.8. For MVP, only the dBm/Watt Converter is
-// live; the rest are "Coming soon" placeholders that still route to a
-// (greyed) category screen.
+// Category structure: the LOCKED 6-category map
+// (Deliverables/2026-05-30-quick-reference-additions-triage/
+//  LOCKED-6-category-structure.md), which supersedes the prior 8-category
+// layout. The four dissolved categories (GPS Tools, Cabling & Connectors,
+// Infrastructure, Wi-Fi Design) merged their tools into the survivors per the
+// locked map; nothing was dropped.
+//
+// Empty-category decision (Felix, 2026-05-30): the LOCKED map adds two NEW
+// categories — Command & Capture and Checklists — whose tools are still pending
+// (Pax research + build). The home grid renders one tile per category, and an
+// empty category would surface a permanently "Coming soon" tile with no tools
+// behind it. Per the build brief's explicit option, these two categories are
+// DEFERRED out of the catalog until their tools land, rather than ship empty
+// tiles. This file therefore holds the 4 consolidated categories
+// (Calculators, Networking Tools, Planning Tools, Quick Reference). Add
+// Command & Capture and Checklists here when their first tools are built — the
+// new tappable-checklist screen type (checklist_screen.dart) is already wired
+// to receive its data.
+//
+// Display-title rename pass (LOCKED map "Display-title rename pass"): titles
+// were reclustered by function (e.g. "DNS Lookup" → "Lookup (DNS)"). The
+// catalog `id` strings are STABLE and unchanged — they back 60 icon/graphic
+// asset files, every route, and every test. Titles change; ids never.
 
 import 'package:flutter/material.dart';
 
@@ -20,7 +39,7 @@ class ToolEntry {
   });
 
   /// Stable identifier (kebab-case). Used as the route argument and for
-  /// telemetry later.
+  /// telemetry later. NEVER renamed — backs asset files, routes, and tests.
   final String id;
 
   /// Title shown on the category tile / list row.
@@ -37,7 +56,7 @@ class ToolEntry {
   final bool isLive;
 }
 
-/// One of the eight home-grid categories.
+/// One of the home-grid categories.
 @immutable
 class ToolCategory {
   const ToolCategory({
@@ -59,12 +78,17 @@ class ToolCategory {
   bool get hasLiveTool => tools.any((t) => t.isLive);
 }
 
-/// Catalog seed — keep this list aligned with the feasibility brief §3.
+/// Catalog seed — the LOCKED 6-category map, with Command & Capture and
+/// Checklists deferred until their tools are built (see file header). Tool
+/// order within each category follows the LOCKED map exactly.
 const List<ToolCategory> kToolCategories = <ToolCategory>[
+  // ───────────────────────── 1. Calculators ─────────────────────────
+  // Was "RF Calculators". Absorbs all GPS tools + Noise Floor + RF Attenuation
+  // (from the dissolved Infrastructure category).
   ToolCategory(
     id: 'rf-calculators',
-    title: 'RF Calculators',
-    summary: 'FSPL, dBm/Watt, Fresnel, EIRP, link budget',
+    title: 'Calculators',
+    summary: 'RF, GPS, and signal math — FSPL, EIRP, coordinates',
     icon: Icons.calculate_outlined,
     tools: <ToolEntry>[
       ToolEntry(
@@ -144,14 +168,7 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         routeName: '/tools/downtilt-coverage',
         isLive: true,
       ),
-    ],
-  ),
-  ToolCategory(
-    id: 'gps-tools',
-    title: 'GPS Tools',
-    summary: 'Coordinate conversions, distance, bearing',
-    icon: Icons.explore_outlined,
-    tools: <ToolEntry>[
+      // ── from the dissolved GPS Tools category ──
       ToolEntry(
         id: 'metric-conversion',
         title: 'Metric Conversion',
@@ -159,6 +176,22 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         routeName: '/tools/metric-conversion',
         isLive: true,
       ),
+      // ── from the dissolved Infrastructure category ──
+      ToolEntry(
+        id: 'noise-floor',
+        title: 'Noise Floor',
+        description: 'Thermal noise floor by channel width and NF',
+        routeName: '/tools/noise-floor',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'rf-attenuation',
+        title: 'RF Attenuation',
+        description: 'Path loss through building materials by band',
+        routeName: '/tools/rf-attenuation',
+        isLive: true,
+      ),
+      // ── from the dissolved GPS Tools category ──
       ToolEntry(
         id: 'lat-long',
         title: 'Lat / Long Conversion',
@@ -187,12 +220,17 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         routeName: '/tools/final-point',
         isLive: true,
       ),
+      // Hex / ASCII converter — NEW, pending build (Pax data). Not added yet.
     ],
   ),
+
+  // ──────────────────────── 2. Networking Tools ─────────────────────
+  // Unchanged set + IPv6 Subnet moved in from Planning. Display titles
+  // reclustered by function per the LOCKED rename pass.
   ToolCategory(
     id: 'networking',
-    title: 'Networking',
-    summary: 'Interface info, DNS, port scan, subnetting',
+    title: 'Networking Tools',
+    summary: 'Interface info, lookups, scans, subnetting',
     icon: Icons.lan_outlined,
     tools: <ToolEntry>[
       ToolEntry(
@@ -204,7 +242,7 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
       ),
       ToolEntry(
         id: 'dns-lookup',
-        title: 'DNS Lookup',
+        title: 'Lookup (DNS)',
         description:
             'A, AAAA, MX, TXT, NS, SOA, PTR, SRV, CAA, SPF over DNS-over-HTTPS',
         routeName: '/tools/dns-lookup',
@@ -228,7 +266,7 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
       ),
       ToolEntry(
         id: 'icmp-ping',
-        title: 'ICMP Ping',
+        title: 'Ping (ICMP)',
         description:
             'Real ICMP echo round-trip (mobile) — live RTT, min/avg/max, loss',
         routeName: '/tools/icmp-ping',
@@ -244,14 +282,14 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
       ),
       ToolEntry(
         id: 'traceroute',
-        title: 'Traceroute (system)',
+        title: 'Traceroute (System)',
         description: 'Hop-by-hop path via the OS traceroute — desktop',
         routeName: '/tools/traceroute',
         isLive: true,
       ),
       ToolEntry(
         id: 'mobile-traceroute',
-        title: 'Mobile Traceroute',
+        title: 'Traceroute (Mobile)',
         description:
             'Hop-by-hop path via an ICMP TTL-walk — Android (iOS unsupported)',
         routeName: '/tools/mobile-traceroute',
@@ -259,7 +297,7 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
       ),
       ToolEntry(
         id: 'ssl-inspect',
-        title: 'SSL/TLS Inspector',
+        title: 'Inspector (SSL/TLS)',
         description:
             'Certificate fields, validity, SAN, fingerprints over TLS',
         routeName: '/tools/ssl-inspect',
@@ -267,7 +305,7 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
       ),
       ToolEntry(
         id: 'http-headers',
-        title: 'HTTP Header Inspector',
+        title: 'Inspector (HTTP Header)',
         description: 'Status, redirect chain, and all response headers',
         routeName: '/tools/http-headers',
         isLive: true,
@@ -288,14 +326,14 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
       ),
       ToolEntry(
         id: 'arp-ndp',
-        title: 'ARP / NDP Lookup',
+        title: 'Lookup (ARP/NDP)',
         description: 'Discover local neighbors — IP and MAC where exposed',
         routeName: '/tools/arp-ndp',
         isLive: true,
       ),
       ToolEntry(
         id: 'bgp-asn',
-        title: 'BGP / ASN Lookup',
+        title: 'Lookup (BGP/ASN)',
         description: 'ASN, holder, prefix, registry, peers via RIPEstat',
         routeName: '/tools/bgp-asn',
         isLive: true,
@@ -309,7 +347,7 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
       ),
       ToolEntry(
         id: 'mac-oui-lookup',
-        title: 'MAC Vendor Lookup',
+        title: 'MAC Vendor OUI Lookup',
         description:
             'MAC → vendor from a bundled IEEE OUI table, fully offline',
         routeName: '/tools/mac-oui',
@@ -327,6 +365,76 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         title: 'IP Subnetting (IPv4)',
         description: 'Network, broadcast, host range, mask ⇄ prefix, CIDR math',
         routeName: '/tools/ipv4-subnet',
+        isLive: true,
+      ),
+      // ── moved in from the (now-small) Planning Tools category ──
+      ToolEntry(
+        id: 'ipv6-subnet',
+        title: 'IP Subnetting (IPv6)',
+        description: 'IPv6 prefix, expansion, and address counts',
+        routeName: '/tools/ipv6-subnet',
+        isLive: true,
+      ),
+    ],
+  ),
+
+  // ───────────────────────── 3. Planning Tools ──────────────────────
+  // Kept deliberately small (4 tools). PoE Budget moved in from the dissolved
+  // Infrastructure category; IPv6 Subnet moved out to Networking.
+  ToolCategory(
+    id: 'planning-tools',
+    title: 'Planning Tools',
+    summary: 'PoE budget, throughput, capacity, PtP',
+    icon: Icons.architecture_outlined,
+    tools: <ToolEntry>[
+      // ── from the dissolved Infrastructure category ──
+      ToolEntry(
+        id: 'poe-budget',
+        title: 'PoE Budget',
+        description: 'Switch PoE budget vs connected device draw',
+        routeName: '/tools/poe-budget',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'throughput-calc',
+        title: 'Throughput Calculator',
+        description: 'PHY rate and effective throughput by MCS',
+        routeName: '/tools/throughput-calc',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'capacity-planner',
+        title: 'Capacity Planner',
+        description: 'Recommended AP count by users and demand',
+        routeName: '/tools/capacity-planner',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'ptp-link',
+        title: 'PtP Link Check',
+        description: 'Point-to-point link budget and fade margin',
+        routeName: '/tools/ptp-link',
+        isLive: true,
+      ),
+    ],
+  ),
+
+  // ──────────────────────── 4. Quick Reference ──────────────────────
+  // Absorbs all Cabling & Connectors, the 3 Wi-Fi Design tools, PoE Reference
+  // (from Infrastructure), plus the existing Wi-Fi reference tables. Tool order
+  // follows the LOCKED map. (OSI Model — NEW — pending build, not added yet.)
+  ToolCategory(
+    id: 'quick-reference',
+    title: 'Quick Reference',
+    summary: 'PoE, channels, standards, cabling, lookup tables',
+    icon: Icons.menu_book_outlined,
+    tools: <ToolEntry>[
+      // ── from the dissolved Infrastructure category ──
+      ToolEntry(
+        id: 'poe-reference',
+        title: 'PoE Reference',
+        description: 'PoE class, wattage, and budget',
+        routeName: '/tools/poe-reference',
         isLive: true,
       ),
       ToolEntry(
@@ -357,86 +465,72 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         routeName: '/tools/signal-thresholds',
         isLive: true,
       ),
-    ],
-  ),
-  ToolCategory(
-    id: 'infrastructure',
-    title: 'Infrastructure',
-    summary: 'PoE, power, switch capacity',
-    icon: Icons.electrical_services_outlined,
-    tools: <ToolEntry>[
+      // ── from the dissolved Wi-Fi Design category ──
       ToolEntry(
-        id: 'poe-budget',
-        title: 'PoE Budget',
-        description: 'Switch PoE budget vs connected device draw',
-        routeName: '/tools/poe-budget',
+        id: 'wpa-security',
+        title: 'WPA Security',
+        description: 'WPA2 / WPA3 reference matrix',
+        routeName: '/tools/wpa-security',
         isLive: true,
       ),
       ToolEntry(
-        id: 'rf-attenuation',
-        title: 'RF Attenuation',
-        description: 'Path loss through building materials by band',
-        routeName: '/tools/rf-attenuation',
+        id: 'roaming',
+        title: 'Roaming Parameters',
+        description: '802.11r/k/v and RSSI/SNR roaming thresholds',
+        routeName: '/tools/roaming',
         isLive: true,
       ),
       ToolEntry(
-        id: 'noise-floor',
-        title: 'Noise Floor',
-        description: 'Thermal noise floor by channel width and NF',
-        routeName: '/tools/noise-floor',
+        id: 'ap-placement',
+        title: 'AP Placement',
+        description: 'Mounting, spacing, and cell-overlap guidance',
+        routeName: '/tools/ap-placement',
         isLive: true,
       ),
       ToolEntry(
-        id: 'poe-reference',
-        title: 'PoE Reference',
-        description: 'PoE class, wattage, and budget',
-        routeName: '/tools/poe-reference',
-        isLive: true,
-      ),
-    ],
-  ),
-  ToolCategory(
-    id: 'planning-tools',
-    title: 'Planning Tools',
-    summary: 'Throughput, capacity, roaming',
-    icon: Icons.architecture_outlined,
-    tools: <ToolEntry>[
-      ToolEntry(
-        id: 'throughput-calc',
-        title: 'Throughput Calculator',
-        description: 'PHY rate and effective throughput by MCS',
-        routeName: '/tools/throughput-calc',
+        id: 'port-reference',
+        title: 'Well-Known Ports',
+        description:
+            'Search common TCP/UDP ports by number or service name — offline',
+        routeName: '/tools/port-reference',
         isLive: true,
       ),
       ToolEntry(
-        id: 'capacity-planner',
-        title: 'Capacity Planner',
-        description: 'Recommended AP count by users and demand',
-        routeName: '/tools/capacity-planner',
+        id: 'reason-codes',
+        title: '802.11 Reason Codes',
+        description: '802.11 deauth / disassoc reason and status codes',
+        routeName: '/tools/reason-codes',
         isLive: true,
       ),
       ToolEntry(
-        id: 'ptp-link',
-        title: 'PtP Link Check',
-        description: 'Point-to-point link budget and fade margin',
-        routeName: '/tools/ptp-link',
+        id: 'frame-exchange',
+        title: '802.11 Frame Exchange',
+        description: '802.11 association and handshake frame sequences',
+        routeName: '/tools/frame-exchange',
         isLive: true,
       ),
       ToolEntry(
-        id: 'ipv6-subnet',
-        title: 'IPv6 Subnet',
-        description: 'IPv6 prefix, expansion, and address counts',
-        routeName: '/tools/ipv6-subnet',
+        id: 'db-reference',
+        title: 'dB Reference',
+        description: 'dB to ratio and dBm anchor values',
+        routeName: '/tools/db-reference',
         isLive: true,
       ),
-    ],
-  ),
-  ToolCategory(
-    id: 'cabling',
-    title: 'Cabling and Connectors',
-    summary: 'Ethernet pinouts, connector lookup',
-    icon: Icons.cable_outlined,
-    tools: <ToolEntry>[
+      ToolEntry(
+        id: 'channel-map',
+        title: 'Channel Map',
+        description: '5 and 6 GHz channel bonding map by width',
+        routeName: '/tools/channel-map',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'spectrum',
+        title: 'Spectrum Reference',
+        description: 'Band allocations, sub-bands, and co-existence',
+        routeName: '/tools/spectrum',
+        isLive: true,
+      ),
+      // ── from the dissolved Cabling & Connectors category ──
       ToolEntry(
         id: 'ethernet-pinout',
         title: 'Ethernet Pinout',
@@ -472,86 +566,24 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         routeName: '/tools/rf-connectors',
         isLive: true,
       ),
+      // OSI Model — NEW — pending build (Pax data). Not added yet.
     ],
   ),
-  ToolCategory(
-    id: 'wifi-design',
-    title: 'Wi-Fi Design',
-    summary: 'WPA, channels, regulatory',
-    icon: Icons.wifi,
-    tools: <ToolEntry>[
-      ToolEntry(
-        id: 'wpa-security',
-        title: 'WPA Security',
-        description: 'WPA2 / WPA3 reference matrix',
-        routeName: '/tools/wpa-security',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'roaming',
-        title: 'Roaming Parameters',
-        description: '802.11r/k/v and RSSI/SNR roaming thresholds',
-        routeName: '/tools/roaming',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'ap-placement',
-        title: 'AP Placement',
-        description: 'Mounting, spacing, and cell-overlap guidance',
-        routeName: '/tools/ap-placement',
-        isLive: true,
-      ),
-    ],
-  ),
-  ToolCategory(
-    id: 'quick-reference',
-    title: 'Quick Reference',
-    summary: 'Ports, standards, lookup tables',
-    icon: Icons.menu_book_outlined,
-    tools: <ToolEntry>[
-      ToolEntry(
-        id: 'port-reference',
-        title: 'Well-Known Ports',
-        description:
-            'Search common TCP/UDP ports by number or service name — offline',
-        routeName: '/tools/port-reference',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'reason-codes',
-        title: 'Reason Codes',
-        description: '802.11 deauth / disassoc reason and status codes',
-        routeName: '/tools/reason-codes',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'frame-exchange',
-        title: 'Frame Exchange',
-        description: '802.11 association and handshake frame sequences',
-        routeName: '/tools/frame-exchange',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'db-reference',
-        title: 'dB Reference',
-        description: 'dB to ratio and dBm anchor values',
-        routeName: '/tools/db-reference',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'channel-map',
-        title: 'Channel Map',
-        description: '5 and 6 GHz channel bonding map by width',
-        routeName: '/tools/channel-map',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'spectrum',
-        title: 'Spectrum Reference',
-        description: 'Band allocations, sub-bands, and co-existence',
-        routeName: '/tools/spectrum',
-        isLive: true,
-      ),
-    ],
-  ),
+
+  // ─────────────── 5. Command & Capture — DEFERRED ──────────────────
+  // NEW category (glyph Icons.terminal_outlined). Its 3 tools (Network CLI
+  // Commands, Linux / WLAN Commands, Wireshark 802.11 Filters) are pending
+  // build. Omitted from the catalog until its first tool lands so the home
+  // grid never shows an empty "Coming soon" category tile (Felix decision,
+  // 2026-05-30). Restore as a 5th ToolCategory(id: 'command-capture', ...,
+  // icon: Icons.terminal_outlined) when the tools exist.
+
+  // ───────────────────── 6. Checklists — DEFERRED ───────────────────
+  // NEW category (glyph Icons.checklist_outlined). Its 2 tools (How to NOT
+  // Have a Wireless Problem, Wi-Fi Client Testing Checklist) are pending data
+  // (pax-research-7-additions.md) and build. Omitted until its first tool
+  // lands, same reason as Command & Capture. The reusable tappable-checklist
+  // screen type (lib/screens/tools/checklists/checklist_screen.dart) is built
+  // and ready to receive that data. Restore as a 6th ToolCategory(id:
+  // 'checklists', ..., icon: Icons.checklist_outlined) when the tools exist.
 ];

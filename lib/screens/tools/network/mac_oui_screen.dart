@@ -120,7 +120,7 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('MAC Vendor Lookup'), toolbarHeight: 64),
+      appBar: AppBar(title: const Text('MAC Vendor OUI Lookup'), toolbarHeight: 64),
       body: SafeArea(top: false, child: _body()),
     );
   }

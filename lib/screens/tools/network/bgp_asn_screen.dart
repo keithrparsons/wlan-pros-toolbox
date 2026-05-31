@@ -89,7 +89,7 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('BGP / ASN'), toolbarHeight: 64),
+      appBar: AppBar(title: const Text('Lookup (BGP/ASN)'), toolbarHeight: 64),
       body: SafeArea(top: false, child: _body()),
     );
   }
