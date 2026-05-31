@@ -114,7 +114,7 @@ class EthernetPinoutScreen extends StatefulWidget {
   /// Footnote, verbatim from the PWA buildPinoutTable. The PWA's em dash is
   /// replaced with a comma per the no-em-dash hard rule.
   static const String footnote =
-      'Applies to Cat5, Cat5e, Cat6, Cat6a, Cat7, and Cat8. A crossover cable '
+      'Applies to Cat5, Cat5e, Cat6, Cat6A, Cat7, and Cat8. A crossover cable '
       'uses T568A on one end and T568B on the other, rarely needed today since '
       'most switches and NICs auto-MDI-X.';
 

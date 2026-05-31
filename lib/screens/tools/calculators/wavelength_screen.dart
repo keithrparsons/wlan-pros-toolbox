@@ -339,7 +339,7 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
           const SizedBox(height: AppSpacing.xs),
           Text(
             'f in MHz. The 300 constant is c (3·10⁸ m/s) scaled for the '
-            'MHz/metre form. cm = m·100, ft = m·3.28084, in = ft·12.',
+            'MHz/meter form. cm = m·100, ft = m·3.28084, in = ft·12.',
             style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
           ),
         ],

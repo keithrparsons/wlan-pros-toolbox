@@ -7,7 +7,7 @@
 // then renders each target unit as meters / toM[target]. We mirror those exact
 // factors so the native app and PWA agree to the decimal. (The PWA keyed
 // nautical miles as "nm"; we name the enum `nmi` to avoid colliding with the
-// nanometre symbol, same 1852 m factor.)
+// nanometer symbol, same 1852 m factor.)
 //
 // UI shape: a single from-unit and to-unit selection with one live result,
 // rather than the PWA's "show all seven at once" panel — the Toolbox tool

@@ -142,7 +142,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('ICMP Ping'), toolbarHeight: 64),
+      appBar: AppBar(title: const Text('Ping (ICMP)'), toolbarHeight: 64),
       body: SafeArea(top: false, child: _body()),
     );
   }
@@ -528,7 +528,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
     TextTheme text,
     AppMonoText mono,
   ) {
-    // WCAG 1.4.1 — outcome carried by text + icon shape, never colour alone.
+    // WCAG 1.4.1 — outcome carried by text + icon shape, never color alone.
     final (Color color, IconData icon, String value, String semantic) =
         r.success
             ? (

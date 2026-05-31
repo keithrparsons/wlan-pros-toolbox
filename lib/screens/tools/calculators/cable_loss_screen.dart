@@ -583,7 +583,7 @@ class _CableLossScreenState extends State<CableLossScreen> {
           const SizedBox(height: AppSpacing.xs),
           Text(
             'dB/100ft is interpolated from manufacturer spec points on a '
-            'sqrt(frequency) axis. Lengths in metres convert at 3.28084 ft/m '
+            'sqrt(frequency) axis. Lengths in meters convert at 3.28084 ft/m '
             'before the math.',
             style: text.labelMedium?.copyWith(
               color: AppColors.textTertiary,
