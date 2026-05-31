@@ -172,4 +172,27 @@ void main() {
       expect(find.text('802.11ax (Wi-Fi 6E)'), findsNothing);
     },
   );
+
+  testWidgets(
+    'app-bar refresh re-reads and confirms with a snackbar',
+    (WidgetTester tester) async {
+      final _FakeInvoker invoker = _FakeInvoker(<String, Object?>{
+        'getWifiInfo': _fullPayload(),
+      });
+      final WifiInfoService service = WifiInfoService(
+        invoke: invoker.call,
+        platformOverride: 'macos',
+      );
+      await pump(tester, service);
+      expect(invoker.getWifiInfoCalls, 1); // initial load
+
+      await tester.tap(find.byTooltip('Refresh'));
+      await tester.pumpAndSettle();
+
+      // The refresh actually re-reads, and confirms visibly so it is never
+      // silent even when the values are unchanged.
+      expect(invoker.getWifiInfoCalls, 2);
+      expect(find.text('Wi-Fi information updated'), findsOneWidget);
+    },
+  );
 }

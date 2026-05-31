@@ -30,12 +30,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/wifi_info_service.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../theme/app_typography.dart';
 import '../concept_graphic_band.dart';
 import 'network_unavailable_view.dart';
 
@@ -92,7 +92,11 @@ class _WifiInfoScreenState extends State<WifiInfoScreen> {
   /// first read fires from `initState`, and an imperative announce on that path
   /// races widget teardown (the binding can be disposed before the async
   /// completes). The liveRegion is the robust, declarative equivalent.
-  Future<void> _fetch() async {
+  /// Reads a fresh snapshot. [manual] is true for a user-initiated refresh
+  /// (the app-bar button), which shows a brief confirmation so the action is
+  /// never silent: a live read often returns identical values, so without a
+  /// snackbar a successful refresh would look like nothing happened.
+  Future<void> _fetch({bool manual = false}) async {
     setState(() {
       _loading = true;
       _error = null;
@@ -104,6 +108,14 @@ class _WifiInfoScreenState extends State<WifiInfoScreen> {
         _info = info;
         _loading = false;
       });
+      if (manual && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Wi-Fi information updated'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     } on WifiInfoUnavailable catch (e) {
       if (!mounted) return;
       setState(() {
@@ -142,15 +154,31 @@ class _WifiInfoScreenState extends State<WifiInfoScreen> {
         toolbarHeight: 64,
         actions: [
           if (!kIsWeb && _service.isSupportedPlatform)
-            Semantics(
-              button: true,
-              label: 'Refresh Wi-Fi information',
-              child: IconButton(
-                icon: const Icon(Icons.refresh),
-                tooltip: 'Refresh',
-                onPressed: _loading ? null : _fetch,
-              ),
-            ),
+            // While a read is in flight the icon becomes a spinner so a refresh
+            // is visibly working even when the values come back unchanged.
+            _loading
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                    child: Center(
+                      child: SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  )
+                : Semantics(
+                    button: true,
+                    label: 'Refresh Wi-Fi information',
+                    child: IconButton(
+                      icon: const Icon(Icons.refresh),
+                      tooltip: 'Refresh',
+                      onPressed: () => _fetch(manual: true),
+                    ),
+                  ),
         ],
       ),
       body: SafeArea(
@@ -559,14 +587,16 @@ class _MetricRow extends StatelessWidget {
         showNote ? '$label, $shown. $note' : '$label, $shown';
 
     // Live values: primary. Unavailable: secondary (clears 4.5:1), never
-    // tertiary for value text. Mono values use Roboto Mono, a monospaced
-    // SANS-SERIF: MAC and hex columns stay aligned without DM Mono's flared
-    // terminals that read as serifs at small sizes. (App-wide numeric mono is
-    // DM Mono per GL-003 §8.5; standardizing this face is an Iris call.)
+    // tertiary for value text. Mono values use the shared Roboto Mono token, a
+    // monospaced SANS-SERIF for identifiers (IP, MAC, subnet masks): hex columns
+    // stay aligned without DM Mono's flared terminals that read as serifs at
+    // small sizes. Sourced from the theme so it is consistent app-wide.
+    final AppMonoText monoText =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final Color valueColor =
         hasValue ? AppColors.textPrimary : AppColors.textSecondary;
     final TextStyle? valueStyle = (mono && hasValue)
-        ? GoogleFonts.robotoMono(textStyle: text.bodyMedium, color: valueColor)
+        ? monoText.robotoMono.copyWith(color: valueColor)
         : text.bodyMedium?.copyWith(color: valueColor);
 
     return Padding(
