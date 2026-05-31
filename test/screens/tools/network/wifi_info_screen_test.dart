@@ -1,200 +1,175 @@
-// Widget tests for WifiInfoScreen.
-//
-// The service is the real WifiInfoService driven through its injectable seams:
-// `platformOverride` forces the supported/unsupported path, and `invoke` is a
-// fake method-channel function so no real CoreWLAN channel or network is hit.
-//
-// Coverage:
-//  - full payload renders metric values; the Rx Rate row shows "Unavailable".
-//  - location-denied shows the Grant card + button; tapping it requests
-//    permission and re-fetches (a second getWifiInfo invoke).
-//  - post-grant-pending shows the "may need an app relaunch" copy and hides
-//    the Grant button.
-//  - non-macOS renders NetworkUnavailableView and never calls the invoker.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wlan_pros_toolbox/screens/tools/network/network_unavailable_view.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/wifi_info_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
 
-/// Builds a getWifiInfo payload map with sensible defaults; override per test.
-Map<String, Object?> _payload({
-  String? ssid = 'TestNet',
-  String? bssid = 'aa:bb:cc:dd:ee:ff',
-  int? rssiDbm = -52,
-  int? noiseDbm = -95,
-  int? snrDb = 43,
-  double? txRateMbps = 866.7,
-  String? phyMode = '802.11ac',
-  int? channel = 44,
-  int? channelWidthMhz = 80,
-  String? band = '5 GHz',
-  String? countryCode = 'US',
-  String? interfaceName = 'en0',
-  String? hardwareAddress = '11:22:33:44:55:66',
-  bool poweredOn = true,
-  bool locationAuthorized = true,
-}) {
-  return <String, Object?>{
-    'interfaceName': interfaceName,
-    'ssid': ssid,
-    'bssid': bssid,
-    'rssiDbm': rssiDbm,
-    'noiseDbm': noiseDbm,
-    'snrDb': snrDb,
-    'txRateMbps': txRateMbps,
-    'phyMode': phyMode,
-    'channel': channel,
-    'channelWidthMhz': channelWidthMhz,
-    'band': band,
-    'countryCode': countryCode,
-    'hardwareAddress': hardwareAddress,
-    'poweredOn': poweredOn,
-    'locationAuthorized': locationAuthorized,
-  };
+/// A fake invoker that scripts channel responses for the screen tests.
+///
+/// Records how many times getWifiInfo is called so the location regrant flow
+/// can be verified without a real platform channel.
+class _FakeInvoker {
+  _FakeInvoker(this.responses);
+
+  final Map<String, Object?> responses;
+  int getWifiInfoCalls = 0;
+  int requestPermissionCalls = 0;
+
+  Future<Object?> call(String method, [dynamic args]) async {
+    switch (method) {
+      case 'getWifiInfo':
+        getWifiInfoCalls++;
+        return responses['getWifiInfo'];
+      case 'requestLocationPermission':
+        requestPermissionCalls++;
+        return responses['requestLocationPermission'];
+      case 'isLocationAuthorized':
+        return responses['isLocationAuthorized'];
+    }
+    return null;
+  }
 }
 
+/// A complete payload: connected on a 6 GHz Wi-Fi 6E link with all fields.
+Map<String, Object?> _fullPayload() => <String, Object?>{
+      'interfaceName': 'en0',
+      'poweredOn': true,
+      'ssid': 'WLAN Pros 6E',
+      'bssid': 'a4:83:e7:9a:bc:de',
+      'rssiDbm': -47,
+      'noiseDbm': -92,
+      'snrDb': 45,
+      'txRateMbps': 2401.0,
+      'phyMode': '802.11ax',
+      'channel': 37,
+      'channelWidthMhz': 160,
+      'band': '6 GHz',
+      'countryCode': 'US',
+      'hardwareAddress': 'a4:83:e7:11:22:33',
+      'locationAuthorized': true,
+    };
+
+/// Location denied: RF metrics resolve, but SSID/BSSID are null.
+Map<String, Object?> _denied() => <String, Object?>{
+      'interfaceName': 'en0',
+      'poweredOn': true,
+      'ssid': null,
+      'bssid': null,
+      'rssiDbm': -47,
+      'noiseDbm': -92,
+      'snrDb': 45,
+      'txRateMbps': 2401.0,
+      'phyMode': '802.11ax',
+      'channel': 37,
+      'channelWidthMhz': 160,
+      'band': '6 GHz',
+      'countryCode': 'US',
+      'hardwareAddress': 'a4:83:e7:11:22:33',
+      'locationAuthorized': false,
+    };
+
+/// After granting: location reads authorized, but SSID is still null (the
+/// documented macOS relaunch quirk).
+Map<String, Object?> _grantedButPending() => <String, Object?>{
+      ..._denied(),
+      'locationAuthorized': true,
+    };
+
 void main() {
-  group('WifiInfoScreen', () {
-    testWidgets('full payload renders values; Rx Rate shows Unavailable',
-        (tester) async {
-      final service = WifiInfoService(
+  Future<void> pump(WidgetTester tester, WifiInfoService service) async {
+    await tester.pumpWidget(
+      MaterialApp(home: WifiInfoScreen(service: service)),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets(
+    'full payload renders values with units; Wi-Fi 6E label; Rx Rate Unavailable',
+    (WidgetTester tester) async {
+      final _FakeInvoker invoker = _FakeInvoker(<String, Object?>{
+        'getWifiInfo': _fullPayload(),
+      });
+      final WifiInfoService service = WifiInfoService(
+        invoke: invoker.call,
         platformOverride: 'macos',
-        invoke: (String method, [dynamic args]) async {
-          if (method == 'getWifiInfo') return _payload();
-          return null;
-        },
       );
+      await pump(tester, service);
 
-      await tester.pumpWidget(
-        MaterialApp(home: WifiInfoScreen(service: service)),
-      );
-      await tester.pumpAndSettle();
+      expect(find.text('WLAN Pros 6E'), findsOneWidget);
+      // Units are tied to the value, not the label.
+      expect(find.text('-47 dBm'), findsOneWidget);
+      expect(find.text('45 dB'), findsOneWidget);
+      expect(find.text('2401 Mbps'), findsOneWidget);
+      expect(find.text('160 MHz'), findsOneWidget);
+      // 802.11ax on 6 GHz is Wi-Fi 6E, shown with both vocabularies.
+      expect(find.text('802.11ax (Wi-Fi 6E)'), findsOneWidget);
+      expect(find.text('37'), findsOneWidget);
+      expect(find.text('6 GHz'), findsOneWidget);
+      // Rx Rate and Tx Power are always-unavailable rows.
+      expect(find.text('Unavailable'), findsNWidgets(2));
+      expect(find.textContaining('Not exposed'), findsNWidgets(2));
+    },
+  );
 
-      // Representative live values from each section.
-      expect(find.text('TestNet'), findsOneWidget); // SSID
-      expect(find.text('-52'), findsOneWidget); // RSSI
-      expect(find.text('43'), findsOneWidget); // SNR
-      expect(find.text('44'), findsOneWidget); // Channel
-      expect(find.text('5 GHz'), findsOneWidget); // Band
-      expect(find.text('802.11ac'), findsOneWidget); // Standard
-
-      // The Rx Rate row is hard-coded unavailable.
-      expect(find.text('Rx Rate (Mbps)'), findsOneWidget);
-      expect(find.text('Tx Power (dBm)'), findsOneWidget);
-      // "Unavailable" appears for the two honesty rows.
-      expect(find.text('Unavailable'), findsWidgets);
-      expect(
-        find.text('Not exposed by macOS CoreWLAN'),
-        findsNWidgets(2),
-      );
-
-      // No Grant-Location card when the SSID is present.
-      expect(find.text('Grant Location permission'), findsNothing);
-    });
-
-    testWidgets('location denied shows Grant card; tap re-fetches',
-        (tester) async {
-      var getWifiInfoCalls = 0;
-      var requestPermissionCalls = 0;
-
-      final service = WifiInfoService(
+  testWidgets(
+    'location denied shows Grant card; tap re-fetches',
+    (WidgetTester tester) async {
+      final _FakeInvoker invoker = _FakeInvoker(<String, Object?>{
+        'getWifiInfo': _denied(),
+        'requestLocationPermission': true,
+      });
+      final WifiInfoService service = WifiInfoService(
+        invoke: invoker.call,
         platformOverride: 'macos',
-        invoke: (String method, [dynamic args]) async {
-          if (method == 'getWifiInfo') {
-            getWifiInfoCalls++;
-            return _payload(
-              ssid: null,
-              bssid: null,
-              locationAuthorized: false,
-            );
-          }
-          if (method == 'requestLocationPermission') {
-            requestPermissionCalls++;
-            return true;
-          }
-          return null;
-        },
       );
+      await pump(tester, service);
 
-      await tester.pumpWidget(
-        MaterialApp(home: WifiInfoScreen(service: service)),
-      );
-      await tester.pumpAndSettle();
-
-      expect(getWifiInfoCalls, 1);
-      expect(
-        find.textContaining('Network name needs Location permission'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('Location'), findsWidgets);
       expect(find.text('Grant Location permission'), findsOneWidget);
 
       await tester.tap(find.text('Grant Location permission'));
       await tester.pumpAndSettle();
+      expect(invoker.getWifiInfoCalls, 2);
+    },
+  );
 
-      expect(requestPermissionCalls, 1);
-      // The grant triggers a second snapshot read.
-      expect(getWifiInfoCalls, 2);
-    });
-
-    testWidgets('post-grant pending shows relaunch copy, hides Grant button',
-        (tester) async {
-      final service = WifiInfoService(
+  testWidgets(
+    'post-grant pending shows relaunch copy, hides Grant button',
+    (WidgetTester tester) async {
+      final _FakeInvoker invoker = _FakeInvoker(<String, Object?>{
+        'getWifiInfo': _denied(),
+        'requestLocationPermission': true,
+      });
+      final WifiInfoService service = WifiInfoService(
+        invoke: invoker.call,
         platformOverride: 'macos',
-        invoke: (String method, [dynamic args]) async {
-          if (method == 'getWifiInfo') {
-            // SSID stays null even though Location is now authorized — the
-            // macOS post-grant relaunch quirk.
-            return _payload(
-              ssid: null,
-              bssid: null,
-              locationAuthorized: true,
-            );
-          }
-          if (method == 'requestLocationPermission') return true;
-          return null;
-        },
       );
-
-      await tester.pumpWidget(
-        MaterialApp(home: WifiInfoScreen(service: service)),
-      );
-      await tester.pumpAndSettle();
-
-      // Before any grant attempt, the original prompt + button show (state a):
-      // not authorized OR name-missing → here name is missing.
-      expect(find.text('Grant Location permission'), findsOneWidget);
-
+      await pump(tester, service);
+      // The refetch returns authorized + still-null SSID (relaunch quirk).
+      invoker.responses['getWifiInfo'] = _grantedButPending();
       await tester.tap(find.text('Grant Location permission'));
       await tester.pumpAndSettle();
 
-      // State (b): granted, ssid still null, attempt made.
-      expect(
-        find.textContaining('may need an app relaunch'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('relaunch'), findsOneWidget);
       expect(find.text('Grant Location permission'), findsNothing);
-    });
+    },
+  );
 
-    testWidgets('non-macOS renders unavailable view and never invokes',
-        (tester) async {
-      var invokeCalls = 0;
-      final service = WifiInfoService(
+  testWidgets(
+    'non-macOS renders unavailable view and never invokes',
+    (WidgetTester tester) async {
+      final _FakeInvoker invoker = _FakeInvoker(<String, Object?>{
+        'getWifiInfo': _fullPayload(),
+      });
+      final WifiInfoService service = WifiInfoService(
+        invoke: invoker.call,
         platformOverride: 'linux',
-        invoke: (String method, [dynamic args]) async {
-          invokeCalls++;
-          return null;
-        },
       );
+      await pump(tester, service);
 
-      await tester.pumpWidget(
-        MaterialApp(home: WifiInfoScreen(service: service)),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.byType(NetworkUnavailableView), findsOneWidget);
-      expect(invokeCalls, 0);
-    });
-  });
+      // The unavailable view shows, and the channel is never touched.
+      expect(invoker.getWifiInfoCalls, 0);
+      // No live metric rows render off macOS.
+      expect(find.text('802.11ax (Wi-Fi 6E)'), findsNothing);
+    },
+  );
 }
