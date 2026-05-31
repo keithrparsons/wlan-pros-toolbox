@@ -3,23 +3,11 @@ import FlutterMacOS
 
 @main
 class AppDelegate: FlutterAppDelegate {
-  /// Retained for the app lifetime so the Wi-Fi method channel stays
-  /// registered and its CLLocationManager delegate can fire.
-  var wifiInfoChannel: WifiInfoChannel?
-
-  override func applicationDidFinishLaunching(_ notification: Notification) {
-    super.applicationDidFinishLaunching(notification)
-
-    // Register the Wi-Fi info channel on the main Flutter engine. If the view
-    // controller cast fails the app still launches; the channel is simply
-    // absent and the Dart side surfaces a channel error.
-    if let controller = mainFlutterWindow?.contentViewController
-      as? FlutterViewController {
-      wifiInfoChannel = WifiInfoChannel(
-        messenger: controller.engine.binaryMessenger
-      )
-    }
-  }
+  // The Wi-Fi Information channel is registered in
+  // MainFlutterWindow.awakeFromNib, where the engine messenger is guaranteed
+  // available. Registering here relied on a contentViewController cast that
+  // could run before the controller was set, leaving the channel unregistered
+  // and the Dart side hanging on a never-answered call.
 
   override func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
     return true
