@@ -420,6 +420,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen> {
   }
 
   Widget _channelCard(WifiInfo info) {
+    final bool isPsc = _isPscChannel(info.channel, info.band);
     return _Card(
       title: 'Channel',
       child: Column(
@@ -428,6 +429,8 @@ class _WifiInfoScreenState extends State<WifiInfoScreen> {
             label: 'Channel',
             value: info.channel?.toString(),
             mono: true,
+            marker: isPsc ? '*' : null,
+            note: isPsc ? 'Preferred Scanning Channel (PSC)' : null,
           ),
           _MetricRow(
             label: 'Width',
@@ -460,6 +463,19 @@ class _WifiInfoScreenState extends State<WifiInfoScreen> {
         ],
       ),
     );
+  }
+
+  /// Whether [channel] is a 6 GHz Preferred Scanning Channel (PSC).
+  ///
+  /// PSC channels are a 6 GHz concept (802.11ax/6E and later): the every-fourth
+  /// 80 MHz channels that 6 GHz APs beacon on so clients find them quickly, per
+  /// IEEE 802.11ax. They are channels 5, 21, 37, ... 229, i.e. (ch - 5) is a
+  /// multiple of 16 across the 6 GHz range. Returns false for 2.4 and 5 GHz,
+  /// where PSC does not apply.
+  static bool _isPscChannel(int? channel, String? band) {
+    if (channel == null || band != '6 GHz') return false;
+    if (channel < 5 || channel > 233) return false;
+    return (channel - 5) % 16 == 0;
   }
 
   /// Renders the link standard with both its 802.11 designation and its Wi-Fi
@@ -554,6 +570,7 @@ class _MetricRow extends StatelessWidget {
     this.mono = false,
     this.note,
     this.unit,
+    this.marker,
   });
 
   /// The left-hand field name.
@@ -565,13 +582,20 @@ class _MetricRow extends StatelessWidget {
   /// Render the value in a monospaced face — for addresses and numerics.
   final bool mono;
 
-  /// Optional honesty note shown under an Unavailable value (e.g. why macOS
-  /// does not expose it). Only meaningful when [value] is null/empty.
+  /// Optional note shown under the value. For an Unavailable value it explains
+  /// why (e.g. "Not exposed by macOS CoreWLAN"); for a present value it is a
+  /// footnote tied to [marker] (e.g. the PSC explanation).
   final String? note;
 
   /// Unit appended to the value (e.g. "dBm", "Mbps"), tied to the number rather
   /// than the label so a reading scans as "-50 dBm". Omitted when unavailable.
   final String? unit;
+
+  /// Optional marker glyph appended to the value (e.g. "*") and used to prefix
+  /// the [note] footnote, tying the two together. Shown only when the value is
+  /// present. Excluded from the spoken value so screen readers do not say
+  /// "star"; the [note] carries the meaning in speech instead.
+  final String? marker;
 
   @override
   Widget build(BuildContext context) {
@@ -580,11 +604,20 @@ class _MetricRow extends StatelessWidget {
     final String shown = hasValue
         ? (unit == null ? value! : '${value!} $unit')
         : 'Unavailable';
-    final bool showNote = !hasValue && note != null;
+    // The marker glyph rides on the visible value only (never spoken).
+    final String displayValue =
+        (hasValue && marker != null) ? '$shown $marker' : shown;
+    // The footnote shows whenever a note exists. When a marker is present it
+    // prefixes the footnote so the asterisk on the value visually ties to it.
+    final bool showNote = note != null;
+    final String footnote = note == null
+        ? ''
+        : (marker != null ? '$marker $note' : note!);
 
-    // Compose the single accessible label, including the note when present.
+    // Compose the single accessible label. The spoken value omits the marker;
+    // the note (without the glyph) carries the meaning.
     final String semanticLabel =
-        showNote ? '$label, $shown. $note' : '$label, $shown';
+        showNote ? '$label, $shown, $note' : '$label, $shown';
 
     // Live values: primary. Unavailable: secondary (clears 4.5:1), never
     // tertiary for value text. Mono values use the shared Roboto Mono token, a
@@ -624,7 +657,7 @@ class _MetricRow extends StatelessWidget {
                 Expanded(
                   flex: 3,
                   child: Text(
-                    shown,
+                    displayValue,
                     textAlign: TextAlign.end,
                     style: valueStyle,
                   ),
@@ -634,7 +667,7 @@ class _MetricRow extends StatelessWidget {
             if (showNote) ...[
               const SizedBox(height: AppSpacing.xs),
               Text(
-                note!,
+                footnote,
                 textAlign: TextAlign.end,
                 style: text.bodySmall?.copyWith(
                   color: AppColors.textTertiary,

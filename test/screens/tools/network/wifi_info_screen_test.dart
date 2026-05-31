@@ -30,6 +30,10 @@ class _FakeInvoker {
 }
 
 /// A complete payload: connected on a 6 GHz Wi-Fi 6E link with all fields.
+///
+/// Channel 33 is intentionally NOT a PSC ((33 - 5) % 16 == 12), so the base
+/// render test is not perturbed by the PSC asterisk; the PSC behavior has its
+/// own dedicated tests below.
 Map<String, Object?> _fullPayload() => <String, Object?>{
       'interfaceName': 'en0',
       'poweredOn': true,
@@ -40,7 +44,7 @@ Map<String, Object?> _fullPayload() => <String, Object?>{
       'snrDb': 45,
       'txRateMbps': 2401.0,
       'phyMode': '802.11ax',
-      'channel': 37,
+      'channel': 33,
       'channelWidthMhz': 160,
       'band': '6 GHz',
       'countryCode': 'US',
@@ -102,7 +106,7 @@ void main() {
       expect(find.text('160 MHz'), findsOneWidget);
       // 802.11ax on 6 GHz is Wi-Fi 6E, shown with both vocabularies.
       expect(find.text('802.11ax (Wi-Fi 6E)'), findsOneWidget);
-      expect(find.text('37'), findsOneWidget);
+      expect(find.text('33'), findsOneWidget);
       expect(find.text('6 GHz'), findsOneWidget);
       // Rx Rate and Tx Power are always-unavailable rows.
       expect(find.text('Unavailable'), findsNWidgets(2));
@@ -174,6 +178,56 @@ void main() {
   );
 
   testWidgets(
+    'a 6 GHz PSC channel is flagged with an asterisk and footnote',
+    (WidgetTester tester) async {
+      // channel 197, 6 GHz -> PSC ((197 - 5) % 16 == 0).
+      final _FakeInvoker invoker = _FakeInvoker(<String, Object?>{
+        'getWifiInfo': <String, Object?>{
+          ..._fullPayload(),
+          'channel': 197,
+          'channelWidthMhz': 160,
+          'band': '6 GHz',
+        },
+      });
+      final WifiInfoService service = WifiInfoService(
+        invoke: invoker.call,
+        platformOverride: 'macos',
+      );
+      await pump(tester, service);
+
+      // The channel value carries the marker, and the PSC footnote renders.
+      expect(find.text('197 *'), findsOneWidget);
+      expect(
+        find.textContaining('Preferred Scanning Channel'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'a non-PSC 6 GHz channel has no asterisk',
+    (WidgetTester tester) async {
+      // channel 193, 6 GHz -> NOT PSC ((193 - 5) % 16 == 12).
+      final _FakeInvoker invoker = _FakeInvoker(<String, Object?>{
+        'getWifiInfo': <String, Object?>{
+          ..._fullPayload(),
+          'channel': 193,
+          'band': '6 GHz',
+        },
+      });
+      final WifiInfoService service = WifiInfoService(
+        invoke: invoker.call,
+        platformOverride: 'macos',
+      );
+      await pump(tester, service);
+
+      expect(find.text('193'), findsOneWidget);
+      expect(find.text('193 *'), findsNothing);
+      expect(find.textContaining('Preferred Scanning Channel'), findsNothing);
+    },
+  );
+
+  testWidgets(
     'app-bar refresh re-reads and confirms with a snackbar',
     (WidgetTester tester) async {
       final _FakeInvoker invoker = _FakeInvoker(<String, Object?>{
@@ -193,6 +247,10 @@ void main() {
       // silent even when the values are unchanged.
       expect(invoker.getWifiInfoCalls, 2);
       expect(find.text('Wi-Fi information updated'), findsOneWidget);
+
+      // Let the SnackBar's auto-dismiss timer fire so no Timer is left pending
+      // when the test tears down.
+      await tester.pumpAndSettle(const Duration(seconds: 3));
     },
   );
 }
