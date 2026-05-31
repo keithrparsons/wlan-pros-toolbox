@@ -38,6 +38,8 @@ import '../../../services/network/network_support.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../concept_graphic_band.dart';
+import 'live_quality_monitor.dart';
+import 'metric_sparkline.dart';
 import 'network_unavailable_view.dart';
 
 /// Network Quality screen. Runs one transport measurement and a popular-site
@@ -48,6 +50,7 @@ class NetQualityScreen extends StatefulWidget {
     super.key,
     this.client,
     this.reachabilityProbe,
+    this.monitor,
   });
 
   /// Measurement backend. Injected in tests (a [MockQualityClient] with no
@@ -60,6 +63,13 @@ class NetQualityScreen extends StatefulWidget {
   /// [ReachabilityProbe] over the default [kPopularSites].
   final ReachabilityProbe? reachabilityProbe;
 
+  /// Live trend monitor. Injected in tests with a fake latency sampler and a
+  /// driven tick; null in production, where the screen builds a real
+  /// [LiveQualityMonitor] over the same target host as [client]. The screen
+  /// owns its lifecycle: it `start()`s the monitor in `initState` and disposes
+  /// it in `dispose()`, which is the "clears on leave" behavior (spec §2).
+  final LiveQualityMonitor? monitor;
+
   @override
   State<NetQualityScreen> createState() => _NetQualityScreenState();
 }
@@ -67,6 +77,7 @@ class NetQualityScreen extends StatefulWidget {
 class _NetQualityScreenState extends State<NetQualityScreen> {
   late final QualityClient _client;
   late final ReachabilityProbe _reachability;
+  late final LiveQualityMonitor _monitor;
 
   bool _running = false;
   String? _error;
@@ -89,11 +100,23 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     _client =
         widget.client ?? OwnEngineQualityClient.forHost('one.one.one.one');
     _reachability = widget.reachabilityProbe ?? ReachabilityProbe();
+    // The live monitor samples the cheap latency trio while the screen is
+    // mounted. Built with a real LatencyProbe in production (same host as the
+    // one-shot client); injected with a fake sampler in tests. Only started on
+    // a platform that can actually run the sockets — never on web.
+    _monitor = widget.monitor ?? LiveQualityMonitor(host: 'one.one.one.one');
+    if (NetworkSupport.activeNetworkSupported) {
+      _monitor.start();
+    }
   }
 
   @override
   void dispose() {
     _sub?.cancel();
+    // Disposing the monitor cancels its timer and frees the histories — this IS
+    // the "clears on leave" behavior; the trend does not survive leaving the
+    // screen (spec §2, Keith's decision).
+    _monitor.dispose();
     super.dispose();
   }
 
@@ -132,10 +155,15 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
       },
       onDone: () {
         if (!mounted) return;
+        final QualityResult? result = _client.lastResult;
         setState(() {
           _running = false;
-          _result = _client.lastResult;
+          _result = result;
         });
+        // Feed all six metric values into the live history. The expensive trio
+        // (download/upload/responsiveness) gets points ONLY here, which is why
+        // those sparklines are sparse by design (spec §2).
+        if (result != null) _monitor.addFullResult(result);
         // WCAG 4.1.3 — announce completion to assistive tech.
         SemanticsService.sendAnnouncement(
           View.of(context),
@@ -203,10 +231,24 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
                     const SizedBox(height: AppSpacing.sm),
                     _progressCard(context),
                   ],
-                  if (_result != null) ...[
-                    const SizedBox(height: AppSpacing.sm),
-                    _metricsCard(context),
-                  ],
+                  // The metrics card redraws as live samples land, so it is
+                  // wrapped in a ListenableBuilder over the monitor. It shows
+                  // once there is either a one-shot result OR any live history.
+                  ListenableBuilder(
+                    listenable: _monitor,
+                    builder: (context, _) {
+                      final bool hasLive = _monitor
+                          .historyFor(MetricIds.latency)
+                          .isNotEmpty;
+                      if (_result == null && !hasLive) {
+                        return const SizedBox.shrink();
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.only(top: AppSpacing.sm),
+                        child: _metricsCard(context),
+                      );
+                    },
+                  ),
                   if (_result != null || _sites.isNotEmpty) ...[
                     const SizedBox(height: AppSpacing.sm),
                     _sitesCard(context),
@@ -350,22 +392,38 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     }
   }
 
+  /// Fixed transport order so the card reads the same every run.
+  static const List<String> _metricOrder = <String>[
+    MetricIds.latency,
+    MetricIds.jitter,
+    MetricIds.loss,
+    MetricIds.download,
+    MetricIds.upload,
+    MetricIds.responsiveness,
+  ];
+
+  /// The latency trio is sampled live every 30 s; the rest only on a one-shot
+  /// run. Used to pick dense-line vs. dots-only rendering and the hint copy.
+  static const Set<String> _liveTrio = <String>{
+    MetricIds.latency,
+    MetricIds.jitter,
+    MetricIds.loss,
+  };
+
+  /// Static label + unit per metric, so a row can render from live history
+  /// alone (before any one-shot run, when there is no [QualityResult] yet).
+  static const Map<String, (String, String)> _metricMeta =
+      <String, (String, String)>{
+    MetricIds.latency: ('Latency', 'ms'),
+    MetricIds.jitter: ('Jitter', 'ms'),
+    MetricIds.loss: ('Loss', '%'),
+    MetricIds.download: ('Download', 'Mbps'),
+    MetricIds.upload: ('Upload', 'Mbps'),
+    MetricIds.responsiveness: ('Responsiveness', 'RPM'),
+  };
+
   Widget _metricsCard(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
-    final QualityResult result = _result!;
-    // Fixed transport order so the card reads the same every run.
-    const List<String> order = <String>[
-      MetricIds.latency,
-      MetricIds.jitter,
-      MetricIds.loss,
-      MetricIds.download,
-      MetricIds.upload,
-      MetricIds.responsiveness,
-    ];
-    final List<QualityMetric> metrics = <QualityMetric>[
-      for (final String id in order)
-        if (result.metric(id) != null) result.metric(id)!,
-    ];
 
     return Container(
       decoration: BoxDecoration(
@@ -377,87 +435,273 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            'Transport',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
-              letterSpacing: 0.4,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              Text(
+                'Transport',
+                style: text.labelMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                  letterSpacing: 0.4,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              // The indicator takes the remaining width so its caption can
+              // ellipsize on narrow phones instead of overflowing the row.
+              Expanded(child: _liveIndicator(context)),
+            ],
           ),
           const SizedBox(height: AppSpacing.xs),
-          for (final QualityMetric m in metrics) _metricRow(context, m),
+          for (final String id in _metricOrder) _metricRow(context, id),
         ],
       ),
     );
   }
 
-  Widget _metricRow(BuildContext context, QualityMetric m) {
+  /// The quiet, honest live affordance: a status word plus a pause/resume
+  /// control. It states exactly what is live (latency, every 30 s) and never
+  /// implies the speed metrics are live — they are not (spec §3).
+  Widget _liveIndicator(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final bool running = _monitor.isRunning;
+    final String caption = running
+        ? 'Live · sampling latency every 30s'
+        : 'Paused';
+    final Color dotColor =
+        running ? AppColors.statusSuccess : AppColors.textTertiary;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: <Widget>[
+        // WCAG 1.4.1 — the dot only reinforces the word "Live"/"Paused", which
+        // carries the state. Decorative for AT.
+        ExcludeSemantics(
+          child: Container(
+            width: 8,
+            height: 8,
+            margin: const EdgeInsets.only(right: 6),
+            decoration: BoxDecoration(
+              color: dotColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
+        Flexible(
+          child: Text(
+            caption,
+            overflow: TextOverflow.ellipsis,
+            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        // Stateful SR label like the Run button: announces the ACTION the tap
+        // performs, and flips with state.
+        Semantics(
+          button: true,
+          label: running
+              ? 'Pause live sampling'
+              : 'Resume live sampling',
+          child: IconButton(
+            visualDensity: VisualDensity.compact,
+            iconSize: 20,
+            color: AppColors.textSecondary,
+            tooltip: running ? 'Pause' : 'Resume',
+            onPressed: () => running ? _monitor.pause() : _monitor.resume(),
+            icon: Icon(running ? Icons.pause : Icons.play_arrow),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _metricRow(BuildContext context, String id) {
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
-    final bool available = m.isAvailable;
-    final String valueLabel =
-        available ? _formatValue(m) : (m.note ?? 'Unavailable');
+    final (String label, String unit) = _metricMeta[id]!;
+    final List<MetricSample> history = _monitor.historyFor(id);
+    final QualityMetric? oneShot = _result?.metric(id);
+
+    // Current value/grade: prefer the most recent live sample (latency trio),
+    // fall back to the one-shot result (the expensive trio, and the trio before
+    // the first live tick lands).
+    final MetricSample? latest =
+        history.isNotEmpty ? history.last : null;
+
+    final bool available =
+        latest != null || (oneShot != null && oneShot.isAvailable);
+
+    final double? currentValue = latest?.value ?? oneShot?.value;
+    final QualityGrade grade = latest?.grade ??
+        oneShot?.grade ??
+        QualityGrade.unavailable;
+    final String? note = (latest == null) ? oneShot?.note : null;
+
+    final String valueLabel = available
+        ? _formatValueRaw(id, currentValue!, unit)
+        : (note ?? 'Unavailable');
 
     // Whole row is one semantic node so AT reads "<label>, <value>, <grade>".
     final String gradePhrase = available
-        ? m.grade.label
-        : 'unavailable${m.note == null ? '' : ', ${m.note}'}';
-    final String semanticValue = available ? _spokenValue(m) : valueLabel;
+        ? grade.label
+        : 'unavailable${note == null ? '' : ', $note'}';
+    final String semanticValue = available
+        ? _spokenValueRaw(id, currentValue!)
+        : valueLabel;
+
+    // Sparkline / hint state (spec §3): 0–1 points → hint, not a misleading
+    // line. The expensive trio is dots-only (points are runs apart).
+    final SparklineDomain? domain = SparklineDomain.forMetric(id);
+    final bool enoughForLine = history.length >= 2;
+    final String trendSemantic =
+        _trendSemantic(label, unit, id, history, grade, available);
 
     return Semantics(
-      label: '${m.label}, $semanticValue, $gradePhrase',
+      label: '$label, $semanticValue, $gradePhrase. $trendSemantic',
       container: true,
       child: ExcludeSemantics(
         child: Padding(
           // §8.7 named row-padding token (12px) — never hardcoded.
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      m.label,
-                      style: text.bodyLarge?.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w500,
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          label,
+                          style: text.bodyLarge?.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        if (!available && note != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            note,
+                            style: text.labelSmall
+                                ?.copyWith(color: AppColors.textTertiary),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  if (available)
+                    // MAJOR 3 (320px overflow): the value shares one row with
+                    // an Expanded label and a fixed-width grade chip. Flexible
+                    // + ellipsis lets a long value give way instead of throwing
+                    // a RenderFlex overflow in a ~150px 2-column grid cell.
+                    Flexible(
+                      child: Text(
+                        valueLabel,
+                        textAlign: TextAlign.right,
+                        overflow: TextOverflow.ellipsis,
+                        style: mono.outputMedium
+                            .copyWith(color: AppColors.primary),
                       ),
                     ),
-                    if (!available && m.note != null) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        m.note!,
-                        style: text.labelSmall
-                            ?.copyWith(color: AppColors.textTertiary),
-                      ),
-                    ],
-                  ],
-                ),
+                  const SizedBox(width: AppSpacing.sm),
+                  _gradeChip(context, grade),
+                ],
               ),
-              const SizedBox(width: AppSpacing.xs),
-              if (available)
-                // MAJOR 3 (320px overflow): the value shares one row with an
-                // Expanded label and a fixed-width grade chip. Flexible +
-                // ellipsis lets a long value give way instead of throwing a
-                // RenderFlex overflow in a ~150px 2-column grid cell.
-                Flexible(
-                  child: Text(
-                    valueLabel,
-                    textAlign: TextAlign.right,
-                    overflow: TextOverflow.ellipsis,
-                    style: mono.outputMedium.copyWith(color: AppColors.primary),
-                  ),
-                ),
-              const SizedBox(width: AppSpacing.sm),
-              _gradeChip(context, m.grade),
+              // Sparkline (>= 2 points) or a hint (0–1 points). The grade chip
+              // above always carries the true grade; the sparkline is a visual
+              // trend reference only (spec §3 + §4).
+              if (domain != null) ...[
+                const SizedBox(height: AppSpacing.xs),
+                if (enoughForLine)
+                  MetricSparkline(
+                    samples: history,
+                    domain: domain,
+                    dotsOnly: !_liveTrio.contains(id),
+                  )
+                else
+                  _trackingHint(context, id),
+              ],
             ],
           ),
         ),
       ),
     );
+  }
+
+  /// Hint shown when a metric has 0–1 points — a line would be misleading
+  /// (spec §3). The expensive trio is sparse by design, so its hint nudges a
+  /// run; the latency trio only shows this for the brief moment before the
+  /// first live tick lands.
+  Widget _trackingHint(BuildContext context, String id) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final String message = _liveTrio.contains(id)
+        ? 'Sampling…'
+        : 'Run a test to start tracking';
+    return Container(
+      height: 40,
+      width: double.infinity,
+      alignment: Alignment.centerLeft,
+      decoration: BoxDecoration(
+        color: AppColors.surface2,
+        borderRadius: BorderRadius.circular(AppRadius.control),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+      child: Text(
+        message,
+        style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+      ),
+    );
+  }
+
+  /// Worded trend summary for the row's semantic label (spec §4): e.g.
+  /// "Latency trend, 12 samples, range 14 to 41 milliseconds." Kept compact;
+  /// the current value + grade are already in the row's primary label, so this
+  /// adds the count and range, never color.
+  String _trendSemantic(
+    String label,
+    String unit,
+    String id,
+    List<MetricSample> history,
+    QualityGrade grade,
+    bool available,
+  ) {
+    if (history.length < 2) {
+      if (!available) return 'No trend yet';
+      return 'Tracking, 1 sample';
+    }
+    double mn = history.first.value;
+    double mx = history.first.value;
+    for (final MetricSample s in history) {
+      if (s.value < mn) mn = s.value;
+      if (s.value > mx) mx = s.value;
+    }
+    final String unitWord = _spokenUnit(id);
+    return '$label trend, ${history.length} samples, '
+        'range ${_round(id, mn)} to ${_round(id, mx)} $unitWord';
+  }
+
+  static String _round(String id, double v) {
+    if (id == MetricIds.download || id == MetricIds.upload) {
+      return v.toStringAsFixed(1);
+    }
+    return v.round().toString();
+  }
+
+  static String _spokenUnit(String id) {
+    switch (id) {
+      case MetricIds.download:
+      case MetricIds.upload:
+        return 'megabits per second';
+      case MetricIds.responsiveness:
+        return 'round-trips per minute';
+      case MetricIds.loss:
+        return 'percent';
+      default:
+        return 'milliseconds';
+    }
   }
 
   /// Compact graded chip. WCAG 1.4.1 — the grade is ALWAYS carried by the text
@@ -518,11 +762,11 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
 
   /// Display value with sensible rounding: integers for ms / % / RPM, one
   /// decimal for throughput, then the unit. Examples: "14 ms", "512.4 Mbps",
-  /// "0%", "820 RPM".
-  static String _formatValue(QualityMetric m) {
-    final double v = m.value!;
+  /// "0%", "820 RPM". Works from a raw id+value so it serves both the one-shot
+  /// result and a live sample (which has no [QualityMetric] wrapper).
+  static String _formatValueRaw(String id, double v, String unit) {
     final String number;
-    switch (m.id) {
+    switch (id) {
       case MetricIds.download:
       case MetricIds.upload:
         number = v.toStringAsFixed(1);
@@ -530,14 +774,13 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
         number = v.round().toString();
     }
     // Percent reads "0%" (no space); the rest read "14 ms", "820 RPM".
-    if (m.unit == '%') return '$number%';
-    return '$number ${m.unit}';
+    if (unit == '%') return '$number%';
+    return '$number $unit';
   }
 
   /// Spoken form of the value for the row's semantic label (units expanded).
-  static String _spokenValue(QualityMetric m) {
-    final double v = m.value!;
-    switch (m.id) {
+  static String _spokenValueRaw(String id, double v) {
+    switch (id) {
       case MetricIds.download:
       case MetricIds.upload:
         return '${v.toStringAsFixed(1)} megabits per second';
