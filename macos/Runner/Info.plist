@@ -30,5 +30,36 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<!-- bonsoir drives the macOS native Bonjour daemon (NWBrowser/NetService)
+	     for the SPIKE-HSD-01 LAN-discovery mDNS pass. macOS requires every
+	     browsed DNS-SD service type to be declared in NSBonjourServices or the
+	     native browser returns nothing — this array MUST stay in lockstep with
+	     kBrowsedServiceTypes in mdns_browse.dart and with the iOS Info.plist. -->
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_services._dns-sd._udp</string>
+		<string>_http._tcp</string>
+		<string>_https._tcp</string>
+		<string>_airplay._tcp</string>
+		<string>_raop._tcp</string>
+		<string>_ipp._tcp</string>
+		<string>_ipps._tcp</string>
+		<string>_printer._tcp</string>
+		<string>_pdl-datastream._tcp</string>
+		<string>_companion-link._tcp</string>
+		<string>_googlecast._tcp</string>
+		<string>_sonos._tcp</string>
+		<string>_spotify-connect._tcp</string>
+		<string>_smb._tcp</string>
+		<string>_ssh._tcp</string>
+		<string>_device-info._tcp</string>
+		<string>_workstation._tcp</string>
+	</array>
+	<!-- macOS gates Local Network access (which the native Bonjour browse uses)
+	     behind a usage-description string + a user prompt. Without it the mDNS
+	     browse silently yields nothing on a sandboxed macOS build. The sandbox
+	     network.client entitlement is already declared in *.entitlements. -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>WLAN Pros Toolbox uses the local network to discover devices (printers, speakers, media players) on your Wi-Fi for the LAN discovery tool. Nothing is stored or shared.</string>
 </dict>
 </plist>

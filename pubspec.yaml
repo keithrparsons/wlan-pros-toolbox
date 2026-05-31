@@ -78,15 +78,25 @@ dependencies:
   net_quality:
     path: packages/net_quality
 
-  # multicast_dns — pure-Dart mDNS/DNS-SD query, no native plugin. Used by the
-  # SPIKE-HSD-01 LAN-discovery prototype (lan_discovery package) to browse
-  # Bonjour service types and collect device names. Chosen over `nsd` for the
-  # spike because it adds NO native method-channel plugin to register on four
-  # platforms — it rides dart:io UDP/5353 like the rest of the scan core, so it
-  # drops into the existing pure-Dart socket-engine pattern cleanly. Still needs
-  # NSBonjourServices declared on iOS and a multicast lock on Android (both
-  # wired in the platform manifests). BSD-3 (Flutter team package).
-  multicast_dns: ^0.3.3
+  # bonsoir — mDNS / DNS-SD service discovery via each OS's NATIVE Bonjour
+  # daemon (NWBrowser/NetService on iOS+macOS, NsdManager on Android, native
+  # resolvers on Windows/Linux). Used by the SPIKE-HSD-01 LAN-discovery
+  # prototype (lan_discovery package) to browse Bonjour service types and
+  # collect device names.
+  #
+  # WHY NOT pure-Dart multicast_dns (the prior choice): on-device iOS testing
+  # found multicast_dns returns ZERO results even with NSBonjourServices and
+  # Bonjour devices present. Since iOS 14, a pure-Dart socket that sends/receives
+  # to the mDNS multicast group 224.0.0.251:5353 requires Apple's
+  # com.apple.developer.networking.multicast entitlement (granted only by
+  # special application). We do not hold it, so iOS silently drops the multicast
+  # and the browse is empty. bonsoir sidesteps this entirely: the OS Bonjour
+  # daemon performs the multicast, so it works with only NSBonjourServices
+  # declared (already present) and NO multicast entitlement — the App-Store-safe
+  # path. Trade-off: bonsoir adds NATIVE plugin code on iOS/macOS/Android, so a
+  # native rebuild is required (the pure-Dart connect-scan core is unaffected;
+  # only the mDNS enrichment layer becomes a native plugin). GPL-3.0.
+  bonsoir: ^7.1.1
 
 dev_dependencies:
   flutter_test:
