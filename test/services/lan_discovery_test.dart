@@ -4,10 +4,10 @@
 // with no device. The throwaway debug UI itself needs no tests (deleted with the
 // spike).
 
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:multicast_dns/multicast_dns.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/connect_scan.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/device_type.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/lan_discovery_engine.dart';
@@ -36,22 +36,74 @@ SubnetSeedDeriver _seedDeriver({required String ip, required String mask}) {
   );
 }
 
-/// An MdnsBrowser whose client cannot bind a multicast socket (its socket
-/// factory throws), so [browse] hits its non-fatal empty path immediately —
-/// keeps engine tests fast and off the real network, no subclassing needed.
-MdnsBrowser _silentMdnsBrowser() => MdnsBrowser(
-      clientFactory: () => MDnsClient(
-        rawDatagramSocketFactory: (
-          dynamic host,
-          int port, {
-          bool reuseAddress = true,
-          bool reusePort = true,
-          int ttl = 1,
-        }) =>
-            Future<RawDatagramSocket>.error(
-                const SocketException('mDNS disabled in test')),
-      ),
+/// A fake [MdnsDiscovery] that replays a scripted list of [MdnsDiscoveryEvent]s
+/// for one service type — no native plugin, no multicast, fully deterministic.
+/// Events fire on the next microtask so the browse's listen() is wired first.
+class _FakeMdnsDiscovery implements MdnsDiscovery {
+  _FakeMdnsDiscovery(this.serviceType, this._scripted);
+
+  @override
+  final String serviceType;
+  final List<MdnsDiscoveryEvent> _scripted;
+  final StreamController<MdnsDiscoveryEvent> _out =
+      StreamController<MdnsDiscoveryEvent>();
+  bool disposed = false;
+
+  @override
+  Stream<MdnsDiscoveryEvent> start() {
+    scheduleMicrotask(() {
+      for (final MdnsDiscoveryEvent e in _scripted) {
+        if (!_out.isClosed) _out.add(e);
+      }
+    });
+    return _out.stream;
+  }
+
+  @override
+  Future<void> dispose() async {
+    disposed = true;
+    if (!_out.isClosed) await _out.close();
+  }
+}
+
+/// A fake discovery whose stream emits an error — exercises the browse's
+/// non-fatal onError path.
+class _ErroringMdnsDiscovery implements MdnsDiscovery {
+  _ErroringMdnsDiscovery(this.serviceType);
+
+  @override
+  final String serviceType;
+
+  @override
+  Stream<MdnsDiscoveryEvent> start() => Stream<MdnsDiscoveryEvent>.error(
+      const SocketException('mDNS unavailable in test'));
+
+  @override
+  Future<void> dispose() async {}
+}
+
+/// Builds an [MdnsBrowser] whose discovery factory yields fakes scripted from
+/// [byType] (service type → events). Anything not in the map yields a fake with
+/// no events. A short timeout keeps tests fast.
+MdnsBrowser _fakeMdnsBrowser({
+  Map<String, List<MdnsDiscoveryEvent>> byType = const {},
+  List<String>? serviceTypes,
+  List<_FakeMdnsDiscovery>? created,
+}) =>
+    MdnsBrowser(
+      serviceTypes: serviceTypes ?? kBrowsedServiceTypes,
+      timeout: const Duration(milliseconds: 30),
+      discoveryFactory: (String type) {
+        final _FakeMdnsDiscovery d =
+            _FakeMdnsDiscovery(type, byType[type] ?? const <MdnsDiscoveryEvent>[]);
+        created?.add(d);
+        return d;
+      },
     );
+
+/// An [MdnsBrowser] that discovers nothing — keeps engine tests fast and off the
+/// real network.
+MdnsBrowser _silentMdnsBrowser() => _fakeMdnsBrowser();
 
 void main() {
   group('inferDeviceType — ordered rule table', () {
@@ -206,6 +258,97 @@ void main() {
         inferDeviceType(openPorts: <int>{80, 554}, mdnsServices: <String>{}),
         DeviceType.camera,
       );
+    });
+  });
+
+  group('MdnsBrowser.browse — bonsoir seam → IP→{name,services} mapping', () {
+    test('a _sonos._tcp resolved event produces a record whose services '
+        'contain _sonos._tcp, keyed by its IPv4', () async {
+      final List<_FakeMdnsDiscovery> created = <_FakeMdnsDiscovery>[];
+      final MdnsBrowser browser = _fakeMdnsBrowser(
+        serviceTypes: const <String>['_sonos._tcp'],
+        byType: <String, List<MdnsDiscoveryEvent>>{
+          '_sonos._tcp': <MdnsDiscoveryEvent>[
+            const MdnsDiscoveryEvent(
+              serviceType: '_sonos._tcp',
+              name: 'Living Room',
+              hostAddresses: <String>['192.168.1.42'],
+            ),
+          ],
+        },
+        created: created,
+      );
+
+      final Map<String, MdnsRecord> result = await browser.browse();
+
+      expect(result.keys, contains('192.168.1.42'));
+      final MdnsRecord rec = result['192.168.1.42']!;
+      expect(rec.name, 'Living Room');
+      expect(rec.services, contains('_sonos._tcp'));
+      // Every discovery the factory built MUST be disposed (no native leak).
+      expect(created.every((_FakeMdnsDiscovery d) => d.disposed), isTrue);
+    });
+
+    test('events across multiple service types fold onto the same IP', () async {
+      final MdnsBrowser browser = _fakeMdnsBrowser(
+        serviceTypes: const <String>['_airplay._tcp', '_raop._tcp'],
+        byType: <String, List<MdnsDiscoveryEvent>>{
+          '_airplay._tcp': <MdnsDiscoveryEvent>[
+            const MdnsDiscoveryEvent(
+              serviceType: '_airplay._tcp',
+              name: 'Apple TV',
+              hostAddresses: <String>['192.168.1.10'],
+            ),
+          ],
+          '_raop._tcp': <MdnsDiscoveryEvent>[
+            const MdnsDiscoveryEvent(
+              serviceType: '_raop._tcp',
+              name: 'Apple TV',
+              hostAddresses: <String>['192.168.1.10'],
+            ),
+          ],
+        },
+      );
+
+      final Map<String, MdnsRecord> result = await browser.browse();
+
+      expect(result, hasLength(1));
+      expect(result['192.168.1.10']!.services,
+          containsAll(<String>['_airplay._tcp', '_raop._tcp']));
+    });
+
+    test('non-IPv4 host addresses are skipped; IPv4 from the same event kept',
+        () async {
+      final MdnsBrowser browser = _fakeMdnsBrowser(
+        serviceTypes: const <String>['_http._tcp'],
+        byType: <String, List<MdnsDiscoveryEvent>>{
+          '_http._tcp': <MdnsDiscoveryEvent>[
+            const MdnsDiscoveryEvent(
+              serviceType: '_http._tcp',
+              name: 'NAS',
+              hostAddresses: <String>['fe80::1', '10.0.0.5'],
+            ),
+          ],
+        },
+      );
+
+      final Map<String, MdnsRecord> result = await browser.browse();
+
+      expect(result.keys, <String>['10.0.0.5']);
+      expect(result.containsKey('fe80::1'), isFalse);
+    });
+
+    test('a discovery whose stream errors is non-fatal; browse returns empty',
+        () async {
+      final MdnsBrowser browser = MdnsBrowser(
+        serviceTypes: const <String>['_http._tcp'],
+        timeout: const Duration(milliseconds: 30),
+        discoveryFactory: (String type) => _ErroringMdnsDiscovery(type),
+      );
+
+      final Map<String, MdnsRecord> result = await browser.browse();
+
+      expect(result, isEmpty);
     });
   });
 
