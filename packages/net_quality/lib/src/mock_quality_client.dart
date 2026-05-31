@@ -1,28 +1,22 @@
 import 'quality_client.dart';
+import 'quality_grade.dart';
+import 'quality_metric.dart';
 import 'quality_result.dart';
 
-/// A deterministic, network-free [QualityClient] for building and testing the
-/// UI before the real engine exists. Emits a scripted progress sequence and a
-/// fixed result so widget tests and the standalone harness are reproducible.
+/// A deterministic [QualityClient] for tests and UI previews.
+///
+/// It performs no network I/O. It emits a fixed progress sequence and exposes a
+/// scripted [QualityResult]. The default script is a healthy connection.
 class MockQualityClient implements QualityClient {
-  final QualityResult _scriptedResult;
+  /// The result this client reports. Override to script other scenarios.
+  final QualityResult scriptedResult;
+
   QualityResult? _lastResult;
 
+  /// Creates a mock client. Pass [scriptedResult] to override the default
+  /// healthy-connection script.
   MockQualityClient({QualityResult? scriptedResult})
-      : _scriptedResult = scriptedResult ?? _defaultResult;
-
-  static final QualityResult _defaultResult = QualityResult(
-    qualityScore: 87,
-    responsiveness: 82,
-    latencyMs: 14.0,
-    jitterMs: 2.3,
-    packetLossPct: 0.0,
-    downloadMbps: 512.4,
-    uploadMbps: 48.7,
-    source: QualitySource.mock,
-    // Fixed timestamp keeps tests deterministic.
-    measuredAt: DateTime.utc(2026, 1, 1),
-  );
+      : scriptedResult = scriptedResult ?? _defaultResult();
 
   @override
   bool get isAvailable => true;
@@ -32,10 +26,60 @@ class MockQualityClient implements QualityClient {
 
   @override
   Stream<QualityProgress> measure() async* {
-    yield const QualityProgress(QualityPhase.latency, 0.1);
+    yield const QualityProgress(QualityPhase.latency, 0.25);
     yield const QualityProgress(QualityPhase.download, 0.5);
-    yield const QualityProgress(QualityPhase.upload, 0.85);
-    _lastResult = _scriptedResult;
+    yield const QualityProgress(QualityPhase.upload, 0.75);
+    _lastResult = scriptedResult;
     yield const QualityProgress(QualityPhase.complete, 1.0);
   }
+
+  /// The default healthy-connection script: six graded transport metrics.
+  static QualityResult _defaultResult() => QualityResult(
+        source: QualitySource.mock,
+        measuredAt: DateTime.utc(2026, 1, 1),
+        metrics: const <QualityMetric>[
+          QualityMetric(
+            id: MetricIds.latency,
+            label: 'Latency',
+            value: 14,
+            unit: 'ms',
+            grade: QualityGrade.excellent,
+          ),
+          QualityMetric(
+            id: MetricIds.jitter,
+            label: 'Jitter',
+            value: 2.3,
+            unit: 'ms',
+            grade: QualityGrade.excellent,
+          ),
+          QualityMetric(
+            id: MetricIds.loss,
+            label: 'Loss',
+            value: 0,
+            unit: '%',
+            grade: QualityGrade.excellent,
+          ),
+          QualityMetric(
+            id: MetricIds.download,
+            label: 'Download',
+            value: 512.4,
+            unit: 'Mbps',
+            grade: QualityGrade.excellent,
+          ),
+          QualityMetric(
+            id: MetricIds.upload,
+            label: 'Upload',
+            value: 48.7,
+            unit: 'Mbps',
+            grade: QualityGrade.good,
+          ),
+          QualityMetric(
+            id: MetricIds.responsiveness,
+            label: 'Responsiveness',
+            value: 820,
+            unit: 'RPM',
+            grade: QualityGrade.good,
+          ),
+        ],
+      );
 }

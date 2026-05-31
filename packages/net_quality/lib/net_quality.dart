@@ -1,16 +1,18 @@
-/// net_quality — backend-agnostic network-quality measurement layer.
+/// Backend-agnostic network-quality measurement for the WLAN Pros Toolbox.
 ///
-/// The toolbox depends only on these abstractions. A measurement backend
-/// (deterministic mock today; a real dart:io engine next) implements
-/// [QualityClient] and is injected at the call site, so swapping in the real
-/// engine never touches the UI.
-///
-/// Naming note: this is intentionally NOT "orb_service". Ookla/Orb expose no
-/// SDK to run a measurement from a third-party app, so every number here is our
-/// own computation. [QualityResult.source] records that provenance so the UI
-/// never implies an Orb/Ookla result.
-library net_quality;
+/// Pure Dart, no Flutter. Exposes the [QualityClient] seam, a graded
+/// [QualityResult] model, a deterministic mock, and a real probe engine.
+library;
 
-export 'src/quality_result.dart';
-export 'src/quality_client.dart';
 export 'src/mock_quality_client.dart';
+export 'src/own_engine_quality_client.dart';
+export 'src/popular_sites.dart';
+export 'src/probes/latency_probe.dart';
+export 'src/probes/reachability_probe.dart';
+export 'src/probes/responsiveness_probe.dart';
+export 'src/probes/throughput_probe.dart';
+export 'src/quality_client.dart';
+export 'src/quality_grade.dart';
+export 'src/quality_metric.dart';
+export 'src/quality_result.dart';
+export 'src/scoring.dart';
