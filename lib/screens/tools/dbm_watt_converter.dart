@@ -304,10 +304,10 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
     // visually wider than the ASCII the converter writes.
     final List<List<String>> refs = const [
       ['+30 dBm', '1,000 mW', '1 W, FCC 2.4 GHz max conducted'],
-      ['+20 dBm', '100 mW', 'Common default AP Tx power'],
+      ['+13 dBm', '20 mW', 'Common default AP Tx power'],
       ['0 dBm', '1 mW', 'Reference point, 1 milliwatt'],
-      ['-70 dBm', '0.1 nW', 'Minimum for enterprise data'],
-      ['-80 dBm', '10 pW', 'Typical Wi-Fi receiver sensitivity'],
+      ['-67 dBm', '0.2 nW', 'Minimum for enterprise data'],
+      ['-80 dBm', '10 pW', 'Typical Ambient Noise Floor'],
     ];
 
     return Container(

@@ -474,7 +474,7 @@ class _PingScreenState extends State<PingScreen> {
     AppMonoText mono,
   ) {
     // WCAG 1.4.1 — outcome is carried by the text label + icon shape, never
-    // colour alone. The whole row is one semantic node.
+    // color alone. The whole row is one semantic node.
     final (Color color, IconData icon, String value, String semantic) =
         r.success
             ? (

@@ -450,7 +450,7 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
     final String rttLabel =
         r.rttMs == null ? '—' : '${r.rttMs!.toStringAsFixed(1)} ms';
 
-    // WCAG 1.4.1 — outcome carried by text + icon shape, never colour alone.
+    // WCAG 1.4.1 — outcome carried by text + icon shape, never color alone.
     // The whole row is one semantic node so AT reads "<host> responded, <rtt>".
     return Semantics(
       label: 'Host ${r.host} responded on TCP $_port'
