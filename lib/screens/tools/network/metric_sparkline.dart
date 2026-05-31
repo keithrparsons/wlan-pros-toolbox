@@ -10,12 +10,13 @@
 // token-only sizing. The new part is the four shaded bands behind the line and
 // a fixed per-metric y-domain so the bands are stable run to run.
 //
-// COLOR (spec §4 + GL-003 §8.13): the bands reuse the EXISTING grade palette —
+// COLOR (spec §4 + GL-003 §8.13.1): the bands reuse the EXISTING grade palette —
 // no new colors. Excellent and Good both map to `statusSuccess` (the existing
 // `_gradeColors` collapses them too), Fair to `statusWarning`, Poor to
-// `statusDanger`. Bands are low-alpha tints of those hues, which §8.13 rule 3
-// explicitly sanctions ("a subtle status tint band may use the same hue at low
-// alpha"). The line and the chip — not the band hue — carry the verdict, so
+// `statusDanger`. Bands are 0.30-alpha tints of those hues (the §8.13.1
+// band-stack floor), separated from each other by a 1px `borderStrong`
+// (#808080) hairline at every internal edge so adjacent bands stay legibly
+// distinct. The line and the chip — not the band hue — carry the verdict, so
 // WCAG 1.4.1 is satisfied (no information by color alone). The whole painter is
 // `excludeSemantics`; the parent supplies a worded `Semantics` label.
 //
@@ -29,6 +30,7 @@
 //     continuity that was never measured.
 
 import 'package:flutter/material.dart';
+import 'package:net_quality/net_quality.dart';
 
 import '../../../theme/app_tokens.dart';
 import 'live_quality_monitor.dart';
@@ -71,37 +73,37 @@ class SparklineDomain {
   static SparklineDomain? forMetric(String id) => _domains[id];
 
   static const Map<String, SparklineDomain> _domains = <String, SparklineDomain>{
-    'latency': SparklineDomain(
+    MetricIds.latency: SparklineDomain(
       min: 0,
       max: 150,
       edges: <double>[20, 50, 100],
       betterWhen: BetterWhen.lower,
     ),
-    'jitter': SparklineDomain(
+    MetricIds.jitter: SparklineDomain(
       min: 0,
       max: 40,
       edges: <double>[5, 15, 30],
       betterWhen: BetterWhen.lower,
     ),
-    'loss': SparklineDomain(
+    MetricIds.loss: SparklineDomain(
       min: 0,
       max: 5,
       edges: <double>[0, 1, 2.5],
       betterWhen: BetterWhen.lower,
     ),
-    'responsiveness': SparklineDomain(
+    MetricIds.responsiveness: SparklineDomain(
       min: 0,
       max: 1200,
       edges: <double>[100, 500, 1000],
       betterWhen: BetterWhen.higher,
     ),
-    'download': SparklineDomain(
+    MetricIds.download: SparklineDomain(
       min: 0,
       max: 120,
       edges: <double>[5, 25, 100],
       betterWhen: BetterWhen.higher,
     ),
-    'upload': SparklineDomain(
+    MetricIds.upload: SparklineDomain(
       min: 0,
       max: 25,
       edges: <double>[1, 5, 20],
@@ -172,8 +174,9 @@ class _BandSparklinePainter extends CustomPainter {
   final SparklineDomain domain;
   final bool dotsOnly;
 
-  // Low-alpha band tints of the existing grade hues (GL-003 §8.13 rule 3).
-  static const double _bandAlpha = 0.16;
+  // GL-003 §8.13.1 band-stack floor: grade-band tints sit at 0.30 alpha so the
+  // deepest band still clears WCAG SC 1.4.11 against the data line.
+  static const double _bandAlpha = 0.30;
 
   /// Band fill colors top-to-bottom in VALUE space (min..max ascending), as
   /// [value-range]→color pairs. The four ranges are
@@ -203,7 +206,17 @@ class _BandSparklinePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (samples.isEmpty) {
+      // No-samples / neutral state: a flat `surface3` fill, no grade hue, so an
+      // empty sparkline never implies a verdict (GL-003 §8.13.1).
+      canvas.drawRect(
+        Rect.fromLTRB(0, 0, size.width, size.height),
+        Paint()..color = AppColors.surface3,
+      );
+      return;
+    }
     _paintBands(canvas, size);
+    _paintBandEdges(canvas, size);
     _paintData(canvas, size);
   }
 
@@ -220,6 +233,21 @@ class _BandSparklinePainter extends CustomPainter {
       final double yBottom = _yFor(bounds[i], size);
       final Rect rect = Rect.fromLTRB(0, yTop, size.width, yBottom);
       canvas.drawRect(rect, Paint()..color = colors[i]);
+    }
+  }
+
+  // GL-003 §8.13.1: a 1px `borderStrong` (#808080) hairline at each of the
+  // three INTERNAL band edges so adjacent grade tints stay distinct. The outer
+  // frame is owned by the ClipRRect/Container, not painted here. Drawn after the
+  // band fills and before the data line, so the line stays on top.
+  void _paintBandEdges(Canvas canvas, Size size) {
+    final Paint hairline = Paint()
+      ..color = AppColors.borderStrong
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    for (final double edge in domain.edges) {
+      final double y = _yFor(edge, size);
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), hairline);
     }
   }
 
