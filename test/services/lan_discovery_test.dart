@@ -106,6 +106,41 @@ void main() {
       );
     });
 
+    test('REGRESSION: Sonos (_sonos mDNS + port 22 open) → speaker, NOT '
+        'sshHost and NOT appleDevice', () {
+      // On-device finding: a Sonos speaker exposes SSH (22) for management and
+      // also advertises _raop/AirPlay. The lone-SSH rule used to fire first and
+      // mislabel it "SSH host"; the _raop rule would mislabel it "Apple device".
+      // mDNS identity must win, and the Sonos rule must precede the Apple rule.
+      final DeviceType t = inferDeviceType(
+        openPorts: <int>{22},
+        mdnsServices: <String>{'_sonos._tcp', '_raop._tcp'},
+      );
+      expect(t, DeviceType.speaker);
+      expect(t, isNot(DeviceType.sshHost));
+      expect(t, isNot(DeviceType.appleDevice));
+    });
+
+    test('Chromecast (_googlecast mDNS) → media streamer', () {
+      expect(
+        inferDeviceType(
+          openPorts: <int>{8009, 8443},
+          mdnsServices: <String>{'_googlecast._tcp'},
+        ),
+        DeviceType.mediaStreamer,
+      );
+    });
+
+    test('Apple device (_airplay/_raop WITHOUT _sonos) → still appleDevice', () {
+      expect(
+        inferDeviceType(
+          openPorts: <int>{7000},
+          mdnsServices: <String>{'_airplay._tcp', '_raop._tcp'},
+        ),
+        DeviceType.appleDevice,
+      );
+    });
+
     test('mDNS-only (no port rule) → generic mDNS device', () {
       expect(
         inferDeviceType(
