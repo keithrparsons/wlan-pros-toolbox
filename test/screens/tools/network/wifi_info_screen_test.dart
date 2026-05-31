@@ -232,6 +232,63 @@ void main() {
       expect(find.byIcon(Icons.stop), findsOneWidget);
       expect(find.text('Live'), findsOneWidget);
     });
+
+    testWidgets(
+        'streaming timestamp is excluded from the live region '
+        '(Vera LOW: no per-tick re-announcement)', (tester) async {
+      final _FakeBridge bridge = _FakeBridge(
+        everReceived: true,
+        latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
+      );
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        ),
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+
+      // Push a streamed payload so the "Updated HH:MM:SS" timestamp renders.
+      bridge.controller.add(
+        WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
+      );
+      await tester.pumpAndSettle();
+
+      final Finder timestamp = find.textContaining('Updated ');
+      expect(timestamp, findsOneWidget);
+
+      // The state word stays inside the liveRegion so Start/Stop announce...
+      final Finder liveRegion = find.ancestor(
+        of: find.text('Live'),
+        matching: find.byWidgetPredicate(
+          (Widget w) => w is Semantics && w.properties.liveRegion == true,
+        ),
+      );
+      expect(liveRegion, findsOneWidget);
+
+      // ...but the ticking timestamp is wrapped in ExcludeSemantics, so it is
+      // NOT re-announced on every ~1s tick (the Vera SOP-009 LOW finding).
+      final Finder excludedTimestamp = find.ancestor(
+        of: timestamp,
+        matching: find.byType(ExcludeSemantics),
+      );
+      expect(excludedTimestamp, findsOneWidget);
+
+      // The timestamp's own ExcludeSemantics wrapper sits inside the live
+      // region subtree — so the timestamp is structurally present under the
+      // liveRegion but excluded from what it announces. (Two ExcludeSemantics
+      // descend from the live region: this one and the decorative live dot.)
+      final Finder excludedTimestampInLiveRegion = find.descendant(
+        of: liveRegion,
+        matching: find.ancestor(
+          of: timestamp,
+          matching: find.byType(ExcludeSemantics),
+        ),
+      );
+      expect(excludedTimestampInLiveRegion, findsOneWidget);
+    });
   });
 
   group('WifiInfoScreen — platform fallbacks', () {
