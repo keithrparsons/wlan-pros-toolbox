@@ -132,6 +132,14 @@ final class WifiInfoChannel: NSObject, CLLocationManagerDelegate {
 
   /// Maps CWPHYMode to a human-readable 802.11 string, or null when unknown.
   private func phyModeString(_ mode: CWPHYMode) -> String? {
+    // Wi-Fi 7 (.mode11be) exists only on the macOS 15+ SDK, so it is matched
+    // first behind an availability guard rather than as a switch case (a bare
+    // case would not compile against older SDKs / deployment targets).
+    if #available(macOS 15.0, *) {
+      if mode == .mode11be {
+        return "802.11be"
+      }
+    }
     switch mode {
     case .modeNone:
       return nil
@@ -147,12 +155,11 @@ final class WifiInfoChannel: NSObject, CLLocationManagerDelegate {
       return "802.11ac"
     case .mode11ax:
       return "802.11ax"
-    // A Wi-Fi 7 case (.mode11be) is deliberately not referenced by name: it is
-    // absent from older SDKs and would not compile there. The plain default
-    // maps it (and any future case) to null, which is the honest answer until
-    // an explicit "802.11be" label is wired. A plain default is used rather
-    // than @unknown default because this SDK already contains cases beyond the
-    // ones enumerated above, so the switch would otherwise be non-exhaustive.
+    // Any case beyond those above (including a future PHY mode) maps to null,
+    // the honest answer until an explicit label is wired. A plain default is
+    // used rather than @unknown default because this SDK already carries cases
+    // beyond the ones enumerated, so the switch would otherwise be
+    // non-exhaustive.
     default:
       return nil
     }

@@ -110,6 +110,17 @@ class _WifiInfoScreenState extends State<WifiInfoScreen> {
         _error = e;
         _loading = false;
       });
+    } catch (e) {
+      // Defensive: any unexpected error must still clear the loading state so
+      // the screen can never sit on a spinner forever.
+      if (!mounted) return;
+      setState(() {
+        _error = WifiInfoUnavailable(
+          WifiInfoUnavailableReason.channelError,
+          e.toString(),
+        );
+        _loading = false;
+      });
     }
   }
 
