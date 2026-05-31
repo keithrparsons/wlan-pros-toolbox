@@ -30,12 +30,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/wifi_info_service.dart';
 import '../../../theme/app_tokens.dart';
-import '../../../theme/app_typography.dart';
 import '../concept_graphic_band.dart';
 import 'network_unavailable_view.dart';
 
@@ -337,18 +337,21 @@ class _WifiInfoScreenState extends State<WifiInfoScreen> {
       child: Column(
         children: [
           _MetricRow(
-            label: 'RSSI (dBm)',
+            label: 'RSSI',
             value: info.rssiDbm?.toString(),
+            unit: 'dBm',
             mono: true,
           ),
           _MetricRow(
-            label: 'Noise (dBm)',
+            label: 'Noise',
             value: info.noiseDbm?.toString(),
+            unit: 'dBm',
             mono: true,
           ),
           _MetricRow(
-            label: 'SNR (dB)',
+            label: 'SNR',
             value: info.snrDb?.toString(),
+            unit: 'dB',
             mono: true,
           ),
         ],
@@ -362,21 +365,23 @@ class _WifiInfoScreenState extends State<WifiInfoScreen> {
       child: Column(
         children: [
           _MetricRow(
-            label: 'Tx Rate (Mbps)',
+            label: 'Tx Rate',
             value: _formatRate(info.txRateMbps),
+            unit: 'Mbps',
             mono: true,
           ),
           // Rx Rate and Tx Power are NOT exposed by macOS CoreWLAN. Keith asked
           // for Rx rate explicitly, so these are hard-coded visibly-unavailable
-          // rows — they never read from data and never silently disappear.
+          // rows — they never read from data and never silently disappear. No
+          // unit is shown because there is no value to attach it to.
           const _MetricRow(
-            label: 'Rx Rate (Mbps)',
+            label: 'Rx Rate',
             value: null,
             mono: true,
             note: 'Not exposed by macOS CoreWLAN',
           ),
           const _MetricRow(
-            label: 'Tx Power (dBm)',
+            label: 'Tx Power',
             value: null,
             mono: true,
             note: 'Not exposed by macOS CoreWLAN',
@@ -397,8 +402,9 @@ class _WifiInfoScreenState extends State<WifiInfoScreen> {
             mono: true,
           ),
           _MetricRow(
-            label: 'Width (MHz)',
+            label: 'Width',
             value: info.channelWidthMhz?.toString(),
+            unit: 'MHz',
             mono: true,
           ),
           _MetricRow(label: 'Band', value: info.band),
@@ -412,7 +418,10 @@ class _WifiInfoScreenState extends State<WifiInfoScreen> {
       title: 'Radio',
       child: Column(
         children: [
-          _MetricRow(label: 'Wi-Fi Standard', value: info.phyMode),
+          _MetricRow(
+            label: 'Wi-Fi Standard',
+            value: _wifiStandardLabel(info.phyMode, info.band),
+          ),
           _MetricRow(label: 'Country', value: info.countryCode),
           _MetricRow(label: 'Interface', value: info.interfaceName, mono: true),
           _MetricRow(
@@ -423,6 +432,24 @@ class _WifiInfoScreenState extends State<WifiInfoScreen> {
         ],
       ),
     );
+  }
+
+  /// Renders the link standard with both its 802.11 designation and its Wi-Fi
+  /// generation, e.g. "802.11be (Wi-Fi 7)". Many readers think in Wi-Fi version
+  /// numbers first, so both vocabularies appear to reinforce that each is valid.
+  /// The 6 GHz band distinguishes Wi-Fi 6E from Wi-Fi 6 (both are 802.11ax).
+  /// Pre-branding modes (a/b/g) have no Wi-Fi number, so only the 802.11 name is
+  /// shown. Returns null (renders "Unavailable") when the PHY mode is unknown.
+  static String? _wifiStandardLabel(String? phyMode, String? band) {
+    if (phyMode == null) return null;
+    final String? generation = switch (phyMode) {
+      '802.11be' => 'Wi-Fi 7',
+      '802.11ax' => band == '6 GHz' ? 'Wi-Fi 6E' : 'Wi-Fi 6',
+      '802.11ac' => 'Wi-Fi 5',
+      '802.11n' => 'Wi-Fi 4',
+      _ => null,
+    };
+    return generation == null ? phyMode : '$phyMode ($generation)';
   }
 
   Widget _statusCard(WifiInfo info) {
@@ -498,6 +525,7 @@ class _MetricRow extends StatelessWidget {
     required this.value,
     this.mono = false,
     this.note,
+    this.unit,
   });
 
   /// The left-hand field name.
@@ -506,20 +534,24 @@ class _MetricRow extends StatelessWidget {
   /// The right-hand value. Null or empty renders "Unavailable".
   final String? value;
 
-  /// Render the value in DM Mono — for addresses and numerics.
+  /// Render the value in a monospaced face — for addresses and numerics.
   final bool mono;
 
   /// Optional honesty note shown under an Unavailable value (e.g. why macOS
   /// does not expose it). Only meaningful when [value] is null/empty.
   final String? note;
 
+  /// Unit appended to the value (e.g. "dBm", "Mbps"), tied to the number rather
+  /// than the label so a reading scans as "-50 dBm". Omitted when unavailable.
+  final String? unit;
+
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
-    final AppMonoText monoStyle =
-        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final bool hasValue = value != null && value!.trim().isNotEmpty;
-    final String shown = hasValue ? value! : 'Unavailable';
+    final String shown = hasValue
+        ? (unit == null ? value! : '${value!} $unit')
+        : 'Unavailable';
     final bool showNote = !hasValue && note != null;
 
     // Compose the single accessible label, including the note when present.
@@ -527,12 +559,14 @@ class _MetricRow extends StatelessWidget {
         showNote ? '$label, $shown. $note' : '$label, $shown';
 
     // Live values: primary. Unavailable: secondary (clears 4.5:1), never
-    // tertiary for value text. Mono values pull the DM Mono inlineCode style
-    // (GL-003 §8.5) so addresses and numerics align; non-mono use bodyMedium.
+    // tertiary for value text. Mono values use Roboto Mono, a monospaced
+    // SANS-SERIF: MAC and hex columns stay aligned without DM Mono's flared
+    // terminals that read as serifs at small sizes. (App-wide numeric mono is
+    // DM Mono per GL-003 §8.5; standardizing this face is an Iris call.)
     final Color valueColor =
         hasValue ? AppColors.textPrimary : AppColors.textSecondary;
     final TextStyle? valueStyle = (mono && hasValue)
-        ? monoStyle.inlineCode.copyWith(color: valueColor)
+        ? GoogleFonts.robotoMono(textStyle: text.bodyMedium, color: valueColor)
         : text.bodyMedium?.copyWith(color: valueColor);
 
     return Padding(
