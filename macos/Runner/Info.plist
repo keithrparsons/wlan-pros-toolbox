@@ -26,6 +26,10 @@
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>$(PRODUCT_COPYRIGHT)</string>
+	<key>NSLocationUsageDescription</key>
+	<string>Wi-Fi Information uses your location only to read the connected network name (SSID and BSSID); macOS requires this permission to expose those fields. No location data leaves your device.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Wi-Fi Information uses your location only to read the connected network name (SSID and BSSID); macOS requires this permission to expose those fields. No location data leaves your device.</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
