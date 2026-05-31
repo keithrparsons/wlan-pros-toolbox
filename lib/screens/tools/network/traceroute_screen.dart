@@ -52,10 +52,28 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
   StreamSubscription<TracerouteEvent>? _sub;
   Completer<void>? _cancel;
 
+  /// Runtime capability probe result. null while the probe is in flight,
+  /// then true (this build can launch the system traceroute) or false (the
+  /// build cannot — e.g. the sandboxed macOS App Store build). On mobile the
+  /// probe is never run; the platform notice handles that case.
+  bool? _launchable;
+
   @override
   void initState() {
     super.initState();
     _service = widget.service ?? TracerouteService();
+    _probeLaunchable();
+  }
+
+  /// Probes whether this build can actually spawn the system traceroute, so the
+  /// screen can show upfront guidance instead of letting the user type a target
+  /// and hit a sandbox wall on Run. Only meaningful on a supported (desktop)
+  /// platform; mobile is handled by the platform notice.
+  Future<void> _probeLaunchable() async {
+    if (!_service.isSupportedPlatform) return;
+    final bool launchable = await _service.isLaunchable();
+    if (!mounted) return;
+    setState(() => _launchable = launchable);
   }
 
   @override
@@ -174,15 +192,64 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
   }
 
   List<Widget> _desktopChildren(BuildContext context, bool isDesktop) {
-    return <Widget>[
+    final List<Widget> head = <Widget>[
       ConceptGraphicBand(toolId: 'traceroute', isDesktop: isDesktop),
       if (ToolAssets.hasGraphic('traceroute'))
         const SizedBox(height: AppSpacing.md),
+    ];
+
+    // Capability probe still in flight — a brief loading state, never the form.
+    if (_launchable == null) {
+      return <Widget>[
+        ...head,
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+          child: Center(
+            child: Semantics(
+              label: 'Checking traceroute availability',
+              child: const CircularProgressIndicator(
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        ),
+      ];
+    }
+
+    // This build cannot launch the system traceroute (e.g. the sandboxed App
+    // Store build). Show upfront guidance instead of an input + button that
+    // would only fail on Run. Rendered through NetworkUnavailableView, the
+    // same surface the web state uses, so an expected platform limit reads as
+    // a normal "not available" state, not an error. (GL-005 / GL-008: name
+    // why, name which builds do work, point to a real alternative here.)
+    if (_launchable == false) {
+      return <Widget>[
+        ...head,
+        const NetworkUnavailableView(
+          toolName: 'Traceroute',
+          reason: NetworkUnavailableReason.platformApiMissing,
+          icon: Icons.route_outlined,
+          headline: 'Traceroute is not available in this build',
+          message:
+              'The macOS App Store build runs in a sandbox that blocks '
+              'launching the system traceroute. It works on Windows, and on '
+              'the direct-download macOS build. For a path test on this '
+              'machine, use Ping (TCP) or the Network Quality reachability '
+              'table.',
+        ),
+      ];
+    }
+
+    // Launchable: the normal form + results flow.
+    return <Widget>[
+      ...head,
       _formCard(context),
       if (_hops.isNotEmpty || _running) ...[
         const SizedBox(height: AppSpacing.sm),
         _hopsCard(context),
       ],
+      // Safety net: the probe said launchable, but a specific run can still
+      // come back with an unavailable verdict (e.g. a transient denial).
       if (_result is TracerouteUnavailable) ...[
         const SizedBox(height: AppSpacing.sm),
         _unavailableCard(context, _result! as TracerouteUnavailable),

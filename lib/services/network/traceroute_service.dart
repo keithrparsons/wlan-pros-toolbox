@@ -148,6 +148,44 @@ class TracerouteService {
   /// reads this to choose between the form and the "use Ping" state.
   bool get isSupportedPlatform => _isDesktop;
 
+  /// Runtime sandbox/capability probe — distinct from [isSupportedPlatform].
+  ///
+  /// [isSupportedPlatform] answers "is this an OS where traceroute *could*
+  /// run" (desktop yes, mobile no). [isLaunchable] answers the sharper
+  /// question the App Store target forces on us: "can THIS BUILD actually
+  /// spawn the binary right now?" The macOS App Store build ships with the App
+  /// Sandbox enabled, which denies launching the system traceroute
+  /// ("Operation not permitted"), while a non-sandboxed Developer ID
+  /// (direct-download) macOS build, and the Windows and Linux builds, launch it
+  /// fine. So the screen probes the live capability instead of hard-coding
+  /// "macOS = unavailable", and adapts to whichever build it is running in.
+  ///
+  /// Implementation: a side-effect-free launch of the binary with no arguments.
+  /// traceroute/tracert with no args just print usage and exit non-zero, so no
+  /// actual trace runs. The exit code is irrelevant; the only question is
+  /// whether the PROCESS LAUNCHES at all. A [ProcessException] (sandbox denial,
+  /// missing binary, PATH issue) or a timeout means not launchable. This method
+  /// never throws.
+  Future<bool> isLaunchable() async {
+    if (!_isDesktop) return false;
+    final String binary = _isWindows ? 'tracert' : 'traceroute';
+    try {
+      // Use the same start seam as a real run so tests can drive this without
+      // a real subprocess. We only care that the launch did not throw.
+      final Process process = await _start(binary, const <String>[])
+          .timeout(const Duration(seconds: 3));
+      // Drain and reap so we never leave a zombie or an unread pipe.
+      unawaited(process.stdout.drain<void>());
+      unawaited(process.stderr.drain<void>());
+      unawaited(process.exitCode);
+      return true;
+    } on Object {
+      // ProcessException (sandbox denial / missing binary), TimeoutException,
+      // or anything else: this build cannot launch the binary.
+      return false;
+    }
+  }
+
   /// Run traceroute against [host], streaming each hop as it resolves and a
   /// terminal [TracerouteResult] at the end.
   ///
