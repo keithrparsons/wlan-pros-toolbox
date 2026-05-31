@@ -1,78 +1,58 @@
-/// Where a [QualityResult]'s numbers came from. Recorded so the UI can label
-/// results honestly and never show an Orb/Ookla mark next to values we computed
-/// ourselves. (No Orb measurement SDK exists — see the 2026-05-31 feasibility
-/// brief.)
+import 'quality_metric.dart';
+
+/// Where a [QualityResult] came from.
 enum QualitySource {
-  /// Synthetic data from [MockQualityClient]; never shown as a real result.
+  /// Deterministic scripted data for tests and previews.
   mock,
 
-  /// Computed by our own dart:io engine.
+  /// The real pure-Dart probe engine.
   ownEngine,
 }
 
-/// The outcome of a single one-shot network-quality measurement.
+/// The outcome of one measurement: a list of individually graded metrics, the
+/// source that produced them, and when it ran.
 ///
-/// Deliberately omits a "reliability" pillar: reliability requires continuous
-/// monitoring over time and cannot be produced by a one-shot test, so claiming
-/// it would be dishonest. We measure what a single run can actually establish.
+/// This model deliberately omits two things by design:
+///   * A reliability pillar. Reliability needs continuous monitoring over time
+///     (sustained loss, dropouts, route changes) that a single one-shot test
+///     cannot honestly provide, so we do not report it.
+///   * A single composite score. We grade each dimension individually; there
+///     is no Orb measurement SDK and no honest way to roll the dimensions into
+///     one headline number, so we do not.
 class QualityResult {
-  /// Our overall quality score, 0-100 (higher is better). This is OUR
-  /// computation, not an Orb Score.
-  final int qualityScore;
+  /// The graded metrics, transport dimensions first.
+  final List<QualityMetric> metrics;
 
-  /// Responsiveness sub-score, 0-100: latency under working load
-  /// (RFC 9097 / RPM-style). Our computation.
-  final int responsiveness;
-
-  /// Idle round-trip latency, milliseconds.
-  final double latencyMs;
-
-  /// Latency variation, milliseconds.
-  final double jitterMs;
-
-  /// Packet loss, percent (0-100).
-  final double packetLossPct;
-
-  /// Download throughput, megabits per second.
-  final double downloadMbps;
-
-  /// Upload throughput, megabits per second.
-  final double uploadMbps;
-
-  /// Provenance of these numbers.
+  /// What produced this result.
   final QualitySource source;
 
   /// When the measurement completed.
   final DateTime measuredAt;
 
+  /// Creates a result.
   const QualityResult({
-    required this.qualityScore,
-    required this.responsiveness,
-    required this.latencyMs,
-    required this.jitterMs,
-    required this.packetLossPct,
-    required this.downloadMbps,
-    required this.uploadMbps,
+    required this.metrics,
     required this.source,
     required this.measuredAt,
   });
 
-  Map<String, Object> toJson() => {
-        'qualityScore': qualityScore,
-        'responsiveness': responsiveness,
-        'latencyMs': latencyMs,
-        'jitterMs': jitterMs,
-        'packetLossPct': packetLossPct,
-        'downloadMbps': downloadMbps,
-        'uploadMbps': uploadMbps,
+  /// Returns the metric whose [QualityMetric.id] matches [id], or null.
+  QualityMetric? metric(String id) {
+    for (final m in metrics) {
+      if (m.id == id) return m;
+    }
+    return null;
+  }
+
+  /// JSON form.
+  Map<String, Object?> toJson() => <String, Object?>{
         'source': source.name,
         'measuredAt': measuredAt.toIso8601String(),
+        'metrics': metrics.map((m) => m.toJson()).toList(),
       };
 
   @override
-  String toString() => 'QualityResult(score: $qualityScore, '
-      'down: ${downloadMbps.toStringAsFixed(1)} Mbps, '
-      'up: ${uploadMbps.toStringAsFixed(1)} Mbps, '
-      'latency: ${latencyMs.toStringAsFixed(0)} ms, '
-      'source: ${source.name})';
+  String toString() =>
+      'QualityResult(${source.name}, ${metrics.length} metrics, '
+      '$measuredAt)';
 }
