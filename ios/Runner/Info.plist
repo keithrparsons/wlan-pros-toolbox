@@ -16,10 +16,31 @@
 	     entries cover the generic service discovery SimplePing performs for
 	     local targets. DEVICE-PENDING: this entitlement chain can only be
 	     exercised against a provisioned device. -->
+	<!-- SPIKE-HSD-01: the mDNS/Bonjour browse in the LAN Discovery prototype
+	     (lib/services/network/lan_discovery/mdns_browse.dart) returns EMPTY on
+	     iOS unless every browsed service type is declared here (brief
+	     anti-pattern #3). This array MUST stay in lockstep with
+	     kBrowsedServiceTypes in mdns_browse.dart. The first two entries also
+	     cover the existing ICMP Ping / service-discovery use. DEVICE-PENDING:
+	     this is Gate 1 — Keith confirms on a provisioned device that the
+	     browse returns results with these declared. -->
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_services._dns-sd._udp</string>
 		<string>_http._tcp</string>
+		<string>_https._tcp</string>
+		<string>_airplay._tcp</string>
+		<string>_raop._tcp</string>
+		<string>_ipp._tcp</string>
+		<string>_ipps._tcp</string>
+		<string>_printer._tcp</string>
+		<string>_pdl-datastream._tcp</string>
+		<string>_companion-link._tcp</string>
+		<string>_googlecast._tcp</string>
+		<string>_smb._tcp</string>
+		<string>_ssh._tcp</string>
+		<string>_device-info._tcp</string>
+		<string>_workstation._tcp</string>
 	</array>
 	<!-- network_info_plus reads the connected Wi-Fi SSID/BSSID, which iOS
 	     gates behind Location When In Use. Without this the SSID/BSSID fields

@@ -78,6 +78,16 @@ dependencies:
   net_quality:
     path: packages/net_quality
 
+  # multicast_dns — pure-Dart mDNS/DNS-SD query, no native plugin. Used by the
+  # SPIKE-HSD-01 LAN-discovery prototype (lan_discovery package) to browse
+  # Bonjour service types and collect device names. Chosen over `nsd` for the
+  # spike because it adds NO native method-channel plugin to register on four
+  # platforms — it rides dart:io UDP/5353 like the rest of the scan core, so it
+  # drops into the existing pure-Dart socket-engine pattern cleanly. Still needs
+  # NSBonjourServices declared on iOS and a multicast lock on Android (both
+  # wired in the platform manifests). BSD-3 (Flutter team package).
+  multicast_dns: ^0.3.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

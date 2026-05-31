@@ -57,6 +57,7 @@ import '../screens/tools/network/http_header_screen.dart';
 import '../screens/tools/network/interface_info_screen.dart';
 import '../screens/tools/network/icmp_ping_screen.dart';
 import '../screens/tools/network/ip_geo_screen.dart';
+import '../screens/tools/network/lan_discovery_debug_screen.dart';
 import '../screens/tools/network/mac_oui_screen.dart';
 import '../screens/tools/network/mobile_traceroute_screen.dart';
 import '../screens/tools/network/net_quality_screen.dart';
@@ -156,6 +157,12 @@ class AppRouter {
   static const String packetSender = '/tools/packet-sender';
   static const String ipv4Subnet = '/tools/ipv4-subnet';
 
+  // SPIKE-HSD-01 — THROWAWAY dev-only route for the LAN Discovery prototype.
+  // Deliberately NOT in the tool catalog, so it never appears in the shipped
+  // home grid. Reach it with Navigator.pushNamed(context, AppRoutes.
+  // lanDiscoveryDebug). Deleted with the spike when TICKET-HSD-02 starts.
+  static const String lanDiscoveryDebug = '/dev/lan-discovery';
+
   // Quick Reference category — offline lookup tables (bundled assets, all
   // platforms incl. web).
   static const String portReference = '/tools/port-reference';
@@ -245,6 +252,8 @@ class AppRouter {
     macOui: (_) => const MacOuiScreen(),
     packetSender: (_) => const PacketSenderScreen(),
     ipv4Subnet: (_) => const SubnetCalcScreen(),
+    // SPIKE-HSD-01 throwaway debug route (not in the catalog; dev-only).
+    lanDiscoveryDebug: (_) => const LanDiscoveryDebugScreen(),
     portReference: (_) => const PortReferenceScreen(),
     osiModel: (_) => const OsiModelScreen(),
     hexAscii: (_) => const HexAsciiScreen(),
