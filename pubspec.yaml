@@ -133,6 +133,10 @@ flutter:
     - assets/fonts/IBMPlexSans-Bold.ttf
     - assets/fonts/DMMono-Regular.ttf
     - assets/fonts/DMMono-Medium.ttf
+    # Roboto Mono — monospaced sans-serif for fixed-width identifiers (IP, MAC,
+    # subnet masks, BSSIDs, hex). Bundled like the others so google_fonts loads
+    # it locally with no runtime HTTP fetch.
+    - assets/fonts/RobotoMono-Regular.ttf
     # Bundled IEEE OUI / vendor table for the MAC Vendor Lookup tool
     # (TICKET-002). Trimmed MA-L/MA-M/MA-S registries; loaded + parsed once and
     # cached. Source + retrieval date documented in the asset header.
