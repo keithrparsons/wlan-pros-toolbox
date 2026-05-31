@@ -70,6 +70,14 @@ dependencies:
   # diagrams rendered as decorative header bands. MIT.
   flutter_svg: ^2.0.17
 
+  # net_quality — the backend-agnostic, pure-Dart network-quality engine
+  # (latency / jitter / loss / throughput / responsiveness + popular-site
+  # reachability). Local path package under packages/. Consumed by the Network
+  # Quality tool (net_quality_screen.dart); the screen depends only on the
+  # QualityClient seam, never on a concrete probe.
+  net_quality:
+    path: packages/net_quality
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

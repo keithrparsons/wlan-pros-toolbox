@@ -59,6 +59,7 @@ import '../screens/tools/network/icmp_ping_screen.dart';
 import '../screens/tools/network/ip_geo_screen.dart';
 import '../screens/tools/network/mac_oui_screen.dart';
 import '../screens/tools/network/mobile_traceroute_screen.dart';
+import '../screens/tools/network/net_quality_screen.dart';
 import '../screens/tools/network/packet_sender_screen.dart';
 import '../screens/tools/network/ping_screen.dart';
 import '../screens/tools/network/ping_sweep_screen.dart';
@@ -141,6 +142,7 @@ class AppRouter {
   static const String ping = '/tools/ping';
   static const String icmpPing = '/tools/icmp-ping';
   static const String pingSweep = '/tools/ping-sweep';
+  static const String netQuality = '/tools/net-quality';
   static const String traceroute = '/tools/traceroute';
   static const String mobileTraceroute = '/tools/mobile-traceroute';
   static const String sslInspect = '/tools/ssl-inspect';
@@ -225,6 +227,12 @@ class AppRouter {
     ping: (_) => const PingScreen(),
     icmpPing: (_) => const IcmpPingScreen(),
     pingSweep: (_) => const PingSweepScreen(),
+    // TODO(icon): bespoke 'net-quality' tool icon owed (GL-003 §8.6); using
+    // fallback for now. The _ToolRow icon resolver (category_screen.dart) shows
+    // the category Material glyph (Icons.bolt) gracefully when no
+    // assets/tool-icons/net-quality.svg is bundled, so no asset is required for
+    // this row to render correctly.
+    netQuality: (_) => const NetQualityScreen(),
     traceroute: (_) => const TracerouteScreen(),
     mobileTraceroute: (_) => const MobileTracerouteScreen(),
     sslInspect: (_) => const SslInspectScreen(),
