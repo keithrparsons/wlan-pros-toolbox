@@ -744,7 +744,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
   ///   excellent + good → statusSuccess (#5BD68A), dark text (9.47:1)
   ///   fair             → statusWarning (#E0A23A), dark text (7.79:1)
   ///   poor             → statusDanger  (#F26E6E), dark text (5.99:1)
-  ///   unavailable      → neutral surface2 + textSecondary (6.30:1, no verdict)
+  ///   unavailable      → neutral surface2 + textSecondary (11.39:1, no verdict)
   /// Every pairing clears WCAG 2.2 AA for normal text (see app_tokens.dart).
   static (Color, Color) _gradeColors(QualityGrade grade) {
     switch (grade) {
