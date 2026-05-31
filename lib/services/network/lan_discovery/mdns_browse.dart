@@ -48,6 +48,8 @@ const List<String> kBrowsedServiceTypes = <String>[
   '_pdl-datastream._tcp', // printers (port 9100 / JetDirect)
   '_companion-link._tcp', // Apple device pairing
   '_googlecast._tcp', // Chromecast / Google TV
+  '_sonos._tcp', // Sonos speakers (device-type heuristic classifies these)
+  '_spotify-connect._tcp', // Spotify Connect speakers / media
   '_smb._tcp', // SMB / file sharing
   '_ssh._tcp', // SSH hosts
   '_device-info._tcp', // generic device metadata
