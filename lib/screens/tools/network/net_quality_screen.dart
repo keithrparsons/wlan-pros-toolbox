@@ -741,9 +741,9 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
   /// GL-003 §8.13 status-token mapping for grade chips. Foreground is the dark
   /// `secondary` (#1A1A1A) on every verdict chip — dark text clears WCAG 4.5:1
   /// on all three grade backgrounds, so no per-grade white exception is needed:
-  ///   excellent + good → statusSuccess (#5BD68A), dark text (13.79:1)
-  ///   fair             → statusWarning (#E0A23A), dark text (9.95:1)
-  ///   poor             → statusDanger  (#F26E6E), dark text (7.27:1)
+  ///   excellent + good → statusSuccess (#5BD68A), dark text (9.47:1)
+  ///   fair             → statusWarning (#E0A23A), dark text (7.79:1)
+  ///   poor             → statusDanger  (#F26E6E), dark text (5.99:1)
   ///   unavailable      → neutral surface2 + textSecondary (6.30:1, no verdict)
   /// Every pairing clears WCAG 2.2 AA for normal text (see app_tokens.dart).
   static (Color, Color) _gradeColors(QualityGrade grade) {
