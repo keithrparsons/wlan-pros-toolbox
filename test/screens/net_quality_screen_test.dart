@@ -8,6 +8,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:net_quality/net_quality.dart';
+import 'package:wlan_pros_toolbox/screens/tools/network/live_quality_monitor.dart';
+import 'package:wlan_pros_toolbox/screens/tools/network/metric_sparkline.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/net_quality_screen.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
@@ -26,7 +28,22 @@ void main() {
     PopularSite(name: 'Unreachable Co', host: 'no.such.host.invalid'),
   ];
 
-  Widget harness() => MaterialApp(
+  LatencyStats fakeStats() => const LatencyStats(
+        avgMs: 18,
+        minMs: 12,
+        maxMs: 24,
+        jitterMs: 3,
+        lossPct: 0,
+        sent: 5,
+        received: 5,
+      );
+
+  // A monitor wired with a fake latency sampler so no socket is opened. The
+  // screen calls start() in initState; the fake fires immediately.
+  LiveQualityMonitor fakeMonitor() =>
+      LiveQualityMonitor(sampler: () async => fakeStats());
+
+  Widget harness({LiveQualityMonitor? monitor}) => MaterialApp(
         theme: AppTheme.dark(),
         home: NetQualityScreen(
           client: MockQualityClient(),
@@ -34,6 +51,7 @@ void main() {
             prober: fakeProber,
             sites: sites,
           ),
+          monitor: monitor ?? fakeMonitor(),
         ),
       );
 
@@ -88,5 +106,90 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
+  });
+
+  group('live monitor', () {
+    testWidgets('live latency samples render the metrics card before a run',
+        (tester) async {
+      // The screen starts the monitor in initState; the fake sampler fires one
+      // immediate latency-trio sample, so the Transport card and the Live
+      // indicator appear without tapping Run.
+      await tester.pumpWidget(harness());
+      await tester.pumpAndSettle();
+
+      expect(find.text('Transport'), findsOneWidget);
+      expect(find.text('Live · sampling latency every 30s'), findsOneWidget);
+      // The latency-trio rows are present from live history alone.
+      expect(find.text('Latency'), findsOneWidget);
+      expect(find.text('Jitter'), findsOneWidget);
+      expect(find.text('Loss'), findsOneWidget);
+    });
+
+    testWidgets('sparse expensive metric shows the tracking hint until a run',
+        (tester) async {
+      await tester.pumpWidget(harness());
+      await tester.pumpAndSettle();
+
+      // Before a one-shot run, download/upload/responsiveness have no points.
+      expect(find.text('Run a test to start tracking'), findsWidgets);
+
+      // After a run, the expensive trio has one point → still a hint (1 point
+      // is not enough for a line), but the chip + value now render.
+      await tester.tap(find.text('Run test'));
+      await tester.pumpAndSettle();
+      expect(find.text('Download'), findsOneWidget);
+      // A single point keeps the hint (>= 2 needed for a line, spec §3).
+      expect(find.text('Run a test to start tracking'), findsWidgets);
+    });
+
+    testWidgets('a dense latency trail renders a sparkline (>= 2 points)',
+        (tester) async {
+      // Drive the monitor to 2+ live samples via tickNow, then pump.
+      final monitor = fakeMonitor();
+      await tester.pumpWidget(harness(monitor: monitor));
+      await tester.pumpAndSettle();
+      await monitor.tickNow();
+      await monitor.tickNow();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(MetricSparkline), findsWidgets);
+    });
+
+    testWidgets('pause/resume toggles the live indicator and SR label',
+        (tester) async {
+      await tester.pumpWidget(harness());
+      await tester.pumpAndSettle();
+
+      expect(find.text('Live · sampling latency every 30s'), findsOneWidget);
+      expect(find.bySemanticsLabel('Pause live sampling'), findsOneWidget);
+
+      await tester.tap(find.bySemanticsLabel('Pause live sampling'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Paused'), findsOneWidget);
+      expect(find.bySemanticsLabel('Resume live sampling'), findsOneWidget);
+
+      await tester.tap(find.bySemanticsLabel('Resume live sampling'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Live · sampling latency every 30s'), findsOneWidget);
+    });
+
+    testWidgets('leaving the screen disposes the monitor with no timer errors',
+        (tester) async {
+      await tester.pumpWidget(harness());
+      await tester.pumpAndSettle();
+      expect(find.byType(NetQualityScreen), findsOneWidget);
+
+      // Replace the screen → State.dispose runs → monitor.dispose cancels the
+      // timer. A leaked Timer.periodic would trip the test binding here.
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: SizedBox.shrink())),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(NetQualityScreen), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
   });
 }
