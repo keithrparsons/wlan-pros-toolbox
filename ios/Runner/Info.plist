@@ -37,6 +37,8 @@
 		<string>_pdl-datastream._tcp</string>
 		<string>_companion-link._tcp</string>
 		<string>_googlecast._tcp</string>
+		<string>_sonos._tcp</string>
+		<string>_spotify-connect._tcp</string>
 		<string>_smb._tcp</string>
 		<string>_ssh._tcp</string>
 		<string>_device-info._tcp</string>

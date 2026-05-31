@@ -7,8 +7,12 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:multicast_dns/multicast_dns.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/connect_scan.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/device_type.dart';
+import 'package:wlan_pros_toolbox/services/network/lan_discovery/lan_discovery_engine.dart';
+import 'package:wlan_pros_toolbox/services/network/lan_discovery/mdns_browse.dart';
+import 'package:wlan_pros_toolbox/services/network/lan_discovery/multicast_lock.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/subnet_seed.dart';
 
 // --- Fake-connector helpers for the connect-scan classification tests. ---
@@ -22,6 +26,32 @@ import 'package:wlan_pros_toolbox/services/network/lan_discovery/subnet_seed.dar
 /// Builds a SocketException with the given errno, like a failed connect.
 SocketException _errnoEx(int code, String message) =>
     SocketException(message, osError: OSError(message, code));
+
+/// A SubnetSeedDeriver fed a fixed ip/mask, with no plugin call, so the engine
+/// runs its full pipeline in a unit test with no device. The given [ip]/[mask]
+/// drive the derived host count (a /29-ish mask keeps it small + predictable).
+SubnetSeedDeriver _seedDeriver({required String ip, required String mask}) {
+  return SubnetSeedDeriver(
+    reader: () async => (ip: ip, mask: mask, gateway: null),
+  );
+}
+
+/// An MdnsBrowser whose client cannot bind a multicast socket (its socket
+/// factory throws), so [browse] hits its non-fatal empty path immediately —
+/// keeps engine tests fast and off the real network, no subclassing needed.
+MdnsBrowser _silentMdnsBrowser() => MdnsBrowser(
+      clientFactory: () => MDnsClient(
+        rawDatagramSocketFactory: (
+          dynamic host,
+          int port, {
+          bool reuseAddress = true,
+          bool reusePort = true,
+          int ttl = 1,
+        }) =>
+            Future<RawDatagramSocket>.error(
+                const SocketException('mDNS disabled in test')),
+      ),
+    );
 
 void main() {
   group('inferDeviceType — ordered rule table', () {
@@ -445,6 +475,110 @@ void main() {
       expect(result[0].openPorts, <int>[443]);
       expect(result[1].openPorts, isEmpty);
       expect(result.every((HostPorts h) => h.alive), isTrue);
+    });
+  });
+
+  group('LanDiscoveryEngine — streamed scanning progress (Fix 2 regression)', () {
+    // A live ServerSocket so "open" probes hand back a real openable socket.
+    late ServerSocket server;
+    late int livePort;
+
+    setUp(() async {
+      server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+      livePort = server.port;
+      server.listen((Socket s) => s.destroy());
+    });
+
+    tearDown(() async {
+      await server.close();
+    });
+
+    test('emits MULTIPLE increasing scanning-phase fractions, not one at 0.05 '
+        'then a jump to 0.6', () async {
+      // /29 over .1 → several hosts; a multi-port set → many probes, so the
+      // in-process scan reports progress repeatedly. The fake connector marks
+      // port 80 open (handshake to loopback) and refuses the rest, so every host
+      // is alive and the run completes normally.
+      final LanDiscoveryEngine engine = LanDiscoveryEngine(
+        runInIsolate: false,
+        seedDeriver: _seedDeriver(ip: '10.0.0.1', mask: '255.255.255.248'),
+        mdnsBrowser: _silentMdnsBrowser(),
+        multicastLock: const NoopMulticastLock(),
+        reverseDns: (String ip) async => null,
+        ports: const <int>[22, 80, 443, 445, 8080],
+        connector: (String host, int port, Duration timeout) {
+          if (port == 80) {
+            return Socket.connect(InternetAddress.loopbackIPv4, livePort,
+                timeout: timeout);
+          }
+          return Future<Socket>.error(_errnoEx(61, 'Connection refused'));
+        },
+      );
+
+      final List<DiscoveryProgress> events =
+          await engine.run().toList();
+
+      // Collect the scanning-phase fractions in order. There must be MORE than
+      // one (the bug was: only 0.05, then a jump straight to 0.6).
+      final List<double> scanFractions = events
+          .where((DiscoveryProgress p) => p.phase == DiscoveryPhase.scanning)
+          .map((DiscoveryProgress p) => p.fraction)
+          .toList();
+
+      expect(scanFractions.length, greaterThan(2),
+          reason: 'progress must tick repeatedly during the scan, not jump');
+
+      // Strictly within the scanning band [0.05, 0.6], and non-decreasing.
+      for (final double f in scanFractions) {
+        expect(f, greaterThanOrEqualTo(0.05));
+        expect(f, lessThanOrEqualTo(0.6));
+      }
+      for (int i = 1; i < scanFractions.length; i++) {
+        expect(scanFractions[i], greaterThanOrEqualTo(scanFractions[i - 1]),
+            reason: 'fractions must be monotonic');
+      }
+      // At least one intermediate value strictly between the seed (0.05) and the
+      // band end (0.6) — proves real mid-scan progress was reported.
+      expect(
+        scanFractions.any((double f) => f > 0.05 && f < 0.6),
+        isTrue,
+        reason: 'expected at least one mid-scan fraction, not just 0.05 → 0.6',
+      );
+
+      // A 'probed X / Y' note shows up so the debug screen can display it.
+      final bool hasProbedNote = events.any((DiscoveryProgress p) =>
+          p.phase == DiscoveryPhase.scanning &&
+          (p.note?.startsWith('probed ') ?? false));
+      expect(hasProbedNote, isTrue);
+
+      // The run still completes successfully with the alive hosts.
+      expect(events.last.phase, DiscoveryPhase.complete);
+      expect(engine.lastResult, isNotNull);
+      expect(engine.lastResult!.error, isNull);
+      expect(engine.lastResult!.hosts, isNotEmpty);
+    });
+
+    test('a scan that throws surfaces as a failed DiscoveryResult, not a hang',
+        () async {
+      final LanDiscoveryEngine engine = LanDiscoveryEngine(
+        runInIsolate: false,
+        seedDeriver: _seedDeriver(ip: '10.0.0.1', mask: '255.255.255.252'),
+        mdnsBrowser: _silentMdnsBrowser(),
+        multicastLock: const NoopMulticastLock(),
+        reverseDns: (String ip) async => null,
+        ports: const <int>[80],
+        // A connector whose throw is NOT a SocketException — runConnectScan
+        // classifies it as dead, so this alone would not fail the scan. Instead
+        // inject a runner that throws to exercise the failure path.
+        scanRunner: (ConnectScanRequest request) =>
+            Future<List<HostPorts>>.error(StateError('scan blew up')),
+      );
+
+      final List<DiscoveryProgress> events = await engine.run().toList();
+
+      expect(events.last.phase, DiscoveryPhase.failed);
+      expect(engine.lastResult, isNotNull);
+      expect(engine.lastResult!.error, contains('Connect-scan failed'));
     });
   });
 }

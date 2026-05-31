@@ -128,6 +128,14 @@ class _LanDiscoveryDebugScreenState extends State<LanDiscoveryDebugScreen> {
                   '  (${(_fraction * 100).round()}%)',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
+                if (_running) ...<Widget>[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Scanning the local subnet. A full /24 sweep can take 10 '
+                    'to 20 seconds.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
               ],
               if (_error != null) ...<Widget>[
                 const SizedBox(height: 8),
