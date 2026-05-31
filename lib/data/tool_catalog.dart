@@ -8,17 +8,14 @@
 // Infrastructure, Wi-Fi Design) merged their tools into the survivors per the
 // locked map; nothing was dropped.
 //
-// Empty-category decision (Felix, 2026-05-30): the LOCKED map adds two NEW
-// categories — Command & Capture and Checklists — whose tools are still pending
-// (Pax research + build). The home grid renders one tile per category, and an
-// empty category would surface a permanently "Coming soon" tile with no tools
-// behind it. Per the build brief's explicit option, these two categories are
-// DEFERRED out of the catalog until their tools land, rather than ship empty
-// tiles. This file therefore holds the 4 consolidated categories
-// (Calculators, Networking Tools, Planning Tools, Quick Reference). Add
-// Command & Capture and Checklists here when their first tools are built — the
-// new tappable-checklist screen type (checklist_screen.dart) is already wired
-// to receive its data.
+// Category activation (Felix, 2026-05-30): the two NEW categories from the
+// LOCKED map — Command & Capture and Checklists — were initially deferred while
+// their tools were pending. Their 7 additions (Hex/ASCII, OSI Model, 3 command
+// sheets, 2 checklists) are now built and live, so both categories are ACTIVE.
+// The home grid now renders all 6 LOCKED categories (Calculators, Networking
+// Tools, Planning Tools, Quick Reference, Command & Capture, Checklists). The
+// tappable-checklist screen type (checklist_screen.dart) renders the
+// Pax-transcribed card content via the consts in data/checklists.dart.
 //
 // Display-title rename pass (LOCKED map "Display-title rename pass"): titles
 // were reclustered by function (e.g. "DNS Lookup" → "Lookup (DNS)"). The
@@ -220,7 +217,14 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         routeName: '/tools/final-point',
         isLive: true,
       ),
-      // Hex / ASCII converter — NEW, pending build (Pax data). Not added yet.
+      // Hex / ASCII converter + printable-ASCII table — NEW.
+      ToolEntry(
+        id: 'hex-ascii',
+        title: 'Hex / ASCII',
+        description: 'Dec/hex/binary converter + ASCII table',
+        routeName: '/tools/hex-ascii',
+        isLive: true,
+      ),
     ],
   ),
 
@@ -566,24 +570,74 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         routeName: '/tools/rf-connectors',
         isLive: true,
       ),
-      // OSI Model — NEW — pending build (Pax data). Not added yet.
+      // OSI Model — NEW (Quick Reference, last per the LOCKED map order).
+      ToolEntry(
+        id: 'osi-model',
+        title: 'OSI Model',
+        description: '7 layers, PDUs, and hardware',
+        routeName: '/tools/osi-model',
+        isLive: true,
+      ),
     ],
   ),
 
-  // ─────────────── 5. Command & Capture — DEFERRED ──────────────────
-  // NEW category (glyph Icons.terminal_outlined). Its 3 tools (Network CLI
-  // Commands, Linux / WLAN Commands, Wireshark 802.11 Filters) are pending
-  // build. Omitted from the catalog until its first tool lands so the home
-  // grid never shows an empty "Coming soon" category tile (Felix decision,
-  // 2026-05-30). Restore as a 5th ToolCategory(id: 'command-capture', ...,
-  // icon: Icons.terminal_outlined) when the tools exist.
+  // ──────────────────── 5. Command & Capture ────────────────────────
+  // NEW category (LOCKED map §5). Its 3 tools are built and live; the category
+  // is now active. Tool order follows the LOCKED map.
+  ToolCategory(
+    id: 'command-capture',
+    title: 'Command & Capture',
+    summary: 'CLI commands, monitor-mode, Wireshark filters',
+    icon: Icons.terminal_outlined,
+    tools: <ToolEntry>[
+      ToolEntry(
+        id: 'cli-commands',
+        title: 'Network CLI Commands',
+        description: 'Windows + macOS/Linux troubleshooting',
+        routeName: '/tools/cli-commands',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'linux-wlan-commands',
+        title: 'Linux / WLAN Commands',
+        description: 'Linux CLI + monitor-mode for WLAN',
+        routeName: '/tools/linux-wlan-commands',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'wireshark-80211-filters',
+        title: 'Wireshark 802.11 Filters',
+        description: 'Display + capture filters for 802.11',
+        routeName: '/tools/wireshark-80211-filters',
+        isLive: true,
+      ),
+    ],
+  ),
 
-  // ───────────────────── 6. Checklists — DEFERRED ───────────────────
-  // NEW category (glyph Icons.checklist_outlined). Its 2 tools (How to NOT
-  // Have a Wireless Problem, Wi-Fi Client Testing Checklist) are pending data
-  // (pax-research-7-additions.md) and build. Omitted until its first tool
-  // lands, same reason as Command & Capture. The reusable tappable-checklist
-  // screen type (lib/screens/tools/checklists/checklist_screen.dart) is built
-  // and ready to receive that data. Restore as a 6th ToolCategory(id:
-  // 'checklists', ..., icon: Icons.checklist_outlined) when the tools exist.
+  // ───────────────────────── 6. Checklists ──────────────────────────
+  // NEW category (LOCKED map §6). Its 2 tools are built and live (the reusable
+  // tappable-checklist screen type renders the Pax-transcribed card content);
+  // the category is now active.
+  ToolCategory(
+    id: 'checklists',
+    title: 'Checklists',
+    summary: 'Field checklists for install and client testing',
+    icon: Icons.checklist_outlined,
+    tools: <ToolEntry>[
+      ToolEntry(
+        id: 'checklist-ap-install',
+        title: 'How to NOT Have a Wireless Problem',
+        description: 'AP install pre/post-check phases',
+        routeName: '/tools/checklist-ap-install',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'checklist-client-test',
+        title: 'Wi-Fi Client Testing Checklist',
+        description: '12 client-side connectivity tests',
+        routeName: '/tools/checklist-client-test',
+        isLive: true,
+      ),
+    ],
+  ),
 ];

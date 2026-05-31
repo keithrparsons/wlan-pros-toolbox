@@ -69,6 +69,13 @@ import '../screens/tools/network/ssl_inspect_screen.dart';
 import '../screens/tools/network/traceroute_screen.dart';
 import '../screens/tools/network/wake_on_lan_screen.dart';
 import '../screens/tools/network/whois_screen.dart';
+import '../screens/tools/calculators/hex_ascii_screen.dart';
+import '../screens/tools/command/cli_commands_screen.dart';
+import '../screens/tools/command/linux_wlan_commands_screen.dart';
+import '../screens/tools/command/wireshark_filters_screen.dart';
+import '../screens/tools/reference/osi_model_screen.dart';
+import '../screens/tools/checklists/checklist_screen.dart';
+import '../data/checklists.dart';
 
 class AppRouter {
   AppRouter._();
@@ -150,6 +157,22 @@ class AppRouter {
   // Quick Reference category — offline lookup tables (bundled assets, all
   // platforms incl. web).
   static const String portReference = '/tools/port-reference';
+  static const String osiModel = '/tools/osi-model';
+
+  // Calculators — Hex / ASCII converter + printable-ASCII table (pure math +
+  // const-derived table, all platforms incl. web).
+  static const String hexAscii = '/tools/hex-ascii';
+
+  // Command & Capture category — offline command / filter references (const
+  // datasets, all platforms incl. web; reference text, never executed).
+  static const String cliCommands = '/tools/cli-commands';
+  static const String linuxWlanCommands = '/tools/linux-wlan-commands';
+  static const String wiresharkFilters = '/tools/wireshark-80211-filters';
+
+  // Checklists category — interactive session-state checklists (in-memory,
+  // all platforms incl. web).
+  static const String checklistApInstall = '/tools/checklist-ap-install';
+  static const String checklistClientTest = '/tools/checklist-client-test';
 
   /// Map of static, argument-less routes. Categories use MaterialPageRoute
   /// directly because each category screen takes a typed `ToolCategory`.
@@ -215,6 +238,19 @@ class AppRouter {
     packetSender: (_) => const PacketSenderScreen(),
     ipv4Subnet: (_) => const SubnetCalcScreen(),
     portReference: (_) => const PortReferenceScreen(),
+    osiModel: (_) => const OsiModelScreen(),
+    hexAscii: (_) => const HexAsciiScreen(),
+    cliCommands: (_) => const CliCommandsScreen(),
+    linuxWlanCommands: (_) => const LinuxWlanCommandsScreen(),
+    wiresharkFilters: (_) => const WiresharkFiltersScreen(),
+    checklistApInstall: (_) => const ChecklistScreen(
+          checklist: kApInstallChecklist,
+          toolId: 'checklist-ap-install',
+        ),
+    checklistClientTest: (_) => const ChecklistScreen(
+          checklist: kClientTestChecklist,
+          toolId: 'checklist-client-test',
+        ),
   };
 
   /// Fallback for any unregistered route. Sends the user back to home rather
