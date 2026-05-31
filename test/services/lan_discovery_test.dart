@@ -4,9 +4,24 @@
 // with no device. The throwaway debug UI itself needs no tests (deleted with the
 // spike).
 
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:wlan_pros_toolbox/services/network/lan_discovery/connect_scan.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/device_type.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/subnet_seed.dart';
+
+// --- Fake-connector helpers for the connect-scan classification tests. ---
+//
+// `Socket` has no public constructor, so a genuinely-OPEN probe is simulated by
+// connecting to a real loopback ServerSocket the test stands up. REFUSED and
+// DEAD are simulated by throwing a SocketException with a constructed OSError
+// carrying the errno we want to exercise — no real network for those. errno
+// values used (BSD = iOS/macOS): EHOSTUNREACH=65, ECONNREFUSED=61, ECONNRESET=54.
+
+/// Builds a SocketException with the given errno, like a failed connect.
+SocketException _errnoEx(int code, String message) =>
+    SocketException(message, osError: OSError(message, code));
 
 void main() {
   group('inferDeviceType — ordered rule table', () {
@@ -210,6 +225,191 @@ void main() {
       expect(s.isValid, isTrue);
       expect(s.hosts.first, '192.168.5.1');
       expect(s.hosts.last, '192.168.5.254');
+    });
+  });
+
+  group('runConnectScan — three-outcome classification (the on-device bug)', () {
+    // A genuinely-open probe needs a real socket (Socket has no public ctor), so
+    // these tests connect to a loopback ServerSocket for "open" ports. The
+    // server's actual port is irrelevant — the fake connector decides per the
+    // probed port number, then connects to the live loopback port to hand back a
+    // real, openable socket.
+    late ServerSocket server;
+    late int livePort;
+
+    setUp(() async {
+      server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+      livePort = server.port;
+      // Accept and immediately drop — we only need the handshake to complete.
+      server.listen((Socket s) => s.destroy());
+    });
+
+    tearDown(() async {
+      await server.close();
+    });
+
+    /// Connector that returns a real (open) socket for ports in [openPorts],
+    /// otherwise throws [thrown] (an exception factory keyed by the probed port).
+    Connector connectorWith({
+      required Set<int> openPorts,
+      required SocketException Function(int port) thrown,
+    }) {
+      return (String host, int port, Duration timeout) {
+        if (openPorts.contains(port)) {
+          return Socket.connect(
+            InternetAddress.loopbackIPv4,
+            livePort,
+            timeout: timeout,
+          );
+        }
+        return Future<Socket>.error(thrown(port));
+      };
+    }
+
+    test('REGRESSION: every probe EHOSTUNREACH → host is DROPPED, not reported '
+        'with all ports open', () async {
+      // This is exactly the iOS/macOS dead-IP behavior the old code mis-read:
+      // EHOSTUNREACH carries a non-null osError. A dead IP must NOT appear.
+      final List<HostPorts> result = await runConnectScan(
+        const ConnectScanRequest(
+          hosts: <String>['10.0.0.99'],
+          ports: <int>[22, 80, 443, 445, 515, 631],
+        ),
+        connector: connectorWith(
+          openPorts: const <int>{},
+          thrown: (_) => _errnoEx(65, 'No route to host'), // EHOSTUNREACH (BSD)
+        ),
+      );
+      expect(result, isEmpty,
+          reason: 'a host that only ever produced EHOSTUNREACH is dead');
+    });
+
+    test('also drops on ENETUNREACH / EHOSTDOWN / ETIMEDOUT and null osError',
+        () async {
+      final List<HostPorts> result = await runConnectScan(
+        const ConnectScanRequest(
+          hosts: <String>['10.0.0.1', '10.0.0.2', '10.0.0.3', '10.0.0.4'],
+          ports: <int>[80, 443],
+        ),
+        connector: (String host, int port, Duration timeout) {
+          // Map each host to a distinct "dead" failure mode.
+          switch (host) {
+            case '10.0.0.1':
+              return Future<Socket>.error(
+                  _errnoEx(51, 'Network is unreachable')); // ENETUNREACH (BSD)
+            case '10.0.0.2':
+              return Future<Socket>.error(
+                  _errnoEx(64, 'Host is down')); // EHOSTDOWN (BSD)
+            case '10.0.0.3':
+              return Future<Socket>.error(
+                  _errnoEx(60, 'Operation timed out')); // ETIMEDOUT (BSD)
+            default:
+              // Our own connect-timeout surfaces a null osError.
+              return Future<Socket>.error(
+                  const SocketException('Connection timed out'));
+          }
+        },
+      );
+      expect(result, isEmpty);
+    });
+
+    test('some ports connect, others refuse → openPorts holds only the '
+        'connected ports; host is present', () async {
+      final List<HostPorts> result = await runConnectScan(
+        const ConnectScanRequest(
+          hosts: <String>['192.168.1.10'],
+          ports: <int>[22, 80, 443, 445],
+        ),
+        connector: connectorWith(
+          openPorts: const <int>{80, 443}, // these two genuinely open
+          thrown: (_) => _errnoEx(61, 'Connection refused'), // ECONNREFUSED BSD
+        ),
+      );
+      expect(result, hasLength(1));
+      final HostPorts host = result.single;
+      expect(host.ip, '192.168.1.10');
+      expect(host.alive, isTrue);
+      expect(host.openPorts, <int>[80, 443],
+          reason: 'refused ports (22, 445) must not appear as open');
+    });
+
+    test('every port refuses → host present, alive, openPorts EMPTY, and the '
+        'device-type heuristic returns unknown (NOT printer)', () async {
+      final List<HostPorts> result = await runConnectScan(
+        const ConnectScanRequest(
+          hosts: <String>['192.168.1.20'],
+          ports: <int>[22, 80, 443, 445, 515, 631], // includes printer ports
+        ),
+        connector: connectorWith(
+          openPorts: const <int>{}, // nothing open
+          thrown: (_) => _errnoEx(61, 'Connection refused'), // all refused
+        ),
+      );
+      expect(result, hasLength(1));
+      final HostPorts host = result.single;
+      expect(host.alive, isTrue);
+      expect(host.openPorts, isEmpty);
+      // The whole point: no open ports means no printer-port fingerprint, so the
+      // heuristic must NOT stamp this as Printer.
+      expect(
+        inferDeviceType(
+          openPorts: host.openPorts.toSet(),
+          mdnsServices: const <String>{},
+        ),
+        DeviceType.unknown,
+      );
+    });
+
+    test('Linux/Android errno ECONNREFUSED=111 / ECONNRESET=104 also count as '
+        'alive (cross-platform, not iOS-only-correct)', () async {
+      final List<HostPorts> result = await runConnectScan(
+        const ConnectScanRequest(
+          hosts: <String>['192.168.1.30', '192.168.1.31'],
+          ports: <int>[80],
+        ),
+        connector: (String host, int port, Duration timeout) {
+          if (host == '192.168.1.30') {
+            return Future<Socket>.error(
+                _errnoEx(111, 'Connection refused')); // ECONNREFUSED (Linux)
+          }
+          return Future<Socket>.error(
+              _errnoEx(104, 'Connection reset by peer')); // ECONNRESET (Linux)
+        },
+      );
+      expect(result, hasLength(2),
+          reason: 'both Linux refusal errnos prove liveness');
+      expect(result.every((HostPorts h) => h.alive && h.openPorts.isEmpty),
+          isTrue);
+    });
+
+    test('mixed subnet: open host kept, refused host kept, dead host dropped',
+        () async {
+      final List<HostPorts> result = await runConnectScan(
+        const ConnectScanRequest(
+          hosts: <String>['10.1.1.1', '10.1.1.2', '10.1.1.3'],
+          ports: <int>[80, 443],
+        ),
+        connector: (String host, int port, Duration timeout) {
+          switch (host) {
+            case '10.1.1.1': // genuinely open on 443
+              if (port == 443) {
+                return Socket.connect(InternetAddress.loopbackIPv4, livePort,
+                    timeout: timeout);
+              }
+              return Future<Socket>.error(_errnoEx(61, 'Connection refused'));
+            case '10.1.1.2': // alive but everything refused
+              return Future<Socket>.error(_errnoEx(61, 'Connection refused'));
+            default: // 10.1.1.3 — dead
+              return Future<Socket>.error(_errnoEx(65, 'No route to host'));
+          }
+        },
+      );
+      // Host order is scan order; dead host is absent.
+      expect(result.map((HostPorts h) => h.ip).toList(),
+          <String>['10.1.1.1', '10.1.1.2']);
+      expect(result[0].openPorts, <int>[443]);
+      expect(result[1].openPorts, isEmpty);
+      expect(result.every((HostPorts h) => h.alive), isTrue);
     });
   });
 }
