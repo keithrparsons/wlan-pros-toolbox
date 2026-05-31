@@ -285,6 +285,15 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         isLive: true,
       ),
       ToolEntry(
+        id: 'net-quality',
+        title: 'Network Quality',
+        description:
+            'Latency, jitter, loss, throughput, responsiveness, and site '
+            'reachability',
+        routeName: '/tools/net-quality',
+        isLive: true,
+      ),
+      ToolEntry(
         id: 'traceroute',
         title: 'Traceroute (System)',
         description: 'Hop-by-hop path via the OS traceroute — desktop',
