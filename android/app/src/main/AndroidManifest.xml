@@ -10,6 +10,22 @@
          permission at runtime; network_info_plus surfaces null without it and
          the UI shows "Not available" rather than crashing. -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <!-- SPIKE-HSD-01: CHANGE_WIFI_MULTICAST_STATE lets the app acquire a Wi-Fi
+         multicast lock. Without an active multicast lock, Android drops
+         inbound multicast frames to save power, so the mDNS/Bonjour browse
+         (multicast_dns over UDP/5353) returns nothing. The lock is acquired in
+         the MainActivity for the duration of a scan (see MainActivity.kt). -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>
+    <!-- SPIKE-HSD-01 Gate 3: ACCESS_LOCAL_NETWORK is the NEW gating permission
+         for ALL local-network traffic (TCP connect-scan, mDNS, reverse DNS to
+         LAN). Per the Android local-network-permission model it is opt-in on
+         Android 16 (NEARBY_WIFI_DEVICES) and becomes MANDATORY on Android 17+
+         for apps targeting SDK 37+. Without the grant the connect-scan fails
+         with TCP timeouts / EPERM. DATE-SENSITIVE: re-verify the SDK-37 /
+         Android-17 enforcement timing at spike time — Google has shifted these
+         dates before. This declaration is harmless on older SDKs (ignored).
+         Keith validates the request-flow timing on a current-SDK device. -->
+    <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK"/>
     <application
         android:label="WLAN Pros Toolbox"
         android:name="${applicationName}"

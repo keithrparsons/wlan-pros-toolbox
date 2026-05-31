@@ -6,9 +6,11 @@
 // Layout per GL-003 §8.7: 16px screen edge on mobile, 24px on tablet+ desktop,
 // 16px grid gutter, tile titles at H3 / IBM Plex Sans 600.
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../data/tool_catalog.dart';
+import '../router/app_router.dart';
 import '../theme/app_tokens.dart';
 import 'category_screen.dart';
 
@@ -52,6 +54,19 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('WLAN Pros Toolbox'),
         toolbarHeight: 64,
+        // SPIKE-HSD-01 — debug-only entry to the throwaway LAN Discovery
+        // prototype. kDebugMode gates it out of any release build, so it never
+        // ships. Removed when the spike is deleted (TICKET-HSD-02).
+        actions: kDebugMode
+            ? <Widget>[
+                IconButton(
+                  tooltip: 'LAN Discovery (spike debug)',
+                  icon: const Icon(Icons.radar),
+                  onPressed: () => Navigator.of(context)
+                      .pushNamed(AppRouter.lanDiscoveryDebug),
+                ),
+              ]
+            : null,
       ),
       body: SafeArea(
         top: false,
