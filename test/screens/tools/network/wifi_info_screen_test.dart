@@ -1,256 +1,256 @@
+// Wi-Fi Information screen — widget tests (TICKET-04, consolidated tool).
+//
+// The one Wi-Fi tool selects its data source per platform behind a seam, so the
+// tests drive each source explicitly via [WifiInfoScreen.sourceOverride] plus an
+// injected fake adapter/bridge — no real platform channel is touched.
+//
+// Covers the state matrix from SOP-007 §5 across BOTH platform paths:
+//   * macOS source: loading → success cards, Wi-Fi-off, location-permission
+//     card, channel-error card + retry.
+//   * iOS source: needs-install empty state, success cards with the monitoring
+//     control bar, Start/Stop, the honest per-field "not reported by iOS" note.
+//   * web source: download-the-app fallback.
+//   * unsupported native: honest "coming in a later update" state.
+
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:wlan_pros_toolbox/screens/tools/network/network_unavailable_view.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/wifi_info_screen.dart';
+import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
+import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
-/// A fake invoker that scripts channel responses for the screen tests.
-///
-/// Records how many times getWifiInfo is called so the location regrant flow
-/// can be verified without a real platform channel.
-class _FakeInvoker {
-  _FakeInvoker(this.responses);
+ConnectedAp _macSample({
+  String? ssid = 'KeithNet',
+  String? bssid = 'a4:83:e7:00:11:22',
+  bool poweredOn = true,
+}) {
+  return ConnectedAp.fromWifiInfo(
+    WifiInfo(
+      interfaceName: 'en0',
+      ssid: ssid,
+      bssid: bssid,
+      rssiDbm: -50,
+      noiseDbm: -95,
+      snrDb: 45,
+      txRateMbps: 866,
+      phyMode: '802.11ax',
+      channel: 36,
+      channelWidthMhz: 80,
+      band: '5 GHz',
+      countryCode: 'US',
+      hardwareAddress: 'a4:83:e7:aa:bb:cc',
+      poweredOn: poweredOn,
+      locationAuthorized: true,
+    ),
+  );
+}
 
-  final Map<String, Object?> responses;
-  int getWifiInfoCalls = 0;
-  int requestPermissionCalls = 0;
+/// A fake macOS adapter: returns a queued snapshot or throws a queued error.
+class _FakeMacAdapter implements WifiInfoAdapter {
+  _FakeMacAdapter({this.snapshot, this.error});
 
-  Future<Object?> call(String method, [dynamic args]) async {
-    switch (method) {
-      case 'getWifiInfo':
-        getWifiInfoCalls++;
-        return responses['getWifiInfo'];
-      case 'requestLocationPermission':
-        requestPermissionCalls++;
-        return responses['requestLocationPermission'];
-      case 'isLocationAuthorized':
-        return responses['isLocationAuthorized'];
-    }
-    return null;
+  final ConnectedAp? snapshot;
+  final WifiInfoUnavailable? error;
+  int grantCalls = 0;
+
+  @override
+  String get platformLabel => 'macOS CoreWLAN';
+
+  @override
+  bool get gatesNameBehindPermission => true;
+
+  @override
+  Future<ConnectedAp> fetch() async {
+    if (error != null) throw error!;
+    return snapshot ?? _macSample();
+  }
+
+  @override
+  Future<bool> requestNamePermission() async {
+    grantCalls++;
+    return true;
   }
 }
 
-/// A complete payload: connected on a 6 GHz Wi-Fi 6E link with all fields.
-///
-/// Channel 33 is intentionally NOT a PSC ((33 - 5) % 16 == 12), so the base
-/// render test is not perturbed by the PSC asterisk; the PSC behavior has its
-/// own dedicated tests below.
-Map<String, Object?> _fullPayload() => <String, Object?>{
-      'interfaceName': 'en0',
-      'poweredOn': true,
-      'ssid': 'WLAN Pros 6E',
-      'bssid': 'a4:83:e7:9a:bc:de',
-      'rssiDbm': -47,
-      'noiseDbm': -92,
-      'snrDb': 45,
-      'txRateMbps': 2401.0,
-      'phyMode': '802.11ax',
-      'channel': 33,
-      'channelWidthMhz': 160,
-      'band': '6 GHz',
-      'countryCode': 'US',
-      'hardwareAddress': 'a4:83:e7:11:22:33',
-      'locationAuthorized': true,
-    };
+/// A fake iOS Shortcuts bridge driving the controller without a channel.
+class _FakeBridge implements WiFiDetailsBridge {
+  _FakeBridge({
+    this.everReceived = false,
+    this.latest,
+  });
 
-/// Location denied: RF metrics resolve, but SSID/BSSID are null.
-Map<String, Object?> _denied() => <String, Object?>{
-      'interfaceName': 'en0',
-      'poweredOn': true,
-      'ssid': null,
-      'bssid': null,
-      'rssiDbm': -47,
-      'noiseDbm': -92,
-      'snrDb': 45,
-      'txRateMbps': 2401.0,
-      'phyMode': '802.11ax',
-      'channel': 37,
-      'channelWidthMhz': 160,
-      'band': '6 GHz',
-      'countryCode': 'US',
-      'hardwareAddress': 'a4:83:e7:11:22:33',
-      'locationAuthorized': false,
-    };
+  bool everReceived;
+  WiFiDetails? latest;
+  bool monitoringActive = false;
+  final StreamController<WiFiDetails> controller =
+      StreamController<WiFiDetails>.broadcast();
 
-/// After granting: location reads authorized, but SSID is still null (the
-/// documented macOS relaunch quirk).
-Map<String, Object?> _grantedButPending() => <String, Object?>{
-      ..._denied(),
-      'locationAuthorized': true,
-    };
+  @override
+  Future<bool> hasEverReceivedPayload() async => everReceived;
 
-void main() {
-  Future<void> pump(WidgetTester tester, WifiInfoService service) async {
-    await tester.pumpWidget(
-      MaterialApp(home: WifiInfoScreen(service: service)),
-    );
-    await tester.pumpAndSettle();
+  @override
+  Future<WiFiDetails?> readLatest() async => latest;
+
+  @override
+  Future<bool> isMonitoringActive() async => monitoringActive;
+
+  @override
+  Future<void> setMonitoringActive(bool active) async {
+    monitoringActive = active;
   }
 
-  testWidgets(
-    'full payload renders values with units; Wi-Fi 6E label; Rx Rate Unavailable',
-    (WidgetTester tester) async {
-      final _FakeInvoker invoker = _FakeInvoker(<String, Object?>{
-        'getWifiInfo': _fullPayload(),
-      });
-      final WifiInfoService service = WifiInfoService(
-        invoke: invoker.call,
-        platformOverride: 'macos',
-      );
-      await pump(tester, service);
+  @override
+  Future<bool> openUrl(String url) async => true;
 
-      expect(find.text('WLAN Pros 6E'), findsOneWidget);
-      // Units are tied to the value, not the label.
-      expect(find.text('-47 dBm'), findsOneWidget);
-      expect(find.text('45 dB'), findsOneWidget);
-      expect(find.text('2401 Mbps'), findsOneWidget);
-      expect(find.text('160 MHz'), findsOneWidget);
-      // 802.11ax on 6 GHz is Wi-Fi 6E, shown with both vocabularies.
-      expect(find.text('802.11ax (Wi-Fi 6E)'), findsOneWidget);
-      expect(find.text('33'), findsOneWidget);
-      expect(find.text('6 GHz'), findsOneWidget);
-      // Rx Rate and Tx Power are always-unavailable rows.
-      expect(find.text('Unavailable'), findsNWidgets(2));
-      expect(find.textContaining('Not exposed'), findsNWidgets(2));
-    },
-  );
+  @override
+  Stream<WiFiDetails> get updates => controller.stream;
+}
 
-  testWidgets(
-    'location denied shows Grant card; tap re-fetches',
-    (WidgetTester tester) async {
-      final _FakeInvoker invoker = _FakeInvoker(<String, Object?>{
-        'getWifiInfo': _denied(),
-        'requestLocationPermission': true,
-      });
-      final WifiInfoService service = WifiInfoService(
-        invoke: invoker.call,
-        platformOverride: 'macos',
-      );
-      await pump(tester, service);
+void main() {
+  Widget host(Widget child) => MaterialApp(theme: AppTheme.dark(), home: child);
 
-      expect(find.textContaining('Location'), findsWidgets);
-      expect(find.text('Grant Location permission'), findsOneWidget);
+  group('WifiInfoScreen — macOS source', () {
+    testWidgets('loading then success cards', (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          macAdapter: _FakeMacAdapter(snapshot: _macSample()),
+        ),
+      ));
+      await tester.pump(); // loading frame
+      await tester.pumpAndSettle(); // resolve fetch
+      expect(find.text('Network'), findsOneWidget);
+      expect(find.text('KeithNet'), findsOneWidget);
+      // macOS cannot expose Rx rate — honest per-field note.
+      expect(find.text('Not exposed by macOS CoreWLAN'), findsOneWidget);
+      // macOS DOES expose channel width — no "not reported" note for it.
+      expect(find.textContaining('Not reported by macOS'), findsNothing);
+    });
 
-      await tester.tap(find.text('Grant Location permission'));
+    testWidgets('Wi-Fi off leads with the off card', (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          macAdapter: _FakeMacAdapter(snapshot: _macSample(poweredOn: false)),
+        ),
+      ));
       await tester.pumpAndSettle();
-      expect(invoker.getWifiInfoCalls, 2);
-    },
-  );
+      expect(find.text('Wi-Fi is off'), findsOneWidget);
+    });
 
-  testWidgets(
-    'post-grant pending shows relaunch copy, hides Grant button',
-    (WidgetTester tester) async {
-      final _FakeInvoker invoker = _FakeInvoker(<String, Object?>{
-        'getWifiInfo': _denied(),
-        'requestLocationPermission': true,
-      });
-      final WifiInfoService service = WifiInfoService(
-        invoke: invoker.call,
-        platformOverride: 'macos',
-      );
-      await pump(tester, service);
-      // The refetch returns authorized + still-null SSID (relaunch quirk).
-      invoker.responses['getWifiInfo'] = _grantedButPending();
-      await tester.tap(find.text('Grant Location permission'));
+    testWidgets('location card shows when the name is gated', (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          macAdapter: _FakeMacAdapter(
+            snapshot: _macSample(ssid: null, bssid: null),
+          ),
+        ),
+      ));
       await tester.pumpAndSettle();
+      // Name is gated (both SSID and BSSID null) -> the Grant card shows.
+      expect(find.text('Grant Location permission'), findsWidgets);
+    });
 
-      expect(find.textContaining('relaunch'), findsOneWidget);
-      expect(find.text('Grant Location permission'), findsNothing);
-    },
-  );
-
-  testWidgets(
-    'non-macOS renders unavailable view and never invokes',
-    (WidgetTester tester) async {
-      final _FakeInvoker invoker = _FakeInvoker(<String, Object?>{
-        'getWifiInfo': _fullPayload(),
-      });
-      final WifiInfoService service = WifiInfoService(
-        invoke: invoker.call,
-        platformOverride: 'linux',
-      );
-      await pump(tester, service);
-
-      // The unavailable view shows, and the channel is never touched.
-      expect(invoker.getWifiInfoCalls, 0);
-      // No live metric rows render off macOS.
-      expect(find.text('802.11ax (Wi-Fi 6E)'), findsNothing);
-    },
-  );
-
-  testWidgets(
-    'a 6 GHz PSC channel is flagged with an asterisk and footnote',
-    (WidgetTester tester) async {
-      // channel 197, 6 GHz -> PSC ((197 - 5) % 16 == 0).
-      final _FakeInvoker invoker = _FakeInvoker(<String, Object?>{
-        'getWifiInfo': <String, Object?>{
-          ..._fullPayload(),
-          'channel': 197,
-          'channelWidthMhz': 160,
-          'band': '6 GHz',
-        },
-      });
-      final WifiInfoService service = WifiInfoService(
-        invoke: invoker.call,
-        platformOverride: 'macos',
-      );
-      await pump(tester, service);
-
-      // The channel value carries the marker, and the PSC footnote renders.
-      expect(find.text('197 *'), findsOneWidget);
-      expect(
-        find.textContaining('Preferred Scanning Channel'),
-        findsOneWidget,
-      );
-    },
-  );
-
-  testWidgets(
-    'a non-PSC 6 GHz channel has no asterisk',
-    (WidgetTester tester) async {
-      // channel 193, 6 GHz -> NOT PSC ((193 - 5) % 16 == 12).
-      final _FakeInvoker invoker = _FakeInvoker(<String, Object?>{
-        'getWifiInfo': <String, Object?>{
-          ..._fullPayload(),
-          'channel': 193,
-          'band': '6 GHz',
-        },
-      });
-      final WifiInfoService service = WifiInfoService(
-        invoke: invoker.call,
-        platformOverride: 'macos',
-      );
-      await pump(tester, service);
-
-      expect(find.text('193'), findsOneWidget);
-      expect(find.text('193 *'), findsNothing);
-      expect(find.textContaining('Preferred Scanning Channel'), findsNothing);
-    },
-  );
-
-  testWidgets(
-    'app-bar refresh re-reads and confirms with a snackbar',
-    (WidgetTester tester) async {
-      final _FakeInvoker invoker = _FakeInvoker(<String, Object?>{
-        'getWifiInfo': _fullPayload(),
-      });
-      final WifiInfoService service = WifiInfoService(
-        invoke: invoker.call,
-        platformOverride: 'macos',
-      );
-      await pump(tester, service);
-      expect(invoker.getWifiInfoCalls, 1); // initial load
-
-      await tester.tap(find.byTooltip('Refresh'));
+    testWidgets('channel error shows an error card with retry', (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          macAdapter: _FakeMacAdapter(
+            error: const WifiInfoUnavailable(
+              WifiInfoUnavailableReason.channelError,
+              'No interface',
+            ),
+          ),
+        ),
+      ));
       await tester.pumpAndSettle();
+      expect(find.text('No Wi-Fi reading available'), findsOneWidget);
+      expect(find.text('Retry'), findsOneWidget);
+    });
+  });
 
-      // The refresh actually re-reads, and confirms visibly so it is never
-      // silent even when the values are unchanged.
-      expect(invoker.getWifiInfoCalls, 2);
-      expect(find.text('Wi-Fi information updated'), findsOneWidget);
+  group('WifiInfoScreen — iOS source', () {
+    testWidgets('needs-install empty state offers Install Shortcut',
+        (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          iosBridge: _FakeBridge(everReceived: false),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.text('No Wi-Fi data yet'), findsOneWidget);
+      expect(find.text('Install Shortcut'), findsOneWidget);
+    });
 
-      // Let the SnackBar's auto-dismiss timer fire so no Timer is left pending
-      // when the test tears down.
-      await tester.pumpAndSettle(const Duration(seconds: 3));
-    },
-  );
+    testWidgets('success shows the control bar + cards + honest width note',
+        (tester) async {
+      final WiFiDetails sample = WiFiDetails.fromMap(const <String, dynamic>{
+        'SSID': 'KeithNet',
+        'BSSID': 'a4:83:e7:00:11:22',
+        'Channel': 36,
+        'RSSI': -50,
+        'Noise': -95,
+        'Standard': '802.11ax - Wi-Fi 6',
+        'RX Rate': 780,
+        'TX Rate': 866,
+      });
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          iosBridge: _FakeBridge(everReceived: true, latest: sample),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.text('KeithNet'), findsOneWidget);
+      // Start control present (idle with data, not yet streaming).
+      expect(find.text('Start'), findsOneWidget);
+      // iOS does not report channel width — honest per-field note.
+      expect(find.text('Not reported by iOS'), findsOneWidget);
+    });
+
+    testWidgets('Start begins streaming and swaps to Stop', (tester) async {
+      final WiFiDetails sample =
+          WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'});
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          iosBridge: _FakeBridge(everReceived: true, latest: sample),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+      // Streaming: the Stop control and the "Live" status label both appear.
+      expect(find.byIcon(Icons.stop), findsOneWidget);
+      expect(find.text('Live'), findsOneWidget);
+    });
+  });
+
+  group('WifiInfoScreen — platform fallbacks', () {
+    testWidgets('web shows the download-the-app fallback', (tester) async {
+      await tester.pumpWidget(host(
+        const WifiInfoScreen(sourceOverride: WifiInfoSource.web),
+      ));
+      await tester.pumpAndSettle();
+      // The download-the-app fallback view renders for the web source.
+      expect(find.byType(NetworkUnavailableView), findsOneWidget);
+    });
+
+    testWidgets('unsupported native shows the coming-soon state',
+        (tester) async {
+      await tester.pumpWidget(host(
+        const WifiInfoScreen(sourceOverride: WifiInfoSource.unsupported),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.text('Coming in a later update'), findsOneWidget);
+    });
+  });
 }

@@ -1,5 +1,6 @@
-# Uncomment this line to define a global platform for your project
-# platform :ios, '13.0'
+# TICKET-01 (iOS Shortcuts Wi-Fi bridge): min target raised to 17.0 — the
+# App Intents framework needs iOS 16+ and the harvested RF fields need 17+.
+platform :ios, '17.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
