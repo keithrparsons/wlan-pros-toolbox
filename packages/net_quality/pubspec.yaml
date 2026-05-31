@@ -1,0 +1,18 @@
+name: net_quality
+description: >-
+  Standalone, backend-agnostic network-quality measurement layer for the
+  WLAN Pros Toolbox. Defines the QualityClient interface and QualityResult
+  model so the toolbox can run a one-shot measurement (latency, jitter, loss,
+  throughput, and a computed responsiveness/quality score) against any
+  implementation: a deterministic mock today, a real dart:io engine next.
+  Deliberately NOT named for Orb/Ookla. Each dimension is graded individually
+  (no single composite score; no Orb measurement SDK exists, see the 2026-05-31
+  feasibility brief). Pure Dart, no Flutter; the real backend uses dart:io only.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.5.0
+
+dev_dependencies:
+  test: ^1.25.0
