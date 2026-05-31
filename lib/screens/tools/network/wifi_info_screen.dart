@@ -882,9 +882,13 @@ class _MonitorControlBar extends StatelessWidget {
   }
 }
 
-/// Status block: state icon + "Live"/"Paused" + "Updated HH:MM:SS". The whole
-/// block is one live region so both Start and Stop transitions announce (WCAG
-/// 2.2 SC 4.1.3). The dot/icon is decorative; the changing text announces.
+/// Status block: state icon + "Live"/"Paused" + "Updated HH:MM:SS". The block
+/// is one live region keyed only on the "Live"/"Paused" state word, so a Start
+/// or Stop transition announces once (WCAG 2.2 SC 4.1.3). The dot/icon is
+/// decorative and excluded. The "Updated HH:MM:SS" timestamp ticks ~1×/s while
+/// streaming, so it is wrapped in [ExcludeSemantics]: were it left inside the
+/// liveRegion it would re-announce the whole status line every tick (Vera
+/// SOP-009 LOW finding). Only state CHANGES announce now, not every tick.
 class _StatusBlock extends StatelessWidget {
   const _StatusBlock({required this.controller});
 
@@ -925,11 +929,17 @@ class _StatusBlock extends StatelessWidget {
                   ),
                 ),
                 if (lastUpdated != null)
-                  Text(
-                    'Updated ${_MonitorControlBar._formatTimestamp(lastUpdated)}',
-                    style: text.bodySmall,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  // Excluded from the live region: the timestamp ticks ~1×/s
+                  // while streaming and would otherwise force VoiceOver to
+                  // re-announce the entire status line on every tick. State
+                  // changes (Live/Paused) still announce via the parent label.
+                  ExcludeSemantics(
+                    child: Text(
+                      'Updated ${_MonitorControlBar._formatTimestamp(lastUpdated)}',
+                      style: text.bodySmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
               ],
             ),
