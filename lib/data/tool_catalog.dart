@@ -294,6 +294,15 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         isLive: true,
       ),
       ToolEntry(
+        id: 'wifi-info',
+        title: 'Wi-Fi Information',
+        description:
+            'Live Wi-Fi link details: SSID, BSSID, RSSI, noise, SNR, channel, '
+            'width, band, standard (macOS)',
+        routeName: '/tools/wifi-info',
+        isLive: true,
+      ),
+      ToolEntry(
         id: 'traceroute',
         title: 'Traceroute (System)',
         description: 'Hop-by-hop path via the OS traceroute — desktop',

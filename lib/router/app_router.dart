@@ -71,6 +71,7 @@ import '../screens/tools/network/ssl_inspect_screen.dart';
 import '../screens/tools/network/traceroute_screen.dart';
 import '../screens/tools/network/wake_on_lan_screen.dart';
 import '../screens/tools/network/whois_screen.dart';
+import '../screens/tools/network/wifi_info_screen.dart';
 import '../screens/tools/calculators/hex_ascii_screen.dart';
 import '../screens/tools/command/cli_commands_screen.dart';
 import '../screens/tools/command/linux_wlan_commands_screen.dart';
@@ -144,6 +145,7 @@ class AppRouter {
   static const String icmpPing = '/tools/icmp-ping';
   static const String pingSweep = '/tools/ping-sweep';
   static const String netQuality = '/tools/net-quality';
+  static const String wifiInfo = '/tools/wifi-info';
   static const String traceroute = '/tools/traceroute';
   static const String mobileTraceroute = '/tools/mobile-traceroute';
   static const String sslInspect = '/tools/ssl-inspect';
@@ -240,6 +242,14 @@ class AppRouter {
     // assets/tool-icons/net-quality.svg is bundled, so no asset is required for
     // this row to render correctly.
     netQuality: (_) => const NetQualityScreen(),
+    // TODO(icon): bespoke 'wifi-info' tool icon owed (GL-003 §8.6); using
+    // fallback for now. The _ToolRow icon resolver (category_screen.dart) shows
+    // the category Material glyph (Icons.bolt) gracefully when no
+    // assets/tool-icons/wifi-info.svg is bundled, and the in-screen
+    // ConceptGraphicBand collapses to an empty SizedBox when no
+    // assets/tool-graphics/wifi-info.svg is bundled, so no asset is required
+    // for this row or screen to render correctly.
+    wifiInfo: (_) => const WifiInfoScreen(),
     traceroute: (_) => const TracerouteScreen(),
     mobileTraceroute: (_) => const MobileTracerouteScreen(),
     sslInspect: (_) => const SslInspectScreen(),
