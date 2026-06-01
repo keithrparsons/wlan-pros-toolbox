@@ -42,8 +42,9 @@ void main() {
     });
 
     test('tool routeNames are globally unique', () {
-      final List<String> routes =
-          _allTools().map((ToolEntry t) => t.routeName).toList();
+      final List<String> routes = _allTools()
+          .map((ToolEntry t) => t.routeName)
+          .toList();
       expect(
         routes.toSet().length,
         routes.length,
@@ -53,11 +54,12 @@ void main() {
   });
 
   group('PDF reference cards', () {
-    // id → title contract for the 10 laminated cards, split by home category.
-    // Titles are kept verbatim from the brief (brand-checked); a rename here is
-    // a deliberate breaking change, not an accident. The 6 quick-reference
-    // cards stay in Quick Reference; the 4 checklist cards moved into the
-    // Checklists category (ids/titles/routes/assets unchanged by the move).
+    // id → title contract for the 10 laminated cards. Titles are kept verbatim
+    // from the brief (brand-checked); a rename here is a deliberate breaking
+    // change, not an accident. Since the 2026-06-01 reorganization ALL 10 cards
+    // live in Quick Reference — the former Checklists category was dissolved
+    // and its 4 checklist cards merged into Quick Reference (ids/titles/routes/
+    // assets unchanged by the move).
     const Map<String, String> quickRefCards = <String, String>{
       'bubble-diagram': 'WLAN Pros Bubble Diagram',
       'troubleshooting-causes': 'Wireless LAN Troubleshooting Causes',
@@ -81,10 +83,7 @@ void main() {
 
     // Assert a set of id→title cards all live in the named category with the
     // expected title/route, and are live.
-    void expectCardsInCategory(
-      String categoryId,
-      Map<String, String> cards,
-    ) {
+    void expectCardsInCategory(String categoryId, Map<String, String> cards) {
       final ToolCategory category = kToolCategories.firstWhere(
         (ToolCategory c) => c.id == categoryId,
       );
@@ -92,39 +91,57 @@ void main() {
         for (final ToolEntry t in category.tools) t.id: t,
       };
       cards.forEach((String id, String title) {
-        expect(byId.containsKey(id), isTrue,
-            reason: 'missing PDF card "$id" in $categoryId');
+        expect(
+          byId.containsKey(id),
+          isTrue,
+          reason: 'missing PDF card "$id" in $categoryId',
+        );
         final ToolEntry t = byId[id]!;
         expect(t.title, title, reason: 'title mismatch for "$id"');
         expect(t.isLive, isTrue, reason: '"$id" must be live');
-        expect(t.routeName, '/tools/$id',
-            reason: 'route convention /tools/<id> for "$id"');
+        expect(
+          t.routeName,
+          '/tools/$id',
+          reason: 'route convention /tools/<id> for "$id"',
+        );
       });
     }
 
-    test('the 6 Quick Reference PDF cards live in quick-reference', () {
+    test('the 6 reference PDF cards live in quick-reference', () {
       expectCardsInCategory('quick-reference', quickRefCards);
     });
 
-    test('the 4 checklist PDF cards live in the checklists category', () {
-      expectCardsInCategory('checklists', checklistCards);
+    test('the 4 checklist PDF cards now live in quick-reference too', () {
+      expectCardsInCategory('quick-reference', checklistCards);
     });
 
     test('each PDF card route resolves to a builder', () {
       for (final String id in allCards.keys) {
-        expect(AppRouter.routes.containsKey('/tools/$id'), isTrue,
-            reason: 'no registered route for PDF card "$id"');
+        expect(
+          AppRouter.routes.containsKey('/tools/$id'),
+          isTrue,
+          reason: 'no registered route for PDF card "$id"',
+        );
       }
     });
 
-    test('mcs-index-card does not collide with the existing mcs-index table',
-        () {
-      final List<String> ids =
-          _allTools().map((ToolEntry t) => t.id).toList();
-      expect(ids.contains('mcs-index'), isTrue,
-          reason: 'existing mcs-index table should still be present');
-      expect(ids.contains('mcs-index-card'), isTrue,
-          reason: 'new mcs-index-card should be present');
-    });
+    test(
+      'mcs-index-card does not collide with the existing mcs-index table',
+      () {
+        final List<String> ids = _allTools()
+            .map((ToolEntry t) => t.id)
+            .toList();
+        expect(
+          ids.contains('mcs-index'),
+          isTrue,
+          reason: 'existing mcs-index table should still be present',
+        );
+        expect(
+          ids.contains('mcs-index-card'),
+          isTrue,
+          reason: 'new mcs-index-card should be present',
+        );
+      },
+    );
   });
 }

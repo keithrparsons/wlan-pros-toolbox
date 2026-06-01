@@ -11,38 +11,39 @@ import '../data/tool_assets.dart';
 import '../data/tool_catalog.dart';
 import '../theme/app_tokens.dart';
 
-/// The id of the one category with a hand-pinned tool order.
-const String _networkingCategoryId = 'networking';
+/// The id of the one category with a hand-pinned tool order. Since the
+/// 2026-06-01 reorganization the three pinned diagnostics live in Test Network
+/// (they moved out of Networking Tools, which is now plain alphabetical).
+const String _pinnedCategoryId = 'test-network';
 
-/// Tool ids pinned to the top of Networking Tools, in this exact order
-/// (Keith's ordering): Wi-Fi vs Internet, then Wi-Fi Information, then
-/// Network Quality.
-const List<String> kNetworkingPinnedToolIds = <String>[
+/// Tool ids pinned to the top of Test Network, in this exact order (Keith's
+/// ordering): Wi-Fi vs Internet, then Wi-Fi Information, then Network Quality.
+const List<String> kTestNetworkPinnedToolIds = <String>[
   'wifi-vs-internet',
   'wifi-info',
   'net-quality',
 ];
 
 /// Display order for a category's tools: alphabetical by title, EXCEPT the
-/// Networking Tools category, which pins [kNetworkingPinnedToolIds] to the top
+/// Test Network category, which pins [kTestNetworkPinnedToolIds] to the top
 /// (in that order) and sorts the remainder alphabetically. The catalog stays
 /// the data source-of-truth; this is purely presentation order.
 List<ToolEntry> orderedCategoryTools(ToolCategory category) {
   int byTitle(ToolEntry a, ToolEntry b) =>
       a.title.toLowerCase().compareTo(b.title.toLowerCase());
 
-  if (category.id != _networkingCategoryId) {
+  if (category.id != _pinnedCategoryId) {
     return <ToolEntry>[...category.tools]..sort(byTitle);
   }
 
   final List<ToolEntry> pinned = <ToolEntry>[];
-  for (final String id in kNetworkingPinnedToolIds) {
+  for (final String id in kTestNetworkPinnedToolIds) {
     final int i = category.tools.indexWhere((ToolEntry t) => t.id == id);
     if (i != -1) pinned.add(category.tools[i]);
   }
   final List<ToolEntry> rest =
       category.tools
-          .where((ToolEntry t) => !kNetworkingPinnedToolIds.contains(t.id))
+          .where((ToolEntry t) => !kTestNetworkPinnedToolIds.contains(t.id))
           .toList()
         ..sort(byTitle);
   return <ToolEntry>[...pinned, ...rest];
@@ -59,10 +60,7 @@ class CategoryScreen extends StatelessWidget {
     final List<ToolEntry> tools = orderedCategoryTools(category);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(category.title),
-        toolbarHeight: 64,
-      ),
+      appBar: AppBar(title: Text(category.title), toolbarHeight: 64),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -188,22 +186,18 @@ class _ToolRowState extends State<_ToolRow> {
                           size: 20,
                         )
                       : ToolAssets.hasIcon(widget.tool.id)
-                          ? SvgPicture.asset(
-                              ToolAssets.iconPath(widget.tool.id),
-                              width: 20,
-                              height: 20,
-                              colorFilter: const ColorFilter.mode(
-                                AppColors.primary,
-                                BlendMode.srcIn,
-                              ),
-                              excludeFromSemantics: true,
-                              placeholderBuilder: (_) => const SizedBox.shrink(),
-                            )
-                          : Icon(
-                              Icons.bolt,
-                              color: AppColors.primary,
-                              size: 20,
-                            ),
+                      ? SvgPicture.asset(
+                          ToolAssets.iconPath(widget.tool.id),
+                          width: 20,
+                          height: 20,
+                          colorFilter: const ColorFilter.mode(
+                            AppColors.primary,
+                            BlendMode.srcIn,
+                          ),
+                          excludeFromSemantics: true,
+                          placeholderBuilder: (_) => const SizedBox.shrink(),
+                        )
+                      : Icon(Icons.bolt, color: AppColors.primary, size: 20),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
