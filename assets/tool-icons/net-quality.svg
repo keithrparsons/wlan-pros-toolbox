@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Network-quality grading: four ascending signal bars (measured dimensions, low->high) -->
+    <line x1="4" y1="20" x2="4" y2="17"/>
+    <line x1="9.333" y1="20" x2="9.333" y2="14"/>
+    <line x1="14.667" y1="20" x2="14.667" y2="11"/>
+    <line x1="20" y1="20" x2="20" y2="8"/>
+    <!-- Live pulse beat cresting over the bars: one responsiveness blip in its own clear lane -->
+    <path d="M3 6 H7 L8.5 3 L10.5 9 L12 6 H21"/>
+  </g>
+</svg>
