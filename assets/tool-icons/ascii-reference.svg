@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- ASCII/Hex/Binary reference: a character cell on the left mapping to a binary bit
+         pattern on the right. Silhouette = a tall framed cell + a maps-to bridge + a stack
+         of short "bit" bars. The bar-stack survives 20px far better than dot accents.
+         Distinct from neighbors: NOT a 2x2/3x3 grid frame (mcs-index / channel-map), NOT
+         open chevrons around a divider (hex-ascii), NOT a dotted list (port-reference),
+         NOT ruled lines + a tag box (reason-codes). The cell-plus-bitstack is unique. -->
+    <!-- character cell (the "char") -->
+    <rect x="3" y="5" width="8" height="14" rx="2"/>
+    <!-- glyph inside the cell -->
+    <line x1="7" y1="9" x2="7" y2="15"/>
+    <!-- maps-to bridge -->
+    <line x1="13" y1="12" x2="15" y2="12"/>
+    <!-- binary bit pattern: three short bars (the encoding) -->
+    <line x1="17.5" y1="8" x2="22" y2="8"/>
+    <line x1="17.5" y1="12" x2="20.5" y2="12"/>
+    <line x1="17.5" y1="16" x2="22" y2="16"/>
+  </g>
+</svg>

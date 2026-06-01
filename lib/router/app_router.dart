@@ -77,6 +77,8 @@ import '../screens/tools/command/cli_commands_screen.dart';
 import '../screens/tools/command/linux_wlan_commands_screen.dart';
 import '../screens/tools/command/wireshark_filters_screen.dart';
 import '../screens/tools/reference/osi_model_screen.dart';
+import '../screens/tools/reference/ascii_reference_screen.dart';
+import '../screens/tools/reference/emoji_reference_screen.dart';
 import '../screens/tools/checklists/checklist_screen.dart';
 import '../data/checklists.dart';
 
@@ -168,6 +170,8 @@ class AppRouter {
   // platforms incl. web).
   static const String portReference = '/tools/port-reference';
   static const String osiModel = '/tools/osi-model';
+  static const String asciiReference = '/tools/ascii-reference';
+  static const String emojiReference = '/tools/emoji-reference';
 
   // Calculators — Hex / ASCII converter + printable-ASCII table (pure math +
   // const-derived table, all platforms incl. web).
@@ -263,6 +267,8 @@ class AppRouter {
     networkDiscovery: (_) => const NetworkDiscoveryScreen(),
     portReference: (_) => const PortReferenceScreen(),
     osiModel: (_) => const OsiModelScreen(),
+    asciiReference: (_) => const AsciiReferenceScreen(),
+    emojiReference: (_) => const EmojiReferenceScreen(),
     hexAscii: (_) => const HexAsciiScreen(),
     cliCommands: (_) => const CliCommandsScreen(),
     linuxWlanCommands: (_) => const LinuxWlanCommandsScreen(),

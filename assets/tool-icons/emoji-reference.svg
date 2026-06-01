@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Top 30 Emoji reference: a classic round smiley face. Full-bleed face circle (touches
+         the 20px live area), two solid eye dots, one upturned smile arc. Universal "emoji"
+         read. Distinct from every existing icon: no other icon is a large bare circle with
+         two interior dots + a mouth curve. dns-lookup has a magnifier handle + globe lines;
+         capacity-planner's central ring is small with radiating spokes; eirp/wifi-info are
+         open arcs fanning up, not a closed face. -->
+    <!-- face outline -->
+    <circle cx="12" cy="12" r="9"/>
+    <!-- left eye -->
+    <circle cx="9" cy="9.5" r="1.1" fill="currentColor" stroke="none"/>
+    <!-- right eye -->
+    <circle cx="15" cy="9.5" r="1.1" fill="currentColor" stroke="none"/>
+    <!-- smile -->
+    <path d="M8 14 A4.2 4.2 0 0 0 16 14"/>
+  </g>
+</svg>
