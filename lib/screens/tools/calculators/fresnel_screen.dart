@@ -96,8 +96,11 @@ class FresnelScreen extends StatefulWidget {
 
     // Midpoint is always shown: d1 = d2 = D/2.
     final double half = totalMeters / 2;
-    final double rMid =
-        firstZoneRadius(freqGHz: freqGHz, d1Meters: half, d2Meters: half);
+    final double rMid = firstZoneRadius(
+      freqGHz: freqGHz,
+      d1Meters: half,
+      d2Meters: half,
+    );
 
     double? rAt;
     double? clearAt;
@@ -194,10 +197,7 @@ class _FresnelScreenState extends State<FresnelScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Fresnel Zone'),
-        toolbarHeight: 64,
-      ),
+      appBar: AppBar(title: const Text('Fresnel Zone'), toolbarHeight: 64),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -365,31 +365,45 @@ class _FresnelScreenState extends State<FresnelScreen> {
     required String label,
     required double? meters,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: text.labelLarge?.copyWith(color: AppColors.textPrimary),
+    // One SR node per row: "First zone radius: 4.5 m, 14.8 ft" (or "not
+    // calculated"), instead of label/value/unit fragments (Vera finding #6).
+    final bool blank = meters == null || !meters.isFinite;
+    return Semantics(
+      label: label,
+      value: blank
+          ? 'not calculated'
+          : '${_fmtMeters(meters)} m, ${_fmtFeet(meters)} ft',
+      excludeSemantics: true,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: text.labelLarge?.copyWith(color: AppColors.textPrimary),
+              ),
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '${_fmtMeters(meters)} m',
-                style: mono.outputMedium.copyWith(color: AppColors.textPrimary),
-              ),
-              Text(
-                '${_fmtFeet(meters)} ft',
-                style: mono.inlineCode.copyWith(color: AppColors.textTertiary),
-              ),
-            ],
-          ),
-        ],
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '${_fmtMeters(meters)} m',
+                  style: mono.outputMedium.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                Text(
+                  '${_fmtFeet(meters)} ft',
+                  style: mono.inlineCode.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -461,7 +475,7 @@ class _FresnelScreenState extends State<FresnelScreen> {
           const SizedBox(height: AppSpacing.xs),
           ...refs.map((row) {
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -540,11 +554,9 @@ class _InputField extends StatelessWidget {
         textInputAction: TextInputAction.done,
         autocorrect: false,
         enableSuggestions: false,
-        style: monoStyle.copyWith(fontSize: 20),
+        style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
         cursorColor: AppColors.primary,
-        decoration: InputDecoration(
-          hintText: hintText,
-        ),
+        decoration: InputDecoration(hintText: hintText),
       ),
     );
   }

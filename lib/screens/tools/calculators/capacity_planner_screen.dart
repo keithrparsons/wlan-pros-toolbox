@@ -182,10 +182,7 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Capacity Planner'),
-        toolbarHeight: 64,
-      ),
+      appBar: AppBar(title: const Text('Capacity Planner'), toolbarHeight: 64),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -214,7 +211,9 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
                       // the input card. Self-collapses when no graphic is
                       // bundled, so the 24px gap below it disappears too.
                       ConceptGraphicBand(
-                          toolId: 'capacity-planner', isDesktop: isDesktop),
+                        toolId: 'capacity-planner',
+                        isDesktop: isDesktop,
+                      ),
                       if (ToolAssets.hasGraphic('capacity-planner'))
                         const SizedBox(height: AppSpacing.md),
                       _inputCard(text, mono),
@@ -325,7 +324,7 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
         textInputAction: TextInputAction.next,
         autocorrect: false,
         enableSuggestions: false,
-        style: monoStyle.copyWith(fontSize: 20),
+        style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
         cursorColor: AppColors.primary,
         decoration: InputDecoration(hintText: hintText),
       ),
@@ -354,26 +353,33 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              SelectableText(
-                r == null ? '—' : r.recommended.toString(),
-                style: mono.outputXL.copyWith(
-                  color: r == null
-                      ? AppColors.textTertiary
-                      : AppColors.primary,
+          // One SR node for the headline: "Recommended access points: 6 APs"
+          // (or "not calculated"), instead of value/unit fragments (finding #6).
+          Semantics(
+            label: 'Recommended access points',
+            value: r == null ? 'not calculated' : '${r.recommended} APs',
+            excludeSemantics: true,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                SelectableText(
+                  r == null ? '—' : r.recommended.toString(),
+                  style: mono.outputXL.copyWith(
+                    color: r == null
+                        ? AppColors.textTertiary
+                        : AppColors.primary,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'APs',
-                style: text.labelLarge?.copyWith(
-                  color: AppColors.textSecondary,
+                const SizedBox(width: AppSpacing.xxs),
+                Text(
+                  'APs',
+                  style: text.labelLarge?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: AppSpacing.md),
           // Supporting outputs.
@@ -395,9 +401,7 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
           _outputRow(
             mono,
             'APs by density',
-            r == null || r.apsByDensity <= 0
-                ? '—'
-                : r.apsByDensity.toString(),
+            r == null || r.apsByDensity <= 0 ? '—' : r.apsByDensity.toString(),
           ),
         ],
       ),
@@ -405,30 +409,35 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
   }
 
   Widget _outputRow(AppMonoText mono, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: mono.inlineCode.copyWith(
-                color: AppColors.textSecondary,
+    // One SR node per supporting row: "Concurrent users: 120" (or "not
+    // calculated"), instead of label and value fragments (Vera finding #6).
+    return Semantics(
+      label: label,
+      value: value == '—' ? 'not calculated' : value,
+      excludeSemantics: true,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: mono.inlineCode.copyWith(color: AppColors.textSecondary),
               ),
             ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          SelectableText(
-            value,
-            style: mono.inlineCode.copyWith(
-              color: value == '—'
-                  ? AppColors.textTertiary
-                  : AppColors.textPrimary,
-              fontWeight: FontWeight.w500,
+            const SizedBox(width: AppSpacing.sm),
+            SelectableText(
+              value,
+              style: mono.inlineCode.copyWith(
+                color: value == '—'
+                    ? AppColors.textTertiary
+                    : AppColors.textPrimary,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -470,9 +479,7 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
           Text(
             'Capacity-first model. AP counts round up. Max clients per AP is '
             'optional and only adds the density floor when set.',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textTertiary,
-            ),
+            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
           ),
         ],
       ),
@@ -509,7 +516,7 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
           const SizedBox(height: AppSpacing.xs),
           ...refs.map((row) {
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
