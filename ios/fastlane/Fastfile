@@ -109,4 +109,102 @@ platform :ios do
     UI.message("Add yourself once: App Store Connect -> TestFlight -> Internal Testing -> " \
                "#{INTERNAL_GROUP} -> + -> check your name. Future builds auto-distribute.")
   end
+
+  EXTERNAL_GROUP = "WLAN Field Testers".freeze
+
+  desc "Create the invite-only EXTERNAL TestFlight group (email invites, no public link)"
+  lane :external_group do
+    asc_api_key
+    app = Spaceship::ConnectAPI::App.find(APP_ID)
+    UI.user_error!("App record not found") unless app
+
+    group = app.get_beta_groups.find { |g| g.name == EXTERNAL_GROUP }
+    if group
+      UI.success("External group '#{EXTERNAL_GROUP}' already exists (internal=#{group.is_internal_group})")
+    else
+      # External groups DO allow the public-link attributes; keep the link OFF so
+      # the group is invite-by-email only.
+      group = app.create_beta_group(
+        group_name: EXTERNAL_GROUP,
+        is_internal_group: false,
+        public_link_enabled: false
+      )
+      UI.success("Created invite-only external group '#{EXTERNAL_GROUP}'")
+    end
+    UI.message("Invite people with: INVITE_EMAILS='a@x.com,b@y.com' fastlane invite_external")
+    UI.message("External testers can install only after the build passes Beta App Review.")
+  end
+
+  desc "Invite external testers by email. Pass INVITE_EMAILS='a@x.com,b@y.com'"
+  lane :invite_external do
+    asc_api_key
+    app = Spaceship::ConnectAPI::App.find(APP_ID)
+    group = app.get_beta_groups.find { |g| g.name == EXTERNAL_GROUP }
+    UI.user_error!("Run external_group first") unless group
+
+    # Each entry is "email" or "email|First|Last" (names recommended for invites).
+    entries = (ENV["INVITE_EMAILS"] || "").split(",").map(&:strip).reject(&:empty?)
+    UI.user_error!("No emails. Use INVITE_EMAILS='a@x.com|First|Last,...' fastlane invite_external") if entries.empty?
+
+    entries.each do |entry|
+      email, first, last = entry.split("|").map(&:strip)
+      first = (first && !first.empty?) ? first : email.split("@").first
+      last  = (last && !last.empty?) ? last : "Tester"
+      begin
+        Spaceship::ConnectAPI.post_beta_tester_assignment(
+          beta_group_ids: [group.id],
+          attributes: { email: email, firstName: first, lastName: last }
+        )
+        UI.success("Invited #{first} #{last} <#{email}> to '#{EXTERNAL_GROUP}'")
+      rescue => e
+        e.message =~ /already|exist/i ? UI.important("#{email} already invited") : UI.error("#{email}: #{e.message}")
+      end
+    end
+  end
+
+  desc "Distribute the latest build to the external group and submit for Beta App Review"
+  # fastlane's pilot distribute_only has a known bug setting the Beta App
+  # Description, so set Test Information + submit directly via the ConnectAPI.
+  lane :submit_external_review do
+    asc_api_key
+    client = Spaceship::ConnectAPI
+    app = client::App.find(APP_ID)
+    group = app.get_beta_groups.find { |g| g.name == EXTERNAL_GROUP }
+    UI.user_error!("Run external_group first") unless group
+    latest = app.get_builds(limit: 200).max_by { |b| b.version.to_i }
+    UI.user_error!("No build found to submit") unless latest
+
+    desc_text = "WLAN Pros Toolbox: Wi-Fi and network diagnostic tools, RF calculators, " \
+                "and reference tables for wireless professionals. Field testing the live " \
+                "network diagnostics (signal, network quality, ping, traceroute)."
+
+    # Test Information — beta app localization (description + feedback email).
+    locs = app.get_beta_app_localizations
+    loc = locs.find { |l| l.locale == "en-US" } || locs.first
+    if loc
+      client.patch_beta_app_localizations(localization_id: loc.id,
+        attributes: { description: desc_text, feedbackEmail: "keith@wlanpros.com" })
+    else
+      client.post_beta_app_localizations(app_id: app.id,
+        attributes: { locale: "en-US", description: desc_text, feedbackEmail: "keith@wlanpros.com" })
+    end
+    UI.success("Set beta Test Information")
+
+    # Review contact (no demo account — the app has no login).
+    client.patch_beta_app_review_detail(app_id: app.id, attributes: {
+      contactFirstName: "Keith", contactLastName: "Parsons",
+      contactEmail: "keith@wlanpros.com", contactPhone: "801-318-5522",
+      demoAccountRequired: false
+    })
+    UI.success("Set Beta App Review contact")
+
+    # Attach the build to the external group, then submit for review.
+    latest.add_beta_groups(beta_groups: [group]) rescue nil
+    begin
+      client.post_beta_app_review_submissions(build_id: latest.id)
+      UI.success("Submitted build #{latest.version} for Beta App Review")
+    rescue => e
+      e.message =~ /already|exist|state/i ? UI.important("Build #{latest.version} already in review: #{e.message}") : raise
+    end
+  end
 end
