@@ -239,11 +239,11 @@ class AppRouter {
     ping: (_) => const PingScreen(),
     icmpPing: (_) => const IcmpPingScreen(),
     pingSweep: (_) => const PingSweepScreen(),
-    // TODO(icon): bespoke 'net-quality' tool icon owed (GL-003 §8.6); using
-    // fallback for now. The _ToolRow icon resolver (category_screen.dart) shows
-    // the category Material glyph (Icons.bolt) gracefully when no
-    // assets/tool-icons/net-quality.svg is bundled, so no asset is required for
-    // this row to render correctly.
+    // The bespoke 'net-quality' tool icon now ships at
+    // assets/tool-icons/net-quality.svg (ascending signal bars with a live
+    // pulse beat cresting over them — GL-003 §8.6 / §8.6.1). The _ToolRow icon
+    // resolver (category_screen.dart) renders it via ToolAssets.hasIcon, so the
+    // Icons.bolt fallback no longer triggers for this row.
     netQuality: (_) => const NetQualityScreen(),
     // TICKET-04: the consolidated cross-platform Wi-Fi Information tool
     // (macOS CoreWLAN + iOS companion-Shortcut behind one screen + normalized

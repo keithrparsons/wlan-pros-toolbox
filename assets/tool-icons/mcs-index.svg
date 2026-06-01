@@ -1,7 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
   <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="4" y="4" width="16" height="16" rx="2"/>
-    <line x1="4" y1="12" x2="20" y2="12"/>
-    <line x1="12" y1="4" x2="12" y2="20"/>
+    <!-- MCS rate ladder: one connected staircase climbing low->high (modulation/coding rate steps). -->
+    <!-- Continuous stepped profile = distinct gross silhouette vs channel-map's grid and vs separated bars. -->
+    <path d="M3 20 H7 V15 H11 V10 H15 V5 H21"/>
+    <!-- ascending direction marker at the top of the climb -->
+    <path d="M18 8 L21 5 L21 8" />
   </g>
 </svg>
