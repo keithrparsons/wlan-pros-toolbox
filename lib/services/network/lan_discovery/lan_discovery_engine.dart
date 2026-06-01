@@ -1,9 +1,14 @@
-// SPIKE-HSD-01 — LAN Discovery engine (THROWAWAY spike).
+// Network Discovery engine (TICKET-HSD-02 — productized from SPIKE-HSD-01).
 //
 // Orchestrates the four scan passes into a single discovery run, mirroring the
 // net_quality engine shape: a client that emits a Stream<DiscoveryProgress> and
 // finishes with a result, depending only on injectable seams so the whole thing
-// is testable with no real network.
+// is testable with no real network. The validated spike engine is preserved
+// verbatim — 3-state TCP connect-scan, in-house NetServiceBrowser mDNS, the
+// sandbox-safe sysctl ARP read, reverse-DNS PTR, and the device-type heuristic.
+// The only productization change here is W2: MAC→vendor now resolves through
+// the full bundled IEEE OUI registry (MacOuiService) via an injected resolver,
+// replacing the throwaway inline OuiVendor table.
 //
 // PASSES (in order):
 //  1. Subnet seed   — derive the local /24 host list (network_info_plus).
@@ -30,7 +35,6 @@ import 'device_type.dart';
 import 'lan_host.dart';
 import 'mdns_browse.dart';
 import 'multicast_lock.dart';
-import 'oui_vendor.dart';
 import 'subnet_seed.dart';
 
 /// Phases a discovery run passes through, in order.
@@ -97,6 +101,17 @@ class DiscoveryResult {
 /// Reverse-DNS seam: IP → hostname or null. Injectable for tests.
 typedef ReverseDnsResolver = Future<String?> Function(String ip);
 
+/// MAC → vendor seam (W2). Production wires this to the full bundled IEEE OUI
+/// registry via [MacOuiService.lookup]; tests inject a fake. Returns:
+///   * the registered vendor name when the OUI matches an IEEE block,
+///   * `null` when the MAC is locally-administered / randomized (no IEEE vendor
+///     exists — never fabricate one) or multicast,
+///   * a raw-OUI fallback string (e.g. `00:11:22`) when the address is a real
+///     globally-administered MAC whose prefix is not in the bundled snapshot.
+/// The engine stores whatever this returns on [LanHost.vendor] verbatim — the
+/// honesty contract (GL-005) lives in the resolver, not the engine.
+typedef VendorResolver = String? Function(String mac);
+
 /// The connect-scan is the long pole, so it owns a wide band of the overall
 /// progress bar. Streamed probe counts map linearly from [_kScanStart] (right
 /// after seeding) to [_kScanEnd] (scan complete, before reverse DNS).
@@ -111,6 +126,7 @@ class LanDiscoveryEngine {
     MulticastLock? multicastLock,
     ReverseDnsResolver? reverseDns,
     ArpReader? arpReader,
+    VendorResolver? vendorResolver,
     List<int>? ports,
     this._connectTimeout = const Duration(milliseconds: 400),
     this._concurrency = 64,
@@ -125,6 +141,7 @@ class LanDiscoveryEngine {
        _multicastLock = multicastLock ?? platformMulticastLock(),
        _reverseDns = reverseDns ?? _defaultReverseDns,
        _arpReader = arpReader ?? platformArpReader(),
+       _vendorResolver = vendorResolver ?? _noVendor,
        _ports = ports ?? CuratedPorts.all,
        _connectScanRunner = scanRunner, // ignore: prefer_initializing_formals
        _connector = connector; // ignore: prefer_initializing_formals
@@ -134,6 +151,12 @@ class LanDiscoveryEngine {
   final MulticastLock _multicastLock;
   final ReverseDnsResolver _reverseDns;
   final ArpReader _arpReader;
+
+  /// MAC → vendor resolver (W2). Defaults to [_noVendor] (returns null) so an
+  /// engine built without the bundled registry never fabricates a vendor; app
+  /// code injects a [MacOuiService]-backed resolver.
+  final VendorResolver _vendorResolver;
+
   final List<int> _ports;
   final Duration _connectTimeout;
   final int _concurrency;
@@ -301,7 +324,11 @@ class LanDiscoveryEngine {
         final String? mac = macByIp[h.ip];
         if (mac != null) {
           h.mac = mac;
-          h.vendor = OuiVendor.lookup(mac);
+          // W2 — resolve through the full bundled IEEE registry (or the
+          // injected fake in tests). The resolver owns the honesty contract:
+          // null for randomized/local MACs, a raw-OUI fallback for unlisted
+          // globally-administered prefixes, the named vendor otherwise.
+          h.vendor = _vendorResolver(mac);
         }
       }
     }
@@ -463,6 +490,11 @@ class LanDiscoveryEngine {
 
     return controller.stream;
   }
+
+  /// Default vendor resolver: no registry wired → no vendor (never fabricated).
+  /// App code injects a [MacOuiService]-backed resolver; the default keeps an
+  /// un-wired engine honest rather than inventing a name.
+  static String? _noVendor(String mac) => null;
 
   /// Default reverse-DNS: InternetAddress.reverse(), null on any failure.
   static Future<String?> _defaultReverseDns(String ip) async {

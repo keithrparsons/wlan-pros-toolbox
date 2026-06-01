@@ -1,13 +1,12 @@
-// SPIKE-HSD-01 — LAN Discovery prototype models.
+// Network Discovery host model (TICKET-HSD-02 — productized from SPIKE-HSD-01).
 //
-// THROWAWAY: this whole lan_discovery/ tree is a time-boxed spike to de-risk a
-// cross-platform LAN scanner (see Deliverables/2026-05-31-lan-scanner-
-// feasibility/SPIKE-lan-scanner.md). It is deleted when the real LAN Discovery
-// build ticket (TICKET-HSD-02) starts. No GL-003 styling, no Vera gate.
+// The validated host record from the spike, kept as the production model. Pure
+// data — no dart:io, no Flutter — so it crosses the isolate boundary as a plain
+// field bag and stays trivially unit-testable.
 //
-// Pure data + a pure heuristic. No dart:io, no Flutter — so the heuristic and
-// the models are trivially unit-testable, and the models can cross the isolate
-// boundary as plain field bags.
+// The IPv4 `ip` is the stable host key (locked decision 2026-05-31). W4 will
+// attach resolved IPv6 addresses to this same record and give IPv6-only hosts
+// their own row; the IPv4 keying here does not block that and is unchanged.
 
 import 'device_type.dart';
 
@@ -61,8 +60,9 @@ class LanHost {
   /// Vendor name resolved from [mac]'s OUI, or null when there is no MAC.
   String? vendor;
 
-  /// A flat, log-friendly dump for the throwaway debug list. Not a UI string
-  /// contract — this screen is deleted with the spike.
+  /// A flat, log-friendly dump of the host's enrichment fields. Diagnostic
+  /// only — not a UI string contract (the screen renders each field directly)
+  /// and not the export shape (CSV/JSON export is W5).
   Map<String, Object?> toDebugMap() => <String, Object?>{
         'ip': ip,
         'hostname': hostname,

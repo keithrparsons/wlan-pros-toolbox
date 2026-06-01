@@ -1,4 +1,4 @@
-// SPIKE-HSD-01 — ARP-cache reader seam (THROWAWAY spike).
+// ARP-cache reader seam — Network Discovery (TICKET-HSD-02, from SPIKE-HSD-01).
 //
 // Gate 2 (the pivot): can a SANDBOXED macOS build read IP → MAC for LAN hosts
 // WITHOUT spawning a subprocess? This is the Dart side of that read. The actual

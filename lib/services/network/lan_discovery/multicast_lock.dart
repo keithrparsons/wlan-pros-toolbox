@@ -1,4 +1,4 @@
-// SPIKE-HSD-01 — Wi-Fi multicast lock seam (THROWAWAY spike).
+// Wi-Fi multicast lock seam — Network Discovery (TICKET-HSD-02).
 //
 // On Android the mDNS browse needs a held multicast lock or inbound multicast
 // frames are dropped (see MainActivity.kt + the manifest's

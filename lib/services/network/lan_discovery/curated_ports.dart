@@ -1,4 +1,4 @@
-// SPIKE-HSD-01 — curated TCP port set for the connect-scan (THROWAWAY spike).
+// Curated TCP port set for the connect-scan — Network Discovery (TICKET-HSD-02).
 //
 // The connect-scan is the SPINE (brief anti-pattern #1: do NOT build on an ICMP
 // ping sweep — raw ICMP sockets are privileged on both mobile OSes). Each port

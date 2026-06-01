@@ -138,6 +138,16 @@ class NetworkSupport {
   /// flag only excludes web, where no part of it can run.
   static bool get tracerouteSupported => !kIsWeb;
 
+  /// Network Discovery (LAN host + service scan) support. The *screen* is
+  /// reachable off-web on every native platform so the catalog can route to it.
+  /// The scan uses `dart:io` TCP connect probes (liveness), the in-house mDNS
+  /// EventChannel (enrichment), and — desktop-only — a sandbox-safe sysctl ARP
+  /// read for MAC/vendor; none of those exist in a browser, so the gate is the
+  /// same `!kIsWeb` as the other socket tools. The per-platform MAC/vendor
+  /// ceiling (desktop reads it, iOS cannot) is surfaced honestly inside the
+  /// screen, not gated here.
+  static bool get networkDiscoverySupported => !kIsWeb;
+
   /// The reason active tools are unavailable, or null when they are available.
   static NetworkUnavailableReason? get unavailableReason =>
       kIsWeb ? NetworkUnavailableReason.web : null;

@@ -239,4 +239,29 @@ class MacOuiService {
       registry: registry,
     );
   }
+
+  /// Discovery-friendly MAC → vendor label (TICKET-HSD-02 W2). Wraps [lookup]
+  /// to produce a single nullable display string for the Network Discovery host
+  /// list, applying the spike's honesty contract over the FULL bundled registry:
+  ///
+  ///   * invalid MAC          → `null` (no row to show);
+  ///   * locally-administered → `null` (the screen renders "Randomized (local)"
+  ///     itself so the no-vendor reason is explicit, never a fabricated name);
+  ///   * multicast            → `null`;
+  ///   * registry match       → the registered vendor name;
+  ///   * unlisted global MAC  → the raw 24-bit OUI (`B8:27:EB`) so the result is
+  ///     always interpretable, never invented and never silently dropped.
+  ///
+  /// This is the resolver app code injects into [LanDiscoveryEngine]; it never
+  /// throws.
+  String? vendorLabelFor(String mac) {
+    final OuiResult r = lookup(mac);
+    if (!r.isValid || r.isLocal || r.isMulticast) return null;
+    if (r.matched) return r.vendor;
+    // Globally-administered but not in the bundled snapshot → raw OUI fallback,
+    // colon-formatted (e.g. `B8:27:EB`), never null and never invented.
+    final String? oui = r.oui;
+    if (oui == null || oui.length < 6) return null;
+    return '${oui.substring(0, 2)}:${oui.substring(2, 4)}:${oui.substring(4, 6)}';
+  }
 }
