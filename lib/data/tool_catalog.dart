@@ -294,6 +294,15 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         isLive: true,
       ),
       ToolEntry(
+        id: 'wifi-vs-internet',
+        title: 'Wi-Fi vs Internet',
+        description:
+            'Is the slowdown your Wi-Fi link or the internet upstream? '
+            'Compares link rate to measured throughput',
+        routeName: '/tools/wifi-vs-internet',
+        isLive: true,
+      ),
+      ToolEntry(
         id: 'net-quality',
         title: 'Network Quality',
         description:
