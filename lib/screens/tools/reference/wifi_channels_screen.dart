@@ -23,6 +23,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../concept_graphic_band.dart';
+import 'reference_row_semantics.dart';
 
 /// Which band's table is shown. 2.4 / 5 / 6 GHz — three short options, so a
 /// segmented toggle, not an AppSelect (GL-003 §8.14).
@@ -379,13 +380,17 @@ class _HeaderCell extends StatelessWidget {
   }
 }
 
-/// A small lime "Non-overlap" / "PSC" affordance chip, or a danger-toned UNII
-/// regulatory chip. Always paired with its row text, never color-only (§8.13).
+/// A small affordance chip — tinted fill + bordered, label always present so it
+/// is never color-only (§8.13). When `neutral` is set the chip renders on the
+/// §8.1/§8.2 neutral stack (surface2 fill + decorative border + tertiary text)
+/// instead of tinting a status hue — used for category chips that carry no
+/// verdict (§8.15 case-3, e.g. the EU/JP regulatory-domain chip).
 class _Chip extends StatelessWidget {
-  const _Chip(this.label, {required this.color});
+  const _Chip(this.label, {required this.color, this.neutral = false});
 
   final String label;
   final Color color;
+  final bool neutral;
 
   @override
   Widget build(BuildContext context) {
@@ -393,14 +398,17 @@ class _Chip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
+        color: neutral ? AppColors.surface2 : color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: color, width: 1),
+        border: Border.all(
+          color: neutral ? AppColors.border : color,
+          width: 1,
+        ),
       ),
       child: Text(
         label,
         style: text.labelSmall?.copyWith(
-          color: color,
+          color: neutral ? AppColors.textTertiary : color,
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -431,7 +439,15 @@ class _Table24 extends StatelessWidget {
           'width. Only 1, 6, 11 are non-overlapping in the US. Ch 12–13 are EU, '
           'ch 14 is JP only.',
       rows: WifiChannelsScreen.channels24.map((c) {
-        return Padding(
+        return ReferenceRowSemantics(
+          label: rowLabel('Channel ${c.channel}', <String?>[
+            'center ${c.centerGhz.toStringAsFixed(3)} gigahertz',
+            'range ${c.rangeMhzLow} to ${c.rangeMhzHigh} megahertz',
+            c.nonOverlap
+                ? 'non-overlapping'
+                : (c.regulatory != 'US' ? '${c.regulatory} only' : null),
+          ]),
+          child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 6),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -471,7 +487,13 @@ class _Table24 extends StatelessWidget {
                   child: c.nonOverlap
                       ? const _Chip('Non-overlap', color: AppColors.primary)
                       : (c.regulatory != 'US'
-                          ? _Chip(c.regulatory, color: AppColors.statusWarning)
+                          // §8.15 R-02: EU/JP is a regulatory-domain *category*,
+                          // not a caution verdict — no status hue. Neutral chip.
+                          ? _Chip(
+                              c.regulatory,
+                              color: AppColors.textTertiary,
+                              neutral: true,
+                            )
                           : Text(
                               '',
                               style: text.labelSmall,
@@ -479,6 +501,7 @@ class _Table24 extends StatelessWidget {
                 ),
               ),
             ],
+          ),
           ),
         );
       }).toList(),
@@ -524,7 +547,13 @@ class _Table5 extends StatelessWidget {
   }
 
   Widget _row5(Channel5 c) {
-    return Padding(
+    return ReferenceRowSemantics(
+      label: rowLabel('Channel ${c.channel}', <String?>[
+        '${c.centerGhz.toStringAsFixed(3)} gigahertz',
+        'band ${c.band}',
+        c.dfs ? 'DFS required' : null,
+      ]),
+      child: Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -569,6 +598,7 @@ class _Table5 extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
 }
@@ -595,7 +625,12 @@ class _Table6 extends StatelessWidget {
           'Power: AFC authorization required. Wi-Fi 7 supports 320 MHz channels '
           'in 6 GHz.',
       rows: WifiChannelsScreen.channels6.map((c) {
-        return Padding(
+        return ReferenceRowSemantics(
+          label: rowLabel('Channel ${c.channel}', <String?>[
+            '${c.centerGhz.toStringAsFixed(3)} gigahertz',
+            'Preferred Scanning Channel',
+          ]),
+          child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 6),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -627,6 +662,7 @@ class _Table6 extends StatelessWidget {
                 ),
               ),
             ],
+          ),
           ),
         );
       }).toList(),

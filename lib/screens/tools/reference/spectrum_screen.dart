@@ -33,6 +33,7 @@ import 'package:flutter/semantics.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../concept_graphic_band.dart';
+import 'reference_row_semantics.dart';
 
 /// Which band's fact sheet is shown. 2.4 / 5 / 6 GHz — three short options, so
 /// a segmented toggle, not an AppSelect (GL-003 §8.14).
@@ -357,7 +358,9 @@ class _FactRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
-    return Padding(
+    return ReferenceRowSemantics(
+      label: rowLabel(label, <String?>[value]),
+      child: Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -383,6 +386,7 @@ class _FactRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }
