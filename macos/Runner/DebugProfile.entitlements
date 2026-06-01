@@ -6,12 +6,9 @@
 	<true/>
 	<key>com.apple.security.cs.allow-jit</key>
 	<true/>
-	<key>com.apple.security.network.server</key>
-	<true/>
-	<!-- Outbound connections for the active network tools: TCP connect scan
-	     and DNS-over-HTTPS lookups. Without network.client the macOS sandbox
-	     blocks Socket.connect and the DoH HTTPS request. -->
 	<key>com.apple.security.network.client</key>
+	<true/>
+	<key>com.apple.security.network.server</key>
 	<true/>
 	<key>com.apple.security.personal-information.location</key>
 	<true/>
