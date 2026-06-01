@@ -47,6 +47,12 @@ import UIKit
       case "hasEverReceivedPayload":
         // Honest install-state (TICKET-03 A1): has any payload ever arrived?
         result(ShortcutsBridge.hasEverReceivedPayload())
+      case "readLatestCellular":
+        // TICKET-02 cellular: read the App Group cellular payload (PULL).
+        result(ShortcutsBridge.readLatestCellular())
+      case "hasEverReceivedCellularPayload":
+        // Honest cellular install-state: has any cellular payload arrived?
+        result(ShortcutsBridge.hasEverReceivedCellularPayload())
       case "setMonitoringActive":
         // Write/clear the loop-gate flag from the in-app Start/Stop control.
         let active = (call.arguments as? Bool) ?? false
