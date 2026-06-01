@@ -1,14 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
   <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <!-- Ethernet jack body -->
-    <rect x="4" y="6" width="12" height="12" rx="2"/>
-    <!-- jack notch/tab at the top -->
-    <path d="M8 6 V4 H12 V6"/>
-    <!-- contact pins inside the jack -->
-    <path d="M7 11 V14"/>
-    <path d="M10 11 V14"/>
-    <path d="M13 11 V14"/>
-    <!-- power bolt beside the jack -->
-    <path d="M20 7 L17.5 11 H19.5 L18 15"/>
+    <!-- spec card -->
+    <rect x="4" y="4" width="16" height="16" rx="2"/>
+    <!-- header band divider (spec-sheet title bar) -->
+    <line x1="4" y1="9.5" x2="20" y2="9.5"/>
+    <!-- PoE bolt in the header band — the load-bearing meaning marker -->
+    <path d="M11.5 5.5 L9 8 H11 L9.5 10.5"/>
+    <!-- spec table: two rows of paired value cells -->
+    <line x1="7.5" y1="13" x2="10" y2="13"/>
+    <line x1="13" y1="13" x2="16.5" y2="13"/>
+    <line x1="7.5" y1="16.5" x2="10" y2="16.5"/>
+    <line x1="13" y1="16.5" x2="16.5" y2="16.5"/>
   </g>
 </svg>
