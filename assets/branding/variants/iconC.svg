@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Variant C — "Bold, small-size optimized". Same mark enlarged to ~73% width,
+       lid seam removed and corners softened for maximum clarity at 60px. Single
+       flat lime #A2CC3A on charcoal #1A1A1A (GL-003 §2/§5). -->
+  <rect width="1024" height="1024" fill="#1A1A1A"/>
+  <g transform="translate(-172.62,-210.14) scale(1.33978)">
+    <rect x="232" y="372" width="560" height="408" rx="64" fill="#A2CC3A"/>
+    <g>
+      <rect x="396" y="300" width="232" height="72" rx="18" fill="#A2CC3A"/>
+      <rect x="436" y="324" width="152" height="48" rx="9" fill="#1A1A1A"/>
+    </g>
+    <g fill="none" stroke="#1A1A1A" stroke-linecap="round" stroke-width="48">
+      <path d="M 455.4 653.4 A 80 80 0 0 1 568.6 653.4"/>
+      <path d="M 410.2 608.2 A 144 144 0 0 1 613.8 608.2"/>
+      <path d="M 364.9 562.9 A 208 208 0 0 1 659.1 562.9"/>
+    </g>
+    <circle cx="512" cy="710" r="32" fill="#1A1A1A"/>
+  </g>
+</svg>
