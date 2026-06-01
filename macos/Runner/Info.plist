@@ -2,6 +2,13 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Export compliance: the app uses only standard HTTPS (TLS) for its
+	     network tools — DNS-over-HTTPS, keyless HTTPS API lookups, and TCP
+	     sockets. No proprietary or non-standard cryptography. Declaring this
+	     here marks the app as exempt so App Store Connect does not prompt for
+	     an encryption questionnaire on every upload. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleExecutable</key>
