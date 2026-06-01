@@ -11,8 +11,8 @@
 //                     ports, RUN IN AN ISOLATE (Isolate.run) so the UI stays
 //                     responsive during a full sweep (brief anti-pattern #4).
 //  3. Reverse DNS   — InternetAddress.reverse() per discovered host.
-//  4. mDNS browse   — bonsoir (native OS Bonjour daemon) browse, folded onto
-//                     the host records.
+//  4. mDNS browse   — in-house native NWBrowser (OS Bonjour daemon) browse,
+//                     folded onto the host records.
 //  Then the pure device-type heuristic runs on each host's ports + services.
 //
 // HONESTY: any single pass can fail without aborting the run. A failed mDNS
@@ -254,11 +254,12 @@ class LanDiscoveryEngine {
     // --- 4. mDNS browse, folded onto host records ---
     yield const DiscoveryProgress(DiscoveryPhase.mdns, 0.82);
     try {
-      // Held as a no-op risk-reduction around the browse. bonsoir's Android
-      // NsdManager path generally does not need an app-held multicast lock (the
-      // OS daemon does the multicast), but acquiring costs nothing and guards
-      // against any device that still drops inbound multicast without it. No-op
-      // on every other platform. Released in finally so it never leaks.
+      // Held as a no-op risk-reduction around the browse. The OS Bonjour daemon
+      // (driven by the native NWBrowser channel) does the multicast itself, so
+      // an app-held multicast lock is generally unnecessary, but acquiring costs
+      // nothing and guards against any device that drops inbound multicast
+      // without it. No-op on every platform this phase (iOS/macOS). Released in
+      // finally so it never leaks.
       await _multicastLock.acquire();
       final Map<String, MdnsRecord> mdns = await _mdnsBrowser.browse();
       mdns.forEach((String ip, MdnsRecord rec) {

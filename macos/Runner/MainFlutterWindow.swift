@@ -6,6 +6,9 @@ class MainFlutterWindow: NSWindow {
   private var wifiInfoChannel: WifiInfoChannel?
   // SPIKE-HSD-01 — retained so the ARP-table channel handler stays live.
   private var arpTableChannel: ArpTableChannel?
+  // SPIKE-HSD-01 — retained so the in-house mDNS EventChannel stream handler
+  // stays live (replaces the GPL-3.0 bonsoir plugin; NWBrowser-backed).
+  private var mdnsBrowseChannel: MdnsBrowseChannel?
 
   override func awakeFromNib() {
     let flutterViewController = FlutterViewController()
@@ -27,6 +30,14 @@ class MainFlutterWindow: NSWindow {
     // for the LAN Discovery debug screen). Same binary-messenger pattern as the
     // Wi-Fi channel so it is unambiguously available.
     self.arpTableChannel = ArpTableChannel(
+      messenger: flutterViewController.engine.binaryMessenger
+    )
+
+    // SPIKE-HSD-01 — register the in-house NWBrowser mDNS EventChannel. Same
+    // binary-messenger pattern as the channels above so it is unambiguously
+    // available. Drives the OS Bonjour daemon (NSBonjourServices in Info.plist,
+    // no multicast entitlement). Replaces the removed GPL-3.0 bonsoir plugin.
+    self.mdnsBrowseChannel = MdnsBrowseChannel(
       messenger: flutterViewController.engine.binaryMessenger
     )
 

@@ -34,11 +34,12 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
-	<!-- bonsoir drives the macOS native Bonjour daemon (NWBrowser/NetService)
-	     for the SPIKE-HSD-01 LAN-discovery mDNS pass. macOS requires every
-	     browsed DNS-SD service type to be declared in NSBonjourServices or the
-	     native browser returns nothing — this array MUST stay in lockstep with
-	     kBrowsedServiceTypes in mdns_browse.dart and with the iOS Info.plist. -->
+	<!-- The in-house native NWBrowser channel (macos/Runner/MdnsBrowseChannel.swift)
+	     drives the macOS Bonjour daemon for the SPIKE-HSD-01 LAN-discovery mDNS
+	     pass. macOS requires every browsed DNS-SD service type to be declared in
+	     NSBonjourServices or the native browser returns nothing — this array MUST
+	     stay in lockstep with kBrowsedServiceTypes in mdns_browse.dart and with
+	     the iOS Info.plist. -->
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_services._dns-sd._udp</string>
