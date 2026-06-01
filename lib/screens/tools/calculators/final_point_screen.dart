@@ -226,7 +226,8 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
                 ? AppSpacing.screenEdgeDesktop
                 : AppSpacing.screenEdgeMobile;
 
-            return Center(
+            return Align(
+              alignment: AppSpacing.calculatorVerticalAlignment(constraints),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(
                   maxWidth: AppSpacing.calculatorMaxWidth,

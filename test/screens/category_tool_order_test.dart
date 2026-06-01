@@ -21,17 +21,19 @@ void main() {
       }
     });
 
-    test('Networking pins Wi-Fi Information then Network Quality, rest A-Z', () {
+    test('Networking pins Wi-Fi vs Internet, Wi-Fi Information, Network '
+        'Quality, then rest A-Z', () {
       final ToolCategory net =
           kToolCategories.firstWhere((ToolCategory c) => c.id == 'networking');
       final List<ToolEntry> ordered = orderedCategoryTools(net);
 
-      // First two are the pinned ids, in the specified order.
-      expect(ordered[0].id, 'wifi-info');
-      expect(ordered[1].id, 'net-quality');
+      // First three are the pinned ids, in the specified order.
+      expect(ordered[0].id, 'wifi-vs-internet');
+      expect(ordered[1].id, 'wifi-info');
+      expect(ordered[2].id, 'net-quality');
 
-      // The remainder (everything after the two pins) is alphabetical and
-      // contains neither pinned id.
+      // The remainder (everything after the pins) is alphabetical and
+      // contains none of the pinned ids.
       final List<ToolEntry> rest = ordered.sublist(kNetworkingPinnedToolIds.length);
       expect(rest.any((ToolEntry t) => kNetworkingPinnedToolIds.contains(t.id)), isFalse);
       final List<String> restTitles = rest.map((ToolEntry t) => t.title).toList();

@@ -123,6 +123,31 @@ class AppSpacing {
   /// Calculator content cap so desktop doesn't stretch a 2000px form field.
   static const double calculatorMaxWidth = 480;
 
+  /// Short-viewport height threshold for the calculator scroll-column alignment
+  /// (see [calculatorVerticalAlignment]). At or below this, the column is
+  /// top-aligned so the result readout (GL-003 §8.5 visual climax) reads from
+  /// the top with no scroll; above it, the column is vertically centered.
+  /// 480 matches the content width cap and the iPhone landscape height band
+  /// (~390–430pt), which is the case Vera's landscape audit flagged.
+  static const double shortViewportHeight = calculatorMaxWidth;
+
+  /// Vertical alignment for a calculator screen's capped scroll column.
+  ///
+  /// In a SHORT viewport (iPhone landscape, ~390pt tall) a vertically centered
+  /// column pushes the result readout to or below the fold; the user has to
+  /// scroll to see the answer they came for. Top-aligning in that case lets the
+  /// layout read inputs-then-result from the top with no scroll. In a TALL
+  /// (portrait) viewport the centered layout looks right, so it is preserved.
+  ///
+  /// Horizontal centering and the [calculatorMaxWidth] cap are unchanged in both
+  /// cases — only the vertical axis switches. Returns [Alignment.topCenter] when
+  /// short, [Alignment.center] when tall.
+  static Alignment calculatorVerticalAlignment(BoxConstraints constraints) {
+    return constraints.maxHeight < shortViewportHeight
+        ? Alignment.topCenter
+        : Alignment.center;
+  }
+
   /// §8.3 — minimum touch target. iOS 44pt / Android 48dp; we render at 48.
   static const double minTouchTarget = 48;
 }
