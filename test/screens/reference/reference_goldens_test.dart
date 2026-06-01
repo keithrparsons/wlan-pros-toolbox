@@ -28,8 +28,8 @@
 //
 // Note on fonts: the baselines are only valid if the bundled IBM Plex Sans /
 // DM Mono / Roboto Mono faces loaded (see flutter_test_config.dart). If a
-// future google_fonts bump changes a family name, the goldens will render in a
-// fallback face and must be regenerated.
+// family name changes in lib/theme/ or pubspec.yaml, the goldens will render in
+// a fallback face and must be regenerated.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

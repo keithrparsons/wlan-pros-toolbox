@@ -5,9 +5,20 @@
 // monospace numerics from any widget without hard-coding the family.
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'app_tokens.dart';
+
+/// The only sans family name. Declared as a bundled font family in
+/// pubspec.yaml (`flutter: fonts:`) with faces at weights 400/500/600/700,
+/// so the engine selects the right face by `fontWeight` at render time —
+/// no runtime fetch, fully offline.
+const String _kSansFamily = 'IBM Plex Sans';
+
+/// The numeric/code mono family. Bundled faces at 400/500.
+const String _kMonoFamily = 'DM Mono';
+
+/// The identifier mono (sans-serif) family. Bundled face at 400.
+const String _kIdentifierMonoFamily = 'Roboto Mono';
 
 /// Builds the `TextTheme` for the app using IBM Plex Sans, per §8.5.
 ///
@@ -19,12 +30,18 @@ import 'app_tokens.dart';
 /// - labelLarge / Small → §3 caption + button labels
 TextTheme buildAppTextTheme() {
   // Start from a fresh dark-theme TextTheme so default colors are sensible,
-  // then apply IBM Plex Sans uniformly.
-  final TextTheme base = ThemeData(brightness: Brightness.dark).textTheme;
+  // then apply IBM Plex Sans uniformly across every slot. `.apply` sets the
+  // family on all 15 default styles (replacing the former
+  // GoogleFonts.ibmPlexSansTextTheme(base) call) before the explicit per-slot
+  // overrides below.
+  final TextTheme base = ThemeData(
+    brightness: Brightness.dark,
+  ).textTheme.apply(fontFamily: _kSansFamily);
 
-  return GoogleFonts.ibmPlexSansTextTheme(base).copyWith(
+  return base.copyWith(
     // Display — editorial only; mapped for completeness.
-    displayLarge: GoogleFonts.ibmPlexSans(
+    displayLarge: const TextStyle(
+      fontFamily: _kSansFamily,
       fontSize: AppTextSize.display,
       fontWeight: FontWeight.w700,
       height: 1.1,
@@ -32,7 +49,8 @@ TextTheme buildAppTextTheme() {
     ),
 
     // H1 — page-level title for very large screens.
-    headlineLarge: GoogleFonts.ibmPlexSans(
+    headlineLarge: const TextStyle(
+      fontFamily: _kSansFamily,
       fontSize: AppTextSize.h1,
       fontWeight: FontWeight.w700,
       height: 1.2,
@@ -40,7 +58,8 @@ TextTheme buildAppTextTheme() {
     ),
 
     // H2 — screen title in the app bar (§8.5).
-    headlineMedium: GoogleFonts.ibmPlexSans(
+    headlineMedium: const TextStyle(
+      fontFamily: _kSansFamily,
       fontSize: AppTextSize.h2,
       fontWeight: FontWeight.w600,
       height: 1.3,
@@ -48,7 +67,8 @@ TextTheme buildAppTextTheme() {
     ),
 
     // H3 — section heading within a screen, home grid tile titles (§8.5).
-    headlineSmall: GoogleFonts.ibmPlexSans(
+    headlineSmall: const TextStyle(
+      fontFamily: _kSansFamily,
       fontSize: AppTextSize.h3,
       fontWeight: FontWeight.w600,
       height: 1.4,
@@ -56,7 +76,8 @@ TextTheme buildAppTextTheme() {
     ),
 
     // titleMedium — used by AppBar by default in M3; align to H3.
-    titleLarge: GoogleFonts.ibmPlexSans(
+    titleLarge: const TextStyle(
+      fontFamily: _kSansFamily,
       fontSize: AppTextSize.h3,
       fontWeight: FontWeight.w600,
       height: 1.4,
@@ -64,13 +85,15 @@ TextTheme buildAppTextTheme() {
     ),
 
     // Body — paragraphs, field input text.
-    bodyLarge: GoogleFonts.ibmPlexSans(
+    bodyLarge: const TextStyle(
+      fontFamily: _kSansFamily,
       fontSize: AppTextSize.body,
       fontWeight: FontWeight.w400,
       height: 1.6,
       color: AppColors.textPrimary,
     ),
-    bodyMedium: GoogleFonts.ibmPlexSans(
+    bodyMedium: const TextStyle(
+      fontFamily: _kSansFamily,
       fontSize: AppTextSize.body,
       fontWeight: FontWeight.w400,
       height: 1.6,
@@ -78,25 +101,29 @@ TextTheme buildAppTextTheme() {
     ),
 
     // Caption — field labels, helper text (§8.4).
-    labelLarge: GoogleFonts.ibmPlexSans(
+    labelLarge: const TextStyle(
+      fontFamily: _kSansFamily,
       fontSize: AppTextSize.body,
       fontWeight: FontWeight.w500,
       height: 1.5,
       color: AppColors.textPrimary,
     ),
-    labelMedium: GoogleFonts.ibmPlexSans(
+    labelMedium: const TextStyle(
+      fontFamily: _kSansFamily,
       fontSize: AppTextSize.caption,
       fontWeight: FontWeight.w500,
       height: 1.5,
       color: AppColors.textSecondary,
     ),
-    labelSmall: GoogleFonts.ibmPlexSans(
+    labelSmall: const TextStyle(
+      fontFamily: _kSansFamily,
       fontSize: AppTextSize.caption,
       fontWeight: FontWeight.w400,
       height: 1.5,
       color: AppColors.textTertiary,
     ),
-    bodySmall: GoogleFonts.ibmPlexSans(
+    bodySmall: const TextStyle(
+      fontFamily: _kSansFamily,
       fontSize: AppTextSize.caption,
       fontWeight: FontWeight.w400,
       height: 1.5,
@@ -140,35 +167,41 @@ class AppMonoText extends ThemeExtension<AppMonoText> {
   /// is specifically for identifier strings (GL-003 §8.5).
   final TextStyle robotoMono;
 
-  /// Factory that wires the mono faces via `google_fonts`. Call once at theme
-  /// build.
+  /// Factory that wires the mono faces from the bundled font families
+  /// ('DM Mono', 'Roboto Mono') declared in pubspec.yaml. Call once at theme
+  /// build. No runtime fetch — renders offline / on first launch.
   factory AppMonoText.defaults() {
-    return AppMonoText(
-      outputXL: GoogleFonts.dmMono(
+    return const AppMonoText(
+      outputXL: TextStyle(
+        fontFamily: _kMonoFamily,
         fontSize: AppTextSize.h1,
         fontWeight: FontWeight.w500,
         color: AppColors.textPrimary,
         height: 1.2,
       ),
-      outputLarge: GoogleFonts.dmMono(
+      outputLarge: TextStyle(
+        fontFamily: _kMonoFamily,
         fontSize: AppTextSize.h2,
         fontWeight: FontWeight.w500,
         color: AppColors.textPrimary,
         height: 1.3,
       ),
-      outputMedium: GoogleFonts.dmMono(
+      outputMedium: TextStyle(
+        fontFamily: _kMonoFamily,
         fontSize: AppTextSize.h3,
         fontWeight: FontWeight.w500,
         color: AppColors.textPrimary,
         height: 1.4,
       ),
-      inlineCode: GoogleFonts.dmMono(
+      inlineCode: TextStyle(
+        fontFamily: _kMonoFamily,
         fontSize: AppTextSize.body,
         fontWeight: FontWeight.w400,
         color: AppColors.textPrimary,
         height: 1.6,
       ),
-      robotoMono: GoogleFonts.robotoMono(
+      robotoMono: TextStyle(
+        fontFamily: _kIdentifierMonoFamily,
         fontSize: AppTextSize.body,
         fontWeight: FontWeight.w400,
         color: AppColors.textPrimary,
