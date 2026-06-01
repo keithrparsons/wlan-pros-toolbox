@@ -1,0 +1,112 @@
+default_platform(:ios)
+
+# App Store Connect API key (identifiers from gitignored fastlane/.env; the
+# private .p8 lives outside the repo). Used for signing and TestFlight upload
+# with no interactive Apple ID login.
+def asc_api_key
+  app_store_connect_api_key(
+    key_id: ENV["ASC_KEY_ID"],
+    issuer_id: ENV["ASC_ISSUER_ID"],
+    key_filepath: ENV["ASC_KEY_FILEPATH"],
+    in_house: false
+  )
+end
+
+APP_ID = "com.wlanpros.wlanProsToolbox".freeze
+APP_NAME = "WLAN Pros Toolbox".freeze
+TEAM_ID = "MNMCTY7YZT".freeze
+INTERNAL_GROUP = "Field Testers".freeze
+
+platform :ios do
+  desc "Non-mutating: verify API auth, app record, bundle id, and distribution certs"
+  lane :check do
+    asc_api_key
+
+    app = Spaceship::ConnectAPI::App.find(APP_ID)
+    app ? UI.success("APP RECORD: #{app.name} | #{app.bundle_id} | id=#{app.id}") : UI.important("APP RECORD NOT FOUND")
+
+    bundle = Spaceship::ConnectAPI::BundleId.all.find { |b| b.identifier == APP_ID }
+    bundle ? UI.success("BUNDLE ID: #{bundle.identifier} | id=#{bundle.id}") : UI.important("BUNDLE ID NOT registered")
+
+    certs = Spaceship::ConnectAPI::Certificate.all.select { |c| c.certificate_type.to_s.include?("DISTRIBUTION") }
+    UI.message("Distribution certificates: #{certs.size}")
+
+    next unless app
+    app.get_beta_groups.each do |g|
+      builds = (g.fetch_builds rescue [])
+      testers = (Spaceship::ConnectAPI::BetaTester.all(filter: { "betaGroups" => g.id }) rescue [])
+      UI.message("Group '#{g.name}' internal=#{g.is_internal_group} testers=#{testers.size} builds=#{builds.map(&:version).join(',')}")
+    end
+  end
+
+  desc "Register the App ID and create the App Store Connect app record (idempotent)"
+  lane :make_app do
+    asc_api_key
+
+    bundle = Spaceship::ConnectAPI::BundleId.all.find { |b| b.identifier == APP_ID }
+    bundle ||= Spaceship::ConnectAPI::BundleId.create(name: APP_NAME, identifier: APP_ID, platform: Spaceship::ConnectAPI::BundleIdPlatform::IOS)
+    UI.success("Bundle ID ready: #{bundle.identifier}")
+
+    app = Spaceship::ConnectAPI::App.find(APP_ID)
+    if app
+      UI.success("App record already exists: #{app.name}")
+    else
+      # NOTE: the App Store Connect API does NOT allow creating an app record;
+      # this will raise. Create it once via the App Store Connect website
+      # (Apps -> + -> New App), then everything else here is automated.
+      app = Spaceship::ConnectAPI::App.create(
+        name: APP_NAME, version_string: "1.0.0", sku: "wlanprostoolbox",
+        primary_locale: "en-US", bundle_id: APP_ID,
+        platforms: [Spaceship::ConnectAPI::Platform::IOS]
+      )
+      UI.success("Created app record: #{app.name}")
+    end
+  end
+
+  desc "Generate the distribution certificate and App Store provisioning profile"
+  lane :signing do
+    api_key = asc_api_key
+    cert(api_key: api_key, development: false)
+    sigh(api_key: api_key, app_identifier: APP_ID, adhoc: false, force: false)
+  end
+
+  desc "Upload the already-built ipa to TestFlight (waits for processing)"
+  lane :upload do
+    api_key = asc_api_key
+    upload_to_testflight(
+      api_key: api_key,
+      ipa: File.expand_path("../../build/ios/ipa/wlan_pros_toolbox.ipa", __dir__),
+      skip_submission: true,
+      skip_waiting_for_build_processing: false,
+      distribute_external: false,
+      changelog: "Internal field-testing build (Wi-Fi + Network tools)."
+    )
+  end
+
+  desc "Ensure the internal '#{INTERNAL_GROUP}' group exists (access to all builds). " \
+       "Adding the account holder as a tester must be done once on the website."
+  lane :internal_group do
+    asc_api_key
+    app = Spaceship::ConnectAPI::App.find(APP_ID)
+    UI.user_error!("App record not found — create it on the website first") unless app
+
+    group = app.get_beta_groups.find { |g| g.name == INTERNAL_GROUP }
+    if group
+      UI.success("Internal group '#{INTERNAL_GROUP}' already exists")
+    else
+      # The create_beta_group helper hardcodes public-link attributes that Apple
+      # rejects on internal groups, so POST the minimal body directly.
+      body = {
+        data: {
+          type: "betaGroups",
+          attributes: { name: INTERNAL_GROUP, isInternalGroup: true, hasAccessToAllBuilds: true },
+          relationships: { app: { data: { id: app.id, type: "apps" } } }
+        }
+      }
+      Spaceship::ConnectAPI.test_flight_request_client.post("v1/betaGroups", body)
+      UI.success("Created internal group '#{INTERNAL_GROUP}'")
+    end
+    UI.message("Add yourself once: App Store Connect -> TestFlight -> Internal Testing -> " \
+               "#{INTERNAL_GROUP} -> + -> check your name. Future builds auto-distribute.")
+  end
+end

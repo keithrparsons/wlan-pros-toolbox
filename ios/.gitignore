@@ -32,3 +32,18 @@ Runner/GeneratedPluginRegistrant.*
 !default.mode2v3
 !default.pbxuser
 !default.perspectivev3
+
+# fastlane — never commit secrets or build artifacts.
+fastlane/.env
+fastlane/report.xml
+fastlane/README.md
+fastlane/test_output/
+build/
+*.ipa
+*.app.dSYM.zip
+# signing material — never commit (private key, cert, CSR, profiles).
+*.mobileprovision
+*.p12
+*.cer
+*.certSigningRequest
+ExportOptions.plist

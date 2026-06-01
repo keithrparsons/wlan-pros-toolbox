@@ -2,20 +2,26 @@ PODS:
   - Flutter (1.0.0)
   - flutter_icmp_ping (0.0.1):
     - Flutter
+  - pdfx (1.0.0):
+    - Flutter
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
   - flutter_icmp_ping (from `.symlinks/plugins/flutter_icmp_ping/ios`)
+  - pdfx (from `.symlinks/plugins/pdfx/ios`)
 
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
   flutter_icmp_ping:
     :path: ".symlinks/plugins/flutter_icmp_ping/ios"
+  pdfx:
+    :path: ".symlinks/plugins/pdfx/ios"
 
 SPEC CHECKSUMS:
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   flutter_icmp_ping: 47c1df3440c18ddd39fc457e607bb3b42d4a339f
+  pdfx: 77f4dddc48361fbb01486fa2bdee4532cbb97ef3
 
 PODFILE CHECKSUM: 94acc1811db91e19611fd332a426b62ffe2a9584
 
