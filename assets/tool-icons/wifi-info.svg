@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Wi-Fi connection: two arcs fanning UP from the gauge hub (the signal being read) -->
+    <path d="M7.4 8.2 A6.5 6.5 0 0 1 16.6 8.2"/>
+    <path d="M9.7 10.5 A3.25 3.25 0 0 1 14.3 10.5"/>
+    <!-- RF readout gauge: semicircular dial arc (the metric scale) -->
+    <path d="M4 18.5 A8 8 0 0 1 20 18.5"/>
+    <!-- gauge needle pointing up-right into the upper band (the live reading) -->
+    <path d="M12 18.5 L16 14.2"/>
+    <!-- hub / pivot, doubles as the Wi-Fi source -->
+    <circle cx="12" cy="18.5" r="1.2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

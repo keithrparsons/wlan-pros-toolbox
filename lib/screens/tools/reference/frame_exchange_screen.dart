@@ -13,19 +13,25 @@
 // focus / open / disabled — all handled inside AppSelect). Every scenario in
 // the dataset is non-empty, so the surface always has frames to show.
 //
-// Frame-type color: the PWA used four literal hex swatches (mgmt blue, eap
-// purple, wired orange, dhcp green). Design-system law forbids literal hex, so
-// each categorical type maps to a semantic status token that keeps the four
-// colors visually distinct (see _FxType.color). Flagged to Iris as a possible
-// §8.13 categorical-palette gap.
+// Frame-type encoding: the PWA used four literal hex swatches (mgmt blue, eap
+// purple, wired orange, dhcp green), which this screen first ported to the four
+// §8.13 status hues. The §8.15 standing ruling (2026-06-01) names this exact
+// table as case-3 — frame *types* are merely different categories, not a
+// canonical color code and not a pass/warn/fail verdict, so they get NO hue.
+// The status-hue legend is removed; frame types are now told apart by a neutral
+// short type code (MGMT / EAP / WIRED / DHCP) rendered in DM Mono, plus the
+// neutral step chip and the existing surface/border structure. No status token,
+// no lime — a frame-sequence table has no single measured quantity to mark.
 
 import 'package:flutter/material.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../theme/app_typography.dart';
 import '../../../widgets/app_select.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
+import 'reference_row_semantics.dart';
 
 /// Categorical frame type. Mirrors the PWA `type` field (mgmt|eap|wired|dhcp).
 enum FxType { mgmt, eap, wired, dhcp }
@@ -45,20 +51,20 @@ extension _FxTypeView on FxType {
     }
   }
 
-  /// Semantic token per categorical type. Replaces the PWA literal hex
-  /// (mgmt #0071e3, eap #7B1FA2, wired #E65100, dhcp #2E7D32) with the four
-  /// distinct §8.13 status tokens so the categories stay distinguishable
-  /// without hardcoding color.
-  Color get color {
+  /// Short neutral type code shown per row in DM Mono. This is how the four
+  /// categories are told apart now (§8.15 case-3) — a textual code, never a
+  /// hue. It is also never the sole carrier of meaning: each row also names the
+  /// frame in plain text and the legend expands every code.
+  String get code {
     switch (this) {
       case FxType.mgmt:
-        return AppColors.statusInfo; // blue → info
+        return 'MGMT';
       case FxType.eap:
-        return AppColors.primary; // purple → lime key/handshake accent
+        return 'EAP';
       case FxType.wired:
-        return AppColors.statusWarning; // orange → warning amber
+        return 'WIRED';
       case FxType.dhcp:
-        return AppColors.statusSuccess; // green → success mint
+        return 'DHCP';
     }
   }
 }
@@ -237,7 +243,7 @@ class _FrameExchangeScreenState extends State<FrameExchangeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Legend',
+            'Frame types',
             style: text.labelMedium?.copyWith(
               color: AppColors.textSecondary,
               letterSpacing: 0.4,
@@ -307,27 +313,43 @@ class _FrameRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
-    return Padding(
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    return ReferenceRowSemantics(
+      // The frame type is now spoken too (was carried only by the removed color
+      // swatch) so screen-reader users get the category that sighted users read
+      // from the type code.
+      label: rowLabel('Step ${frame.n}', <String?>[
+        '${frame.type.code} frame',
+        frame.dir,
+        frame.label,
+        frame.note,
+      ]),
+      child: Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Numbered type chip. The number reads on the type color; Exclude
-          // semantics so AT does not re-announce the index (the label carries
-          // meaning, the swatch is decorative).
-          Container(
-            width: 28,
-            height: 28,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: frame.type.color,
-              borderRadius: BorderRadius.circular(AppRadius.control),
-            ),
-            child: Text(
-              '${frame.n}',
-              style: text.labelMedium?.copyWith(
-                color: AppColors.surface0,
-                fontWeight: FontWeight.w700,
+          // Neutral numbered step chip (§8.15 case-3): surface step + strong
+          // border + DM Mono index. No status hue — the chip no longer encodes
+          // a category by color. Excluded from semantics (the row label already
+          // says "Step N"); the swatch is now purely structural.
+          ExcludeSemantics(
+            child: Container(
+              width: 28,
+              height: 28,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppColors.surface2,
+                borderRadius: BorderRadius.circular(AppRadius.control),
+                border: Border.all(color: AppColors.borderStrong, width: 1),
+              ),
+              child: Text(
+                '${frame.n}',
+                style: mono.inlineCode.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ),
@@ -336,12 +358,21 @@ class _FrameRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  frame.dir,
-                  style: text.labelSmall?.copyWith(
-                    color: AppColors.textTertiary,
-                    letterSpacing: 0.4,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        frame.dir,
+                        style: text.labelSmall?.copyWith(
+                          color: AppColors.textTertiary,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    // Neutral type code — the category, carried by text not hue.
+                    _TypeTag(code: frame.type.code, mono: mono),
+                  ],
                 ),
                 Text(
                   frame.label,
@@ -365,11 +396,49 @@ class _FrameRow extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
 }
 
-/// One legend entry: a color dot + the type label.
+/// Neutral frame-type code tag (MGMT / EAP / WIRED / DHCP). A DM Mono pill on a
+/// neutral surface + decorative border — the category is carried by the code
+/// text, never by a status hue (§8.15 case-3). Excluded from semantics because
+/// the row label already speaks the frame type.
+class _TypeTag extends StatelessWidget {
+  const _TypeTag({required this.code, required this.mono});
+
+  final String code;
+  final AppMonoText mono;
+
+  @override
+  Widget build(BuildContext context) {
+    return ExcludeSemantics(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+        decoration: BoxDecoration(
+          color: AppColors.surface2,
+          borderRadius: BorderRadius.circular(AppRadius.control),
+          border: Border.all(color: AppColors.border, width: 1),
+        ),
+        child: Text(
+          code,
+          style: mono.inlineCode.copyWith(
+            fontSize: 11,
+            height: 1.2,
+            color: AppColors.textTertiary,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One legend entry: the neutral type-code tag + the full type label. Maps the
+/// short row code (MGMT / EAP / WIRED / DHCP) to its plain-English meaning. No
+/// color swatch — the legend now expands a textual code, not a hue (§8.15).
 class _LegendItem extends StatelessWidget {
   const _LegendItem({required this.type});
 
@@ -378,17 +447,12 @@ class _LegendItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: type.color,
-            borderRadius: BorderRadius.circular(AppRadius.pill),
-          ),
-        ),
+        _TypeTag(code: type.code, mono: mono),
         const SizedBox(width: AppSpacing.xs),
         // Flexible + ellipsis so a long legend label ("Wired (RADIUS / DHCP)")
         // shrinks within the Wrap line at 320px instead of overflowing the row

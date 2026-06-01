@@ -26,6 +26,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../concept_graphic_band.dart';
+import 'reference_row_semantics.dart';
 
 /// One row of the coax reference table. Field order mirrors the PWA
 /// COAX_DATA tuple: [name, impedance, vf, diameterMm, maxGhz, use].
@@ -256,7 +257,15 @@ class _CoaxRow extends StatelessWidget {
     final Color specColor =
         muted ? AppColors.textTertiary : AppColors.textSecondary;
 
-    return Padding(
+    return ReferenceRowSemantics(
+      label: rowLabel(cable.name, <String?>[
+        '${cable.impedance} impedance',
+        'velocity factor ${cable.vf} percent',
+        'diameter ${_fmt(cable.diameterMm)} millimeters',
+        'max ${_fmt(cable.maxGhz)} gigahertz',
+        cable.use,
+      ]),
+      child: Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -311,6 +320,7 @@ class _CoaxRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

@@ -78,15 +78,21 @@ dependencies:
   net_quality:
     path: packages/net_quality
 
-  # multicast_dns — pure-Dart mDNS/DNS-SD query, no native plugin. Used by the
-  # SPIKE-HSD-01 LAN-discovery prototype (lan_discovery package) to browse
-  # Bonjour service types and collect device names. Chosen over `nsd` for the
-  # spike because it adds NO native method-channel plugin to register on four
-  # platforms — it rides dart:io UDP/5353 like the rest of the scan core, so it
-  # drops into the existing pure-Dart socket-engine pattern cleanly. Still needs
-  # NSBonjourServices declared on iOS and a multicast lock on Android (both
-  # wired in the platform manifests). BSD-3 (Flutter team package).
-  multicast_dns: ^0.3.3
+  # mDNS / DNS-SD service discovery for the SPIKE-HSD-01 LAN-discovery prototype
+  # is provided by an IN-HOUSE native plugin over Apple's Network framework
+  # `NWBrowser` (ios/Runner/MdnsBrowseChannel.swift +
+  # macos/Runner/MdnsBrowseChannel.swift, an in-Runner Swift EventChannel
+  # mirroring the ARP / Wi-Fi channels). There is NO mDNS package dependency.
+  #
+  # WHY in-house, not a package: the prior choice `bonsoir` is GPL-3.0, which is
+  # incompatible with a closed-source commercial App Store app (PRD Decision Log
+  # 13), so it was removed. NWBrowser drives the OS Bonjour daemon, so the browse
+  # works with only NSBonjourServices declared in Info.plist and NO
+  # com.apple.developer.networking.multicast entitlement — the App-Store-safe
+  # path (pure-Dart multicast_dns needs that entitlement and returns empty on
+  # iOS without it). Android NsdManager is deferred per
+  # project-toolbox-platform-scope; the Dart factory returns a clean empty
+  # discovery on non-iOS/macOS targets.
 
 dev_dependencies:
   flutter_test:
@@ -143,6 +149,10 @@ flutter:
     - assets/fonts/IBMPlexSans-Bold.ttf
     - assets/fonts/DMMono-Regular.ttf
     - assets/fonts/DMMono-Medium.ttf
+    # Roboto Mono — monospaced sans-serif for fixed-width identifiers (IP, MAC,
+    # subnet masks, BSSIDs, hex). Bundled like the others so google_fonts loads
+    # it locally with no runtime HTTP fetch.
+    - assets/fonts/RobotoMono-Regular.ttf
     # Bundled IEEE OUI / vendor table for the MAC Vendor Lookup tool
     # (TICKET-002). Trimmed MA-L/MA-M/MA-S registries; loaded + parsed once and
     # cached. Source + retrieval date documented in the asset header.

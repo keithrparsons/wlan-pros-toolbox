@@ -235,7 +235,7 @@ class OsiModelScreen extends StatelessWidget {
                       _HeaderCell('#', width: 28),
                       _HeaderCell('Layer', width: 104),
                       _HeaderCell('Function', width: 96),
-                      _HeaderCell('PDU', width: 72),
+                      _HeaderCell('PDU', width: 88),
                       _HeaderCell('Protocols', width: 248),
                       _HeaderCell('Hardware', width: 184),
                     ],
@@ -310,7 +310,7 @@ class _LayerRow extends StatelessWidget {
               ),
             ),
             SizedBox(
-              width: 72,
+              width: 88,
               child: Text(
                 layer.pdu,
                 style: mono.inlineCode.copyWith(

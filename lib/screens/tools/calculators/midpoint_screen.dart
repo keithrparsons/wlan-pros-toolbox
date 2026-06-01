@@ -75,8 +75,7 @@ class MidpointScreen extends StatefulWidget {
       math.sin(phi1) + math.sin(phi2),
       math.sqrt(math.pow(math.cos(phi1) + bx, 2) + by * by),
     );
-    final double lambdaM =
-        _toRad(lon1) + math.atan2(by, math.cos(phi1) + bx);
+    final double lambdaM = _toRad(lon1) + math.atan2(by, math.cos(phi1) + bx);
 
     return MidpointResult(
       lat: _toDeg(phiM),
@@ -162,10 +161,7 @@ class _MidpointScreenState extends State<MidpointScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Midpoint'),
-        toolbarHeight: 64,
-      ),
+      appBar: AppBar(title: const Text('Midpoint'), toolbarHeight: 64),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -193,7 +189,10 @@ class _MidpointScreenState extends State<MidpointScreen> {
                       // §8.6.2 concept-graphic header band — first child, above
                       // the input card. Self-collapses when no graphic is
                       // bundled, so the 24px gap below it disappears too.
-                      ConceptGraphicBand(toolId: 'midpoint', isDesktop: isDesktop),
+                      ConceptGraphicBand(
+                        toolId: 'midpoint',
+                        isDesktop: isDesktop,
+                      ),
                       if (ToolAssets.hasGraphic('midpoint'))
                         const SizedBox(height: AppSpacing.md),
                       _inputCard(text, mono),
@@ -321,7 +320,7 @@ class _MidpointScreenState extends State<MidpointScreen> {
         textInputAction: TextInputAction.done,
         autocorrect: false,
         enableSuggestions: false,
-        style: monoStyle.copyWith(fontSize: 20),
+        style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
         cursorColor: AppColors.primary,
         decoration: InputDecoration(hintText: hintText),
       ),
@@ -354,29 +353,35 @@ class _MidpointScreenState extends State<MidpointScreen> {
     String value,
   ) {
     final bool blank = _mid == null;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
-      children: [
-        SizedBox(
-          width: 48,
-          child: Text(
-            tag,
-            style: text.labelLarge?.copyWith(
-              color: AppColors.textSecondary,
+    // One SR node per row: "Lat: 37.401900" (or "not calculated"), instead of
+    // tag and value as separate fragments (Vera finding #6).
+    final String spoken = tag == 'Lat' ? 'Latitude' : 'Longitude';
+    return Semantics(
+      label: spoken,
+      value: blank ? 'not calculated' : value,
+      excludeSemantics: true,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: [
+          SizedBox(
+            width: 48,
+            child: Text(
+              tag,
+              style: text.labelLarge?.copyWith(color: AppColors.textSecondary),
             ),
           ),
-        ),
-        Expanded(
-          child: SelectableText(
-            value,
-            style: mono.outputXL.copyWith(
-              fontSize: 28,
-              color: blank ? AppColors.textTertiary : AppColors.primary,
+          Expanded(
+            child: SelectableText(
+              value,
+              style: mono.outputXL.copyWith(
+                fontSize: 28,
+                color: blank ? AppColors.textTertiary : AppColors.primary,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -420,9 +425,7 @@ class _MidpointScreenState extends State<MidpointScreen> {
             'Great-circle midpoint on a sphere. Decimal degrees in, decimal '
             'degrees out. This is the halfway point on the shortest path, not '
             'the average of the two coordinates.',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textTertiary,
-            ),
+            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
           ),
         ],
       ),
@@ -458,7 +461,7 @@ class _MidpointScreenState extends State<MidpointScreen> {
           const SizedBox(height: AppSpacing.xs),
           ...refs.map((row) {
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

@@ -1,0 +1,216 @@
+// Connected-AP — the normalized, cross-platform model the one Wi-Fi Information
+// tool renders, regardless of which platform supplied the reading.
+//
+// TICKET-04 consolidates two platform-specific Wi-Fi tools into one. The two
+// data sources stay live behind a platform-adapter seam (see
+// [WifiInfoAdapter]) and both map their native payload into THIS model:
+//
+//   * macOS → CoreWLAN  (WifiInfoService / WifiInfoChannel.swift) → [fromWifiInfo]
+//   * iOS   → Shortcuts  (WiFiDetailsBridge / ToolboxAppIntents.swift) →
+//             [fromWifiDetails]
+//
+// Android / Windows are a clean seam only (the adapter reports them
+// unsupported); they slot a future native source into this same model.
+//
+// Every field is nullable: each platform exposes a different subset, and a
+// reading can legitimately omit any field. The screen renders a missing field
+// as an honest "Unavailable" row (per GL-008 + GL-005) — never a fabricated
+// value, never a silent drop. Two availability flags ([rxRateAvailable],
+// [channelWidthAvailable]) distinguish "this platform never exposes this datum"
+// from "absent this reading", so the UI can show a precise per-field reason.
+
+import 'wifi_details.dart';
+import 'wifi_info_service.dart';
+
+/// A normalized snapshot of the connected access point, independent of the
+/// platform that produced it. Immutable.
+class ConnectedAp {
+  const ConnectedAp({
+    this.ssid,
+    this.bssid,
+    this.rssiDbm,
+    this.noiseDbm,
+    this.snrDb,
+    this.txRateMbps,
+    this.rxRateMbps,
+    this.channel,
+    this.channelWidthMhz,
+    this.band,
+    this.standard,
+    this.countryCode,
+    this.interfaceName,
+    this.hardwareAddress,
+    this.poweredOn = true,
+    this.rxRateAvailable = false,
+    this.channelWidthAvailable = false,
+    this.bandDerived = false,
+    this.snrDerived = false,
+  });
+
+  /// Connected network name. Null when not connected, hidden, or omitted.
+  final String? ssid;
+
+  /// Connected access point MAC (BSSID). Null when hidden or omitted.
+  final String? bssid;
+
+  /// Received signal strength in dBm (negative). Null when unavailable.
+  final int? rssiDbm;
+
+  /// Noise floor in dBm (negative). Null when unavailable.
+  final int? noiseDbm;
+
+  /// Signal-to-noise ratio in dB. Null unless both RSSI and noise are present
+  /// (computing it from a missing input would be a fabricated number).
+  final int? snrDb;
+
+  /// Transmit rate in Mbps. Null when unavailable.
+  final double? txRateMbps;
+
+  /// Receive rate in Mbps. Null when unavailable. See [rxRateAvailable] to
+  /// distinguish "this platform never exposes Rx rate" from "absent this read".
+  final double? rxRateMbps;
+
+  /// Primary channel number. Null when unavailable.
+  final int? channel;
+
+  /// Channel width in MHz (20/40/80/160). Null when unavailable. See
+  /// [channelWidthAvailable] to distinguish "platform never exposes it".
+  final int? channelWidthMhz;
+
+  /// Band label ("2.4 GHz", "5 GHz", "6 GHz"). Null when unknown.
+  final String? band;
+
+  /// Wi-Fi standard / PHY generation label (e.g. "802.11ax (Wi-Fi 6)"). Null
+  /// when unknown.
+  final String? standard;
+
+  /// Regulatory country code. Null when unavailable.
+  final String? countryCode;
+
+  /// BSD interface name (e.g. "en0"). Null when unavailable (iOS does not
+  /// expose it through the Shortcut path).
+  final String? interfaceName;
+
+  /// Interface hardware (MAC) address. Null when unavailable.
+  final String? hardwareAddress;
+
+  /// Whether the Wi-Fi radio is powered on. Defaults true for sources that do
+  /// not report a radio-power state (the iOS Shortcut only runs while connected).
+  final bool poweredOn;
+
+  /// Whether THIS platform can ever expose the Rx rate. macOS public CoreWLAN
+  /// cannot; iOS can. When false the UI shows a "Not exposed by `<platform>`"
+  /// reason rather than a generic "Unavailable".
+  final bool rxRateAvailable;
+
+  /// Whether THIS platform can ever expose the channel width. The iOS Shortcut
+  /// harvest does not return it; macOS CoreWLAN does. When false the UI shows a
+  /// precise "Not reported by `<platform>`" reason.
+  final bool channelWidthAvailable;
+
+  /// Whether [band] was computed app-side (true on iOS, where band is derived
+  /// from the channel number) rather than read from the source (macOS reports
+  /// it directly). Drives the honest "derived" caption.
+  final bool bandDerived;
+
+  /// Whether [snrDb] was computed app-side (rssi − noise). True on the iOS path;
+  /// macOS reports SNR directly. Drives the honest "derived" caption.
+  final bool snrDerived;
+
+  /// Maps the macOS CoreWLAN snapshot into the normalized model.
+  ///
+  /// macOS reports band and SNR directly (not derived), exposes channel width
+  /// and country/interface/hardware address, but public CoreWLAN does NOT expose
+  /// the Rx rate — so [rxRateAvailable] is false and the UI says so.
+  factory ConnectedAp.fromWifiInfo(WifiInfo info) {
+    return ConnectedAp(
+      ssid: info.ssid,
+      bssid: info.bssid,
+      rssiDbm: info.rssiDbm,
+      noiseDbm: info.noiseDbm,
+      snrDb: info.snrDb,
+      txRateMbps: info.txRateMbps,
+      rxRateMbps: null,
+      channel: info.channel,
+      channelWidthMhz: info.channelWidthMhz,
+      band: info.band,
+      standard: _macStandardLabel(info.phyMode, info.band),
+      countryCode: info.countryCode,
+      interfaceName: info.interfaceName,
+      hardwareAddress: info.hardwareAddress,
+      poweredOn: info.poweredOn,
+      // macOS public CoreWLAN never exposes Rx rate or Tx power.
+      rxRateAvailable: false,
+      // macOS DOES expose channel width.
+      channelWidthAvailable: true,
+      bandDerived: false,
+      snrDerived: false,
+    );
+  }
+
+  /// Maps the iOS Shortcuts [WiFiDetails] payload into the normalized model.
+  ///
+  /// iOS exposes the Rx rate and reports SNR/band as APP-DERIVED (snr = rssi −
+  /// noise; band from the channel number). The harvest action does NOT return
+  /// channel width, so [channelWidthAvailable] is false and the UI says so.
+  factory ConnectedAp.fromWifiDetails(WiFiDetails d) {
+    return ConnectedAp(
+      ssid: d.ssid,
+      bssid: d.bssid,
+      rssiDbm: d.rssi,
+      noiseDbm: d.noise,
+      snrDb: d.snr,
+      txRateMbps: d.txRate?.toDouble(),
+      rxRateMbps: d.rxRate?.toDouble(),
+      channel: d.channel,
+      channelWidthMhz: null,
+      band: d.band?.label,
+      standard: d.standard,
+      countryCode: null,
+      interfaceName: null,
+      hardwareAddress: null,
+      // The Shortcut only runs while connected; treat the radio as on.
+      poweredOn: true,
+      // iOS DOES expose Rx rate via "Get Network Details".
+      rxRateAvailable: true,
+      // The iOS harvest action does not return channel width.
+      channelWidthAvailable: false,
+      // On iOS both band and SNR are computed app-side.
+      bandDerived: d.band != null,
+      snrDerived: d.snr != null,
+    );
+  }
+
+  /// True when at least one substantive field is present — i.e. a real reading
+  /// arrived. An all-null model means the source delivered an empty payload and
+  /// the screen should show its empty / waiting state, not a grid of
+  /// "Unavailable".
+  bool get hasAnyData =>
+      ssid != null ||
+      bssid != null ||
+      rssiDbm != null ||
+      noiseDbm != null ||
+      txRateMbps != null ||
+      rxRateMbps != null ||
+      channel != null ||
+      band != null ||
+      standard != null;
+
+  /// Renders the macOS PHY mode with both its 802.11 designation and its Wi-Fi
+  /// generation, e.g. "802.11be (Wi-Fi 7)". The iOS path already supplies a
+  /// formatted standard string, so this is macOS-only. The 6 GHz band
+  /// distinguishes Wi-Fi 6E from Wi-Fi 6 (both 802.11ax). Pre-branding modes
+  /// (a/b/g) have no Wi-Fi number, so only the 802.11 name shows. Returns null
+  /// when the PHY mode is unknown.
+  static String? _macStandardLabel(String? phyMode, String? band) {
+    if (phyMode == null) return null;
+    final String? generation = switch (phyMode) {
+      '802.11be' => 'Wi-Fi 7',
+      '802.11ax' => band == '6 GHz' ? 'Wi-Fi 6E' : 'Wi-Fi 6',
+      '802.11ac' => 'Wi-Fi 5',
+      '802.11n' => 'Wi-Fi 4',
+      _ => null,
+    };
+    return generation == null ? phyMode : '$phyMode ($generation)';
+  }
+}

@@ -24,6 +24,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../concept_graphic_band.dart';
+import 'reference_row_semantics.dart';
 
 /// One Ethernet cable category row. Ported verbatim from PWA app.js ETH_DATA
 /// (`[cat, max_mhz, max_speed, dist_1g, dist_10g, poe, shielding, use]`).
@@ -248,49 +249,76 @@ class EthernetCableScreen extends StatelessWidget {
         DataColumn(label: Text('Shielding')),
       ],
       rows: ethData.map((EthCable e) {
+        // DataTable renders each DataCell as its own column node, so a screen
+        // reader would otherwise read "Cat6A", "500", "10 Gbps"… as seven
+        // disconnected nodes. We give the FIRST cell the full row summary via
+        // Semantics(label:) and exclude the remaining cells from semantics, so
+        // the row announces once as a coherent unit. (Vera F-02.)
+        final String summary = rowLabel(e.category, <String?>[
+          '${e.maxMhz} megahertz',
+          'max speed ${e.maxSpeed}',
+          e.dist1g == 'N/A' ? null : '${e.dist1g} at 1 gigabit',
+          e.dist10g == 'N/A' ? null : '${e.dist10g} at 10 gigabit',
+          'PoE ${e.poe}',
+          'shielding ${e.shielding}',
+        ]);
         return DataRow(
           cells: [
             DataCell(
-              Text(
-                e.category,
-                style: mono.inlineCode.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
+              Semantics(
+                label: summary,
+                container: true,
+                child: ExcludeSemantics(
+                  child: Text(
+                    e.category,
+                    style: mono.inlineCode.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
             ),
             DataCell(
-              Align(
-                alignment: Alignment.centerRight,
+              ExcludeSemantics(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    '${e.maxMhz}',
+                    style:
+                        mono.inlineCode.copyWith(color: AppColors.textPrimary),
+                  ),
+                ),
+              ),
+            ),
+            DataCell(ExcludeSemantics(child: Text(e.maxSpeed, style: cellStyle))),
+            DataCell(
+              ExcludeSemantics(
                 child: Text(
-                  '${e.maxMhz}',
-                  style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
-                ),
-              ),
-            ),
-            DataCell(Text(e.maxSpeed, style: cellStyle)),
-            DataCell(
-              Text(
-                e.dist1g,
-                style: mono.inlineCode.copyWith(
-                  color: e.dist1g == 'N/A'
-                      ? AppColors.textTertiary
-                      : AppColors.textPrimary,
+                  e.dist1g,
+                  style: mono.inlineCode.copyWith(
+                    color: e.dist1g == 'N/A'
+                        ? AppColors.textTertiary
+                        : AppColors.textPrimary,
+                  ),
                 ),
               ),
             ),
             DataCell(
-              Text(
-                e.dist10g,
-                style: mono.inlineCode.copyWith(
-                  color: e.dist10g == 'N/A'
-                      ? AppColors.textTertiary
-                      : AppColors.textPrimary,
+              ExcludeSemantics(
+                child: Text(
+                  e.dist10g,
+                  style: mono.inlineCode.copyWith(
+                    color: e.dist10g == 'N/A'
+                        ? AppColors.textTertiary
+                        : AppColors.textPrimary,
+                  ),
                 ),
               ),
             ),
-            DataCell(Text(e.poe, style: smallStyle)),
-            DataCell(Text(e.shielding, style: smallStyle)),
+            DataCell(ExcludeSemantics(child: Text(e.poe, style: smallStyle))),
+            DataCell(
+                ExcludeSemantics(child: Text(e.shielding, style: smallStyle))),
           ],
         );
       }).toList(),

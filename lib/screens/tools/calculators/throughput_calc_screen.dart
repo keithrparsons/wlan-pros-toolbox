@@ -49,14 +49,38 @@ class ThroughputCalcScreen extends StatefulWidget {
 
   /// Bits per symbol per MCS — Nbpsc · Rc (PWA MCS_BPS).
   static const List<double> mcsBps = [
-    0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 4.5, 5.0, 6.0, 6.6667, 7.5, 8.3333, 9.0, 10.0,
+    0.5,
+    1.0,
+    1.5,
+    2.0,
+    3.0,
+    4.0,
+    4.5,
+    5.0,
+    6.0,
+    6.6667,
+    7.5,
+    8.3333,
+    9.0,
+    10.0,
   ];
 
   /// Modulation label per MCS (PWA MCS_MOD).
   static const List<String> mcsMod = [
-    'BPSK ½', 'QPSK ½', 'QPSK ¾', '16-QAM ½', '16-QAM ¾',
-    '64-QAM ⅔', '64-QAM ¾', '64-QAM ⅚', '256-QAM ¾', '256-QAM ⅚',
-    '1024-QAM ¾', '1024-QAM ⅚', '4096-QAM ¾', '4096-QAM ⅚',
+    'BPSK ½',
+    'QPSK ½',
+    'QPSK ¾',
+    '16-QAM ½',
+    '16-QAM ¾',
+    '64-QAM ⅔',
+    '64-QAM ¾',
+    '64-QAM ⅚',
+    '256-QAM ¾',
+    '256-QAM ⅚',
+    '1024-QAM ¾',
+    '1024-QAM ⅚',
+    '4096-QAM ¾',
+    '4096-QAM ⅚',
   ];
 
   /// Long MCS label (index — modulation) for the MCS select (PWA mcsLabels).
@@ -248,10 +272,7 @@ class _ThroughputCalcScreenState extends State<ThroughputCalcScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Throughput'),
-        toolbarHeight: 64,
-      ),
+      appBar: AppBar(title: const Text('Throughput'), toolbarHeight: 64),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -280,7 +301,9 @@ class _ThroughputCalcScreenState extends State<ThroughputCalcScreen> {
                       // the input card. Self-collapses when no graphic is
                       // bundled, so the 24px gap below it disappears too.
                       ConceptGraphicBand(
-                          toolId: 'throughput-calc', isDesktop: isDesktop),
+                        toolId: 'throughput-calc',
+                        isDesktop: isDesktop,
+                      ),
                       if (ToolAssets.hasGraphic('throughput-calc'))
                         const SizedBox(height: AppSpacing.md),
                       _inputCard(text, mono),
@@ -330,9 +353,7 @@ class _ThroughputCalcScreenState extends State<ThroughputCalcScreen> {
       field: AppSelect<WifiStd>(
         value: _std,
         semanticLabel: 'Wi-Fi standard',
-        items: WifiStd.values
-            .map((WifiStd s) => (s, _stdLabel(s)))
-            .toList(),
+        items: WifiStd.values.map((WifiStd s) => (s, _stdLabel(s))).toList(),
         onChanged: _onStdChanged,
       ),
     );
@@ -435,26 +456,33 @@ class _ThroughputCalcScreenState extends State<ThroughputCalcScreen> {
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            SelectableText(
-              _formatRate(real),
-              style: mono.outputXL.copyWith(
-                color: real == null
-                    ? AppColors.textTertiary
-                    : AppColors.primary,
+        // One SR node for the headline: "Est. real throughput: 720 Mbps" (or
+        // "not calculated"), instead of value/unit fragments (Vera finding #6).
+        Semantics(
+          label: 'Estimated real throughput',
+          value: real == null ? 'not calculated' : '${_formatRate(real)} Mbps',
+          excludeSemantics: true,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              SelectableText(
+                _formatRate(real),
+                style: mono.outputXL.copyWith(
+                  color: real == null
+                      ? AppColors.textTertiary
+                      : AppColors.primary,
+                ),
               ),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              'Mbps',
-              style: text.labelLarge?.copyWith(
-                color: AppColors.textSecondary,
+              const SizedBox(width: AppSpacing.xxs),
+              Text(
+                'Mbps',
+                style: text.labelLarge?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -467,28 +495,33 @@ class _ThroughputCalcScreenState extends State<ThroughputCalcScreen> {
     String value,
   ) {
     final bool blank = value == '—';
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
-      children: [
-        Text(
-          label,
-          style: text.labelMedium?.copyWith(
-            color: AppColors.textTertiary,
+    // One SR node per detail row: "PHY rate: 960 Mbps" (or "not calculated"),
+    // instead of label and value fragments (Vera finding #6).
+    return Semantics(
+      label: label,
+      value: blank ? 'not calculated' : value,
+      excludeSemantics: true,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: [
+          Text(
+            label,
+            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
           ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Flexible(
-          child: SelectableText(
-            value,
-            textAlign: TextAlign.right,
-            style: mono.outputMedium.copyWith(
-              color: blank ? AppColors.textTertiary : AppColors.textPrimary,
+          const SizedBox(width: AppSpacing.sm),
+          Flexible(
+            child: SelectableText(
+              value,
+              textAlign: TextAlign.right,
+              style: mono.outputMedium.copyWith(
+                color: blank ? AppColors.textTertiary : AppColors.textPrimary,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -525,9 +558,7 @@ class _ThroughputCalcScreenState extends State<ThroughputCalcScreen> {
             'Nsd is data subcarriers (standard × width); bits/symbol is the '
             'MCS modulation and coding. Efficiency is an approximate real/PHY '
             'factor per standard (HT 0.70, VHT 0.72, HE 0.76, EHT 0.80).',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textTertiary,
-            ),
+            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
           ),
         ],
       ),

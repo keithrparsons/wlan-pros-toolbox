@@ -13,5 +13,7 @@
 	     blocks Socket.connect and the DoH HTTPS request. -->
 	<key>com.apple.security.network.client</key>
 	<true/>
+	<key>com.apple.security.personal-information.location</key>
+	<true/>
 </dict>
 </plist>

@@ -26,6 +26,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -52,7 +53,8 @@ class WavelengthScreen extends StatefulWidget {
   static double wavelengthMeters(double freqMHz) => 300.0 / freqMHz;
 
   /// Wavelength in centimeters (meters * 100).
-  static double wavelengthCm(double freqMHz) => wavelengthMeters(freqMHz) * 100.0;
+  static double wavelengthCm(double freqMHz) =>
+      wavelengthMeters(freqMHz) * 100.0;
 
   /// Wavelength in feet (meters * 3.28084).
   static double wavelengthFeet(double freqMHz) =>
@@ -128,10 +130,7 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Wavelength'),
-        toolbarHeight: 64,
-      ),
+      appBar: AppBar(title: const Text('Wavelength'), toolbarHeight: 64),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -160,7 +159,9 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
                       // the input card. Self-collapses when no graphic is
                       // bundled, so the 24px gap below it disappears too.
                       ConceptGraphicBand(
-                          toolId: 'wavelength', isDesktop: isDesktop),
+                        toolId: 'wavelength',
+                        isDesktop: isDesktop,
+                      ),
                       if (ToolAssets.hasGraphic('wavelength'))
                         const SizedBox(height: AppSpacing.md),
                       _inputCard(text, mono),
@@ -203,26 +204,26 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
                   field: TextField(
                     controller: _freqCtrl,
                     focusNode: _freqFocus,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     inputFormatters: _unsignedDecimal,
                     onChanged: (_) => _recompute(),
                     textInputAction: TextInputAction.done,
                     autocorrect: false,
                     enableSuggestions: false,
-                    style: mono.outputLarge.copyWith(fontSize: 20),
+                    style: mono.outputLarge.copyWith(
+                      fontSize: AppTextSize.fieldNumeric,
+                    ),
                     cursorColor: AppColors.primary,
                     decoration: const InputDecoration(hintText: '2400'),
                   ),
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
-              _UnitToggle<WlFreqUnit>(
+              AppToggle<WlFreqUnit>(
                 value: _freqUnit,
-                options: const [
-                  (WlFreqUnit.mhz, 'MHz'),
-                  (WlFreqUnit.ghz, 'GHz'),
-                ],
+                items: const [(WlFreqUnit.mhz, 'MHz'), (WlFreqUnit.ghz, 'GHz')],
                 onChanged: (u) {
                   setState(() => _freqUnit = u);
                   _recompute();
@@ -250,7 +251,9 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
         ),
         const SizedBox(height: AppSpacing.xs),
         _resultRow(
-          _freqMHz == null ? null : WavelengthScreen.wavelengthMeters(_freqMHz!),
+          _freqMHz == null
+              ? null
+              : WavelengthScreen.wavelengthMeters(_freqMHz!),
           4,
           'm',
           text,
@@ -275,7 +278,9 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
         ),
         const SizedBox(height: AppSpacing.xs),
         _resultRow(
-          _freqMHz == null ? null : WavelengthScreen.wavelengthInches(_freqMHz!),
+          _freqMHz == null
+              ? null
+              : WavelengthScreen.wavelengthInches(_freqMHz!),
           3,
           'in',
           text,
@@ -294,23 +299,51 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
     bool large = false,
   }) {
     final TextStyle valueStyle = large ? mono.outputXL : mono.outputLarge;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
-      children: [
-        SelectableText(
-          _fmt(value, decimals),
-          style: valueStyle.copyWith(
-            color: value == null ? AppColors.textTertiary : AppColors.primary,
+    // One SR node per unit row: "Wavelength in meters: 0.1250 m" (or "not
+    // calculated"), instead of value and unit as separate fragments under the
+    // single "Wavelength" heading (Vera finding #6).
+    final String unitName = _unitName(unit);
+    return Semantics(
+      label: 'Wavelength in $unitName',
+      value: value == null
+          ? 'not calculated'
+          : '${_fmt(value, decimals)} $unit',
+      excludeSemantics: true,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: [
+          SelectableText(
+            _fmt(value, decimals),
+            style: valueStyle.copyWith(
+              color: value == null ? AppColors.textTertiary : AppColors.primary,
+            ),
           ),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          unit,
-          style: text.labelLarge?.copyWith(color: AppColors.textSecondary),
-        ),
-      ],
+          const SizedBox(width: AppSpacing.xxs),
+          Text(
+            unit,
+            style: text.labelLarge?.copyWith(color: AppColors.textSecondary),
+          ),
+        ],
+      ),
     );
+  }
+
+  /// Spoken name for a wavelength unit symbol, so the screen reader announces
+  /// "meters" rather than the bare "m" (Vera finding #6).
+  static String _unitName(String unit) {
+    switch (unit) {
+      case 'm':
+        return 'meters';
+      case 'cm':
+        return 'centimeters';
+      case 'ft':
+        return 'feet';
+      case 'in':
+        return 'inches';
+      default:
+        return unit;
+    }
   }
 
   Widget _formulaCard(TextTheme text, AppMonoText mono) {
@@ -377,7 +410,7 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
           const SizedBox(height: AppSpacing.xs),
           ...refs.map((row) {
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -414,68 +447,6 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
             );
           }),
         ],
-      ),
-    );
-  }
-}
-
-/// Segmented unit toggle for the frequency input. Holds the §8.3 minimum touch
-/// target. Identical pattern to the FSPL screen toggle.
-class _UnitToggle<T> extends StatelessWidget {
-  const _UnitToggle({
-    required this.value,
-    required this.options,
-    required this.onChanged,
-  });
-
-  final T value;
-  final List<(T, String)> options;
-  final ValueChanged<T> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme text = Theme.of(context).textTheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.inputFill,
-        borderRadius: BorderRadius.circular(AppRadius.control),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: options.map((opt) {
-          final bool selected = opt.$1 == value;
-          return Semantics(
-            button: true,
-            selected: selected,
-            label: opt.$2,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(AppRadius.control),
-              onTap: () => onChanged(opt.$1),
-              child: Container(
-                constraints: const BoxConstraints(
-                  minHeight: AppSpacing.minTouchTarget,
-                ),
-                alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: selected ? AppColors.primary : Colors.transparent,
-                  borderRadius: BorderRadius.circular(AppRadius.control),
-                ),
-                child: Text(
-                  opt.$2,
-                  style: text.labelLarge?.copyWith(
-                    color: selected
-                        ? AppColors.secondary
-                        : AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
       ),
     );
   }

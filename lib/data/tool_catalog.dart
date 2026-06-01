@@ -285,12 +285,30 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         isLive: true,
       ),
       ToolEntry(
+        id: 'network-discovery',
+        title: 'Network Discovery',
+        description:
+            'Find live hosts on your network — name, services, device type, '
+            'and vendor (desktop)',
+        routeName: '/tools/network-discovery',
+        isLive: true,
+      ),
+      ToolEntry(
         id: 'net-quality',
         title: 'Network Quality',
         description:
             'Latency, jitter, loss, throughput, responsiveness, and site '
             'reachability',
         routeName: '/tools/net-quality',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'wifi-info',
+        title: 'Wi-Fi Information',
+        description:
+            'Live Wi-Fi link details: SSID, BSSID, RSSI, noise, SNR, channel, '
+            'width, band, standard (macOS)',
+        routeName: '/tools/wifi-info',
         isLive: true,
       ),
       ToolEntry(

@@ -57,8 +57,8 @@ import '../screens/tools/network/http_header_screen.dart';
 import '../screens/tools/network/interface_info_screen.dart';
 import '../screens/tools/network/icmp_ping_screen.dart';
 import '../screens/tools/network/ip_geo_screen.dart';
-import '../screens/tools/network/lan_discovery_debug_screen.dart';
 import '../screens/tools/network/mac_oui_screen.dart';
+import '../screens/tools/network/network_discovery_screen.dart';
 import '../screens/tools/network/mobile_traceroute_screen.dart';
 import '../screens/tools/network/net_quality_screen.dart';
 import '../screens/tools/network/packet_sender_screen.dart';
@@ -71,6 +71,7 @@ import '../screens/tools/network/ssl_inspect_screen.dart';
 import '../screens/tools/network/traceroute_screen.dart';
 import '../screens/tools/network/wake_on_lan_screen.dart';
 import '../screens/tools/network/whois_screen.dart';
+import '../screens/tools/network/wifi_info_screen.dart';
 import '../screens/tools/calculators/hex_ascii_screen.dart';
 import '../screens/tools/command/cli_commands_screen.dart';
 import '../screens/tools/command/linux_wlan_commands_screen.dart';
@@ -144,6 +145,7 @@ class AppRouter {
   static const String icmpPing = '/tools/icmp-ping';
   static const String pingSweep = '/tools/ping-sweep';
   static const String netQuality = '/tools/net-quality';
+  static const String wifiInfo = '/tools/wifi-info';
   static const String traceroute = '/tools/traceroute';
   static const String mobileTraceroute = '/tools/mobile-traceroute';
   static const String sslInspect = '/tools/ssl-inspect';
@@ -157,11 +159,10 @@ class AppRouter {
   static const String packetSender = '/tools/packet-sender';
   static const String ipv4Subnet = '/tools/ipv4-subnet';
 
-  // SPIKE-HSD-01 — THROWAWAY dev-only route for the LAN Discovery prototype.
-  // Deliberately NOT in the tool catalog, so it never appears in the shipped
-  // home grid. Reach it with Navigator.pushNamed(context, AppRoutes.
-  // lanDiscoveryDebug). Deleted with the spike when TICKET-HSD-02 starts.
-  static const String lanDiscoveryDebug = '/dev/lan-discovery';
+  /// Network Discovery — LAN host + service scan (TICKET-HSD-02). The id
+  /// `network-discovery` is permanent (backs this route, the catalog entry, the
+  /// icon/graphic assets, and tests; never renamed).
+  static const String networkDiscovery = '/tools/network-discovery';
 
   // Quick Reference category — offline lookup tables (bundled assets, all
   // platforms incl. web).
@@ -240,6 +241,13 @@ class AppRouter {
     // assets/tool-icons/net-quality.svg is bundled, so no asset is required for
     // this row to render correctly.
     netQuality: (_) => const NetQualityScreen(),
+    // TICKET-04: the consolidated cross-platform Wi-Fi Information tool
+    // (macOS CoreWLAN + iOS companion-Shortcut behind one screen + normalized
+    // model). The bespoke 'wifi-info' tool icon now ships at
+    // assets/tool-icons/wifi-info.svg (gauge + Wi-Fi fan). No concept graphic
+    // yet: the in-screen ConceptGraphicBand collapses to an empty SizedBox when
+    // assets/tool-graphics/wifi-info.svg is absent, so the screen still renders.
+    wifiInfo: (_) => const WifiInfoScreen(),
     traceroute: (_) => const TracerouteScreen(),
     mobileTraceroute: (_) => const MobileTracerouteScreen(),
     sslInspect: (_) => const SslInspectScreen(),
@@ -252,8 +260,7 @@ class AppRouter {
     macOui: (_) => const MacOuiScreen(),
     packetSender: (_) => const PacketSenderScreen(),
     ipv4Subnet: (_) => const SubnetCalcScreen(),
-    // SPIKE-HSD-01 throwaway debug route (not in the catalog; dev-only).
-    lanDiscoveryDebug: (_) => const LanDiscoveryDebugScreen(),
+    networkDiscovery: (_) => const NetworkDiscoveryScreen(),
     portReference: (_) => const PortReferenceScreen(),
     osiModel: (_) => const OsiModelScreen(),
     hexAscii: (_) => const HexAsciiScreen(),

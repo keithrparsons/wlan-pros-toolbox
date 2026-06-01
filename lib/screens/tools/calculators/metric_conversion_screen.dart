@@ -188,10 +188,7 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Metric Conversion'),
-        toolbarHeight: 64,
-      ),
+      appBar: AppBar(title: const Text('Metric Conversion'), toolbarHeight: 64),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -220,7 +217,9 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
                       // the input card. Self-collapses when no graphic is
                       // bundled, so the 24px gap below it disappears too.
                       ConceptGraphicBand(
-                          toolId: 'metric-conversion', isDesktop: isDesktop),
+                        toolId: 'metric-conversion',
+                        isDesktop: isDesktop,
+                      ),
                       if (ToolAssets.hasGraphic('metric-conversion'))
                         const SizedBox(height: AppSpacing.md),
                       _converterCard(text, mono),
@@ -270,7 +269,9 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
                     textInputAction: TextInputAction.done,
                     autocorrect: false,
                     enableSuggestions: false,
-                    style: mono.outputLarge.copyWith(fontSize: 20),
+                    style: mono.outputLarge.copyWith(
+                      fontSize: AppTextSize.fieldNumeric,
+                    ),
                     cursorColor: AppColors.primary,
                     decoration: const InputDecoration(hintText: '1'),
                   ),
@@ -329,29 +330,39 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            Flexible(
-              child: SelectableText(
-                _formatResult(_result, _toUnit),
-                maxLines: 1,
-                style: mono.outputXL.copyWith(
-                  color: _result == null
-                      ? AppColors.textTertiary
-                      : AppColors.primary,
+        // One SR node: "Result: 1.609 km" (or "not calculated"), instead of
+        // value and unit symbol as separate fragments (Vera finding #6).
+        Semantics(
+          label: 'Result',
+          value: _result == null
+              ? 'not calculated'
+              : '${_formatResult(_result, _toUnit)} '
+                    '${MetricConversionScreen.symbolFor(_toUnit)}',
+          excludeSemantics: true,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Flexible(
+                child: SelectableText(
+                  _formatResult(_result, _toUnit),
+                  maxLines: 1,
+                  style: mono.outputXL.copyWith(
+                    color: _result == null
+                        ? AppColors.textTertiary
+                        : AppColors.primary,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              MetricConversionScreen.symbolFor(_toUnit),
-              style: text.labelLarge?.copyWith(
-                color: AppColors.textSecondary,
+              const SizedBox(width: AppSpacing.xxs),
+              Text(
+                MetricConversionScreen.symbolFor(_toUnit),
+                style: text.labelLarge?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -389,7 +400,7 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
           const SizedBox(height: AppSpacing.xs),
           ...refs.map((row) {
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -421,4 +432,3 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
     );
   }
 }
-

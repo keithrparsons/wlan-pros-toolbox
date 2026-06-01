@@ -32,6 +32,7 @@ import '../../../theme/app_typography.dart';
 import '../../../widgets/app_select.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
+import 'reference_row_semantics.dart';
 
 /// 802.11 standard shown in the MCS table, mirroring the PWA tab data-tab
 /// values (n / ac / ax).
@@ -379,24 +380,57 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
           DataColumn(label: Text(c), numeric: true),
       ],
       rows: data.rows.map((McsRow row) {
+        // DataTable renders each cell as its own column node; without grouping
+        // a screen reader reads "0", "BPSK", "1/2", "8.6"… as disconnected
+        // nodes and can't tell which rates belong to which MCS. Label the first
+        // (MCS) cell with the full row summary and exclude the rest. (Vera
+        // F-02.) The rate clause reflects the live std + spatial-stream choice.
+        final List<String?> rateClauses = <String?>[];
+        for (int i = 0; i < data.columns.length; i++) {
+          final double? scaled = McsIndexScreen.rate(
+            std: _std,
+            mcs: row.mcs,
+            columnIndex: i,
+            spatialStreams: _ss,
+          );
+          if (scaled == null) continue;
+          rateClauses.add('${data.columns[i]} ${_formatRate(scaled)} megabits');
+        }
+        final String summary = rowLabel('MCS ${row.mcs}', <String?>[
+          row.modulation,
+          'code rate ${row.codeRate}',
+          ...rateClauses,
+        ]);
         return DataRow(
           cells: [
             DataCell(
-              Text(
-                '${row.mcs}',
-                style: mono.outputMedium.copyWith(color: AppColors.primary),
+              Semantics(
+                label: summary,
+                container: true,
+                child: ExcludeSemantics(
+                  child: Text(
+                    '${row.mcs}',
+                    style: mono.outputMedium.copyWith(color: AppColors.primary),
+                  ),
+                ),
               ),
             ),
             DataCell(
-              Text(
-                row.modulation,
-                style: text.bodyMedium?.copyWith(color: AppColors.textPrimary),
+              ExcludeSemantics(
+                child: Text(
+                  row.modulation,
+                  style:
+                      text.bodyMedium?.copyWith(color: AppColors.textPrimary),
+                ),
               ),
             ),
             DataCell(
-              Text(
-                row.codeRate,
-                style: mono.inlineCode.copyWith(color: AppColors.textSecondary),
+              ExcludeSemantics(
+                child: Text(
+                  row.codeRate,
+                  style:
+                      mono.inlineCode.copyWith(color: AppColors.textSecondary),
+                ),
               ),
             ),
             for (int i = 0; i < row.ratesPerSs.length; i++)
@@ -416,12 +450,14 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
     );
     final bool na = scaled == null;
     return DataCell(
-      Align(
-        alignment: Alignment.centerRight,
-        child: Text(
-          _formatRate(scaled),
-          style: mono.outputMedium.copyWith(
-            color: na ? AppColors.textTertiary : AppColors.textPrimary,
+      ExcludeSemantics(
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            _formatRate(scaled),
+            style: mono.outputMedium.copyWith(
+              color: na ? AppColors.textTertiary : AppColors.textPrimary,
+            ),
           ),
         ),
       ),
