@@ -27,6 +27,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -146,10 +147,7 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Downtilt'),
-        toolbarHeight: 64,
-      ),
+      appBar: AppBar(title: const Text('Downtilt'), toolbarHeight: 64),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -178,7 +176,9 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
                       // the input card. Self-collapses when no graphic is
                       // bundled, so the 24px gap below it disappears too.
                       ConceptGraphicBand(
-                          toolId: 'downtilt', isDesktop: isDesktop),
+                        toolId: 'downtilt',
+                        isDesktop: isDesktop,
+                      ),
                       if (ToolAssets.hasGraphic('downtilt'))
                         const SizedBox(height: AppSpacing.md),
                       _inputCard(text, mono),
@@ -257,14 +257,15 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
             field: TextField(
               controller: controller,
               focusNode: focusNode,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               inputFormatters: _unsignedDecimal,
               onChanged: (_) => _recompute(),
               textInputAction: TextInputAction.done,
               autocorrect: false,
               enableSuggestions: false,
-              style: monoStyle.copyWith(fontSize: 20),
+              style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
               cursorColor: AppColors.primary,
               decoration: InputDecoration(hintText: hintText),
             ),
@@ -277,49 +278,52 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
   }
 
   Widget _resultRow(TextTheme text, AppMonoText mono) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Downtilt angle',
-          style: text.labelMedium?.copyWith(
-            color: AppColors.textSecondary,
-            letterSpacing: 0.4,
+    // One SR node: "Downtilt angle: 3.2 degrees" (or "not calculated"), instead
+    // of value/unit/label fragments (Vera finding #6).
+    final bool blank = _angleDeg == null;
+    return Semantics(
+      label: 'Downtilt angle',
+      value: blank ? 'not calculated' : '${_formatAngle(_angleDeg)} degrees',
+      excludeSemantics: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Downtilt angle',
+            style: text.labelMedium?.copyWith(
+              color: AppColors.textSecondary,
+              letterSpacing: 0.4,
+            ),
           ),
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            SelectableText(
-              _formatAngle(_angleDeg),
-              style: mono.outputXL.copyWith(
-                color: _angleDeg == null
-                    ? AppColors.textTertiary
-                    : AppColors.primary,
+          const SizedBox(height: AppSpacing.xs),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              SelectableText(
+                _formatAngle(_angleDeg),
+                style: mono.outputXL.copyWith(
+                  color: blank ? AppColors.textTertiary : AppColors.primary,
+                ),
               ),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              '°',
-              style: text.labelLarge?.copyWith(
-                color: AppColors.textSecondary,
+              const SizedBox(width: AppSpacing.xxs),
+              Text(
+                '°',
+                style: text.labelLarge?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 
   Widget _heightUnitSelector(TextTheme text) {
-    return _UnitToggle<HeightUnit>(
+    return AppToggle<HeightUnit>(
       value: _heightUnit,
-      options: const [
-        (HeightUnit.m, 'm'),
-        (HeightUnit.ft, 'ft'),
-      ],
+      items: const [(HeightUnit.m, 'm'), (HeightUnit.ft, 'ft')],
       onChanged: (u) {
         setState(() => _heightUnit = u);
         _recompute();
@@ -328,9 +332,9 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
   }
 
   Widget _coverageUnitSelector(TextTheme text) {
-    return _UnitToggle<CoverageUnit>(
+    return AppToggle<CoverageUnit>(
       value: _coverageUnit,
-      options: const [
+      items: const [
         (CoverageUnit.m, 'm'),
         (CoverageUnit.ft, 'ft'),
         (CoverageUnit.km, 'km'),
@@ -389,9 +393,7 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
           Text(
             'Height and coverage in meters. The angle aims the beam center at '
             'the coverage radius on the ground.',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textTertiary,
-            ),
+            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
           ),
         ],
       ),
@@ -464,7 +466,7 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
           ),
           ...refs.map((row) {
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -501,68 +503,6 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
             );
           }),
         ],
-      ),
-    );
-  }
-}
-
-/// Segmented unit toggle for an input row. Holds to the §8.3 minimum touch
-/// target and uses ChoiceChip-style selection without inventing new tokens.
-class _UnitToggle<T> extends StatelessWidget {
-  const _UnitToggle({
-    required this.value,
-    required this.options,
-    required this.onChanged,
-  });
-
-  final T value;
-  final List<(T, String)> options;
-  final ValueChanged<T> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme text = Theme.of(context).textTheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.inputFill,
-        borderRadius: BorderRadius.circular(AppRadius.control),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: options.map((opt) {
-          final bool selected = opt.$1 == value;
-          return Semantics(
-            button: true,
-            selected: selected,
-            label: opt.$2,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(AppRadius.control),
-              onTap: () => onChanged(opt.$1),
-              child: Container(
-                constraints: const BoxConstraints(
-                  minHeight: AppSpacing.minTouchTarget,
-                ),
-                alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: selected ? AppColors.primary : Colors.transparent,
-                  borderRadius: BorderRadius.circular(AppRadius.control),
-                ),
-                child: Text(
-                  opt.$2,
-                  style: text.labelLarge?.copyWith(
-                    color: selected
-                        ? AppColors.secondary
-                        : AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
       ),
     );
   }

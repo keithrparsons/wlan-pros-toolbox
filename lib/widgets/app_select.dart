@@ -108,7 +108,11 @@ class AppSelect<T> extends StatelessWidget {
     final Color chevronColor;
 
     if (!enabled) {
-      borderColor = AppColors.disabledFill;
+      // §8.14 States table (border corrected 2026-06-01, Vera finding #4): the
+      // disabled border is `borderStrong` (#808080) = 3.63:1 on the #2A2A2A
+      // disabled fill (SC 1.4.11), not `disabledFill` — that was ~1.1:1,
+      // imperceptible, leaving the disabled control with no visible boundary.
+      borderColor = AppColors.borderStrong;
       borderWidth = 1;
       fillColor = AppColors.disabledFill;
       valueColor = AppColors.textDisabled;
@@ -130,8 +134,8 @@ class AppSelect<T> extends StatelessWidget {
     // The value text style: §8.4 field text — body / IBM Plex Sans / textPrimary
     // (weight 500 acceptable for short unit symbols, matching the prior
     // `_UnitMenu`). Disabled / error recolor handled via `valueColor`.
-    final TextStyle valueStyle =
-        (text.labelLarge ?? const TextStyle()).copyWith(color: valueColor);
+    final TextStyle valueStyle = (text.labelLarge ?? const TextStyle())
+        .copyWith(color: valueColor);
 
     final Widget control = _SelectControl<T>(
       value: value,
@@ -144,10 +148,13 @@ class AppSelect<T> extends StatelessWidget {
       valueStyle: valueStyle,
       chevronColor: chevronColor,
       minWidth: minWidth,
-      menuItemStyle: (text.bodyLarge ?? const TextStyle())
-          .copyWith(color: AppColors.textPrimary),
-      selectedItemStyle: (text.bodyLarge ?? const TextStyle())
-          .copyWith(color: AppColors.primary, fontWeight: FontWeight.w500),
+      menuItemStyle: (text.bodyLarge ?? const TextStyle()).copyWith(
+        color: AppColors.textPrimary,
+      ),
+      selectedItemStyle: (text.bodyLarge ?? const TextStyle()).copyWith(
+        color: AppColors.primary,
+        fontWeight: FontWeight.w500,
+      ),
     );
 
     // Semantics: announce name, button role, and current selection value.
@@ -171,8 +178,9 @@ class AppSelect<T> extends StatelessWidget {
         const SizedBox(height: AppSpacing.xs),
         Text(
           errorText!,
-          style: (text.labelSmall ?? const TextStyle())
-              .copyWith(color: AppColors.statusDanger),
+          style: (text.labelSmall ?? const TextStyle()).copyWith(
+            color: AppColors.statusDanger,
+          ),
         ),
       ],
     );
@@ -232,8 +240,9 @@ class _SelectControlState<T> extends State<_SelectControl<T>> {
     final bool isIdleBorder = widget.borderColor == AppColors.borderStrong;
     final bool active = widget.enabled && (_open || _focused) && isIdleBorder;
 
-    final Color effectiveBorder =
-        active ? AppColors.primary : widget.borderColor;
+    final Color effectiveBorder = active
+        ? AppColors.primary
+        : widget.borderColor;
     final double effectiveWidth = active ? 2 : widget.borderWidth;
 
     return Container(
@@ -319,8 +328,9 @@ class _SelectControlState<T> extends State<_SelectControl<T>> {
                         item.$2,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style:
-                            selected ? widget.selectedItemStyle : widget.menuItemStyle,
+                        style: selected
+                            ? widget.selectedItemStyle
+                            : widget.menuItemStyle,
                       ),
                     ),
                     // Selected row carries a lime check glyph in addition to the

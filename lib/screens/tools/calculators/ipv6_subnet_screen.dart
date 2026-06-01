@@ -48,16 +48,16 @@ class Ipv6Result {
     required this.last,
     required this.hosts,
     required this.type,
-  })  : error = null;
+  }) : error = null;
 
   const Ipv6Result.invalid(this.error)
-      : expanded = '',
-        compressed = '',
-        network = '',
-        first = '',
-        last = '',
-        hosts = '',
-        type = '';
+    : expanded = '',
+      compressed = '',
+      network = '',
+      first = '',
+      last = '',
+      hosts = '',
+      type = '';
 
   /// Full 8-group, 4-hex-digit form (PWA ipv6-expanded).
   final String expanded;
@@ -107,18 +107,22 @@ class Ipv6SubnetScreen extends StatefulWidget {
         throw const FormatException('multiple "::" runs');
       }
       final List<String> halves = addr.split('::');
-      final List<String> left =
-          halves[0].isEmpty ? <String>[] : halves[0].split(':');
-      final List<String> right =
-          halves[1].isEmpty ? <String>[] : halves[1].split(':');
+      final List<String> left = halves[0].isEmpty
+          ? <String>[]
+          : halves[0].split(':');
+      final List<String> right = halves[1].isEmpty
+          ? <String>[]
+          : halves[1].split(':');
       final int missing = 8 - left.length - right.length;
       if (missing < 1) {
         throw const FormatException('"::" with no zero groups to fill');
       }
       final List<String> mid = List<String>.filled(missing, '0000');
-      return <String>[...left, ...mid, ...right]
-          .map((String g) => g.padLeft(4, '0'))
-          .join(':');
+      return <String>[
+        ...left,
+        ...mid,
+        ...right,
+      ].map((String g) => g.padLeft(4, '0')).join(':');
     }
     return addr.split(':').map((String g) => g.padLeft(4, '0')).join(':');
   }
@@ -154,8 +158,10 @@ class Ipv6SubnetScreen extends StatefulWidget {
         ...parts.sublist(bestStart + bestLen),
       ];
       final String joined = parts
-          .map((String? p) =>
-              p == null ? '' : BigInt.parse(p, radix: 16).toRadixString(16))
+          .map(
+            (String? p) =>
+                p == null ? '' : BigInt.parse(p, radix: 16).toRadixString(16),
+          )
           .join(':')
           .replaceAll(RegExp(r'^:|:$'), '')
           .replaceFirst(':::', '::');
@@ -292,8 +298,9 @@ class Ipv6SubnetScreen extends StatefulWidget {
 }
 
 class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
-  final TextEditingController _addrCtrl =
-      TextEditingController(text: '2001:db8::1');
+  final TextEditingController _addrCtrl = TextEditingController(
+    text: '2001:db8::1',
+  );
   final TextEditingController _prefixCtrl = TextEditingController(text: '32');
 
   Ipv6Result? _result;
@@ -305,8 +312,8 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
   ];
   static final List<TextInputFormatter> _prefixFormatters =
       <TextInputFormatter>[
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9/]')),
-  ];
+        FilteringTextInputFormatter.allow(RegExp(r'[0-9/]')),
+      ];
 
   @override
   void initState() {
@@ -389,7 +396,9 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
                   // the input card. Self-collapses when no graphic is
                   // bundled, so the 24px gap below it disappears too.
                   ConceptGraphicBand(
-                      toolId: 'ipv6-subnet', isDesktop: isDesktop),
+                    toolId: 'ipv6-subnet',
+                    isDesktop: isDesktop,
+                  ),
                   if (ToolAssets.hasGraphic('ipv6-subnet'))
                     const SizedBox(height: AppSpacing.md),
                   _formCard(context),
@@ -436,9 +445,7 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
               textInputAction: TextInputAction.next,
               inputFormatters: _addrFormatters,
               cursorColor: AppColors.primary,
-              decoration: const InputDecoration(
-                hintText: '2001:db8::1',
-              ),
+              decoration: const InputDecoration(hintText: '2001:db8::1'),
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -487,20 +494,61 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
-          ValueRow(
-            label: 'Network',
-            value: r.network,
-            mono: true,
-            emphasize: true,
+          // Each readout is wrapped so a screen reader announces "Network:
+          // 2001:db8::/64" as one node instead of the label and value as
+          // separate fragments (Vera finding #6). The shared ValueRow widget
+          // lives outside calculators/, so the wrap is applied at the call site.
+          _semanticRow(
+            'Network',
+            r.network,
+            ValueRow(
+              label: 'Network',
+              value: r.network,
+              mono: true,
+              emphasize: true,
+            ),
           ),
-          ValueRow(label: 'Expanded', value: r.expanded, mono: true),
-          ValueRow(label: 'Compressed', value: r.compressed, mono: true),
-          ValueRow(label: 'First', value: r.first, mono: true),
-          ValueRow(label: 'Last', value: r.last, mono: true),
-          ValueRow(label: 'Addresses', value: r.hosts, mono: true),
-          ValueRow(label: 'Type', value: r.type),
+          _semanticRow(
+            'Expanded',
+            r.expanded,
+            ValueRow(label: 'Expanded', value: r.expanded, mono: true),
+          ),
+          _semanticRow(
+            'Compressed',
+            r.compressed,
+            ValueRow(label: 'Compressed', value: r.compressed, mono: true),
+          ),
+          _semanticRow(
+            'First',
+            r.first,
+            ValueRow(label: 'First', value: r.first, mono: true),
+          ),
+          _semanticRow(
+            'Last',
+            r.last,
+            ValueRow(label: 'Last', value: r.last, mono: true),
+          ),
+          _semanticRow(
+            'Addresses',
+            r.hosts,
+            ValueRow(label: 'Addresses', value: r.hosts, mono: true),
+          ),
+          _semanticRow('Type', r.type, ValueRow(label: 'Type', value: r.type)),
         ],
       ),
+    );
+  }
+
+  /// Wraps a result [ValueRow] so a screen reader announces `<label>: <value>`
+  /// as one node (Vera finding #6). [child] must be the visually-rendered row
+  /// for [label]/[value]; the wrapper only changes the semantics tree.
+  Widget _semanticRow(String label, String? value, Widget child) {
+    final bool blank = value == null || value.trim().isEmpty;
+    return Semantics(
+      label: label,
+      value: blank ? 'not calculated' : value,
+      excludeSemantics: true,
+      child: child,
     );
   }
 
@@ -532,8 +580,9 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
                 const SizedBox(height: 2),
                 Text(
                   message,
-                  style: text.labelMedium
-                      ?.copyWith(color: AppColors.textTertiary),
+                  style: text.labelMedium?.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
                 ),
               ],
             ),

@@ -59,6 +59,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -398,10 +399,7 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('PtP Link Check'),
-        toolbarHeight: 64,
-      ),
+      appBar: AppBar(title: const Text('PtP Link Check'), toolbarHeight: 64),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -430,7 +428,9 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
                       // the input card. Self-collapses when no graphic is
                       // bundled, so the 24px gap below it disappears too.
                       ConceptGraphicBand(
-                          toolId: 'ptp-link', isDesktop: isDesktop),
+                        toolId: 'ptp-link',
+                        isDesktop: isDesktop,
+                      ),
                       if (ToolAssets.hasGraphic('ptp-link'))
                         const SizedBox(height: AppSpacing.md),
                       _inputCard(text, mono),
@@ -600,7 +600,7 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
       textInputAction: TextInputAction.done,
       autocorrect: false,
       enableSuggestions: false,
-      style: monoStyle.copyWith(fontSize: 20),
+      style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
       cursorColor: AppColors.primary,
       decoration: InputDecoration(hintText: hintText),
     );
@@ -625,12 +625,9 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
           ),
         ),
         const SizedBox(width: AppSpacing.sm),
-        _UnitToggle<PtpDistUnit>(
+        AppToggle<PtpDistUnit>(
           value: _distUnit,
-          options: const [
-            (PtpDistUnit.km, 'km'),
-            (PtpDistUnit.mi, 'mi'),
-          ],
+          items: const [(PtpDistUnit.km, 'km'), (PtpDistUnit.mi, 'mi')],
           onChanged: (u) {
             setState(() => _distUnit = u);
             _recompute();
@@ -655,10 +652,10 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
         // Full-word labels ("Horizontal" / "Vertical") are wide; stretch the
         // segmented control to the row width so the two options share the
         // available space instead of overflowing at narrow phone widths.
-        _UnitToggle<PtpPolarization>(
+        AppToggle<PtpPolarization>(
           value: _pol,
           expand: true,
-          options: const [
+          items: const [
             (PtpPolarization.horizontal, 'Horizontal'),
             (PtpPolarization.vertical, 'Vertical'),
           ],
@@ -693,19 +690,37 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
         children: [
           _verdictBlock(text, mono, r),
           const SizedBox(height: AppSpacing.md),
-          _resultRow(text, mono,
-              label: 'EIRP', value: _fmt(r?.eirp, 1), unit: 'dBm'),
+          _resultRow(
+            text,
+            mono,
+            label: 'EIRP',
+            value: _fmt(r?.eirp, 1),
+            unit: 'dBm',
+          ),
           const SizedBox(height: AppSpacing.xs),
-          _resultRow(text, mono,
-              label: 'Free space loss', value: _fmt(r?.fspl, 1), unit: 'dB'),
+          _resultRow(
+            text,
+            mono,
+            label: 'Free space loss',
+            value: _fmt(r?.fspl, 1),
+            unit: 'dB',
+          ),
           const SizedBox(height: AppSpacing.xs),
-          _resultRow(text, mono,
-              label: 'Rain fade', value: _fmt(r?.rainFade, 2), unit: 'dB'),
+          _resultRow(
+            text,
+            mono,
+            label: 'Rain fade',
+            value: _fmt(r?.rainFade, 2),
+            unit: 'dB',
+          ),
           const SizedBox(height: AppSpacing.xs),
-          _resultRow(text, mono,
-              label: 'Received signal',
-              value: _fmt(r?.rxLevel, 1),
-              unit: 'dBm'),
+          _resultRow(
+            text,
+            mono,
+            label: 'Received signal',
+            value: _fmt(r?.rxLevel, 1),
+            unit: 'dBm',
+          ),
         ],
       ),
     );
@@ -725,21 +740,29 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              SelectableText(
-                '—',
-                style: mono.outputXL.copyWith(color: AppColors.textTertiary),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'dB',
-                style:
-                    text.labelLarge?.copyWith(color: AppColors.textSecondary),
-              ),
-            ],
+          // Empty-state readout: one SR node, "not calculated" (Vera finding
+          // #6).
+          Semantics(
+            label: 'Link margin',
+            value: 'not calculated',
+            excludeSemantics: true,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                SelectableText(
+                  '—',
+                  style: mono.outputXL.copyWith(color: AppColors.textTertiary),
+                ),
+                const SizedBox(width: AppSpacing.xxs),
+                Text(
+                  'dB',
+                  style: text.labelLarge?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
@@ -750,8 +773,10 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
       );
     }
 
-    final PtpVerdict verdict =
-        PtpLinkScreen.verdictFor(r.margin, _reqMarginUsed);
+    final PtpVerdict verdict = PtpLinkScreen.verdictFor(
+      r.margin,
+      _reqMarginUsed,
+    );
     final Color statusColor;
     final String word;
     final String detail;
@@ -786,21 +811,30 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
         ),
         const SizedBox(height: AppSpacing.xs),
         // Big margin number in the status color, paired with the word verdict
-        // (never color alone — GL-003 §8.13).
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            SelectableText(
-              _fmt(r.margin, 1),
-              style: mono.outputXL.copyWith(color: statusColor),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              'dB',
-              style: text.labelLarge?.copyWith(color: AppColors.textSecondary),
-            ),
-          ],
+        // (never color alone — GL-003 §8.13). One SR node folds the verdict
+        // word into the value so it never rides on color alone (finding #6):
+        // "Link margin: 8.0 dB, MARGINAL".
+        Semantics(
+          label: 'Link margin',
+          value: '${_fmt(r.margin, 1)} dB, $word',
+          excludeSemantics: true,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              SelectableText(
+                _fmt(r.margin, 1),
+                style: mono.outputXL.copyWith(color: statusColor),
+              ),
+              const SizedBox(width: AppSpacing.xxs),
+              Text(
+                'dB',
+                style: text.labelLarge?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: AppSpacing.sm),
         // Verdict chip: status color + the word, with detail beside it.
@@ -850,31 +884,39 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
     required String value,
     required String unit,
   }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+    // One SR node per row: "EIRP: 36.0 dBm" (or "not calculated"), instead of
+    // label/value/unit fragments (Vera finding #6).
+    return Semantics(
+      label: label,
+      value: value == '—' ? 'not calculated' : '$value $unit',
+      excludeSemantics: true,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+            ),
           ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        SelectableText(
-          value,
-          style: mono.inlineCode.copyWith(
-            color:
-                value == '—' ? AppColors.textTertiary : AppColors.textPrimary,
-            fontWeight: FontWeight.w500,
+          const SizedBox(width: AppSpacing.sm),
+          SelectableText(
+            value,
+            style: mono.inlineCode.copyWith(
+              color: value == '—'
+                  ? AppColors.textTertiary
+                  : AppColors.textPrimary,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          unit,
-          style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
-        ),
-      ],
+          const SizedBox(width: AppSpacing.xxs),
+          Text(
+            unit,
+            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+          ),
+        ],
+      ),
     );
   }
 
@@ -923,84 +965,6 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
             style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Segmented unit toggle for an input row. Holds to the §8.3 minimum touch
-/// target and uses ChoiceChip-style selection without inventing new tokens.
-/// Copied in pattern from fspl_screen.dart's _UnitToggle.
-class _UnitToggle<T> extends StatelessWidget {
-  const _UnitToggle({
-    required this.value,
-    required this.options,
-    required this.onChanged,
-    this.expand = false,
-  });
-
-  final T value;
-  final List<(T, String)> options;
-  final ValueChanged<T> onChanged;
-
-  /// When true, the control stretches to fill its parent's width and each
-  /// option shares the space equally. Used for wide, full-word labels
-  /// (e.g. Horizontal / Vertical) that would otherwise overflow a narrow
-  /// phone row at intrinsic width. Default false keeps the compact,
-  /// intrinsic-width behavior used by the km/mi unit toggles.
-  final bool expand;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme text = Theme.of(context).textTheme;
-
-    Widget buildOption((T, String) opt) {
-      final bool selected = opt.$1 == value;
-      return Semantics(
-        button: true,
-        selected: selected,
-        label: opt.$2,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.control),
-          onTap: () => onChanged(opt.$1),
-          child: Container(
-            constraints: const BoxConstraints(
-              minHeight: AppSpacing.minTouchTarget,
-            ),
-            alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: selected ? AppColors.primary : Colors.transparent,
-              borderRadius: BorderRadius.circular(AppRadius.control),
-            ),
-            child: Text(
-              opt.$2,
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: text.labelLarge?.copyWith(
-                color:
-                    selected ? AppColors.secondary : AppColors.textSecondary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.inputFill,
-        borderRadius: BorderRadius.circular(AppRadius.control),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
-      ),
-      child: Row(
-        mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
-        children: options.map((opt) {
-          final Widget option = buildOption(opt);
-          return expand ? Expanded(child: option) : option;
-        }).toList(),
       ),
     );
   }

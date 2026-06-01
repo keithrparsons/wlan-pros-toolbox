@@ -31,6 +31,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -79,7 +80,8 @@ class FinalPointScreen extends StatefulWidget {
       math.sin(phi1) * math.cos(delta) +
           math.cos(phi1) * math.sin(delta) * math.cos(theta),
     );
-    final double lambda2 = lambda1 +
+    final double lambda2 =
+        lambda1 +
         math.atan2(
           math.sin(theta) * math.sin(delta) * math.cos(phi1),
           math.cos(delta) - math.sin(phi1) * math.sin(phi2),
@@ -113,6 +115,11 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
   // Computed destination, or null when input is empty / invalid.
   DestinationPoint? _result;
 
+  // Set when input is present but a value is out of range, so we show one honest
+  // validity note instead of silently blanking (Vera finding #10 — matches the
+  // Distance & Bearing screen's range-note pattern). Null in the cold state.
+  String? _rangeNote;
+
   // Lat/lon/bearing can be negative; allow a leading minus and decimal point.
   static final List<TextInputFormatter> _signedDecimal = [
     FilteringTextInputFormatter.allow(RegExp(r'[0-9.\-]')),
@@ -143,21 +150,44 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
     final double? brng = _tryParseDouble(_bearingCtrl.text);
     final double? dist = _tryParseDouble(_distCtrl.text);
 
+    // Any field empty / non-numeric → blank, no note (cold state).
     if (lat == null || lon == null || brng == null || dist == null) {
-      setState(() => _result = null);
+      setState(() {
+        _result = null;
+        _rangeNote = null;
+      });
       return;
     }
 
     final double distKm = FinalPointScreen.distToKm(dist, _distUnit);
 
-    // Validation mirrors PWA calcFinalPoint.
-    if (lat.abs() > 90 || lon.abs() > 180 || distKm <= 0) {
-      setState(() => _result = null);
+    // Validation mirrors PWA calcFinalPoint. All fields present but out of
+    // range → blank + a visible note rather than a silent blank (finding #10).
+    if (lat.abs() > 90) {
+      setState(() {
+        _result = null;
+        _rangeNote = 'Latitude must be −90 to 90.';
+      });
+      return;
+    }
+    if (lon.abs() > 180) {
+      setState(() {
+        _result = null;
+        _rangeNote = 'Longitude must be −180 to 180.';
+      });
+      return;
+    }
+    if (distKm <= 0) {
+      setState(() {
+        _result = null;
+        _rangeNote = 'Distance must be greater than 0.';
+      });
       return;
     }
 
     setState(() {
       _result = FinalPointScreen.destination(lat, lon, brng, distKm);
+      _rangeNote = null;
     });
   }
 
@@ -186,10 +216,7 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Final Point'),
-        toolbarHeight: 64,
-      ),
+      appBar: AppBar(title: const Text('Final Point'), toolbarHeight: 64),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -218,7 +245,9 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
                       // the input card. Self-collapses when no graphic is
                       // bundled, so the 24px gap below it disappears too.
                       ConceptGraphicBand(
-                          toolId: 'final-point', isDesktop: isDesktop),
+                        toolId: 'final-point',
+                        isDesktop: isDesktop,
+                      ),
                       if (ToolAssets.hasGraphic('final-point'))
                         const SizedBox(height: AppSpacing.md),
                       _inputCard(text, mono),
@@ -280,6 +309,13 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
           ),
           const SizedBox(height: AppSpacing.sm),
           _distanceRow(text, mono),
+          if (_rangeNote != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              _rangeNote!,
+              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            ),
+          ],
           const SizedBox(height: AppSpacing.md),
           _resultRow(text, mono),
         ],
@@ -313,7 +349,7 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
         textInputAction: TextInputAction.done,
         autocorrect: false,
         enableSuggestions: false,
-        style: monoStyle.copyWith(fontSize: 20),
+        style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
         cursorColor: AppColors.primary,
         decoration: InputDecoration(hintText: hintText),
       ),
@@ -332,23 +368,26 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
             field: TextField(
               controller: _distCtrl,
               focusNode: _distFocus,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               inputFormatters: _unsignedDecimal,
               onChanged: (_) => _recompute(),
               textInputAction: TextInputAction.done,
               autocorrect: false,
               enableSuggestions: false,
-              style: mono.outputLarge.copyWith(fontSize: 20),
+              style: mono.outputLarge.copyWith(
+                fontSize: AppTextSize.fieldNumeric,
+              ),
               cursorColor: AppColors.primary,
               decoration: const InputDecoration(hintText: '10'),
             ),
           ),
         ),
         const SizedBox(width: AppSpacing.sm),
-        _UnitToggle<FpDistUnit>(
+        AppToggle<FpDistUnit>(
           value: _distUnit,
-          options: const [
+          items: const [
             (FpDistUnit.km, 'km'),
             (FpDistUnit.mi, 'mi'),
             (FpDistUnit.m, 'm'),
@@ -398,30 +437,34 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
     TextTheme text,
     AppMonoText mono,
   ) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
-      children: [
-        SizedBox(
-          width: 96,
-          child: Text(
-            label,
-            style: text.labelLarge?.copyWith(
-              color: AppColors.textSecondary,
+    final bool blank = value == null || !value.isFinite;
+    // One SR node per coordinate: "Latitude: 34.052360" (or "not calculated"),
+    // instead of label and value as separate fragments (Vera finding #6).
+    return Semantics(
+      label: label,
+      value: blank ? 'not calculated' : _formatCoord(value),
+      excludeSemantics: true,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: [
+          SizedBox(
+            width: 96,
+            child: Text(
+              label,
+              style: text.labelLarge?.copyWith(color: AppColors.textSecondary),
             ),
           ),
-        ),
-        Expanded(
-          child: SelectableText(
-            _formatCoord(value),
-            style: mono.outputLarge.copyWith(
-              color: value == null
-                  ? AppColors.textTertiary
-                  : AppColors.primary,
+          Expanded(
+            child: SelectableText(
+              _formatCoord(value),
+              style: mono.outputLarge.copyWith(
+                color: blank ? AppColors.textTertiary : AppColors.primary,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -456,73 +499,9 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
           Text(
             'δ = distance / R, θ = bearing. Great-circle destination on a '
             'sphere of radius R = 6371 km.',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textTertiary,
-            ),
+            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Segmented unit toggle for an input row. Holds to the §8.3 minimum touch
-/// target and uses ChoiceChip-style selection without inventing new tokens.
-class _UnitToggle<T> extends StatelessWidget {
-  const _UnitToggle({
-    required this.value,
-    required this.options,
-    required this.onChanged,
-  });
-
-  final T value;
-  final List<(T, String)> options;
-  final ValueChanged<T> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme text = Theme.of(context).textTheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.inputFill,
-        borderRadius: BorderRadius.circular(AppRadius.control),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: options.map((opt) {
-          final bool selected = opt.$1 == value;
-          return Semantics(
-            button: true,
-            selected: selected,
-            label: opt.$2,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(AppRadius.control),
-              onTap: () => onChanged(opt.$1),
-              child: Container(
-                constraints: const BoxConstraints(
-                  minHeight: AppSpacing.minTouchTarget,
-                ),
-                alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: selected ? AppColors.primary : Colors.transparent,
-                  borderRadius: BorderRadius.circular(AppRadius.control),
-                ),
-                child: Text(
-                  opt.$2,
-                  style: text.labelLarge?.copyWith(
-                    color: selected
-                        ? AppColors.secondary
-                        : AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
       ),
     );
   }

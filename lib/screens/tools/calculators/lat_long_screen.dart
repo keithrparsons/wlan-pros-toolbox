@@ -151,9 +151,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
     final double? lat = _tryParseDouble(_latCtrl.text);
     final double? lon = _tryParseDouble(_lonCtrl.text);
     setState(() {
-      _lat = lat == null
-          ? null
-          : LatLongScreen.format(lat, CoordAxis.latitude);
+      _lat = lat == null ? null : LatLongScreen.format(lat, CoordAxis.latitude);
       _lon = lon == null
           ? null
           : LatLongScreen.format(lon, CoordAxis.longitude);
@@ -175,10 +173,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Lat / Long'),
-        toolbarHeight: 64,
-      ),
+      appBar: AppBar(title: const Text('Lat / Long'), toolbarHeight: 64),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -206,7 +201,10 @@ class _LatLongScreenState extends State<LatLongScreen> {
                       // §8.6.2 concept-graphic header band — first child, above
                       // the input card. Self-collapses when no graphic is
                       // bundled, so the 24px gap below it disappears too.
-                      ConceptGraphicBand(toolId: 'lat-long', isDesktop: isDesktop),
+                      ConceptGraphicBand(
+                        toolId: 'lat-long',
+                        isDesktop: isDesktop,
+                      ),
                       if (ToolAssets.hasGraphic('lat-long'))
                         const SizedBox(height: AppSpacing.md),
                       _inputCard(text, mono),
@@ -282,7 +280,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
       textInputAction: TextInputAction.done,
       autocorrect: false,
       enableSuggestions: false,
-      style: monoStyle.copyWith(fontSize: 20),
+      style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
       cursorColor: AppColors.primary,
       decoration: InputDecoration(hintText: hintText),
     );
@@ -324,40 +322,51 @@ class _LatLongScreenState extends State<LatLongScreen> {
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
-        _formatRow('DD', f?.dd, mono),
+        _formatRow(heading, 'DD', f?.dd, mono),
         const SizedBox(height: 4),
-        _formatRow('DDM', f?.ddm, mono),
+        _formatRow(heading, 'DDM', f?.ddm, mono),
         const SizedBox(height: 4),
-        _formatRow('DMS', f?.dms, mono),
+        _formatRow(heading, 'DMS', f?.dms, mono),
       ],
     );
   }
 
-  Widget _formatRow(String tag, String? value, AppMonoText mono) {
+  Widget _formatRow(
+    String heading,
+    String tag,
+    String? value,
+    AppMonoText mono,
+  ) {
     final bool blank = value == null;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Tag column snaps to the 8px base unit (GL-003 §4); 56px holds "DDM".
-        SizedBox(
-          width: 56,
-          child: Text(
-            tag,
-            style: mono.inlineCode.copyWith(
-              color: AppColors.textTertiary,
+    // One SR node per row: "Latitude DD: 40.712800" (or "not calculated"),
+    // instead of tag and value as separate fragments (Vera finding #6). The
+    // heading rides along so the format is unambiguous when read aloud.
+    return Semantics(
+      label: '$heading $tag',
+      value: blank ? 'not calculated' : value,
+      excludeSemantics: true,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Tag column snaps to the 8px base unit (GL-003 §4); 56px holds "DDM".
+          SizedBox(
+            width: 56,
+            child: Text(
+              tag,
+              style: mono.inlineCode.copyWith(color: AppColors.textTertiary),
             ),
           ),
-        ),
-        Expanded(
-          child: SelectableText(
-            blank ? '—' : value,
-            style: mono.inlineCode.copyWith(
-              color: blank ? AppColors.textTertiary : AppColors.primary,
-              fontWeight: blank ? FontWeight.w400 : FontWeight.w500,
+          Expanded(
+            child: SelectableText(
+              blank ? '—' : value,
+              style: mono.inlineCode.copyWith(
+                color: blank ? AppColors.textTertiary : AppColors.primary,
+                fontWeight: blank ? FontWeight.w400 : FontWeight.w500,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -394,7 +403,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
           const SizedBox(height: AppSpacing.xs),
           ...rows.map((row) {
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

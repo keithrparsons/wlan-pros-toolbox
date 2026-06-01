@@ -53,10 +53,16 @@ class DistBearingScreen extends StatefulWidget {
 
   /// Great-circle distance in km between two decimal-degree points (haversine).
   /// Mirrors PWA haversineKm.
-  static double haversineKm(double lat1, double lon1, double lat2, double lon2) {
+  static double haversineKm(
+    double lat1,
+    double lon1,
+    double lat2,
+    double lon2,
+  ) {
     final double dLat = _toRad(lat2 - lat1);
     final double dLon = _toRad(lon2 - lon1);
-    final double a = math.pow(math.sin(dLat / 2), 2).toDouble() +
+    final double a =
+        math.pow(math.sin(dLat / 2), 2).toDouble() +
         math.cos(_toRad(lat1)) *
             math.cos(_toRad(lat2)) *
             math.pow(math.sin(dLon / 2), 2).toDouble();
@@ -68,7 +74,8 @@ class DistBearingScreen extends StatefulWidget {
   static double bearingDeg(double lat1, double lon1, double lat2, double lon2) {
     final double dLon = _toRad(lon2 - lon1);
     final double y = math.sin(dLon) * math.cos(_toRad(lat2));
-    final double x = math.cos(_toRad(lat1)) * math.sin(_toRad(lat2)) -
+    final double x =
+        math.cos(_toRad(lat1)) * math.sin(_toRad(lat2)) -
         math.sin(_toRad(lat1)) * math.cos(_toRad(lat2)) * math.cos(dLon);
     return (_toDeg(math.atan2(y, x)) + 360) % 360;
   }
@@ -228,7 +235,9 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
                       // the input card. Self-collapses when no graphic is
                       // bundled, so the 24px gap below it disappears too.
                       ConceptGraphicBand(
-                          toolId: 'dist-bearing', isDesktop: isDesktop),
+                        toolId: 'dist-bearing',
+                        isDesktop: isDesktop,
+                      ),
                       if (ToolAssets.hasGraphic('dist-bearing'))
                         const SizedBox(height: AppSpacing.md),
                       _inputCard(text, mono),
@@ -371,7 +380,7 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
         textInputAction: TextInputAction.next,
         autocorrect: false,
         enableSuggestions: false,
-        style: monoStyle.copyWith(fontSize: 18),
+        style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
         cursorColor: AppColors.primary,
         decoration: InputDecoration(hintText: hintText),
       ),
@@ -397,27 +406,34 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
-          // Primary readout — km, mirroring the PWA's lead distance unit.
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              SelectableText(
-                _kmText,
-                style: mono.outputXL.copyWith(
-                  color: _km == null
-                      ? AppColors.textTertiary
-                      : AppColors.primary,
+          // Primary readout — km, mirroring the PWA's lead distance unit. One
+          // SR node: "Great-circle distance: 3935.7460 km" (or "not
+          // calculated"), instead of value/unit fragments (Vera finding #6).
+          Semantics(
+            label: 'Great-circle distance',
+            value: _km == null ? 'not calculated' : '$_kmText km',
+            excludeSemantics: true,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                SelectableText(
+                  _kmText,
+                  style: mono.outputXL.copyWith(
+                    color: _km == null
+                        ? AppColors.textTertiary
+                        : AppColors.primary,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'km',
-                style: text.labelLarge?.copyWith(
-                  color: AppColors.textSecondary,
+                const SizedBox(width: AppSpacing.xxs),
+                Text(
+                  'km',
+                  style: text.labelLarge?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
           _dataRow('mi', _miText, mono, text),
@@ -448,34 +464,41 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
     TextTheme text, {
     bool emphasize = false,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Label column snaps to 8px grid (GL-003 §4); 120px holds the widest
-          // bearing label without truncating.
-          SizedBox(
-            width: 120,
-            child: Text(
-              label,
-              style: text.labelMedium?.copyWith(
-                color: AppColors.textSecondary,
+    // One SR node per row: "Forward (1→2): 258.0°" (or "not calculated"),
+    // instead of label and value fragments (Vera finding #6).
+    return Semantics(
+      label: label,
+      value: value == '—' ? 'not calculated' : value,
+      excludeSemantics: true,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Label column snaps to 8px grid (GL-003 §4); 120px holds the widest
+            // bearing label without truncating.
+            SizedBox(
+              width: 120,
+              child: Text(
+                label,
+                style: text.labelMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
             ),
-          ),
-          Expanded(
-            child: SelectableText(
-              value,
-              style: mono.inlineCode.copyWith(
-                color: value == '—'
-                    ? AppColors.textTertiary
-                    : (emphasize ? AppColors.primary : AppColors.textPrimary),
-                fontWeight: emphasize ? FontWeight.w500 : FontWeight.w400,
+            Expanded(
+              child: SelectableText(
+                value,
+                style: mono.inlineCode.copyWith(
+                  color: value == '—'
+                      ? AppColors.textTertiary
+                      : (emphasize ? AppColors.primary : AppColors.textPrimary),
+                  fontWeight: emphasize ? FontWeight.w500 : FontWeight.w400,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -511,9 +534,7 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
           Text(
             'Haversine great-circle distance and initial bearing on a sphere '
             'of mean radius 6371 km. Coordinates are decimal degrees.',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textTertiary,
-            ),
+            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
           ),
         ],
       ),

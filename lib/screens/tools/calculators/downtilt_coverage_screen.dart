@@ -37,6 +37,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -172,8 +173,7 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
       return;
     }
     final double h = DowntiltCoverageScreen.heightToMeters(height, _heightUnit);
-    setState(() =>
-        _result = DowntiltCoverageScreen.coverage(h, tilt, bw));
+    setState(() => _result = DowntiltCoverageScreen.coverage(h, tilt, bw));
   }
 
   // ─── Formatting ───────────────────────────────────────────────────────────
@@ -202,10 +202,7 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Downtilt Coverage'),
-        toolbarHeight: 64,
-      ),
+      appBar: AppBar(title: const Text('Downtilt Coverage'), toolbarHeight: 64),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -234,7 +231,9 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
                       // the input card. Self-collapses when no graphic is
                       // bundled, so the 24px gap below it disappears too.
                       ConceptGraphicBand(
-                          toolId: 'downtilt-coverage', isDesktop: isDesktop),
+                        toolId: 'downtilt-coverage',
+                        isDesktop: isDesktop,
+                      ),
                       if (ToolAssets.hasGraphic('downtilt-coverage'))
                         const SizedBox(height: AppSpacing.md),
                       _inputCard(text, mono),
@@ -324,14 +323,15 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
             field: TextField(
               controller: controller,
               focusNode: focusNode,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               inputFormatters: _unsignedDecimal,
               onChanged: (_) => _recompute(),
               textInputAction: TextInputAction.done,
               autocorrect: false,
               enableSuggestions: false,
-              style: monoStyle.copyWith(fontSize: 20),
+              style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
               cursorColor: AppColors.primary,
               decoration: InputDecoration(hintText: hintText),
             ),
@@ -350,8 +350,8 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
     final String far = r == null
         ? '—'
         : r.beamAboveHorizon
-            ? '∞ (beam above horizon)'
-            : _formatDual(r.farEdge);
+        ? '∞ (beam above horizon)'
+        : _formatDual(r.farEdge);
     final String depth = r == null ? '—' : _formatDual(r.depth);
 
     return Column(
@@ -385,34 +385,38 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
     String value, {
     required bool primary,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: text.labelMedium?.copyWith(
-            color: AppColors.textSecondary,
-            letterSpacing: 0.4,
+    // One SR node per row: "Near edge: 12.4 m" (or "not calculated"), instead
+    // of label and value as separate fragments (Vera finding #6).
+    return Semantics(
+      label: label,
+      value: value == '—' ? 'not calculated' : value,
+      excludeSemantics: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: text.labelMedium?.copyWith(
+              color: AppColors.textSecondary,
+              letterSpacing: 0.4,
+            ),
           ),
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        SelectableText(
-          value,
-          style: mono.outputLarge.copyWith(
-            color: primary ? AppColors.primary : AppColors.textTertiary,
+          const SizedBox(height: AppSpacing.xs),
+          SelectableText(
+            value,
+            style: mono.outputLarge.copyWith(
+              color: primary ? AppColors.primary : AppColors.textTertiary,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _heightUnitSelector(TextTheme text) {
-    return _UnitToggle<HeightUnit>(
+    return AppToggle<HeightUnit>(
       value: _heightUnit,
-      options: const [
-        (HeightUnit.m, 'm'),
-        (HeightUnit.ft, 'ft'),
-      ],
+      items: const [(HeightUnit.m, 'm'), (HeightUnit.ft, 'ft')],
       onChanged: (u) {
         setState(() => _heightUnit = u);
         _recompute();
@@ -424,9 +428,7 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
   // toggle footprint rather than inventing a one-option toggle.
   Widget _degreeUnitChip(TextTheme text) {
     return Container(
-      constraints: const BoxConstraints(
-        minHeight: AppSpacing.minTouchTarget,
-      ),
+      constraints: const BoxConstraints(minHeight: AppSpacing.minTouchTarget),
       alignment: Alignment.center,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
@@ -481,9 +483,7 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
             'Height in meters, angles in degrees. The far edge uses '
             'tilt - beamwidth/2 and the near edge tilt + beamwidth/2. If the '
             'upper beam edge reaches the horizon the far edge is unbounded.',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textTertiary,
-            ),
+            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
           ),
         ],
       ),
@@ -556,7 +556,7 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
           ),
           ...refs.map((row) {
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -593,68 +593,6 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
             );
           }),
         ],
-      ),
-    );
-  }
-}
-
-/// Segmented unit toggle for an input row. Holds to the §8.3 minimum touch
-/// target and uses ChoiceChip-style selection without inventing new tokens.
-class _UnitToggle<T> extends StatelessWidget {
-  const _UnitToggle({
-    required this.value,
-    required this.options,
-    required this.onChanged,
-  });
-
-  final T value;
-  final List<(T, String)> options;
-  final ValueChanged<T> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme text = Theme.of(context).textTheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.inputFill,
-        borderRadius: BorderRadius.circular(AppRadius.control),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: options.map((opt) {
-          final bool selected = opt.$1 == value;
-          return Semantics(
-            button: true,
-            selected: selected,
-            label: opt.$2,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(AppRadius.control),
-              onTap: () => onChanged(opt.$1),
-              child: Container(
-                constraints: const BoxConstraints(
-                  minHeight: AppSpacing.minTouchTarget,
-                ),
-                alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: selected ? AppColors.primary : Colors.transparent,
-                  borderRadius: BorderRadius.circular(AppRadius.control),
-                ),
-                child: Text(
-                  opt.$2,
-                  style: text.labelLarge?.copyWith(
-                    color: selected
-                        ? AppColors.secondary
-                        : AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
       ),
     );
   }

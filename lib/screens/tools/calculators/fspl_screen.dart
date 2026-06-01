@@ -26,6 +26,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -146,10 +147,7 @@ class _FsplScreenState extends State<FsplScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('FSPL'),
-        toolbarHeight: 64,
-      ),
+      appBar: AppBar(title: const Text('FSPL'), toolbarHeight: 64),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -256,14 +254,15 @@ class _FsplScreenState extends State<FsplScreen> {
             field: TextField(
               controller: controller,
               focusNode: focusNode,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               inputFormatters: _unsignedDecimal,
               onChanged: (_) => _recompute(),
               textInputAction: TextInputAction.done,
               autocorrect: false,
               enableSuggestions: false,
-              style: monoStyle.copyWith(fontSize: 20),
+              style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
               cursorColor: AppColors.primary,
               decoration: InputDecoration(hintText: hintText),
             ),
@@ -276,49 +275,53 @@ class _FsplScreenState extends State<FsplScreen> {
   }
 
   Widget _resultRow(TextTheme text, AppMonoText mono) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Free space path loss',
-          style: text.labelMedium?.copyWith(
-            color: AppColors.textSecondary,
-            letterSpacing: 0.4,
+    // Single SR node: "Free space path loss: 100.1 dB" (or "not calculated"),
+    // instead of the value, unit, and label announcing as separate fragments
+    // (Vera finding #6).
+    final bool blank = _lossDb == null;
+    return Semantics(
+      label: 'Free space path loss',
+      value: blank ? 'not calculated' : '${_formatLoss(_lossDb)} dB',
+      excludeSemantics: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Free space path loss',
+            style: text.labelMedium?.copyWith(
+              color: AppColors.textSecondary,
+              letterSpacing: 0.4,
+            ),
           ),
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            SelectableText(
-              _formatLoss(_lossDb),
-              style: mono.outputXL.copyWith(
-                color: _lossDb == null
-                    ? AppColors.textTertiary
-                    : AppColors.primary,
+          const SizedBox(height: AppSpacing.xs),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              SelectableText(
+                _formatLoss(_lossDb),
+                style: mono.outputXL.copyWith(
+                  color: blank ? AppColors.textTertiary : AppColors.primary,
+                ),
               ),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              'dB',
-              style: text.labelLarge?.copyWith(
-                color: AppColors.textSecondary,
+              const SizedBox(width: AppSpacing.xxs),
+              Text(
+                'dB',
+                style: text.labelLarge?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 
   Widget _freqUnitSelector(TextTheme text) {
-    return _UnitToggle<FreqUnit>(
+    return AppToggle<FreqUnit>(
       value: _freqUnit,
-      options: const [
-        (FreqUnit.ghz, 'GHz'),
-        (FreqUnit.mhz, 'MHz'),
-      ],
+      items: const [(FreqUnit.ghz, 'GHz'), (FreqUnit.mhz, 'MHz')],
       onChanged: (u) {
         setState(() => _freqUnit = u);
         _recompute();
@@ -327,9 +330,9 @@ class _FsplScreenState extends State<FsplScreen> {
   }
 
   Widget _distUnitSelector(TextTheme text) {
-    return _UnitToggle<DistUnit>(
+    return AppToggle<DistUnit>(
       value: _distUnit,
-      options: const [
+      items: const [
         (DistUnit.km, 'km'),
         (DistUnit.mi, 'mi'),
         (DistUnit.m, 'm'),
@@ -379,9 +382,7 @@ class _FsplScreenState extends State<FsplScreen> {
           Text(
             'f in GHz, d in km. The 92.45 constant folds in c and the '
             'unit conversion for the GHz/km form.',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textTertiary,
-            ),
+            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
           ),
         ],
       ),
@@ -419,7 +420,7 @@ class _FsplScreenState extends State<FsplScreen> {
           const SizedBox(height: AppSpacing.xs),
           ...refs.map((row) {
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -456,68 +457,6 @@ class _FsplScreenState extends State<FsplScreen> {
             );
           }),
         ],
-      ),
-    );
-  }
-}
-
-/// Segmented unit toggle for an input row. Holds to the §8.3 minimum touch
-/// target and uses ChoiceChip-style selection without inventing new tokens.
-class _UnitToggle<T> extends StatelessWidget {
-  const _UnitToggle({
-    required this.value,
-    required this.options,
-    required this.onChanged,
-  });
-
-  final T value;
-  final List<(T, String)> options;
-  final ValueChanged<T> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme text = Theme.of(context).textTheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.inputFill,
-        borderRadius: BorderRadius.circular(AppRadius.control),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: options.map((opt) {
-          final bool selected = opt.$1 == value;
-          return Semantics(
-            button: true,
-            selected: selected,
-            label: opt.$2,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(AppRadius.control),
-              onTap: () => onChanged(opt.$1),
-              child: Container(
-                constraints: const BoxConstraints(
-                  minHeight: AppSpacing.minTouchTarget,
-                ),
-                alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: selected ? AppColors.primary : Colors.transparent,
-                  borderRadius: BorderRadius.circular(AppRadius.control),
-                ),
-                child: Text(
-                  opt.$2,
-                  style: text.labelLarge?.copyWith(
-                    color: selected
-                        ? AppColors.secondary
-                        : AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
       ),
     );
   }

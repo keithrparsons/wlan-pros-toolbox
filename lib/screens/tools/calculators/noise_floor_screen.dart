@@ -108,6 +108,11 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
   double? _rxFloorDbm;
   double? _ruleDbm;
 
+  // Field-level validation message for the noise figure. Set when the field is
+  // non-empty but invalid or negative (was a silent blank — Vera finding #7).
+  // Stays null for an empty field, which legitimately blanks the outputs.
+  String? _nfError;
+
   // Noise figure: unsigned decimal (PWA min=0). Temperature: signed decimal so
   // negative °C is allowed (PWA min=-40).
   static final List<TextInputFormatter> _unsignedDecimal = [
@@ -135,13 +140,20 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
   void _recompute() {
+    final String nfRaw = _nfCtrl.text.trim();
     final double? nf = _tryParseDouble(_nfCtrl.text);
-    // PWA: nf must be finite and >= 0, else showError (blank outputs).
+    // PWA: nf must be finite and >= 0, else showError (blank outputs). An empty
+    // field stays silent (a legitimate not-yet-entered state); a non-empty but
+    // invalid or negative value gets a visible field-level message instead of a
+    // silent blank (Vera finding #7).
     if (nf == null || nf < 0) {
       setState(() {
         _thermalDbm = null;
         _rxFloorDbm = null;
         _ruleDbm = null;
+        _nfError = nfRaw.isEmpty
+            ? null
+            : 'Noise figure must be 0 dB or higher.';
       });
       return;
     }
@@ -151,6 +163,7 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
 
     final double bwMhz = _bw.mhz.toDouble();
     setState(() {
+      _nfError = null;
       _thermalDbm = NoiseFloorScreen.thermalDbm(bwMhz, tempC);
       _rxFloorDbm = NoiseFloorScreen.rxFloorDbm(bwMhz, tempC, nf);
       _ruleDbm = NoiseFloorScreen.ruleOfThumbDbm(bwMhz);
@@ -180,10 +193,7 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Noise Floor'),
-        toolbarHeight: 64,
-      ),
+      appBar: AppBar(title: const Text('Noise Floor'), toolbarHeight: 64),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -212,7 +222,9 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
                       // the input card. Self-collapses when no graphic is
                       // bundled, so the 24px gap below it disappears too.
                       ConceptGraphicBand(
-                          toolId: 'noise-floor', isDesktop: isDesktop),
+                        toolId: 'noise-floor',
+                        isDesktop: isDesktop,
+                      ),
                       if (ToolAssets.hasGraphic('noise-floor'))
                         const SizedBox(height: AppSpacing.md),
                       _inputCard(text, mono),
@@ -267,16 +279,19 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
             field: TextField(
               controller: _nfCtrl,
               focusNode: _nfFocus,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               inputFormatters: _unsignedDecimal,
               onChanged: (_) => _recompute(),
               textInputAction: TextInputAction.next,
               autocorrect: false,
               enableSuggestions: false,
-              style: mono.outputLarge.copyWith(fontSize: 20),
+              style: mono.outputLarge.copyWith(
+                fontSize: AppTextSize.fieldNumeric,
+              ),
               cursorColor: AppColors.primary,
-              decoration: const InputDecoration(hintText: '7'),
+              decoration: InputDecoration(hintText: '7', errorText: _nfError),
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -296,7 +311,9 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
               textInputAction: TextInputAction.done,
               autocorrect: false,
               enableSuggestions: false,
-              style: mono.outputLarge.copyWith(fontSize: 20),
+              style: mono.outputLarge.copyWith(
+                fontSize: AppTextSize.fieldNumeric,
+              ),
               cursorColor: AppColors.primary,
               decoration: const InputDecoration(hintText: '20'),
             ),
@@ -338,39 +355,46 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
     required bool primary,
   }) {
     final bool blank = value == null || !value.isFinite;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: text.labelMedium?.copyWith(
-            color: AppColors.textSecondary,
-            letterSpacing: 0.4,
+    // One SR node: "Rx noise floor: -94.0 dBm" (or "not calculated"), instead
+    // of value/unit/label as separate fragments (Vera finding #6).
+    return Semantics(
+      label: label,
+      value: blank ? 'not calculated' : '${_formatDbm(value)} dBm',
+      excludeSemantics: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: text.labelMedium?.copyWith(
+              color: AppColors.textSecondary,
+              letterSpacing: 0.4,
+            ),
           ),
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            SelectableText(
-              _formatDbm(value),
-              style: (primary ? mono.outputXL : mono.outputLarge).copyWith(
-                color: blank
-                    ? AppColors.textTertiary
-                    : (primary ? AppColors.primary : AppColors.textPrimary),
+          const SizedBox(height: AppSpacing.xs),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              SelectableText(
+                _formatDbm(value),
+                style: (primary ? mono.outputXL : mono.outputLarge).copyWith(
+                  color: blank
+                      ? AppColors.textTertiary
+                      : (primary ? AppColors.primary : AppColors.textPrimary),
+                ),
               ),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              'dBm',
-              style: text.labelLarge?.copyWith(
-                color: AppColors.textSecondary,
+              const SizedBox(width: AppSpacing.xxs),
+              Text(
+                'dBm',
+                style: text.labelLarge?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -402,9 +426,7 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
             'k = 1.380649×10⁻²³ J/K, T = °C + 273.15 K, B in Hz. NF is the '
             'receiver noise figure. The rule of thumb uses -174 dBm/Hz + '
             '10·log₁₀(B).',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textTertiary,
-            ),
+            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
           ),
         ],
       ),
@@ -442,7 +464,7 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
           const SizedBox(height: AppSpacing.xs),
           ...refs.map((row) {
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
