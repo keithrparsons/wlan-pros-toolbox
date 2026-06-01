@@ -15,7 +15,8 @@ import '../theme/app_tokens.dart';
 const String _networkingCategoryId = 'networking';
 
 /// Tool ids pinned to the top of Networking Tools, in this exact order
-/// (Keith's ordering): Wi-Fi Information first, Network Quality second.
+/// (Keith's ordering): Wi-Fi vs Internet, then Wi-Fi Information, then
+/// Network Quality.
 const List<String> kNetworkingPinnedToolIds = <String>[
   'wifi-vs-internet',
   'wifi-info',
