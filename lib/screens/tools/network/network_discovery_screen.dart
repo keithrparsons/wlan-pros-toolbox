@@ -51,6 +51,7 @@ import '../../../services/network/mac_oui_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import 'network_unavailable_view.dart';
 
@@ -109,8 +110,9 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
 
   Future<void> _loadOuiRegistry() async {
     try {
-      final String raw =
-          await rootBundle.loadString('assets/oui/oui_table.tsv');
+      final String raw = await rootBundle.loadString(
+        'assets/oui/oui_table.tsv',
+      );
       final Map<String, String> table = MacOuiService.parseTable(raw);
       if (!mounted) return;
       setState(() => _oui = MacOuiService.fromTable(table));
@@ -122,7 +124,8 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
   }
 
   void _scan() {
-    final LanDiscoveryEngine engine = widget.engineFactory?.call() ??
+    final LanDiscoveryEngine engine =
+        widget.engineFactory?.call() ??
         LanDiscoveryEngine(
           // W2 — resolve MAC→vendor through the full bundled IEEE registry once
           // it is loaded; before that, no vendor (never fabricated).
@@ -201,9 +204,67 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Network Discovery'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Network Discovery'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until a scan has
+        // produced hosts; copies the host table as TSV (header + one row per
+        // host). Copy leads; this screen has no help icon, so copy is the only
+        // action (it still lands in the same trailing slot the order rule
+        // reserves for it).
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// §8.16 copy payload — the discovered host table as TSV.
+  ///
+  /// Returns null (→ disabled affordance) until a scan has completed with at
+  /// least one host: a failed/empty/in-progress scan has nothing to keep. The
+  /// header row names every column the host list shows; each host is one
+  /// tab-separated row in the same column order, null/empty cells emitted as
+  /// empty strings (never fabricated, GL-005). Set fields (ports, services)
+  /// are sorted and space-joined inside their single cell so the row stays
+  /// one tab-delimited line.
+  String? _buildCopyText() {
+    final DiscoveryResult? r = _result;
+    if (_scanning || r == null || r.error != null || r.hosts.isEmpty) {
+      return null;
+    }
+
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()
+      ..writeln(
+        <String>[
+          'IP',
+          'Name',
+          'Type',
+          'MAC',
+          'Vendor',
+          'Services',
+          'Open ports',
+        ].join(tab),
+      );
+
+    for (final LanHost h in r.hosts) {
+      final String name = h.mdnsName ?? h.hostname ?? '';
+      final String services = (h.mdnsServices.toList()..sort()).join(' ');
+      final String ports = (h.openPorts.toList()..sort()).join(' ');
+      buf.writeln(
+        <String>[
+          h.ip,
+          name,
+          h.deviceType.label,
+          h.mac ?? '',
+          h.vendor ?? '',
+          services,
+          ports,
+        ].join(tab),
+      );
+    }
+
+    return buf.toString().trimRight();
   }
 
   Widget _body() {
@@ -283,10 +344,7 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
           ),
           const SizedBox(height: AppSpacing.md),
           if (_scanning)
-            FilledButton.tonal(
-              onPressed: _stop,
-              child: const Text('Stop'),
-            )
+            FilledButton.tonal(onPressed: _stop, child: const Text('Stop'))
           else
             FilledButton(
               onPressed: _scan,
@@ -341,14 +399,16 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
                       Flexible(
                         child: Text(
                           _phaseLabel(_phase),
-                          style: text.labelMedium
-                              ?.copyWith(color: AppColors.textSecondary),
+                          style: text.labelMedium?.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                       ),
                       Text(
                         '$pct%',
-                        style: mono.inlineCode
-                            .copyWith(color: AppColors.textSecondary),
+                        style: mono.inlineCode.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -361,8 +421,7 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
             ExcludeSemantics(
               child: Text(
                 _note!,
-                style:
-                    text.labelSmall?.copyWith(color: AppColors.textTertiary),
+                style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
               ),
             ),
           ],
@@ -372,8 +431,7 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
               child: Text(
                 'Listening for Bonjour / mDNS responders (~4 seconds) — slow '
                 'devices answer late, so the scan waits.',
-                style:
-                    text.labelSmall?.copyWith(color: AppColors.textTertiary),
+                style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
               ),
             ),
           ],
@@ -408,7 +466,8 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
         _MessageCard(
           icon: Icons.search_off_outlined,
           title: 'No hosts responded',
-          body: 'No devices on ${r.subnetLabel} answered on the probed ports '
+          body:
+              'No devices on ${r.subnetLabel} answered on the probed ports '
               'or via mDNS. They may be firewalled, asleep, or the subnet may '
               'be empty.',
         )
@@ -469,8 +528,7 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
             width: 96,
             child: Text(
               label,
-              style:
-                  text.labelMedium?.copyWith(color: AppColors.textSecondary),
+              style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
             ),
           ),
           const SizedBox(width: AppSpacing.xs),
@@ -495,7 +553,8 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
     final String message;
     if (arp != null && arp.available) {
       final int withMac = r.hosts.where((LanHost h) => h.mac != null).length;
-      message = 'MAC + vendor read from the ARP cache — '
+      message =
+          'MAC + vendor read from the ARP cache — '
           '$withMac of ${r.hosts.length} host${r.hosts.length == 1 ? '' : 's'} '
           'matched.';
     } else {
@@ -540,32 +599,32 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
   }
 
   String _phaseLabel(DiscoveryPhase phase) => switch (phase) {
-        DiscoveryPhase.idle => 'Idle',
-        DiscoveryPhase.seeding => 'Finding the local subnet',
-        DiscoveryPhase.scanning => 'Probing hosts',
-        DiscoveryPhase.resolving => 'Resolving hostnames',
-        DiscoveryPhase.mdns => 'Browsing mDNS / Bonjour',
-        DiscoveryPhase.arp => 'Reading MAC addresses',
-        DiscoveryPhase.complete => 'Complete',
-        DiscoveryPhase.failed => 'Failed',
-      };
+    DiscoveryPhase.idle => 'Idle',
+    DiscoveryPhase.seeding => 'Finding the local subnet',
+    DiscoveryPhase.scanning => 'Probing hosts',
+    DiscoveryPhase.resolving => 'Resolving hostnames',
+    DiscoveryPhase.mdns => 'Browsing mDNS / Bonjour',
+    DiscoveryPhase.arp => 'Reading MAC addresses',
+    DiscoveryPhase.complete => 'Complete',
+    DiscoveryPhase.failed => 'Failed',
+  };
 }
 
 /// A Material glyph for each coarse device type — a quiet leading affordance,
 /// never the sole carrier of meaning (the worded label sits beside it).
 IconData _deviceIcon(DeviceType type) => switch (type) {
-      DeviceType.printer => Icons.print_outlined,
-      DeviceType.camera => Icons.videocam_outlined,
-      DeviceType.speaker => Icons.speaker_outlined,
-      DeviceType.mediaStreamer => Icons.cast_outlined,
-      DeviceType.appleDevice => Icons.devices_outlined,
-      DeviceType.iosDevice => Icons.smartphone_outlined,
-      DeviceType.windowsHost => Icons.desktop_windows_outlined,
-      DeviceType.webServer => Icons.dns_outlined,
-      DeviceType.sshHost => Icons.terminal_outlined,
-      DeviceType.mdnsDevice => Icons.lan_outlined,
-      DeviceType.unknown => Icons.device_unknown_outlined,
-    };
+  DeviceType.printer => Icons.print_outlined,
+  DeviceType.camera => Icons.videocam_outlined,
+  DeviceType.speaker => Icons.speaker_outlined,
+  DeviceType.mediaStreamer => Icons.cast_outlined,
+  DeviceType.appleDevice => Icons.devices_outlined,
+  DeviceType.iosDevice => Icons.smartphone_outlined,
+  DeviceType.windowsHost => Icons.desktop_windows_outlined,
+  DeviceType.webServer => Icons.dns_outlined,
+  DeviceType.sshHost => Icons.terminal_outlined,
+  DeviceType.mdnsDevice => Icons.lan_outlined,
+  DeviceType.unknown => Icons.device_unknown_outlined,
+};
 
 /// One discovered host, rendered as a list row inside the host-list card. Every
 /// enrichment field is shown only when present (honest blanks per GL-005), and
@@ -615,15 +674,17 @@ class _HostRow extends StatelessWidget {
                       Expanded(
                         child: SelectableText(
                           host.ip,
-                          style: mono.inlineCode
-                              .copyWith(color: AppColors.textPrimary),
+                          style: mono.inlineCode.copyWith(
+                            color: AppColors.textPrimary,
+                          ),
                         ),
                       ),
                       const SizedBox(width: AppSpacing.xs),
                       Text(
                         host.deviceType.label,
-                        style: text.labelSmall
-                            ?.copyWith(color: AppColors.textSecondary),
+                        style: text.labelSmall?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -631,8 +692,9 @@ class _HostRow extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       name,
-                      style: text.bodyMedium
-                          ?.copyWith(color: AppColors.textPrimary),
+                      style: text.bodyMedium?.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ],
                   if (host.mac != null) ...<Widget>[
@@ -690,9 +752,11 @@ class _HostRow extends StatelessWidget {
       parts.add('services ${(host.mdnsServices.toList()..sort()).join(', ')}');
     }
     final List<int> openPorts = host.openPorts.toList()..sort();
-    parts.add(openPorts.isEmpty
-        ? 'no open ports'
-        : 'open ports ${openPorts.join(', ')}');
+    parts.add(
+      openPorts.isEmpty
+          ? 'no open ports'
+          : 'open ports ${openPorts.join(', ')}',
+    );
     return parts.join(', ');
   }
 }
@@ -739,8 +803,9 @@ class _MessageCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium
-                      ?.copyWith(color: AppColors.textTertiary),
+                  style: text.labelMedium?.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
                 ),
               ],
             ),

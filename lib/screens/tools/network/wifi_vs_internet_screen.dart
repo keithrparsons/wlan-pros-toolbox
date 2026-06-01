@@ -42,6 +42,7 @@ import '../../../services/network/wifi_info_adapter.dart';
 import '../../../services/network/wifi_vs_internet.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import 'network_unavailable_view.dart';
 
@@ -252,10 +253,125 @@ class _WifiVsInternetScreenState extends State<WifiVsInternetScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Wi-Fi vs Internet'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Wi-Fi vs Internet'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until a check has
+        // been run; copies the verdict + Wi-Fi link + internet figures as a
+        // labeled text block. Copy leads; this screen has no help icon.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body()),
     );
   }
+
+  /// §8.16 copy payload — the whole check as a labeled plain-text block.
+  ///
+  /// Returns null (→ disabled affordance) until a check has produced a verdict.
+  /// Per the §8.16 content contract, every on-screen VERDICT WORD travels to
+  /// the clipboard: the headline verdict word, and each internet dimension's
+  /// grade WORD (Excellent / Good / Fair / Poor / Unavailable) appended to its
+  /// line — color was the on-screen carrier, the word is the clipboard carrier.
+  /// Unavailable figures are written as "Unavailable" (never blank/fabricated,
+  /// matching the on-screen `_DataRow` treatment, GL-005).
+  String? _buildCopyText() {
+    final WifiVsInternetResult? v = _verdict;
+    if (_running || v == null) return null;
+
+    final ConnectedAp? ap = _ap;
+    final QualityResult? net = _internet;
+    final StringBuffer buf = StringBuffer();
+
+    // --- Verdict (the WORD always leads; §8.13 / §8.16) ---
+    buf
+      ..writeln('Wi-Fi vs Internet')
+      ..writeln('Verdict: ${v.headline}')
+      ..writeln(v.explanation);
+    if (v.snrContext.isNotEmpty) buf.writeln(v.snrContext);
+
+    // --- Wi-Fi link figures ---
+    buf
+      ..writeln()
+      ..writeln('Your Wi-Fi link')
+      ..writeln('  Tx rate: ${_copyVal(_copyRate(ap?.txRateMbps), 'Mbps')}');
+    final bool rxUnavailable =
+        ap != null && !ap.rxRateAvailable && ap.rxRateMbps == null;
+    buf.writeln(
+      '  Rx rate: ${rxUnavailable ? 'Not reported on this platform' : _copyVal(_copyRate(ap?.rxRateMbps), 'Mbps')}',
+    );
+    buf.writeln(
+      '  Usable capacity: ${_copyVal(_copyRate(v.usableWifiMbps), 'Mbps')} '
+      '(55% of ${WifiVsInternetEngine.rateBasisCaption(v.rateBasis)})',
+    );
+    buf
+      ..writeln(
+        '  SNR: ${_copyVal(ap?.snrDb?.toString(), 'dB')}'
+        '${(ap?.snrDerived ?? false) ? ' (derived)' : ''}',
+      )
+      ..writeln('  RSSI: ${_copyVal(ap?.rssiDbm?.toString(), 'dBm')}')
+      ..writeln('  Channel: ${_copyVal(ap?.channel?.toString(), null)}')
+      ..writeln('  Standard: ${_copyVal(ap?.standard, null)}');
+
+    // --- Internet figures, each with its grade WORD ---
+    final double? down = _copyMetricValue(net, MetricIds.download);
+    final double? up = _copyMetricValue(net, MetricIds.upload);
+    final double? avg = (down != null && up != null)
+        ? (down + up) / 2
+        : (down ?? up);
+    buf
+      ..writeln()
+      ..writeln('Your internet')
+      ..writeln(
+        '  Download: ${_copyVal(down?.toStringAsFixed(1), 'Mbps')} — ${_copyGrade(net, MetricIds.download)}',
+      )
+      ..writeln(
+        '  Upload: ${_copyVal(up?.toStringAsFixed(1), 'Mbps')} — ${_copyGrade(net, MetricIds.upload)}',
+      )
+      ..writeln(
+        '  Averaged: ${_copyVal(avg?.toStringAsFixed(1), 'Mbps')} '
+        '(average of download and upload)',
+      )
+      ..writeln(
+        '  Latency: ${_copyVal(_copyMetricValue(net, MetricIds.latency)?.round().toString(), 'ms')} — ${_copyGrade(net, MetricIds.latency)}',
+      )
+      ..writeln(
+        '  Jitter: ${_copyVal(_copyMetricValue(net, MetricIds.jitter)?.round().toString(), 'ms')} — ${_copyGrade(net, MetricIds.jitter)}',
+      )
+      ..writeln(
+        '  Loss: ${_copyVal(_copyMetricValue(net, MetricIds.loss)?.round().toString(), '%')} — ${_copyGrade(net, MetricIds.loss)}',
+      );
+
+    // --- Method footnote ---
+    buf
+      ..writeln()
+      ..writeln(kWifiVsInternetFootnote);
+
+    return buf.toString().trimRight();
+  }
+
+  /// Formats "value unit", or "Unavailable" when the value is missing — the
+  /// clipboard analog of the on-screen `_DataRow` (GL-005 honest blanks).
+  static String _copyVal(String? value, String? unit) {
+    if (value == null || value.trim().isEmpty) return 'Unavailable';
+    return unit == null ? value : '$value $unit';
+  }
+
+  /// Same rate rounding as the on-screen `_WifiLinkSection._rate`.
+  static String? _copyRate(double? mbps) {
+    if (mbps == null) return null;
+    final double r = (mbps * 10).round() / 10;
+    return r == r.roundToDouble() ? r.toStringAsFixed(0) : r.toStringAsFixed(1);
+  }
+
+  static double? _copyMetricValue(QualityResult? r, String id) {
+    final QualityMetric? m = r?.metric(id);
+    return (m != null && m.isAvailable) ? m.value : null;
+  }
+
+  /// The grade WORD for a dimension — the §8.16 verdict-word carrier for the
+  /// internet figures. Falls back to "Unavailable" when no grade exists.
+  static String _copyGrade(QualityResult? r, String id) =>
+      (r?.metric(id)?.grade ?? QualityGrade.unavailable).label;
 
   Widget _body() {
     // The internet measurement needs dart:io sockets the browser does not have;
