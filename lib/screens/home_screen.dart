@@ -120,10 +120,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// Tile vertical room scales with viewport. Phones (<480px) get a taller
-  /// tile so the 28px icon row + 2-line H3 title (22px/1.4) + 2-line caption
-  /// (13px/1.5) fit without RenderFlex overflow at 375pt. Narrow phones
+  /// tile so the 28px icon row + 2-line H3 title (22px/1.25) + 2-line caption
+  /// (13px/1.35) fit without RenderFlex overflow at 375pt. Narrow phones
   /// (<360px, iPhone SE 1st-gen) drop a second step so the same content
-  /// clears at 320pt. (Vera F-01, F-NEW-03.)
+  /// clears at 320pt. (Vera F-01, F-NEW-03.) The tightened leading (2026-06-01)
+  /// only shrinks the text block; the trailing Spacer absorbs the freed
+  /// height, so these aspect ratios stay valid and clear with more slack.
   double _aspectRatioFor(double width) {
     if (width < HomeScreen._narrowPhoneBreakpoint) return 0.75;
     if (width < HomeScreen._phoneBreakpoint) return 0.85;
