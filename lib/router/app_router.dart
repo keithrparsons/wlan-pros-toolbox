@@ -79,6 +79,7 @@ import '../screens/tools/command/wireshark_filters_screen.dart';
 import '../screens/tools/reference/osi_model_screen.dart';
 import '../screens/tools/reference/ascii_reference_screen.dart';
 import '../screens/tools/reference/emoji_reference_screen.dart';
+import '../screens/tools/reference/pdf_reference_screen.dart';
 import '../screens/tools/checklists/checklist_screen.dart';
 import '../data/checklists.dart';
 
@@ -172,6 +173,26 @@ class AppRouter {
   static const String osiModel = '/tools/osi-model';
   static const String asciiReference = '/tools/ascii-reference';
   static const String emojiReference = '/tools/emoji-reference';
+
+  // PDF reference cards — Keith's 10 laminated reference cards bundled as PDFs
+  // (assets/reference-cards/<id>.pdf), rendered pinch-zoomable by the single
+  // PdfReferenceScreen. They interleave alphabetically with the other Quick
+  // Reference tools. ids: bubble-diagram is distinct from any existing tool;
+  // mcs-index-card is deliberately distinct from the existing mcs-index table.
+  static const String bubbleDiagram = '/tools/bubble-diagram';
+  static const String troubleshootingCauses = '/tools/troubleshooting-causes';
+  static const String top20Checklist = '/tools/top-20-checklist';
+  static const String extendedChecklist = '/tools/extended-checklist';
+  static const String extendedChecklistNonadvertised =
+      '/tools/extended-checklist-nonadvertised';
+  static const String connectionChecklist = '/tools/connection-checklist';
+  static const String channelAllocations24ghz =
+      '/tools/channel-allocations-24ghz';
+  static const String channelAllocations5ghz =
+      '/tools/channel-allocations-5ghz';
+  static const String channelAllocations6ghz =
+      '/tools/channel-allocations-6ghz';
+  static const String mcsIndexCard = '/tools/mcs-index-card';
 
   // Calculators — Hex / ASCII converter + printable-ASCII table (pure math +
   // const-derived table, all platforms incl. web).
@@ -269,6 +290,49 @@ class AppRouter {
     osiModel: (_) => const OsiModelScreen(),
     asciiReference: (_) => const AsciiReferenceScreen(),
     emojiReference: (_) => const EmojiReferenceScreen(),
+    // PDF reference cards — one PdfReferenceScreen per bundled card. Title +
+    // asset path are the only per-card inputs; the screen is otherwise shared.
+    bubbleDiagram: (_) => const PdfReferenceScreen(
+          title: 'WLAN Pros Bubble Diagram',
+          assetPath: 'assets/reference-cards/bubble-diagram.pdf',
+        ),
+    troubleshootingCauses: (_) => const PdfReferenceScreen(
+          title: 'Wireless LAN Troubleshooting Causes',
+          assetPath: 'assets/reference-cards/troubleshooting-causes.pdf',
+        ),
+    top20Checklist: (_) => const PdfReferenceScreen(
+          title: 'Top 20 Wi-Fi Checklist',
+          assetPath: 'assets/reference-cards/top-20-checklist.pdf',
+        ),
+    extendedChecklist: (_) => const PdfReferenceScreen(
+          title: 'Extended Wi-Fi Checklist',
+          assetPath: 'assets/reference-cards/extended-checklist.pdf',
+        ),
+    extendedChecklistNonadvertised: (_) => const PdfReferenceScreen(
+          title: 'Extended Checklist (Non-Advertised Items)',
+          assetPath:
+              'assets/reference-cards/extended-checklist-nonadvertised.pdf',
+        ),
+    connectionChecklist: (_) => const PdfReferenceScreen(
+          title: 'Wi-Fi Connection Checklist',
+          assetPath: 'assets/reference-cards/connection-checklist.pdf',
+        ),
+    channelAllocations24ghz: (_) => const PdfReferenceScreen(
+          title: '2.4 GHz Channel Allocations',
+          assetPath: 'assets/reference-cards/channel-allocations-24ghz.pdf',
+        ),
+    channelAllocations5ghz: (_) => const PdfReferenceScreen(
+          title: '5 GHz Channel Allocations',
+          assetPath: 'assets/reference-cards/channel-allocations-5ghz.pdf',
+        ),
+    channelAllocations6ghz: (_) => const PdfReferenceScreen(
+          title: '6 GHz Channel Allocations',
+          assetPath: 'assets/reference-cards/channel-allocations-6ghz.pdf',
+        ),
+    mcsIndexCard: (_) => const PdfReferenceScreen(
+          title: 'Modulation and Coding Schemes (MCS Index)',
+          assetPath: 'assets/reference-cards/mcs-index-card.pdf',
+        ),
     hexAscii: (_) => const HexAsciiScreen(),
     cliCommands: (_) => const CliCommandsScreen(),
     linuxWlanCommands: (_) => const LinuxWlanCommandsScreen(),

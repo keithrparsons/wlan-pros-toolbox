@@ -80,6 +80,14 @@ dependencies:
   net_quality:
     path: packages/net_quality
 
+  # pdfx — renders the bundled "PDF reference card" tools (Keith's 10 laminated
+  # Excel→PDF exports) in a pinch-zoomable viewer. Chosen over flutter_pdfview
+  # because flutter_pdfview is mobile-only (no macOS); pdfx uses Apple PDFKit on
+  # BOTH iOS and macOS (PdfiumAndroid on Android, pdf.js on web), so one viewer
+  # covers the iOS + macOS targets the Toolbox ships first
+  # (project-toolbox-platform-scope). MIT. No network — loads from rootBundle.
+  pdfx: ^2.9.2
+
   # mDNS / DNS-SD service discovery for the SPIKE-HSD-01 LAN-discovery prototype
   # is provided by an IN-HOUSE native plugin over Apple's Network framework
   # `NWBrowser` (ios/Runner/MdnsBrowseChannel.swift +
@@ -98,6 +106,15 @@ dependencies:
 
 dev_dependencies:
   flutter_test:
+    sdk: flutter
+
+  # integration_test — drives widget tests against the REAL platform embedder
+  # (here: macOS, via `flutter test -d macos`) so native PDFKit is available.
+  # The 10 bundled reference-card PDFs render through pdfx → Apple PDFKit, which
+  # is a no-op in the headless flutter_test environment; this package is the
+  # only way to prove they decode and paint on-device. See
+  # integration_test/pdf_render_test.dart.
+  integration_test:
     sdk: flutter
 
   # The "flutter_lints" package below contains a set of recommended lints to
@@ -180,6 +197,12 @@ flutter:
     # the folder, so dropping a new <id>.svg in needs no pubspec change.
     - assets/tool-icons/
     - assets/tool-graphics/
+    # PDF reference cards — Keith's 10 laminated reference cards (Excel→PDF
+    # exports), one bundled PDF per "PDF reference card" tool, named by catalog
+    # id: assets/reference-cards/<tool-id>.pdf. Rendered offline in a
+    # pinch-zoomable PdfViewPinch (lib/screens/tools/reference/
+    # pdf_reference_screen.dart) via pdfx → Apple PDFKit on iOS + macOS.
+    - assets/reference-cards/
 
   # Original commented-out scaffold examples removed for clarity.
 
