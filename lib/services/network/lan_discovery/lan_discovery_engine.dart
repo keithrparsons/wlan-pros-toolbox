@@ -11,7 +11,7 @@
 //                     ports, RUN IN AN ISOLATE (Isolate.run) so the UI stays
 //                     responsive during a full sweep (brief anti-pattern #4).
 //  3. Reverse DNS   — InternetAddress.reverse() per discovered host.
-//  4. mDNS browse   — in-house native NWBrowser (OS Bonjour daemon) browse,
+//  4. mDNS browse   — in-house native NetServiceBrowser (OS Bonjour daemon),
 //                     folded onto the host records.
 //  Then the pure device-type heuristic runs on each host's ports + services.
 //
@@ -255,7 +255,8 @@ class LanDiscoveryEngine {
     yield const DiscoveryProgress(DiscoveryPhase.mdns, 0.82);
     try {
       // Held as a no-op risk-reduction around the browse. The OS Bonjour daemon
-      // (driven by the native NWBrowser channel) does the multicast itself, so
+      // (driven by the native NetServiceBrowser channel) does the multicast
+      // itself, so
       // an app-held multicast lock is generally unnecessary, but acquiring costs
       // nothing and guards against any device that drops inbound multicast
       // without it. No-op on every platform this phase (iOS/macOS). Released in

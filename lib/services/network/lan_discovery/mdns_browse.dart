@@ -1,19 +1,24 @@
 // SPIKE-HSD-01 — mDNS / Bonjour browse pass (THROWAWAY spike).
 //
-// Uses an IN-HOUSE native plugin over Apple's Network framework `NWBrowser`,
-// which drives the OS Bonjour daemon on iOS + macOS. Browses a curated set of
-// DNS-SD service types, resolves each found instance to its host addresses, and
-// yields (ip → {name, serviceTypes}) so the engine can fold mDNS names/services
-// onto the connect-scan's host records.
+// Uses an IN-HOUSE native plugin over Apple's `NetServiceBrowser` + `NetService`
+// (Foundation Bonjour), which drives the OS Bonjour daemon on iOS + macOS.
+// Browses a curated set of DNS-SD service types, resolves each found instance to
+// its host addresses, and yields (ip → {name, serviceTypes}) so the engine can
+// fold mDNS names/services onto the connect-scan's host records.
 //
-// WHY IN-HOUSE NWBrowser, NOT `bonsoir` (the spike's first native choice):
-// bonsoir is GPL-3.0, incompatible with a closed-source commercial App Store app
-// (PRD Decision Log 13). It is replaced by a thin in-Runner Swift EventChannel
-// (ios/Runner/MdnsBrowseChannel.swift, macos/Runner/MdnsBrowseChannel.swift)
-// that runs one `NWBrowser` per service type and streams resolved instances
-// back. Behavior is identical: found → resolve → resolved → host-addresses.
+// WHY IN-HOUSE NetServiceBrowser, NOT `bonsoir` (the spike's first native
+// choice): bonsoir is GPL-3.0, incompatible with a closed-source commercial App
+// Store app (PRD Decision Log 13). It is replaced by a thin in-Runner Swift
+// EventChannel (ios/Runner/MdnsBrowseChannel.swift,
+// macos/Runner/MdnsBrowseChannel.swift) that runs one `NetServiceBrowser` per
+// service type and resolves each instance with `NetService` — the exact Apple
+// API stack bonsoir_darwin used. Behavior is identical: found → resolve →
+// resolved → host-addresses. An earlier in-house attempt used `NWBrowser`; on a
+// sandboxed macOS app on-device it reached `.ready` but delivered ZERO browse
+// results, so NWBrowser was removed entirely in favor of the bonsoir-proven
+// NetServiceBrowser path.
 //
-// WHY NWBrowser, NOT pure-Dart multicast_dns (the spike's ORIGINAL choice):
+// WHY NOT pure-Dart multicast_dns (the spike's ORIGINAL choice):
 // on-device iOS testing found multicast_dns returned ZERO results even with the
 // NSBonjourServices plist entries declared and many Bonjour devices present.
 // Since iOS 14, a pure-Dart UDP socket that sends/receives to the mDNS
@@ -22,10 +27,11 @@
 // by special application and which this app does NOT hold. iOS therefore
 // silently drops the multicast traffic and the browse comes back empty. The TCP
 // connect-scan kept working because it is unicast (covered by the granted Local
-// Network permission). NWBrowser hands the browse to the OS Bonjour daemon,
-// which is allowed to multicast on the app's behalf, so it works with only
-// NSBonjourServices declared (already present in Info.plist) and NO multicast
-// entitlement — the App-Store-safe path, same as bonsoir but license-clean.
+// Network permission). NetServiceBrowser hands the browse to the OS Bonjour
+// daemon, which is allowed to multicast on the app's behalf, so it works with
+// only NSBonjourServices declared (already present in Info.plist) and NO
+// multicast entitlement — the App-Store-safe path, same as bonsoir but
+// license-clean.
 //
 // ARCHITECTURE NOTE (deliberate, documented spike finding): the TCP connect-scan
 // core stays pure-Dart and cross-platform; ONLY this mDNS/Bonjour enrichment
@@ -88,7 +94,8 @@ const List<String> kBrowsedServiceTypes = <String>[
 
 // --- Injectable discovery seam ---------------------------------------------
 //
-// The real discovery rides the in-house native NWBrowser EventChannel, which
+// The real discovery rides the in-house native NetServiceBrowser EventChannel,
+// which
 // cannot run in a pure-Dart unit test (no platform channel). To keep the browse
 // deterministic and off the network in tests, discovery is abstracted behind
 // [MdnsDiscovery]: a tiny interface that yields normalized [MdnsDiscoveryEvent]s
@@ -124,8 +131,9 @@ class MdnsDiscoveryEvent {
 ///
 /// Implementations must NOT throw from [start]/[events]: a platform/permission
 /// failure surfaces as an empty (or error-swallowed) stream so the browse stays
-/// non-fatal. [dispose] must release all native resources (the native NWBrowser
-/// and its resolving connections are explicitly cancelled; none may leak).
+/// non-fatal. [dispose] must release all native resources (the native
+/// NetServiceBrowser and its resolving NetServices are explicitly stopped; none
+/// may leak).
 abstract interface class MdnsDiscovery {
   /// The service type being discovered.
   String get serviceType;
@@ -144,19 +152,22 @@ typedef MdnsDiscoveryFactory = MdnsDiscovery Function(String serviceType);
 /// The name of the in-house native mDNS browse EventChannel. Shared with
 /// `ios/Runner/MdnsBrowseChannel.swift` and `macos/Runner/MdnsBrowseChannel.swift`.
 /// The browsed service type is passed as the stream's `onListen` argument, so a
-/// single channel multiplexes one independent NWBrowser per service type.
+/// single channel multiplexes one independent NetServiceBrowser per service type.
 const String kMdnsBrowseChannel = 'com.wlanpros.toolbox/mdns_browse';
 
-/// Production discovery backed by the in-house native NWBrowser EventChannel.
+/// Production discovery backed by the in-house native NetServiceBrowser
+/// EventChannel. (The class name retains the historical `NWBrowser` prefix for
+/// API/test stability; the native implementation is now NetServiceBrowser.)
 ///
 /// One [NWBrowserMdnsDiscovery] opens one stream on [kMdnsBrowseChannel] with
-/// its [serviceType] as the listen argument. The native side runs an `NWBrowser`
-/// for that type and, for each found instance, opens a short-lived connection to
-/// resolve it, then pushes `{serviceType, name, hostAddresses}` up the stream —
-/// the same found→resolve→resolved→host-addresses flow bonsoir performed. Each
-/// native event is normalized into an [MdnsDiscoveryEvent]. [dispose] cancels the
-/// Dart subscription, which fires the native `onCancel` so the NWBrowser and all
-/// its in-flight resolving connections are torn down — no native resource leak.
+/// its [serviceType] as the listen argument. The native side runs a
+/// `NetServiceBrowser` for that type and, for each found instance, resolves it
+/// with `NetService`, then pushes `{serviceType, name, hostAddresses}` up the
+/// stream — the same found→resolve→resolved→host-addresses flow bonsoir
+/// performed. Each native event is normalized into an [MdnsDiscoveryEvent].
+/// [dispose] cancels the Dart subscription, which fires the native `onCancel` so
+/// the NetServiceBrowser and all its in-flight resolving NetServices are torn
+/// down — no native resource leak.
 ///
 /// HONESTY: any channel/platform failure (e.g. the channel is unregistered on a
 /// platform where Android NsdManager is deferred) surfaces as an empty stream,
@@ -229,8 +240,8 @@ class NWBrowserMdnsDiscovery implements MdnsDiscovery {
   Future<void> dispose() async {
     if (_disposed) return;
     _disposed = true;
-    // Cancelling the subscription fires the native onCancel, which cancels the
-    // NWBrowser + all resolving connections (no native leak).
+    // Cancelling the subscription fires the native onCancel, which stops the
+    // NetServiceBrowser + all resolving NetServices (no native leak).
     try {
       await _sub?.cancel();
     } catch (_) {/* ignore */}
@@ -258,9 +269,9 @@ class UnavailableMdnsDiscovery implements MdnsDiscovery {
   Future<void> dispose() async {}
 }
 
-/// Picks the discovery for the current platform: the native NWBrowser channel on
-/// iOS + macOS (the only platforms whose Runner registers the channel this
-/// phase), an honest empty discovery everywhere else.
+/// Picks the discovery for the current platform: the native NetServiceBrowser
+/// channel on iOS + macOS (the only platforms whose Runner registers the channel
+/// this phase), an honest empty discovery everywhere else.
 MdnsDiscovery _defaultDiscoveryFactory(String serviceType) {
   if (Platform.isIOS || Platform.isMacOS) {
     return NWBrowserMdnsDiscovery(serviceType);
@@ -270,7 +281,7 @@ MdnsDiscovery _defaultDiscoveryFactory(String serviceType) {
 
 /// Browses mDNS for [serviceTypes] for up to [timeout] and returns one
 /// [MdnsRecord] per discovered IPv4 address, via the OS Bonjour daemon (the
-/// in-house native NWBrowser EventChannel on iOS + macOS).
+/// in-house native NetServiceBrowser EventChannel on iOS + macOS).
 ///
 /// [discoveryFactory] is injectable so the browse loop is unit-testable with a
 /// fake discovery (no native plugin, no real multicast).
@@ -324,7 +335,7 @@ class MdnsBrowser {
         } catch (_) {/* ignore */}
       }
       for (final MdnsDiscovery d in discoveries) {
-        await d.dispose(); // NWBrowser + resolving connections MUST be cancelled.
+        await d.dispose(); // NetServiceBrowser + resolving NetServices MUST stop.
       }
     }
     return byIp;
