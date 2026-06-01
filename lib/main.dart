@@ -1,11 +1,11 @@
 // WLAN Pros Toolbox — entry point.
 //
-// Dark-only theme (GL-003 §8 scope), IBM Plex Sans + DM Mono via google_fonts,
-// Material 3, named routes for live tools; category screens push themselves
-// with a typed argument.
+// Dark-only theme (GL-003 §8 scope), IBM Plex Sans + DM Mono + Roboto Mono as
+// bundled Flutter font families (pubspec `flutter: fonts:`), Material 3, named
+// routes for live tools; category screens push themselves with a typed
+// argument.
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'data/tool_assets.dart';
 import 'router/app_router.dart';
@@ -17,11 +17,11 @@ Future<void> main() async {
   // first frame paints.
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Force `google_fonts` to use the bundled assets only (no runtime HTTP
-  // fetch). The font files are declared as assets in pubspec.yaml; this flag
-  // ensures we never depend on network access just to render typography —
-  // critical for the macOS sandbox and for offline use on any platform.
-  GoogleFonts.config.allowRuntimeFetching = false;
+  // Typography is bundled as Flutter font families (IBM Plex Sans / DM Mono /
+  // Roboto Mono — see pubspec `flutter: fonts:`) and referenced by family name
+  // in lib/theme/. Nothing is fetched at runtime, so type renders fully offline
+  // / on first launch — critical for the macOS sandbox (no network.client
+  // entitlement) and for offline use on any platform.
 
   // Install the iOS ICMP factory (SimplePing/GBPing) for Real ICMP Ping. No-op
   // off iOS and idempotent; kept behind this helper so the dart_ping_ios import

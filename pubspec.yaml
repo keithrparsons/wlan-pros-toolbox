@@ -35,8 +35,10 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
-  # IBM Plex Sans (UI) + DM Mono (numeric outputs) per GL-003 §3 / §8.5.
-  google_fonts: ^6.2.1
+  # Typography (IBM Plex Sans / DM Mono / Roboto Mono per GL-003 §3 / §8.5)
+  # ships as bundled Flutter font families declared in the `flutter: fonts:`
+  # block below — no google_fonts runtime resolution. Dependency removed
+  # 2026-06-01 once every GoogleFonts.* call was swapped to plain fontFamily.
 
   # Active-network services layer (lib/services/network/):
   # network_info_plus — Wi-Fi link details (SSID/BSSID/gateway/submask/IP)
@@ -137,11 +139,18 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # IBM Plex Sans + DM Mono shipped as local assets so `google_fonts` skips
-  # the runtime HTTP fetch. Required because the default macOS Flutter
-  # entitlements do not include com.apple.security.network.client; bundling
-  # avoids needing to broaden the sandbox just to load typography.
-  # See: https://pub.dev/packages/google_fonts#bundling-fonts-in-your-app
+  # IBM Plex Sans + DM Mono + Roboto Mono ship as bundled Flutter font
+  # families (see the `fonts:` block below) so typography renders fully
+  # offline / on first launch with zero runtime fetch. The theme asks for
+  # these plain family names via `fontFamily` (lib/theme/), not via
+  # google_fonts runtime resolution. Required because the default macOS
+  # Flutter entitlements do not include com.apple.security.network.client;
+  # bundling the families avoids any dependency on network access just to
+  # render type.
+  #
+  # The same TTFs are ALSO listed under `assets:` below so the golden-test
+  # FontLoader (test/flutter_test_config.dart) can rootBundle.load them by
+  # path. Listing a TTF as both an asset and a font face is harmless.
   assets:
     - assets/fonts/IBMPlexSans-Regular.ttf
     - assets/fonts/IBMPlexSans-Medium.ttf
@@ -150,8 +159,8 @@ flutter:
     - assets/fonts/DMMono-Regular.ttf
     - assets/fonts/DMMono-Medium.ttf
     # Roboto Mono — monospaced sans-serif for fixed-width identifiers (IP, MAC,
-    # subnet masks, BSSIDs, hex). Bundled like the others so google_fonts loads
-    # it locally with no runtime HTTP fetch.
+    # subnet masks, BSSIDs, hex). Declared as a font family below; also listed
+    # here as an asset for the golden-test FontLoader.
     - assets/fonts/RobotoMono-Regular.ttf
     # Bundled IEEE OUI / vendor table for the MAC Vendor Lookup tool
     # (TICKET-002). Trimmed MA-L/MA-M/MA-S registries; loaded + parsed once and
@@ -180,22 +189,33 @@ flutter:
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/to/asset-from-package
 
-  # To add custom fonts to your application, add a fonts section here,
-  # in this "flutter" section. Each entry in this list should have a
-  # "family" key with the font family name, and a "fonts" key with a
-  # list giving the asset and other descriptors for the font. For
-  # example:
-  # fonts:
-  #   - family: Schyler
-  #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
-  #       - asset: fonts/Schyler-Italic.ttf
-  #         style: italic
-  #   - family: Trajan Pro
-  #     fonts:
-  #       - asset: fonts/TrajanPro.ttf
-  #       - asset: fonts/TrajanPro_Bold.ttf
-  #         weight: 700
+  # Bundled font families. The theme (lib/theme/app_typography.dart)
+  # references these plain family names via `fontFamily`; the engine selects
+  # the correct face by weight at render
+  # time. No runtime fetch, fully offline. Weight mapping mirrors the
+  # GL-003 §3 type scale exactly (behavior-preserving migration off
+  # google_fonts, 2026-06-01).
+  fonts:
+    - family: IBM Plex Sans
+      fonts:
+        - asset: assets/fonts/IBMPlexSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/IBMPlexSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/IBMPlexSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/IBMPlexSans-Bold.ttf
+          weight: 700
+    - family: DM Mono
+      fonts:
+        - asset: assets/fonts/DMMono-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/DMMono-Medium.ttf
+          weight: 500
+    - family: Roboto Mono
+      fonts:
+        - asset: assets/fonts/RobotoMono-Regular.ttf
+          weight: 400
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
