@@ -23,6 +23,7 @@ import 'package:flutter/material.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 
 /// Coarse signal verdict used to tint a row with the §8.13 status palette.
@@ -138,15 +139,51 @@ class SignalThresholdsScreen extends StatelessWidget {
     SnrMcsRow(minSnr: '5 dB', mcs: 'MCS 0 - BPSK 1/2', rate: '~29-36 Mbps'),
     SnrMcsRow(minSnr: '8 dB', mcs: 'MCS 1 - QPSK 1/2', rate: '~58-72 Mbps'),
     SnrMcsRow(minSnr: '10 dB', mcs: 'MCS 2 - QPSK 3/4', rate: '~87-108 Mbps'),
-    SnrMcsRow(minSnr: '13 dB', mcs: 'MCS 3 - 16-QAM 1/2', rate: '~117-144 Mbps'),
-    SnrMcsRow(minSnr: '16 dB', mcs: 'MCS 4 - 16-QAM 3/4', rate: '~175-216 Mbps'),
-    SnrMcsRow(minSnr: '20 dB', mcs: 'MCS 5 - 64-QAM 2/3', rate: '~234-288 Mbps'),
-    SnrMcsRow(minSnr: '22 dB', mcs: 'MCS 6 - 64-QAM 3/4', rate: '~263-324 Mbps'),
-    SnrMcsRow(minSnr: '24 dB', mcs: 'MCS 7 - 64-QAM 5/6', rate: '~292-360 Mbps'),
-    SnrMcsRow(minSnr: '28 dB', mcs: 'MCS 8 - 256-QAM 3/4', rate: '~351-432 Mbps'),
-    SnrMcsRow(minSnr: '30 dB', mcs: 'MCS 9 - 256-QAM 5/6', rate: '~390-480 Mbps'),
-    SnrMcsRow(minSnr: '33 dB', mcs: 'MCS 10 - 1024-QAM 3/4', rate: '~540 Mbps (ax)'),
-    SnrMcsRow(minSnr: '35 dB', mcs: 'MCS 11 - 1024-QAM 5/6', rate: '~600 Mbps (ax)'),
+    SnrMcsRow(
+      minSnr: '13 dB',
+      mcs: 'MCS 3 - 16-QAM 1/2',
+      rate: '~117-144 Mbps',
+    ),
+    SnrMcsRow(
+      minSnr: '16 dB',
+      mcs: 'MCS 4 - 16-QAM 3/4',
+      rate: '~175-216 Mbps',
+    ),
+    SnrMcsRow(
+      minSnr: '20 dB',
+      mcs: 'MCS 5 - 64-QAM 2/3',
+      rate: '~234-288 Mbps',
+    ),
+    SnrMcsRow(
+      minSnr: '22 dB',
+      mcs: 'MCS 6 - 64-QAM 3/4',
+      rate: '~263-324 Mbps',
+    ),
+    SnrMcsRow(
+      minSnr: '24 dB',
+      mcs: 'MCS 7 - 64-QAM 5/6',
+      rate: '~292-360 Mbps',
+    ),
+    SnrMcsRow(
+      minSnr: '28 dB',
+      mcs: 'MCS 8 - 256-QAM 3/4',
+      rate: '~351-432 Mbps',
+    ),
+    SnrMcsRow(
+      minSnr: '30 dB',
+      mcs: 'MCS 9 - 256-QAM 5/6',
+      rate: '~390-480 Mbps',
+    ),
+    SnrMcsRow(
+      minSnr: '33 dB',
+      mcs: 'MCS 10 - 1024-QAM 3/4',
+      rate: '~540 Mbps (ax)',
+    ),
+    SnrMcsRow(
+      minSnr: '35 dB',
+      mcs: 'MCS 11 - 1024-QAM 5/6',
+      rate: '~600 Mbps (ax)',
+    ),
   ];
 
   /// §8.13 verdict tint for a grade. Color is never the only signal — the
@@ -162,10 +199,62 @@ class SignalThresholdsScreen extends StatelessWidget {
     }
   }
 
+  /// Worded verdict for a grade — the clipboard carrier of the §8.13 status hue
+  /// the RSSI quality scale paints on-screen (§8.16 verdict-word rule).
+  static String gradeWord(SignalGrade grade) {
+    switch (grade) {
+      case SignalGrade.good:
+        return 'Good';
+      case SignalGrade.marginal:
+        return 'Marginal';
+      case SignalGrade.bad:
+        return 'Bad';
+    }
+  }
+
+  /// §8.16 copy payload — all three reference blocks as TSV. Static data, so
+  /// always enabled. Three sections (subtitle + header + rows): the RSSI
+  /// quality scale (verdict word carries the status hue), the per-application
+  /// minimum RSSI/SNR table, and the SNR→MCS rate table.
+  static String _buildCopyText() {
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()
+      ..writeln('Signal Thresholds (RSSI / SNR)')
+      ..writeln()
+      ..writeln('RSSI quality scale')
+      ..writeln(<String>['Quality', 'Verdict', 'RSSI range'].join(tab));
+    for (final SignalBand b in kSignalBands) {
+      buf.writeln(<String>[b.label, gradeWord(b.grade), b.range].join(tab));
+    }
+    buf
+      ..writeln()
+      ..writeln('Minimum signal by application')
+      ..writeln(
+        <String>['Application', 'Min RSSI', 'Min SNR', 'Notes'].join(tab),
+      );
+    for (final AppThreshold r in kAppThresholds) {
+      buf.writeln(
+        <String>[r.application, r.minRssi, r.minSnr, r.notes].join(tab),
+      );
+    }
+    buf
+      ..writeln()
+      ..writeln('SNR to MCS (80 MHz, 1 SS)')
+      ..writeln(<String>['Min SNR', 'Typical MCS', 'Rate'].join(tab));
+    for (final SnrMcsRow r in kSnrMcsRows) {
+      buf.writeln(<String>[r.minSnr, r.mcs, r.rate].join(tab));
+    }
+    return buf.toString().trimRight();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Signal Thresholds'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Signal Thresholds'),
+        toolbarHeight: 64,
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body(context)),
     );
   }
@@ -245,8 +334,9 @@ class SignalThresholdsScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _ThresholdHeader(text: text),
-          ...kAppThresholds
-              .map((AppThreshold r) => _ThresholdRow(row: r, text: text, mono: mono)),
+          ...kAppThresholds.map(
+            (AppThreshold r) => _ThresholdRow(row: r, text: text, mono: mono),
+          ),
         ],
       ),
     );
@@ -262,8 +352,9 @@ class SignalThresholdsScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _SnrMcsHeader(text: text),
-          ...kSnrMcsRows
-              .map((SnrMcsRow r) => _SnrMcsRowTile(row: r, text: text, mono: mono)),
+          ...kSnrMcsRows.map(
+            (SnrMcsRow r) => _SnrMcsRowTile(row: r, text: text, mono: mono),
+          ),
         ],
       ),
     );
@@ -527,9 +618,7 @@ class _SnrMcsRowTile extends StatelessWidget {
               child: Text(
                 row.rate,
                 textAlign: TextAlign.right,
-                style: mono.inlineCode.copyWith(
-                  color: AppColors.textTertiary,
-                ),
+                style: mono.inlineCode.copyWith(color: AppColors.textTertiary),
               ),
             ),
           ],

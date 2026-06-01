@@ -37,6 +37,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -202,7 +203,14 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Downtilt Coverage'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Downtilt Coverage'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until a valid
+        // coverage geometry is computed; copies the result as a labeled text
+        // block (the beam-above-horizon verdict copies as its word).
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -251,6 +259,38 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
         ),
       ),
     );
+  }
+
+  /// §8.16 copy payload — the coverage geometry as a labeled text block.
+  ///
+  /// Returns null (→ disabled affordance) whenever there is no valid coverage:
+  /// any empty field, non-positive height, or out-of-band beamwidth. When the
+  /// upper beam edge reaches the horizon the far edge copies as its verdict word
+  /// ("Unbounded (beam above horizon)", §8.16) and depth as "Unbounded", since
+  /// neither has a finite value — matching the on-screen [_resultBlock]. Field
+  /// order and values match the on-screen inputs and result rows.
+  String? _buildCopyText() {
+    final DtCoverage? r = _result;
+    if (r == null) return null;
+
+    final String hUnit = _heightUnitLabel(_heightUnit);
+    final String far = r.beamAboveHorizon
+        ? 'Unbounded (beam above horizon)'
+        : _formatDual(r.farEdge);
+    final String depth = r.beamAboveHorizon
+        ? 'Unbounded'
+        : _formatDual(r.depth);
+
+    return (StringBuffer()
+          ..writeln('Downtilt Coverage')
+          ..writeln('Antenna height (AGL): ${_heightCtrl.text.trim()} $hUnit')
+          ..writeln('Downtilt angle: ${_tiltCtrl.text.trim()}°')
+          ..writeln('Vertical beamwidth: ${_bwCtrl.text.trim()}°')
+          ..writeln('Near edge: ${_formatDual(r.nearEdge)}')
+          ..writeln('Far edge: $far')
+          ..writeln('Coverage depth: $depth'))
+        .toString()
+        .trimRight();
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {

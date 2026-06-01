@@ -31,6 +31,7 @@ import 'package:flutter/material.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
 
@@ -95,23 +96,96 @@ class PoeReferenceScreen extends StatelessWidget {
 
   /// PoE standards. Ported verbatim from PWA app.js POE_STDS.
   static const List<PoeStandard> standards = [
-    PoeStandard(standard: '802.3af', name: 'PoE', pseWatts: 15.4, pdWatts: 12.95, pairs: '2 of 4', classes: '0-3'),
-    PoeStandard(standard: '802.3at', name: 'PoE+', pseWatts: 30.0, pdWatts: 25.5, pairs: '2 of 4', classes: '0-4'),
-    PoeStandard(standard: '802.3bt Type 3', name: 'PoE++ / 4PPoE', pseWatts: 60.0, pdWatts: 51.0, pairs: '4 of 4', classes: '0-6'),
-    PoeStandard(standard: '802.3bt Type 4', name: 'PoE++ Hi', pseWatts: 100.0, pdWatts: 71.3, pairs: '4 of 4', classes: '0-8'),
+    PoeStandard(
+      standard: '802.3af',
+      name: 'PoE',
+      pseWatts: 15.4,
+      pdWatts: 12.95,
+      pairs: '2 of 4',
+      classes: '0-3',
+    ),
+    PoeStandard(
+      standard: '802.3at',
+      name: 'PoE+',
+      pseWatts: 30.0,
+      pdWatts: 25.5,
+      pairs: '2 of 4',
+      classes: '0-4',
+    ),
+    PoeStandard(
+      standard: '802.3bt Type 3',
+      name: 'PoE++ / 4PPoE',
+      pseWatts: 60.0,
+      pdWatts: 51.0,
+      pairs: '4 of 4',
+      classes: '0-6',
+    ),
+    PoeStandard(
+      standard: '802.3bt Type 4',
+      name: 'PoE++ Hi',
+      pseWatts: 100.0,
+      pdWatts: 71.3,
+      pairs: '4 of 4',
+      classes: '0-8',
+    ),
   ];
 
   /// PD power classes. Ported verbatim from PWA app.js POE_CLASSES.
   static const List<PoeClass> classes = [
-    PoeClass(classNum: 0, maxPdWatts: 12.95, standard: '802.3af', note: 'Default / unclassified'),
-    PoeClass(classNum: 1, maxPdWatts: 3.84, standard: '802.3af', note: 'Low power'),
-    PoeClass(classNum: 2, maxPdWatts: 6.49, standard: '802.3af', note: 'Medium power'),
-    PoeClass(classNum: 3, maxPdWatts: 12.95, standard: '802.3af', note: 'af maximum'),
-    PoeClass(classNum: 4, maxPdWatts: 25.5, standard: '802.3at', note: 'PoE+ max'),
-    PoeClass(classNum: 5, maxPdWatts: 40.0, standard: '802.3bt', note: 'Type 3'),
-    PoeClass(classNum: 6, maxPdWatts: 51.0, standard: '802.3bt', note: 'Type 3 max'),
-    PoeClass(classNum: 7, maxPdWatts: 62.0, standard: '802.3bt', note: 'Type 4'),
-    PoeClass(classNum: 8, maxPdWatts: 71.3, standard: '802.3bt', note: 'Type 4 max'),
+    PoeClass(
+      classNum: 0,
+      maxPdWatts: 12.95,
+      standard: '802.3af',
+      note: 'Default / unclassified',
+    ),
+    PoeClass(
+      classNum: 1,
+      maxPdWatts: 3.84,
+      standard: '802.3af',
+      note: 'Low power',
+    ),
+    PoeClass(
+      classNum: 2,
+      maxPdWatts: 6.49,
+      standard: '802.3af',
+      note: 'Medium power',
+    ),
+    PoeClass(
+      classNum: 3,
+      maxPdWatts: 12.95,
+      standard: '802.3af',
+      note: 'af maximum',
+    ),
+    PoeClass(
+      classNum: 4,
+      maxPdWatts: 25.5,
+      standard: '802.3at',
+      note: 'PoE+ max',
+    ),
+    PoeClass(
+      classNum: 5,
+      maxPdWatts: 40.0,
+      standard: '802.3bt',
+      note: 'Type 3',
+    ),
+    PoeClass(
+      classNum: 6,
+      maxPdWatts: 51.0,
+      standard: '802.3bt',
+      note: 'Type 3 max',
+    ),
+    PoeClass(
+      classNum: 7,
+      maxPdWatts: 62.0,
+      standard: '802.3bt',
+      note: 'Type 4',
+    ),
+    PoeClass(
+      classNum: 8,
+      maxPdWatts: 71.3,
+      standard: '802.3bt',
+      note: 'Type 4 max',
+    ),
   ];
 
   /// Footnote — PD power is what reaches the device after cable loss.
@@ -123,9 +197,67 @@ class PoeReferenceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('PoE Reference'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('PoE Reference'),
+        toolbarHeight: 64,
+        // §8.16 — copy both sub-tables as TSV (PoE standards + PD power
+        // classes), each its own section. Static data, always enabled.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body(context)),
     );
+  }
+
+  /// §8.16 copy payload — both PoE sub-tables as a two-section TSV. Section 1
+  /// is the standards table (standard, name, PSE W, PD W, pairs, classes);
+  /// section 2 is the PD power-class table (class, max at PD, standard, note).
+  /// Each section gets a subtitle + header + one row per entry. Watt values use
+  /// the same `_fmt` trimming the screen shows. Always non-null (static data).
+  static String _buildCopyText() {
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()
+      ..writeln('PoE Reference')
+      ..writeln()
+      ..writeln('PoE standards')
+      ..writeln(
+        <String>[
+          'Standard',
+          'Name',
+          'PSE (W)',
+          'PD (W)',
+          'Pairs',
+          'Classes',
+        ].join(tab),
+      );
+    for (final PoeStandard s in standards) {
+      buf.writeln(
+        <String>[
+          s.standard,
+          s.name,
+          _fmt(s.pseWatts),
+          _fmt(s.pdWatts),
+          s.pairs,
+          s.classes,
+        ].join(tab),
+      );
+    }
+    buf
+      ..writeln()
+      ..writeln('PD power classes')
+      ..writeln(
+        <String>['Class', 'Max at PD (W)', 'Standard', 'Note'].join(tab),
+      );
+    for (final PoeClass c in classes) {
+      buf.writeln(
+        <String>[
+          '${c.classNum}',
+          _fmt(c.maxPdWatts),
+          c.standard,
+          c.note,
+        ].join(tab),
+      );
+    }
+    return buf.toString().trimRight();
   }
 
   Widget _body(BuildContext context) {
@@ -196,68 +328,68 @@ class PoeReferenceScreen extends StatelessWidget {
             'classes ${s.classes}',
           ]),
           child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: 120,
-                child: Text(
-                  s.standard,
-                  style: mono.inlineCode.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w500,
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 120,
+                  child: Text(
+                    s.standard,
+                    style: mono.inlineCode.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(
-                width: 120,
-                child: Text(
-                  s.name,
-                  style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                SizedBox(
+                  width: 120,
+                  child: Text(
+                    s.name,
+                    style: text.labelMedium?.copyWith(
+                      color: AppColors.textTertiary,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(
-                width: 64,
-                child: Text(
-                  '${_fmt(s.pseWatts)} W',
-                  style: mono.inlineCode.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w500,
+                SizedBox(
+                  width: 64,
+                  child: Text(
+                    '${_fmt(s.pseWatts)} W',
+                    style: mono.inlineCode.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(
-                width: 64,
-                child: Text(
-                  '${_fmt(s.pdWatts)} W',
-                  style: mono.inlineCode.copyWith(
-                    color: AppColors.textSecondary,
+                SizedBox(
+                  width: 64,
+                  child: Text(
+                    '${_fmt(s.pdWatts)} W',
+                    style: mono.inlineCode.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(
-                width: 64,
-                child: Text(
-                  s.pairs,
-                  style: mono.inlineCode.copyWith(
-                    color: AppColors.textTertiary,
+                SizedBox(
+                  width: 64,
+                  child: Text(
+                    s.pairs,
+                    style: mono.inlineCode.copyWith(
+                      color: AppColors.textTertiary,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(
-                width: 56,
-                child: Text(
-                  s.classes,
-                  style: mono.inlineCode.copyWith(
-                    color: AppColors.textTertiary,
+                SizedBox(
+                  width: 56,
+                  child: Text(
+                    s.classes,
+                    style: mono.inlineCode.copyWith(
+                      color: AppColors.textTertiary,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
           ),
         );
       }).toList(),
@@ -283,50 +415,50 @@ class PoeReferenceScreen extends StatelessWidget {
             c.note,
           ]),
           child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: 56,
-                child: Text(
-                  '${c.classNum}',
-                  style: mono.inlineCode.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w500,
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 56,
+                  child: Text(
+                    '${c.classNum}',
+                    style: mono.inlineCode.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(
-                width: 88,
-                child: Text(
-                  '${_fmt(c.maxPdWatts)} W',
-                  style: mono.inlineCode.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w500,
+                SizedBox(
+                  width: 88,
+                  child: Text(
+                    '${_fmt(c.maxPdWatts)} W',
+                    style: mono.inlineCode.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(
-                width: 88,
-                child: Text(
-                  c.standard,
-                  style: mono.inlineCode.copyWith(
-                    color: AppColors.textSecondary,
+                SizedBox(
+                  width: 88,
+                  child: Text(
+                    c.standard,
+                    style: mono.inlineCode.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(
-                width: 160,
-                child: Text(
-                  c.note,
-                  style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                SizedBox(
+                  width: 160,
+                  child: Text(
+                    c.note,
+                    style: text.labelMedium?.copyWith(
+                      color: AppColors.textTertiary,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
           ),
         );
       }).toList(),
@@ -394,10 +526,7 @@ class _TableCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   header,
-                  const Divider(
-                    color: AppColors.border,
-                    height: AppSpacing.sm,
-                  ),
+                  const Divider(color: AppColors.border, height: AppSpacing.sm),
                   ...rows,
                 ],
               ),
@@ -407,9 +536,7 @@ class _TableCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.xs),
             Text(
               footnote!,
-              style: text.labelMedium?.copyWith(
-                color: AppColors.textTertiary,
-              ),
+              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
             ),
           ],
         ],

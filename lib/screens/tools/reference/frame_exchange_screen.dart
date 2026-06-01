@@ -28,6 +28,7 @@ import 'package:flutter/material.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_select.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -133,15 +134,48 @@ class _FrameExchangeScreenState extends State<FrameExchangeScreen> {
   // Selected scenario key. Defaults to the PWA's initially-active tab ('open').
   String _selectedKey = FrameExchangeScreen.scenarios.first.key;
 
-  FxScenario get _selected => FrameExchangeScreen.scenarios
-      .firstWhere((FxScenario s) => s.key == _selectedKey);
+  FxScenario get _selected => FrameExchangeScreen.scenarios.firstWhere(
+    (FxScenario s) => s.key == _selectedKey,
+  );
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('802.11 Frame Exchange'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('802.11 Frame Exchange'),
+        toolbarHeight: 64,
+        // §8.16 — copy the selected scenario's frame sequence as TSV, one
+        // section per phase. Static data, always enabled.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// §8.16 copy payload — the selected scenario's full frame sequence as a
+  /// multi-section TSV. The scenario title names the document; each phase is
+  /// its own section (phase name subtitle + header + one row per frame).
+  /// Columns: Step, Type, Direction, Frame, Note. Always non-null (static
+  /// data); the frame-type code is included as its WORD so the §8.15-suppressed
+  /// category survives the copy.
+  String _buildCopyText() {
+    const String tab = '\t';
+    final FxScenario s = _selected;
+    final StringBuffer buf = StringBuffer()..writeln(s.title);
+    for (final FxPhase phase in s.phases) {
+      buf
+        ..writeln()
+        ..writeln(phase.name)
+        ..writeln(
+          <String>['Step', 'Type', 'Direction', 'Frame', 'Note'].join(tab),
+        );
+      for (final FxFrame f in phase.frames) {
+        buf.writeln(
+          <String>['${f.n}', f.type.code, f.dir, f.label, f.note].join(tab),
+        );
+      }
+    }
+    return buf.toString().trimRight();
   }
 
   Widget _body() {
@@ -326,76 +360,76 @@ class _FrameRow extends StatelessWidget {
         frame.note,
       ]),
       child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Neutral numbered step chip (§8.15 case-3): surface step + strong
-          // border + DM Mono index. No status hue — the chip no longer encodes
-          // a category by color. Excluded from semantics (the row label already
-          // says "Step N"); the swatch is now purely structural.
-          ExcludeSemantics(
-            child: Container(
-              width: 28,
-              height: 28,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: AppColors.surface2,
-                borderRadius: BorderRadius.circular(AppRadius.control),
-                border: Border.all(color: AppColors.borderStrong, width: 1),
-              ),
-              child: Text(
-                '${frame.n}',
-                style: mono.inlineCode.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w500,
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Neutral numbered step chip (§8.15 case-3): surface step + strong
+            // border + DM Mono index. No status hue — the chip no longer encodes
+            // a category by color. Excluded from semantics (the row label already
+            // says "Step N"); the swatch is now purely structural.
+            ExcludeSemantics(
+              child: Container(
+                width: 28,
+                height: 28,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.surface2,
+                  borderRadius: BorderRadius.circular(AppRadius.control),
+                  border: Border.all(color: AppColors.borderStrong, width: 1),
+                ),
+                child: Text(
+                  '${frame.n}',
+                  style: mono.inlineCode.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          frame.dir,
+                          style: text.labelSmall?.copyWith(
+                            color: AppColors.textTertiary,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      // Neutral type code — the category, carried by text not hue.
+                      _TypeTag(code: frame.type.code, mono: mono),
+                    ],
+                  ),
+                  Text(
+                    frame.label,
+                    style: text.bodyLarge?.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (frame.note.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
                       child: Text(
-                        frame.dir,
-                        style: text.labelSmall?.copyWith(
+                        frame.note,
+                        style: text.labelMedium?.copyWith(
                           color: AppColors.textTertiary,
-                          letterSpacing: 0.4,
                         ),
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.xs),
-                    // Neutral type code — the category, carried by text not hue.
-                    _TypeTag(code: frame.type.code, mono: mono),
-                  ],
-                ),
-                Text(
-                  frame.label,
-                  style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                if (frame.note.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Text(
-                      frame.note,
-                      style: text.labelMedium?.copyWith(
-                        color: AppColors.textTertiary,
-                      ),
-                    ),
-                  ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
@@ -494,7 +528,8 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             dir: 'STA → AP',
             label: 'Probe Request',
             type: FxType.mgmt,
-            note: 'STA actively scans for specific SSID (optional — passive '
+            note:
+                'STA actively scans for specific SSID (optional — passive '
                 'scan skips this)',
           ),
           FxFrame(
@@ -509,7 +544,8 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             dir: 'STA → AP',
             label: 'Auth Request (Open)',
             type: FxType.mgmt,
-            note: 'Open System auth — always succeeds; just a formality before '
+            note:
+                'Open System auth — always succeeds; just a formality before '
                 'Association',
           ),
           FxFrame(
@@ -529,7 +565,8 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             dir: 'STA → AP',
             label: 'Association Request',
             type: FxType.mgmt,
-            note: 'STA requests association, declares its capabilities and RSN '
+            note:
+                'STA requests association, declares its capabilities and RSN '
                 'IE (cipher suites, PMF)',
           ),
           FxFrame(
@@ -563,7 +600,8 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             dir: 'AP → STA',
             label: 'EAPOL Key (Msg 3/4)',
             type: FxType.eap,
-            note: 'AP sends GTK (group key), encrypted with PTK. STA installs '
+            note:
+                'AP sends GTK (group key), encrypted with PTK. STA installs '
                 'PTK',
           ),
           FxFrame(
@@ -571,7 +609,8 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             dir: 'STA → AP',
             label: 'EAPOL Key (Msg 4/4)',
             type: FxType.eap,
-            note: 'STA confirms GTK installed. Both sides now have matching '
+            note:
+                'STA confirms GTK installed. Both sides now have matching '
                 'PTK/GTK',
           ),
         ],
@@ -631,7 +670,8 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             dir: 'STA → AP',
             label: 'SAE Commit (Auth Seq 1)',
             type: FxType.mgmt,
-            note: 'STA initiates SAE Dragonfly handshake. Contains scalar and '
+            note:
+                'STA initiates SAE Dragonfly handshake. Contains scalar and '
                 'element derived from passphrase',
           ),
           FxFrame(
@@ -646,7 +686,8 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             dir: 'STA → AP',
             label: 'SAE Confirm (Auth Seq 2)',
             type: FxType.mgmt,
-            note: 'STA sends confirmation token. Both sides derive PMK from the '
+            note:
+                'STA sends confirmation token. Both sides derive PMK from the '
                 'exchange — no password is transmitted',
           ),
           FxFrame(
@@ -654,7 +695,8 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             dir: 'AP → STA',
             label: 'SAE Confirm (Auth Seq 2)',
             type: FxType.mgmt,
-            note: 'AP confirms. Auth complete. PMK is now shared — forward '
+            note:
+                'AP confirms. Auth complete. PMK is now shared — forward '
                 'secrecy guaranteed',
           ),
         ],
@@ -765,7 +807,8 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             dir: 'AP → STA',
             label: 'Association Response',
             type: FxType.mgmt,
-            note: 'Status = 0. STA now associated but port is blocked '
+            note:
+                'Status = 0. STA now associated but port is blocked '
                 '(Controlled Port = closed)',
           ),
         ],
@@ -799,7 +842,8 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             dir: 'RADIUS → AP',
             label: 'RADIUS Access-Challenge',
             type: FxType.wired,
-            note: 'RADIUS sends EAP challenge (e.g. TLS tunnel setup for '
+            note:
+                'RADIUS sends EAP challenge (e.g. TLS tunnel setup for '
                 'PEAP/EAP-TLS)',
           ),
           FxFrame(
@@ -807,7 +851,8 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             dir: 'AP ↔ STA',
             label: 'EAP Method Exchange',
             type: FxType.eap,
-            note: 'Multiple round-trips for the chosen EAP method (PEAP, '
+            note:
+                'Multiple round-trips for the chosen EAP method (PEAP, '
                 'EAP-TLS, EAP-TTLS). Credential exchange happens inside '
                 'encrypted TLS tunnel',
           ),
@@ -816,7 +861,8 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             dir: 'RADIUS → AP',
             label: 'RADIUS Access-Accept',
             type: FxType.wired,
-            note: 'Auth succeeded. RADIUS optionally delivers MSK (Master '
+            note:
+                'Auth succeeded. RADIUS optionally delivers MSK (Master '
                 'Session Key) and VLAN assignment',
           ),
           FxFrame(
@@ -874,7 +920,8 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             dir: 'STA → AP1',
             label: 'Standard association',
             type: FxType.mgmt,
-            note: 'Full association and 4-Way Handshake with AP1. PMK-R0 and '
+            note:
+                'Full association and 4-Way Handshake with AP1. PMK-R0 and '
                 'PMK-R1 keys are derived and cached at AP1 and the R0KH/R1KH',
           ),
         ],
@@ -887,7 +934,8 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             dir: 'STA → AP2',
             label: 'Probe Request (to AP2)',
             type: FxType.mgmt,
-            note: 'STA scans for neighboring APs (aided by 802.11k Neighbor '
+            note:
+                'STA scans for neighboring APs (aided by 802.11k Neighbor '
                 'Report if supported)',
           ),
           FxFrame(
@@ -907,7 +955,8 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             dir: 'STA → AP2',
             label: 'FT Auth Request (Seq 1)',
             type: FxType.mgmt,
-            note: 'STA sends MDIE + FTIE with SNonce. AP2 fetches PMK-R1 from '
+            note:
+                'STA sends MDIE + FTIE with SNonce. AP2 fetches PMK-R1 from '
                 'R1KH (via DS or R0KH)',
           ),
           FxFrame(
@@ -915,7 +964,8 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             dir: 'AP2 → STA',
             label: 'FT Auth Response (Seq 2)',
             type: FxType.mgmt,
-            note: 'AP2 sends ANonce + FTIE. PTK is now derivable by both sides '
+            note:
+                'AP2 sends ANonce + FTIE. PTK is now derivable by both sides '
                 'without a full 4-Way Handshake',
           ),
         ],
@@ -928,7 +978,8 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             dir: 'STA → AP2',
             label: 'FT Reassociation Request',
             type: FxType.mgmt,
-            note: 'Contains MDIE + FTIE. No separate 4-Way Handshake needed — '
+            note:
+                'Contains MDIE + FTIE. No separate 4-Way Handshake needed — '
                 'keys already negotiated',
           ),
           FxFrame(
@@ -936,7 +987,8 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             dir: 'AP2 → STA',
             label: 'FT Reassociation Response',
             type: FxType.mgmt,
-            note: 'Status = 0. STA is now associated to AP2. Total roam latency '
+            note:
+                'Status = 0. STA is now associated to AP2. Total roam latency '
                 '< 50 ms with 802.11r vs > 150 ms without',
           ),
         ],

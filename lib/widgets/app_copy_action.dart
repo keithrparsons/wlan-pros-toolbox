@@ -11,10 +11,13 @@
 //   - the icon-swap confirmation (copy_outlined → check) + 1500ms window +
 //     §8.8 cross-fade (collapsed to 0ms under reduced motion);
 //   - the live-region SR announcement ("Results copied", SC 4.1.3);
-//   - the §8.3 keyboard focus ring (drawn locally — the app sets
-//     `focusColor: Colors.transparent` globally and has no IconButtonTheme, so
-//     this widget cannot inherit a visible ring and must paint its own);
 //   - the disabled / no-results state (textDisabled, not focusable).
+//
+// The §8.3 keyboard focus ring is NO LONGER drawn here. As of 2026-06-01 the
+// app ThemeData carries an `iconButtonTheme` whose `ButtonStyle.side` paints
+// the 2px lime `_focusRingSide` on WidgetState.focused, so every icon-only
+// IconButton — including this one — inherits the ring globally. This widget's
+// inner control is a standard IconButton, so the theme reaches it.
 //
 // Contract: the screen passes a [textBuilder] closure that returns the full
 // plain-text payload to copy, or `null` when there are no results yet. Null →
@@ -67,33 +70,11 @@ class _AppCopyActionState extends State<AppCopyAction> {
   static const Duration _confirmWindow = Duration(milliseconds: 1500);
 
   bool _confirmed = false;
-  bool _focused = false;
 
   // Increments on every tap; the revert callback only acts if its captured
   // generation still matches — this is how a re-tap inside the window
   // RESTARTS the timer (§8.16) without a Timer field to cancel.
   int _confirmGeneration = 0;
-
-  // The IconButton is the real actionable, focusable control (so Enter/Space
-  // activation works for free). We listen to ITS focus to drive the local
-  // §8.3 ring — the app sets focusColor transparent and has no
-  // IconButtonTheme, so the button would otherwise show no visible ring.
-  late final FocusNode _focusNode = FocusNode(debugLabel: 'AppCopyAction')
-    ..addListener(_onFocusChange);
-
-  void _onFocusChange() {
-    if (_focusNode.hasFocus != _focused) {
-      setState(() => _focused = _focusNode.hasFocus);
-    }
-  }
-
-  @override
-  void dispose() {
-    _focusNode
-      ..removeListener(_onFocusChange)
-      ..dispose();
-    super.dispose();
-  }
 
   Future<void> _handleTap() async {
     final String? text = widget.textBuilder();
@@ -152,41 +133,28 @@ class _AppCopyActionState extends State<AppCopyAction> {
       // excludeSemantics keeps the inner Icon/IconButton out of the tree — the
       // parent Semantics owns the single labelled, button role.
       child: ExcludeSemantics(
-        child: Container(
-          // §8.3 keyboard focus ring — 2px solid lime with a 2px offset,
-          // matching AppTheme._focusRingSide. Drawn locally because the app has
-          // no IconButtonTheme and a globally transparent focusColor, so the
-          // IconButton would otherwise show no visible ring. Driven by the
-          // button's own focus node so Enter/Space activation works for free.
-          margin: const EdgeInsets.all(2), // the 2px offset
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.pill),
-            border: Border.all(
-              color: (_focused && enabled)
-                  ? AppColors.primary
-                  : Colors.transparent,
-              width: 2,
-            ),
-          ),
-          child: IconButton(
-            // §8.16: onPressed null when disabled drops it from focus traversal
-            // and exposes the platform disabled state to AT.
-            onPressed: enabled ? _handleTap : null,
-            focusNode: _focusNode,
-            // The visual glyph is 24px (§8.6 nav size); IconButton's hit region
-            // stays ≥48dp for the §8.3 touch-target floor.
-            iconSize: 24,
-            // Tooltip mirrors the live label so pointer/hover users get the
-            // same state text; suppressed while disabled.
-            tooltip: enabled ? label : null,
-            icon: AnimatedSwitcher(
-              duration: swapDuration,
-              child: Icon(
-                icon,
-                key: ValueKey<bool>(_confirmed),
-                size: 24,
-                color: iconColor,
-              ),
+        // §8.3 keyboard focus ring is provided globally by the app's
+        // iconButtonTheme (ButtonStyle.side → _focusRingSide on
+        // WidgetState.focused), so this IconButton inherits the 2px lime ring
+        // without any local drawing. The IconButton remains the real
+        // actionable, focusable control (Enter/Space activation works for free).
+        child: IconButton(
+          // §8.16: onPressed null when disabled drops it from focus traversal
+          // and exposes the platform disabled state to AT.
+          onPressed: enabled ? _handleTap : null,
+          // The visual glyph is 24px (§8.6 nav size); IconButton's hit region
+          // stays ≥48dp for the §8.3 touch-target floor.
+          iconSize: 24,
+          // Tooltip mirrors the live label so pointer/hover users get the
+          // same state text; suppressed while disabled.
+          tooltip: enabled ? label : null,
+          icon: AnimatedSwitcher(
+            duration: swapDuration,
+            child: Icon(
+              icon,
+              key: ValueKey<bool>(_confirmed),
+              size: 24,
+              color: iconColor,
             ),
           ),
         ),

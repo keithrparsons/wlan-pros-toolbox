@@ -59,6 +59,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -399,7 +400,15 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('PtP Link Check'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('PtP Link Check'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until every
+        // required field is valid (no link budget); copies the link budget as a
+        // labeled text block, carrying the §8.13 PASS / MARGINAL / FAIL verdict
+        // WORD. Copy leads; no help icon here.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -448,6 +457,51 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
         ),
       ),
     );
+  }
+
+  /// §8.16 copy payload — the PtP link budget as a labeled text block.
+  ///
+  /// Returns null (→ disabled affordance) until every required field is valid
+  /// (freq/dist/Tx power/gains/sensitivity present, freq & distance > 0), so
+  /// there is no link budget to keep. The verdict line carries the §8.13
+  /// PASS / MARGINAL / FAIL WORD plus its detail; the margin and the five
+  /// result rows match the on-screen result card.
+  String? _buildCopyText() {
+    final PtpResult? r = _result;
+    if (r == null) return null;
+
+    final PtpVerdict verdict = PtpLinkScreen.verdictFor(
+      r.margin,
+      _reqMarginUsed,
+    );
+    final String word;
+    final String detail;
+    switch (verdict) {
+      case PtpVerdict.pass:
+        word = 'PASS';
+        detail = '${_fmt(r.margin, 1)} dB margin';
+        break;
+      case PtpVerdict.marginal:
+        word = 'MARGINAL';
+        detail =
+            '${_fmt(r.margin, 1)} dB, below the ${_fmt(_reqMarginUsed, 0)} dB required';
+        break;
+      case PtpVerdict.fail:
+        word = 'FAIL';
+        detail = '${_fmt(r.margin.abs(), 1)} dB short';
+        break;
+    }
+
+    return (StringBuffer()
+          ..writeln('PtP Link Check')
+          ..writeln('Verdict: $word — $detail')
+          ..writeln('Link margin: ${_fmt(r.margin, 1)} dB')
+          ..writeln('EIRP: ${_fmt(r.eirp, 1)} dBm')
+          ..writeln('Free space loss: ${_fmt(r.fspl, 1)} dB')
+          ..writeln('Rain fade: ${_fmt(r.rainFade, 2)} dB')
+          ..writeln('Received signal: ${_fmt(r.rxLevel, 1)} dBm'))
+        .toString()
+        .trimRight();
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {

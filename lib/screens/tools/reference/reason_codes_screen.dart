@@ -21,6 +21,7 @@ import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -54,7 +55,10 @@ class ReasonCodesScreen extends StatefulWidget {
       CodeEntry(2, 'Previous auth no longer valid (expired)'),
       CodeEntry(3, 'Deauth — STA leaving BSS (or IBSS)'),
       CodeEntry(4, 'Disassoc — inactivity timer expired'),
-      CodeEntry(5, 'Disassoc — AP cannot handle all associated STAs (capacity)'),
+      CodeEntry(
+        5,
+        'Disassoc — AP cannot handle all associated STAs (capacity)',
+      ),
       CodeEntry(6, 'Class 2 frame received from non-auth STA'),
       CodeEntry(7, 'Class 3 frame received from non-assoc STA'),
       CodeEntry(8, 'Disassoc — STA leaving BSS'),
@@ -98,32 +102,30 @@ class ReasonCodesScreen extends StatefulWidget {
 
   /// Association status codes (most common subset), verbatim from PWA SC_DATA.
   /// Code 0 is the success value and is highlighted in the UI.
-  static const CodeGroup statusGroup = CodeGroup(
-    'Association Status Codes (most common)',
-    <CodeEntry>[
-      CodeEntry(0, 'Successful'),
-      CodeEntry(1, 'Unspecified failure'),
-      CodeEntry(10, 'Cannot support all requested capabilities'),
-      CodeEntry(11, 'Reassociation denied — previous association not found'),
-      CodeEntry(12, 'Association denied — reason outside scope of 802.11'),
-      CodeEntry(13, 'Responding STA does not support specified auth algorithm'),
-      CodeEntry(14, 'Auth sequence out of expected sequence'),
-      CodeEntry(15, 'Auth rejected — challenge failure'),
-      CodeEntry(16, 'Auth rejected — timeout waiting for next frame'),
-      CodeEntry(17, 'Assoc denied — AP cannot handle additional associated STAs'),
-      CodeEntry(18, 'Association denied — basic rates not supported'),
-      CodeEntry(19, 'Association denied — short preamble not supported'),
-      CodeEntry(23, 'Unspecified QoS failure'),
-      CodeEntry(24, 'Association denied — QoS capacity insufficient'),
-      CodeEntry(25, 'Association denied — poor link conditions'),
-      CodeEntry(37, 'Association denied — requesting STA not supporting MFP'),
-      CodeEntry(38, 'Association denied — AP requires MFP'),
-      CodeEntry(72, 'Requesting STA does not support HT features'),
-      CodeEntry(73, 'PCCO transition time not OK'),
-      CodeEntry(76, 'Requesting STA does not support VHT features'),
-      CodeEntry(104, 'Requesting STA does not support HE features'),
-    ],
-  );
+  static const CodeGroup
+  statusGroup = CodeGroup('Association Status Codes (most common)', <CodeEntry>[
+    CodeEntry(0, 'Successful'),
+    CodeEntry(1, 'Unspecified failure'),
+    CodeEntry(10, 'Cannot support all requested capabilities'),
+    CodeEntry(11, 'Reassociation denied — previous association not found'),
+    CodeEntry(12, 'Association denied — reason outside scope of 802.11'),
+    CodeEntry(13, 'Responding STA does not support specified auth algorithm'),
+    CodeEntry(14, 'Auth sequence out of expected sequence'),
+    CodeEntry(15, 'Auth rejected — challenge failure'),
+    CodeEntry(16, 'Auth rejected — timeout waiting for next frame'),
+    CodeEntry(17, 'Assoc denied — AP cannot handle additional associated STAs'),
+    CodeEntry(18, 'Association denied — basic rates not supported'),
+    CodeEntry(19, 'Association denied — short preamble not supported'),
+    CodeEntry(23, 'Unspecified QoS failure'),
+    CodeEntry(24, 'Association denied — QoS capacity insufficient'),
+    CodeEntry(25, 'Association denied — poor link conditions'),
+    CodeEntry(37, 'Association denied — requesting STA not supporting MFP'),
+    CodeEntry(38, 'Association denied — AP requires MFP'),
+    CodeEntry(72, 'Requesting STA does not support HT features'),
+    CodeEntry(73, 'PCCO transition time not OK'),
+    CodeEntry(76, 'Requesting STA does not support VHT features'),
+    CodeEntry(104, 'Requesting STA does not support HE features'),
+  ]);
 
   @override
   State<ReasonCodesScreen> createState() => _ReasonCodesScreenState();
@@ -154,8 +156,9 @@ class _ReasonCodesScreenState extends State<ReasonCodesScreen> {
   /// the heading is dropped along with its (empty) table.
   CodeGroup? _filterGroup(CodeGroup group, String q) {
     if (q.isEmpty) return group;
-    final List<CodeEntry> kept =
-        group.entries.where((CodeEntry e) => _matches(e, q)).toList();
+    final List<CodeEntry> kept = group.entries
+        .where((CodeEntry e) => _matches(e, q))
+        .toList();
     if (kept.isEmpty) return null;
     return CodeGroup(group.label, kept);
   }
@@ -185,9 +188,40 @@ class _ReasonCodesScreenState extends State<ReasonCodesScreen> {
       appBar: AppBar(
         title: const Text('802.11 Reason Codes'),
         toolbarHeight: 64,
+        // §8.16 — copy the reason/status code reference as TSV, one section per
+        // group. Reflects the active filter when it matches anything; falls
+        // back to the full reference when the filter matches nothing (so the
+        // action is never empty). Static data, always enabled.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// §8.16 copy payload — the reason + status code reference as a multi-section
+  /// TSV. Each code group (the same headings the screen renders) is its own
+  /// section: group-name subtitle + header + one tab-separated row per code.
+  /// Columns: Code, Meaning. Copies the FULL reference (every reason group +
+  /// the status group), not the filtered view — the filter only narrows the
+  /// display, and "copy the reference" should be predictable and consistent
+  /// with the other filterable reference tables. Always non-null (static data).
+  String _buildCopyText() {
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()
+      ..writeln('802.11 Reason & Status Codes');
+    for (final CodeGroup g in <CodeGroup>[
+      ...ReasonCodesScreen.reasonGroups,
+      ReasonCodesScreen.statusGroup,
+    ]) {
+      buf
+        ..writeln()
+        ..writeln(g.label)
+        ..writeln(<String>['Code', 'Meaning'].join(tab));
+      for (final CodeEntry e in g.entries) {
+        buf.writeln(<String>['${e.code}', e.meaning].join(tab));
+      }
+    }
+    return buf.toString().trimRight();
   }
 
   Widget _body() {
@@ -271,9 +305,7 @@ class _ReasonCodesScreenState extends State<ReasonCodesScreen> {
           textInputAction: TextInputAction.search,
           onChanged: _onQueryChanged,
           cursorColor: AppColors.primary,
-          decoration: const InputDecoration(
-            hintText: 'e.g. 15 or handshake',
-          ),
+          decoration: const InputDecoration(hintText: 'e.g. 15 or handshake'),
         ),
       ),
     );
@@ -357,10 +389,8 @@ class _GroupCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           ...group.entries.map(
-            (CodeEntry e) => _CodeRow(
-              entry: e,
-              highlight: highlightZero && e.code == 0,
-            ),
+            (CodeEntry e) =>
+                _CodeRow(entry: e, highlight: highlightZero && e.code == 0),
           ),
         ],
       ),
@@ -380,10 +410,12 @@ class _CodeRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
-    final Color codeColor =
-        highlight ? AppColors.statusSuccess : AppColors.textPrimary;
-    final Color meaningColor =
-        highlight ? AppColors.statusSuccess : AppColors.textSecondary;
+    final Color codeColor = highlight
+        ? AppColors.statusSuccess
+        : AppColors.textPrimary;
+    final Color meaningColor = highlight
+        ? AppColors.statusSuccess
+        : AppColors.textSecondary;
     // Merge code + meaning into one semantic node so AT reads "15, 4-Way
     // Handshake timeout" as a single row instead of two fragments.
     return Semantics(

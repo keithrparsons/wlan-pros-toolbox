@@ -29,6 +29,7 @@ import 'package:flutter/material.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 
 /// Coarse roaming verdict used to tint a scenario with the §8.13 status
@@ -191,12 +192,79 @@ class RoamingScreen extends StatelessWidget {
     }
   }
 
+  /// Worded verdict for a grade — the clipboard carrier of the §8.13 status hue
+  /// the threshold rows paint on-screen (§8.16 verdict-word rule).
+  static String gradeWord(RoamGrade grade) {
+    switch (grade) {
+      case RoamGrade.good:
+        return 'Good';
+      case RoamGrade.marginal:
+        return 'Marginal';
+      case RoamGrade.bad:
+        return 'Bad';
+    }
+  }
+
+  /// §8.16 copy payload — both reference blocks as TSV. Static data, so always
+  /// enabled. Two sections (subtitle + header + rows): the 802.11k/r/v protocol
+  /// overview, then the RSSI/SNR/latency design thresholds. The threshold
+  /// grade is carried as a worded Verdict cell so the on-screen status hue
+  /// survives the copy.
+  static String _buildCopyText() {
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()
+      ..writeln('Roaming Parameters (802.11k/r/v)')
+      ..writeln()
+      ..writeln('Protocols')
+      ..writeln(
+        <String>[
+          'Protocol',
+          'Name',
+          'What it does',
+          'Requirements',
+          'Note',
+        ].join(tab),
+      );
+    for (final RoamingProtocol p in kProtocols) {
+      buf.writeln(
+        <String>[p.proto, p.name, p.what, p.requirements, p.note].join(tab),
+      );
+    }
+    buf
+      ..writeln()
+      ..writeln('Thresholds')
+      ..writeln(
+        <String>[
+          'Scenario',
+          'Verdict',
+          'Min RSSI',
+          'Min SNR',
+          'Roam latency',
+          'Design rule',
+        ].join(tab),
+      );
+    for (final RoamingThreshold r in kThresholds) {
+      buf.writeln(
+        <String>[
+          r.scenario,
+          gradeWord(r.grade),
+          r.minRssi,
+          r.minSnr,
+          r.roamLatency,
+          r.designRule,
+        ].join(tab),
+      );
+    }
+    return buf.toString().trimRight();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Roaming Parameters'),
         toolbarHeight: 64,
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -224,10 +292,7 @@ class RoamingScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  ConceptGraphicBand(
-                    toolId: 'roaming',
-                    isDesktop: isDesktop,
-                  ),
+                  ConceptGraphicBand(toolId: 'roaming', isDesktop: isDesktop),
                   if (ToolAssets.hasGraphic('roaming'))
                     const SizedBox(height: AppSpacing.md),
                   _intro(context),
@@ -458,14 +523,26 @@ class _ThresholdHeader extends StatelessWidget {
         padding: const EdgeInsets.only(bottom: AppSpacing.xs),
         child: Row(
           children: [
-            SizedBox(width: _kScenarioW, child: Text('Scenario', style: style)),
-            SizedBox(width: _kRssiW, child: Text('Min RSSI', style: style)),
-            SizedBox(width: _kSnrW, child: Text('Min SNR', style: style)),
+            SizedBox(
+              width: _kScenarioW,
+              child: Text('Scenario', style: style),
+            ),
+            SizedBox(
+              width: _kRssiW,
+              child: Text('Min RSSI', style: style),
+            ),
+            SizedBox(
+              width: _kSnrW,
+              child: Text('Min SNR', style: style),
+            ),
             SizedBox(
               width: _kLatencyW,
               child: Text('Roam Latency', style: style),
             ),
-            SizedBox(width: _kRuleW, child: Text('Design Rule', style: style)),
+            SizedBox(
+              width: _kRuleW,
+              child: Text('Design Rule', style: style),
+            ),
           ],
         ),
       ),
@@ -540,7 +617,10 @@ class _ThresholdRow extends StatelessWidget {
               width: _kRssiW,
               child: Text(row.minRssi, style: monoCell),
             ),
-            SizedBox(width: _kSnrW, child: Text(row.minSnr, style: monoCell)),
+            SizedBox(
+              width: _kSnrW,
+              child: Text(row.minSnr, style: monoCell),
+            ),
             SizedBox(
               width: _kLatencyW,
               child: Text(

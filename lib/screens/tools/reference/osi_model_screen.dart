@@ -28,6 +28,7 @@ import 'package:flutter/material.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 
 /// One OSI layer row. Field names + values mirror the Pax research model
@@ -141,9 +142,46 @@ class OsiModelScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('OSI Model'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('OSI Model'),
+        toolbarHeight: 64,
+        // §8.16 — copy the 7 layers as TSV. Static data, always enabled.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body(context)),
     );
+  }
+
+  /// §8.16 copy payload — the 7 OSI layers as TSV (number, name, function PDU,
+  /// protocols, hardware), top (7) to bottom (1). One header row; one
+  /// tab-separated row per layer. Always non-null (static data).
+  static String _buildCopyText() {
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()
+      ..writeln('OSI Model — the 7 layers')
+      ..writeln(
+        <String>[
+          '#',
+          'Layer',
+          'Function',
+          'PDU',
+          'Protocols',
+          'Hardware',
+        ].join(tab),
+      );
+    for (final OsiLayer l in layers) {
+      buf.writeln(
+        <String>[
+          '${l.num}',
+          l.name,
+          l.keyword,
+          l.pdu,
+          l.protocols,
+          l.hardware,
+        ].join(tab),
+      );
+    }
+    return buf.toString().trimRight();
   }
 
   Widget _body(BuildContext context) {
@@ -172,10 +210,7 @@ class OsiModelScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  ConceptGraphicBand(
-                    toolId: 'osi-model',
-                    isDesktop: isDesktop,
-                  ),
+                  ConceptGraphicBand(toolId: 'osi-model', isDesktop: isDesktop),
                   if (ToolAssets.hasGraphic('osi-model'))
                     const SizedBox(height: AppSpacing.md),
                   _introCard(text),
@@ -241,7 +276,9 @@ class OsiModelScreen extends StatelessWidget {
                     ],
                   ),
                   const Divider(color: AppColors.border, height: AppSpacing.sm),
-                  ...layers.map((OsiLayer l) => _LayerRow(layer: l, mono: mono)),
+                  ...layers.map(
+                    (OsiLayer l) => _LayerRow(layer: l, mono: mono),
+                  ),
                 ],
               ),
             ),
@@ -313,9 +350,7 @@ class _LayerRow extends StatelessWidget {
               width: 88,
               child: Text(
                 layer.pdu,
-                style: mono.inlineCode.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+                style: mono.inlineCode.copyWith(color: AppColors.textSecondary),
               ),
             ),
             SizedBox(

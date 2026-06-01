@@ -25,6 +25,7 @@ import 'package:flutter/material.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
 
@@ -68,19 +69,110 @@ class CoaxCableScreen extends StatelessWidget {
 
   /// Coax cable reference. Ported verbatim from PWA app.js COAX_DATA.
   static const List<CoaxCable> coaxData = [
-    CoaxCable(name: 'RG-58', impedance: '50Ω', vf: 66, diameterMm: 5.0, maxGhz: 1.0, use: 'Short runs, legacy / test gear'),
-    CoaxCable(name: 'RG-8/U', impedance: '50Ω', vf: 66, diameterMm: 10.3, maxGhz: 1.0, use: 'General outdoor, amateur radio'),
-    CoaxCable(name: 'RG-213', impedance: '50Ω', vf: 66, diameterMm: 10.3, maxGhz: 1.0, use: 'Mil-spec jacket, same as RG-8'),
-    CoaxCable(name: 'RG-214', impedance: '50Ω', vf: 66, diameterMm: 10.8, maxGhz: 3.0, use: 'Double-shielded, low leakage'),
-    CoaxCable(name: 'LMR-100A', impedance: '50Ω', vf: 80, diameterMm: 3.5, maxGhz: 6.0, use: 'Pigtails, jumpers, tight bends'),
-    CoaxCable(name: 'LMR-200', impedance: '50Ω', vf: 83, diameterMm: 6.1, maxGhz: 6.0, use: 'Short outdoor runs (< 3 m)'),
-    CoaxCable(name: 'LMR-400', impedance: '50Ω', vf: 85, diameterMm: 10.8, maxGhz: 6.0, use: 'Standard Wi-Fi / cellular run'),
-    CoaxCable(name: 'LMR-600', impedance: '50Ω', vf: 87, diameterMm: 15.2, maxGhz: 6.0, use: 'Long runs, rooftop / tower'),
-    CoaxCable(name: 'LMR-900', impedance: '50Ω', vf: 87, diameterMm: 22.9, maxGhz: 6.0, use: 'Very long runs (> 30 m)'),
-    CoaxCable(name: 'LMR-1200', impedance: '50Ω', vf: 88, diameterMm: 30.0, maxGhz: 6.0, use: 'Tower base, high-power'),
-    CoaxCable(name: 'HELIAX ½"', impedance: '50Ω', vf: 81, diameterMm: 14.5, maxGhz: 8.0, use: 'Cellular BTS, microwave links'),
-    CoaxCable(name: 'HELIAX ⅞"', impedance: '50Ω', vf: 81, diameterMm: 25.0, maxGhz: 3.0, use: 'High-power base station feeder'),
-    CoaxCable(name: 'RG-6', impedance: '75Ω', vf: 82, diameterMm: 6.9, maxGhz: 1.0, use: 'CATV / satellite - NOT for Wi-Fi'),
+    CoaxCable(
+      name: 'RG-58',
+      impedance: '50Ω',
+      vf: 66,
+      diameterMm: 5.0,
+      maxGhz: 1.0,
+      use: 'Short runs, legacy / test gear',
+    ),
+    CoaxCable(
+      name: 'RG-8/U',
+      impedance: '50Ω',
+      vf: 66,
+      diameterMm: 10.3,
+      maxGhz: 1.0,
+      use: 'General outdoor, amateur radio',
+    ),
+    CoaxCable(
+      name: 'RG-213',
+      impedance: '50Ω',
+      vf: 66,
+      diameterMm: 10.3,
+      maxGhz: 1.0,
+      use: 'Mil-spec jacket, same as RG-8',
+    ),
+    CoaxCable(
+      name: 'RG-214',
+      impedance: '50Ω',
+      vf: 66,
+      diameterMm: 10.8,
+      maxGhz: 3.0,
+      use: 'Double-shielded, low leakage',
+    ),
+    CoaxCable(
+      name: 'LMR-100A',
+      impedance: '50Ω',
+      vf: 80,
+      diameterMm: 3.5,
+      maxGhz: 6.0,
+      use: 'Pigtails, jumpers, tight bends',
+    ),
+    CoaxCable(
+      name: 'LMR-200',
+      impedance: '50Ω',
+      vf: 83,
+      diameterMm: 6.1,
+      maxGhz: 6.0,
+      use: 'Short outdoor runs (< 3 m)',
+    ),
+    CoaxCable(
+      name: 'LMR-400',
+      impedance: '50Ω',
+      vf: 85,
+      diameterMm: 10.8,
+      maxGhz: 6.0,
+      use: 'Standard Wi-Fi / cellular run',
+    ),
+    CoaxCable(
+      name: 'LMR-600',
+      impedance: '50Ω',
+      vf: 87,
+      diameterMm: 15.2,
+      maxGhz: 6.0,
+      use: 'Long runs, rooftop / tower',
+    ),
+    CoaxCable(
+      name: 'LMR-900',
+      impedance: '50Ω',
+      vf: 87,
+      diameterMm: 22.9,
+      maxGhz: 6.0,
+      use: 'Very long runs (> 30 m)',
+    ),
+    CoaxCable(
+      name: 'LMR-1200',
+      impedance: '50Ω',
+      vf: 88,
+      diameterMm: 30.0,
+      maxGhz: 6.0,
+      use: 'Tower base, high-power',
+    ),
+    CoaxCable(
+      name: 'HELIAX ½"',
+      impedance: '50Ω',
+      vf: 81,
+      diameterMm: 14.5,
+      maxGhz: 8.0,
+      use: 'Cellular BTS, microwave links',
+    ),
+    CoaxCable(
+      name: 'HELIAX ⅞"',
+      impedance: '50Ω',
+      vf: 81,
+      diameterMm: 25.0,
+      maxGhz: 3.0,
+      use: 'High-power base station feeder',
+    ),
+    CoaxCable(
+      name: 'RG-6',
+      impedance: '75Ω',
+      vf: 82,
+      diameterMm: 6.9,
+      maxGhz: 1.0,
+      use: 'CATV / satellite - NOT for Wi-Fi',
+    ),
   ];
 
   /// Footnote, ported verbatim from the PWA coax view.
@@ -93,9 +185,51 @@ class CoaxCableScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Coax Cable'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Coax Cable'),
+        toolbarHeight: 64,
+        // §8.16 — copy the coax table as TSV. Static data, so always enabled.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body(context)),
     );
+  }
+
+  /// §8.16 copy payload — the coax reference as TSV: a title, the six-column
+  /// header, one tab-separated row per cable (every column the card shows,
+  /// including the typical-use note), then the footnote section. Always
+  /// non-null: the dataset is static, so copy is never disabled.
+  String _buildCopyText() {
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()
+      ..writeln('Coax Cable Types')
+      ..writeln(
+        <String>[
+          'Cable',
+          'Impedance',
+          'VF %',
+          'Diameter (mm)',
+          'Max GHz',
+          'Typical use',
+        ].join(tab),
+      );
+    for (final CoaxCable c in coaxData) {
+      buf.writeln(
+        <String>[
+          c.name,
+          c.impedance,
+          '${c.vf}',
+          _CoaxRow._fmt(c.diameterMm),
+          _CoaxRow._fmt(c.maxGhz),
+          c.use,
+        ].join(tab),
+      );
+    }
+    buf
+      ..writeln()
+      ..writeln('Notes')
+      ..writeln(footnote);
+    return buf.toString().trimRight();
   }
 
   Widget _body(BuildContext context) {
@@ -252,10 +386,12 @@ class _CoaxRow extends StatelessWidget {
     // 75Ω is impedance-mismatched for 50Ω Wi-Fi; the PWA dims it. Reuse the
     // muted text tier so it reads as "reference only" without a new token.
     final bool muted = cable.isMismatched;
-    final Color nameColor =
-        muted ? AppColors.textTertiary : AppColors.textPrimary;
-    final Color specColor =
-        muted ? AppColors.textTertiary : AppColors.textSecondary;
+    final Color nameColor = muted
+        ? AppColors.textTertiary
+        : AppColors.textPrimary;
+    final Color specColor = muted
+        ? AppColors.textTertiary
+        : AppColors.textSecondary;
 
     return ReferenceRowSemantics(
       label: rowLabel(cable.name, <String?>[
@@ -266,61 +402,63 @@ class _CoaxRow extends StatelessWidget {
         cable.use,
       ]),
       child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            cable.name,
-            style: text.bodyLarge?.copyWith(
-              color: nameColor,
-              fontWeight: FontWeight.w600,
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              cable.name,
+              style: text.bodyLarge?.copyWith(
+                color: nameColor,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
-          const SizedBox(height: 2),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 56,
-                child: Text(
-                  cable.impedance,
-                  style: mono.inlineCode.copyWith(
-                    color: muted ? AppColors.textTertiary : AppColors.primary,
+            const SizedBox(height: 2),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 56,
+                  child: Text(
+                    cable.impedance,
+                    style: mono.inlineCode.copyWith(
+                      color: muted ? AppColors.textTertiary : AppColors.primary,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(
-                width: 48,
-                child: Text(
-                  '${cable.vf}',
-                  style: mono.inlineCode.copyWith(color: specColor),
+                SizedBox(
+                  width: 48,
+                  child: Text(
+                    '${cable.vf}',
+                    style: mono.inlineCode.copyWith(color: specColor),
+                  ),
                 ),
-              ),
-              SizedBox(
-                width: 72,
-                child: Text(
-                  _fmt(cable.diameterMm),
-                  style: mono.inlineCode.copyWith(color: specColor),
+                SizedBox(
+                  width: 72,
+                  child: Text(
+                    _fmt(cable.diameterMm),
+                    style: mono.inlineCode.copyWith(color: specColor),
+                  ),
                 ),
-              ),
-              Expanded(
-                child: Text(
-                  _fmt(cable.maxGhz),
-                  style: mono.inlineCode.copyWith(color: specColor),
+                Expanded(
+                  child: Text(
+                    _fmt(cable.maxGhz),
+                    style: mono.inlineCode.copyWith(color: specColor),
+                  ),
                 ),
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Text(
-              cable.use,
-              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+              ],
             ),
-          ),
-        ],
-      ),
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                cable.use,
+                style: text.labelMedium?.copyWith(
+                  color: AppColors.textTertiary,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

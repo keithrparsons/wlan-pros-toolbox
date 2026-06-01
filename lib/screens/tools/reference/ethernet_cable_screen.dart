@@ -23,6 +23,7 @@ import 'package:flutter/material.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
 
@@ -144,9 +145,56 @@ class EthernetCableScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Ethernet Cable'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Ethernet Cable'),
+        toolbarHeight: 64,
+        // §8.16 — copy the cable table as TSV. Static data, always enabled.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body(context)),
     );
+  }
+
+  /// §8.16 copy payload — the Ethernet table as TSV. One title, the full
+  /// eight-column header (every field the screen shows, including the typical-
+  /// use column the scroll table drops to the footnote), one row per category,
+  /// then the footnote. Always non-null: the dataset is static, so copy is
+  /// never disabled.
+  String _buildCopyText() {
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()
+      ..writeln('Ethernet Cable Categories')
+      ..writeln(
+        <String>[
+          'Category',
+          'MHz',
+          'Max speed',
+          '@1G',
+          '@10G',
+          'PoE',
+          'Shielding',
+          'Typical use',
+        ].join(tab),
+      );
+    for (final EthCable e in ethData) {
+      buf.writeln(
+        <String>[
+          e.category,
+          '${e.maxMhz}',
+          e.maxSpeed,
+          e.dist1g,
+          e.dist10g,
+          e.poe,
+          e.shielding,
+          e.use,
+        ].join(tab),
+      );
+    }
+    buf
+      ..writeln()
+      ..writeln('Notes')
+      ..writeln(footnote);
+    return buf.toString().trimRight();
   }
 
   Widget _body(BuildContext context) {
@@ -226,8 +274,9 @@ class EthernetCableScreen extends StatelessWidget {
   Widget _dataTable(TextTheme text, AppMonoText mono) {
     final TextStyle headStyle = (text.labelMedium ?? const TextStyle())
         .copyWith(color: AppColors.textTertiary, letterSpacing: 0.4);
-    final TextStyle cellStyle = (text.bodyMedium ?? const TextStyle())
-        .copyWith(color: AppColors.textPrimary);
+    final TextStyle cellStyle = (text.bodyMedium ?? const TextStyle()).copyWith(
+      color: AppColors.textPrimary,
+    );
     final TextStyle smallStyle = (text.labelMedium ?? const TextStyle())
         .copyWith(color: AppColors.textSecondary);
 
@@ -285,13 +334,16 @@ class EthernetCableScreen extends StatelessWidget {
                   alignment: Alignment.centerRight,
                   child: Text(
                     '${e.maxMhz}',
-                    style:
-                        mono.inlineCode.copyWith(color: AppColors.textPrimary),
+                    style: mono.inlineCode.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
               ),
             ),
-            DataCell(ExcludeSemantics(child: Text(e.maxSpeed, style: cellStyle))),
+            DataCell(
+              ExcludeSemantics(child: Text(e.maxSpeed, style: cellStyle)),
+            ),
             DataCell(
               ExcludeSemantics(
                 child: Text(
@@ -318,7 +370,8 @@ class EthernetCableScreen extends StatelessWidget {
             ),
             DataCell(ExcludeSemantics(child: Text(e.poe, style: smallStyle))),
             DataCell(
-                ExcludeSemantics(child: Text(e.shielding, style: smallStyle))),
+              ExcludeSemantics(child: Text(e.shielding, style: smallStyle)),
+            ),
           ],
         );
       }).toList(),

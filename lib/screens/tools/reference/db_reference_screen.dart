@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
 
@@ -40,11 +41,7 @@ class DbRatio {
 
 /// One row of the dBm reference-points table.
 class DbmRef {
-  const DbmRef({
-    required this.dbm,
-    required this.power,
-    required this.context,
-  });
+  const DbmRef({required this.dbm, required this.power, required this.context});
 
   final String dbm;
   final String power;
@@ -56,32 +53,121 @@ class DbReferenceScreen extends StatelessWidget {
 
   /// dB → power/voltage ratios. Ported verbatim from PWA app.js DB_RATIOS.
   static const List<DbRatio> dbRatios = [
-    DbRatio(db: '+3 dB', powerRatio: '2x', voltageRatio: '1.41x (sqrt 2)', note: 'Double power, the most-used rule'),
-    DbRatio(db: '+6 dB', powerRatio: '4x', voltageRatio: '2x', note: 'Double voltage or field strength'),
-    DbRatio(db: '+10 dB', powerRatio: '10x', voltageRatio: '3.16x', note: 'Ten times power'),
-    DbRatio(db: '+13 dB', powerRatio: '20x', voltageRatio: '4.47x', note: '3 dB + 10 dB combined'),
-    DbRatio(db: '+20 dB', powerRatio: '100x', voltageRatio: '10x', note: 'Hundred times power'),
-    DbRatio(db: '+30 dB', powerRatio: '1,000x', voltageRatio: '31.6x', note: 'Thousand times (0 dBm to +30 dBm = 1 W)'),
-    DbRatio(db: '-3 dB', powerRatio: '1/2x', voltageRatio: '0.71x', note: 'Half power'),
-    DbRatio(db: '-10 dB', powerRatio: '1/10x', voltageRatio: '0.32x', note: 'One-tenth power'),
-    DbRatio(db: '-20 dB', powerRatio: '1/100x', voltageRatio: '0.1x', note: 'One-hundredth power'),
+    DbRatio(
+      db: '+3 dB',
+      powerRatio: '2x',
+      voltageRatio: '1.41x (sqrt 2)',
+      note: 'Double power, the most-used rule',
+    ),
+    DbRatio(
+      db: '+6 dB',
+      powerRatio: '4x',
+      voltageRatio: '2x',
+      note: 'Double voltage or field strength',
+    ),
+    DbRatio(
+      db: '+10 dB',
+      powerRatio: '10x',
+      voltageRatio: '3.16x',
+      note: 'Ten times power',
+    ),
+    DbRatio(
+      db: '+13 dB',
+      powerRatio: '20x',
+      voltageRatio: '4.47x',
+      note: '3 dB + 10 dB combined',
+    ),
+    DbRatio(
+      db: '+20 dB',
+      powerRatio: '100x',
+      voltageRatio: '10x',
+      note: 'Hundred times power',
+    ),
+    DbRatio(
+      db: '+30 dB',
+      powerRatio: '1,000x',
+      voltageRatio: '31.6x',
+      note: 'Thousand times (0 dBm to +30 dBm = 1 W)',
+    ),
+    DbRatio(
+      db: '-3 dB',
+      powerRatio: '1/2x',
+      voltageRatio: '0.71x',
+      note: 'Half power',
+    ),
+    DbRatio(
+      db: '-10 dB',
+      powerRatio: '1/10x',
+      voltageRatio: '0.32x',
+      note: 'One-tenth power',
+    ),
+    DbRatio(
+      db: '-20 dB',
+      powerRatio: '1/100x',
+      voltageRatio: '0.1x',
+      note: 'One-hundredth power',
+    ),
   ];
 
   /// dBm anchor values. Ported verbatim from PWA app.js DBM_REFS.
   static const List<DbmRef> dbmRefs = [
-    DbmRef(dbm: '+36 dBm', power: '4 W', context: 'FCC 6 GHz standard-power EIRP limit (AFC required)'),
-    DbmRef(dbm: '+30 dBm', power: '1,000 mW', context: 'FCC 2.4 GHz max conducted power (Part 15.247)'),
-    DbmRef(dbm: '+27 dBm', power: '500 mW', context: 'Common high-power AP transmit setting'),
-    DbmRef(dbm: '+24 dBm', power: '250 mW', context: 'FCC UNII-2A/2C conducted max; typical mid-power AP'),
-    DbmRef(dbm: '+23 dBm', power: '200 mW', context: 'ETSI 5 GHz EIRP limit (EN 301 893)'),
-    DbmRef(dbm: '+20 dBm', power: '100 mW', context: 'Common default AP Tx power'),
+    DbmRef(
+      dbm: '+36 dBm',
+      power: '4 W',
+      context: 'FCC 6 GHz standard-power EIRP limit (AFC required)',
+    ),
+    DbmRef(
+      dbm: '+30 dBm',
+      power: '1,000 mW',
+      context: 'FCC 2.4 GHz max conducted power (Part 15.247)',
+    ),
+    DbmRef(
+      dbm: '+27 dBm',
+      power: '500 mW',
+      context: 'Common high-power AP transmit setting',
+    ),
+    DbmRef(
+      dbm: '+24 dBm',
+      power: '250 mW',
+      context: 'FCC UNII-2A/2C conducted max; typical mid-power AP',
+    ),
+    DbmRef(
+      dbm: '+23 dBm',
+      power: '200 mW',
+      context: 'ETSI 5 GHz EIRP limit (EN 301 893)',
+    ),
+    DbmRef(
+      dbm: '+20 dBm',
+      power: '100 mW',
+      context: 'Common default AP Tx power',
+    ),
     DbmRef(dbm: '+17 dBm', power: '50 mW', context: 'FCC UNII-1 conducted max'),
     DbmRef(dbm: '+15 dBm', power: '32 mW', context: 'Typical laptop Tx power'),
-    DbmRef(dbm: '0 dBm', power: '1 mW', context: 'Reference point, 1 milliwatt'),
-    DbmRef(dbm: '-67 dBm', power: '0.2 nW', context: 'Minimum for enterprise VoIP (Ekahau / Aruba / Cisco)'),
-    DbmRef(dbm: '-70 dBm', power: '0.1 nW', context: 'Minimum for enterprise data'),
-    DbmRef(dbm: '-80 dBm', power: '10 pW', context: 'Typical Wi-Fi receiver sensitivity'),
-    DbmRef(dbm: '-100 dBm', power: '0.1 pW', context: 'Near thermal noise floor, unusable for Wi-Fi'),
+    DbmRef(
+      dbm: '0 dBm',
+      power: '1 mW',
+      context: 'Reference point, 1 milliwatt',
+    ),
+    DbmRef(
+      dbm: '-67 dBm',
+      power: '0.2 nW',
+      context: 'Minimum for enterprise VoIP (Ekahau / Aruba / Cisco)',
+    ),
+    DbmRef(
+      dbm: '-70 dBm',
+      power: '0.1 nW',
+      context: 'Minimum for enterprise data',
+    ),
+    DbmRef(
+      dbm: '-80 dBm',
+      power: '10 pW',
+      context: 'Typical Wi-Fi receiver sensitivity',
+    ),
+    DbmRef(
+      dbm: '-100 dBm',
+      power: '0.1 pW',
+      context: 'Near thermal noise floor, unusable for Wi-Fi',
+    ),
   ];
 
   /// Footnote, ported verbatim from the PWA dbref view.
@@ -92,9 +178,49 @@ class DbReferenceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('dB Reference'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('dB Reference'),
+        toolbarHeight: 64,
+        // §8.16 — copy both reference tables as TSV. Static data, always on.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body(context)),
     );
+  }
+
+  /// §8.16 copy payload — both dB tables as TSV. Two sections, each with its own
+  /// subtitle + header + rows (dB Power Ratios, then Common dBm Reference
+  /// Points), then the footnote. Always non-null: the dataset is static, so
+  /// copy is never disabled.
+  String _buildCopyText() {
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()
+      ..writeln('dB Power Ratios')
+      ..writeln(
+        <String>[
+          'dB',
+          'Power ratio',
+          'Voltage ratio',
+          'Rule of thumb',
+        ].join(tab),
+      );
+    for (final DbRatio r in dbRatios) {
+      buf.writeln(
+        <String>[r.db, r.powerRatio, r.voltageRatio, r.note].join(tab),
+      );
+    }
+    buf
+      ..writeln()
+      ..writeln('Common dBm Reference Points')
+      ..writeln(<String>['dBm', 'Power', 'Context'].join(tab));
+    for (final DbmRef r in dbmRefs) {
+      buf.writeln(<String>[r.dbm, r.power, r.context].join(tab));
+    }
+    buf
+      ..writeln()
+      ..writeln('Notes')
+      ..writeln(footnote);
+    return buf.toString().trimRight();
   }
 
   Widget _body(BuildContext context) {
@@ -152,7 +278,8 @@ class DbReferenceScreen extends StatelessWidget {
         children: [
           _RatioHeaderRow(text: text),
           const SizedBox(height: AppSpacing.xs),
-          for (final DbRatio r in dbRatios) _RatioRow(ratio: r, text: text, mono: mono),
+          for (final DbRatio r in dbRatios)
+            _RatioRow(ratio: r, text: text, mono: mono),
         ],
       ),
     );
@@ -165,7 +292,8 @@ class DbReferenceScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (final DbmRef r in dbmRefs) _DbmRow(ref: r, text: text, mono: mono),
+          for (final DbmRef r in dbmRefs)
+            _DbmRow(ref: r, text: text, mono: mono),
         ],
       ),
     );
@@ -250,7 +378,11 @@ class _RatioHeaderRow extends StatelessWidget {
 
 /// One ratio row: dB / power / voltage on the top line, rule-of-thumb beneath.
 class _RatioRow extends StatelessWidget {
-  const _RatioRow({required this.ratio, required this.text, required this.mono});
+  const _RatioRow({
+    required this.ratio,
+    required this.text,
+    required this.mono,
+  });
 
   final DbRatio ratio;
   final TextTheme text;
@@ -261,8 +393,7 @@ class _RatioRow extends StatelessWidget {
     // Positive gains read in lime; losses in the danger color — matches the
     // PWA's green/red dB-change coloring (app.js buildDBRefCard).
     final bool positive = ratio.db.startsWith('+');
-    final Color dbColor =
-        positive ? AppColors.primary : AppColors.statusDanger;
+    final Color dbColor = positive ? AppColors.primary : AppColors.statusDanger;
     return ReferenceRowSemantics(
       label: rowLabel('${ratio.db} dB', <String?>[
         'power ratio ${ratio.powerRatio}',
@@ -270,49 +401,53 @@ class _RatioRow extends StatelessWidget {
         ratio.note,
       ]),
       child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 72,
-                child: Text(
-                  ratio.db,
-                  style: mono.inlineCode.copyWith(
-                    color: dbColor,
-                    fontWeight: FontWeight.w600,
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 72,
+                  child: Text(
+                    ratio.db,
+                    style: mono.inlineCode.copyWith(
+                      color: dbColor,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(
-                width: 80,
-                child: Text(
-                  ratio.powerRatio,
-                  style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
-                ),
-              ),
-              Expanded(
-                child: Text(
-                  ratio.voltageRatio,
-                  style: mono.inlineCode.copyWith(
-                    color: AppColors.textSecondary,
+                SizedBox(
+                  width: 80,
+                  child: Text(
+                    ratio.powerRatio,
+                    style: mono.inlineCode.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Text(
-              ratio.note,
-              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+                Expanded(
+                  child: Text(
+                    ratio.voltageRatio,
+                    style: mono.inlineCode.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                ratio.note,
+                style: text.labelMedium?.copyWith(
+                  color: AppColors.textTertiary,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -331,42 +466,44 @@ class _DbmRow extends StatelessWidget {
     return ReferenceRowSemantics(
       label: rowLabel(ref.dbm, <String?>[ref.power, ref.context]),
       child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 88,
-                child: Text(
-                  ref.dbm,
-                  style: mono.inlineCode.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w500,
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 88,
+                  child: Text(
+                    ref.dbm,
+                    style: mono.inlineCode.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
-              ),
-              Expanded(
-                child: Text(
-                  ref.power,
-                  style: mono.inlineCode.copyWith(
-                    color: AppColors.textSecondary,
+                Expanded(
+                  child: Text(
+                    ref.power,
+                    style: mono.inlineCode.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Text(
-              ref.context,
-              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+              ],
             ),
-          ),
-        ],
-      ),
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                ref.context,
+                style: text.labelMedium?.copyWith(
+                  color: AppColors.textTertiary,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

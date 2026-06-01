@@ -33,6 +33,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -221,6 +222,31 @@ class _HexAsciiScreenState extends State<HexAsciiScreen> {
   void _onBinChanged(String raw) =>
       _spreadFrom(HexAsciiConvert.parseBinary(raw), _binCtrl);
 
+  /// §8.16 copy payload — the CURRENT conversion as a labeled text block.
+  ///
+  /// The converter has no separate "result"; its three fields are kept in sync
+  /// on every keystroke, so the decimal controller always holds the canonical
+  /// value when the input is valid. Returns null (→ disabled) when the value is
+  /// empty or unparseable (all mirrors blank). When the value is a single
+  /// printable-ASCII code point (decimal 32-126), the matching character is
+  /// added (space rendered as the word "space"), derived not transcribed.
+  String? _buildCopyText() {
+    final BigInt? v = HexAsciiConvert.parseDecimal(_decCtrl.text);
+    if (v == null) return null;
+
+    final StringBuffer buf = StringBuffer()
+      ..writeln('Hex / ASCII')
+      ..writeln('Decimal: ${HexAsciiConvert.toDecimal(v)}')
+      ..writeln('Hexadecimal: ${HexAsciiConvert.toHex(v)}')
+      ..writeln('Binary: ${HexAsciiConvert.toBinary(v)}');
+    if (v >= BigInt.from(32) && v <= BigInt.from(126)) {
+      final int code = v.toInt();
+      final String glyph = code == 32 ? 'space' : String.fromCharCode(code);
+      buf.writeln('Character: $glyph');
+    }
+    return buf.toString().trimRight();
+  }
+
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
@@ -228,7 +254,16 @@ class _HexAsciiScreenState extends State<HexAsciiScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Hex / ASCII'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Hex / ASCII'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. The converter's three
+        // fields are both input and output, so this copies the CURRENT
+        // conversion: all three representations (decimal/hex/binary) plus the
+        // ASCII character when the value is a single printable code point.
+        // Disabled when no field holds a valid value (all mirrors blank).
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
