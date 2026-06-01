@@ -1,24 +1,29 @@
 // Tool catalog — single source of truth for what appears on the home grid and
 // what tools each category exposes.
 //
-// Category structure: the LOCKED 6-category map
+// Category structure: the 4-category reorganization (Keith, 2026-06-01), which
+// SUPERSEDES the prior LOCKED 6-category map
 // (Deliverables/2026-05-30-quick-reference-additions-triage/
-//  LOCKED-6-category-structure.md), which supersedes the prior 8-category
-// layout. The four dissolved categories (GPS Tools, Cabling & Connectors,
-// Infrastructure, Wi-Fi Design) merged their tools into the survivors per the
-// locked map; nothing was dropped.
+//  LOCKED-6-category-structure.md). The four current categories, in home-grid
+// order, are:
+//   1. Test Network    — live Wi-Fi/internet diagnostics (NEW; holds the three
+//                         pinned tools moved out of Networking Tools:
+//                         wifi-vs-internet, wifi-info, net-quality).
+//   2. Networking Tools — the remaining networking utilities (lookups, scans,
+//                         subnetting, inspectors, etc.).
+//   3. Calculators & Tools — id stays 'rf-calculators' (stable; backs routes,
+//                         assets, tests); title broadened from 'Calculators'.
+//                         Absorbs all former Planning Tools.
+//   4. Quick Reference — reference tables + the former Command & Capture and
+//                         Checklists tools.
+// The three dissolved categories (Planning Tools, Command & Capture,
+// Checklists) merged their tools into the survivors per this map; nothing was
+// dropped or duplicated. The tappable-checklist screen type
+// (checklist_screen.dart) still renders the Pax-transcribed card content via
+// the consts in data/checklists.dart — only the home category changed.
 //
-// Category activation (Felix, 2026-05-30): the two NEW categories from the
-// LOCKED map — Command & Capture and Checklists — were initially deferred while
-// their tools were pending. Their 7 additions (Hex/ASCII, OSI Model, 3 command
-// sheets, 2 checklists) are now built and live, so both categories are ACTIVE.
-// The home grid now renders all 6 LOCKED categories (Calculators, Networking
-// Tools, Planning Tools, Quick Reference, Command & Capture, Checklists). The
-// tappable-checklist screen type (checklist_screen.dart) renders the
-// Pax-transcribed card content via the consts in data/checklists.dart.
-//
-// Display-title rename pass (LOCKED map "Display-title rename pass"): titles
-// were reclustered by function (e.g. "DNS Lookup" → "Lookup (DNS)"). The
+// Display-title rename pass (prior LOCKED map "Display-title rename pass"):
+// titles were reclustered by function (e.g. "DNS Lookup" → "Lookup (DNS)"). The
 // catalog `id` strings are STABLE and unchanged — they back 60 icon/graphic
 // asset files, every route, and every test. Titles change; ids never.
 
@@ -75,17 +80,221 @@ class ToolCategory {
   bool get hasLiveTool => tools.any((t) => t.isLive);
 }
 
-/// Catalog seed — the LOCKED 6-category map, with Command & Capture and
-/// Checklists deferred until their tools are built (see file header). Tool
-/// order within each category follows the LOCKED map exactly.
+/// Catalog seed — the 4-category reorganization (Keith, 2026-06-01; see file
+/// header). The list order IS the home-grid order: Test Network, Networking
+/// Tools, Calculators & Tools, Quick Reference. Tool order within each category
+/// is presentation-sorted in category_screen.dart (alphabetical, except the
+/// pinned three in Test Network).
 const List<ToolCategory> kToolCategories = <ToolCategory>[
-  // ───────────────────────── 1. Calculators ─────────────────────────
-  // Was "RF Calculators". Absorbs all GPS tools + Noise Floor + RF Attenuation
-  // (from the dissolved Infrastructure category).
+  // ───────────────────────── 1. Test Network ────────────────────────
+  // NEW (2026-06-01). The three live Wi-Fi/internet diagnostics moved out of
+  // Networking Tools, pinned in this order on the category screen:
+  // wifi-vs-internet, wifi-info, net-quality.
+  ToolCategory(
+    id: 'test-network',
+    title: 'Test Network',
+    summary: 'Live Wi-Fi and internet diagnostics',
+    icon: Icons.network_check,
+    tools: <ToolEntry>[
+      ToolEntry(
+        id: 'wifi-vs-internet',
+        title: 'Wi-Fi vs Internet',
+        description:
+            'Is the slowdown your Wi-Fi link or the internet upstream? '
+            'Compares link rate to measured throughput',
+        routeName: '/tools/wifi-vs-internet',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'wifi-info',
+        title: 'Wi-Fi Information',
+        description:
+            'Live Wi-Fi link details: SSID, BSSID, RSSI, noise, SNR, channel, '
+            'width, band, standard (macOS)',
+        routeName: '/tools/wifi-info',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'net-quality',
+        title: 'Network Quality',
+        description:
+            'Latency, jitter, loss, throughput, responsiveness, and site '
+            'reachability',
+        routeName: '/tools/net-quality',
+        isLive: true,
+      ),
+    ],
+  ),
+
+  // ──────────────────────── 2. Networking Tools ─────────────────────
+  // The networking utilities MINUS the three diagnostics moved to Test Network.
+  // Display titles reclustered by function per the prior rename pass.
+  ToolCategory(
+    id: 'networking',
+    title: 'Networking Tools',
+    summary: 'Interface info, lookups, scans, subnetting',
+    icon: Icons.lan_outlined,
+    tools: <ToolEntry>[
+      ToolEntry(
+        id: 'interface-info',
+        title: 'Interface Information',
+        description: 'Local IPs, gateway, DNS, Wi-Fi link, interface type',
+        routeName: '/tools/interface-info',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'dns-lookup',
+        title: 'Lookup (DNS)',
+        description:
+            'A, AAAA, MX, TXT, NS, SOA, PTR, SRV, CAA, SPF over DNS-over-HTTPS',
+        routeName: '/tools/dns-lookup',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'port-scan',
+        title: 'Port Scan',
+        description: 'TCP connect scan — common ports preset or custom range',
+        routeName: '/tools/port-scan',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'ping',
+        title: 'Ping (TCP)',
+        description:
+            'TCP-handshake round-trip probe (not ICMP) — works on every '
+            'platform incl. sandboxed desktop',
+        routeName: '/tools/ping',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'icmp-ping',
+        title: 'Ping (ICMP)',
+        description:
+            'Real ICMP echo round-trip (mobile) — live RTT, min/avg/max, loss',
+        routeName: '/tools/icmp-ping',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'ping-sweep',
+        title: 'Ping Sweep',
+        description:
+            'Discover responsive hosts on a subnet — TCP-probe sweep, no ICMP',
+        routeName: '/tools/ping-sweep',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'network-discovery',
+        title: 'Network Discovery',
+        description:
+            'Find live hosts on your network — name, services, device type, '
+            'and vendor (desktop)',
+        routeName: '/tools/network-discovery',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'traceroute',
+        title: 'Traceroute (System)',
+        description: 'Hop-by-hop path via the OS traceroute — desktop',
+        routeName: '/tools/traceroute',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'mobile-traceroute',
+        title: 'Traceroute (Mobile)',
+        description:
+            'Hop-by-hop path via an ICMP TTL-walk — Android (iOS unsupported)',
+        routeName: '/tools/mobile-traceroute',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'ssl-inspect',
+        title: 'Inspector (SSL/TLS)',
+        description: 'Certificate fields, validity, SAN, fingerprints over TLS',
+        routeName: '/tools/ssl-inspect',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'http-headers',
+        title: 'Inspector (HTTP Header)',
+        description: 'Status, redirect chain, and all response headers',
+        routeName: '/tools/http-headers',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'whois',
+        title: 'WHOIS',
+        description: 'Domain / IP registration record over WHOIS (port 43)',
+        routeName: '/tools/whois',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'wake-on-lan',
+        title: 'Wake-on-LAN',
+        description: 'Send a magic packet to wake a host by MAC address',
+        routeName: '/tools/wake-on-lan',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'arp-ndp',
+        title: 'Lookup (ARP/NDP)',
+        description: 'Discover local neighbors — IP and MAC where exposed',
+        routeName: '/tools/arp-ndp',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'bgp-asn',
+        title: 'Lookup (BGP/ASN)',
+        description: 'ASN, holder, prefix, registry, peers via RIPEstat',
+        routeName: '/tools/bgp-asn',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'ip-geo',
+        title: 'IP Geolocation',
+        description: 'Country, city, coordinates, timezone, ISP, ASN',
+        routeName: '/tools/ip-geo',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'mac-oui-lookup',
+        title: 'MAC Vendor OUI Lookup',
+        description:
+            'MAC → vendor from a bundled IEEE OUI table, fully offline',
+        routeName: '/tools/mac-oui',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'packet-sender',
+        title: 'Packet Sender',
+        description: 'Send a custom TCP/UDP payload and read the reply',
+        routeName: '/tools/packet-sender',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'ipv4-subnet',
+        title: 'IP Subnetting (IPv4)',
+        description: 'Network, broadcast, host range, mask ⇄ prefix, CIDR math',
+        routeName: '/tools/ipv4-subnet',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'ipv6-subnet',
+        title: 'IP Subnetting (IPv6)',
+        description: 'IPv6 prefix, expansion, and address counts',
+        routeName: '/tools/ipv6-subnet',
+        isLive: true,
+      ),
+    ],
+  ),
+
+  // ─────────────────────── 3. Calculators & Tools ───────────────────
+  // id stays 'rf-calculators' (stable — backs routes, assets, tests). Title
+  // broadened from 'Calculators'. Original RF/GPS/signal calculators plus ALL
+  // former Planning Tools (PoE Budget, Throughput, Capacity, PtP) appended.
   ToolCategory(
     id: 'rf-calculators',
-    title: 'Calculators',
-    summary: 'RF, GPS, and signal math — FSPL, EIRP, coordinates',
+    title: 'Calculators & Tools',
+    summary: 'RF, GPS, signal, and planning math — FSPL, EIRP, PoE, capacity',
     icon: Icons.calculate_outlined,
     tools: <ToolEntry>[
       ToolEntry(
@@ -225,209 +434,7 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         routeName: '/tools/hex-ascii',
         isLive: true,
       ),
-    ],
-  ),
-
-  // ──────────────────────── 2. Networking Tools ─────────────────────
-  // Unchanged set + IPv6 Subnet moved in from Planning. Display titles
-  // reclustered by function per the LOCKED rename pass.
-  ToolCategory(
-    id: 'networking',
-    title: 'Networking Tools',
-    summary: 'Interface info, lookups, scans, subnetting',
-    icon: Icons.lan_outlined,
-    tools: <ToolEntry>[
-      ToolEntry(
-        id: 'interface-info',
-        title: 'Interface Information',
-        description: 'Local IPs, gateway, DNS, Wi-Fi link, interface type',
-        routeName: '/tools/interface-info',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'dns-lookup',
-        title: 'Lookup (DNS)',
-        description:
-            'A, AAAA, MX, TXT, NS, SOA, PTR, SRV, CAA, SPF over DNS-over-HTTPS',
-        routeName: '/tools/dns-lookup',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'port-scan',
-        title: 'Port Scan',
-        description: 'TCP connect scan — common ports preset or custom range',
-        routeName: '/tools/port-scan',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'ping',
-        title: 'Ping (TCP)',
-        description:
-            'TCP-handshake round-trip probe (not ICMP) — works on every '
-            'platform incl. sandboxed desktop',
-        routeName: '/tools/ping',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'icmp-ping',
-        title: 'Ping (ICMP)',
-        description:
-            'Real ICMP echo round-trip (mobile) — live RTT, min/avg/max, loss',
-        routeName: '/tools/icmp-ping',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'ping-sweep',
-        title: 'Ping Sweep',
-        description:
-            'Discover responsive hosts on a subnet — TCP-probe sweep, no ICMP',
-        routeName: '/tools/ping-sweep',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'network-discovery',
-        title: 'Network Discovery',
-        description:
-            'Find live hosts on your network — name, services, device type, '
-            'and vendor (desktop)',
-        routeName: '/tools/network-discovery',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'wifi-vs-internet',
-        title: 'Wi-Fi vs Internet',
-        description:
-            'Is the slowdown your Wi-Fi link or the internet upstream? '
-            'Compares link rate to measured throughput',
-        routeName: '/tools/wifi-vs-internet',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'net-quality',
-        title: 'Network Quality',
-        description:
-            'Latency, jitter, loss, throughput, responsiveness, and site '
-            'reachability',
-        routeName: '/tools/net-quality',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'wifi-info',
-        title: 'Wi-Fi Information',
-        description:
-            'Live Wi-Fi link details: SSID, BSSID, RSSI, noise, SNR, channel, '
-            'width, band, standard (macOS)',
-        routeName: '/tools/wifi-info',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'traceroute',
-        title: 'Traceroute (System)',
-        description: 'Hop-by-hop path via the OS traceroute — desktop',
-        routeName: '/tools/traceroute',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'mobile-traceroute',
-        title: 'Traceroute (Mobile)',
-        description:
-            'Hop-by-hop path via an ICMP TTL-walk — Android (iOS unsupported)',
-        routeName: '/tools/mobile-traceroute',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'ssl-inspect',
-        title: 'Inspector (SSL/TLS)',
-        description:
-            'Certificate fields, validity, SAN, fingerprints over TLS',
-        routeName: '/tools/ssl-inspect',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'http-headers',
-        title: 'Inspector (HTTP Header)',
-        description: 'Status, redirect chain, and all response headers',
-        routeName: '/tools/http-headers',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'whois',
-        title: 'WHOIS',
-        description: 'Domain / IP registration record over WHOIS (port 43)',
-        routeName: '/tools/whois',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'wake-on-lan',
-        title: 'Wake-on-LAN',
-        description: 'Send a magic packet to wake a host by MAC address',
-        routeName: '/tools/wake-on-lan',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'arp-ndp',
-        title: 'Lookup (ARP/NDP)',
-        description: 'Discover local neighbors — IP and MAC where exposed',
-        routeName: '/tools/arp-ndp',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'bgp-asn',
-        title: 'Lookup (BGP/ASN)',
-        description: 'ASN, holder, prefix, registry, peers via RIPEstat',
-        routeName: '/tools/bgp-asn',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'ip-geo',
-        title: 'IP Geolocation',
-        description: 'Country, city, coordinates, timezone, ISP, ASN',
-        routeName: '/tools/ip-geo',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'mac-oui-lookup',
-        title: 'MAC Vendor OUI Lookup',
-        description:
-            'MAC → vendor from a bundled IEEE OUI table, fully offline',
-        routeName: '/tools/mac-oui',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'packet-sender',
-        title: 'Packet Sender',
-        description: 'Send a custom TCP/UDP payload and read the reply',
-        routeName: '/tools/packet-sender',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'ipv4-subnet',
-        title: 'IP Subnetting (IPv4)',
-        description: 'Network, broadcast, host range, mask ⇄ prefix, CIDR math',
-        routeName: '/tools/ipv4-subnet',
-        isLive: true,
-      ),
-      // ── moved in from the (now-small) Planning Tools category ──
-      ToolEntry(
-        id: 'ipv6-subnet',
-        title: 'IP Subnetting (IPv6)',
-        description: 'IPv6 prefix, expansion, and address counts',
-        routeName: '/tools/ipv6-subnet',
-        isLive: true,
-      ),
-    ],
-  ),
-
-  // ───────────────────────── 3. Planning Tools ──────────────────────
-  // Kept deliberately small (4 tools). PoE Budget moved in from the dissolved
-  // Infrastructure category; IPv6 Subnet moved out to Networking.
-  ToolCategory(
-    id: 'planning-tools',
-    title: 'Planning Tools',
-    summary: 'PoE budget, throughput, capacity, PtP',
-    icon: Icons.architecture_outlined,
-    tools: <ToolEntry>[
-      // ── from the dissolved Infrastructure category ──
+      // ── moved in from the dissolved Planning Tools category (2026-06-01) ──
       ToolEntry(
         id: 'poe-budget',
         title: 'PoE Budget',
@@ -460,13 +467,17 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
   ),
 
   // ──────────────────────── 4. Quick Reference ──────────────────────
-  // Absorbs all Cabling & Connectors, the 3 Wi-Fi Design tools, PoE Reference
-  // (from Infrastructure), plus the existing Wi-Fi reference tables. Tool order
-  // follows the LOCKED map. (OSI Model — NEW — pending build, not added yet.)
+  // Reference tables (PoE, channels, standards, cabling) + PDF reference cards,
+  // plus the former Command & Capture tools (CLI / Wireshark sheets) and the
+  // former Checklists tools (tappable + PDF checklists), all merged in here on
+  // 2026-06-01. The category screen sorts alphabetically by title, so every
+  // tool type interleaves automatically — no manual ordering. The moved tools
+  // keep their stable ids/titles/routes/asset paths; only their home category
+  // changed.
   ToolCategory(
     id: 'quick-reference',
     title: 'Quick Reference',
-    summary: 'PoE, channels, standards, cabling, lookup tables',
+    summary: 'Tables, cards, CLI/Wireshark sheets, and checklists',
     icon: Icons.menu_book_outlined,
     tools: <ToolEntry>[
       // ── from the dissolved Infrastructure category ──
@@ -677,18 +688,8 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         routeName: '/tools/mcs-index-card',
         isLive: true,
       ),
-    ],
-  ),
-
-  // ──────────────────── 5. Command & Capture ────────────────────────
-  // NEW category (LOCKED map §5). Its 3 tools are built and live; the category
-  // is now active. Tool order follows the LOCKED map.
-  ToolCategory(
-    id: 'command-capture',
-    title: 'Command & Capture',
-    summary: 'CLI commands, monitor-mode, Wireshark filters',
-    icon: Icons.terminal_outlined,
-    tools: <ToolEntry>[
+      // ── moved in from the dissolved Command & Capture category
+      // (2026-06-01): CLI / monitor-mode / Wireshark reference sheets ──
       ToolEntry(
         id: 'cli-commands',
         title: 'Network CLI Commands',
@@ -710,23 +711,8 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         routeName: '/tools/wireshark-80211-filters',
         isLive: true,
       ),
-    ],
-  ),
-
-  // ───────────────────────── 6. Checklists ──────────────────────────
-  // NEW category (LOCKED map §6). Mixes two tool types: the reusable
-  // tappable-checklist screen (Pax-transcribed card content) and 4 PDF
-  // reference-card checklists (rendered by PdfReferenceScreen). All live. The
-  // category screen sorts alphabetically by title, so the two types interleave
-  // automatically — no manual ordering. The 4 PDF cards keep their stable
-  // ids/titles/routes/asset paths; only their home category moved here from
-  // Quick Reference.
-  ToolCategory(
-    id: 'checklists',
-    title: 'Checklists',
-    summary: 'Field checklists for install and client testing',
-    icon: Icons.checklist_outlined,
-    tools: <ToolEntry>[
+      // ── moved in from the dissolved Checklists category (2026-06-01):
+      // tappable-checklist screens + PDF reference-card checklists ──
       ToolEntry(
         id: 'checklist-ap-install',
         title: 'How to NOT Have a Wireless Problem',
@@ -741,7 +727,6 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         routeName: '/tools/checklist-client-test',
         isLive: true,
       ),
-      // ── PDF reference-card checklists (bundled PDFs, PdfReferenceScreen) ──
       ToolEntry(
         id: 'top-20-checklist',
         title: 'Top 20 Wi-Fi Checklist',

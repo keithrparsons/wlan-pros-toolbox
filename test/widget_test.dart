@@ -3,10 +3,10 @@
 // Coverage targets (post-Vera-regate fix pass 2, 2026-05-29):
 // - Smoke: app mounts with the correct app-bar title.
 // - Category grid: every category title in the catalog renders; item count
-//   equals catalog length. (Vera F-11.) The catalog moved from 8 to the LOCKED
-//   6-category map (2026-05-30); Command & Capture + Checklists are deferred,
-//   so 4 categories ship today. These checks iterate kToolCategories, so they
-//   track the catalog automatically.
+//   equals catalog length. (Vera F-11.) The catalog is the 4-category
+//   reorganization (2026-06-01): Test Network, Networking Tools,
+//   Calculators & Tools, Quick Reference. These checks iterate kToolCategories,
+//   so they track the catalog automatically.
 // - Semantics: each tile exposes a single curated label; no duplicate
 //   child-Text semantics leak through. (Vera F-04.)
 // - Responsive: 375x900 phone viewport renders the home grid without
@@ -110,89 +110,89 @@ void main() {
     },
   );
 
-  testWidgets(
-    'No tile retains focus after navigating Home → Category → Home',
-    (tester) async {
-      // Vera F-NEW-02 — the `initState` unfocus only fires on first build.
-      // When the user pops back from a category, Flutter's focus traversal
-      // can land on an unpredictable tile, painting the lime hover/focus
-      // tint as if it were "selected". The fix chains an unfocus on the
-      // Navigator.push().then(...) so home returns to its cold-start focus
-      // state on every pop-back.
-      await _withViewport(tester, const Size(800, 1200), () async {
-        await _pumpApp(tester);
+  testWidgets('No tile retains focus after navigating Home → Category → Home', (
+    tester,
+  ) async {
+    // Vera F-NEW-02 — the `initState` unfocus only fires on first build.
+    // When the user pops back from a category, Flutter's focus traversal
+    // can land on an unpredictable tile, painting the lime hover/focus
+    // tint as if it were "selected". The fix chains an unfocus on the
+    // Navigator.push().then(...) so home returns to its cold-start focus
+    // state on every pop-back.
+    await _withViewport(tester, const Size(800, 1200), () async {
+      await _pumpApp(tester);
 
-        // Force a tile into the focused state — this is the precondition
-        // F-NEW-02 reproduces (a tile holds focus on the home tree, the
-        // user navigates away and back, and focus persists on the tile).
-        // We do it by walking the live Focus tree to the first Focus node
-        // owned by a tile InkWell and requesting focus directly.
-        final ToolCategory liveCat = kToolCategories.firstWhere(
-          (ToolCategory c) => c.hasLiveTool,
-        );
+      // Force a tile into the focused state — this is the precondition
+      // F-NEW-02 reproduces (a tile holds focus on the home tree, the
+      // user navigates away and back, and focus persists on the tile).
+      // We do it by walking the live Focus tree to the first Focus node
+      // owned by a tile InkWell and requesting focus directly.
+      final ToolCategory liveCat = kToolCategories.firstWhere(
+        (ToolCategory c) => c.hasLiveTool,
+      );
 
-        FocusNode? tileFocusNode;
-        void walk(FocusNode node) {
-          if (tileFocusNode != null) return;
-          final BuildContext? ctx = node.context;
-          if (ctx != null &&
-              ctx.findAncestorWidgetOfExactType<InkWell>() != null) {
-            tileFocusNode = node;
-            return;
-          }
-          for (final FocusNode child in node.children) {
-            walk(child);
-          }
+      FocusNode? tileFocusNode;
+      void walk(FocusNode node) {
+        if (tileFocusNode != null) return;
+        final BuildContext? ctx = node.context;
+        if (ctx != null &&
+            ctx.findAncestorWidgetOfExactType<InkWell>() != null) {
+          tileFocusNode = node;
+          return;
         }
+        for (final FocusNode child in node.children) {
+          walk(child);
+        }
+      }
 
-        walk(FocusManager.instance.rootScope);
-        expect(
-          tileFocusNode,
-          isNotNull,
-          reason: 'precondition: expected at least one tile-owned Focus node',
-        );
-        tileFocusNode!.requestFocus();
-        await tester.pump();
+      walk(FocusManager.instance.rootScope);
+      expect(
+        tileFocusNode,
+        isNotNull,
+        reason: 'precondition: expected at least one tile-owned Focus node',
+      );
+      tileFocusNode!.requestFocus();
+      await tester.pump();
 
-        // Sanity check — primary focus is now inside a tile's InkWell.
-        final FocusNode? pre = FocusManager.instance.primaryFocus;
-        final BuildContext? preCtx = pre?.context;
-        expect(
-          preCtx != null &&
-              preCtx.findAncestorWidgetOfExactType<InkWell>() != null,
-          isTrue,
-          reason: 'precondition: focus must be on a tile InkWell before nav',
-        );
+      // Sanity check — primary focus is now inside a tile's InkWell.
+      final FocusNode? pre = FocusManager.instance.primaryFocus;
+      final BuildContext? preCtx = pre?.context;
+      expect(
+        preCtx != null &&
+            preCtx.findAncestorWidgetOfExactType<InkWell>() != null,
+        isTrue,
+        reason: 'precondition: focus must be on a tile InkWell before nav',
+      );
 
-        // Navigate into the category by tapping the focused tile.
-        await tester.tap(find.text(liveCat.title));
-        await tester.pumpAndSettle();
-        expect(find.widgetWithText(AppBar, liveCat.title), findsOneWidget);
+      // Navigate into the category by tapping the focused tile.
+      await tester.tap(find.text(liveCat.title));
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(AppBar, liveCat.title), findsOneWidget);
 
-        // Pop back to home.
-        await tester.tap(find.byType(BackButton));
-        await tester.pumpAndSettle();
-        // Drain the Navigator.push().then(...) microtask.
-        await tester.pumpAndSettle();
+      // Pop back to home.
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+      // Drain the Navigator.push().then(...) microtask.
+      await tester.pumpAndSettle();
 
-        // The defining symptom of F-NEW-02: a tile-level Focus node still
-        // holds primary focus after pop-back, painting the lime tint on a
-        // grid tile. After the fix, focus must have lifted off any tile.
-        final FocusNode? primary = FocusManager.instance.primaryFocus;
-        final BuildContext? focusedContext = primary?.context;
-        final bool focusInsideTileInkWell = focusedContext != null &&
-            focusedContext.findAncestorWidgetOfExactType<InkWell>() != null;
-        expect(
-          focusInsideTileInkWell,
-          isFalse,
-          reason:
-              'After Home → Category → Home no grid tile should hold '
-              'primary focus — found focus inside an InkWell: '
-              '${primary?.debugLabel ?? primary?.toString() ?? "<none>"}',
-        );
-      });
-    },
-  );
+      // The defining symptom of F-NEW-02: a tile-level Focus node still
+      // holds primary focus after pop-back, painting the lime tint on a
+      // grid tile. After the fix, focus must have lifted off any tile.
+      final FocusNode? primary = FocusManager.instance.primaryFocus;
+      final BuildContext? focusedContext = primary?.context;
+      final bool focusInsideTileInkWell =
+          focusedContext != null &&
+          focusedContext.findAncestorWidgetOfExactType<InkWell>() != null;
+      expect(
+        focusInsideTileInkWell,
+        isFalse,
+        reason:
+            'After Home → Category → Home no grid tile should hold '
+            'primary focus — found focus inside an InkWell: '
+            '${primary?.debugLabel ?? primary?.toString() ?? "<none>"}',
+      );
+    });
+  });
 
   testWidgets(
     'Home grid fits within a 375x900 iPhone viewport without overflow',
@@ -215,174 +215,146 @@ void main() {
     },
   );
 
-  testWidgets(
-    'Noise Floor screen renders in a 375x900 phone viewport',
-    (tester) async {
-      // Phone-viewport smoke for the calculator: it pumps, renders its result
-      // rows, and shows the default 20 MHz thermal floor without overflow.
-      await _withViewport(tester, const Size(375, 900), () async {
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: AppTheme.dark(),
-            home: const NoiseFloorScreen(),
-          ),
-        );
-        await tester.pump();
+  testWidgets('Noise Floor screen renders in a 375x900 phone viewport', (
+    tester,
+  ) async {
+    // Phone-viewport smoke for the calculator: it pumps, renders its result
+    // rows, and shows the default 20 MHz thermal floor without overflow.
+    await _withViewport(tester, const Size(375, 900), () async {
+      await tester.pumpWidget(
+        MaterialApp(theme: AppTheme.dark(), home: const NoiseFloorScreen()),
+      );
+      await tester.pump();
 
-        expect(find.text('Channel bandwidth'), findsOneWidget);
-        expect(find.text('Rx noise floor'), findsOneWidget);
-        // Default 20 MHz / NF 7 / 20°C → thermal -100.9 dBm.
-        expect(find.text('-100.9'), findsOneWidget);
-      });
-    },
-  );
+      expect(find.text('Channel bandwidth'), findsOneWidget);
+      expect(find.text('Rx noise floor'), findsOneWidget);
+      // Default 20 MHz / NF 7 / 20°C → thermal -100.9 dBm.
+      expect(find.text('-100.9'), findsOneWidget);
+    });
+  });
 
-  testWidgets(
-    'MCS Index screen renders in a 375x900 phone viewport',
-    (tester) async {
-      // Phone-viewport smoke for the MCS reference table: it pumps, renders the
-      // default 802.11n table, and shows a known PWA cell (MCS 0 / 20 LGI = 6.5)
-      // without a RenderFlex overflow.
-      await _withViewport(tester, const Size(375, 900), () async {
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: AppTheme.dark(),
-            home: const McsIndexScreen(),
-          ),
-        );
-        await tester.pump();
+  testWidgets('MCS Index screen renders in a 375x900 phone viewport', (
+    tester,
+  ) async {
+    // Phone-viewport smoke for the MCS reference table: it pumps, renders the
+    // default 802.11n table, and shows a known PWA cell (MCS 0 / 20 LGI = 6.5)
+    // without a RenderFlex overflow.
+    await _withViewport(tester, const Size(375, 900), () async {
+      await tester.pumpWidget(
+        MaterialApp(theme: AppTheme.dark(), home: const McsIndexScreen()),
+      );
+      await tester.pump();
 
-        expect(find.text('802.11 standard'), findsOneWidget);
-        expect(find.text('20 LGI'), findsOneWidget);
-        expect(find.text('6.5'), findsOneWidget);
-      });
-    },
-  );
+      expect(find.text('802.11 standard'), findsOneWidget);
+      expect(find.text('20 LGI'), findsOneWidget);
+      expect(find.text('6.5'), findsOneWidget);
+    });
+  });
 
-  testWidgets(
-    'Signal Thresholds screen renders in a 375x900 phone viewport',
-    (tester) async {
-      // Phone-viewport smoke for the RSSI/SNR reference: it pumps, renders its
-      // section headings, and shows a known PWA cell (the -67 dBm VoIP RSSI
-      // target) without a RenderFlex overflow.
-      await _withViewport(tester, const Size(375, 900), () async {
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: AppTheme.dark(),
-            home: const SignalThresholdsScreen(),
-          ),
-        );
-        await tester.pump();
+  testWidgets('Signal Thresholds screen renders in a 375x900 phone viewport', (
+    tester,
+  ) async {
+    // Phone-viewport smoke for the RSSI/SNR reference: it pumps, renders its
+    // section headings, and shows a known PWA cell (the -67 dBm VoIP RSSI
+    // target) without a RenderFlex overflow.
+    await _withViewport(tester, const Size(375, 900), () async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: const SignalThresholdsScreen(),
+        ),
+      );
+      await tester.pump();
 
-        expect(find.text('RSSI quality scale'), findsOneWidget);
-        expect(find.text('Minimum signal by application'), findsOneWidget);
-        // VoIP minimum RSSI cell, verbatim from the PWA rssi tool.
-        expect(find.text('-67 dBm'), findsOneWidget);
-      });
-    },
-  );
+      expect(find.text('RSSI quality scale'), findsOneWidget);
+      expect(find.text('Minimum signal by application'), findsOneWidget);
+      // VoIP minimum RSSI cell, verbatim from the PWA rssi tool.
+      expect(find.text('-67 dBm'), findsOneWidget);
+    });
+  });
 
-  testWidgets(
-    'Frame Exchange screen renders in a 375x900 phone viewport',
-    (tester) async {
-      // Phone-viewport smoke for the frame-exchange reference: it pumps,
-      // renders the default Open/WPA2-PSK scenario heading and its first frame
-      // (Beacon Frame, verbatim from the PWA FX_SCENARIOS) without overflow.
-      await _withViewport(tester, const Size(375, 900), () async {
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: AppTheme.dark(),
-            home: const FrameExchangeScreen(),
-          ),
-        );
-        await tester.pump();
+  testWidgets('Frame Exchange screen renders in a 375x900 phone viewport', (
+    tester,
+  ) async {
+    // Phone-viewport smoke for the frame-exchange reference: it pumps,
+    // renders the default Open/WPA2-PSK scenario heading and its first frame
+    // (Beacon Frame, verbatim from the PWA FX_SCENARIOS) without overflow.
+    await _withViewport(tester, const Size(375, 900), () async {
+      await tester.pumpWidget(
+        MaterialApp(theme: AppTheme.dark(), home: const FrameExchangeScreen()),
+      );
+      await tester.pump();
 
-        expect(find.text('802.11 Frame Exchange'), findsOneWidget);
-        expect(
-          find.text('Open Network / WPA2-Personal Association'),
-          findsOneWidget,
-        );
-        expect(find.text('Beacon Frame'), findsOneWidget);
-      });
-    },
-  );
+      expect(find.text('802.11 Frame Exchange'), findsOneWidget);
+      expect(
+        find.text('Open Network / WPA2-Personal Association'),
+        findsOneWidget,
+      );
+      expect(find.text('Beacon Frame'), findsOneWidget);
+    });
+  });
 
-  testWidgets(
-    'AP Placement screen renders in a 375x900 phone viewport',
-    (tester) async {
-      // Phone-viewport smoke for the AP-placement reference: it pumps, renders
-      // its rule-group headings and a known PWA guidance line (the 15-20% cell
-      // overlap target, verbatim from AP_RULES) without a RenderFlex overflow.
-      await _withViewport(tester, const Size(375, 900), () async {
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: AppTheme.dark(),
-            home: const ApPlacementScreen(),
-          ),
-        );
-        await tester.pump();
+  testWidgets('AP Placement screen renders in a 375x900 phone viewport', (
+    tester,
+  ) async {
+    // Phone-viewport smoke for the AP-placement reference: it pumps, renders
+    // its rule-group headings and a known PWA guidance line (the 15-20% cell
+    // overlap target, verbatim from AP_RULES) without a RenderFlex overflow.
+    await _withViewport(tester, const Size(375, 900), () async {
+      await tester.pumpWidget(
+        MaterialApp(theme: AppTheme.dark(), home: const ApPlacementScreen()),
+      );
+      await tester.pump();
 
-        expect(find.text('AP Placement'), findsOneWidget);
-        expect(find.text('Cell sizing and overlap'), findsOneWidget);
-        expect(find.text('Channel planning'), findsOneWidget);
-        // Known guidance line, verbatim from the PWA aplace AP_RULES.
-        expect(
-          find.textContaining('15-20% cell overlap'),
-          findsOneWidget,
-        );
-      });
-    },
-  );
+      expect(find.text('AP Placement'), findsOneWidget);
+      expect(find.text('Cell sizing and overlap'), findsOneWidget);
+      expect(find.text('Channel planning'), findsOneWidget);
+      // Known guidance line, verbatim from the PWA aplace AP_RULES.
+      expect(find.textContaining('15-20% cell overlap'), findsOneWidget);
+    });
+  });
 
-  testWidgets(
-    'Ethernet Pinout screen renders in a 375x900 phone viewport',
-    (tester) async {
-      // Phone-viewport smoke for the pinout reference: it pumps, renders the
-      // standard toggle and the default T568B pin-1 wiring (Orange / White,
-      // TX+, verbatim from the PWA PINOUT) without a RenderFlex overflow.
-      await _withViewport(tester, const Size(375, 900), () async {
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: AppTheme.dark(),
-            home: const EthernetPinoutScreen(),
-          ),
-        );
-        await tester.pump();
+  testWidgets('Ethernet Pinout screen renders in a 375x900 phone viewport', (
+    tester,
+  ) async {
+    // Phone-viewport smoke for the pinout reference: it pumps, renders the
+    // standard toggle and the default T568B pin-1 wiring (Orange / White,
+    // TX+, verbatim from the PWA PINOUT) without a RenderFlex overflow.
+    await _withViewport(tester, const Size(375, 900), () async {
+      await tester.pumpWidget(
+        MaterialApp(theme: AppTheme.dark(), home: const EthernetPinoutScreen()),
+      );
+      await tester.pump();
 
-        expect(find.text('Ethernet Pinout'), findsWidgets);
-        expect(find.text('T568B'), findsWidgets);
-        expect(find.text('T568A'), findsWidgets);
-        // Default T568B pin 1, verbatim from the PWA pinout view.
-        expect(find.text('Orange / White'), findsWidgets);
-        expect(find.text('TX+'), findsOneWidget);
-      });
-    },
-  );
+      expect(find.text('Ethernet Pinout'), findsWidgets);
+      expect(find.text('T568B'), findsWidgets);
+      expect(find.text('T568A'), findsWidgets);
+      // Default T568B pin 1, verbatim from the PWA pinout view.
+      expect(find.text('Orange / White'), findsWidgets);
+      expect(find.text('TX+'), findsOneWidget);
+    });
+  });
 
-  testWidgets(
-    'Roaming Parameters screen renders in a 375x900 phone viewport',
-    (tester) async {
-      // Phone-viewport smoke for the roaming reference: it pumps, renders both
-      // section headings and the 802.11r protocol heading (verbatim from the
-      // PWA ROAMING_PROTOCOLS) without a RenderFlex overflow. The 5-column
-      // threshold table scrolls horizontally, so it must not overflow.
-      await _withViewport(tester, const Size(375, 900), () async {
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: AppTheme.dark(),
-            home: const RoamingScreen(),
-          ),
-        );
-        await tester.pump();
+  testWidgets('Roaming Parameters screen renders in a 375x900 phone viewport', (
+    tester,
+  ) async {
+    // Phone-viewport smoke for the roaming reference: it pumps, renders both
+    // section headings and the 802.11r protocol heading (verbatim from the
+    // PWA ROAMING_PROTOCOLS) without a RenderFlex overflow. The 5-column
+    // threshold table scrolls horizontally, so it must not overflow.
+    await _withViewport(tester, const Size(375, 900), () async {
+      await tester.pumpWidget(
+        MaterialApp(theme: AppTheme.dark(), home: const RoamingScreen()),
+      );
+      await tester.pump();
 
-        expect(find.text('Roaming Parameters'), findsOneWidget);
-        expect(find.text('Protocols'), findsOneWidget);
-        expect(find.text('Thresholds'), findsOneWidget);
-        // 802.11r protocol heading, verbatim from the PWA roaming tool.
-        expect(find.textContaining('802.11r'), findsWidgets);
-      });
-    },
-  );
+      expect(find.text('Roaming Parameters'), findsOneWidget);
+      expect(find.text('Protocols'), findsOneWidget);
+      expect(find.text('Thresholds'), findsOneWidget);
+      // 802.11r protocol heading, verbatim from the PWA roaming tool.
+      expect(find.textContaining('802.11r'), findsWidgets);
+    });
+  });
 }
 
 /// Helper — pump the app at [size] and assert no `RenderFlex overflowed`
