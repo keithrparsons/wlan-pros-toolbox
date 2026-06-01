@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- App-level privacy manifest (Apple required for App Store since 2024).
+	     The app does NOT track users and collects NO data off-device: every
+	     tool (calculators, reference tables, live network diagnostics) runs
+	     locally and sends nothing to a backend the developer controls. The
+	     network tools reach third-party hosts the USER targets (DNS-over-HTTPS
+	     resolvers, keyless public IP/ASN lookups) — that is tool function, not
+	     data collection about the user.
+
+	     Bundled plugins ship their own PrivacyInfo.xcprivacy (network_info_plus
+	     declares its own accessed-API reasons); Apple aggregates per-bundle
+	     manifests, so those are NOT repeated here. The entries below cover the
+	     required-reason APIs the app's own code path and the Flutter framework
+	     commonly invoke. -->
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<!-- UserDefaults — Flutter framework + plugins read/write app prefs. -->
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>CA92.1</string>
+			</array>
+		</dict>
+		<!-- File timestamp — reading times of files inside the app container. -->
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>C617.1</string>
+			</array>
+		</dict>
+		<!-- System boot time — monotonic timing used by the framework. -->
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategorySystemBootTime</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>35F9.1</string>
+			</array>
+		</dict>
+		<!-- Disk space — checked before writing to the app container. -->
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryDiskSpace</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>E174.1</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

@@ -4,6 +4,13 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<!-- Export compliance: the app uses only standard HTTPS (TLS) for its
+	     network tools — DNS-over-HTTPS, keyless HTTPS API lookups, and TCP
+	     sockets. No proprietary or non-standard cryptography. Declaring this
+	     here marks the app as exempt so App Store Connect does not prompt for
+	     an encryption questionnaire on every upload. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<!-- Active network tools (Interface Info, Port Scan, future Ping/iperf)
 	     touch hosts on the local network. iOS 14+ requires this purpose
 	     string before granting local-network access. -->
