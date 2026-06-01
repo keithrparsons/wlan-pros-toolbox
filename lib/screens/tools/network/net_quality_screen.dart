@@ -40,6 +40,7 @@ import '../../../theme/app_typography.dart';
 import '../concept_graphic_band.dart';
 import 'live_quality_monitor.dart';
 import 'metric_sparkline.dart';
+import 'net_quality_help_sheet.dart';
 import 'network_unavailable_view.dart';
 
 /// Network Quality screen. Runs one transport measurement and a popular-site
@@ -184,7 +185,26 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Network Quality'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Network Quality'),
+        toolbarHeight: 64,
+        // Help affordance matches wifi_info_screen's idiom: an Icons.help_outline
+        // app-bar action that opens a scrollable help sheet. It surfaces the
+        // approved "About these metrics" copy — the six metrics, the grade
+        // bands, and the honesty caveats. Available on every platform (the copy
+        // is reference content, useful even on the web/unsupported fallback).
+        actions: <Widget>[
+          Semantics(
+            button: true,
+            label: 'About these metrics',
+            child: IconButton(
+              icon: const Icon(Icons.help_outline),
+              tooltip: 'About these metrics',
+              onPressed: () => showNetQualityHelpSheet(context),
+            ),
+          ),
+        ],
+      ),
       body: SafeArea(top: false, child: _body()),
     );
   }
