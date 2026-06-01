@@ -62,6 +62,7 @@ import '../screens/tools/network/network_discovery_screen.dart';
 import '../screens/tools/network/mobile_traceroute_screen.dart';
 import '../screens/tools/network/net_quality_screen.dart';
 import '../screens/tools/network/wifi_vs_internet_screen.dart';
+import '../screens/tools/network/test_my_connection_screen.dart';
 import '../screens/tools/network/packet_sender_screen.dart';
 import '../screens/tools/network/ping_screen.dart';
 import '../screens/tools/network/ping_sweep_screen.dart';
@@ -150,6 +151,12 @@ class AppRouter {
   static const String pingSweep = '/tools/ping-sweep';
   static const String netQuality = '/tools/net-quality';
   static const String wifiVsInternet = '/tools/wifi-vs-internet';
+
+  /// Test My Connection — the CONSUMER companion to wifi-vs-internet (Keith,
+  /// 2026-06-01). Same backends + verdict engine, plain-English re-skin. The id
+  /// `test-my-connection` is permanent (backs this route, the catalog entry,
+  /// and tests). The pro `wifi-vs-internet` tool is unchanged.
+  static const String testMyConnection = '/tools/test-my-connection';
   static const String wifiInfo = '/tools/wifi-info';
   static const String traceroute = '/tools/traceroute';
   static const String mobileTraceroute = '/tools/mobile-traceroute';
@@ -269,6 +276,7 @@ class AppRouter {
     // Icons.bolt fallback no longer triggers for this row.
     netQuality: (_) => const NetQualityScreen(),
     wifiVsInternet: (_) => const WifiVsInternetScreen(),
+    testMyConnection: (_) => const TestMyConnectionScreen(),
     // TICKET-04: the consolidated cross-platform Wi-Fi Information tool
     // (macOS CoreWLAN + iOS companion-Shortcut behind one screen + normalized
     // model). The bespoke 'wifi-info' tool icon now ships at
