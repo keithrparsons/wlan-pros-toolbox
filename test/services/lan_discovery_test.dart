@@ -7,6 +7,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/arp_reader.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/connect_scan.dart';
@@ -1015,6 +1016,110 @@ void main() {
         events.any((DiscoveryProgress p) => p.phase == DiscoveryPhase.arp),
         isTrue,
       );
+    });
+  });
+
+  // The 2026-05-31 stream-lifecycle fix: the production transport must open
+  // EXACTLY ONE EventChannel stream for the whole browse (a Flutter EventChannel
+  // allows only one active stream per name), pass the full service-type list as
+  // the single listen argument, demultiplex incoming events by `serviceType`,
+  // and cancel exactly once when the last per-type discovery disposes. These
+  // tests stand in a mock platform channel for the native side.
+  group('mDNS single-stream transport (production EventChannel lifecycle)', () {
+    const String channel = kMdnsBrowseChannel;
+    const MethodCodec codec = StandardMethodCodec();
+
+    late TestDefaultBinaryMessenger messenger;
+    late int listenCount;
+    late int cancelCount;
+    late Object? lastListenArgs;
+    void Function(Object? event)? sink;
+
+    setUp(() {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      messenger = TestDefaultBinaryMessengerBinding
+          .instance.defaultBinaryMessenger;
+      listenCount = 0;
+      cancelCount = 0;
+      lastListenArgs = null;
+      sink = null;
+
+      // Mock the native side of the EventChannel: record listen/cancel calls and
+      // expose a sink that pushes events back up the broadcast stream, exactly
+      // as the native BrowseSession's `emit` does.
+      messenger.setMockMethodCallHandler(
+        MethodChannel(channel, codec),
+        (MethodCall call) async {
+          if (call.method == 'listen') {
+            listenCount++;
+            lastListenArgs = call.arguments;
+            sink = (Object? event) {
+              messenger.handlePlatformMessage(
+                channel,
+                codec.encodeSuccessEnvelope(event),
+                (ByteData? _) {},
+              );
+            };
+            return codec.encodeSuccessEnvelope(null);
+          }
+          if (call.method == 'cancel') {
+            cancelCount++;
+            sink = null;
+            return codec.encodeSuccessEnvelope(null);
+          }
+          return null;
+        },
+      );
+    });
+
+    test('a 16-type browse opens ONE stream with the full type list, not 16',
+        () async {
+      final MdnsBrowser browser = MdnsBrowser(
+        serviceTypes: kBrowsedServiceTypes,
+        timeout: const Duration(milliseconds: 60),
+      );
+
+      // While the browse is in its dwell window, push a Sonos event up the ONE
+      // stream tagged with its service type; the transport must demux it to the
+      // _sonos._tcp discovery and fold it into the result.
+      final Future<Map<String, MdnsRecord>> browsing = browser.browse();
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+      sink?.call(<String, Object?>{
+        'serviceType': '_sonos._tcp',
+        'name': 'Living Room',
+        'hostAddresses': <String>['192.168.1.42'],
+      });
+      final Map<String, MdnsRecord> result = await browsing;
+
+      // ONE listen for the whole browse — the bug was 16.
+      expect(listenCount, 1);
+      // The single listen argument is the FULL service-type list.
+      expect(lastListenArgs, kBrowsedServiceTypes);
+      // Exactly one cancel when the browse's dwell window ends.
+      expect(cancelCount, 1);
+      // The event was demultiplexed to the right type and folded in.
+      expect(result['192.168.1.42']?.name, 'Living Room');
+      expect(result['192.168.1.42']?.services, contains('_sonos._tcp'));
+    });
+
+    test('back-to-back browses each open and cancel exactly one stream',
+        () async {
+      Future<void> oneBrowse() async {
+        await MdnsBrowser(
+          serviceTypes: const <String>['_http._tcp', '_sonos._tcp'],
+          timeout: const Duration(milliseconds: 30),
+        ).browse();
+      }
+
+      await oneBrowse();
+      await oneBrowse();
+
+      expect(listenCount, 2); // one per browse, never one-per-type
+      expect(cancelCount, 2);
+    });
+
+    tearDown(() {
+      messenger.setMockMethodCallHandler(MethodChannel(channel, codec), null);
     });
   });
 }

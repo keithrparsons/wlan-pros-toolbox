@@ -15,61 +15,63 @@ import Foundation
 /// bonsoir was chosen over pure-Dart multicast_dns). Entitlements are untouched.
 ///
 /// ARCHITECTURE — NetServiceBrowser browse, NetService resolve (the bonsoir path):
-/// Two earlier attempts used `NWBrowser` for discovery. On a SANDBOXED macOS app,
-/// on-device testing (Keith, 2026-05-31) showed `NWBrowser` reaching `.ready` for
-/// every service type — including `_sonos._tcp` — but delivering ZERO browse
-/// results: `browseResultsChangedHandler` never fired, so nothing was ever found,
-/// let alone resolved. The TCP connect-scan + ARP read worked, so Local Network
-/// access was granted; the failure was specific to `NWBrowser`'s browse not
-/// surfacing results in this sandboxed context. We are done patching NWBrowser.
-///
-/// This rewrite removes `NWBrowser` ENTIRELY and uses the legacy `NetServiceBrowser`
-/// for discovery — the path we KNOW discovered Sonos + Apple devices under bonsoir
-/// (iOS Gate 1 passed). `searchForServices(ofType:inDomain:)` hands the browse to
-/// the OS daemon and its delegate (`netServiceBrowser(_:didFind:moreComing:)`)
-/// yields a `NetService` per instance; we then `resolve(withTimeout:)` each one and
-/// read raw `sockaddr` addresses from `netServiceDidResolveAddress`. Both
+/// Earlier attempts used `NWBrowser` for discovery; on a SANDBOXED macOS app it
+/// reached `.ready` but delivered ZERO browse results, so NWBrowser was removed
+/// entirely in favor of the bonsoir-proven `NetServiceBrowser` + `NetService`
+/// path. `searchForServices(ofType:inDomain:)` hands the browse to the OS daemon
+/// and its delegate (`netServiceBrowser(_:didFind:moreComing:)`) yields a
+/// `NetService` per instance; we then `resolve(withTimeout:)` each one and read
+/// raw `sockaddr` addresses from `netServiceDidResolveAddress`. Both
 /// `NetServiceBrowser` and `NetService` are API-deprecated but fully functional,
 /// OS-daemon-based, and need NO multicast entitlement.
 ///
+/// SINGLE-STREAM CONTRACT (2026-05-31 stream-lifecycle fix): a Flutter
+/// `FlutterEventChannel` keyed by NAME supports exactly ONE active stream. The
+/// Dart browse therefore opens this channel ONCE and passes the FULL LIST of
+/// service types (`[String]`) as the `onListen` argument. This channel starts
+/// ONE `BrowseSession` that runs one `NetServiceBrowser` PER type and tags every
+/// emitted event with the `serviceType` it was found under, so the single Dart
+/// stream is demultiplexed back to per-type listeners. `onCancel` stops that one
+/// session exactly once and is idempotent (a redundant/late cancel is a benign
+/// no-op, never a `FlutterError`). The previous design accepted a single type
+/// per stream and the Dart side opened 16 concurrent streams on this one channel
+/// name — that thrashed the framework's subscribe/cancel bookkeeping, tore the
+/// browsers down before mDNS could hear an announcement, and produced a
+/// "No active stream to cancel" storm. Fixed by one stream, one session, N
+/// browsers, held for the full dwell window.
+///
 /// DOMAIN: bonsoir_darwin searches in `""` (the empty string), which the daemon
-/// treats as the default registration domain (effectively `local.`). We match that
-/// exactly — `searchForServices(ofType: serviceType, inDomain: "")` — rather than
-/// passing `"local."`, to mirror the proven behavior.
+/// treats as the default registration domain (effectively `local.`). We match
+/// that exactly — `searchForServices(ofType:inDomain: "")`.
 ///
-/// DELEGATE ORDERING: the browser delegate is set BEFORE `searchForServices` is
-/// called, and the browser is scheduled on the main run loop first, so no early
-/// `didFind` callback is lost.
+/// DELEGATE ORDERING: each browser's delegate is set BEFORE `searchForServices`
+/// is called, and the browser is scheduled on the main run loop first, so no
+/// early `didFind` callback is lost.
 ///
-/// RETENTION (the #1 NetService bug): `NetServiceBrowser` is held in a strong
-/// property for the session's lifetime, and EVERY in-flight `NetService` is held in
-/// a strong `Set` until it resolves or fails — a `NetService` that is not retained
-/// is deallocated before its async resolve completes and silently never fires its
-/// delegate. All of them are torn down on `stop()` / dispose — no leak.
+/// RETENTION (the #1 NetService bug): every `NetServiceBrowser` is held in a
+/// strong collection for the session's lifetime, and EVERY in-flight
+/// `NetService` is held in a strong `Set` until it resolves or fails — a
+/// `NetService` that is not retained is deallocated before its async resolve
+/// completes and silently never fires its delegate. All torn down on `stop()` —
+/// no leak.
 ///
-/// EventChannel `com.wlanpros.toolbox/mdns_browse`. One stream per browsed
-/// service type: Dart opens the stream with the service type as the listen
-/// argument; native browses that single type and emits one event per RESOLVED
-/// instance:
+/// EventChannel `com.wlanpros.toolbox/mdns_browse`. ONE stream for the whole
+/// browse; the listen argument is the `[String]` list of service types. Native
+/// emits one event per RESOLVED instance, tagged with its service type:
 ///   { "name": String, "hostAddresses": [String], "serviceType": String }
-/// Only resolved instances with at least one address are emitted — mirroring the
-/// Dart `MdnsDiscoveryEvent` contract (resolved-only). IPv6 literals are passed
-/// through; the Dart browse layer keeps only IPv4 (existing behavior).
-///
-/// TEARDOWN: each stream owns its NetServiceBrowser plus the set of in-flight
-/// resolving NetServices. `onCancel` stops the browser and every resolve so no
-/// native resource leaks (the dispose contract the spike requires).
+/// Only resolved instances with at least one address are emitted. IPv6 literals
+/// are passed through; the Dart browse layer keeps only IPv4 (existing behavior).
 ///
 /// HONESTY (GL-005 / GL-008): a browse that finds nothing emits nothing; a
-/// permission/platform failure surfaces as a browser-not-search state that simply
-/// stops the stream. Nothing is ever fabricated.
+/// permission/platform failure surfaces as a browser-not-search state that
+/// simply stops the stream. Nothing is ever fabricated.
 final class MdnsBrowseChannel: NSObject, FlutterStreamHandler {
   /// The exact event-channel name shared with the Dart side.
   static let channelName = "com.wlanpros.toolbox/mdns_browse"
 
   private let channel: FlutterEventChannel
 
-  /// One live browse session per active stream listener.
+  /// The ONE live browse session for the single active stream listener.
   private var session: BrowseSession?
 
   init(messenger: FlutterBinaryMessenger) {
@@ -87,59 +89,84 @@ final class MdnsBrowseChannel: NSObject, FlutterStreamHandler {
     withArguments arguments: Any?,
     eventSink events: @escaping FlutterEventSink
   ) -> FlutterError? {
-    guard let serviceType = arguments as? String, !serviceType.isEmpty else {
+    // The single stream's argument is the FULL list of service types to browse.
+    // Accept a list; tolerate a bare string for backward compatibility.
+    let serviceTypes: [String]
+    if let list = arguments as? [String] {
+      serviceTypes = list.filter { !$0.isEmpty }
+    } else if let one = arguments as? String, !one.isEmpty {
+      serviceTypes = [one]
+    } else {
       return FlutterError(
         code: "bad_args",
-        message: "mDNS browse requires a service type string as the stream argument.",
+        message:
+          "mDNS browse requires a [String] list of service types as the stream argument.",
         details: nil
       )
     }
-    // Replace any prior session (a stream is 1:1 with a listener here).
+    guard !serviceTypes.isEmpty else {
+      return FlutterError(
+        code: "bad_args",
+        message: "mDNS browse requires at least one non-empty service type.",
+        details: nil
+      )
+    }
+    // Replace any prior session (a stream is 1:1 with a listener here). Stopping
+    // a prior session is safe and idempotent.
     session?.stop()
-    session = BrowseSession(serviceType: serviceType, sink: events)
+    session = BrowseSession(serviceTypes: serviceTypes, sink: events)
     session?.start()
     return nil
   }
 
   func onCancel(withArguments arguments: Any?) -> FlutterError? {
+    // Idempotent: a cancel when there is no live session is a benign no-op, NOT
+    // a FlutterError. `stop()` itself is idempotent (guards on `stopped`).
     session?.stop()
     session = nil
     return nil
   }
 }
 
-/// One `NetServiceBrowser` browse for a single service type, resolving each found
-/// instance to its host addresses via `NetService` (sockaddr → IPv4/IPv6) — the
-/// exact bonsoir_darwin path.
+/// ONE browse session running a `NetServiceBrowser` PER service type, resolving
+/// each found instance to its host addresses via `NetService` (sockaddr →
+/// IPv4/IPv6) — the exact bonsoir_darwin path. Every emitted event is tagged
+/// with the service type it was found under so the single Dart stream can
+/// demultiplex back to per-type listeners.
 ///
 /// THREADING: `NetServiceBrowser` and `NetService` both require a live run loop,
-/// so everything — browser creation/scheduling/search, each NetService schedule +
-/// resolve, all delegate callbacks, and teardown — runs on the MAIN run loop
-/// (scheduled `forMode: .common`). The Flutter sink is therefore always invoked on
-/// main. `stopped`/`resolving`/`seen` are touched only on main.
+/// so everything — browser creation/scheduling/search, each NetService schedule
+/// + resolve, all delegate callbacks, and teardown — runs on the MAIN run loop
+/// (scheduled `forMode: .common`). The Flutter sink is therefore always invoked
+/// on main. All mutable state is touched only on main.
 private final class BrowseSession: NSObject, NetServiceBrowserDelegate, NetServiceDelegate {
-  private let serviceType: String
+  private let serviceTypes: [String]
   private let sink: FlutterEventSink
 
-  /// The browser, retained for the session's lifetime (main only).
-  private var browser: NetServiceBrowser?
-  /// In-flight resolving services, retained until they resolve or fail (main only).
-  /// CRITICAL: a NetService that is not strongly held is deallocated before its
-  /// async resolve completes and its delegate never fires.
-  private var resolving: Set<NetService> = []
-  /// De-dupes resolve attempts for the same instance (main only).
+  /// One browser per service type, retained for the session's lifetime. Keyed by
+  /// `ObjectIdentifier` so a delegate callback can recover the browser's type.
+  private var browsers: [ObjectIdentifier: (browser: NetServiceBrowser, type: String)] = [:]
+  /// In-flight resolving services, retained until they resolve or fail (main
+  /// only). CRITICAL: a NetService that is not strongly held is deallocated
+  /// before its async resolve completes and its delegate never fires. Maps each
+  /// service to the type it was found under, so the emitted event is tagged.
+  private var resolving: [ObjectIdentifier: (service: NetService, type: String)] = [:]
+  /// De-dupes resolve attempts for the same instance, per type (main only).
   private var seen: Set<String> = []
   private var stopped = false
 
-  // SPIKE-HSD-01 diagnostic counters (logged only on stop, gated by isDebug).
-  // Keith's on-device run prints these per service type so a future empty result
-  // is attributable to browse-vs-resolve. Remove once the path is productized.
-  private var foundCount = 0
-  private var resolvedCount = 0
-  private var failedResolveCount = 0
+  /// When the dwell window began, for the elapsed-ms log on stop.
+  private var startedAt: Date?
 
-  /// Debug builds only: Flutter sets DEBUG via the Xcode config, but to stay
-  /// independent of build flags we mirror Dart's kDebugMode with assert-side-effect.
+  // SPIKE-HSD-01 diagnostic counters, per service type (logged only on stop,
+  // gated by isDebug). Keith's on-device run prints these so a future empty
+  // result is attributable to browse-vs-resolve.
+  private var foundCount: [String: Int] = [:]
+  private var resolvedCount: [String: Int] = [:]
+  private var failedResolveCount: [String: Int] = [:]
+
+  /// Debug builds only: mirror Dart's kDebugMode with an assert side-effect so
+  /// the logging is independent of build flags.
   private static let isDebug: Bool = {
     var dbg = false
     assert({ dbg = true; return true }())
@@ -152,8 +179,8 @@ private final class BrowseSession: NSObject, NetServiceBrowserDelegate, NetServi
     }
   }
 
-  init(serviceType: String, sink: @escaping FlutterEventSink) {
-    self.serviceType = serviceType
+  init(serviceTypes: [String], sink: @escaping FlutterEventSink) {
+    self.serviceTypes = serviceTypes
     self.sink = sink
     super.init()
   }
@@ -161,26 +188,33 @@ private final class BrowseSession: NSObject, NetServiceBrowserDelegate, NetServi
   func start() {
     // NetServiceBrowser is run-loop bound; drive it from main so its delegate and
     // every NetService resolve share one live run loop (what bonsoir effectively
-    // does). Set the delegate and schedule BEFORE searching so no early didFind is
-    // lost.
+    // does). Set the delegate and schedule BEFORE searching so no early didFind
+    // is lost. ONE browser per service type, all under this single session.
     DispatchQueue.main.async { [weak self] in
       guard let self = self, !self.stopped else { return }
-      let browser = NetServiceBrowser()
-      browser.delegate = self
-      browser.schedule(in: .main, forMode: .common)
-      self.browser = browser
-      // Domain "" = the daemon's default registration domain (== local.), exactly
-      // what bonsoir_darwin searches. Do NOT pass "local." here — match the proven
-      // behavior.
-      browser.searchForServices(ofType: self.serviceType, inDomain: "")
-      self.log("browser searching for \(self.serviceType)")
+      self.startedAt = Date()
+      for type in self.serviceTypes {
+        let browser = NetServiceBrowser()
+        browser.delegate = self
+        browser.schedule(in: .main, forMode: .common)
+        self.browsers[ObjectIdentifier(browser)] = (browser, type)
+        // Domain "" = the daemon's default registration domain (== local.),
+        // exactly what bonsoir_darwin searches.
+        browser.searchForServices(ofType: type, inDomain: "")
+        self.log("browser searching for \(type)")
+      }
     }
+  }
+
+  /// Recovers the service type a given browser was created for.
+  private func type(for browser: NetServiceBrowser) -> String? {
+    browsers[ObjectIdentifier(browser)]?.type
   }
 
   // MARK: - NetServiceBrowserDelegate (main run loop)
 
   func netServiceBrowserWillSearch(_ browser: NetServiceBrowser) {
-    log("willSearch \(serviceType)")
+    log("willSearch \(type(for: browser) ?? "?")")
   }
 
   func netServiceBrowser(
@@ -189,7 +223,7 @@ private final class BrowseSession: NSObject, NetServiceBrowserDelegate, NetServi
   ) {
     // Non-fatal: this type produced no search. The Dart browse layer treats an
     // empty stream as "no mDNS results".
-    log("didNotSearch \(serviceType): \(errorDict)")
+    log("didNotSearch \(type(for: browser) ?? "?"): \(errorDict)")
   }
 
   func netServiceBrowser(
@@ -198,20 +232,21 @@ private final class BrowseSession: NSObject, NetServiceBrowserDelegate, NetServi
     moreComing: Bool
   ) {
     guard !stopped else { return }
+    let svcType = type(for: browser) ?? service.type
     // Log every didFind the instant it arrives so a found>0 / resolved=0 outcome
     // is distinguishable from a found=0 outcome.
-    log("didFind \(service.name) [\(serviceType)] moreComing=\(moreComing)")
+    log("didFind \(service.name) [\(svcType)] moreComing=\(moreComing)")
 
     // Bonjour browse results can repeat; resolve each instance once.
     let key = "\(service.name).\(service.type)\(service.domain)"
     if seen.contains(key) { return }
     seen.insert(key)
-    foundCount += 1
+    foundCount[svcType, default: 0] += 1
 
     // Retain (the #1 NetService bug is the service being deallocated before it
     // resolves), set the delegate, schedule on the same main run loop, resolve.
     service.delegate = self
-    resolving.insert(service)
+    resolving[ObjectIdentifier(service)] = (service, svcType)
     service.schedule(in: .main, forMode: .common)
     service.resolve(withTimeout: 5.0)
   }
@@ -223,7 +258,7 @@ private final class BrowseSession: NSObject, NetServiceBrowserDelegate, NetServi
   ) {
     // We only enrich on presence; a removed service is dropped silently. Stop any
     // in-flight resolve for it so it does not leak.
-    if resolving.contains(service) {
+    if resolving[ObjectIdentifier(service)] != nil {
       finishResolving(service)
     }
   }
@@ -232,32 +267,35 @@ private final class BrowseSession: NSObject, NetServiceBrowserDelegate, NetServi
 
   func netServiceDidResolveAddress(_ service: NetService) {
     guard !stopped else { return }
+    let svcType = resolving[ObjectIdentifier(service)]?.type ?? service.type
     let addresses = Self.ipStrings(from: service.addresses ?? [])
     finishResolving(service)
     guard !addresses.isEmpty else {
-      log("resolved \(service.name) [\(serviceType)] but NO usable address")
+      log("resolved \(service.name) [\(svcType)] but NO usable address")
       return
     }
-    resolvedCount += 1
-    log("resolved \(service.name) [\(serviceType)] -> \(addresses)")
-    emit(name: service.name, addresses: addresses)
+    resolvedCount[svcType, default: 0] += 1
+    log("resolved \(service.name) [\(svcType)] -> \(addresses)")
+    emit(serviceType: svcType, name: service.name, addresses: addresses)
   }
 
   func netService(_ service: NetService, didNotResolve errorDict: [String: NSNumber]) {
     // Non-fatal: drop this instance, keep browsing/resolving the rest.
-    failedResolveCount += 1
-    log("didNotResolve \(service.name) [\(serviceType)]: \(errorDict)")
+    let svcType = resolving[ObjectIdentifier(service)]?.type ?? service.type
+    failedResolveCount[svcType, default: 0] += 1
+    log("didNotResolve \(service.name) [\(svcType)]: \(errorDict)")
     finishResolving(service)
   }
 
   private func finishResolving(_ service: NetService) {
     service.stop()
     service.delegate = nil
-    resolving.remove(service)
+    resolving.removeValue(forKey: ObjectIdentifier(service))
   }
 
-  /// Emit one resolved instance up the Flutter sink (already on main).
-  private func emit(name: String, addresses: [String]) {
+  /// Emit one resolved instance up the Flutter sink (already on main), tagged
+  /// with its service type so the single Dart stream demultiplexes correctly.
+  private func emit(serviceType: String, name: String, addresses: [String]) {
     guard !stopped else { return }
     let payload: [String: Any] = [
       "serviceType": serviceType,
@@ -269,23 +307,37 @@ private final class BrowseSession: NSObject, NetServiceBrowserDelegate, NetServi
 
   func stop() {
     // Tear down everything on main (NetServiceBrowser + NetService are
-    // main-run-loop bound). Log the per-type browse/resolve summary first.
+    // main-run-loop bound). Log the dwell window + per-type browse/resolve
+    // summaries first. Idempotent: a second stop() is a no-op (guards on
+    // `stopped`), so a redundant cancel never double-tears-down or throws.
     DispatchQueue.main.async { [weak self] in
-      guard let self = self else { return }
-      self.log(
-        "STOP \(self.serviceType): found=\(self.foundCount) "
-          + "resolved=\(self.resolvedCount) failedResolve=\(self.failedResolveCount)"
-      )
+      guard let self = self, !self.stopped else { return }
+
+      let elapsedMs: Int
+      if let s = self.startedAt {
+        elapsedMs = Int(Date().timeIntervalSince(s) * 1000.0)
+      } else {
+        elapsedMs = 0
+      }
+      self.log("STOP browse: dwell=\(elapsedMs)ms types=\(self.serviceTypes.count)")
+      for type in self.serviceTypes {
+        self.log(
+          "STOP \(type): found=\(self.foundCount[type] ?? 0) "
+            + "resolved=\(self.resolvedCount[type] ?? 0) "
+            + "failedResolve=\(self.failedResolveCount[type] ?? 0)"
+        )
+      }
+
       self.stopped = true
 
-      if let browser = self.browser {
+      for (browser, _) in self.browsers.values {
         browser.stop()
         browser.delegate = nil
         browser.remove(from: .main, forMode: .common)
       }
-      self.browser = nil
+      self.browsers.removeAll()
 
-      for service in self.resolving {
+      for (service, _) in self.resolving.values {
         service.stop()
         service.delegate = nil
         service.remove(from: .main, forMode: .common)
