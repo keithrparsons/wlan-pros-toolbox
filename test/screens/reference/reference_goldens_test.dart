@@ -1,4 +1,7 @@
-// Rendered-pixel golden tests for the 19 reference-table screens (Vera F-04).
+// Rendered-pixel golden tests for the reference-table screens (Vera F-04).
+// (The Top 30 Emoji screen is intentionally excluded — its glyphs render via
+// the system color-emoji font, which the headless golden engine lacks; its
+// layout/data are covered by emoji_reference_screen_test.dart instead.)
 //
 // Until now the reference tables passed only code review and *computed*
 // contrast checks — no one had snapshotted the actual rendered pixels, so a
@@ -35,6 +38,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:wlan_pros_toolbox/screens/tools/reference/ap_placement_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/reference/ascii_reference_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/channel_map_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/coax_cable_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/db_reference_screen.dart';
@@ -64,6 +68,7 @@ typedef _RefScreen = ({String slug, Widget Function() build});
 /// golden filenames line up with the catalog.
 final List<_RefScreen> _screens = <_RefScreen>[
   (slug: 'ap_placement', build: () => const ApPlacementScreen()),
+  (slug: 'ascii_reference', build: () => const AsciiReferenceScreen()),
   (slug: 'channel_map', build: () => const ChannelMapScreen()),
   (slug: 'coax_cable', build: () => const CoaxCableScreen()),
   (slug: 'db_reference', build: () => const DbReferenceScreen()),

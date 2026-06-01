@@ -605,6 +605,20 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         routeName: '/tools/osi-model',
         isLive: true,
       ),
+      ToolEntry(
+        id: 'ascii-reference',
+        title: 'ASCII / Hex / Binary',
+        description: 'ASCII table with hex, octal, binary, and control codes',
+        routeName: '/tools/ascii-reference',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'emoji-reference',
+        title: 'Top 30 Emoji',
+        description: 'The 30 most-used emoji, names, and common meaning',
+        routeName: '/tools/emoji-reference',
+        isLive: true,
+      ),
     ],
   ),
 
