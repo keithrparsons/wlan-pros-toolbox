@@ -192,4 +192,80 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   });
+
+  group('help affordance', () {
+    testWidgets('app-bar help icon opens the About these metrics sheet',
+        (tester) async {
+      await tester.pumpWidget(harness());
+      await tester.pumpAndSettle();
+
+      // The help affordance is the SR-labeled icon button in the app bar.
+      final Finder help = find.bySemanticsLabel('About these metrics');
+      expect(help, findsOneWidget);
+
+      // Before opening, the help content is not on screen.
+      expect(find.text('About Network Quality'), findsNothing);
+
+      await tester.tap(help);
+      await tester.pumpAndSettle();
+
+      // The sheet renders its heading and the six metric headings.
+      expect(find.text('About Network Quality'), findsOneWidget);
+      expect(find.text('The six metrics'), findsOneWidget);
+      for (final String metric in <String>[
+        'Latency',
+        'Jitter',
+        'Loss',
+        'Responsiveness',
+        'Download',
+        'Upload',
+      ]) {
+        expect(find.text(metric), findsWidgets, reason: '$metric heading');
+      }
+
+      // A representative grade band is present.
+      expect(find.text('What the grades mean'), findsOneWidget);
+      expect(find.text('under 20 ms'), findsOneWidget);
+    });
+
+    testWidgets('the honesty caveats are present in the help sheet',
+        (tester) async {
+      await tester.pumpWidget(harness());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.bySemanticsLabel('About these metrics'));
+      await tester.pumpAndSettle();
+
+      // The not-an-Orb/Ookla-score caveat — the load-bearing honesty claim —
+      // is rendered. Matched on a substring so a copy tweak elsewhere in the
+      // paragraph does not break the test.
+      expect(
+        find.textContaining('not an Orb or Ookla score'),
+        findsOneWidget,
+      );
+      // The RFC 9097 single-stream Responsiveness caveat is present (it appears
+      // both in the metric card note and the honesty card).
+      expect(find.textContaining('RFC 9097'), findsWidgets);
+      // The "no single composite score" intent survives.
+      expect(find.textContaining('no single overall score'), findsOneWidget);
+    });
+
+    testWidgets('Close dismisses the help sheet', (tester) async {
+      await tester.pumpWidget(harness());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.bySemanticsLabel('About these metrics'));
+      await tester.pumpAndSettle();
+      expect(find.text('About Network Quality'), findsOneWidget);
+
+      // The help sheet is taller than the test viewport, so the bottom Close
+      // button is off-screen until scrolled to (on a real device it is reached
+      // by scroll or the drag-handle swipe).
+      await tester.ensureVisible(find.bySemanticsLabel('Close help'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.bySemanticsLabel('Close help'));
+      await tester.pumpAndSettle();
+      expect(find.text('About Network Quality'), findsNothing);
+    });
+  });
 }

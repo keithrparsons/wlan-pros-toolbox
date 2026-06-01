@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Network Quality: per-dimension grade bars of stepped lengths, each capped by a
+         reading marker. Ragged right edge + left scale axis = a horizontal grade chart,
+         NOT a gauge (throughput-calc/wifi-info) and NOT an even line stack (port-reference).
+         Stepped lengths read as "graded per dimension, no single composite score." -->
+    <!-- left scale axis tying the dimensions together -->
+    <path d="M4 5 V19"/>
+    <!-- dimension 1: long bar (high grade) -->
+    <path d="M4 6.5 H16.5"/>
+    <circle cx="16.5" cy="6.5" r="1.6" fill="currentColor" stroke="none"/>
+    <!-- dimension 2: short bar (low grade) -->
+    <path d="M4 10.5 H9"/>
+    <circle cx="9" cy="10.5" r="1.6" fill="currentColor" stroke="none"/>
+    <!-- dimension 3: medium-long bar -->
+    <path d="M4 14.5 H13.5"/>
+    <circle cx="13.5" cy="14.5" r="1.6" fill="currentColor" stroke="none"/>
+    <!-- dimension 4: medium bar -->
+    <path d="M4 18.5 H19"/>
+    <circle cx="19" cy="18.5" r="1.6" fill="currentColor" stroke="none"/>
+  </g>
+</svg>
