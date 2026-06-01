@@ -236,7 +236,8 @@ class _RfAttenuationScreenState extends State<RfAttenuationScreen> {
                 ? AppSpacing.screenEdgeDesktop
                 : AppSpacing.screenEdgeMobile;
 
-            return Center(
+            return Align(
+              alignment: AppSpacing.calculatorVerticalAlignment(constraints),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(
                   maxWidth: AppSpacing.calculatorMaxWidth,
