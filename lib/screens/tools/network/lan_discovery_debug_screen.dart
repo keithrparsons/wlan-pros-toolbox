@@ -18,8 +18,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../../services/network/lan_discovery/arp_reader.dart';
 import '../../../services/network/lan_discovery/lan_discovery_engine.dart';
 import '../../../services/network/lan_discovery/lan_host.dart';
+import '../../../services/network/lan_discovery/oui_vendor.dart';
 
 /// Throwaway debug UI for the SPIKE-HSD-01 LAN Discovery engine.
 class LanDiscoveryDebugScreen extends StatefulWidget {
@@ -108,8 +110,10 @@ class _LanDiscoveryDebugScreenState extends State<LanDiscoveryDebugScreen> {
               const Text(
                 'Throwaway spike screen. Tap Scan to derive the local subnet, '
                 'run a bounded TCP connect-scan in a background isolate, then '
-                'enrich with reverse DNS, mDNS, and a device-type heuristic. '
-                'No MAC / vendor — out of scope for this spike.',
+                'enrich with reverse DNS, mDNS, a device-type heuristic, and '
+                '(macOS only) a sandbox-safe ARP-cache read for MAC + vendor. '
+                'On iOS/Android the ARP read is reported as unavailable — that '
+                'is the expected, honest result, not a bug.',
               ),
               const SizedBox(height: 12),
               FilledButton(
@@ -154,6 +158,8 @@ class _LanDiscoveryDebugScreenState extends State<LanDiscoveryDebugScreen> {
                   'gateway ${r.gateway ?? '?'}  ·  ${r.hosts.length} host(s)',
                   style: Theme.of(context).textTheme.labelMedium,
                 ),
+                const SizedBox(height: 6),
+                _arpStatus(context, r),
               ],
             ],
           ),
@@ -180,6 +186,38 @@ class _LanDiscoveryDebugScreenState extends State<LanDiscoveryDebugScreen> {
     );
   }
 
+  /// The Gate-2 result banner: green when the ARP read succeeded and MACs are
+  /// expected (the pivot PASSES on macOS), a clear "unavailable" line when the
+  /// sandbox blocked it or the platform cannot read the cache (the FAIL / N-A
+  /// signal). Verbatim error so a sandbox EPERM is visible.
+  Widget _arpStatus(BuildContext context, DiscoveryResult r) {
+    final ArpReadResult? arp = r.arp;
+    final ThemeData theme = Theme.of(context);
+    if (arp == null) {
+      return Text('ARP/MAC: not attempted.',
+          style: theme.textTheme.labelMedium);
+    }
+    if (!arp.available) {
+      return Text(
+        'MAC / vendor: ${arp.error ?? 'unavailable.'}',
+        style: theme.textTheme.labelMedium
+            ?.copyWith(color: theme.colorScheme.error),
+      );
+    }
+    final int withMac = r.hosts.where((LanHost h) => h.mac != null).length;
+    final int named = r.hosts
+        .where((LanHost h) => h.mac != null && OuiVendor.isNamedVendor(h.mac!))
+        .length;
+    return Text(
+      'MAC / vendor: ARP read OK — ${arp.entries.length} cache entr'
+      '${arp.entries.length == 1 ? 'y' : 'ies'}, '
+      '$withMac of ${r.hosts.length} host(s) matched, $named named by the '
+      'spike OUI table (${OuiVendor.prefixCount} prefixes).',
+      style: theme.textTheme.labelMedium
+          ?.copyWith(color: theme.colorScheme.primary),
+    );
+  }
+
   Widget _hostTile(LanHost h) {
     final String ports = (h.openPorts.toList()..sort()).join(', ');
     final String services = (h.mdnsServices.toList()..sort()).join(', ');
@@ -191,6 +229,9 @@ class _LanDiscoveryDebugScreenState extends State<LanDiscoveryDebugScreen> {
         children: <Widget>[
           if (h.hostname != null) Text('PTR: ${h.hostname}'),
           if (h.mdnsName != null) Text('mDNS: ${h.mdnsName}'),
+          if (h.mac != null)
+            Text('MAC: ${h.mac}'
+                '${h.vendor == null ? '' : '  ·  ${h.vendor}'}'),
           if (services.isNotEmpty) Text('services: $services'),
           Text('ports: ${ports.isEmpty ? '—' : ports}'),
         ],

@@ -23,12 +23,14 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 
+import 'arp_reader.dart';
 import 'connect_scan.dart';
 import 'curated_ports.dart';
 import 'device_type.dart';
 import 'lan_host.dart';
 import 'mdns_browse.dart';
 import 'multicast_lock.dart';
+import 'oui_vendor.dart';
 import 'subnet_seed.dart';
 
 /// Phases a discovery run passes through, in order.
@@ -38,6 +40,7 @@ enum DiscoveryPhase {
   scanning, // TCP connect-scan across the /24
   resolving, // reverse DNS per host
   mdns, // mDNS browse
+  arp, // ARP-cache read (macOS-only MAC/vendor, after the scan warms it)
   complete,
   failed,
 }
@@ -67,6 +70,7 @@ class DiscoveryResult {
     this.selfIp,
     this.gateway,
     this.error,
+    this.arp,
   });
 
   /// Discovered hosts, enriched, ascending by IP.
@@ -81,6 +85,13 @@ class DiscoveryResult {
   /// Null on success; a short reason when the run could not start (e.g. no
   /// subnet). A run that started but found nothing is success with empty hosts.
   final String? error;
+
+  /// SPIKE-HSD-01 Gate 2 — the ARP-cache read outcome (macOS MAC/vendor). Null
+  /// when no read was attempted. When present, [ArpReadResult.available]
+  /// distinguishes a successful read (MACs populate) from a sandbox block
+  /// (the gate's FAIL signal). Surfaced verbatim on the debug screen so the run
+  /// is interpretable as pass/fail.
+  final ArpReadResult? arp;
 }
 
 /// Reverse-DNS seam: IP → hostname or null. Injectable for tests.
@@ -99,6 +110,7 @@ class LanDiscoveryEngine {
     MdnsBrowser? mdnsBrowser,
     MulticastLock? multicastLock,
     ReverseDnsResolver? reverseDns,
+    ArpReader? arpReader,
     List<int>? ports,
     this._connectTimeout = const Duration(milliseconds: 400),
     this._concurrency = 64,
@@ -112,6 +124,7 @@ class LanDiscoveryEngine {
        _mdnsBrowser = mdnsBrowser ?? MdnsBrowser(),
        _multicastLock = multicastLock ?? platformMulticastLock(),
        _reverseDns = reverseDns ?? _defaultReverseDns,
+       _arpReader = arpReader ?? platformArpReader(),
        _ports = ports ?? CuratedPorts.all,
        _connectScanRunner = scanRunner, // ignore: prefer_initializing_formals
        _connector = connector; // ignore: prefer_initializing_formals
@@ -120,6 +133,7 @@ class LanDiscoveryEngine {
   final MdnsBrowser _mdnsBrowser;
   final MulticastLock _multicastLock;
   final ReverseDnsResolver _reverseDns;
+  final ArpReader _arpReader;
   final List<int> _ports;
   final Duration _connectTimeout;
   final int _concurrency;
@@ -259,7 +273,37 @@ class LanDiscoveryEngine {
     } finally {
       await _multicastLock.release();
     }
-    yield const DiscoveryProgress(DiscoveryPhase.mdns, 0.95);
+    yield const DiscoveryProgress(DiscoveryPhase.mdns, 0.9);
+
+    // --- ARP-cache read (macOS-only MAC/vendor) — SPIKE-HSD-01 Gate 2 ---
+    //
+    // MUST run AFTER the connect-scan (and mDNS): the TCP probes to every host
+    // populate the kernel ARP cache as a side effect, so by now the cache is
+    // warm for exactly the hosts we found. The read is via Swift sysctl
+    // (NET_RT_FLAGS / RTF_LLINFO) — never a subprocess. On non-macOS the reader
+    // returns an honest "unavailable" result; nothing is faked. Like the other
+    // enrichment passes, a failure here is non-fatal: the host list still
+    // stands, MAC/vendor just stay null.
+    yield const DiscoveryProgress(DiscoveryPhase.arp, 0.92);
+    ArpReadResult arp;
+    try {
+      arp = await _arpReader.read();
+    } catch (e) {
+      // The reader contract is never-throw, but be defensive: a thrown reader
+      // becomes an honest unavailable result, not a failed run.
+      arp = ArpReadResult.unavailable('ARP read threw: $e');
+    }
+    if (arp.available) {
+      final Map<String, String> macByIp = arp.byIp;
+      for (final LanHost h in byIp.values) {
+        final String? mac = macByIp[h.ip];
+        if (mac != null) {
+          h.mac = mac;
+          h.vendor = OuiVendor.lookup(mac);
+        }
+      }
+    }
+    yield const DiscoveryProgress(DiscoveryPhase.arp, 0.97);
 
     // --- Heuristic device-type on each host ---
     for (final LanHost h in byIp.values) {
@@ -277,6 +321,7 @@ class LanDiscoveryEngine {
       subnetLabel: seed.label,
       selfIp: seed.selfIp,
       gateway: seed.gateway,
+      arp: arp,
     );
     yield const DiscoveryProgress(DiscoveryPhase.complete, 1.0);
   }
