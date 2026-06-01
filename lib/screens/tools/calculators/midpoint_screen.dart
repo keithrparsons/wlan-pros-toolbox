@@ -171,7 +171,8 @@ class _MidpointScreenState extends State<MidpointScreen> {
                 ? AppSpacing.screenEdgeDesktop
                 : AppSpacing.screenEdgeMobile;
 
-            return Center(
+            return Align(
+              alignment: AppSpacing.calculatorVerticalAlignment(constraints),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(
                   maxWidth: AppSpacing.calculatorMaxWidth,
