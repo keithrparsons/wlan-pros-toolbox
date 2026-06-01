@@ -12,16 +12,19 @@ import '../data/tool_catalog.dart';
 import '../theme/app_tokens.dart';
 
 /// The id of the one category with a hand-pinned tool order. Since the
-/// 2026-06-01 reorganization the three pinned diagnostics live in Test Network
+/// 2026-06-01 reorganization the live diagnostics live in Test Network
 /// (they moved out of Networking Tools, which is now plain alphabetical).
 const String _pinnedCategoryId = 'test-network';
 
 /// Tool ids pinned to the top of Test Network, in this exact order (Keith's
-/// ordering): Wi-Fi vs Internet, then Wi-Fi Information, then Network Quality.
+/// ordering, 2026-06-01): the consumer one-tap tool first, then the deeper
+/// pro tools — Test My Connection, Network Quality, Wi-Fi Information,
+/// Wi-Fi vs Internet.
 const List<String> kTestNetworkPinnedToolIds = <String>[
-  'wifi-vs-internet',
-  'wifi-info',
+  'test-my-connection',
   'net-quality',
+  'wifi-info',
+  'wifi-vs-internet',
 ];
 
 /// Display order for a category's tools: alphabetical by title, EXCEPT the
