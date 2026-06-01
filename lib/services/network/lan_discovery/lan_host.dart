@@ -26,6 +26,8 @@ class LanHost {
     this.mdnsName,
     Set<String>? mdnsServices,
     this.deviceType = DeviceType.unknown,
+    this.mac,
+    this.vendor,
   })  : openPorts = openPorts ?? <int>{},
         mdnsServices = mdnsServices ?? <String>{};
 
@@ -45,8 +47,19 @@ class LanHost {
   final Set<String> mdnsServices;
 
   /// Heuristic device type inferred from open ports + mDNS service types.
-  /// No MAC anchor — mobile cannot read it, so the spike never uses one.
+  /// On mobile there is no MAC anchor, so the heuristic itself uses none; on
+  /// macOS the MAC/vendor below are read from the ARP cache as a separate
+  /// desktop-only enrichment (SPIKE-HSD-01 Gate 2) and do not feed the
+  /// heuristic for the spike.
   DeviceType deviceType;
+
+  /// Link-layer MAC read from the macOS ARP cache (Gate 2), or null when no MAC
+  /// was available for this host (every non-macOS platform, or a host not in
+  /// the cache). Never fabricated.
+  String? mac;
+
+  /// Vendor name resolved from [mac]'s OUI, or null when there is no MAC.
+  String? vendor;
 
   /// A flat, log-friendly dump for the throwaway debug list. Not a UI string
   /// contract — this screen is deleted with the spike.
@@ -57,9 +70,12 @@ class LanHost {
         'openPorts': (openPorts.toList()..sort()),
         'mdnsServices': (mdnsServices.toList()..sort()),
         'deviceType': deviceType.label,
+        'mac': mac,
+        'vendor': vendor,
       };
 
   @override
   String toString() => 'LanHost($ip, ports=${openPorts.toList()..sort()}, '
-      'host=$hostname, mdns=$mdnsName, type=${deviceType.label})';
+      'host=$hostname, mdns=$mdnsName, type=${deviceType.label}, '
+      'mac=$mac, vendor=$vendor)';
 }

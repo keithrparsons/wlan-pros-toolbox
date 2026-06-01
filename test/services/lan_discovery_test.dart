@@ -8,12 +8,24 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:wlan_pros_toolbox/services/network/lan_discovery/arp_reader.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/connect_scan.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/device_type.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/lan_discovery_engine.dart';
+import 'package:wlan_pros_toolbox/services/network/lan_discovery/lan_host.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/mdns_browse.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/multicast_lock.dart';
+import 'package:wlan_pros_toolbox/services/network/lan_discovery/oui_vendor.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/subnet_seed.dart';
+
+/// A fake [ArpReader] that returns a scripted result with no platform channel —
+/// so engine tests exercise the ARP-enrichment fold deterministically.
+class _FakeArpReader implements ArpReader {
+  _FakeArpReader(this._result);
+  final ArpReadResult _result;
+  @override
+  Future<ArpReadResult> read() async => _result;
+}
 
 // --- Fake-connector helpers for the connect-scan classification tests. ---
 //
@@ -722,6 +734,202 @@ void main() {
       expect(events.last.phase, DiscoveryPhase.failed);
       expect(engine.lastResult, isNotNull);
       expect(engine.lastResult!.error, contains('Connect-scan failed'));
+    });
+  });
+
+  group('OuiVendor — MAC → vendor lookup (spike inline table)', () {
+    test('a known Ubiquiti OUI resolves to the named vendor', () {
+      expect(OuiVendor.lookup('fc:ec:da:01:23:45'), 'Ubiquiti');
+      expect(OuiVendor.isNamedVendor('fc:ec:da:01:23:45'), isTrue);
+    });
+
+    test('Sonos / Apple / HP / Raspberry Pi named prefixes resolve', () {
+      expect(OuiVendor.lookup('5c:aa:fd:00:00:01'), 'Sonos');
+      expect(OuiVendor.lookup('a4:b1:97:aa:bb:cc'), 'Apple');
+      expect(OuiVendor.lookup('34:64:a9:de:ad:be'), 'HP');
+      expect(OuiVendor.lookup('b8:27:eb:11:22:33'), 'Raspberry Pi');
+    });
+
+    test('an unknown OUI falls back to the raw OUI string, never null/invented',
+        () {
+      // 02:.. would be local; use a globally-administered but unlisted prefix.
+      final String? v = OuiVendor.lookup('00:11:22:33:44:55');
+      expect(v, '00:11:22');
+      expect(OuiVendor.isNamedVendor('00:11:22:33:44:55'), isFalse);
+    });
+
+    test('a locally-administered (U/L bit set) MAC is reported as randomized, '
+        'not misattributed to an IEEE block', () {
+      // 0x02 set in the first octet → locally administered.
+      expect(OuiVendor.lookup('02:fc:ec:da:00:01'), 'Randomized (local)');
+      expect(OuiVendor.isNamedVendor('02:fc:ec:da:00:01'), isFalse);
+    });
+
+    test('accepts hyphen, dot, and bare notations; case-insensitive', () {
+      expect(OuiVendor.lookup('FC-EC-DA-01-23-45'), 'Ubiquiti');
+      expect(OuiVendor.lookup('fcec.da01.2345'), 'Ubiquiti');
+      expect(OuiVendor.lookup('fcecda012345'), 'Ubiquiti');
+    });
+
+    test('an invalid MAC (wrong length) returns null', () {
+      expect(OuiVendor.lookup('fc:ec:da'), isNull);
+      expect(OuiVendor.lookup('not-a-mac'), isNull);
+      expect(OuiVendor.ouiOf('zz:zz:zz:zz:zz:zz'), isNull);
+    });
+
+    test('ouiOf returns the colon-formatted upper-case 24-bit prefix', () {
+      expect(OuiVendor.ouiOf('fc:ec:da:01:23:45'), 'FC:EC:DA');
+    });
+  });
+
+  group('MethodChannelArpReader.parsePayload — Swift payload → ArpReadResult',
+      () {
+    test('available:true with entries → mapped IP→MAC, lower-cased', () {
+      final ArpReadResult r = MethodChannelArpReader.parsePayload(
+        <String, Object?>{
+          'available': true,
+          'entries': <Object?>[
+            <String, Object?>{'ip': '10.0.10.5', 'mac': 'B8:27:EB:01:23:45'},
+            <String, Object?>{'ip': '10.0.10.6', 'mac': 'fc:ec:da:aa:bb:cc'},
+          ],
+        },
+      );
+      expect(r.available, isTrue);
+      expect(r.error, isNull);
+      expect(r.byIp['10.0.10.5'], 'b8:27:eb:01:23:45'); // lower-cased
+      expect(r.byIp['10.0.10.6'], 'fc:ec:da:aa:bb:cc');
+    });
+
+    test('available:true with empty entries is a VALID success, not a failure',
+        () {
+      final ArpReadResult r = MethodChannelArpReader.parsePayload(
+        <String, Object?>{'available': true, 'entries': <Object?>[]},
+      );
+      expect(r.available, isTrue);
+      expect(r.entries, isEmpty);
+      expect(r.error, isNull);
+    });
+
+    test('available:false surfaces a sandbox-blocked message with the errno',
+        () {
+      final ArpReadResult r = MethodChannelArpReader.parsePayload(
+        <String, Object?>{
+          'available': false,
+          'entries': <Object?>[],
+          'error': 'sysctl(fetch) failed: errno 1 (Operation not permitted)',
+        },
+      );
+      expect(r.available, isFalse);
+      expect(r.error, contains('sandbox-blocked'));
+      expect(r.error, contains('Operation not permitted'));
+    });
+
+    test('a malformed payload (not a Map) becomes an honest unavailable result',
+        () {
+      final ArpReadResult r = MethodChannelArpReader.parsePayload('garbage');
+      expect(r.available, isFalse);
+      expect(r.error, isNotNull);
+    });
+
+    test('entries with missing/empty fields are skipped, never faked', () {
+      final ArpReadResult r = MethodChannelArpReader.parsePayload(
+        <String, Object?>{
+          'available': true,
+          'entries': <Object?>[
+            <String, Object?>{'ip': '10.0.0.1', 'mac': ''}, // empty mac
+            <String, Object?>{'ip': '', 'mac': 'aa:bb:cc:dd:ee:ff'}, // empty ip
+            <String, Object?>{'ip': '10.0.0.2'}, // missing mac
+            <String, Object?>{'ip': '10.0.0.3', 'mac': 'aa:bb:cc:00:11:22'},
+          ],
+        },
+      );
+      expect(r.entries, hasLength(1));
+      expect(r.byIp['10.0.0.3'], 'aa:bb:cc:00:11:22');
+    });
+  });
+
+  group('LanDiscoveryEngine — ARP enrichment (Gate 2 fold)', () {
+    late ServerSocket server;
+    late int livePort;
+
+    setUp(() async {
+      server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+      livePort = server.port;
+      server.listen((Socket s) => s.destroy());
+    });
+
+    tearDown(() async {
+      await server.close();
+    });
+
+    LanDiscoveryEngine engineWithArp(ArpReader arpReader) => LanDiscoveryEngine(
+          runInIsolate: false,
+          seedDeriver: _seedDeriver(ip: '10.0.10.1', mask: '255.255.255.252'),
+          mdnsBrowser: _silentMdnsBrowser(),
+          multicastLock: const NoopMulticastLock(),
+          reverseDns: (String ip) async => null,
+          arpReader: arpReader,
+          ports: const <int>[80],
+          connector: (String host, int port, Duration timeout) {
+            // Every host in the /30 is alive on port 80 (handshake to loopback).
+            return Socket.connect(InternetAddress.loopbackIPv4, livePort,
+                timeout: timeout);
+          },
+        );
+
+    test('a successful ARP read populates MAC + vendor on matching hosts', () async {
+      // /30 over .1 → hosts .1 and .2.
+      final ArpReadResult arp = ArpReadResult(
+        available: true,
+        entries: const <ArpEntry>[
+          ArpEntry(ip: '10.0.10.1', mac: 'fc:ec:da:01:23:45'), // Ubiquiti
+          ArpEntry(ip: '10.0.10.2', mac: '00:11:22:33:44:55'), // unknown → raw
+        ],
+      );
+      final LanDiscoveryEngine engine = engineWithArp(_FakeArpReader(arp));
+
+      await engine.run().toList();
+      final DiscoveryResult r = engine.lastResult!;
+
+      expect(r.arp, isNotNull);
+      expect(r.arp!.available, isTrue);
+      final LanHost h1 = r.hosts.firstWhere((LanHost h) => h.ip == '10.0.10.1');
+      expect(h1.mac, 'fc:ec:da:01:23:45');
+      expect(h1.vendor, 'Ubiquiti');
+      final LanHost h2 = r.hosts.firstWhere((LanHost h) => h.ip == '10.0.10.2');
+      expect(h2.mac, '00:11:22:33:44:55');
+      expect(h2.vendor, '00:11:22'); // raw-OUI fallback, never null
+    });
+
+    test('an unavailable ARP read leaves MAC/vendor null and surfaces the '
+        'reason — the run still completes', () async {
+      final LanDiscoveryEngine engine = engineWithArp(
+        _FakeArpReader(const ArpReadResult.unavailable(
+          'iOS sandbox cannot read the ARP table.',
+        )),
+      );
+
+      final List<DiscoveryProgress> events = await engine.run().toList();
+      final DiscoveryResult r = engine.lastResult!;
+
+      expect(events.last.phase, DiscoveryPhase.complete);
+      expect(r.error, isNull); // not a failed run; ARP is enrichment-only
+      expect(r.arp, isNotNull);
+      expect(r.arp!.available, isFalse);
+      expect(r.arp!.error, contains('sandbox'));
+      expect(r.hosts.every((LanHost h) => h.mac == null), isTrue);
+      expect(r.hosts.every((LanHost h) => h.vendor == null), isTrue);
+    });
+
+    test('the run emits an arp progress phase', () async {
+      final LanDiscoveryEngine engine = engineWithArp(
+        _FakeArpReader(const ArpReadResult(available: true)),
+      );
+      final List<DiscoveryProgress> events = await engine.run().toList();
+      expect(
+        events.any((DiscoveryProgress p) => p.phase == DiscoveryPhase.arp),
+        isTrue,
+      );
     });
   });
 }
