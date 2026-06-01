@@ -26,6 +26,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../concept_graphic_band.dart';
+import 'reference_row_semantics.dart';
 
 /// One fiber type, ported verbatim from PWA app.js FIBER_DATA.
 class FiberType {
@@ -388,7 +389,16 @@ class _DistanceRow extends StatelessWidget {
     final Color typeColor = fiber.legacy
         ? AppColors.textTertiary
         : AppColors.primary;
-    return Padding(
+    return ReferenceRowSemantics(
+      label: rowLabel(fiber.type, <String?>[
+        'core ${fiber.core}',
+        'bandwidth ${fiber.bandwidth}',
+        'at 1 gigabit ${fiber.dist1G}',
+        'at 10 gigabit ${fiber.dist10G}',
+        'at 40 gigabit ${fiber.dist40G}',
+        'at 100 gigabit ${fiber.dist100G}',
+      ]),
+      child: Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -426,6 +436,7 @@ class _DistanceRow extends StatelessWidget {
           _rateCell(fiber.dist100G, cellColor),
         ],
       ),
+      ),
     );
   }
 
@@ -455,7 +466,12 @@ class _JacketRow extends StatelessWidget {
     final Color typeColor = fiber.legacy
         ? AppColors.textTertiary
         : AppColors.primary;
-    return Padding(
+    return ReferenceRowSemantics(
+      label: rowLabel(fiber.type, <String?>[
+        'jacket ${fiber.jacketName}',
+        fiber.notes,
+      ]),
+      child: Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -504,6 +520,7 @@ class _JacketRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }
