@@ -39,11 +39,13 @@ WifiVsInternetResult result(
 
 void main() {
   group('verdict translation — one row per mapping', () {
-    test('wifiLimiter → A (Wi-Fi)', () {
+    test('wifiLimiter → A (Wi-Fi): Wi-Fi Slow, Internet Fine', () {
       final v = ConsumerVerdictMapper.map(
         result(WifiVsInternetVerdict.wifiLimiter, internetAvgMbps: 84),
       );
       expect(v.outcome, ConsumerOutcome.wifi);
+      expect(v.wifiStatus, AxisStatus.slow);
+      expect(v.internetStatus, AxisStatus.fine);
       expect(v.headline, 'Looks like your Wi-Fi');
       expect(
         v.body,
@@ -53,11 +55,13 @@ void main() {
       expect(v.selfHelp, SelfHelpTopic.wifi);
     });
 
-    test('bothContributing → A (Wi-Fi lead)', () {
+    test('bothContributing → A (Wi-Fi lead): both Slow', () {
       final v = ConsumerVerdictMapper.map(
         result(WifiVsInternetVerdict.bothContributing, internetAvgMbps: 40),
       );
       expect(v.outcome, ConsumerOutcome.wifiLead);
+      expect(v.wifiStatus, AxisStatus.slow);
+      expect(v.internetStatus, AxisStatus.slow);
       expect(v.headline, 'Mostly your Wi-Fi');
       expect(
         v.body,
@@ -67,11 +71,13 @@ void main() {
       expect(v.selfHelp, SelfHelpTopic.wifi);
     });
 
-    test('upstream → B (Internet)', () {
+    test('upstream → B (Internet): Wi-Fi Fine, Internet Slow', () {
       final v = ConsumerVerdictMapper.map(
         result(WifiVsInternetVerdict.upstream, internetAvgMbps: 20),
       );
       expect(v.outcome, ConsumerOutcome.internet);
+      expect(v.wifiStatus, AxisStatus.fine);
+      expect(v.internetStatus, AxisStatus.slow);
       expect(v.headline, 'Looks like your Internet');
       expect(
         v.body,
@@ -81,11 +87,13 @@ void main() {
       expect(v.selfHelp, SelfHelpTopic.internet);
     });
 
-    test('bothHealthy → C (Both fine)', () {
+    test('bothHealthy → C (Both fine): both Fine', () {
       final v = ConsumerVerdictMapper.map(
         result(WifiVsInternetVerdict.bothHealthy, internetAvgMbps: 300),
       );
       expect(v.outcome, ConsumerOutcome.bothFine);
+      expect(v.wifiStatus, AxisStatus.fine);
+      expect(v.internetStatus, AxisStatus.fine);
       expect(v.headline, 'Both look fine');
       expect(
         v.body,
@@ -97,12 +105,16 @@ void main() {
     });
 
     test(
-      'wifiUnknown WITH internet measured → D1 (Couldn’t check everything)',
+      'wifiUnknown WITH internet measured, HEALTHY → D1: '
+      'Wi-Fi Couldn’t check, Internet Fine',
       () {
         final v = ConsumerVerdictMapper.map(
           result(WifiVsInternetVerdict.wifiUnknown, internetAvgMbps: 84),
+          internetHealthy: true,
         );
         expect(v.outcome, ConsumerOutcome.couldntCheckWifi);
+        expect(v.wifiStatus, AxisStatus.unknown);
+        expect(v.internetStatus, AxisStatus.fine);
         expect(v.headline, 'Couldn’t check everything');
         expect(v.body, contains('[X] Mbps'));
         expect(v.body, contains('[fine/slow]'));
@@ -111,12 +123,39 @@ void main() {
     );
 
     test(
-      'wifiUnknown WITHOUT internet measured → D2 (Couldn’t complete)',
+      'wifiUnknown WITH internet measured, NOT healthy → D1: '
+      'Wi-Fi Couldn’t check, Internet Slow',
+      () {
+        final v = ConsumerVerdictMapper.map(
+          result(WifiVsInternetVerdict.wifiUnknown, internetAvgMbps: 12),
+          internetHealthy: false,
+        );
+        expect(v.outcome, ConsumerOutcome.couldntCheckWifi);
+        expect(v.wifiStatus, AxisStatus.unknown);
+        expect(v.internetStatus, AxisStatus.slow);
+      },
+    );
+
+    test('D1 defaults the Internet chip to Slow when health omitted', () {
+      // Conservative default: a caller that does not pass internetHealthy never
+      // over-promises a healthy internet.
+      final v = ConsumerVerdictMapper.map(
+        result(WifiVsInternetVerdict.wifiUnknown, internetAvgMbps: 50),
+      );
+      expect(v.internetStatus, AxisStatus.slow);
+    });
+
+    test(
+      'wifiUnknown WITHOUT internet measured → D2: both Couldn’t check',
       () {
         final v = ConsumerVerdictMapper.map(
           result(WifiVsInternetVerdict.wifiUnknown, internetAvgMbps: null),
+          // Health is ignored on the D2 path (nothing was measured).
+          internetHealthy: true,
         );
         expect(v.outcome, ConsumerOutcome.couldntComplete);
+        expect(v.wifiStatus, AxisStatus.unknown);
+        expect(v.internetStatus, AxisStatus.unknown);
         expect(v.headline, 'Couldn’t complete the check');
         expect(v.body, "Make sure you're connected to Wi-Fi and try again.");
         expect(v.selfHelp, SelfHelpTopic.reconnect);
