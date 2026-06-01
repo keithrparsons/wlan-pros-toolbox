@@ -285,6 +285,15 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         isLive: true,
       ),
       ToolEntry(
+        id: 'network-discovery',
+        title: 'Network Discovery',
+        description:
+            'Find live hosts on your network — name, services, device type, '
+            'and vendor (desktop)',
+        routeName: '/tools/network-discovery',
+        isLive: true,
+      ),
+      ToolEntry(
         id: 'net-quality',
         title: 'Network Quality',
         description:

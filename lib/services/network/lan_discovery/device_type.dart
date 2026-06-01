@@ -1,4 +1,4 @@
-// SPIKE-HSD-01 — heuristic device-type inference (THROWAWAY spike).
+// Heuristic device-type inference — Network Discovery (TICKET-HSD-02).
 //
 // No OS gives you "this is a printer" (brief §7). Device type is inferred from
 // the signals the scan actually collects: the open-port fingerprint and the

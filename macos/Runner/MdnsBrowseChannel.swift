@@ -158,26 +158,20 @@ private final class BrowseSession: NSObject, NetServiceBrowserDelegate, NetServi
   /// When the dwell window began, for the elapsed-ms log on stop.
   private var startedAt: Date?
 
-  // SPIKE-HSD-01 diagnostic counters, per service type (logged only on stop,
-  // gated by isDebug). Keith's on-device run prints these so a future empty
-  // result is attributable to browse-vs-resolve.
+  // Per-service-type diagnostic counters, kept as instrumentation seams. They
+  // fed the SPIKE-HSD-01 on-stop log (now a no-op, see `log` below) that made a
+  // future empty result attributable to browse-vs-resolve.
   private var foundCount: [String: Int] = [:]
   private var resolvedCount: [String: Int] = [:]
   private var failedResolveCount: [String: Int] = [:]
 
-  /// Debug builds only: mirror Dart's kDebugMode with an assert side-effect so
-  /// the logging is independent of build flags.
-  private static let isDebug: Bool = {
-    var dbg = false
-    assert({ dbg = true; return true }())
-    return dbg
-  }()
-
-  private func log(_ message: @autoclosure () -> String) {
-    if Self.isDebug {
-      NSLog("[mdns_browse] \(message())")
-    }
-  }
+  /// Diagnostics removed for the productized Network Discovery build
+  /// (TICKET-HSD-02 W1). The SPIKE-HSD-01 mDNS browse emitted noisy
+  /// `[mdns_browse]` NSLog lines at every delegate callback to debug the
+  /// single-stream lifecycle on-device; that work is done, so this is a no-op.
+  /// The call sites are kept as instrumentation seams (re-enable by restoring a
+  /// gated body) without shipping any console output.
+  private func log(_ message: @autoclosure () -> String) {}
 
   init(serviceTypes: [String], sink: @escaping FlutterEventSink) {
     self.serviceTypes = serviceTypes

@@ -1,4 +1,4 @@
-// SPIKE-HSD-01 — TCP connect-scan core, isolate-runnable (THROWAWAY spike).
+// TCP connect-scan core, isolate-runnable — Network Discovery (TICKET-HSD-02).
 //
 // The spine of the scanner (brief §5 + anti-pattern #1): bounded-concurrency
 // `Socket.connect` across the subnet on a curated port set. NO ICMP — raw ICMP

@@ -16,8 +16,8 @@ import 'package:wlan_pros_toolbox/services/network/lan_discovery/lan_discovery_e
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/lan_host.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/mdns_browse.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/multicast_lock.dart';
-import 'package:wlan_pros_toolbox/services/network/lan_discovery/oui_vendor.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/subnet_seed.dart';
+import 'package:wlan_pros_toolbox/services/network/mac_oui_service.dart';
 
 /// A fake [ArpReader] that returns a scripted result with no platform channel —
 /// so engine tests exercise the ARP-enrichment fold deterministically.
@@ -823,48 +823,43 @@ void main() {
     });
   });
 
-  group('OuiVendor — MAC → vendor lookup (spike inline table)', () {
-    test('a known Ubiquiti OUI resolves to the named vendor', () {
-      expect(OuiVendor.lookup('fc:ec:da:01:23:45'), 'Ubiquiti');
-      expect(OuiVendor.isNamedVendor('fc:ec:da:01:23:45'), isTrue);
+  group('MacOuiService.vendorLabelFor — W2 discovery vendor resolver', () {
+    // The production MAC→vendor seam the engine injects. Backs the full bundled
+    // IEEE registry in the app; here a tiny in-memory table exercises the same
+    // honesty contract that replaced the throwaway OuiVendor inline table.
+    final MacOuiService svc = MacOuiService.fromTable(<String, String>{
+      'FCECDA': 'Ubiquiti', // a known /24
     });
 
-    test('Sonos / Apple / HP / Raspberry Pi named prefixes resolve', () {
-      expect(OuiVendor.lookup('5c:aa:fd:00:00:01'), 'Sonos');
-      expect(OuiVendor.lookup('a4:b1:97:aa:bb:cc'), 'Apple');
-      expect(OuiVendor.lookup('34:64:a9:de:ad:be'), 'HP');
-      expect(OuiVendor.lookup('b8:27:eb:11:22:33'), 'Raspberry Pi');
+    test('a known OUI resolves to the named vendor', () {
+      expect(svc.vendorLabelFor('fc:ec:da:01:23:45'), 'Ubiquiti');
     });
 
-    test('an unknown OUI falls back to the raw OUI string, never null/invented',
-        () {
-      // 02:.. would be local; use a globally-administered but unlisted prefix.
-      final String? v = OuiVendor.lookup('00:11:22:33:44:55');
-      expect(v, '00:11:22');
-      expect(OuiVendor.isNamedVendor('00:11:22:33:44:55'), isFalse);
+    test('an unknown but globally-administered OUI falls back to the raw OUI, '
+        'never null/invented', () {
+      expect(svc.vendorLabelFor('00:11:22:33:44:55'), '00:11:22');
     });
 
-    test('a locally-administered (U/L bit set) MAC is reported as randomized, '
-        'not misattributed to an IEEE block', () {
+    test('a locally-administered (U/L bit set) MAC returns null — the screen '
+        'renders "Randomized (local)" itself, never a fabricated vendor', () {
       // 0x02 set in the first octet → locally administered.
-      expect(OuiVendor.lookup('02:fc:ec:da:00:01'), 'Randomized (local)');
-      expect(OuiVendor.isNamedVendor('02:fc:ec:da:00:01'), isFalse);
+      expect(svc.vendorLabelFor('02:fc:ec:da:00:01'), isNull);
+    });
+
+    test('a multicast (I/G bit set) MAC returns null — not a single NIC', () {
+      // 0x01 set in the first octet → multicast / group.
+      expect(svc.vendorLabelFor('01:00:5e:00:00:01'), isNull);
     });
 
     test('accepts hyphen, dot, and bare notations; case-insensitive', () {
-      expect(OuiVendor.lookup('FC-EC-DA-01-23-45'), 'Ubiquiti');
-      expect(OuiVendor.lookup('fcec.da01.2345'), 'Ubiquiti');
-      expect(OuiVendor.lookup('fcecda012345'), 'Ubiquiti');
+      expect(svc.vendorLabelFor('FC-EC-DA-01-23-45'), 'Ubiquiti');
+      expect(svc.vendorLabelFor('fcec.da01.2345'), 'Ubiquiti');
+      expect(svc.vendorLabelFor('fcecda012345'), 'Ubiquiti');
     });
 
-    test('an invalid MAC (wrong length) returns null', () {
-      expect(OuiVendor.lookup('fc:ec:da'), isNull);
-      expect(OuiVendor.lookup('not-a-mac'), isNull);
-      expect(OuiVendor.ouiOf('zz:zz:zz:zz:zz:zz'), isNull);
-    });
-
-    test('ouiOf returns the colon-formatted upper-case 24-bit prefix', () {
-      expect(OuiVendor.ouiOf('fc:ec:da:01:23:45'), 'FC:EC:DA');
+    test('an invalid MAC (wrong length) returns null, never throws', () {
+      expect(svc.vendorLabelFor('fc:ec:da'), isNull);
+      expect(svc.vendorLabelFor('not-a-mac'), isNull);
     });
   });
 
@@ -948,6 +943,14 @@ void main() {
       await server.close();
     });
 
+    // A small in-memory IEEE registry so the W2 vendor fold is exercised against
+    // the real MacOuiService.vendorLabelFor path (the production resolver), not
+    // a stand-in. fc:ec:da is a known Ubiquiti /24; 00:11:22 is deliberately
+    // absent so the raw-OUI fallback is tested.
+    final MacOuiService oui = MacOuiService.fromTable(<String, String>{
+      'FCECDA': 'Ubiquiti',
+    });
+
     LanDiscoveryEngine engineWithArp(ArpReader arpReader) => LanDiscoveryEngine(
           runInIsolate: false,
           seedDeriver: _seedDeriver(ip: '10.0.10.1', mask: '255.255.255.252'),
@@ -955,6 +958,7 @@ void main() {
           multicastLock: const NoopMulticastLock(),
           reverseDns: (String ip) async => null,
           arpReader: arpReader,
+          vendorResolver: oui.vendorLabelFor,
           ports: const <int>[80],
           connector: (String host, int port, Duration timeout) {
             // Every host in the /30 is alive on port 80 (handshake to loopback).

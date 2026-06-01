@@ -1,4 +1,4 @@
-// SPIKE-HSD-01 — mDNS / Bonjour browse pass (THROWAWAY spike).
+// mDNS / Bonjour browse pass — Network Discovery (TICKET-HSD-02).
 //
 // Uses an IN-HOUSE native plugin over Apple's `NetServiceBrowser` + `NetService`
 // (Foundation Bonjour), which drives the OS Bonjour daemon on iOS + macOS.

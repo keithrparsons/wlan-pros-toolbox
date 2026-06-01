@@ -1,4 +1,4 @@
-// SPIKE-HSD-01 — subnet seed derivation (THROWAWAY spike).
+// Subnet seed derivation — Network Discovery (TICKET-HSD-02).
 //
 // Derive the local /24-ish host list to scan from the device's own IPv4 + the
 // subnet mask, both read from network_info_plus (getWifiIP / getWifiSubmask).
