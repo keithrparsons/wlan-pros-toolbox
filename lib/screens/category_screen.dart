@@ -11,6 +11,38 @@ import '../data/tool_assets.dart';
 import '../data/tool_catalog.dart';
 import '../theme/app_tokens.dart';
 
+/// The id of the one category with a hand-pinned tool order.
+const String _networkingCategoryId = 'networking';
+
+/// Tool ids pinned to the top of Networking Tools, in this exact order
+/// (Keith's ordering): Wi-Fi Information first, Network Quality second.
+const List<String> kNetworkingPinnedToolIds = <String>['wifi-info', 'net-quality'];
+
+/// Display order for a category's tools: alphabetical by title, EXCEPT the
+/// Networking Tools category, which pins [kNetworkingPinnedToolIds] to the top
+/// (in that order) and sorts the remainder alphabetically. The catalog stays
+/// the data source-of-truth; this is purely presentation order.
+List<ToolEntry> orderedCategoryTools(ToolCategory category) {
+  int byTitle(ToolEntry a, ToolEntry b) =>
+      a.title.toLowerCase().compareTo(b.title.toLowerCase());
+
+  if (category.id != _networkingCategoryId) {
+    return <ToolEntry>[...category.tools]..sort(byTitle);
+  }
+
+  final List<ToolEntry> pinned = <ToolEntry>[];
+  for (final String id in kNetworkingPinnedToolIds) {
+    final int i = category.tools.indexWhere((ToolEntry t) => t.id == id);
+    if (i != -1) pinned.add(category.tools[i]);
+  }
+  final List<ToolEntry> rest =
+      category.tools
+          .where((ToolEntry t) => !kNetworkingPinnedToolIds.contains(t.id))
+          .toList()
+        ..sort(byTitle);
+  return <ToolEntry>[...pinned, ...rest];
+}
+
 class CategoryScreen extends StatelessWidget {
   const CategoryScreen({super.key, required this.category});
 
@@ -19,7 +51,7 @@ class CategoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
-    final List<ToolEntry> tools = category.tools;
+    final List<ToolEntry> tools = orderedCategoryTools(category);
 
     return Scaffold(
       appBar: AppBar(

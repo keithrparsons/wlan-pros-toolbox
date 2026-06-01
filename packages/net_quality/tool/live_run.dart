@@ -44,7 +44,7 @@ Future<void> main() async {
         ? '${s.latencyMs!.toStringAsFixed(0)} ms'.padRight(10)
         : 'unreachable'.padRight(10);
     // ignore: avoid_print
-    print('  ${s.site.name.padRight(14)} ${status} ${s.reachable ? 'reachable' : 'UNREACHABLE'}');
+    print('  ${s.site.name.padRight(14)} $status ${s.reachable ? 'reachable' : 'UNREACHABLE'}');
   }
 
   // ignore: avoid_print

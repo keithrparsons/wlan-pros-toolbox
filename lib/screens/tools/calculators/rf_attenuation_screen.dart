@@ -314,6 +314,7 @@ class _RfAttenuationScreenState extends State<RfAttenuationScreen> {
       // intrinsic-width Row inside an Align overflowed ~31px at 375pt).
       field: AppToggle<MaterialBand>(
         value: _band,
+        expand: true,
         items: const [
           (MaterialBand.ghz24, '2.4 GHz'),
           (MaterialBand.ghz5, '5 GHz'),
