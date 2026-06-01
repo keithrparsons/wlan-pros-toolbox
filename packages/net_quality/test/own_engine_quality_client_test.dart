@@ -33,7 +33,7 @@ void main() {
         loadGenerator: () async {},
       );
 
-      final clock = () => DateTime.utc(2026, 3, 15, 9, 30);
+      DateTime clock() => DateTime.utc(2026, 3, 15, 9, 30);
       final client = OwnEngineQualityClient(
         latencyProbe: latency,
         throughputProbe: throughput,
