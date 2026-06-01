@@ -99,10 +99,12 @@ const List<String> kBrowsedServiceTypes = <String>[
 // cannot run in a pure-Dart unit test (no platform channel). To keep the browse
 // deterministic and off the network in tests, discovery is abstracted behind
 // [MdnsDiscovery]: a tiny interface that yields normalized [MdnsDiscoveryEvent]s
-// for ONE service type. Production wraps [NWBrowserMdnsDiscovery] (one native
-// EventChannel stream per service type); tests inject a fake that replays a
-// scripted list of events. The seam is unchanged from the bonsoir version — only
-// the production implementation behind it changed.
+// for ONE service type. Production wraps [NWBrowserMdnsDiscovery], which shares
+// a single native EventChannel stream across ALL service types in the browse via
+// [_MdnsBrowseTransport] (a Flutter EventChannel allows only ONE active stream
+// per channel name — see the kMdnsBrowseChannel contract); tests inject a fake
+// that replays a scripted list of events. The seam is unchanged from the bonsoir
+// version — only the production implementation behind it changed.
 
 /// A normalized mDNS discovery event for one resolved service instance.
 ///
@@ -151,60 +153,169 @@ typedef MdnsDiscoveryFactory = MdnsDiscovery Function(String serviceType);
 
 /// The name of the in-house native mDNS browse EventChannel. Shared with
 /// `ios/Runner/MdnsBrowseChannel.swift` and `macos/Runner/MdnsBrowseChannel.swift`.
-/// The browsed service type is passed as the stream's `onListen` argument, so a
-/// single channel multiplexes one independent NetServiceBrowser per service type.
+///
+/// CRITICAL CONTRACT (2026-05-31 stream-lifecycle fix): a Flutter [EventChannel]
+/// keyed by NAME supports exactly ONE active broadcast stream. The whole browse
+/// therefore opens the channel ONCE, passing the FULL LIST of service types
+/// (`List<String>`) as the single `onListen` argument. The native side runs one
+/// `NetServiceBrowser` per type under ONE session and tags every event with the
+/// `serviceType` it was found under, so the single Dart stream is demultiplexed
+/// back to per-type discoveries. (The earlier bug opened one
+/// `receiveBroadcastStream` PER service type on this one channel — 16 concurrent
+/// listens on a single-stream channel — which thrashed the framework's
+/// subscribe/cancel bookkeeping, tore the native browsers down before mDNS could
+/// hear any announcement, and produced a "No active stream to cancel" storm.)
 const String kMdnsBrowseChannel = 'com.wlanpros.toolbox/mdns_browse';
+
+/// Process-wide transport that owns the ONE allowed [EventChannel] subscription
+/// for the whole browse and fans events out to per-type [NWBrowserMdnsDiscovery]
+/// listeners by `serviceType`.
+///
+/// Why a shared transport: a Flutter [EventChannel] supports a SINGLE active
+/// broadcast stream per channel name. The browse runs N service types
+/// concurrently but they must all ride ONE native stream. This transport opens
+/// that stream once (with the full type list as the listen argument), holds it
+/// open for the whole discovery window, and tears it down with a SINGLE cancel
+/// when the last per-type discovery disposes. Reference-counted so back-to-back
+/// browses each get a fresh, correctly-bounded stream.
+///
+/// HONESTY: any channel/platform failure (channel unregistered on a deferred
+/// platform, no permission, native error) surfaces as silence — listeners simply
+/// receive no events. Never a throw to the caller; mDNS enrichment is non-fatal.
+class _MdnsBrowseTransport {
+  _MdnsBrowseTransport._();
+
+  /// Singleton: one transport per process so all per-type discoveries in a
+  /// single browse share the one allowed channel stream.
+  static final _MdnsBrowseTransport instance = _MdnsBrowseTransport._();
+
+  final EventChannel _channel = const EventChannel(kMdnsBrowseChannel);
+
+  /// Per-service-type sinks for the currently-active browse, demultiplexed from
+  /// the single native stream by the `serviceType` field on each event.
+  final Map<String, Set<StreamController<MdnsDiscoveryEvent>>> _sinks =
+      <String, Set<StreamController<MdnsDiscoveryEvent>>>{};
+
+  /// The ONE active native subscription, or null when no browse is running.
+  StreamSubscription<dynamic>? _sub;
+
+  /// Reference count of live per-type discoveries; the native stream is opened
+  /// when it goes 0→1 and cancelled (single cancel) when it returns to 0.
+  int _refs = 0;
+
+  /// Registers [controller] to receive events for [serviceType], opening the
+  /// single native stream on the first registration. The listen argument is the
+  /// FULL set of service types being browsed so the native side starts one
+  /// browser per type under one session.
+  void register(
+    String serviceType,
+    StreamController<MdnsDiscoveryEvent> controller,
+    List<String> allServiceTypes,
+  ) {
+    _sinks.putIfAbsent(serviceType, () => <StreamController<MdnsDiscoveryEvent>>{}).add(controller);
+    _refs++;
+    if (_sub == null) {
+      // First listener of this browse: open the ONE native stream. Pass the full
+      // type list as the listen argument so a single session browses them all.
+      try {
+        _sub = _channel
+            .receiveBroadcastStream(allServiceTypes)
+            .listen(_onNativeEvent, onError: (Object _) {/* non-fatal */});
+      } catch (_) {
+        // Synchronous failure (e.g. missing channel): no stream, listeners stay
+        // silent. Leave _sub null so a later browse can retry.
+      }
+    }
+  }
+
+  /// Unregisters [controller]; when the last live discovery for the browse
+  /// unregisters, the ONE native stream is cancelled exactly once.
+  Future<void> unregister(
+    String serviceType,
+    StreamController<MdnsDiscoveryEvent> controller,
+  ) async {
+    final Set<StreamController<MdnsDiscoveryEvent>>? set = _sinks[serviceType];
+    if (set != null) {
+      set.remove(controller);
+      if (set.isEmpty) _sinks.remove(serviceType);
+    }
+    if (_refs > 0) _refs--;
+    if (_refs == 0) {
+      // Last listener gone: single, clean cancel of the one native stream. The
+      // native onCancel stops every NetServiceBrowser + resolving NetService.
+      final StreamSubscription<dynamic>? sub = _sub;
+      _sub = null;
+      _sinks.clear();
+      try {
+        await sub?.cancel();
+      } catch (_) {/* ignore */}
+    }
+  }
+
+  void _onNativeEvent(dynamic event) {
+    if (event is! Map) return;
+    final Object? rawType = event['serviceType'];
+    if (rawType is! String) return;
+    final Set<StreamController<MdnsDiscoveryEvent>>? set = _sinks[rawType];
+    if (set == null || set.isEmpty) return;
+    final MdnsDiscoveryEvent? ev =
+        NWBrowserMdnsDiscovery.parseNativeEvent(rawType, event);
+    if (ev == null) return;
+    for (final StreamController<MdnsDiscoveryEvent> c in set) {
+      if (!c.isClosed) c.add(ev);
+    }
+  }
+}
 
 /// Production discovery backed by the in-house native NetServiceBrowser
 /// EventChannel. (The class name retains the historical `NWBrowser` prefix for
 /// API/test stability; the native implementation is now NetServiceBrowser.)
 ///
-/// One [NWBrowserMdnsDiscovery] opens one stream on [kMdnsBrowseChannel] with
-/// its [serviceType] as the listen argument. The native side runs a
-/// `NetServiceBrowser` for that type and, for each found instance, resolves it
-/// with `NetService`, then pushes `{serviceType, name, hostAddresses}` up the
-/// stream — the same found→resolve→resolved→host-addresses flow bonsoir
-/// performed. Each native event is normalized into an [MdnsDiscoveryEvent].
-/// [dispose] cancels the Dart subscription, which fires the native `onCancel` so
-/// the NetServiceBrowser and all its in-flight resolving NetServices are torn
-/// down — no native resource leak.
+/// Each [NWBrowserMdnsDiscovery] registers ITS [serviceType] with the shared
+/// [_MdnsBrowseTransport], which owns the ONE allowed channel stream for the
+/// whole browse. The native side runs a `NetServiceBrowser` per type under one
+/// session and, for each found instance, resolves it with `NetService`, then
+/// pushes `{serviceType, name, hostAddresses}` up the single stream — the same
+/// found→resolve→resolved→host-addresses flow bonsoir performed. The transport
+/// fans each event to the matching discovery by `serviceType`; this class
+/// normalizes it into an [MdnsDiscoveryEvent]. [dispose] unregisters from the
+/// transport; when the last discovery unregisters, the transport fires the ONE
+/// native cancel so the NetServiceBrowsers and all in-flight resolving
+/// NetServices are torn down — no native resource leak, no cancel storm.
+///
+/// [allServiceTypes] is the full set the browse will run, passed through to the
+/// native side as the single stream's listen argument.
 ///
 /// HONESTY: any channel/platform failure (e.g. the channel is unregistered on a
 /// platform where Android NsdManager is deferred) surfaces as an empty stream,
 /// never a throw. mDNS enrichment is non-fatal by contract.
 class NWBrowserMdnsDiscovery implements MdnsDiscovery {
-  NWBrowserMdnsDiscovery(this.serviceType)
-      : _channel = const EventChannel(kMdnsBrowseChannel);
+  NWBrowserMdnsDiscovery(
+    this.serviceType, {
+    List<String>? allServiceTypes,
+  })  : _allServiceTypes = allServiceTypes ?? <String>[serviceType],
+        _transport = _MdnsBrowseTransport.instance;
 
   @override
   final String serviceType;
 
-  final EventChannel _channel;
+  final List<String> _allServiceTypes;
+  final _MdnsBrowseTransport _transport;
   final StreamController<MdnsDiscoveryEvent> _out =
       StreamController<MdnsDiscoveryEvent>.broadcast();
-  StreamSubscription<dynamic>? _sub;
+  bool _started = false;
   bool _disposed = false;
 
   @override
   Stream<MdnsDiscoveryEvent> start() {
-    // Subscribe to the native stream, passing the service type as the listen
-    // argument so the native side browses exactly this type. Any error on the
-    // platform stream (no permission, channel unregistered, browser failed) is
-    // swallowed — _out simply stays empty. Never thrown to the caller.
-    try {
-      _sub = _channel
-          .receiveBroadcastStream(serviceType)
-          .listen(_onNativeEvent, onError: (Object _) {/* non-fatal */});
-    } catch (_) {
-      // Synchronous failure (e.g. missing channel): leave _out empty.
+    // Register this type with the shared transport, which opens (or reuses) the
+    // ONE native stream for the whole browse. Any failure inside the transport
+    // is swallowed there — _out simply stays empty. Never thrown to the caller.
+    if (!_started && !_disposed) {
+      _started = true;
+      _transport.register(serviceType, _out, _allServiceTypes);
     }
     return _out.stream;
-  }
-
-  void _onNativeEvent(dynamic event) {
-    if (_out.isClosed) return;
-    final MdnsDiscoveryEvent? ev = parseNativeEvent(serviceType, event);
-    if (ev != null) _out.add(ev);
   }
 
   /// Normalizes one native payload `{serviceType, name, hostAddresses:[...]}`
@@ -240,11 +351,12 @@ class NWBrowserMdnsDiscovery implements MdnsDiscovery {
   Future<void> dispose() async {
     if (_disposed) return;
     _disposed = true;
-    // Cancelling the subscription fires the native onCancel, which stops the
-    // NetServiceBrowser + all resolving NetServices (no native leak).
-    try {
-      await _sub?.cancel();
-    } catch (_) {/* ignore */}
+    // Unregister from the shared transport. When the last live discovery
+    // unregisters, the transport fires the ONE native cancel, which stops the
+    // NetServiceBrowsers + all resolving NetServices (no native leak).
+    if (_started) {
+      await _transport.unregister(serviceType, _out);
+    }
     try {
       if (!_out.isClosed) await _out.close();
     } catch (_) {/* ignore */}
@@ -269,12 +381,31 @@ class UnavailableMdnsDiscovery implements MdnsDiscovery {
   Future<void> dispose() async {}
 }
 
+/// Builds an [MdnsDiscovery] for one [serviceType] within a browse of
+/// [allServiceTypes]. Injectable so tests supply a fake (no native plugin, no
+/// multicast). The production factory passes [allServiceTypes] through to the
+/// native side as the single stream's listen argument.
+typedef MdnsDiscoveryFactoryFull = MdnsDiscovery Function(
+  String serviceType,
+  List<String> allServiceTypes,
+);
+
 /// Picks the discovery for the current platform: the native NetServiceBrowser
 /// channel on iOS + macOS (the only platforms whose Runner registers the channel
 /// this phase), an honest empty discovery everywhere else.
-MdnsDiscovery _defaultDiscoveryFactory(String serviceType) {
+///
+/// [allServiceTypes] is the full set the browse will run; on iOS/macOS it is
+/// passed to the shared transport so the ONE native stream starts one browser
+/// per type under a single session.
+MdnsDiscovery _defaultDiscoveryFactory(
+  String serviceType,
+  List<String> allServiceTypes,
+) {
   if (Platform.isIOS || Platform.isMacOS) {
-    return NWBrowserMdnsDiscovery(serviceType);
+    return NWBrowserMdnsDiscovery(
+      serviceType,
+      allServiceTypes: allServiceTypes,
+    );
   }
   return UnavailableMdnsDiscovery(serviceType);
 }
@@ -290,11 +421,27 @@ class MdnsBrowser {
     this.serviceTypes = kBrowsedServiceTypes,
     this.timeout = const Duration(seconds: 4),
     MdnsDiscoveryFactory? discoveryFactory,
-  }) : _discoveryFactory = discoveryFactory ?? _defaultDiscoveryFactory;
+    // Public-named so callers in other libraries (tests) can supply it; an
+    // initializing formal would force the param name to start with `_`.
+  }) : _discoveryFactory = discoveryFactory; // ignore: prefer_initializing_formals
 
   final List<String> serviceTypes;
   final Duration timeout;
-  final MdnsDiscoveryFactory _discoveryFactory;
+
+  /// Test seam: a single-arg factory `(serviceType) -> MdnsDiscovery`. When set,
+  /// it takes precedence (tests inject fakes that ignore the type list). When
+  /// null, production uses [_defaultDiscoveryFactory], which also receives the
+  /// full [serviceTypes] list so the native side opens one stream for the whole
+  /// browse.
+  final MdnsDiscoveryFactory? _discoveryFactory;
+
+  /// Builds the per-type discovery, honoring an injected test factory if present
+  /// and otherwise the production factory (which gets the full type list).
+  MdnsDiscovery _buildDiscovery(String service, List<String> allTypes) {
+    final MdnsDiscoveryFactory? injected = _discoveryFactory;
+    if (injected != null) return injected(service);
+    return _defaultDiscoveryFactory(service, allTypes);
+  }
 
   /// Runs the browse. Returns a map keyed by IPv4 address. Never throws — on
   /// any failure (no permission, platform gate, native error) it returns
@@ -320,11 +467,15 @@ class MdnsBrowser {
 
     try {
       for (final String service in serviceTypes) {
-        final MdnsDiscovery disc = _discoveryFactory(service);
+        final MdnsDiscovery disc = _buildDiscovery(service, serviceTypes);
         discoveries.add(disc);
         subs.add(disc.start().listen(fold, onError: (_) {/* non-fatal */}));
       }
-      // One shared discovery window; the native browser streams as it resolves.
+      // ONE shared discovery window held open for the whole [timeout] (the dwell
+      // mDNS needs to hear devices announce). All per-type discoveries ride the
+      // single native stream opened by the shared transport; nothing is torn
+      // down until this window elapses. The native browser streams resolved
+      // instances as they arrive across the window.
       await Future<void>.delayed(timeout);
     } catch (_) {
       // Non-fatal: return whatever was gathered.
