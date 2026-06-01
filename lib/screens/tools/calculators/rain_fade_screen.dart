@@ -41,6 +41,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -251,7 +252,15 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Rain Fade'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Rain Fade'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until frequency,
+        // rain rate, and path length are all valid and > 0 (no attenuation);
+        // copies the rain-fade breakdown as a labeled text block. Copy leads;
+        // no help icon here.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -300,6 +309,34 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
         ),
       ),
     );
+  }
+
+  /// §8.16 copy payload — the rain-fade breakdown as a labeled text block.
+  ///
+  /// Returns null (→ disabled affordance) until frequency, rain rate, and path
+  /// length are all valid and > 0, so there is no attenuation to keep. Inputs
+  /// (path with its unit, polarization word) and outputs match the on-screen
+  /// result rows.
+  String? _buildCopyText() {
+    final double? atten = _attenDb;
+    if (atten == null || !atten.isFinite) return null;
+
+    final String pathUnit = _pathUnit == PathUnit.km ? 'km' : 'mi';
+    final String pol = _pol == Polarization.horizontal
+        ? 'Horizontal'
+        : 'Vertical';
+
+    return (StringBuffer()
+          ..writeln('Rain Fade')
+          ..writeln('Frequency: ${_freqCtrl.text.trim()} GHz')
+          ..writeln('Rain rate: ${_rainCtrl.text.trim()} mm/hr')
+          ..writeln('Path length: ${_pathCtrl.text.trim()} $pathUnit')
+          ..writeln('Polarization: $pol')
+          ..writeln('Rain attenuation: ${_fmt(atten, 2)} dB')
+          ..writeln('Specific attenuation (γ): ${_fmt(_gamma, 4)} dB/km')
+          ..writeln('Effective path length: ${_fmt(_leffKm, 2)} km'))
+        .toString()
+        .trimRight();
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {

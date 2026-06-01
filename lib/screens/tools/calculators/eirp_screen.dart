@@ -23,6 +23,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -166,7 +167,13 @@ class _EirpScreenState extends State<EirpScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('EIRP'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('EIRP'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until a valid
+        // EIRP is computed; copies the result as a labeled text block.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -214,6 +221,32 @@ class _EirpScreenState extends State<EirpScreen> {
         ),
       ),
     );
+  }
+
+  /// §8.16 copy payload — the EIRP result as a labeled text block.
+  ///
+  /// Returns null (→ disabled affordance) whenever there is no valid result:
+  /// any empty / invalid field, or a non-finite log from W/mW <= 0. Field order
+  /// and values match the on-screen inputs and [_resultCard].
+  String? _buildCopyText() {
+    final double? dbm = _eirpDbm;
+    if (dbm == null) return null;
+
+    final String powerUnit = switch (_powerUnit) {
+      EirpPowerUnit.dBm => 'dBm',
+      EirpPowerUnit.w => 'W',
+      EirpPowerUnit.mW => 'mW',
+    };
+
+    return (StringBuffer()
+          ..writeln('EIRP')
+          ..writeln('TX power: ${_powerCtrl.text.trim()} $powerUnit')
+          ..writeln('Cable loss: ${_lossCtrl.text.trim()} dB')
+          ..writeln('Antenna gain: ${_gainCtrl.text.trim()} dBi')
+          ..writeln('EIRP: ${_formatDbm(dbm)} dBm')
+          ..writeln('EIRP power: ${_formatPower(dbm)}'))
+        .toString()
+        .trimRight();
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {

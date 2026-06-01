@@ -35,6 +35,7 @@ import 'package:flutter/material.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_select.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -272,7 +273,16 @@ class _ThroughputCalcScreenState extends State<ThroughputCalcScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Throughput'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Throughput'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. The dependent-option
+        // reclamp keeps the selection valid, so the rate is normally present;
+        // disabled only on an invalid bandwidth/GI/MCS combination (no rate).
+        // Copies the throughput breakdown as a labeled text block. Copy leads;
+        // no help icon here.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -319,6 +329,44 @@ class _ThroughputCalcScreenState extends State<ThroughputCalcScreen> {
         ),
       ),
     );
+  }
+
+  /// §8.16 copy payload — the throughput breakdown as a labeled text block.
+  ///
+  /// Returns null (→ disabled affordance) only when the current standard /
+  /// width / GI / MCS / streams combination yields no rate (the PWA showError
+  /// path); the reclamp logic keeps the selection valid in normal use, so this
+  /// is normally enabled. Selections, modulation, PHY rate, and real throughput
+  /// match the on-screen result rows.
+  String? _buildCopyText() {
+    final double? phy = ThroughputCalcScreen.phyRateMbps(
+      std: _std,
+      bandwidthMHz: _bandwidth,
+      mcs: _mcs,
+      streams: _streams,
+      giKey: _gi,
+    );
+    final double? real = ThroughputCalcScreen.realRateMbps(
+      std: _std,
+      bandwidthMHz: _bandwidth,
+      mcs: _mcs,
+      streams: _streams,
+      giKey: _gi,
+    );
+    if (real == null || phy == null) return null;
+
+    return (StringBuffer()
+          ..writeln('Wi-Fi Throughput')
+          ..writeln('Standard: ${_stdLabel(_std)}')
+          ..writeln('Channel width: $_bandwidth MHz')
+          ..writeln('MCS index: ${ThroughputCalcScreen.mcsLabel(_mcs)}')
+          ..writeln('Spatial streams: $_streams')
+          ..writeln('Guard interval: ${_giLabel(_std, _gi)}')
+          ..writeln('Modulation: $_modulation')
+          ..writeln('PHY rate: ${_formatRate(phy)} Mbps')
+          ..writeln('Est. real throughput: ${_formatRate(real)} Mbps'))
+        .toString()
+        .trimRight();
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {

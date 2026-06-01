@@ -33,6 +33,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_select.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -179,6 +180,26 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
     return value.toStringAsFixed(MetricConversionScreen.decimalsFor(unit));
   }
 
+  /// §8.16 copy payload — the length conversion as a labeled text block.
+  ///
+  /// Returns null (→ disabled affordance) whenever there is no valid result:
+  /// an empty or non-numeric value. Echoes the entered value with its from-unit
+  /// and the converted value with its to-unit, both using the on-screen symbols
+  /// and the PWA per-unit precision.
+  String? _buildCopyText() {
+    final double? r = _result;
+    if (r == null || !r.isFinite) return null;
+
+    final String fromSym = MetricConversionScreen.symbolFor(_fromUnit);
+    final String toSym = MetricConversionScreen.symbolFor(_toUnit);
+    return (StringBuffer()
+          ..writeln('Metric Conversion')
+          ..writeln('From: ${_valueCtrl.text.trim()} $fromSym')
+          ..writeln('To: ${_formatResult(r, _toUnit)} $toSym'))
+        .toString()
+        .trimRight();
+  }
+
   // ─── Build ────────────────────────────────────────────────────────────────
 
   @override
@@ -188,7 +209,14 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Metric Conversion'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Metric Conversion'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until a value is
+        // entered; copies the from-value and unit and the converted to-value
+        // and unit as a labeled text block.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(

@@ -26,8 +26,10 @@ class AppTheme {
   /// surface1 (#222222), and 7.36:1 on surface2 (#2A2A2A) — every dark surface a
   /// button or chip sits on clears the SC 1.4.11 / §8.11 3:1 non-text floor with
   /// wide margin. (Computed per §8.12; spot-checked WebAIM.)
-  static const BorderSide _focusRingSide =
-      BorderSide(color: AppColors.primary, width: 2);
+  static const BorderSide _focusRingSide = BorderSide(
+    color: AppColors.primary,
+    width: 2,
+  );
 
   /// Shared chip border resolver — drop into a `ChoiceChip`/`FilterChip`'s
   /// `side:` so every chip in the app carries the same §8.3 treatment:
@@ -106,9 +108,7 @@ class AppTheme {
       textTheme: textTheme,
       primaryTextTheme: textTheme,
 
-      extensions: <ThemeExtension<dynamic>>[
-        monoExtension,
-      ],
+      extensions: <ThemeExtension<dynamic>>[monoExtension],
 
       // App bar — flat on canvas, no tonal elevation.
       appBarTheme: AppBarTheme(
@@ -168,8 +168,7 @@ class AppTheme {
         // Disabled label resolves to textDisabled (#7F7F7F) on disabledFill
         // (#2A2A2A) = 3.05:1, passes SC 1.4.11. Other states keep secondary.
         labelStyle: WidgetStateTextStyle.resolveWith((states) {
-          final TextStyle base =
-              textTheme.labelMedium ?? const TextStyle();
+          final TextStyle base = textTheme.labelMedium ?? const TextStyle();
           if (states.contains(WidgetState.disabled)) {
             return base.copyWith(color: AppColors.textDisabled);
           }
@@ -180,7 +179,9 @@ class AppTheme {
         ),
         hintStyle: textTheme.bodyLarge?.copyWith(color: AppColors.textTertiary),
         helperStyle: textTheme.labelSmall,
-        errorStyle: textTheme.labelSmall?.copyWith(color: AppColors.statusDanger),
+        errorStyle: textTheme.labelSmall?.copyWith(
+          color: AppColors.statusDanger,
+        ),
         border: const OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(AppRadius.control)),
           borderSide: BorderSide(color: AppColors.borderStrong, width: 1),
@@ -335,6 +336,26 @@ class AppTheme {
               borderRadius: BorderRadius.circular(AppRadius.control),
             ),
           ),
+        ),
+      ),
+
+      // Icon-only buttons (AppBar help / copy / refresh / re-run) — §8.3.
+      // Per Iris's 2026-06-01 ruling, every icon-only IconButton carries the
+      // §8.3 keyboard focus ring globally rather than per-widget. On
+      // WidgetState.focused the button draws the same 2px solid lime side as
+      // every other button/chip theme above (`_focusRingSide`); all other
+      // states return null so there is NO at-rest visual change — idle, hover,
+      // and pressed keep Material's default IconButton treatment, leaving
+      // goldens untouched. IconButton resolves `ButtonStyle.side` over its
+      // StadiumBorder shape, so the ring renders as a lime outline on the
+      // circular hit region. Replaces the per-widget ring AppCopyAction used to
+      // paint because the app had no IconButtonTheme.
+      iconButtonTheme: IconButtonThemeData(
+        style: ButtonStyle(
+          side: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.focused)) return _focusRingSide;
+            return null;
+          }),
         ),
       ),
 

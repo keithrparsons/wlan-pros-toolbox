@@ -26,6 +26,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
@@ -149,7 +150,13 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Earth Curvature'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Earth Curvature'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until a valid
+        // bulge is computed; copies the result as a labeled text block.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -198,6 +205,28 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
         ),
       ),
     );
+  }
+
+  /// §8.16 copy payload — the earth bulge as a labeled text block.
+  ///
+  /// Returns null (→ disabled affordance) whenever there is no valid bulge:
+  /// empty / non-numeric / non-positive path length. Field order and values
+  /// match the on-screen inputs and [_resultRow].
+  String? _buildCopyText() {
+    final double? bulgeM = _bulgeM;
+    if (bulgeM == null) return null;
+
+    final double bulgeFt = EarthCurvatureScreen.metersToFeet(bulgeM);
+    final String pathUnit = _pathUnitLabel(_pathUnit);
+
+    return (StringBuffer()
+          ..writeln('Earth Curvature')
+          ..writeln('Path length: ${_distCtrl.text.trim()} $pathUnit')
+          ..writeln('K-factor: ${_kFactor.label}')
+          ..writeln('Earth bulge at midpoint: ${_formatFixed(bulgeM)} m')
+          ..writeln('Earth bulge at midpoint: ${_formatFixed(bulgeFt)} ft'))
+        .toString()
+        .trimRight();
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {

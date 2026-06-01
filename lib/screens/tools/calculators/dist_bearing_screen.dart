@@ -36,6 +36,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -206,6 +207,10 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
       appBar: AppBar(
         title: const Text('Distance & Bearing'),
         toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until a valid
+        // distance/bearing is computed; copies the result as a labeled text
+        // block.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,
@@ -255,6 +260,33 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
         ),
       ),
     );
+  }
+
+  /// §8.16 copy payload — distance and bearing as a labeled text block.
+  ///
+  /// Returns null (→ disabled affordance) whenever there is no valid result:
+  /// any empty / non-numeric field, or an out-of-range coordinate (the range
+  /// note has no result to keep). Field order and values match the on-screen
+  /// inputs and [_resultCard], reusing the same derived display getters.
+  String? _buildCopyText() {
+    if (_km == null || _bearingFwd == null) return null;
+
+    return (StringBuffer()
+          ..writeln('Distance & Bearing')
+          ..writeln(
+            'Point 1: ${_lat1Ctrl.text.trim()}, ${_lon1Ctrl.text.trim()}',
+          )
+          ..writeln(
+            'Point 2: ${_lat2Ctrl.text.trim()}, ${_lon2Ctrl.text.trim()}',
+          )
+          ..writeln('Distance: $_kmText km')
+          ..writeln('Distance: $_miText mi')
+          ..writeln('Distance: $_mText m')
+          ..writeln('Distance: $_ftText ft')
+          ..writeln('Initial bearing (1→2): $_bFwdText')
+          ..writeln('Reverse bearing (2→1): $_bRevText'))
+        .toString()
+        .trimRight();
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {

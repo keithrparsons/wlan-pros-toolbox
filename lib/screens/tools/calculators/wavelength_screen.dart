@@ -26,6 +26,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -130,7 +131,15 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Wavelength'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Wavelength'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled while the
+        // frequency is empty/invalid/≤0 (no wavelength); copies the four-unit
+        // wavelength breakdown as a labeled text block. Copy leads; no help
+        // icon here.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -179,6 +188,29 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
         ),
       ),
     );
+  }
+
+  /// §8.16 copy payload — the four-unit wavelength as a labeled text block.
+  ///
+  /// Returns null (→ disabled affordance) while the frequency is empty,
+  /// invalid, or ≤ 0 (no wavelength). The frequency line echoes the raw entry
+  /// with its selected unit; the four wavelength lines use the same per-unit
+  /// decimals as the on-screen result grid.
+  String? _buildCopyText() {
+    final double? f = _freqMHz;
+    if (f == null) return null;
+
+    final String freqUnit = _freqUnit == WlFreqUnit.mhz ? 'MHz' : 'GHz';
+
+    return (StringBuffer()
+          ..writeln('Wavelength')
+          ..writeln('Frequency: ${_freqCtrl.text.trim()} $freqUnit')
+          ..writeln('λ: ${_fmt(WavelengthScreen.wavelengthMeters(f), 4)} m')
+          ..writeln('λ: ${_fmt(WavelengthScreen.wavelengthCm(f), 2)} cm')
+          ..writeln('λ: ${_fmt(WavelengthScreen.wavelengthFeet(f), 4)} ft')
+          ..writeln('λ: ${_fmt(WavelengthScreen.wavelengthInches(f), 3)} in'))
+        .toString()
+        .trimRight();
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {

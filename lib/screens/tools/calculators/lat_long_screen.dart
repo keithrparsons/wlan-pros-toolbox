@@ -33,6 +33,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -164,6 +165,33 @@ class _LatLongScreenState extends State<LatLongScreen> {
     return double.tryParse(s);
   }
 
+  /// §8.16 copy payload — the coordinate conversions as a labeled text block.
+  ///
+  /// Returns null (→ disabled affordance) when neither coordinate is valid:
+  /// before any entry, or when both are empty / non-numeric / out of range. A
+  /// present coordinate copies all three formats (DD / DDM / DMS); a coordinate
+  /// that is absent or out of range is simply omitted (honest blank, GL-005).
+  String? _buildCopyText() {
+    final CoordFormats? lat = _lat;
+    final CoordFormats? lon = _lon;
+    if (lat == null && lon == null) return null;
+
+    final StringBuffer buf = StringBuffer()..writeln('Lat / Long');
+    if (lat != null) {
+      buf
+        ..writeln('Latitude DD: ${lat.dd}')
+        ..writeln('Latitude DDM: ${lat.ddm}')
+        ..writeln('Latitude DMS: ${lat.dms}');
+    }
+    if (lon != null) {
+      buf
+        ..writeln('Longitude DD: ${lon.dd}')
+        ..writeln('Longitude DDM: ${lon.ddm}')
+        ..writeln('Longitude DMS: ${lon.dms}');
+    }
+    return buf.toString().trimRight();
+  }
+
   // ─── Build ────────────────────────────────────────────────────────────────
 
   @override
@@ -173,7 +201,14 @@ class _LatLongScreenState extends State<LatLongScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Lat / Long'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Lat / Long'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until at least one
+        // coordinate is valid and in range; copies each present coordinate in
+        // all three formats (DD / DDM / DMS) as a labeled text block.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(

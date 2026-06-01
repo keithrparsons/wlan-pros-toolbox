@@ -32,6 +32,7 @@ import 'package:flutter/semantics.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 
 /// Which wiring standard's table is shown. Two short options → segmented
@@ -77,24 +78,120 @@ class EthernetPinoutScreen extends StatefulWidget {
   /// wire-color hexes (data glyphs). Do not edit without re-checking the PWA.
   static const Map<WiringStandard, List<PinoutPin>> pinout = {
     WiringStandard.t568b: [
-      PinoutPin(pin: 1, colorHex: 0xFFE65100, colorName: 'Orange / White', pair: 2, function: 'TX+'),
-      PinoutPin(pin: 2, colorHex: 0xFFE65100, colorName: 'Orange', pair: 2, function: 'TX-'),
-      PinoutPin(pin: 3, colorHex: 0xFF2E7D32, colorName: 'Green / White', pair: 3, function: 'RX+'),
-      PinoutPin(pin: 4, colorHex: 0xFF1565C0, colorName: 'Blue', pair: 1, function: 'BI-D A+'),
-      PinoutPin(pin: 5, colorHex: 0xFF1565C0, colorName: 'Blue / White', pair: 1, function: 'BI-D A-'),
-      PinoutPin(pin: 6, colorHex: 0xFF2E7D32, colorName: 'Green', pair: 3, function: 'RX-'),
-      PinoutPin(pin: 7, colorHex: 0xFF6D4C41, colorName: 'Brown / White', pair: 4, function: 'BI-D B+'),
-      PinoutPin(pin: 8, colorHex: 0xFF6D4C41, colorName: 'Brown', pair: 4, function: 'BI-D B-'),
+      PinoutPin(
+        pin: 1,
+        colorHex: 0xFFE65100,
+        colorName: 'Orange / White',
+        pair: 2,
+        function: 'TX+',
+      ),
+      PinoutPin(
+        pin: 2,
+        colorHex: 0xFFE65100,
+        colorName: 'Orange',
+        pair: 2,
+        function: 'TX-',
+      ),
+      PinoutPin(
+        pin: 3,
+        colorHex: 0xFF2E7D32,
+        colorName: 'Green / White',
+        pair: 3,
+        function: 'RX+',
+      ),
+      PinoutPin(
+        pin: 4,
+        colorHex: 0xFF1565C0,
+        colorName: 'Blue',
+        pair: 1,
+        function: 'BI-D A+',
+      ),
+      PinoutPin(
+        pin: 5,
+        colorHex: 0xFF1565C0,
+        colorName: 'Blue / White',
+        pair: 1,
+        function: 'BI-D A-',
+      ),
+      PinoutPin(
+        pin: 6,
+        colorHex: 0xFF2E7D32,
+        colorName: 'Green',
+        pair: 3,
+        function: 'RX-',
+      ),
+      PinoutPin(
+        pin: 7,
+        colorHex: 0xFF6D4C41,
+        colorName: 'Brown / White',
+        pair: 4,
+        function: 'BI-D B+',
+      ),
+      PinoutPin(
+        pin: 8,
+        colorHex: 0xFF6D4C41,
+        colorName: 'Brown',
+        pair: 4,
+        function: 'BI-D B-',
+      ),
     ],
     WiringStandard.t568a: [
-      PinoutPin(pin: 1, colorHex: 0xFF2E7D32, colorName: 'Green / White', pair: 3, function: 'TX+'),
-      PinoutPin(pin: 2, colorHex: 0xFF2E7D32, colorName: 'Green', pair: 3, function: 'TX-'),
-      PinoutPin(pin: 3, colorHex: 0xFFE65100, colorName: 'Orange / White', pair: 2, function: 'RX+'),
-      PinoutPin(pin: 4, colorHex: 0xFF1565C0, colorName: 'Blue', pair: 1, function: 'BI-D A+'),
-      PinoutPin(pin: 5, colorHex: 0xFF1565C0, colorName: 'Blue / White', pair: 1, function: 'BI-D A-'),
-      PinoutPin(pin: 6, colorHex: 0xFFE65100, colorName: 'Orange', pair: 2, function: 'RX-'),
-      PinoutPin(pin: 7, colorHex: 0xFF6D4C41, colorName: 'Brown / White', pair: 4, function: 'BI-D B+'),
-      PinoutPin(pin: 8, colorHex: 0xFF6D4C41, colorName: 'Brown', pair: 4, function: 'BI-D B-'),
+      PinoutPin(
+        pin: 1,
+        colorHex: 0xFF2E7D32,
+        colorName: 'Green / White',
+        pair: 3,
+        function: 'TX+',
+      ),
+      PinoutPin(
+        pin: 2,
+        colorHex: 0xFF2E7D32,
+        colorName: 'Green',
+        pair: 3,
+        function: 'TX-',
+      ),
+      PinoutPin(
+        pin: 3,
+        colorHex: 0xFFE65100,
+        colorName: 'Orange / White',
+        pair: 2,
+        function: 'RX+',
+      ),
+      PinoutPin(
+        pin: 4,
+        colorHex: 0xFF1565C0,
+        colorName: 'Blue',
+        pair: 1,
+        function: 'BI-D A+',
+      ),
+      PinoutPin(
+        pin: 5,
+        colorHex: 0xFF1565C0,
+        colorName: 'Blue / White',
+        pair: 1,
+        function: 'BI-D A-',
+      ),
+      PinoutPin(
+        pin: 6,
+        colorHex: 0xFFE65100,
+        colorName: 'Orange',
+        pair: 2,
+        function: 'RX-',
+      ),
+      PinoutPin(
+        pin: 7,
+        colorHex: 0xFF6D4C41,
+        colorName: 'Brown / White',
+        pair: 4,
+        function: 'BI-D B+',
+      ),
+      PinoutPin(
+        pin: 8,
+        colorHex: 0xFF6D4C41,
+        colorName: 'Brown',
+        pair: 4,
+        function: 'BI-D B-',
+      ),
     ],
   };
 
@@ -142,9 +239,34 @@ class _EthernetPinoutScreenState extends State<EthernetPinoutScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Ethernet Pinout'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Ethernet Pinout'),
+        toolbarHeight: 64,
+        // §8.16 — copy the selected standard's pin table as TSV. Static data,
+        // so the affordance is always enabled.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// §8.16 copy payload — the selected standard's pin → wire → pair → function
+  /// table as TSV. The selected standard names the title line; one header row;
+  /// one tab-separated row per pin. Always non-null (static data).
+  String _buildCopyText() {
+    const String tab = '\t';
+    final List<PinoutPin> pins = EthernetPinoutScreen.pinout[_std]!;
+    final StringBuffer buf = StringBuffer()
+      ..writeln('${_label(_std)} — pin to pair')
+      ..writeln(
+        <String>['Pin', 'Wire color', 'Pair', '100/1000 Base-T'].join(tab),
+      );
+    for (final PinoutPin p in pins) {
+      buf.writeln(
+        <String>['${p.pin}', p.colorName, '${p.pair}', p.function].join(tab),
+      );
+    }
+    return buf.toString().trimRight();
   }
 
   Widget _body() {

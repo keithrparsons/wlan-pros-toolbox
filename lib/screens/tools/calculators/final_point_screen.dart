@@ -31,6 +31,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -207,6 +208,29 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
     return value.toStringAsFixed(6);
   }
 
+  /// §8.16 copy payload — the great-circle destination as a labeled text block.
+  ///
+  /// Returns null (→ disabled affordance) whenever there is no valid result:
+  /// an empty/invalid field or an out-of-range input (the on-screen note carries
+  /// nothing to copy). Echoes the start point, bearing, and distance with the
+  /// currently-selected unit, then the computed destination lat/long.
+  String? _buildCopyText() {
+    final DestinationPoint? r = _result;
+    if (r == null) return null;
+
+    final String unit = _distUnitLabel(_distUnit);
+    return (StringBuffer()
+          ..writeln('Final Point')
+          ..writeln('Start latitude: ${_latCtrl.text.trim()}°')
+          ..writeln('Start longitude: ${_lonCtrl.text.trim()}°')
+          ..writeln('Bearing: ${_bearingCtrl.text.trim()}°')
+          ..writeln('Distance: ${_distCtrl.text.trim()} $unit')
+          ..writeln('Destination latitude: ${_formatCoord(r.latitude)}°')
+          ..writeln('Destination longitude: ${_formatCoord(r.longitude)}°'))
+        .toString()
+        .trimRight();
+  }
+
   // ─── Build ────────────────────────────────────────────────────────────────
 
   @override
@@ -216,7 +240,14 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Final Point'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Final Point'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until a valid
+        // destination is computed; copies the start point, bearing, distance,
+        // and the destination lat/long as a labeled text block.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(

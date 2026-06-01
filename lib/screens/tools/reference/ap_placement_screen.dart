@@ -23,6 +23,7 @@ import 'package:flutter/material.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
 
@@ -116,9 +117,32 @@ class ApPlacementScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('AP Placement'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('AP Placement'),
+        toolbarHeight: 64,
+        // §8.16 — copy the placement guidance as TSV. The data is a bundled
+        // const, so the affordance is always enabled (the table is the result).
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body(context)),
     );
+  }
+
+  /// §8.16 copy payload — the placement guidance as TSV. One title line, then
+  /// each rule group as its own subtitle followed by a single-column list of
+  /// its guidance lines (the guidance is prose, not a multi-column table).
+  /// Always non-null: the dataset is static, so copy is never disabled.
+  String _buildCopyText() {
+    final StringBuffer buf = StringBuffer()..writeln('AP Placement');
+    for (final ApRuleGroup group in kApRules) {
+      buf
+        ..writeln()
+        ..writeln(group.category);
+      for (final String rule in group.rules) {
+        buf.writeln(rule);
+      }
+    }
+    return buf.toString().trimRight();
   }
 
   Widget _body(BuildContext context) {
@@ -189,26 +213,26 @@ class _RuleCard extends StatelessWidget {
       label: group.category,
       merge: false,
       child: Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            group.category,
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
-              letterSpacing: 0.4,
+        decoration: BoxDecoration(
+          color: AppColors.surface1,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(color: AppColors.border, width: 1),
+        ),
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              group.category,
+              style: text.labelMedium?.copyWith(
+                color: AppColors.textSecondary,
+                letterSpacing: 0.4,
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          for (final String rule in group.rules) _RuleLine(rule: rule),
-        ],
-      ),
+            const SizedBox(height: AppSpacing.xs),
+            for (final String rule in group.rules) _RuleLine(rule: rule),
+          ],
+        ),
       ),
     );
   }

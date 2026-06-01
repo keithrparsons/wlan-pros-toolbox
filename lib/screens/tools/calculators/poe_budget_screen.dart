@@ -34,6 +34,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -244,7 +245,15 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('PoE Budget'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('PoE Budget'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled while the switch
+        // budget is empty/invalid (no result block); copies the budget summary
+        // as a labeled text block, carrying the §8.13 verdict WORD. Copy leads;
+        // no help icon here.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -295,6 +304,41 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
         ),
       ),
     );
+  }
+
+  /// Short verdict word for the clipboard headline (§8.16 / §8.13 rule 2 — the
+  /// color is the on-screen carrier, the word is the clipboard carrier). The
+  /// full advisory sentence rides along beneath it.
+  static String _verdictWord(PoeVerdict v) {
+    switch (v) {
+      case PoeVerdict.over:
+        return 'Over budget';
+      case PoeVerdict.caution:
+        return 'Caution';
+      case PoeVerdict.ok:
+        return 'Budget OK';
+    }
+  }
+
+  /// §8.16 copy payload — the PoE budget summary as a labeled text block.
+  ///
+  /// Returns null (→ disabled affordance) while the switch budget is empty,
+  /// non-finite, or ≤ 0 (no result block). The verdict line carries the §8.13
+  /// status WORD plus the full advisory; values match the on-screen result card.
+  String? _buildCopyText() {
+    final PoeBudgetResult? r = _result;
+    if (r == null) return null;
+
+    return (StringBuffer()
+          ..writeln('PoE Budget')
+          ..writeln('Switch budget: ${_fmt(r.budget, 0)} W')
+          ..writeln('Total draw: ${_fmt(r.total, 1)} W')
+          ..writeln('Remaining: ${_remainingLabel(r.remaining)}')
+          ..writeln('Utilization: ${r.pct.toStringAsFixed(0)}%')
+          ..writeln('Verdict: ${_verdictWord(r.verdict)}')
+          ..writeln(_verdictText(r.verdict)))
+        .toString()
+        .trimRight();
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {

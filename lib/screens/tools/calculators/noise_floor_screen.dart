@@ -35,6 +35,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_select.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -193,7 +194,14 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Noise Floor'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Noise Floor'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled while the noise
+        // figure is empty/invalid (no computed floor); copies the noise-floor
+        // breakdown as a labeled text block. Copy leads; no help icon here.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -242,6 +250,31 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
         ),
       ),
     );
+  }
+
+  /// §8.16 copy payload — the noise-floor breakdown as a labeled text block.
+  ///
+  /// Returns null (→ disabled affordance) whenever the outputs are blank: the
+  /// noise figure is empty, invalid, or negative. The temperature line reflects
+  /// the effective value used (the 20°C fallback when the field is blank, the
+  /// same value the computation used). Field order matches the on-screen rows.
+  String? _buildCopyText() {
+    final double? rx = _rxFloorDbm;
+    if (rx == null || !rx.isFinite) return null;
+
+    final double tempC =
+        _tryParseDouble(_tempCtrl.text) ?? NoiseFloorScreen.defaultTempC;
+
+    return (StringBuffer()
+          ..writeln('Noise Floor')
+          ..writeln('Channel bandwidth: ${_bw.mhz} MHz')
+          ..writeln('Noise figure: ${_nfCtrl.text.trim()} dB')
+          ..writeln('Temperature: ${tempC.toStringAsFixed(1)} °C')
+          ..writeln('Thermal noise (kTB): ${_formatDbm(_thermalDbm)} dBm')
+          ..writeln('Rx noise floor: ${_formatDbm(rx)} dBm')
+          ..writeln('Rule of thumb: ${_formatDbm(_ruleDbm)} dBm'))
+        .toString()
+        .trimRight();
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {

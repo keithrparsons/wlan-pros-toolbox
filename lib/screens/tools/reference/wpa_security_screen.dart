@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 
 /// One row of the security-modes table. Field data verbatim from PWA
@@ -158,54 +159,125 @@ class WpaSecurityScreen extends StatelessWidget {
     WpaFeature(
       feature: 'SAE (Simultaneous Authentication of Equals)',
       appliesTo: 'WPA3-Personal',
-      description: 'Replaces PSK 4-way handshake. Forward secrecy. Resistant '
+      description:
+          'Replaces PSK 4-way handshake. Forward secrecy. Resistant '
           'to offline dictionary attacks even if the passphrase is short.',
     ),
     WpaFeature(
       feature: 'PMF — Protected Management Frames',
       appliesTo: 'Optional: WPA2 · Required: WPA3',
-      description: 'Encrypts deauth and disassociation frames (802.11w). '
+      description:
+          'Encrypts deauth and disassociation frames (802.11w). '
           'Prevents deauth flood attacks.',
     ),
     WpaFeature(
       feature: 'OWE — Opportunistic Wireless Encryption',
       appliesTo: 'Enhanced Open only',
-      description: 'Encrypts open-network sessions without a password. No '
+      description:
+          'Encrypts open-network sessions without a password. No '
           'authentication, but eavesdropping is prevented.',
     ),
     WpaFeature(
       feature: 'Forward Secrecy',
       appliesTo: 'WPA3-Personal (SAE), WPA3-Enterprise',
-      description: 'Session keys are ephemeral. Captured traffic cannot be '
+      description:
+          'Session keys are ephemeral. Captured traffic cannot be '
           'decrypted retroactively even if the passphrase is later compromised.',
     ),
     WpaFeature(
       feature: '192-bit Security Mode',
       appliesTo: 'WPA3-Enterprise only',
-      description: 'GCMP-256 + HMAC-SHA-384 + ECDH/ECDSA-384. Required for '
+      description:
+          'GCMP-256 + HMAC-SHA-384 + ECDH/ECDSA-384. Required for '
           'government and classified deployments.',
     ),
     WpaFeature(
       feature: 'WPA3 mandatory on 6 GHz',
       appliesTo: 'All Wi-Fi 6E / Wi-Fi 7',
-      description: '6 GHz band requires WPA3 or OWE. WPA2 and older protocols '
+      description:
+          '6 GHz band requires WPA3 or OWE. WPA2 and older protocols '
           'are not permitted on 6 GHz.',
     ),
     WpaFeature(
       feature: '802.1X / RADIUS roles',
       appliesTo: 'WPA2/WPA3-Enterprise',
-      description: 'Supplicant (client) → Authenticator (AP) → Authentication '
+      description:
+          'Supplicant (client) → Authenticator (AP) → Authentication '
           'Server (RADIUS). EAP tunnel carries credential exchange.',
     ),
   ];
 
-  static const String _intro = 'WPA security modes, encryption standards, and '
+  static const String _intro =
+      'WPA security modes, encryption standards, and '
       'advanced feature reference for enterprise WLAN design.';
+
+  /// Expand the terse PMF token for the clipboard, matching the on-screen
+  /// long form (the visible value uses _ModeRow._pmfLong, kept in sync here).
+  static String _pmfLong(String pmf) {
+    switch (pmf) {
+      case 'No':
+        return 'Not supported';
+      case 'Opt':
+        return 'Optional';
+      case 'Req':
+        return 'Required';
+      default:
+        return pmf;
+    }
+  }
+
+  /// §8.16 copy payload — both reference blocks as TSV. Static data, so always
+  /// enabled. Two sections (subtitle + header + rows): the security modes and
+  /// the advanced features. Each mode's deployment verdict (the §8.13
+  /// status-hued chip on-screen) is carried as the worded Status cell — the
+  /// status word is the clipboard carrier of the color (§8.16 verdict-word
+  /// rule).
+  static String _buildCopyText() {
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()
+      ..writeln('WPA Security')
+      ..writeln()
+      ..writeln('Security modes')
+      ..writeln(
+        <String>[
+          'Mode',
+          'Category',
+          'Encryption',
+          'Key method',
+          'PMF',
+          'Status',
+        ].join(tab),
+      );
+    for (final WpaMode m in modes) {
+      buf.writeln(
+        <String>[
+          m.mode,
+          m.category,
+          m.encryption,
+          m.keyMethod,
+          _pmfLong(m.pmf),
+          m.status,
+        ].join(tab),
+      );
+    }
+    buf
+      ..writeln()
+      ..writeln('Advanced features')
+      ..writeln(<String>['Feature', 'Applies to', 'Description'].join(tab));
+    for (final WpaFeature f in features) {
+      buf.writeln(<String>[f.feature, f.appliesTo, f.description].join(tab));
+    }
+    return buf.toString().trimRight();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('WPA Security'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('WPA Security'),
+        toolbarHeight: 64,
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body()),
     );
   }
@@ -292,7 +364,9 @@ class _SectionCard extends StatelessWidget {
     final List<Widget> rows = <Widget>[];
     for (int i = 0; i < children.length; i++) {
       if (i > 0) {
-        rows.add(const Divider(height: 1, thickness: 1, color: AppColors.border));
+        rows.add(
+          const Divider(height: 1, thickness: 1, color: AppColors.border),
+        );
       }
       rows.add(children[i]);
     }
@@ -333,7 +407,8 @@ class _ModeRow extends StatelessWidget {
     final TextTheme t = Theme.of(context).textTheme;
     return Semantics(
       container: true,
-      label: '${mode.mode}, ${mode.category}. Encryption '
+      label:
+          '${mode.mode}, ${mode.category}. Encryption '
           '${mode.encryption}. Key method ${mode.keyMethod}. '
           'Protected Management Frames ${_pmfLong(mode.pmf)}. '
           'Status ${mode.status}.',
@@ -442,7 +517,10 @@ class _StatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme t = Theme.of(context).textTheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: 4,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AppRadius.control),
@@ -470,7 +548,8 @@ class _FeatureRow extends StatelessWidget {
     final TextTheme t = Theme.of(context).textTheme;
     return Semantics(
       container: true,
-      label: '${feature.feature}. Applies to ${feature.appliesTo}. '
+      label:
+          '${feature.feature}. Applies to ${feature.appliesTo}. '
           '${feature.description}',
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),

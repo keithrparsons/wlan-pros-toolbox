@@ -25,6 +25,7 @@ import 'package:flutter/material.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
 
@@ -190,9 +191,59 @@ class FiberOpticScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Fiber Optic'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Fiber Optic'),
+        toolbarHeight: 64,
+        // §8.16 — copy both sub-tables as TSV (distance-by-rate + jacket color
+        // & notes), each its own section. Static data, always enabled.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body(context)),
     );
+  }
+
+  /// §8.16 copy payload — both fiber sub-tables as a two-section TSV. Section 1
+  /// is the distance-by-rate matrix (type, core, BW, @1G/@10G/@40G/@100G);
+  /// section 2 is jacket color code + deployment notes. Each section gets a
+  /// subtitle + header + one row per fiber type. Always non-null (static data).
+  static String _buildCopyText() {
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()
+      ..writeln('Fiber Optic Reference')
+      ..writeln()
+      ..writeln('Distance by data rate')
+      ..writeln(
+        <String>[
+          'Type',
+          'Core',
+          'BW (MHz·km)',
+          '@ 1G',
+          '@ 10G',
+          '@ 40G',
+          '@ 100G',
+        ].join(tab),
+      );
+    for (final FiberType f in FIBER_DATA) {
+      buf.writeln(
+        <String>[
+          f.type,
+          f.core,
+          f.bandwidth,
+          f.dist1G,
+          f.dist10G,
+          f.dist40G,
+          f.dist100G,
+        ].join(tab),
+      );
+    }
+    buf
+      ..writeln()
+      ..writeln('Jacket color code & notes')
+      ..writeln(<String>['Type', 'Jacket color', 'Notes'].join(tab));
+    for (final FiberType f in FIBER_DATA) {
+      buf.writeln(<String>[f.type, f.jacketName, f.notes].join(tab));
+    }
+    return buf.toString().trimRight();
   }
 
   Widget _body(BuildContext context) {
@@ -354,13 +405,34 @@ class _DistanceHeaderRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 2),
       child: Row(
         children: [
-          SizedBox(width: _kTypeW, child: Text('Type', style: style)),
-          SizedBox(width: _kCoreW, child: Text('Core', style: style)),
-          SizedBox(width: _kBwW, child: Text('BW', style: style)),
-          SizedBox(width: _kRateW, child: Text('@ 1G', style: style)),
-          SizedBox(width: _kRateW, child: Text('@ 10G', style: style)),
-          SizedBox(width: _kRateW, child: Text('@ 40G', style: style)),
-          SizedBox(width: _kRateW, child: Text('@ 100G', style: style)),
+          SizedBox(
+            width: _kTypeW,
+            child: Text('Type', style: style),
+          ),
+          SizedBox(
+            width: _kCoreW,
+            child: Text('Core', style: style),
+          ),
+          SizedBox(
+            width: _kBwW,
+            child: Text('BW', style: style),
+          ),
+          SizedBox(
+            width: _kRateW,
+            child: Text('@ 1G', style: style),
+          ),
+          SizedBox(
+            width: _kRateW,
+            child: Text('@ 10G', style: style),
+          ),
+          SizedBox(
+            width: _kRateW,
+            child: Text('@ 40G', style: style),
+          ),
+          SizedBox(
+            width: _kRateW,
+            child: Text('@ 100G', style: style),
+          ),
         ],
       ),
     );
@@ -399,43 +471,43 @@ class _DistanceRow extends StatelessWidget {
         'at 100 gigabit ${fiber.dist100G}',
       ]),
       child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: _kTypeW,
-            child: Text(
-              fiber.type,
-              style: mono.inlineCode.copyWith(
-                color: typeColor,
-                fontWeight: FontWeight.w600,
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: _kTypeW,
+              child: Text(
+                fiber.type,
+                style: mono.inlineCode.copyWith(
+                  color: typeColor,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-          ),
-          SizedBox(
-            width: _kCoreW,
-            child: Text(
-              fiber.core,
-              style: mono.inlineCode.copyWith(
-                color: cellColor,
-                fontSize: AppTextSize.caption,
+            SizedBox(
+              width: _kCoreW,
+              child: Text(
+                fiber.core,
+                style: mono.inlineCode.copyWith(
+                  color: cellColor,
+                  fontSize: AppTextSize.caption,
+                ),
               ),
             ),
-          ),
-          SizedBox(
-            width: _kBwW,
-            child: Text(
-              fiber.bandwidth,
-              style: mono.inlineCode.copyWith(color: cellColor),
+            SizedBox(
+              width: _kBwW,
+              child: Text(
+                fiber.bandwidth,
+                style: mono.inlineCode.copyWith(color: cellColor),
+              ),
             ),
-          ),
-          _rateCell(fiber.dist1G, cellColor),
-          _rateCell(fiber.dist10G, cellColor),
-          _rateCell(fiber.dist40G, cellColor),
-          _rateCell(fiber.dist100G, cellColor),
-        ],
-      ),
+            _rateCell(fiber.dist1G, cellColor),
+            _rateCell(fiber.dist10G, cellColor),
+            _rateCell(fiber.dist40G, cellColor),
+            _rateCell(fiber.dist100G, cellColor),
+          ],
+        ),
       ),
     );
   }
@@ -472,55 +544,57 @@ class _JacketRow extends StatelessWidget {
         fiber.notes,
       ]),
       child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Jacket swatch — color is verbatim PWA data, not a brand token.
-              // Decorative; the color name beside it carries the meaning for
-              // colorblind / AT users (never color-only).
-              Container(
-                width: 14,
-                height: 14,
-                decoration: BoxDecoration(
-                  color: Color(fiber.jacketHex),
-                  borderRadius: BorderRadius.circular(3),
-                  border: Border.all(color: AppColors.border, width: 1),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              SizedBox(
-                width: _kTypeW,
-                child: Text(
-                  fiber.type,
-                  style: mono.inlineCode.copyWith(
-                    color: typeColor,
-                    fontWeight: FontWeight.w600,
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Jacket swatch — color is verbatim PWA data, not a brand token.
+                // Decorative; the color name beside it carries the meaning for
+                // colorblind / AT users (never color-only).
+                Container(
+                  width: 14,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color: Color(fiber.jacketHex),
+                    borderRadius: BorderRadius.circular(3),
+                    border: Border.all(color: AppColors.border, width: 1),
                   ),
                 ),
-              ),
-              Expanded(
-                child: Text(
-                  fiber.jacketName,
-                  style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                const SizedBox(width: AppSpacing.xs),
+                SizedBox(
+                  width: _kTypeW,
+                  child: Text(
+                    fiber.type,
+                    style: mono.inlineCode.copyWith(
+                      color: typeColor,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Text(
-              fiber.notes,
-              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+                Expanded(
+                  child: Text(
+                    fiber.jacketName,
+                    style: text.bodyLarge?.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                fiber.notes,
+                style: text.labelMedium?.copyWith(
+                  color: AppColors.textTertiary,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

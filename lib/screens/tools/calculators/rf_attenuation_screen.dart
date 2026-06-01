@@ -32,6 +32,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
@@ -226,7 +227,14 @@ class _RfAttenuationScreenState extends State<RfAttenuationScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('RF Attenuation'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('RF Attenuation'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until at least one
+        // material is added (no total); copies the per-material breakdown plus
+        // total as a labeled text block. Copy leads; no help icon here.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -275,6 +283,28 @@ class _RfAttenuationScreenState extends State<RfAttenuationScreen> {
         ),
       ),
     );
+  }
+
+  /// §8.16 copy payload — the material-stack loss as a labeled text block.
+  ///
+  /// Returns null (→ disabled affordance) until at least one material is
+  /// accumulated (the empty/no-results state), so there is no total to keep.
+  /// Each accumulated material contributes a `Nx Name: loss dB` line in
+  /// insertion order, mirroring the on-screen breakdown, followed by the total.
+  String? _buildCopyText() {
+    final bool hasRows = _quantities.values.any((int q) => q > 0);
+    if (!hasRows) return null;
+
+    final StringBuffer buf = StringBuffer()
+      ..writeln('RF Attenuation')
+      ..writeln('Band: ${_bandLabel(_band)}');
+    for (final MapEntry<RfMaterial, int> e in _quantities.entries) {
+      if (e.value <= 0) continue;
+      final int loss = RfAttenuationScreen.lossPerLayer(e.key, _band) * e.value;
+      buf.writeln('${e.value}x ${e.key.name}: $loss dB');
+    }
+    buf.writeln('Total loss: $_total dB');
+    return buf.toString().trimRight();
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {

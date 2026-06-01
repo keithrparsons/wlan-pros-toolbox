@@ -32,6 +32,7 @@ import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
 
@@ -82,15 +83,15 @@ class SpectrumBandInfo {
 
   /// The eight key/value fact rows, in the PWA's row order.
   List<(String, String)> get facts => <(String, String)>[
-        ('Total spectrum', total),
-        ('Standards', standards),
-        ('Channels (US)', channels),
-        ('Non-overlapping', nonOverlap),
-        ('Channel widths', widths),
-        ('DFS / Radar', dfs),
-        ('Co-existence', coexist),
-        ('Key notes', notes),
-      ];
+    ('Total spectrum', total),
+    ('Standards', standards),
+    ('Channels (US)', channels),
+    ('Non-overlapping', nonOverlap),
+    ('Channel widths', widths),
+    ('DFS / Radar', dfs),
+    ('Co-existence', coexist),
+    ('Key notes', notes),
+  ];
 }
 
 class SpectrumScreen extends StatefulWidget {
@@ -190,10 +191,40 @@ class _SpectrumScreenState extends State<SpectrumScreen> {
   SpectrumBandInfo _info(SpectrumBand b) =>
       SpectrumScreen.bands.firstWhere((SpectrumBandInfo i) => i.band == b);
 
+  /// §8.16 copy payload — the full band-allocation reference as TSV. Static
+  /// data, so always enabled, and it copies ALL THREE bands (not just the
+  /// selected one) so the clipboard carries the complete reference. Each band
+  /// is its own section: a subtitle (label + range), a Fact/Value header, then
+  /// one row per fact in the band's fixed fact order.
+  static String _buildCopyText() {
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()..writeln('Spectrum Reference');
+    for (final SpectrumBandInfo info in SpectrumScreen.bands) {
+      buf
+        ..writeln()
+        ..writeln('${info.label} (${info.range})')
+        ..writeln(<String>['Fact', 'Value'].join(tab));
+      for (final (String key, String value) in info.facts) {
+        buf.writeln(<String>[key, value].join(tab));
+      }
+    }
+    buf
+      ..writeln()
+      ..writeln(
+        'US (FCC) regulatory domain. Verify local rules before '
+        'deployment.',
+      );
+    return buf.toString().trimRight();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Spectrum Ref'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Spectrum Ref'),
+        toolbarHeight: 64,
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body()),
     );
   }
@@ -220,10 +251,7 @@ class _SpectrumScreenState extends State<SpectrumScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  ConceptGraphicBand(
-                    toolId: 'spectrum',
-                    isDesktop: isDesktop,
-                  ),
+                  ConceptGraphicBand(toolId: 'spectrum', isDesktop: isDesktop),
                   if (ToolAssets.hasGraphic('spectrum'))
                     const SizedBox(height: AppSpacing.md),
                   _bandCard(context),
@@ -361,32 +389,32 @@ class _FactRow extends StatelessWidget {
     return ReferenceRowSemantics(
       label: rowLabel(label, <String?>[value]),
       child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Fixed label column — wide enough for the longest key
-          // ("Non-overlapping") without truncating, narrow enough to leave the
-          // value the majority of a 320pt phone width.
-          SizedBox(
-            width: 116,
-            child: Text(
-              label,
-              style: text.labelMedium?.copyWith(
-                color: AppColors.textSecondary,
-                letterSpacing: 0.2,
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Fixed label column — wide enough for the longest key
+            // ("Non-overlapping") without truncating, narrow enough to leave the
+            // value the majority of a 320pt phone width.
+            SizedBox(
+              width: 116,
+              child: Text(
+                label,
+                style: text.labelMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                  letterSpacing: 0.2,
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(
-              value,
-              style: text.bodyMedium?.copyWith(color: AppColors.textPrimary),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                value,
+                style: text.bodyMedium?.copyWith(color: AppColors.textPrimary),
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }

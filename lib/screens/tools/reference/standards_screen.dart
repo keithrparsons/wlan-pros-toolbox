@@ -27,6 +27,7 @@ import 'package:flutter/semantics.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_select.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -198,11 +199,11 @@ class _StandardsScreenState extends State<StandardsScreen> {
 
   static const List<AppSelectItem<_BandFilter>> _filterItems =
       <AppSelectItem<_BandFilter>>[
-    (_BandFilter.all, 'All bands'),
-    (_BandFilter.band24, '2.4 GHz'),
-    (_BandFilter.band5, '5 GHz'),
-    (_BandFilter.band6, '6 GHz'),
-  ];
+        (_BandFilter.all, 'All bands'),
+        (_BandFilter.band24, '2.4 GHz'),
+        (_BandFilter.band5, '5 GHz'),
+        (_BandFilter.band6, '6 GHz'),
+      ];
 
   List<StandardEntry> get _visible {
     switch (_filter) {
@@ -236,10 +237,53 @@ class _StandardsScreenState extends State<StandardsScreen> {
     );
   }
 
+  /// §8.16 copy payload — the full 802.11 amendment table as TSV. Static data,
+  /// so always enabled, and it copies the COMPLETE amendment set regardless of
+  /// the on-screen band filter (the filter narrows the view, not the
+  /// reference). One section: a header row, then one tab-separated row per
+  /// amendment. The source `—` placeholders for the original 802.11's
+  /// generation/MIMO are kept verbatim.
+  static String _buildCopyText() {
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()
+      ..writeln('802.11 Standards')
+      ..writeln(
+        <String>[
+          'Standard',
+          'Wi-Fi gen',
+          'Year',
+          'Bands (GHz)',
+          'Max PHY rate',
+          'MIMO',
+          'Ch width (MHz)',
+          'Modulation',
+        ].join(tab),
+      );
+    for (final StandardEntry e in StandardsScreen.standards) {
+      buf.writeln(
+        <String>[
+          e.std,
+          e.generation,
+          '${e.year}',
+          e.bands,
+          e.maxRate,
+          e.mimo,
+          e.channelWidth,
+          e.modulation,
+        ].join(tab),
+      );
+    }
+    return buf.toString().trimRight();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('802.11 Standards'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('802.11 Standards'),
+        toolbarHeight: 64,
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body()),
     );
   }
@@ -344,8 +388,9 @@ class _StandardsScreenState extends State<StandardsScreen> {
                 const SizedBox(height: 2),
                 Text(
                   'No 802.11 standard operates in this band.',
-                  style:
-                      text.labelMedium?.copyWith(color: AppColors.textTertiary),
+                  style: text.labelMedium?.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
                 ),
               ],
             ),
@@ -381,41 +426,45 @@ class _StandardCard extends StatelessWidget {
         'modulation ${entry.modulation}',
       ]),
       child: _Card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  entry.std,
-                  style: text.headlineSmall?.copyWith(
-                    color: AppColors.textPrimary,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    entry.std,
+                    style: text.headlineSmall?.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
-              ),
-              if (entry.generation != '—') ...<Widget>[
-                _GenerationBadge(label: entry.generation),
-                const SizedBox(width: AppSpacing.xs),
-              ],
-              Text(
-                '${entry.year}',
-                style: text.labelMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                if (entry.generation != '—') ...<Widget>[
+                  _GenerationBadge(label: entry.generation),
+                  const SizedBox(width: AppSpacing.xs),
+                ],
+                Text(
+                  '${entry.year}',
+                  style: text.labelMedium?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          const Divider(color: AppColors.border, height: 1),
-          ValueRow(label: 'Bands (GHz)', value: entry.bands),
-          ValueRow(label: 'Max PHY rate', value: entry.maxRate, emphasize: true),
-          ValueRow(label: 'MIMO', value: entry.mimo),
-          ValueRow(label: 'Ch width (MHz)', value: entry.channelWidth),
-          ValueRow(label: 'Modulation', value: entry.modulation),
-        ],
-      ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            const Divider(color: AppColors.border, height: 1),
+            ValueRow(label: 'Bands (GHz)', value: entry.bands),
+            ValueRow(
+              label: 'Max PHY rate',
+              value: entry.maxRate,
+              emphasize: true,
+            ),
+            ValueRow(label: 'MIMO', value: entry.mimo),
+            ValueRow(label: 'Ch width (MHz)', value: entry.channelWidth),
+            ValueRow(label: 'Modulation', value: entry.modulation),
+          ],
+        ),
       ),
     );
   }

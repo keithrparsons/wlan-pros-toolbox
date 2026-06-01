@@ -43,6 +43,7 @@ import 'package:flutter/material.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
 
@@ -282,9 +283,31 @@ class EmojiReferenceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Top 30 Emoji'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Top 30 Emoji'),
+        toolbarHeight: 64,
+        // §8.16 — copy the ranked table as TSV. Static data, always enabled.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body(context)),
     );
+  }
+
+  /// §8.16 copy payload — the Top 30 table as TSV: a title, a four-column
+  /// header (Rank / Emoji / Name / Common use — the `literal` field is omitted
+  /// here too, matching the screen), one row per entry. Always non-null: the
+  /// dataset is static, so copy is never disabled.
+  String _buildCopyText() {
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()
+      ..writeln('Top 30 Emoji')
+      ..writeln(<String>['Rank', 'Emoji', 'Name', 'Common use'].join(tab));
+    for (final EmojiEntry e in emoji) {
+      buf.writeln(
+        <String>['${e.rank}', e.emoji, e.name, e.commonUse].join(tab),
+      );
+    }
+    return buf.toString().trimRight();
   }
 
   Widget _body(BuildContext context) {
@@ -309,10 +332,7 @@ class EmojiReferenceScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  ConceptGraphicBand(
-                    toolId: 'emoji',
-                    isDesktop: isDesktop,
-                  ),
+                  ConceptGraphicBand(toolId: 'emoji', isDesktop: isDesktop),
                   if (ToolAssets.hasGraphic('emoji'))
                     const SizedBox(height: AppSpacing.md),
                   _introCard(context),

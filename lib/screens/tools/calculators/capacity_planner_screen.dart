@@ -33,6 +33,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -182,7 +183,13 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Capacity Planner'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Capacity Planner'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until a valid plan
+        // is computed; copies the plan as a labeled text block.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -233,6 +240,41 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
         ),
       ),
     );
+  }
+
+  /// §8.16 copy payload — the capacity plan as a labeled text block.
+  ///
+  /// Returns null (→ disabled affordance) whenever there is no valid plan: any
+  /// required field empty or non-positive. Field order and values match the
+  /// on-screen inputs and [_resultsCard]; the density row reads "Not set" when
+  /// no max-clients ceiling was given (apsByDensity <= 0), matching the dash
+  /// shown on screen.
+  String? _buildCopyText() {
+    final CapacityResult? r = _result;
+    if (r == null) return null;
+
+    final String maxCli = _maxCliCtrl.text.trim();
+    final String density = r.apsByDensity <= 0
+        ? 'Not set'
+        : r.apsByDensity.toString();
+
+    return (StringBuffer()
+          ..writeln('Capacity Planner')
+          ..writeln('Total users: ${_usersCtrl.text.trim()}')
+          ..writeln('Concurrent usage: ${_concCtrl.text.trim()}%')
+          ..writeln('Per-user throughput: ${_perUserCtrl.text.trim()} Mbps')
+          ..writeln('AP max throughput: ${_apMaxCtrl.text.trim()} Mbps')
+          ..writeln('Target utilization: ${_utilCtrl.text.trim()}%')
+          ..writeln(
+            'Max clients per AP: ${maxCli.isEmpty ? 'Not set' : maxCli}',
+          )
+          ..writeln('Recommended APs: ${r.recommended}')
+          ..writeln('Concurrent users: ${r.concurrent}')
+          ..writeln('Aggregate demand: ${_formatInt(r.totalBwMbps)} Mbps')
+          ..writeln('APs by throughput: ${r.apsByThroughput}')
+          ..writeln('APs by density: $density'))
+        .toString()
+        .trimRight();
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {

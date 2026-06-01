@@ -27,6 +27,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -147,7 +148,13 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Downtilt'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Downtilt'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until a valid
+        // angle is computed; copies the result as a labeled text block.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -196,6 +203,27 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
         ),
       ),
     );
+  }
+
+  /// §8.16 copy payload — the downtilt angle as a labeled text block.
+  ///
+  /// Returns null (→ disabled affordance) whenever there is no valid angle:
+  /// empty / partial / non-positive height or coverage. Field order and values
+  /// match the on-screen inputs and [_resultRow].
+  String? _buildCopyText() {
+    final double? angle = _angleDeg;
+    if (angle == null) return null;
+
+    final String hUnit = _heightUnitLabel(_heightUnit);
+    final String cUnit = _coverageUnitLabel(_coverageUnit);
+
+    return (StringBuffer()
+          ..writeln('Downtilt')
+          ..writeln('Antenna height (AGL): ${_heightCtrl.text.trim()} $hUnit')
+          ..writeln('Target coverage: ${_coverageCtrl.text.trim()} $cUnit')
+          ..writeln('Downtilt angle: ${_formatAngle(angle)}°'))
+        .toString()
+        .trimRight();
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {

@@ -35,6 +35,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -161,7 +162,14 @@ class _MidpointScreenState extends State<MidpointScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Midpoint'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Midpoint'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until all four
+        // coordinates are valid (no midpoint); copies the great-circle midpoint
+        // as a labeled text block. Copy leads; this screen has no help icon.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -210,6 +218,31 @@ class _MidpointScreenState extends State<MidpointScreen> {
         ),
       ),
     );
+  }
+
+  /// §8.16 copy payload — the great-circle midpoint as a labeled text block.
+  ///
+  /// Returns null (→ disabled affordance) whenever any of the four coordinate
+  /// fields is empty or invalid, so there is no computed midpoint to keep.
+  /// Input points and the midpoint use the same 6-decimal formatting as the
+  /// on-screen [_resultBlock].
+  String? _buildCopyText() {
+    final MidpointResult? m = _mid;
+    if (m == null) return null;
+
+    final String aLat = _formatCoord(_tryParseDouble(_lat1Ctrl.text));
+    final String aLon = _formatCoord(_tryParseDouble(_lon1Ctrl.text));
+    final String bLat = _formatCoord(_tryParseDouble(_lat2Ctrl.text));
+    final String bLon = _formatCoord(_tryParseDouble(_lon2Ctrl.text));
+
+    return (StringBuffer()
+          ..writeln('Midpoint (great-circle)')
+          ..writeln('Point A: $aLat, $aLon')
+          ..writeln('Point B: $bLat, $bLon')
+          ..writeln('Midpoint lat: ${_formatCoord(m.lat)}')
+          ..writeln('Midpoint lon: ${_formatCoord(m.lon)}'))
+        .toString()
+        .trimRight();
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {

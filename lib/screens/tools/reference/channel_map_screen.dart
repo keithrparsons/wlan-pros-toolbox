@@ -36,6 +36,7 @@ import 'package:flutter/semantics.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 
 /// Which band's bonding map is shown. 2.4 / 5 / 6 GHz — three short options, so
@@ -135,66 +136,342 @@ class ChannelMapScreen extends StatefulWidget {
   /// UNII-1 (36–48) and UNII-3 (149–165); dfs for UNII-2A (52–64) and UNII-2C
   /// (100–144).
   static const List<BondedBlock> map5_20 = [
-    BondedBlock(widthMhz: 20, centerChannel: 36, lowChannel: 36, highChannel: 36, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 20, centerChannel: 40, lowChannel: 40, highChannel: 40, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 20, centerChannel: 44, lowChannel: 44, highChannel: 44, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 20, centerChannel: 48, lowChannel: 48, highChannel: 48, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 20, centerChannel: 52, lowChannel: 52, highChannel: 52, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 20, centerChannel: 56, lowChannel: 56, highChannel: 56, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 20, centerChannel: 60, lowChannel: 60, highChannel: 60, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 20, centerChannel: 64, lowChannel: 64, highChannel: 64, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 20, centerChannel: 100, lowChannel: 100, highChannel: 100, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 20, centerChannel: 104, lowChannel: 104, highChannel: 104, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 20, centerChannel: 108, lowChannel: 108, highChannel: 108, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 20, centerChannel: 112, lowChannel: 112, highChannel: 112, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 20, centerChannel: 116, lowChannel: 116, highChannel: 116, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 20, centerChannel: 120, lowChannel: 120, highChannel: 120, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 20, centerChannel: 124, lowChannel: 124, highChannel: 124, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 20, centerChannel: 128, lowChannel: 128, highChannel: 128, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 20, centerChannel: 132, lowChannel: 132, highChannel: 132, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 20, centerChannel: 136, lowChannel: 136, highChannel: 136, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 20, centerChannel: 140, lowChannel: 140, highChannel: 140, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 20, centerChannel: 144, lowChannel: 144, highChannel: 144, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 20, centerChannel: 149, lowChannel: 149, highChannel: 149, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 20, centerChannel: 153, lowChannel: 153, highChannel: 153, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 20, centerChannel: 157, lowChannel: 157, highChannel: 157, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 20, centerChannel: 161, lowChannel: 161, highChannel: 161, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 20, centerChannel: 165, lowChannel: 165, highChannel: 165, dfs: DfsClass.noDfs),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 36,
+      lowChannel: 36,
+      highChannel: 36,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 40,
+      lowChannel: 40,
+      highChannel: 40,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 44,
+      lowChannel: 44,
+      highChannel: 44,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 48,
+      lowChannel: 48,
+      highChannel: 48,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 52,
+      lowChannel: 52,
+      highChannel: 52,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 56,
+      lowChannel: 56,
+      highChannel: 56,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 60,
+      lowChannel: 60,
+      highChannel: 60,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 64,
+      lowChannel: 64,
+      highChannel: 64,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 100,
+      lowChannel: 100,
+      highChannel: 100,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 104,
+      lowChannel: 104,
+      highChannel: 104,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 108,
+      lowChannel: 108,
+      highChannel: 108,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 112,
+      lowChannel: 112,
+      highChannel: 112,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 116,
+      lowChannel: 116,
+      highChannel: 116,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 120,
+      lowChannel: 120,
+      highChannel: 120,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 124,
+      lowChannel: 124,
+      highChannel: 124,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 128,
+      lowChannel: 128,
+      highChannel: 128,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 132,
+      lowChannel: 132,
+      highChannel: 132,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 136,
+      lowChannel: 136,
+      highChannel: 136,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 140,
+      lowChannel: 140,
+      highChannel: 140,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 144,
+      lowChannel: 144,
+      highChannel: 144,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 149,
+      lowChannel: 149,
+      highChannel: 149,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 153,
+      lowChannel: 153,
+      highChannel: 153,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 157,
+      lowChannel: 157,
+      highChannel: 157,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 161,
+      lowChannel: 161,
+      highChannel: 161,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 165,
+      lowChannel: 165,
+      highChannel: 165,
+      dfs: DfsClass.noDfs,
+    ),
   ];
 
   /// 5 GHz 40 MHz bonds — verbatim from PWA `CM5_40`. Center = round((c1+c2)/2).
   static const List<BondedBlock> map5_40 = [
-    BondedBlock(widthMhz: 40, centerChannel: 38, lowChannel: 36, highChannel: 40, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 40, centerChannel: 46, lowChannel: 44, highChannel: 48, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 40, centerChannel: 54, lowChannel: 52, highChannel: 56, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 40, centerChannel: 62, lowChannel: 60, highChannel: 64, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 40, centerChannel: 102, lowChannel: 100, highChannel: 104, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 40, centerChannel: 110, lowChannel: 108, highChannel: 112, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 40, centerChannel: 118, lowChannel: 116, highChannel: 120, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 40, centerChannel: 126, lowChannel: 124, highChannel: 128, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 40, centerChannel: 134, lowChannel: 132, highChannel: 136, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 40, centerChannel: 142, lowChannel: 140, highChannel: 144, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 40, centerChannel: 151, lowChannel: 149, highChannel: 153, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 40, centerChannel: 159, lowChannel: 157, highChannel: 161, dfs: DfsClass.noDfs),
+    BondedBlock(
+      widthMhz: 40,
+      centerChannel: 38,
+      lowChannel: 36,
+      highChannel: 40,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 40,
+      centerChannel: 46,
+      lowChannel: 44,
+      highChannel: 48,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 40,
+      centerChannel: 54,
+      lowChannel: 52,
+      highChannel: 56,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 40,
+      centerChannel: 62,
+      lowChannel: 60,
+      highChannel: 64,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 40,
+      centerChannel: 102,
+      lowChannel: 100,
+      highChannel: 104,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 40,
+      centerChannel: 110,
+      lowChannel: 108,
+      highChannel: 112,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 40,
+      centerChannel: 118,
+      lowChannel: 116,
+      highChannel: 120,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 40,
+      centerChannel: 126,
+      lowChannel: 124,
+      highChannel: 128,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 40,
+      centerChannel: 134,
+      lowChannel: 132,
+      highChannel: 136,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 40,
+      centerChannel: 142,
+      lowChannel: 140,
+      highChannel: 144,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 40,
+      centerChannel: 151,
+      lowChannel: 149,
+      highChannel: 153,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 40,
+      centerChannel: 159,
+      lowChannel: 157,
+      highChannel: 161,
+      dfs: DfsClass.noDfs,
+    ),
   ];
 
   /// 5 GHz 80 MHz bonds — verbatim from PWA `CM5_80`. Center = round((c1+c2)/2).
   static const List<BondedBlock> map5_80 = [
-    BondedBlock(widthMhz: 80, centerChannel: 42, lowChannel: 36, highChannel: 48, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 80, centerChannel: 58, lowChannel: 52, highChannel: 64, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 80, centerChannel: 106, lowChannel: 100, highChannel: 112, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 80, centerChannel: 122, lowChannel: 116, highChannel: 128, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 80, centerChannel: 138, lowChannel: 132, highChannel: 144, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 80, centerChannel: 155, lowChannel: 149, highChannel: 161, dfs: DfsClass.noDfs),
+    BondedBlock(
+      widthMhz: 80,
+      centerChannel: 42,
+      lowChannel: 36,
+      highChannel: 48,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 80,
+      centerChannel: 58,
+      lowChannel: 52,
+      highChannel: 64,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 80,
+      centerChannel: 106,
+      lowChannel: 100,
+      highChannel: 112,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 80,
+      centerChannel: 122,
+      lowChannel: 116,
+      highChannel: 128,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 80,
+      centerChannel: 138,
+      lowChannel: 132,
+      highChannel: 144,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 80,
+      centerChannel: 155,
+      lowChannel: 149,
+      highChannel: 161,
+      dfs: DfsClass.noDfs,
+    ),
   ];
 
   /// 5 GHz 160 MHz bonds — verbatim from PWA `CM5_160`. Center = round((c1+c2)/2).
   /// ch 50 (36–64) spans UNII-1 + UNII-2A → mixed: a non-DFS + DFS span, so the
   /// whole bond is subject to DFS (the PWA's purple block).
   static const List<BondedBlock> map5_160 = [
-    BondedBlock(widthMhz: 160, centerChannel: 50, lowChannel: 36, highChannel: 64, dfs: DfsClass.mixed),
-    BondedBlock(widthMhz: 160, centerChannel: 114, lowChannel: 100, highChannel: 128, dfs: DfsClass.dfs),
-    BondedBlock(widthMhz: 160, centerChannel: 130, lowChannel: 116, highChannel: 144, dfs: DfsClass.dfs),
+    BondedBlock(
+      widthMhz: 160,
+      centerChannel: 50,
+      lowChannel: 36,
+      highChannel: 64,
+      dfs: DfsClass.mixed,
+    ),
+    BondedBlock(
+      widthMhz: 160,
+      centerChannel: 114,
+      lowChannel: 100,
+      highChannel: 128,
+      dfs: DfsClass.dfs,
+    ),
+    BondedBlock(
+      widthMhz: 160,
+      centerChannel: 130,
+      lowChannel: 116,
+      highChannel: 144,
+      dfs: DfsClass.dfs,
+    ),
   ];
 
   // ── 6 GHz bonding map (UNII-5, ch 1–93) ────────────────────────────────────
@@ -205,71 +482,354 @@ class ChannelMapScreen extends StatefulWidget {
   /// 6 GHz 20 MHz primaries (UNII-5, ch 1–93). PSC channels (5,21,37,53,69,85)
   /// are the preferred scanning channels Wi-Fi 6E clients scan first.
   static const List<BondedBlock> map6_20 = [
-    BondedBlock(widthMhz: 20, centerChannel: 1, lowChannel: 1, highChannel: 1, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 20, centerChannel: 5, lowChannel: 5, highChannel: 5, dfs: DfsClass.psc),
-    BondedBlock(widthMhz: 20, centerChannel: 9, lowChannel: 9, highChannel: 9, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 20, centerChannel: 13, lowChannel: 13, highChannel: 13, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 20, centerChannel: 17, lowChannel: 17, highChannel: 17, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 20, centerChannel: 21, lowChannel: 21, highChannel: 21, dfs: DfsClass.psc),
-    BondedBlock(widthMhz: 20, centerChannel: 25, lowChannel: 25, highChannel: 25, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 20, centerChannel: 29, lowChannel: 29, highChannel: 29, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 20, centerChannel: 33, lowChannel: 33, highChannel: 33, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 20, centerChannel: 37, lowChannel: 37, highChannel: 37, dfs: DfsClass.psc),
-    BondedBlock(widthMhz: 20, centerChannel: 41, lowChannel: 41, highChannel: 41, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 20, centerChannel: 45, lowChannel: 45, highChannel: 45, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 20, centerChannel: 49, lowChannel: 49, highChannel: 49, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 20, centerChannel: 53, lowChannel: 53, highChannel: 53, dfs: DfsClass.psc),
-    BondedBlock(widthMhz: 20, centerChannel: 57, lowChannel: 57, highChannel: 57, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 20, centerChannel: 61, lowChannel: 61, highChannel: 61, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 20, centerChannel: 65, lowChannel: 65, highChannel: 65, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 20, centerChannel: 69, lowChannel: 69, highChannel: 69, dfs: DfsClass.psc),
-    BondedBlock(widthMhz: 20, centerChannel: 73, lowChannel: 73, highChannel: 73, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 20, centerChannel: 77, lowChannel: 77, highChannel: 77, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 20, centerChannel: 81, lowChannel: 81, highChannel: 81, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 20, centerChannel: 85, lowChannel: 85, highChannel: 85, dfs: DfsClass.psc),
-    BondedBlock(widthMhz: 20, centerChannel: 89, lowChannel: 89, highChannel: 89, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 20, centerChannel: 93, lowChannel: 93, highChannel: 93, dfs: DfsClass.noDfs),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 1,
+      lowChannel: 1,
+      highChannel: 1,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 5,
+      lowChannel: 5,
+      highChannel: 5,
+      dfs: DfsClass.psc,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 9,
+      lowChannel: 9,
+      highChannel: 9,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 13,
+      lowChannel: 13,
+      highChannel: 13,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 17,
+      lowChannel: 17,
+      highChannel: 17,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 21,
+      lowChannel: 21,
+      highChannel: 21,
+      dfs: DfsClass.psc,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 25,
+      lowChannel: 25,
+      highChannel: 25,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 29,
+      lowChannel: 29,
+      highChannel: 29,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 33,
+      lowChannel: 33,
+      highChannel: 33,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 37,
+      lowChannel: 37,
+      highChannel: 37,
+      dfs: DfsClass.psc,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 41,
+      lowChannel: 41,
+      highChannel: 41,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 45,
+      lowChannel: 45,
+      highChannel: 45,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 49,
+      lowChannel: 49,
+      highChannel: 49,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 53,
+      lowChannel: 53,
+      highChannel: 53,
+      dfs: DfsClass.psc,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 57,
+      lowChannel: 57,
+      highChannel: 57,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 61,
+      lowChannel: 61,
+      highChannel: 61,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 65,
+      lowChannel: 65,
+      highChannel: 65,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 69,
+      lowChannel: 69,
+      highChannel: 69,
+      dfs: DfsClass.psc,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 73,
+      lowChannel: 73,
+      highChannel: 73,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 77,
+      lowChannel: 77,
+      highChannel: 77,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 81,
+      lowChannel: 81,
+      highChannel: 81,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 85,
+      lowChannel: 85,
+      highChannel: 85,
+      dfs: DfsClass.psc,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 89,
+      lowChannel: 89,
+      highChannel: 89,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 93,
+      lowChannel: 93,
+      highChannel: 93,
+      dfs: DfsClass.noDfs,
+    ),
   ];
 
   /// 6 GHz 40 MHz bonds — verbatim from PWA `CM6_40`. Center label = c1+2.
   static const List<BondedBlock> map6_40 = [
-    BondedBlock(widthMhz: 40, centerChannel: 3, lowChannel: 1, highChannel: 5, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 40, centerChannel: 11, lowChannel: 9, highChannel: 13, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 40, centerChannel: 19, lowChannel: 17, highChannel: 21, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 40, centerChannel: 27, lowChannel: 25, highChannel: 29, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 40, centerChannel: 35, lowChannel: 33, highChannel: 37, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 40, centerChannel: 43, lowChannel: 41, highChannel: 45, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 40, centerChannel: 51, lowChannel: 49, highChannel: 53, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 40, centerChannel: 59, lowChannel: 57, highChannel: 61, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 40, centerChannel: 67, lowChannel: 65, highChannel: 69, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 40, centerChannel: 75, lowChannel: 73, highChannel: 77, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 40, centerChannel: 83, lowChannel: 81, highChannel: 85, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 40, centerChannel: 91, lowChannel: 89, highChannel: 93, dfs: DfsClass.noDfs),
+    BondedBlock(
+      widthMhz: 40,
+      centerChannel: 3,
+      lowChannel: 1,
+      highChannel: 5,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 40,
+      centerChannel: 11,
+      lowChannel: 9,
+      highChannel: 13,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 40,
+      centerChannel: 19,
+      lowChannel: 17,
+      highChannel: 21,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 40,
+      centerChannel: 27,
+      lowChannel: 25,
+      highChannel: 29,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 40,
+      centerChannel: 35,
+      lowChannel: 33,
+      highChannel: 37,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 40,
+      centerChannel: 43,
+      lowChannel: 41,
+      highChannel: 45,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 40,
+      centerChannel: 51,
+      lowChannel: 49,
+      highChannel: 53,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 40,
+      centerChannel: 59,
+      lowChannel: 57,
+      highChannel: 61,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 40,
+      centerChannel: 67,
+      lowChannel: 65,
+      highChannel: 69,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 40,
+      centerChannel: 75,
+      lowChannel: 73,
+      highChannel: 77,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 40,
+      centerChannel: 83,
+      lowChannel: 81,
+      highChannel: 85,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 40,
+      centerChannel: 91,
+      lowChannel: 89,
+      highChannel: 93,
+      dfs: DfsClass.noDfs,
+    ),
   ];
 
   /// 6 GHz 80 MHz bonds — verbatim from PWA `CM6_80`. Center label = c1+6.
   static const List<BondedBlock> map6_80 = [
-    BondedBlock(widthMhz: 80, centerChannel: 7, lowChannel: 1, highChannel: 13, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 80, centerChannel: 23, lowChannel: 17, highChannel: 29, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 80, centerChannel: 39, lowChannel: 33, highChannel: 45, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 80, centerChannel: 55, lowChannel: 49, highChannel: 61, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 80, centerChannel: 71, lowChannel: 65, highChannel: 77, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 80, centerChannel: 87, lowChannel: 81, highChannel: 93, dfs: DfsClass.noDfs),
+    BondedBlock(
+      widthMhz: 80,
+      centerChannel: 7,
+      lowChannel: 1,
+      highChannel: 13,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 80,
+      centerChannel: 23,
+      lowChannel: 17,
+      highChannel: 29,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 80,
+      centerChannel: 39,
+      lowChannel: 33,
+      highChannel: 45,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 80,
+      centerChannel: 55,
+      lowChannel: 49,
+      highChannel: 61,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 80,
+      centerChannel: 71,
+      lowChannel: 65,
+      highChannel: 77,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 80,
+      centerChannel: 87,
+      lowChannel: 81,
+      highChannel: 93,
+      dfs: DfsClass.noDfs,
+    ),
   ];
 
   /// 6 GHz 160 MHz bonds — verbatim from PWA `CM6_160`. Center label = c1+14.
   static const List<BondedBlock> map6_160 = [
-    BondedBlock(widthMhz: 160, centerChannel: 15, lowChannel: 1, highChannel: 29, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 160, centerChannel: 47, lowChannel: 33, highChannel: 61, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 160, centerChannel: 79, lowChannel: 65, highChannel: 93, dfs: DfsClass.noDfs),
+    BondedBlock(
+      widthMhz: 160,
+      centerChannel: 15,
+      lowChannel: 1,
+      highChannel: 29,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 160,
+      centerChannel: 47,
+      lowChannel: 33,
+      highChannel: 61,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 160,
+      centerChannel: 79,
+      lowChannel: 65,
+      highChannel: 93,
+      dfs: DfsClass.noDfs,
+    ),
   ];
 
   /// 6 GHz 320 MHz bonds — verbatim from PWA's 320 block. ch 31 is the primary
   /// 320 MHz block in UNII-5; ch 63 is the dashed alternative (they overlap, so
   /// only one is used at a time).
   static const List<BondedBlock> map6_320 = [
-    BondedBlock(widthMhz: 320, centerChannel: 31, lowChannel: 1, highChannel: 61, dfs: DfsClass.noDfs),
-    BondedBlock(widthMhz: 320, centerChannel: 63, lowChannel: 33, highChannel: 93, dfs: DfsClass.noDfs, alt: true),
+    BondedBlock(
+      widthMhz: 320,
+      centerChannel: 31,
+      lowChannel: 1,
+      highChannel: 61,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 320,
+      centerChannel: 63,
+      lowChannel: 33,
+      highChannel: 93,
+      dfs: DfsClass.noDfs,
+      alt: true,
+    ),
   ];
 
   @override
@@ -304,9 +864,96 @@ class _ChannelMapScreenState extends State<ChannelMapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Channel Map'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Channel Map'),
+        toolbarHeight: 64,
+        // §8.16 — copy all three band maps as TSV. The maps are static const
+        // data (the band toggle only picks which one renders, all are present),
+        // so the affordance is always enabled.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// §8.16 copy payload — every band's channel map as TSV, regardless of which
+  /// band is currently toggled on screen (the data is all present; the toggle
+  /// only chooses what renders). Three sections:
+  ///   - 2.4 GHz: Channel / Frequency (MHz) / Overlap.
+  ///   - 5 GHz and 6 GHz: each bonded width as its own sub-section with
+  ///     Width (MHz) / Center channel / Low channel / High channel / Class —
+  ///     where Class is the worded DFS/PSC label (§8.13: the color carries the
+  ///     class on screen; the word carries it to the clipboard).
+  /// Always non-null: the datasets are static, so copy is never disabled.
+  String _buildCopyText() {
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer();
+
+    // ── 2.4 GHz ──
+    buf
+      ..writeln('2.4 GHz — 20 MHz channels (US)')
+      ..writeln(<String>['Channel', 'Frequency (MHz)', 'Overlap'].join(tab));
+    for (final ChanMap24 c in ChannelMapScreen.map24) {
+      buf.writeln(
+        <String>[
+          '${c.channel}',
+          '${c.freqMhz}',
+          c.nonOverlap ? 'Non-overlapping' : 'Overlapping',
+        ].join(tab),
+      );
+    }
+
+    // ── 5 GHz bonded widths ──
+    buf
+      ..writeln()
+      ..writeln('5 GHz — bonded widths (US, FCC)');
+    _writeBonded(buf, tab, '20 MHz', ChannelMapScreen.map5_20);
+    _writeBonded(buf, tab, '40 MHz', ChannelMapScreen.map5_40);
+    _writeBonded(buf, tab, '80 MHz', ChannelMapScreen.map5_80);
+    _writeBonded(buf, tab, '160 MHz', ChannelMapScreen.map5_160);
+
+    // ── 6 GHz bonded widths ──
+    buf
+      ..writeln()
+      ..writeln('6 GHz — UNII-5, ch 1–93');
+    _writeBonded(buf, tab, '20 MHz', ChannelMapScreen.map6_20);
+    _writeBonded(buf, tab, '40 MHz', ChannelMapScreen.map6_40);
+    _writeBonded(buf, tab, '80 MHz', ChannelMapScreen.map6_80);
+    _writeBonded(buf, tab, '160 MHz', ChannelMapScreen.map6_160);
+    _writeBonded(buf, tab, '320 MHz', ChannelMapScreen.map6_320);
+
+    return buf.toString().trimRight();
+  }
+
+  /// One bonded-width sub-section: a subtitle, a header, then one row per block.
+  void _writeBonded(
+    StringBuffer buf,
+    String tab,
+    String widthLabel,
+    List<BondedBlock> blocks,
+  ) {
+    buf
+      ..writeln(widthLabel)
+      ..writeln(
+        <String>[
+          'Width (MHz)',
+          'Center channel',
+          'Low channel',
+          'High channel',
+          'Class',
+        ].join(tab),
+      );
+    for (final BondedBlock b in blocks) {
+      buf.writeln(
+        <String>[
+          '${b.widthMhz}',
+          b.alt ? '${b.centerChannel} (alt)' : '${b.centerChannel}',
+          '${b.lowChannel}',
+          '${b.highChannel}',
+          _dfsStyle(b.dfs).label,
+        ].join(tab),
+      );
+    }
   }
 
   Widget _body() {
@@ -477,10 +1124,7 @@ class _MapCard extends StatelessWidget {
           // intrinsic (fixed) width, so nothing is pinned to a guessed value
           // that would overflow a phone. Matches wifi_channels_screen.dart and
           // the PWA's own "scroll horizontally" treatment for 5/6 GHz.
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: grid,
-          ),
+          SingleChildScrollView(scrollDirection: Axis.horizontal, child: grid),
           const SizedBox(height: AppSpacing.sm),
           Wrap(
             spacing: AppSpacing.xs,
@@ -540,8 +1184,9 @@ class _Block extends StatelessWidget {
         ? AppColors.textTertiary.withValues(alpha: 0.06)
         : st.color.withValues(alpha: 0.18);
     final Color blockBorder = st.neutral ? AppColors.border : st.color;
-    final String label =
-        block.alt ? '${block.centerChannel} alt' : '${block.centerChannel}';
+    final String label = block.alt
+        ? '${block.centerChannel} alt'
+        : '${block.centerChannel}';
     return Semantics(
       label:
           '${block.widthMhz} megahertz, primary channel ${block.centerChannel}'
@@ -661,9 +1306,7 @@ class _Map24 extends StatelessWidget {
               ),
               Text(
                 '${c.freqMhz}',
-                style: text.labelSmall?.copyWith(
-                  color: AppColors.textTertiary,
-                ),
+                style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
               ),
             ],
           ),
@@ -700,10 +1343,26 @@ class _Map5 extends StatelessWidget {
       grid: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _BondRow(widthLabel: '20', blocks: ChannelMapScreen.map5_20, mono: mono),
-          _BondRow(widthLabel: '40', blocks: ChannelMapScreen.map5_40, mono: mono),
-          _BondRow(widthLabel: '80', blocks: ChannelMapScreen.map5_80, mono: mono),
-          _BondRow(widthLabel: '160', blocks: ChannelMapScreen.map5_160, mono: mono),
+          _BondRow(
+            widthLabel: '20',
+            blocks: ChannelMapScreen.map5_20,
+            mono: mono,
+          ),
+          _BondRow(
+            widthLabel: '40',
+            blocks: ChannelMapScreen.map5_40,
+            mono: mono,
+          ),
+          _BondRow(
+            widthLabel: '80',
+            blocks: ChannelMapScreen.map5_80,
+            mono: mono,
+          ),
+          _BondRow(
+            widthLabel: '160',
+            blocks: ChannelMapScreen.map5_160,
+            mono: mono,
+          ),
         ],
       ),
       legend: const [DfsClass.noDfs, DfsClass.dfs, DfsClass.mixed],
@@ -730,11 +1389,31 @@ class _Map6 extends StatelessWidget {
       grid: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _BondRow(widthLabel: '20', blocks: ChannelMapScreen.map6_20, mono: mono),
-          _BondRow(widthLabel: '40', blocks: ChannelMapScreen.map6_40, mono: mono),
-          _BondRow(widthLabel: '80', blocks: ChannelMapScreen.map6_80, mono: mono),
-          _BondRow(widthLabel: '160', blocks: ChannelMapScreen.map6_160, mono: mono),
-          _BondRow(widthLabel: '320', blocks: ChannelMapScreen.map6_320, mono: mono),
+          _BondRow(
+            widthLabel: '20',
+            blocks: ChannelMapScreen.map6_20,
+            mono: mono,
+          ),
+          _BondRow(
+            widthLabel: '40',
+            blocks: ChannelMapScreen.map6_40,
+            mono: mono,
+          ),
+          _BondRow(
+            widthLabel: '80',
+            blocks: ChannelMapScreen.map6_80,
+            mono: mono,
+          ),
+          _BondRow(
+            widthLabel: '160',
+            blocks: ChannelMapScreen.map6_160,
+            mono: mono,
+          ),
+          _BondRow(
+            widthLabel: '320',
+            blocks: ChannelMapScreen.map6_320,
+            mono: mono,
+          ),
         ],
       ),
       legend: const [DfsClass.noDfs, DfsClass.psc],
@@ -771,10 +1450,7 @@ class _Chip extends StatelessWidget {
       decoration: BoxDecoration(
         color: neutral ? AppColors.surface2 : color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(
-          color: neutral ? AppColors.border : color,
-          width: 1,
-        ),
+        border: Border.all(color: neutral ? AppColors.border : color, width: 1),
       ),
       child: Text(
         label,

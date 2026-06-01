@@ -34,6 +34,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
@@ -311,7 +312,13 @@ class _CableLossScreenState extends State<CableLossScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Cable Loss'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Cable Loss'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until a valid
+        // total loss is computed; copies the run as a labeled text block.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -360,6 +367,29 @@ class _CableLossScreenState extends State<CableLossScreen> {
         ),
       ),
     );
+  }
+
+  /// §8.16 copy payload — the cable run as a labeled text block.
+  ///
+  /// Returns null (→ disabled affordance) whenever there is no valid total
+  /// loss: empty / partial / non-positive frequency or length. Field order and
+  /// values match the on-screen inputs and [_resultRow].
+  String? _buildCopyText() {
+    final double? total = _totalLossDb;
+    if (total == null) return null;
+
+    final String freqUnit = _freqUnit == CableFreqUnit.ghz ? 'GHz' : 'MHz';
+    final String lenUnit = _lengthUnit == CableLengthUnit.ft ? 'ft' : 'm';
+
+    return (StringBuffer()
+          ..writeln('Cable Loss')
+          ..writeln('Cable type: $_cable')
+          ..writeln('Frequency: ${_freqCtrl.text.trim()} $freqUnit')
+          ..writeln('Cable length: ${_lengthCtrl.text.trim()} $lenUnit')
+          ..writeln('Total loss: ${_format2(total)} dB')
+          ..writeln('Loss per 100 ft: ${_format2(_lossPer100)} dB'))
+        .toString()
+        .trimRight();
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {

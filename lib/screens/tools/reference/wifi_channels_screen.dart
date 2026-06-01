@@ -22,6 +22,7 @@ import 'package:flutter/semantics.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
 
@@ -99,20 +100,118 @@ class WifiChannelsScreen extends StatefulWidget {
   /// the special 12 MHz step above ch 13). Matches PWA CH24 plus its band
   /// footnote "Ch 1–11 (US) · Ch 1–13 (EU) · Ch 1–14 (JP)".
   static const List<Channel24> channels24 = [
-    Channel24(channel: 1, centerGhz: 2.412, rangeMhzLow: 2401, rangeMhzHigh: 2423, nonOverlap: true, regulatory: 'US'),
-    Channel24(channel: 2, centerGhz: 2.417, rangeMhzLow: 2406, rangeMhzHigh: 2428, nonOverlap: false, regulatory: 'US'),
-    Channel24(channel: 3, centerGhz: 2.422, rangeMhzLow: 2411, rangeMhzHigh: 2433, nonOverlap: false, regulatory: 'US'),
-    Channel24(channel: 4, centerGhz: 2.427, rangeMhzLow: 2416, rangeMhzHigh: 2438, nonOverlap: false, regulatory: 'US'),
-    Channel24(channel: 5, centerGhz: 2.432, rangeMhzLow: 2421, rangeMhzHigh: 2443, nonOverlap: false, regulatory: 'US'),
-    Channel24(channel: 6, centerGhz: 2.437, rangeMhzLow: 2426, rangeMhzHigh: 2448, nonOverlap: true, regulatory: 'US'),
-    Channel24(channel: 7, centerGhz: 2.442, rangeMhzLow: 2431, rangeMhzHigh: 2453, nonOverlap: false, regulatory: 'US'),
-    Channel24(channel: 8, centerGhz: 2.447, rangeMhzLow: 2436, rangeMhzHigh: 2458, nonOverlap: false, regulatory: 'US'),
-    Channel24(channel: 9, centerGhz: 2.452, rangeMhzLow: 2441, rangeMhzHigh: 2463, nonOverlap: false, regulatory: 'US'),
-    Channel24(channel: 10, centerGhz: 2.457, rangeMhzLow: 2446, rangeMhzHigh: 2468, nonOverlap: false, regulatory: 'US'),
-    Channel24(channel: 11, centerGhz: 2.462, rangeMhzLow: 2451, rangeMhzHigh: 2473, nonOverlap: true, regulatory: 'US'),
-    Channel24(channel: 12, centerGhz: 2.467, rangeMhzLow: 2456, rangeMhzHigh: 2478, nonOverlap: false, regulatory: 'EU'),
-    Channel24(channel: 13, centerGhz: 2.472, rangeMhzLow: 2461, rangeMhzHigh: 2483, nonOverlap: false, regulatory: 'EU'),
-    Channel24(channel: 14, centerGhz: 2.484, rangeMhzLow: 2473, rangeMhzHigh: 2495, nonOverlap: false, regulatory: 'JP'),
+    Channel24(
+      channel: 1,
+      centerGhz: 2.412,
+      rangeMhzLow: 2401,
+      rangeMhzHigh: 2423,
+      nonOverlap: true,
+      regulatory: 'US',
+    ),
+    Channel24(
+      channel: 2,
+      centerGhz: 2.417,
+      rangeMhzLow: 2406,
+      rangeMhzHigh: 2428,
+      nonOverlap: false,
+      regulatory: 'US',
+    ),
+    Channel24(
+      channel: 3,
+      centerGhz: 2.422,
+      rangeMhzLow: 2411,
+      rangeMhzHigh: 2433,
+      nonOverlap: false,
+      regulatory: 'US',
+    ),
+    Channel24(
+      channel: 4,
+      centerGhz: 2.427,
+      rangeMhzLow: 2416,
+      rangeMhzHigh: 2438,
+      nonOverlap: false,
+      regulatory: 'US',
+    ),
+    Channel24(
+      channel: 5,
+      centerGhz: 2.432,
+      rangeMhzLow: 2421,
+      rangeMhzHigh: 2443,
+      nonOverlap: false,
+      regulatory: 'US',
+    ),
+    Channel24(
+      channel: 6,
+      centerGhz: 2.437,
+      rangeMhzLow: 2426,
+      rangeMhzHigh: 2448,
+      nonOverlap: true,
+      regulatory: 'US',
+    ),
+    Channel24(
+      channel: 7,
+      centerGhz: 2.442,
+      rangeMhzLow: 2431,
+      rangeMhzHigh: 2453,
+      nonOverlap: false,
+      regulatory: 'US',
+    ),
+    Channel24(
+      channel: 8,
+      centerGhz: 2.447,
+      rangeMhzLow: 2436,
+      rangeMhzHigh: 2458,
+      nonOverlap: false,
+      regulatory: 'US',
+    ),
+    Channel24(
+      channel: 9,
+      centerGhz: 2.452,
+      rangeMhzLow: 2441,
+      rangeMhzHigh: 2463,
+      nonOverlap: false,
+      regulatory: 'US',
+    ),
+    Channel24(
+      channel: 10,
+      centerGhz: 2.457,
+      rangeMhzLow: 2446,
+      rangeMhzHigh: 2468,
+      nonOverlap: false,
+      regulatory: 'US',
+    ),
+    Channel24(
+      channel: 11,
+      centerGhz: 2.462,
+      rangeMhzLow: 2451,
+      rangeMhzHigh: 2473,
+      nonOverlap: true,
+      regulatory: 'US',
+    ),
+    Channel24(
+      channel: 12,
+      centerGhz: 2.467,
+      rangeMhzLow: 2456,
+      rangeMhzHigh: 2478,
+      nonOverlap: false,
+      regulatory: 'EU',
+    ),
+    Channel24(
+      channel: 13,
+      centerGhz: 2.472,
+      rangeMhzLow: 2461,
+      rangeMhzHigh: 2483,
+      nonOverlap: false,
+      regulatory: 'EU',
+    ),
+    Channel24(
+      channel: 14,
+      centerGhz: 2.484,
+      rangeMhzLow: 2473,
+      rangeMhzHigh: 2495,
+      nonOverlap: false,
+      regulatory: 'JP',
+    ),
   ];
 
   /// 5 GHz — US (FCC). UNII-1 / 2A / 2C / 3, 20 MHz centers, DFS per sub-band.
@@ -194,10 +293,75 @@ class _WifiChannelsScreenState extends State<WifiChannelsScreen> {
     }
   }
 
+  /// §8.16 copy payload — all three band tables as TSV. Static data, so always
+  /// enabled, and it copies EVERY band (not just the selected one) so the
+  /// clipboard carries the complete channel reference. Each band is its own
+  /// section with its own column shape: 2.4 GHz (channel + range + note),
+  /// 5 GHz (channel + UNII sub-band + DFS), 6 GHz (channel + PSC). The on-screen
+  /// chips (non-overlap / regulatory domain / DFS / PSC) are carried as worded
+  /// cells so the meaning survives the copy.
+  static String _buildCopyText() {
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()..writeln('Wi-Fi Channels');
+
+    buf
+      ..writeln()
+      ..writeln('2.4 GHz (${WifiChannelsScreen.channels24.length} channels)')
+      ..writeln(<String>['Ch', 'Center GHz', 'Range MHz', 'Note'].join(tab));
+    for (final Channel24 c in WifiChannelsScreen.channels24) {
+      final String note = c.nonOverlap
+          ? 'Non-overlapping'
+          : (c.regulatory != 'US' ? '${c.regulatory} only' : '');
+      buf.writeln(
+        <String>[
+          '${c.channel}',
+          c.centerGhz.toStringAsFixed(3),
+          '${c.rangeMhzLow}-${c.rangeMhzHigh}',
+          note,
+        ].join(tab),
+      );
+    }
+
+    buf
+      ..writeln()
+      ..writeln('5 GHz (${WifiChannelsScreen.channels5.length} channels, US)')
+      ..writeln(<String>['Ch', 'GHz', 'Band', 'DFS'].join(tab));
+    for (final Channel5 c in WifiChannelsScreen.channels5) {
+      buf.writeln(
+        <String>[
+          '${c.channel}',
+          c.centerGhz.toStringAsFixed(3),
+          c.band,
+          c.dfs ? 'DFS required' : 'No DFS',
+        ].join(tab),
+      );
+    }
+
+    buf
+      ..writeln()
+      ..writeln('6 GHz (${WifiChannelsScreen.channels6.length} PSC channels)')
+      ..writeln(<String>['Ch', 'GHz', 'Type'].join(tab));
+    for (final Channel6 c in WifiChannelsScreen.channels6) {
+      buf.writeln(
+        <String>[
+          '${c.channel}',
+          c.centerGhz.toStringAsFixed(3),
+          c.psc ? 'PSC' : '',
+        ].join(tab),
+      );
+    }
+
+    return buf.toString().trimRight();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Wi-Fi Channels'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Wi-Fi Channels'),
+        toolbarHeight: 64,
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body()),
     );
   }
@@ -333,10 +497,7 @@ class _TableCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   header,
-                  const Divider(
-                    color: AppColors.border,
-                    height: AppSpacing.sm,
-                  ),
+                  const Divider(color: AppColors.border, height: AppSpacing.sm),
                   ...rows,
                 ],
               ),
@@ -346,9 +507,7 @@ class _TableCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.xs),
             Text(
               footnote!,
-              style: text.labelMedium?.copyWith(
-                color: AppColors.textTertiary,
-              ),
+              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
             ),
           ],
         ],
@@ -400,10 +559,7 @@ class _Chip extends StatelessWidget {
       decoration: BoxDecoration(
         color: neutral ? AppColors.surface2 : color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(
-          color: neutral ? AppColors.border : color,
-          width: 1,
-        ),
+        border: Border.all(color: neutral ? AppColors.border : color, width: 1),
       ),
       child: Text(
         label,
@@ -448,60 +604,57 @@ class _Table24 extends StatelessWidget {
                 : (c.regulatory != 'US' ? '${c.regulatory} only' : null),
           ]),
           child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: 40,
-                child: Text(
-                  '${c.channel}',
-                  style: mono.inlineCode.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w500,
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 40,
+                  child: Text(
+                    '${c.channel}',
+                    style: mono.inlineCode.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(
-                width: 64,
-                child: Text(
-                  c.centerGhz.toStringAsFixed(3),
-                  style: mono.inlineCode.copyWith(
-                    color: AppColors.textSecondary,
+                SizedBox(
+                  width: 64,
+                  child: Text(
+                    c.centerGhz.toStringAsFixed(3),
+                    style: mono.inlineCode.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(
-                width: 96,
-                child: Text(
-                  '${c.rangeMhzLow}-${c.rangeMhzHigh}',
-                  style: mono.inlineCode.copyWith(
-                    color: AppColors.textTertiary,
+                SizedBox(
+                  width: 96,
+                  child: Text(
+                    '${c.rangeMhzLow}-${c.rangeMhzHigh}',
+                    style: mono.inlineCode.copyWith(
+                      color: AppColors.textTertiary,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(
-                width: 120,
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: c.nonOverlap
-                      ? const _Chip('Non-overlap', color: AppColors.primary)
-                      : (c.regulatory != 'US'
-                          // §8.15 R-02: EU/JP is a regulatory-domain *category*,
-                          // not a caution verdict — no status hue. Neutral chip.
-                          ? _Chip(
-                              c.regulatory,
-                              color: AppColors.textTertiary,
-                              neutral: true,
-                            )
-                          : Text(
-                              '',
-                              style: text.labelSmall,
-                            )),
+                SizedBox(
+                  width: 120,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: c.nonOverlap
+                        ? const _Chip('Non-overlap', color: AppColors.primary)
+                        : (c.regulatory != 'US'
+                              // §8.15 R-02: EU/JP is a regulatory-domain *category*,
+                              // not a caution verdict — no status hue. Neutral chip.
+                              ? _Chip(
+                                  c.regulatory,
+                                  color: AppColors.textTertiary,
+                                  neutral: true,
+                                )
+                              : Text('', style: text.labelSmall)),
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
           ),
         );
       }).toList(),
@@ -522,9 +675,7 @@ class _Table5 extends StatelessWidget {
       // PWA draws a 2px rule at each UNII sub-band boundary; mirror with a
       // thin divider above the first row of a new band.
       if (c.band != lastBand && lastBand.isNotEmpty) {
-        rows.add(
-          const Divider(color: AppColors.border, height: AppSpacing.sm),
-        );
+        rows.add(const Divider(color: AppColors.border, height: AppSpacing.sm));
       }
       lastBand = c.band;
       rows.add(_row5(c));
@@ -554,50 +705,48 @@ class _Table5 extends StatelessWidget {
         c.dfs ? 'DFS required' : null,
       ]),
       child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 48,
-            child: Text(
-              '${c.channel}',
-              style: mono.inlineCode.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w500,
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 48,
+              child: Text(
+                '${c.channel}',
+                style: mono.inlineCode.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
-          ),
-          SizedBox(
-            width: 72,
-            child: Text(
-              c.centerGhz.toStringAsFixed(3),
-              style: mono.inlineCode.copyWith(color: AppColors.textSecondary),
+            SizedBox(
+              width: 72,
+              child: Text(
+                c.centerGhz.toStringAsFixed(3),
+                style: mono.inlineCode.copyWith(color: AppColors.textSecondary),
+              ),
             ),
-          ),
-          SizedBox(
-            width: 88,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: _Chip(c.band, color: AppColors.statusInfo),
+            SizedBox(
+              width: 88,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _Chip(c.band, color: AppColors.statusInfo),
+              ),
             ),
-          ),
-          SizedBox(
-            width: 56,
-            child: c.dfs
-                ? const _Chip('DFS', color: AppColors.statusWarning)
-                : Builder(
-                    builder: (context) => Text(
-                      '—',
-                      style: Theme.of(context)
-                          .textTheme
-                          .labelMedium
-                          ?.copyWith(color: AppColors.textTertiary),
+            SizedBox(
+              width: 56,
+              child: c.dfs
+                  ? const _Chip('DFS', color: AppColors.statusWarning)
+                  : Builder(
+                      builder: (context) => Text(
+                        '—',
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(color: AppColors.textTertiary),
+                      ),
                     ),
-                  ),
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -631,38 +780,38 @@ class _Table6 extends StatelessWidget {
             'Preferred Scanning Channel',
           ]),
           child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: 56,
-                child: Text(
-                  '${c.channel}',
-                  style: mono.inlineCode.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w500,
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 56,
+                  child: Text(
+                    '${c.channel}',
+                    style: mono.inlineCode.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(
-                width: 88,
-                child: Text(
-                  c.centerGhz.toStringAsFixed(3),
-                  style: mono.inlineCode.copyWith(
-                    color: AppColors.textSecondary,
+                SizedBox(
+                  width: 88,
+                  child: Text(
+                    c.centerGhz.toStringAsFixed(3),
+                    style: mono.inlineCode.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(
-                width: 88,
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: _Chip('PSC', color: AppColors.primary),
+                const SizedBox(
+                  width: 88,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: _Chip('PSC', color: AppColors.primary),
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
           ),
         );
       }).toList(),

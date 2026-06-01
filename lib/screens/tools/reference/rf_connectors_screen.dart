@@ -30,6 +30,7 @@ import 'package:flutter/material.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
 
@@ -153,10 +154,48 @@ class RfConnectorsScreen extends StatelessWidget {
       'antenna runs. Frequency ranges are typical maximums; verify against the '
       'specific part before design decisions.';
 
+  /// §8.16 copy payload — the RF-connector table as TSV. Static reference data,
+  /// so the affordance is always enabled (never returns null). Title line, a
+  /// header row, then one tab-separated row per connector; the 75Ω mismatch
+  /// flag is carried as a worded cell so the on-screen warning hue survives the
+  /// copy (§8.16 verdict-word rule).
+  static String _buildCopyText() {
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()
+      ..writeln('Coaxial RF Connectors')
+      ..writeln(
+        <String>[
+          'Connector',
+          'Impedance',
+          'Max freq.',
+          'Mating',
+          'Wi-Fi impedance',
+          'Notes',
+        ].join(tab),
+      );
+    for (final RfConnector c in rfConnectors) {
+      buf.writeln(
+        <String>[
+          c.name,
+          c.impedance,
+          c.maxFreq,
+          c.mating,
+          c.isImpedanceMismatch ? 'Mismatch (not for WLAN)' : 'Match (50Ω)',
+          c.notes,
+        ].join(tab),
+      );
+    }
+    return buf.toString().trimRight();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('RF Connectors'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('RF Connectors'),
+        toolbarHeight: 64,
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body(context)),
     );
   }
@@ -303,41 +342,43 @@ class _ConnectorBlock extends StatelessWidget {
       label: connector.name,
       merge: false,
       child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Title line: connector name + impedance chip.
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Text(
-                  connector.name,
-                  style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Title line: connector name + impedance chip.
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Text(
+                    connector.name,
+                    style: text.bodyLarge?.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              _ImpedanceChip(connector: connector, mono: mono),
-            ],
-          ),
-          const SizedBox(height: 4),
-          // Frequency + mating as labeled mono data rows.
-          _DataRow(label: 'Max freq.', value: connector.maxFreq, mono: mono),
-          _DataRow(label: 'Mating', value: connector.mating, mono: mono),
-          // Field notes.
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text(
-              connector.notes,
-              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+                const SizedBox(width: AppSpacing.xs),
+                _ImpedanceChip(connector: connector, mono: mono),
+              ],
             ),
-          ),
-        ],
-      ),
+            const SizedBox(height: 4),
+            // Frequency + mating as labeled mono data rows.
+            _DataRow(label: 'Max freq.', value: connector.maxFreq, mono: mono),
+            _DataRow(label: 'Mating', value: connector.mating, mono: mono),
+            // Field notes.
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                connector.notes,
+                style: text.labelMedium?.copyWith(
+                  color: AppColors.textTertiary,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -355,7 +396,9 @@ class _ImpedanceChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool mismatch = connector.isImpedanceMismatch;
-    final Color fg = mismatch ? AppColors.statusWarning : AppColors.textSecondary;
+    final Color fg = mismatch
+        ? AppColors.statusWarning
+        : AppColors.textSecondary;
     // §8.13 rule 3 sanctions a low-alpha status tint band. Derive it from the
     // statusWarning token (no literal hex) at ~10% alpha over the card.
     final Color bg = mismatch
@@ -368,7 +411,10 @@ class _ImpedanceChip extends StatelessWidget {
       label: 'Impedance',
       value: semanticValue,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 4),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xs,
+          vertical: 4,
+        ),
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(AppRadius.control),
@@ -389,7 +435,11 @@ class _ImpedanceChip extends StatelessWidget {
 /// and a mono value. The value uses Expanded so long mating descriptions wrap
 /// instead of overflowing at narrow width.
 class _DataRow extends StatelessWidget {
-  const _DataRow({required this.label, required this.value, required this.mono});
+  const _DataRow({
+    required this.label,
+    required this.value,
+    required this.mono,
+  });
 
   final String label;
   final String value;

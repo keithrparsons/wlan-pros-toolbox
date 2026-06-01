@@ -34,6 +34,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -188,6 +189,35 @@ class _FresnelScreenState extends State<FresnelScreen> {
     return (meters * 3.28084).toStringAsFixed(1);
   }
 
+  /// §8.16 copy payload — the Fresnel radii as a labeled text block.
+  ///
+  /// Returns null (→ disabled affordance) whenever there is no valid result:
+  /// a missing/non-positive frequency or total distance. Echoes the inputs, the
+  /// midpoint first-zone radius + 60% clearance (m and ft, mirroring the
+  /// on-screen pair), then the at-point pair when an in-path point was entered.
+  String? _buildCopyText() {
+    final FresnelResult? r = _result;
+    if (r == null) return null;
+
+    String line(double m) => '${_fmtMeters(m)} m (${_fmtFeet(m)} ft)';
+    final StringBuffer buf = StringBuffer()
+      ..writeln('Fresnel Zone')
+      ..writeln('Frequency: ${_freqCtrl.text.trim()} GHz')
+      ..writeln('Total path distance: ${_distCtrl.text.trim()} m');
+    if (_pointCtrl.text.trim().isNotEmpty) {
+      buf.writeln('Point from TX: ${_pointCtrl.text.trim()} m');
+    }
+    buf
+      ..writeln('Midpoint first zone radius: ${line(r.radiusMid)}')
+      ..writeln('Midpoint 60% clearance: ${line(r.clearanceMid)}');
+    if (r.radiusAtPoint != null && r.clearanceAtPoint != null) {
+      buf
+        ..writeln('At-point first zone radius: ${line(r.radiusAtPoint!)}')
+        ..writeln('At-point 60% clearance: ${line(r.clearanceAtPoint!)}');
+    }
+    return buf.toString().trimRight();
+  }
+
   // ─── Build ────────────────────────────────────────────────────────────────
 
   @override
@@ -197,7 +227,14 @@ class _FresnelScreenState extends State<FresnelScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Fresnel Zone'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Fresnel Zone'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until frequency
+        // and total distance yield a valid midpoint radius; copies the inputs
+        // and the midpoint (and at-point, when present) radii as a labeled block.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(

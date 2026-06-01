@@ -29,6 +29,7 @@ import 'package:flutter/material.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_select.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -83,22 +84,54 @@ class McsIndexScreen extends StatefulWidget {
   static const McsStdData ht = McsStdData(
     columns: ['20 LGI', '20 SGI', '40 LGI', '40 SGI'],
     rows: [
-      McsRow(mcs: 0, modulation: 'BPSK', codeRate: '1/2',
-          ratesPerSs: [6.5, 7.2, 13.5, 15]),
-      McsRow(mcs: 1, modulation: 'QPSK', codeRate: '1/2',
-          ratesPerSs: [13, 14.4, 27, 30]),
-      McsRow(mcs: 2, modulation: 'QPSK', codeRate: '3/4',
-          ratesPerSs: [19.5, 21.7, 40.5, 45]),
-      McsRow(mcs: 3, modulation: '16-QAM', codeRate: '1/2',
-          ratesPerSs: [26, 28.9, 54, 60]),
-      McsRow(mcs: 4, modulation: '16-QAM', codeRate: '3/4',
-          ratesPerSs: [39, 43.3, 81, 90]),
-      McsRow(mcs: 5, modulation: '64-QAM', codeRate: '2/3',
-          ratesPerSs: [52, 57.8, 108, 120]),
-      McsRow(mcs: 6, modulation: '64-QAM', codeRate: '3/4',
-          ratesPerSs: [58.5, 65, 121.5, 135]),
-      McsRow(mcs: 7, modulation: '64-QAM', codeRate: '5/6',
-          ratesPerSs: [65, 72.2, 135, 150]),
+      McsRow(
+        mcs: 0,
+        modulation: 'BPSK',
+        codeRate: '1/2',
+        ratesPerSs: [6.5, 7.2, 13.5, 15],
+      ),
+      McsRow(
+        mcs: 1,
+        modulation: 'QPSK',
+        codeRate: '1/2',
+        ratesPerSs: [13, 14.4, 27, 30],
+      ),
+      McsRow(
+        mcs: 2,
+        modulation: 'QPSK',
+        codeRate: '3/4',
+        ratesPerSs: [19.5, 21.7, 40.5, 45],
+      ),
+      McsRow(
+        mcs: 3,
+        modulation: '16-QAM',
+        codeRate: '1/2',
+        ratesPerSs: [26, 28.9, 54, 60],
+      ),
+      McsRow(
+        mcs: 4,
+        modulation: '16-QAM',
+        codeRate: '3/4',
+        ratesPerSs: [39, 43.3, 81, 90],
+      ),
+      McsRow(
+        mcs: 5,
+        modulation: '64-QAM',
+        codeRate: '2/3',
+        ratesPerSs: [52, 57.8, 108, 120],
+      ),
+      McsRow(
+        mcs: 6,
+        modulation: '64-QAM',
+        codeRate: '3/4',
+        ratesPerSs: [58.5, 65, 121.5, 135],
+      ),
+      McsRow(
+        mcs: 7,
+        modulation: '64-QAM',
+        codeRate: '5/6',
+        ratesPerSs: [65, 72.2, 135, 150],
+      ),
     ],
   );
 
@@ -107,26 +140,66 @@ class McsIndexScreen extends StatefulWidget {
   static const McsStdData vht = McsStdData(
     columns: ['20 SGI', '40 SGI', '80 SGI', '160 SGI'],
     rows: [
-      McsRow(mcs: 0, modulation: 'BPSK', codeRate: '1/2',
-          ratesPerSs: [7.2, 15, 32.5, 65]),
-      McsRow(mcs: 1, modulation: 'QPSK', codeRate: '1/2',
-          ratesPerSs: [14.4, 30, 65, 130]),
-      McsRow(mcs: 2, modulation: 'QPSK', codeRate: '3/4',
-          ratesPerSs: [21.7, 45, 97.5, 195]),
-      McsRow(mcs: 3, modulation: '16-QAM', codeRate: '1/2',
-          ratesPerSs: [28.9, 60, 130, 260]),
-      McsRow(mcs: 4, modulation: '16-QAM', codeRate: '3/4',
-          ratesPerSs: [43.3, 90, 195, 390]),
-      McsRow(mcs: 5, modulation: '64-QAM', codeRate: '2/3',
-          ratesPerSs: [57.8, 120, 260, 520]),
-      McsRow(mcs: 6, modulation: '64-QAM', codeRate: '3/4',
-          ratesPerSs: [65, 135, 292.5, 585]),
-      McsRow(mcs: 7, modulation: '64-QAM', codeRate: '5/6',
-          ratesPerSs: [72.2, 150, 325, 650]),
-      McsRow(mcs: 8, modulation: '256-QAM', codeRate: '3/4',
-          ratesPerSs: [86.7, 180, 390, 780]),
-      McsRow(mcs: 9, modulation: '256-QAM', codeRate: '5/6',
-          ratesPerSs: [null, 200, 433.3, 866.7]), // MCS9 invalid at 20 MHz
+      McsRow(
+        mcs: 0,
+        modulation: 'BPSK',
+        codeRate: '1/2',
+        ratesPerSs: [7.2, 15, 32.5, 65],
+      ),
+      McsRow(
+        mcs: 1,
+        modulation: 'QPSK',
+        codeRate: '1/2',
+        ratesPerSs: [14.4, 30, 65, 130],
+      ),
+      McsRow(
+        mcs: 2,
+        modulation: 'QPSK',
+        codeRate: '3/4',
+        ratesPerSs: [21.7, 45, 97.5, 195],
+      ),
+      McsRow(
+        mcs: 3,
+        modulation: '16-QAM',
+        codeRate: '1/2',
+        ratesPerSs: [28.9, 60, 130, 260],
+      ),
+      McsRow(
+        mcs: 4,
+        modulation: '16-QAM',
+        codeRate: '3/4',
+        ratesPerSs: [43.3, 90, 195, 390],
+      ),
+      McsRow(
+        mcs: 5,
+        modulation: '64-QAM',
+        codeRate: '2/3',
+        ratesPerSs: [57.8, 120, 260, 520],
+      ),
+      McsRow(
+        mcs: 6,
+        modulation: '64-QAM',
+        codeRate: '3/4',
+        ratesPerSs: [65, 135, 292.5, 585],
+      ),
+      McsRow(
+        mcs: 7,
+        modulation: '64-QAM',
+        codeRate: '5/6',
+        ratesPerSs: [72.2, 150, 325, 650],
+      ),
+      McsRow(
+        mcs: 8,
+        modulation: '256-QAM',
+        codeRate: '3/4',
+        ratesPerSs: [86.7, 180, 390, 780],
+      ),
+      McsRow(
+        mcs: 9,
+        modulation: '256-QAM',
+        codeRate: '5/6',
+        ratesPerSs: [null, 200, 433.3, 866.7],
+      ), // MCS9 invalid at 20 MHz
     ],
   );
 
@@ -135,30 +208,78 @@ class McsIndexScreen extends StatefulWidget {
   static const McsStdData he = McsStdData(
     columns: ['20 MHz', '40 MHz', '80 MHz', '160 MHz'],
     rows: [
-      McsRow(mcs: 0, modulation: 'BPSK', codeRate: '1/2',
-          ratesPerSs: [8.6, 17.2, 36.0, 72.1]),
-      McsRow(mcs: 1, modulation: 'QPSK', codeRate: '1/2',
-          ratesPerSs: [17.2, 34.4, 72.1, 144.1]),
-      McsRow(mcs: 2, modulation: 'QPSK', codeRate: '3/4',
-          ratesPerSs: [25.8, 51.6, 108.1, 216.2]),
-      McsRow(mcs: 3, modulation: '16-QAM', codeRate: '1/2',
-          ratesPerSs: [34.4, 68.8, 144.1, 288.2]),
-      McsRow(mcs: 4, modulation: '16-QAM', codeRate: '3/4',
-          ratesPerSs: [51.6, 103.2, 216.2, 432.4]),
-      McsRow(mcs: 5, modulation: '64-QAM', codeRate: '2/3',
-          ratesPerSs: [68.8, 137.6, 288.2, 576.5]),
-      McsRow(mcs: 6, modulation: '64-QAM', codeRate: '3/4',
-          ratesPerSs: [77.4, 154.9, 324.3, 648.5]),
-      McsRow(mcs: 7, modulation: '64-QAM', codeRate: '5/6',
-          ratesPerSs: [86.0, 172.1, 360.3, 720.6]),
-      McsRow(mcs: 8, modulation: '256-QAM', codeRate: '3/4',
-          ratesPerSs: [103.2, 206.5, 432.4, 864.7]),
-      McsRow(mcs: 9, modulation: '256-QAM', codeRate: '5/6',
-          ratesPerSs: [114.7, 229.4, 480.4, 960.8]),
-      McsRow(mcs: 10, modulation: '1024-QAM', codeRate: '3/4',
-          ratesPerSs: [129.0, 258.1, 540.4, 1080.9]),
-      McsRow(mcs: 11, modulation: '1024-QAM', codeRate: '5/6',
-          ratesPerSs: [143.4, 286.8, 600.4, 1200.9]),
+      McsRow(
+        mcs: 0,
+        modulation: 'BPSK',
+        codeRate: '1/2',
+        ratesPerSs: [8.6, 17.2, 36.0, 72.1],
+      ),
+      McsRow(
+        mcs: 1,
+        modulation: 'QPSK',
+        codeRate: '1/2',
+        ratesPerSs: [17.2, 34.4, 72.1, 144.1],
+      ),
+      McsRow(
+        mcs: 2,
+        modulation: 'QPSK',
+        codeRate: '3/4',
+        ratesPerSs: [25.8, 51.6, 108.1, 216.2],
+      ),
+      McsRow(
+        mcs: 3,
+        modulation: '16-QAM',
+        codeRate: '1/2',
+        ratesPerSs: [34.4, 68.8, 144.1, 288.2],
+      ),
+      McsRow(
+        mcs: 4,
+        modulation: '16-QAM',
+        codeRate: '3/4',
+        ratesPerSs: [51.6, 103.2, 216.2, 432.4],
+      ),
+      McsRow(
+        mcs: 5,
+        modulation: '64-QAM',
+        codeRate: '2/3',
+        ratesPerSs: [68.8, 137.6, 288.2, 576.5],
+      ),
+      McsRow(
+        mcs: 6,
+        modulation: '64-QAM',
+        codeRate: '3/4',
+        ratesPerSs: [77.4, 154.9, 324.3, 648.5],
+      ),
+      McsRow(
+        mcs: 7,
+        modulation: '64-QAM',
+        codeRate: '5/6',
+        ratesPerSs: [86.0, 172.1, 360.3, 720.6],
+      ),
+      McsRow(
+        mcs: 8,
+        modulation: '256-QAM',
+        codeRate: '3/4',
+        ratesPerSs: [103.2, 206.5, 432.4, 864.7],
+      ),
+      McsRow(
+        mcs: 9,
+        modulation: '256-QAM',
+        codeRate: '5/6',
+        ratesPerSs: [114.7, 229.4, 480.4, 960.8],
+      ),
+      McsRow(
+        mcs: 10,
+        modulation: '1024-QAM',
+        codeRate: '3/4',
+        ratesPerSs: [129.0, 258.1, 540.4, 1080.9],
+      ),
+      McsRow(
+        mcs: 11,
+        modulation: '1024-QAM',
+        codeRate: '5/6',
+        ratesPerSs: [143.4, 286.8, 600.4, 1200.9],
+      ),
     ],
   );
 
@@ -226,6 +347,39 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
     return n.toStringAsFixed(1);
   }
 
+  /// §8.16 copy payload — the live MCS rate table as TSV. The title records the
+  /// selected standard and spatial-stream count because the rates are scaled by
+  /// SS (PWA `r * ss`). One header row (MCS, Modulation, Code, then one column
+  /// per channel-width); one tab-separated row per MCS index. Invalid cells
+  /// copy as "N/A" (never fabricated). Always non-null (static data).
+  String _buildCopyText() {
+    const String tab = '\t';
+    final McsStdData data = McsIndexScreen.dataFor(_std);
+    final StringBuffer buf = StringBuffer()
+      ..writeln('MCS Index — ${_stdLabel(_std)} · $_ss SS (Mbps)')
+      ..writeln(
+        <String>['MCS', 'Modulation', 'Code', ...data.columns].join(tab),
+      );
+    for (final McsRow row in data.rows) {
+      final List<String> cells = <String>[
+        '${row.mcs}',
+        row.modulation,
+        row.codeRate,
+      ];
+      for (int i = 0; i < data.columns.length; i++) {
+        final double? scaled = McsIndexScreen.rate(
+          std: _std,
+          mcs: row.mcs,
+          columnIndex: i,
+          spatialStreams: _ss,
+        );
+        cells.add(_formatRate(scaled));
+      }
+      buf.writeln(cells.join(tab));
+    }
+    return buf.toString().trimRight();
+  }
+
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
@@ -233,7 +387,14 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('MCS Index'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('MCS Index'),
+        toolbarHeight: 64,
+        // §8.16 — copy the live MCS rate table as TSV, with the selected
+        // standard and spatial-stream count recorded in the title (rates are
+        // scaled by SS, so the params matter). Static data, always enabled.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -305,9 +466,7 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
       field: AppSelect<McsStd>(
         value: _std,
         semanticLabel: '802.11 standard',
-        items: McsStd.values
-            .map((McsStd s) => (s, _stdLabel(s)))
-            .toList(),
+        items: McsStd.values.map((McsStd s) => (s, _stdLabel(s))).toList(),
         onChanged: (McsStd s) => setState(() => _std = s),
       ),
     );
@@ -419,8 +578,9 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
               ExcludeSemantics(
                 child: Text(
                   row.modulation,
-                  style:
-                      text.bodyMedium?.copyWith(color: AppColors.textPrimary),
+                  style: text.bodyMedium?.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
             ),
@@ -428,8 +588,9 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
               ExcludeSemantics(
                 child: Text(
                   row.codeRate,
-                  style:
-                      mono.inlineCode.copyWith(color: AppColors.textSecondary),
+                  style: mono.inlineCode.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ),
             ),

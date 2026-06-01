@@ -34,6 +34,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -265,6 +266,35 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
     }
   }
 
+  /// §8.16 copy payload — the link budget result as a labeled text block.
+  ///
+  /// Returns null (→ disabled affordance) whenever there is no valid result:
+  /// any required field empty/invalid, or a non-finite normalized TX power.
+  /// Echoes the received signal, the link margin, and the margin VERDICT as a
+  /// WORD (healthy / marginal / negative) — per §8.16 the on-screen status hue
+  /// is the screen carrier, the word is the clipboard carrier.
+  String? _buildCopyText() {
+    final double? rx = _receivedDbm;
+    final double? margin = _marginDb;
+    if (rx == null || !rx.isFinite || margin == null || !margin.isFinite) {
+      return null;
+    }
+
+    final String verdict = switch (LinkBudgetScreen.marginHealth(margin)) {
+      MarginHealth.healthy => 'Healthy — link has fade headroom',
+      MarginHealth.marginal => 'Marginal — vulnerable to fade',
+      MarginHealth.negative => 'Negative — link does not close',
+    };
+
+    return (StringBuffer()
+          ..writeln('Link Budget')
+          ..writeln('Received signal: ${_format(rx)} dBm')
+          ..writeln('Link margin: ${_format(margin)} dB')
+          ..writeln('Verdict: $verdict'))
+        .toString()
+        .trimRight();
+  }
+
   // ─── Build ────────────────────────────────────────────────────────────────
 
   @override
@@ -274,7 +304,15 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Link Budget'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Link Budget'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until every
+        // required field is finite; copies the received signal, the link
+        // margin, and the margin VERDICT WORD (healthy/marginal/negative) so the
+        // §8.13 status hue is never the only carrier of the verdict.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(

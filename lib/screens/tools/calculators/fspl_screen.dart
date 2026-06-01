@@ -26,6 +26,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -138,6 +139,26 @@ class _FsplScreenState extends State<FsplScreen> {
     return loss.toStringAsFixed(1);
   }
 
+  /// §8.16 copy payload — the FSPL result as a labeled text block.
+  ///
+  /// Returns null (→ disabled affordance) whenever there is no valid result:
+  /// an empty/invalid or non-positive frequency or distance. Echoes the inputs
+  /// with the currently-selected units, then the computed loss in dB.
+  String? _buildCopyText() {
+    final double? loss = _lossDb;
+    if (loss == null || !loss.isFinite) return null;
+
+    final String freqUnit = _freqUnit == FreqUnit.ghz ? 'GHz' : 'MHz';
+    final String distUnit = _distUnitLabel(_distUnit);
+    return (StringBuffer()
+          ..writeln('Free Space Path Loss')
+          ..writeln('Frequency: ${_freqCtrl.text.trim()} $freqUnit')
+          ..writeln('Distance: ${_distCtrl.text.trim()} $distUnit')
+          ..writeln('Path loss: ${_formatLoss(loss)} dB'))
+        .toString()
+        .trimRight();
+  }
+
   // ─── Build ────────────────────────────────────────────────────────────────
 
   @override
@@ -147,7 +168,14 @@ class _FsplScreenState extends State<FsplScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('FSPL'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('FSPL'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until frequency
+        // and distance yield a finite loss; copies the inputs with their
+        // selected units and the path loss in dB as a labeled text block.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
