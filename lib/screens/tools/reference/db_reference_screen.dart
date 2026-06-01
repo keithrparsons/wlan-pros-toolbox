@@ -21,6 +21,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../concept_graphic_band.dart';
+import 'reference_row_semantics.dart';
 
 /// One row of the dB power-ratio table.
 class DbRatio {
@@ -262,7 +263,13 @@ class _RatioRow extends StatelessWidget {
     final bool positive = ratio.db.startsWith('+');
     final Color dbColor =
         positive ? AppColors.primary : AppColors.statusDanger;
-    return Padding(
+    return ReferenceRowSemantics(
+      label: rowLabel('${ratio.db} dB', <String?>[
+        'power ratio ${ratio.powerRatio}',
+        'voltage ratio ${ratio.voltageRatio}',
+        ratio.note,
+      ]),
+      child: Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -306,6 +313,7 @@ class _RatioRow extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
 }
@@ -320,7 +328,9 @@ class _DbmRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return ReferenceRowSemantics(
+      label: rowLabel(ref.dbm, <String?>[ref.power, ref.context]),
+      child: Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -356,6 +366,7 @@ class _DbmRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

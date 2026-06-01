@@ -40,10 +40,7 @@ import '../labeled_field.dart';
 /// String.fromCharCode, so the literal glyph is always correct (incl. "|").
 @immutable
 class AsciiRow {
-  const AsciiRow({
-    required this.dec,
-    required this.name,
-  });
+  const AsciiRow({required this.dec, required this.name});
 
   /// Decimal code point, 32-126. LIME index column.
   final int dec;
@@ -156,15 +153,14 @@ class HexAsciiScreen extends StatefulWidget {
 
   /// The printable-ASCII rows, decimal 32-126, derived (char/hex/bin computed).
   /// Public + static so tests can assert row count and known rows.
-  static final List<AsciiRow> rows = List<AsciiRow>.generate(
-    126 - 32 + 1,
-    (int i) {
-      final int dec = 32 + i;
-      // Space renders as a glyph-less code point; show "(space)" as the name's
-      // companion in the cell. The derived char for 32 is a literal space.
-      return AsciiRow(dec: dec, name: names[dec] ?? '');
-    },
-  );
+  static final List<AsciiRow> rows = List<AsciiRow>.generate(126 - 32 + 1, (
+    int i,
+  ) {
+    final int dec = 32 + i;
+    // Space renders as a glyph-less code point; show "(space)" as the name's
+    // companion in the cell. The derived char for 32 is a literal space.
+    return AsciiRow(dec: dec, name: names[dec] ?? '');
+  });
 
   @override
   State<HexAsciiScreen> createState() => _HexAsciiScreenState();
@@ -386,8 +382,9 @@ class _HexAsciiScreenState extends State<HexAsciiScreen> {
                     ],
                   ),
                   const Divider(color: AppColors.border, height: AppSpacing.sm),
-                  ...HexAsciiScreen.rows
-                      .map((AsciiRow r) => _AsciiTableRow(row: r, mono: mono)),
+                  ...HexAsciiScreen.rows.map(
+                    (AsciiRow r) => _AsciiTableRow(row: r, mono: mono),
+                  ),
                 ],
               ),
             ),
@@ -467,7 +464,9 @@ class _AsciiTableRow extends StatelessWidget {
               width: 160,
               child: Text(
                 row.name,
-                style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+                style: text.labelMedium?.copyWith(
+                  color: AppColors.textTertiary,
+                ),
               ),
             ),
           ],
@@ -514,7 +513,7 @@ class _ConverterField extends StatelessWidget {
         textInputAction: TextInputAction.done,
         autocorrect: false,
         enableSuggestions: false,
-        style: monoStyle.copyWith(fontSize: 20),
+        style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
         cursorColor: AppColors.primary,
         decoration: InputDecoration(hintText: hint),
       ),

@@ -35,6 +35,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_select.dart';
+import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -73,83 +74,83 @@ class CableLossScreen extends StatefulWidget {
   /// [freq_MHz, dB/100ft] knot sets, verbatim from PWA CABLE_DATA.
   static const Map<String, List<List<double>>> cableData =
       <String, List<List<double>>>{
-    'LMR-100A': [
-      [100, 3.3],
-      [450, 7.0],
-      [900, 10.3],
-      [1500, 13.6],
-      [2400, 17.5],
-      [5800, 28.5],
-    ],
-    'LMR-200': [
-      [100, 1.7],
-      [450, 3.9],
-      [900, 5.6],
-      [1500, 7.3],
-      [2400, 9.4],
-      [5800, 15.3],
-    ],
-    'LMR-400': [
-      [100, 0.7],
-      [450, 1.5],
-      [900, 2.2],
-      [1500, 2.9],
-      [2400, 3.9],
-      [5800, 6.3],
-    ],
-    'LMR-600': [
-      [100, 0.45],
-      [450, 1.0],
-      [900, 1.4],
-      [1500, 1.9],
-      [2400, 2.5],
-      [5800, 4.1],
-    ],
-    'LMR-900': [
-      [100, 0.29],
-      [450, 0.65],
-      [900, 0.93],
-      [1500, 1.2],
-      [2400, 1.6],
-      [5800, 2.7],
-    ],
-    'LMR-1200': [
-      [100, 0.22],
-      [450, 0.49],
-      [900, 0.70],
-      [1500, 0.92],
-      [2400, 1.2],
-      [5800, 2.0],
-    ],
-    'RG-58': [
-      [100, 4.5],
-      [450, 7.5],
-      [900, 11.0],
-      [1500, 15.0],
-      [2400, 20.0],
-    ],
-    'RG-8/U': [
-      [100, 1.3],
-      [450, 2.8],
-      [900, 4.1],
-      [1500, 5.5],
-      [2400, 7.2],
-    ],
-    'RG-213': [
-      [100, 1.3],
-      [450, 2.8],
-      [900, 4.1],
-      [1500, 5.5],
-      [2400, 7.2],
-    ],
-    'RG-214': [
-      [100, 1.1],
-      [450, 2.5],
-      [900, 3.8],
-      [1500, 5.0],
-      [2400, 6.6],
-    ],
-  };
+        'LMR-100A': [
+          [100, 3.3],
+          [450, 7.0],
+          [900, 10.3],
+          [1500, 13.6],
+          [2400, 17.5],
+          [5800, 28.5],
+        ],
+        'LMR-200': [
+          [100, 1.7],
+          [450, 3.9],
+          [900, 5.6],
+          [1500, 7.3],
+          [2400, 9.4],
+          [5800, 15.3],
+        ],
+        'LMR-400': [
+          [100, 0.7],
+          [450, 1.5],
+          [900, 2.2],
+          [1500, 2.9],
+          [2400, 3.9],
+          [5800, 6.3],
+        ],
+        'LMR-600': [
+          [100, 0.45],
+          [450, 1.0],
+          [900, 1.4],
+          [1500, 1.9],
+          [2400, 2.5],
+          [5800, 4.1],
+        ],
+        'LMR-900': [
+          [100, 0.29],
+          [450, 0.65],
+          [900, 0.93],
+          [1500, 1.2],
+          [2400, 1.6],
+          [5800, 2.7],
+        ],
+        'LMR-1200': [
+          [100, 0.22],
+          [450, 0.49],
+          [900, 0.70],
+          [1500, 0.92],
+          [2400, 1.2],
+          [5800, 2.0],
+        ],
+        'RG-58': [
+          [100, 4.5],
+          [450, 7.5],
+          [900, 11.0],
+          [1500, 15.0],
+          [2400, 20.0],
+        ],
+        'RG-8/U': [
+          [100, 1.3],
+          [450, 2.8],
+          [900, 4.1],
+          [1500, 5.5],
+          [2400, 7.2],
+        ],
+        'RG-213': [
+          [100, 1.3],
+          [450, 2.8],
+          [900, 4.1],
+          [1500, 5.5],
+          [2400, 7.2],
+        ],
+        'RG-214': [
+          [100, 1.1],
+          [450, 2.5],
+          [900, 3.8],
+          [1500, 5.0],
+          [2400, 6.6],
+        ],
+      };
 
   // ─── Math (pure) ────────────────────────────────────────────────────────
   // Mirrors app.js: toMHz, cableLossPer100ft, calcCable.
@@ -190,8 +191,7 @@ class CableLossScreen extends StatefulWidget {
       final double l1 = pts[pts.length - 2][1];
       final double f2 = pts.last[0];
       final double l2 = pts.last[1];
-      final double slope =
-          (l2 - l1) / (math.sqrt(f2) - math.sqrt(f1));
+      final double slope = (l2 - l1) / (math.sqrt(f2) - math.sqrt(f1));
       return l2 + slope * (math.sqrt(freqMHz) - math.sqrt(f2));
     }
 
@@ -201,7 +201,8 @@ class CableLossScreen extends StatefulWidget {
       final double f2 = pts[i + 1][0];
       final double l2 = pts[i + 1][1];
       if (freqMHz >= f1 && freqMHz <= f2) {
-        final double t = (math.sqrt(freqMHz) - math.sqrt(f1)) /
+        final double t =
+            (math.sqrt(freqMHz) - math.sqrt(f1)) /
             (math.sqrt(f2) - math.sqrt(f1));
         return l1 + t * (l2 - l1);
       }
@@ -310,10 +311,7 @@ class _CableLossScreenState extends State<CableLossScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Cable Loss'),
-        toolbarHeight: 64,
-      ),
+      appBar: AppBar(title: const Text('Cable Loss'), toolbarHeight: 64),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -342,7 +340,9 @@ class _CableLossScreenState extends State<CableLossScreen> {
                       // the input card. Self-collapses when no graphic is
                       // bundled, so the 24px gap below it disappears too.
                       ConceptGraphicBand(
-                          toolId: 'cable-loss', isDesktop: isDesktop),
+                        toolId: 'cable-loss',
+                        isDesktop: isDesktop,
+                      ),
                       if (ToolAssets.hasGraphic('cable-loss'))
                         const SizedBox(height: AppSpacing.md),
                       _inputCard(text, mono),
@@ -442,14 +442,15 @@ class _CableLossScreenState extends State<CableLossScreen> {
             field: TextField(
               controller: controller,
               focusNode: focusNode,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               inputFormatters: _unsignedDecimal,
               onChanged: (_) => _recompute(),
               textInputAction: TextInputAction.done,
               autocorrect: false,
               enableSuggestions: false,
-              style: monoStyle.copyWith(fontSize: 20),
+              style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
               cursorColor: AppColors.primary,
               decoration: InputDecoration(hintText: hintText),
             ),
@@ -462,80 +463,89 @@ class _CableLossScreenState extends State<CableLossScreen> {
   }
 
   Widget _resultRow(TextTheme text, AppMonoText mono) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Total cable loss',
-          style: text.labelMedium?.copyWith(
-            color: AppColors.textSecondary,
-            letterSpacing: 0.4,
+    // One SR node for the readout: "Total cable loss: 3.42 dB, 1.71 dB per 100
+    // feet" (or "not calculated"), instead of value/unit/label fragments
+    // across two lines (Vera finding #6).
+    final bool blank = _totalLossDb == null;
+    final String per100 = _lossPer100 == null
+        ? ''
+        : ', ${_format2(_lossPer100)} dB per 100 feet';
+    return Semantics(
+      label: 'Total cable loss',
+      value: blank ? 'not calculated' : '${_format2(_totalLossDb)} dB$per100',
+      excludeSemantics: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Total cable loss',
+            style: text.labelMedium?.copyWith(
+              color: AppColors.textSecondary,
+              letterSpacing: 0.4,
+            ),
           ),
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            SelectableText(
-              _format2(_totalLossDb),
-              style: mono.outputXL.copyWith(
-                color: _totalLossDb == null
-                    ? AppColors.textTertiary
-                    : AppColors.primary,
+          const SizedBox(height: AppSpacing.xs),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              SelectableText(
+                _format2(_totalLossDb),
+                style: mono.outputXL.copyWith(
+                  color: _totalLossDb == null
+                      ? AppColors.textTertiary
+                      : AppColors.primary,
+                ),
               ),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              'dB',
-              style: text.labelLarge?.copyWith(
-                color: AppColors.textSecondary,
+              const SizedBox(width: AppSpacing.xxs),
+              Text(
+                'dB',
+                style: text.labelLarge?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        // Per-100ft coefficient — the PWA's second output line. Secondary so it
-        // reads as supporting detail beneath the headline total.
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            Text(
-              'Loss per 100 ft',
-              style: text.labelMedium?.copyWith(
-                color: AppColors.textTertiary,
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          // Per-100ft coefficient — the PWA's second output line. Secondary so it
+          // reads as supporting detail beneath the headline total.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                'Loss per 100 ft',
+                style: text.labelMedium?.copyWith(
+                  color: AppColors.textTertiary,
+                ),
               ),
-            ),
-            const SizedBox(width: AppSpacing.xs),
-            SelectableText(
-              _format2(_lossPer100),
-              style: mono.inlineCode.copyWith(
-                color: _lossPer100 == null
-                    ? AppColors.textTertiary
-                    : AppColors.textSecondary,
+              const SizedBox(width: AppSpacing.xs),
+              SelectableText(
+                _format2(_lossPer100),
+                style: mono.inlineCode.copyWith(
+                  color: _lossPer100 == null
+                      ? AppColors.textTertiary
+                      : AppColors.textSecondary,
+                ),
               ),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              'dB',
-              style: text.labelMedium?.copyWith(
-                color: AppColors.textTertiary,
+              const SizedBox(width: 4),
+              Text(
+                'dB',
+                style: text.labelMedium?.copyWith(
+                  color: AppColors.textTertiary,
+                ),
               ),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 
   Widget _freqUnitSelector() {
-    return _UnitToggle<CableFreqUnit>(
+    return AppToggle<CableFreqUnit>(
       value: _freqUnit,
-      options: const [
-        (CableFreqUnit.ghz, 'GHz'),
-        (CableFreqUnit.mhz, 'MHz'),
-      ],
+      items: const [(CableFreqUnit.ghz, 'GHz'), (CableFreqUnit.mhz, 'MHz')],
       onChanged: (u) {
         setState(() => _freqUnit = u);
         _recompute();
@@ -544,12 +554,9 @@ class _CableLossScreenState extends State<CableLossScreen> {
   }
 
   Widget _lengthUnitSelector() {
-    return _UnitToggle<CableLengthUnit>(
+    return AppToggle<CableLengthUnit>(
       value: _lengthUnit,
-      options: const [
-        (CableLengthUnit.ft, 'ft'),
-        (CableLengthUnit.m, 'm'),
-      ],
+      items: const [(CableLengthUnit.ft, 'ft'), (CableLengthUnit.m, 'm')],
       onChanged: (u) {
         setState(() => _lengthUnit = u);
         _recompute();
@@ -585,9 +592,7 @@ class _CableLossScreenState extends State<CableLossScreen> {
             'dB/100ft is interpolated from manufacturer spec points on a '
             'sqrt(frequency) axis. Lengths in meters convert at 3.28084 ft/m '
             'before the math.',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textTertiary,
-            ),
+            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
           ),
         ],
       ),
@@ -626,7 +631,7 @@ class _CableLossScreenState extends State<CableLossScreen> {
           const SizedBox(height: AppSpacing.xs),
           ...refs.map((row) {
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -663,68 +668,6 @@ class _CableLossScreenState extends State<CableLossScreen> {
             );
           }),
         ],
-      ),
-    );
-  }
-}
-
-/// Segmented unit toggle for an input row. Holds to the §8.3 minimum touch
-/// target and uses ChoiceChip-style selection without inventing new tokens.
-class _UnitToggle<T> extends StatelessWidget {
-  const _UnitToggle({
-    required this.value,
-    required this.options,
-    required this.onChanged,
-  });
-
-  final T value;
-  final List<(T, String)> options;
-  final ValueChanged<T> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme text = Theme.of(context).textTheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.inputFill,
-        borderRadius: BorderRadius.circular(AppRadius.control),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: options.map((opt) {
-          final bool selected = opt.$1 == value;
-          return Semantics(
-            button: true,
-            selected: selected,
-            label: opt.$2,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(AppRadius.control),
-              onTap: () => onChanged(opt.$1),
-              child: Container(
-                constraints: const BoxConstraints(
-                  minHeight: AppSpacing.minTouchTarget,
-                ),
-                alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: selected ? AppColors.primary : Colors.transparent,
-                  borderRadius: BorderRadius.circular(AppRadius.control),
-                ),
-                child: Text(
-                  opt.$2,
-                  style: text.labelLarge?.copyWith(
-                    color: selected
-                        ? AppColors.secondary
-                        : AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
       ),
     );
   }

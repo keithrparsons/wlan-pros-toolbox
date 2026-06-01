@@ -34,6 +34,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -184,8 +185,10 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
       return;
     }
 
-    final double txPowerDbm =
-        LinkBudgetScreen.txPowerToDbm(txPower, _txPowerUnit);
+    final double txPowerDbm = LinkBudgetScreen.txPowerToDbm(
+      txPower,
+      _txPowerUnit,
+    );
     // W/mW <= 0 yields a non-finite dBm; treat as invalid rather than render it.
     if (!txPowerDbm.isFinite) {
       setState(() {
@@ -248,6 +251,20 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
     }
   }
 
+  /// The margin verdict as a word, for the screen-reader value (§8.13 rule 2 —
+  /// the verdict is never carried by color alone). Null when not computed.
+  String? _marginVerdictWord() {
+    if (_marginDb == null || !_marginDb!.isFinite) return null;
+    switch (LinkBudgetScreen.marginHealth(_marginDb!)) {
+      case MarginHealth.healthy:
+        return 'healthy';
+      case MarginHealth.marginal:
+        return 'marginal';
+      case MarginHealth.negative:
+        return 'negative, link does not close';
+    }
+  }
+
   // ─── Build ────────────────────────────────────────────────────────────────
 
   @override
@@ -257,10 +274,7 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Link Budget'),
-        toolbarHeight: 64,
-      ),
+      appBar: AppBar(title: const Text('Link Budget'), toolbarHeight: 64),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -465,7 +479,7 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
         textInputAction: TextInputAction.next,
         autocorrect: false,
         enableSuggestions: false,
-        style: monoStyle.copyWith(fontSize: 20),
+        style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
         cursorColor: AppColors.primary,
         decoration: InputDecoration(hintText: hintText),
       ),
@@ -487,9 +501,9 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
   }
 
   Widget _txPowerUnitSelector() {
-    return _UnitToggle<TxPowerUnit>(
+    return AppToggle<TxPowerUnit>(
       value: _txPowerUnit,
-      options: const [
+      items: const [
         (TxPowerUnit.dbm, 'dBm'),
         (TxPowerUnit.w, 'W'),
         (TxPowerUnit.mw, 'mW'),
@@ -532,6 +546,7 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
             valueColor: _receivedDbm == null
                 ? AppColors.textTertiary
                 : AppColors.textPrimary,
+            blank: _receivedDbm == null,
           ),
           const SizedBox(height: AppSpacing.sm),
           Divider(height: 1, color: AppColors.border),
@@ -543,6 +558,10 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
             value: _format(_marginDb),
             unit: 'dB',
             valueColor: _marginColor(),
+            blank: _marginDb == null || !_marginDb!.isFinite,
+            // Expose the pass/fail verdict word in the SR value so it does not
+            // ride on color alone (colorblind + screen reader; §8.13 rule 2).
+            verdictWord: _marginVerdictWord(),
           ),
         ],
       ),
@@ -556,36 +575,51 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
     required String value,
     required String unit,
     required Color valueColor,
+    required bool blank,
+    String? verdictWord,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: text.labelMedium?.copyWith(
-            color: AppColors.textSecondary,
-            letterSpacing: 0.4,
+    // One SR node per readout: "Link margin: 12.0 dB, healthy" instead of the
+    // value, unit, and verdict color announcing as separate fragments (finding
+    // #6). The verdict word rides in the value so it never depends on color.
+    final String semanticValue = blank
+        ? 'not calculated'
+        : verdictWord == null
+        ? '$value $unit'
+        : '$value $unit, $verdictWord';
+    return Semantics(
+      label: label,
+      value: semanticValue,
+      excludeSemantics: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: text.labelMedium?.copyWith(
+              color: AppColors.textSecondary,
+              letterSpacing: 0.4,
+            ),
           ),
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            SelectableText(
-              value,
-              style: mono.outputXL.copyWith(color: valueColor),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              unit,
-              style: text.labelLarge?.copyWith(
-                color: AppColors.textSecondary,
+          const SizedBox(height: AppSpacing.xs),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              SelectableText(
+                value,
+                style: mono.outputXL.copyWith(color: valueColor),
               ),
-            ),
-          ],
-        ),
-      ],
+              const SizedBox(width: AppSpacing.xxs),
+              Text(
+                unit,
+                style: text.labelLarge?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -620,9 +654,7 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
           Text(
             'All terms in dB except Tx (dBm or W/mW) and Sensitivity (dBm). '
             'A positive margin means the link closes; aim for 10 dB or more.',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textTertiary,
-            ),
+            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
           ),
         ],
       ),
@@ -659,7 +691,7 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
           const SizedBox(height: AppSpacing.xs),
           ...refs.map((row) {
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -687,69 +719,6 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
             );
           }),
         ],
-      ),
-    );
-  }
-}
-
-/// Segmented unit toggle for an input row. Holds to the §8.3 minimum touch
-/// target and uses ChoiceChip-style selection without inventing new tokens.
-/// Copied from the FSPL screen pattern to keep the two calculators identical.
-class _UnitToggle<T> extends StatelessWidget {
-  const _UnitToggle({
-    required this.value,
-    required this.options,
-    required this.onChanged,
-  });
-
-  final T value;
-  final List<(T, String)> options;
-  final ValueChanged<T> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme text = Theme.of(context).textTheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.inputFill,
-        borderRadius: BorderRadius.circular(AppRadius.control),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: options.map((opt) {
-          final bool selected = opt.$1 == value;
-          return Semantics(
-            button: true,
-            selected: selected,
-            label: opt.$2,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(AppRadius.control),
-              onTap: () => onChanged(opt.$1),
-              child: Container(
-                constraints: const BoxConstraints(
-                  minHeight: AppSpacing.minTouchTarget,
-                ),
-                alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: selected ? AppColors.primary : Colors.transparent,
-                  borderRadius: BorderRadius.circular(AppRadius.control),
-                ),
-                child: Text(
-                  opt.$2,
-                  style: text.labelLarge?.copyWith(
-                    color: selected
-                        ? AppColors.secondary
-                        : AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
       ),
     );
   }

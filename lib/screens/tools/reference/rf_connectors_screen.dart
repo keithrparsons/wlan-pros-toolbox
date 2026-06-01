@@ -31,6 +31,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../concept_graphic_band.dart';
+import 'reference_row_semantics.dart';
 
 /// One RF connector row. Fields mirror the PWA's RF_CONN_DATA tuple
 /// [name, impedance, maxFreq, mating, notes].
@@ -293,7 +294,15 @@ class _ConnectorBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    // Group the whole connector block as one container labelled by the
+    // connector name, so a screen reader announces "BNC" then steps through
+    // its impedance / frequency / mating / notes as a coherent unit rather
+    // than as orphaned nodes. merge:false keeps the impedance chip's own
+    // label/value node intact. (Vera F-02.)
+    return ReferenceRowSemantics(
+      label: connector.name,
+      merge: false,
+      child: Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -328,6 +337,7 @@ class _ConnectorBlock extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

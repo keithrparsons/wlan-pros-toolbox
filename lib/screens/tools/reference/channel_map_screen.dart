@@ -404,18 +404,27 @@ class _ChannelMapScreenState extends State<ChannelMapScreen> {
 
 // ── DFS / scanning class → status token + label ──────────────────────────────
 
-/// Tint and paired label for a DfsClass. Color carries the PWA's key; the label
-/// keeps it from being color-only (§8.13 rule 2).
+/// Tint and paired label for a DfsClass. `color` carries the verdict/affordance
+/// hue; the label keeps it from being color-only (§8.13 rule 2). `neutral` flips
+/// the rendering to the §8.1/§8.2 neutral stack (surface tint + decorative
+/// border + tertiary text) for classes that are a plain *attribute*, not a
+/// verdict — per §8.15 case-3, an attribute gets no status hue.
 class _DfsStyle {
-  const _DfsStyle(this.color, this.label);
+  const _DfsStyle(this.color, this.label, {this.neutral = false});
   final Color color;
   final String label;
+  final bool neutral;
 }
 
 _DfsStyle _dfsStyle(DfsClass d) {
   switch (d) {
     case DfsClass.noDfs:
-      return const _DfsStyle(AppColors.statusInfo, 'No DFS');
+      // §8.15 R-03: "No DFS" is an attribute (the absence of a regulatory
+      // requirement), not an info verdict. It gets no status hue — render it
+      // neutral (surface tint + decorative border + tertiary text). It stays
+      // distinguishable from DFS (amber) and Mixed (danger) by being the only
+      // un-tinted, neutral class.
+      return const _DfsStyle(AppColors.textTertiary, 'No DFS', neutral: true);
     case DfsClass.dfs:
       return const _DfsStyle(AppColors.statusWarning, 'DFS');
     case DfsClass.mixed:
@@ -478,7 +487,7 @@ class _MapCard extends StatelessWidget {
             runSpacing: AppSpacing.xs,
             children: legend.map((d) {
               final _DfsStyle st = _dfsStyle(d);
-              return _Chip(st.label, color: st.color);
+              return _Chip(st.label, color: st.color, neutral: st.neutral);
             }).toList(),
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -524,6 +533,13 @@ class _Block extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final _DfsStyle st = _dfsStyle(block.dfs);
+    // Neutral (No DFS) blocks use the §8.1/§8.2 neutral stack — a faint surface
+    // tint + decorative border — matching the 2.4 GHz overlapping-channel idiom
+    // already in this file. Verdict classes keep their status-hue tint.
+    final Color blockFill = st.neutral
+        ? AppColors.textTertiary.withValues(alpha: 0.06)
+        : st.color.withValues(alpha: 0.18);
+    final Color blockBorder = st.neutral ? AppColors.border : st.color;
     final String label =
         block.alt ? '${block.centerChannel} alt' : '${block.centerChannel}';
     return Semantics(
@@ -536,10 +552,10 @@ class _Block extends StatelessWidget {
         margin: const EdgeInsets.only(right: _kGap),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: st.color.withValues(alpha: 0.18),
+          color: blockFill,
           borderRadius: BorderRadius.circular(AppRadius.control),
           border: Border.all(
-            color: st.color,
+            color: blockBorder,
             width: 1,
             // Dashed look isn't a Border feature; the "alt" block is instead
             // marked by its label suffix and a lighter fill. (PWA dashed = alt.)
@@ -736,12 +752,16 @@ class _Map6 extends StatelessWidget {
 // ── Chips and toggle ──────────────────────────────────────────────────────────
 
 /// Small affordance chip — tinted fill + bordered, label always present so it
-/// is never color-only (§8.13 rule 2).
+/// is never color-only (§8.13 rule 2). When `neutral` is set, the chip renders
+/// on the §8.1/§8.2 neutral stack (surface2 fill + decorative border + tertiary
+/// text) instead of tinting a status hue — used for attribute chips that carry
+/// no verdict (§8.15 case-3, e.g. "No DFS").
 class _Chip extends StatelessWidget {
-  const _Chip(this.label, {required this.color});
+  const _Chip(this.label, {required this.color, this.neutral = false});
 
   final String label;
   final Color color;
+  final bool neutral;
 
   @override
   Widget build(BuildContext context) {
@@ -749,14 +769,17 @@ class _Chip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
+        color: neutral ? AppColors.surface2 : color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: color, width: 1),
+        border: Border.all(
+          color: neutral ? AppColors.border : color,
+          width: 1,
+        ),
       ),
       child: Text(
         label,
         style: text.labelSmall?.copyWith(
-          color: color,
+          color: neutral ? AppColors.textTertiary : color,
           fontWeight: FontWeight.w500,
         ),
       ),

@@ -32,6 +32,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../concept_graphic_band.dart';
+import 'reference_row_semantics.dart';
 
 /// One row of the PoE standards table. Field names + values mirror the PWA
 /// `POE_STDS` const exactly: [standard, name, pse_w, pd_w, pairs, classes].
@@ -186,7 +187,15 @@ class PoeReferenceScreen extends StatelessWidget {
         ],
       ),
       rows: standards.map((PoeStandard s) {
-        return Padding(
+        return ReferenceRowSemantics(
+          label: rowLabel(s.standard, <String?>[
+            s.name,
+            'PSE ${_fmt(s.pseWatts)} watts',
+            'PD ${_fmt(s.pdWatts)} watts',
+            'pairs ${s.pairs}',
+            'classes ${s.classes}',
+          ]),
+          child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 6),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -249,6 +258,7 @@ class PoeReferenceScreen extends StatelessWidget {
               ),
             ],
           ),
+          ),
         );
       }).toList(),
     );
@@ -266,7 +276,13 @@ class PoeReferenceScreen extends StatelessWidget {
         ],
       ),
       rows: classes.map((PoeClass c) {
-        return Padding(
+        return ReferenceRowSemantics(
+          label: rowLabel('Class ${c.classNum}', <String?>[
+            'max at PD ${_fmt(c.maxPdWatts)} watts',
+            'standard ${c.standard}',
+            c.note,
+          ]),
+          child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 6),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -310,6 +326,7 @@ class PoeReferenceScreen extends StatelessWidget {
                 ),
               ),
             ],
+          ),
           ),
         );
       }).toList(),

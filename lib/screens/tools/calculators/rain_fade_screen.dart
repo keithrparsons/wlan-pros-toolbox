@@ -41,6 +41,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -116,7 +117,8 @@ class RainFadeScreen extends StatefulWidget {
         final double frac =
             (math.log(freqGHz) - math.log(f1)) / (math.log(f2) - math.log(f1));
         final double k = math.exp(
-          math.log(t[i][ki]) + frac * (math.log(t[i + 1][ki]) - math.log(t[i][ki])),
+          math.log(t[i][ki]) +
+              frac * (math.log(t[i + 1][ki]) - math.log(t[i][ki])),
         );
         final double a = t[i][ai] + frac * (t[i + 1][ai] - t[i][ai]);
         return (k, a);
@@ -209,8 +211,7 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
       _blank();
       return;
     }
-    final double gamma =
-        RainFadeScreen.specificAttenuation(freq, rain, _pol);
+    final double gamma = RainFadeScreen.specificAttenuation(freq, rain, _pol);
     final double leff = RainFadeScreen.effectivePathKm(pathKm, rain);
     setState(() {
       _gamma = gamma;
@@ -250,10 +251,7 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Rain Fade'),
-        toolbarHeight: 64,
-      ),
+      appBar: AppBar(title: const Text('Rain Fade'), toolbarHeight: 64),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -282,7 +280,9 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
                       // the input card. Self-collapses when no graphic is
                       // bundled, so the 24px gap below it disappears too.
                       ConceptGraphicBand(
-                          toolId: 'rain-fade', isDesktop: isDesktop),
+                        toolId: 'rain-fade',
+                        isDesktop: isDesktop,
+                      ),
                       if (ToolAssets.hasGraphic('rain-fade'))
                         const SizedBox(height: AppSpacing.md),
                       _inputCard(text, mono),
@@ -370,7 +370,7 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
       textInputAction: TextInputAction.done,
       autocorrect: false,
       enableSuggestions: false,
-      style: monoStyle.copyWith(fontSize: 20),
+      style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
       cursorColor: AppColors.primary,
       decoration: InputDecoration(hintText: hintText),
     );
@@ -395,12 +395,9 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
           ),
         ),
         const SizedBox(width: AppSpacing.sm),
-        _UnitToggle<PathUnit>(
+        AppToggle<PathUnit>(
           value: _pathUnit,
-          options: const [
-            (PathUnit.km, 'km'),
-            (PathUnit.mi, 'mi'),
-          ],
+          items: const [(PathUnit.km, 'km'), (PathUnit.mi, 'mi')],
           onChanged: (u) {
             setState(() => _pathUnit = u);
             _recompute();
@@ -422,9 +419,9 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
-        _UnitToggle<Polarization>(
+        AppToggle<Polarization>(
           value: _pol,
-          options: const [
+          items: const [
             (Polarization.horizontal, 'Horizontal'),
             (Polarization.vertical, 'Vertical'),
           ],
@@ -449,26 +446,35 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            SelectableText(
-              _fmt(_attenDb, 2),
-              style: mono.outputXL.copyWith(
-                color: _attenDb == null
-                    ? AppColors.textTertiary
-                    : AppColors.primary,
+        // One SR node for the headline: "Rain attenuation: 12.50 dB" (or "not
+        // calculated"), instead of value/unit fragments (Vera finding #6).
+        Semantics(
+          label: 'Rain attenuation',
+          value: _attenDb == null
+              ? 'not calculated'
+              : '${_fmt(_attenDb, 2)} dB',
+          excludeSemantics: true,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              SelectableText(
+                _fmt(_attenDb, 2),
+                style: mono.outputXL.copyWith(
+                  color: _attenDb == null
+                      ? AppColors.textTertiary
+                      : AppColors.primary,
+                ),
               ),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              'dB',
-              style: text.labelLarge?.copyWith(
-                color: AppColors.textSecondary,
+              const SizedBox(width: AppSpacing.xxs),
+              Text(
+                'dB',
+                style: text.labelLarge?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         const SizedBox(height: AppSpacing.sm),
         // Secondary outputs, matching the PWA's gamma / L_eff result rows.
@@ -498,30 +504,39 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
     required String value,
     required String unit,
   }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+    // One SR node per row: "Specific attenuation (γ): 0.0123 dB/km" (or "not
+    // calculated"), instead of label/value/unit fragments (Vera finding #6).
+    return Semantics(
+      label: label,
+      value: value == '—' ? 'not calculated' : '$value $unit',
+      excludeSemantics: true,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            ),
           ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        SelectableText(
-          value,
-          style: mono.inlineCode.copyWith(
-            color: value == '—' ? AppColors.textTertiary : AppColors.textPrimary,
-            fontWeight: FontWeight.w500,
+          const SizedBox(width: AppSpacing.sm),
+          SelectableText(
+            value,
+            style: mono.inlineCode.copyWith(
+              color: value == '—'
+                  ? AppColors.textTertiary
+                  : AppColors.textPrimary,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          unit,
-          style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
-        ),
-      ],
+          const SizedBox(width: AppSpacing.xxs),
+          Text(
+            unit,
+            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+          ),
+        ],
+      ),
     );
   }
 
@@ -604,7 +619,7 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
           const SizedBox(height: AppSpacing.xs),
           ...refs.map((row) {
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -641,69 +656,6 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
             );
           }),
         ],
-      ),
-    );
-  }
-}
-
-/// Segmented unit toggle for an input row. Holds to the §8.3 minimum touch
-/// target and uses ChoiceChip-style selection without inventing new tokens.
-/// Copied in pattern from fspl_screen.dart's _UnitToggle.
-class _UnitToggle<T> extends StatelessWidget {
-  const _UnitToggle({
-    required this.value,
-    required this.options,
-    required this.onChanged,
-  });
-
-  final T value;
-  final List<(T, String)> options;
-  final ValueChanged<T> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme text = Theme.of(context).textTheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.inputFill,
-        borderRadius: BorderRadius.circular(AppRadius.control),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: options.map((opt) {
-          final bool selected = opt.$1 == value;
-          return Semantics(
-            button: true,
-            selected: selected,
-            label: opt.$2,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(AppRadius.control),
-              onTap: () => onChanged(opt.$1),
-              child: Container(
-                constraints: const BoxConstraints(
-                  minHeight: AppSpacing.minTouchTarget,
-                ),
-                alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: selected ? AppColors.primary : Colors.transparent,
-                  borderRadius: BorderRadius.circular(AppRadius.control),
-                ),
-                child: Text(
-                  opt.$2,
-                  style: text.labelLarge?.copyWith(
-                    color: selected
-                        ? AppColors.secondary
-                        : AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
       ),
     );
   }

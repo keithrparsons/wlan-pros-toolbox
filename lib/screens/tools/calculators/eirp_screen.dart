@@ -23,6 +23,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -151,7 +152,9 @@ class _EirpScreenState extends State<EirpScreen> {
   static String _formatPower(double eirpDbm) {
     final double w = EirpScreen._dbmToWatts(eirpDbm);
     if (!w.isFinite) return '—';
-    return w >= 1 ? '${w.toStringAsFixed(2)} W' : '${(w * 1000).toStringAsFixed(1)} mW';
+    return w >= 1
+        ? '${w.toStringAsFixed(2)} W'
+        : '${(w * 1000).toStringAsFixed(1)} mW';
   }
 
   // ─── Build ────────────────────────────────────────────────────────────────
@@ -163,10 +166,7 @@ class _EirpScreenState extends State<EirpScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('EIRP'),
-        toolbarHeight: 64,
-      ),
+      appBar: AppBar(title: const Text('EIRP'), toolbarHeight: 64),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -247,7 +247,9 @@ class _EirpScreenState extends State<EirpScreen> {
                     textInputAction: TextInputAction.next,
                     autocorrect: false,
                     enableSuggestions: false,
-                    style: mono.outputLarge.copyWith(fontSize: 20),
+                    style: mono.outputLarge.copyWith(
+                      fontSize: AppTextSize.fieldNumeric,
+                    ),
                     cursorColor: AppColors.primary,
                     decoration: const InputDecoration(hintText: '20'),
                   ),
@@ -297,9 +299,9 @@ class _EirpScreenState extends State<EirpScreen> {
     // (§8.14: "Use a segmented Toggle for 2–3 short options"). This matches the
     // Link Budget TX-power selector exactly so the two calculators stay
     // consistent. (Replaces the former 3-option DropdownButton.)
-    return _UnitToggle<EirpPowerUnit>(
+    return AppToggle<EirpPowerUnit>(
       value: _powerUnit,
-      options: const [
+      items: const [
         (EirpPowerUnit.dBm, 'dBm'),
         (EirpPowerUnit.w, 'W'),
         (EirpPowerUnit.mW, 'mW'),
@@ -320,51 +322,61 @@ class _EirpScreenState extends State<EirpScreen> {
         border: Border.all(color: AppColors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'EIRP',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
-              letterSpacing: 0.4,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          // Primary result, dBm. Mono so decimals align; "—" in the empty /
-          // invalid state so the field reads as "no input yet", never blank.
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              SelectableText(
-                dbmText,
-                style: mono.outputXL.copyWith(
-                  color: hasResult ? AppColors.primary : AppColors.textTertiary,
-                ),
+      // One SR node for the readout: "EIRP: 36.0 dBm, 4.0 W" (or "not
+      // calculated"), instead of value/unit fragments across two lines (Vera
+      // finding #6).
+      child: Semantics(
+        label: 'EIRP',
+        value: hasResult ? '$dbmText dBm, $powerText' : 'not calculated',
+        excludeSemantics: true,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'EIRP',
+              style: text.labelMedium?.copyWith(
+                color: AppColors.textSecondary,
+                letterSpacing: 0.4,
               ),
-              const SizedBox(width: AppSpacing.xs),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Text(
-                  'dBm',
-                  style: text.labelLarge?.copyWith(
-                    color: AppColors.textSecondary,
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            // Primary result, dBm. Mono so decimals align; "—" in the empty /
+            // invalid state so the field reads as "no input yet", never blank.
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                SelectableText(
+                  dbmText,
+                  style: mono.outputXL.copyWith(
+                    color: hasResult
+                        ? AppColors.primary
+                        : AppColors.textTertiary,
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          SelectableText(
-            powerText,
-            style: mono.outputMedium.copyWith(
-              color: hasResult
-                  ? AppColors.textSecondary
-                  : AppColors.textTertiary,
+                const SizedBox(width: AppSpacing.xs),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    'dBm',
+                    style: text.labelLarge?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: AppSpacing.xs),
+            SelectableText(
+              powerText,
+              style: mono.outputMedium.copyWith(
+                color: hasResult
+                    ? AppColors.textSecondary
+                    : AppColors.textTertiary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -434,7 +446,7 @@ class _EirpScreenState extends State<EirpScreen> {
           const SizedBox(height: AppSpacing.xs),
           ...refs.map((row) {
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -472,70 +484,6 @@ class _EirpScreenState extends State<EirpScreen> {
             );
           }),
         ],
-      ),
-    );
-  }
-}
-
-/// Segmented unit toggle for an input row. Holds to the §8.3 minimum touch
-/// target and uses ChoiceChip-style selection without inventing new tokens.
-/// Mirrors the Link Budget TX-power toggle so the two calculators are identical
-/// (§8.14: a Toggle is the correct control for the 2–3 short dBm/W/mW options).
-class _UnitToggle<T> extends StatelessWidget {
-  const _UnitToggle({
-    required this.value,
-    required this.options,
-    required this.onChanged,
-  });
-
-  final T value;
-  final List<(T, String)> options;
-  final ValueChanged<T> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme text = Theme.of(context).textTheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.inputFill,
-        borderRadius: BorderRadius.circular(AppRadius.control),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: options.map((opt) {
-          final bool selected = opt.$1 == value;
-          return Semantics(
-            button: true,
-            selected: selected,
-            label: opt.$2,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(AppRadius.control),
-              onTap: () => onChanged(opt.$1),
-              child: Container(
-                constraints: const BoxConstraints(
-                  minHeight: AppSpacing.minTouchTarget,
-                ),
-                alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: selected ? AppColors.primary : Colors.transparent,
-                  borderRadius: BorderRadius.circular(AppRadius.control),
-                ),
-                child: Text(
-                  opt.$2,
-                  style: text.labelLarge?.copyWith(
-                    color: selected
-                        ? AppColors.secondary
-                        : AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
       ),
     );
   }
@@ -581,7 +529,7 @@ class _ConverterField extends StatelessWidget {
         textInputAction: TextInputAction.next,
         autocorrect: false,
         enableSuggestions: false,
-        style: monoStyle.copyWith(fontSize: 20),
+        style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
         cursorColor: AppColors.primary,
         decoration: InputDecoration(hintText: hint),
       ),

@@ -244,10 +244,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('PoE Budget'),
-        toolbarHeight: 64,
-      ),
+      appBar: AppBar(title: const Text('PoE Budget'), toolbarHeight: 64),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -276,7 +273,9 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
                       // the input card. Self-collapses when no graphic is
                       // bundled, so the 24px gap below it disappears too.
                       ConceptGraphicBand(
-                          toolId: 'poe-budget', isDesktop: isDesktop),
+                        toolId: 'poe-budget',
+                        isDesktop: isDesktop,
+                      ),
                       if (ToolAssets.hasGraphic('poe-budget'))
                         const SizedBox(height: AppSpacing.md),
                       _inputCard(text, mono),
@@ -314,14 +313,17 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
             semanticLabel: 'Switch PoE budget in watts',
             field: TextField(
               controller: _budgetCtrl,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               inputFormatters: _unsignedDecimal,
               onChanged: (_) => _recompute(),
               textInputAction: TextInputAction.next,
               autocorrect: false,
               enableSuggestions: false,
-              style: mono.outputLarge.copyWith(fontSize: 20),
+              style: mono.outputLarge.copyWith(
+                fontSize: AppTextSize.fieldNumeric,
+              ),
               cursorColor: AppColors.primary,
               decoration: const InputDecoration(hintText: '370'),
             ),
@@ -370,14 +372,17 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
             textField: true,
             child: TextField(
               controller: _wattsCtrls[i],
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               inputFormatters: _unsignedDecimal,
               onChanged: (_) => _recompute(),
               textInputAction: TextInputAction.next,
               autocorrect: false,
               enableSuggestions: false,
-              style: mono.outputLarge.copyWith(fontSize: 18),
+              style: mono.outputLarge.copyWith(
+                fontSize: AppTextSize.fieldNumeric,
+              ),
               cursorColor: AppColors.primary,
               decoration: const InputDecoration(hintText: 'W'),
             ),
@@ -397,7 +402,9 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
               textInputAction: TextInputAction.next,
               autocorrect: false,
               enableSuggestions: false,
-              style: mono.outputLarge.copyWith(fontSize: 18),
+              style: mono.outputLarge.copyWith(
+                fontSize: AppTextSize.fieldNumeric,
+              ),
               cursorColor: AppColors.primary,
               decoration: const InputDecoration(hintText: 'Qty'),
             ),
@@ -472,10 +479,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
             borderRadius: BorderRadius.circular(AppRadius.control),
             child: Stack(
               children: [
-                Container(
-                  height: AppSpacing.sm,
-                  color: AppColors.inputFill,
-                ),
+                Container(height: AppSpacing.sm, color: AppColors.inputFill),
                 FractionallySizedBox(
                   // pct is capped at 100, so the fraction never exceeds 1.
                   widthFactor: (r.pct / 100).clamp(0.0, 1.0),
@@ -496,28 +500,37 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
     String value, {
     Color? valueColor,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.baseline,
-        textBaseline: TextBaseline.alphabetic,
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: text.labelMedium?.copyWith(
-                color: AppColors.textSecondary,
+    // One SR node per row: "Total draw: 142.0 W", instead of label and value as
+    // separate fragments (Vera finding #6). The "Remaining" row's verdict color
+    // is never the only signal — the worded verdict lives in the status line
+    // below (§8.13 rule 2).
+    return Semantics(
+      label: label,
+      value: value,
+      excludeSemantics: true,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: text.labelMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
             ),
-          ),
-          SelectableText(
-            value,
-            style: mono.inlineCode.copyWith(
-              color: valueColor ?? AppColors.textPrimary,
-              fontWeight: FontWeight.w500,
+            SelectableText(
+              value,
+              style: mono.inlineCode.copyWith(
+                color: valueColor ?? AppColors.textPrimary,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -588,7 +601,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
           const SizedBox(height: AppSpacing.xs),
           ...rows.map((row) {
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -668,7 +681,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
           const SizedBox(height: AppSpacing.xs),
           ...rows.map((row) {
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
               child: Row(
                 children: [
                   SizedBox(

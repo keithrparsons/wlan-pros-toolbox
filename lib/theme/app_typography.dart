@@ -118,6 +118,7 @@ class AppMonoText extends ThemeExtension<AppMonoText> {
     required this.outputLarge,
     required this.outputMedium,
     required this.inlineCode,
+    required this.robotoMono,
   });
 
   /// 36px DM Mono 500 — extra-large numeric result (e.g. hero converter value).
@@ -132,7 +133,15 @@ class AppMonoText extends ThemeExtension<AppMonoText> {
   /// 16px DM Mono 400 — inline code / CLI fragments.
   final TextStyle inlineCode;
 
-  /// Factory that wires DM Mono via `google_fonts`. Call once at theme build.
+  /// 16px Roboto Mono 400 — body-size monospaced SANS-SERIF for fixed-width
+  /// IDENTIFIERS (IP addresses, MAC addresses, subnet masks, BSSIDs, hex). Its
+  /// clean terminals avoid DM Mono's flared, serif-like glyphs that read oddly
+  /// in address columns. Calculator numeric outputs stay on DM Mono; this token
+  /// is specifically for identifier strings (GL-003 §8.5).
+  final TextStyle robotoMono;
+
+  /// Factory that wires the mono faces via `google_fonts`. Call once at theme
+  /// build.
   factory AppMonoText.defaults() {
     return AppMonoText(
       outputXL: GoogleFonts.dmMono(
@@ -159,6 +168,12 @@ class AppMonoText extends ThemeExtension<AppMonoText> {
         color: AppColors.textPrimary,
         height: 1.6,
       ),
+      robotoMono: GoogleFonts.robotoMono(
+        fontSize: AppTextSize.body,
+        fontWeight: FontWeight.w400,
+        color: AppColors.textPrimary,
+        height: 1.6,
+      ),
     );
   }
 
@@ -168,12 +183,14 @@ class AppMonoText extends ThemeExtension<AppMonoText> {
     TextStyle? outputLarge,
     TextStyle? outputMedium,
     TextStyle? inlineCode,
+    TextStyle? robotoMono,
   }) {
     return AppMonoText(
       outputXL: outputXL ?? this.outputXL,
       outputLarge: outputLarge ?? this.outputLarge,
       outputMedium: outputMedium ?? this.outputMedium,
       inlineCode: inlineCode ?? this.inlineCode,
+      robotoMono: robotoMono ?? this.robotoMono,
     );
   }
 
@@ -185,6 +202,7 @@ class AppMonoText extends ThemeExtension<AppMonoText> {
       outputLarge: TextStyle.lerp(outputLarge, other.outputLarge, t)!,
       outputMedium: TextStyle.lerp(outputMedium, other.outputMedium, t)!,
       inlineCode: TextStyle.lerp(inlineCode, other.inlineCode, t)!,
+      robotoMono: TextStyle.lerp(robotoMono, other.robotoMono, t)!,
     );
   }
 }

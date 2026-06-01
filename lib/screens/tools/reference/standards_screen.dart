@@ -31,6 +31,7 @@ import '../../../widgets/app_select.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import '../network/value_row.dart';
+import 'reference_row_semantics.dart';
 
 /// One row of the 802.11 PHY-layer comparison. Field names and values mirror
 /// the PWA `STANDARDS` const exactly (std / gen / year / bands / rate / mimo /
@@ -365,7 +366,21 @@ class _StandardCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
-    return _Card(
+    return ReferenceRowSemantics(
+      // merge:false — the card holds SelectableText ValueRows; keep them
+      // individually navigable/selectable while the card reads as one
+      // container labelled by the IEEE designation. (Vera F-02.)
+      merge: false,
+      label: rowLabel(entry.std, <String?>[
+        entry.generation == '—' ? null : entry.generation,
+        '${entry.year}',
+        'bands ${entry.bands} gigahertz',
+        'max rate ${entry.maxRate}',
+        'MIMO ${entry.mimo}',
+        'channel width ${entry.channelWidth} megahertz',
+        'modulation ${entry.modulation}',
+      ]),
+      child: _Card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -400,6 +415,7 @@ class _StandardCard extends StatelessWidget {
           ValueRow(label: 'Ch width (MHz)', value: entry.channelWidth),
           ValueRow(label: 'Modulation', value: entry.modulation),
         ],
+      ),
       ),
     );
   }

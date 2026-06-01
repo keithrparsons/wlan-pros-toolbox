@@ -13,9 +13,13 @@ class AppColors {
 
   // §2 — brand palette.
   static const Color primary = Color(0xFFA2CC3A); // Lime — only app accent.
-  static const Color secondary = Color(0xFF1A1A1A); // Charcoal (also surface-0).
+  static const Color secondary = Color(
+    0xFF1A1A1A,
+  ); // Charcoal (also surface-0).
   static const Color accent = Color(0xFF7A9E26); // Hover / pressed companion.
-  static const Color pressed = Color(0xFF6B8C20); // §8.3 — primary button pressed.
+  static const Color pressed = Color(
+    0xFF6B8C20,
+  ); // §8.3 — primary button pressed.
 
   static const Color neutral0 = Color(0xFFFFFFFF);
   static const Color neutral2 = Color(0xFFE5E5E5);
@@ -89,6 +93,15 @@ class AppColors {
 class AppSpacing {
   AppSpacing._();
 
+  /// §4 — `--space-xxs`: the single sanctioned sub-8px gap (half-step). Use for
+  /// tight inline pairings inside one logical unit (value↔unit symbol,
+  /// number↔suffix) and dense single-line data-row top/bottom insets where 8px
+  /// would over-space the row. The smallest gap in the system; nothing finer is
+  /// permitted. Added 2026-06-01 (Vera calculator-gate finding #2): replaces the
+  /// off-grid `SizedBox(width: 6)` value→unit gaps and `vertical: 4` row insets.
+  /// Do not introduce 2px, 6px, or any other sub-grid value.
+  static const double xxs = 4;
+
   static const double xs = 8;
   static const double sm = 16;
   static const double md = 24;
@@ -155,4 +168,14 @@ class AppTextSize {
   static const double h3 = 22;
   static const double body = 16;
   static const double caption = 13;
+
+  /// §8.5.1 — `--app-text-field-numeric`: the editable numeric *input* value in
+  /// calculators and unit converters (the field the user types dBm / Watts /
+  /// MHz / distances into). Rendered in DM Mono 500 at line-height 1.4. Sits
+  /// between body/16 and h3/22 as the dense-input mono register. NOT for result
+  /// readouts (those use h2/h1 per §8.5) and NOT for identifier strings (IP/MAC/
+  /// hex use Roboto Mono). Added 2026-06-01: every hardcoded `fontSize: 18`/`20`
+  /// on a DM Mono input field resolves to this one token (20). 16px floor
+  /// (iOS Safari auto-zoom) is respected.
+  static const double fieldNumeric = 20;
 }

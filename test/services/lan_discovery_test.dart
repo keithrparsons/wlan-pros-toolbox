@@ -4,12 +4,29 @@
 // with no device. The throwaway debug UI itself needs no tests (deleted with the
 // spike).
 
+import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:wlan_pros_toolbox/services/network/lan_discovery/arp_reader.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/connect_scan.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/device_type.dart';
+import 'package:wlan_pros_toolbox/services/network/lan_discovery/lan_discovery_engine.dart';
+import 'package:wlan_pros_toolbox/services/network/lan_discovery/lan_host.dart';
+import 'package:wlan_pros_toolbox/services/network/lan_discovery/mdns_browse.dart';
+import 'package:wlan_pros_toolbox/services/network/lan_discovery/multicast_lock.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/subnet_seed.dart';
+import 'package:wlan_pros_toolbox/services/network/mac_oui_service.dart';
+
+/// A fake [ArpReader] that returns a scripted result with no platform channel —
+/// so engine tests exercise the ARP-enrichment fold deterministically.
+class _FakeArpReader implements ArpReader {
+  _FakeArpReader(this._result);
+  final ArpReadResult _result;
+  @override
+  Future<ArpReadResult> read() async => _result;
+}
 
 // --- Fake-connector helpers for the connect-scan classification tests. ---
 //
@@ -22,6 +39,84 @@ import 'package:wlan_pros_toolbox/services/network/lan_discovery/subnet_seed.dar
 /// Builds a SocketException with the given errno, like a failed connect.
 SocketException _errnoEx(int code, String message) =>
     SocketException(message, osError: OSError(message, code));
+
+/// A SubnetSeedDeriver fed a fixed ip/mask, with no plugin call, so the engine
+/// runs its full pipeline in a unit test with no device. The given [ip]/[mask]
+/// drive the derived host count (a /29-ish mask keeps it small + predictable).
+SubnetSeedDeriver _seedDeriver({required String ip, required String mask}) {
+  return SubnetSeedDeriver(
+    reader: () async => (ip: ip, mask: mask, gateway: null),
+  );
+}
+
+/// A fake [MdnsDiscovery] that replays a scripted list of [MdnsDiscoveryEvent]s
+/// for one service type — no native plugin, no multicast, fully deterministic.
+/// Events fire on the next microtask so the browse's listen() is wired first.
+class _FakeMdnsDiscovery implements MdnsDiscovery {
+  _FakeMdnsDiscovery(this.serviceType, this._scripted);
+
+  @override
+  final String serviceType;
+  final List<MdnsDiscoveryEvent> _scripted;
+  final StreamController<MdnsDiscoveryEvent> _out =
+      StreamController<MdnsDiscoveryEvent>();
+  bool disposed = false;
+
+  @override
+  Stream<MdnsDiscoveryEvent> start() {
+    scheduleMicrotask(() {
+      for (final MdnsDiscoveryEvent e in _scripted) {
+        if (!_out.isClosed) _out.add(e);
+      }
+    });
+    return _out.stream;
+  }
+
+  @override
+  Future<void> dispose() async {
+    disposed = true;
+    if (!_out.isClosed) await _out.close();
+  }
+}
+
+/// A fake discovery whose stream emits an error — exercises the browse's
+/// non-fatal onError path.
+class _ErroringMdnsDiscovery implements MdnsDiscovery {
+  _ErroringMdnsDiscovery(this.serviceType);
+
+  @override
+  final String serviceType;
+
+  @override
+  Stream<MdnsDiscoveryEvent> start() => Stream<MdnsDiscoveryEvent>.error(
+      const SocketException('mDNS unavailable in test'));
+
+  @override
+  Future<void> dispose() async {}
+}
+
+/// Builds an [MdnsBrowser] whose discovery factory yields fakes scripted from
+/// [byType] (service type → events). Anything not in the map yields a fake with
+/// no events. A short timeout keeps tests fast.
+MdnsBrowser _fakeMdnsBrowser({
+  Map<String, List<MdnsDiscoveryEvent>> byType = const {},
+  List<String>? serviceTypes,
+  List<_FakeMdnsDiscovery>? created,
+}) =>
+    MdnsBrowser(
+      serviceTypes: serviceTypes ?? kBrowsedServiceTypes,
+      timeout: const Duration(milliseconds: 30),
+      discoveryFactory: (String type) {
+        final _FakeMdnsDiscovery d =
+            _FakeMdnsDiscovery(type, byType[type] ?? const <MdnsDiscoveryEvent>[]);
+        created?.add(d);
+        return d;
+      },
+    );
+
+/// An [MdnsBrowser] that discovers nothing — keeps engine tests fast and off the
+/// real network.
+MdnsBrowser _silentMdnsBrowser() => _fakeMdnsBrowser();
 
 void main() {
   group('inferDeviceType — ordered rule table', () {
@@ -106,6 +201,41 @@ void main() {
       );
     });
 
+    test('REGRESSION: Sonos (_sonos mDNS + port 22 open) → speaker, NOT '
+        'sshHost and NOT appleDevice', () {
+      // On-device finding: a Sonos speaker exposes SSH (22) for management and
+      // also advertises _raop/AirPlay. The lone-SSH rule used to fire first and
+      // mislabel it "SSH host"; the _raop rule would mislabel it "Apple device".
+      // mDNS identity must win, and the Sonos rule must precede the Apple rule.
+      final DeviceType t = inferDeviceType(
+        openPorts: <int>{22},
+        mdnsServices: <String>{'_sonos._tcp', '_raop._tcp'},
+      );
+      expect(t, DeviceType.speaker);
+      expect(t, isNot(DeviceType.sshHost));
+      expect(t, isNot(DeviceType.appleDevice));
+    });
+
+    test('Chromecast (_googlecast mDNS) → media streamer', () {
+      expect(
+        inferDeviceType(
+          openPorts: <int>{8009, 8443},
+          mdnsServices: <String>{'_googlecast._tcp'},
+        ),
+        DeviceType.mediaStreamer,
+      );
+    });
+
+    test('Apple device (_airplay/_raop WITHOUT _sonos) → still appleDevice', () {
+      expect(
+        inferDeviceType(
+          openPorts: <int>{7000},
+          mdnsServices: <String>{'_airplay._tcp', '_raop._tcp'},
+        ),
+        DeviceType.appleDevice,
+      );
+    });
+
     test('mDNS-only (no port rule) → generic mDNS device', () {
       expect(
         inferDeviceType(
@@ -141,6 +271,182 @@ void main() {
         inferDeviceType(openPorts: <int>{80, 554}, mdnsServices: <String>{}),
         DeviceType.camera,
       );
+    });
+  });
+
+  group('MdnsBrowser.browse — NWBrowser seam → IP→{name,services} mapping', () {
+    test('a _sonos._tcp resolved event produces a record whose services '
+        'contain _sonos._tcp, keyed by its IPv4', () async {
+      final List<_FakeMdnsDiscovery> created = <_FakeMdnsDiscovery>[];
+      final MdnsBrowser browser = _fakeMdnsBrowser(
+        serviceTypes: const <String>['_sonos._tcp'],
+        byType: <String, List<MdnsDiscoveryEvent>>{
+          '_sonos._tcp': <MdnsDiscoveryEvent>[
+            const MdnsDiscoveryEvent(
+              serviceType: '_sonos._tcp',
+              name: 'Living Room',
+              hostAddresses: <String>['192.168.1.42'],
+            ),
+          ],
+        },
+        created: created,
+      );
+
+      final Map<String, MdnsRecord> result = await browser.browse();
+
+      expect(result.keys, contains('192.168.1.42'));
+      final MdnsRecord rec = result['192.168.1.42']!;
+      expect(rec.name, 'Living Room');
+      expect(rec.services, contains('_sonos._tcp'));
+      // Every discovery the factory built MUST be disposed (no native leak).
+      expect(created.every((_FakeMdnsDiscovery d) => d.disposed), isTrue);
+    });
+
+    test('events across multiple service types fold onto the same IP', () async {
+      final MdnsBrowser browser = _fakeMdnsBrowser(
+        serviceTypes: const <String>['_airplay._tcp', '_raop._tcp'],
+        byType: <String, List<MdnsDiscoveryEvent>>{
+          '_airplay._tcp': <MdnsDiscoveryEvent>[
+            const MdnsDiscoveryEvent(
+              serviceType: '_airplay._tcp',
+              name: 'Apple TV',
+              hostAddresses: <String>['192.168.1.10'],
+            ),
+          ],
+          '_raop._tcp': <MdnsDiscoveryEvent>[
+            const MdnsDiscoveryEvent(
+              serviceType: '_raop._tcp',
+              name: 'Apple TV',
+              hostAddresses: <String>['192.168.1.10'],
+            ),
+          ],
+        },
+      );
+
+      final Map<String, MdnsRecord> result = await browser.browse();
+
+      expect(result, hasLength(1));
+      expect(result['192.168.1.10']!.services,
+          containsAll(<String>['_airplay._tcp', '_raop._tcp']));
+    });
+
+    test('non-IPv4 host addresses are skipped; IPv4 from the same event kept',
+        () async {
+      final MdnsBrowser browser = _fakeMdnsBrowser(
+        serviceTypes: const <String>['_http._tcp'],
+        byType: <String, List<MdnsDiscoveryEvent>>{
+          '_http._tcp': <MdnsDiscoveryEvent>[
+            const MdnsDiscoveryEvent(
+              serviceType: '_http._tcp',
+              name: 'NAS',
+              hostAddresses: <String>['fe80::1', '10.0.0.5'],
+            ),
+          ],
+        },
+      );
+
+      final Map<String, MdnsRecord> result = await browser.browse();
+
+      expect(result.keys, <String>['10.0.0.5']);
+      expect(result.containsKey('fe80::1'), isFalse);
+    });
+
+    test('a discovery whose stream errors is non-fatal; browse returns empty',
+        () async {
+      final MdnsBrowser browser = MdnsBrowser(
+        serviceTypes: const <String>['_http._tcp'],
+        timeout: const Duration(milliseconds: 30),
+        discoveryFactory: (String type) => _ErroringMdnsDiscovery(type),
+      );
+
+      final Map<String, MdnsRecord> result = await browser.browse();
+
+      expect(result, isEmpty);
+    });
+  });
+
+  group('NWBrowserMdnsDiscovery.parseNativeEvent — native payload normalization',
+      () {
+    test('well-formed payload → event with name + IPv4 address', () {
+      final MdnsDiscoveryEvent? ev = NWBrowserMdnsDiscovery.parseNativeEvent(
+        '_sonos._tcp',
+        <Object?, Object?>{
+          'serviceType': '_sonos._tcp',
+          'name': 'Living Room',
+          'hostAddresses': <Object?>['10.0.10.42'],
+        },
+      );
+      expect(ev, isNotNull);
+      expect(ev!.serviceType, '_sonos._tcp');
+      expect(ev.name, 'Living Room');
+      expect(ev.hostAddresses, <String>['10.0.10.42']);
+    });
+
+    test('missing name → empty name, address preserved', () {
+      final MdnsDiscoveryEvent? ev = NWBrowserMdnsDiscovery.parseNativeEvent(
+        '_http._tcp',
+        <Object?, Object?>{
+          'hostAddresses': <Object?>['192.168.1.5'],
+        },
+      );
+      expect(ev, isNotNull);
+      expect(ev!.name, '');
+      expect(ev.hostAddresses, <String>['192.168.1.5']);
+    });
+
+    test('no addresses → null (resolved-only contract)', () {
+      expect(
+        NWBrowserMdnsDiscovery.parseNativeEvent(
+          '_http._tcp',
+          <Object?, Object?>{'name': 'x', 'hostAddresses': <Object?>[]},
+        ),
+        isNull,
+      );
+    });
+
+    test('malformed payloads → null, never throws', () {
+      expect(
+        NWBrowserMdnsDiscovery.parseNativeEvent('_http._tcp', null),
+        isNull,
+      );
+      expect(
+        NWBrowserMdnsDiscovery.parseNativeEvent('_http._tcp', 'not a map'),
+        isNull,
+      );
+      expect(
+        NWBrowserMdnsDiscovery.parseNativeEvent(
+          '_http._tcp',
+          <Object?, Object?>{'hostAddresses': 'not a list'},
+        ),
+        isNull,
+      );
+      // Non-string / empty-string entries in the address list are filtered out;
+      // if nothing usable remains, the event is dropped.
+      expect(
+        NWBrowserMdnsDiscovery.parseNativeEvent(
+          '_http._tcp',
+          <Object?, Object?>{
+            'hostAddresses': <Object?>[42, '', null],
+          },
+        ),
+        isNull,
+      );
+    });
+  });
+
+  group('UnavailableMdnsDiscovery — non-iOS/macOS clean empty discovery', () {
+    test('start() yields no events and browse() folds nothing', () async {
+      final UnavailableMdnsDiscovery disc =
+          const UnavailableMdnsDiscovery('_http._tcp');
+      expect(await disc.start().toList(), isEmpty);
+      await disc.dispose(); // idempotent, never throws
+
+      final MdnsBrowser browser = MdnsBrowser(
+        serviceTypes: const <String>['_http._tcp', '_sonos._tcp'],
+        timeout: const Duration(milliseconds: 20),
+        discoveryFactory: (String type) => UnavailableMdnsDiscovery(type),
+      );
+      expect(await browser.browse(), isEmpty);
     });
   });
 
@@ -410,6 +716,414 @@ void main() {
       expect(result[0].openPorts, <int>[443]);
       expect(result[1].openPorts, isEmpty);
       expect(result.every((HostPorts h) => h.alive), isTrue);
+    });
+  });
+
+  group('LanDiscoveryEngine — streamed scanning progress (Fix 2 regression)', () {
+    // A live ServerSocket so "open" probes hand back a real openable socket.
+    late ServerSocket server;
+    late int livePort;
+
+    setUp(() async {
+      server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+      livePort = server.port;
+      server.listen((Socket s) => s.destroy());
+    });
+
+    tearDown(() async {
+      await server.close();
+    });
+
+    test('emits MULTIPLE increasing scanning-phase fractions, not one at 0.05 '
+        'then a jump to 0.6', () async {
+      // /29 over .1 → several hosts; a multi-port set → many probes, so the
+      // in-process scan reports progress repeatedly. The fake connector marks
+      // port 80 open (handshake to loopback) and refuses the rest, so every host
+      // is alive and the run completes normally.
+      final LanDiscoveryEngine engine = LanDiscoveryEngine(
+        runInIsolate: false,
+        seedDeriver: _seedDeriver(ip: '10.0.0.1', mask: '255.255.255.248'),
+        mdnsBrowser: _silentMdnsBrowser(),
+        multicastLock: const NoopMulticastLock(),
+        reverseDns: (String ip) async => null,
+        ports: const <int>[22, 80, 443, 445, 8080],
+        connector: (String host, int port, Duration timeout) {
+          if (port == 80) {
+            return Socket.connect(InternetAddress.loopbackIPv4, livePort,
+                timeout: timeout);
+          }
+          return Future<Socket>.error(_errnoEx(61, 'Connection refused'));
+        },
+      );
+
+      final List<DiscoveryProgress> events =
+          await engine.run().toList();
+
+      // Collect the scanning-phase fractions in order. There must be MORE than
+      // one (the bug was: only 0.05, then a jump straight to 0.6).
+      final List<double> scanFractions = events
+          .where((DiscoveryProgress p) => p.phase == DiscoveryPhase.scanning)
+          .map((DiscoveryProgress p) => p.fraction)
+          .toList();
+
+      expect(scanFractions.length, greaterThan(2),
+          reason: 'progress must tick repeatedly during the scan, not jump');
+
+      // Strictly within the scanning band [0.05, 0.6], and non-decreasing.
+      for (final double f in scanFractions) {
+        expect(f, greaterThanOrEqualTo(0.05));
+        expect(f, lessThanOrEqualTo(0.6));
+      }
+      for (int i = 1; i < scanFractions.length; i++) {
+        expect(scanFractions[i], greaterThanOrEqualTo(scanFractions[i - 1]),
+            reason: 'fractions must be monotonic');
+      }
+      // At least one intermediate value strictly between the seed (0.05) and the
+      // band end (0.6) — proves real mid-scan progress was reported.
+      expect(
+        scanFractions.any((double f) => f > 0.05 && f < 0.6),
+        isTrue,
+        reason: 'expected at least one mid-scan fraction, not just 0.05 → 0.6',
+      );
+
+      // A 'probed X / Y' note shows up so the debug screen can display it.
+      final bool hasProbedNote = events.any((DiscoveryProgress p) =>
+          p.phase == DiscoveryPhase.scanning &&
+          (p.note?.startsWith('probed ') ?? false));
+      expect(hasProbedNote, isTrue);
+
+      // The run still completes successfully with the alive hosts.
+      expect(events.last.phase, DiscoveryPhase.complete);
+      expect(engine.lastResult, isNotNull);
+      expect(engine.lastResult!.error, isNull);
+      expect(engine.lastResult!.hosts, isNotEmpty);
+    });
+
+    test('a scan that throws surfaces as a failed DiscoveryResult, not a hang',
+        () async {
+      final LanDiscoveryEngine engine = LanDiscoveryEngine(
+        runInIsolate: false,
+        seedDeriver: _seedDeriver(ip: '10.0.0.1', mask: '255.255.255.252'),
+        mdnsBrowser: _silentMdnsBrowser(),
+        multicastLock: const NoopMulticastLock(),
+        reverseDns: (String ip) async => null,
+        ports: const <int>[80],
+        // A connector whose throw is NOT a SocketException — runConnectScan
+        // classifies it as dead, so this alone would not fail the scan. Instead
+        // inject a runner that throws to exercise the failure path.
+        scanRunner: (ConnectScanRequest request) =>
+            Future<List<HostPorts>>.error(StateError('scan blew up')),
+      );
+
+      final List<DiscoveryProgress> events = await engine.run().toList();
+
+      expect(events.last.phase, DiscoveryPhase.failed);
+      expect(engine.lastResult, isNotNull);
+      expect(engine.lastResult!.error, contains('Connect-scan failed'));
+    });
+  });
+
+  group('MacOuiService.vendorLabelFor — W2 discovery vendor resolver', () {
+    // The production MAC→vendor seam the engine injects. Backs the full bundled
+    // IEEE registry in the app; here a tiny in-memory table exercises the same
+    // honesty contract that replaced the throwaway OuiVendor inline table.
+    final MacOuiService svc = MacOuiService.fromTable(<String, String>{
+      'FCECDA': 'Ubiquiti', // a known /24
+    });
+
+    test('a known OUI resolves to the named vendor', () {
+      expect(svc.vendorLabelFor('fc:ec:da:01:23:45'), 'Ubiquiti');
+    });
+
+    test('an unknown but globally-administered OUI falls back to the raw OUI, '
+        'never null/invented', () {
+      expect(svc.vendorLabelFor('00:11:22:33:44:55'), '00:11:22');
+    });
+
+    test('a locally-administered (U/L bit set) MAC returns null — the screen '
+        'renders "Randomized (local)" itself, never a fabricated vendor', () {
+      // 0x02 set in the first octet → locally administered.
+      expect(svc.vendorLabelFor('02:fc:ec:da:00:01'), isNull);
+    });
+
+    test('a multicast (I/G bit set) MAC returns null — not a single NIC', () {
+      // 0x01 set in the first octet → multicast / group.
+      expect(svc.vendorLabelFor('01:00:5e:00:00:01'), isNull);
+    });
+
+    test('accepts hyphen, dot, and bare notations; case-insensitive', () {
+      expect(svc.vendorLabelFor('FC-EC-DA-01-23-45'), 'Ubiquiti');
+      expect(svc.vendorLabelFor('fcec.da01.2345'), 'Ubiquiti');
+      expect(svc.vendorLabelFor('fcecda012345'), 'Ubiquiti');
+    });
+
+    test('an invalid MAC (wrong length) returns null, never throws', () {
+      expect(svc.vendorLabelFor('fc:ec:da'), isNull);
+      expect(svc.vendorLabelFor('not-a-mac'), isNull);
+    });
+  });
+
+  group('MethodChannelArpReader.parsePayload — Swift payload → ArpReadResult',
+      () {
+    test('available:true with entries → mapped IP→MAC, lower-cased', () {
+      final ArpReadResult r = MethodChannelArpReader.parsePayload(
+        <String, Object?>{
+          'available': true,
+          'entries': <Object?>[
+            <String, Object?>{'ip': '10.0.10.5', 'mac': 'B8:27:EB:01:23:45'},
+            <String, Object?>{'ip': '10.0.10.6', 'mac': 'fc:ec:da:aa:bb:cc'},
+          ],
+        },
+      );
+      expect(r.available, isTrue);
+      expect(r.error, isNull);
+      expect(r.byIp['10.0.10.5'], 'b8:27:eb:01:23:45'); // lower-cased
+      expect(r.byIp['10.0.10.6'], 'fc:ec:da:aa:bb:cc');
+    });
+
+    test('available:true with empty entries is a VALID success, not a failure',
+        () {
+      final ArpReadResult r = MethodChannelArpReader.parsePayload(
+        <String, Object?>{'available': true, 'entries': <Object?>[]},
+      );
+      expect(r.available, isTrue);
+      expect(r.entries, isEmpty);
+      expect(r.error, isNull);
+    });
+
+    test('available:false surfaces a sandbox-blocked message with the errno',
+        () {
+      final ArpReadResult r = MethodChannelArpReader.parsePayload(
+        <String, Object?>{
+          'available': false,
+          'entries': <Object?>[],
+          'error': 'sysctl(fetch) failed: errno 1 (Operation not permitted)',
+        },
+      );
+      expect(r.available, isFalse);
+      expect(r.error, contains('sandbox-blocked'));
+      expect(r.error, contains('Operation not permitted'));
+    });
+
+    test('a malformed payload (not a Map) becomes an honest unavailable result',
+        () {
+      final ArpReadResult r = MethodChannelArpReader.parsePayload('garbage');
+      expect(r.available, isFalse);
+      expect(r.error, isNotNull);
+    });
+
+    test('entries with missing/empty fields are skipped, never faked', () {
+      final ArpReadResult r = MethodChannelArpReader.parsePayload(
+        <String, Object?>{
+          'available': true,
+          'entries': <Object?>[
+            <String, Object?>{'ip': '10.0.0.1', 'mac': ''}, // empty mac
+            <String, Object?>{'ip': '', 'mac': 'aa:bb:cc:dd:ee:ff'}, // empty ip
+            <String, Object?>{'ip': '10.0.0.2'}, // missing mac
+            <String, Object?>{'ip': '10.0.0.3', 'mac': 'aa:bb:cc:00:11:22'},
+          ],
+        },
+      );
+      expect(r.entries, hasLength(1));
+      expect(r.byIp['10.0.0.3'], 'aa:bb:cc:00:11:22');
+    });
+  });
+
+  group('LanDiscoveryEngine — ARP enrichment (Gate 2 fold)', () {
+    late ServerSocket server;
+    late int livePort;
+
+    setUp(() async {
+      server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+      livePort = server.port;
+      server.listen((Socket s) => s.destroy());
+    });
+
+    tearDown(() async {
+      await server.close();
+    });
+
+    // A small in-memory IEEE registry so the W2 vendor fold is exercised against
+    // the real MacOuiService.vendorLabelFor path (the production resolver), not
+    // a stand-in. fc:ec:da is a known Ubiquiti /24; 00:11:22 is deliberately
+    // absent so the raw-OUI fallback is tested.
+    final MacOuiService oui = MacOuiService.fromTable(<String, String>{
+      'FCECDA': 'Ubiquiti',
+    });
+
+    LanDiscoveryEngine engineWithArp(ArpReader arpReader) => LanDiscoveryEngine(
+          runInIsolate: false,
+          seedDeriver: _seedDeriver(ip: '10.0.10.1', mask: '255.255.255.252'),
+          mdnsBrowser: _silentMdnsBrowser(),
+          multicastLock: const NoopMulticastLock(),
+          reverseDns: (String ip) async => null,
+          arpReader: arpReader,
+          vendorResolver: oui.vendorLabelFor,
+          ports: const <int>[80],
+          connector: (String host, int port, Duration timeout) {
+            // Every host in the /30 is alive on port 80 (handshake to loopback).
+            return Socket.connect(InternetAddress.loopbackIPv4, livePort,
+                timeout: timeout);
+          },
+        );
+
+    test('a successful ARP read populates MAC + vendor on matching hosts', () async {
+      // /30 over .1 → hosts .1 and .2.
+      final ArpReadResult arp = ArpReadResult(
+        available: true,
+        entries: const <ArpEntry>[
+          ArpEntry(ip: '10.0.10.1', mac: 'fc:ec:da:01:23:45'), // Ubiquiti
+          ArpEntry(ip: '10.0.10.2', mac: '00:11:22:33:44:55'), // unknown → raw
+        ],
+      );
+      final LanDiscoveryEngine engine = engineWithArp(_FakeArpReader(arp));
+
+      await engine.run().toList();
+      final DiscoveryResult r = engine.lastResult!;
+
+      expect(r.arp, isNotNull);
+      expect(r.arp!.available, isTrue);
+      final LanHost h1 = r.hosts.firstWhere((LanHost h) => h.ip == '10.0.10.1');
+      expect(h1.mac, 'fc:ec:da:01:23:45');
+      expect(h1.vendor, 'Ubiquiti');
+      final LanHost h2 = r.hosts.firstWhere((LanHost h) => h.ip == '10.0.10.2');
+      expect(h2.mac, '00:11:22:33:44:55');
+      expect(h2.vendor, '00:11:22'); // raw-OUI fallback, never null
+    });
+
+    test('an unavailable ARP read leaves MAC/vendor null and surfaces the '
+        'reason — the run still completes', () async {
+      final LanDiscoveryEngine engine = engineWithArp(
+        _FakeArpReader(const ArpReadResult.unavailable(
+          'iOS sandbox cannot read the ARP table.',
+        )),
+      );
+
+      final List<DiscoveryProgress> events = await engine.run().toList();
+      final DiscoveryResult r = engine.lastResult!;
+
+      expect(events.last.phase, DiscoveryPhase.complete);
+      expect(r.error, isNull); // not a failed run; ARP is enrichment-only
+      expect(r.arp, isNotNull);
+      expect(r.arp!.available, isFalse);
+      expect(r.arp!.error, contains('sandbox'));
+      expect(r.hosts.every((LanHost h) => h.mac == null), isTrue);
+      expect(r.hosts.every((LanHost h) => h.vendor == null), isTrue);
+    });
+
+    test('the run emits an arp progress phase', () async {
+      final LanDiscoveryEngine engine = engineWithArp(
+        _FakeArpReader(const ArpReadResult(available: true)),
+      );
+      final List<DiscoveryProgress> events = await engine.run().toList();
+      expect(
+        events.any((DiscoveryProgress p) => p.phase == DiscoveryPhase.arp),
+        isTrue,
+      );
+    });
+  });
+
+  // The 2026-05-31 stream-lifecycle fix: the production transport must open
+  // EXACTLY ONE EventChannel stream for the whole browse (a Flutter EventChannel
+  // allows only one active stream per name), pass the full service-type list as
+  // the single listen argument, demultiplex incoming events by `serviceType`,
+  // and cancel exactly once when the last per-type discovery disposes. These
+  // tests stand in a mock platform channel for the native side.
+  group('mDNS single-stream transport (production EventChannel lifecycle)', () {
+    const String channel = kMdnsBrowseChannel;
+    const MethodCodec codec = StandardMethodCodec();
+
+    late TestDefaultBinaryMessenger messenger;
+    late int listenCount;
+    late int cancelCount;
+    late Object? lastListenArgs;
+    void Function(Object? event)? sink;
+
+    setUp(() {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      messenger = TestDefaultBinaryMessengerBinding
+          .instance.defaultBinaryMessenger;
+      listenCount = 0;
+      cancelCount = 0;
+      lastListenArgs = null;
+      sink = null;
+
+      // Mock the native side of the EventChannel: record listen/cancel calls and
+      // expose a sink that pushes events back up the broadcast stream, exactly
+      // as the native BrowseSession's `emit` does.
+      messenger.setMockMethodCallHandler(
+        MethodChannel(channel, codec),
+        (MethodCall call) async {
+          if (call.method == 'listen') {
+            listenCount++;
+            lastListenArgs = call.arguments;
+            sink = (Object? event) {
+              messenger.handlePlatformMessage(
+                channel,
+                codec.encodeSuccessEnvelope(event),
+                (ByteData? _) {},
+              );
+            };
+            return codec.encodeSuccessEnvelope(null);
+          }
+          if (call.method == 'cancel') {
+            cancelCount++;
+            sink = null;
+            return codec.encodeSuccessEnvelope(null);
+          }
+          return null;
+        },
+      );
+    });
+
+    test('a 16-type browse opens ONE stream with the full type list, not 16',
+        () async {
+      final MdnsBrowser browser = MdnsBrowser(
+        serviceTypes: kBrowsedServiceTypes,
+        timeout: const Duration(milliseconds: 60),
+      );
+
+      // While the browse is in its dwell window, push a Sonos event up the ONE
+      // stream tagged with its service type; the transport must demux it to the
+      // _sonos._tcp discovery and fold it into the result.
+      final Future<Map<String, MdnsRecord>> browsing = browser.browse();
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+      sink?.call(<String, Object?>{
+        'serviceType': '_sonos._tcp',
+        'name': 'Living Room',
+        'hostAddresses': <String>['192.168.1.42'],
+      });
+      final Map<String, MdnsRecord> result = await browsing;
+
+      // ONE listen for the whole browse — the bug was 16.
+      expect(listenCount, 1);
+      // The single listen argument is the FULL service-type list.
+      expect(lastListenArgs, kBrowsedServiceTypes);
+      // Exactly one cancel when the browse's dwell window ends.
+      expect(cancelCount, 1);
+      // The event was demultiplexed to the right type and folded in.
+      expect(result['192.168.1.42']?.name, 'Living Room');
+      expect(result['192.168.1.42']?.services, contains('_sonos._tcp'));
+    });
+
+    test('back-to-back browses each open and cancel exactly one stream',
+        () async {
+      Future<void> oneBrowse() async {
+        await MdnsBrowser(
+          serviceTypes: const <String>['_http._tcp', '_sonos._tcp'],
+          timeout: const Duration(milliseconds: 30),
+        ).browse();
+      }
+
+      await oneBrowse();
+      await oneBrowse();
+
+      expect(listenCount, 2); // one per browse, never one-per-type
+      expect(cancelCount, 2);
+    });
+
+    tearDown(() {
+      messenger.setMockMethodCallHandler(MethodChannel(channel, codec), null);
     });
   });
 }

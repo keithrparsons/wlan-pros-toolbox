@@ -24,6 +24,7 @@ import 'package:flutter/material.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../concept_graphic_band.dart';
+import 'reference_row_semantics.dart';
 
 /// One AP_RULES group: a category heading and its ordered guidance lines.
 /// Mirrors the PWA `{ cat, rules }` shape one-to-one.
@@ -184,7 +185,10 @@ class _RuleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
-    return Container(
+    return ReferenceRowSemantics(
+      label: group.category,
+      merge: false,
+      child: Container(
       decoration: BoxDecoration(
         color: AppColors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
@@ -204,6 +208,7 @@ class _RuleCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           for (final String rule in group.rules) _RuleLine(rule: rule),
         ],
+      ),
       ),
     );
   }

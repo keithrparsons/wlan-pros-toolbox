@@ -1,4 +1,4 @@
-// SPIKE-HSD-01 — heuristic device-type inference (THROWAWAY spike).
+// Heuristic device-type inference — Network Discovery (TICKET-HSD-02).
 //
 // No OS gives you "this is a printer" (brief §7). Device type is inferred from
 // the signals the scan actually collects: the open-port fingerprint and the
@@ -17,6 +17,8 @@ import 'curated_ports.dart';
 enum DeviceType {
   printer('Printer'),
   camera('Camera / NVR'),
+  speaker('Speaker / media'),
+  mediaStreamer('Media streamer'),
   appleDevice('Apple device'),
   iosDevice('iOS device'),
   windowsHost('Windows / SMB host'),
@@ -34,17 +36,29 @@ enum DeviceType {
 /// Pure heuristic: infer a [DeviceType] from the open-port set and the mDNS
 /// service-type set. Ordered most-specific-first; first match wins.
 ///
+/// Ordering principle (SPIKE-HSD-01, refined after on-device iOS testing): a
+/// specific mDNS service type is a much STRONGER identity signal than a lone
+/// open port. A bare SSH (22) or bare web (80/443/8080) port is weak —
+/// infrastructure and IoT devices routinely expose SSH for management — so
+/// those two rules now sit BELOW every mDNS-identity rule. Genuinely strong
+/// port fingerprints (printer IPP/LPD/9100, RTSP camera, iOS lockdownd, SMB)
+/// keep their high priority.
+///
 /// Rules (ordered):
-///  1. 631 (IPP) or 515 (LPD) or 9100, OR an `_ipp`/`_pdl-datastream` mDNS
-///     service          → printer
+///  1. 631 (IPP) or 515 (LPD) or 9100, OR an `_ipp`/`_printer`/
+///     `_pdl-datastream` mDNS service → printer
 ///  2. 554 (RTSP)       → camera / NVR
 ///  3. 62078 (iOS lockdownd / "usbmuxd over Wi-Fi") → iOS device
-///  4. an `_airplay`/`_raop`/`_companion-link` mDNS service → Apple device
-///  5. 445 (SMB)        → Windows / SMB host
-///  6. 80 or 443 or 8080 → web server / host
-///  7. 22 (SSH)         → SSH host
-///  8. any mDNS service at all → generic mDNS device
-///  9. otherwise        → unknown
+///  4. 445 (SMB)        → Windows / SMB host
+///  5. `_sonos` (or `_spotify-connect`) mDNS service → speaker / media.
+///     Runs BEFORE the Apple rule because Sonos also advertises `_raop`/AirPlay
+///     and would otherwise read as an Apple device.
+///  6. `_googlecast` mDNS service → media streamer
+///  7. an `_airplay`/`_raop`/`_companion-link` mDNS service → Apple device
+///  8. 80 or 443 or 8080 → web server / host  (weak — below mDNS identity)
+///  9. 22 (SSH)         → SSH host            (weak — below mDNS identity)
+/// 10. any mDNS service at all → generic mDNS device
+/// 11. otherwise        → unknown
 DeviceType inferDeviceType({
   required Set<int> openPorts,
   required Set<String> mdnsServices,
@@ -72,7 +86,25 @@ DeviceType inferDeviceType({
     return DeviceType.iosDevice;
   }
 
-  // 4. Apple device — AirPlay / AirTunes / companion-link.
+  // 4. Windows / SMB host — a strong port fingerprint, kept high.
+  if (openPorts.contains(CuratedPorts.smb)) {
+    return DeviceType.windowsHost;
+  }
+
+  // --- mDNS service identity (stronger than a lone SSH/web port) ---
+
+  // 5. Sonos / speaker. MUST precede the Apple rule: Sonos also advertises
+  //    `_raop`/AirPlay, so checking it first stops a speaker reading as Apple.
+  if (hasService('_sonos') || hasService('_spotify-connect')) {
+    return DeviceType.speaker;
+  }
+
+  // 6. Media streamer — Google Cast / Chromecast.
+  if (hasService('_googlecast')) {
+    return DeviceType.mediaStreamer;
+  }
+
+  // 7. Apple device — AirPlay / AirTunes / companion-link.
   if (hasService('_airplay') ||
       hasService('_raop') ||
       hasService('_companion-link') ||
@@ -81,28 +113,34 @@ DeviceType inferDeviceType({
     return DeviceType.appleDevice;
   }
 
-  // 5. Windows / SMB host.
-  if (openPorts.contains(CuratedPorts.smb)) {
-    return DeviceType.windowsHost;
-  }
+  // --- Weak single-port rules (only after mDNS identity has had its say) ---
+  //
+  // Access points / infrastructure: NOTE — most access points broadcast no
+  // "I am an access point" mDNS service, and the one reliable signal is the
+  // OUI vendor from the MAC address, which a sandboxed mobile app cannot read
+  // (desktop-only per the spike brief). So we deliberately do NOT fake an
+  // access-point rule here. On mobile, an access point with only 22/80/443
+  // open correctly falls through to sshHost / webServer / unknown below. That
+  // is a documented ceiling, not a bug to paper over.
 
-  // 6. Web server / host.
+  // 8. Web server / host — weak; an open web port alone says little.
   if (openPorts.contains(CuratedPorts.http) ||
       openPorts.contains(CuratedPorts.https) ||
       openPorts.contains(CuratedPorts.httpAlt)) {
     return DeviceType.webServer;
   }
 
-  // 7. SSH host.
+  // 9. SSH host — weakest port signal. Infrastructure and IoT expose 22 for
+  //    management, so a lone open 22 only earns this low-priority outcome.
   if (openPorts.contains(CuratedPorts.ssh)) {
     return DeviceType.sshHost;
   }
 
-  // 8. Anything that answered mDNS but matched no port rule.
+  // 10. Anything that answered mDNS but matched no rule above.
   if (mdnsServices.isNotEmpty || openPorts.contains(CuratedPorts.mdns)) {
     return DeviceType.mdnsDevice;
   }
 
-  // 9. Live (it had an open port) but unclassifiable.
+  // 11. Live (it had an open port) but unclassifiable.
   return DeviceType.unknown;
 }
