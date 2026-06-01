@@ -31,6 +31,17 @@ enum ShortcutsBridge {
   /// UserDefaults key holding the most recent JSON payload from the Shortcut.
   static let latestPayloadKey = "shortcuts_bridge.latest_wifi_json"
 
+  /// UserDefaults key holding the most recent CELLULAR JSON payload from the
+  /// companion Shortcut (TICKET-02 cellular). Separate from the Wi-Fi key so the
+  /// two tools never clobber each other's last reading.
+  static let latestCellularPayloadKey = "shortcuts_bridge.latest_cellular_json"
+
+  /// Honest install-state flag for the cellular Shortcut: has any cellular
+  /// payload ever arrived? Set true the first time a cellular payload is stored;
+  /// never cleared. Separate from the Wi-Fi install-state flag.
+  static let hasReceivedCellularPayloadKey =
+    "shortcuts_bridge.has_received_cellular_payload"
+
   /// Honest install-state flag (TICKET-03 A1). iOS cannot query whether a
   /// Shortcut is installed, so the app infers it from "has any payload ever
   /// arrived". Set true the first time the receiver intent stores a payload;
@@ -72,6 +83,29 @@ enum ShortcutsBridge {
   /// Honest install-state: has the app ever received a payload? (TICKET-03 A1.)
   static func hasEverReceivedPayload() -> Bool {
     sharedDefaults?.bool(forKey: hasReceivedPayloadKey) ?? false
+  }
+
+  /// Persist a CELLULAR payload and notify any foregrounded listener. Called
+  /// from `ReceiveCellularDetailsIntent.perform()`. Raises the honest cellular
+  /// install-state flag the first time a cellular payload arrives. Reuses the
+  /// same Darwin notification as Wi-Fi so a foregrounded engine wakes; the Dart
+  /// side reads the cellular key specifically.
+  static func storeCellular(json: String) {
+    sharedDefaults?.set(json, forKey: latestCellularPayloadKey)
+    sharedDefaults?.set(true, forKey: hasReceivedCellularPayloadKey)
+    sharedDefaults?.synchronize()
+    postDarwinNotification()
+  }
+
+  /// Read the most recent cellular payload, or nil if none stored.
+  static func readLatestCellular() -> String? {
+    sharedDefaults?.string(forKey: latestCellularPayloadKey)
+  }
+
+  /// Honest install-state for the cellular Shortcut: has any cellular payload
+  /// ever arrived?
+  static func hasEverReceivedCellularPayload() -> Bool {
+    sharedDefaults?.bool(forKey: hasReceivedCellularPayloadKey) ?? false
   }
 
   /// Set the monitoring-active flag the looping Shortcut consumes (A2/A3).

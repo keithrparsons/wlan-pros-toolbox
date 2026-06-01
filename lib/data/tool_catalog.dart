@@ -123,6 +123,15 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         routeName: '/tools/net-quality',
         isLive: true,
       ),
+      ToolEntry(
+        id: 'cellular-info',
+        title: 'Cellular Information',
+        description:
+            'Carrier, radio technology, signal bars, country code, and '
+            'roaming (iPhone)',
+        routeName: '/tools/cellular-info',
+        isLive: true,
+      ),
     ],
   ),
 
