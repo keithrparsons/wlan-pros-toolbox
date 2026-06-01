@@ -1,9 +1,10 @@
 // Unit tests for orderedCategoryTools — the per-category display ordering.
 //
 // Rule (since the 2026-06-01 reorganization): every category lists its tools
-// alphabetically by title, EXCEPT Test Network, which pins Wi-Fi vs Internet,
-// Wi-Fi Information, then Network Quality to the top and sorts the remainder
-// alphabetically. Networking Tools is now plain alphabetical like the rest.
+// alphabetically by title, EXCEPT Test Network, which pins Test My Connection,
+// Network Quality, Wi-Fi Information, then Wi-Fi vs Internet to the top and
+// sorts any remainder alphabetically. Networking Tools is now plain
+// alphabetical like the rest.
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
@@ -25,17 +26,18 @@ void main() {
       }
     });
 
-    test('Test Network pins Wi-Fi vs Internet, Wi-Fi Information, Network '
-        'Quality, then rest A-Z', () {
+    test('Test Network pins Test My Connection, Network Quality, Wi-Fi '
+        'Information, Wi-Fi vs Internet, then rest A-Z', () {
       final ToolCategory net = kToolCategories.firstWhere(
         (ToolCategory c) => c.id == 'test-network',
       );
       final List<ToolEntry> ordered = orderedCategoryTools(net);
 
-      // First three are the pinned ids, in the specified order.
-      expect(ordered[0].id, 'wifi-vs-internet');
-      expect(ordered[1].id, 'wifi-info');
-      expect(ordered[2].id, 'net-quality');
+      // The pinned ids lead, in Keith's specified order (2026-06-01).
+      expect(ordered[0].id, 'test-my-connection');
+      expect(ordered[1].id, 'net-quality');
+      expect(ordered[2].id, 'wifi-info');
+      expect(ordered[3].id, 'wifi-vs-internet');
 
       // The remainder (everything after the pins) is alphabetical and
       // contains none of the pinned ids.
