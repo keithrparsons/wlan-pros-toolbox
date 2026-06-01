@@ -8,6 +8,10 @@ import UIKit
   // observer when the event channel is cancelled.
   private var bridgeEventSink: FlutterEventSink?
 
+  // SPIKE-HSD-01: retained so the in-house mDNS EventChannel stream handler
+  // stays live (replaces the GPL-3.0 bonsoir plugin; NWBrowser-backed).
+  private var mdnsBrowseChannel: MdnsBrowseChannel?
+
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
@@ -18,7 +22,12 @@ import UIKit
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     // The application-level binary messenger for app-owned channels.
-    registerShortcutsBridge(with: engineBridge.applicationRegistrar.messenger())
+    let messenger = engineBridge.applicationRegistrar.messenger()
+    registerShortcutsBridge(with: messenger)
+    // SPIKE-HSD-01 — register the in-house NWBrowser mDNS EventChannel. Drives
+    // the OS Bonjour daemon (NSBonjourServices in Info.plist, no multicast
+    // entitlement). Replaces the removed GPL-3.0 bonsoir plugin.
+    mdnsBrowseChannel = MdnsBrowseChannel(messenger: messenger)
   }
 
   // MARK: - Shortcuts bridge (TICKET-01 spike)

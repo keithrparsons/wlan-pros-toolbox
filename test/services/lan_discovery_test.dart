@@ -273,7 +273,7 @@ void main() {
     });
   });
 
-  group('MdnsBrowser.browse — bonsoir seam → IP→{name,services} mapping', () {
+  group('MdnsBrowser.browse — NWBrowser seam → IP→{name,services} mapping', () {
     test('a _sonos._tcp resolved event produces a record whose services '
         'contain _sonos._tcp, keyed by its IPv4', () async {
       final List<_FakeMdnsDiscovery> created = <_FakeMdnsDiscovery>[];
@@ -361,6 +361,91 @@ void main() {
       final Map<String, MdnsRecord> result = await browser.browse();
 
       expect(result, isEmpty);
+    });
+  });
+
+  group('NWBrowserMdnsDiscovery.parseNativeEvent — native payload normalization',
+      () {
+    test('well-formed payload → event with name + IPv4 address', () {
+      final MdnsDiscoveryEvent? ev = NWBrowserMdnsDiscovery.parseNativeEvent(
+        '_sonos._tcp',
+        <Object?, Object?>{
+          'serviceType': '_sonos._tcp',
+          'name': 'Living Room',
+          'hostAddresses': <Object?>['10.0.10.42'],
+        },
+      );
+      expect(ev, isNotNull);
+      expect(ev!.serviceType, '_sonos._tcp');
+      expect(ev.name, 'Living Room');
+      expect(ev.hostAddresses, <String>['10.0.10.42']);
+    });
+
+    test('missing name → empty name, address preserved', () {
+      final MdnsDiscoveryEvent? ev = NWBrowserMdnsDiscovery.parseNativeEvent(
+        '_http._tcp',
+        <Object?, Object?>{
+          'hostAddresses': <Object?>['192.168.1.5'],
+        },
+      );
+      expect(ev, isNotNull);
+      expect(ev!.name, '');
+      expect(ev.hostAddresses, <String>['192.168.1.5']);
+    });
+
+    test('no addresses → null (resolved-only contract)', () {
+      expect(
+        NWBrowserMdnsDiscovery.parseNativeEvent(
+          '_http._tcp',
+          <Object?, Object?>{'name': 'x', 'hostAddresses': <Object?>[]},
+        ),
+        isNull,
+      );
+    });
+
+    test('malformed payloads → null, never throws', () {
+      expect(
+        NWBrowserMdnsDiscovery.parseNativeEvent('_http._tcp', null),
+        isNull,
+      );
+      expect(
+        NWBrowserMdnsDiscovery.parseNativeEvent('_http._tcp', 'not a map'),
+        isNull,
+      );
+      expect(
+        NWBrowserMdnsDiscovery.parseNativeEvent(
+          '_http._tcp',
+          <Object?, Object?>{'hostAddresses': 'not a list'},
+        ),
+        isNull,
+      );
+      // Non-string / empty-string entries in the address list are filtered out;
+      // if nothing usable remains, the event is dropped.
+      expect(
+        NWBrowserMdnsDiscovery.parseNativeEvent(
+          '_http._tcp',
+          <Object?, Object?>{
+            'hostAddresses': <Object?>[42, '', null],
+          },
+        ),
+        isNull,
+      );
+    });
+  });
+
+  group('UnavailableMdnsDiscovery — non-iOS/macOS clean empty discovery', () {
+    test('start() yields no events and browse() folds nothing', () async {
+      final UnavailableMdnsDiscovery disc =
+          const UnavailableMdnsDiscovery('_http._tcp');
+      expect(await disc.start().toList(), isEmpty);
+      await disc.dispose(); // idempotent, never throws
+
+      final MdnsBrowser browser = MdnsBrowser(
+        serviceTypes: const <String>['_http._tcp', '_sonos._tcp'],
+        timeout: const Duration(milliseconds: 20),
+        discoveryFactory: (String type) => UnavailableMdnsDiscovery(type),
+      );
+      expect(await browser.browse(), isEmpty);
     });
   });
 

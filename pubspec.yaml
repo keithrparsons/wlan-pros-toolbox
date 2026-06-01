@@ -78,25 +78,21 @@ dependencies:
   net_quality:
     path: packages/net_quality
 
-  # bonsoir — mDNS / DNS-SD service discovery via each OS's NATIVE Bonjour
-  # daemon (NWBrowser/NetService on iOS+macOS, NsdManager on Android, native
-  # resolvers on Windows/Linux). Used by the SPIKE-HSD-01 LAN-discovery
-  # prototype (lan_discovery package) to browse Bonjour service types and
-  # collect device names.
+  # mDNS / DNS-SD service discovery for the SPIKE-HSD-01 LAN-discovery prototype
+  # is provided by an IN-HOUSE native plugin over Apple's Network framework
+  # `NWBrowser` (ios/Runner/MdnsBrowseChannel.swift +
+  # macos/Runner/MdnsBrowseChannel.swift, an in-Runner Swift EventChannel
+  # mirroring the ARP / Wi-Fi channels). There is NO mDNS package dependency.
   #
-  # WHY NOT pure-Dart multicast_dns (the prior choice): on-device iOS testing
-  # found multicast_dns returns ZERO results even with NSBonjourServices and
-  # Bonjour devices present. Since iOS 14, a pure-Dart socket that sends/receives
-  # to the mDNS multicast group 224.0.0.251:5353 requires Apple's
-  # com.apple.developer.networking.multicast entitlement (granted only by
-  # special application). We do not hold it, so iOS silently drops the multicast
-  # and the browse is empty. bonsoir sidesteps this entirely: the OS Bonjour
-  # daemon performs the multicast, so it works with only NSBonjourServices
-  # declared (already present) and NO multicast entitlement — the App-Store-safe
-  # path. Trade-off: bonsoir adds NATIVE plugin code on iOS/macOS/Android, so a
-  # native rebuild is required (the pure-Dart connect-scan core is unaffected;
-  # only the mDNS enrichment layer becomes a native plugin). GPL-3.0.
-  bonsoir: ^7.1.1
+  # WHY in-house, not a package: the prior choice `bonsoir` is GPL-3.0, which is
+  # incompatible with a closed-source commercial App Store app (PRD Decision Log
+  # 13), so it was removed. NWBrowser drives the OS Bonjour daemon, so the browse
+  # works with only NSBonjourServices declared in Info.plist and NO
+  # com.apple.developer.networking.multicast entitlement — the App-Store-safe
+  # path (pure-Dart multicast_dns needs that entitlement and returns empty on
+  # iOS without it). Android NsdManager is deferred per
+  # project-toolbox-platform-scope; the Dart factory returns a clean empty
+  # discovery on non-iOS/macOS targets.
 
 dev_dependencies:
   flutter_test:
