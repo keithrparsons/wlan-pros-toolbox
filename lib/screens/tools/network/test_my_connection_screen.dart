@@ -718,7 +718,7 @@ class _VerdictCard extends StatelessWidget {
       case ConsumerOutcome.wifiLead:
         return Icons.wifi_outlined;
       case ConsumerOutcome.internet:
-        return Icons.cloud_off_outlined;
+        return Icons.cloud_queue;
       case ConsumerOutcome.couldntCheckWifi:
       case ConsumerOutcome.couldntComplete:
         return Icons.help_outline;
