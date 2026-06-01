@@ -87,28 +87,21 @@ class ToolCategory {
 /// pinned three in Test Network).
 const List<ToolCategory> kToolCategories = <ToolCategory>[
   // ───────────────────────── 1. Test Network ────────────────────────
-  // NEW (2026-06-01). The three live Wi-Fi/internet diagnostics moved out of
-  // Networking Tools, pinned in this order on the category screen:
-  // wifi-vs-internet, wifi-info, net-quality.
+  // NEW (2026-06-01). The live Wi-Fi/internet diagnostics moved out of
+  // Networking Tools, pinned in this order on the category screen (Keith,
+  // 2026-06-01): consumer one-tap first, then the deeper pro tools.
+  // test-my-connection, net-quality, wifi-info, wifi-vs-internet.
   ToolCategory(
     id: 'test-network',
     title: 'Test Network',
     summary: 'Live Wi-Fi and internet diagnostics',
     icon: Icons.network_check,
     tools: <ToolEntry>[
-      ToolEntry(
-        id: 'wifi-vs-internet',
-        title: 'Wi-Fi vs Internet',
-        description:
-            'Is the slowdown your Wi-Fi link or the internet upstream? '
-            'Compares link rate to measured throughput',
-        routeName: '/tools/wifi-vs-internet',
-        isLive: true,
-      ),
       // Consumer companion to wifi-vs-internet (Keith, 2026-06-01). Same
       // backends + verdict engine, plain-English re-skin. Audience-distinct
-      // description: the pro entry above reads "for engineers", this one is the
-      // one-tap consumer answer + what to tell support.
+      // description: the pro wifi-vs-internet entry below reads "for engineers",
+      // this one is the one-tap consumer answer + what to tell support. Pinned
+      // first so the everyday entry point leads the category.
       ToolEntry(
         id: 'test-my-connection',
         title: 'Test My Connection',
@@ -116,6 +109,15 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
             'Find out fast whether a slowdown is your Wi-Fi or your internet, '
             'and what to tell support',
         routeName: '/tools/test-my-connection',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'net-quality',
+        title: 'Network Quality',
+        description:
+            'Latency, jitter, loss, throughput, responsiveness, and site '
+            'reachability',
+        routeName: '/tools/net-quality',
         isLive: true,
       ),
       ToolEntry(
@@ -128,12 +130,12 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         isLive: true,
       ),
       ToolEntry(
-        id: 'net-quality',
-        title: 'Network Quality',
+        id: 'wifi-vs-internet',
+        title: 'Wi-Fi vs Internet',
         description:
-            'Latency, jitter, loss, throughput, responsiveness, and site '
-            'reachability',
-        routeName: '/tools/net-quality',
+            'Is the slowdown your Wi-Fi link or the internet upstream? '
+            'Compares link rate to measured throughput',
+        routeName: '/tools/wifi-vs-internet',
         isLive: true,
       ),
       ToolEntry(
