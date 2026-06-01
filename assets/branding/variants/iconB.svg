@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Variant B — "Flat two-tone lid". Adds dimensionality WITHOUT a gradient:
+       the toolbox lid + handle use the brand darker green #7A9E26 (GL-003 §2
+       accent), the body stays lime #A2CC3A. Pure flat color blocking, brand-legal.
+       Thin seam removed (the color change is the seam). Same R8 geometry/sizing. -->
+  <rect width="1024" height="1024" fill="#1A1A1A"/>
+  <g transform="translate(-125.6694,-160.6102) scale(1.24789)">
+    <!-- Lime body -->
+    <rect x="232" y="372" width="560" height="408" rx="60" fill="#A2CC3A"/>
+    <!-- Darker-green lid: rounded top corners match body, straight bottom at y456 -->
+    <path d="M 232 456 L 232 432 A 60 60 0 0 1 292 372 L 732 372 A 60 60 0 0 1 792 432 L 792 456 Z" fill="#7A9E26"/>
+    <!-- Handle in darker green to match the lid -->
+    <g>
+      <rect x="396" y="300" width="232" height="72" rx="16" fill="#7A9E26"/>
+      <rect x="436" y="324" width="152" height="48" rx="8" fill="#1A1A1A"/>
+    </g>
+    <!-- Wi-Fi fan knocked out of the lime body front face -->
+    <g fill="none" stroke="#1A1A1A" stroke-linecap="round" stroke-width="44">
+      <path d="M 455.4 653.4 A 80 80 0 0 1 568.6 653.4"/>
+      <path d="M 410.2 608.2 A 144 144 0 0 1 613.8 608.2"/>
+      <path d="M 364.9 562.9 A 208 208 0 0 1 659.1 562.9"/>
+    </g>
+    <circle cx="512" cy="710" r="30" fill="#1A1A1A"/>
+  </g>
+</svg>
