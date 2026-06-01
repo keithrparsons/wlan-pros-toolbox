@@ -17,16 +17,16 @@ class CellularShortcutsConfig {
 
   /// iCloud share link that installs the companion cellular Shortcut.
   ///
-  /// TODO(device-testing): replace this PLACEHOLDER with Keith's real iCloud
-  /// link once the "WLAN Pros Toolbox Cellular" Shortcut is published and
-  /// device-verified (the same flow as the Wi-Fi Shortcut in TICKET-03 Part B).
-  /// Until then [isShortcutUrlPlaceholder] is true and the Install action is
-  /// disabled so the app never opens a dead link.
+  /// LIVE: the "WLAN Pros Toolbox Cellular" Shortcut is published and
+  /// device-verified (all five cellular fields confirmed on a real iPhone
+  /// 2026-06-01). [isShortcutUrlPlaceholder] is now false, so the Install
+  /// action is enabled.
   static const String kCompanionShortcutUrl =
-      'https://www.icloud.com/shortcuts/CELLULAR_PLACEHOLDER';
+      'https://www.icloud.com/shortcuts/f00b34ab4ed5490892cdd90c0c945f3e';
 
   /// True while [kCompanionShortcutUrl] is still the placeholder. The UI uses
   /// this to disable the Install action so the app never opens a dead link.
+  /// Now false: the real published link is wired above.
   static bool get isShortcutUrlPlaceholder =>
       kCompanionShortcutUrl.endsWith('PLACEHOLDER');
 }

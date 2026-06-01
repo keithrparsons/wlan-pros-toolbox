@@ -303,7 +303,7 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
           case _IosPhase.loading:
             return const _IosLoadingState();
           case _IosPhase.needsInstall:
-            return _EmptyInstallState(edge: edge, onInstall: _openInstallSheet);
+            return _EmptyInstallState(onInstall: _openInstallSheet);
           case _IosPhase.hasData:
             return _IosSuccess(
               info: _iosInfo!,
@@ -338,9 +338,8 @@ class _IosLoadingState extends StatelessWidget {
 
 /// iOS empty state — no payload has ever arrived. Offers the install onboarding.
 class _EmptyInstallState extends StatelessWidget {
-  const _EmptyInstallState({required this.edge, required this.onInstall});
+  const _EmptyInstallState({required this.onInstall});
 
-  final double edge;
   final VoidCallback onInstall;
 
   @override
@@ -350,7 +349,11 @@ class _EmptyInstallState extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420),
         child: Padding(
-          padding: EdgeInsets.all(edge + AppSpacing.md),
+          // §4 single sanctioned token: a uniform `--space-lg` pad on the
+          // centered empty-state card. Replaces the prior `edge + AppSpacing.md`
+          // combination, which summed to an off-grid 40px (mobile) / 48px
+          // (desktop) and drifted with the breakpoint.
+          padding: EdgeInsets.all(AppSpacing.lg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -555,12 +558,18 @@ class _SignalBarsRow extends StatelessWidget {
 class _BarMeter extends StatelessWidget {
   const _BarMeter({required this.filled});
 
+  /// Width of a single signal-bar segment, in logical pixels. A fixed glyph
+  /// metric for the meter shape (not a layout spacing gap, so it is not a §4
+  /// spacing token): wide enough to read at a glance, narrow enough that four
+  /// segments plus their `--space-xxs` gaps sit compactly beside the "N of 4"
+  /// label.
+  static const double _barSegmentWidth = 6;
+
   /// Number of filled bars, 0..[CellularInfo.maxSignalBars].
   final int filled;
 
   @override
   Widget build(BuildContext context) {
-    const double barWidth = 6;
     const double gap = AppSpacing.xxs;
     final int total = CellularInfo.maxSignalBars;
     return ExcludeSemantics(
@@ -571,7 +580,7 @@ class _BarMeter extends StatelessWidget {
           for (int i = 0; i < total; i++) ...[
             if (i > 0) const SizedBox(width: gap),
             Container(
-              width: barWidth,
+              width: _barSegmentWidth,
               // Ascending heights so the meter reads as a signal staircase.
               height: 8 + i * 4,
               decoration: BoxDecoration(

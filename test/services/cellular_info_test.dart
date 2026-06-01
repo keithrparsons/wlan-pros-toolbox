@@ -70,6 +70,57 @@ void main() {
     test('an empty map has no data', () {
       expect(CellularInfo.fromMap(const <String, dynamic>{}).hasAnyData, isFalse);
     });
+
+    test('normalizes keys with stray whitespace (trim + lowercase)', () {
+      // On-device bug: hand-assembled Shortcut keys arrived with stray spaces
+      // ("signalBars " with a trailing space) and silently failed to match.
+      // Keys are now trimmed as well as lowercased.
+      final info = CellularInfo.fromMap(const <String, dynamic>{
+        'signalBars ': '2',
+        ' carrier': 'Verizon',
+        '  Country Code  ': 'US',
+      });
+      expect(info.signalBars, 2);
+      expect(info.carrier, 'Verizon');
+      expect(info.countryCode, 'US');
+    });
+  });
+
+  group('CellularInfo.normalizeRadioTechnology', () {
+    test('maps a raw CTRadioAccessTechnology constant to a friendly label', () {
+      expect(
+        CellularInfo.normalizeRadioTechnology('CTRadioAccessTechnologyLTE'),
+        'LTE',
+      );
+      expect(
+        CellularInfo.normalizeRadioTechnology('CTRadioAccessTechnologyNRNSA'),
+        '5G (NSA)',
+      );
+      expect(
+        CellularInfo.normalizeRadioTechnology('CTRadioAccessTechnologyNR'),
+        '5G',
+      );
+    });
+
+    test('passes through an already-friendly value unchanged (never blanks)',
+        () {
+      // The 2026-06-01 device test returned a clean value; pass-through is the
+      // default when no mapping matches.
+      expect(CellularInfo.normalizeRadioTechnology('5G NR'), '5G NR');
+      expect(CellularInfo.normalizeRadioTechnology('LTE'), 'LTE');
+    });
+
+    test('returns null for null or whitespace-only input', () {
+      expect(CellularInfo.normalizeRadioTechnology(null), isNull);
+      expect(CellularInfo.normalizeRadioTechnology('   '), isNull);
+    });
+
+    test('fromMap applies the radio normalization end to end', () {
+      final info = CellularInfo.fromMap(const <String, dynamic>{
+        'radioTechnology': 'CTRadioAccessTechnologyLTE',
+      });
+      expect(info.radioTechnology, 'LTE');
+    });
   });
 
   group('CellularInfo.fromJsonString', () {

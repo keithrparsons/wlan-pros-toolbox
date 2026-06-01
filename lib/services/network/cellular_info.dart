@@ -102,15 +102,21 @@ class CellularInfo {
   /// stock "Get Network Details" action, so both the published Shortcut and a
   /// hand-built one populate the model. (Case-insensitive keys are a Wi-Fi
   /// bridge learning, TICKET-01.)
+  ///
+  /// Keys are normalized with both `.trim()` and `.toLowerCase()`: the incoming
+  /// map keys are hand-assembled in Shortcuts and can carry stray whitespace
+  /// (a real on-device bug saw the key arrive as `"signalBars "` with a trailing
+  /// space and silently fail to match). Lookup keys below are already clean, so
+  /// trimming only the incoming side is safe.
   factory CellularInfo.fromMap(Map<dynamic, dynamic> map) {
     final Map<String, dynamic> ci = <String, dynamic>{};
     map.forEach((dynamic k, dynamic v) {
-      if (k != null) ci[k.toString().toLowerCase()] = v;
+      if (k != null) ci[k.toString().trim().toLowerCase()] = v;
     });
 
     String? pickString(List<String> keys) {
       for (final String key in keys) {
-        final dynamic v = ci[key.toLowerCase()];
+        final dynamic v = ci[key.trim().toLowerCase()];
         if (v == null) continue;
         final String s = v.toString().trim();
         if (s.isNotEmpty) return s;
@@ -141,11 +147,11 @@ class CellularInfo {
 
     return CellularInfo(
       carrier: pickString(<String>['carrier', 'Carrier', 'Carrier Name']),
-      radioTechnology: pickString(<String>[
+      radioTechnology: normalizeRadioTechnology(pickString(<String>[
         'radioTechnology',
         'Radio Technology',
         'radio',
-      ]),
+      ])),
       signalBars: pickBars(<String>[
         'signalBars',
         'Signal Bars',
@@ -164,6 +170,40 @@ class CellularInfo {
         'Is Roaming Abroad?',
       ]),
     );
+  }
+
+  /// Maps known raw `CTRadioAccessTechnology*` constants (the form iOS emits via
+  /// CoreTelephony / the Shortcuts cellular branch on some payloads) to friendly
+  /// labels. Values that are already friendly pass through unchanged — the
+  /// iPhone returned a clean value on the 2026-06-01 device test, so the default
+  /// is pass-through and a value is NEVER blanked when no mapping matches.
+  ///
+  /// Returns null only for a null input; an empty / whitespace-only string also
+  /// returns null (the caller already drops empties via [pickString]).
+  static String? normalizeRadioTechnology(String? raw) {
+    if (raw == null) return null;
+    final String trimmed = raw.trim();
+    if (trimmed.isEmpty) return null;
+
+    const Map<String, String> friendly = <String, String>{
+      'CTRadioAccessTechnologyNRNSA': '5G (NSA)',
+      'CTRadioAccessTechnologyNR': '5G',
+      'CTRadioAccessTechnologyLTE': 'LTE',
+      'CTRadioAccessTechnologyWCDMA': 'WCDMA',
+      'CTRadioAccessTechnologyHSDPA': 'HSDPA',
+      'CTRadioAccessTechnologyHSUPA': 'HSUPA',
+      'CTRadioAccessTechnologyCDMA1x': 'CDMA 1x',
+      'CTRadioAccessTechnologyCDMAEVDORev0': 'CDMA EV-DO Rev. 0',
+      'CTRadioAccessTechnologyCDMAEVDORevA': 'CDMA EV-DO Rev. A',
+      'CTRadioAccessTechnologyCDMAEVDORevB': 'CDMA EV-DO Rev. B',
+      'CTRadioAccessTechnologyeHRPD': 'eHRPD',
+      'CTRadioAccessTechnologyEdge': 'Edge',
+      'CTRadioAccessTechnologyGPRS': 'GPRS',
+    };
+
+    final String? mapped = friendly[trimmed];
+    // Pass through anything already friendly (never blank a value).
+    return mapped ?? trimmed;
   }
 
   @override
