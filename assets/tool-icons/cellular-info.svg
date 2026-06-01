@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- Cellular signal: four ascending bars (a 0-to-4 signal staircase), single
+       currentColor silhouette per GL-003 §8.6.1 (no multi-accent). -->
+  <g fill="currentColor" stroke="none">
+    <rect x="3" y="16" width="3" height="5" rx="0.8"/>
+    <rect x="8" y="12.5" width="3" height="8.5" rx="0.8"/>
+    <rect x="13" y="8.5" width="3" height="12.5" rx="0.8"/>
+    <rect x="18" y="3.5" width="3" height="17.5" rx="0.8"/>
+  </g>
+</svg>
