@@ -61,6 +61,7 @@ import '../screens/tools/network/mac_oui_screen.dart';
 import '../screens/tools/network/network_discovery_screen.dart';
 import '../screens/tools/network/mobile_traceroute_screen.dart';
 import '../screens/tools/network/net_quality_screen.dart';
+import '../screens/tools/network/wifi_vs_internet_screen.dart';
 import '../screens/tools/network/packet_sender_screen.dart';
 import '../screens/tools/network/ping_screen.dart';
 import '../screens/tools/network/ping_sweep_screen.dart';
@@ -147,6 +148,7 @@ class AppRouter {
   static const String icmpPing = '/tools/icmp-ping';
   static const String pingSweep = '/tools/ping-sweep';
   static const String netQuality = '/tools/net-quality';
+  static const String wifiVsInternet = '/tools/wifi-vs-internet';
   static const String wifiInfo = '/tools/wifi-info';
   static const String traceroute = '/tools/traceroute';
   static const String mobileTraceroute = '/tools/mobile-traceroute';
@@ -245,6 +247,7 @@ class AppRouter {
     // resolver (category_screen.dart) renders it via ToolAssets.hasIcon, so the
     // Icons.bolt fallback no longer triggers for this row.
     netQuality: (_) => const NetQualityScreen(),
+    wifiVsInternet: (_) => const WifiVsInternetScreen(),
     // TICKET-04: the consolidated cross-platform Wi-Fi Information tool
     // (macOS CoreWLAN + iOS companion-Shortcut behind one screen + normalized
     // model). The bespoke 'wifi-info' tool icon now ships at
