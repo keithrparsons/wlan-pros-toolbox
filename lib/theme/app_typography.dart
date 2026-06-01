@@ -25,7 +25,7 @@ const String _kIdentifierMonoFamily = 'Roboto Mono';
 /// Material 3 token mapping (Flutter conventions):
 /// - display* → editorial-scale display copy (§3 — rarely used in-app)
 /// - headlineLarge / Medium / Small → §3 H1 / H2 / H3
-/// - bodyLarge → §3 body (16px / 1.6)
+/// - bodyLarge → §3 body (16px / 1.45)
 /// - bodyMedium → §3 body small variant
 /// - labelLarge / Small → §3 caption + button labels
 TextTheme buildAppTextTheme() {
@@ -53,7 +53,7 @@ TextTheme buildAppTextTheme() {
       fontFamily: _kSansFamily,
       fontSize: AppTextSize.h1,
       fontWeight: FontWeight.w700,
-      height: 1.2,
+      height: 1.15,
       color: AppColors.textPrimary,
     ),
 
@@ -62,7 +62,7 @@ TextTheme buildAppTextTheme() {
       fontFamily: _kSansFamily,
       fontSize: AppTextSize.h2,
       fontWeight: FontWeight.w600,
-      height: 1.3,
+      height: 1.2,
       color: AppColors.textPrimary,
     ),
 
@@ -71,7 +71,7 @@ TextTheme buildAppTextTheme() {
       fontFamily: _kSansFamily,
       fontSize: AppTextSize.h3,
       fontWeight: FontWeight.w600,
-      height: 1.4,
+      height: 1.25,
       color: AppColors.textPrimary,
     ),
 
@@ -80,7 +80,7 @@ TextTheme buildAppTextTheme() {
       fontFamily: _kSansFamily,
       fontSize: AppTextSize.h3,
       fontWeight: FontWeight.w600,
-      height: 1.4,
+      height: 1.25,
       color: AppColors.textPrimary,
     ),
 
@@ -89,14 +89,14 @@ TextTheme buildAppTextTheme() {
       fontFamily: _kSansFamily,
       fontSize: AppTextSize.body,
       fontWeight: FontWeight.w400,
-      height: 1.6,
+      height: 1.45,
       color: AppColors.textPrimary,
     ),
     bodyMedium: const TextStyle(
       fontFamily: _kSansFamily,
       fontSize: AppTextSize.body,
       fontWeight: FontWeight.w400,
-      height: 1.6,
+      height: 1.45,
       color: AppColors.textPrimary,
     ),
 
@@ -105,28 +105,28 @@ TextTheme buildAppTextTheme() {
       fontFamily: _kSansFamily,
       fontSize: AppTextSize.body,
       fontWeight: FontWeight.w500,
-      height: 1.5,
+      height: 1.35,
       color: AppColors.textPrimary,
     ),
     labelMedium: const TextStyle(
       fontFamily: _kSansFamily,
       fontSize: AppTextSize.caption,
       fontWeight: FontWeight.w500,
-      height: 1.5,
+      height: 1.35,
       color: AppColors.textSecondary,
     ),
     labelSmall: const TextStyle(
       fontFamily: _kSansFamily,
       fontSize: AppTextSize.caption,
       fontWeight: FontWeight.w400,
-      height: 1.5,
+      height: 1.35,
       color: AppColors.textTertiary,
     ),
     bodySmall: const TextStyle(
       fontFamily: _kSansFamily,
       fontSize: AppTextSize.caption,
       fontWeight: FontWeight.w400,
-      height: 1.5,
+      height: 1.45,
       color: AppColors.textTertiary,
     ),
   );
@@ -177,35 +177,35 @@ class AppMonoText extends ThemeExtension<AppMonoText> {
         fontSize: AppTextSize.h1,
         fontWeight: FontWeight.w500,
         color: AppColors.textPrimary,
-        height: 1.2,
+        height: 1.1,
       ),
       outputLarge: TextStyle(
         fontFamily: _kMonoFamily,
         fontSize: AppTextSize.h2,
         fontWeight: FontWeight.w500,
         color: AppColors.textPrimary,
-        height: 1.3,
+        height: 1.15,
       ),
       outputMedium: TextStyle(
         fontFamily: _kMonoFamily,
         fontSize: AppTextSize.h3,
         fontWeight: FontWeight.w500,
         color: AppColors.textPrimary,
-        height: 1.4,
+        height: 1.2,
       ),
       inlineCode: TextStyle(
         fontFamily: _kMonoFamily,
         fontSize: AppTextSize.body,
         fontWeight: FontWeight.w400,
         color: AppColors.textPrimary,
-        height: 1.6,
+        height: 1.45,
       ),
       robotoMono: TextStyle(
         fontFamily: _kIdentifierMonoFamily,
         fontSize: AppTextSize.body,
         fontWeight: FontWeight.w400,
         color: AppColors.textPrimary,
-        height: 1.6,
+        height: 1.3,
       ),
     );
   }
