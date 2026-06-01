@@ -26,6 +26,7 @@ import '../../../services/network/packet_sender_service.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
@@ -82,14 +83,20 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
     if (_sending || !_canRun) return;
     final int? port = int.tryParse(_portCtrl.text.trim());
     if (port == null || port < 1 || port > 65535) {
-      setState(() => _inputError = 'Port must be a number between 1 and 65535.');
+      setState(
+        () => _inputError = 'Port must be a number between 1 and 65535.',
+      );
       return;
     }
-    final List<int>? payload = PacketSenderService.parsePayload(_payloadCtrl.text);
+    final List<int>? payload = PacketSenderService.parsePayload(
+      _payloadCtrl.text,
+    );
     if (payload == null) {
-      setState(() => _inputError =
-          r'Bad hex escape in the payload — \x must be followed by two hex '
-          r'digits, e.g. \x00\xff.');
+      setState(
+        () => _inputError =
+            r'Bad hex escape in the payload — \x must be followed by two hex '
+            r'digits, e.g. \x00\xff.',
+      );
       return;
     }
 
@@ -131,16 +138,82 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Packet Sender'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Packet Sender'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. No help icon here, so copy
+        // is the only action. Disabled until a send produces a result.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// §8.16 copy payload — the send outcome as a labeled plain-text block,
+  /// mirroring the on-screen `_ReplyCard` / error card. The outcome WORD leads
+  /// ("Reply received" / "Sent — no reply" / "Failed: …") so the verdict the
+  /// border/icon reinforced survives to the clipboard (§8.16). Carries the sent
+  /// payload (from the input, since the result stores only the byte count) and
+  /// the response in the SAME view (Text or Hex) the screen currently shows, so
+  /// the copy matches what the user sees. Honesty (GL-005): a no-reply outcome
+  /// is recorded plainly, not as an error.
+  ///
+  /// Returns null (→ disabled affordance) until a send completes.
+  String? _buildCopyText() {
+    final PacketResult? r = _result;
+    if (_sending || r == null) return null;
+
+    final String transport = r.transport == PacketTransport.tcp ? 'TCP' : 'UDP';
+    final StringBuffer buf = StringBuffer()..writeln('Packet Sender');
+
+    if (r.isError) {
+      buf
+        ..writeln('Status: Failed — ${_titleForError(r.errorKind!)}')
+        ..writeln('  ${r.errorMessage}')
+        ..writeln('  Transport: $transport')
+        ..writeln('  Target: ${r.host}:${r.port}');
+      return buf.toString().trimRight();
+    }
+
+    final bool noReply = r.received.isEmpty;
+    buf
+      ..writeln('Status: ${noReply ? 'Sent — no reply' : 'Reply received'}')
+      ..writeln('  Transport: $transport')
+      ..writeln('  Target: ${r.host}:${r.port}')
+      ..writeln('  Sent: ${r.bytesSent} bytes')
+      ..writeln('  Received: ${r.received.length} bytes')
+      ..writeln('  Elapsed: ${r.elapsed.inMilliseconds} ms');
+
+    final String sentPayload = _payloadCtrl.text;
+    if (sentPayload.isNotEmpty) {
+      buf
+        ..writeln()
+        ..writeln('Payload sent')
+        ..writeln(sentPayload);
+    }
+
+    if (!noReply) {
+      final String viewLabel = _view == _View.hex
+          ? 'Response (hex)'
+          : 'Response (text)';
+      final String body = _view == _View.hex
+          ? PacketSenderService.toHex(r.received)
+          : PacketSenderService.decodeText(r.received);
+      buf
+        ..writeln()
+        ..writeln(viewLabel)
+        ..writeln(body);
+    }
+
+    return buf.toString().trimRight();
   }
 
   Widget _body() {
     if (!NetworkSupport.packetSenderSupported) {
       return NetworkUnavailableView(
         toolName: 'Packet Sender',
-        reason: NetworkSupport.unavailableReason ?? NetworkUnavailableReason.web,
+        reason:
+            NetworkSupport.unavailableReason ?? NetworkUnavailableReason.web,
       );
     }
 
@@ -277,8 +350,9 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
               liveRegion: true,
               child: Text(
                 _inputError!,
-                style:
-                    text.labelMedium?.copyWith(color: AppColors.textTertiary),
+                style: text.labelMedium?.copyWith(
+                  color: AppColors.textTertiary,
+                ),
               ),
             ),
           ],
@@ -327,8 +401,9 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.control),
       ),
-      onSelected:
-          _sending ? null : (_) => setState(() => _transport = transport),
+      onSelected: _sending
+          ? null
+          : (_) => setState(() => _transport = transport),
     );
   }
 
@@ -340,28 +415,32 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
         body: r.errorMessage!,
       );
     }
-    return _ReplyCard(result: r, view: _view, onViewChanged: (v) {
-      setState(() => _view = v);
-    });
+    return _ReplyCard(
+      result: r,
+      view: _view,
+      onViewChanged: (v) {
+        setState(() => _view = v);
+      },
+    );
   }
 
   IconData _iconForError(PacketErrorKind kind) => switch (kind) {
-        PacketErrorKind.timeout => Icons.schedule,
-        PacketErrorKind.refused => Icons.do_not_disturb_on_outlined,
-        PacketErrorKind.unreachable => Icons.cloud_off,
-        PacketErrorKind.dnsFailure => Icons.travel_explore_outlined,
-        PacketErrorKind.invalidInput => Icons.edit_outlined,
-        PacketErrorKind.other => Icons.error_outline,
-      };
+    PacketErrorKind.timeout => Icons.schedule,
+    PacketErrorKind.refused => Icons.do_not_disturb_on_outlined,
+    PacketErrorKind.unreachable => Icons.cloud_off,
+    PacketErrorKind.dnsFailure => Icons.travel_explore_outlined,
+    PacketErrorKind.invalidInput => Icons.edit_outlined,
+    PacketErrorKind.other => Icons.error_outline,
+  };
 
   String _titleForError(PacketErrorKind kind) => switch (kind) {
-        PacketErrorKind.timeout => 'Timed out',
-        PacketErrorKind.refused => 'Connection refused',
-        PacketErrorKind.unreachable => 'Host unreachable',
-        PacketErrorKind.dnsFailure => 'Name not resolved',
-        PacketErrorKind.invalidInput => 'Check your input',
-        PacketErrorKind.other => 'Send failed',
-      };
+    PacketErrorKind.timeout => 'Timed out',
+    PacketErrorKind.refused => 'Connection refused',
+    PacketErrorKind.unreachable => 'Host unreachable',
+    PacketErrorKind.dnsFailure => 'Name not resolved',
+    PacketErrorKind.invalidInput => 'Check your input',
+    PacketErrorKind.other => 'Send failed',
+  };
 }
 
 /// The reply panel — bytes-sent/received summary, a text/hex view switch, and
@@ -383,8 +462,9 @@ class _ReplyCard extends StatelessWidget {
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final bool noReply = result.received.isEmpty;
-    final String transportLabel =
-        result.transport == PacketTransport.tcp ? 'TCP' : 'UDP';
+    final String transportLabel = result.transport == PacketTransport.tcp
+        ? 'TCP'
+        : 'UDP';
 
     return Container(
       decoration: BoxDecoration(
@@ -423,13 +503,13 @@ class _ReplyCard extends StatelessWidget {
             Text(
               result.transport == PacketTransport.udp
                   ? 'The datagram was sent ($transportLabel, '
-                      '${result.bytesSent} bytes), but no reply arrived within '
-                      'the timeout. UDP has no delivery guarantee, so this is '
-                      'expected when the port is closed, filtered, or the '
-                      'service simply does not answer.'
+                        '${result.bytesSent} bytes), but no reply arrived within '
+                        'the timeout. UDP has no delivery guarantee, so this is '
+                        'expected when the port is closed, filtered, or the '
+                        'service simply does not answer.'
                   : 'Connected and sent $transportLabel '
-                      '(${result.bytesSent} bytes), but the service returned '
-                      'nothing before the read went idle.',
+                        '(${result.bytesSent} bytes), but the service returned '
+                        'nothing before the read went idle.',
               style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
             ),
           const SizedBox(height: AppSpacing.sm),
@@ -437,12 +517,7 @@ class _ReplyCard extends StatelessWidget {
           _row(context, 'Target', '${result.host}:${result.port}', mono),
           _row(context, 'Sent', '${result.bytesSent} bytes', mono),
           _row(context, 'Received', '${result.received.length} bytes', mono),
-          _row(
-            context,
-            'Elapsed',
-            '${result.elapsed.inMilliseconds} ms',
-            mono,
-          ),
+          _row(context, 'Elapsed', '${result.elapsed.inMilliseconds} ms', mono),
           if (!noReply) ...[
             const SizedBox(height: AppSpacing.sm),
             Row(
@@ -572,8 +647,9 @@ class _MessageCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium
-                      ?.copyWith(color: AppColors.textTertiary),
+                  style: text.labelMedium?.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
                 ),
               ],
             ),

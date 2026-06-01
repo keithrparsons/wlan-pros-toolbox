@@ -33,6 +33,7 @@ import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import '../network/value_row.dart';
 import '../labeled_field.dart';
@@ -365,9 +366,36 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
       appBar: AppBar(
         title: const Text('IPv6 Subnet Calculator'),
         toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled while the input is
+        // empty or malformed (no valid breakdown); copies the IPv6 breakdown as
+        // a labeled text block. Copy leads; this screen has no help icon.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// §8.16 copy payload — the IPv6 subnet breakdown as a labeled text block.
+  ///
+  /// Returns null (→ disabled affordance) whenever there is no valid result:
+  /// before the first compute, an empty address/prefix, or an invalid address /
+  /// out-of-range prefix (the inline error card has nothing to keep). Field
+  /// order and values match the on-screen [_resultsCard].
+  String? _buildCopyText() {
+    final Ipv6Result? r = _result;
+    if (r == null || !r.isValid) return null;
+
+    return (StringBuffer()
+          ..writeln('IPv6 Subnet')
+          ..writeln('Network: ${r.network}')
+          ..writeln('Expanded: ${r.expanded}')
+          ..writeln('Compressed: ${r.compressed}')
+          ..writeln('First: ${r.first}')
+          ..writeln('Last: ${r.last}')
+          ..writeln('Addresses: ${r.hosts}')
+          ..writeln('Type: ${r.type}'))
+        .toString()
+        .trimRight();
   }
 
   Widget _body() {

@@ -29,6 +29,7 @@ import '../../../services/network/interface_info_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import 'network_unavailable_view.dart';
 
@@ -72,7 +73,8 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
       _service = widget.service ?? ArpNdpService();
       _interfaceService = widget.interfaceService ?? InterfaceInfoService();
     }
-    _capability = widget.capabilityOverride ??
+    _capability =
+        widget.capabilityOverride ??
         (NetworkSupport.arpNdpSupported
             ? ArpNdpService.capabilityFor()
             : ArpCapability.unavailable);
@@ -103,7 +105,8 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
     if (ipv4 == null) {
       setState(() {
         _running = false;
-        _error = 'No active IPv4 interface found, so there is no local subnet '
+        _error =
+            'No active IPv4 interface found, so there is no local subnet '
             'to scan. Connect to a Wi-Fi or Ethernet network and try again.';
       });
       return;
@@ -126,32 +129,32 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
           cancel: cancel.future,
         )
         .listen(
-      (ArpScanProgress p) {
-        if (!mounted) return;
-        setState(() {
-          _probed = p.probed;
-          _total = p.total;
-          if (p.lastFound != null) _neighbors.add(p.lastFound!);
-        });
-      },
-      onDone: () {
-        if (!mounted) return;
-        setState(() => _running = false);
-        SemanticsService.sendAnnouncement(
-          View.of(context),
-          'Scan complete. Found ${_neighbors.length} '
+          (ArpScanProgress p) {
+            if (!mounted) return;
+            setState(() {
+              _probed = p.probed;
+              _total = p.total;
+              if (p.lastFound != null) _neighbors.add(p.lastFound!);
+            });
+          },
+          onDone: () {
+            if (!mounted) return;
+            setState(() => _running = false);
+            SemanticsService.sendAnnouncement(
+              View.of(context),
+              'Scan complete. Found ${_neighbors.length} '
               '${_neighbors.length == 1 ? 'neighbor' : 'neighbors'}.',
-          TextDirection.ltr,
+              TextDirection.ltr,
+            );
+          },
+          onError: (Object e) {
+            if (!mounted) return;
+            setState(() {
+              _running = false;
+              _error = 'Discovery error: $e';
+            });
+          },
         );
-      },
-      onError: (Object e) {
-        if (!mounted) return;
-        setState(() {
-          _running = false;
-          _error = 'Discovery error: $e';
-        });
-      },
-    );
   }
 
   void _stop() {
@@ -162,16 +165,52 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Lookup (ARP/NDP)'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Lookup (ARP/NDP)'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. No help icon here, so copy
+        // is the only action. Disabled until the sweep has found a neighbor.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// §8.16 copy payload — the neighbor table as TSV (header + one row per
+  /// neighbor). Columns are IP, MAC, RTT (ms): this tool's [Neighbor] model
+  /// carries no vendor or per-host interface field, so those columns are not
+  /// emitted (never a fabricated cell, GL-005). Where the platform sandboxes
+  /// the MAC away the cell carries the on-screen honesty WORD "Not exposed on
+  /// this platform" rather than a blank that reads as missing-data.
+  ///
+  /// Returns null (→ disabled affordance) until the sweep has found at least
+  /// one neighbor; an in-flight or empty sweep has nothing to keep. Copyable
+  /// while the sweep is still running (partial results are real results), as
+  /// long as a neighbor has answered.
+  String? _buildCopyText() {
+    if (_neighbors.isEmpty) return null;
+
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()
+      ..writeln('ARP / NDP Neighbors')
+      ..writeln(<String>['IP', 'MAC', 'RTT (ms)'].join(tab));
+
+    for (final Neighbor n in _neighbors) {
+      final bool hasMac = n.mac != null && n.mac!.isNotEmpty;
+      final String mac = hasMac ? n.mac! : 'Not exposed on this platform';
+      final String rtt = n.rttMs == null ? '' : n.rttMs!.toStringAsFixed(0);
+      buf.writeln(<String>[n.ip, mac, rtt].join(tab));
+    }
+
+    return buf.toString().trimRight();
   }
 
   Widget _body() {
     if (!NetworkSupport.arpNdpSupported) {
       return NetworkUnavailableView(
         toolName: 'ARP / NDP Lookup',
-        reason: NetworkSupport.unavailableReason ?? NetworkUnavailableReason.web,
+        reason:
+            NetworkSupport.unavailableReason ?? NetworkUnavailableReason.web,
       );
     }
     return LayoutBuilder(
@@ -230,18 +269,18 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
     final TextTheme text = Theme.of(context).textTheme;
     final (String title, String body) = switch (_capability) {
       ArpCapability.sweepWithMac => (
-          'Discovery with MAC addresses',
-          'On this platform the toolbox sweeps the local subnet and reads the '
-              'kernel ARP table (/proc/net/arp) to attach each responder\'s real '
-              'MAC address. No subprocess, no elevated privilege.',
-        ),
+        'Discovery with MAC addresses',
+        'On this platform the toolbox sweeps the local subnet and reads the '
+            'kernel ARP table (/proc/net/arp) to attach each responder\'s real '
+            'MAC address. No subprocess, no elevated privilege.',
+      ),
       ArpCapability.sweepNoMac => (
-          'Discovery only — MAC not exposed',
-          'This platform sandboxes the ARP table away from apps, and shelling '
-              'out to the system arp command is blocked. The toolbox sweeps the '
-              'local subnet and lists every host that answers; MAC addresses are '
-              'shown as "Not exposed on this platform" rather than guessed.',
-        ),
+        'Discovery only — MAC not exposed',
+        'This platform sandboxes the ARP table away from apps, and shelling '
+            'out to the system arp command is blocked. The toolbox sweeps the '
+            'local subnet and lists every host that answers; MAC addresses are '
+            'shown as "Not exposed on this platform" rather than guessed.',
+      ),
       ArpCapability.unavailable => ('', ''),
     };
     return Container(
@@ -276,8 +315,9 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium
-                      ?.copyWith(color: AppColors.textTertiary),
+                  style: text.labelMedium?.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
                 ),
               ],
             ),
@@ -309,7 +349,8 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
             const SizedBox(height: AppSpacing.sm),
             Semantics(
               liveRegion: true,
-              label: 'Scanning, $_probed of $_total probed, '
+              label:
+                  'Scanning, $_probed of $_total probed, '
                   '${_neighbors.length} found',
               child: LinearProgressIndicator(
                 value: _total == 0 ? null : _probed / _total,
@@ -342,15 +383,16 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
     final String header = _running
         ? 'Neighbors · ${_neighbors.length} so far'
         : (_neighbors.isEmpty
-            ? 'No neighbors answered'
-            : '${_neighbors.length} '
-                '${_neighbors.length == 1 ? 'neighbor' : 'neighbors'} found');
+              ? 'No neighbors answered'
+              : '${_neighbors.length} '
+                    '${_neighbors.length == 1 ? 'neighbor' : 'neighbors'} found');
 
     if (!_running && _neighbors.isEmpty) {
       return _MessageCard(
         icon: Icons.search_off,
         title: 'No neighbors answered',
-        body: 'Swept $_total hosts on ${_subnetLabel ?? 'the local subnet'} and '
+        body:
+            'Swept $_total hosts on ${_subnetLabel ?? 'the local subnet'} and '
             'none responded to a reachability probe. Hosts that block all '
             'probe ports will not appear.',
       );
@@ -375,7 +417,9 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
-          ..._neighbors.map((Neighbor n) => _neighborRow(context, n, text, mono)),
+          ..._neighbors.map(
+            (Neighbor n) => _neighborRow(context, n, text, mono),
+          ),
         ],
       ),
     );
@@ -388,7 +432,9 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
     AppMonoText mono,
   ) {
     final bool hasMac = n.mac != null && n.mac!.isNotEmpty;
-    final String rtt = n.rttMs == null ? '' : '${n.rttMs!.toStringAsFixed(0)} ms';
+    final String rtt = n.rttMs == null
+        ? ''
+        : '${n.rttMs!.toStringAsFixed(0)} ms';
     final String semantic = hasMac
         ? 'Neighbor ${n.ip}, MAC ${n.mac}, $rtt'
         : 'Neighbor ${n.ip}, MAC not exposed on this platform, $rtt';
@@ -460,8 +506,11 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.devices_other_outlined,
-                  size: 24, color: AppColors.textSecondary),
+              const Icon(
+                Icons.devices_other_outlined,
+                size: 24,
+                color: AppColors.textSecondary,
+              ),
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(
@@ -529,8 +578,9 @@ class _MessageCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium
-                      ?.copyWith(color: AppColors.textTertiary),
+                  style: text.labelMedium?.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
                 ),
               ],
             ),

@@ -17,6 +17,7 @@ import '../../../data/tool_assets.dart';
 import '../../../services/network/bgp_asn_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'error_card.dart';
@@ -64,7 +65,9 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
     if (_loading || !_canRun) return;
     _queryFocus.unfocus();
     setState(() => _loading = true);
-    final BgpAsnResult result = await _service.lookup(rawQuery: _queryCtrl.text);
+    final BgpAsnResult result = await _service.lookup(
+      rawQuery: _queryCtrl.text,
+    );
     if (!mounted) return;
     setState(() {
       _loading = false;
@@ -89,16 +92,70 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Lookup (BGP/ASN)'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Lookup (BGP/ASN)'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until routing data
+        // is retrieved; copies the ASN/holder/prefix/registry fields as a
+        // labeled text block. Copy leads; this screen has no help icon.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// §8.16 copy payload — the routing/registry data as a labeled plain-text
+  /// block.
+  ///
+  /// Returns null (→ disabled affordance) while loading, before any lookup, on
+  /// an error, or when no ASN/prefix resolved — none of those is a result to
+  /// keep. Absent fields are omitted (GL-005 honest blanks). The "In routing
+  /// table" line carries its VERDICT WORD ("Yes — announced" / "No — not
+  /// announced"), per the §8.16 content contract.
+  String? _buildCopyText() {
+    final BgpAsnResult? r = _result;
+    if (_loading || r == null || r.isError || r.isEmpty) return null;
+
+    final StringBuffer buf = StringBuffer()
+      ..writeln('Lookup (BGP/ASN)')
+      ..writeln(
+        r.kind == BgpQueryKind.asn ? 'AS overview' : 'Routing for ${r.query}',
+      );
+    void line(String label, String? value) {
+      if (value != null && value.trim().isNotEmpty) {
+        buf.writeln('$label: ${value.trim()}');
+      }
+    }
+
+    line('ASN', r.asn);
+    line('Holder', r.holder);
+    line('Announced prefix', r.announcedPrefix);
+    line('Registry', r.registry);
+    line('AS type', r.asnType);
+    line(
+      'In routing table',
+      r.isAnnounced == null
+          ? null
+          : (r.isAnnounced! ? 'Yes — announced' : 'No — not announced'),
+    );
+    if (r.kind == BgpQueryKind.asn) {
+      line('Upstreams', r.upstreamCount?.toString());
+      line('Peers', r.peerCount?.toString());
+      line('Downstreams', r.downstreamCount?.toString());
+    }
+    if (r.relatedAsns.isNotEmpty) {
+      line('Other ASNs', r.relatedAsns.join(', '));
+    }
+
+    return buf.toString().trimRight();
   }
 
   Widget _body() {
     if (!NetworkSupport.bgpAsnSupported) {
       return NetworkUnavailableView(
         toolName: 'BGP / ASN Lookup',
-        reason: NetworkSupport.unavailableReason ?? NetworkUnavailableReason.web,
+        reason:
+            NetworkSupport.unavailableReason ?? NetworkUnavailableReason.web,
       );
     }
     return LayoutBuilder(
@@ -159,8 +216,9 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
               textInputAction: TextInputAction.search,
               onSubmitted: (_) => _run(),
               cursorColor: AppColors.primary,
-              decoration:
-                  const InputDecoration(hintText: '8.8.8.8  or  AS15169'),
+              decoration: const InputDecoration(
+                hintText: '8.8.8.8  or  AS15169',
+              ),
             ),
           ),
           const SizedBox(height: 6),
@@ -205,7 +263,8 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
       return _MessageCard(
         icon: Icons.search_off,
         title: 'No routing data',
-        body: 'RIPEstat returned no ASN or prefix for ${r.query}. The address '
+        body:
+            'RIPEstat returned no ASN or prefix for ${r.query}. The address '
             'may be private, reserved, or not currently announced in the global '
             'routing table.',
       );
@@ -234,7 +293,9 @@ class _ResultCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            r.kind == BgpQueryKind.asn ? 'AS overview' : 'Routing for ${r.query}',
+            r.kind == BgpQueryKind.asn
+                ? 'AS overview'
+                : 'Routing for ${r.query}',
             style: text.labelMedium?.copyWith(
               color: AppColors.textSecondary,
               letterSpacing: 0.4,
@@ -326,8 +387,9 @@ class _MessageCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium
-                      ?.copyWith(color: AppColors.textTertiary),
+                  style: text.labelMedium?.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
                 ),
               ],
             ),

@@ -20,6 +20,7 @@ import '../../../services/network/network_support.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
@@ -81,8 +82,7 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
       announcement = 'No ${result.type.label} records found';
     } else {
       final int n = result.records.length;
-      announcement =
-          '$n ${result.type.label} record${n == 1 ? '' : 's'} found';
+      announcement = '$n ${result.type.label} record${n == 1 ? '' : 's'} found';
     }
     SemanticsService.sendAnnouncement(
       View.of(context),
@@ -94,9 +94,47 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Lookup (DNS)'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Lookup (DNS)'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until a lookup has
+        // resolved at least one record; copies the record list as TSV (Type,
+        // Name, Value, TTL — one row per record). Copy leads; no help icon.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// §8.16 copy payload — the resolved record list as TSV.
+  ///
+  /// Returns null (→ disabled affordance) until a lookup resolves with at least
+  /// one record: idle, loading, a failed lookup, and an empty (no-records)
+  /// result all have nothing to keep. The header row names the four columns; each
+  /// record is one tab-separated row in the same order. The Value column reuses
+  /// the on-screen [_displayData] so parsed SRV/CAA rows copy as they render; a
+  /// null TTL is written as an empty cell (honest blank, GL-005).
+  String? _buildCopyText() {
+    final DnsLookupResult? r = _result;
+    if (_loading || r == null || r.isError || r.isEmpty || r.records.isEmpty) {
+      return null;
+    }
+
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()
+      ..writeln('DNS Lookup')
+      ..writeln(<String>['Type', 'Name', 'Value', 'TTL'].join(tab));
+    for (final DnsRecord rec in r.records) {
+      buf.writeln(
+        <String>[
+          rec.type,
+          rec.name,
+          _displayData(rec),
+          rec.ttl == null ? '' : '${rec.ttl}',
+        ].join(tab),
+      );
+    }
+    return buf.toString().trimRight();
   }
 
   Widget _body() {
@@ -210,9 +248,7 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.control),
                 ),
-                onSelected: _loading
-                    ? null
-                    : (_) => setState(() => _type = t),
+                onSelected: _loading ? null : (_) => setState(() => _type = t),
               );
             }).toList(),
           ),

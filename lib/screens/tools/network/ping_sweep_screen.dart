@@ -32,6 +32,7 @@ import '../../../services/network/ping_sweep_service.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
@@ -47,8 +48,9 @@ class PingSweepScreen extends StatefulWidget {
 
 class _PingSweepScreenState extends State<PingSweepScreen> {
   late final PingSweepService _service;
-  final TextEditingController _subnetCtrl =
-      TextEditingController(text: '192.168.1.0/24');
+  final TextEditingController _subnetCtrl = TextEditingController(
+    text: '192.168.1.0/24',
+  );
   final FocusNode _subnetFocus = FocusNode();
 
   int _port = PingSweepService.defaultPort;
@@ -109,40 +111,36 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
     });
 
     _sub = _service
-        .sweep(
-          spec: spec,
-          ports: <int>[_port],
-          cancel: cancel.future,
-        )
+        .sweep(spec: spec, ports: <int>[_port], cancel: cancel.future)
         .listen(
-      (SweepProgress p) {
-        if (!mounted) return;
-        setState(() {
-          _completed = p.completed;
-          _total = p.total;
-          _live = p.live;
-          if (p.lastResponsive != null) _responsive.add(p.lastResponsive!);
-        });
-      },
-      onDone: () {
-        if (!mounted) return;
-        setState(() => _sweeping = false);
-        // WCAG 4.1.3 — announce the final tally to assistive tech.
-        SemanticsService.sendAnnouncement(
-          View.of(context),
-          'Sweep complete, $_live of $_total '
-          'host${_total == 1 ? '' : 's'} responded on TCP $_port',
-          TextDirection.ltr,
+          (SweepProgress p) {
+            if (!mounted) return;
+            setState(() {
+              _completed = p.completed;
+              _total = p.total;
+              _live = p.live;
+              if (p.lastResponsive != null) _responsive.add(p.lastResponsive!);
+            });
+          },
+          onDone: () {
+            if (!mounted) return;
+            setState(() => _sweeping = false);
+            // WCAG 4.1.3 — announce the final tally to assistive tech.
+            SemanticsService.sendAnnouncement(
+              View.of(context),
+              'Sweep complete, $_live of $_total '
+              'host${_total == 1 ? '' : 's'} responded on TCP $_port',
+              TextDirection.ltr,
+            );
+          },
+          onError: (Object e) {
+            if (!mounted) return;
+            setState(() {
+              _sweeping = false;
+              _error = 'Sweep error: $e';
+            });
+          },
         );
-      },
-      onError: (Object e) {
-        if (!mounted) return;
-        setState(() {
-          _sweeping = false;
-          _error = 'Sweep error: $e';
-        });
-      },
-    );
   }
 
   void _stop() {
@@ -153,9 +151,56 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Ping Sweep'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Ping Sweep'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until a sweep has
+        // started (a range is in flight). Copies the tally summary + a TSV of
+        // the responsive hosts. Copy leads; no help icon on this screen.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// §8.16 copy payload — the sweep tally plus a TSV of responsive hosts.
+  ///
+  /// Returns null (→ disabled) until a sweep has begun (`_total > 0`). Mid-run
+  /// it copies the partial tally and the responsive hosts found so far (the
+  /// §8.16 streaming rule). The service only retains hosts that RESPONDED — it
+  /// keeps no per-address list of silent hosts — so the TSV is the responsive
+  /// set (State column always "responded"), and the honest caveat that silent
+  /// hosts may still be up is carried into the copied text exactly as it is
+  /// shown on screen (GL-005). Hosts sort by numeric address, matching the
+  /// on-screen order.
+  String? _buildCopyText() {
+    if (_total == 0) return null;
+
+    final List<SweepHostResult> sorted = List<SweepHostResult>.of(_responsive)
+      ..sort(
+        (SweepHostResult a, SweepHostResult b) =>
+            _ipKey(a.host).compareTo(_ipKey(b.host)),
+      );
+
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()
+      ..writeln('Ping Sweep — TCP-probe (reachability on a port, not ICMP)')
+      ..writeln(
+        _rangeLabel.isEmpty ? 'Range: (unknown)' : 'Range: $_rangeLabel',
+      )
+      ..writeln(
+        'Summary: $_live of $_total host${_total == 1 ? '' : 's'} responded '
+        'on TCP $_port. A host silent on TCP $_port may still be up.',
+      )
+      ..writeln()
+      ..writeln(<String>['IP', 'State', 'Time (ms)'].join(tab));
+
+    for (final SweepHostResult r in sorted) {
+      final String time = r.rttMs == null ? '' : r.rttMs!.toStringAsFixed(1);
+      buf.writeln(<String>[r.host, 'responded', time].join(tab));
+    }
+
+    return buf.toString().trimRight();
   }
 
   Widget _body() {
@@ -348,7 +393,7 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
             label: _sweeping
                 ? 'Scanning, $_completed of $_total hosts, $_live responded'
                 : 'Sweep complete, $_live of $_total '
-                    'host${_total == 1 ? '' : 's'} responded',
+                      'host${_total == 1 ? '' : 's'} responded',
             liveRegion: true,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(AppRadius.control),
@@ -356,8 +401,9 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
                 value: _sweeping ? fraction : 1.0,
                 minHeight: 6,
                 backgroundColor: AppColors.surface2,
-                valueColor:
-                    const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  AppColors.primary,
+                ),
               ),
             ),
           ),
@@ -377,8 +423,10 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
     // Responsive hosts ascending by numeric address so the list reads as a
     // tidy subnet column rather than arrival order.
     final List<SweepHostResult> sorted = List<SweepHostResult>.of(_responsive)
-      ..sort((SweepHostResult a, SweepHostResult b) =>
-          _ipKey(a.host).compareTo(_ipKey(b.host)));
+      ..sort(
+        (SweepHostResult a, SweepHostResult b) =>
+            _ipKey(a.host).compareTo(_ipKey(b.host)),
+      );
 
     return Container(
       decoration: BoxDecoration(
@@ -426,7 +474,9 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
               ),
             )
           else ...[
-            ...sorted.map((SweepHostResult r) => _hostRow(context, r, text, mono)),
+            ...sorted.map(
+              (SweepHostResult r) => _hostRow(context, r, text, mono),
+            ),
             const SizedBox(height: AppSpacing.xs),
             // Honesty footer — always present alongside results so a populated
             // list is never read as authoritative liveness.
@@ -447,13 +497,15 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
     TextTheme text,
     AppMonoText mono,
   ) {
-    final String rttLabel =
-        r.rttMs == null ? '—' : '${r.rttMs!.toStringAsFixed(1)} ms';
+    final String rttLabel = r.rttMs == null
+        ? '—'
+        : '${r.rttMs!.toStringAsFixed(1)} ms';
 
     // WCAG 1.4.1 — outcome carried by text + icon shape, never color alone.
     // The whole row is one semantic node so AT reads "<host> responded, <rtt>".
     return Semantics(
-      label: 'Host ${r.host} responded on TCP $_port'
+      label:
+          'Host ${r.host} responded on TCP $_port'
           '${r.rttMs == null ? '' : ', ${r.rttMs!.toStringAsFixed(1)} milliseconds'}',
       container: true,
       child: ExcludeSemantics(
@@ -462,7 +514,11 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
           child: Row(
             children: [
-              const Icon(Icons.check_circle, size: 16, color: AppColors.primary),
+              const Icon(
+                Icons.check_circle,
+                size: 16,
+                color: AppColors.primary,
+              ),
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(

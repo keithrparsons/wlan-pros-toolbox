@@ -22,6 +22,7 @@ import '../../../services/network/network_support.dart';
 import '../../../services/network/ssl_inspect_service.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
@@ -39,8 +40,9 @@ class SslInspectScreen extends StatefulWidget {
 class _SslInspectScreenState extends State<SslInspectScreen> {
   late final SslInspectService _service;
   final TextEditingController _hostCtrl = TextEditingController();
-  final TextEditingController _portCtrl =
-      TextEditingController(text: '${SslInspectService.defaultPort}');
+  final TextEditingController _portCtrl = TextEditingController(
+    text: '${SslInspectService.defaultPort}',
+  );
   final FocusNode _hostFocus = FocusNode();
 
   bool _loading = false;
@@ -92,8 +94,7 @@ class _SslInspectScreenState extends State<SslInspectScreen> {
       announcement = switch (v.state) {
         CertValidityState.valid => 'Certificate retrieved, currently valid',
         CertValidityState.expired => 'Certificate retrieved, expired',
-        CertValidityState.notYetValid =>
-          'Certificate retrieved, not yet valid',
+        CertValidityState.notYetValid => 'Certificate retrieved, not yet valid',
       };
     }
     SemanticsService.sendAnnouncement(
@@ -106,9 +107,124 @@ class _SslInspectScreenState extends State<SslInspectScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Inspector (SSL/TLS)'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Inspector (SSL/TLS)'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until a successful
+        // inspection has produced a certificate; copies the cert as a labeled
+        // text block. Copy leads; this screen has no help icon.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// §8.16 copy payload — the inspected certificate as a labeled text block.
+  ///
+  /// Returns null (→ disabled affordance) until a successful inspection holds a
+  /// certificate: idle, loading, and a failed handshake all have nothing to
+  /// keep. The validity VERDICT word (Currently valid / EXPIRED / Not yet valid)
+  /// leads the block — it is the on-screen status the §8.16 content contract
+  /// requires in the clipboard, since the screen carries it with an icon + word
+  /// and the plain text must keep the word. Missing optional fields are written
+  /// as "Unavailable" (never blank/fabricated, GL-005).
+  String? _buildCopyText() {
+    final SslInspectResult? r = _result;
+    if (_loading || r == null || r.isError || r.certificate == null) {
+      return null;
+    }
+    final InspectedCertificate cert = r.certificate!;
+    final CertValidity v = cert.validity;
+
+    String val(String? s) =>
+        (s == null || s.trim().isEmpty) ? 'Unavailable' : s;
+    String fmtUtc(DateTime d) {
+      final DateTime u = d.toUtc();
+      String p2(int n) => n.toString().padLeft(2, '0');
+      return '${u.year}-${p2(u.month)}-${p2(u.day)} '
+          '${p2(u.hour)}:${p2(u.minute)} UTC';
+    }
+
+    final (String verdictWord, String validityDetail) = switch (v.state) {
+      CertValidityState.valid => (
+        'Currently valid',
+        v.daysToExpiry == 0
+            ? 'Expires today'
+            : 'Expires in ${v.daysToExpiry} day'
+                  '${v.daysToExpiry == 1 ? '' : 's'}',
+      ),
+      CertValidityState.expired => (
+        'EXPIRED',
+        'Expired ${v.daysToExpiry.abs()} day'
+            '${v.daysToExpiry.abs() == 1 ? '' : 's'} ago',
+      ),
+      CertValidityState.notYetValid => (
+        'Not yet valid',
+        'Becomes valid ${fmtUtc(v.notBefore)}',
+      ),
+    };
+
+    final String? keyLine =
+        (cert.publicKeyAlgorithm == null && cert.publicKeyBits == null)
+        ? null
+        : (cert.publicKeyAlgorithm != null && cert.publicKeyBits != null)
+        ? '${cert.publicKeyAlgorithm} · ${cert.publicKeyBits}-bit'
+        : (cert.publicKeyAlgorithm ?? '${cert.publicKeyBits}-bit');
+
+    final StringBuffer buf = StringBuffer()
+      ..writeln('SSL/TLS Certificate')
+      // The VERDICT word leads (§8.16 content contract).
+      ..writeln('Validity: $verdictWord ($validityDetail)')
+      ..writeln('Not before: ${fmtUtc(v.notBefore)}')
+      ..writeln('Not after: ${fmtUtc(v.notAfter)}')
+      ..writeln()
+      ..writeln('Subject')
+      ..writeln('  Common name: ${val(cert.subjectCommonName)}')
+      ..writeln('  Organization: ${val(cert.subjectOrg)}');
+    for (final DnField f in cert.subjectFields) {
+      buf.writeln('  ${f.label}: ${f.value}');
+    }
+    buf
+      ..writeln()
+      ..writeln('Issuer')
+      ..writeln('  Common name: ${val(cert.issuerCommonName)}')
+      ..writeln('  Organization: ${val(cert.issuerOrg)}');
+    for (final DnField f in cert.issuerFields) {
+      buf.writeln('  ${f.label}: ${f.value}');
+    }
+
+    buf.writeln();
+    if (cert.subjectAltNames.isEmpty) {
+      buf.writeln('Subject alternative names: None listed');
+    } else {
+      buf.writeln('Subject alternative names (${cert.subjectAltNames.length})');
+      for (final String s in cert.subjectAltNames) {
+        buf.writeln('  $s');
+      }
+    }
+
+    buf
+      ..writeln()
+      ..writeln('Key and signature')
+      ..writeln('  Public key: ${val(keyLine)}')
+      ..writeln('  Signature: ${val(cert.signatureAlgorithm)}')
+      ..writeln('  Serial: ${val(cert.serialNumber)}')
+      ..writeln()
+      ..writeln('Fingerprints')
+      ..writeln('  SHA-256: ${val(cert.sha256Fingerprint)}')
+      ..writeln('  SHA-1: ${val(cert.sha1Fingerprint)}')
+      ..writeln()
+      ..writeln('Connection')
+      ..writeln('  Host: ${r.host}')
+      ..writeln('  Port: ${r.port}')
+      ..writeln(
+        '  Handshake: ${r.handshakeMs == null ? 'Unavailable' : '${r.handshakeMs} ms'}',
+      )
+      ..writeln('  ALPN: ${val(r.alpn)}')
+      ..writeln()
+      ..writeln(SslInspectResult.chainNote);
+
+    return buf.toString().trimRight();
   }
 
   Widget _body() {
@@ -315,27 +431,30 @@ class _ValidityCard extends StatelessWidget {
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
-    final (IconData icon, String verdict, String detail) = switch (
-        validity.state) {
+    final (
+      IconData icon,
+      String verdict,
+      String detail,
+    ) = switch (validity.state) {
       CertValidityState.valid => (
-          Icons.verified_outlined,
-          'Currently valid',
-          validity.daysToExpiry == 0
-              ? 'Expires today'
-              : 'Expires in ${validity.daysToExpiry} day'
+        Icons.verified_outlined,
+        'Currently valid',
+        validity.daysToExpiry == 0
+            ? 'Expires today'
+            : 'Expires in ${validity.daysToExpiry} day'
                   '${validity.daysToExpiry == 1 ? '' : 's'}',
-        ),
+      ),
       CertValidityState.expired => (
-          Icons.report_gmailerrorred_outlined,
-          'EXPIRED',
-          'Expired ${validity.daysToExpiry.abs()} day'
-              '${validity.daysToExpiry.abs() == 1 ? '' : 's'} ago',
-        ),
+        Icons.report_gmailerrorred_outlined,
+        'EXPIRED',
+        'Expired ${validity.daysToExpiry.abs()} day'
+            '${validity.daysToExpiry.abs() == 1 ? '' : 's'} ago',
+      ),
       CertValidityState.notYetValid => (
-          Icons.schedule_outlined,
-          'Not yet valid',
-          'Becomes valid ${_fmtDate(validity.notBefore)}',
-        ),
+        Icons.schedule_outlined,
+        'Not yet valid',
+        'Becomes valid ${_fmtDate(validity.notBefore)}',
+      ),
     };
 
     return Container(
@@ -425,7 +544,11 @@ class _ValidityCard extends StatelessWidget {
 }
 
 class _DatePair extends StatelessWidget {
-  const _DatePair({required this.label, required this.value, required this.mono});
+  const _DatePair({
+    required this.label,
+    required this.value,
+    required this.mono,
+  });
 
   final String label;
   final String value;
@@ -524,8 +647,9 @@ class _DnCardState extends State<_DnCard> {
                         width: 48,
                         child: Text(
                           f.label,
-                          style: text.labelMedium
-                              ?.copyWith(color: AppColors.textTertiary),
+                          style: text.labelMedium?.copyWith(
+                            color: AppColors.textTertiary,
+                          ),
                         ),
                       ),
                       const SizedBox(width: AppSpacing.xs),
@@ -583,7 +707,9 @@ class _DisclosureButton extends StatelessWidget {
         // global non-transparent focusColor.
         focusColor: AppColors.primary.withValues(alpha: 0.16),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: AppSpacing.minTouchTarget),
+          constraints: const BoxConstraints(
+            minHeight: AppSpacing.minTouchTarget,
+          ),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
             child: Row(
@@ -690,15 +816,10 @@ class _PemCardState extends State<_PemCard> {
             // "Copied" on success. Theme gives it a 48dp minimum target.
             child: OutlinedButton.icon(
               onPressed: _copy,
-              icon: Icon(
-                _copied ? Icons.check : Icons.copy_outlined,
-                size: 20,
-              ),
+              icon: Icon(_copied ? Icons.check : Icons.copy_outlined, size: 20),
               label: Text(
                 _copied ? 'Copied' : 'Copy PEM',
-                style: text.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
+                style: text.labelLarge?.copyWith(fontWeight: FontWeight.w500),
                 semanticsLabel: _copied
                     ? 'Certificate PEM copied to clipboard'
                     : 'Copy certificate PEM to clipboard',
@@ -722,7 +843,8 @@ class _SanCard extends StatelessWidget {
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     return _SectionShell(
-      title: 'Subject alternative names'
+      title:
+          'Subject alternative names'
           '${sans.isEmpty ? '' : ' (${sans.length})'}',
       child: sans.isEmpty
           ? Text(
@@ -740,8 +862,9 @@ class _SanCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 6),
                       child: SelectableText(
                         s,
-                        style: mono.inlineCode
-                            .copyWith(color: AppColors.textPrimary),
+                        style: mono.inlineCode.copyWith(
+                          color: AppColors.textPrimary,
+                        ),
                       ),
                     ),
                   )
@@ -868,15 +991,17 @@ class _ChainNoteCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   SslInspectResult.chainNote,
-                  style: text.labelMedium
-                      ?.copyWith(color: AppColors.textTertiary),
+                  style: text.labelMedium?.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   'TLS protocol version and cipher suite are not exposed by '
                   'the platform TLS API and are therefore not shown.',
-                  style: text.labelMedium
-                      ?.copyWith(color: AppColors.textTertiary),
+                  style: text.labelMedium?.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
                 ),
               ],
             ),
@@ -983,8 +1108,9 @@ class _MessageCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium
-                      ?.copyWith(color: AppColors.textTertiary),
+                  style: text.labelMedium?.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
                 ),
               ],
             ),

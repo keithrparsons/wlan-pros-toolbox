@@ -24,6 +24,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../services/network/subnet_calc_service.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import 'value_row.dart';
 import '../labeled_field.dart';
@@ -39,8 +40,9 @@ class SubnetCalcScreen extends StatefulWidget {
 
 class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
   late final SubnetCalcService _service;
-  final TextEditingController _addrCtrl =
-      TextEditingController(text: '10.20.0.0');
+  final TextEditingController _addrCtrl = TextEditingController(
+    text: '10.20.0.0',
+  );
   final TextEditingController _prefixCtrl = TextEditingController(text: '22');
 
   SubnetResult? _result;
@@ -120,8 +122,11 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
       return;
     }
 
-    final SubnetResult r =
-        _service.calculate(address: address, prefix: prefix, mask: mask);
+    final SubnetResult r = _service.calculate(
+      address: address,
+      prefix: prefix,
+      mask: mask,
+    );
     setState(() => _result = r);
   }
 
@@ -131,9 +136,48 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
       appBar: AppBar(
         title: const Text('IP Subnetting (IPv4)'),
         toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled while the input is
+        // empty or malformed (no valid breakdown); copies the subnet breakdown
+        // as a labeled text block. Copy leads; this screen has no help icon.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// §8.16 copy payload — the IPv4 subnet breakdown as a labeled text block.
+  ///
+  /// Returns null (→ disabled affordance) whenever there is no valid result:
+  /// before the first compute, an empty field, or a malformed address/prefix/mask
+  /// (the inline error card has nothing to keep). Field order and values match
+  /// the on-screen [_resultsCard]; /31 and /32 have no broadcast, so that line is
+  /// written as "Unavailable" (honest blank, GL-005) rather than fabricated. The
+  /// RFC 3021 / single-host note copies when present.
+  String? _buildCopyText() {
+    final SubnetResult? r = _result;
+    if (r == null || !r.isValid) return null;
+
+    String val(String? s) =>
+        (s == null || s.trim().isEmpty) ? 'Unavailable' : s;
+    final String? hostNote = switch (r.prefix) {
+      31 => 'RFC 3021 point-to-point — both addresses are usable hosts.',
+      32 => 'Single-host route — one address, no network/broadcast.',
+      _ => null,
+    };
+
+    final StringBuffer buf = StringBuffer()
+      ..writeln('IPv4 Subnet')
+      ..writeln('Network: ${val(r.networkAddress)}/${r.prefix}')
+      ..writeln('Netmask: ${val(r.dottedMask)}')
+      ..writeln('Wildcard: ${val(r.wildcardMask)}')
+      ..writeln('Broadcast: ${val(r.broadcastAddress)}')
+      ..writeln('First host: ${val(r.firstHost)}')
+      ..writeln('Last host: ${val(r.lastHost)}')
+      ..writeln('Total IPs: ${r.totalAddresses ?? 'Unavailable'}')
+      ..writeln('Usable hosts: ${r.usableHosts ?? 'Unavailable'}');
+    if (hostNote != null) buf.writeln(hostNote);
+
+    return buf.toString().trimRight();
   }
 
   Widget _body() {
@@ -214,7 +258,9 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
                 FilteringTextInputFormatter.allow(RegExp(r'[0-9./]')),
               ],
               cursorColor: AppColors.primary,
-              decoration: const InputDecoration(hintText: '10.20.0.0 or 10.20.0.0/22'),
+              decoration: const InputDecoration(
+                hintText: '10.20.0.0 or 10.20.0.0/22',
+              ),
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -231,7 +277,9 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
                 FilteringTextInputFormatter.allow(RegExp(r'[0-9./]')),
               ],
               cursorColor: AppColors.primary,
-              decoration: const InputDecoration(hintText: '22 or 255.255.252.0'),
+              decoration: const InputDecoration(
+                hintText: '22 or 255.255.252.0',
+              ),
             ),
           ),
           const SizedBox(height: 2),
@@ -339,8 +387,9 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
                 const SizedBox(height: 2),
                 Text(
                   message,
-                  style: text.labelMedium
-                      ?.copyWith(color: AppColors.textTertiary),
+                  style: text.labelMedium?.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
                 ),
               ],
             ),

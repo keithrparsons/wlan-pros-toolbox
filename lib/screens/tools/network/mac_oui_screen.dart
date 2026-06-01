@@ -23,6 +23,7 @@ import '../../../data/tool_assets.dart';
 import '../../../services/network/mac_oui_service.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -61,8 +62,9 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
   Future<void> _loadTable() async {
     setState(() => _loadingTable = true);
     try {
-      final String raw =
-          await rootBundle.loadString('assets/oui/oui_table.tsv');
+      final String raw = await rootBundle.loadString(
+        'assets/oui/oui_table.tsv',
+      );
       final Map<String, String> table = MacOuiService.parseTable(raw);
       if (!mounted) return;
       setState(() {
@@ -120,9 +122,56 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('MAC Vendor OUI Lookup'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('MAC Vendor OUI Lookup'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until a valid MAC
+        // has been looked up; copies the vendor verdict + MAC/OUI/registry as a
+        // labeled text block. Copy leads; this screen has no help icon.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// §8.16 copy payload — the OUI lookup as a labeled plain-text block.
+  ///
+  /// Returns null (→ disabled affordance) before any lookup, or when the input
+  /// was not a valid MAC — an invalid-input message is an error surface, not a
+  /// result to keep. Valid lookups all copy: a matched vendor, an unmatched
+  /// "Not in registry", and the honest locally-administered / multicast cases
+  /// (which have no vendor) each lead with their VERDICT WORD per the §8.16
+  /// content contract, since on screen that status is carried by an icon + the
+  /// result-card title rather than a value the clipboard would otherwise lose.
+  String? _buildCopyText() {
+    final OuiResult? r = _result;
+    if (r == null || !r.isValid) return null;
+
+    final StringBuffer buf = StringBuffer()..writeln('MAC Vendor OUI Lookup');
+
+    final String verdict;
+    if (r.isLocal) {
+      verdict = 'Locally administered (no vendor)';
+    } else if (r.isMulticast) {
+      verdict = 'Multicast address (no vendor)';
+    } else if (r.matched) {
+      verdict = 'Vendor: ${r.vendor}';
+    } else {
+      verdict = 'Vendor: Not in registry';
+    }
+    buf.writeln(verdict);
+
+    void line(String label, String? value) {
+      if (value != null && value.trim().isNotEmpty) {
+        buf.writeln('$label: ${value.trim()}');
+      }
+    }
+
+    line('MAC', r.normalizedMac);
+    line('OUI', r.oui);
+    if (r.matched && r.registry != null) line('Registry', r.registry!.label);
+
+    return buf.toString().trimRight();
   }
 
   Widget _body() {
@@ -252,11 +301,11 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
     if (r.isLocal || r.isMulticast) {
       final String reason = r.isLocal
           ? 'This is a locally-administered (randomized) address. The U/L bit '
-              'is set, so it was assigned by software, not from an IEEE vendor '
-              'block — modern phones randomize their Wi-Fi MAC this way. There '
-              'is no real vendor to look up.'
+                'is set, so it was assigned by software, not from an IEEE vendor '
+                'block — modern phones randomize their Wi-Fi MAC this way. There '
+                'is no real vendor to look up.'
           : 'This is a multicast / group address (the I/G bit is set), not a '
-              'single device NIC, so it has no vendor.';
+                'single device NIC, so it has no vendor.';
       return _NoVendorCard(
         mac: r.normalizedMac!,
         oui: r.oui!,
@@ -403,7 +452,9 @@ class _NoVendorCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
+            padding: const EdgeInsets.symmetric(
+              vertical: AppSpacing.rowPadding,
+            ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -411,8 +462,9 @@ class _NoVendorCard extends StatelessWidget {
                   width: 88,
                   child: Text(
                     'MAC',
-                    style: text.labelMedium
-                        ?.copyWith(color: AppColors.textSecondary),
+                    style: text.labelMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xs),
@@ -475,8 +527,9 @@ class _MessageCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium
-                      ?.copyWith(color: AppColors.textTertiary),
+                  style: text.labelMedium?.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
                 ),
               ],
             ),

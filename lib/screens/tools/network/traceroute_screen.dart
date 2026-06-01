@@ -26,6 +26,7 @@ import '../../../services/network/network_support.dart';
 import '../../../services/network/traceroute_service.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
@@ -101,39 +102,42 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
       _cancel = cancel;
     });
 
-    _sub = _service.trace(host: host, cancel: cancel.future).listen(
-      (TracerouteEvent e) {
-        if (!mounted) return;
-        setState(() {
-          if (e.hop != null) {
-            _hops.add(e.hop!);
-          } else if (e.result != null) {
-            _result = e.result;
-            _running = false;
-          }
-        });
-        if (e.result != null) _announce(e.result!);
-      },
-      onDone: () {
-        if (!mounted) return;
-        if (_running) setState(() => _running = false);
-      },
-      onError: (Object err) {
-        if (!mounted) return;
-        setState(() {
-          _running = false;
-          _error = 'Traceroute error: $err';
-        });
-      },
-    );
+    _sub = _service
+        .trace(host: host, cancel: cancel.future)
+        .listen(
+          (TracerouteEvent e) {
+            if (!mounted) return;
+            setState(() {
+              if (e.hop != null) {
+                _hops.add(e.hop!);
+              } else if (e.result != null) {
+                _result = e.result;
+                _running = false;
+              }
+            });
+            if (e.result != null) _announce(e.result!);
+          },
+          onDone: () {
+            if (!mounted) return;
+            if (_running) setState(() => _running = false);
+          },
+          onError: (Object err) {
+            if (!mounted) return;
+            setState(() {
+              _running = false;
+              _error = 'Traceroute error: $err';
+            });
+          },
+        );
   }
 
   void _announce(TracerouteResult result) {
     final String msg = switch (result) {
-      TracerouteComplete(:final bool reachedTarget) => reachedTarget
-          ? 'Traceroute complete, target reached in ${_hops.length} hops'
-          : 'Traceroute finished at ${_hops.length} hops without reaching '
-              'the target',
+      TracerouteComplete(:final bool reachedTarget) =>
+        reachedTarget
+            ? 'Traceroute complete, target reached in ${_hops.length} hops'
+            : 'Traceroute finished at ${_hops.length} hops without reaching '
+                  'the target',
       TracerouteCancelled() => 'Traceroute stopped',
       TracerouteUnavailable() => 'Traceroute not available on this platform',
     };
@@ -148,9 +152,67 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Traceroute (System)'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Traceroute (System)'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until hops exist
+        // (so it stays disabled in the capability-probe, mobile-notice, and
+        // unavailable states, which produce no hops). Copies a hop TSV with a
+        // status header. Copy leads; no help icon on this screen.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// §8.16 copy payload — the discovered path as a hop TSV with a status line.
+  ///
+  /// Returns null (→ disabled) until at least one hop exists; that also keeps
+  /// it disabled across every unavailable state (mobile notice, sandboxed
+  /// build, capability probe), none of which produce hops. Mid-run it copies
+  /// the hops streamed so far (the §8.16 streaming rule). A timed-out hop is
+  /// written honestly as "no response" with a "*" time (GL-005), matching the
+  /// on-screen row; the status header carries the reached/stopped verdict WORD.
+  String? _buildCopyText() {
+    if (_hops.isEmpty) return null;
+
+    final String host = _hostCtrl.text.trim();
+    final String status;
+    if (_running) {
+      status = 'Tracing… ${_hops.length} hops so far';
+    } else if (_result case TracerouteComplete(:final bool reachedTarget)) {
+      status = reachedTarget
+          ? 'Reached target in ${_hops.length} hops'
+          : 'Stopped at ${_hops.length} hops, target not reached';
+    } else if (_result is TracerouteCancelled) {
+      status = 'Stopped at ${_hops.length} hops';
+    } else {
+      status = '${_hops.length} hops';
+    }
+
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()
+      ..writeln(
+        'Traceroute (system) — path to '
+        '${host.isEmpty ? '(unknown)' : host}',
+      )
+      ..writeln('Status: $status')
+      ..writeln()
+      ..writeln(<String>['Hop', 'Host / IP', 'Time (ms)'].join(tab));
+
+    for (final TracerouteHop h in _hops) {
+      final String addr = h.timedOut
+          ? 'no response'
+          : (h.host != null && h.host != h.ip
+                ? '${h.host} (${h.ip})'
+                : (h.ip ?? '—'));
+      final String time = h.timedOut
+          ? '*'
+          : (h.bestRttMs == null ? '—' : h.bestRttMs!.toStringAsFixed(1));
+      buf.writeln(<String>['${h.ttl}', addr, time].join(tab));
+    }
+
+    return buf.toString().trimRight();
   }
 
   Widget _body() {
@@ -207,9 +269,7 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
           child: Center(
             child: Semantics(
               label: 'Checking traceroute availability',
-              child: const CircularProgressIndicator(
-                color: AppColors.primary,
-              ),
+              child: const CircularProgressIndicator(color: AppColors.primary),
             ),
           ),
         ),
@@ -271,8 +331,11 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.route_outlined,
-                  size: 24, color: AppColors.textSecondary),
+              const Icon(
+                Icons.route_outlined,
+                size: 24,
+                color: AppColors.textSecondary,
+              ),
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(
@@ -395,14 +458,12 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
   ) {
     final String rttLabel = h.timedOut
         ? '*'
-        : (h.bestRttMs == null
-            ? '—'
-            : '${h.bestRttMs!.toStringAsFixed(1)} ms');
+        : (h.bestRttMs == null ? '—' : '${h.bestRttMs!.toStringAsFixed(1)} ms');
     final String addr = h.timedOut
         ? 'no response'
         : (h.host != null && h.host != h.ip
-            ? '${h.host}  (${h.ip})'
-            : (h.ip ?? '—'));
+              ? '${h.host}  (${h.ip})'
+              : (h.ip ?? '—'));
 
     final String semantic = h.timedOut
         ? 'Hop ${h.ttl}, no response'
@@ -435,9 +496,7 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
                           color: AppColors.textTertiary,
                           fontStyle: FontStyle.italic,
                         )
-                      : mono.inlineCode.copyWith(
-                          color: AppColors.textPrimary,
-                        ),
+                      : mono.inlineCode.copyWith(color: AppColors.textPrimary),
                 ),
               ),
               const SizedBox(width: AppSpacing.xs),
@@ -475,8 +534,11 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline,
-              size: 20, color: AppColors.textTertiary),
+          const Icon(
+            Icons.info_outline,
+            size: 20,
+            color: AppColors.textTertiary,
+          ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(

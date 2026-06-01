@@ -36,6 +36,7 @@ import '../../../services/network/icmp_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
@@ -66,8 +67,7 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
   @override
   void initState() {
     super.initState();
-    _service =
-        widget.service ?? IcmpService(backend: defaultIcmpBackend());
+    _service = widget.service ?? IcmpService(backend: defaultIcmpBackend());
   }
 
   @override
@@ -97,39 +97,43 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
       _cancel = cancel;
     });
 
-    _sub = _service.traceroute(host: host, cancel: cancel.future).listen(
-      (IcmpTraceEvent e) {
-        if (!mounted) return;
-        setState(() {
-          if (e.hop != null) {
-            _hops.add(e.hop!);
-          } else if (e.done) {
-            _running = false;
-            _completed = true;
-            _reachedTarget = e.reachedTarget;
-          }
-        });
-        if (e.done) _announce();
-      },
-      onDone: () {
-        if (!mounted) return;
-        if (_running) setState(() => _running = false);
-      },
-      onError: (Object err) {
-        if (!mounted) return;
-        setState(() {
-          _running = false;
-          _error = err is StateError ? err.message : 'Traceroute error: $err';
-        });
-      },
-    );
+    _sub = _service
+        .traceroute(host: host, cancel: cancel.future)
+        .listen(
+          (IcmpTraceEvent e) {
+            if (!mounted) return;
+            setState(() {
+              if (e.hop != null) {
+                _hops.add(e.hop!);
+              } else if (e.done) {
+                _running = false;
+                _completed = true;
+                _reachedTarget = e.reachedTarget;
+              }
+            });
+            if (e.done) _announce();
+          },
+          onDone: () {
+            if (!mounted) return;
+            if (_running) setState(() => _running = false);
+          },
+          onError: (Object err) {
+            if (!mounted) return;
+            setState(() {
+              _running = false;
+              _error = err is StateError
+                  ? err.message
+                  : 'Traceroute error: $err';
+            });
+          },
+        );
   }
 
   void _announce() {
     final String msg = _reachedTarget
         ? 'Traceroute complete, target reached in ${_hops.length} hops'
         : 'Traceroute finished at ${_hops.length} hops without reaching the '
-            'target';
+              'target';
     SemanticsService.sendAnnouncement(View.of(context), msg, TextDirection.ltr);
   }
 
@@ -141,10 +145,62 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar:
-          AppBar(title: const Text('Traceroute (Mobile)'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Traceroute (Mobile)'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until hops exist
+        // (so it stays disabled on the iOS / sandboxed-desktop unavailable
+        // cards, which produce no hops). Copies a hop TSV with a status header.
+        // Copy leads; no help icon on this screen.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// §8.16 copy payload — the ICMP TTL-walk path as a hop TSV with a status
+  /// line.
+  ///
+  /// Returns null (→ disabled) until at least one hop exists; that also keeps
+  /// it disabled across the unavailable states (iOS no-TimeExceeded, sandboxed
+  /// desktop), neither of which produces hops. Mid-run it copies the hops
+  /// streamed so far (the §8.16 streaming rule). A timed-out hop is written
+  /// honestly as "no response" with a "*" time (GL-005); the status header
+  /// carries the reached/stopped verdict WORD.
+  String? _buildCopyText() {
+    if (_hops.isEmpty) return null;
+
+    final String host = _hostCtrl.text.trim();
+    final String status;
+    if (_running) {
+      status = 'Tracing… ${_hops.length} hops so far';
+    } else if (_completed) {
+      status = _reachedTarget
+          ? 'Reached target in ${_hops.length} hops'
+          : 'Stopped at ${_hops.length} hops, target not reached';
+    } else {
+      status = '${_hops.length} hops';
+    }
+
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()
+      ..writeln(
+        'Traceroute (mobile) — ICMP TTL-walk to '
+        '${host.isEmpty ? '(unknown)' : host}',
+      )
+      ..writeln('Status: $status')
+      ..writeln()
+      ..writeln(<String>['Hop', 'Host / IP', 'Time (ms)'].join(tab));
+
+    for (final IcmpHop h in _hops) {
+      final String addr = h.timedOut ? 'no response' : (h.fromIp ?? '—');
+      final String time = h.timedOut
+          ? '*'
+          : (h.rttMs == null ? '—' : h.rttMs!.toStringAsFixed(1));
+      buf.writeln(<String>['${h.ttl}', addr, time].join(tab));
+    }
+
+    return buf.toString().trimRight();
   }
 
   Widget _body() {
@@ -187,10 +243,7 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
     switch (_service.tracerouteCapability) {
       case IcmpTracerouteCapability.available:
         return <Widget>[
-          ConceptGraphicBand(
-            toolId: 'mobile-traceroute',
-            isDesktop: isDesktop,
-          ),
+          ConceptGraphicBand(toolId: 'mobile-traceroute', isDesktop: isDesktop),
           if (ToolAssets.hasGraphic('mobile-traceroute'))
             const SizedBox(height: AppSpacing.md),
           _formCard(context),
@@ -250,8 +303,9 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
               Expanded(
                 child: Text(
                   copy.title,
-                  style:
-                      text.headlineSmall?.copyWith(color: AppColors.textPrimary),
+                  style: text.headlineSmall?.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
             ],
@@ -277,7 +331,9 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
                   isDesktopCopy ? Icons.route : Icons.network_ping,
                   size: 18,
                 ),
-                label: Text(isDesktopCopy ? 'Open Traceroute' : 'Open ICMP Ping'),
+                label: Text(
+                  isDesktopCopy ? 'Open Traceroute' : 'Open ICMP Ping',
+                ),
               ),
             ),
           ),
@@ -347,8 +403,11 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline,
-              size: 16, color: AppColors.textTertiary),
+          const Icon(
+            Icons.info_outline,
+            size: 16,
+            color: AppColors.textTertiary,
+          ),
           const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: Text(
@@ -449,8 +508,7 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
                           color: AppColors.textTertiary,
                           fontStyle: FontStyle.italic,
                         )
-                      : mono.inlineCode
-                          .copyWith(color: AppColors.textPrimary),
+                      : mono.inlineCode.copyWith(color: AppColors.textPrimary),
                 ),
               ),
               const SizedBox(width: AppSpacing.xs),

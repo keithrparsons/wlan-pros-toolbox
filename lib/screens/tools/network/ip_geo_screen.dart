@@ -22,6 +22,7 @@ import '../../../services/network/ip_geo_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'error_card.dart';
@@ -96,16 +97,59 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('IP Geolocation'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('IP Geolocation'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until a successful
+        // lookup exists; copies the location/coordinates as a labeled text
+        // block. Copy leads; this screen has no help icon.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// §8.16 copy payload — the geolocation result as a labeled plain-text block.
+  ///
+  /// Returns null (→ disabled affordance) while loading, before any lookup, or
+  /// when the last lookup errored — an error has no result to keep. Absent
+  /// fields are omitted (GL-005 honest blanks), matching the on-screen
+  /// `ValueRow` treatment that hides null rows.
+  String? _buildCopyText() {
+    final IpGeoResult? r = _result;
+    if (_loading || r == null || r.isError) return null;
+
+    final StringBuffer buf = StringBuffer()..writeln('IP Geolocation');
+    void line(String label, String? value) {
+      if (value != null && value.trim().isNotEmpty) {
+        buf.writeln('$label: ${value.trim()}');
+      }
+    }
+
+    line('IP', r.ip);
+    line('IP version', r.ipVersion);
+    line('Location', r.locationLine);
+    line('Postal code', r.postal);
+    line('Timezone', r.timezone);
+    line('UTC offset', r.utcOffset);
+    line('ISP', r.isp);
+    line('Organization', r.org);
+    line('ASN', r.asn);
+    if (r.hasCoordinates) {
+      line('Latitude', r.latitude?.toStringAsFixed(6));
+      line('Longitude', r.longitude?.toStringAsFixed(6));
+      line('Map link', r.mapsUrl);
+    }
+
+    return buf.toString().trimRight();
   }
 
   Widget _body() {
     if (!NetworkSupport.ipGeoSupported) {
       return NetworkUnavailableView(
         toolName: 'IP Geolocation',
-        reason: NetworkSupport.unavailableReason ?? NetworkUnavailableReason.web,
+        reason:
+            NetworkSupport.unavailableReason ?? NetworkUnavailableReason.web,
       );
     }
     return LayoutBuilder(
@@ -167,7 +211,8 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
               onSubmitted: (_) => _run(),
               cursorColor: AppColors.primary,
               decoration: const InputDecoration(
-                  hintText: 'Leave blank for my public IP'),
+                hintText: 'Leave blank for my public IP',
+              ),
             ),
           ),
           const SizedBox(height: 6),
@@ -243,10 +288,7 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
           const SizedBox(height: AppSpacing.xs),
           ValueRow(label: 'IP', value: r.ip, mono: true, emphasize: true),
           ValueRow(label: 'IP version', value: r.ipVersion),
-          ValueRow(
-            label: 'Location',
-            value: r.locationLine,
-          ),
+          ValueRow(label: 'Location', value: r.locationLine),
           ValueRow(label: 'Postal code', value: r.postal, mono: true),
           ValueRow(label: 'Timezone', value: r.timezone),
           ValueRow(label: 'UTC offset', value: r.utcOffset, mono: true),

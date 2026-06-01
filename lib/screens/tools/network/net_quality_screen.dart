@@ -37,6 +37,7 @@ import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import 'live_quality_monitor.dart';
 import 'metric_sparkline.dart';
@@ -136,15 +137,20 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
 
     // Reachability runs concurrently with the transport stream. Its result
     // populates the popular-sites section as soon as it lands.
-    unawaited(_reachability.measure().then((List<SiteReachability> sites) {
-      if (!mounted) return;
-      setState(() => _sites = sites);
-    }).catchError((Object _) {
-      // A reachability failure is non-fatal: leave the section empty rather
-      // than surfacing an error over the transport result.
-      if (!mounted) return;
-      setState(() => _sites = <SiteReachability>[]);
-    }));
+    unawaited(
+      _reachability
+          .measure()
+          .then((List<SiteReachability> sites) {
+            if (!mounted) return;
+            setState(() => _sites = sites);
+          })
+          .catchError((Object _) {
+            // A reachability failure is non-fatal: leave the section empty rather
+            // than surfacing an error over the transport result.
+            if (!mounted) return;
+            setState(() => _sites = <SiteReachability>[]);
+          }),
+    );
 
     _sub = _client.measure().listen(
       (QualityProgress p) {
@@ -193,7 +199,10 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
         // approved "About these metrics" copy — the six metrics, the grade
         // bands, and the honesty caveats. Available on every platform (the copy
         // is reference content, useful even on the web/unsupported fallback).
+        // §8.16 order: copy LEADS, help (About these metrics) trails. Copy is
+        // disabled until a one-shot run has produced a result.
         actions: <Widget>[
+          AppCopyAction(textBuilder: _buildCopyText),
           Semantics(
             button: true,
             label: 'About these metrics',
@@ -207,6 +216,67 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
       ),
       body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// §8.16 copy payload — the completed run as a labeled plain-text block: the
+  /// six transport dimensions then the popular-site reachability table. Each
+  /// transport line carries its grade WORD (Excellent / Good / Fair / Poor /
+  /// Unavailable) and each site its reachable/unreachable WORD, so every
+  /// on-screen verdict the color reinforced survives to the clipboard
+  /// (§8.13 / §8.16 content contract). Honesty (GL-005): a dimension that did
+  /// not measure is written as "Unavailable" with its note, never faked.
+  ///
+  /// Returns null (→ disabled affordance) until a one-shot run completes
+  /// ([_result] is non-null and the test is not in flight). The live latency
+  /// trio alone is not a "result to keep" — copy waits for a full Run.
+  String? _buildCopyText() {
+    final QualityResult? r = _result;
+    if (_running || r == null) return null;
+
+    final StringBuffer buf = StringBuffer()..writeln('Network Quality');
+
+    buf
+      ..writeln()
+      ..writeln('Transport');
+    for (final String id in _metricOrder) {
+      final (String label, String unit) = _metricMeta[id]!;
+      final QualityMetric? m = r.metric(id);
+      final double? v = m?.value;
+      final bool available = m != null && m.isAvailable && v != null;
+      final String value = available
+          ? _formatValueRaw(id, v, unit)
+          : 'Unavailable';
+      final String grade = (m?.grade ?? QualityGrade.unavailable).label;
+      final String note = (!available && m?.note != null)
+          ? ' (${m!.note})'
+          : '';
+      buf.writeln('  $label: $value — $grade$note');
+    }
+
+    buf
+      ..writeln()
+      ..writeln('Popular sites');
+    if (_sites.isEmpty) {
+      buf.writeln('  No reachability results.');
+    } else {
+      for (final SiteReachability s in _sites) {
+        final String status = s.reachable ? 'reachable' : 'unreachable';
+        final String rtt = (s.reachable && s.latencyMs != null)
+            ? ' (${s.latencyMs!.round()} ms)'
+            : '';
+        buf.writeln('  ${s.site.name}: $status$rtt');
+      }
+    }
+
+    buf
+      ..writeln()
+      ..writeln(
+        "These are this app's own measurements, not an Orb or Ookla score. "
+        'The Responsiveness grade is an indicative figure inspired by '
+        'RFC 9097, not the full standard.',
+      );
+
+    return buf.toString().trimRight();
   }
 
   Widget _body() {
@@ -384,8 +454,9 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
                 value: _fraction == 0 ? null : _fraction,
                 minHeight: 6,
                 backgroundColor: AppColors.surface2,
-                valueColor:
-                    const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  AppColors.primary,
+                ),
               ),
             ),
           ),
@@ -434,13 +505,13 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
   /// alone (before any one-shot run, when there is no [QualityResult] yet).
   static const Map<String, (String, String)> _metricMeta =
       <String, (String, String)>{
-    MetricIds.latency: ('Latency', 'ms'),
-    MetricIds.jitter: ('Jitter', 'ms'),
-    MetricIds.loss: ('Loss', '%'),
-    MetricIds.download: ('Download', 'Mbps'),
-    MetricIds.upload: ('Upload', 'Mbps'),
-    MetricIds.responsiveness: ('Responsiveness', 'RPM'),
-  };
+        MetricIds.latency: ('Latency', 'ms'),
+        MetricIds.jitter: ('Jitter', 'ms'),
+        MetricIds.loss: ('Loss', '%'),
+        MetricIds.download: ('Download', 'Mbps'),
+        MetricIds.upload: ('Upload', 'Mbps'),
+        MetricIds.responsiveness: ('Responsiveness', 'RPM'),
+      };
 
   Widget _metricsCard(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
@@ -487,8 +558,9 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     final String caption = running
         ? 'Live · sampling latency every 30s'
         : 'Paused';
-    final Color dotColor =
-        running ? AppColors.statusSuccess : AppColors.textTertiary;
+    final Color dotColor = running
+        ? AppColors.statusSuccess
+        : AppColors.textTertiary;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
@@ -500,10 +572,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
             width: 8,
             height: 8,
             margin: const EdgeInsets.only(right: 6),
-            decoration: BoxDecoration(
-              color: dotColor,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
           ),
         ),
         Flexible(
@@ -518,9 +587,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
         // performs, and flips with state.
         Semantics(
           button: true,
-          label: running
-              ? 'Pause live sampling'
-              : 'Resume live sampling',
+          label: running ? 'Pause live sampling' : 'Resume live sampling',
           child: IconButton(
             visualDensity: VisualDensity.compact,
             iconSize: 20,
@@ -546,16 +613,14 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     // Current value/grade: prefer the most recent live sample (latency trio),
     // fall back to the one-shot result (the expensive trio, and the trio before
     // the first live tick lands).
-    final MetricSample? latest =
-        history.isNotEmpty ? history.last : null;
+    final MetricSample? latest = history.isNotEmpty ? history.last : null;
 
     final bool available =
         latest != null || (oneShot != null && oneShot.isAvailable);
 
     final double? currentValue = latest?.value ?? oneShot?.value;
-    final QualityGrade grade = latest?.grade ??
-        oneShot?.grade ??
-        QualityGrade.unavailable;
+    final QualityGrade grade =
+        latest?.grade ?? oneShot?.grade ?? QualityGrade.unavailable;
     final String? note = (latest == null) ? oneShot?.note : null;
 
     final String valueLabel = available
@@ -574,8 +639,14 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     // line. The expensive trio is dots-only (points are runs apart).
     final SparklineDomain? domain = SparklineDomain.forMetric(id);
     final bool enoughForLine = history.length >= 2;
-    final String trendSemantic =
-        _trendSemantic(label, unit, id, history, grade, available);
+    final String trendSemantic = _trendSemantic(
+      label,
+      unit,
+      id,
+      history,
+      grade,
+      available,
+    );
 
     return Semantics(
       label: '$label, $semanticValue, $gradePhrase. $trendSemantic',
@@ -604,8 +675,9 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
                           const SizedBox(height: 2),
                           Text(
                             note,
-                            style: text.labelSmall
-                                ?.copyWith(color: AppColors.textTertiary),
+                            style: text.labelSmall?.copyWith(
+                              color: AppColors.textTertiary,
+                            ),
                           ),
                         ],
                       ],
@@ -622,8 +694,9 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
                         valueLabel,
                         textAlign: TextAlign.right,
                         overflow: TextOverflow.ellipsis,
-                        style: mono.outputMedium
-                            .copyWith(color: AppColors.primary),
+                        style: mono.outputMedium.copyWith(
+                          color: AppColors.primary,
+                        ),
                       ),
                     ),
                   const SizedBox(width: AppSpacing.sm),
@@ -858,15 +931,17 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     // WCAG 1.4.1 — outcome carried by icon shape AND a text status word, never
     // color alone.
     final IconData icon = ok ? Icons.check_circle : Icons.cancel;
-    final Color iconColor =
-        ok ? AppColors.statusSuccess : AppColors.statusDanger;
+    final Color iconColor = ok
+        ? AppColors.statusSuccess
+        : AppColors.statusDanger;
     final String status = ok ? 'reachable' : 'unreachable';
     final String rtt = ok && s.latencyMs != null
         ? '${s.latencyMs!.round()} ms'
         : '—';
 
     return Semantics(
-      label: '${s.site.name}, $status'
+      label:
+          '${s.site.name}, $status'
           '${ok && s.latencyMs != null ? ', ${s.latencyMs!.round()} milliseconds' : ''}',
       container: true,
       child: ExcludeSemantics(
@@ -879,9 +954,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
               Expanded(
                 child: Text(
                   s.site.name,
-                  style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
-                  ),
+                  style: text.bodyLarge?.copyWith(color: AppColors.textPrimary),
                 ),
               ),
               Text(
