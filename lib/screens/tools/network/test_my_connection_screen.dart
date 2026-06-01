@@ -92,6 +92,12 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
   bool _running = false;
   String? _error;
 
+  /// R1-B — whether macOS Location ended up authorized after the in-check
+  /// request. Drives the honest network-name fallback: false → "Name unavailable
+  /// (Location access off)" rather than a bare "Not measured". Stays true for
+  /// non-macOS sources (no Location gate there).
+  bool _macLocationAuthorized = true;
+
   // Internet progress.
   QualityPhase _phase = QualityPhase.idle;
   double _fraction = 0;
@@ -158,6 +164,25 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
         case WifiInfoSource.macosCoreWlan:
           final WifiInfoAdapter? adapter = _macAdapter;
           if (adapter == null) return null;
+          // R1-B — macOS gates the network NAME (SSID/BSSID) behind Location
+          // Services. Request it once as part of the check (mirroring the pro
+          // Wi-Fi Information tool's _grantLocation flow), then read regardless
+          // of the result. The link RATE — hence the Wi-Fi Fine/Slow chip and
+          // the verdict — resolves WITHOUT Location; only the human-readable
+          // name depends on it, and the facts row degrades honestly if denied.
+          if (adapter.gatesNameBehindPermission) {
+            try {
+              // The request resolves to whether Location is authorized AFTER
+              // the prompt — captured so the facts row can say "Name unavailable
+              // (Location access off)" only when access is genuinely off, vs a
+              // plain not-connected case.
+              _macLocationAuthorized = await adapter.requestNamePermission();
+            } catch (_) {
+              // A denied/failed permission is non-fatal: fall through to the
+              // read; the name simply stays unavailable.
+              _macLocationAuthorized = false;
+            }
+          }
           return await adapter.fetch();
         case WifiInfoSource.iosShortcuts:
           final WiFiDetailsBridge? bridge = _iosBridge;
@@ -183,6 +208,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
       _running = true;
       _phase = QualityPhase.idle;
       _fraction = 0;
+      _macLocationAuthorized = true;
       _ap = null;
       _internet = null;
       _engineResult = null;
@@ -209,7 +235,11 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
           _ap = ap;
           _internet = internet;
           _engineResult = engine;
-          _verdict = ConsumerVerdictMapper.map(engine);
+          _verdict = ConsumerVerdictMapper.map(
+            engine,
+            internetHealthy:
+                _internetHealth(internet) == InternetHealth.good,
+          );
           _testedAt = (widget.nowOverride ?? DateTime.now)();
           _running = false;
         });
@@ -564,9 +594,18 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
     }
   }
 
-  static String _ssidOrNotMeasured(ConnectedAp? ap) {
+  /// The Wi-Fi network name, or an honest fallback. R1-B: on macOS, when the
+  /// name is missing BECAUSE Location access is off, say so explicitly —
+  /// "Name unavailable (Location access off)" — never a bare "Not measured"
+  /// (which reads as "Wi-Fi unchecked"). The Wi-Fi STATUS chip is independent of
+  /// this; the link rate (hence Fine/Slow) resolves without Location.
+  String _ssidOrNotMeasured(ConnectedAp? ap) {
     final String? ssid = ap?.ssid;
-    return (ssid != null && ssid.trim().isNotEmpty) ? ssid : 'Not measured';
+    if (ssid != null && ssid.trim().isNotEmpty) return ssid;
+    if (_source == WifiInfoSource.macosCoreWlan && !_macLocationAuthorized) {
+      return 'Name unavailable (Location access off)';
+    }
+    return 'Not measured';
   }
 
   /// Mbps rounded to a whole number for a consumer, or "Not measured".
@@ -605,8 +644,18 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
     final double? latency = _metricValue(net, MetricIds.latency);
     final double? loss = _metricValue(net, MetricIds.loss);
 
+    // R1-A — the two-axis status line, reinforcing the Wi-Fi vs Internet model
+    // in the help-desk paste (e.g. "Wi-Fi: Fine · Internet: Slow").
+    final ConsumerVerdict? v = _verdict;
     final StringBuffer buf = StringBuffer()
-      ..writeln('Test My Connection (WLAN Pros Toolbox)')
+      ..writeln('Test My Connection (WLAN Pros Toolbox)');
+    if (v != null) {
+      buf.writeln(
+        'Wi-Fi: ${_TwoAxisChips.word(v.wifiStatus)} · '
+        'Internet: ${_TwoAxisChips.word(v.internetStatus)}',
+      );
+    }
+    buf
       ..writeln('Likely cause: ${fact('Likely cause')}')
       ..writeln(
         'Internet speed tested: ${_mbps(down)} down / ${_mbps(up)} up',
@@ -682,57 +731,45 @@ class _Fact {
 // Verdict card — status color (§8.13) + the verdict WORD (never color-only).
 // ===========================================================================
 
+/// R1-A — the result verdict card. The card itself is NEUTRAL (surface1 +
+/// hairline, no full-card tint); the COLOR lives in the two status chips.
+///
+/// Layout: two labeled chips ("Wi-Fi:" / "Internet:"), a divider, then ONE
+/// plain conclusion sentence. The chips replace the old single "headline word"
+/// — they teach the non-technical reader that Wi-Fi and Internet are two
+/// separate things, and each axis carries its OWN explicit status so a missing
+/// Wi-Fi read shows as "Wi-Fi: Couldn't check", never a silent gap.
+///
+/// D2 (both chips "Couldn't check") is redundant with its retry sentence, so it
+/// renders the conclusion line ONLY, no chips.
 class _VerdictCard extends StatelessWidget {
   const _VerdictCard({required this.verdict, required this.body});
 
   final ConsumerVerdict verdict;
 
-  /// The resolved body (D1 substitutes the live internet figure upstream).
+  /// The resolved one-line conclusion (D1 substitutes the live internet figure
+  /// upstream).
   final String body;
 
-  /// Maps each outcome to a §8.13 status token. The COLOR only reinforces the
-  /// headline WORD; the word always carries the verdict (WCAG 2.2 SC 1.4.1).
-  ///   wifi / wifiLead / internet → warning amber (a found bottleneck, advisory)
-  ///   bothFine → success mint
-  ///   couldntCheckWifi / couldntComplete → info sky-blue (neutral, not a fault)
-  static Color _statusColor(ConsumerOutcome o) {
-    switch (o) {
-      case ConsumerOutcome.bothFine:
-        return AppColors.statusSuccess;
-      case ConsumerOutcome.wifi:
-      case ConsumerOutcome.wifiLead:
-      case ConsumerOutcome.internet:
-        return AppColors.statusWarning;
-      case ConsumerOutcome.couldntCheckWifi:
-      case ConsumerOutcome.couldntComplete:
-        return AppColors.statusInfo;
-    }
-  }
-
-  /// Leading glyph reinforcing the verdict by SHAPE (never color alone).
-  static IconData _icon(ConsumerOutcome o) {
-    switch (o) {
-      case ConsumerOutcome.bothFine:
-        return Icons.check_circle_outline;
-      case ConsumerOutcome.wifi:
-      case ConsumerOutcome.wifiLead:
-        return Icons.wifi_outlined;
-      case ConsumerOutcome.internet:
-        return Icons.cloud_queue;
-      case ConsumerOutcome.couldntCheckWifi:
-      case ConsumerOutcome.couldntComplete:
-        return Icons.help_outline;
-    }
-  }
+  /// D2 shows the retry sentence alone — both chips would just say "Couldn't
+  /// check", which the sentence already conveys.
+  bool get _chipsRedundant =>
+      verdict.outcome == ConsumerOutcome.couldntComplete;
 
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
-    final Color status = _statusColor(verdict.outcome);
+
+    // SR reads the two axis statuses, then the conclusion, as one container.
+    final String semanticsLabel = _chipsRedundant
+        ? body
+        : 'Wi-Fi ${_TwoAxisChips.word(verdict.wifiStatus)}. '
+              'Internet ${_TwoAxisChips.word(verdict.internetStatus)}. '
+              '$body';
 
     return Semantics(
       container: true,
-      label: '${verdict.headline}. $body',
+      label: semanticsLabel,
       child: ExcludeSemantics(
         child: Container(
           decoration: BoxDecoration(
@@ -744,25 +781,15 @@ class _VerdictCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Icon(_icon(verdict.outcome), size: 28, color: status),
-                  const SizedBox(width: AppSpacing.xs),
-                  // The verdict WORD, in the status hue. Flexible so a long
-                  // headline wraps instead of overflowing at 320px.
-                  Expanded(
-                    child: Text(
-                      verdict.headline,
-                      style: text.titleLarge?.copyWith(
-                        color: status,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.xs),
+              if (!_chipsRedundant) ...[
+                _TwoAxisChips(
+                  wifiStatus: verdict.wifiStatus,
+                  internetStatus: verdict.internetStatus,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                const Divider(height: 1, thickness: 1, color: AppColors.border),
+                const SizedBox(height: AppSpacing.sm),
+              ],
               Text(
                 body,
                 style: text.bodyLarge?.copyWith(color: AppColors.textPrimary),
@@ -770,6 +797,136 @@ class _VerdictCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// The two labeled axis rows — "Wi-Fi:" and "Internet:", each with a status
+/// chip. Aligned labels keep the two words scannable in under two seconds.
+class _TwoAxisChips extends StatelessWidget {
+  const _TwoAxisChips({
+    required this.wifiStatus,
+    required this.internetStatus,
+  });
+
+  final AxisStatus wifiStatus;
+  final AxisStatus internetStatus;
+
+  /// Plain status WORD — the single source the card, chip, and SR label share.
+  static String word(AxisStatus s) {
+    switch (s) {
+      case AxisStatus.fine:
+        return 'Fine';
+      case AxisStatus.slow:
+        return 'Slow';
+      case AxisStatus.unknown:
+        return "Couldn't check";
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        _AxisRow(label: 'Wi-Fi', status: wifiStatus),
+        const SizedBox(height: AppSpacing.xs),
+        _AxisRow(label: 'Internet', status: internetStatus),
+      ],
+    );
+  }
+}
+
+/// One axis: an aligned plain label + a status chip.
+class _AxisRow extends StatelessWidget {
+  const _AxisRow({required this.label, required this.status});
+
+  final String label;
+  final AxisStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: <Widget>[
+        SizedBox(
+          width: 84,
+          child: Text(
+            '$label:',
+            style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        Flexible(child: _StatusChip(status: status)),
+      ],
+    );
+  }
+}
+
+/// A single status chip: icon + WORD + §8.13 color. The WORD always carries
+/// meaning (WCAG 2.2 SC 1.4.1, never color alone). Fine → status-good, Slow →
+/// status-warn, "Couldn't check" → a neutral/muted token.
+class _StatusChip extends StatelessWidget {
+  const _StatusChip({required this.status});
+
+  final AxisStatus status;
+
+  /// §8.13 token per status. Neutral muted text token for the unknown axis so a
+  /// "couldn't check" never reads as an alarm color.
+  Color get _color {
+    switch (status) {
+      case AxisStatus.fine:
+        return AppColors.statusSuccess;
+      case AxisStatus.slow:
+        return AppColors.statusWarning;
+      case AxisStatus.unknown:
+        return AppColors.textTertiary;
+    }
+  }
+
+  /// Glyph reinforcing the word by SHAPE (✓ / ⚠ / –), never color alone.
+  IconData get _icon {
+    switch (status) {
+      case AxisStatus.fine:
+        return Icons.check_circle_outline;
+      case AxisStatus.slow:
+        return Icons.warning_amber_outlined;
+      case AxisStatus.unknown:
+        return Icons.remove_circle_outline;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final Color color = _color;
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface2,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: color, width: 1),
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: AppSpacing.xxs,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(_icon, size: 18, color: color),
+          const SizedBox(width: AppSpacing.xxs),
+          Flexible(
+            child: Text(
+              _TwoAxisChips.word(status),
+              style: text.labelLarge?.copyWith(
+                color: color,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
