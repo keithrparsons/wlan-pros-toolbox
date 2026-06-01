@@ -105,6 +105,19 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         routeName: '/tools/wifi-vs-internet',
         isLive: true,
       ),
+      // Consumer companion to wifi-vs-internet (Keith, 2026-06-01). Same
+      // backends + verdict engine, plain-English re-skin. Audience-distinct
+      // description: the pro entry above reads "for engineers", this one is the
+      // one-tap consumer answer + what to tell support.
+      ToolEntry(
+        id: 'test-my-connection',
+        title: 'Test My Connection',
+        description:
+            'Find out fast whether a slowdown is your Wi-Fi or your internet, '
+            'and what to tell support',
+        routeName: '/tools/test-my-connection',
+        isLive: true,
+      ),
       ToolEntry(
         id: 'wifi-info',
         title: 'Wi-Fi Information',
