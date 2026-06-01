@@ -20,6 +20,7 @@ import '../../../services/network/wake_on_lan_service.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
@@ -95,16 +96,63 @@ class _WakeOnLanScreenState extends State<WakeOnLanScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Wake-on-LAN'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Wake-on-LAN'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. No help icon on this
+        // screen, so copy is the only action. Disabled until a send has
+        // produced a result (sent OR failed).
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// §8.16 copy payload — the magic-packet send outcome as a labeled plain-text
+  /// block, mirroring the on-screen `_SentCard` / failure card. The send STATUS
+  /// WORD always leads ("Sent" / "Failed") so the verdict survives to the
+  /// clipboard color-independent (§8.16). Honest about Wake-on-LAN being
+  /// fire-and-forget: this records that the packet left the device, never that
+  /// the target woke.
+  ///
+  /// Returns null (→ disabled affordance) until a send completes; a send in
+  /// flight has no result to keep.
+  String? _buildCopyText() {
+    final WakeOnLanResult? r = _result;
+    if (_loading || r == null) return null;
+
+    final StringBuffer buf = StringBuffer()..writeln('Wake-on-LAN');
+
+    if (r.isError) {
+      buf
+        ..writeln('Status: Failed')
+        ..writeln('  ${r.errorMessage}');
+      if (r.normalizedMac.isNotEmpty) {
+        buf.writeln('  Target MAC: ${r.normalizedMac}');
+      }
+      if (r.broadcast.isNotEmpty) buf.writeln('  Broadcast: ${r.broadcast}');
+      buf.writeln('  Port: ${r.port}');
+      return buf.toString().trimRight();
+    }
+
+    buf
+      ..writeln(
+        'Status: Sent (the packet left this device; Wake-on-LAN is '
+        'unacknowledged, so this is not confirmation the target woke)',
+      )
+      ..writeln('  Target MAC: ${r.normalizedMac}')
+      ..writeln('  Broadcast: ${r.broadcast}')
+      ..writeln('  Port: ${r.port}')
+      ..writeln('  Bytes sent: ${r.bytesSent}');
+    return buf.toString().trimRight();
   }
 
   Widget _body() {
     if (!NetworkSupport.wakeOnLanSupported) {
       return NetworkUnavailableView(
         toolName: 'Wake-on-LAN',
-        reason: NetworkSupport.unavailableReason ?? NetworkUnavailableReason.web,
+        reason:
+            NetworkSupport.unavailableReason ?? NetworkUnavailableReason.web,
       );
     }
 
@@ -222,8 +270,9 @@ class _WakeOnLanScreenState extends State<WakeOnLanScreen> {
                 selected: selected,
                 showCheckmark: false,
                 labelStyle: text.labelMedium?.copyWith(
-                  color:
-                      selected ? AppColors.secondary : AppColors.textSecondary,
+                  color: selected
+                      ? AppColors.secondary
+                      : AppColors.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
                 selectedColor: AppColors.primary,
@@ -235,8 +284,7 @@ class _WakeOnLanScreenState extends State<WakeOnLanScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.control),
                 ),
-                onSelected:
-                    _loading ? null : (_) => setState(() => _port = p),
+                onSelected: _loading ? null : (_) => setState(() => _port = p),
               );
             }).toList(),
           ),
@@ -287,8 +335,9 @@ class _SentCard extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
-    final String hex =
-        WakeOnLanService.packetHex(WakeOnLanService.buildMagicPacket(result.normalizedMac));
+    final String hex = WakeOnLanService.packetHex(
+      WakeOnLanService.buildMagicPacket(result.normalizedMac),
+    );
 
     return Container(
       decoration: BoxDecoration(
@@ -440,8 +489,9 @@ class _MessageCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium
-                      ?.copyWith(color: AppColors.textTertiary),
+                  style: text.labelMedium?.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
                 ),
               ],
             ),

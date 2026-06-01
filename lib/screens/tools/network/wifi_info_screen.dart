@@ -49,6 +49,7 @@ import '../../../services/network/wifi_info_service.dart';
 import '../../../services/network/wifi_monitor_controller.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import 'install_shortcut_sheet.dart';
 import 'network_unavailable_view.dart';
@@ -200,10 +201,8 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       isScrollControlled: true,
       showDragHandle: true,
       backgroundColor: AppColors.surface2,
-      builder: (_) => InstallShortcutSheet(
-        bridge: bridge,
-        onInstalled: controller.load,
-      ),
+      builder: (_) =>
+          InstallShortcutSheet(bridge: bridge, onInstalled: controller.load),
     );
   }
 
@@ -222,9 +221,11 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   List<Widget> _appBarActions() {
     switch (_source) {
       case WifiInfoSource.macosCoreWlan:
-        // Refresh, swapping to a spinner while a read is in flight so a refresh
-        // is visibly working even when the values come back unchanged.
+        // §8.16 order: copy LEADS, the Refresh action trails. Copy is disabled
+        // until a snapshot has resolved (textBuilder → null while loading or on
+        // error with no info), enabled once link details exist.
         return [
+          AppCopyAction(textBuilder: _buildCopyText),
           _macLoading
               ? const Padding(
                   padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
@@ -252,25 +253,37 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       case WifiInfoSource.iosShortcuts:
         final WifiMonitorController? controller = _iosController;
         if (controller == null) return const [];
-        // How-to is reachable from the data states; the empty state surfaces
-        // install inline, so no redundant app-bar action there.
+        // §8.16 order: copy LEADS, help (How-to) trails. Both live inside one
+        // AnimatedBuilder over the controller so copy re-evaluates its
+        // enabled-state as streamed payloads land (the AppBar sits outside the
+        // body's AnimatedBuilder, so it would not otherwise rebuild on a new
+        // sample). Copy is present on every data phase; the help icon keeps its
+        // prior behavior of appearing only once there is data to be about.
         return [
           AnimatedBuilder(
             animation: controller,
             builder: (context, _) {
-              if (controller.phase == WifiMonitorPhase.idleWithData ||
-                  controller.phase == WifiMonitorPhase.streaming) {
-                return Semantics(
-                  button: true,
-                  label: 'How to install the Shortcut',
-                  child: IconButton(
-                    icon: const Icon(Icons.help_outline),
-                    tooltip: 'How to install the Shortcut',
-                    onPressed: _openInstallSheet,
-                  ),
-                );
-              }
-              return const SizedBox.shrink();
+              final bool hasData =
+                  controller.phase == WifiMonitorPhase.idleWithData ||
+                  controller.phase == WifiMonitorPhase.streaming;
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  // Copy whatever is currently shown; null (→ disabled) before
+                  // the first streamed payload arrives.
+                  AppCopyAction(textBuilder: _buildCopyText),
+                  if (hasData)
+                    Semantics(
+                      button: true,
+                      label: 'How to install the Shortcut',
+                      child: IconButton(
+                        icon: const Icon(Icons.help_outline),
+                        tooltip: 'How to install the Shortcut',
+                        onPressed: _openInstallSheet,
+                      ),
+                    ),
+                ],
+              );
             },
           ),
         ];
@@ -278,6 +291,106 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       case WifiInfoSource.web:
         return const [];
     }
+  }
+
+  /// The connected-AP link currently shown, regardless of platform source:
+  /// the macOS CoreWLAN snapshot, or the latest iOS streamed/one-shot payload.
+  /// Null when nothing is on screen yet.
+  ConnectedAp? _currentAp() {
+    switch (_source) {
+      case WifiInfoSource.macosCoreWlan:
+        return _macInfo;
+      case WifiInfoSource.iosShortcuts:
+        final WifiMonitorController? c = _iosController;
+        return (c == null || c.details == null)
+            ? null
+            : ConnectedAp.fromWifiDetails(c.details!);
+      case WifiInfoSource.unsupported:
+      case WifiInfoSource.web:
+        return null;
+    }
+  }
+
+  /// §8.16 copy payload — the connected-AP link as a labeled plain-text block,
+  /// mirroring the on-screen metric cards (Network / Signal / Rate / Channel /
+  /// Radio / Status). Returns null (→ disabled affordance) until link details
+  /// exist. On iOS this copies whatever the live stream currently shows; a tap
+  /// re-serializes on demand, so a later sample copies its newer values.
+  ///
+  /// Honesty (GL-005): a field the platform cannot expose is written as
+  /// "Unavailable", and the two per-platform reasons the cards surface
+  /// (Rx rate, Channel width) travel as an explicit "Not reported on this
+  /// platform" note — never a blank, never a fabricated value.
+  String? _buildCopyText() {
+    final ConnectedAp? info = _currentAp();
+    if (info == null) return null;
+
+    final String platformLabel = _source == WifiInfoSource.iosShortcuts
+        ? 'iOS'
+        : 'macOS CoreWLAN';
+    final StringBuffer buf = StringBuffer()..writeln('Wi-Fi Information');
+
+    buf
+      ..writeln()
+      ..writeln('Network')
+      ..writeln('  SSID: ${_copyVal(info.ssid, null)}')
+      ..writeln('  BSSID: ${_copyVal(info.bssid, null)}');
+
+    buf
+      ..writeln()
+      ..writeln('Signal')
+      ..writeln('  RSSI: ${_copyVal(info.rssiDbm?.toString(), 'dBm')}')
+      ..writeln('  Noise: ${_copyVal(info.noiseDbm?.toString(), 'dBm')}')
+      ..writeln(
+        '  SNR: ${_copyVal(info.snrDb?.toString(), 'dB')}'
+        '${info.snrDerived ? ' (derived)' : ''}',
+      );
+
+    buf
+      ..writeln()
+      ..writeln('Rate')
+      ..writeln('  Tx Rate: ${_copyVal(_formatRate(info.txRateMbps), 'Mbps')}')
+      ..writeln(
+        '  Rx Rate: ${info.rxRateAvailable ? _copyVal(_formatRate(info.rxRateMbps), 'Mbps') : 'Not exposed by $platformLabel'}',
+      );
+
+    final bool isPsc = _isPscChannel(info.channel, info.band);
+    buf
+      ..writeln()
+      ..writeln('Channel')
+      ..writeln(
+        '  Channel: ${_copyVal(info.channel?.toString(), null)}'
+        '${isPsc ? ' (Preferred Scanning Channel)' : ''}',
+      )
+      ..writeln(
+        '  Width: ${info.channelWidthAvailable ? _copyVal(info.channelWidthMhz?.toString(), 'MHz') : 'Not reported by $platformLabel'}',
+      )
+      ..writeln(
+        '  Band: ${_copyVal(info.band, null)}'
+        '${info.bandDerived ? ' (derived)' : ''}',
+      );
+
+    buf
+      ..writeln()
+      ..writeln('Radio')
+      ..writeln('  Wi-Fi Standard: ${_copyVal(info.standard, null)}')
+      ..writeln('  Country: ${_copyVal(info.countryCode, null)}')
+      ..writeln('  Interface: ${_copyVal(info.interfaceName, null)}')
+      ..writeln('  Hardware Address: ${_copyVal(info.hardwareAddress, null)}');
+
+    buf
+      ..writeln()
+      ..writeln('Status')
+      ..writeln('  Wi-Fi Power: ${info.poweredOn ? 'On' : 'Off'}');
+
+    return buf.toString().trimRight();
+  }
+
+  /// Clipboard analog of `_MetricRow`: "value unit", or "Unavailable" when the
+  /// value is missing (GL-005 honest blanks).
+  static String _copyVal(String? value, String? unit) {
+    if (value == null || value.trim().isEmpty) return 'Unavailable';
+    return unit == null ? value : '$value $unit';
   }
 
   Widget _body() {
@@ -370,7 +483,10 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     if (_macError != null) {
       children
         ..add(
-          _ErrorCard(error: _macError!, onRetry: _macLoading ? null : _fetchMac),
+          _ErrorCard(
+            error: _macError!,
+            onRetry: _macLoading ? null : _fetchMac,
+          ),
         )
         ..add(const SizedBox(height: AppSpacing.sm));
     }
@@ -467,66 +583,64 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   }
 
   Widget _networkCard(ConnectedAp info) => _Card(
-        title: 'Network',
-        child: Column(
-          children: [
-            _MetricRow(label: 'SSID', value: info.ssid),
-            _MetricRow(label: 'BSSID', value: info.bssid, mono: true),
-          ],
-        ),
-      );
+    title: 'Network',
+    child: Column(
+      children: [
+        _MetricRow(label: 'SSID', value: info.ssid),
+        _MetricRow(label: 'BSSID', value: info.bssid, mono: true),
+      ],
+    ),
+  );
 
   Widget _signalCard(ConnectedAp info) => _Card(
-        title: 'Signal',
-        child: Column(
-          children: [
-            _MetricRow(
-              label: 'RSSI',
-              value: info.rssiDbm?.toString(),
-              unit: 'dBm',
-              mono: true,
-            ),
-            _MetricRow(
-              label: 'Noise',
-              value: info.noiseDbm?.toString(),
-              unit: 'dBm',
-              mono: true,
-            ),
-            _MetricRow(
-              label: 'SNR',
-              value: info.snrDb?.toString(),
-              unit: 'dB',
-              mono: true,
-              derived: info.snrDerived,
-            ),
-          ],
+    title: 'Signal',
+    child: Column(
+      children: [
+        _MetricRow(
+          label: 'RSSI',
+          value: info.rssiDbm?.toString(),
+          unit: 'dBm',
+          mono: true,
         ),
-      );
+        _MetricRow(
+          label: 'Noise',
+          value: info.noiseDbm?.toString(),
+          unit: 'dBm',
+          mono: true,
+        ),
+        _MetricRow(
+          label: 'SNR',
+          value: info.snrDb?.toString(),
+          unit: 'dB',
+          mono: true,
+          derived: info.snrDerived,
+        ),
+      ],
+    ),
+  );
 
   Widget _rateCard(ConnectedAp info, String platformLabel) => _Card(
-        title: 'Rate',
-        child: Column(
-          children: [
-            _MetricRow(
-              label: 'Tx Rate',
-              value: _formatRate(info.txRateMbps),
-              unit: 'Mbps',
-              mono: true,
-            ),
-            _MetricRow(
-              label: 'Rx Rate',
-              value: _formatRate(info.rxRateMbps),
-              unit: 'Mbps',
-              mono: true,
-              // When the platform never exposes Rx rate, say so precisely
-              // instead of a generic "Unavailable".
-              note: info.rxRateAvailable
-                  ? null
-                  : 'Not exposed by $platformLabel',
-            ),
-          ],
+    title: 'Rate',
+    child: Column(
+      children: [
+        _MetricRow(
+          label: 'Tx Rate',
+          value: _formatRate(info.txRateMbps),
+          unit: 'Mbps',
+          mono: true,
         ),
-      );
+        _MetricRow(
+          label: 'Rx Rate',
+          value: _formatRate(info.rxRateMbps),
+          unit: 'Mbps',
+          mono: true,
+          // When the platform never exposes Rx rate, say so precisely
+          // instead of a generic "Unavailable".
+          note: info.rxRateAvailable ? null : 'Not exposed by $platformLabel',
+        ),
+      ],
+    ),
+  );
 
   Widget _channelCard(ConnectedAp info, String platformLabel) {
     final bool isPsc = _isPscChannel(info.channel, info.band);
@@ -561,36 +675,29 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   }
 
   Widget _radioCard(ConnectedAp info) => _Card(
-        title: 'Radio',
-        child: Column(
-          children: [
-            _MetricRow(label: 'Wi-Fi Standard', value: info.standard),
-            _MetricRow(label: 'Country', value: info.countryCode),
-            _MetricRow(
-              label: 'Interface',
-              value: info.interfaceName,
-              mono: true,
-            ),
-            _MetricRow(
-              label: 'Hardware Address',
-              value: info.hardwareAddress,
-              mono: true,
-            ),
-          ],
+    title: 'Radio',
+    child: Column(
+      children: [
+        _MetricRow(label: 'Wi-Fi Standard', value: info.standard),
+        _MetricRow(label: 'Country', value: info.countryCode),
+        _MetricRow(label: 'Interface', value: info.interfaceName, mono: true),
+        _MetricRow(
+          label: 'Hardware Address',
+          value: info.hardwareAddress,
+          mono: true,
         ),
-      );
+      ],
+    ),
+  );
 
   Widget _statusCard(ConnectedAp info) => _Card(
-        title: 'Status',
-        child: Column(
-          children: [
-            _MetricRow(
-              label: 'Wi-Fi Power',
-              value: info.poweredOn ? 'On' : 'Off',
-            ),
-          ],
-        ),
-      );
+    title: 'Status',
+    child: Column(
+      children: [
+        _MetricRow(label: 'Wi-Fi Power', value: info.poweredOn ? 'On' : 'Off'),
+      ],
+    ),
+  );
 
   /// Whether [channel] is a 6 GHz Preferred Scanning Channel (PSC). PSC channels
   /// are 5, 21, 37, ... 229 -- (ch - 5) a multiple of 16 across 6 GHz. False for
@@ -811,10 +918,7 @@ class _IosSuccess extends StatelessWidget {
               if (ap == null || !ap.hasAnyData)
                 _WaitingForFirstPayload(streaming: controller.isStreaming)
               else ...[
-                ConceptGraphicBand(
-                  toolId: 'wifi-info',
-                  isDesktop: isDesktop,
-                ),
+                ConceptGraphicBand(toolId: 'wifi-info', isDesktop: isDesktop),
                 if (ToolAssets.hasGraphic('wifi-info'))
                   const SizedBox(height: AppSpacing.md),
                 ...metricCards(ap),
@@ -856,8 +960,10 @@ class _MonitorControlBar extends StatelessWidget {
         builder: (context, constraints) {
           final bool narrow = constraints.maxWidth < _reflowThreshold;
           final Widget status = _StatusBlock(controller: controller);
-          final Widget action =
-              _ActionButton(streaming: streaming, controller: controller);
+          final Widget action = _ActionButton(
+            streaming: streaming,
+            controller: controller,
+          );
 
           if (narrow) {
             return Column(
@@ -1178,7 +1284,7 @@ class _ErrorCard extends StatelessWidget {
                       detail != null && detail.trim().isNotEmpty
                           ? detail
                           : 'The system did not return a Wi-Fi snapshot. '
-                              'There may be no active Wi-Fi interface.',
+                                'There may be no active Wi-Fi interface.',
                       style: text.bodyMedium?.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -1291,21 +1397,24 @@ class _MetricRow extends StatelessWidget {
     final String shown = hasValue
         ? (unit == null ? value! : '${value!} $unit')
         : 'Unavailable';
-    final String displayValue =
-        (hasValue && marker != null) ? '$shown $marker' : shown;
+    final String displayValue = (hasValue && marker != null)
+        ? '$shown $marker'
+        : shown;
     final bool showNote = note != null;
     final String footnote = note == null
         ? ''
         : (marker != null ? '$marker $note' : note!);
 
     final String labelSpoken = derived ? '$label, derived' : label;
-    final String semanticLabel =
-        showNote ? '$labelSpoken, $shown, $note' : '$labelSpoken, $shown';
+    final String semanticLabel = showNote
+        ? '$labelSpoken, $shown, $note'
+        : '$labelSpoken, $shown';
 
     final AppMonoText monoText =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
-    final Color valueColor =
-        hasValue ? AppColors.textPrimary : AppColors.textSecondary;
+    final Color valueColor = hasValue
+        ? AppColors.textPrimary
+        : AppColors.textSecondary;
     final TextStyle? valueStyle = (mono && hasValue)
         ? monoText.robotoMono.copyWith(color: valueColor)
         : text.bodyMedium?.copyWith(color: valueColor);
@@ -1360,9 +1469,7 @@ class _MetricRow extends StatelessWidget {
               Text(
                 footnote,
                 textAlign: TextAlign.end,
-                style: text.bodySmall?.copyWith(
-                  color: AppColors.textTertiary,
-                ),
+                style: text.bodySmall?.copyWith(color: AppColors.textTertiary),
               ),
             ],
           ],

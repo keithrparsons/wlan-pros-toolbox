@@ -24,6 +24,7 @@ import '../../../data/tool_assets.dart';
 import '../../../services/network/interface_info_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import 'network_unavailable_view.dart';
 import 'value_row.dart';
@@ -42,6 +43,11 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen> {
   InterfaceInfoService? _service;
   Future<InterfaceInfoSnapshot>? _future;
 
+  // The resolved snapshot, mirrored out of the FutureBuilder so the §8.16 copy
+  // builder can read the current result and the affordance re-enables when the
+  // read completes. Null while loading / before the first read / on error.
+  InterfaceInfoSnapshot? _snapshot;
+
   @override
   void initState() {
     super.initState();
@@ -52,9 +58,23 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen> {
   }
 
   void _load() {
+    final Future<InterfaceInfoSnapshot> future = _service!.read();
     setState(() {
-      _future = _service!.read();
+      _future = future;
+      // Disable copy while the (re)read is in flight; it re-enables on success.
+      _snapshot = null;
     });
+    // Mirror the resolved snapshot into state so AppCopyAction rebuilds (via
+    // setState) and reads the current result; an error/cancel leaves it null.
+    future
+        .then((InterfaceInfoSnapshot data) {
+          if (!mounted || !identical(_future, future)) return;
+          setState(() => _snapshot = data);
+        })
+        .catchError((Object _) {
+          // Errors are surfaced by the FutureBuilder's error branch; copy stays
+          // disabled (snapshot null). Swallow here so no unhandled-error fires.
+        });
   }
 
   @override
@@ -63,20 +83,79 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen> {
       appBar: AppBar(
         title: const Text('Interface Info'),
         toolbarHeight: 64,
+        // §8.16 — copy leads, the meta action (refresh) trails, matching the
+        // copy-before-help order rule. Copy is disabled until a read completes.
         actions: [
-          if (NetworkSupport.interfaceInfoSupported)
+          if (NetworkSupport.interfaceInfoSupported) ...[
+            AppCopyAction(textBuilder: _buildCopyText),
             IconButton(
               icon: const Icon(Icons.refresh),
               tooltip: 'Refresh',
               onPressed: _load,
             ),
+          ],
         ],
       ),
-      body: SafeArea(
-        top: false,
-        child: _body(),
-      ),
+      body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// §8.16 copy payload — the interface snapshot as a labeled plain-text block.
+  ///
+  /// Returns null (→ disabled affordance) while a read is in flight, before the
+  /// first read, or after an error — none of those is a result to keep. Absent
+  /// fields are omitted (GL-005 honest blanks), matching the on-screen
+  /// `ValueRow` treatment. The Wi-Fi link and each active interface are grouped
+  /// under their own subheadings, mirroring the on-screen card grouping.
+  String? _buildCopyText() {
+    final InterfaceInfoSnapshot? data = _snapshot;
+    if (data == null) return null;
+
+    final StringBuffer buf = StringBuffer()..writeln('Interface Info');
+    void line(String label, String? value) {
+      if (value != null && value.trim().isNotEmpty) {
+        buf.writeln('$label: ${value.trim()}');
+      }
+    }
+
+    // Device summary.
+    buf.writeln();
+    buf.writeln('Device');
+    line('Primary IPv4', data.primaryIPv4);
+    line('Hostname', data.hostname);
+
+    // Wi-Fi link.
+    final WifiLinkInfo w = data.wifi;
+    buf.writeln();
+    buf.writeln('Wi-Fi link');
+    line('SSID', w.ssid);
+    line('BSSID', w.bssid);
+    line('IPv4', w.wifiIPv4);
+    line('IPv6', w.wifiIPv6);
+    line('Subnet mask', w.subnetMask);
+    line('Gateway', w.gatewayIP);
+
+    // Per-interface, only those with an assigned address (matching _Success).
+    final List<NetworkInterfaceInfo> active = data.interfaces
+        .where((NetworkInterfaceInfo i) => i.addresses.isNotEmpty)
+        .toList(growable: false);
+    if (active.isEmpty) {
+      buf
+        ..writeln()
+        ..writeln('Interfaces')
+        ..writeln('No active interfaces with an assigned address.');
+    } else {
+      for (final NetworkInterfaceInfo iface in active) {
+        buf
+          ..writeln()
+          ..writeln('${iface.name}  ·  ${_Success._kindLabel(iface.kind)}');
+        for (final InterfaceAddress a in iface.addresses) {
+          line(a.isIPv4 ? 'IPv4' : 'IPv6', a.ip);
+        }
+      }
+    }
+
+    return buf.toString().trimRight();
   }
 
   Widget _body() {
@@ -330,16 +409,11 @@ class _ErrorState extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             Text(
               'Could not read network state',
-              style: text.headlineSmall?.copyWith(
-                color: AppColors.textPrimary,
-              ),
+              style: text.headlineSmall?.copyWith(color: AppColors.textPrimary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.md),
-            FilledButton(
-              onPressed: onRetry,
-              child: const Text('Retry'),
-            ),
+            FilledButton(onPressed: onRetry, child: const Text('Retry')),
           ],
         ),
       ),

@@ -20,6 +20,7 @@ import '../../../services/network/network_support.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
@@ -96,9 +97,82 @@ class _HttpHeaderScreenState extends State<HttpHeaderScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Inspector (HTTP Header)'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Inspector (HTTP Header)'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until a successful
+        // request has produced a final hop; copies the status line, redirect
+        // chain, and response headers as labeled text. Copy leads; no help icon.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// §8.16 copy payload — the status line, redirect chain, and final response
+  /// headers as a labeled text block (`Header: value` per line, §8.16 mapping
+  /// for key:value response headers).
+  ///
+  /// Returns null (→ disabled affordance) until a successful request holds a
+  /// final hop: idle, loading, and a failed request all have nothing to keep.
+  /// The status line (`200 OK`) carries the request's outcome WORD into the
+  /// clipboard. An empty header set is written honestly, never fabricated.
+  String? _buildCopyText() {
+    final HttpHeaderResult? r = _result;
+    if (_loading || r == null || r.isError || r.finalHop == null) {
+      return null;
+    }
+    final HttpHop last = r.finalHop!;
+    final int hops = r.hops.length;
+    final List<HttpHop> redirects = r.hops
+        .where((HttpHop h) => h.isRedirect)
+        .toList();
+
+    final StringBuffer buf = StringBuffer()
+      ..writeln('HTTP Header Inspection')
+      ..writeln('Status: ${last.statusLine}')
+      ..writeln(
+        'Summary: $hops hop${hops == 1 ? '' : 's'} · ${r.totalMs} ms total · '
+        '${last.method.label}',
+      );
+    if (r.headFellBackToGet) {
+      buf.writeln(
+        'Note: the server rejected HEAD (405); retried with GET so headers '
+        'could be read.',
+      );
+    }
+    if (r.redirectLimitHit) {
+      buf.writeln(
+        'Note: stopped after ${HttpHeaderService.defaultMaxRedirects} '
+        'redirects — the chain may be a loop.',
+      );
+    }
+
+    if (redirects.isNotEmpty) {
+      buf
+        ..writeln()
+        ..writeln('Redirect chain');
+      for (int i = 0; i < r.hops.length; i++) {
+        final HttpHop h = r.hops[i];
+        buf.writeln(
+          '  ${i + 1}. ${h.method.label} · ${h.statusLine} · '
+          '${h.elapsedMs} ms — ${h.url}',
+        );
+        if (h.location != null) buf.writeln('     → ${h.location}');
+      }
+    }
+
+    buf.writeln();
+    if (last.headers.isEmpty) {
+      buf.writeln('Response headers: the final response carried no headers.');
+    } else {
+      buf.writeln('Response headers (${last.headers.length})');
+      for (final HeaderEntry h in last.headers) {
+        buf.writeln('${h.name}: ${h.value}');
+      }
+    }
+
+    return buf.toString().trimRight();
   }
 
   Widget _body() {
@@ -171,8 +245,9 @@ class _HttpHeaderScreenState extends State<HttpHeaderScreen> {
               textInputAction: TextInputAction.go,
               onSubmitted: (_) => _run(),
               cursorColor: AppColors.primary,
-              decoration:
-                  const InputDecoration(hintText: 'https://example.com'),
+              decoration: const InputDecoration(
+                hintText: 'https://example.com',
+              ),
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -193,8 +268,9 @@ class _HttpHeaderScreenState extends State<HttpHeaderScreen> {
                 selected: selected,
                 showCheckmark: false,
                 labelStyle: text.labelMedium?.copyWith(
-                  color:
-                      selected ? AppColors.secondary : AppColors.textSecondary,
+                  color: selected
+                      ? AppColors.secondary
+                      : AppColors.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
                 selectedColor: AppColors.primary,
@@ -206,8 +282,9 @@ class _HttpHeaderScreenState extends State<HttpHeaderScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.control),
                 ),
-                onSelected:
-                    _loading ? null : (_) => setState(() => _method = m),
+                onSelected: _loading
+                    ? null
+                    : (_) => setState(() => _method = m),
               );
             }).toList(),
           ),
@@ -256,8 +333,9 @@ class _ResponseView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final HttpHop? finalHop = result.finalHop;
-    final List<HttpHop> redirects =
-        result.hops.where((HttpHop h) => h.isRedirect).toList();
+    final List<HttpHop> redirects = result.hops
+        .where((HttpHop h) => h.isRedirect)
+        .toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -311,8 +389,9 @@ class _SummaryCard extends StatelessWidget {
               Expanded(
                 child: SelectableText(
                   last?.statusLine ?? '—',
-                  style: mono.outputMedium
-                      .copyWith(color: AppColors.textPrimary),
+                  style: mono.outputMedium.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
             ],
@@ -327,7 +406,8 @@ class _SummaryCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.xs),
             _Note(
               icon: Icons.info_outline,
-              text: 'The server rejected HEAD (405); retried with GET so '
+              text:
+                  'The server rejected HEAD (405); retried with GET so '
                   'headers could be read.',
             ),
           ],
@@ -335,7 +415,8 @@ class _SummaryCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.xs),
             _Note(
               icon: Icons.warning_amber_outlined,
-              text: 'Stopped after '
+              text:
+                  'Stopped after '
                   '${HttpHeaderService.defaultMaxRedirects} redirects — the '
                   'chain may be a loop.',
             ),
@@ -367,11 +448,7 @@ class _RedirectChainCard extends StatelessWidget {
 }
 
 class _HopRow extends StatelessWidget {
-  const _HopRow({
-    required this.index,
-    required this.hop,
-    required this.isLast,
-  });
+  const _HopRow({required this.index, required this.hop, required this.isLast});
 
   final int index;
   final HttpHop hop;
@@ -407,8 +484,9 @@ class _HopRow extends StatelessWidget {
                     Text(
                       '${hop.method.label} · ${hop.statusLine}'
                       ' · ${hop.elapsedMs} ms',
-                      style: text.labelMedium
-                          ?.copyWith(color: AppColors.textSecondary),
+                      style: text.labelMedium?.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     SelectableText(
@@ -597,8 +675,9 @@ class _MessageCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium
-                      ?.copyWith(color: AppColors.textTertiary),
+                  style: text.labelMedium?.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
                 ),
               ],
             ),

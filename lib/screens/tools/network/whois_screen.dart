@@ -20,6 +20,7 @@ import '../../../services/network/network_support.dart';
 import '../../../services/network/whois_service.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
@@ -91,16 +92,53 @@ class _WhoisScreenState extends State<WhoisScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('WHOIS'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('WHOIS'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until a record is
+        // retrieved; copies the highlights, the consulted-server path, and the
+        // raw record. Copy leads; this screen has no help icon.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// §8.16 copy payload — the WHOIS record as a labeled plain-text block.
+  ///
+  /// Returns null (→ disabled affordance) while loading, before any lookup, on
+  /// an error, or when the registry returned no record — none of those is a
+  /// result worth keeping. The highlights are emitted as `Label: value` lines,
+  /// the referral path as a "via" line, then the rendered raw record verbatim
+  /// (the same text the on-screen raw-record card shows).
+  String? _buildCopyText() {
+    final WhoisResult? r = _result;
+    if (_loading || r == null || r.isError || r.isEmpty) return null;
+
+    final StringBuffer buf = StringBuffer()
+      ..writeln('WHOIS')
+      ..writeln('Query: ${r.query}');
+
+    for (final WhoisHighlight h in r.highlights) {
+      buf.writeln('${h.label}: ${h.value}');
+    }
+    if (r.serversQueried.isNotEmpty) {
+      buf.writeln('Consulted: ${r.serversQueried.join(' → ')}');
+    }
+    buf
+      ..writeln()
+      ..writeln('Raw record')
+      ..writeln(r.rawRecord.trim());
+
+    return buf.toString().trimRight();
   }
 
   Widget _body() {
     if (!NetworkSupport.whoisSupported) {
       return NetworkUnavailableView(
         toolName: 'WHOIS',
-        reason: NetworkSupport.unavailableReason ?? NetworkUnavailableReason.web,
+        reason:
+            NetworkSupport.unavailableReason ?? NetworkUnavailableReason.web,
       );
     }
 
@@ -201,7 +239,8 @@ class _WhoisScreenState extends State<WhoisScreen> {
       return _MessageCard(
         icon: Icons.search_off,
         title: 'No record',
-        body: 'No registration record found for ${r.query}. The domain may be '
+        body:
+            'No registration record found for ${r.query}. The domain may be '
             'unregistered, or the registry returned no data.',
       );
     }
@@ -392,8 +431,9 @@ class _MessageCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium
-                      ?.copyWith(color: AppColors.textTertiary),
+                  style: text.labelMedium?.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
                 ),
               ],
             ),

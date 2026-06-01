@@ -26,6 +26,7 @@ import '../../../services/network/ping_service.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
@@ -89,34 +90,34 @@ class _PingScreenState extends State<PingScreen> {
     _sub = _service
         .ping(host: host, port: _port, count: _count, cancel: cancel.future)
         .listen(
-      (PingProgress p) {
-        if (!mounted) return;
-        setState(() {
-          _replies.add(p.reply);
-          _stats = p.stats;
-        });
-      },
-      onDone: () {
-        if (!mounted) return;
-        setState(() => _running = false);
-        // WCAG 4.1.3 — announce the final summary to assistive tech.
-        final String avg = _stats.avgMs == null
-            ? 'no replies'
-            : 'average ${_stats.avgMs!.toStringAsFixed(1)} milliseconds';
-        SemanticsService.sendAnnouncement(
-          View.of(context),
-          'Ping complete, ${_stats.received} of ${_stats.sent} replies, $avg',
-          TextDirection.ltr,
+          (PingProgress p) {
+            if (!mounted) return;
+            setState(() {
+              _replies.add(p.reply);
+              _stats = p.stats;
+            });
+          },
+          onDone: () {
+            if (!mounted) return;
+            setState(() => _running = false);
+            // WCAG 4.1.3 — announce the final summary to assistive tech.
+            final String avg = _stats.avgMs == null
+                ? 'no replies'
+                : 'average ${_stats.avgMs!.toStringAsFixed(1)} milliseconds';
+            SemanticsService.sendAnnouncement(
+              View.of(context),
+              'Ping complete, ${_stats.received} of ${_stats.sent} replies, $avg',
+              TextDirection.ltr,
+            );
+          },
+          onError: (Object e) {
+            if (!mounted) return;
+            setState(() {
+              _running = false;
+              _error = 'Ping error: $e';
+            });
+          },
         );
-      },
-      onError: (Object e) {
-        if (!mounted) return;
-        setState(() {
-          _running = false;
-          _error = 'Ping error: $e';
-        });
-      },
-    );
   }
 
   void _stop() {
@@ -127,9 +128,58 @@ class _PingScreenState extends State<PingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Ping'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Ping'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until a run has
+        // produced replies; copies the summary stats line + a TSV of replies.
+        // Copy leads; this screen has no help icon, so copy is the only action
+        // (it still lands in the trailing slot the order rule reserves for it).
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// §8.16 copy payload — the ping run as a labeled summary plus a reply TSV.
+  ///
+  /// Returns null (→ disabled affordance) until a run has at least started
+  /// sending probes (`_stats.sent > 0`): an idle screen has nothing to keep.
+  /// Mid-run, it copies whatever is on screen at tap time — the partial stats
+  /// and the replies streamed so far (the §8.16 streaming rule). Replies are
+  /// emitted in send order (sequence ascending), the natural reading order,
+  /// not the reversed on-screen newest-first order. A lost probe carries its
+  /// honest reason word in the Result column (GL-005); nothing is fabricated.
+  String? _buildCopyText() {
+    if (_stats.sent == 0) return null;
+
+    final String host = _hostCtrl.text.trim();
+    final String lossPct = (_stats.lossFraction * 100).toStringAsFixed(0);
+    String ms(double? v) => v == null ? '—' : v.toStringAsFixed(1);
+
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()
+      ..writeln('Ping — TCP handshake RTT (not ICMP echo)')
+      ..writeln('Target: ${host.isEmpty ? '(unknown)' : host}  port $_port')
+      ..writeln(
+        'Summary: ${_stats.received}/${_stats.sent} replies, $lossPct% loss · '
+        'min ${ms(_stats.minMs)} ms / avg ${ms(_stats.avgMs)} ms / '
+        'max ${ms(_stats.maxMs)} ms',
+      )
+      ..writeln()
+      ..writeln(<String>['Seq', 'Result', 'Time (ms)'].join(tab));
+
+    final List<PingReply> ordered = List<PingReply>.of(_replies)
+      ..sort((PingReply a, PingReply b) => a.sequence.compareTo(b.sequence));
+    for (final PingReply r in ordered) {
+      final String result = r.success ? 'reply' : (r.errorLabel ?? 'no reply');
+      final String time = r.success && r.rtt != null
+          ? (r.rtt!.inMicroseconds / 1000.0).toStringAsFixed(1)
+          : '';
+      buf.writeln(<String>['${r.sequence}', result, time].join(tab));
+    }
+
+    return buf.toString().trimRight();
   }
 
   Widget _body() {
@@ -236,9 +286,12 @@ class _PingScreenState extends State<PingScreen> {
           Wrap(
             spacing: AppSpacing.xs,
             runSpacing: AppSpacing.xs,
-            children: const <int>[5, 10, 20, 0]
-                .map((int c) => _countChip(context, c))
-                .toList(),
+            children: const <int>[
+              5,
+              10,
+              20,
+              0,
+            ].map((int c) => _countChip(context, c)).toList(),
           ),
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.xs),
@@ -332,9 +385,9 @@ class _PingScreenState extends State<PingScreen> {
 
     final String liveLabel = _running
         ? 'Pinging, ${_stats.received} of ${_stats.sent} replies, '
-            '$lossPct percent loss, average $av milliseconds'
+              '$lossPct percent loss, average $av milliseconds'
         : 'Ping complete, ${_stats.received} of ${_stats.sent} replies, '
-            '$lossPct percent loss, average $av milliseconds';
+              '$lossPct percent loss, average $av milliseconds';
 
     return Container(
       decoration: BoxDecoration(
@@ -461,7 +514,9 @@ class _PingScreenState extends State<PingScreen> {
                 style: text.bodyLarge?.copyWith(color: AppColors.textTertiary),
               ),
             ),
-          ..._replies.reversed.map((PingReply r) => _replyRow(context, r, text, mono)),
+          ..._replies.reversed.map(
+            (PingReply r) => _replyRow(context, r, text, mono),
+          ),
         ],
       ),
     );
@@ -475,22 +530,26 @@ class _PingScreenState extends State<PingScreen> {
   ) {
     // WCAG 1.4.1 — outcome is carried by the text label + icon shape, never
     // color alone. The whole row is one semantic node.
-    final (Color color, IconData icon, String value, String semantic) =
-        r.success
-            ? (
-                AppColors.primary,
-                Icons.south_east,
-                '${(r.rtt!.inMicroseconds / 1000.0).toStringAsFixed(1)} ms',
-                'Reply ${r.sequence}, '
-                    '${(r.rtt!.inMicroseconds / 1000.0).toStringAsFixed(1)} '
-                    'milliseconds',
-              )
-            : (
-                AppColors.textTertiary,
-                Icons.block,
-                r.errorLabel ?? 'lost',
-                'Probe ${r.sequence} lost, ${r.errorLabel ?? 'no reply'}',
-              );
+    final (
+      Color color,
+      IconData icon,
+      String value,
+      String semantic,
+    ) = r.success
+        ? (
+            AppColors.primary,
+            Icons.south_east,
+            '${(r.rtt!.inMicroseconds / 1000.0).toStringAsFixed(1)} ms',
+            'Reply ${r.sequence}, '
+                '${(r.rtt!.inMicroseconds / 1000.0).toStringAsFixed(1)} '
+                'milliseconds',
+          )
+        : (
+            AppColors.textTertiary,
+            Icons.block,
+            r.errorLabel ?? 'lost',
+            'Probe ${r.sequence} lost, ${r.errorLabel ?? 'no reply'}',
+          );
 
     return Semantics(
       label: semantic,

@@ -34,6 +34,7 @@ import '../../../services/network/network_support.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
@@ -69,8 +70,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
   @override
   void initState() {
     super.initState();
-    _service =
-        widget.service ?? IcmpService(backend: defaultIcmpBackend());
+    _service = widget.service ?? IcmpService(backend: defaultIcmpBackend());
   }
 
   @override
@@ -102,36 +102,36 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
     _sub = _service
         .ping(host: host, count: _count, cancel: cancel.future)
         .listen(
-      (IcmpProgress p) {
-        if (!mounted) return;
-        setState(() {
-          _replies.add(p.reply);
-          _stats = p.stats;
-        });
-      },
-      onDone: () {
-        if (!mounted) return;
-        setState(() => _running = false);
-        final String avg = _stats.avgMs == null
-            ? 'no replies'
-            : 'average ${_stats.avgMs!.toStringAsFixed(1)} milliseconds';
-        SemanticsService.sendAnnouncement(
-          View.of(context),
-          'ICMP ping complete, ${_stats.received} of ${_stats.sent} replies, '
-          '$avg',
-          TextDirection.ltr,
+          (IcmpProgress p) {
+            if (!mounted) return;
+            setState(() {
+              _replies.add(p.reply);
+              _stats = p.stats;
+            });
+          },
+          onDone: () {
+            if (!mounted) return;
+            setState(() => _running = false);
+            final String avg = _stats.avgMs == null
+                ? 'no replies'
+                : 'average ${_stats.avgMs!.toStringAsFixed(1)} milliseconds';
+            SemanticsService.sendAnnouncement(
+              View.of(context),
+              'ICMP ping complete, ${_stats.received} of ${_stats.sent} replies, '
+              '$avg',
+              TextDirection.ltr,
+            );
+          },
+          onError: (Object e) {
+            if (!mounted) return;
+            setState(() {
+              _running = false;
+              // The device-pending backend throws an explanatory StateError; show
+              // it verbatim rather than a generic failure (honesty bar).
+              _error = e is StateError ? e.message : 'ICMP ping error: $e';
+            });
+          },
         );
-      },
-      onError: (Object e) {
-        if (!mounted) return;
-        setState(() {
-          _running = false;
-          // The device-pending backend throws an explanatory StateError; show
-          // it verbatim rather than a generic failure (honesty bar).
-          _error = e is StateError ? e.message : 'ICMP ping error: $e';
-        });
-      },
-    );
   }
 
   void _stop() {
@@ -142,9 +142,58 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Ping (ICMP)'), toolbarHeight: 64),
+      appBar: AppBar(
+        title: const Text('Ping (ICMP)'),
+        toolbarHeight: 64,
+        // §8.16 — shared "Copy results" affordance. Disabled until a run has
+        // produced replies (and so always disabled on the sandboxed-desktop
+        // state, which never reaches `_stats.sent > 0`). Copies the summary
+        // line + a reply TSV. Copy leads; no help icon on this screen.
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+      ),
       body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// §8.16 copy payload — the ICMP run as a labeled summary plus a reply TSV.
+  ///
+  /// Returns null (→ disabled) until a run has begun sending (`_stats.sent >
+  /// 0`); that also keeps it disabled on the sandboxed-desktop unavailable
+  /// state, which never runs. Mid-run it copies the partial stats + replies on
+  /// screen at tap time (the §8.16 streaming rule). Replies are emitted in send
+  /// order; the ICMP responder IP is carried per reply when known; a lost probe
+  /// keeps its honest reason word (GL-005), never a fabricated time.
+  String? _buildCopyText() {
+    if (_stats.sent == 0) return null;
+
+    final String host = _hostCtrl.text.trim();
+    final String lossPct = (_stats.lossFraction * 100).toStringAsFixed(0);
+    String ms(double? v) => v == null ? '—' : v.toStringAsFixed(1);
+
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()
+      ..writeln('Ping — ICMP echo')
+      ..writeln('Target: ${host.isEmpty ? '(unknown)' : host}')
+      ..writeln(
+        'Summary: ${_stats.received}/${_stats.sent} replies, $lossPct% loss · '
+        'min ${ms(_stats.minMs)} ms / avg ${ms(_stats.avgMs)} ms / '
+        'max ${ms(_stats.maxMs)} ms',
+      )
+      ..writeln()
+      ..writeln(<String>['Seq', 'Result', 'From', 'Time (ms)'].join(tab));
+
+    final List<IcmpReply> ordered = List<IcmpReply>.of(_replies)
+      ..sort((IcmpReply a, IcmpReply b) => a.sequence.compareTo(b.sequence));
+    for (final IcmpReply r in ordered) {
+      final String result = r.success ? 'reply' : (r.errorLabel ?? 'no reply');
+      final String from = r.fromIp ?? '';
+      final String time = r.success && r.rttMs != null
+          ? r.rttMs!.toStringAsFixed(1)
+          : '';
+      buf.writeln(<String>['${r.sequence}', result, from, time].join(tab));
+    }
+
+    return buf.toString().trimRight();
   }
 
   Widget _body() {
@@ -174,7 +223,8 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: _service.echoCapability ==
+                children:
+                    _service.echoCapability ==
                         IcmpEchoCapability.sandboxedDesktop
                     ? <Widget>[_sandboxedDesktopCard(context)]
                     : _availableChildren(context, isDesktop),
@@ -220,14 +270,18 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.shield_outlined,
-                  size: 24, color: AppColors.textSecondary),
+              const Icon(
+                Icons.shield_outlined,
+                size: 24,
+                color: AppColors.textSecondary,
+              ),
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(
                   'ICMP ping runs on mobile',
-                  style:
-                      text.headlineSmall?.copyWith(color: AppColors.textPrimary),
+                  style: text.headlineSmall?.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
             ],
@@ -299,9 +353,12 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
           Wrap(
             spacing: AppSpacing.xs,
             runSpacing: AppSpacing.xs,
-            children: const <int>[5, 10, 20, 0]
-                .map((int c) => _countChip(context, c))
-                .toList(),
+            children: const <int>[
+              5,
+              10,
+              20,
+              0,
+            ].map((int c) => _countChip(context, c)).toList(),
           ),
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.xs),
@@ -338,7 +395,11 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline, size: 16, color: AppColors.textTertiary),
+          const Icon(
+            Icons.info_outline,
+            size: 16,
+            color: AppColors.textTertiary,
+          ),
           const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: Text(
@@ -384,18 +445,21 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     final String lossPct = (_stats.lossFraction * 100).toStringAsFixed(0);
-    final String mn =
-        _stats.minMs == null ? '—' : _stats.minMs!.toStringAsFixed(1);
-    final String av =
-        _stats.avgMs == null ? '—' : _stats.avgMs!.toStringAsFixed(1);
-    final String mx =
-        _stats.maxMs == null ? '—' : _stats.maxMs!.toStringAsFixed(1);
+    final String mn = _stats.minMs == null
+        ? '—'
+        : _stats.minMs!.toStringAsFixed(1);
+    final String av = _stats.avgMs == null
+        ? '—'
+        : _stats.avgMs!.toStringAsFixed(1);
+    final String mx = _stats.maxMs == null
+        ? '—'
+        : _stats.maxMs!.toStringAsFixed(1);
 
     final String liveLabel = _running
         ? 'Pinging by ICMP, ${_stats.received} of ${_stats.sent} replies, '
-            '$lossPct percent loss, average $av milliseconds'
+              '$lossPct percent loss, average $av milliseconds'
         : 'ICMP ping complete, ${_stats.received} of ${_stats.sent} replies, '
-            '$lossPct percent loss, average $av milliseconds';
+              '$lossPct percent loss, average $av milliseconds';
 
     return Container(
       decoration: BoxDecoration(
@@ -419,8 +483,9 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
               ),
               Text(
                 '${_stats.received} / ${_stats.sent} · $lossPct% loss',
-                style:
-                    text.labelMedium?.copyWith(color: AppColors.textTertiary),
+                style: text.labelMedium?.copyWith(
+                  color: AppColors.textTertiary,
+                ),
               ),
             ],
           ),
@@ -469,8 +534,9 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
               if (value != '—')
                 Text(
                   'ms',
-                  style: text.labelSmall
-                      ?.copyWith(color: AppColors.textTertiary),
+                  style: text.labelSmall?.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
                 ),
             ],
           ),
@@ -507,16 +573,16 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
           const SizedBox(height: AppSpacing.xs),
           if (noReplies)
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
               child: Text(
                 'No replies. The host did not answer the ICMP echo — it may be '
                 'down, or ICMP may be filtered on the path.',
                 style: text.bodyLarge?.copyWith(color: AppColors.textTertiary),
               ),
             ),
-          ..._replies.reversed
-              .map((IcmpReply r) => _replyRow(context, r, text, mono)),
+          ..._replies.reversed.map(
+            (IcmpReply r) => _replyRow(context, r, text, mono),
+          ),
         ],
       ),
     );
@@ -529,21 +595,25 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
     AppMonoText mono,
   ) {
     // WCAG 1.4.1 — outcome carried by text + icon shape, never color alone.
-    final (Color color, IconData icon, String value, String semantic) =
-        r.success
-            ? (
-                AppColors.primary,
-                Icons.south_east,
-                r.rttMs == null ? 'reply' : '${r.rttMs!.toStringAsFixed(1)} ms',
-                'Reply ${r.sequence}, '
-                    '${r.rttMs == null ? 'no time' : '${r.rttMs!.toStringAsFixed(1)} milliseconds'}',
-              )
-            : (
-                AppColors.textTertiary,
-                Icons.block,
-                r.errorLabel ?? 'lost',
-                'Probe ${r.sequence} lost, ${r.errorLabel ?? 'no reply'}',
-              );
+    final (
+      Color color,
+      IconData icon,
+      String value,
+      String semantic,
+    ) = r.success
+        ? (
+            AppColors.primary,
+            Icons.south_east,
+            r.rttMs == null ? 'reply' : '${r.rttMs!.toStringAsFixed(1)} ms',
+            'Reply ${r.sequence}, '
+                '${r.rttMs == null ? 'no time' : '${r.rttMs!.toStringAsFixed(1)} milliseconds'}',
+          )
+        : (
+            AppColors.textTertiary,
+            Icons.block,
+            r.errorLabel ?? 'lost',
+            'Probe ${r.sequence} lost, ${r.errorLabel ?? 'no reply'}',
+          );
 
     return Semantics(
       label: semantic,
@@ -560,21 +630,25 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
                 width: 40,
                 child: Text(
                   '#${r.sequence}',
-                  style: mono.inlineCode
-                      .copyWith(color: AppColors.textTertiary),
+                  style: mono.inlineCode.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
                 ),
               ),
               Expanded(
                 child: Text(
                   r.success ? 'reply' : (r.errorLabel ?? 'no reply'),
-                  style: text.labelMedium
-                      ?.copyWith(color: AppColors.textSecondary),
+                  style: text.labelMedium?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ),
               Text(
                 value,
-                style: mono.inlineCode
-                    .copyWith(color: color, fontWeight: FontWeight.w500),
+                style: mono.inlineCode.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
           ),
