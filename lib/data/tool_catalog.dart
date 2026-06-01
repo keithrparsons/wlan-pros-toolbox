@@ -628,6 +628,55 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         routeName: '/tools/emoji-reference',
         isLive: true,
       ),
+      // ── PDF reference cards (bundled as PDFs, rendered by the shared
+      // PdfReferenceScreen — pinch-zoomable, offline) ──
+      // 6 of Keith's 10 laminated cards live here in Quick Reference; the other
+      // 4 (the checklist cards) live in the Checklists category. The category
+      // screen sorts alphabetically by title, so these interleave with the
+      // tables above automatically — no manual ordering. `mcs-index-card` is
+      // deliberately distinct from the existing `mcs-index` table id.
+      ToolEntry(
+        id: 'bubble-diagram',
+        title: 'WLAN Pros Bubble Diagram',
+        description: 'Wi-Fi design decision bubble diagram',
+        routeName: '/tools/bubble-diagram',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'troubleshooting-causes',
+        title: 'Wireless LAN Troubleshooting Causes',
+        description: 'Common causes to check when troubleshooting',
+        routeName: '/tools/troubleshooting-causes',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'channel-allocations-24ghz',
+        title: '2.4 GHz Channel Allocations',
+        description: '2.4 GHz channel layout and allocations',
+        routeName: '/tools/channel-allocations-24ghz',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'channel-allocations-5ghz',
+        title: '5 GHz Channel Allocations',
+        description: '5 GHz channel layout and allocations',
+        routeName: '/tools/channel-allocations-5ghz',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'channel-allocations-6ghz',
+        title: '6 GHz Channel Allocations',
+        description: '6 GHz channel layout and allocations',
+        routeName: '/tools/channel-allocations-6ghz',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'mcs-index-card',
+        title: 'Modulation and Coding Schemes (MCS Index)',
+        description: 'MCS index, rates, and modulation',
+        routeName: '/tools/mcs-index-card',
+        isLive: true,
+      ),
     ],
   ),
 
@@ -665,9 +714,13 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
   ),
 
   // ───────────────────────── 6. Checklists ──────────────────────────
-  // NEW category (LOCKED map §6). Its 2 tools are built and live (the reusable
-  // tappable-checklist screen type renders the Pax-transcribed card content);
-  // the category is now active.
+  // NEW category (LOCKED map §6). Mixes two tool types: the reusable
+  // tappable-checklist screen (Pax-transcribed card content) and 4 PDF
+  // reference-card checklists (rendered by PdfReferenceScreen). All live. The
+  // category screen sorts alphabetically by title, so the two types interleave
+  // automatically — no manual ordering. The 4 PDF cards keep their stable
+  // ids/titles/routes/asset paths; only their home category moved here from
+  // Quick Reference.
   ToolCategory(
     id: 'checklists',
     title: 'Checklists',
@@ -686,6 +739,35 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
         title: 'Wi-Fi Client Testing Checklist',
         description: '12 client-side connectivity tests',
         routeName: '/tools/checklist-client-test',
+        isLive: true,
+      ),
+      // ── PDF reference-card checklists (bundled PDFs, PdfReferenceScreen) ──
+      ToolEntry(
+        id: 'top-20-checklist',
+        title: 'Top 20 Wi-Fi Checklist',
+        description: 'The Top 20 Wi-Fi design checklist',
+        routeName: '/tools/top-20-checklist',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'extended-checklist',
+        title: 'Extended Wi-Fi Checklist',
+        description: 'Extended design checklist items',
+        routeName: '/tools/extended-checklist',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'extended-checklist-nonadvertised',
+        title: 'Extended Checklist (Non-Advertised Items)',
+        description: 'Extended checklist, non-advertised items',
+        routeName: '/tools/extended-checklist-nonadvertised',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'connection-checklist',
+        title: 'Wi-Fi Connection Checklist',
+        description: 'Client connection sequence checklist',
+        routeName: '/tools/connection-checklist',
         isLive: true,
       ),
     ],
