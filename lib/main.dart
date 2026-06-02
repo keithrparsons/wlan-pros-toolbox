@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 
 import 'data/tool_assets.dart';
 import 'router/app_router.dart';
+import 'router/shortcut_deep_link_router.dart';
 import 'services/network/dart_ping_icmp_backend.dart';
 import 'theme/app_theme.dart';
 
@@ -54,6 +55,10 @@ class ToolboxApp extends StatelessWidget {
       theme: theme,
       darkTheme: theme,
       themeMode: ThemeMode.dark,
+      // Shared navigator key so the one-tap-trigger deep-link router (TICKET-03)
+      // can navigate to a tool route on the cold-relaunch path, where no screen
+      // is listening. Reuses this Navigator; adds no second nav system.
+      navigatorKey: AppRouter.navigatorKey,
       initialRoute: AppRouter.home,
       routes: AppRouter.routes,
       onUnknownRoute: AppRouter.onUnknownRoute,
@@ -75,10 +80,17 @@ class ToolboxApp extends StatelessWidget {
       // already dismiss via a return key (e.g. Lat/Long, signed number pad):
       // tapping outside simply dismisses, matching that field's behavior.
       builder: (BuildContext context, Widget? child) {
-        return GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-          child: child,
+        // ShortcutDeepLinkRouter subscribes to the iOS one-tap-trigger return
+        // streams and deep-links to the originating tool (warm + cold). Placing
+        // it in the MaterialApp builder keeps it under the navigator key and
+        // alive for the app's lifetime so the cold-launch buffer flushes on
+        // first listen. Inert off-iOS and when no deep-link return arrives.
+        return ShortcutDeepLinkRouter(
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+            child: child,
+          ),
         );
       },
     );

@@ -51,8 +51,17 @@ struct ReceiveWiFiDetailsIntent: AppIntent {
     "Hands the connected network's harvested Wi-Fi details (as JSON text) to the WLAN Pros Toolbox app."
   )
 
-  // Bring the app forward on delivery so the running engine can pull/receive.
-  static var openAppWhenRun: Bool = true
+  // STORE SILENTLY — do NOT foreground here (TICKET-03 one-tap trigger).
+  //
+  // When the app fires the run-shortcut x-callback URL, iOS flicks to Shortcuts,
+  // runs this intent, then returns control to the app via the `x-success`
+  // callback (wlanprostoolbox://ok). If this intent ALSO foregrounds the app
+  // (`openAppWhenRun = true`), it races and fights the x-callback return: the
+  // app can be bounced forward by the intent BEFORE Shortcuts finishes, so the
+  // callback never lands and the success/error signal is lost. The receiver must
+  // store the payload to the App Group quietly and let the x-callback handle the
+  // single, well-defined return. Changed from `true` 2026-06-01.
+  static var openAppWhenRun: Bool = false
 
   @Parameter(
     title: "Wi-Fi Details (JSON)",
@@ -86,8 +95,11 @@ struct ReceiveCellularDetailsIntent: AppIntent {
     "Hands the device's harvested cellular details (as JSON text) to the WLAN Pros Toolbox app."
   )
 
-  // Bring the app forward on delivery so the running engine can pull/receive.
-  static var openAppWhenRun: Bool = true
+  // STORE SILENTLY — do NOT foreground here (TICKET-03 one-tap trigger). See the
+  // identical note on `ReceiveWiFiDetailsIntent`: the run-shortcut x-callback
+  // handles the return, and an in-intent foregrounding would race and break it.
+  // Changed from `true` 2026-06-01.
+  static var openAppWhenRun: Bool = false
 
   @Parameter(
     title: "Cellular Details (JSON)",

@@ -59,6 +59,106 @@ enum ShortcutsBridge {
   /// engine can react immediately. Plain Darwin names are process-global.
   static let darwinNotificationName = "com.wlanpros.toolbox.shortcuts_bridge.delivered"
 
+  // MARK: - One-tap trigger x-callback (TICKET-03)
+
+  /// Custom URL scheme registered in Info.plist (CFBundleURLSchemes). The
+  /// run-shortcut x-callback returns control to the app via this scheme.
+  static let callbackScheme = "wlanprostoolbox"
+
+  /// Host the x-callback returns to (`wlanprostoolbox://reading?...`). A single
+  /// host now carries BOTH the originating tool and the ok/err status as query
+  /// items so the app can deep-link the user straight back to the tool screen
+  /// they triggered from — even after iOS cold-relaunches the app during the
+  /// Shortcuts run (the killed-app case, TICKET-03 UX fix). The legacy bare
+  /// `://ok` / `://err` hosts are still honored by `parseCallback` for safety.
+  static let callbackReadingHost = "reading"
+
+  /// Query-item key carrying the originating tool id (e.g. `wifi-info`,
+  /// `cellular-info`) so the app routes the return to that tool's screen.
+  static let callbackToolKey = "tool"
+
+  /// Query-item key carrying the run status (`ok` | `err`).
+  static let callbackStatusKey = "status"
+
+  /// Status values on the `status=` query item.
+  static let callbackStatusOk = "ok"
+  static let callbackStatusErr = "err"
+
+  /// Legacy bare-host success value (`wlanprostoolbox://ok`). Kept so an older
+  /// published Shortcut whose callbacks were not re-encoded still resolves.
+  static let callbackSuccessHost = "ok"
+
+  /// Legacy bare-host error value (`wlanprostoolbox://err`).
+  static let callbackErrorHost = "err"
+
+  /// A parsed x-callback return: which tool fired it (nil if the legacy bare
+  /// host was used) and whether the run succeeded.
+  struct Callback {
+    let tool: String?
+    let isError: Bool
+  }
+
+  /// Builds the Shortcuts run-shortcut x-callback URL for [name], encoding the
+  /// originating [tool] into the success/error callback targets so the return
+  /// can deep-link back to that tool's screen. URL-encodes the Shortcut name and
+  /// both callback URLs. Returns nil if the name cannot be percent-encoded (it
+  /// always can in practice).
+  ///
+  /// Result:
+  ///   shortcuts://x-callback-url/run-shortcut?name=<enc>
+  ///     &x-success=<enc wlanprostoolbox://reading?tool=<tool>&status=ok>
+  ///     &x-error=<enc   wlanprostoolbox://reading?tool=<tool>&status=err>
+  static func runShortcutURL(name: String, tool: String) -> URL? {
+    var components = URLComponents()
+    components.scheme = "shortcuts"
+    components.host = "x-callback-url"
+    components.path = "/run-shortcut"
+    components.queryItems = [
+      URLQueryItem(name: "name", value: name),
+      URLQueryItem(name: "x-success", value: callbackURLString(tool: tool, status: callbackStatusOk)),
+      URLQueryItem(name: "x-error", value: callbackURLString(tool: tool, status: callbackStatusErr)),
+    ]
+    return components.url
+  }
+
+  /// Builds one return URL string (`wlanprostoolbox://reading?tool=<tool>&status=<status>`),
+  /// URL-encoding the tool + status query items. Used as the x-success / x-error
+  /// target embedded in the run-shortcut URL.
+  static func callbackURLString(tool: String, status: String) -> String {
+    var components = URLComponents()
+    components.scheme = callbackScheme
+    components.host = callbackReadingHost
+    components.queryItems = [
+      URLQueryItem(name: callbackToolKey, value: tool),
+      URLQueryItem(name: callbackStatusKey, value: status),
+    ]
+    return components.url?.absoluteString
+      ?? "\(callbackScheme)://\(callbackReadingHost)?\(callbackToolKey)=\(tool)&\(callbackStatusKey)=\(status)"
+  }
+
+  /// Parses a return URL into a [Callback], or nil if it is not one of ours.
+  /// Handles the new `reading?tool=&status=` form AND the legacy bare `ok`/`err`
+  /// hosts (treated as tool-less, so the app falls back to refreshing whatever
+  /// trigger screen is already listening).
+  static func parseCallback(_ url: URL) -> Callback? {
+    guard url.scheme == callbackScheme else { return nil }
+    switch url.host {
+    case callbackReadingHost:
+      let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
+      let tool = items?.first(where: { $0.name == callbackToolKey })?.value
+      let status = items?.first(where: { $0.name == callbackStatusKey })?.value
+      return Callback(tool: tool, isError: status == callbackStatusErr)
+    case callbackErrorHost:
+      return Callback(tool: nil, isError: true)
+    case callbackSuccessHost:
+      return Callback(tool: nil, isError: false)
+    default:
+      // Any other host on our scheme: treat as a tool-less success so the app
+      // still re-reads the App Group rather than dropping the return.
+      return Callback(tool: nil, isError: false)
+    }
+  }
+
   /// Shared defaults for the App Group, or nil if the capability is missing
   /// (e.g. entitlement not provisioned yet). Callers degrade honestly.
   static var sharedDefaults: UserDefaults? {

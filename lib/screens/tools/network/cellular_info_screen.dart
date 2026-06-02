@@ -37,18 +37,28 @@
 // ConstrainedBox + scroll, surface1 cards with a hairline border, the
 // concept-graphic band degrades to nothing when the tool has no graphic asset.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../router/shortcut_deep_link_router.dart';
 import '../../../services/network/cellular_info.dart';
 import '../../../services/network/cellular_info_adapter.dart';
 import '../../../services/network/cellular_info_bridge.dart';
 import '../../../services/network/cellular_shortcuts_config.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/shortcut_trigger_result.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
+import 'get_reading_action.dart';
 import 'network_unavailable_view.dart';
+
+/// Honest error line shown when the cellular one-tap trigger returns x-error.
+const String _kCellularTriggerError =
+    'Could not get a reading. The companion Shortcut may not be installed, or '
+    'the run was cancelled. Install it, then try again.';
 
 /// The Cellular Information tool screen.
 class CellularInfoScreen extends StatefulWidget {
@@ -81,6 +91,29 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
   _IosPhase _iosPhase = _IosPhase.loading;
   CellularInfo? _iosInfo;
 
+  // ---- One-tap trigger state (TICKET-03) ----
+  /// True from the moment "Get Reading" is tapped until the x-callback returns
+  /// (the app is backgrounded during the flick to Shortcuts). Suppresses a
+  /// second tap and labels the button "Getting reading…".
+  bool _triggering = false;
+
+  /// Set when the last trigger returned `x-error` (Shortcut missing / errored /
+  /// user cancelled). Cleared on the next successful read or trigger attempt.
+  bool _triggerError = false;
+
+  StreamSubscription<ShortcutTriggerResult>? _triggerSub;
+
+  /// Guards the one-time read of the deep-link route argument (TICKET-03 cold
+  /// launch): a `status=err` return that cold-launched the app into this screen
+  /// must surface the error banner here, not on home.
+  bool _consumedDeepLinkArgs = false;
+
+  /// Latched true when the app was cold-launched into this screen by a
+  /// `status=err` deep link. Keeps the honest error banner visible through the
+  /// initState `_loadIos` (which clears `_triggerError` on any reading it finds),
+  /// until the user's next Get Reading attempt resolves it.
+  bool _deepLinkError = false;
+
   @override
   void initState() {
     super.initState();
@@ -89,16 +122,65 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
     if (_source == CellularInfoSource.iosShortcuts) {
       _iosBridge = widget.iosBridge ?? CellularInfoBridge();
       WidgetsBinding.instance.addObserver(this);
+      _triggerSub = _iosBridge!.triggerResults.listen(_onTriggerResult);
       _loadIos();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Cold-launch deep-link arg (TICKET-03): when the app was relaunched by a
+    // `status=err` x-callback and deep-linked here, the router passes
+    // ShortcutTriggerArgs(initialError: true). Read it once so the honest error
+    // banner shows on THIS tool screen rather than home. status=ok needs no flag
+    // — _loadIos already re-reads the fresh payload.
+    if (_consumedDeepLinkArgs ||
+        _source != CellularInfoSource.iosShortcuts) {
+      return;
+    }
+    final Object? args = ModalRoute.of(context)?.settings.arguments;
+    if (args is ShortcutTriggerArgs) {
+      _consumedDeepLinkArgs = true;
+      if (args.initialError && mounted) {
+        // Latches the error so the initState _loadIos (which clears _triggerError
+        // on any reading it finds) cannot stomp it before the banner shows.
+        _deepLinkError = true;
+        setState(() => _triggerError = true);
+      }
     }
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // iOS only: the Shortcut bounces the app to the foreground; on resume,
-    // re-read so a payload delivered while backgrounded lands.
+    // re-read so a payload delivered while backgrounded lands. Clearing
+    // _triggering here covers the path where the user returns to the app
+    // WITHOUT an x-callback (e.g. swiped back manually) so the button never
+    // sticks on "Getting reading…".
     if (state == AppLifecycleState.resumed &&
         _source == CellularInfoSource.iosShortcuts) {
+      if (_triggering && mounted) {
+        setState(() => _triggering = false);
+      }
+      _loadIos();
+    }
+  }
+
+  /// Handles the x-callback return from a one-tap trigger (TICKET-03). On
+  /// success it re-reads the App Group payload directly (belt-and-suspenders
+  /// with the lifecycle-resume re-read, so the refresh does not depend solely on
+  /// the OS delivering a resume event). On error it keeps the install affordance
+  /// as the fallback and surfaces an honest message.
+  void _onTriggerResult(ShortcutTriggerResult result) {
+    if (!mounted) return;
+    setState(() {
+      _triggering = false;
+      _triggerError = result == ShortcutTriggerResult.error;
+      // A live trigger result supersedes any latched cold-launch deep-link err.
+      _deepLinkError = result == ShortcutTriggerResult.error;
+    });
+    if (result == ShortcutTriggerResult.success) {
       _loadIos();
     }
   }
@@ -108,7 +190,35 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
     if (_source == CellularInfoSource.iosShortcuts) {
       WidgetsBinding.instance.removeObserver(this);
     }
+    _triggerSub?.cancel();
     super.dispose();
+  }
+
+  /// Fires the one-tap trigger: opens the run-shortcut x-callback URL for the
+  /// canonical cellular Shortcut name. If iOS cannot open it (Shortcuts missing,
+  /// or the Shortcut is not installed so the open fails), fall back to the
+  /// honest error + install affordance.
+  Future<void> _getReading() async {
+    final CellularInfoBridge? bridge = _iosBridge;
+    if (bridge == null || _triggering) return;
+    setState(() {
+      _triggering = true;
+      _triggerError = false;
+      _deepLinkError = false; // a fresh attempt clears the latched deep-link err
+    });
+    final bool opened = await bridge.runShortcut(
+      CellularShortcutsConfig.kCompanionShortcutName,
+      tool: 'cellular-info',
+    );
+    if (!mounted) return;
+    if (!opened) {
+      // Could not even reach Shortcuts — show the honest error now (the
+      // x-callback will never arrive in this case).
+      setState(() {
+        _triggering = false;
+        _triggerError = true;
+      });
+    }
   }
 
   // ---- iOS data flow ----
@@ -131,6 +241,9 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
       if (latest != null && latest.hasAnyData) {
         _iosInfo = latest;
         _iosPhase = _IosPhase.hasData;
+        // A fresh reading clears any prior trigger error — EXCEPT a latched
+        // cold-launch deep-link error, which must stay visible.
+        if (!_deepLinkError) _triggerError = false;
       } else if (ever) {
         // A payload arrived before but carried no data this read — still show
         // whatever we last held, or fall back to the install onboarding.
@@ -303,12 +416,21 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
           case _IosPhase.loading:
             return const _IosLoadingState();
           case _IosPhase.needsInstall:
-            return _EmptyInstallState(onInstall: _openInstallSheet);
+            return _EmptyInstallState(
+              onGetReading: _triggering ? null : _getReading,
+              onInstall: _openInstallSheet,
+              triggering: _triggering,
+              triggerError: _triggerError,
+            );
           case _IosPhase.hasData:
             return _IosSuccess(
               info: _iosInfo!,
               edge: edge,
               isDesktop: isDesktop,
+              onGetReading: _triggering ? null : _getReading,
+              triggering: _triggering,
+              triggerError: _triggerError,
+              onOpenInstall: _openInstallSheet,
             );
         }
       },
@@ -336,11 +458,21 @@ class _IosLoadingState extends StatelessWidget {
   }
 }
 
-/// iOS empty state — no payload has ever arrived. Offers the install onboarding.
+/// iOS empty state — no payload has ever arrived. "Get Reading" is the primary
+/// action (one tap fires the companion Shortcut); installing the Shortcut is the
+/// secondary affordance for the first run / the fallback when it is missing.
 class _EmptyInstallState extends StatelessWidget {
-  const _EmptyInstallState({required this.onInstall});
+  const _EmptyInstallState({
+    required this.onGetReading,
+    required this.onInstall,
+    required this.triggering,
+    required this.triggerError,
+  });
 
+  final VoidCallback? onGetReading;
   final VoidCallback onInstall;
+  final bool triggering;
+  final bool triggerError;
 
   @override
   Widget build(BuildContext context) {
@@ -356,6 +488,7 @@ class _EmptyInstallState extends StatelessWidget {
           padding: EdgeInsets.all(AppSpacing.lg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Icon(
                 Icons.signal_cellular_alt_outlined,
@@ -372,17 +505,26 @@ class _EmptyInstallState extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'Install the companion Shortcut once, then run it to populate '
-                "this screen with your carrier, radio technology, signal bars, "
-                'country code, and roaming status.',
+                'Tap Get Reading to run the companion Shortcut and fill this '
+                "screen with your carrier, radio technology, signal bars, "
+                'country code, and roaming status. If you have not installed '
+                'the Shortcut yet, install it first.',
                 style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppSpacing.md),
+              GetReadingAction(
+                onGetReading: onGetReading,
+                triggering: triggering,
+                triggerError: triggerError,
+                errorMessage: _kCellularTriggerError,
+                onOpenInstall: onInstall,
+              ),
+              const SizedBox(height: AppSpacing.xs),
               Semantics(
                 button: true,
                 label: 'Install Shortcut',
-                child: FilledButton.icon(
+                child: OutlinedButton.icon(
                   onPressed: onInstall,
                   icon: const Icon(Icons.download_outlined),
                   label: const Text('Install Shortcut'),
@@ -396,17 +538,26 @@ class _EmptyInstallState extends StatelessWidget {
   }
 }
 
-/// iOS success body: the shared metric cards rendering the [CellularInfo].
+/// iOS success body: the "Get Reading" trigger + the shared metric cards
+/// rendering the [CellularInfo].
 class _IosSuccess extends StatelessWidget {
   const _IosSuccess({
     required this.info,
     required this.edge,
     required this.isDesktop,
+    required this.onGetReading,
+    required this.triggering,
+    required this.triggerError,
+    required this.onOpenInstall,
   });
 
   final CellularInfo info;
   final double edge;
   final bool isDesktop;
+  final VoidCallback? onGetReading;
+  final bool triggering;
+  final bool triggerError;
+  final VoidCallback onOpenInstall;
 
   @override
   Widget build(BuildContext context) {
@@ -423,6 +574,14 @@ class _IosSuccess extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              GetReadingAction(
+                onGetReading: onGetReading,
+                triggering: triggering,
+                triggerError: triggerError,
+                errorMessage: _kCellularTriggerError,
+                onOpenInstall: onOpenInstall,
+              ),
+              const SizedBox(height: AppSpacing.sm),
               ConceptGraphicBand(toolId: 'cellular-info', isDesktop: isDesktop),
               if (ToolAssets.hasGraphic('cellular-info'))
                 const SizedBox(height: AppSpacing.md),

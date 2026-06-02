@@ -94,4 +94,44 @@ void main() {
       expect(await WiFiDetailsBridge().openUrl('https://x'), isFalse);
     });
   });
+
+  group('runShortcut (one-tap trigger, TICKET-03)', () {
+    test('invokes runShortcut with the Shortcut name AND originating tool',
+        () async {
+      MethodCall? seen;
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        seen = call;
+        return true;
+      });
+      final ok = await WiFiDetailsBridge()
+          .runShortcut('WLAN Pros Wi-Fi', tool: 'wifi-info');
+
+      expect(ok, isTrue);
+      expect(seen!.method, 'runShortcut');
+      // The name + tool are passed as a map; the native side URL-encodes them
+      // into the run-shortcut x-callback URL, encoding the tool into the
+      // x-success / x-error callback targets so the return deep-links back to
+      // the originating tool screen (TICKET-03 UX fix).
+      expect(seen!.arguments, <String, String>{
+        'name': 'WLAN Pros Wi-Fi',
+        'tool': 'wifi-info',
+      });
+    });
+
+    test('returns false when the platform could not open Shortcuts', () async {
+      messenger.setMockMethodCallHandler(channel, (call) async => false);
+      expect(
+        await WiFiDetailsBridge().runShortcut('X', tool: 'wifi-info'),
+        isFalse,
+      );
+    });
+
+    test('returns false when the plugin is missing (off-iOS)', () async {
+      messenger.setMockMethodCallHandler(channel, null);
+      expect(
+        await WiFiDetailsBridge().runShortcut('X', tool: 'wifi-info'),
+        isFalse,
+      );
+    });
+  });
 }

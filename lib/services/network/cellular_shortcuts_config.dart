@@ -17,10 +17,9 @@ class CellularShortcutsConfig {
 
   /// iCloud share link that installs the companion cellular Shortcut.
   ///
-  /// LIVE: the "WLAN Pros Toolbox Cellular" Shortcut is published and
-  /// device-verified (all five cellular fields confirmed on a real iPhone
-  /// 2026-06-01). [isShortcutUrlPlaceholder] is now false, so the Install
-  /// action is enabled.
+  /// LIVE: the "WLAN Pros Cellular" Shortcut is published and device-verified
+  /// (all five cellular fields confirmed on a real iPhone 2026-06-01).
+  /// [isShortcutUrlPlaceholder] is now false, so the Install action is enabled.
   static const String kCompanionShortcutUrl =
       'https://www.icloud.com/shortcuts/f00b34ab4ed5490892cdd90c0c945f3e';
 
@@ -29,4 +28,12 @@ class CellularShortcutsConfig {
   /// Now false: the real published link is wired above.
   static bool get isShortcutUrlPlaceholder =>
       kCompanionShortcutUrl.endsWith('PLACEHOLDER');
+
+  /// Canonical name of the published companion Cellular Shortcut (TICKET-03
+  /// one-tap trigger). The app fires `shortcuts://x-callback-url/run-shortcut`
+  /// with this exact name; iOS matches it against the user's installed
+  /// Shortcuts by name, so the published Shortcut MUST be named exactly this —
+  /// confirmed during the device test. Changing this string without renaming
+  /// the published Shortcut breaks the "Get Reading" trigger.
+  static const String kCompanionShortcutName = 'WLAN Pros Cellular';
 }

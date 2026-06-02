@@ -57,6 +57,36 @@
 	     name. -->
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>WLAN Pros Toolbox uses your location only to read the name (SSID) of the Wi-Fi network you are connected to. Your location is never stored or shared.</string>
+	<!-- Custom URL scheme for the one-tap Shortcut trigger (TICKET-03).
+	     The app fires `shortcuts://x-callback-url/run-shortcut?name=…&
+	     x-success=wlanprostoolbox://reading?tool=<id>&status=ok&
+	     x-error=wlanprostoolbox://reading?tool=<id>&status=err`; iOS runs the
+	     companion Shortcut, then returns control to this scheme carrying the
+	     originating tool id + status. The SceneDelegate parses the callback and
+	     the deep-link router navigates to that tool's screen — on warm resume AND
+	     after a cold relaunch — re-reading the App Group payload on success and
+	     showing an honest error (Shortcut missing / cancelled) on error. The
+	     legacy bare wlanprostoolbox://ok | ://err hosts are still honored. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>None</string>
+			<key>CFBundleURLName</key>
+			<string>com.wlanpros.wlanProsToolbox.callback</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>wlanprostoolbox</string>
+			</array>
+		</dict>
+	</array>
+	<!-- LSApplicationQueriesSchemes lets the app open the Shortcuts app via the
+	     `shortcuts://` x-callback URL on iOS 9+ (UIApplication.canOpenURL /
+	     open both consult this allow-list). -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>shortcuts</string>
+	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
