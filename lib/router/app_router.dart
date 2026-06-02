@@ -375,22 +375,6 @@ class AppRouter {
         ),
   };
 
-  /// Maps a one-tap-trigger tool id (the kebab id carried in the x-callback
-  /// `tool=` query item, e.g. `wifi-info`, `cellular-info`) to its registered
-  /// route name. Only the two iOS Shortcut-backed tools are deep-link targets
-  /// today; an unknown id resolves to null and the router no-ops (the user stays
-  /// where they are rather than being bounced). The route strings come from the
-  /// existing [routes] table — no parallel mapping to drift.
-  static const Map<String, String> _triggerToolRoutes = <String, String>{
-    'wifi-info': wifiInfo,
-    'cellular-info': cellularInfo,
-  };
-
-  /// Resolves a trigger tool id to its route name, or null if the id is not a
-  /// known deep-link target.
-  static String? routeForTriggerTool(String toolId) =>
-      _triggerToolRoutes[toolId];
-
   /// Fallback for any unregistered route. Sends the user back to home rather
   /// than blowing up — useful while many tools are still "Coming soon".
   static Route<dynamic> onUnknownRoute(RouteSettings settings) {

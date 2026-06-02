@@ -13,7 +13,6 @@ import 'package:net_quality/net_quality.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/network_unavailable_view.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/wifi_vs_internet_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
-import 'package:wlan_pros_toolbox/services/network/shortcut_trigger_result.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
@@ -70,13 +69,7 @@ class _NoPayloadBridge implements WiFiDetailsBridge {
   @override
   Future<bool> openUrl(String url) async => true;
   @override
-  Future<bool> runShortcut(String name, {required String tool}) async => true;
-  @override
-  Stream<ShortcutTriggerEvent> get triggerEvents =>
-      const Stream<ShortcutTriggerEvent>.empty();
-  @override
-  Stream<ShortcutTriggerResult> get triggerResults =>
-      const Stream<ShortcutTriggerResult>.empty();
+  Future<bool> runShortcut(String name) async => true;
   @override
   Stream<WiFiDetails> get updates => const Stream<WiFiDetails>.empty();
 }

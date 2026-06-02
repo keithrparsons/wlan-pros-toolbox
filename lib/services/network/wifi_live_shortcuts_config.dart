@@ -1,39 +1,42 @@
-// Companion-Shortcut distribution config for Wi-Fi Information LIVE mode
-// (TICKET-01).
+// Companion-Shortcut distribution config for LIVE streaming.
 //
-// Snapshot mode uses the existing SINGLE-SHOT companion Shortcut (run once →
-// one update). LIVE mode needs the LOOPING companion Shortcut: it repeats while
-// the native `ShouldContinueMonitoringIntent` returns the app's
-// monitoring-active flag, sending one `ReceiveWiFiDetailsIntent` sample per
-// pass, and stops cleanly the moment the in-app Stop button clears that flag.
+// ONE combined companion Shortcut, "WLAN Pros Live", drives Live mode for BOTH
+// the Wi-Fi Information and Cellular Information screens. Each cycle it gathers
+// Wi-Fi + cellular details and hands BOTH to the native `ReceiveLiveDetailsIntent`
+// as one JSON payload; the app splits that payload into the two App Group keys
+// the existing bridges parse and posts one Darwin notification, so both Live
+// screens update from a single delivery. The Shortcut loops while the native
+// `ShouldContinueMonitoringIntent` returns the app's monitoring-active flag, and
+// stops cleanly the moment in-app Stop clears that flag.
 //
-// The looping Shortcut is published during device testing. Until then the link
-// below is a clearly-marked PLACEHOLDER; the UI gates the Live "get the looping
-// Shortcut" affordance on [isLoopShortcutUrlPlaceholder] exactly the way the
-// cellular tool gated its Install action while its link was a placeholder
-// (see [CellularShortcutsConfig]). The app never opens a dead link.
-//
-// The install link lives in exactly one place so swapping Keith's real iCloud
-// link is a one-line change.
+// The canonical name and the install link each live in exactly one place so the
+// streaming trigger and the install affordance never drift, and swapping Keith's
+// real iCloud link is a one-line change.
 
-/// Configuration for installing and linking the LOOPING companion iOS Wi-Fi
-/// Shortcut used by Live mode.
+/// Configuration for installing and linking the combined LIVE companion iOS
+/// Shortcut.
 class WifiLiveShortcutsConfig {
   WifiLiveShortcutsConfig._();
 
-  /// iCloud share link that installs the LOOPING companion Wi-Fi Shortcut.
-  ///
-  /// TODO(keith): PLACEHOLDER — replace with the real iCloud link once the
-  /// looping Shortcut is published during device testing. Must end in a value
-  /// that does NOT match the placeholder sentinel below to enable the Live
-  /// "get the looping Shortcut" affordance. The single-shot Snapshot link is
-  /// separate and unaffected.
-  static const String kLoopShortcutUrl =
-      'https://www.icloud.com/shortcuts/LOOP_SHORTCUT_PLACEHOLDER';
+  /// Canonical name of the combined LIVE companion Shortcut. The app fires the
+  /// PLAIN `shortcuts://run-shortcut?name=<this>` URL; iOS matches it against the
+  /// user's installed Shortcuts BY NAME, so the published Shortcut MUST be named
+  /// exactly this. Both the Wi-Fi and Cellular Live screens trigger this one
+  /// Shortcut. Changing this string without renaming the published Shortcut
+  /// breaks Live streaming.
+  static const String kLiveShortcutName = 'WLAN Pros Live';
 
-  /// True while [kLoopShortcutUrl] is still the placeholder. The Live UI uses
-  /// this to disable the "get the looping Shortcut" action so the app never
-  /// opens a dead link (mirrors [CellularShortcutsConfig.isShortcutUrlPlaceholder]).
-  static bool get isLoopShortcutUrlPlaceholder =>
-      kLoopShortcutUrl.endsWith('PLACEHOLDER');
+  /// iCloud share link that installs the combined LIVE companion Shortcut.
+  ///
+  /// Published "WLAN Pros Live" Shortcut (Keith, 2026-06-02). This is the link
+  /// users tap to install the one combined Shortcut that drives Live streaming
+  /// on both screens.
+  static const String kLiveShortcutUrl =
+      'https://www.icloud.com/shortcuts/3e3e600b050441a5923dda5e660d055b';
+
+  /// True while [kLiveShortcutUrl] is still the placeholder. The Live UI uses
+  /// this to disable the "get the Live Shortcut" action so the app never opens a
+  /// dead link.
+  static bool get isLiveShortcutUrlPlaceholder =>
+      kLiveShortcutUrl.endsWith('PLACEHOLDER');
 }

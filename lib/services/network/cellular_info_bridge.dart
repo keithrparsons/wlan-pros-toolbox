@@ -30,7 +30,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import 'cellular_info.dart';
-import 'shortcut_trigger_result.dart';
 
 /// Bridges the native iOS Shortcuts cellular handoff to Dart, typed to
 /// [CellularInfo].
@@ -38,19 +37,14 @@ class CellularInfoBridge {
   CellularInfoBridge({
     MethodChannel? methodChannel,
     EventChannel? eventChannel,
-    EventChannel? triggerResultChannel,
   })  : _method = methodChannel ??
             const MethodChannel('com.wlanpros.toolbox/shortcuts_bridge'),
         _events = eventChannel ??
             const EventChannel(
-                'com.wlanpros.toolbox/shortcuts_bridge/cellular_events'),
-        _triggerResults = triggerResultChannel ??
-            const EventChannel(
-                'com.wlanpros.toolbox/shortcuts_bridge/trigger_result');
+                'com.wlanpros.toolbox/shortcuts_bridge/cellular_events');
 
   final MethodChannel _method;
   final EventChannel _events;
-  final EventChannel _triggerResults;
 
   /// Reads the most recent cellular payload the native receiver intent stored
   /// and parses it to a [CellularInfo], or null if nothing has been delivered
@@ -125,21 +119,23 @@ class CellularInfoBridge {
     }
   }
 
-  /// Fires the one-tap Shortcut trigger (TICKET-03): builds and opens the
-  /// `shortcuts://x-callback-url/run-shortcut` URL for the Shortcut named
-  /// [name], encoding the originating [tool] id so the return can deep-link back
-  /// to that tool's screen. The name and callbacks are URL-encoded natively. iOS
-  /// flicks to Shortcuts, runs the one-shot Shortcut (which stores JSON to the
-  /// App Group via [ReceiveCellularDetailsIntent]), then returns to
-  /// `wlanprostoolbox://reading?tool=<tool>&status=ok|err`. The result arrives
-  /// on [triggerEvents] / [triggerResults]; the fresh data lands via
-  /// [readLatest] on resume. Returns false when the platform could not open the
-  /// URL (or off-iOS where the channel is absent).
-  Future<bool> runShortcut(String name, {required String tool}) async {
+  /// Fires the combined Live Shortcut trigger: opens the PLAIN, fire-and-forget
+  /// `shortcuts://run-shortcut?name=<enc>` URL for the Shortcut named [name]. The
+  /// name is URL-encoded natively.
+  ///
+  /// This is deliberately NOT the `x-callback-url` form. The x-callback variant
+  /// makes the app WAIT for the Shortcut to finish; the looping Live Shortcut
+  /// never finishes, so the app would hang. The plain form hands the Shortcut off
+  /// and returns immediately, after which the app passively consumes [updates].
+  ///
+  /// Returns false when the platform could not OPEN the URL (Shortcuts app
+  /// missing, or off-iOS where the channel is absent). A true result means iOS
+  /// opened the URL, not that the Shortcut finished (it never does, by design).
+  Future<bool> runShortcut(String name) async {
     try {
       return await _method.invokeMethod<bool>(
             'runShortcut',
-            <String, String>{'name': name, 'tool': tool},
+            <String, String>{'name': name},
           ) ??
           false;
     } on MissingPluginException {
@@ -149,30 +145,6 @@ class CellularInfoBridge {
       return false;
     }
   }
-
-  /// Broadcast stream of decoded one-tap trigger returns (TICKET-03), each
-  /// carrying the originating tool id + outcome. The native SceneDelegate parses
-  /// the `wlanprostoolbox://reading?tool=…&status=…` return URL and pushes the
-  /// wire string `"<tool>|<ok|err>"`; on a cold relaunch the native side buffers
-  /// it and replays it the instant this stream is listened to. The deep-link
-  /// router consumes this to navigate to the originating tool. Off-iOS the
-  /// channel has no handler and the stream stays empty.
-  Stream<ShortcutTriggerEvent> get triggerEvents =>
-      _triggerEvents ??= _triggerResults
-          .receiveBroadcastStream()
-          .map<String>((dynamic e) => e?.toString() ?? '')
-          .where((String s) => s.isNotEmpty)
-          .map<ShortcutTriggerEvent>(ShortcutTriggerEvent.fromNative)
-          .handleError((Object error) {
-            debugPrint('CellularInfoBridge trigger-event stream error: $error');
-          })
-          .asBroadcastStream();
-  Stream<ShortcutTriggerEvent>? _triggerEvents;
-
-  /// Stream of x-callback results from the one-tap trigger (TICKET-03), reduced
-  /// to the outcome only. Derived from [triggerEvents].
-  Stream<ShortcutTriggerResult> get triggerResults =>
-      triggerEvents.map<ShortcutTriggerResult>((e) => e.result);
 
   /// Stream of parsed [CellularInfo] pushed when a Darwin notification fires
   /// while the app is foregrounded (TICKET-05). The recursive companion

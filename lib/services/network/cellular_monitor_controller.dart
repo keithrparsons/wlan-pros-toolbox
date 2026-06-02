@@ -98,26 +98,26 @@ class CellularMonitorController extends ChangeNotifier {
     _safeNotify();
   }
 
-  /// Begins live monitoring (TICKET-05): raises the shared monitoring-active
-  /// flag so the Shortcut's `ShouldContinueMonitoringIntent` returns "keep
-  /// going", then fires the run-shortcut trigger ONCE to kick off the recursion.
-  /// The app then passively consumes [CellularInfoBridge.updates]; it never
-  /// loops itself. When [triggerShortcutName] is null the trigger is skipped
-  /// (the recursion is assumed already running, e.g. a relaunch-resumed loop).
+  /// Begins live monitoring: raises the shared monitoring-active flag so the
+  /// Shortcut's `ShouldContinueMonitoringIntent` returns "keep going", then fires
+  /// the PLAIN, fire-and-forget run-shortcut trigger ONCE to kick off the
+  /// recursion. The combined "WLAN Pros Live" Shortcut delivers both Wi-Fi and
+  /// cellular each cycle; this controller consumes only the cellular side of the
+  /// stream. The app then passively consumes [CellularInfoBridge.updates]; it
+  /// never loops itself. When [triggerShortcutName] is null the trigger is
+  /// skipped (the recursion is assumed already running, e.g. a relaunch-resumed
+  /// loop).
   ///
-  /// Returns false when the trigger could not be opened (Shortcuts missing /
-  /// the loop Shortcut not installed). Returns true when no trigger was
-  /// requested or the trigger opened.
-  Future<bool> startMonitoring({
-    String? triggerShortcutName,
-    String triggerTool = 'cellular-info',
-  }) async {
+  /// Returns false when the trigger could not be OPENED (Shortcuts missing / the
+  /// Live Shortcut not installed). Returns true when no trigger was requested or
+  /// iOS opened the trigger URL.
+  Future<bool> startMonitoring({String? triggerShortcutName}) async {
     final Future<void> write = _bridge.setMonitoringActive(true);
     _startListening();
     _safeNotify();
     await write;
     if (triggerShortcutName == null) return true;
-    return _bridge.runShortcut(triggerShortcutName, tool: triggerTool);
+    return _bridge.runShortcut(triggerShortcutName);
   }
 
   /// Stops live monitoring: clears the shared monitoring flag (the recursive

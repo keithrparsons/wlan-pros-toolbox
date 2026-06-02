@@ -28,7 +28,6 @@ class _FakeBridge extends WiFiDetailsBridge {
   bool? lastMonitoringValue;
   int runShortcutCalls = 0;
   String? lastRunShortcutName;
-  String? lastRunShortcutTool;
 
   @override
   Future<bool> hasEverReceivedPayload() async => everReceived;
@@ -47,10 +46,9 @@ class _FakeBridge extends WiFiDetailsBridge {
   }
 
   @override
-  Future<bool> runShortcut(String name, {required String tool}) async {
+  Future<bool> runShortcut(String name) async {
     runShortcutCalls++;
     lastRunShortcutName = name;
-    lastRunShortcutTool = tool;
     return runShortcutResult;
   }
 
@@ -155,10 +153,10 @@ void main() {
       await bridge.close();
     });
 
-    test('start fires the recursive trigger once with the canonical name',
+    test('start fires the PLAIN recursive trigger once with the Live name',
         () async {
-      // TICKET-05: Start raises the flag AND fires the run-shortcut trigger once
-      // to kick off the recursion. The app never loops itself.
+      // Start raises the flag AND fires the PLAIN run-shortcut trigger once to
+      // kick off the recursion. The app never loops itself.
       final bridge = _FakeBridge()
         ..everReceived = true
         ..latest = _details();
@@ -166,16 +164,14 @@ void main() {
       await c.load();
 
       final bool opened = await c.startMonitoring(
-        triggerShortcutName: 'WLAN Pros Wi-Fi',
-        triggerTool: 'wifi-info',
+        triggerShortcutName: 'WLAN Pros Live',
       );
 
       expect(opened, isTrue);
       expect(c.isStreaming, isTrue);
       expect(bridge.lastMonitoringValue, isTrue);
       expect(bridge.runShortcutCalls, 1);
-      expect(bridge.lastRunShortcutName, 'WLAN Pros Wi-Fi');
-      expect(bridge.lastRunShortcutTool, 'wifi-info');
+      expect(bridge.lastRunShortcutName, 'WLAN Pros Live');
       c.dispose();
       await bridge.close();
     });

@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 
 import 'data/tool_assets.dart';
 import 'router/app_router.dart';
-import 'router/shortcut_deep_link_router.dart';
 import 'services/network/dart_ping_icmp_backend.dart';
 import 'theme/app_theme.dart';
 
@@ -80,17 +79,14 @@ class ToolboxApp extends StatelessWidget {
       // already dismiss via a return key (e.g. Lat/Long, signed number pad):
       // tapping outside simply dismisses, matching that field's behavior.
       builder: (BuildContext context, Widget? child) {
-        // ShortcutDeepLinkRouter subscribes to the iOS one-tap-trigger return
-        // streams and deep-links to the originating tool (warm + cold). Placing
-        // it in the MaterialApp builder keeps it under the navigator key and
-        // alive for the app's lifetime so the cold-launch buffer flushes on
-        // first listen. Inert off-iOS and when no deep-link return arrives.
-        return ShortcutDeepLinkRouter(
-          child: GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-            child: child,
-          ),
+        // The Live streaming trigger fires a PLAIN, fire-and-forget Shortcut URL
+        // with no x-callback return, so there is no deep-link return to route —
+        // the former ShortcutDeepLinkRouter wrap was removed with the snapshot
+        // one-tap trigger. The app passively consumes the Live stream instead.
+        return GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+          child: child,
         );
       },
     );

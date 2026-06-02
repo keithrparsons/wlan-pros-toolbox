@@ -95,43 +95,38 @@ void main() {
     });
   });
 
-  group('runShortcut (one-tap trigger, TICKET-03)', () {
-    test('invokes runShortcut with the Shortcut name AND originating tool',
+  group('runShortcut (PLAIN fire-and-forget Live trigger)', () {
+    test('invokes runShortcut with ONLY the name — no x-callback, no tool',
         () async {
       MethodCall? seen;
       messenger.setMockMethodCallHandler(channel, (call) async {
         seen = call;
         return true;
       });
-      final ok = await WiFiDetailsBridge()
-          .runShortcut('WLAN Pros Wi-Fi', tool: 'wifi-info');
+      final ok = await WiFiDetailsBridge().runShortcut('WLAN Pros Live');
 
       expect(ok, isTrue);
       expect(seen!.method, 'runShortcut');
-      // The name + tool are passed as a map; the native side URL-encodes them
-      // into the run-shortcut x-callback URL, encoding the tool into the
-      // x-success / x-error callback targets so the return deep-links back to
-      // the originating tool screen (TICKET-03 UX fix).
-      expect(seen!.arguments, <String, String>{
-        'name': 'WLAN Pros Wi-Fi',
-        'tool': 'wifi-info',
-      });
+      // ONLY the name is passed; the native side builds the PLAIN
+      // `shortcuts://run-shortcut?name=…` URL (NOT the x-callback form, which
+      // would make the app wait for the never-finishing Live Shortcut).
+      final args = seen!.arguments as Map;
+      expect(args['name'], 'WLAN Pros Live');
+      // No tool / x-callback / x-success plumbing rides along anymore.
+      expect(args.containsKey('tool'), isFalse);
+      expect(args.keys.length, 1);
+      // Defensive: nothing in the call mentions x-callback.
+      expect(args.toString().contains('x-callback'), isFalse);
     });
 
     test('returns false when the platform could not open Shortcuts', () async {
       messenger.setMockMethodCallHandler(channel, (call) async => false);
-      expect(
-        await WiFiDetailsBridge().runShortcut('X', tool: 'wifi-info'),
-        isFalse,
-      );
+      expect(await WiFiDetailsBridge().runShortcut('X'), isFalse);
     });
 
     test('returns false when the plugin is missing (off-iOS)', () async {
       messenger.setMockMethodCallHandler(channel, null);
-      expect(
-        await WiFiDetailsBridge().runShortcut('X', tool: 'wifi-info'),
-        isFalse,
-      );
+      expect(await WiFiDetailsBridge().runShortcut('X'), isFalse);
     });
   });
 }

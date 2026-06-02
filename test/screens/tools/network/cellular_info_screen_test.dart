@@ -1,12 +1,15 @@
-// Cellular Information screen — widget tests (TICKET-02).
+// Cellular Information screen — widget tests (iOS Live-only).
 //
 // The tool selects its data source per platform behind a seam, so the tests
 // drive each source explicitly via [CellularInfoScreen.sourceOverride] plus an
 // injected fake bridge — no real platform channel is touched.
 //
 // Covers the state matrix from SOP-007 §5:
-//   * iOS source: needs-install empty state, one-shot success cards (the five
-//     fields), and the honest signal-bars footnote.
+//   * iOS source (LIVE ONLY): the idle "Tap Start" state; Start sets the shared
+//     monitoring flag + fires the PLAIN combined-Live trigger; stream
+//     consumption renders live carrier / bars updates (bars stay 0..4, never
+//     dBm; no fabricated grade); Stop clears the flag and freezes the last
+//     values; dispose clears the flag (Vera regression).
 //   * macOS / unsupported native: the explicit "not available on this platform"
 //     state (hard requirement — never a silent empty).
 //   * web source: download-the-app fallback.
@@ -20,12 +23,11 @@ import 'package:wlan_pros_toolbox/screens/tools/network/network_unavailable_view
 import 'package:wlan_pros_toolbox/services/network/cellular_info.dart';
 import 'package:wlan_pros_toolbox/services/network/cellular_info_adapter.dart';
 import 'package:wlan_pros_toolbox/services/network/cellular_info_bridge.dart';
-import 'package:wlan_pros_toolbox/services/network/cellular_shortcuts_config.dart';
-import 'package:wlan_pros_toolbox/services/network/shortcut_trigger_result.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_live_shortcuts_config.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
-/// A fake iOS Shortcuts bridge: returns a queued reading + install flag without
-/// a platform channel, and records the one-tap trigger call (TICKET-03).
+/// A fake iOS Shortcuts bridge: feeds the Live streaming flow without a platform
+/// channel, and records the PLAIN combined-Live trigger call.
 class _FakeBridge implements CellularInfoBridge {
   _FakeBridge({
     this.everReceived = false,
@@ -39,12 +41,12 @@ class _FakeBridge implements CellularInfoBridge {
 
   /// What [runShortcut] returns (false => could not open Shortcuts).
   bool runShortcutResult;
+
+  /// Records the exact name passed to [runShortcut] for assertions. The PLAIN
+  /// trigger carries ONLY the name (no tool / no x-callback).
   String? lastRunShortcutName;
-  String? lastRunShortcutTool;
   int runShortcutCalls = 0;
 
-  final StreamController<ShortcutTriggerResult> triggerController =
-      StreamController<ShortcutTriggerResult>.broadcast();
   final StreamController<CellularInfo> updatesController =
       StreamController<CellularInfo>.broadcast();
 
@@ -66,21 +68,11 @@ class _FakeBridge implements CellularInfoBridge {
   Future<bool> openUrl(String url) async => true;
 
   @override
-  Future<bool> runShortcut(String name, {required String tool}) async {
+  Future<bool> runShortcut(String name) async {
     runShortcutCalls++;
     lastRunShortcutName = name;
-    lastRunShortcutTool = tool;
     return runShortcutResult;
   }
-
-  @override
-  Stream<ShortcutTriggerEvent> get triggerEvents =>
-      triggerController.stream.map(
-        (r) => ShortcutTriggerEvent(tool: 'cellular-info', result: r),
-      );
-
-  @override
-  Stream<ShortcutTriggerResult> get triggerResults => triggerController.stream;
 
   @override
   Stream<CellularInfo> get updates => updatesController.stream;
@@ -97,8 +89,8 @@ CellularInfo _sample() => const CellularInfo(
 void main() {
   Widget host(Widget child) => MaterialApp(theme: AppTheme.dark(), home: child);
 
-  group('CellularInfoScreen — iOS source', () {
-    testWidgets('needs-install empty state offers Get Reading + Install',
+  group('CellularInfoScreen — iOS source (Live only)', () {
+    testWidgets('idle state offers Start and the begin-live hint',
         (tester) async {
       await tester.pumpWidget(host(
         CellularInfoScreen(
@@ -107,13 +99,32 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      expect(find.text('No cellular data yet'), findsOneWidget);
-      // "Get Reading" is the primary trigger; "Install Shortcut" is secondary.
-      expect(find.text('Get Reading'), findsOneWidget);
-      expect(find.text('Install Shortcut'), findsOneWidget);
+      // Live is the only iOS mode: a clean idle "Tap Start" state, no Snapshot
+      // toggle and no Get Reading button.
+      expect(find.text('Start'), findsOneWidget);
+      expect(find.textContaining('Tap Start to begin live readings'),
+          findsOneWidget);
+      expect(find.text('Snapshot'), findsNothing);
+      expect(find.text('Get Reading'), findsNothing);
     });
 
-    testWidgets('success shows the five fields and the signal footnote',
+    testWidgets(
+        'install/setup hint SHOWS on first-time setup (never received a payload)',
+        (tester) async {
+      await tester.pumpWidget(host(
+        CellularInfoScreen(
+          sourceOverride: CellularInfoSource.iosShortcuts,
+          iosBridge: _FakeBridge(everReceived: false),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      // Genuine first-time setup: the companion-Shortcut install/how-to note is
+      // shown so new users know to install it and tap Start.
+      expect(find.textContaining('WLAN Pros Live'), findsOneWidget);
+    });
+
+    testWidgets(
+        'install/setup hint HIDDEN once the app has ever received a payload',
         (tester) async {
       await tester.pumpWidget(host(
         CellularInfoScreen(
@@ -122,209 +133,46 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-
-      // The four card titles.
-      expect(find.text('Carrier'), findsWidgets);
-      expect(find.text('Radio'), findsOneWidget);
-      expect(find.text('Signal'), findsOneWidget);
-      expect(find.text('Network'), findsOneWidget);
-
-      // The values.
-      expect(find.text('Verizon'), findsOneWidget);
-      expect(find.text('5G NR'), findsOneWidget);
-      expect(find.text('US'), findsOneWidget);
-      expect(find.text('No'), findsOneWidget); // roaming = false
-
-      // Signal bars render as "N of 4" — NEVER a dBm/RSRP value. The bar value
-      // text must be exactly "3 of 4"; no bar value carries a dBm/RSRP unit.
-      expect(find.text('3 of 4'), findsOneWidget);
-      expect(find.text('3 dBm'), findsNothing);
-      expect(find.text('-3 dBm'), findsNothing);
-      expect(find.textContaining('RSRP: '), findsNothing);
-
-      // The honest footnote stating bars are the only signal indicator.
-      expect(
-        find.textContaining('Apple does not expose a raw signal reading'),
-        findsOneWidget,
-      );
+      // The user clearly has the Shortcut working (hasEverReceived = true), so
+      // the install/setup note is noise and is gone permanently.
+      expect(find.textContaining('WLAN Pros Live'), findsNothing);
     });
 
-    testWidgets('missing fields render an honest Unavailable', (tester) async {
-      await tester.pumpWidget(host(
-        CellularInfoScreen(
-          sourceOverride: CellularInfoSource.iosShortcuts,
-          iosBridge: _FakeBridge(
-            everReceived: true,
-            latest: const CellularInfo(carrier: 'AT&T'),
-          ),
-        ),
-      ));
-      await tester.pumpAndSettle();
-      expect(find.text('AT&T'), findsOneWidget);
-      // Radio Technology / Country Code / Roaming all absent -> Unavailable.
-      expect(find.text('Unavailable'), findsWidgets);
-    });
-
-    testWidgets('Get Reading fires runShortcut with the canonical name',
-        (tester) async {
-      final _FakeBridge bridge =
-          _FakeBridge(everReceived: true, latest: _sample());
-      await tester.pumpWidget(host(
-        CellularInfoScreen(
-          sourceOverride: CellularInfoSource.iosShortcuts,
-          iosBridge: bridge,
-        ),
-      ));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Get Reading'));
-      await tester.pump();
-      expect(bridge.runShortcutCalls, 1);
-      // The EXACT canonical Shortcut name the published Shortcut must match.
-      expect(
-        bridge.lastRunShortcutName,
-        CellularShortcutsConfig.kCompanionShortcutName,
-      );
-      expect(bridge.lastRunShortcutName, 'WLAN Pros Cellular');
-      // The originating tool id is carried so the x-callback return can
-      // deep-link back to THIS screen on a cold relaunch (TICKET-03 UX fix).
-      expect(bridge.lastRunShortcutTool, 'cellular-info');
-    });
-
-    testWidgets('x-error return shows the honest error + install fallback',
-        (tester) async {
-      final _FakeBridge bridge =
-          _FakeBridge(everReceived: true, latest: _sample());
-      await tester.pumpWidget(host(
-        CellularInfoScreen(
-          sourceOverride: CellularInfoSource.iosShortcuts,
-          iosBridge: bridge,
-        ),
-      ));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Get Reading'));
-      await tester.pump();
-      bridge.triggerController.add(ShortcutTriggerResult.error);
-      await tester.pumpAndSettle();
-      expect(find.textContaining('Could not get a reading'), findsOneWidget);
-      expect(find.text('Install the Shortcut'), findsOneWidget);
-    });
-
-    testWidgets('x-success return refreshes from the App Group payload',
-        (tester) async {
-      final _FakeBridge bridge =
-          _FakeBridge(everReceived: true, latest: _sample());
-      await tester.pumpWidget(host(
-        CellularInfoScreen(
-          sourceOverride: CellularInfoSource.iosShortcuts,
-          iosBridge: bridge,
-        ),
-      ));
-      await tester.pumpAndSettle();
-      expect(find.text('Verizon'), findsOneWidget);
-
-      await tester.tap(find.text('Get Reading'));
-      await tester.pump();
-      // The App Group payload updates while in Shortcuts; x-success re-reads it.
-      bridge.latest = const CellularInfo(carrier: 'T-Mobile');
-      bridge.triggerController.add(ShortcutTriggerResult.success);
-      await tester.pumpAndSettle();
-
-      expect(find.text('T-Mobile'), findsOneWidget);
-      expect(find.text('Verizon'), findsNothing);
-      expect(find.textContaining('Could not get a reading'), findsNothing);
-    });
-
-    testWidgets('runShortcut failing to open shows the error immediately',
-        (tester) async {
-      final _FakeBridge bridge = _FakeBridge(
-        everReceived: true,
-        latest: _sample(),
-        runShortcutResult: false,
-      );
-      await tester.pumpWidget(host(
-        CellularInfoScreen(
-          sourceOverride: CellularInfoSource.iosShortcuts,
-          iosBridge: bridge,
-        ),
-      ));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Get Reading'));
-      await tester.pumpAndSettle();
-      expect(find.textContaining('Could not get a reading'), findsOneWidget);
-    });
-
-    testWidgets(
-        'app resume with no callback unsticks the triggering state',
-        (tester) async {
-      // Regression (Vera priority-1): the user taps Get Reading, lands in
-      // Shortcuts, then back-swipes out WITHOUT the x-callback ever firing. On
-      // resume the screen must clear _triggering so the button re-enables and
-      // the spinner never sticks.
-      final _FakeBridge bridge =
-          _FakeBridge(everReceived: true, latest: _sample());
-      await tester.pumpWidget(host(
-        CellularInfoScreen(
-          sourceOverride: CellularInfoSource.iosShortcuts,
-          iosBridge: bridge,
-        ),
-      ));
-      await tester.pumpAndSettle();
-
-      // Tap Get Reading -> the screen enters the triggering state (spinner +
-      // "Getting reading…"; the idle "Get Reading" label is gone).
-      await tester.tap(find.text('Get Reading'));
-      await tester.pump();
-      expect(find.text('Getting reading…'), findsOneWidget);
-      expect(find.text('Get Reading'), findsNothing);
-
-      // Simulate the back-swipe return: an app RESUME with NO trigger callback.
-      tester.binding
-          .handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-      await tester.pumpAndSettle();
-
-      // Triggering cleared: the idle button is back, the spinner is gone, and
-      // no error banner was raised (the user simply backed out).
-      expect(find.text('Get Reading'), findsOneWidget);
-      expect(find.text('Getting reading…'), findsNothing);
-      expect(find.textContaining('Could not get a reading'), findsNothing);
-    });
-  });
-
-  group('CellularInfoScreen — iOS Live mode (TICKET-05)', () {
-    Future<void> pumpLive(WidgetTester tester, _FakeBridge bridge) async {
-      await tester.pumpWidget(host(
-        CellularInfoScreen(
-          sourceOverride: CellularInfoSource.iosShortcuts,
-          iosBridge: bridge,
-        ),
-      ));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Live'));
-      await tester.pumpAndSettle();
-    }
-
-    testWidgets('Start sets the monitoring flag and fires the recursive trigger',
+    testWidgets('Start sets the flag and fires the PLAIN combined-Live trigger',
         (tester) async {
       final bridge = _FakeBridge(everReceived: true, latest: _sample());
-      await pumpLive(tester, bridge);
+      await tester.pumpWidget(host(
+        CellularInfoScreen(
+          sourceOverride: CellularInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        ),
+      ));
+      await tester.pumpAndSettle();
 
       await tester.tap(find.text('Start'));
       await tester.pumpAndSettle();
 
       expect(bridge.monitoringActive, isTrue);
+      // Start fires the run-shortcut trigger ONCE, with the ONE canonical
+      // combined-Live name shared with the Wi-Fi tool (the bridge-level test
+      // asserts the URL is the plain, non-x-callback form).
       expect(bridge.runShortcutCalls, 1);
-      expect(
-        bridge.lastRunShortcutName,
-        CellularShortcutsConfig.kCompanionShortcutName,
-      );
-      expect(bridge.lastRunShortcutTool, 'cellular-info');
+      expect(bridge.lastRunShortcutName,
+          WifiLiveShortcutsConfig.kLiveShortcutName);
+      expect(bridge.lastRunShortcutName, 'WLAN Pros Live');
       expect(find.text('Stop'), findsOneWidget);
     });
 
     testWidgets('stream consumption renders live carrier / bars updates',
         (tester) async {
       final bridge = _FakeBridge(everReceived: true, latest: _sample());
-      await pumpLive(tester, bridge);
+      await tester.pumpWidget(host(
+        CellularInfoScreen(
+          sourceOverride: CellularInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        ),
+      ));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Start'));
       await tester.pumpAndSettle();
 
@@ -337,24 +185,88 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      // The live value updated from the streamed payload, bars stay 0..4.
+      // The live value updated from the streamed payload; bars stay 0..4 and are
+      // NEVER a dBm/RSRP value. Cellular is never graded.
       expect(find.text('T-Mobile'), findsOneWidget);
       expect(find.text('2 of 4'), findsOneWidget);
       expect(find.text('2 dBm'), findsNothing);
+      // The honest signal footnote is present in the live surface.
+      expect(
+        find.textContaining('Apple does not expose a raw signal reading'),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('Stop clears the monitoring flag', (tester) async {
+    testWidgets('Stop clears the monitoring flag and freezes the last values',
+        (tester) async {
       final bridge = _FakeBridge(everReceived: true, latest: _sample());
-      await pumpLive(tester, bridge);
+      await tester.pumpWidget(host(
+        CellularInfoScreen(
+          sourceOverride: CellularInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        ),
+      ));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Start'));
       await tester.pumpAndSettle();
       expect(bridge.monitoringActive, isTrue);
 
+      bridge.updatesController.add(const CellularInfo(carrier: 'T-Mobile'));
+      await tester.pumpAndSettle();
+
       await tester.tap(find.text('Stop'));
       await tester.pumpAndSettle();
 
+      // Flag cleared; the idle Start control is back; the last value stays frozen
+      // on screen (the snapshot).
       expect(bridge.monitoringActive, isFalse);
       expect(find.text('Start'), findsOneWidget);
+      expect(find.text('T-Mobile'), findsOneWidget);
+    });
+
+    testWidgets('Start failing to open the Shortcut clears the flag + errors',
+        (tester) async {
+      final bridge = _FakeBridge(
+        everReceived: true,
+        latest: _sample(),
+        runShortcutResult: false,
+      );
+      await tester.pumpWidget(host(
+        CellularInfoScreen(
+          sourceOverride: CellularInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        ),
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+
+      expect(bridge.monitoringActive, isFalse);
+      expect(find.textContaining('Could not start live streaming'),
+          findsOneWidget);
+      expect(find.text('Start'), findsOneWidget);
+    });
+
+    testWidgets('dispose clears the monitoring flag (Vera regression)',
+        (tester) async {
+      final bridge = _FakeBridge(everReceived: true, latest: _sample());
+      await tester.pumpWidget(host(
+        CellularInfoScreen(
+          sourceOverride: CellularInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        ),
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+      expect(bridge.monitoringActive, isTrue);
+
+      // Tear the screen down. Dispose must clear the shared flag so the recursive
+      // Shortcut stops and the Wi-Fi tool is never stranded as "streaming".
+      await tester.pumpWidget(host(const SizedBox.shrink()));
+      await tester.pumpAndSettle();
+
+      expect(bridge.monitoringActive, isFalse);
     });
   });
 

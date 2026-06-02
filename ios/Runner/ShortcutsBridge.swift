@@ -59,104 +59,26 @@ enum ShortcutsBridge {
   /// engine can react immediately. Plain Darwin names are process-global.
   static let darwinNotificationName = "com.wlanpros.toolbox.shortcuts_bridge.delivered"
 
-  // MARK: - One-tap trigger x-callback (TICKET-03)
+  // MARK: - Live streaming trigger (plain, fire-and-forget)
 
-  /// Custom URL scheme registered in Info.plist (CFBundleURLSchemes). The
-  /// run-shortcut x-callback returns control to the app via this scheme.
-  static let callbackScheme = "wlanprostoolbox"
-
-  /// Host the x-callback returns to (`wlanprostoolbox://reading?...`). A single
-  /// host now carries BOTH the originating tool and the ok/err status as query
-  /// items so the app can deep-link the user straight back to the tool screen
-  /// they triggered from — even after iOS cold-relaunches the app during the
-  /// Shortcuts run (the killed-app case, TICKET-03 UX fix). The legacy bare
-  /// `://ok` / `://err` hosts are still honored by `parseCallback` for safety.
-  static let callbackReadingHost = "reading"
-
-  /// Query-item key carrying the originating tool id (e.g. `wifi-info`,
-  /// `cellular-info`) so the app routes the return to that tool's screen.
-  static let callbackToolKey = "tool"
-
-  /// Query-item key carrying the run status (`ok` | `err`).
-  static let callbackStatusKey = "status"
-
-  /// Status values on the `status=` query item.
-  static let callbackStatusOk = "ok"
-  static let callbackStatusErr = "err"
-
-  /// Legacy bare-host success value (`wlanprostoolbox://ok`). Kept so an older
-  /// published Shortcut whose callbacks were not re-encoded still resolves.
-  static let callbackSuccessHost = "ok"
-
-  /// Legacy bare-host error value (`wlanprostoolbox://err`).
-  static let callbackErrorHost = "err"
-
-  /// A parsed x-callback return: which tool fired it (nil if the legacy bare
-  /// host was used) and whether the run succeeded.
-  struct Callback {
-    let tool: String?
-    let isError: Bool
-  }
-
-  /// Builds the Shortcuts run-shortcut x-callback URL for [name], encoding the
-  /// originating [tool] into the success/error callback targets so the return
-  /// can deep-link back to that tool's screen. URL-encodes the Shortcut name and
-  /// both callback URLs. Returns nil if the name cannot be percent-encoded (it
-  /// always can in practice).
+  /// Builds the PLAIN, fire-and-forget Shortcuts run-shortcut URL for [name]:
   ///
-  /// Result:
-  ///   shortcuts://x-callback-url/run-shortcut?name=<enc>
-  ///     &x-success=<enc wlanprostoolbox://reading?tool=<tool>&status=ok>
-  ///     &x-error=<enc   wlanprostoolbox://reading?tool=<tool>&status=err>
-  static func runShortcutURL(name: String, tool: String) -> URL? {
+  ///   shortcuts://run-shortcut?name=<URL-encoded name>
+  ///
+  /// This is deliberately NOT the `x-callback-url` form. The x-callback variant
+  /// makes the firing app WAIT for the Shortcut to finish and return control via
+  /// an `x-success` URL. A continuous / looping Live Shortcut never finishes, so
+  /// the app would hang ("stuck, very slow, nothing happens"). The plain form
+  /// hands the Shortcut off and returns immediately; the app then passively
+  /// consumes the App Group + Darwin stream the recursive Shortcut feeds. The
+  /// name is percent-encoded by URLComponents. Returns nil only if the name
+  /// cannot be encoded (never in practice).
+  static func runShortcutURL(name: String) -> URL? {
     var components = URLComponents()
     components.scheme = "shortcuts"
-    components.host = "x-callback-url"
-    components.path = "/run-shortcut"
-    components.queryItems = [
-      URLQueryItem(name: "name", value: name),
-      URLQueryItem(name: "x-success", value: callbackURLString(tool: tool, status: callbackStatusOk)),
-      URLQueryItem(name: "x-error", value: callbackURLString(tool: tool, status: callbackStatusErr)),
-    ]
+    components.host = "run-shortcut"
+    components.queryItems = [URLQueryItem(name: "name", value: name)]
     return components.url
-  }
-
-  /// Builds one return URL string (`wlanprostoolbox://reading?tool=<tool>&status=<status>`),
-  /// URL-encoding the tool + status query items. Used as the x-success / x-error
-  /// target embedded in the run-shortcut URL.
-  static func callbackURLString(tool: String, status: String) -> String {
-    var components = URLComponents()
-    components.scheme = callbackScheme
-    components.host = callbackReadingHost
-    components.queryItems = [
-      URLQueryItem(name: callbackToolKey, value: tool),
-      URLQueryItem(name: callbackStatusKey, value: status),
-    ]
-    return components.url?.absoluteString
-      ?? "\(callbackScheme)://\(callbackReadingHost)?\(callbackToolKey)=\(tool)&\(callbackStatusKey)=\(status)"
-  }
-
-  /// Parses a return URL into a [Callback], or nil if it is not one of ours.
-  /// Handles the new `reading?tool=&status=` form AND the legacy bare `ok`/`err`
-  /// hosts (treated as tool-less, so the app falls back to refreshing whatever
-  /// trigger screen is already listening).
-  static func parseCallback(_ url: URL) -> Callback? {
-    guard url.scheme == callbackScheme else { return nil }
-    switch url.host {
-    case callbackReadingHost:
-      let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
-      let tool = items?.first(where: { $0.name == callbackToolKey })?.value
-      let status = items?.first(where: { $0.name == callbackStatusKey })?.value
-      return Callback(tool: tool, isError: status == callbackStatusErr)
-    case callbackErrorHost:
-      return Callback(tool: nil, isError: true)
-    case callbackSuccessHost:
-      return Callback(tool: nil, isError: false)
-    default:
-      // Any other host on our scheme: treat as a tool-less success so the app
-      // still re-reads the App Group rather than dropping the return.
-      return Callback(tool: nil, isError: false)
-    }
   }
 
   /// Shared defaults for the App Group, or nil if the capability is missing
@@ -185,21 +107,34 @@ enum ShortcutsBridge {
     sharedDefaults?.bool(forKey: hasReceivedPayloadKey) ?? false
   }
 
-  /// Persist a CELLULAR payload and notify any foregrounded listener. Called
-  /// from `ReceiveCellularDetailsIntent.perform()`. Raises the honest cellular
-  /// install-state flag the first time a cellular payload arrives. Reuses the
-  /// same Darwin notification as Wi-Fi so a foregrounded engine wakes; the Dart
-  /// side reads the cellular key specifically.
-  static func storeCellular(json: String) {
-    sharedDefaults?.set(json, forKey: latestCellularPayloadKey)
-    sharedDefaults?.set(true, forKey: hasReceivedCellularPayloadKey)
-    sharedDefaults?.synchronize()
-    postDarwinNotification()
-  }
-
   /// Read the most recent cellular payload, or nil if none stored.
   static func readLatestCellular() -> String? {
     sharedDefaults?.string(forKey: latestCellularPayloadKey)
+  }
+
+  /// Persist BOTH a Wi-Fi and a cellular payload from ONE combined Live cycle
+  /// and notify listeners with a SINGLE Darwin post. Called from
+  /// `ReceiveLiveDetailsIntent.perform()`: the combined "WLAN Pros Live"
+  /// Shortcut gathers Wi-Fi + cellular each cycle and delivers both as one JSON
+  /// to the app, which splits it into the two App Group keys the existing
+  /// `wifi_details_bridge` / `cellular_info_bridge` already parse. Either side
+  /// may be nil for a cycle (e.g. Wi-Fi off, or no cellular radio): a nil side
+  /// is left untouched so the last good value for that side stays on screen,
+  /// and its install-state flag is raised only when a real payload is written.
+  /// One notification wakes BOTH foregrounded observers; each re-reads its own
+  /// key.
+  static func storeLive(wifiJson: String?, cellularJson: String?) {
+    let defaults = sharedDefaults
+    if let wifi = wifiJson, !wifi.isEmpty {
+      defaults?.set(wifi, forKey: latestPayloadKey)
+      defaults?.set(true, forKey: hasReceivedPayloadKey)
+    }
+    if let cellular = cellularJson, !cellular.isEmpty {
+      defaults?.set(cellular, forKey: latestCellularPayloadKey)
+      defaults?.set(true, forKey: hasReceivedCellularPayloadKey)
+    }
+    defaults?.synchronize()
+    postDarwinNotification()
   }
 
   /// Honest install-state for the cellular Shortcut: has any cellular payload

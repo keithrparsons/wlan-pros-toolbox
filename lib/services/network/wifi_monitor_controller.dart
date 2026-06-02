@@ -94,15 +94,17 @@ class WifiMonitorController extends ChangeNotifier {
     _safeNotify();
   }
 
-  /// Begins live monitoring (TICKET-05). The app never loops itself: the
-  /// continuous stream comes from a RECURSIVE companion Shortcut. Start does two
-  /// things, in order:
+  /// Begins live monitoring. The app never loops itself: the continuous stream
+  /// comes from the RECURSIVE combined companion Shortcut. Start does two things,
+  /// in order:
   ///   1. raises the App Group monitoring-active flag so the Shortcut's
   ///      `ShouldContinueMonitoringIntent` returns "keep going", and
-  ///   2. fires the run-shortcut x-callback trigger ONCE to kick off the
-  ///      recursion ([triggerShortcutName] / [triggerTool]); each cycle the
-  ///      Shortcut delivers a sample via the background Receive intent, posts a
-  ///      Darwin notification, checks the flag, waits, and runs itself again.
+  ///   2. fires the PLAIN, fire-and-forget run-shortcut trigger ONCE to kick off
+  ///      the recursion ([triggerShortcutName]); each cycle the Shortcut delivers
+  ///      a sample via the background `ReceiveLiveDetailsIntent`, posts a Darwin
+  ///      notification, checks the flag, waits, and runs itself again. The plain
+  ///      trigger does NOT make the app wait for the Shortcut to finish, so a
+  ///      looping Shortcut never hangs the app.
   /// The app's only job from here is to passively consume [WiFiDetailsBridge.updates].
   ///
   /// The flag write and the stream subscription are kicked off synchronously
@@ -110,20 +112,17 @@ class WifiMonitorController extends ChangeNotifier {
   /// microtask. When [triggerShortcutName] is null the trigger is skipped (the
   /// recursion is assumed already running, e.g. a relaunch-resumed loop).
   ///
-  /// Returns false when the trigger could not be opened (Shortcuts missing /
-  /// the loop Shortcut not installed); the caller surfaces the honest error and
-  /// the install affordance. Returns true when no trigger was requested or the
-  /// trigger opened.
-  Future<bool> startMonitoring({
-    String? triggerShortcutName,
-    String triggerTool = 'wifi-info',
-  }) async {
+  /// Returns false when the trigger could not be OPENED (Shortcuts missing / the
+  /// Live Shortcut not installed); the caller surfaces the honest error and the
+  /// install affordance. Returns true when no trigger was requested or iOS opened
+  /// the trigger URL.
+  Future<bool> startMonitoring({String? triggerShortcutName}) async {
     final Future<void> write = _bridge.setMonitoringActive(true);
     _startListening();
     _safeNotify();
     await write;
     if (triggerShortcutName == null) return true;
-    return _bridge.runShortcut(triggerShortcutName, tool: triggerTool);
+    return _bridge.runShortcut(triggerShortcutName);
   }
 
   /// Stops live monitoring: fires the App Group flag clear, flips the phase, and

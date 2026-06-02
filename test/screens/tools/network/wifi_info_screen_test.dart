@@ -1,4 +1,4 @@
-// Wi-Fi Information screen — widget tests (TICKET-04, consolidated tool).
+// Wi-Fi Information screen — widget tests (consolidated tool; iOS Live-only).
 //
 // The one Wi-Fi tool selects its data source per platform behind a seam, so the
 // tests drive each source explicitly via [WifiInfoScreen.sourceOverride] plus an
@@ -6,9 +6,11 @@
 //
 // Covers the state matrix from SOP-007 §5 across BOTH platform paths:
 //   * macOS source: loading → success cards, Wi-Fi-off, location-permission
-//     card, channel-error card + retry.
-//   * iOS source: needs-install empty state, success cards with the monitoring
-//     control bar, Start/Stop, the honest per-field "not reported by iOS" note.
+//     card, channel-error card + retry. (Unchanged — macOS uses CoreWLAN.)
+//   * iOS source (LIVE ONLY): the idle "Tap Start" state; Start sets the
+//     monitoring flag + fires the PLAIN combined-Live trigger; stream
+//     consumption renders the live charts; Stop clears the flag and freezes the
+//     last values; dispose clears the flag (Vera regression).
 //   * web source: download-the-app fallback.
 //   * unsupported native: honest "coming in a later update" state.
 
@@ -16,16 +18,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wlan_pros_toolbox/router/shortcut_deep_link_router.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/network_unavailable_view.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/wifi_info_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
-import 'package:wlan_pros_toolbox/services/network/shortcut_trigger_result.dart';
-import 'package:wlan_pros_toolbox/services/network/shortcuts_config.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_live_shortcuts_config.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
 ConnectedAp _macSample({
@@ -81,7 +81,7 @@ class _FakeMacAdapter implements WifiInfoAdapter {
   }
 }
 
-/// A fake iOS Shortcuts bridge driving the one-shot trigger flow without a
+/// A fake iOS Shortcuts bridge driving the Live streaming flow without a
 /// platform channel.
 class _FakeBridge implements WiFiDetailsBridge {
   _FakeBridge({
@@ -97,15 +97,13 @@ class _FakeBridge implements WiFiDetailsBridge {
   /// What [runShortcut] returns (false => could not open Shortcuts).
   bool runShortcutResult;
 
-  /// Records the exact name + tool passed to [runShortcut] for assertions.
+  /// Records the exact name passed to [runShortcut] for assertions. The PLAIN
+  /// trigger carries ONLY the name (no tool / no x-callback).
   String? lastRunShortcutName;
-  String? lastRunShortcutTool;
   int runShortcutCalls = 0;
 
   final StreamController<WiFiDetails> controller =
       StreamController<WiFiDetails>.broadcast();
-  final StreamController<ShortcutTriggerResult> triggerController =
-      StreamController<ShortcutTriggerResult>.broadcast();
 
   @override
   Future<bool> hasEverReceivedPayload() async => everReceived;
@@ -125,21 +123,11 @@ class _FakeBridge implements WiFiDetailsBridge {
   Future<bool> openUrl(String url) async => true;
 
   @override
-  Future<bool> runShortcut(String name, {required String tool}) async {
+  Future<bool> runShortcut(String name) async {
     runShortcutCalls++;
     lastRunShortcutName = name;
-    lastRunShortcutTool = tool;
     return runShortcutResult;
   }
-
-  @override
-  Stream<ShortcutTriggerEvent> get triggerEvents =>
-      triggerController.stream.map(
-        (r) => ShortcutTriggerEvent(tool: 'wifi-info', result: r),
-      );
-
-  @override
-  Stream<ShortcutTriggerResult> get triggerResults => triggerController.stream;
 
   @override
   Stream<WiFiDetails> get updates => controller.stream;
@@ -209,8 +197,8 @@ void main() {
     });
   });
 
-  group('WifiInfoScreen — iOS source (one-tap trigger, TICKET-03)', () {
-    testWidgets('needs-install empty state offers Get Reading + Install',
+  group('WifiInfoScreen — iOS source (Live only)', () {
+    testWidgets('idle state offers Start and the begin-live hint',
         (tester) async {
       await tester.pumpWidget(host(
         WifiInfoScreen(
@@ -219,212 +207,75 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      expect(find.text('No Wi-Fi data yet'), findsOneWidget);
-      // "Get Reading" is the primary trigger; "Install Shortcut" is secondary.
-      expect(find.text('Get Reading'), findsOneWidget);
-      expect(find.text('Install Shortcut'), findsOneWidget);
-    });
-
-    testWidgets('success shows Get Reading + cards + honest width note',
-        (tester) async {
-      final WiFiDetails sample = WiFiDetails.fromMap(const <String, dynamic>{
-        'SSID': 'KeithNet',
-        'BSSID': 'a4:83:e7:00:11:22',
-        'Channel': 36,
-        'RSSI': -50,
-        'Noise': -95,
-        'Standard': '802.11ax - Wi-Fi 6',
-        'RX Rate': 780,
-        'TX Rate': 866,
-      });
-      await tester.pumpWidget(host(
-        WifiInfoScreen(
-          sourceOverride: WifiInfoSource.iosShortcuts,
-          iosBridge: _FakeBridge(everReceived: true, latest: sample),
-        ),
-      ));
-      await tester.pumpAndSettle();
-      expect(find.text('KeithNet'), findsOneWidget);
-      // The one-tap trigger is present on the success screen.
-      expect(find.text('Get Reading'), findsOneWidget);
-      // iOS does not report channel width — honest per-field note.
-      expect(find.text('Not reported by iOS'), findsOneWidget);
-    });
-
-    testWidgets('Get Reading fires runShortcut with the canonical name',
-        (tester) async {
-      final _FakeBridge bridge = _FakeBridge(
-        everReceived: true,
-        latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
-      );
-      await tester.pumpWidget(host(
-        WifiInfoScreen(
-          sourceOverride: WifiInfoSource.iosShortcuts,
-          iosBridge: bridge,
-        ),
-      ));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Get Reading'));
-      await tester.pump(); // start the async trigger
-      expect(bridge.runShortcutCalls, 1);
-      // The trigger uses the EXACT canonical Shortcut name the published
-      // Shortcut must match (the native side URL-encodes it into the
-      // run-shortcut x-callback URL).
-      expect(bridge.lastRunShortcutName, ShortcutsConfig.kCompanionShortcutName);
-      expect(bridge.lastRunShortcutName, 'WLAN Pros Wi-Fi');
-      // The originating tool id is carried so the x-callback return can
-      // deep-link back to THIS screen on a cold relaunch (TICKET-03 UX fix).
-      expect(bridge.lastRunShortcutTool, 'wifi-info');
-    });
-
-    testWidgets('x-success return refreshes from the App Group payload',
-        (tester) async {
-      // Start with one reading; the trigger return delivers a newer payload via
-      // readLatest (mirrors the native re-read on resume).
-      final _FakeBridge bridge = _FakeBridge(
-        everReceived: true,
-        latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'OldNet'}),
-      );
-      await tester.pumpWidget(host(
-        WifiInfoScreen(
-          sourceOverride: WifiInfoSource.iosShortcuts,
-          iosBridge: bridge,
-        ),
-      ));
-      await tester.pumpAndSettle();
-      expect(find.text('OldNet'), findsOneWidget);
-
-      // Fire the trigger; the App Group payload updates while the app is in
-      // Shortcuts, then the x-success callback arrives. The success handler
-      // re-reads the App Group (readLatest now returns the fresh payload).
-      await tester.tap(find.text('Get Reading'));
-      await tester.pump();
-      bridge.latest =
-          WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'FreshNet'});
-      bridge.triggerController.add(ShortcutTriggerResult.success);
-      await tester.pumpAndSettle();
-
-      // The fresh reading rendered, the stale one is gone, and no error banner.
-      expect(find.text('FreshNet'), findsOneWidget);
-      expect(find.text('OldNet'), findsNothing);
-      expect(find.textContaining('Could not get a reading'), findsNothing);
-    });
-
-    testWidgets('x-error return shows the honest error + install fallback',
-        (tester) async {
-      final _FakeBridge bridge = _FakeBridge(
-        everReceived: true,
-        latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
-      );
-      await tester.pumpWidget(host(
-        WifiInfoScreen(
-          sourceOverride: WifiInfoSource.iosShortcuts,
-          iosBridge: bridge,
-        ),
-      ));
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('Get Reading'));
-      await tester.pump();
-      // The Shortcut errored / the user cancelled.
-      bridge.triggerController.add(ShortcutTriggerResult.error);
-      await tester.pumpAndSettle();
-
-      // Honest error message + the install affordance as the fallback.
-      expect(find.textContaining('Could not get a reading'), findsOneWidget);
-      expect(find.text('Install the Shortcut'), findsOneWidget);
-    });
-
-    testWidgets('runShortcut failing to open shows the error immediately',
-        (tester) async {
-      final _FakeBridge bridge = _FakeBridge(
-        everReceived: true,
-        latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
-        runShortcutResult: false, // Shortcuts app could not be opened
-      );
-      await tester.pumpWidget(host(
-        WifiInfoScreen(
-          sourceOverride: WifiInfoSource.iosShortcuts,
-          iosBridge: bridge,
-        ),
-      ));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Get Reading'));
-      await tester.pumpAndSettle();
-      // No x-callback will ever arrive when the open failed; the error shows now.
-      expect(find.textContaining('Could not get a reading'), findsOneWidget);
+      // The only iOS mode is Live: a clean idle "Tap Start" state, no Snapshot
+      // toggle and no Get Reading button.
+      expect(find.text('Start'), findsOneWidget);
+      expect(find.textContaining('Tap Start to begin live readings'),
+          findsOneWidget);
+      expect(find.text('Snapshot'), findsNothing);
+      expect(find.text('Get Reading'), findsNothing);
     });
 
     testWidgets(
-        'app resume with no callback unsticks the triggering state',
+        'install/setup hint SHOWS on first-time setup (never received a payload)',
         (tester) async {
-      // Regression (Vera priority-1): the user taps Get Reading, lands in
-      // Shortcuts, then back-swipes out WITHOUT the x-callback ever firing. On
-      // resume the screen must clear _triggering so the button re-enables and
-      // the spinner never sticks.
-      final _FakeBridge bridge = _FakeBridge(
-        everReceived: true,
-        latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
-      );
       await tester.pumpWidget(host(
         WifiInfoScreen(
           sourceOverride: WifiInfoSource.iosShortcuts,
-          iosBridge: bridge,
+          iosBridge: _FakeBridge(everReceived: false),
         ),
       ));
       await tester.pumpAndSettle();
-
-      // Tap Get Reading -> the screen enters the triggering state (spinner +
-      // "Getting reading…"; the idle "Get Reading" label is gone).
-      await tester.tap(find.text('Get Reading'));
-      await tester.pump();
-      expect(find.text('Getting reading…'), findsOneWidget);
-      expect(find.text('Get Reading'), findsNothing);
-
-      // Simulate the back-swipe return: an app RESUME with NO trigger callback.
-      tester.binding
-          .handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-      await tester.pumpAndSettle();
-
-      // Triggering cleared: the idle button is back, the spinner is gone, and
-      // no error banner was raised (the user simply backed out).
-      expect(find.text('Get Reading'), findsOneWidget);
-      expect(find.text('Getting reading…'), findsNothing);
-      expect(find.textContaining('Could not get a reading'), findsNothing);
+      // Genuine first-time setup: the companion-Shortcut install/how-to note is
+      // shown so new users know to install it and tap Start.
+      expect(find.textContaining('WLAN Pros Live'), findsOneWidget);
     });
-  });
 
-  group('WifiInfoScreen — iOS Live mode (TICKET-05)', () {
-    Future<void> pumpLive(WidgetTester tester, _FakeBridge bridge) async {
+    testWidgets(
+        'install/setup hint HIDDEN once the app has ever received a payload',
+        (tester) async {
       await tester.pumpWidget(host(
         WifiInfoScreen(
           sourceOverride: WifiInfoSource.iosShortcuts,
-          iosBridge: bridge,
+          iosBridge: _FakeBridge(
+            everReceived: true,
+            latest:
+                WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
+          ),
         ),
       ));
       await tester.pumpAndSettle();
-      // Flip to Live via the segmented toggle.
-      await tester.tap(find.text('Live'));
-      await tester.pumpAndSettle();
-    }
+      // The user clearly has the Shortcut working (hasEverReceived = true), so
+      // the install/setup note is noise and is gone permanently.
+      expect(find.textContaining('WLAN Pros Live'), findsNothing);
+    });
 
-    testWidgets('Start sets the monitoring flag and fires the recursive trigger',
+    testWidgets('Start sets the flag and fires the PLAIN combined-Live trigger',
         (tester) async {
       final bridge = _FakeBridge(
         everReceived: true,
         latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
       );
-      await pumpLive(tester, bridge);
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        ),
+      ));
+      await tester.pumpAndSettle();
 
       await tester.tap(find.text('Start'));
       await tester.pumpAndSettle();
 
       // The shared monitoring flag is raised so the Shortcut keeps recursing.
       expect(bridge.monitoringActive, isTrue);
-      // Start fires the run-shortcut trigger ONCE to kick off the recursion.
+      // Start fires the run-shortcut trigger ONCE to kick off the recursion,
+      // with the ONE canonical combined-Live name (the bridge-level test asserts
+      // the URL is the plain, non-x-callback form).
       expect(bridge.runShortcutCalls, 1);
-      expect(bridge.lastRunShortcutName, ShortcutsConfig.kCompanionShortcutName);
-      expect(bridge.lastRunShortcutTool, 'wifi-info');
+      expect(bridge.lastRunShortcutName,
+          WifiLiveShortcutsConfig.kLiveShortcutName);
+      expect(bridge.lastRunShortcutName, 'WLAN Pros Live');
       // The Stop control is now showing (streaming).
       expect(find.text('Stop'), findsOneWidget);
     });
@@ -435,7 +286,13 @@ void main() {
         everReceived: true,
         latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
       );
-      await pumpLive(tester, bridge);
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        ),
+      ));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Start'));
       await tester.pumpAndSettle();
 
@@ -455,7 +312,7 @@ void main() {
       }));
       await tester.pumpAndSettle();
 
-      // The live charts rendered (graded RSSI/SNR + trend Tx/Rx cards).
+      // The live charts rendered (graded RSSI/SNR + Tx/Rx rate cards).
       expect(find.text('RSSI'), findsOneWidget);
       expect(find.text('SNR'), findsOneWidget);
       expect(find.text('Tx Rate'), findsOneWidget);
@@ -463,63 +320,88 @@ void main() {
       expect(find.textContaining('-60'), findsWidgets);
     });
 
-    testWidgets('Stop clears the monitoring flag', (tester) async {
+    testWidgets('Stop clears the monitoring flag and freezes the last values',
+        (tester) async {
       final bridge = _FakeBridge(
         everReceived: true,
         latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
       );
-      await pumpLive(tester, bridge);
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        ),
+      ));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Start'));
       await tester.pumpAndSettle();
       expect(bridge.monitoringActive, isTrue);
 
+      bridge.controller.add(WiFiDetails.fromMap(const <String, dynamic>{
+        'SSID': 'KeithNet',
+        'RSSI': -55,
+        'Noise': -95,
+      }));
+      await tester.pumpAndSettle();
+
       await tester.tap(find.text('Stop'));
       await tester.pumpAndSettle();
 
+      // Flag cleared; the idle Start control is back; the last reading is frozen
+      // on screen (still charted).
       expect(bridge.monitoringActive, isFalse);
       expect(find.text('Start'), findsOneWidget);
+      expect(find.text('RSSI'), findsOneWidget);
     });
-  });
 
-  group('WifiInfoScreen — cold-launch deep-link args (TICKET-03)', () {
-    testWidgets(
-        'reached via a status=err deep link shows the error banner here',
+    testWidgets('Start failing to open the Shortcut clears the flag + errors',
         (tester) async {
-      // The cold-launch router pushes this screen with
-      // ShortcutTriggerArgs(initialError: true) when the x-callback returned
-      // status=err. The screen must show its honest error banner on THIS tool
-      // screen rather than leaving the user on home.
-      final _FakeBridge bridge = _FakeBridge(
+      final bridge = _FakeBridge(
+        everReceived: true,
+        latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
+        runShortcutResult: false, // Shortcuts app could not be opened
+      );
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        ),
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+
+      // The flag is cleared (no producer) and the honest Live error shows.
+      expect(bridge.monitoringActive, isFalse);
+      expect(find.textContaining('Could not start live streaming'),
+          findsOneWidget);
+      expect(find.text('Start'), findsOneWidget);
+    });
+
+    testWidgets('dispose clears the monitoring flag (Vera regression)',
+        (tester) async {
+      final bridge = _FakeBridge(
         everReceived: true,
         latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
       );
-      // Push the screen via a route that carries the deep-link args, exactly as
-      // the cold-launch router does (Navigator.pushNamed(route, arguments: …)).
-      await tester.pumpWidget(MaterialApp(
-        theme: AppTheme.dark(),
-        home: Builder(
-          builder: (context) => ElevatedButton(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                settings: const RouteSettings(
-                  arguments: ShortcutTriggerArgs(initialError: true),
-                ),
-                builder: (_) => WifiInfoScreen(
-                  sourceOverride: WifiInfoSource.iosShortcuts,
-                  iosBridge: bridge,
-                ),
-              ),
-            ),
-            child: const Text('go'),
-          ),
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          iosBridge: bridge,
         ),
       ));
-      await tester.tap(find.text('go'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+      expect(bridge.monitoringActive, isTrue);
+
+      // Tear the screen down (navigate away). Dispose must clear the flag so the
+      // recursive Shortcut stops and the cellular tool is never stranded as
+      // "streaming".
+      await tester.pumpWidget(host(const SizedBox.shrink()));
       await tester.pumpAndSettle();
 
-      // The honest error banner is shown on the tool screen.
-      expect(find.textContaining('Could not get a reading'), findsOneWidget);
-      expect(find.text('Install the Shortcut'), findsOneWidget);
+      expect(bridge.monitoringActive, isFalse);
     });
   });
 

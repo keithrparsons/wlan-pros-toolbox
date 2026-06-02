@@ -11,7 +11,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/services/network/cellular_info.dart';
 import 'package:wlan_pros_toolbox/services/network/cellular_info_bridge.dart';
 import 'package:wlan_pros_toolbox/services/network/cellular_monitor_controller.dart';
-import 'package:wlan_pros_toolbox/services/network/shortcut_trigger_result.dart';
 
 /// In-memory fake of [CellularInfoBridge] for state-machine tests.
 class _FakeBridge implements CellularInfoBridge {
@@ -29,7 +28,6 @@ class _FakeBridge implements CellularInfoBridge {
   bool? lastMonitoringValue;
   int runShortcutCalls = 0;
   String? lastRunShortcutName;
-  String? lastRunShortcutTool;
 
   @override
   Future<bool> hasEverReceivedPayload() async => everReceived;
@@ -51,18 +49,11 @@ class _FakeBridge implements CellularInfoBridge {
   Future<bool> openUrl(String url) async => true;
 
   @override
-  Future<bool> runShortcut(String name, {required String tool}) async {
+  Future<bool> runShortcut(String name) async {
     runShortcutCalls++;
     lastRunShortcutName = name;
-    lastRunShortcutTool = tool;
     return runShortcutResult;
   }
-
-  @override
-  Stream<ShortcutTriggerEvent> get triggerEvents => const Stream.empty();
-
-  @override
-  Stream<ShortcutTriggerResult> get triggerResults => const Stream.empty();
 
   @override
   Stream<CellularInfo> get updates => _controller.stream;
@@ -140,17 +131,15 @@ void main() {
       await c.load();
 
       final bool opened = await c.startMonitoring(
-        triggerShortcutName: 'WLAN Pros Cellular',
-        triggerTool: 'cellular-info',
+        triggerShortcutName: 'WLAN Pros Live',
       );
 
       expect(opened, isTrue);
       expect(c.isStreaming, isTrue);
       expect(bridge.lastMonitoringValue, isTrue);
-      // Start fires the recursive Shortcut once to kick off the stream.
+      // Start fires the recursive combined Shortcut once to kick off the stream.
       expect(bridge.runShortcutCalls, 1);
-      expect(bridge.lastRunShortcutName, 'WLAN Pros Cellular');
-      expect(bridge.lastRunShortcutTool, 'cellular-info');
+      expect(bridge.lastRunShortcutName, 'WLAN Pros Live');
       c.dispose();
       await bridge.close();
     });
@@ -253,7 +242,7 @@ void main() {
       await c.load();
 
       final bool opened = await c.startMonitoring(
-        triggerShortcutName: 'WLAN Pros Cellular',
+        triggerShortcutName: 'WLAN Pros Live',
       );
 
       expect(opened, isFalse);
