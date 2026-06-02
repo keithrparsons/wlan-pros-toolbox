@@ -56,6 +56,21 @@ class ThroughputStats {
       '${downloadBytes}B/${uploadBytes}B)';
 }
 
+/// Thrown when a transfer completes without producing a usable measurement
+/// (non-2xx status, empty body, or a zero-byte transfer). Surfaced so the
+/// quality client reports an honest "couldn't measure" instead of a fake
+/// 0 Mbps. See GL-005 / GL-008: an unmeasurable transfer is not "0".
+class ThroughputUnmeasurable implements Exception {
+  /// Human-readable reason the transfer could not be measured.
+  final String reason;
+
+  /// Creates the exception with a [reason].
+  const ThroughputUnmeasurable(this.reason);
+
+  @override
+  String toString() => 'ThroughputUnmeasurable: $reason';
+}
+
 /// Measures download and upload throughput against swappable endpoints.
 ///
 /// Defaults use the Cloudflare speed endpoints. All network access goes through
@@ -75,8 +90,18 @@ class ThroughputProbe {
   /// Upload endpoint.
   final Uri uploadEndpoint;
 
-  /// Hard cap on each transfer.
+  /// Hard cap on each transfer (per attempt).
   final Duration maxDuration;
+
+  /// Maximum number of retry attempts after the first failed attempt. With the
+  /// default of 2, each direction is tried up to 3 times total before giving
+  /// up (which surfaces an honest "couldn't measure", never a fake 0).
+  final int maxRetries;
+
+  /// Smallest byte count that counts as a real transfer. A successful response
+  /// at or below this floor is treated as a failure (e.g. an empty/hiccuped
+  /// CDN response), not graded as 0 Mbps.
+  final int minBytesFloor;
 
   /// Download seam.
   final Downloader downloader;
@@ -94,6 +119,8 @@ class ThroughputProbe {
     Uri? downloadEndpoint,
     Uri? uploadEndpoint,
     this.maxDuration = const Duration(seconds: 10),
+    this.maxRetries = 2,
+    this.minBytesFloor = 0,
     Downloader? downloader,
     Uploader? uploader,
     ElapsedTimer? timer,
@@ -116,15 +143,23 @@ class ThroughputProbe {
   }
 
   /// Runs download then upload and computes both rates.
+  ///
+  /// Each direction is attempted up to `1 + [maxRetries]` times. A thrown
+  /// transfer error or a successful-but-empty transfer (bytes at or below
+  /// [minBytesFloor]) counts as a failed attempt and is retried. If every
+  /// attempt fails, the final error propagates out of [measure] so the caller
+  /// reports an honest "couldn't measure" — never a fabricated 0 Mbps.
   Future<ThroughputStats> measure() async {
     var dlBytes = 0;
-    final dlElapsed = await timer(() async {
-      dlBytes = await downloader(downloadEndpoint, maxDuration);
+    final dlElapsed = await _measureWithRetry((max) async {
+      dlBytes = await downloader(downloadEndpoint, max);
+      return dlBytes;
     });
 
     var ulBytes = 0;
-    final ulElapsed = await timer(() async {
-      ulBytes = await uploader(uploadEndpoint, uploadBytes, maxDuration);
+    final ulElapsed = await _measureWithRetry((max) async {
+      ulBytes = await uploader(uploadEndpoint, uploadBytes, max);
+      return ulBytes;
     });
 
     return ThroughputStats(
@@ -135,6 +170,34 @@ class ThroughputProbe {
       elapsedDownload: dlElapsed,
       elapsedUpload: ulElapsed,
     );
+  }
+
+  /// Runs [transfer] under the [timer] seam, retrying up to [maxRetries] extra
+  /// times when it throws or returns a byte count at or below [minBytesFloor].
+  /// Returns the elapsed time of the first successful attempt. Throws the last
+  /// error (or a [ThroughputUnmeasurable]) when all attempts fail.
+  Future<Duration> _measureWithRetry(
+    Future<int> Function(Duration maxDuration) transfer,
+  ) async {
+    Object lastError = const ThroughputUnmeasurable('no attempts made');
+    final attempts = maxRetries + 1;
+    for (var attempt = 0; attempt < attempts; attempt++) {
+      try {
+        var bytes = 0;
+        final elapsed = await timer(() async {
+          bytes = await transfer(maxDuration);
+        });
+        if (bytes <= minBytesFloor) {
+          throw ThroughputUnmeasurable(
+            'empty transfer ($bytes bytes <= floor $minBytesFloor)',
+          );
+        }
+        return elapsed;
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    throw lastError;
   }
 
   /// Default timing seam using a real [Stopwatch].
@@ -149,16 +212,31 @@ class ThroughputProbe {
 
   /// Default download: streams the response, counting bytes, stopping at
   /// [maxDuration].
+  ///
+  /// Throws [ThroughputUnmeasurable] when the endpoint returns a non-2xx
+  /// status (e.g. Cloudflare rate-limiting) or an empty body, so a hiccuped
+  /// request becomes an honest failure instead of a fake 0 Mbps.
   static Future<int> _defaultDownloader(Uri uri, Duration maxDuration) async {
-    final client = HttpClient();
+    final client = HttpClient()
+      ..connectionTimeout = const Duration(seconds: 5);
     try {
       final request = await client.getUrl(uri);
       final response = await request.close();
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        // Drain so the socket can be reused/closed cleanly, then fail.
+        await response.drain<void>();
+        throw ThroughputUnmeasurable(
+          'download HTTP ${response.statusCode}',
+        );
+      }
       var total = 0;
       final deadline = DateTime.now().add(maxDuration);
       await for (final chunk in response) {
         total += chunk.length;
         if (DateTime.now().isAfter(deadline)) break;
+      }
+      if (total == 0) {
+        throw const ThroughputUnmeasurable('download returned 0 bytes');
       }
       return total;
     } finally {
@@ -168,12 +246,17 @@ class ThroughputProbe {
 
   /// Default upload: sends [bytes] of payload, counting bytes written, stopping
   /// at [maxDuration].
+  ///
+  /// Throws [ThroughputUnmeasurable] when the endpoint returns a non-2xx
+  /// status or no bytes were sent, so a rejected upload becomes an honest
+  /// failure instead of a fake 0 Mbps.
   static Future<int> _defaultUploader(
     Uri uri,
     int bytes,
     Duration maxDuration,
   ) async {
-    final client = HttpClient();
+    final client = HttpClient()
+      ..connectionTimeout = const Duration(seconds: 5);
     try {
       final request = await client.postUrl(uri);
       request.headers.contentType = ContentType.binary;
@@ -190,7 +273,14 @@ class ThroughputProbe {
       }
       await request.flush();
       final response = await request.close();
+      final status = response.statusCode;
       await response.drain<void>();
+      if (status < 200 || status >= 300) {
+        throw ThroughputUnmeasurable('upload HTTP $status');
+      }
+      if (sent == 0) {
+        throw const ThroughputUnmeasurable('upload sent 0 bytes');
+      }
       return sent;
     } finally {
       client.close(force: true);

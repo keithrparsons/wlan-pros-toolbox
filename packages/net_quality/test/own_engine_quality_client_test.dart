@@ -82,6 +82,10 @@ void main() {
         connector: constConnector(null), // every sample throws
       );
       final throughput = ThroughputProbe(
+        // Single attempt: a zero-byte transfer is now treated as a failure,
+        // so download/upload surface as unavailable (not graded 0). This test
+        // asserts the latency/loss path, so keep throughput deterministic.
+        maxRetries: 0,
         downloader: (uri, max) async => 0,
         uploader: (uri, bytes, max) async => 0,
         timer: _scriptedTimer(const <Duration>[
@@ -151,6 +155,92 @@ void main() {
       expect(result.metric(MetricIds.download)!.note, 'Measurement failed');
       // Latency still measured fine.
       expect(result.metric(MetricIds.latency)!.grade, QualityGrade.excellent);
+    });
+
+    test('zero-byte download reports download UNAVAILABLE, never graded 0',
+        () async {
+      final latency = LatencyProbe(
+        host: 'h',
+        samples: 2,
+        connector: constConnector(10),
+      );
+      final throughput = ThroughputProbe(
+        maxRetries: 0,
+        downloader: (uri, max) async => 0, // hiccuped CDN: 0 bytes, no throw
+        uploader: (uri, bytes, max) async => bytes,
+        timer: _scriptedTimer(const <Duration>[
+          Duration(seconds: 1),
+          Duration(seconds: 1),
+        ]),
+      );
+      final responsiveness = ResponsivenessProbe(
+        idleSamples: 1,
+        loadedSamples: 1,
+        latencySampler: () async => const Duration(milliseconds: 20),
+        loadGenerator: () async {},
+      );
+
+      final client = OwnEngineQualityClient(
+        latencyProbe: latency,
+        throughputProbe: throughput,
+        responsivenessProbe: responsiveness,
+      );
+
+      await client.measure().drain<void>();
+      final result = client.lastResult!;
+
+      final dl = result.metric(MetricIds.download)!;
+      // The bug: this used to be value 0.0 graded poor. Now it must be honest.
+      expect(dl.grade, QualityGrade.unavailable);
+      expect(dl.value, isNull);
+      expect(dl.note, 'Measurement failed');
+    });
+
+    test('transient blip then success: download is graded with a real value',
+        () async {
+      var calls = 0;
+      final latency = LatencyProbe(
+        host: 'h',
+        samples: 2,
+        connector: constConnector(10),
+      );
+      final throughput = ThroughputProbe(
+        downloadBytes: 50 * 1000 * 1000,
+        uploadBytes: 10 * 1000 * 1000,
+        downloader: (uri, max) async {
+          calls++;
+          if (calls == 1) throw const ThroughputUnmeasurable('transient');
+          return 50 * 1000 * 1000;
+        },
+        uploader: (uri, bytes, max) async => bytes,
+        // download: failed attempt (timer still runs the body) then success,
+        // then the upload attempt -> three timer calls.
+        timer: _scriptedTimer(const <Duration>[
+          Duration(seconds: 4), // download attempt 1 (body throws)
+          Duration(seconds: 4), // download attempt 2 -> 100 Mbps
+          Duration(seconds: 2), // upload -> 40 Mbps
+        ]),
+      );
+      final responsiveness = ResponsivenessProbe(
+        idleSamples: 1,
+        loadedSamples: 1,
+        latencySampler: () async => const Duration(milliseconds: 20),
+        loadGenerator: () async {},
+      );
+
+      final client = OwnEngineQualityClient(
+        latencyProbe: latency,
+        throughputProbe: throughput,
+        responsivenessProbe: responsiveness,
+      );
+
+      await client.measure().drain<void>();
+      final result = client.lastResult!;
+
+      expect(calls, 2);
+      final dl = result.metric(MetricIds.download)!;
+      expect(dl.grade, QualityGrade.excellent);
+      expect(dl.value, closeTo(100.0, 0.0001));
     });
   });
 }
