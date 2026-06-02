@@ -1,24 +1,24 @@
 // Per-metric live sparkline for the Network Quality screen.
 //
-// Renders one metric's in-memory history as a lime line over four shaded
-// Excellent / Good / Fair / Poor bands. The bands give a glance-readable sense
-// of which zone the line is sitting in; the grade CHIP in the row still carries
-// the true engine grade (the band is a visual reference only — spec §3).
+// Renders one metric's in-memory history as a lime line on a plain `surface2`
+// panel. The grade CHIP in each row carries the true engine grade; the
+// sparkline is a visual trend reference only (spec §3).
 //
 // Visual language is borrowed from the Ping screen's `_Sparkline`: a lime
 // (`AppColors.primary`) polyline on a `surface2` panel, a single-point dot, and
-// token-only sizing. The new part is the four shaded bands behind the line and
-// a fixed per-metric y-domain so the bands are stable run to run.
+// token-only sizing. A fixed per-metric y-domain keeps the line's vertical
+// placement stable run to run.
 //
-// COLOR (spec §4 + GL-003 §8.13.1): the bands reuse the EXISTING grade palette —
-// no new colors. Excellent and Good both map to `statusSuccess` (the existing
-// `_gradeColors` collapses them too), Fair to `statusWarning`, Poor to
-// `statusDanger`. Bands are 0.30-alpha tints of those hues (the §8.13.1
-// band-stack floor), separated from each other by a 1px `borderStrong`
-// (#808080) hairline at every internal edge so adjacent bands stay legibly
-// distinct. The line and the chip — not the band hue — carry the verdict, so
-// WCAG 1.4.1 is satisfied (no information by color alone). The whole painter is
-// `excludeSemantics`; the parent supplies a worded `Semantics` label.
+// COLORED GRADE BANDS REMOVED 2026-06-02 (Keith): the four shaded
+// Excellent / Good / Fair / Poor zone tints that used to sit behind the line
+// interfered with reading the trend, so they are gone — the line now stands on
+// the same neutral `surface2` surface as the rest of the card. No information
+// is lost: the grade was never carried by the band hue. The row's grade CHIP
+// (a worded label) carries the verdict, and the row's `Semantics` label speaks
+// the value + grade + trend, so WCAG 1.4.1 (no information by color alone)
+// holds. The `domain` is retained solely to fix the y-axis scale. The whole
+// painter is `excludeSemantics`; the parent supplies a worded `Semantics`
+// label.
 //
 // States (SOP-007 §5):
 //   - 0–1 points: caller shows a hint instead of this widget (a 1-point line is
@@ -112,8 +112,9 @@ class SparklineDomain {
   };
 }
 
-/// A small token-only sparkline with shaded grade bands behind a metric's
-/// live history. Decorative for AT (the parent row carries the worded summary).
+/// A small token-only sparkline of a metric's live history on a plain
+/// `surface2` panel (no grade-zone bands). Decorative for AT (the parent row
+/// carries the worded summary).
 class MetricSparkline extends StatelessWidget {
   /// Creates a sparkline.
   ///
@@ -174,28 +175,6 @@ class _BandSparklinePainter extends CustomPainter {
   final SparklineDomain domain;
   final bool dotsOnly;
 
-  // GL-003 §8.13.1 band-stack floor: grade-band tints sit at 0.30 alpha so the
-  // deepest band still clears WCAG SC 1.4.11 against the data line.
-  static const double _bandAlpha = 0.30;
-
-  /// Band fill colors top-to-bottom in VALUE space (min..max ascending), as
-  /// [value-range]→color pairs. The four ranges are
-  /// [min..e0], [e0..e1], [e1..e2], [e2..max].
-  List<Color> _bandColorsByValueRange() {
-    // In value order (low value first): for "lower is better" the lowest band
-    // is Excellent; for "higher is better" the lowest band is Poor.
-    final Color exc = AppColors.statusSuccess.withValues(alpha: _bandAlpha);
-    final Color good = AppColors.statusSuccess.withValues(alpha: _bandAlpha);
-    final Color fair = AppColors.statusWarning.withValues(alpha: _bandAlpha);
-    final Color poor = AppColors.statusDanger.withValues(alpha: _bandAlpha);
-    if (domain.betterWhen == BetterWhen.lower) {
-      // low value = good end
-      return <Color>[exc, good, fair, poor];
-    }
-    // higher is better: low value = poor end
-    return <Color>[poor, fair, good, exc];
-  }
-
   double _yFor(double value, Size size) {
     final double span = (domain.max - domain.min);
     final double clamped = value.clamp(domain.min, domain.max);
@@ -207,48 +186,14 @@ class _BandSparklinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (samples.isEmpty) {
-      // No-samples / neutral state: a flat `surface3` fill, no grade hue, so an
-      // empty sparkline never implies a verdict (GL-003 §8.13.1).
-      canvas.drawRect(
-        Rect.fromLTRB(0, 0, size.width, size.height),
-        Paint()..color = AppColors.surface3,
-      );
+      // No-samples / neutral state: leave the plain `surface2` panel (owned by
+      // the Container) showing — no grade hue, so an empty sparkline never
+      // implies a verdict.
       return;
     }
-    _paintBands(canvas, size);
-    _paintBandEdges(canvas, size);
+    // Grade-zone bands removed 2026-06-02 (Keith): the line now renders on the
+    // plain `surface2` panel. Only the data line + latest-point dot are painted.
     _paintData(canvas, size);
-  }
-
-  void _paintBands(Canvas canvas, Size size) {
-    // Band boundaries in value space: min, e0, e1, e2, max.
-    final List<double> bounds = <double>[
-      domain.min,
-      ...domain.edges,
-      domain.max,
-    ];
-    final List<Color> colors = _bandColorsByValueRange();
-    for (int i = 0; i < 4; i++) {
-      final double yTop = _yFor(bounds[i + 1], size); // higher value = top
-      final double yBottom = _yFor(bounds[i], size);
-      final Rect rect = Rect.fromLTRB(0, yTop, size.width, yBottom);
-      canvas.drawRect(rect, Paint()..color = colors[i]);
-    }
-  }
-
-  // GL-003 §8.13.1: a 1px `borderStrong` (#808080) hairline at each of the
-  // three INTERNAL band edges so adjacent grade tints stay distinct. The outer
-  // frame is owned by the ClipRRect/Container, not painted here. Drawn after the
-  // band fills and before the data line, so the line stays on top.
-  void _paintBandEdges(Canvas canvas, Size size) {
-    final Paint hairline = Paint()
-      ..color = AppColors.borderStrong
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-    for (final double edge in domain.edges) {
-      final double y = _yFor(edge, size);
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), hairline);
-    }
   }
 
   void _paintData(Canvas canvas, Size size) {

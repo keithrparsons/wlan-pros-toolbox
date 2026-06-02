@@ -29,8 +29,15 @@
 //
 // STATES (SOP-007 §5): web/unsupported → NetworkUnavailableView · idle (intro +
 // one big button) · running (friendly progress card, button disabled) · result
-// (verdict + help-desk facts + self-help cards) · error (in-card message + the
-// button re-enabled to retry).
+// (verdict + Wi-Fi details + help-desk facts + self-help cards) · error (in-card
+// message + the button re-enabled to retry).
+//
+// Wi-Fi details (RSSI / SNR, Wi-Fi Down = avg Rx rate, Wi-Fi Up = avg Tx rate)
+// come from the single connected-NIC read [ConnectedAp]; this tool does not
+// sample the rate over the test window, so "average" is the NIC's reported
+// average at read time. Any datum the platform does not expose (macOS public
+// CoreWLAN never reports Rx rate) renders "Unavailable" on screen AND in the
+// copy text — never fabricated or zero-filled (GL-005 / GL-008).
 
 import 'dart:async';
 
@@ -105,7 +112,6 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
   // Results, populated when the run completes.
   ConnectedAp? _ap;
   QualityResult? _internet;
-  WifiVsInternetResult? _engineResult;
   ConsumerVerdict? _verdict;
   DateTime? _testedAt;
 
@@ -211,7 +217,6 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
       _macLocationAuthorized = true;
       _ap = null;
       _internet = null;
-      _engineResult = null;
       _verdict = null;
       _testedAt = null;
     });
@@ -234,7 +239,6 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
         setState(() {
           _ap = ap;
           _internet = internet;
-          _engineResult = engine;
           _verdict = ConsumerVerdictMapper.map(
             engine,
             internetHealthy:
@@ -313,12 +317,59 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
       appBar: AppBar(
         title: const Text('Test My Connection'),
         toolbarHeight: 64,
-        // §8.16 — shared "Copy results" affordance; disabled until a check has
-        // run. Same payload as the inline "Copy these details" button.
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        // §8.16 order: copy LEADS, the Refresh action trails. Copy is disabled
+        // until a check has run (same payload as the inline "Copy these
+        // details" button). Refresh re-runs the SAME check in place via _run()
+        // — it appears only once a result exists (before that, the big "Check
+        // My Connection" button is the affordance) and shows the in-progress
+        // spinner while a re-run is underway so the test can't be double-fired.
+        actions: <Widget>[
+          AppCopyAction(textBuilder: _buildCopyText),
+          ..._refreshAction(),
+        ],
       ),
       body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// The AppBar "Refresh" action — re-runs the SAME check via [_run()] (no
+  /// duplicated logic). Matches the Wi-Fi Information screen's affordance: a
+  /// circular-arrow [IconButton] that swaps to a small in-progress spinner
+  /// while a run is underway. Returns an empty list until a result exists, so
+  /// the affordance only appears once there is something to re-run (the big
+  /// "Check My Connection" button is the first-run affordance). The spinner +
+  /// the run guard in [_run]/onPressed prevent a double-run.
+  List<Widget> _refreshAction() {
+    // Nothing to re-run before the first result lands.
+    if (_verdict == null && !_running) return const <Widget>[];
+    if (_running) {
+      return const <Widget>[
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          child: Center(
+            child: SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        ),
+      ];
+    }
+    return <Widget>[
+      Semantics(
+        button: true,
+        label: 'Run the test again',
+        child: IconButton(
+          icon: const Icon(Icons.refresh),
+          tooltip: 'Refresh',
+          onPressed: _run,
+        ),
+      ),
+    ];
   }
 
   Widget _body() {
@@ -366,7 +417,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
                     _progressCard(context),
                   ],
                   if (verdict != null) ...[
-                    _VerdictCard(verdict: verdict, body: _verdictBody(verdict)),
+                    _VerdictCard(verdict: verdict),
+                    const SizedBox(height: AppSpacing.sm),
+                    _WifiDetailsCard(details: _wifiDetails()),
                     const SizedBox(height: AppSpacing.sm),
                     _HelpDeskCard(
                       facts: _facts(),
@@ -529,27 +582,13 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
     }
   }
 
-  // ---- Result: verdict body (D1 gets the live figure substituted) ----
+  // ---- Result: the plain help-desk facts ----
 
-  String _verdictBody(ConsumerVerdict verdict) {
-    if (verdict.outcome == ConsumerOutcome.couldntCheckWifi) {
-      return ConsumerVerdictMapper.bodyForCouldntCheckWifi(
-        internetAvgMbps: _engineResult?.internetAvgMbps,
-        healthy:
-            _internetHealth(_internet) == InternetHealth.good,
-      );
-    }
-    return verdict.body;
-  }
-
-  // ---- Result: the 5 help-desk facts ----
-
-  /// The 5 plain facts (spec decision 3), as label/value rows. Any field not
-  /// measured prints "Not measured" — never blank, never invented (GL-005).
+  /// The plain facts, as label/value rows. Any field not measured prints
+  /// "Not measured" — never blank, never invented (GL-005).
   List<_Fact> _facts() {
     final QualityResult? net = _internet;
     final ConnectedAp? ap = _ap;
-    final ConsumerVerdict? v = _verdict;
 
     final double? down = _metricValue(net, MetricIds.download);
     final double? up = _metricValue(net, MetricIds.upload);
@@ -557,13 +596,12 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
     final double? loss = _metricValue(net, MetricIds.loss);
 
     return <_Fact>[
-      _Fact('Likely cause', _likelyCause(v)),
-      _Fact(
-        'Internet speed',
-        (down != null || up != null)
-            ? '${_mbps(down)} down / ${_mbps(up)} up'
-            : 'Not measured',
-      ),
+      // Each speed value on its own labeled row so it can never wrap mid-value
+      // (e.g. "60" / "Mbps" splitting across lines). Parallels the Wi-Fi
+      // Down/Up rows. "Not measured" stands in for any value the run did not
+      // produce (GL-005) — never blank, never invented.
+      _Fact('Internet Down', _mbps(down)),
+      _Fact('Internet Up', _mbps(up)),
       _Fact(
         'Delay / dropped data',
         '${latency != null ? '${latency.round()} ms' : 'Not measured'} · '
@@ -574,24 +612,56 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
     ];
   }
 
-  /// The plain "likely cause" sentence per outcome (the verdict WORD as a
-  /// help-desk fact). Always present, even for D — the word travels to the
-  /// clipboard (§8.16 / §8.13).
-  static String _likelyCause(ConsumerVerdict? v) {
-    if (v == null) return 'Not measured';
-    switch (v.outcome) {
-      case ConsumerOutcome.wifi:
-      case ConsumerOutcome.wifiLead:
-        return 'Wi-Fi between your device and the router';
-      case ConsumerOutcome.internet:
-        return 'The internet coming into your home';
-      case ConsumerOutcome.bothFine:
-        return 'Connection is fine; likely the app or website';
-      case ConsumerOutcome.couldntCheckWifi:
-        return "Internet measured; couldn't check Wi-Fi on this device";
-      case ConsumerOutcome.couldntComplete:
-        return "Couldn't complete the check";
-    }
+  /// The Wi-Fi link detail rows: RSSI / SNR, Wi-Fi Down (avg Rx rate), and
+  /// Wi-Fi Up (avg Tx rate), read from the connected NIC ([ConnectedAp]). Each
+  /// value is taken from the single link read this tool performs; where the NIC
+  /// does not expose a datum (e.g. macOS public CoreWLAN never reports the Rx
+  /// rate) the value is "Unavailable" — never fabricated or zero-filled
+  /// (GL-005 / GL-008). The same four rows feed the copy text.
+  List<_Fact> _wifiDetails() {
+    final ConnectedAp? ap = _ap;
+    return <_Fact>[
+      _Fact('RSSI / SNR', _rssiSnr(ap)),
+      _Fact('Wi-Fi Down', _rxRate(ap)),
+      _Fact('Wi-Fi Up', _txRate(ap)),
+    ];
+  }
+
+  /// "RSSI / SNR" as e.g. "-58 dBm / 32 dB". Each half degrades to
+  /// "Unavailable" on its own when the NIC omits it (GL-005).
+  static String _rssiSnr(ConnectedAp? ap) {
+    final int? rssi = ap?.rssiDbm;
+    final int? snr = ap?.snrDb;
+    final String rssiStr = rssi != null ? '$rssi dBm' : 'Unavailable';
+    final String snrStr = snr != null ? '$snr dB' : 'Unavailable';
+    return '$rssiStr / $snrStr';
+  }
+
+  /// Wi-Fi Down — the NIC's average Rx data rate. "Unavailable" when the
+  /// platform never exposes Rx (macOS public CoreWLAN) or the read omitted it.
+  static String _rxRate(ConnectedAp? ap) {
+    final double? rx = ap?.rxRateMbps;
+    return rx != null ? '${rx.round()} Mbps' : 'Unavailable';
+  }
+
+  /// Wi-Fi Up — the NIC's average Tx data rate. "Unavailable" when omitted.
+  static String _txRate(ConnectedAp? ap) {
+    final double? tx = ap?.txRateMbps;
+    return tx != null ? '${tx.round()} Mbps' : 'Unavailable';
+  }
+
+  /// RSSI alone, for the separately-labeled copy line. "Unavailable" when the
+  /// NIC omits it.
+  static String _rssiOnly(ConnectedAp? ap) {
+    final int? rssi = ap?.rssiDbm;
+    return rssi != null ? '$rssi dBm' : 'Unavailable';
+  }
+
+  /// SNR alone, for the separately-labeled copy line. "Unavailable" when the
+  /// NIC omits it (SNR is null unless both RSSI and noise are present).
+  static String _snrOnly(ConnectedAp? ap) {
+    final int? snr = ap?.snrDb;
+    return snr != null ? '$snr dB' : 'Unavailable';
   }
 
   /// The Wi-Fi network name, or an honest fallback. R1-B: on macOS, when the
@@ -656,15 +726,21 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
       );
     }
     buf
-      ..writeln('Likely cause: ${fact('Likely cause')}')
-      ..writeln(
-        'Internet speed tested: ${_mbps(down)} down / ${_mbps(up)} up',
-      )
+      // Internet down and up on their own labeled lines — one value per line,
+      // parallel to the Wi-Fi Down / Wi-Fi Up lines below.
+      ..writeln('Internet Down: ${_mbps(down)}')
+      ..writeln('Internet Up: ${_mbps(up)}')
       ..writeln(
         'Delay: ${latency != null ? '${latency.round()} ms' : 'Not measured'}   '
         'Dropped data: ${loss != null ? '${loss.round()}%' : 'Not measured'}',
       )
       ..writeln('Wi-Fi network: ${_ssidOrNotMeasured(_ap)}')
+      // Wi-Fi link details from the connected NIC — "Unavailable" where the
+      // platform does not expose a datum (GL-005 / GL-008), never fabricated.
+      ..writeln('RSSI: ${_rssiOnly(_ap)}')
+      ..writeln('SNR: ${_snrOnly(_ap)}')
+      ..writeln('Wi-Fi Down: ${_rxRate(_ap)}')
+      ..writeln('Wi-Fi Up: ${_txRate(_ap)}')
       ..writeln('Tested: ${fact('Tested')}');
     return buf.toString().trimRight();
   }
@@ -734,38 +810,25 @@ class _Fact {
 /// R1-A — the result verdict card. The card itself is NEUTRAL (surface1 +
 /// hairline, no full-card tint); the COLOR lives in the two status chips.
 ///
-/// Layout: two labeled chips ("Wi-Fi:" / "Internet:"), a divider, then ONE
-/// plain conclusion sentence. The chips replace the old single "headline word"
-/// — they teach the non-technical reader that Wi-Fi and Internet are two
-/// separate things, and each axis carries its OWN explicit status so a missing
-/// Wi-Fi read shows as "Wi-Fi: Couldn't check", never a silent gap.
+/// Layout: two labeled chips ("Wi-Fi:" / "Internet:"). The chips ARE the
+/// verdict — they teach the non-technical reader that Wi-Fi and Internet are
+/// two separate things, and each axis carries its OWN explicit status so a
+/// missing Wi-Fi read shows as "Wi-Fi: Couldn't check", never a silent gap.
 ///
-/// D2 (both chips "Couldn't check") is redundant with its retry sentence, so it
-/// renders the conclusion line ONLY, no chips.
+/// The explanatory conclusion sentence was removed 2026-06-02 (Keith) — the
+/// status chips and the measured facts below them speak for themselves. The
+/// chips render for every outcome, including D2 (both axes "Couldn't check").
 class _VerdictCard extends StatelessWidget {
-  const _VerdictCard({required this.verdict, required this.body});
+  const _VerdictCard({required this.verdict});
 
   final ConsumerVerdict verdict;
 
-  /// The resolved one-line conclusion (D1 substitutes the live internet figure
-  /// upstream).
-  final String body;
-
-  /// D2 shows the retry sentence alone — both chips would just say "Couldn't
-  /// check", which the sentence already conveys.
-  bool get _chipsRedundant =>
-      verdict.outcome == ConsumerOutcome.couldntComplete;
-
   @override
   Widget build(BuildContext context) {
-    final TextTheme text = Theme.of(context).textTheme;
-
-    // SR reads the two axis statuses, then the conclusion, as one container.
-    final String semanticsLabel = _chipsRedundant
-        ? body
-        : 'Wi-Fi ${_TwoAxisChips.word(verdict.wifiStatus)}. '
-              'Internet ${_TwoAxisChips.word(verdict.internetStatus)}. '
-              '$body';
+    // SR reads the two axis statuses as one container.
+    final String semanticsLabel =
+        'Wi-Fi ${_TwoAxisChips.word(verdict.wifiStatus)}. '
+        'Internet ${_TwoAxisChips.word(verdict.internetStatus)}.';
 
     return Semantics(
       container: true,
@@ -778,23 +841,9 @@ class _VerdictCard extends StatelessWidget {
             border: Border.all(color: AppColors.border, width: 1),
           ),
           padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              if (!_chipsRedundant) ...[
-                _TwoAxisChips(
-                  wifiStatus: verdict.wifiStatus,
-                  internetStatus: verdict.internetStatus,
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                const Divider(height: 1, thickness: 1, color: AppColors.border),
-                const SizedBox(height: AppSpacing.sm),
-              ],
-              Text(
-                body,
-                style: text.bodyLarge?.copyWith(color: AppColors.textPrimary),
-              ),
-            ],
+          child: _TwoAxisChips(
+            wifiStatus: verdict.wifiStatus,
+            internetStatus: verdict.internetStatus,
           ),
         ),
       ),
@@ -933,19 +982,15 @@ class _StatusChip extends StatelessWidget {
 }
 
 // ===========================================================================
-// "Tell your help desk" card — 5 plain facts + inline copy button.
+// "Wi-Fi details" card — the connected-NIC link facts: RSSI / SNR, Wi-Fi Down
+// (avg Rx rate), Wi-Fi Up (avg Tx rate). Any datum the platform does not
+// expose renders "Unavailable" — never fabricated (GL-005 / GL-008).
 // ===========================================================================
 
-class _HelpDeskCard extends StatelessWidget {
-  const _HelpDeskCard({
-    required this.facts,
-    required this.onCopy,
-    required this.copied,
-  });
+class _WifiDetailsCard extends StatelessWidget {
+  const _WifiDetailsCard({required this.details});
 
-  final List<_Fact> facts;
-  final Future<void> Function() onCopy;
-  final bool copied;
+  final List<_Fact> details;
 
   @override
   Widget build(BuildContext context) {
@@ -961,10 +1006,45 @@ class _HelpDeskCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            'If you need to call support, here’s what to tell them.',
+            'Wi-Fi details',
             style: text.titleSmall?.copyWith(color: AppColors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.sm),
+          ...details.map((f) => _FactRow(fact: f)),
+        ],
+      ),
+    );
+  }
+}
+
+// ===========================================================================
+// Help-desk facts card — plain measured facts + inline copy button. The copy
+// button serializes the verdict, these facts, AND the Wi-Fi link details.
+// ===========================================================================
+
+class _HelpDeskCard extends StatelessWidget {
+  const _HelpDeskCard({
+    required this.facts,
+    required this.onCopy,
+    required this.copied,
+  });
+
+  final List<_Fact> facts;
+  final Future<void> Function() onCopy;
+  final bool copied;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
           ...facts.map((f) => _FactRow(fact: f)),
           const SizedBox(height: AppSpacing.sm),
           Semantics(

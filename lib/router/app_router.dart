@@ -89,6 +89,13 @@ import '../data/checklists.dart';
 class AppRouter {
   AppRouter._();
 
+  /// App-wide navigator key. Lets the one-tap-trigger deep-link router
+  /// (TICKET-03) navigate to a tool route from outside the widget tree — the
+  /// cold-launch case has no listening screen to route on its own. Reuses the
+  /// existing named-route Navigator; introduces no second nav system.
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
+
   static const String home = '/';
   static const String dbmWatt = '/tools/dbm-watt';
 

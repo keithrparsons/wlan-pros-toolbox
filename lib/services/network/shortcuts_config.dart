@@ -15,8 +15,8 @@ class ShortcutsConfig {
   /// iCloud share link that installs the companion Shortcut.
   ///
   /// Set 2026-05-31 (TICKET-03 Part B) after Keith published and device-verified
-  /// the "WLAN Pros Toolbox Wi-Fi" Shortcut (live streaming + in-app Stop
-  /// confirmed on iPhone 17 Pro).
+  /// the "WLAN Pros Wi-Fi" Shortcut (one-tap Get Reading round-trip confirmed
+  /// on iPhone 17 Pro).
   static const String kCompanionShortcutUrl =
       'https://www.icloud.com/shortcuts/eac19bfd8ce6465482e54c034e23eb45';
 
@@ -24,4 +24,12 @@ class ShortcutsConfig {
   /// this to disable the Install action so the app never opens a dead link.
   static bool get isShortcutUrlPlaceholder =>
       kCompanionShortcutUrl.endsWith('PLACEHOLDER');
+
+  /// Canonical name of the published companion Wi-Fi Shortcut (TICKET-03
+  /// one-tap trigger). The app fires `shortcuts://x-callback-url/run-shortcut`
+  /// with this exact name; iOS matches it against the user's installed
+  /// Shortcuts by name, so the published Shortcut MUST be named exactly this —
+  /// confirmed during the device test. Changing this string without renaming
+  /// the published Shortcut breaks the "Get Reading" trigger.
+  static const String kCompanionShortcutName = 'WLAN Pros Wi-Fi';
 }

@@ -69,6 +69,8 @@ class _NoPayloadBridge implements WiFiDetailsBridge {
   @override
   Future<bool> openUrl(String url) async => true;
   @override
+  Future<bool> runShortcut(String name) async => true;
+  @override
   Stream<WiFiDetails> get updates => const Stream<WiFiDetails>.empty();
 }
 

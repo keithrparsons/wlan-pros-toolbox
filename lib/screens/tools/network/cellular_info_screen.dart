@@ -1,14 +1,17 @@
-// Cellular Information — the iOS mobile-network snapshot tool (TICKET-02).
+// Cellular Information — the iOS mobile-network tool (LIVE streaming only).
 //
-// Parallels the Wi-Fi Information tool, but cellular has exactly ONE live
-// source (iOS, via the companion Shortcut) and is a ONE-SHOT snapshot — there is
-// no live streaming here (that is a separate ticket). The data source is
-// selected per platform behind the [CellularInfoSourceResolver] seam, and the
-// iOS payload maps into the normalized [CellularInfo] model:
+// Parallels the Wi-Fi Information tool. On iOS, cellular has exactly ONE mode:
+// LIVE streaming, fed by the combined "WLAN Pros Live" companion Shortcut. There
+// is no separate one-tap snapshot — Stop freezes the last values on screen (the
+// snapshot). The data source is selected per platform behind the
+// [CellularInfoSourceResolver] seam, and the iOS payload maps into the
+// normalized [CellularInfo] model:
 //
-//   * iOS   -> companion-Shortcut stack ([CellularInfoBridge]): an
-//             Install-Shortcut onboarding flow, then a one-shot read each time
-//             the Shortcut runs and bounces the app forward.
+//   * iOS   -> LIVE streaming via [CellularMonitorController] over the shared
+//             companion-Shortcut bridge ([CellularInfoBridge]). Start raises the
+//             shared monitoring flag and fires the PLAIN, fire-and-forget
+//             run-shortcut trigger once; the app then passively consumes the
+//             cellular side of the combined Live stream.
 //   * macOS -> HONEST UNAVAILABLE state. Macs ship with no cellular radio, so
 //             the tool says so plainly via NetworkUnavailableView.
 //   * Android / Windows / desktop Linux -> the same honest unavailable state
@@ -20,18 +23,17 @@
 // is hard-blocked for apps. Data comes only via the Shortcuts bridge.
 //
 // HARD RULE — Signal Bars render as bars or "0 to 4" ONLY. They are NEVER
-// relabeled dBm, RSRP, or RSRQ. We do not have a raw signal value.
+// relabeled dBm, RSRP, or RSRQ. We do not have a raw signal value. Cellular is
+// NEVER graded (no fabricated grade).
 //
 // States (SOP-007 section 5):
 //   * web -> NetworkUnavailableView (download the app).
 //   * unsupported native (macOS et al.) -> explicit "not available on this
 //     platform" state, never a silent empty.
-//   * loading -> labeled spinner (announced via liveRegion).
-//   * empty -> iOS install / how-to onboarding before the first reading.
-//   * success -> grouped metric cards (Carrier / Radio / Signal / Network).
-//   * disabled -> the iOS Install button is disabled while the link is a
-//     placeholder (the cellular Shortcut is published during device testing).
-//   * interactive -> Install / Refresh, keyboard- and screen-reader-labeled.
+//   * idle -> a clean "Tap Start to begin live readings" state.
+//   * streaming -> live-updating cards (Carrier / Radio / Signal / Network).
+//   * error -> the Live trigger error banner (Shortcut missing / cancelled).
+//   * interactive -> Start / Stop, keyboard- and screen-reader-labeled.
 //
 // Layout matches wifi_info_screen: SafeArea + LayoutBuilder + centered
 // ConstrainedBox + scroll, surface1 cards with a hairline border, the
@@ -39,15 +41,16 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../data/tool_assets.dart';
 import '../../../services/network/cellular_info.dart';
 import '../../../services/network/cellular_info_adapter.dart';
 import '../../../services/network/cellular_info_bridge.dart';
-import '../../../services/network/cellular_shortcuts_config.dart';
+import '../../../services/network/cellular_monitor_controller.dart';
+import '../../../services/network/cellular_time_series.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/wifi_live_shortcuts_config.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../concept_graphic_band.dart';
+import '../../../widgets/sparkline.dart';
 import 'network_unavailable_view.dart';
 
 /// The Cellular Information tool screen.
@@ -68,18 +71,19 @@ class CellularInfoScreen extends StatefulWidget {
   State<CellularInfoScreen> createState() => _CellularInfoScreenState();
 }
 
-/// The iOS data-flow phase. Cellular is one-shot, so this is simpler than the
-/// Wi-Fi streaming controller: load -> (needsInstall | hasData).
-enum _IosPhase { loading, needsInstall, hasData }
-
 class _CellularInfoScreenState extends State<CellularInfoScreen>
     with WidgetsBindingObserver {
   late final CellularInfoSource _source;
 
-  // ---- iOS (Shortcuts one-shot) state ----
+  // ---- iOS (Live streaming) state ----
   CellularInfoBridge? _iosBridge;
-  _IosPhase _iosPhase = _IosPhase.loading;
-  CellularInfo? _iosInfo;
+  CellularMonitorController? _liveController;
+  CellularTimeSeries? _series;
+  CellularInfo? _lastCharted;
+  bool _wasStreaming = false;
+
+  /// Set when the last Live Start could not open the Live Shortcut.
+  bool _liveTriggerError = false;
 
   @override
   void initState() {
@@ -88,18 +92,73 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
 
     if (_source == CellularInfoSource.iosShortcuts) {
       _iosBridge = widget.iosBridge ?? CellularInfoBridge();
+      _liveController = CellularMonitorController(bridge: _iosBridge!);
+      _series = CellularTimeSeries();
+      _liveController!.addListener(_captureSample);
       WidgetsBinding.instance.addObserver(this);
-      _loadIos();
+      _liveController!.load();
     }
+  }
+
+  /// Controller listener (iOS Live): appends a bars sample each time a NEW
+  /// streamed payload lands while monitoring is running. Guarded so phase-change
+  /// notifications do not duplicate the last reading.
+  void _captureSample() {
+    final CellularMonitorController? c = _liveController;
+    final CellularTimeSeries? series = _series;
+    if (c == null || series == null) return;
+
+    final bool streaming = c.isStreaming;
+    if (streaming && !_wasStreaming) {
+      series.clear();
+      _lastCharted = null;
+    }
+    _wasStreaming = streaming;
+
+    if (mounted) setState(() {}); // reflect live indicator / timestamp ticks
+
+    if (!streaming) return;
+    final CellularInfo? d = c.info;
+    if (d == null || d == _lastCharted) return;
+    _lastCharted = d;
+    series.add(d);
+  }
+
+  /// Live Start: raise the shared monitoring flag AND fire the recursive
+  /// Shortcut once to kick off the stream. The app then passively consumes the
+  /// bridge updates; it never loops itself.
+  Future<void> _startLive() async {
+    final CellularMonitorController? c = _liveController;
+    if (c == null) return;
+    setState(() => _liveTriggerError = false);
+    final bool opened = await c.startMonitoring(
+      triggerShortcutName: WifiLiveShortcutsConfig.kLiveShortcutName,
+    );
+    if (!mounted) return;
+    if (!opened) {
+      // Could not open the Shortcut. Surface the honest error immediately, then
+      // clear the shared monitoring flag (the recursion never started, so there
+      // is no producer). Showing the error first means the banner does not wait
+      // on the stop cleanup completing.
+      setState(() => _liveTriggerError = true);
+      await c.stopMonitoring();
+    }
+  }
+
+  /// Live Stop: clear the shared monitoring flag so the recursive Shortcut halts
+  /// on its next check. The last values stay frozen on screen (the snapshot).
+  Future<void> _stopLive() async {
+    await _liveController?.stopMonitoring();
+    if (mounted) setState(() {});
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // iOS only: the Shortcut bounces the app to the foreground; on resume,
-    // re-read so a payload delivered while backgrounded lands.
+    // iOS only: on resume, re-resolve so a payload delivered while backgrounded
+    // lands and any persisted monitoring flag resumes the live state.
     if (state == AppLifecycleState.resumed &&
         _source == CellularInfoSource.iosShortcuts) {
-      _loadIos();
+      _liveController?.load();
     }
   }
 
@@ -107,62 +166,19 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
   void dispose() {
     if (_source == CellularInfoSource.iosShortcuts) {
       WidgetsBinding.instance.removeObserver(this);
+      // Hygiene: leaving the screen clears the shared monitoring flag so the
+      // recursive Shortcut stops on its next check and the Wi-Fi tool is never
+      // stranded as "streaming".
+      final CellularMonitorController? controller = _liveController;
+      // Detach the listener FIRST so the stopMonitoring() notify below does not
+      // re-enter _captureSample's setState on a defunct element.
+      controller?.removeListener(_captureSample);
+      if (controller != null && controller.isStreaming) {
+        controller.stopMonitoring();
+      }
+      controller?.dispose();
     }
     super.dispose();
-  }
-
-  // ---- iOS data flow ----
-
-  /// Reads the latest cellular payload + install state. [manual] is true for the
-  /// app-bar Refresh, which shows a brief confirmation so a refresh that returns
-  /// identical values is never silent.
-  Future<void> _loadIos({bool manual = false}) async {
-    final CellularInfoBridge? bridge = _iosBridge;
-    if (bridge == null) return;
-    if (manual && mounted) {
-      setState(() => _iosPhase = _IosPhase.loading);
-    }
-
-    final CellularInfo? latest = await bridge.readLatest();
-    final bool ever = await bridge.hasEverReceivedPayload();
-    if (!mounted) return;
-
-    setState(() {
-      if (latest != null && latest.hasAnyData) {
-        _iosInfo = latest;
-        _iosPhase = _IosPhase.hasData;
-      } else if (ever) {
-        // A payload arrived before but carried no data this read — still show
-        // whatever we last held, or fall back to the install onboarding.
-        _iosPhase = _iosInfo != null ? _IosPhase.hasData : _IosPhase.needsInstall;
-      } else {
-        _iosPhase = _IosPhase.needsInstall;
-      }
-    });
-
-    if (manual && mounted && _iosPhase == _IosPhase.hasData) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Cellular information updated'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
-  }
-
-  Future<void> _openInstallSheet() async {
-    final CellularInfoBridge? bridge = _iosBridge;
-    if (bridge == null) return;
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      backgroundColor: AppColors.surface2,
-      builder: (_) => _InstallCellularShortcutSheet(
-        bridge: bridge,
-        onInstalled: () => _loadIos(),
-      ),
-    );
   }
 
   @override
@@ -179,54 +195,20 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
 
   List<Widget> _appBarActions() {
     if (_source != CellularInfoSource.iosShortcuts) return const [];
-    final bool hasData = _iosPhase == _IosPhase.hasData;
     return <Widget>[
-      // §8.16 order: copy LEADS, then the trailing actions. Copy is disabled
-      // (textBuilder -> null) until a reading exists.
+      // §8.16: copy is the only app-bar action on iOS. Disabled
+      // (textBuilder -> null) until at least one live reading exists.
       AppCopyAction(textBuilder: _buildCopyText),
-      if (hasData)
-        Semantics(
-          button: true,
-          label: 'How to install the Shortcut',
-          child: IconButton(
-            icon: const Icon(Icons.help_outline),
-            tooltip: 'How to install the Shortcut',
-            onPressed: _openInstallSheet,
-          ),
-        ),
-      if (_iosPhase == _IosPhase.loading)
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
-          child: Center(
-            child: SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: AppColors.primary,
-              ),
-            ),
-          ),
-        )
-      else
-        Semantics(
-          button: true,
-          label: 'Refresh cellular information',
-          child: IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
-            onPressed: () => _loadIos(manual: true),
-          ),
-        ),
     ];
   }
 
   /// §8.16 copy payload — the cellular reading as a labeled plain-text block,
   /// mirroring the on-screen metric cards. Returns null (-> disabled affordance)
-  /// until a reading exists. Honest blanks: a missing field is "Unavailable".
+  /// until a live reading exists. Honest blanks: a missing field is
+  /// "Unavailable". Stop freezes the last values, which remain copyable.
   String? _buildCopyText() {
-    final CellularInfo? info = _iosInfo;
-    if (_iosPhase != _IosPhase.hasData || info == null) return null;
+    final CellularInfo? info = _liveController?.info;
+    if (info == null || !info.hasAnyData) return null;
 
     final StringBuffer buf = StringBuffer()
       ..writeln('Cellular Information')
@@ -289,7 +271,7 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
     }
   }
 
-  // ---- iOS body ----
+  // ---- iOS body (Live streaming only) ----
 
   Widget _iosBody() {
     return LayoutBuilder(
@@ -299,185 +281,19 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
             ? AppSpacing.screenEdgeDesktop
             : AppSpacing.screenEdgeMobile;
 
-        switch (_iosPhase) {
-          case _IosPhase.loading:
-            return const _IosLoadingState();
-          case _IosPhase.needsInstall:
-            return _EmptyInstallState(onInstall: _openInstallSheet);
-          case _IosPhase.hasData:
-            return _IosSuccess(
-              info: _iosInfo!,
-              edge: edge,
-              isDesktop: isDesktop,
-            );
-        }
+        return _LiveBody(
+          controller: _liveController!,
+          series: _series!,
+          edge: edge,
+          triggerError: _liveTriggerError,
+          onStart: _startLive,
+          onStop: _stopLive,
+        );
       },
     );
   }
 }
 
-// ===========================================================================
-// iOS states
-// ===========================================================================
-
-/// iOS brief loading state while install-state + latest payload resolve.
-class _IosLoadingState extends StatelessWidget {
-  const _IosLoadingState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Semantics(
-        liveRegion: true,
-        label: 'Loading cellular information',
-        child: const CircularProgressIndicator(color: AppColors.primary),
-      ),
-    );
-  }
-}
-
-/// iOS empty state — no payload has ever arrived. Offers the install onboarding.
-class _EmptyInstallState extends StatelessWidget {
-  const _EmptyInstallState({required this.onInstall});
-
-  final VoidCallback onInstall;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme text = Theme.of(context).textTheme;
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 420),
-        child: Padding(
-          // §4 single sanctioned token: a uniform `--space-lg` pad on the
-          // centered empty-state card. Replaces the prior `edge + AppSpacing.md`
-          // combination, which summed to an off-grid 40px (mobile) / 48px
-          // (desktop) and drifted with the breakpoint.
-          padding: EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.signal_cellular_alt_outlined,
-                size: 48,
-                color: AppColors.textTertiary,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                'No cellular data yet',
-                style: text.headlineSmall?.copyWith(
-                  color: AppColors.textPrimary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                'Install the companion Shortcut once, then run it to populate '
-                "this screen with your carrier, radio technology, signal bars, "
-                'country code, and roaming status.',
-                style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Semantics(
-                button: true,
-                label: 'Install Shortcut',
-                child: FilledButton.icon(
-                  onPressed: onInstall,
-                  icon: const Icon(Icons.download_outlined),
-                  label: const Text('Install Shortcut'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// iOS success body: the shared metric cards rendering the [CellularInfo].
-class _IosSuccess extends StatelessWidget {
-  const _IosSuccess({
-    required this.info,
-    required this.edge,
-    required this.isDesktop,
-  });
-
-  final CellularInfo info;
-  final double edge;
-  final bool isDesktop;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 560),
-        child: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(
-            edge,
-            AppSpacing.sm,
-            edge,
-            edge + AppSpacing.sm,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              ConceptGraphicBand(toolId: 'cellular-info', isDesktop: isDesktop),
-              if (ToolAssets.hasGraphic('cellular-info'))
-                const SizedBox(height: AppSpacing.md),
-              _carrierCard(info),
-              const SizedBox(height: AppSpacing.sm),
-              _radioCard(info),
-              const SizedBox(height: AppSpacing.sm),
-              _signalCard(info),
-              const SizedBox(height: AppSpacing.sm),
-              _networkCard(info),
-              const SizedBox(height: AppSpacing.sm),
-              const _SignalFootnote(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _carrierCard(CellularInfo info) => _Card(
-        title: 'Carrier',
-        child: Column(
-          children: [_MetricRow(label: 'Carrier', value: info.carrier)],
-        ),
-      );
-
-  Widget _radioCard(CellularInfo info) => _Card(
-        title: 'Radio',
-        child: Column(
-          children: [
-            _MetricRow(label: 'Radio Technology', value: info.radioTechnology),
-          ],
-        ),
-      );
-
-  Widget _signalCard(CellularInfo info) => _Card(
-        title: 'Signal',
-        child: _SignalBarsRow(bars: info.signalBars),
-      );
-
-  Widget _networkCard(CellularInfo info) => _Card(
-        title: 'Network',
-        child: Column(
-          children: [
-            _MetricRow(label: 'Country Code', value: info.countryCode),
-            _MetricRow(
-              label: 'Roaming',
-              value: info.roaming == null
-                  ? null
-                  : (info.roaming! ? 'Yes' : 'No'),
-            ),
-          ],
-        ),
-      );
-}
 
 // ===========================================================================
 // Signal bars — rendered as a 0-to-4 bar meter, NEVER as dBm / RSRP / RSRQ.
@@ -615,140 +431,6 @@ class _SignalFootnote extends StatelessWidget {
   }
 }
 
-// ===========================================================================
-// Install sheet
-// ===========================================================================
-
-/// Install-the-companion-Shortcut onboarding sheet for the cellular tool.
-/// Mirrors the Wi-Fi InstallShortcutSheet; the Install action is disabled while
-/// the iCloud link is still a placeholder so the app never opens a dead link.
-class _InstallCellularShortcutSheet extends StatelessWidget {
-  const _InstallCellularShortcutSheet({
-    required this.bridge,
-    required this.onInstalled,
-  });
-
-  final CellularInfoBridge bridge;
-  final Future<void> Function() onInstalled;
-
-  Future<void> _install(BuildContext context) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final bool ok =
-        await bridge.openUrl(CellularShortcutsConfig.kCompanionShortcutUrl);
-    if (!ok) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Could not open the Shortcut link.')),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme text = Theme.of(context).textTheme;
-    final bool isPlaceholder = CellularShortcutsConfig.isShortcutUrlPlaceholder;
-
-    return SafeArea(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 560),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            AppSpacing.sm,
-            AppSpacing.md,
-            AppSpacing.md,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Install the companion Shortcut',
-                style: text.headlineSmall,
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                'Cellular Information reads your mobile network from a small '
-                'Shortcut you install once. After installing, run it to send '
-                'your carrier, radio technology, signal bars, country code, and '
-                'roaming status to the app.',
-                style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              const _Step(
-                number: 1,
-                text: 'Tap Install Shortcut to open it in the Shortcuts app, '
-                    'then add it.',
-              ),
-              const _Step(
-                number: 2,
-                text: 'Run the Shortcut once. Its details appear here.',
-              ),
-              const SizedBox(height: AppSpacing.md),
-              FilledButton.icon(
-                onPressed: isPlaceholder ? null : () => _install(context),
-                icon: const Icon(Icons.download_outlined),
-                label: const Text('Install Shortcut'),
-              ),
-              if (isPlaceholder) ...[
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  'Install link coming soon.',
-                  style: text.bodySmall?.copyWith(color: AppColors.textTertiary),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-              const SizedBox(height: AppSpacing.xs),
-              OutlinedButton(
-                onPressed: () async {
-                  Navigator.of(context).pop();
-                  await onInstalled();
-                },
-                child: const Text("I've installed it, run it"),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Step extends StatelessWidget {
-  const _Step({required this.number, required this.text});
-
-  final int number;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme textTheme = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: AppSpacing.md,
-            height: AppSpacing.md,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: AppColors.surface3,
-              shape: BoxShape.circle,
-            ),
-            child: Text(
-              '$number',
-              style: textTheme.labelMedium?.copyWith(
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(child: Text(text, style: textTheme.bodyLarge)),
-        ],
-      ),
-    );
-  }
-}
 
 // ===========================================================================
 // Shared presentation widgets (mirror wifi_info_screen)
@@ -756,10 +438,20 @@ class _Step extends StatelessWidget {
 
 /// Reusable card shell (matches wifi_info_screen._Card).
 class _Card extends StatelessWidget {
-  const _Card({required this.title, required this.child});
+  const _Card({
+    required this.title,
+    required this.child,
+    this.verticalPadding = AppSpacing.sm,
+  });
 
   final String title;
   final Widget child;
+
+  /// Top/bottom inset for the card. Defaults to `sm` (16px). The Live cards
+  /// pass a tighter `xs` (8px) so the per-metric Live stack fits a phone screen
+  /// without the bottom card clipping; horizontal inset stays `sm` so content
+  /// edges still align.
+  final double verticalPadding;
 
   @override
   Widget build(BuildContext context) {
@@ -770,7 +462,10 @@ class _Card extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: AppColors.border, width: 1),
       ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: verticalPadding,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -836,6 +531,467 @@ class _MetricRow extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ===========================================================================
+// iOS Live mode — continuous streaming surface (the only iOS mode)
+// ===========================================================================
+
+/// The Live body: the Start/Stop monitor bar, and either the idle start hint,
+/// the waiting state, or the live cards. Rebuilds on each streamed payload via
+/// an [AnimatedBuilder] over the [CellularMonitorController]. Stop freezes the
+/// last values on screen (the snapshot); there is no separate snapshot mode.
+class _LiveBody extends StatelessWidget {
+  const _LiveBody({
+    required this.controller,
+    required this.series,
+    required this.edge,
+    required this.triggerError,
+    required this.onStart,
+    required this.onStop,
+  });
+
+  final CellularMonitorController controller;
+  final CellularTimeSeries series;
+  final double edge;
+  final bool triggerError;
+  final VoidCallback onStart;
+  final VoidCallback onStop;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: AnimatedBuilder(
+          animation: controller,
+          builder: (context, _) {
+            final CellularInfo? info = controller.info;
+            return SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                edge,
+                AppSpacing.sm,
+                edge,
+                edge + AppSpacing.sm,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  _MonitorControlBar(
+                    streaming: controller.isStreaming,
+                    lastUpdated: controller.lastUpdated,
+                    onStart: onStart,
+                    onStop: onStop,
+                  ),
+                  if (triggerError) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    const _LiveTriggerErrorCard(),
+                  ],
+                  const SizedBox(height: AppSpacing.sm),
+                  if (!controller.isStreaming && series.isEmpty)
+                    const _LiveStartHint()
+                  else if (info == null)
+                    _WaitingForFirstPayload(streaming: controller.isStreaming)
+                  else
+                    _LiveCards(info: info, series: series),
+                  // First-time SETUP hint only. Once the app has EVER received a
+                  // Live payload (hasEverReceived — mirrors the App Group
+                  // shortcuts_bridge.has_received_payload flag), the user clearly
+                  // has the companion Shortcut working, so the install/how-to note
+                  // is noise and is hidden permanently.
+                  if (!controller.hasEverReceived) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    const _LoopShortcutNote(),
+                  ],
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// Live sparkline chart height. A denser glyph metric than the [Sparkline]
+/// default (40) so the Live card stack fits a phone screen without the bottom
+/// card clipping; still tall enough to read the trend. Live-mode only.
+const double _liveSparklineHeight = 32;
+
+/// The Live cellular surface: live-updating Carrier / Radio / Network cards,
+/// a live Signal-Bars readout, an optional small bars-history sparkline, and the
+/// honest signal footnote. Bars stay the coarse 0..4 scale and are never a grade
+/// or a dBm value (GL-005). No fabricated grade is shown for cellular.
+class _LiveCards extends StatelessWidget {
+  const _LiveCards({required this.info, required this.series});
+
+  final CellularInfo info;
+  final CellularTimeSeries series;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        _Card(
+          title: 'Carrier',
+          verticalPadding: AppSpacing.xs,
+          child: Column(
+            children: [_MetricRow(label: 'Carrier', value: info.carrier)],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        _Card(
+          title: 'Radio',
+          verticalPadding: AppSpacing.xs,
+          child: Column(
+            children: [
+              _MetricRow(label: 'Radio Technology', value: info.radioTechnology),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        _Card(
+          title: 'Signal',
+          verticalPadding: AppSpacing.xs,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              _SignalBarsRow(bars: info.signalBars),
+              if (series.length >= 2) ...[
+                const SizedBox(height: AppSpacing.xxs),
+                Semantics(
+                  label: 'Signal bars trend',
+                  child: ExcludeSemantics(
+                    child: Sparkline(
+                      values: series.bars,
+                      semanticLabel: 'Signal bars trend',
+                      height: _liveSparklineHeight,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        _Card(
+          title: 'Network',
+          verticalPadding: AppSpacing.xs,
+          child: Column(
+            children: [
+              _MetricRow(label: 'Country Code', value: info.countryCode),
+              _MetricRow(
+                label: 'Roaming',
+                value: info.roaming == null
+                    ? null
+                    : (info.roaming! ? 'Yes' : 'No'),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        const _SignalFootnote(),
+      ],
+    );
+  }
+}
+
+/// Live-mode prompt before streaming and before any sample.
+class _LiveStartHint extends StatelessWidget {
+  const _LiveStartHint();
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+      child: Text(
+        'Tap Start to begin live readings. Your carrier, radio technology, '
+        'signal bars, country code, and roaming status update here as each '
+        'sample arrives. Stop freezes the last values on screen.',
+        style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+}
+
+/// Honest error card when Live Start could not open the looping Shortcut.
+class _LiveTriggerErrorCard extends StatelessWidget {
+  const _LiveTriggerErrorCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.error_outline, size: 20, color: AppColors.statusDanger),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Semantics(
+              liveRegion: true,
+              child: Text(
+                'Could not start live streaming. The looping companion Shortcut '
+                'may not be installed, or the run was cancelled. Install it, '
+                'then press Start again.',
+                style: text.bodyMedium?.copyWith(color: AppColors.textSecondary),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Honest note about the recursive companion Shortcut for Live mode.
+class _LoopShortcutNote extends StatelessWidget {
+  const _LoopShortcutNote();
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final bool placeholder =
+        WifiLiveShortcutsConfig.isLiveShortcutUrlPlaceholder;
+    final String message = placeholder
+        ? 'Live streaming needs the combined "WLAN Pros Live" companion '
+              'Shortcut, which is published during device testing.'
+        : 'Live streaming uses the combined "WLAN Pros Live" companion '
+              'Shortcut. Install it, then tap Start.';
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.info_outline, size: 20, color: AppColors.textTertiary),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              message,
+              style: text.bodyMedium?.copyWith(color: AppColors.textSecondary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// iOS Start/Stop control + live indicator + last-updated timestamp.
+class _MonitorControlBar extends StatelessWidget {
+  const _MonitorControlBar({
+    required this.streaming,
+    required this.lastUpdated,
+    required this.onStart,
+    required this.onStop,
+  });
+
+  final bool streaming;
+  final DateTime? lastUpdated;
+  final VoidCallback onStart;
+  final VoidCallback onStop;
+
+  static String _formatTimestamp(DateTime t) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${two(t.hour)}:${two(t.minute)}:${two(t.second)}';
+  }
+
+  /// Below this width the status and action stack vertically (reflow, not clip)
+  /// so the bar survives 320px at 200% type. GL-003 §8.9.
+  static const double _reflowThreshold = 280;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: AppColors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final bool narrow = constraints.maxWidth < _reflowThreshold;
+          final Widget status = _StatusBlock(
+            streaming: streaming,
+            lastUpdated: lastUpdated,
+          );
+          final Widget action = _ActionButton(
+            streaming: streaming,
+            onStart: onStart,
+            onStop: onStop,
+          );
+
+          if (narrow) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                status,
+                const SizedBox(height: AppSpacing.sm),
+                Align(alignment: Alignment.centerLeft, child: action),
+              ],
+            );
+          }
+          return Row(
+            children: [
+              Expanded(child: status),
+              const SizedBox(width: AppSpacing.xs),
+              action,
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Status block: state icon + "Live"/"Paused" + "Updated HH:MM:SS". One live
+/// region keyed only on the state word (Start/Stop announces once, SC 4.1.3);
+/// the ticking timestamp is excluded so it does not re-announce every tick.
+class _StatusBlock extends StatelessWidget {
+  const _StatusBlock({required this.streaming, required this.lastUpdated});
+
+  final bool streaming;
+  final DateTime? lastUpdated;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final String label = streaming ? 'Live' : 'Paused';
+
+    return Semantics(
+      liveRegion: true,
+      label: label,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (streaming)
+            const _LiveIndicator()
+          else
+            const Icon(
+              Icons.pause_circle_outline,
+              size: 20,
+              color: AppColors.textTertiary,
+            ),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: text.labelLarge?.copyWith(
+                    color: streaming
+                        ? AppColors.primary
+                        : AppColors.textSecondary,
+                  ),
+                ),
+                if (lastUpdated != null)
+                  ExcludeSemantics(
+                    child: Text(
+                      'Updated ${_MonitorControlBar._formatTimestamp(lastUpdated!)}',
+                      style: text.bodySmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({
+    required this.streaming,
+    required this.onStart,
+    required this.onStop,
+  });
+
+  final bool streaming;
+  final VoidCallback onStart;
+  final VoidCallback onStop;
+
+  @override
+  Widget build(BuildContext context) {
+    return streaming
+        ? Semantics(
+            button: true,
+            label: 'Stop live monitoring',
+            child: OutlinedButton.icon(
+              onPressed: onStop,
+              icon: const Icon(Icons.stop),
+              label: const Text('Stop'),
+            ),
+          )
+        : Semantics(
+            button: true,
+            label: 'Start live monitoring',
+            child: FilledButton.icon(
+              onPressed: onStart,
+              icon: const Icon(Icons.play_arrow),
+              label: const Text('Start'),
+            ),
+          );
+  }
+}
+
+/// Decorative lime "live" dot. Excluded from the a11y tree (the live region +
+/// label live on [_StatusBlock]).
+class _LiveIndicator extends StatelessWidget {
+  const _LiveIndicator();
+
+  @override
+  Widget build(BuildContext context) {
+    return ExcludeSemantics(
+      child: Container(
+        width: 12,
+        height: 12,
+        decoration: const BoxDecoration(
+          color: AppColors.primary,
+          shape: BoxShape.circle,
+        ),
+      ),
+    );
+  }
+}
+
+class _WaitingForFirstPayload extends StatelessWidget {
+  const _WaitingForFirstPayload({required this.streaming});
+
+  final bool streaming;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+      child: Text(
+        streaming
+            ? 'Listening. The recursive Shortcut is sending cellular details.'
+            : 'Press Start to begin streaming cellular details.',
+        style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+        textAlign: TextAlign.center,
       ),
     );
   }
