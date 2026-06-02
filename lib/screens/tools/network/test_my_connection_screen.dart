@@ -171,25 +171,36 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
           final WifiInfoAdapter? adapter = _macAdapter;
           if (adapter == null) return null;
           // R1-B — macOS gates the network NAME (SSID/BSSID) behind Location
-          // Services. Request it once as part of the check (mirroring the pro
-          // Wi-Fi Information tool's _grantLocation flow), then read regardless
-          // of the result. The link RATE — hence the Wi-Fi Fine/Slow chip and
-          // the verdict — resolves WITHOUT Location; only the human-readable
-          // name depends on it, and the facts row degrades honestly if denied.
+          // Services. A connection check must NEVER pop a Location prompt
+          // mid-test, so we do NOT request the permission here (that is the pro
+          // Wi-Fi Information tool's job, via its explicit "grant Location"
+          // button). Instead we read the CURRENT authorization with a no-prompt
+          // status check and read the snapshot regardless. The link RATE —
+          // hence the Wi-Fi Fine/Slow chip and the verdict — resolves WITHOUT
+          // Location; only the human-readable NAME depends on it, and the facts
+          // row degrades honestly when it was not already granted elsewhere.
           if (adapter.gatesNameBehindPermission) {
             try {
-              // The request resolves to whether Location is authorized AFTER
-              // the prompt — captured so the facts row can say "Name unavailable
-              // (Location access off)" only when access is genuinely off, vs a
-              // plain not-connected case.
-              _macLocationAuthorized = await adapter.requestNamePermission();
+              // No-prompt: reflects whether Location was ALREADY granted (in the
+              // pro tool or System Settings), so the facts row can say "Name
+              // unavailable (Location access off)" only when access is genuinely
+              // off, vs a plain not-connected case. Never surfaces a prompt.
+              _macLocationAuthorized = await adapter.currentNameAuthorization();
             } catch (_) {
-              // A denied/failed permission is non-fatal: fall through to the
-              // read; the name simply stays unavailable.
+              // A failed status read is non-fatal: fall through to the read; the
+              // name simply stays honestly unavailable.
               _macLocationAuthorized = false;
             }
           }
-          return await adapter.fetch();
+          // Bound the snapshot read too: a stalled native channel must not
+          // hang the check. On timeout the link reads as unread (null) and the
+          // verdict degrades to the honest internet-only path (Outcome D).
+          return await adapter.fetch().timeout(
+            const Duration(seconds: 5),
+            onTimeout: () => throw TimeoutException(
+              'Wi-Fi link read timed out',
+            ),
+          );
         case WifiInfoSource.iosShortcuts:
           final WiFiDetailsBridge? bridge = _iosBridge;
           if (bridge == null) return null;
@@ -233,7 +244,15 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
       },
       onDone: () async {
         final QualityResult? internet = _quality.lastResult;
-        final ConnectedAp? ap = await linkFuture;
+        // Safety net: the link read is already bounded inside _readLink (the
+        // permission request at the adapter and the snapshot fetch here), but
+        // guard this final await as well so the verdict ALWAYS computes even if
+        // the link future stalls for any reason. A timeout yields ap = null →
+        // the honest internet-only / wifiUnknown path (Outcome D).
+        final ConnectedAp? ap = await linkFuture.timeout(
+          const Duration(seconds: 8),
+          onTimeout: () => null,
+        );
         if (!mounted) return;
         final WifiVsInternetResult engine = _compute(ap, internet);
         setState(() {
@@ -673,7 +692,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
     final String? ssid = ap?.ssid;
     if (ssid != null && ssid.trim().isNotEmpty) return ssid;
     if (_source == WifiInfoSource.macosCoreWlan && !_macLocationAuthorized) {
-      return 'Name unavailable (Location access off)';
+      return 'Unavailable (enable Location Services to show the name)';
     }
     return 'Not measured';
   }

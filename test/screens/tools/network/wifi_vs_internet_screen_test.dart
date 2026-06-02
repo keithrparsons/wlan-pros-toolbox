@@ -53,6 +53,12 @@ class _FakeMacAdapter implements WifiInfoAdapter {
 
   @override
   Future<bool> requestNamePermission() async => true;
+
+  @override
+  Future<bool> currentNameAuthorization() async => true;
+
+  @override
+  Future<bool> openNamePermissionSettings() async => true;
 }
 
 /// iOS bridge that never delivered a payload — readLatest returns null, so the
@@ -72,6 +78,38 @@ class _NoPayloadBridge implements WiFiDetailsBridge {
   Future<bool> runShortcut(String name) async => true;
   @override
   Stream<WiFiDetails> get updates => const Stream<WiFiDetails>.empty();
+}
+
+/// A [QualityClient] that counts how many times [measure] is subscribed,
+/// proving the AppBar Refresh re-runs the SAME check (it re-invokes the screen's
+/// one [_run] handler, which re-subscribes this client). A small first-event
+/// delay keeps the in-progress state observable across a finite pump; no
+/// network I/O.
+class _CountingQualityClient implements QualityClient {
+  _CountingQualityClient(this.scriptedResult);
+
+  final QualityResult scriptedResult;
+  QualityResult? _lastResult;
+
+  /// Number of times the screen has started a run against this client.
+  int measureCount = 0;
+
+  @override
+  bool get isAvailable => true;
+
+  @override
+  QualityResult? get lastResult => _lastResult;
+
+  @override
+  Stream<QualityProgress> measure() async* {
+    measureCount++;
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    yield const QualityProgress(QualityPhase.latency, 0.25);
+    yield const QualityProgress(QualityPhase.download, 0.5);
+    yield const QualityProgress(QualityPhase.upload, 0.75);
+    _lastResult = scriptedResult;
+    yield const QualityProgress(QualityPhase.complete, 1.0);
+  }
 }
 
 /// A net_quality result graded marginal so a finite link produces a
@@ -208,6 +246,51 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(NetworkUnavailableView), findsOneWidget);
   });
+
+  testWidgets(
+    'AppBar Refresh re-runs the same check and is disabled while running',
+    (tester) async {
+      final _CountingQualityClient quality =
+          _CountingQualityClient(_marginalInternet());
+      await tester.pumpWidget(
+        host(
+          WifiVsInternetScreen(
+            sourceOverride: WifiInfoSource.macosCoreWlan,
+            macAdapter: _FakeMacAdapter(),
+            qualityClient: quality,
+          ),
+        ),
+      );
+
+      // No Refresh before the first verdict — the in-card Run button is the
+      // first-run affordance.
+      await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.refresh), findsNothing);
+
+      // First run via the in-card button.
+      await tester.tap(find.text('Run Check'));
+      await tester.pumpAndSettle();
+      expect(quality.measureCount, 1);
+
+      // Refresh now appears in the AppBar with the §a11y label.
+      expect(find.byIcon(Icons.refresh), findsOneWidget);
+      expect(find.bySemanticsLabel('Run the test again'), findsOneWidget);
+
+      // Tap Refresh: a single pump lands on the in-progress state — the refresh
+      // IconButton is gone (swapped for the spinner) so the check can't be
+      // double-fired, and the second run has begun.
+      await tester.tap(find.byIcon(Icons.refresh));
+      await tester.pump();
+      expect(find.byIcon(Icons.refresh), findsNothing);
+      expect(find.byType(CircularProgressIndicator), findsWidgets);
+
+      // The re-run settles back to a verdict and the Refresh control restores.
+      await tester.pumpAndSettle();
+      expect(quality.measureCount, 2);
+      expect(find.byIcon(Icons.refresh), findsOneWidget);
+      expect(find.text('Your Wi-Fi link'), findsOneWidget);
+    },
+  );
 
   testWidgets('no RenderFlex overflow at 320px after a full run', (
     tester,

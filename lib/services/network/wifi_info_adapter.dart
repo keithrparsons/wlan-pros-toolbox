@@ -24,6 +24,8 @@
 // shape into every platform. The seam's job is to pick the source honestly; the
 // screen folds the iOS-only affordances behind the iOS source.
 
+import 'dart:async';
+
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
@@ -83,7 +85,28 @@ abstract class WifiInfoAdapter {
 
   /// Requests the name-gating permission, then reports whether it is authorized.
   /// A no-op returning true for sources without such a gate.
+  ///
+  /// This is the INTERACTIVE path: it surfaces the OS prompt and waits for the
+  /// user to respond, so it carries a generous timeout ceiling. Callers that
+  /// must not pop a prompt (e.g. a connection check) read with the CURRENT
+  /// authorization via [currentNameAuthorization] instead.
   Future<bool> requestNamePermission();
+
+  /// Reports the CURRENT name-gating authorization WITHOUT surfacing any prompt.
+  /// Returns true for sources without such a gate. Used by callers (a connection
+  /// check) that must read with the existing authorization and never interrupt
+  /// the user with a system prompt mid-task.
+  Future<bool> currentNameAuthorization();
+
+  /// Deep-links the user to the OS settings pane where they can grant the
+  /// name-gating permission manually.
+  ///
+  /// Some platforms (macOS) cannot toggle their own Location permission in code
+  /// (TCC protection), and the in-app prompt is unreliable in notarized builds,
+  /// so the honest fallback is to open the exact settings pane and tell the user
+  /// what to flip. Returns whether the settings pane opened. A no-op returning
+  /// false for sources without such a deep-link.
+  Future<bool> openNamePermissionSettings();
 
   /// Human label for the source platform, used in honest per-field
   /// "not exposed by `<platform>`" copy.
@@ -96,10 +119,42 @@ abstract class WifiInfoAdapter {
 class MacWifiInfoAdapter implements WifiInfoAdapter {
   /// [service] is injectable so widget tests drive a fake invoker + platform
   /// override without a real platform channel.
-  MacWifiInfoAdapter({WifiInfoService? service})
-      : _service = service ?? WifiInfoService();
+  ///
+  /// [permissionTimeout] bounds the INTERACTIVE native Location-authorization
+  /// request. It is a GENEROUS ceiling (default 30s) — long enough for a user
+  /// to read and respond to the system prompt before the delegate callback
+  /// fires, while still being a hang-safety for the pathological case where the
+  /// prompt never surfaces and no callback ever arrives (common in notarized
+  /// non-App-Store builds). On timeout the request resolves to `false` —
+  /// treated as "not authorized" — and the network NAME degrades honestly while
+  /// the rate-derived verdict, which never needs Location, proceeds.
+  ///
+  /// NOTE: this timeout governs the interactive [requestNamePermission] only.
+  /// The no-prompt [currentNameAuthorization] never surfaces a prompt, so it is
+  /// not bounded by this ceiling.
+  ///
+  /// [fetchTimeout] bounds the native CoreWLAN snapshot read for the same
+  /// reason: a stalled channel (the native side never returns) must never hang
+  /// a caller. On timeout [fetch] throws a typed [WifiInfoUnavailable]
+  /// (`channelError`), so EVERY caller is protected in one place — the pro
+  /// Wi-Fi Information tool surfaces its honest "No Wi-Fi reading" card, while
+  /// Test My Connection and Wi-Fi vs Internet degrade to their internet-only
+  /// verdict. Mirrors how [requestNamePermission] is bounded.
+  MacWifiInfoAdapter({
+    WifiInfoService? service,
+    Duration permissionTimeout = const Duration(seconds: 30),
+    Duration fetchTimeout = const Duration(seconds: 5),
+  })  : _service = service ?? WifiInfoService(),
+        // Kept in the initializer list alongside `_service` (which needs the
+        // `?? WifiInfoService()` fallback) rather than split into formals.
+        // ignore: prefer_initializing_formals
+        _permissionTimeout = permissionTimeout,
+        // ignore: prefer_initializing_formals
+        _fetchTimeout = fetchTimeout;
 
   final WifiInfoService _service;
+  final Duration _permissionTimeout;
+  final Duration _fetchTimeout;
 
   @override
   String get platformLabel => 'macOS CoreWLAN';
@@ -108,13 +163,56 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
   @override
   bool get gatesNameBehindPermission => true;
 
+  /// Reads a fresh macOS CoreWLAN snapshot with a hard upper bound. A native
+  /// channel that never returns (CoreWLAN read stalls) raises a typed
+  /// [WifiInfoUnavailable] (`channelError`) after [fetchTimeout] rather than
+  /// hanging the caller. This protects EVERY caller — the pro Wi-Fi Information
+  /// tool and the two consumer checks (Test My Connection, Wi-Fi vs Internet) —
+  /// in one place, so no screen has to wrap the call itself. The thrown type
+  /// matches the existing channel-error path, so callers' current `catch`
+  /// handling degrades honestly with no per-screen change.
   @override
   Future<ConnectedAp> fetch() async {
-    final WifiInfo info = await _service.fetch();
+    final WifiInfo info = await _service.fetch().timeout(
+      _fetchTimeout,
+      onTimeout: () => throw const WifiInfoUnavailable(
+        WifiInfoUnavailableReason.channelError,
+        'Wi-Fi snapshot read timed out.',
+      ),
+    );
     return ConnectedAp.fromWifiInfo(info);
   }
 
+  /// Requests Location authorization (INTERACTIVE — surfaces the OS prompt and
+  /// waits for the user) with a generous [permissionTimeout] ceiling (30s by
+  /// default). The ceiling is long enough for a real user to respond to the
+  /// system prompt — the delegate fires on their response well within it — so
+  /// the interactive grant in the pro Wi-Fi Information tool resolves AUTHORIZED
+  /// after the user clicks Allow, and the subsequent re-read populates SSID and
+  /// BSSID. It still guards the pathological hang where no prompt surfaces and
+  /// no callback ever arrives: on timeout the request resolves to `false`.
   @override
-  Future<bool> requestNamePermission() =>
-      _service.requestLocationPermission();
+  Future<bool> requestNamePermission() => _service
+      .requestLocationPermission()
+      .timeout(_permissionTimeout, onTimeout: () => false);
+
+  /// Reports the CURRENT Location authorization WITHOUT surfacing any prompt.
+  /// Backs onto the native no-prompt status check. Used by a connection check
+  /// so it can label the network name honestly (authorized vs not) without ever
+  /// interrupting the user with a system prompt. Bounded by [fetchTimeout] as a
+  /// hang-safety; on timeout it resolves to `false` (treated as not authorized).
+  @override
+  Future<bool> currentNameAuthorization() => _service
+      .isLocationAuthorized()
+      .timeout(_fetchTimeout, onTimeout: () => false);
+
+  /// Opens the macOS Location Services privacy pane so the user can enable this
+  /// app's Location access manually. macOS cannot toggle its own Location
+  /// permission in code (TCC), so this deep-link plus on-screen steps is the
+  /// honest path when the in-app prompt does not surface. Bounded by
+  /// [fetchTimeout] as a hang-safety; on timeout it resolves to `false`.
+  @override
+  Future<bool> openNamePermissionSettings() => _service
+      .openLocationSettings()
+      .timeout(_fetchTimeout, onTimeout: () => false);
 }
