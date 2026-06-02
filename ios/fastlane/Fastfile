@@ -70,6 +70,12 @@ platform :ios do
     sigh(api_key: api_key, app_identifier: APP_ID, adhoc: false, force: false)
   end
 
+  desc "Create/fetch the Developer ID Application certificate (for notarized macOS builds)"
+  lane :mac_cert do
+    api_key = asc_api_key
+    cert(api_key: api_key, type: "developer_id_application", platform: "macos")
+  end
+
   desc "Upload the already-built ipa to TestFlight (waits for processing)"
   lane :upload do
     api_key = asc_api_key
