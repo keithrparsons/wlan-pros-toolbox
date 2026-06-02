@@ -189,7 +189,15 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
               _macLocationAuthorized = false;
             }
           }
-          return await adapter.fetch();
+          // Bound the snapshot read too: a stalled native channel must not
+          // hang the check. On timeout the link reads as unread (null) and the
+          // verdict degrades to the honest internet-only path (Outcome D).
+          return await adapter.fetch().timeout(
+            const Duration(seconds: 5),
+            onTimeout: () => throw TimeoutException(
+              'Wi-Fi link read timed out',
+            ),
+          );
         case WifiInfoSource.iosShortcuts:
           final WiFiDetailsBridge? bridge = _iosBridge;
           if (bridge == null) return null;
@@ -233,7 +241,15 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
       },
       onDone: () async {
         final QualityResult? internet = _quality.lastResult;
-        final ConnectedAp? ap = await linkFuture;
+        // Safety net: the link read is already bounded inside _readLink (the
+        // permission request at the adapter and the snapshot fetch here), but
+        // guard this final await as well so the verdict ALWAYS computes even if
+        // the link future stalls for any reason. A timeout yields ap = null →
+        // the honest internet-only / wifiUnknown path (Outcome D).
+        final ConnectedAp? ap = await linkFuture.timeout(
+          const Duration(seconds: 8),
+          onTimeout: () => null,
+        );
         if (!mounted) return;
         final WifiVsInternetResult engine = _compute(ap, internet);
         setState(() {

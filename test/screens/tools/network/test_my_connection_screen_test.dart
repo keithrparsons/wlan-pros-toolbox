@@ -20,6 +20,8 @@
 // (Clipboard.setData → SystemChannels.platform) so the test asserts the EXACT
 // payload the user would paste, not a re-derivation of it.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -62,6 +64,23 @@ class _FakeMacAdapter implements WifiInfoAdapter {
   Future<ConnectedAp> fetch() async => _macSample();
   @override
   Future<bool> requestNamePermission() async => true;
+}
+
+/// A macOS adapter whose Location-permission request NEVER resolves — models
+/// the production hang (stalled CLLocationManager prompt / delegate callback
+/// that never fires). The real adapter bounds this at the service layer; this
+/// fake bypasses that bound so the test exercises the screen's own safety net
+/// (the 8s guard on the link future). The check must still complete with the
+/// link unread (ap = null → "Couldn't check"), never hang.
+class _HangingMacAdapter implements WifiInfoAdapter {
+  @override
+  String get platformLabel => 'macOS CoreWLAN';
+  @override
+  bool get gatesNameBehindPermission => true;
+  @override
+  Future<ConnectedAp> fetch() async => _macSample();
+  @override
+  Future<bool> requestNamePermission() => Completer<bool>().future;
 }
 
 /// iOS bridge delivering a full payload: rssi -58, noise -90 (→ SNR 32),
@@ -435,6 +454,42 @@ void main() {
       expect(quality.measureCount, 2);
       expect(find.byIcon(Icons.refresh), findsOneWidget);
       expect(find.text('Wi-Fi:'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'check still completes (ap = null → "Couldn\'t check") when the macOS '
+    'Location request never resolves — the link read can never hang the check',
+    (tester) async {
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            sourceOverride: WifiInfoSource.macosCoreWlan,
+            macAdapter: _HangingMacAdapter(),
+            qualityClient: MockQualityClient(
+              scriptedResult: _marginalInternet(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Check My Connection'));
+
+      // The internet measurement drains, onDone fires, and the link future is
+      // still pending (the permission request never resolves). Advance fake time
+      // past the screen's 8s safety net so `await linkFuture.timeout(8s)` yields
+      // null and the verdict computes on the internet-only path.
+      await tester.pump(const Duration(seconds: 9));
+      await tester.pumpAndSettle();
+
+      // The verdict landed — the check did NOT hang.
+      expect(find.text('Wi-Fi:'), findsOneWidget);
+      expect(find.text('Internet:'), findsOneWidget);
+      // Link unread → the Wi-Fi axis honestly reports "Couldn't check".
+      expect(find.text("Couldn't check"), findsWidgets);
+      // The internet result it DID measure is still shown.
+      expect(find.text('Internet Down'), findsOneWidget);
+      expect(find.text('60 Mbps'), findsOneWidget);
     },
   );
 }

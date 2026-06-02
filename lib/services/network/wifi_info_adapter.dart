@@ -24,6 +24,8 @@
 // shape into every platform. The seam's job is to pick the source honestly; the
 // screen folds the iOS-only affordances behind the iOS source.
 
+import 'dart:async';
+
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
@@ -96,10 +98,24 @@ abstract class WifiInfoAdapter {
 class MacWifiInfoAdapter implements WifiInfoAdapter {
   /// [service] is injectable so widget tests drive a fake invoker + platform
   /// override without a real platform channel.
-  MacWifiInfoAdapter({WifiInfoService? service})
-      : _service = service ?? WifiInfoService();
+  ///
+  /// [permissionTimeout] bounds the native Location-authorization request so a
+  /// stalled CLLocationManager prompt (common in notarized non-App-Store builds
+  /// where the system prompt never surfaces or the delegate callback never
+  /// fires) can never hang a caller. On timeout the request resolves to `false`
+  /// — treated as "not authorized" — and the network NAME degrades honestly
+  /// while the rate-derived verdict, which never needs Location, proceeds.
+  MacWifiInfoAdapter({
+    WifiInfoService? service,
+    Duration permissionTimeout = const Duration(seconds: 3),
+  })  : _service = service ?? WifiInfoService(),
+        // Kept in the initializer list alongside `_service` (which needs the
+        // `?? WifiInfoService()` fallback) rather than split into a formal.
+        // ignore: prefer_initializing_formals
+        _permissionTimeout = permissionTimeout;
 
   final WifiInfoService _service;
+  final Duration _permissionTimeout;
 
   @override
   String get platformLabel => 'macOS CoreWLAN';
@@ -114,7 +130,13 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
     return ConnectedAp.fromWifiInfo(info);
   }
 
+  /// Requests Location authorization with a hard upper bound. A native side
+  /// that never answers (no prompt surfaced, delegate callback never fires)
+  /// resolves to `false` after [permissionTimeout] instead of hanging the
+  /// caller. This protects EVERY caller — Test My Connection and the pro Wi-Fi
+  /// Information tool alike — without either needing to wrap the call itself.
   @override
-  Future<bool> requestNamePermission() =>
-      _service.requestLocationPermission();
+  Future<bool> requestNamePermission() => _service
+      .requestLocationPermission()
+      .timeout(_permissionTimeout, onTimeout: () => false);
 }
