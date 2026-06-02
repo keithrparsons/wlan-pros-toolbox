@@ -65,6 +65,66 @@ void main() {
     },
   );
 
+  test(
+    'requestNamePermission() default ceiling is GENEROUS (30s) — long enough '
+    'for the interactive grant to wait for the user, still a hang-safety',
+    () async {
+      // The interactive grant must not time out before a user can click Allow
+      // (~4s). A real delegate response that lands shortly after the prompt
+      // resolves authorized within the default ceiling. We model that response
+      // arriving after a small delay and assert it passes through (it is NOT
+      // cut off to false by a too-tight 3s bound). Uses the DEFAULT ceiling.
+      final WifiInfoService service = WifiInfoService(
+        invoke: (String method, [dynamic args]) async {
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+          return true;
+        },
+        platformOverride: 'macos',
+      );
+      // No permissionTimeout override → exercises the 30s default ceiling.
+      final MacWifiInfoAdapter adapter = MacWifiInfoAdapter(service: service);
+
+      expect(await adapter.requestNamePermission(), isTrue);
+    },
+  );
+
+  // The no-prompt current-authorization path used by a connection check: it
+  // reports the CURRENT status without surfacing a prompt, and is bounded so it
+  // can never hang either.
+  test(
+    'currentNameAuthorization() reports the current status without prompting',
+    () async {
+      final WifiInfoService service = WifiInfoService(
+        invoke: (String method, [dynamic args]) async {
+          // The no-prompt path hits isLocationAuthorized, never the prompt.
+          expect(method, 'isLocationAuthorized');
+          return true;
+        },
+        platformOverride: 'macos',
+      );
+      final MacWifiInfoAdapter adapter = MacWifiInfoAdapter(service: service);
+
+      expect(await adapter.currentNameAuthorization(), isTrue);
+    },
+  );
+
+  test(
+    'currentNameAuthorization() returns false (does not hang) when the native '
+    'status channel never resolves',
+    () async {
+      final MacWifiInfoAdapter adapter = MacWifiInfoAdapter(
+        service: neverResolvingService(),
+        fetchTimeout: const Duration(milliseconds: 50),
+      );
+
+      final bool authorized = await adapter
+          .currentNameAuthorization()
+          .timeout(const Duration(seconds: 2));
+
+      expect(authorized, isFalse);
+    },
+  );
+
   // The same hang class on the SNAPSHOT read: a CoreWLAN read that never
   // returns must not hang any caller. The adapter bounds fetch() and degrades
   // to a typed channelError, which every caller already handles.

@@ -53,6 +53,9 @@ class _FakeMacAdapter implements WifiInfoAdapter {
 
   @override
   Future<bool> requestNamePermission() async => true;
+
+  @override
+  Future<bool> currentNameAuthorization() async => true;
 }
 
 /// iOS bridge that never delivered a payload — readLatest returns null, so the

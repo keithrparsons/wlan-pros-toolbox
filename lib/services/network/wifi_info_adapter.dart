@@ -85,7 +85,18 @@ abstract class WifiInfoAdapter {
 
   /// Requests the name-gating permission, then reports whether it is authorized.
   /// A no-op returning true for sources without such a gate.
+  ///
+  /// This is the INTERACTIVE path: it surfaces the OS prompt and waits for the
+  /// user to respond, so it carries a generous timeout ceiling. Callers that
+  /// must not pop a prompt (e.g. a connection check) read with the CURRENT
+  /// authorization via [currentNameAuthorization] instead.
   Future<bool> requestNamePermission();
+
+  /// Reports the CURRENT name-gating authorization WITHOUT surfacing any prompt.
+  /// Returns true for sources without such a gate. Used by callers (a connection
+  /// check) that must read with the existing authorization and never interrupt
+  /// the user with a system prompt mid-task.
+  Future<bool> currentNameAuthorization();
 
   /// Human label for the source platform, used in honest per-field
   /// "not exposed by `<platform>`" copy.
@@ -99,12 +110,18 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
   /// [service] is injectable so widget tests drive a fake invoker + platform
   /// override without a real platform channel.
   ///
-  /// [permissionTimeout] bounds the native Location-authorization request so a
-  /// stalled CLLocationManager prompt (common in notarized non-App-Store builds
-  /// where the system prompt never surfaces or the delegate callback never
-  /// fires) can never hang a caller. On timeout the request resolves to `false`
-  /// — treated as "not authorized" — and the network NAME degrades honestly
-  /// while the rate-derived verdict, which never needs Location, proceeds.
+  /// [permissionTimeout] bounds the INTERACTIVE native Location-authorization
+  /// request. It is a GENEROUS ceiling (default 30s) — long enough for a user
+  /// to read and respond to the system prompt before the delegate callback
+  /// fires, while still being a hang-safety for the pathological case where the
+  /// prompt never surfaces and no callback ever arrives (common in notarized
+  /// non-App-Store builds). On timeout the request resolves to `false` —
+  /// treated as "not authorized" — and the network NAME degrades honestly while
+  /// the rate-derived verdict, which never needs Location, proceeds.
+  ///
+  /// NOTE: this timeout governs the interactive [requestNamePermission] only.
+  /// The no-prompt [currentNameAuthorization] never surfaces a prompt, so it is
+  /// not bounded by this ceiling.
   ///
   /// [fetchTimeout] bounds the native CoreWLAN snapshot read for the same
   /// reason: a stalled channel (the native side never returns) must never hang
@@ -115,7 +132,7 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
   /// verdict. Mirrors how [requestNamePermission] is bounded.
   MacWifiInfoAdapter({
     WifiInfoService? service,
-    Duration permissionTimeout = const Duration(seconds: 3),
+    Duration permissionTimeout = const Duration(seconds: 30),
     Duration fetchTimeout = const Duration(seconds: 5),
   })  : _service = service ?? WifiInfoService(),
         // Kept in the initializer list alongside `_service` (which needs the
@@ -156,13 +173,26 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
     return ConnectedAp.fromWifiInfo(info);
   }
 
-  /// Requests Location authorization with a hard upper bound. A native side
-  /// that never answers (no prompt surfaced, delegate callback never fires)
-  /// resolves to `false` after [permissionTimeout] instead of hanging the
-  /// caller. This protects EVERY caller — Test My Connection and the pro Wi-Fi
-  /// Information tool alike — without either needing to wrap the call itself.
+  /// Requests Location authorization (INTERACTIVE — surfaces the OS prompt and
+  /// waits for the user) with a generous [permissionTimeout] ceiling (30s by
+  /// default). The ceiling is long enough for a real user to respond to the
+  /// system prompt — the delegate fires on their response well within it — so
+  /// the interactive grant in the pro Wi-Fi Information tool resolves AUTHORIZED
+  /// after the user clicks Allow, and the subsequent re-read populates SSID and
+  /// BSSID. It still guards the pathological hang where no prompt surfaces and
+  /// no callback ever arrives: on timeout the request resolves to `false`.
   @override
   Future<bool> requestNamePermission() => _service
       .requestLocationPermission()
       .timeout(_permissionTimeout, onTimeout: () => false);
+
+  /// Reports the CURRENT Location authorization WITHOUT surfacing any prompt.
+  /// Backs onto the native no-prompt status check. Used by a connection check
+  /// so it can label the network name honestly (authorized vs not) without ever
+  /// interrupting the user with a system prompt. Bounded by [fetchTimeout] as a
+  /// hang-safety; on timeout it resolves to `false` (treated as not authorized).
+  @override
+  Future<bool> currentNameAuthorization() => _service
+      .isLocationAuthorized()
+      .timeout(_fetchTimeout, onTimeout: () => false);
 }

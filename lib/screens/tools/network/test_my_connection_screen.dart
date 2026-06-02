@@ -171,21 +171,24 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
           final WifiInfoAdapter? adapter = _macAdapter;
           if (adapter == null) return null;
           // R1-B — macOS gates the network NAME (SSID/BSSID) behind Location
-          // Services. Request it once as part of the check (mirroring the pro
-          // Wi-Fi Information tool's _grantLocation flow), then read regardless
-          // of the result. The link RATE — hence the Wi-Fi Fine/Slow chip and
-          // the verdict — resolves WITHOUT Location; only the human-readable
-          // name depends on it, and the facts row degrades honestly if denied.
+          // Services. A connection check must NEVER pop a Location prompt
+          // mid-test, so we do NOT request the permission here (that is the pro
+          // Wi-Fi Information tool's job, via its explicit "grant Location"
+          // button). Instead we read the CURRENT authorization with a no-prompt
+          // status check and read the snapshot regardless. The link RATE —
+          // hence the Wi-Fi Fine/Slow chip and the verdict — resolves WITHOUT
+          // Location; only the human-readable NAME depends on it, and the facts
+          // row degrades honestly when it was not already granted elsewhere.
           if (adapter.gatesNameBehindPermission) {
             try {
-              // The request resolves to whether Location is authorized AFTER
-              // the prompt — captured so the facts row can say "Name unavailable
-              // (Location access off)" only when access is genuinely off, vs a
-              // plain not-connected case.
-              _macLocationAuthorized = await adapter.requestNamePermission();
+              // No-prompt: reflects whether Location was ALREADY granted (in the
+              // pro tool or System Settings), so the facts row can say "Name
+              // unavailable (Location access off)" only when access is genuinely
+              // off, vs a plain not-connected case. Never surfaces a prompt.
+              _macLocationAuthorized = await adapter.currentNameAuthorization();
             } catch (_) {
-              // A denied/failed permission is non-fatal: fall through to the
-              // read; the name simply stays unavailable.
+              // A failed status read is non-fatal: fall through to the read; the
+              // name simply stays honestly unavailable.
               _macLocationAuthorized = false;
             }
           }

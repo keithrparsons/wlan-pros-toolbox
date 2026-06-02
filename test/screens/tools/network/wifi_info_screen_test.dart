@@ -56,11 +56,19 @@ ConnectedAp _macSample({
 
 /// A fake macOS adapter: returns a queued snapshot or throws a queued error.
 class _FakeMacAdapter implements WifiInfoAdapter {
-  _FakeMacAdapter({this.snapshot, this.error});
+  _FakeMacAdapter({this.snapshot, this.error, this.snapshotAfterGrant});
 
   final ConnectedAp? snapshot;
   final WifiInfoUnavailable? error;
+
+  /// When set, models the real grant flow: [fetch] returns [snapshot] until the
+  /// interactive [requestNamePermission] resolves authorized, then returns this
+  /// post-grant snapshot (SSID/BSSID now populated). Lets a test prove the
+  /// grant → re-read → name-appears path.
+  final ConnectedAp? snapshotAfterGrant;
+
   int grantCalls = 0;
+  bool _granted = false;
 
   @override
   String get platformLabel => 'macOS CoreWLAN';
@@ -71,14 +79,19 @@ class _FakeMacAdapter implements WifiInfoAdapter {
   @override
   Future<ConnectedAp> fetch() async {
     if (error != null) throw error!;
+    if (_granted && snapshotAfterGrant != null) return snapshotAfterGrant!;
     return snapshot ?? _macSample();
   }
 
   @override
   Future<bool> requestNamePermission() async {
     grantCalls++;
+    _granted = true;
     return true;
   }
+
+  @override
+  Future<bool> currentNameAuthorization() async => _granted;
 }
 
 /// A fake iOS Shortcuts bridge driving the Live streaming flow without a
@@ -177,6 +190,38 @@ void main() {
       await tester.pumpAndSettle();
       // Name is gated (both SSID and BSSID null) -> the Grant card shows.
       expect(find.text('Grant Location permission'), findsWidgets);
+    });
+
+    testWidgets(
+        'grant Location -> permission resolves authorized -> re-read populates '
+        'SSID/BSSID (the interactive grant waits for the user)', (tester) async {
+      final adapter = _FakeMacAdapter(
+        // Before grant: name gated off (Location not yet authorized).
+        snapshot: _macSample(ssid: null, bssid: null),
+        // After grant: the same network, now with the name exposed.
+        snapshotAfterGrant: _macSample(),
+      );
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          macAdapter: adapter,
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      // Pre-grant: the name is gated, the Grant card is visible, no SSID value.
+      expect(find.text('Grant Location permission'), findsWidgets);
+      expect(find.text('KeithNet'), findsNothing);
+
+      // Tap Grant: requestNamePermission resolves authorized (the 30s ceiling
+      // means the interactive grant waits for the user), then _fetchMac re-reads
+      // WITH authorization and the name appears.
+      await tester.tap(find.text('Grant Location permission').first);
+      await tester.pumpAndSettle();
+
+      expect(adapter.grantCalls, 1);
+      expect(find.text('KeithNet'), findsOneWidget);
+      expect(find.text('a4:83:e7:00:11:22'), findsOneWidget);
     });
 
     testWidgets('channel error shows an error card with retry', (tester) async {
