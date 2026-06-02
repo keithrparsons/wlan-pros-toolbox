@@ -127,8 +127,11 @@ class NetQualityHelpSheet extends StatelessWidget {
           'often matters more than download for video calls, backups, and '
           'sharing files.',
       howWeMeasure:
-          'We upload roughly 10 MB in a single stream to Cloudflare\'s speed '
-          'servers and divide the data sent by the time it took.',
+          'We send data up to Cloudflare\'s speed servers in a single stream '
+          'for up to about 10 seconds, then divide the amount actually sent by '
+          'the time it took. That is up to roughly 10 MB on a fast connection '
+          'and less on a slower one; either way we measure what actually went '
+          'out, not an estimate.',
     ),
   ];
 
