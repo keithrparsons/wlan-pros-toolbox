@@ -22,9 +22,13 @@ class _FakeBridge extends WiFiDetailsBridge {
   bool everReceived = false;
   bool monitoringFlag = false;
   WiFiDetails? latest;
+  bool runShortcutResult = true;
 
   int setMonitoringActiveCalls = 0;
   bool? lastMonitoringValue;
+  int runShortcutCalls = 0;
+  String? lastRunShortcutName;
+  String? lastRunShortcutTool;
 
   @override
   Future<bool> hasEverReceivedPayload() async => everReceived;
@@ -40,6 +44,14 @@ class _FakeBridge extends WiFiDetailsBridge {
     setMonitoringActiveCalls++;
     lastMonitoringValue = active;
     monitoringFlag = active;
+  }
+
+  @override
+  Future<bool> runShortcut(String name, {required String tool}) async {
+    runShortcutCalls++;
+    lastRunShortcutName = name;
+    lastRunShortcutTool = tool;
+    return runShortcutResult;
   }
 
   @override
@@ -139,6 +151,46 @@ void main() {
 
       expect(c.isStreaming, isTrue);
       expect(bridge.lastMonitoringValue, isTrue);
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('start fires the recursive trigger once with the canonical name',
+        () async {
+      // TICKET-05: Start raises the flag AND fires the run-shortcut trigger once
+      // to kick off the recursion. The app never loops itself.
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _details();
+      final c = WifiMonitorController(bridge: bridge);
+      await c.load();
+
+      final bool opened = await c.startMonitoring(
+        triggerShortcutName: 'WLAN Pros Wi-Fi',
+        triggerTool: 'wifi-info',
+      );
+
+      expect(opened, isTrue);
+      expect(c.isStreaming, isTrue);
+      expect(bridge.lastMonitoringValue, isTrue);
+      expect(bridge.runShortcutCalls, 1);
+      expect(bridge.lastRunShortcutName, 'WLAN Pros Wi-Fi');
+      expect(bridge.lastRunShortcutTool, 'wifi-info');
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('start without a trigger name skips the trigger (resume case)',
+        () async {
+      final bridge = _FakeBridge()..everReceived = true;
+      final c = WifiMonitorController(bridge: bridge);
+      await c.load();
+
+      final bool ok = await c.startMonitoring();
+
+      expect(ok, isTrue);
+      expect(c.isStreaming, isTrue);
+      expect(bridge.runShortcutCalls, 0);
       c.dispose();
       await bridge.close();
     });

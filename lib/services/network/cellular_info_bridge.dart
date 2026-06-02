@@ -24,6 +24,8 @@
 // install link is opened via [openUrl], shared with the Wi-Fi bridge's channel
 // so the app keeps a single native surface and adds no URL-launcher plugin.
 
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
@@ -35,14 +37,19 @@ import 'shortcut_trigger_result.dart';
 class CellularInfoBridge {
   CellularInfoBridge({
     MethodChannel? methodChannel,
+    EventChannel? eventChannel,
     EventChannel? triggerResultChannel,
   })  : _method = methodChannel ??
             const MethodChannel('com.wlanpros.toolbox/shortcuts_bridge'),
+        _events = eventChannel ??
+            const EventChannel(
+                'com.wlanpros.toolbox/shortcuts_bridge/cellular_events'),
         _triggerResults = triggerResultChannel ??
             const EventChannel(
                 'com.wlanpros.toolbox/shortcuts_bridge/trigger_result');
 
   final MethodChannel _method;
+  final EventChannel _events;
   final EventChannel _triggerResults;
 
   /// Reads the most recent cellular payload the native receiver intent stored
@@ -70,6 +77,35 @@ class CellularInfoBridge {
       return false;
     } on PlatformException catch (e) {
       debugPrint('CellularInfoBridge.hasEverReceivedPayload failed: $e');
+      return false;
+    }
+  }
+
+  /// Sets the shared App Group monitoring-active flag (TICKET-05). The native
+  /// [ShouldContinueMonitoringIntent] returns this value to the recursive
+  /// companion Shortcut: `true` keeps the recursion running, `false` stops it.
+  /// The flag is SHARED with the Wi-Fi bridge (only one tool streams at a time),
+  /// so the same `setMonitoringActive` method channel call is used. No-op
+  /// off-iOS.
+  Future<void> setMonitoringActive(bool active) async {
+    try {
+      await _method.invokeMethod<void>('setMonitoringActive', active);
+    } on MissingPluginException {
+      // Non-iOS: no recursion to gate.
+    } on PlatformException catch (e) {
+      debugPrint('CellularInfoBridge.setMonitoringActive failed: $e');
+    }
+  }
+
+  /// Reads the persisted shared monitoring-active flag (TICKET-05). Lets the
+  /// screen resume the live state after a relaunch mid-stream. False off-iOS.
+  Future<bool> isMonitoringActive() async {
+    try {
+      return await _method.invokeMethod<bool>('isMonitoringActive') ?? false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException catch (e) {
+      debugPrint('CellularInfoBridge.isMonitoringActive failed: $e');
       return false;
     }
   }
@@ -137,6 +173,26 @@ class CellularInfoBridge {
   /// to the outcome only. Derived from [triggerEvents].
   Stream<ShortcutTriggerResult> get triggerResults =>
       triggerEvents.map<ShortcutTriggerResult>((e) => e.result);
+
+  /// Stream of parsed [CellularInfo] pushed when a Darwin notification fires
+  /// while the app is foregrounded (TICKET-05). The recursive companion
+  /// Shortcut delivers one cellular sample per cycle via the background
+  /// [ReceiveCellularDetailsIntent], which stores the JSON to the App Group
+  /// cellular key and posts the shared Darwin notification; the native cellular
+  /// event channel re-reads that cellular key and pushes the JSON here.
+  /// Unparseable / empty payloads are dropped (never surfaced as an error) so
+  /// the screen's stream never tears down on a transient delivery. Off-iOS the
+  /// channel has no handler and the stream stays empty.
+  Stream<CellularInfo> get updates => _events
+      .receiveBroadcastStream()
+      .map<String>((dynamic e) => e?.toString() ?? '')
+      .where((String s) => s.isNotEmpty)
+      .map<CellularInfo?>(CellularInfo.fromJsonString)
+      .where((CellularInfo? d) => d != null && d.hasAnyData)
+      .cast<CellularInfo>()
+      .handleError((Object error) {
+        debugPrint('CellularInfoBridge event stream error: $error');
+      });
 
   Future<String?> _readLatestJson() async {
     try {

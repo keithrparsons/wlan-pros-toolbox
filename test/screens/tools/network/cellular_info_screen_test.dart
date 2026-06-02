@@ -35,6 +35,7 @@ class _FakeBridge implements CellularInfoBridge {
 
   bool everReceived;
   CellularInfo? latest;
+  bool monitoringActive = false;
 
   /// What [runShortcut] returns (false => could not open Shortcuts).
   bool runShortcutResult;
@@ -44,12 +45,22 @@ class _FakeBridge implements CellularInfoBridge {
 
   final StreamController<ShortcutTriggerResult> triggerController =
       StreamController<ShortcutTriggerResult>.broadcast();
+  final StreamController<CellularInfo> updatesController =
+      StreamController<CellularInfo>.broadcast();
 
   @override
   Future<bool> hasEverReceivedPayload() async => everReceived;
 
   @override
   Future<CellularInfo?> readLatest() async => latest;
+
+  @override
+  Future<bool> isMonitoringActive() async => monitoringActive;
+
+  @override
+  Future<void> setMonitoringActive(bool active) async {
+    monitoringActive = active;
+  }
 
   @override
   Future<bool> openUrl(String url) async => true;
@@ -70,6 +81,9 @@ class _FakeBridge implements CellularInfoBridge {
 
   @override
   Stream<ShortcutTriggerResult> get triggerResults => triggerController.stream;
+
+  @override
+  Stream<CellularInfo> get updates => updatesController.stream;
 }
 
 CellularInfo _sample() => const CellularInfo(
@@ -273,6 +287,74 @@ void main() {
       expect(find.text('Get Reading'), findsOneWidget);
       expect(find.text('Getting reading…'), findsNothing);
       expect(find.textContaining('Could not get a reading'), findsNothing);
+    });
+  });
+
+  group('CellularInfoScreen — iOS Live mode (TICKET-05)', () {
+    Future<void> pumpLive(WidgetTester tester, _FakeBridge bridge) async {
+      await tester.pumpWidget(host(
+        CellularInfoScreen(
+          sourceOverride: CellularInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        ),
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Live'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('Start sets the monitoring flag and fires the recursive trigger',
+        (tester) async {
+      final bridge = _FakeBridge(everReceived: true, latest: _sample());
+      await pumpLive(tester, bridge);
+
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+
+      expect(bridge.monitoringActive, isTrue);
+      expect(bridge.runShortcutCalls, 1);
+      expect(
+        bridge.lastRunShortcutName,
+        CellularShortcutsConfig.kCompanionShortcutName,
+      );
+      expect(bridge.lastRunShortcutTool, 'cellular-info');
+      expect(find.text('Stop'), findsOneWidget);
+    });
+
+    testWidgets('stream consumption renders live carrier / bars updates',
+        (tester) async {
+      final bridge = _FakeBridge(everReceived: true, latest: _sample());
+      await pumpLive(tester, bridge);
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+
+      bridge.updatesController.add(const CellularInfo(
+        carrier: 'T-Mobile',
+        radioTechnology: 'LTE',
+        signalBars: 2,
+        countryCode: 'US',
+        roaming: false,
+      ));
+      await tester.pumpAndSettle();
+
+      // The live value updated from the streamed payload, bars stay 0..4.
+      expect(find.text('T-Mobile'), findsOneWidget);
+      expect(find.text('2 of 4'), findsOneWidget);
+      expect(find.text('2 dBm'), findsNothing);
+    });
+
+    testWidgets('Stop clears the monitoring flag', (tester) async {
+      final bridge = _FakeBridge(everReceived: true, latest: _sample());
+      await pumpLive(tester, bridge);
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+      expect(bridge.monitoringActive, isTrue);
+
+      await tester.tap(find.text('Stop'));
+      await tester.pumpAndSettle();
+
+      expect(bridge.monitoringActive, isFalse);
+      expect(find.text('Start'), findsOneWidget);
     });
   });
 

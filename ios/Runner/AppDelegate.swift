@@ -8,6 +8,10 @@ import UIKit
   // observer when the event channel is cancelled.
   private var bridgeEventSink: FlutterEventSink?
 
+  // TICKET-05 cellular Live streaming: retained so the cellular stream handler
+  // (its own Darwin observer + sink) stays alive for the channel's lifetime.
+  private var cellularEventChannel: CellularEventStreamHandler?
+
   // SPIKE-HSD-01: retained so the in-house mDNS EventChannel stream handler
   // stays live (replaces the GPL-3.0 bonsoir plugin; NWBrowser-backed).
   private var mdnsBrowseChannel: MdnsBrowseChannel?
@@ -147,6 +151,18 @@ import UIKit
     )
     events.setStreamHandler(self)
 
+    // TICKET-05 cellular Live streaming: a dedicated event channel that, on the
+    // shared Darwin "delivered" notification, re-reads the CELLULAR App Group
+    // key and pushes its JSON. Separate from the Wi-Fi `events` channel above so
+    // the two tools stream independently and never push each other's payload.
+    let cellularEvents = FlutterEventChannel(
+      name: "com.wlanpros.toolbox/shortcuts_bridge/cellular_events",
+      binaryMessenger: messenger
+    )
+    let cellularHandler = CellularEventStreamHandler()
+    cellularEventChannel = cellularHandler
+    cellularEvents.setStreamHandler(cellularHandler)
+
     // TICKET-03 one-tap trigger: a dedicated event channel carrying the
     // x-callback result ("ok" | "err"). Kept separate from the Darwin
     // payload-delivered stream above so the two never interleave.
@@ -171,6 +187,59 @@ import UIKit
   /// Darwin notification → push the latest payload up the event channel.
   fileprivate func handleBridgeDarwinNotification() {
     guard let sink = bridgeEventSink, let json = ShortcutsBridge.readLatest() else {
+      return
+    }
+    sink(json)
+  }
+}
+
+// MARK: - Cellular Live stream handler (TICKET-05)
+
+/// Stream handler for the cellular Live channel. Self-contained: it owns its own
+/// Darwin observer (registered with its OWN pointer, so it never interferes with
+/// the AppDelegate's Wi-Fi observer) and, on each shared "delivered"
+/// notification, re-reads the CELLULAR App Group key and pushes its JSON. The
+/// Wi-Fi and cellular tools therefore stream independently from the one Darwin
+/// signal; each reads its own key.
+final class CellularEventStreamHandler: NSObject, FlutterStreamHandler {
+  private var sink: FlutterEventSink?
+
+  func onListen(
+    withArguments arguments: Any?,
+    eventSink events: @escaping FlutterEventSink
+  ) -> FlutterError? {
+    sink = events
+    let observer = Unmanaged.passUnretained(self).toOpaque()
+    CFNotificationCenterAddObserver(
+      CFNotificationCenterGetDarwinNotifyCenter(),
+      observer,
+      { _, observer, _, _, _ in
+        guard let observer = observer else { return }
+        let me = Unmanaged<CellularEventStreamHandler>
+          .fromOpaque(observer).takeUnretainedValue()
+        me.handleDarwinNotification()
+      },
+      ShortcutsBridge.darwinNotificationName as CFString,
+      nil,
+      .deliverImmediately
+    )
+    return nil
+  }
+
+  func onCancel(withArguments arguments: Any?) -> FlutterError? {
+    let observer = Unmanaged.passUnretained(self).toOpaque()
+    CFNotificationCenterRemoveObserver(
+      CFNotificationCenterGetDarwinNotifyCenter(),
+      observer,
+      CFNotificationName(ShortcutsBridge.darwinNotificationName as CFString),
+      nil
+    )
+    sink = nil
+    return nil
+  }
+
+  private func handleDarwinNotification() {
+    guard let sink = sink, let json = ShortcutsBridge.readLatestCellular() else {
       return
     }
     sink(json)

@@ -394,6 +394,93 @@ void main() {
     });
   });
 
+  group('WifiInfoScreen — iOS Live mode (TICKET-05)', () {
+    Future<void> pumpLive(WidgetTester tester, _FakeBridge bridge) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        ),
+      ));
+      await tester.pumpAndSettle();
+      // Flip to Live via the segmented toggle.
+      await tester.tap(find.text('Live'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('Start sets the monitoring flag and fires the recursive trigger',
+        (tester) async {
+      final bridge = _FakeBridge(
+        everReceived: true,
+        latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
+      );
+      await pumpLive(tester, bridge);
+
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+
+      // The shared monitoring flag is raised so the Shortcut keeps recursing.
+      expect(bridge.monitoringActive, isTrue);
+      // Start fires the run-shortcut trigger ONCE to kick off the recursion.
+      expect(bridge.runShortcutCalls, 1);
+      expect(bridge.lastRunShortcutName, ShortcutsConfig.kCompanionShortcutName);
+      expect(bridge.lastRunShortcutTool, 'wifi-info');
+      // The Stop control is now showing (streaming).
+      expect(find.text('Stop'), findsOneWidget);
+    });
+
+    testWidgets('stream consumption appends samples + renders the live charts',
+        (tester) async {
+      final bridge = _FakeBridge(
+        everReceived: true,
+        latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
+      );
+      await pumpLive(tester, bridge);
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+
+      // Push two streamed samples through the bridge updates stream.
+      bridge.controller.add(WiFiDetails.fromMap(const <String, dynamic>{
+        'SSID': 'KeithNet',
+        'RSSI': -50,
+        'Noise': -95,
+        'TX Rate': 866,
+      }));
+      await tester.pump();
+      bridge.controller.add(WiFiDetails.fromMap(const <String, dynamic>{
+        'SSID': 'KeithNet',
+        'RSSI': -60,
+        'Noise': -95,
+        'TX Rate': 700,
+      }));
+      await tester.pumpAndSettle();
+
+      // The live charts rendered (graded RSSI/SNR + trend Tx/Rx cards).
+      expect(find.text('RSSI'), findsOneWidget);
+      expect(find.text('SNR'), findsOneWidget);
+      expect(find.text('Tx Rate'), findsOneWidget);
+      // The latest RSSI value (-60) is shown in the readout.
+      expect(find.textContaining('-60'), findsWidgets);
+    });
+
+    testWidgets('Stop clears the monitoring flag', (tester) async {
+      final bridge = _FakeBridge(
+        everReceived: true,
+        latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
+      );
+      await pumpLive(tester, bridge);
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+      expect(bridge.monitoringActive, isTrue);
+
+      await tester.tap(find.text('Stop'));
+      await tester.pumpAndSettle();
+
+      expect(bridge.monitoringActive, isFalse);
+      expect(find.text('Start'), findsOneWidget);
+    });
+  });
+
   group('WifiInfoScreen — cold-launch deep-link args (TICKET-03)', () {
     testWidgets(
         'reached via a status=err deep link shows the error banner here',
