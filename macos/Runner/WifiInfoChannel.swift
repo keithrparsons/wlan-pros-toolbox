@@ -57,9 +57,31 @@ final class WifiInfoChannel: NSObject, CLLocationManagerDelegate {
       result(isLocationAuthorized())
     case "requestLocationPermission":
       requestLocationPermission(result: result)
+    case "openLocationSettings":
+      openLocationSettings(result: result)
     default:
       result(FlutterMethodNotImplemented)
     }
+  }
+
+  // MARK: - Location settings deep-link
+
+  /// Opens the macOS Location Services privacy pane directly.
+  ///
+  /// macOS does not let an app toggle its own Location authorization in code
+  /// (TCC protection), so when the unreliable in-app prompt does not surface in
+  /// a notarized build, the honest fallback is to deep-link the user straight to
+  /// the exact settings pane where they can enable it manually. Returns true
+  /// when the URL opened, false otherwise. Never throws across to Dart.
+  private func openLocationSettings(result: @escaping FlutterResult) {
+    guard let url = URL(
+      string: "x-apple.systempreferences:com.apple.preference.security?Privacy_LocationServices"
+    ) else {
+      result(false)
+      return
+    }
+    let opened = NSWorkspace.shared.open(url)
+    result(opened)
   }
 
   // MARK: - Wi-Fi info
@@ -247,10 +269,29 @@ final class WifiInfoChannel: NSObject, CLLocationManagerDelegate {
       result(isAuthorized(status))
       return
     }
-    // Determined later by the delegate. Store the pending result strongly so
-    // it is not lost before the system responds.
-    pendingPermissionResult = result
-    locationManager.requestAlwaysAuthorization()
+    // Status is .notDetermined: normally we'd prompt. But if Location Services
+    // is turned OFF system-wide, no prompt will appear and the authorization
+    // delegate will never fire — awaiting requestAlwaysAuthorization() would
+    // hang forever. Detect that case up front and return the current
+    // (unauthorized) bool immediately rather than awaiting a callback that can
+    // never come. locationServicesEnabled() can emit a main-thread runtime
+    // warning, so it is called off the main thread; the FlutterResult is then
+    // delivered back on the main thread.
+    DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+      let servicesEnabled = CLLocationManager.locationServicesEnabled()
+      DispatchQueue.main.async {
+        guard let self = self else { return }
+        if !servicesEnabled {
+          // No prompt is possible; answer honestly with the current status.
+          result(self.isAuthorized(self.currentAuthorizationStatus()))
+          return
+        }
+        // Determined later by the delegate. Store the pending result strongly
+        // so it is not lost before the system responds.
+        self.pendingPermissionResult = result
+        self.locationManager.requestAlwaysAuthorization()
+      }
+    }
   }
 
   // MARK: - CLLocationManagerDelegate

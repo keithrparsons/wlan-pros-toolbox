@@ -20,6 +20,8 @@
 // (Clipboard.setData → SystemChannels.platform) so the test asserts the EXACT
 // payload the user would paste, not a re-derivation of it.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -53,7 +55,57 @@ ConnectedAp _macSample() => ConnectedAp.fromWifiInfo(
   ),
 );
 
+/// macOS sample with the NAME gated off (Location not authorized): SSID/BSSID
+/// null, RF metrics still present. Mirrors a real unauthorized snapshot.
+ConnectedAp _macSampleNoName() => ConnectedAp.fromWifiInfo(
+  WifiInfo(
+    interfaceName: 'en0',
+    ssid: null,
+    bssid: null,
+    rssiDbm: -50,
+    noiseDbm: -95,
+    snrDb: 45,
+    txRateMbps: 866,
+    phyMode: '802.11ax',
+    channel: 36,
+    channelWidthMhz: 80,
+    band: '5 GHz',
+    countryCode: 'US',
+    hardwareAddress: 'a4:83:e7:aa:bb:cc',
+    poweredOn: true,
+    locationAuthorized: false,
+  ),
+);
+
+/// A macOS adapter whose snapshot has no name (Location off) and whose
+/// no-prompt status check reports unauthorized — used to assert TMC labels the
+/// name honestly as "(Location access off)" WITHOUT ever prompting.
+class _NoNameMacAdapter implements WifiInfoAdapter {
+  bool promptRequested = false;
+
+  @override
+  String get platformLabel => 'macOS CoreWLAN';
+  @override
+  bool get gatesNameBehindPermission => true;
+  @override
+  Future<ConnectedAp> fetch() async => _macSampleNoName();
+  @override
+  Future<bool> requestNamePermission() async {
+    promptRequested = true;
+    return true;
+  }
+
+  @override
+  Future<bool> currentNameAuthorization() async => false;
+  @override
+  Future<bool> openNamePermissionSettings() async => true;
+}
+
 class _FakeMacAdapter implements WifiInfoAdapter {
+  /// Set true if the screen ever calls the INTERACTIVE prompt path. A
+  /// connection check must NEVER prompt, so the tests assert this stays false.
+  bool promptRequested = false;
+
   @override
   String get platformLabel => 'macOS CoreWLAN';
   @override
@@ -61,7 +113,39 @@ class _FakeMacAdapter implements WifiInfoAdapter {
   @override
   Future<ConnectedAp> fetch() async => _macSample();
   @override
-  Future<bool> requestNamePermission() async => true;
+  Future<bool> requestNamePermission() async {
+    promptRequested = true;
+    return true;
+  }
+
+  @override
+  Future<bool> currentNameAuthorization() async => true;
+  @override
+  Future<bool> openNamePermissionSettings() async => true;
+}
+
+/// A macOS adapter whose SNAPSHOT READ never resolves — models the production
+/// hang (stalled CoreWLAN channel that never returns). TMC no longer prompts
+/// for Location (the no-prompt status check resolves immediately), so the path
+/// that can still stall is the snapshot fetch. The real adapter bounds fetch at
+/// the service layer; this fake bypasses that bound so the test exercises the
+/// screen's own safety net (the 8s guard on the link future). The check must
+/// still complete with the link unread (ap = null → "Couldn't check"), never
+/// hang. It also asserts the interactive prompt is never called.
+class _HangingMacAdapter implements WifiInfoAdapter {
+  @override
+  String get platformLabel => 'macOS CoreWLAN';
+  @override
+  bool get gatesNameBehindPermission => true;
+  @override
+  Future<ConnectedAp> fetch() => Completer<ConnectedAp>().future;
+  @override
+  Future<bool> requestNamePermission() =>
+      throw StateError('A connection check must never prompt for Location.');
+  @override
+  Future<bool> currentNameAuthorization() async => false;
+  @override
+  Future<bool> openNamePermissionSettings() async => true;
 }
 
 /// iOS bridge delivering a full payload: rssi -58, noise -90 (→ SNR 32),
@@ -395,6 +479,61 @@ void main() {
   );
 
   testWidgets(
+    'macOS check NEVER prompts for Location — reads with current authorization',
+    (tester) async {
+      final _FakeMacAdapter adapter = _FakeMacAdapter();
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            sourceOverride: WifiInfoSource.macosCoreWlan,
+            macAdapter: adapter,
+            qualityClient: MockQualityClient(
+              scriptedResult: _marginalInternet(),
+            ),
+          ),
+        ),
+      );
+      await runCheck(tester);
+
+      // The interactive prompt path was never invoked during the check.
+      expect(adapter.promptRequested, isFalse);
+      // The check still produced a real Wi-Fi verdict from the link rate.
+      expect(find.text('Wi-Fi:'), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 1600));
+    },
+  );
+
+  testWidgets(
+    'macOS name honestly "(Location access off)" when not authorized, no prompt',
+    (tester) async {
+      final _NoNameMacAdapter adapter = _NoNameMacAdapter();
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            sourceOverride: WifiInfoSource.macosCoreWlan,
+            macAdapter: adapter,
+            qualityClient: MockQualityClient(
+              scriptedResult: _marginalInternet(),
+            ),
+          ),
+        ),
+      );
+      await runCheck(tester);
+
+      // No prompt was surfaced, and the missing name is labeled honestly —
+      // never a fabricated SSID, never a bare "Not measured".
+      expect(adapter.promptRequested, isFalse);
+      expect(
+        find.text('Unavailable (enable Location Services to show the name)'),
+        findsOneWidget,
+      );
+
+      await tester.pump(const Duration(milliseconds: 1600));
+    },
+  );
+
+  testWidgets(
     'AppBar Refresh re-runs the same check and is disabled while running',
     (tester) async {
       final _CountingQualityClient quality =
@@ -435,6 +574,42 @@ void main() {
       expect(quality.measureCount, 2);
       expect(find.byIcon(Icons.refresh), findsOneWidget);
       expect(find.text('Wi-Fi:'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'check still completes (ap = null → "Couldn\'t check") when the macOS '
+    'snapshot read never resolves — the link read can never hang the check',
+    (tester) async {
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            sourceOverride: WifiInfoSource.macosCoreWlan,
+            macAdapter: _HangingMacAdapter(),
+            qualityClient: MockQualityClient(
+              scriptedResult: _marginalInternet(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Check My Connection'));
+
+      // The internet measurement drains, onDone fires, and the link future is
+      // still pending (the snapshot read never resolves). Advance fake time
+      // past the screen's 8s safety net so `await linkFuture.timeout(8s)` yields
+      // null and the verdict computes on the internet-only path.
+      await tester.pump(const Duration(seconds: 9));
+      await tester.pumpAndSettle();
+
+      // The verdict landed — the check did NOT hang.
+      expect(find.text('Wi-Fi:'), findsOneWidget);
+      expect(find.text('Internet:'), findsOneWidget);
+      // Link unread → the Wi-Fi axis honestly reports "Couldn't check".
+      expect(find.text("Couldn't check"), findsWidgets);
+      // The internet result it DID measure is still shown.
+      expect(find.text('Internet Down'), findsOneWidget);
+      expect(find.text('60 Mbps'), findsOneWidget);
     },
   );
 }

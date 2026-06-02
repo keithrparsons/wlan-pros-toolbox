@@ -140,7 +140,18 @@ class _WifiVsInternetScreenState extends State<WifiVsInternetScreen> {
         case WifiInfoSource.macosCoreWlan:
           final WifiInfoAdapter? adapter = _macAdapter;
           if (adapter == null) return null;
-          return await adapter.fetch();
+          // Bound the native CoreWLAN snapshot read so a stalled channel can
+          // never hang the check. This screen does NOT call
+          // requestNamePermission() (it reads the link rate, which never needs
+          // Location), so the adapter-level permission timeout does not cover
+          // this path — fetch() is bounded here directly, mirroring Test My
+          // Connection. On timeout the link reads as unread (null) and the
+          // verdict degrades to the honest internet-only wifiUnknown path.
+          return await adapter.fetch().timeout(
+            const Duration(seconds: 5),
+            onTimeout: () =>
+                throw TimeoutException('Wi-Fi link read timed out'),
+          );
         case WifiInfoSource.iosShortcuts:
           final WiFiDetailsBridge? bridge = _iosBridge;
           if (bridge == null) return null;
@@ -183,7 +194,14 @@ class _WifiVsInternetScreenState extends State<WifiVsInternetScreen> {
       },
       onDone: () async {
         final QualityResult? internet = _quality.lastResult;
-        final ConnectedAp? ap = await linkFuture;
+        // Safety net: the link read is already bounded inside _readLink (the
+        // fetch() timeout), but guard this final await too so the verdict
+        // ALWAYS computes even if the link future stalls for any reason. A
+        // timeout yields ap = null → the honest internet-only wifiUnknown path.
+        final ConnectedAp? ap = await linkFuture.timeout(
+          const Duration(seconds: 8),
+          onTimeout: () => null,
+        );
         if (!mounted) return;
         setState(() {
           _ap = ap;
@@ -256,13 +274,60 @@ class _WifiVsInternetScreenState extends State<WifiVsInternetScreen> {
       appBar: AppBar(
         title: const Text('Wi-Fi vs Internet'),
         toolbarHeight: 64,
-        // §8.16 — shared "Copy results" affordance. Disabled until a check has
-        // been run; copies the verdict + Wi-Fi link + internet figures as a
-        // labeled text block. Copy leads; this screen has no help icon.
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        // §8.16 order: copy LEADS, the Refresh action trails. Copy is disabled
+        // until a check has been run; copies the verdict + Wi-Fi link +
+        // internet figures as a labeled text block. Refresh re-runs the SAME
+        // check in place via _run() — it appears only once a verdict exists
+        // (before that, the in-card "Run Check" button is the affordance) and
+        // swaps to the in-progress spinner while a re-run is underway so the
+        // check can't be double-fired. This screen has no help icon.
+        actions: <Widget>[
+          AppCopyAction(textBuilder: _buildCopyText),
+          ..._refreshAction(),
+        ],
       ),
       body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// The AppBar "Refresh" action — re-runs the SAME check via [_run()] (no
+  /// duplicated logic). Matches the Wi-Fi Information and Test My Connection
+  /// screens' affordance: a circular-arrow [IconButton] that swaps to a small
+  /// in-progress spinner while a run is underway. Returns an empty list until a
+  /// verdict exists, so the affordance only appears once there is something to
+  /// re-run (the in-card "Run Check" button is the first-run affordance). The
+  /// spinner + the run guard in [_run]/onPressed prevent a double-run.
+  List<Widget> _refreshAction() {
+    // Nothing to re-run before the first verdict lands.
+    if (_verdict == null && !_running) return const <Widget>[];
+    if (_running) {
+      return const <Widget>[
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          child: Center(
+            child: SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        ),
+      ];
+    }
+    return <Widget>[
+      Semantics(
+        button: true,
+        label: 'Run the test again',
+        child: IconButton(
+          icon: const Icon(Icons.refresh),
+          tooltip: 'Refresh',
+          onPressed: _run,
+        ),
+      ),
+    ];
   }
 
   /// §8.16 copy payload — the whole check as a labeled plain-text block.
