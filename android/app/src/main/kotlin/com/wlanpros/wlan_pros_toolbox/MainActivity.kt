@@ -28,7 +28,7 @@ class MainActivity : FlutterActivity() {
                         result.success(true)
                     }
                     "release" -> {
-                        release()
+                        releaseLock()
                         result.success(true)
                     }
                     else -> result.notImplemented()
@@ -46,13 +46,13 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun release() {
+    private fun releaseLock() {
         multicastLock?.let { if (it.isHeld) it.release() }
         multicastLock = null
     }
 
     override fun onDestroy() {
-        release()
+        releaseLock()
         super.onDestroy()
     }
 }
