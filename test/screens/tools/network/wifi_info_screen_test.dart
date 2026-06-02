@@ -1,4 +1,4 @@
-// Wi-Fi Information screen — widget tests (TICKET-04, consolidated tool).
+// Wi-Fi Information screen — widget tests (consolidated tool; iOS Live-only).
 //
 // The one Wi-Fi tool selects its data source per platform behind a seam, so the
 // tests drive each source explicitly via [WifiInfoScreen.sourceOverride] plus an
@@ -6,9 +6,11 @@
 //
 // Covers the state matrix from SOP-007 §5 across BOTH platform paths:
 //   * macOS source: loading → success cards, Wi-Fi-off, location-permission
-//     card, channel-error card + retry.
-//   * iOS source: needs-install empty state, success cards with the monitoring
-//     control bar, Start/Stop, the honest per-field "not reported by iOS" note.
+//     card, channel-error card + retry. (Unchanged — macOS uses CoreWLAN.)
+//   * iOS source (LIVE ONLY): the idle "Tap Start" state; Start sets the
+//     monitoring flag + fires the PLAIN combined-Live trigger; stream
+//     consumption renders the live charts; Stop clears the flag and freezes the
+//     last values; dispose clears the flag (Vera regression).
 //   * web source: download-the-app fallback.
 //   * unsupported native: honest "coming in a later update" state.
 
@@ -23,6 +25,7 @@ import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_live_shortcuts_config.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
 ConnectedAp _macSample({
@@ -78,16 +81,27 @@ class _FakeMacAdapter implements WifiInfoAdapter {
   }
 }
 
-/// A fake iOS Shortcuts bridge driving the controller without a channel.
+/// A fake iOS Shortcuts bridge driving the Live streaming flow without a
+/// platform channel.
 class _FakeBridge implements WiFiDetailsBridge {
   _FakeBridge({
     this.everReceived = false,
     this.latest,
+    this.runShortcutResult = true,
   });
 
   bool everReceived;
   WiFiDetails? latest;
   bool monitoringActive = false;
+
+  /// What [runShortcut] returns (false => could not open Shortcuts).
+  bool runShortcutResult;
+
+  /// Records the exact name passed to [runShortcut] for assertions. The PLAIN
+  /// trigger carries ONLY the name (no tool / no x-callback).
+  String? lastRunShortcutName;
+  int runShortcutCalls = 0;
+
   final StreamController<WiFiDetails> controller =
       StreamController<WiFiDetails>.broadcast();
 
@@ -107,6 +121,13 @@ class _FakeBridge implements WiFiDetailsBridge {
 
   @override
   Future<bool> openUrl(String url) async => true;
+
+  @override
+  Future<bool> runShortcut(String name) async {
+    runShortcutCalls++;
+    lastRunShortcutName = name;
+    return runShortcutResult;
+  }
 
   @override
   Stream<WiFiDetails> get updates => controller.stream;
@@ -176,8 +197,8 @@ void main() {
     });
   });
 
-  group('WifiInfoScreen — iOS source', () {
-    testWidgets('needs-install empty state offers Install Shortcut',
+  group('WifiInfoScreen — iOS source (Live only)', () {
+    testWidgets('idle state offers Start and the begin-live hint',
         (tester) async {
       await tester.pumpWidget(host(
         WifiInfoScreen(
@@ -186,57 +207,82 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      expect(find.text('No Wi-Fi data yet'), findsOneWidget);
-      expect(find.text('Install Shortcut'), findsOneWidget);
-    });
-
-    testWidgets('success shows the control bar + cards + honest width note',
-        (tester) async {
-      final WiFiDetails sample = WiFiDetails.fromMap(const <String, dynamic>{
-        'SSID': 'KeithNet',
-        'BSSID': 'a4:83:e7:00:11:22',
-        'Channel': 36,
-        'RSSI': -50,
-        'Noise': -95,
-        'Standard': '802.11ax - Wi-Fi 6',
-        'RX Rate': 780,
-        'TX Rate': 866,
-      });
-      await tester.pumpWidget(host(
-        WifiInfoScreen(
-          sourceOverride: WifiInfoSource.iosShortcuts,
-          iosBridge: _FakeBridge(everReceived: true, latest: sample),
-        ),
-      ));
-      await tester.pumpAndSettle();
-      expect(find.text('KeithNet'), findsOneWidget);
-      // Start control present (idle with data, not yet streaming).
+      // The only iOS mode is Live: a clean idle "Tap Start" state, no Snapshot
+      // toggle and no Get Reading button.
       expect(find.text('Start'), findsOneWidget);
-      // iOS does not report channel width — honest per-field note.
-      expect(find.text('Not reported by iOS'), findsOneWidget);
-    });
-
-    testWidgets('Start begins streaming and swaps to Stop', (tester) async {
-      final WiFiDetails sample =
-          WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'});
-      await tester.pumpWidget(host(
-        WifiInfoScreen(
-          sourceOverride: WifiInfoSource.iosShortcuts,
-          iosBridge: _FakeBridge(everReceived: true, latest: sample),
-        ),
-      ));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Start'));
-      await tester.pumpAndSettle();
-      // Streaming: the Stop control and the "Live" status label both appear.
-      expect(find.byIcon(Icons.stop), findsOneWidget);
-      expect(find.text('Live'), findsOneWidget);
+      expect(find.textContaining('Tap Start to begin live readings'),
+          findsOneWidget);
+      expect(find.text('Snapshot'), findsNothing);
+      expect(find.text('Get Reading'), findsNothing);
     });
 
     testWidgets(
-        'streaming timestamp is excluded from the live region '
-        '(Vera LOW: no per-tick re-announcement)', (tester) async {
-      final _FakeBridge bridge = _FakeBridge(
+        'install/setup hint SHOWS on first-time setup (never received a payload)',
+        (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          iosBridge: _FakeBridge(everReceived: false),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      // Genuine first-time setup: the companion-Shortcut install/how-to note is
+      // shown so new users know to install it and tap Start.
+      expect(find.textContaining('WLAN Pros Live'), findsOneWidget);
+    });
+
+    testWidgets(
+        'install/setup hint HIDDEN once the app has ever received a payload',
+        (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          iosBridge: _FakeBridge(
+            everReceived: true,
+            latest:
+                WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      // The user clearly has the Shortcut working (hasEverReceived = true), so
+      // the install/setup note is noise and is gone permanently.
+      expect(find.textContaining('WLAN Pros Live'), findsNothing);
+    });
+
+    testWidgets('Start sets the flag and fires the PLAIN combined-Live trigger',
+        (tester) async {
+      final bridge = _FakeBridge(
+        everReceived: true,
+        latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
+      );
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+
+      // The shared monitoring flag is raised so the Shortcut keeps recursing.
+      expect(bridge.monitoringActive, isTrue);
+      // Start fires the run-shortcut trigger ONCE to kick off the recursion,
+      // with the ONE canonical combined-Live name (the bridge-level test asserts
+      // the URL is the plain, non-x-callback form).
+      expect(bridge.runShortcutCalls, 1);
+      expect(bridge.lastRunShortcutName,
+          WifiLiveShortcutsConfig.kLiveShortcutName);
+      expect(bridge.lastRunShortcutName, 'WLAN Pros Live');
+      // The Stop control is now showing (streaming).
+      expect(find.text('Stop'), findsOneWidget);
+    });
+
+    testWidgets('stream consumption appends samples + renders the live charts',
+        (tester) async {
+      final bridge = _FakeBridge(
         everReceived: true,
         latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
       );
@@ -250,44 +296,112 @@ void main() {
       await tester.tap(find.text('Start'));
       await tester.pumpAndSettle();
 
-      // Push a streamed payload so the "Updated HH:MM:SS" timestamp renders.
-      bridge.controller.add(
-        WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
-      );
+      // Push two streamed samples through the bridge updates stream.
+      bridge.controller.add(WiFiDetails.fromMap(const <String, dynamic>{
+        'SSID': 'KeithNet',
+        'RSSI': -50,
+        'Noise': -95,
+        'TX Rate': 866,
+      }));
+      await tester.pump();
+      bridge.controller.add(WiFiDetails.fromMap(const <String, dynamic>{
+        'SSID': 'KeithNet',
+        'RSSI': -60,
+        'Noise': -95,
+        'TX Rate': 700,
+      }));
       await tester.pumpAndSettle();
 
-      final Finder timestamp = find.textContaining('Updated ');
-      expect(timestamp, findsOneWidget);
+      // The live charts rendered (graded RSSI/SNR + Tx/Rx rate cards).
+      expect(find.text('RSSI'), findsOneWidget);
+      expect(find.text('SNR'), findsOneWidget);
+      expect(find.text('Tx Rate'), findsOneWidget);
+      // The latest RSSI value (-60) is shown in the readout.
+      expect(find.textContaining('-60'), findsWidgets);
+    });
 
-      // The state word stays inside the liveRegion so Start/Stop announce...
-      final Finder liveRegion = find.ancestor(
-        of: find.text('Live'),
-        matching: find.byWidgetPredicate(
-          (Widget w) => w is Semantics && w.properties.liveRegion == true,
+    testWidgets('Stop clears the monitoring flag and freezes the last values',
+        (tester) async {
+      final bridge = _FakeBridge(
+        everReceived: true,
+        latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
+      );
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          iosBridge: bridge,
         ),
-      );
-      expect(liveRegion, findsOneWidget);
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+      expect(bridge.monitoringActive, isTrue);
 
-      // ...but the ticking timestamp is wrapped in ExcludeSemantics, so it is
-      // NOT re-announced on every ~1s tick (the Vera SOP-009 LOW finding).
-      final Finder excludedTimestamp = find.ancestor(
-        of: timestamp,
-        matching: find.byType(ExcludeSemantics),
-      );
-      expect(excludedTimestamp, findsOneWidget);
+      bridge.controller.add(WiFiDetails.fromMap(const <String, dynamic>{
+        'SSID': 'KeithNet',
+        'RSSI': -55,
+        'Noise': -95,
+      }));
+      await tester.pumpAndSettle();
 
-      // The timestamp's own ExcludeSemantics wrapper sits inside the live
-      // region subtree — so the timestamp is structurally present under the
-      // liveRegion but excluded from what it announces. (Two ExcludeSemantics
-      // descend from the live region: this one and the decorative live dot.)
-      final Finder excludedTimestampInLiveRegion = find.descendant(
-        of: liveRegion,
-        matching: find.ancestor(
-          of: timestamp,
-          matching: find.byType(ExcludeSemantics),
+      await tester.tap(find.text('Stop'));
+      await tester.pumpAndSettle();
+
+      // Flag cleared; the idle Start control is back; the last reading is frozen
+      // on screen (still charted).
+      expect(bridge.monitoringActive, isFalse);
+      expect(find.text('Start'), findsOneWidget);
+      expect(find.text('RSSI'), findsOneWidget);
+    });
+
+    testWidgets('Start failing to open the Shortcut clears the flag + errors',
+        (tester) async {
+      final bridge = _FakeBridge(
+        everReceived: true,
+        latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
+        runShortcutResult: false, // Shortcuts app could not be opened
+      );
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          iosBridge: bridge,
         ),
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+
+      // The flag is cleared (no producer) and the honest Live error shows.
+      expect(bridge.monitoringActive, isFalse);
+      expect(find.textContaining('Could not start live streaming'),
+          findsOneWidget);
+      expect(find.text('Start'), findsOneWidget);
+    });
+
+    testWidgets('dispose clears the monitoring flag (Vera regression)',
+        (tester) async {
+      final bridge = _FakeBridge(
+        everReceived: true,
+        latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
       );
-      expect(excludedTimestampInLiveRegion, findsOneWidget);
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        ),
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+      expect(bridge.monitoringActive, isTrue);
+
+      // Tear the screen down (navigate away). Dispose must clear the flag so the
+      // recursive Shortcut stops and the cellular tool is never stranded as
+      // "streaming".
+      await tester.pumpWidget(host(const SizedBox.shrink()));
+      await tester.pumpAndSettle();
+
+      expect(bridge.monitoringActive, isFalse);
     });
   });
 

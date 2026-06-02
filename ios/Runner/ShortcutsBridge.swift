@@ -59,6 +59,28 @@ enum ShortcutsBridge {
   /// engine can react immediately. Plain Darwin names are process-global.
   static let darwinNotificationName = "com.wlanpros.toolbox.shortcuts_bridge.delivered"
 
+  // MARK: - Live streaming trigger (plain, fire-and-forget)
+
+  /// Builds the PLAIN, fire-and-forget Shortcuts run-shortcut URL for [name]:
+  ///
+  ///   shortcuts://run-shortcut?name=<URL-encoded name>
+  ///
+  /// This is deliberately NOT the `x-callback-url` form. The x-callback variant
+  /// makes the firing app WAIT for the Shortcut to finish and return control via
+  /// an `x-success` URL. A continuous / looping Live Shortcut never finishes, so
+  /// the app would hang ("stuck, very slow, nothing happens"). The plain form
+  /// hands the Shortcut off and returns immediately; the app then passively
+  /// consumes the App Group + Darwin stream the recursive Shortcut feeds. The
+  /// name is percent-encoded by URLComponents. Returns nil only if the name
+  /// cannot be encoded (never in practice).
+  static func runShortcutURL(name: String) -> URL? {
+    var components = URLComponents()
+    components.scheme = "shortcuts"
+    components.host = "run-shortcut"
+    components.queryItems = [URLQueryItem(name: "name", value: name)]
+    return components.url
+  }
+
   /// Shared defaults for the App Group, or nil if the capability is missing
   /// (e.g. entitlement not provisioned yet). Callers degrade honestly.
   static var sharedDefaults: UserDefaults? {
@@ -85,21 +107,34 @@ enum ShortcutsBridge {
     sharedDefaults?.bool(forKey: hasReceivedPayloadKey) ?? false
   }
 
-  /// Persist a CELLULAR payload and notify any foregrounded listener. Called
-  /// from `ReceiveCellularDetailsIntent.perform()`. Raises the honest cellular
-  /// install-state flag the first time a cellular payload arrives. Reuses the
-  /// same Darwin notification as Wi-Fi so a foregrounded engine wakes; the Dart
-  /// side reads the cellular key specifically.
-  static func storeCellular(json: String) {
-    sharedDefaults?.set(json, forKey: latestCellularPayloadKey)
-    sharedDefaults?.set(true, forKey: hasReceivedCellularPayloadKey)
-    sharedDefaults?.synchronize()
-    postDarwinNotification()
-  }
-
   /// Read the most recent cellular payload, or nil if none stored.
   static func readLatestCellular() -> String? {
     sharedDefaults?.string(forKey: latestCellularPayloadKey)
+  }
+
+  /// Persist BOTH a Wi-Fi and a cellular payload from ONE combined Live cycle
+  /// and notify listeners with a SINGLE Darwin post. Called from
+  /// `ReceiveLiveDetailsIntent.perform()`: the combined "WLAN Pros Live"
+  /// Shortcut gathers Wi-Fi + cellular each cycle and delivers both as one JSON
+  /// to the app, which splits it into the two App Group keys the existing
+  /// `wifi_details_bridge` / `cellular_info_bridge` already parse. Either side
+  /// may be nil for a cycle (e.g. Wi-Fi off, or no cellular radio): a nil side
+  /// is left untouched so the last good value for that side stays on screen,
+  /// and its install-state flag is raised only when a real payload is written.
+  /// One notification wakes BOTH foregrounded observers; each re-reads its own
+  /// key.
+  static func storeLive(wifiJson: String?, cellularJson: String?) {
+    let defaults = sharedDefaults
+    if let wifi = wifiJson, !wifi.isEmpty {
+      defaults?.set(wifi, forKey: latestPayloadKey)
+      defaults?.set(true, forKey: hasReceivedPayloadKey)
+    }
+    if let cellular = cellularJson, !cellular.isEmpty {
+      defaults?.set(cellular, forKey: latestCellularPayloadKey)
+      defaults?.set(true, forKey: hasReceivedCellularPayloadKey)
+    }
+    defaults?.synchronize()
+    postDarwinNotification()
   }
 
   /// Honest install-state for the cellular Shortcut: has any cellular payload

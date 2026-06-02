@@ -54,6 +54,10 @@ class ToolboxApp extends StatelessWidget {
       theme: theme,
       darkTheme: theme,
       themeMode: ThemeMode.dark,
+      // Shared navigator key so the one-tap-trigger deep-link router (TICKET-03)
+      // can navigate to a tool route on the cold-relaunch path, where no screen
+      // is listening. Reuses this Navigator; adds no second nav system.
+      navigatorKey: AppRouter.navigatorKey,
       initialRoute: AppRouter.home,
       routes: AppRouter.routes,
       onUnknownRoute: AppRouter.onUnknownRoute,
@@ -75,6 +79,10 @@ class ToolboxApp extends StatelessWidget {
       // already dismiss via a return key (e.g. Lat/Long, signed number pad):
       // tapping outside simply dismisses, matching that field's behavior.
       builder: (BuildContext context, Widget? child) {
+        // The Live streaming trigger fires a PLAIN, fire-and-forget Shortcut URL
+        // with no x-callback return, so there is no deep-link return to route —
+        // the former ShortcutDeepLinkRouter wrap was removed with the snapshot
+        // one-tap trigger. The app passively consumes the Live stream instead.
         return GestureDetector(
           behavior: HitTestBehavior.translucent,
           onTap: () => FocusManager.instance.primaryFocus?.unfocus(),

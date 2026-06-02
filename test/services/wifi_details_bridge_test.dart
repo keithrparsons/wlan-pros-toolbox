@@ -94,4 +94,39 @@ void main() {
       expect(await WiFiDetailsBridge().openUrl('https://x'), isFalse);
     });
   });
+
+  group('runShortcut (PLAIN fire-and-forget Live trigger)', () {
+    test('invokes runShortcut with ONLY the name — no x-callback, no tool',
+        () async {
+      MethodCall? seen;
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        seen = call;
+        return true;
+      });
+      final ok = await WiFiDetailsBridge().runShortcut('WLAN Pros Live');
+
+      expect(ok, isTrue);
+      expect(seen!.method, 'runShortcut');
+      // ONLY the name is passed; the native side builds the PLAIN
+      // `shortcuts://run-shortcut?name=…` URL (NOT the x-callback form, which
+      // would make the app wait for the never-finishing Live Shortcut).
+      final args = seen!.arguments as Map;
+      expect(args['name'], 'WLAN Pros Live');
+      // No tool / x-callback / x-success plumbing rides along anymore.
+      expect(args.containsKey('tool'), isFalse);
+      expect(args.keys.length, 1);
+      // Defensive: nothing in the call mentions x-callback.
+      expect(args.toString().contains('x-callback'), isFalse);
+    });
+
+    test('returns false when the platform could not open Shortcuts', () async {
+      messenger.setMockMethodCallHandler(channel, (call) async => false);
+      expect(await WiFiDetailsBridge().runShortcut('X'), isFalse);
+    });
+
+    test('returns false when the plugin is missing (off-iOS)', () async {
+      messenger.setMockMethodCallHandler(channel, null);
+      expect(await WiFiDetailsBridge().runShortcut('X'), isFalse);
+    });
+  });
 }

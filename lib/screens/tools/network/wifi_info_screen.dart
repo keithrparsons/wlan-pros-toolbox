@@ -8,11 +8,14 @@
 //
 //   * macOS -> CoreWLAN snapshot ([MacWifiInfoAdapter]). Pull + Refresh, with the
 //             Location-permission states (SSID/BSSID are gated by macOS Location
-//             Services). No streaming on macOS.
-//   * iOS   -> companion-Shortcut stack ([WiFiDetailsBridge] +
-//             [WifiMonitorController]): an Install-Shortcut onboarding flow, a
-//             one-shot run, and Start/Stop LIVE streaming. These affordances are
-//             iOS-only and never appear on macOS.
+//             Services). No Shortcut, no trigger on macOS.
+//   * iOS   -> LIVE streaming ONLY. The combined "WLAN Pros Live" companion
+//             Shortcut feeds the App Group + Darwin stream each cycle; the screen
+//             passively renders the live RF fields (sparklines + grading). Start
+//             raises the monitoring flag and fires the PLAIN, fire-and-forget
+//             run-shortcut trigger once; Stop clears the flag and FREEZES the last
+//             values on screen (the snapshot). There is no separate one-tap "Get
+//             Reading" snapshot on iOS — Live is the only iOS mode.
 //   * Android / Windows -> honest "coming in a later update" state (clean seam).
 //   * web -> download-the-app fallback.
 //
@@ -23,15 +26,14 @@
 //
 // States (SOP-007 section 5):
 //   * web / unsupported native -> NetworkUnavailableView / coming-soon.
-//   * loading  -> labeled spinner (announced via liveRegion).
-//   * empty    -> iOS: install / how-to onboarding. macOS: covered by the
-//                location card or the error card.
-//   * error    -> in-flow info/error card with the channel detail + retry (macOS).
-//   * success  -> grouped metric cards (+ iOS monitoring control bar).
-//   * disabled -> the iOS Install button is disabled while the link is a
-//                placeholder; macOS Grant button hides after a grant.
-//   * interactive -> Refresh / Grant / Install / Start / Stop, all keyboard- and
-//                   screen-reader-labeled.
+//   * loading  -> macOS: labeled spinner (announced via liveRegion).
+//   * empty/idle -> iOS: a clean "Tap Start to begin live readings" state.
+//                macOS: covered by the location card or the error card.
+//   * error    -> macOS: in-flow info/error card + retry. iOS: the Live trigger
+//                error banner (Shortcut missing / cancelled).
+//   * success  -> grouped metric cards (macOS) / live charts (iOS streaming).
+//   * disabled -> macOS Grant button hides after a grant.
+//   * interactive -> Refresh / Grant (macOS); Start / Stop (iOS).
 //
 // Layout matches interface_info_screen / net_quality_screen: SafeArea +
 // LayoutBuilder + centered ConstrainedBox + scroll, surface1 cards with a
@@ -39,19 +41,24 @@
 // degrades to nothing when the tool has no graphic asset.
 
 import 'package:flutter/material.dart';
+import 'package:net_quality/net_quality.dart' show QualityGrade, QualityGradeLabel;
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/connected_ap.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/wifi_details.dart';
 import '../../../services/network/wifi_details_bridge.dart';
+import '../../../services/network/wifi_grading.dart';
 import '../../../services/network/wifi_info_adapter.dart';
 import '../../../services/network/wifi_info_service.dart';
+import '../../../services/network/wifi_live_shortcuts_config.dart';
 import '../../../services/network/wifi_monitor_controller.dart';
+import '../../../services/network/wifi_time_series.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/sparkline.dart';
 import '../concept_graphic_band.dart';
-import 'install_shortcut_sheet.dart';
 import 'network_unavailable_view.dart';
 
 /// The one Wi-Fi Information tool screen.
@@ -87,9 +94,28 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   WifiInfoUnavailable? _macError;
   bool _locationGrantAttempted = false;
 
-  // ---- iOS (Shortcuts streaming) state ----
+  // ---- iOS (Live streaming) state ----
   WiFiDetailsBridge? _iosBridge;
-  WifiMonitorController? _iosController;
+
+  /// Live monitoring state machine, built lazily on the iOS path. Owns the
+  /// stream subscription, the monitoring flag, and the recursion kickoff.
+  WifiMonitorController? _liveController;
+
+  /// Rolling window of streamed RF fields for the Live sparklines + grading.
+  WifiTimeSeries? _series;
+
+  /// The last details object folded into [_series], so the listener appends one
+  /// sample per NEW payload (the controller notifies on phase changes too).
+  WiFiDetails? _lastCharted;
+
+  /// Whether the controller was streaming on the previous notification, so a
+  /// Stop->Start transition clears the window (a new session does not chart the
+  /// previous one's stale samples).
+  bool _wasStreaming = false;
+
+  /// Set when the last Live Start could not open the Live Shortcut (Shortcuts
+  /// missing / not installed). Surfaced as the honest error in the Live bar.
+  bool _liveTriggerError = false;
 
   @override
   void initState() {
@@ -102,9 +128,11 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         _fetchMac();
       case WifiInfoSource.iosShortcuts:
         _iosBridge = widget.iosBridge ?? WiFiDetailsBridge();
-        _iosController = WifiMonitorController(bridge: _iosBridge!);
+        _liveController = WifiMonitorController(bridge: _iosBridge!);
+        _series = WifiTimeSeries();
+        _liveController!.addListener(_captureSample);
         WidgetsBinding.instance.addObserver(this);
-        _iosController!.load();
+        _liveController!.load();
       case WifiInfoSource.unsupported:
       case WifiInfoSource.web:
         break;
@@ -113,11 +141,11 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // iOS only: the Shortcut bounces the app to the foreground; on resume,
-    // re-resolve so a payload delivered while backgrounded lands and any
-    // persisted monitoring flag resumes the live state.
-    if (state == AppLifecycleState.resumed) {
-      _iosController?.load();
+    // iOS only: on resume, re-resolve so a payload delivered while backgrounded
+    // lands and any persisted monitoring flag resumes the live state.
+    if (state == AppLifecycleState.resumed &&
+        _source == WifiInfoSource.iosShortcuts) {
+      _liveController?.load();
     }
   }
 
@@ -125,9 +153,74 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   void dispose() {
     if (_source == WifiInfoSource.iosShortcuts) {
       WidgetsBinding.instance.removeObserver(this);
+      // Hygiene: leaving the screen clears the monitoring flag so the recursive
+      // Shortcut stops on its next check and the other tool is never stranded as
+      // "streaming".
+      final WifiMonitorController? controller = _liveController;
+      // Detach the listener FIRST so the stopMonitoring() notify below does not
+      // re-enter _captureSample's setState on a defunct element.
+      controller?.removeListener(_captureSample);
+      if (controller != null && controller.isStreaming) {
+        controller.stopMonitoring();
+      }
+      controller?.dispose();
     }
-    _iosController?.dispose();
     super.dispose();
+  }
+
+  /// Controller listener (iOS Live): appends a sample to [_series] each time a
+  /// NEW streamed payload lands while monitoring is running. Guarded so the
+  /// many non-sample notifications (phase changes, Start/Stop) do not duplicate
+  /// the last reading into the window.
+  void _captureSample() {
+    final WifiMonitorController? c = _liveController;
+    final WifiTimeSeries? series = _series;
+    if (c == null || series == null) return;
+
+    final bool streaming = c.isStreaming;
+    // Fresh Stop->Start: drop the previous session's window.
+    if (streaming && !_wasStreaming) {
+      series.clear();
+      _lastCharted = null;
+    }
+    _wasStreaming = streaming;
+
+    if (mounted) setState(() {}); // reflect live indicator / timestamp ticks
+
+    if (!streaming) return;
+    final WiFiDetails? d = c.details;
+    if (d == null || d == _lastCharted) return;
+    _lastCharted = d;
+    series.add(ConnectedAp.fromWifiDetails(d));
+  }
+
+  /// Live Start: raise the monitoring flag AND fire the recursive Shortcut once
+  /// to kick off the stream. The app then passively consumes the bridge updates;
+  /// it never loops itself.
+  Future<void> _startLive() async {
+    final WifiMonitorController? c = _liveController;
+    if (c == null) return;
+    setState(() => _liveTriggerError = false);
+    final bool opened = await c.startMonitoring(
+      triggerShortcutName: WifiLiveShortcutsConfig.kLiveShortcutName,
+    );
+    if (!mounted) return;
+    if (!opened) {
+      // Could not open the Shortcut. Surface the honest error immediately, then
+      // clear the monitoring flag (the recursion never started, so there is no
+      // producer). Showing the error first means the banner does not wait on the
+      // stop cleanup completing.
+      setState(() => _liveTriggerError = true);
+      await c.stopMonitoring();
+    }
+  }
+
+  /// Live Stop: clear the monitoring flag so the recursive Shortcut halts on its
+  /// next `ShouldContinueMonitoringIntent` check. The last values stay frozen on
+  /// screen (the snapshot).
+  Future<void> _stopLive() async {
+    await _liveController?.stopMonitoring();
+    if (mounted) setState(() {});
   }
 
   // ---- macOS data flow ----
@@ -190,22 +283,6 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     await _fetchMac();
   }
 
-  // ---- iOS install flow ----
-
-  Future<void> _openInstallSheet() async {
-    final WiFiDetailsBridge? bridge = _iosBridge;
-    final WifiMonitorController? controller = _iosController;
-    if (bridge == null || controller == null) return;
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      backgroundColor: AppColors.surface2,
-      builder: (_) =>
-          InstallShortcutSheet(bridge: bridge, onInstalled: controller.load),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -251,41 +328,10 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
                 ),
         ];
       case WifiInfoSource.iosShortcuts:
-        final WifiMonitorController? controller = _iosController;
-        if (controller == null) return const [];
-        // §8.16 order: copy LEADS, help (How-to) trails. Both live inside one
-        // AnimatedBuilder over the controller so copy re-evaluates its
-        // enabled-state as streamed payloads land (the AppBar sits outside the
-        // body's AnimatedBuilder, so it would not otherwise rebuild on a new
-        // sample). Copy is present on every data phase; the help icon keeps its
-        // prior behavior of appearing only once there is data to be about.
-        return [
-          AnimatedBuilder(
-            animation: controller,
-            builder: (context, _) {
-              final bool hasData =
-                  controller.phase == WifiMonitorPhase.idleWithData ||
-                  controller.phase == WifiMonitorPhase.streaming;
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  // Copy whatever is currently shown; null (→ disabled) before
-                  // the first streamed payload arrives.
-                  AppCopyAction(textBuilder: _buildCopyText),
-                  if (hasData)
-                    Semantics(
-                      button: true,
-                      label: 'How to install the Shortcut',
-                      child: IconButton(
-                        icon: const Icon(Icons.help_outline),
-                        tooltip: 'How to install the Shortcut',
-                        onPressed: _openInstallSheet,
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
+        // §8.16: copy is the only app-bar action on iOS. Disabled
+        // (textBuilder → null) until at least one live reading exists.
+        return <Widget>[
+          AppCopyAction(textBuilder: _buildCopyText),
         ];
       case WifiInfoSource.unsupported:
       case WifiInfoSource.web:
@@ -294,17 +340,15 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   }
 
   /// The connected-AP link currently shown, regardless of platform source:
-  /// the macOS CoreWLAN snapshot, or the latest iOS streamed/one-shot payload.
-  /// Null when nothing is on screen yet.
+  /// the macOS CoreWLAN snapshot, or the latest iOS streamed payload (which Stop
+  /// freezes as the snapshot). Null when nothing is on screen yet.
   ConnectedAp? _currentAp() {
     switch (_source) {
       case WifiInfoSource.macosCoreWlan:
         return _macInfo;
       case WifiInfoSource.iosShortcuts:
-        final WifiMonitorController? c = _iosController;
-        return (c == null || c.details == null)
-            ? null
-            : ConnectedAp.fromWifiDetails(c.details!);
+        final WiFiDetails? d = _liveController?.details;
+        return d == null ? null : ConnectedAp.fromWifiDetails(d);
       case WifiInfoSource.unsupported:
       case WifiInfoSource.web:
         return null;
@@ -523,10 +567,9 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     return null;
   }
 
-  // ---- iOS body ----
+  // ---- iOS body (Live streaming only) ----
 
   Widget _iosBody() {
-    final WifiMonitorController controller = _iosController!;
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool isDesktop = constraints.maxWidth >= 720;
@@ -534,28 +577,13 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
             ? AppSpacing.screenEdgeDesktop
             : AppSpacing.screenEdgeMobile;
 
-        return AnimatedBuilder(
-          animation: controller,
-          builder: (context, _) {
-            switch (controller.phase) {
-              case WifiMonitorPhase.loading:
-                return const _IosLoadingState();
-              case WifiMonitorPhase.needsInstall:
-                return _EmptyInstallState(
-                  edge: edge,
-                  onInstall: _openInstallSheet,
-                );
-              case WifiMonitorPhase.idleWithData:
-              case WifiMonitorPhase.streaming:
-                return _IosSuccess(
-                  controller: controller,
-                  edge: edge,
-                  isDesktop: isDesktop,
-                  metricCards: (ConnectedAp ap) =>
-                      _metricCards(ap, platformLabel: 'iOS'),
-                );
-            }
-          },
+        return _LiveBody(
+          controller: _liveController!,
+          series: _series!,
+          edge: edge,
+          triggerError: _liveTriggerError,
+          onStart: _startLive,
+          onStop: _stopLive,
         );
       },
     );
@@ -809,324 +837,6 @@ class _LoadingCard extends StatelessWidget {
   }
 }
 
-/// iOS brief loading state while install-state + latest payload resolve.
-class _IosLoadingState extends StatelessWidget {
-  const _IosLoadingState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Semantics(
-        liveRegion: true,
-        label: 'Loading Wi-Fi information',
-        child: const CircularProgressIndicator(color: AppColors.primary),
-      ),
-    );
-  }
-}
-
-/// iOS empty state -- no payload has ever arrived. Offers the install onboarding.
-class _EmptyInstallState extends StatelessWidget {
-  const _EmptyInstallState({required this.edge, required this.onInstall});
-
-  final double edge;
-  final VoidCallback onInstall;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme text = Theme.of(context).textTheme;
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 420),
-        child: Padding(
-          padding: EdgeInsets.all(edge + AppSpacing.md),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.wifi_outlined,
-                size: 48,
-                color: AppColors.textTertiary,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                'No Wi-Fi data yet',
-                style: text.headlineSmall?.copyWith(
-                  color: AppColors.textPrimary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                'Install the companion Shortcut once, then run it to populate '
-                "this screen with the connected access point's RF metrics.",
-                style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Semantics(
-                button: true,
-                label: 'Install Shortcut',
-                child: FilledButton.icon(
-                  onPressed: onInstall,
-                  icon: const Icon(Icons.download_outlined),
-                  label: const Text('Install Shortcut'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// iOS success body: the monitoring control bar + the shared metric cards.
-class _IosSuccess extends StatelessWidget {
-  const _IosSuccess({
-    required this.controller,
-    required this.edge,
-    required this.isDesktop,
-    required this.metricCards,
-  });
-
-  final WifiMonitorController controller;
-  final double edge;
-  final bool isDesktop;
-  final List<Widget> Function(ConnectedAp ap) metricCards;
-
-  @override
-  Widget build(BuildContext context) {
-    final ConnectedAp? ap = controller.details == null
-        ? null
-        : ConnectedAp.fromWifiDetails(controller.details!);
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 560),
-        child: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(
-            edge,
-            AppSpacing.sm,
-            edge,
-            edge + AppSpacing.sm,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _MonitorControlBar(controller: controller),
-              const SizedBox(height: AppSpacing.sm),
-              if (ap == null || !ap.hasAnyData)
-                _WaitingForFirstPayload(streaming: controller.isStreaming)
-              else ...[
-                ConceptGraphicBand(toolId: 'wifi-info', isDesktop: isDesktop),
-                if (ToolAssets.hasGraphic('wifi-info'))
-                  const SizedBox(height: AppSpacing.md),
-                ...metricCards(ap),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// iOS Start/Stop control + live indicator + last-updated timestamp.
-class _MonitorControlBar extends StatelessWidget {
-  const _MonitorControlBar({required this.controller});
-
-  final WifiMonitorController controller;
-
-  static String _formatTimestamp(DateTime t) {
-    String two(int n) => n.toString().padLeft(2, '0');
-    return '${two(t.hour)}:${two(t.minute)}:${two(t.second)}';
-  }
-
-  /// Below this width the status and action stack vertically (reflow, not clip)
-  /// so the bar survives 320px at 200% type. GL-003 section 8.9.
-  static const double _reflowThreshold = 280;
-
-  @override
-  Widget build(BuildContext context) {
-    final bool streaming = controller.isStreaming;
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      decoration: BoxDecoration(
-        color: AppColors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final bool narrow = constraints.maxWidth < _reflowThreshold;
-          final Widget status = _StatusBlock(controller: controller);
-          final Widget action = _ActionButton(
-            streaming: streaming,
-            controller: controller,
-          );
-
-          if (narrow) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                status,
-                const SizedBox(height: AppSpacing.sm),
-                Align(alignment: Alignment.centerLeft, child: action),
-              ],
-            );
-          }
-          return Row(
-            children: [
-              Expanded(child: status),
-              const SizedBox(width: AppSpacing.xs),
-              action,
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-/// Status block: state icon + "Live"/"Paused" + "Updated HH:MM:SS". The block
-/// is one live region keyed only on the "Live"/"Paused" state word, so a Start
-/// or Stop transition announces once (WCAG 2.2 SC 4.1.3). The dot/icon is
-/// decorative and excluded. The "Updated HH:MM:SS" timestamp ticks ~1×/s while
-/// streaming, so it is wrapped in [ExcludeSemantics]: were it left inside the
-/// liveRegion it would re-announce the whole status line every tick (Vera
-/// SOP-009 LOW finding). Only state CHANGES announce now, not every tick.
-class _StatusBlock extends StatelessWidget {
-  const _StatusBlock({required this.controller});
-
-  final WifiMonitorController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme text = Theme.of(context).textTheme;
-    final bool streaming = controller.isStreaming;
-    final DateTime? lastUpdated = controller.lastUpdated;
-    final String label = streaming ? 'Live' : 'Paused';
-
-    return Semantics(
-      liveRegion: true,
-      label: label,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (streaming)
-            const _LiveIndicator()
-          else
-            const Icon(
-              Icons.pause_circle_outline,
-              size: 20,
-              color: AppColors.textTertiary,
-            ),
-          const SizedBox(width: AppSpacing.xs),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: text.labelLarge?.copyWith(
-                    color: streaming
-                        ? AppColors.primary
-                        : AppColors.textSecondary,
-                  ),
-                ),
-                if (lastUpdated != null)
-                  // Excluded from the live region: the timestamp ticks ~1×/s
-                  // while streaming and would otherwise force VoiceOver to
-                  // re-announce the entire status line on every tick. State
-                  // changes (Live/Paused) still announce via the parent label.
-                  ExcludeSemantics(
-                    child: Text(
-                      'Updated ${_MonitorControlBar._formatTimestamp(lastUpdated)}',
-                      style: text.bodySmall,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({required this.streaming, required this.controller});
-
-  final bool streaming;
-  final WifiMonitorController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return streaming
-        ? Semantics(
-            button: true,
-            label: 'Stop live monitoring',
-            child: OutlinedButton.icon(
-              onPressed: controller.stopMonitoring,
-              icon: const Icon(Icons.stop),
-              label: const Text('Stop'),
-            ),
-          )
-        : Semantics(
-            button: true,
-            label: 'Start live monitoring',
-            child: FilledButton.icon(
-              onPressed: controller.startMonitoring,
-              icon: const Icon(Icons.play_arrow),
-              label: const Text('Start'),
-            ),
-          );
-  }
-}
-
-/// Decorative lime "live" dot. The live region + changing label live on
-/// [_StatusBlock]; this dot is excluded from the a11y tree so Stop -> Paused
-/// still announces. Lime is the section 8.3 active-state accent, not a verdict.
-class _LiveIndicator extends StatelessWidget {
-  const _LiveIndicator();
-
-  @override
-  Widget build(BuildContext context) {
-    return ExcludeSemantics(
-      child: Container(
-        width: 12,
-        height: 12,
-        decoration: const BoxDecoration(
-          color: AppColors.primary,
-          shape: BoxShape.circle,
-        ),
-      ),
-    );
-  }
-}
-
-class _WaitingForFirstPayload extends StatelessWidget {
-  const _WaitingForFirstPayload({required this.streaming});
-
-  final bool streaming;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme text = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
-      child: Text(
-        streaming
-            ? 'Listening. Run the Shortcut to send Wi-Fi details.'
-            : 'Press Start, then run the Shortcut to send Wi-Fi details.',
-        style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
-        textAlign: TextAlign.center,
-      ),
-    );
-  }
-}
 
 // ---- macOS location card ----
 
@@ -1317,10 +1027,20 @@ class _ErrorCard extends StatelessWidget {
 // ---- Reusable card shell (matches interface_info_screen._Card) ----
 
 class _Card extends StatelessWidget {
-  const _Card({required this.title, required this.child});
+  const _Card({
+    required this.title,
+    required this.child,
+    this.verticalPadding = AppSpacing.sm,
+  });
 
   final String title;
   final Widget child;
+
+  /// Top/bottom inset for the card. Defaults to `sm` (16px) for the macOS
+  /// snapshot / idle / error cards. The Live charts pass a tighter `xs` (8px)
+  /// so the dense per-metric sparkline stack fits a phone screen without
+  /// clipping — horizontal inset stays `sm` so content edges still align.
+  final double verticalPadding;
 
   @override
   Widget build(BuildContext context) {
@@ -1331,7 +1051,10 @@ class _Card extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: AppColors.border, width: 1),
       ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: verticalPadding,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1474,6 +1197,691 @@ class _MetricRow extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ===========================================================================
+// iOS Live mode — continuous streaming surface (the only iOS mode)
+// ===========================================================================
+
+/// The Live body: the Start/Stop monitor bar, and either the idle start hint,
+/// the waiting state, or the live charts. Rebuilds on each streamed payload via
+/// an [AnimatedBuilder] over the [WifiMonitorController]. Stop freezes the last
+/// values on screen (the snapshot); there is no separate snapshot mode.
+class _LiveBody extends StatelessWidget {
+  const _LiveBody({
+    required this.controller,
+    required this.series,
+    required this.edge,
+    required this.triggerError,
+    required this.onStart,
+    required this.onStop,
+  });
+
+  final WifiMonitorController controller;
+  final WifiTimeSeries series;
+  final double edge;
+  final bool triggerError;
+  final VoidCallback onStart;
+  final VoidCallback onStop;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: AnimatedBuilder(
+          animation: controller,
+          builder: (context, _) {
+            final ConnectedAp? ap = controller.details == null
+                ? null
+                : ConnectedAp.fromWifiDetails(controller.details!);
+            return SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                edge,
+                AppSpacing.sm,
+                edge,
+                edge + AppSpacing.sm,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  _MonitorControlBar(
+                    streaming: controller.isStreaming,
+                    lastUpdated: controller.lastUpdated,
+                    onStart: onStart,
+                    onStop: onStop,
+                  ),
+                  if (triggerError) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    const _LiveTriggerErrorCard(),
+                  ],
+                  const SizedBox(height: AppSpacing.sm),
+                  if (!controller.isStreaming && series.isEmpty)
+                    const _LiveStartHint()
+                  else if (series.isEmpty)
+                    _WaitingForFirstPayload(streaming: controller.isStreaming)
+                  else
+                    _LiveCharts(series: series, latest: ap),
+                  // First-time SETUP hint only. Once the app has EVER received a
+                  // Live payload (hasEverReceived — mirrors the App Group
+                  // shortcuts_bridge.has_received_payload flag), the user clearly
+                  // has the companion Shortcut working, so the install/how-to note
+                  // is noise and is hidden permanently.
+                  if (!controller.hasEverReceived) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    const _LoopShortcutNote(),
+                  ],
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// Live-mode prompt before any sample has been captured and monitoring is not
+/// running.
+class _LiveStartHint extends StatelessWidget {
+  const _LiveStartHint();
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+      child: Text(
+        'Tap Start to begin live readings. The companion Shortcut sends a sample '
+        'each cycle; each one charts here and the signal dimensions are graded as '
+        'they arrive. Stop freezes the last values on screen.',
+        style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+}
+
+/// Honest error card when Live Start could not open the looping Shortcut.
+class _LiveTriggerErrorCard extends StatelessWidget {
+  const _LiveTriggerErrorCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.error_outline, size: 20, color: AppColors.statusDanger),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Semantics(
+              liveRegion: true,
+              child: Text(
+                'Could not start live streaming. The looping companion Shortcut '
+                'may not be installed, or the run was cancelled. Install it, '
+                'then press Start again.',
+                style: text.bodyMedium?.copyWith(color: AppColors.textSecondary),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Live sparkline chart height. A denser glyph metric than the [Sparkline]
+/// default (40) so the four-metric Live stack (RSSI / SNR / Tx / Rx) fits a
+/// phone screen without the bottom card clipping; still tall enough to read the
+/// trend. Live-mode only — the macOS snapshot cards carry no sparkline.
+const double _liveSparklineHeight = 32;
+
+/// The Live charting + grading surface. RSSI and SNR each carry a graded chip +
+/// sparkline; Tx and Rx rate each carry a trend label + sparkline (rates are
+/// NOT hard-graded — a "good" rate is relative to band/width/MCS, so the value +
+/// direction is the honest signal). Congestion / CCA is intentionally absent —
+/// iOS does not expose channel utilization and we do not fabricate it (GL-005).
+class _LiveCharts extends StatelessWidget {
+  const _LiveCharts({required this.series, required this.latest});
+
+  final WifiTimeSeries series;
+
+  /// The latest connected-AP reading, for the current-value readout. May be
+  /// null briefly between Start and the first streamed payload.
+  final ConnectedAp? latest;
+
+  @override
+  Widget build(BuildContext context) {
+    final int? rssi = latest?.rssiDbm;
+    final int? snr = latest?.snrDb;
+    final double? tx = latest?.txRateMbps;
+    final double? rx = latest?.rxRateMbps;
+    final bool rxAvail = latest?.rxRateAvailable ?? false;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        _GradedMetricChart(
+          label: 'RSSI',
+          unit: 'dBm',
+          currentValue: rssi?.toString(),
+          grade: WifiGrading.gradeRssi(rssi),
+          window: series.rssi,
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        _GradedMetricChart(
+          label: 'SNR',
+          unit: 'dB',
+          currentValue: snr?.toString(),
+          grade: WifiGrading.gradeSnr(snr),
+          window: series.snr,
+          derived: latest?.snrDerived ?? false,
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        _TrendMetricChart(
+          label: 'Tx Rate',
+          unit: 'Mbps',
+          currentValue: _WifiInfoScreenState._formatRate(tx),
+          window: series.txRate,
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        _TrendMetricChart(
+          label: 'Rx Rate',
+          unit: 'Mbps',
+          currentValue:
+              rxAvail ? _WifiInfoScreenState._formatRate(rx) : null,
+          window: series.rxRate,
+          unavailableNote: (latest != null && !rxAvail)
+              ? 'Not exposed by iOS'
+              : null,
+        ),
+      ],
+    );
+  }
+}
+
+/// A hard-graded dimension card: label, current value, grade chip, and a
+/// sparkline tinted to the grade. The grade WORD carries the meaning; the tint
+/// only reinforces it (SC 1.4.1). A null current value renders "Unavailable"
+/// and the grade is [QualityGrade.unavailable].
+class _GradedMetricChart extends StatelessWidget {
+  const _GradedMetricChart({
+    required this.label,
+    required this.unit,
+    required this.currentValue,
+    required this.grade,
+    required this.window,
+    this.derived = false,
+  });
+
+  final String label;
+  final String unit;
+  final String? currentValue;
+  final QualityGrade grade;
+  final List<double?> window;
+  final bool derived;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool hasValue =
+        currentValue != null && currentValue!.trim().isNotEmpty;
+    final String shown = hasValue ? '$currentValue $unit' : 'Unavailable';
+    final String semantic =
+        '$label${derived ? ', derived' : ''}, $shown, ${grade.label}';
+    final Color lineColor = _gradeLineColor(grade);
+
+    return _Card(
+      title: label,
+      verticalPadding: AppSpacing.xs,
+      child: Semantics(
+        container: true,
+        label: semantic,
+        child: ExcludeSemantics(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  Expanded(
+                    child: _CurrentReadout(value: shown, hasValue: hasValue),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  _GradeChip(grade: grade),
+                ],
+              ),
+              if (derived) ...[
+                const SizedBox(height: AppSpacing.xxs),
+                Text(
+                  'derived',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: AppColors.textTertiary,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ],
+              const SizedBox(height: AppSpacing.xxs),
+              Sparkline(
+                values: window,
+                lineColor: lineColor,
+                semanticLabel: '$label trend',
+                height: _liveSparklineHeight,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Tints the sparkline to match the grade chip (reinforcement only). The
+  /// unavailable case stays neutral tertiary so it does not read as a verdict.
+  static Color _gradeLineColor(QualityGrade grade) {
+    switch (grade) {
+      case QualityGrade.excellent:
+      case QualityGrade.good:
+        return AppColors.statusSuccess;
+      case QualityGrade.fair:
+        return AppColors.statusWarning;
+      case QualityGrade.poor:
+        return AppColors.statusDanger;
+      case QualityGrade.unavailable:
+        return AppColors.textTertiary;
+    }
+  }
+}
+
+/// A trend dimension card (rates): label, current value, and a lime sparkline.
+/// Rates are not hard-graded, so the line stays the §8.3 lime accent (no verdict
+/// tint) and the sparkline alone carries the rising/falling/steady signal — the
+/// redundant trend word was dropped 2026-06-02 (Keith). When the platform does
+/// not expose the rate, an honest [unavailableNote] explains why.
+class _TrendMetricChart extends StatelessWidget {
+  const _TrendMetricChart({
+    required this.label,
+    required this.unit,
+    required this.currentValue,
+    required this.window,
+    this.unavailableNote,
+  });
+
+  final String label;
+  final String unit;
+  final String? currentValue;
+  final List<double?> window;
+  final String? unavailableNote;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final bool hasValue =
+        currentValue != null && currentValue!.trim().isNotEmpty;
+    final String shown = hasValue ? '$currentValue $unit' : 'Unavailable';
+    final String semantic = unavailableNote != null
+        ? '$label, $shown, $unavailableNote'
+        : '$label, $shown';
+
+    return _Card(
+      title: label,
+      verticalPadding: AppSpacing.xs,
+      child: Semantics(
+        container: true,
+        label: semantic,
+        child: ExcludeSemantics(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              _CurrentReadout(value: shown, hasValue: hasValue),
+              if (unavailableNote != null) ...[
+                const SizedBox(height: AppSpacing.xxs),
+                Text(
+                  unavailableNote!,
+                  style: text.bodySmall?.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
+                ),
+              ],
+              const SizedBox(height: AppSpacing.xxs),
+              Sparkline(
+                values: window,
+                semanticLabel: '$label trend',
+                height: _liveSparklineHeight,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The large mono current-value readout for a Live chart card.
+class _CurrentReadout extends StatelessWidget {
+  const _CurrentReadout({required this.value, required this.hasValue});
+
+  final String value;
+  final bool hasValue;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final TextTheme text = Theme.of(context).textTheme;
+    return hasValue
+        ? Text(
+            value,
+            style: mono.outputMedium.copyWith(color: AppColors.textPrimary),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          )
+        : Text(
+            value,
+            style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+          );
+  }
+}
+
+/// The §8.13 grade chip, matching net_quality_screen / wifi_vs_internet_screen
+/// so every graded surface reads identically. The grade WORD carries the
+/// meaning; the color only reinforces it (SC 1.4.1).
+class _GradeChip extends StatelessWidget {
+  const _GradeChip({required this.grade});
+
+  final QualityGrade grade;
+
+  static (Color, Color) _colors(QualityGrade grade) {
+    switch (grade) {
+      case QualityGrade.excellent:
+      case QualityGrade.good:
+        return (AppColors.statusSuccess, AppColors.secondary);
+      case QualityGrade.fair:
+        return (AppColors.statusWarning, AppColors.secondary);
+      case QualityGrade.poor:
+        return (AppColors.statusDanger, AppColors.secondary);
+      case QualityGrade.unavailable:
+        return (AppColors.surface2, AppColors.textSecondary);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final (Color bg, Color fg) = _colors(grade);
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: AppSpacing.xxs,
+      ),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(AppRadius.control),
+        border: grade == QualityGrade.unavailable
+            ? Border.all(color: AppColors.borderStrong, width: 1)
+            : null,
+      ),
+      child: Text(
+        grade.label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: text.labelSmall?.copyWith(color: fg, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+}
+
+/// Honest note about the recursive companion Shortcut for Live mode. While the
+/// looping Shortcut link is still a placeholder (pre-publish), the affordance to
+/// get it is a plain disabled note rather than a tappable link the app could not
+/// open — mirroring how the cellular tool gated its Install action.
+class _LoopShortcutNote extends StatelessWidget {
+  const _LoopShortcutNote();
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final bool placeholder =
+        WifiLiveShortcutsConfig.isLiveShortcutUrlPlaceholder;
+    final String message = placeholder
+        ? 'Live streaming needs the combined "WLAN Pros Live" companion '
+              'Shortcut, which is published during device testing.'
+        : 'Live streaming uses the combined "WLAN Pros Live" companion '
+              'Shortcut. Install it, then tap Start.';
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.info_outline, size: 20, color: AppColors.textTertiary),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              message,
+              style: text.bodyMedium?.copyWith(color: AppColors.textSecondary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// iOS Start/Stop control + live indicator + last-updated timestamp.
+class _MonitorControlBar extends StatelessWidget {
+  const _MonitorControlBar({
+    required this.streaming,
+    required this.lastUpdated,
+    required this.onStart,
+    required this.onStop,
+  });
+
+  final bool streaming;
+  final DateTime? lastUpdated;
+  final VoidCallback onStart;
+  final VoidCallback onStop;
+
+  static String _formatTimestamp(DateTime t) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${two(t.hour)}:${two(t.minute)}:${two(t.second)}';
+  }
+
+  /// Below this width the status and action stack vertically (reflow, not clip)
+  /// so the bar survives 320px at 200% type. GL-003 §8.9.
+  static const double _reflowThreshold = 280;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: AppColors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final bool narrow = constraints.maxWidth < _reflowThreshold;
+          final Widget status = _StatusBlock(
+            streaming: streaming,
+            lastUpdated: lastUpdated,
+          );
+          final Widget action = _ActionButton(
+            streaming: streaming,
+            onStart: onStart,
+            onStop: onStop,
+          );
+
+          if (narrow) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                status,
+                const SizedBox(height: AppSpacing.sm),
+                Align(alignment: Alignment.centerLeft, child: action),
+              ],
+            );
+          }
+          return Row(
+            children: [
+              Expanded(child: status),
+              const SizedBox(width: AppSpacing.xs),
+              action,
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Status block: state icon + "Live"/"Paused" + "Updated HH:MM:SS". The block
+/// is one live region keyed only on the "Live"/"Paused" state word, so a Start
+/// or Stop transition announces once (WCAG 2.2 SC 4.1.3). The "Updated" stamp
+/// ticks ~1×/s while streaming, so it is wrapped in [ExcludeSemantics] to avoid
+/// re-announcing the whole line every tick.
+class _StatusBlock extends StatelessWidget {
+  const _StatusBlock({required this.streaming, required this.lastUpdated});
+
+  final bool streaming;
+  final DateTime? lastUpdated;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final String label = streaming ? 'Live' : 'Paused';
+
+    return Semantics(
+      liveRegion: true,
+      label: label,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (streaming)
+            const _LiveIndicator()
+          else
+            const Icon(
+              Icons.pause_circle_outline,
+              size: 20,
+              color: AppColors.textTertiary,
+            ),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: text.labelLarge?.copyWith(
+                    color: streaming
+                        ? AppColors.primary
+                        : AppColors.textSecondary,
+                  ),
+                ),
+                if (lastUpdated != null)
+                  ExcludeSemantics(
+                    child: Text(
+                      'Updated ${_MonitorControlBar._formatTimestamp(lastUpdated!)}',
+                      style: text.bodySmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({
+    required this.streaming,
+    required this.onStart,
+    required this.onStop,
+  });
+
+  final bool streaming;
+  final VoidCallback onStart;
+  final VoidCallback onStop;
+
+  @override
+  Widget build(BuildContext context) {
+    return streaming
+        ? Semantics(
+            button: true,
+            label: 'Stop live monitoring',
+            child: OutlinedButton.icon(
+              onPressed: onStop,
+              icon: const Icon(Icons.stop),
+              label: const Text('Stop'),
+            ),
+          )
+        : Semantics(
+            button: true,
+            label: 'Start live monitoring',
+            child: FilledButton.icon(
+              onPressed: onStart,
+              icon: const Icon(Icons.play_arrow),
+              label: const Text('Start'),
+            ),
+          );
+  }
+}
+
+/// Decorative lime "live" dot. The live region + changing label live on
+/// [_StatusBlock]; this dot is excluded from the a11y tree. Lime is the §8.3
+/// active-state accent, not a verdict.
+class _LiveIndicator extends StatelessWidget {
+  const _LiveIndicator();
+
+  @override
+  Widget build(BuildContext context) {
+    return ExcludeSemantics(
+      child: Container(
+        width: 12,
+        height: 12,
+        decoration: const BoxDecoration(
+          color: AppColors.primary,
+          shape: BoxShape.circle,
+        ),
+      ),
+    );
+  }
+}
+
+class _WaitingForFirstPayload extends StatelessWidget {
+  const _WaitingForFirstPayload({required this.streaming});
+
+  final bool streaming;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+      child: Text(
+        streaming
+            ? 'Listening. The recursive Shortcut is sending Wi-Fi details.'
+            : 'Press Start to begin streaming Wi-Fi details.',
+        style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+        textAlign: TextAlign.center,
       ),
     );
   }

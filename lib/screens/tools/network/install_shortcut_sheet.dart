@@ -66,9 +66,9 @@ class InstallShortcutSheet extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'Wi-Fi Details reads your network from a small Shortcut you '
-                'install once. After installing, run it to send the connected '
-                "access point's RF metrics to the app.",
+                'Live mode reads your network from the "WLAN Pros Live" '
+                'Shortcut you install once. After installing, tap Start to '
+                'begin live readings on this screen.',
                 style:
                     text.bodyLarge?.copyWith(color: AppColors.textSecondary),
               ),
@@ -80,12 +80,8 @@ class InstallShortcutSheet extends StatelessWidget {
               ),
               const _Step(
                 number: 2,
-                text: 'Run the Shortcut once. Its details appear here.',
-              ),
-              const _Step(
-                number: 3,
-                text: 'For live updates, press Start on this screen and run '
-                    'the Shortcut.',
+                text: 'Back here, tap Start to begin live readings. Your '
+                    'network details stream onto this screen.',
               ),
               const SizedBox(height: AppSpacing.sm),
               const _NoPermissionNote(),

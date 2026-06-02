@@ -112,6 +112,34 @@ class WiFiDetailsBridge {
     }
   }
 
+  /// Fires the combined Live Shortcut trigger: opens the PLAIN, fire-and-forget
+  /// `shortcuts://run-shortcut?name=<enc>` URL for the Shortcut named [name]. The
+  /// name is URL-encoded natively.
+  ///
+  /// This is deliberately NOT the `x-callback-url` form. The x-callback variant
+  /// makes the app WAIT for the Shortcut to finish; the looping Live Shortcut
+  /// never finishes, so the app would hang. The plain form hands the Shortcut off
+  /// and returns immediately, after which the app passively consumes [updates].
+  ///
+  /// Returns false when the platform could not OPEN the URL (Shortcuts app
+  /// missing, or off-iOS where the channel is absent) — the caller surfaces the
+  /// honest error + install affordance. A true result means iOS opened the URL,
+  /// not that the Shortcut finished (it never does, by design).
+  Future<bool> runShortcut(String name) async {
+    try {
+      return await _method.invokeMethod<bool>(
+            'runShortcut',
+            <String, String>{'name': name},
+          ) ??
+          false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException catch (e) {
+      debugPrint('WiFiDetailsBridge.runShortcut failed: $e');
+      return false;
+    }
+  }
+
   /// Stream of parsed [WiFiDetails] pushed when the Darwin notification fires
   /// while the app is foregrounded. Unparseable payloads are dropped (never
   /// surfaced as an error) so the screen's StreamBuilder never tears down on a

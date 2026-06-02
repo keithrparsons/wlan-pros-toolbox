@@ -57,6 +57,16 @@
 	     name. -->
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>WLAN Pros Toolbox uses your location only to read the name (SSID) of the Wi-Fi network you are connected to. Your location is never stored or shared.</string>
+	<!-- LSApplicationQueriesSchemes lets the app open the Shortcuts app via the
+	     PLAIN, fire-and-forget `shortcuts://run-shortcut?name=…` URL on iOS 9+
+	     (UIApplication.canOpenURL / open both consult this allow-list). This is
+	     the Live streaming trigger; it is NOT the x-callback form, so there is no
+	     return URL scheme to register — the former wlanprostoolbox:// callback
+	     CFBundleURLTypes entry was removed with the snapshot one-tap trigger. -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>shortcuts</string>
+	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
