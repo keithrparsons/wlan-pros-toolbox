@@ -105,17 +105,29 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
   /// fires) can never hang a caller. On timeout the request resolves to `false`
   /// — treated as "not authorized" — and the network NAME degrades honestly
   /// while the rate-derived verdict, which never needs Location, proceeds.
+  ///
+  /// [fetchTimeout] bounds the native CoreWLAN snapshot read for the same
+  /// reason: a stalled channel (the native side never returns) must never hang
+  /// a caller. On timeout [fetch] throws a typed [WifiInfoUnavailable]
+  /// (`channelError`), so EVERY caller is protected in one place — the pro
+  /// Wi-Fi Information tool surfaces its honest "No Wi-Fi reading" card, while
+  /// Test My Connection and Wi-Fi vs Internet degrade to their internet-only
+  /// verdict. Mirrors how [requestNamePermission] is bounded.
   MacWifiInfoAdapter({
     WifiInfoService? service,
     Duration permissionTimeout = const Duration(seconds: 3),
+    Duration fetchTimeout = const Duration(seconds: 5),
   })  : _service = service ?? WifiInfoService(),
         // Kept in the initializer list alongside `_service` (which needs the
-        // `?? WifiInfoService()` fallback) rather than split into a formal.
+        // `?? WifiInfoService()` fallback) rather than split into formals.
         // ignore: prefer_initializing_formals
-        _permissionTimeout = permissionTimeout;
+        _permissionTimeout = permissionTimeout,
+        // ignore: prefer_initializing_formals
+        _fetchTimeout = fetchTimeout;
 
   final WifiInfoService _service;
   final Duration _permissionTimeout;
+  final Duration _fetchTimeout;
 
   @override
   String get platformLabel => 'macOS CoreWLAN';
@@ -124,9 +136,23 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
   @override
   bool get gatesNameBehindPermission => true;
 
+  /// Reads a fresh macOS CoreWLAN snapshot with a hard upper bound. A native
+  /// channel that never returns (CoreWLAN read stalls) raises a typed
+  /// [WifiInfoUnavailable] (`channelError`) after [fetchTimeout] rather than
+  /// hanging the caller. This protects EVERY caller — the pro Wi-Fi Information
+  /// tool and the two consumer checks (Test My Connection, Wi-Fi vs Internet) —
+  /// in one place, so no screen has to wrap the call itself. The thrown type
+  /// matches the existing channel-error path, so callers' current `catch`
+  /// handling degrades honestly with no per-screen change.
   @override
   Future<ConnectedAp> fetch() async {
-    final WifiInfo info = await _service.fetch();
+    final WifiInfo info = await _service.fetch().timeout(
+      _fetchTimeout,
+      onTimeout: () => throw const WifiInfoUnavailable(
+        WifiInfoUnavailableReason.channelError,
+        'Wi-Fi snapshot read timed out.',
+      ),
+    );
     return ConnectedAp.fromWifiInfo(info);
   }
 

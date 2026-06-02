@@ -13,6 +13,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
 
@@ -61,6 +62,53 @@ void main() {
       );
 
       expect(await adapter.requestNamePermission(), isTrue);
+    },
+  );
+
+  // The same hang class on the SNAPSHOT read: a CoreWLAN read that never
+  // returns must not hang any caller. The adapter bounds fetch() and degrades
+  // to a typed channelError, which every caller already handles.
+  test(
+    'fetch() throws WifiInfoUnavailable (does not hang) when the native '
+    'channel never resolves',
+    () async {
+      final MacWifiInfoAdapter adapter = MacWifiInfoAdapter(
+        service: neverResolvingService(),
+        fetchTimeout: const Duration(milliseconds: 50),
+      );
+
+      // Without the bound this await would never complete. The outer 2s test
+      // timeout is the backstop: the call must resolve (by throwing) well
+      // inside it, proving the bound is the adapter's.
+      await expectLater(
+        adapter.fetch().timeout(const Duration(seconds: 2)),
+        throwsA(
+          isA<WifiInfoUnavailable>().having(
+            (WifiInfoUnavailable e) => e.reason,
+            'reason',
+            WifiInfoUnavailableReason.channelError,
+          ),
+        ),
+      );
+    },
+  );
+
+  test(
+    'fetch() returns the snapshot when the channel resolves in time',
+    () async {
+      final WifiInfoService service = WifiInfoService(
+        invoke: (String method, [dynamic args]) async =>
+            <String, Object?>{'poweredOn': true, 'ssid': 'TestNet'},
+        platformOverride: 'macos',
+      );
+      final MacWifiInfoAdapter adapter = MacWifiInfoAdapter(
+        service: service,
+        fetchTimeout: const Duration(seconds: 3),
+      );
+
+      final ConnectedAp ap = await adapter.fetch();
+      expect(ap.ssid, 'TestNet');
+      expect(ap.poweredOn, isTrue);
     },
   );
 }

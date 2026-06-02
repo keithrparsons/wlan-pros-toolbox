@@ -195,6 +195,44 @@ void main() {
       expect(find.text('No Wi-Fi reading available'), findsOneWidget);
       expect(find.text('Retry'), findsOneWidget);
     });
+
+    testWidgets(
+        'a STALLED fetch (native channel never returns) does not hang — the '
+        'screen leaves loading and shows the error card', (tester) async {
+      // Drive the REAL adapter against a never-resolving native channel with a
+      // tiny fetchTimeout. This exercises the full chain end-to-end: the
+      // adapter bounds fetch(), throws the typed channelError, and the screen's
+      // catch leaves the spinner and renders the honest error card. Before the
+      // adapter bound, _fetchMac's `await adapter.fetch()` would hang forever
+      // and the loading spinner would never clear.
+      final adapter = MacWifiInfoAdapter(
+        service: WifiInfoService(
+          invoke: (String method, [dynamic args]) =>
+              Completer<Object?>().future, // never resolves
+          platformOverride: 'macos',
+        ),
+        fetchTimeout: const Duration(milliseconds: 50),
+      );
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          macAdapter: adapter,
+        ),
+      ));
+      await tester.pump(); // loading frame
+      // Spinner is up while the bounded fetch is in flight.
+      expect(find.text('Reading Wi-Fi link state…'), findsOneWidget);
+
+      // Let the adapter's fetchTimeout fire and the screen settle. If the read
+      // were unbounded, this would never settle.
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
+
+      // The screen left loading and degraded to the honest error card.
+      expect(find.text('Reading Wi-Fi link state…'), findsNothing);
+      expect(find.text('No Wi-Fi reading available'), findsOneWidget);
+      expect(find.text('Retry'), findsOneWidget);
+    });
   });
 
   group('WifiInfoScreen — iOS source (Live only)', () {
