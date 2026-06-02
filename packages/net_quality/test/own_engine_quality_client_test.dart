@@ -18,12 +18,13 @@ void main() {
         connector: constConnector(15), // excellent, jitter 0
       );
       final throughput = ThroughputProbe(
+        downloadStreamCount: 1,
         downloader: (uri, max) async => 50 * 1000 * 1000,
         uploader: (uri, bytes, max) async => bytes,
-        timer: _scriptedTimer(const <Duration>[
-          Duration(seconds: 4), // 50MB/4s = 100 Mbps download -> excellent
-          Duration(seconds: 2), // 10MB/2s = 40 Mbps upload -> excellent
-        ]),
+        // 50MB/4s = 100 Mbps download -> excellent (single stream window).
+        windowTimer: _passthroughTimer(const Duration(seconds: 4)),
+        // 10MB/2s = 40 Mbps upload -> excellent.
+        timer: _passthroughTimer(const Duration(seconds: 2)),
         uploadBytes: 10 * 1000 * 1000,
       );
       final responsiveness = ResponsivenessProbe(
@@ -85,13 +86,12 @@ void main() {
         // Single attempt: a zero-byte transfer is now treated as a failure,
         // so download/upload surface as unavailable (not graded 0). This test
         // asserts the latency/loss path, so keep throughput deterministic.
+        downloadStreamCount: 1,
         maxRetries: 0,
         downloader: (uri, max) async => 0,
         uploader: (uri, bytes, max) async => 0,
-        timer: _scriptedTimer(const <Duration>[
-          Duration(seconds: 1),
-          Duration(seconds: 1),
-        ]),
+        windowTimer: _passthroughTimer(const Duration(seconds: 1)),
+        timer: _passthroughTimer(const Duration(seconds: 1)),
       );
       final responsiveness = ResponsivenessProbe(
         idleSamples: 1,
@@ -129,9 +129,11 @@ void main() {
         connector: constConnector(10),
       );
       final throughput = ThroughputProbe(
+        downloadStreamCount: 1,
         downloader: (uri, max) async => throw Exception('net down'),
         uploader: (uri, bytes, max) async => bytes,
-        timer: _throwingTimer(),
+        windowTimer: _passthroughTimer(Duration.zero),
+        timer: _passthroughTimer(Duration.zero),
       );
       final responsiveness = ResponsivenessProbe(
         idleSamples: 1,
@@ -165,13 +167,12 @@ void main() {
         connector: constConnector(10),
       );
       final throughput = ThroughputProbe(
+        downloadStreamCount: 1,
         maxRetries: 0,
         downloader: (uri, max) async => 0, // hiccuped CDN: 0 bytes, no throw
         uploader: (uri, bytes, max) async => bytes,
-        timer: _scriptedTimer(const <Duration>[
-          Duration(seconds: 1),
-          Duration(seconds: 1),
-        ]),
+        windowTimer: _passthroughTimer(const Duration(seconds: 1)),
+        timer: _passthroughTimer(const Duration(seconds: 1)),
       );
       final responsiveness = ResponsivenessProbe(
         idleSamples: 1,
@@ -205,21 +206,25 @@ void main() {
         connector: constConnector(10),
       );
       final throughput = ThroughputProbe(
+        downloadStreamCount: 1,
         downloadBytes: 50 * 1000 * 1000,
         uploadBytes: 10 * 1000 * 1000,
+        downloadEndpoints: <Uri>[
+          Uri.parse('https://first.test/down'), // throws (transient)
+          Uri.parse('https://second.test/down'), // 50 MB -> 100 Mbps
+        ],
         downloader: (uri, max) async {
           calls++;
-          if (calls == 1) throw const ThroughputUnmeasurable('transient');
+          if (uri.host == 'first.test') {
+            throw const ThroughputUnmeasurable('transient');
+          }
           return 50 * 1000 * 1000;
         },
         uploader: (uri, bytes, max) async => bytes,
-        // download: failed attempt (timer still runs the body) then success,
-        // then the upload attempt -> three timer calls.
-        timer: _scriptedTimer(const <Duration>[
-          Duration(seconds: 4), // download attempt 1 (body throws)
-          Duration(seconds: 4), // download attempt 2 -> 100 Mbps
-          Duration(seconds: 2), // upload -> 40 Mbps
-        ]),
+        // Single shared window for the (retried) download = 4s -> 100 Mbps;
+        // upload window = 2s -> 40 Mbps.
+        windowTimer: _passthroughTimer(const Duration(seconds: 4)),
+        timer: _passthroughTimer(const Duration(seconds: 2)),
       );
       final responsiveness = ResponsivenessProbe(
         idleSamples: 1,
@@ -245,17 +250,11 @@ void main() {
   });
 }
 
-ElapsedTimer _scriptedTimer(List<Duration> durations) {
-  var i = 0;
+/// A timer that runs the body and reports a fixed duration. Used for both the
+/// per-attempt seam and the parallel-download window seam.
+ElapsedTimer _passthroughTimer(Duration d) {
   return (body) async {
     await body();
-    return durations[i++];
-  };
-}
-
-ElapsedTimer _throwingTimer() {
-  return (body) async {
-    await body(); // body throws, propagates out of measure()
-    return Duration.zero;
+    return d;
   };
 }
