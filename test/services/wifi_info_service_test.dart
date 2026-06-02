@@ -187,5 +187,24 @@ void main() {
       expect(seen, 'isLocationAuthorized');
       expect(authorized, isFalse);
     });
+
+    test('openLocationSettings invokes the deep-link channel method', () async {
+      var seen = '';
+      var calls = 0;
+      Future<Object?> fakeInvoke(String method, [dynamic args]) async {
+        seen = method;
+        calls++;
+        return true;
+      }
+
+      final service = WifiInfoService(
+        invoke: fakeInvoke,
+        platformOverride: 'macos',
+      );
+      final opened = await service.openLocationSettings();
+      expect(seen, 'openLocationSettings');
+      expect(calls, 1);
+      expect(opened, isTrue);
+    });
   });
 }

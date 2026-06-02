@@ -692,7 +692,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
     final String? ssid = ap?.ssid;
     if (ssid != null && ssid.trim().isNotEmpty) return ssid;
     if (_source == WifiInfoSource.macosCoreWlan && !_macLocationAuthorized) {
-      return 'Name unavailable (Location access off)';
+      return 'Unavailable (enable Location Services to show the name)';
     }
     return 'Not measured';
   }

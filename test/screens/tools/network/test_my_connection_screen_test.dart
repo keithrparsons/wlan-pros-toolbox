@@ -97,6 +97,8 @@ class _NoNameMacAdapter implements WifiInfoAdapter {
 
   @override
   Future<bool> currentNameAuthorization() async => false;
+  @override
+  Future<bool> openNamePermissionSettings() async => true;
 }
 
 class _FakeMacAdapter implements WifiInfoAdapter {
@@ -118,6 +120,8 @@ class _FakeMacAdapter implements WifiInfoAdapter {
 
   @override
   Future<bool> currentNameAuthorization() async => true;
+  @override
+  Future<bool> openNamePermissionSettings() async => true;
 }
 
 /// A macOS adapter whose SNAPSHOT READ never resolves — models the production
@@ -140,6 +144,8 @@ class _HangingMacAdapter implements WifiInfoAdapter {
       throw StateError('A connection check must never prompt for Location.');
   @override
   Future<bool> currentNameAuthorization() async => false;
+  @override
+  Future<bool> openNamePermissionSettings() async => true;
 }
 
 /// iOS bridge delivering a full payload: rssi -58, noise -90 (→ SNR 32),
@@ -519,7 +525,7 @@ void main() {
       // never a fabricated SSID, never a bare "Not measured".
       expect(adapter.promptRequested, isFalse);
       expect(
-        find.text('Name unavailable (Location access off)'),
+        find.text('Unavailable (enable Location Services to show the name)'),
         findsOneWidget,
       );
 

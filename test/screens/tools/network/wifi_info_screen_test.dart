@@ -68,6 +68,7 @@ class _FakeMacAdapter implements WifiInfoAdapter {
   final ConnectedAp? snapshotAfterGrant;
 
   int grantCalls = 0;
+  int openSettingsCalls = 0;
   bool _granted = false;
 
   @override
@@ -92,6 +93,12 @@ class _FakeMacAdapter implements WifiInfoAdapter {
 
   @override
   Future<bool> currentNameAuthorization() async => _granted;
+
+  @override
+  Future<bool> openNamePermissionSettings() async {
+    openSettingsCalls++;
+    return true;
+  }
 }
 
 /// A fake iOS Shortcuts bridge driving the Live streaming flow without a
@@ -188,8 +195,35 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      // Name is gated (both SSID and BSSID null) -> the Grant card shows.
-      expect(find.text('Grant Location permission'), findsWidgets);
+      // Name is gated (both SSID and BSSID null) -> the Grant card shows, with
+      // both the system-prompt button and the deep-link to Location Settings.
+      expect(find.text('Grant Location'), findsWidgets);
+      expect(find.text('Open Location Settings'), findsOneWidget);
+      // The consumer-friendly numbered steps render under the buttons.
+      expect(find.textContaining('Turn on WLAN Pros Toolbox'), findsOneWidget);
+    });
+
+    testWidgets(
+        'tapping "Open Location Settings" invokes the deep-link channel method',
+        (tester) async {
+      final adapter = _FakeMacAdapter(
+        snapshot: _macSample(ssid: null, bssid: null),
+      );
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          macAdapter: adapter,
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(adapter.openSettingsCalls, 0);
+      await tester.tap(find.text('Open Location Settings'));
+      await tester.pumpAndSettle();
+
+      // The button routes to the adapter, which (on the real macOS adapter)
+      // calls the `openLocationSettings` channel method — the deep-link.
+      expect(adapter.openSettingsCalls, 1);
     });
 
     testWidgets(
@@ -210,13 +244,13 @@ void main() {
       await tester.pumpAndSettle();
 
       // Pre-grant: the name is gated, the Grant card is visible, no SSID value.
-      expect(find.text('Grant Location permission'), findsWidgets);
+      expect(find.text('Grant Location'), findsWidgets);
       expect(find.text('KeithNet'), findsNothing);
 
       // Tap Grant: requestNamePermission resolves authorized (the 30s ceiling
       // means the interactive grant waits for the user), then _fetchMac re-reads
       // WITH authorization and the name appears.
-      await tester.tap(find.text('Grant Location permission').first);
+      await tester.tap(find.text('Grant Location').first);
       await tester.pumpAndSettle();
 
       expect(adapter.grantCalls, 1);

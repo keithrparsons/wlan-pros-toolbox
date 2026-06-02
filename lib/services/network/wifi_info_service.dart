@@ -226,4 +226,16 @@ class WifiInfoService {
     final result = await _invoke('isLocationAuthorized');
     return (result as bool?) ?? false;
   }
+
+  /// Deep-links to the macOS Location Services privacy pane so the user can
+  /// enable this app's Location access manually.
+  ///
+  /// macOS does not allow an app to toggle its own Location permission in code
+  /// (TCC protection), so when the in-app prompt is unreliable (common in
+  /// notarized non-App-Store builds) this opens the exact settings pane as the
+  /// honest fallback. Returns whether the settings pane opened.
+  Future<bool> openLocationSettings() async {
+    final result = await _invoke('openLocationSettings');
+    return (result as bool?) ?? false;
+  }
 }

@@ -57,9 +57,31 @@ final class WifiInfoChannel: NSObject, CLLocationManagerDelegate {
       result(isLocationAuthorized())
     case "requestLocationPermission":
       requestLocationPermission(result: result)
+    case "openLocationSettings":
+      openLocationSettings(result: result)
     default:
       result(FlutterMethodNotImplemented)
     }
+  }
+
+  // MARK: - Location settings deep-link
+
+  /// Opens the macOS Location Services privacy pane directly.
+  ///
+  /// macOS does not let an app toggle its own Location authorization in code
+  /// (TCC protection), so when the unreliable in-app prompt does not surface in
+  /// a notarized build, the honest fallback is to deep-link the user straight to
+  /// the exact settings pane where they can enable it manually. Returns true
+  /// when the URL opened, false otherwise. Never throws across to Dart.
+  private func openLocationSettings(result: @escaping FlutterResult) {
+    guard let url = URL(
+      string: "x-apple.systempreferences:com.apple.preference.security?Privacy_LocationServices"
+    ) else {
+      result(false)
+      return
+    }
+    let opened = NSWorkspace.shared.open(url)
+    result(opened)
   }
 
   // MARK: - Wi-Fi info

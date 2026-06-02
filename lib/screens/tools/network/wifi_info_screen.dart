@@ -283,6 +283,16 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     await _fetchMac();
   }
 
+  /// macOS: deep-links to System Settings → Privacy & Security → Location
+  /// Services so the user can enable this app manually. macOS cannot toggle its
+  /// own Location permission in code, so this opens the exact pane; the user
+  /// flips the toggle and returns to tap Refresh.
+  Future<void> _openLocationSettings() async {
+    final WifiInfoAdapter? adapter = _macAdapter;
+    if (adapter == null) return;
+    await adapter.openNamePermissionSettings();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -540,6 +550,10 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   }
 
   /// macOS location card (three states). Returns null when no card is needed.
+  ///
+  /// macOS-only — the card and its deep-link are never built on iOS (the iOS
+  /// path reads the network name through the Shortcut bridge and has no Location
+  /// gate, so it routes through [_iosBody], not here).
   Widget? _buildLocationCard(ConnectedAp info) {
     final bool nameMissing = info.ssid == null && info.bssid == null;
     if (info.ssid != null) return null;
@@ -551,16 +565,18 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
             'network name appears. The signal and channel details below are '
             'unaffected.',
         onGrant: null,
+        onOpenSettings: null,
       );
     }
 
     if (nameMissing) {
       return _LocationCard(
         message:
-            'Network name needs Location permission. macOS requires Location '
-            'Services authorization to read the SSID and BSSID. The signal '
-            'and channel details below do not need it.',
+            'The network name (SSID and BSSID) needs Location Services for this '
+            'app. macOS requires it to read the name. Signal, rate, and channel '
+            'details already work without it.',
         onGrant: _macLoading ? null : _grantLocation,
+        onOpenSettings: _openLocationSettings,
       );
     }
 
@@ -841,13 +857,22 @@ class _LoadingCard extends StatelessWidget {
 // ---- macOS location card ----
 
 class _LocationCard extends StatelessWidget {
-  const _LocationCard({required this.message, required this.onGrant});
+  const _LocationCard({
+    required this.message,
+    required this.onGrant,
+    required this.onOpenSettings,
+  });
 
   final String message;
 
   /// When null, the card is informational (post-grant) and hides the Grant
   /// button to avoid an endless re-tap loop.
   final VoidCallback? onGrant;
+
+  /// Deep-links to System Settings → Privacy & Security → Location Services.
+  /// When null (the post-grant informational state) the settings affordance and
+  /// the numbered steps are hidden.
+  final VoidCallback? onOpenSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -881,22 +906,76 @@ class _LocationCard extends StatelessWidget {
               ),
             ],
           ),
-          if (onGrant != null) ...[
+          // The Grant button tries the system prompt (still helps first-time
+          // users). The Open Location Settings button deep-links to the exact
+          // pane for the reliable manual path. Both are shown side by side and
+          // wrap on a narrow card.
+          if (onGrant != null || onOpenSettings != null) ...[
             const SizedBox(height: AppSpacing.sm),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Semantics(
-                button: true,
-                label: 'Grant Location permission',
-                child: FilledButton(
-                  onPressed: onGrant,
-                  child: const Text('Grant Location permission'),
-                ),
-              ),
+            Wrap(
+              spacing: AppSpacing.xs,
+              runSpacing: AppSpacing.xs,
+              children: <Widget>[
+                if (onGrant != null)
+                  Semantics(
+                    button: true,
+                    label: 'Grant Location permission',
+                    child: FilledButton(
+                      onPressed: onGrant,
+                      child: const Text('Grant Location'),
+                    ),
+                  ),
+                if (onOpenSettings != null)
+                  Semantics(
+                    button: true,
+                    label: 'Open macOS Location Services settings',
+                    child: OutlinedButton(
+                      onPressed: onOpenSettings,
+                      child: const Text('Open Location Settings'),
+                    ),
+                  ),
+              ],
             ),
+          ],
+          if (onOpenSettings != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            const _LocationSteps(),
           ],
         ],
       ),
+    );
+  }
+}
+
+/// Short numbered steps for enabling Location Services manually on macOS. Shown
+/// under the Location card's buttons. Each step is plain text; the whole block
+/// reads as one list to a screen reader.
+class _LocationSteps extends StatelessWidget {
+  const _LocationSteps();
+
+  static const List<String> _steps = <String>[
+    'Open Location Settings (button above).',
+    'Turn on WLAN Pros Toolbox.',
+    'Come back and tap Refresh.',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final TextStyle? style = text.bodySmall?.copyWith(
+      color: AppColors.textTertiary,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        for (int i = 0; i < _steps.length; i++)
+          Padding(
+            padding: EdgeInsets.only(
+              top: i == 0 ? 0 : AppSpacing.xxs,
+            ),
+            child: Text('${i + 1}. ${_steps[i]}', style: style),
+          ),
+      ],
     );
   }
 }

@@ -98,6 +98,16 @@ abstract class WifiInfoAdapter {
   /// the user with a system prompt mid-task.
   Future<bool> currentNameAuthorization();
 
+  /// Deep-links the user to the OS settings pane where they can grant the
+  /// name-gating permission manually.
+  ///
+  /// Some platforms (macOS) cannot toggle their own Location permission in code
+  /// (TCC protection), and the in-app prompt is unreliable in notarized builds,
+  /// so the honest fallback is to open the exact settings pane and tell the user
+  /// what to flip. Returns whether the settings pane opened. A no-op returning
+  /// false for sources without such a deep-link.
+  Future<bool> openNamePermissionSettings();
+
   /// Human label for the source platform, used in honest per-field
   /// "not exposed by `<platform>`" copy.
   String get platformLabel;
@@ -194,5 +204,15 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
   @override
   Future<bool> currentNameAuthorization() => _service
       .isLocationAuthorized()
+      .timeout(_fetchTimeout, onTimeout: () => false);
+
+  /// Opens the macOS Location Services privacy pane so the user can enable this
+  /// app's Location access manually. macOS cannot toggle its own Location
+  /// permission in code (TCC), so this deep-link plus on-screen steps is the
+  /// honest path when the in-app prompt does not surface. Bounded by
+  /// [fetchTimeout] as a hang-safety; on timeout it resolves to `false`.
+  @override
+  Future<bool> openNamePermissionSettings() => _service
+      .openLocationSettings()
       .timeout(_fetchTimeout, onTimeout: () => false);
 }
