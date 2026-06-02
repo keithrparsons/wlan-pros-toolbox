@@ -110,9 +110,15 @@ class NetQualityHelpSheet extends StatelessWidget {
           'How fast you can pull data down, in megabits per second (Mbps). '
           'Higher is better.',
       howWeMeasure:
-          'We download roughly 25 MB from Cloudflare\'s public speed servers '
-          'and divide the data moved by the time it took. It is a real '
-          'transfer, not an estimate.',
+          'We run two real downloads at the same time from two different public '
+          'speed providers and add their results together, because a single '
+          'stream can undercount a fast connection. Pulling in parallel and '
+          'summing measures your true total download capacity. We use several '
+          'independent providers (Cloudflare, with OVH and Cachefly as backups) '
+          'so one provider having a bad moment does not ruin the result. It all '
+          'happens inside the same short window (about 10 seconds); running the '
+          'streams in parallel does not make it slower. It is a real transfer, '
+          'not an estimate.',
     ),
     _Metric(
       name: 'Upload',
@@ -121,8 +127,8 @@ class NetQualityHelpSheet extends StatelessWidget {
           'often matters more than download for video calls, backups, and '
           'sharing files.',
       howWeMeasure:
-          'We upload roughly 10 MB to the same Cloudflare speed servers and '
-          'divide the data sent by the time it took.',
+          'We upload roughly 10 MB in a single stream to Cloudflare\'s speed '
+          'servers and divide the data sent by the time it took.',
     ),
   ];
 
