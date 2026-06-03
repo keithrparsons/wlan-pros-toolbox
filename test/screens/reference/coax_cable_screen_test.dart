@@ -16,8 +16,8 @@ void main() {
     CoaxCable cableFor(String name) =>
         CoaxCableScreen.coaxData.firstWhere((CoaxCable c) => c.name == name);
 
-    test('thirteen cable rows', () {
-      expect(CoaxCableScreen.coaxData.length, 13);
+    test('eleven cable rows', () {
+      expect(CoaxCableScreen.coaxData.length, 11);
     });
 
     test('LMR-400 is the standard Wi-Fi run: 50Ω, VF 85, 10.8 mm, 6 GHz', () {

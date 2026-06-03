@@ -16,9 +16,8 @@
 // cable name and typical use beneath. No horizontal scroll needed; nothing
 // can RenderFlex-overflow. Matches the db_reference row idiom.
 //
-// Glyph note: the Ω (ohm) sign, the inch marks on the HELIAX sizes (½", ⅞"),
-// and the × in the footnote are preserved as data glyphs verbatim from the
-// PWA. No em dashes; ASCII hyphen-minus only.
+// Glyph note: the Ω (ohm) sign and the × in the footnote are preserved as data
+// glyphs verbatim from the PWA. No em dashes; ASCII hyphen-minus only.
 
 import 'package:flutter/material.dart';
 
@@ -148,22 +147,6 @@ class CoaxCableScreen extends StatelessWidget {
       diameterMm: 30.0,
       maxGhz: 6.0,
       use: 'Tower base, high-power',
-    ),
-    CoaxCable(
-      name: 'HELIAX ½"',
-      impedance: '50Ω',
-      vf: 81,
-      diameterMm: 14.5,
-      maxGhz: 8.0,
-      use: 'Cellular BTS, microwave links',
-    ),
-    CoaxCable(
-      name: 'HELIAX ⅞"',
-      impedance: '50Ω',
-      vf: 81,
-      diameterMm: 25.0,
-      maxGhz: 3.0,
-      use: 'High-power base station feeder',
     ),
     CoaxCable(
       name: 'RG-6',
