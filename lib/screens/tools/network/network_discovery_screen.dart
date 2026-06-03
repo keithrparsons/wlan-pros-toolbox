@@ -533,9 +533,11 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
           ),
           const SizedBox(width: AppSpacing.xs),
           Expanded(
+            // _summaryRow only renders IP addresses (self IP, gateway) →
+            // Roboto Mono identifier register (GL-003 §8.5).
             child: SelectableText(
               value,
-              style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+              style: mono.robotoMono.copyWith(color: AppColors.textPrimary),
             ),
           ),
         ],
@@ -674,7 +676,8 @@ class _HostRow extends StatelessWidget {
                       Expanded(
                         child: SelectableText(
                           host.ip,
-                          style: mono.inlineCode.copyWith(
+                          // Discovered host IP is an identifier → Roboto Mono.
+                          style: mono.robotoMono.copyWith(
                             color: AppColors.textPrimary,
                           ),
                         ),
@@ -726,9 +729,11 @@ class _HostRow extends StatelessWidget {
   }
 
   Widget _detail(BuildContext context, AppMonoText mono, String value) {
+    // The detail line leads with the host MAC (optionally " · vendor") — a MAC
+    // identifier → Roboto Mono (GL-003 §8.5).
     return SelectableText(
       value,
-      style: mono.inlineCode.copyWith(color: AppColors.textSecondary),
+      style: mono.robotoMono.copyWith(color: AppColors.textSecondary),
     );
   }
 

@@ -491,12 +491,14 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
               Expanded(
                 child: SelectableText(
                   addr,
+                  // Hop address (hostname + IP) is an identifier → Roboto Mono
+                  // (GL-003 §8.5). TTL counter and RTT stay DM Mono.
                   style: h.timedOut
                       ? text.bodyLarge?.copyWith(
                           color: AppColors.textTertiary,
                           fontStyle: FontStyle.italic,
                         )
-                      : mono.inlineCode.copyWith(color: AppColors.textPrimary),
+                      : mono.robotoMono.copyWith(color: AppColors.textPrimary),
                 ),
               ),
               const SizedBox(width: AppSpacing.xs),

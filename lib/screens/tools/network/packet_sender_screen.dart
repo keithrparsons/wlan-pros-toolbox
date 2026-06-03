@@ -514,7 +514,13 @@ class _ReplyCard extends StatelessWidget {
             ),
           const SizedBox(height: AppSpacing.sm),
           _row(context, 'Transport', transportLabel, mono),
-          _row(context, 'Target', '${result.host}:${result.port}', mono),
+          _row(
+            context,
+            'Target',
+            '${result.host}:${result.port}',
+            mono,
+            identifier: true,
+          ),
           _row(context, 'Sent', '${result.bytesSent} bytes', mono),
           _row(context, 'Received', '${result.received.length} bytes', mono),
           _row(context, 'Elapsed', '${result.elapsed.inMilliseconds} ms', mono),
@@ -578,8 +584,9 @@ class _ReplyCard extends StatelessWidget {
     BuildContext context,
     String label,
     String value,
-    AppMonoText mono,
-  ) {
+    AppMonoText mono, {
+    bool identifier = false,
+  }) {
     final TextTheme text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
@@ -597,7 +604,9 @@ class _ReplyCard extends StatelessWidget {
           Expanded(
             child: SelectableText(
               value,
-              style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+              style: (identifier ? mono.robotoMono : mono.inlineCode).copyWith(
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
         ],

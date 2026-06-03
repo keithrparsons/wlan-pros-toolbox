@@ -389,7 +389,10 @@ class _RecordsCard extends StatelessWidget {
                   Expanded(
                     child: SelectableText(
                       _displayData(rec),
-                      style: mono.inlineCode.copyWith(
+                      // Record DATA is the resolved address/identifier (IP for
+                      // A/AAAA, hostname for CNAME/MX/NS) → Roboto Mono
+                      // (GL-003 §8.5). The type token (left) stays DM Mono.
+                      style: mono.robotoMono.copyWith(
                         color: AppColors.textPrimary,
                       ),
                     ),

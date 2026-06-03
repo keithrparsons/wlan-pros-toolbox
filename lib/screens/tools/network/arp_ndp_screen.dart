@@ -453,7 +453,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
                   Expanded(
                     child: SelectableText(
                       n.ip,
-                      style: mono.inlineCode.copyWith(
+                      style: mono.robotoMono.copyWith(
                         color: AppColors.primary,
                         fontWeight: FontWeight.w500,
                       ),
@@ -473,7 +473,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
               hasMac
                   ? SelectableText(
                       n.mac!,
-                      style: mono.inlineCode.copyWith(
+                      style: mono.robotoMono.copyWith(
                         color: AppColors.textSecondary,
                         fontSize: AppTextSize.caption,
                       ),

@@ -303,12 +303,17 @@ class _ResultCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
-          ValueRow(label: 'ASN', value: r.asn, mono: true, emphasize: true),
+          ValueRow(
+            label: 'ASN',
+            value: r.asn,
+            identifier: true,
+            emphasize: true,
+          ),
           ValueRow(label: 'Holder', value: r.holder),
           ValueRow(
             label: 'Announced prefix',
             value: r.announcedPrefix,
-            mono: true,
+            identifier: true,
           ),
           ValueRow(label: 'Registry', value: r.registry),
           ValueRow(label: 'AS type', value: r.asnType),
@@ -339,7 +344,7 @@ class _ResultCard extends StatelessWidget {
             ValueRow(
               label: 'Other ASNs',
               value: r.relatedAsns.join(', '),
-              mono: true,
+              identifier: true,
             ),
         ],
       ),

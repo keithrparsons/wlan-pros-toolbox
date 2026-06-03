@@ -286,7 +286,7 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
-          ValueRow(label: 'IP', value: r.ip, mono: true, emphasize: true),
+          ValueRow(label: 'IP', value: r.ip, identifier: true, emphasize: true),
           ValueRow(label: 'IP version', value: r.ipVersion),
           ValueRow(label: 'Location', value: r.locationLine),
           ValueRow(label: 'Postal code', value: r.postal, mono: true),
@@ -294,7 +294,7 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
           ValueRow(label: 'UTC offset', value: r.utcOffset, mono: true),
           ValueRow(label: 'ISP', value: r.isp),
           ValueRow(label: 'Organization', value: r.org),
-          ValueRow(label: 'ASN', value: r.asn, mono: true),
+          ValueRow(label: 'ASN', value: r.asn, identifier: true),
         ],
       ),
     );

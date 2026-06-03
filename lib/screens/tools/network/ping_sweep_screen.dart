@@ -454,7 +454,8 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
                     _rangeLabel,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.right,
-                    style: mono.inlineCode.copyWith(
+                    // Address-range label is an identifier → Roboto Mono (§8.5).
+                    style: mono.robotoMono.copyWith(
                       color: AppColors.textTertiary,
                     ),
                   ),
@@ -523,7 +524,9 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
               Expanded(
                 child: Text(
                   r.host,
-                  style: mono.inlineCode.copyWith(
+                  // Responsive host IP is an identifier → Roboto Mono (§8.5).
+                  // The RTT label stays DM Mono.
+                  style: mono.robotoMono.copyWith(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w500,
                   ),

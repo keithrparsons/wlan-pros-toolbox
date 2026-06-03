@@ -11,6 +11,7 @@ import 'package:net_quality/net_quality.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/live_quality_monitor.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/metric_sparkline.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/net_quality_screen.dart';
+import 'package:wlan_pros_toolbox/theme/app_tokens.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
 void main() {
@@ -266,6 +267,125 @@ void main() {
       await tester.tap(find.bySemanticsLabel('Close help'));
       await tester.pumpAndSettle();
       expect(find.text('About Network Quality'), findsNothing);
+    });
+  });
+
+  group('grade chip foreground (GL-003 §8.13 _gradeColors regression)', () {
+    // A scripted result spanning a verdict grade (download → good) and the
+    // unavailable grade (responsiveness), so the chip-foreground pairing can be
+    // asserted for both branches of _gradeColors. The expensive trio is driven
+    // here (the live latency trio is left alone), so these chips read the
+    // one-shot grade deterministically.
+    QualityResult scriptedResult() => QualityResult(
+          source: QualitySource.mock,
+          measuredAt: DateTime.utc(2026, 1, 1),
+          metrics: const <QualityMetric>[
+            QualityMetric(
+              id: MetricIds.latency,
+              label: 'Latency',
+              value: 14,
+              unit: 'ms',
+              grade: QualityGrade.excellent,
+            ),
+            QualityMetric(
+              id: MetricIds.jitter,
+              label: 'Jitter',
+              value: 2.3,
+              unit: 'ms',
+              grade: QualityGrade.excellent,
+            ),
+            QualityMetric(
+              id: MetricIds.loss,
+              label: 'Loss',
+              value: 0,
+              unit: '%',
+              grade: QualityGrade.excellent,
+            ),
+            QualityMetric(
+              id: MetricIds.download,
+              label: 'Download',
+              value: 512.4,
+              unit: 'Mbps',
+              grade: QualityGrade.good,
+            ),
+            QualityMetric(
+              id: MetricIds.upload,
+              label: 'Upload',
+              value: 48.7,
+              unit: 'Mbps',
+              grade: QualityGrade.poor,
+            ),
+            // The unavailable branch: a null-value metric that grades
+            // Unavailable and never gets a live override (addFullResult skips
+            // null-value metrics).
+            QualityMetric.unavailable(
+              id: MetricIds.responsiveness,
+              label: 'Responsiveness',
+              unit: 'RPM',
+              note: 'Not measured on this run',
+            ),
+          ],
+        );
+
+    Widget scriptedHarness() => MaterialApp(
+          theme: AppTheme.dark(),
+          home: NetQualityScreen(
+            client: MockQualityClient(scriptedResult: scriptedResult()),
+            reachabilityProbe: ReachabilityProbe(
+              prober: fakeProber,
+              sites: sites,
+            ),
+            monitor: fakeMonitor(),
+          ),
+        );
+
+    /// The color of the chip's grade-word Text — i.e. the _gradeColors
+    /// foreground. The chip label is the only Text whose string equals [word].
+    Color chipForeground(WidgetTester tester, String word) {
+      final Text label = tester.widget<Text>(
+        find.text(word).first,
+      );
+      return label.style!.color!;
+    }
+
+    testWidgets(
+        'verdict chips use the dark secondary foreground; the unavailable chip '
+        'uses textSecondary', (tester) async {
+      await tester.pumpWidget(scriptedHarness());
+      await tester.tap(find.text('Run test'));
+      await tester.pumpAndSettle();
+
+      // Verdict chips (good, poor) carry the dark `secondary` (#1A1A1A) label —
+      // dark text on the lime/amber/red verdict backgrounds clears WCAG 4.5:1
+      // per the _gradeColors doc-comment (9.47 / 7.79 / 5.99:1).
+      expect(chipForeground(tester, 'Good'), AppColors.secondary);
+      expect(chipForeground(tester, 'Poor'), AppColors.secondary);
+
+      // The unavailable chip is a NON-verdict: a neutral surface2 background
+      // with textSecondary (#E5E5E5) foreground (11.39:1), so it never reads as
+      // a graded result.
+      expect(chipForeground(tester, 'Unavailable'), AppColors.textSecondary);
+    });
+
+    testWidgets('an unavailable metric renders without overflow at 320px width',
+        (tester) async {
+      // The worst-case narrow cell: a long metric label, a "Not measured…" note,
+      // and the "Unavailable" chip sharing a ~150px column. The row uses a
+      // Flexible value + ellipsis so this never throws a RenderFlex overflow.
+      tester.view.physicalSize = const Size(320, 720);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(scriptedHarness());
+      await tester.tap(find.text('Run test'));
+      await tester.pumpAndSettle();
+
+      // The unavailable row is on screen (chip + its honest note).
+      expect(find.text('Unavailable'), findsWidgets);
+      expect(find.textContaining('Not measured on this run'), findsOneWidget);
+      // No overflow at the narrowest supported width.
+      expect(tester.takeException(), isNull);
     });
   });
 }

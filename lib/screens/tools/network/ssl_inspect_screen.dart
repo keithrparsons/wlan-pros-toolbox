@@ -390,7 +390,11 @@ class _CertificateView extends StatelessWidget {
               value: _keyLine(cert.publicKeyAlgorithm, cert.publicKeyBits),
             ),
             ValueRow(label: 'Signature', value: cert.signatureAlgorithm),
-            ValueRow(label: 'Serial', value: cert.serialNumber, mono: true),
+            ValueRow(
+              label: 'Serial',
+              value: cert.serialNumber,
+              identifier: true,
+            ),
           ],
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -862,7 +866,9 @@ class _SanCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 6),
                       child: SelectableText(
                         s,
-                        style: mono.inlineCode.copyWith(
+                        // SANs are DNS-name / IP identifiers → Roboto Mono
+                        // (GL-003 §8.5 identifier rule), not DM Mono.
+                        style: mono.robotoMono.copyWith(
                           color: AppColors.textPrimary,
                         ),
                       ),
@@ -919,7 +925,9 @@ class _Fingerprint extends StatelessWidget {
         SelectableText(
           available ? value! : 'Not available on this platform',
           style: available
-              ? mono.inlineCode.copyWith(
+              // Hex fingerprint (SHA-256 / SHA-1) is an identifier → Roboto
+              // Mono (GL-003 §8.5), not DM Mono.
+              ? mono.robotoMono.copyWith(
                   color: AppColors.textPrimary,
                   fontSize: AppTextSize.caption,
                 )
@@ -943,7 +951,7 @@ class _ConnectionCard extends StatelessWidget {
     return _SectionCard(
       title: 'Connection',
       children: <Widget>[
-        ValueRow(label: 'Host', value: result.host, mono: true),
+        ValueRow(label: 'Host', value: result.host, identifier: true),
         ValueRow(label: 'Port', value: '${result.port}', mono: true),
         ValueRow(
           label: 'Handshake',
