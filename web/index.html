@@ -33,16 +33,30 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+  <!-- ============================================================= -->
+  <!--  pdf.js: DELIBERATELY SELF-HOSTED — DO NOT CDN-IFY.            -->
+  <!-- ============================================================= -->
   <!--
     pdf.js engine for the bundled "PDF reference card" tools (pdfx on web).
     SELF-HOSTED, not CDN: the Toolbox is offline-branded, so the pdf.js library,
-    worker, and CMaps are bundled under web/pdfjs/ rather than fetched from
-    jsdelivr at runtime. `flutter pub run pdfx:install_web` (pdfx 2.9.2) normally
-    injects three CDN references to pdfjs-dist@4.6.82; those are rewritten here
-    to local web/pdfjs/ paths. Files are the canonical pdfjs-dist@4.6.82 build
-    (Apache-2.0; see web/pdfjs/LICENSE). Paths are relative (no leading slash)
-    so they resolve against the Flutter <base href> for both root and sub-path
-    hosting. If pdfjs-dist is ever version-bumped, re-bundle web/pdfjs/ to match.
+    worker, and CMaps are bundled under web/pdfjs/ rather than fetched from a
+    CDN at runtime. The three references below (engine <script src>, worker
+    workerSrc, cMapUrl) point at LOCAL relative web/pdfjs/ paths. Files are the
+    canonical pdfjs-dist@4.6.82 build (Apache-2.0; see web/pdfjs/LICENSE). Paths
+    are relative (no leading slash) so they resolve against the Flutter
+    <base href> for both root and sub-path hosting.
+
+    !! HAZARD — DO NOT RUN `flutter pub run pdfx:install_web` !!
+    That command (pdfx 2.9.x) REWRITES this file to inject jsdelivr CDN
+    <script> tags for pdfjs-dist@4.6.82, silently reintroducing a remote
+    dependency and breaking the offline promise. This already bit us once. If
+    you ever run it, REVERT index.html and restore these three local
+    web/pdfjs/ paths. If pdfjs-dist is version-bumped, re-bundle web/pdfjs/ AND
+    keep these paths local.
+
+    GUARD: test/web/pdfjs_self_hosted_test.dart asserts these local paths are
+    present and that no jsdelivr/cdnjs/unpkg/remote pdfjs reference exists in
+    live markup. Re-injecting the CDN turns that test red. Keep it green.
   -->
   <script src="pdfjs/build/pdf.min.mjs" type="module"></script>
   <script type="module">
