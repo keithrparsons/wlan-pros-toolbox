@@ -382,8 +382,14 @@ class _SentCard extends StatelessWidget {
             style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.sm),
-          _row(context, 'Target MAC', result.normalizedMac, mono),
-          _row(context, 'Broadcast', result.broadcast, mono),
+          _row(
+            context,
+            'Target MAC',
+            result.normalizedMac,
+            mono,
+            identifier: true,
+          ),
+          _row(context, 'Broadcast', result.broadcast, mono, identifier: true),
           _row(context, 'Port', '${result.port}', mono),
           _row(context, 'Bytes sent', '${result.bytesSent}', mono),
           const SizedBox(height: AppSpacing.sm),
@@ -406,7 +412,8 @@ class _SentCard extends StatelessWidget {
             padding: const EdgeInsets.all(AppSpacing.sm),
             child: SelectableText(
               hex,
-              style: mono.inlineCode.copyWith(
+              // Magic-packet hex dump is a hex identifier → Roboto Mono (§8.5).
+              style: mono.robotoMono.copyWith(
                 color: AppColors.textPrimary,
                 fontSize: AppTextSize.caption,
               ),
@@ -421,8 +428,9 @@ class _SentCard extends StatelessWidget {
     BuildContext context,
     String label,
     String value,
-    AppMonoText mono,
-  ) {
+    AppMonoText mono, {
+    bool identifier = false,
+  }) {
     final TextTheme text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -440,7 +448,9 @@ class _SentCard extends StatelessWidget {
           Expanded(
             child: SelectableText(
               value,
-              style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+              style: (identifier ? mono.robotoMono : mono.inlineCode).copyWith(
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
         ],

@@ -323,20 +323,20 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
           ValueRow(
             label: 'Network',
             value: '${r.networkAddress}/${r.prefix}',
-            mono: true,
+            identifier: true,
             emphasize: true,
           ),
-          ValueRow(label: 'Netmask', value: r.dottedMask, mono: true),
-          ValueRow(label: 'Wildcard', value: r.wildcardMask, mono: true),
+          ValueRow(label: 'Netmask', value: r.dottedMask, identifier: true),
+          ValueRow(label: 'Wildcard', value: r.wildcardMask, identifier: true),
           ValueRow(
             label: 'Broadcast',
             // /31 and /32 have no broadcast — ValueRow renders the unavailable
             // treatment for a null value, which is the honest answer here.
             value: r.broadcastAddress,
-            mono: true,
+            identifier: true,
           ),
-          ValueRow(label: 'First host', value: r.firstHost, mono: true),
-          ValueRow(label: 'Last host', value: r.lastHost, mono: true),
+          ValueRow(label: 'First host', value: r.firstHost, identifier: true),
+          ValueRow(label: 'Last host', value: r.lastHost, identifier: true),
           ValueRow(
             label: 'Total IPs',
             value: '${r.totalAddresses}',

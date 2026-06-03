@@ -274,11 +274,11 @@ class _Success extends StatelessWidget {
       child: Column(
         children: [
           ValueRow(label: 'SSID', value: w.ssid),
-          ValueRow(label: 'BSSID', value: w.bssid, mono: true),
-          ValueRow(label: 'IPv4', value: w.wifiIPv4, mono: true),
-          ValueRow(label: 'IPv6', value: w.wifiIPv6, mono: true),
-          ValueRow(label: 'Subnet mask', value: w.subnetMask, mono: true),
-          ValueRow(label: 'Gateway', value: w.gatewayIP, mono: true),
+          ValueRow(label: 'BSSID', value: w.bssid, identifier: true),
+          ValueRow(label: 'IPv4', value: w.wifiIPv4, identifier: true),
+          ValueRow(label: 'IPv6', value: w.wifiIPv6, identifier: true),
+          ValueRow(label: 'Subnet mask', value: w.subnetMask, identifier: true),
+          ValueRow(label: 'Gateway', value: w.gatewayIP, identifier: true),
         ],
       ),
     );
@@ -293,7 +293,7 @@ class _Success extends StatelessWidget {
             ValueRow(
               label: a.isIPv4 ? 'IPv4' : 'IPv6',
               value: a.ip,
-              mono: true,
+              identifier: true,
             ),
         ],
       ),

@@ -522,6 +522,50 @@ void main() {
     });
   });
 
+  group('WifiInfoScreen — macOS Location card narrow-width reflow', () {
+    // The not-authorized Location card carries two action buttons (Grant
+    // Location + Open Location Settings) side by side in a Wrap, plus the
+    // numbered manual steps. On a narrow phone the two buttons cannot sit on one
+    // line, so the Wrap must reflow them rather than throw a RenderFlex
+    // overflow. These tests pin the viewport narrow and assert no overflow while
+    // the full not-authorized content still renders.
+    for (final double width in <double>[280, 320]) {
+      testWidgets('renders the gated Location card without overflow at '
+          '${width.toInt()}px', (tester) async {
+        await _withViewport(tester, Size(width, 900), () async {
+          await tester.pumpWidget(host(
+            WifiInfoScreen(
+              sourceOverride: WifiInfoSource.macosCoreWlan,
+              macAdapter: _FakeMacAdapter(
+                // Name gated off (both SSID and BSSID null) → the not-authorized
+                // Location card with both buttons + the numbered steps.
+                snapshot: _macSample(ssid: null, bssid: null),
+              ),
+            ),
+          ));
+          await tester.pumpAndSettle();
+
+          // The full not-authorized content is present: both action buttons and
+          // the numbered manual steps.
+          expect(find.text('Grant Location'), findsWidgets);
+          expect(find.text('Open Location Settings'), findsOneWidget);
+          expect(
+            find.textContaining('Turn on WLAN Pros Toolbox'),
+            findsOneWidget,
+          );
+          // The buttons live in a Wrap so they reflow on a narrow card.
+          expect(find.byType(Wrap), findsWidgets);
+          // No RenderFlex overflow at this width.
+          expect(
+            tester.takeException(),
+            isNull,
+            reason: 'Location card overflowed at ${width.toInt()}px',
+          );
+        });
+      });
+    }
+  });
+
   group('WifiInfoScreen — platform fallbacks', () {
     testWidgets('web shows the download-the-app fallback', (tester) async {
       await tester.pumpWidget(host(
@@ -541,4 +585,21 @@ void main() {
       expect(find.text('Coming in a later update'), findsOneWidget);
     });
   });
+}
+
+/// Run [body] with the test view sized to [size], then restore. Mirrors the
+/// `_withViewport` helper in test/widget_test.dart so narrow-width overflow
+/// checks layout at a real phone width.
+Future<void> _withViewport(
+  WidgetTester tester,
+  Size size,
+  Future<void> Function() body,
+) async {
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+  await body();
 }

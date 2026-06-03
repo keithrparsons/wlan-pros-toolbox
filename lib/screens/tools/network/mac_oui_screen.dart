@@ -359,8 +359,8 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
             ),
           ],
           const SizedBox(height: AppSpacing.sm),
-          _row(context, 'MAC', r.normalizedMac!, mono),
-          _row(context, 'OUI', r.oui!, mono),
+          _row(context, 'MAC', r.normalizedMac!, mono, identifier: true),
+          _row(context, 'OUI', r.oui!, mono, identifier: true),
           if (matched && r.registry != null)
             _row(context, 'Registry', r.registry!.label, mono),
         ],
@@ -372,8 +372,9 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
     BuildContext context,
     String label,
     String value,
-    AppMonoText mono,
-  ) {
+    AppMonoText mono, {
+    bool identifier = false,
+  }) {
     final TextTheme text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
@@ -391,7 +392,9 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
           Expanded(
             child: SelectableText(
               value,
-              style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+              style: (identifier ? mono.robotoMono : mono.inlineCode).copyWith(
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
         ],
@@ -471,7 +474,7 @@ class _NoVendorCard extends StatelessWidget {
                 Expanded(
                   child: SelectableText(
                     mac,
-                    style: mono.inlineCode.copyWith(
+                    style: mono.robotoMono.copyWith(
                       color: AppColors.textPrimary,
                     ),
                   ),

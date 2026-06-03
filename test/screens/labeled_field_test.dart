@@ -41,8 +41,14 @@ void main() {
       // textField semantics flag — exactly what VoiceOver / TalkBack announce
       // on focus.
       final Finder byLabel = find.bySemanticsLabel('Host or IP');
+
+      // Exactly ONE node carries the label — the field. The visible §8.4 label
+      // line is wrapped in ExcludeSemantics, so it must NOT contribute a second
+      // 'Host or IP' node (no double-announcement to VoiceOver / TalkBack).
       expect(byLabel, findsOneWidget);
 
+      // And that one node is announced as a text field, exactly what a screen
+      // reader speaks on focus: "Host or IP, text field".
       expect(
         tester.getSemantics(byLabel),
         matchesSemantics(label: 'Host or IP', isTextField: true),

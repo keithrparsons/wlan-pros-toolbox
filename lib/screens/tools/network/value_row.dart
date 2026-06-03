@@ -3,8 +3,15 @@
 // Renders a left-aligned caption label and a right-aligned value. A null or
 // empty value shows the canonical "Not available on this platform" treatment
 // (brief §10) in tertiary text — never a 0, never a blank that reads as a bug.
-// Addresses and numeric values render in DM Mono (GL-003 §8.5) when `mono` is
-// set, so columns of IPs align cleanly.
+//
+// Two distinct fixed-width registers, per GL-003 §8.5:
+//   - `mono`       → DM Mono (`inlineCode`) — computed numerics (counts, coords,
+//                    measured durations) so decimal columns align.
+//   - `identifier` → Roboto Mono (`robotoMono`) — address/identifier strings
+//                    (IP, MAC, BSSID, subnet/wildcard/gateway, CIDR, ASN, hex
+//                    serials/fingerprints) per the identifier rule. Scanned
+//                    glyph-by-glyph, so they take the cleaner identifier face.
+// Set at most one of the two; `identifier` wins if both are passed.
 
 import 'package:flutter/material.dart';
 
@@ -17,6 +24,7 @@ class ValueRow extends StatelessWidget {
     required this.label,
     required this.value,
     this.mono = false,
+    this.identifier = false,
     this.emphasize = false,
   });
 
@@ -25,8 +33,14 @@ class ValueRow extends StatelessWidget {
   /// Null or empty renders the unavailable treatment.
   final String? value;
 
-  /// Render the value in DM Mono (for IPs, MACs, masks).
+  /// Render the value in DM Mono — computed numerics (counts, coordinates,
+  /// measured durations). For address/identifier strings use [identifier].
   final bool mono;
+
+  /// Render the value in Roboto Mono — address/identifier strings (IP, MAC,
+  /// BSSID, subnet/wildcard/gateway, CIDR, ASN, hex serial/fingerprint) per
+  /// GL-003 §8.5. Takes precedence over [mono] if both are set.
+  final bool identifier;
 
   /// Lime + larger weight for the headline value (e.g. Primary IPv4).
   final bool emphasize;
@@ -40,15 +54,20 @@ class ValueRow extends StatelessWidget {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     final TextStyle valueStyle = _available
-        ? (mono
-            ? monoStyle.inlineCode.copyWith(
-                color: emphasize ? AppColors.primary : AppColors.textPrimary,
-                fontWeight: emphasize ? FontWeight.w500 : FontWeight.w400,
-              )
-            : (text.bodyLarge ?? const TextStyle()).copyWith(
-                color: emphasize ? AppColors.primary : AppColors.textPrimary,
-                fontWeight: emphasize ? FontWeight.w600 : FontWeight.w400,
-              ))
+        ? (identifier
+              ? monoStyle.robotoMono.copyWith(
+                  color: emphasize ? AppColors.primary : AppColors.textPrimary,
+                  fontWeight: emphasize ? FontWeight.w500 : FontWeight.w400,
+                )
+              : mono
+              ? monoStyle.inlineCode.copyWith(
+                  color: emphasize ? AppColors.primary : AppColors.textPrimary,
+                  fontWeight: emphasize ? FontWeight.w500 : FontWeight.w400,
+                )
+              : (text.bodyLarge ?? const TextStyle()).copyWith(
+                  color: emphasize ? AppColors.primary : AppColors.textPrimary,
+                  fontWeight: emphasize ? FontWeight.w600 : FontWeight.w400,
+                ))
         : (text.bodyLarge ?? const TextStyle()).copyWith(
             color: AppColors.textTertiary,
             fontStyle: FontStyle.italic,
@@ -63,9 +82,7 @@ class ValueRow extends StatelessWidget {
             width: 112,
             child: Text(
               label,
-              style: text.labelMedium?.copyWith(
-                color: AppColors.textSecondary,
-              ),
+              style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
             ),
           ),
           const SizedBox(width: AppSpacing.xs),
