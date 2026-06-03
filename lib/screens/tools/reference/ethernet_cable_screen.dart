@@ -22,6 +22,7 @@ import 'package:flutter/material.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
@@ -262,10 +263,7 @@ class EthernetCableScreen extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           // Horizontal scroll: seven columns exceed phone width, so the data
           // table scrolls sideways inside the fixed card (mcs_index idiom).
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: _dataTable(text, mono),
-          ),
+          HorizontalScrollTable(child: _dataTable(text, mono)),
         ],
       ),
     );

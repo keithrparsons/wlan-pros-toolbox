@@ -104,10 +104,10 @@ void main() {
       );
     });
 
-    test('PSC ch 5 centers on 5.965 GHz ((5940 + 5×5) MHz)', () {
+    test('PSC ch 5 centers on 5.975 GHz ((5950 + 5×5) MHz)', () {
       final Channel6 ch5 = WifiChannelsScreen.channels6
           .firstWhere((Channel6 c) => c.channel == 5);
-      expect(ch5.centerGhz, 5.965);
+      expect(ch5.centerGhz, 5.975);
     });
   });
 
@@ -152,7 +152,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // PSC ch 5 center frequency renders in the 6 GHz table.
-        expect(find.text('5.965'), findsOneWidget);
+        expect(find.text('5.975'), findsOneWidget);
         expect(find.text('PSC'), findsWidgets);
       });
     });

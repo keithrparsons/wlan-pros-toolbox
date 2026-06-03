@@ -47,7 +47,7 @@ void main() {
       expect(wifi7.year, 2024);
       expect(wifi7.bands, '2.4 / 5 / 6');
       expect(wifi7.maxRate, '46 Gbps');
-      expect(wifi7.mimo, '16×16 MLO');
+      expect(wifi7.mimo, '8×8 + MLO');
       expect(wifi7.channelWidth, '20–320');
       expect(wifi7.modulation, '4K-QAM OFDMA');
     });

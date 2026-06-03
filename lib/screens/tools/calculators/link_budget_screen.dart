@@ -36,6 +36,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/field_unit_row.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -378,24 +379,20 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
         children: [
           _sectionTitle(text, 'Transmitter'),
           const SizedBox(height: AppSpacing.xs),
-          // TX power is the one field with a unit toggle.
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: _field(
-                  label: 'TX Power',
-                  unitHint: _txPowerUnitLabel(_txPowerUnit),
-                  controller: _txPowerCtrl,
-                  focusNode: _txPowerFocus,
-                  hintText: '23',
-                  monoStyle: mono.outputLarge,
-                  signed: true,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              _txPowerUnitSelector(),
-            ],
+          // TX power is the one field with a unit toggle. FieldUnitRow reflows
+          // the unit beneath the field below 440px so it never clips at phone
+          // widths (Vera web-demo gate, 2026-06-02).
+          FieldUnitRow(
+            field: _field(
+              label: 'TX Power',
+              unitHint: _txPowerUnitLabel(_txPowerUnit),
+              controller: _txPowerCtrl,
+              focusNode: _txPowerFocus,
+              hintText: '23',
+              monoStyle: mono.outputLarge,
+              signed: true,
+            ),
+            unit: _txPowerUnitSelector(),
           ),
           const SizedBox(height: AppSpacing.sm),
           _field(

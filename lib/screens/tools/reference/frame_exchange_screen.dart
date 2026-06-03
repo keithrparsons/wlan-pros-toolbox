@@ -518,7 +518,7 @@ const List<FxScenario> _kScenarios = <FxScenario>[
         frames: <FxFrame>[
           FxFrame(
             n: 1,
-            dir: 'STA → AP',
+            dir: 'AP → STA',
             label: 'Beacon Frame',
             type: FxType.mgmt,
             note: 'AP broadcasts BSS info (SSID, rates, capabilities, RSN IE)',

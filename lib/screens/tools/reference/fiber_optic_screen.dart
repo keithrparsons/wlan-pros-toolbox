@@ -24,6 +24,7 @@ import 'package:flutter/material.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
@@ -298,8 +299,7 @@ class FiberOpticScreen extends StatelessWidget {
     return _Card(
       heading: 'Distance by data rate',
       headingText: text,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
+      child: HorizontalScrollTable(
         child: IntrinsicWidth(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

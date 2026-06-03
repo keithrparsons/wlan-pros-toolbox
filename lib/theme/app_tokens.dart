@@ -120,16 +120,33 @@ class AppSpacing {
   /// Horizontal row inset follows card padding (`sm`, 16px).
   static const double rowPadding = 12;
 
-  /// Calculator content cap so desktop doesn't stretch a 2000px form field.
-  static const double calculatorMaxWidth = 480;
+  /// Shared content-column cap for EVERY app surface — the home category grid,
+  /// the category tool list, every calculator, and every reference table all
+  /// center their content at this width so navigating from a list into a tool
+  /// no longer changes the content-column width (Vera web-demo gate, 2026-06-02,
+  /// "inconsistent content width"). 680 lets calculators breathe wider than the
+  /// old 480 cap on desktop while keeping tables and lists feeling intentional
+  /// rather than full-bleed. TUNABLE — Keith may adjust this single value to
+  /// widen or tighten every surface at once. Apply it via [CenteredContent]
+  /// (lib/widgets/centered_content.dart), not a fresh ConstrainedBox per screen.
+  static const double contentMaxWidth = 680;
+
+  /// Calculator content cap. Folded into [contentMaxWidth] on 2026-06-02 so the
+  /// app no longer carries two competing content widths (calculators were 480,
+  /// home/category were full-bleed). Retained as a named alias only so the ~50
+  /// tool screens that reference it keep compiling; new code uses
+  /// [contentMaxWidth] (or [CenteredContent]) directly.
+  static const double calculatorMaxWidth = contentMaxWidth;
 
   /// Short-viewport height threshold for the calculator scroll-column alignment
   /// (see [calculatorVerticalAlignment]). At or below this, the column is
   /// top-aligned so the result readout (GL-003 §8.5 visual climax) reads from
   /// the top with no scroll; above it, the column is vertically centered.
-  /// 480 matches the content width cap and the iPhone landscape height band
-  /// (~390–430pt), which is the case Vera's landscape audit flagged.
-  static const double shortViewportHeight = calculatorMaxWidth;
+  /// 480 is the iPhone landscape height band (~390–430pt), which is the case
+  /// Vera's landscape audit flagged. (Decoupled from the content-width cap on
+  /// 2026-06-02 when that widened to 680 — this is a height threshold and must
+  /// stay at the landscape band, not track the content width.)
+  static const double shortViewportHeight = 480;
 
   /// Vertical alignment for a calculator screen's capped scroll column.
   ///

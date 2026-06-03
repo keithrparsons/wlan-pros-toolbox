@@ -28,6 +28,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/field_unit_row.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -272,34 +273,31 @@ class _FsplScreenState extends State<FsplScreen> {
     required TextStyle monoStyle,
     required Widget unitSelector,
   }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(
-          child: LabeledField(
-            label: label,
-            hint: '($unitHint)',
-            semanticLabel: '$semanticLabel in $unitHint',
-            field: TextField(
-              controller: controller,
-              focusNode: focusNode,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              inputFormatters: _unsignedDecimal,
-              onChanged: (_) => _recompute(),
-              textInputAction: TextInputAction.done,
-              autocorrect: false,
-              enableSuggestions: false,
-              style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
-              cursorColor: AppColors.primary,
-              decoration: InputDecoration(hintText: hintText),
-            ),
+    // Field + unit selector via the shared FieldUnitRow: side-by-side on wide
+    // rows, unit reflows beneath the field below 440px so the toggle never
+    // clips at phone widths (Vera web-demo gate, 2026-06-02).
+    return FieldUnitRow(
+      field: LabeledField(
+        label: label,
+        hint: '($unitHint)',
+        semanticLabel: '$semanticLabel in $unitHint',
+        field: TextField(
+          controller: controller,
+          focusNode: focusNode,
+          keyboardType: const TextInputType.numberWithOptions(
+            decimal: true,
           ),
+          inputFormatters: _unsignedDecimal,
+          onChanged: (_) => _recompute(),
+          textInputAction: TextInputAction.done,
+          autocorrect: false,
+          enableSuggestions: false,
+          style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
+          cursorColor: AppColors.primary,
+          decoration: InputDecoration(hintText: hintText),
         ),
-        const SizedBox(width: AppSpacing.sm),
-        unitSelector,
-      ],
+      ),
+      unit: unitSelector,
     );
   }
 

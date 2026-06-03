@@ -40,9 +40,9 @@ void main() {
       expect(p.pairs, '4 of 4');
     });
 
-    test('802.3bt Type 4 = 100 W PSE / 71.3 W PD (the 90-100 W tier)', () {
+    test('802.3bt Type 4 = 90 W PSE / 71.3 W PD', () {
       final PoeStandard p = stdFor('802.3bt Type 4');
-      expect(p.pseWatts, 100.0);
+      expect(p.pseWatts, 90.0);
       expect(p.pdWatts, 71.3);
       expect(p.classes, '0-8');
     });

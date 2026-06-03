@@ -60,6 +60,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/field_unit_row.dart';
 import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -662,33 +663,29 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
   }
 
   Widget _distRow(AppMonoText mono) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(
-          child: LabeledField(
-            label: 'Distance',
-            hint: _distUnit == PtpDistUnit.km ? '(km)' : '(mi)',
-            semanticLabel:
-                'Link distance in ${_distUnit == PtpDistUnit.km ? 'kilometers' : 'miles'}',
-            field: _numberField(
-              controller: _distCtrl,
-              focusNode: _distFocus,
-              hintText: '5',
-              monoStyle: mono.outputLarge,
-            ),
-          ),
+    // FieldUnitRow reflows the unit selector beneath the field below 440px so
+    // it never clips at phone widths (Vera web-demo gate, 2026-06-02).
+    return FieldUnitRow(
+      field: LabeledField(
+        label: 'Distance',
+        hint: _distUnit == PtpDistUnit.km ? '(km)' : '(mi)',
+        semanticLabel:
+            'Link distance in ${_distUnit == PtpDistUnit.km ? 'kilometers' : 'miles'}',
+        field: _numberField(
+          controller: _distCtrl,
+          focusNode: _distFocus,
+          hintText: '5',
+          monoStyle: mono.outputLarge,
         ),
-        const SizedBox(width: AppSpacing.sm),
-        AppToggle<PtpDistUnit>(
-          value: _distUnit,
-          items: const [(PtpDistUnit.km, 'km'), (PtpDistUnit.mi, 'mi')],
-          onChanged: (u) {
-            setState(() => _distUnit = u);
-            _recompute();
-          },
-        ),
-      ],
+      ),
+      unit: AppToggle<PtpDistUnit>(
+        value: _distUnit,
+        items: const [(PtpDistUnit.km, 'km'), (PtpDistUnit.mi, 'mi')],
+        onChanged: (u) {
+          setState(() => _distUnit = u);
+          _recompute();
+        },
+      ),
     );
   }
 

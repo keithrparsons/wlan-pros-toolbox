@@ -30,6 +30,7 @@ import 'package:flutter/material.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
@@ -123,7 +124,7 @@ class PoeReferenceScreen extends StatelessWidget {
     PoeStandard(
       standard: '802.3bt Type 4',
       name: 'PoE++ Hi',
-      pseWatts: 100.0,
+      pseWatts: 90.0,
       pdWatts: 71.3,
       pairs: '4 of 4',
       classes: '0-8',
@@ -519,8 +520,7 @@ class _TableCard extends StatelessWidget {
           // each Row shrink-wrap its fixed-width cells while sharing one common
           // width — columns align, nothing overflows. Title + footnote stay
           // full-width and wrap.
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
+          HorizontalScrollTable(
             child: IntrinsicWidth(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

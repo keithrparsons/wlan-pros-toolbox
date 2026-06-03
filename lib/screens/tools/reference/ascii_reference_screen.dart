@@ -53,6 +53,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/horizontal_scroll_table.dart';
 import '../labeled_field.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
@@ -2038,8 +2039,8 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
         children: <Widget>[
           // Genuinely narrow + tabular → horizontal scroll is the overflow
           // safety valve (mcs_index idiom) but never triggers at phone width.
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
+          // HorizontalScrollTable signals the sideways scroll on web.
+          HorizontalScrollTable(
             child: DataTable(
               headingRowHeight: 40,
               dataRowMinHeight: 36,

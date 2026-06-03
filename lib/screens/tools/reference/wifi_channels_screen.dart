@@ -21,6 +21,7 @@ import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
@@ -244,24 +245,24 @@ class WifiChannelsScreen extends StatefulWidget {
     Channel5(channel: 165, centerGhz: 5.825, band: 'UNII-3', dfs: false),
   ];
 
-  /// 6 GHz — the 15 Preferred Scanning Channels (US). Center = (5940 + ch·5)
-  /// MHz. Verbatim from PWA PSC6 / CH6.filter(psc).
+  /// 6 GHz — the 15 Preferred Scanning Channels (US). Center = (5950 + ch·5)
+  /// MHz, per IEEE 802.11ax / List of WLAN channels (channel 1 = 5955 MHz).
   static const List<Channel6> channels6 = [
-    Channel6(channel: 5, centerGhz: 5.965, psc: true),
-    Channel6(channel: 21, centerGhz: 6.045, psc: true),
-    Channel6(channel: 37, centerGhz: 6.125, psc: true),
-    Channel6(channel: 53, centerGhz: 6.205, psc: true),
-    Channel6(channel: 69, centerGhz: 6.285, psc: true),
-    Channel6(channel: 85, centerGhz: 6.365, psc: true),
-    Channel6(channel: 101, centerGhz: 6.445, psc: true),
-    Channel6(channel: 117, centerGhz: 6.525, psc: true),
-    Channel6(channel: 133, centerGhz: 6.605, psc: true),
-    Channel6(channel: 149, centerGhz: 6.685, psc: true),
-    Channel6(channel: 165, centerGhz: 6.765, psc: true),
-    Channel6(channel: 181, centerGhz: 6.845, psc: true),
-    Channel6(channel: 197, centerGhz: 6.925, psc: true),
-    Channel6(channel: 213, centerGhz: 7.005, psc: true),
-    Channel6(channel: 229, centerGhz: 7.085, psc: true),
+    Channel6(channel: 5, centerGhz: 5.975, psc: true),
+    Channel6(channel: 21, centerGhz: 6.055, psc: true),
+    Channel6(channel: 37, centerGhz: 6.135, psc: true),
+    Channel6(channel: 53, centerGhz: 6.215, psc: true),
+    Channel6(channel: 69, centerGhz: 6.295, psc: true),
+    Channel6(channel: 85, centerGhz: 6.375, psc: true),
+    Channel6(channel: 101, centerGhz: 6.455, psc: true),
+    Channel6(channel: 117, centerGhz: 6.535, psc: true),
+    Channel6(channel: 133, centerGhz: 6.615, psc: true),
+    Channel6(channel: 149, centerGhz: 6.695, psc: true),
+    Channel6(channel: 165, centerGhz: 6.775, psc: true),
+    Channel6(channel: 181, centerGhz: 6.855, psc: true),
+    Channel6(channel: 197, centerGhz: 6.935, psc: true),
+    Channel6(channel: 213, centerGhz: 7.015, psc: true),
+    Channel6(channel: 229, centerGhz: 7.095, psc: true),
   ];
 
   @override
@@ -490,8 +491,7 @@ class _TableCard extends StatelessWidget {
           // fixed-width cells while sharing one common width — columns align
           // and nothing is pinned to a guessed (too-small) value that would
           // overflow. Title and footnote stay full-width and wrap.
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
+          HorizontalScrollTable(
             child: IntrinsicWidth(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

@@ -28,6 +28,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/field_unit_row.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -224,45 +225,42 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: LabeledField(
-                  label: 'Frequency',
-                  hint: _freqUnit == WlFreqUnit.mhz ? '(MHz)' : '(GHz)',
-                  semanticLabel: _freqUnit == WlFreqUnit.mhz
-                      ? 'Frequency in MHz'
-                      : 'Frequency in GHz',
-                  field: TextField(
-                    controller: _freqCtrl,
-                    focusNode: _freqFocus,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    inputFormatters: _unsignedDecimal,
-                    onChanged: (_) => _recompute(),
-                    textInputAction: TextInputAction.done,
-                    autocorrect: false,
-                    enableSuggestions: false,
-                    style: mono.outputLarge.copyWith(
-                      fontSize: AppTextSize.fieldNumeric,
-                    ),
-                    cursorColor: AppColors.primary,
-                    decoration: const InputDecoration(hintText: '2400'),
-                  ),
+          // Field + unit via the shared FieldUnitRow: reflows the unit beneath
+          // the field below 440px so the toggle never clips (Vera web-demo
+          // gate, 2026-06-02).
+          FieldUnitRow(
+            field: LabeledField(
+              label: 'Frequency',
+              hint: _freqUnit == WlFreqUnit.mhz ? '(MHz)' : '(GHz)',
+              semanticLabel: _freqUnit == WlFreqUnit.mhz
+                  ? 'Frequency in MHz'
+                  : 'Frequency in GHz',
+              field: TextField(
+                controller: _freqCtrl,
+                focusNode: _freqFocus,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
                 ),
+                inputFormatters: _unsignedDecimal,
+                onChanged: (_) => _recompute(),
+                textInputAction: TextInputAction.done,
+                autocorrect: false,
+                enableSuggestions: false,
+                style: mono.outputLarge.copyWith(
+                  fontSize: AppTextSize.fieldNumeric,
+                ),
+                cursorColor: AppColors.primary,
+                decoration: const InputDecoration(hintText: '2400'),
               ),
-              const SizedBox(width: AppSpacing.sm),
-              AppToggle<WlFreqUnit>(
-                value: _freqUnit,
-                items: const [(WlFreqUnit.mhz, 'MHz'), (WlFreqUnit.ghz, 'GHz')],
-                onChanged: (u) {
-                  setState(() => _freqUnit = u);
-                  _recompute();
-                },
-              ),
-            ],
+            ),
+            unit: AppToggle<WlFreqUnit>(
+              value: _freqUnit,
+              items: const [(WlFreqUnit.mhz, 'MHz'), (WlFreqUnit.ghz, 'GHz')],
+              onChanged: (u) {
+                setState(() => _freqUnit = u);
+                _recompute();
+              },
+            ),
           ),
           const SizedBox(height: AppSpacing.md),
           _resultGrid(text, mono),

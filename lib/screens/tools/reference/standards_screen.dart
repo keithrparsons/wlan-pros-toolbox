@@ -181,7 +181,7 @@ class StandardsScreen extends StatefulWidget {
       year: 2024,
       bands: '2.4 / 5 / 6',
       maxRate: '46 Gbps',
-      mimo: '16×16 MLO',
+      mimo: '8×8 + MLO',
       channelWidth: '20–320',
       modulation: '4K-QAM OFDMA',
     ),

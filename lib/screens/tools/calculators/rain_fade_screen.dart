@@ -42,6 +42,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/field_unit_row.dart';
 import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -415,33 +416,29 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
   }
 
   Widget _pathRow(AppMonoText mono) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(
-          child: LabeledField(
-            label: 'Path length',
-            hint: _pathUnit == PathUnit.km ? '(km)' : '(mi)',
-            semanticLabel:
-                'Path length in ${_pathUnit == PathUnit.km ? 'kilometers' : 'miles'}',
-            field: _numberField(
-              controller: _pathCtrl,
-              focusNode: _pathFocus,
-              hintText: '10',
-              monoStyle: mono.outputLarge,
-            ),
-          ),
+    // FieldUnitRow reflows the unit selector beneath the field below 440px so
+    // it never clips at phone widths (Vera web-demo gate, 2026-06-02).
+    return FieldUnitRow(
+      field: LabeledField(
+        label: 'Path length',
+        hint: _pathUnit == PathUnit.km ? '(km)' : '(mi)',
+        semanticLabel:
+            'Path length in ${_pathUnit == PathUnit.km ? 'kilometers' : 'miles'}',
+        field: _numberField(
+          controller: _pathCtrl,
+          focusNode: _pathFocus,
+          hintText: '10',
+          monoStyle: mono.outputLarge,
         ),
-        const SizedBox(width: AppSpacing.sm),
-        AppToggle<PathUnit>(
-          value: _pathUnit,
-          items: const [(PathUnit.km, 'km'), (PathUnit.mi, 'mi')],
-          onChanged: (u) {
-            setState(() => _pathUnit = u);
-            _recompute();
-          },
-        ),
-      ],
+      ),
+      unit: AppToggle<PathUnit>(
+        value: _pathUnit,
+        items: const [(PathUnit.km, 'km'), (PathUnit.mi, 'mi')],
+        onChanged: (u) {
+          setState(() => _pathUnit = u);
+          _recompute();
+        },
+      ),
     );
   }
 

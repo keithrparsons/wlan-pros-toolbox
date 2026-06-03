@@ -34,6 +34,28 @@
 </head>
 <body>
   <!--
+    pdf.js engine for the bundled "PDF reference card" tools (pdfx on web).
+    SELF-HOSTED, not CDN: the Toolbox is offline-branded, so the pdf.js library,
+    worker, and CMaps are bundled under web/pdfjs/ rather than fetched from
+    jsdelivr at runtime. `flutter pub run pdfx:install_web` (pdfx 2.9.2) normally
+    injects three CDN references to pdfjs-dist@4.6.82; those are rewritten here
+    to local web/pdfjs/ paths. Files are the canonical pdfjs-dist@4.6.82 build
+    (Apache-2.0; see web/pdfjs/LICENSE). Paths are relative (no leading slash)
+    so they resolve against the Flutter <base href> for both root and sub-path
+    hosting. If pdfjs-dist is ever version-bumped, re-bundle web/pdfjs/ to match.
+  -->
+  <script src="pdfjs/build/pdf.min.mjs" type="module"></script>
+  <script type="module">
+    var { pdfjsLib } = globalThis;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdfjs/build/pdf.worker.mjs';
+
+    var pdfRenderOptions = {
+      cMapUrl: 'pdfjs/cmaps/',
+      cMapPacked: true,
+    }
+  </script>
+
+  <!--
     You can customize the "flutter_bootstrap.js" script.
     This is useful to provide a custom configuration to the Flutter loader
     or to give the user feedback during the initialization process.

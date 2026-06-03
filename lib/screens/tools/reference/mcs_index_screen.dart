@@ -17,7 +17,7 @@
 // States (SOP-007 §5):
 //  - success → the chosen standard's MCS rows render, rates scaled by SS.
 //  - empty   → not reachable: the datasets are bundled consts, never empty; a
-//    single PWA cell (VHT MCS9 @ 20 MHz) is honestly "N/A", never fabricated.
+//    the VHT MCS9 @ 20 and 40 MHz (1 SS) cells are honestly "N/A", not faked.
 //  - loading / error → not applicable: no asset load, no network, no parse. The
 //    data is compile-time const, so there is no failure surface to render.
 //
@@ -31,6 +31,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_select.dart';
+import '../../../widgets/horizontal_scroll_table.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'reference_row_semantics.dart';
@@ -136,7 +137,7 @@ class McsIndexScreen extends StatefulWidget {
   );
 
   /// 802.11ac (VHT) — columns are SGI rates per width [20, 40, 80, 160]
-  /// (PWA MCS_AC). MCS9 @ 20 MHz is invalid (null → "N/A").
+  /// (PWA MCS_AC). MCS9 is invalid at 20 and 40 MHz for 1 SS (null → "N/A").
   static const McsStdData vht = McsStdData(
     columns: ['20 SGI', '40 SGI', '80 SGI', '160 SGI'],
     rows: [
@@ -198,8 +199,8 @@ class McsIndexScreen extends StatefulWidget {
         mcs: 9,
         modulation: '256-QAM',
         codeRate: '5/6',
-        ratesPerSs: [null, 200, 433.3, 866.7],
-      ), // MCS9 invalid at 20 MHz
+        ratesPerSs: [null, null, 433.3, 866.7],
+      ), // MCS9 invalid at 20 and 40 MHz (1 SS)
     ],
   );
 
@@ -510,10 +511,10 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
           const SizedBox(height: AppSpacing.sm),
           // Horizontal scroll: the per-width rate columns can exceed phone
           // width, so the data table scrolls sideways inside the fixed card.
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: _dataTable(data, text, mono),
-          ),
+          // HorizontalScrollTable adds the always-visible scrollbar so the
+          // sideways scroll is signalled on web (Vera web-demo gate,
+          // 2026-06-02).
+          HorizontalScrollTable(child: _dataTable(data, text, mono)),
         ],
       ),
     );
@@ -648,7 +649,8 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
             'Rates are per-stream values multiplied by the spatial-stream count '
             'above. 802.11n: LGI = 800 ns long guard interval, SGI = 400 ns '
             'short. 802.11ac: short guard interval. 802.11ax: 800 ns guard '
-            'interval. 802.11ac MCS 9 is invalid at 20 MHz (N/A). Actual '
+            'interval. 802.11ac MCS 9 is invalid at 20 and 40 MHz for a single '
+            'stream (N/A). Actual '
             'throughput is typically 50 to 65 percent of the PHY rate.',
             style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
           ),

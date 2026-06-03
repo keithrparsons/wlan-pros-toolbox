@@ -33,6 +33,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/field_unit_row.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
@@ -373,39 +374,36 @@ class _RfAttenuationScreenState extends State<RfAttenuationScreen> {
   }
 
   Widget _qtyRow(TextTheme text, AppMonoText mono) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(
-          child: LabeledField(
-            label: 'Quantity',
-            hint: '(layers)',
-            semanticLabel: 'Quantity of layers',
-            field: TextField(
-              controller: _qtyCtrl,
-              focusNode: _qtyFocus,
-              keyboardType: TextInputType.number,
-              inputFormatters: _unsignedInt,
-              textInputAction: TextInputAction.done,
-              onSubmitted: (_) => _addSelected(),
-              // Clear the validation message as soon as the user edits the
-              // field, so the error only reflects the last Add attempt.
-              onChanged: (_) {
-                if (_qtyError != null) setState(() => _qtyError = null);
-              },
-              autocorrect: false,
-              enableSuggestions: false,
-              style: mono.outputLarge.copyWith(
-                fontSize: AppTextSize.fieldNumeric,
-              ),
-              cursorColor: AppColors.primary,
-              decoration: InputDecoration(hintText: '1', errorText: _qtyError),
-            ),
+    // FieldUnitRow reflows the Add button beneath the field below 440px so the
+    // quantity field + button never clip at phone widths (Vera web-demo gate,
+    // 2026-06-02).
+    return FieldUnitRow(
+      field: LabeledField(
+        label: 'Quantity',
+        hint: '(layers)',
+        semanticLabel: 'Quantity of layers',
+        field: TextField(
+          controller: _qtyCtrl,
+          focusNode: _qtyFocus,
+          keyboardType: TextInputType.number,
+          inputFormatters: _unsignedInt,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => _addSelected(),
+          // Clear the validation message as soon as the user edits the
+          // field, so the error only reflects the last Add attempt.
+          onChanged: (_) {
+            if (_qtyError != null) setState(() => _qtyError = null);
+          },
+          autocorrect: false,
+          enableSuggestions: false,
+          style: mono.outputLarge.copyWith(
+            fontSize: AppTextSize.fieldNumeric,
           ),
+          cursorColor: AppColors.primary,
+          decoration: InputDecoration(hintText: '1', errorText: _qtyError),
         ),
-        const SizedBox(width: AppSpacing.sm),
-        _AddButton(onPressed: _addSelected),
-      ],
+      ),
+      unit: _AddButton(onPressed: _addSelected),
     );
   }
 

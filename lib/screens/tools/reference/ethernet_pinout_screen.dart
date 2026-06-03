@@ -31,6 +31,7 @@ import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
@@ -403,8 +404,7 @@ class _TableCard extends StatelessWidget {
           // and share one common width — columns align and nothing is pinned
           // to a guessed (too-small) value that would overflow. Title and
           // footnote stay full-width and wrap.
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
+          HorizontalScrollTable(
             child: IntrinsicWidth(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

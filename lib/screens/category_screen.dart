@@ -10,6 +10,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../data/tool_assets.dart';
 import '../data/tool_catalog.dart';
 import '../theme/app_tokens.dart';
+import '../widgets/centered_content.dart';
 
 /// The id of the one category with a hand-pinned tool order. Since the
 /// 2026-06-01 reorganization the live diagnostics live in Test Network
@@ -76,18 +77,25 @@ class CategoryScreen extends StatelessWidget {
               return _EmptyState(text: text, edge: edge);
             }
 
-            return ListView.separated(
-              padding: EdgeInsets.fromLTRB(
-                edge,
-                AppSpacing.sm,
-                edge,
-                edge + AppSpacing.sm,
+            // Centered, content-width-capped list so the tool list shares the
+            // same column width as the calculators and reference tables it
+            // links into (Vera web-demo gate, 2026-06-02). topCenter so the
+            // list scrolls from the top, not from a vertically centered block.
+            return CenteredContent(
+              child: ListView.separated(
+                padding: EdgeInsets.fromLTRB(
+                  edge,
+                  AppSpacing.sm,
+                  edge,
+                  edge + AppSpacing.sm,
+                ),
+                itemCount: tools.length,
+                separatorBuilder: (_, _) =>
+                    const SizedBox(height: AppSpacing.sm),
+                itemBuilder: (context, index) {
+                  return _ToolRow(tool: tools[index]);
+                },
               ),
-              itemCount: tools.length,
-              separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
-              itemBuilder: (context, index) {
-                return _ToolRow(tool: tools[index]);
-              },
             );
           },
         ),

@@ -36,6 +36,7 @@ import 'package:flutter/semantics.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../concept_graphic_band.dart';
 
@@ -1124,7 +1125,7 @@ class _MapCard extends StatelessWidget {
           // intrinsic (fixed) width, so nothing is pinned to a guessed value
           // that would overflow a phone. Matches wifi_channels_screen.dart and
           // the PWA's own "scroll horizontally" treatment for 5/6 GHz.
-          SingleChildScrollView(scrollDirection: Axis.horizontal, child: grid),
+          HorizontalScrollTable(child: grid),
           const SizedBox(height: AppSpacing.sm),
           Wrap(
             spacing: AppSpacing.xs,

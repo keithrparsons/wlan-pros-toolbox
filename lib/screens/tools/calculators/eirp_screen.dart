@@ -25,6 +25,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/field_unit_row.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -265,32 +266,30 @@ class _EirpScreenState extends State<EirpScreen> {
           LabeledField(
             label: 'TX Power',
             semanticLabel: 'TX power value',
-            field: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _powerCtrl,
-                    focusNode: _powerFocus,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                      signed: true,
-                    ),
-                    inputFormatters: _signedDecimal,
-                    onChanged: (_) => _recompute(),
-                    textInputAction: TextInputAction.next,
-                    autocorrect: false,
-                    enableSuggestions: false,
-                    style: mono.outputLarge.copyWith(
-                      fontSize: AppTextSize.fieldNumeric,
-                    ),
-                    cursorColor: AppColors.primary,
-                    decoration: const InputDecoration(hintText: '20'),
-                  ),
+            // Field + unit via the shared FieldUnitRow: the dBm/W/mW selector
+            // reflows beneath the field below 440px so it never clips at phone
+            // widths (Vera web-demo gate, 2026-06-02).
+            field: FieldUnitRow(
+              gap: AppSpacing.xs,
+              field: TextField(
+                controller: _powerCtrl,
+                focusNode: _powerFocus,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                  signed: true,
                 ),
-                const SizedBox(width: AppSpacing.xs),
-                _unitSelector(),
-              ],
+                inputFormatters: _signedDecimal,
+                onChanged: (_) => _recompute(),
+                textInputAction: TextInputAction.next,
+                autocorrect: false,
+                enableSuggestions: false,
+                style: mono.outputLarge.copyWith(
+                  fontSize: AppTextSize.fieldNumeric,
+                ),
+                cursorColor: AppColors.primary,
+                decoration: const InputDecoration(hintText: '20'),
+              ),
+              unit: _unitSelector(),
             ),
           ),
           const SizedBox(height: AppSpacing.sm),

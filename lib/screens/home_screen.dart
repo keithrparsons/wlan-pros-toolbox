@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 
 import '../data/tool_catalog.dart';
 import '../theme/app_tokens.dart';
+import '../widgets/centered_content.dart';
 import 'category_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -57,7 +58,15 @@ class _HomeScreenState extends State<HomeScreen> {
         top: false,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final double width = constraints.maxWidth;
+            // Breakpoints (column count, aspect, edge) are driven by the
+            // CONTENT-column width, not the raw viewport. CenteredContent caps
+            // the grid at AppSpacing.contentMaxWidth, so a 1440px desktop lays
+            // the grid out inside a 680px band — clamp the width the breakpoints
+            // see so we don't render 4 columns inside that narrow band.
+            final double width =
+                constraints.maxWidth > AppSpacing.contentMaxWidth
+                ? AppSpacing.contentMaxWidth
+                : constraints.maxWidth;
             final bool isDesktop = width >= HomeScreen._desktopBreakpoint;
             final double edge = isDesktop
                 ? AppSpacing.screenEdgeDesktop
@@ -65,21 +74,22 @@ class _HomeScreenState extends State<HomeScreen> {
             final int crossAxisCount = _crossAxisCountFor(width);
             final double aspect = _aspectRatioFor(width);
 
-            return Padding(
-              padding: EdgeInsets.fromLTRB(edge, AppSpacing.sm, edge, edge),
-              child: GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: crossAxisCount,
-                  crossAxisSpacing: AppSpacing.sm,
-                  mainAxisSpacing: AppSpacing.sm,
-                  childAspectRatio: aspect,
-                ),
-                itemCount: kToolCategories.length,
-                itemBuilder: (context, index) {
-                  final ToolCategory cat = kToolCategories[index];
-                  return _CategoryTile(
-                    category: cat,
-                    onTap: () {
+            return CenteredContent(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(edge, AppSpacing.sm, edge, edge),
+                child: GridView.builder(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    crossAxisSpacing: AppSpacing.sm,
+                    mainAxisSpacing: AppSpacing.sm,
+                    childAspectRatio: aspect,
+                  ),
+                  itemCount: kToolCategories.length,
+                  itemBuilder: (context, index) {
+                    final ToolCategory cat = kToolCategories[index];
+                    return _CategoryTile(
+                      category: cat,
+                      onTap: () {
                       // Vera F-NEW-02 — the `initState` unfocus only fires on
                       // first mount. When the user pops back from a category,
                       // Flutter's focus traversal can leave a tile holding
@@ -101,9 +111,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               FocusManager.instance.primaryFocus?.unfocus();
                             });
                           });
-                    },
-                  );
-                },
+                      },
+                    );
+                  },
+                ),
               ),
             );
           },
@@ -115,9 +126,17 @@ class _HomeScreenState extends State<HomeScreen> {
   int _crossAxisCountFor(double width) {
     if (width >= 1100) return 4;
     if (width >= 720) return 3;
-    if (width >= 480) return 2;
-    return 2; // phones — keep 2-up so tiles stay tappable.
+    // Vera web-demo gate (2026-06-02): below ~440px the 2nd tile clipped off
+    // the right edge (16px edge + 16px gutter left no room for two tiles at
+    // sub-440 logical widths). Drop to a single column so each tile gets the
+    // full content width and nothing clips.
+    if (width >= _singleColumnBreakpoint) return 2;
+    return 1; // very narrow phones — one tile per row, no horizontal clip.
   }
+
+  /// Below this width the home grid drops from 2 columns to 1 so the 2nd tile
+  /// can't clip off the right edge (Vera web-demo gate, 2026-06-02).
+  static const double _singleColumnBreakpoint = 440;
 
   /// Tile vertical room scales with viewport. Phones (<480px) get a taller
   /// tile so the 28px icon row + 2-line H3 title (22px/1.25) + 2-line caption
@@ -127,6 +146,11 @@ class _HomeScreenState extends State<HomeScreen> {
   /// only shrinks the text block; the trailing Spacer absorbs the freed
   /// height, so these aspect ratios stay valid and clear with more slack.
   double _aspectRatioFor(double width) {
+    // Below the single-column breakpoint each tile spans the full content
+    // width (~one phone width), so a tall 0.75–0.85 ratio would leave a huge
+    // tile. Widen the ratio so a single full-width tile stays a compact card
+    // (icon row + title + summary) instead of a near-square slab.
+    if (width < _singleColumnBreakpoint) return 2.6;
     if (width < HomeScreen._narrowPhoneBreakpoint) return 0.75;
     if (width < HomeScreen._phoneBreakpoint) return 0.85;
     return 1.05;

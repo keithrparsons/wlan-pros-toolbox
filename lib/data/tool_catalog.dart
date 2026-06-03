@@ -27,6 +27,7 @@
 // catalog `id` strings are STABLE and unchanged — they back 60 icon/graphic
 // asset files, every route, and every test. Titles change; ids never.
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 /// A single tool that can be launched from a category screen.
@@ -80,12 +81,30 @@ class ToolCategory {
   bool get hasLiveTool => tools.any((t) => t.isLive);
 }
 
+/// Category ids gated OFF on the web build. The web flavor is a click-through
+/// demo served from a browser; the live network/Wi-Fi diagnostics need OS-level
+/// sockets, native link metrics, and platform plugins that do not exist on web,
+/// so the two network categories are hidden from navigation on web entirely.
+/// This is a `kIsWeb` filter, NOT a deletion — on iOS/macOS/Android the full
+/// catalog renders unchanged. Flip the build target back to native and all 86
+/// tools reappear with no further change. The 61 web-safe tools (Calculators &
+/// Tools = 24, Quick Reference = 37) are pure-Dart math + bundled reference
+/// assets and run identically in the browser.
+const Set<String> kWebGatedCategoryIds = <String>{
+  'test-network', // 5 live Wi-Fi/internet diagnostics
+  'networking', // 20 socket/lookup/scan utilities
+};
+
 /// Catalog seed — the 4-category reorganization (Keith, 2026-06-01; see file
 /// header). The list order IS the home-grid order: Test Network, Networking
 /// Tools, Calculators & Tools, Quick Reference. Tool order within each category
 /// is presentation-sorted in category_screen.dart (alphabetical, except the
 /// pinned three in Test Network).
-const List<ToolCategory> kToolCategories = <ToolCategory>[
+///
+/// This is the FULL, platform-agnostic catalog. UI consumers MUST read
+/// [kToolCategories] (below), which applies the web gate. Only touch this raw
+/// list when adding/removing a tool from the product itself.
+const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
   // ───────────────────────── 1. Test Network ────────────────────────
   // NEW (2026-06-01). The live Wi-Fi/internet diagnostics moved out of
   // Networking Tools, pinned in this order on the category screen (Keith,
@@ -782,3 +801,16 @@ const List<ToolCategory> kToolCategories = <ToolCategory>[
     ],
   ),
 ];
+
+/// The catalog the UI renders. On native targets this is the full
+/// [_kAllToolCategories]; on web it drops the [kWebGatedCategoryIds]
+/// categories (the network diagnostics that have no browser implementation),
+/// leaving only the 61 web-safe Calculators & Tools and Quick Reference tools.
+/// Every catalog consumer (home grid, category screen) reads this list, so
+/// gating here is sufficient to keep gated tools out of all navigation and
+/// search surfaces on web. Reversible: it's a `kIsWeb` filter, not a deletion.
+final List<ToolCategory> kToolCategories = kIsWeb
+    ? _kAllToolCategories
+          .where((ToolCategory c) => !kWebGatedCategoryIds.contains(c.id))
+          .toList(growable: false)
+    : _kAllToolCategories;

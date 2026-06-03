@@ -27,6 +27,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/field_unit_row.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
@@ -251,43 +252,39 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
   }
 
   Widget _pathRow(AppMonoText mono) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(
-          child: LabeledField(
-            label: 'Path Length',
-            hint: '(${_pathUnitLabel(_pathUnit)})',
-            semanticLabel: 'Path length in ${_pathUnitLabel(_pathUnit)}',
-            field: TextField(
-              controller: _distCtrl,
-              focusNode: _distFocus,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              inputFormatters: _unsignedDecimal,
-              onChanged: (_) => _recompute(),
-              textInputAction: TextInputAction.done,
-              autocorrect: false,
-              enableSuggestions: false,
-              style: mono.outputLarge.copyWith(
-                fontSize: AppTextSize.fieldNumeric,
-              ),
-              cursorColor: AppColors.primary,
-              decoration: const InputDecoration(hintText: '20'),
-            ),
+    // FieldUnitRow reflows the unit selector beneath the field below 440px so
+    // it never clips at phone widths (Vera web-demo gate, 2026-06-02).
+    return FieldUnitRow(
+      field: LabeledField(
+        label: 'Path Length',
+        hint: '(${_pathUnitLabel(_pathUnit)})',
+        semanticLabel: 'Path length in ${_pathUnitLabel(_pathUnit)}',
+        field: TextField(
+          controller: _distCtrl,
+          focusNode: _distFocus,
+          keyboardType: const TextInputType.numberWithOptions(
+            decimal: true,
           ),
+          inputFormatters: _unsignedDecimal,
+          onChanged: (_) => _recompute(),
+          textInputAction: TextInputAction.done,
+          autocorrect: false,
+          enableSuggestions: false,
+          style: mono.outputLarge.copyWith(
+            fontSize: AppTextSize.fieldNumeric,
+          ),
+          cursorColor: AppColors.primary,
+          decoration: const InputDecoration(hintText: '20'),
         ),
-        const SizedBox(width: AppSpacing.sm),
-        AppToggle<PathUnit>(
-          value: _pathUnit,
-          items: const [(PathUnit.km, 'km'), (PathUnit.mi, 'mi')],
-          onChanged: (u) {
-            setState(() => _pathUnit = u);
-            _recompute();
-          },
-        ),
-      ],
+      ),
+      unit: AppToggle<PathUnit>(
+        value: _pathUnit,
+        items: const [(PathUnit.km, 'km'), (PathUnit.mi, 'mi')],
+        onChanged: (u) {
+          setState(() => _pathUnit = u);
+          _recompute();
+        },
+      ),
     );
   }
 

@@ -35,6 +35,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/field_unit_row.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
 import '../concept_graphic_band.dart';
@@ -462,34 +463,30 @@ class _CableLossScreenState extends State<CableLossScreen> {
     required TextStyle monoStyle,
     required Widget unitSelector,
   }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(
-          child: LabeledField(
-            label: label,
-            hint: '($unitHint)',
-            semanticLabel: '$semanticLabel in $unitHint',
-            field: TextField(
-              controller: controller,
-              focusNode: focusNode,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              inputFormatters: _unsignedDecimal,
-              onChanged: (_) => _recompute(),
-              textInputAction: TextInputAction.done,
-              autocorrect: false,
-              enableSuggestions: false,
-              style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
-              cursorColor: AppColors.primary,
-              decoration: InputDecoration(hintText: hintText),
-            ),
+    // FieldUnitRow reflows the unit selector beneath the field below 440px so
+    // it never clips at phone widths (Vera web-demo gate, 2026-06-02).
+    return FieldUnitRow(
+      field: LabeledField(
+        label: label,
+        hint: '($unitHint)',
+        semanticLabel: '$semanticLabel in $unitHint',
+        field: TextField(
+          controller: controller,
+          focusNode: focusNode,
+          keyboardType: const TextInputType.numberWithOptions(
+            decimal: true,
           ),
+          inputFormatters: _unsignedDecimal,
+          onChanged: (_) => _recompute(),
+          textInputAction: TextInputAction.done,
+          autocorrect: false,
+          enableSuggestions: false,
+          style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
+          cursorColor: AppColors.primary,
+          decoration: InputDecoration(hintText: hintText),
         ),
-        const SizedBox(width: AppSpacing.sm),
-        unitSelector,
-      ],
+      ),
+      unit: unitSelector,
     );
   }
 
