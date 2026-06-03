@@ -370,9 +370,10 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
         children: <Widget>[
           Text(
             'Measures latency, jitter, loss, download, upload, and '
-            'responsiveness over a TCP-connect probe and an HTTPS transfer to '
-            'Cloudflare, then checks reachability to a list of popular sites. '
-            'Each dimension is graded on its own; there is no single score.',
+            'responsiveness over a TCP-connect probe and HTTPS transfers to '
+            'public CDN servers, then checks reachability to a list of popular '
+            'sites. Each dimension is graded on its own; there is no single '
+            'score.',
             style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
           ),
           if (_error != null) ...[

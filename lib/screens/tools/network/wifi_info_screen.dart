@@ -1482,7 +1482,7 @@ class _LiveCharts extends StatelessWidget {
               rxAvail ? _WifiInfoScreenState._formatRate(rx) : null,
           window: series.rxRate,
           unavailableNote: (latest != null && !rxAvail)
-              ? 'Not exposed by iOS'
+              ? 'Not reported in this reading'
               : null,
         ),
       ],
