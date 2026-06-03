@@ -9,6 +9,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/tool_catalog.dart';
+import '../router/app_router.dart';
 import '../theme/app_tokens.dart';
 import '../widgets/centered_content.dart';
 import 'category_screen.dart';
@@ -53,6 +54,15 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('WLAN Pros Toolbox'),
         toolbarHeight: 64,
+        actions: <Widget>[
+          // App-level "About" entry point. Icon-only IconButton inherits the
+          // §8.3 lime focus ring globally from the app's iconButtonTheme.
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            tooltip: 'About',
+            onPressed: () => Navigator.of(context).pushNamed(AppRouter.about),
+          ),
+        ],
       ),
       body: SafeArea(
         top: false,

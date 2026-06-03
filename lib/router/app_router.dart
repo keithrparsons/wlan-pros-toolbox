@@ -8,6 +8,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../screens/about_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/tools/dbm_watt_converter.dart';
 import '../screens/tools/calculators/cable_loss_screen.dart';
@@ -98,6 +99,11 @@ class AppRouter {
       GlobalKey<NavigatorState>();
 
   static const String home = '/';
+
+  /// App-level "About" surface (SOP-020 copy). Not a tool route — reached from
+  /// the HomeScreen AppBar info action, never the tool catalog.
+  static const String about = '/about';
+
   static const String dbmWatt = '/tools/dbm-watt';
 
   // RF Calculators category — pure-math tools (no network, all platforms incl.
@@ -233,6 +239,7 @@ class AppRouter {
   /// directly because each category screen takes a typed `ToolCategory`.
   static final Map<String, WidgetBuilder> routes = <String, WidgetBuilder>{
     home: (_) => const HomeScreen(),
+    about: (_) => const AboutScreen(),
     dbmWatt: (_) => const DbmWattConverterScreen(),
     fspl: (_) => const FsplScreen(),
     eirp: (_) => const EirpScreen(),

@@ -65,6 +65,13 @@ dependencies:
   dart_ping: ^9.0.1
   dart_ping_ios: ^4.0.2
 
+  # url_launcher — opens the external links in the About screen (the WLAN Pros
+  # contact form, wlanpros.com, thewlpc.com). The canonical Flutter-team plugin
+  # for opening URLs; chosen over the iOS-only Shortcuts bridge `openUrl` because
+  # the About screen ships on macOS too (the bridge channel is absent off iOS).
+  # First-party, lightweight, no API key. BSD-3.
+  url_launcher: ^6.3.0
+
   # flutter_svg — renders the per-tool Tier-2 icons (assets/tool-icons/<id>.svg)
   # and the in-tool concept graphics (assets/tool-graphics/<id>.svg) per GL-003
   # §8.6 / §8.6.1 / §8.6.2. Icons are single-color and runtime-tinted via
