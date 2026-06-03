@@ -128,7 +128,7 @@ class SpectrumScreen extends StatefulWidget {
       label: '5 GHz',
       range: '5150 - 5850 MHz (US UNII-1/2A/2C/3)',
       accent: AppColors.statusInfo,
-      total: '700 MHz (US) · up to 580 MHz (EU)',
+      total: '~580 MHz usable (US UNII-1/2A/2C/3)',
       standards: '802.11a / n / ac / ax (Wi-Fi 5 / 6)',
       channels: '25 channels at 20 MHz (US, including DFS)',
       nonOverlap: '25 @ 20 MHz · 12 @ 40 MHz · 6 @ 80 MHz · 2 @ 160 MHz',
@@ -165,7 +165,8 @@ class SpectrumScreen extends StatefulWidget {
       notes:
           'Three power modes in US: Standard Power (up to 36 dBm EIRP, '
           'requires AFC outdoors) · Low Power Indoor / LPI (up to 30 dBm, no '
-          'AFC) · Very Low Power / VLP (up to 21 dBm, no AFC, mobile use). No '
+          'AFC) · Very Low Power / VLP (up to 14 dBm EIRP, no AFC, mobile '
+          'use). No '
           'legacy Wi-Fi 4 or older devices - WPA3 mandatory.',
     ),
   ];

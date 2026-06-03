@@ -56,9 +56,9 @@ void main() {
       expect(f.dist10G, '550 m');
     });
 
-    test('OM5 — wideband multimode, 28,000 MHz·km, Lime Green', () {
+    test('OM5 — wideband multimode, 4,700 MHz·km at 850 nm, Lime Green', () {
       final FiberType f = rowFor('OM5');
-      expect(f.bandwidth, '28,000');
+      expect(f.bandwidth, '4,700');
       expect(f.jacketName, 'Lime Green');
       expect(f.dist40G, '150 m');
     });

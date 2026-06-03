@@ -111,6 +111,56 @@ void main() {
     });
   });
 
+  group('WifiChannelsScreen HaLow (802.11ah) dataset', () {
+    test('US scheme has 26 odd-numbered 1 MHz channels 1..51', () {
+      expect(WifiChannelsScreen.halowUs1Mhz, hasLength(26));
+      expect(
+        WifiChannelsScreen.halowUs1Mhz.map((ChannelHalow c) => c.channel),
+        List<int>.generate(26, (int i) => 2 * i + 1),
+      );
+    });
+
+    test('center frequency follows 902.5 + 0.5 × (ch − 1) MHz', () {
+      for (final ChannelHalow c in WifiChannelsScreen.halowUs1Mhz) {
+        final double expected = 902.5 + 0.5 * (c.channel - 1);
+        expect(c.centerMhz, closeTo(expected, 1e-9),
+            reason: 'ch ${c.channel}');
+      }
+    });
+
+    test('endpoints: ch 1 = 902.5 MHz, ch 51 = 927.5 MHz (not 930.5)', () {
+      expect(WifiChannelsScreen.halowUs1Mhz.first.centerMhz, 902.5);
+      expect(WifiChannelsScreen.halowUs1Mhz.last.centerMhz, 927.5);
+      // The rejected faulty extraction (930.5 MHz) never appears.
+      expect(
+        WifiChannelsScreen.halowUs1Mhz.any((c) => c.centerMhz == 930.5),
+        isFalse,
+      );
+    });
+
+    test('every US channel stays inside the 902-928 MHz band', () {
+      for (final ChannelHalow c in WifiChannelsScreen.halowUs1Mhz) {
+        expect(c.centerMhz, greaterThanOrEqualTo(902.0));
+        expect(c.centerMhz, lessThanOrEqualTo(928.0));
+      }
+    });
+
+    test('US width blocks carry the verified counts 26/13/6/3/1', () {
+      final Map<int, int> byWidth = <int, int>{
+        for (final HalowWidthBlock w in WifiChannelsScreen.halowUsWidths)
+          w.widthMhz: w.count,
+      };
+      expect(byWidth, <int, int>{1: 26, 2: 13, 4: 6, 8: 3, 16: 1});
+    });
+
+    test('China region is flagged uncertain, never a hard channel count', () {
+      final HalowRegion china = WifiChannelsScreen.halowRegions
+          .firstWhere((HalowRegion r) => r.region == 'China');
+      expect(china.note.toLowerCase(), contains('uncertain'));
+      expect(china.note, contains('CMIIT'));
+    });
+  });
+
   group('WifiChannelsScreen widget', () {
     testWidgets('renders title and default 2.4 GHz table in a phone viewport', (
       WidgetTester tester,
@@ -129,9 +179,9 @@ void main() {
         // Default band card + table.
         expect(find.text('2.4 GHz'), findsWidgets);
         expect(find.text('2.437'), findsOneWidget); // ch 6 center
-        // Band toggle exposes all three options.
-        expect(find.text('5 GHz'), findsWidgets);
-        expect(find.text('6 GHz'), findsWidgets);
+        // Band selector (§8.14 AppSelect) shows the default value closed.
+        // The other bands live in the menu, revealed on tap (see the
+        // band-switching tests below).
       });
     });
 
@@ -147,13 +197,39 @@ void main() {
         );
         await tester.pump();
 
-        // Tap the 6 GHz toggle segment.
+        // Open the band AppSelect (§8.14), then pick the 6 GHz menu item.
+        await tester.tap(find.byType(DropdownButton<WifiBand>));
+        await tester.pumpAndSettle();
         await tester.tap(find.text('6 GHz').last);
         await tester.pumpAndSettle();
 
         // PSC ch 5 center frequency renders in the 6 GHz table.
         expect(find.text('5.975'), findsOneWidget);
         expect(find.text('PSC'), findsWidgets);
+      });
+    });
+
+    testWidgets('switching to HaLow reveals the US 1 MHz channel table', (
+      WidgetTester tester,
+    ) async {
+      await _withViewport(tester, const Size(375, 900), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: const WifiChannelsScreen(),
+          ),
+        );
+        await tester.pump();
+
+        // Open the band AppSelect (§8.14), then pick the HaLow menu item.
+        await tester.tap(find.byType(DropdownButton<WifiBand>));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('HaLow').last);
+        await tester.pumpAndSettle();
+
+        // Ch 1 = 902.5 MHz and ch 51 = 927.5 MHz render in the HaLow table.
+        expect(find.text('902.5'), findsOneWidget);
+        expect(find.text('927.5'), findsOneWidget);
       });
     });
   });

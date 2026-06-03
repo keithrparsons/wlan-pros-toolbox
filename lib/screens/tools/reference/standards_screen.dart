@@ -151,7 +151,7 @@ class StandardsScreen extends StatefulWidget {
       year: 2013,
       bands: '5',
       maxRate: '6.9 Gbps',
-      mimo: '8×8 MU-MIMO',
+      mimo: '8×8 (DL MU-MIMO)',
       channelWidth: '20–160',
       modulation: '256-QAM OFDM',
     ),
@@ -180,7 +180,7 @@ class StandardsScreen extends StatefulWidget {
       generation: 'Wi-Fi 7',
       year: 2024,
       bands: '2.4 / 5 / 6',
-      maxRate: '46 Gbps',
+      maxRate: '46 Gbps (MLO)',
       mimo: '8×8 + MLO',
       channelWidth: '20–320',
       modulation: '4K-QAM OFDMA',
@@ -196,6 +196,15 @@ enum _BandFilter { all, band24, band5, band6 }
 
 class _StandardsScreenState extends State<StandardsScreen> {
   _BandFilter _filter = _BandFilter.all;
+
+  /// Footnote — the early generation labels predate official WFA branding.
+  static const String namingFootnote =
+      'Wi-Fi 1/2/3 are informal/retroactive labels; official Wi-Fi Alliance '
+      'naming begins at Wi-Fi 4.';
+
+  /// Footnote — the Wi-Fi 7 cert year and the IEEE publication year differ.
+  static const String wifi7Footnote =
+      'Wi-Fi 7 certification began 2024; IEEE 802.11be was published 2025.';
 
   static const List<AppSelectItem<_BandFilter>> _filterItems =
       <AppSelectItem<_BandFilter>>[
@@ -273,6 +282,10 @@ class _StandardsScreenState extends State<StandardsScreen> {
         ].join(tab),
       );
     }
+    buf
+      ..writeln()
+      ..writeln(namingFootnote)
+      ..writeln(wifi7Footnote);
     return buf.toString().trimRight();
   }
 
@@ -342,11 +355,26 @@ class _StandardsScreenState extends State<StandardsScreen> {
   Widget _introCard(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
     return _Card(
-      child: Text(
-        'PHY-layer comparison of all major 802.11 amendments. Max PHY rate is '
-        'the theoretical aggregate ceiling. Real-world throughput is typically '
-        '50 to 60 percent of the PHY rate.',
-        style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'PHY-layer comparison of all major 802.11 amendments. Max PHY rate '
+            'is the theoretical aggregate ceiling. Real-world throughput is '
+            'typically 50 to 60 percent of the PHY rate.',
+            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            namingFootnote,
+            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            wifi7Footnote,
+            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+          ),
+        ],
       ),
     );
   }

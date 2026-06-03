@@ -534,8 +534,16 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       ToolEntry(
         id: 'wifi-channels',
         title: 'Wi-Fi Channels',
-        description: 'Channels, center frequencies, widths, DFS by band',
+        description:
+            'Channels, center frequencies, widths, DFS by band incl. HaLow',
         routeName: '/tools/wifi-channels',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'non-wifi-channels',
+        title: 'Non-Wi-Fi Wireless Channels',
+        description: 'LoRaWAN, 802.15.4, Bluetooth, BLE, Zigbee channel plans',
+        routeName: '/tools/non-wifi-channels',
         isLive: true,
       ),
       ToolEntry(

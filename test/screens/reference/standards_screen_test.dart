@@ -46,7 +46,7 @@ void main() {
       expect(wifi7.std, '802.11be');
       expect(wifi7.year, 2024);
       expect(wifi7.bands, '2.4 / 5 / 6');
-      expect(wifi7.maxRate, '46 Gbps');
+      expect(wifi7.maxRate, '46 Gbps (MLO)');
       expect(wifi7.mimo, '8×8 + MLO');
       expect(wifi7.channelWidth, '20–320');
       expect(wifi7.modulation, '4K-QAM OFDMA');
@@ -107,7 +107,7 @@ void main() {
         // 802.11ax appears twice (Wi-Fi 6 and Wi-Fi 6E share the std string).
         expect(find.text('802.11ax'), findsNWidgets(2));
         // Spec values render.
-        expect(find.text('46 Gbps'), findsOneWidget);
+        expect(find.text('46 Gbps (MLO)'), findsOneWidget);
       });
     });
   });

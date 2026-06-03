@@ -48,6 +48,7 @@ import '../screens/tools/reference/fiber_optic_screen.dart';
 import '../screens/tools/reference/rf_connectors_screen.dart';
 import '../screens/tools/reference/roaming_screen.dart';
 import '../screens/tools/reference/ap_placement_screen.dart';
+import '../screens/tools/reference/non_wifi_channels_screen.dart';
 import '../screens/tools/reference/poe_reference_screen.dart';
 import '../screens/tools/reference/spectrum_screen.dart';
 import '../screens/tools/network/arp_ndp_screen.dart';
@@ -147,6 +148,7 @@ class AppRouter {
   static const String apPlacement = '/tools/ap-placement';
   static const String poeReference = '/tools/poe-reference';
   static const String spectrum = '/tools/spectrum';
+  static const String nonWifiChannels = '/tools/non-wifi-channels';
 
   // Networking category — active network tools (native-only; web shows the
   // download-the-app fallback inside each screen, so the routes are always
@@ -272,6 +274,7 @@ class AppRouter {
     apPlacement: (_) => const ApPlacementScreen(),
     poeReference: (_) => const PoeReferenceScreen(),
     spectrum: (_) => const SpectrumScreen(),
+    nonWifiChannels: (_) => const NonWifiChannelsScreen(),
     interfaceInfo: (_) => const InterfaceInfoScreen(),
     dnsLookup: (_) => const DnsLookupScreen(),
     portScan: (_) => const PortScanScreen(),

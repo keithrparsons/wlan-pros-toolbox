@@ -511,9 +511,9 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
-            'concurrent = ⌈users · conc% ⌉\n'
+            'concurrent = ⌈users · conc%/100⌉\n'
             'demand = concurrent · per-user (Mbps)\n'
-            'usable/AP = AP max · util%\n'
+            'usable/AP = AP max · util%/100\n'
             'APs = ⌈demand / usable⌉, density = ⌈concurrent / max-clients⌉\n'
             'recommended = max(throughput, density, 1)',
             style: mono.inlineCode.copyWith(color: AppColors.textPrimary),

@@ -43,12 +43,15 @@ void main() {
       expect(e.dist10g, '55m');
     });
 
-    test('Cat8 is 25/40 Gbps, 30m at 10G, 2000 MHz, no 1G distance', () {
+    test('Cat8 is 25/40 Gbps, runs 1G/10G to 100m, 2000 MHz', () {
       final EthCable e = rowFor('Cat8');
       expect(e.maxSpeed, '25/40 Gbps');
       expect(e.maxMhz, 2000);
-      expect(e.dist10g, '30m');
-      expect(e.dist1g, 'N/A');
+      // Cat8 carries the lower rates the full 100 m channel; the 25/40G design
+      // rate (limited to ~30 m) is captured in the use note + footnote.
+      expect(e.dist1g, '100m');
+      expect(e.dist10g, '100m');
+      expect(e.use, contains('30 m'));
     });
 
     test('Cat7A is 40 Gbps at 1000 MHz', () {

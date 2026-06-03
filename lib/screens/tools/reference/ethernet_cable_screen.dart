@@ -128,11 +128,11 @@ class EthernetCableScreen extends StatelessWidget {
       category: 'Cat8',
       maxMhz: 2000,
       maxSpeed: '25/40 Gbps',
-      dist1g: 'N/A',
-      dist10g: '30m',
+      dist1g: '100m',
+      dist10g: '100m',
       poe: 'Limited',
       shielding: 'S/FTP',
-      use: 'Data center short runs',
+      use: 'Data center short runs; 25/40G design rate to 30 m',
     ),
   ];
 
@@ -141,7 +141,8 @@ class EthernetCableScreen extends StatelessWidget {
       'PoE++ tip: Use Cat6A for 802.3bt deployments. Bundled Cat6 cables '
       'running PoE++ generate significant heat. Cat6A\'s larger conductor and '
       'diameter dissipate heat better. TIA-568 recommends Cat6A for PoE++ in '
-      'cable bundles.';
+      'cable bundles. Cat8 carries 1G/10G to the full 100 m channel; its '
+      '25G/40G design rate is limited to ~30 m (data-center top-of-rack).';
 
   @override
   Widget build(BuildContext context) {

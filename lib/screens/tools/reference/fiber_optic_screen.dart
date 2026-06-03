@@ -145,14 +145,17 @@ class FiberOpticScreen extends StatelessWidget {
     FiberType(
       type: 'OM5',
       core: '50/125 µm',
-      bandwidth: '28,000',
+      bandwidth: '4,700',
       jacketHex: 0xFF7CB342,
       jacketName: 'Lime Green',
       dist1G: '1 km',
       dist10G: '550 m',
       dist40G: '150 m',
       dist100G: '150 m',
-      notes: 'Wideband multimode — SWDM, 400G over 2 fibers. Emerging.',
+      notes:
+          'Wideband multimode (SWDM), 400G over 2 fibers. EMB 4,700 MHz·km '
+          'at 850 nm (same as OM4); wideband window adds ~1,850-2,470 MHz·km '
+          'near 953 nm. Emerging.',
       legacy: false,
     ),
     FiberType(

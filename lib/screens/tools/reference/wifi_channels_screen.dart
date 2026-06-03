@@ -24,12 +24,15 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/app_select.dart';
 import '../concept_graphic_band.dart';
+import '../labeled_field.dart';
 import 'reference_row_semantics.dart';
 
-/// Which band's table is shown. 2.4 / 5 / 6 GHz — three short options, so a
-/// segmented toggle, not an AppSelect (GL-003 §8.14).
-enum WifiBand { ghz24, ghz5, ghz6 }
+/// Which band's table is shown. 2.4 / 5 / 6 GHz + sub-1 GHz HaLow — FOUR
+/// options, so an `AppSelect`, not a segmented toggle (GL-003 §8.14: a Toggle
+/// is for 2–3 short options; 4+ uses the Select).
+enum WifiBand { ghz24, ghz5, ghz6, halow }
 
 /// One 2.4 GHz channel row. US table is ch 1–11; 12–14 carry their regulatory
 /// domain (EU adds 12–13, JP adds 14) per the PWA's own band footnote.
@@ -88,6 +91,60 @@ class Channel6 {
 
   /// Preferred Scanning Channel — clients scan these first.
   final bool psc;
+}
+
+/// One US (902-928 MHz) Wi-Fi HaLow 1 MHz channel row. Center frequency is
+/// derived from the IEEE 802.11ah / List-of-WLAN-channels formula
+/// center (MHz) = 902.5 + 0.5 x (channel - 1); the 1 MHz channels are the odd
+/// numbers 1..51. HaLow has NO global numbering — this is the US reference
+/// scheme (the only one verified at the per-channel level; other regions show
+/// ranges only).
+class ChannelHalow {
+  const ChannelHalow({required this.channel, required this.centerMhz});
+
+  final int channel;
+
+  /// Center frequency in MHz (not GHz — sub-1 GHz reads more naturally in MHz).
+  final double centerMhz;
+}
+
+/// One Wi-Fi HaLow channel-width block in the US scheme: how many channels of a
+/// given width exist and how they are numbered.
+class HalowWidthBlock {
+  const HalowWidthBlock({
+    required this.widthMhz,
+    required this.count,
+    required this.numbering,
+  });
+
+  /// Channel width in MHz (1 / 2 / 4 / 8 / 16).
+  final int widthMhz;
+
+  /// Number of channels of this width in the US 902-928 MHz band.
+  final int count;
+
+  /// How the channels of this width are numbered, e.g. "1, 3, 5 ... 51".
+  final String numbering;
+}
+
+/// One Wi-Fi HaLow regional operating range. HaLow's legal band, channel
+/// numbering, and channel count are all region-dependent; only the operating
+/// range is shown as the headline fact (counts are MEDIUM/LOW confidence per
+/// the research brief and are labelled region-dependent).
+class HalowRegion {
+  const HalowRegion({
+    required this.region,
+    required this.rangeMhz,
+    required this.note,
+  });
+
+  final String region;
+
+  /// Operating range in MHz, e.g. "902-928".
+  final String rangeMhz;
+
+  /// Short region-dependent caveat for the count.
+  final String note;
 }
 
 class WifiChannelsScreen extends StatefulWidget {
@@ -265,6 +322,121 @@ class WifiChannelsScreen extends StatefulWidget {
     Channel6(channel: 229, centerGhz: 7.095, psc: true),
   ];
 
+  /// Wi-Fi HaLow (802.11ah) — US 902-928 MHz 1 MHz channels. Odd channel
+  /// numbers 1..51; center = 902.5 + 0.5 x (channel - 1) MHz (each successive
+  /// odd channel is +1.0 MHz). Verified against IEEE 802.11ah and the Wikipedia
+  /// List-of-WLAN-channels 802.11ah table; ch 51 = 927.5 MHz (a faulty
+  /// 930.5 MHz source extraction was rejected by the band-edge check — see the
+  /// research brief).
+  static const List<ChannelHalow> halowUs1Mhz = [
+    ChannelHalow(channel: 1, centerMhz: 902.5),
+    ChannelHalow(channel: 3, centerMhz: 903.5),
+    ChannelHalow(channel: 5, centerMhz: 904.5),
+    ChannelHalow(channel: 7, centerMhz: 905.5),
+    ChannelHalow(channel: 9, centerMhz: 906.5),
+    ChannelHalow(channel: 11, centerMhz: 907.5),
+    ChannelHalow(channel: 13, centerMhz: 908.5),
+    ChannelHalow(channel: 15, centerMhz: 909.5),
+    ChannelHalow(channel: 17, centerMhz: 910.5),
+    ChannelHalow(channel: 19, centerMhz: 911.5),
+    ChannelHalow(channel: 21, centerMhz: 912.5),
+    ChannelHalow(channel: 23, centerMhz: 913.5),
+    ChannelHalow(channel: 25, centerMhz: 914.5),
+    ChannelHalow(channel: 27, centerMhz: 915.5),
+    ChannelHalow(channel: 29, centerMhz: 916.5),
+    ChannelHalow(channel: 31, centerMhz: 917.5),
+    ChannelHalow(channel: 33, centerMhz: 918.5),
+    ChannelHalow(channel: 35, centerMhz: 919.5),
+    ChannelHalow(channel: 37, centerMhz: 920.5),
+    ChannelHalow(channel: 39, centerMhz: 921.5),
+    ChannelHalow(channel: 41, centerMhz: 922.5),
+    ChannelHalow(channel: 43, centerMhz: 923.5),
+    ChannelHalow(channel: 45, centerMhz: 924.5),
+    ChannelHalow(channel: 47, centerMhz: 925.5),
+    ChannelHalow(channel: 49, centerMhz: 926.5),
+    ChannelHalow(channel: 51, centerMhz: 927.5),
+  ];
+
+  /// Wi-Fi HaLow US channel-width blocks (902-928 MHz). 1 and 2 MHz are
+  /// mandatory; 1 MHz is the base unit, wider channels bond and take the centre
+  /// number of their block. Verified against the brief (Wikipedia 802.11ah +
+  /// everythingRF).
+  static const List<HalowWidthBlock> halowUsWidths = [
+    HalowWidthBlock(
+      widthMhz: 1,
+      count: 26,
+      numbering: '1, 3, 5 ... 51 (odd)',
+    ),
+    HalowWidthBlock(
+      widthMhz: 2,
+      count: 13,
+      numbering: '2, 6, 10 ... 50',
+    ),
+    HalowWidthBlock(
+      widthMhz: 4,
+      count: 6,
+      numbering: '4, 12, 20, 28, 36, 44',
+    ),
+    HalowWidthBlock(
+      widthMhz: 8,
+      count: 3,
+      numbering: '8, 24, 40',
+    ),
+    HalowWidthBlock(
+      widthMhz: 16,
+      count: 1,
+      numbering: '16',
+    ),
+  ];
+
+  /// Wi-Fi HaLow operating ranges by region. Range is the headline fact; the
+  /// channel count and numbering are region-dependent and (outside the US)
+  /// MEDIUM/LOW confidence, so they are NOT presented as hard numbers. China is
+  /// UNCERTAIN (conflicting band reports) — confirm with CMIIT. US is the only
+  /// fully verified scheme (shown in full in the tables above).
+  static const List<HalowRegion> halowRegions = [
+    HalowRegion(
+      region: 'United States',
+      rangeMhz: '902-928',
+      note: '26 x 1 MHz channels (full scheme above)',
+    ),
+    HalowRegion(
+      region: 'Europe (EU)',
+      rangeMhz: '863-868.6',
+      note: 'Region-dependent; duty-cycle limited',
+    ),
+    HalowRegion(
+      region: 'Japan',
+      rangeMhz: '916.5-927.5',
+      note: 'Region-dependent; grid shifted 0.5 MHz',
+    ),
+    HalowRegion(
+      region: 'South Korea',
+      rangeMhz: '917.5-923.5',
+      note: 'Region-dependent',
+    ),
+    HalowRegion(
+      region: 'Australia / NZ',
+      rangeMhz: '915-928',
+      note: 'Region-dependent',
+    ),
+    HalowRegion(
+      region: 'Singapore',
+      rangeMhz: '866-869 and 920-925',
+      note: 'Two sub-bands; region-dependent',
+    ),
+    HalowRegion(
+      region: 'India',
+      rangeMhz: '865-867',
+      note: 'Region-dependent; narrow allocation',
+    ),
+    HalowRegion(
+      region: 'China',
+      rangeMhz: 'varies (reported 755-787)',
+      note: 'UNCERTAIN — confirm with CMIIT',
+    ),
+  ];
+
   @override
   State<WifiChannelsScreen> createState() => _WifiChannelsScreenState();
 }
@@ -291,6 +463,8 @@ class _WifiChannelsScreenState extends State<WifiChannelsScreen> {
         return '5 GHz';
       case WifiBand.ghz6:
         return '6 GHz';
+      case WifiBand.halow:
+        return 'HaLow';
     }
   }
 
@@ -352,6 +526,40 @@ class _WifiChannelsScreenState extends State<WifiChannelsScreen> {
       );
     }
 
+    // Wi-Fi HaLow (802.11ah, sub-1 GHz) — three sections: US 1 MHz channels,
+    // US width blocks, and per-region operating ranges. No global numbering, so
+    // the copy carries the same region-dependent framing the screen shows.
+    buf
+      ..writeln()
+      ..writeln('Wi-Fi HaLow / 802.11ah (sub-1 GHz, US 902-928 MHz)')
+      ..writeln(
+        <String>[
+          'Ch (1 MHz)',
+          'Center MHz',
+        ].join(tab),
+      );
+    for (final ChannelHalow c in WifiChannelsScreen.halowUs1Mhz) {
+      buf.writeln(
+        <String>['${c.channel}', c.centerMhz.toStringAsFixed(1)].join(tab),
+      );
+    }
+    buf
+      ..writeln()
+      ..writeln('HaLow US channel widths')
+      ..writeln(<String>['Width MHz', 'Count', 'Numbering'].join(tab));
+    for (final HalowWidthBlock w in WifiChannelsScreen.halowUsWidths) {
+      buf.writeln(
+        <String>['${w.widthMhz}', '${w.count}', w.numbering].join(tab),
+      );
+    }
+    buf
+      ..writeln()
+      ..writeln('HaLow operating ranges by region (counts region-dependent)')
+      ..writeln(<String>['Region', 'Range MHz', 'Note'].join(tab));
+    for (final HalowRegion r in WifiChannelsScreen.halowRegions) {
+      buf.writeln(<String>[r.region, r.rangeMhz, r.note].join(tab));
+    }
+
     return buf.toString().trimRight();
   }
 
@@ -410,7 +618,6 @@ class _WifiChannelsScreenState extends State<WifiChannelsScreen> {
   }
 
   Widget _bandCard(BuildContext context) {
-    final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface1,
@@ -418,20 +625,20 @@ class _WifiChannelsScreenState extends State<WifiChannelsScreen> {
         border: Border.all(color: AppColors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Band',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
-              letterSpacing: 0.4,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          // 2.4 / 5 / 6 GHz — three short options, segmented toggle (§8.14).
-          _BandToggle(value: _band, onChanged: _onBandChanged),
-        ],
+      // 2.4 / 5 / 6 GHz + HaLow — FOUR options, so an AppSelect, not a
+      // segmented toggle (§8.14: Toggle is 2–3 short options only; 4+ → Select).
+      // The HaLow addition pushed this past the 3-option Toggle ceiling, where
+      // the fourth segment wrapped and "HaLow" broke mid-word at 320px.
+      child: LabeledField(
+        label: 'Band',
+        field: AppSelect<WifiBand>(
+          value: _band,
+          semanticLabel: 'Band',
+          items: WifiBand.values
+              .map((WifiBand b) => (b, _bandLabel(b)))
+              .toList(),
+          onChanged: _onBandChanged,
+        ),
       ),
     );
   }
@@ -444,6 +651,8 @@ class _WifiChannelsScreenState extends State<WifiChannelsScreen> {
         return _Table5(mono: mono);
       case WifiBand.ghz6:
         return _Table6(mono: mono);
+      case WifiBand.halow:
+        return _TableHalow(mono: mono);
     }
   }
 }
@@ -819,69 +1028,205 @@ class _Table6 extends StatelessWidget {
   }
 }
 
-/// Segmented band toggle (2.4 / 5 / 6 GHz). Mirrors the calculators' private
-/// `_UnitToggle` idiom (§8.14: a Toggle is correct for 2–3 short options) so
-/// this reference screen stays consistent with the rest of the app.
-class _BandToggle extends StatelessWidget {
-  const _BandToggle({required this.value, required this.onChanged});
+/// Wi-Fi HaLow (802.11ah, sub-1 GHz) tables. Three stacked cards: the US 1 MHz
+/// channel→frequency list (the only per-channel-verified scheme), the US
+/// channel-width blocks (1/2/4/8/16 MHz numbering), and the per-region operating
+/// ranges with region-dependent counts. HaLow has no global numbering, so the
+/// US scheme is the reference and other regions show ranges only.
+class _TableHalow extends StatelessWidget {
+  const _TableHalow({required this.mono});
 
-  final WifiBand value;
-  final ValueChanged<WifiBand> onChanged;
-
-  static const List<(WifiBand, String)> _options = [
-    (WifiBand.ghz24, '2.4 GHz'),
-    (WifiBand.ghz5, '5 GHz'),
-    (WifiBand.ghz6, '6 GHz'),
-  ];
+  final AppMonoText mono;
 
   @override
   Widget build(BuildContext context) {
-    final TextTheme text = Theme.of(context).textTheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.inputFill,
-        borderRadius: BorderRadius.circular(AppRadius.control),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _usChannelsCard(context),
+        const SizedBox(height: AppSpacing.sm),
+        _widthsCard(context),
+        const SizedBox(height: AppSpacing.sm),
+        _regionsCard(context),
+      ],
+    );
+  }
+
+  Widget _usChannelsCard(BuildContext context) {
+    return _TableCard(
+      title: 'HaLow — US 902-928 MHz, 26 × 1 MHz channels',
+      header: const Row(
+        children: [
+          _HeaderCell('Ch', width: 56),
+          _HeaderCell('Center MHz', width: 96),
+        ],
       ),
-      child: Row(
-        children: _options.map((opt) {
-          final bool selected = opt.$1 == value;
-          // Each segment flexes to share the row width so the three band
-          // chips never overflow a narrow phone surface (the toggle is
-          // stretched full-width by the parent Column).
-          return Expanded(
-            child: Semantics(
-              button: true,
-              selected: selected,
-              label: opt.$2,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(AppRadius.control),
-                onTap: () => onChanged(opt.$1),
-                child: Container(
-                  constraints: const BoxConstraints(
-                    minHeight: AppSpacing.minTouchTarget,
-                  ),
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: selected ? AppColors.primary : Colors.transparent,
-                    borderRadius: BorderRadius.circular(AppRadius.control),
-                  ),
+      footnote:
+          'Wi-Fi HaLow (802.11ah), sub-1 GHz IoT. Center = 902.5 + 0.5 × '
+          '(ch − 1) MHz. 1 MHz channels are odd-numbered 1–51; 1 and 2 MHz '
+          'widths are mandatory. US numbering shown — HaLow has no global '
+          'channel scheme.',
+      rows: WifiChannelsScreen.halowUs1Mhz.map((ChannelHalow c) {
+        return ReferenceRowSemantics(
+          label: rowLabel('Channel ${c.channel}', <String?>[
+            'center ${c.centerMhz.toStringAsFixed(1)} megahertz',
+            '1 megahertz width',
+          ]),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 56,
                   child: Text(
-                    opt.$2,
-                    style: text.labelLarge?.copyWith(
-                      color: selected
-                          ? AppColors.secondary
-                          : AppColors.textSecondary,
+                    '${c.channel}',
+                    style: mono.inlineCode.copyWith(
+                      color: AppColors.textPrimary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
-              ),
+                SizedBox(
+                  width: 96,
+                  child: Text(
+                    c.centerMhz.toStringAsFixed(1),
+                    style: mono.inlineCode.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          );
-        }).toList(),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _widthsCard(BuildContext context) {
+    return _TableCard(
+      title: 'HaLow — US channel widths',
+      header: const Row(
+        children: [
+          _HeaderCell('Width', width: 64),
+          _HeaderCell('Count', width: 56),
+          _HeaderCell('Numbering', width: 168),
+        ],
       ),
+      footnote:
+          'Wider channels bond 1 MHz units and take the center number of the '
+          'block. Counts are the US 902-928 MHz scheme.',
+      rows: WifiChannelsScreen.halowUsWidths.map((HalowWidthBlock w) {
+        return ReferenceRowSemantics(
+          label: rowLabel('${w.widthMhz} megahertz width', <String?>[
+            '${w.count} channels',
+            'numbered ${w.numbering}',
+          ]),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 64,
+                  child: Text(
+                    '${w.widthMhz} MHz',
+                    style: mono.inlineCode.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 56,
+                  child: Text(
+                    '${w.count}',
+                    style: mono.inlineCode.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 168,
+                  child: Text(
+                    w.numbering,
+                    style: mono.inlineCode.copyWith(
+                      color: AppColors.textTertiary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _regionsCard(BuildContext context) {
+    return _TableCard(
+      title: 'HaLow — operating ranges by region',
+      header: const Row(
+        children: [
+          _HeaderCell('Region', width: 128),
+          _HeaderCell('Range MHz', width: 144),
+          _HeaderCell('Note', width: 220),
+        ],
+      ),
+      footnote:
+          'Channel numbering and count are region-dependent and subject to the '
+          'local regulator; only the US scheme is verified per-channel. China '
+          'is uncertain — confirm with CMIIT.',
+      rows: WifiChannelsScreen.halowRegions.map((HalowRegion r) {
+        return ReferenceRowSemantics(
+          label: rowLabel(r.region, <String?>[
+            'range ${r.rangeMhz} megahertz',
+            r.note,
+          ]),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 128,
+                  child: Builder(
+                    builder: (context) => Text(
+                      r.region,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 144,
+                  child: Text(
+                    r.rangeMhz,
+                    style: mono.inlineCode.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 220,
+                  child: Builder(
+                    builder: (context) => Text(
+                      r.note,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: AppColors.textTertiary,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }
+

@@ -42,7 +42,7 @@ void main() {
     test('5 GHz UNII-1 begins at 5150 MHz and band spans to 5850 MHz', () {
       final SpectrumBandInfo b = bandOf(SpectrumBand.ghz5);
       expect(b.range, '5150 - 5850 MHz (US UNII-1/2A/2C/3)');
-      expect(b.total, '700 MHz (US) · up to 580 MHz (EU)');
+      expect(b.total, '~580 MHz usable (US UNII-1/2A/2C/3)');
     });
 
     test('5 GHz DFS row names the UNII-2A 5250-5350 and 2C 5470-5725 ranges',
