@@ -28,6 +28,8 @@
 // Pure-Dart, no I/O, no platform APIs. All math is static on the public widget
 // class so it is unit-testable against the PWA values.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -307,6 +309,21 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
 
   Ipv6Result? _result;
 
+  // Screen-reader announcement gating (Vera calculator-gate finding #8 — IPv6
+  // live-region verbosity). The result subtree recomputes and repaints on every
+  // keystroke so a sighted user sees the breakdown update live, but a
+  // liveRegion that re-announces the full 8-line breakdown on every character
+  // floods VoiceOver / TalkBack. So the visual recompute stays synchronous while
+  // the liveRegion flag is held false during active typing and flipped true
+  // only after a short pause, so the screen reader announces the settled result
+  // once instead of per-keystroke. The flag also gates on a settled value so the
+  // very first paint (the seeded example) does not announce on screen entry.
+  bool _announce = false;
+  Timer? _announceTimer;
+
+  // Pause after the last keystroke before the result is allowed to announce.
+  static const Duration _announceDebounce = Duration(milliseconds: 600);
+
   // Address: hex digits, colon, and the optional IPv4-tail dot. Prefix:
   // digits and a leading slash. No spaces — these are typed literals.
   static final List<TextInputFormatter> _addrFormatters = <TextInputFormatter>[
@@ -328,14 +345,30 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
 
   @override
   void dispose() {
+    _announceTimer?.cancel();
     _addrCtrl.dispose();
     _prefixCtrl.dispose();
     super.dispose();
   }
 
+  /// Restart the announce-debounce on every recompute: hold the liveRegion
+  /// silent while the user is actively typing, then flip it true once typing
+  /// settles so the screen reader announces the final result a single time.
+  void _scheduleAnnounce() {
+    if (_announce) setState(() => _announce = false);
+    _announceTimer?.cancel();
+    _announceTimer = Timer(_announceDebounce, () {
+      if (mounted) setState(() => _announce = true);
+    });
+  }
+
   void _recompute() {
     final String addr = _addrCtrl.text.trim();
     final String rawPrefix = _prefixCtrl.text.replaceFirst('/', '').trim();
+
+    // Every keystroke restarts the announce debounce so the liveRegion only
+    // speaks the settled result, never the per-character intermediate states.
+    _scheduleAnnounce();
 
     // Empty address → blank the panel, no error (idle state).
     if (addr.isEmpty) {
@@ -440,7 +473,11 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
                   if (_result != null) ...[
                     const SizedBox(height: AppSpacing.sm),
                     Semantics(
-                      liveRegion: true,
+                      // liveRegion only after typing settles (finding #8): the
+                      // breakdown still repaints live for sighted users, but the
+                      // screen reader announces the settled result once instead
+                      // of re-reading all eight lines on every keystroke.
+                      liveRegion: _announce,
                       child: _result!.isValid
                           ? _resultsCard(context, _result!)
                           : _errorCard(context, _result!.error!),
