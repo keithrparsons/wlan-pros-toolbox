@@ -35,6 +35,7 @@ class WifiInfo {
     required this.band,
     required this.countryCode,
     required this.hardwareAddress,
+    this.securityToken,
     required this.poweredOn,
     required this.locationAuthorized,
   });
@@ -83,6 +84,11 @@ class WifiInfo {
   /// The interface hardware (MAC) address, or null if unavailable.
   final String? hardwareAddress;
 
+  /// The CoreWLAN security token (e.g. "wpa2Personal", "wpa3Transition",
+  /// "open"), or null when unavailable. The native channel maps `CWSecurity` to
+  /// this string; Dart classifies it via [WifiSecurityClassifier].
+  final String? securityToken;
+
   /// Whether the Wi-Fi interface is powered on.
   final bool poweredOn;
 
@@ -107,6 +113,7 @@ class WifiInfo {
       band: map['band'] as String?,
       countryCode: map['countryCode'] as String?,
       hardwareAddress: map['hardwareAddress'] as String?,
+      securityToken: map['securityToken'] as String?,
       poweredOn: (map['poweredOn'] as bool?) ?? false,
       locationAuthorized: (map['locationAuthorized'] as bool?) ?? false,
     );
@@ -119,6 +126,7 @@ class WifiInfo {
       'txRateMbps: $txRateMbps, phyMode: $phyMode, channel: $channel, '
       'channelWidthMhz: $channelWidthMhz, band: $band, '
       'countryCode: $countryCode, hardwareAddress: $hardwareAddress, '
+      'securityToken: $securityToken, '
       'poweredOn: $poweredOn, locationAuthorized: $locationAuthorized)';
 }
 

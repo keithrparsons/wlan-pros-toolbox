@@ -20,6 +20,10 @@ import UIKit
   // live for the engine lifetime.
   private var systemInfoChannel: SystemInfoChannel?
 
+  // TICKET-BATCH7: retained so the NEHotspotNetwork security + BSSID method
+  // channel handler stays live for the engine's lifetime.
+  private var wifiSecurityChannel: WifiSecurityChannel?
+
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
@@ -39,6 +43,10 @@ import UIKit
     // Batch 6 — register the Device/System info channel (uptime via
     // ProcessInfo.systemUptime). App-owned MethodChannel, no entitlement.
     systemInfoChannel = SystemInfoChannel(messenger: messenger)
+    // TICKET-BATCH7 — register the NEHotspotNetwork security + BSSID channel.
+    // Reads the connected network's (coarse) security type and BSSID directly,
+    // gated by the Access Wi-Fi Information entitlement + Location permission.
+    wifiSecurityChannel = WifiSecurityChannel(messenger: messenger)
   }
 
   // MARK: - Shortcuts bridge (TICKET-01 spike)
