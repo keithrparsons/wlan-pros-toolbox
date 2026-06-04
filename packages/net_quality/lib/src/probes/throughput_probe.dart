@@ -372,14 +372,44 @@ class ThroughputProbe {
     return sw.elapsed;
   }
 
+  /// Hard ceiling added to [maxDuration] to bound the connect + response-header
+  /// phase. [maxDuration] only bounds the byte-streaming window; an endpoint
+  /// that completes the TCP handshake (so [HttpClient.connectionTimeout] is
+  /// satisfied) but never sends response headers, or stalls mid-body, would
+  /// otherwise hang forever and freeze the whole stage. The wall-clock
+  /// `.timeout()` below guarantees every transfer either completes or aborts
+  /// within `maxDuration + _transferDeadlineSlack`, so the download stage can
+  /// never freeze. See the 40%-freeze regression.
+  static const Duration _transferDeadlineSlack = Duration(seconds: 5);
+
   /// Default download: streams the response, counting bytes, stopping at
   /// [maxDuration].
   ///
   /// Throws [ThroughputUnmeasurable] when the endpoint returns a non-2xx
-  /// status (e.g. Cloudflare rate-limiting) or an empty body, so a hiccuped
-  /// request becomes an honest failure instead of a fake 0 Mbps. Accepts both
-  /// 200 and 206 (range/partial) since some CDN files are served via ranges.
+  /// status (e.g. Cloudflare rate-limiting), an empty body, OR when the whole
+  /// transfer (connect + headers + body) exceeds the hard wall-clock deadline,
+  /// so a hung/stalled endpoint becomes an honest, recoverable failure (the
+  /// caller falls back to the next endpoint) instead of freezing the stage.
+  /// Accepts both 200 and 206 (range/partial) since some CDN files are served
+  /// via ranges.
   static Future<int> _defaultDownloader(Uri uri, Duration maxDuration) async {
+    final hardDeadline = maxDuration + _transferDeadlineSlack;
+    try {
+      return await _downloadOnce(uri, maxDuration).timeout(
+        hardDeadline,
+        onTimeout: () => throw ThroughputUnmeasurable(
+          'download exceeded hard deadline '
+          '(${hardDeadline.inSeconds}s) from $uri',
+        ),
+      );
+    } on TimeoutException {
+      // Defensive: any TimeoutException surfacing from a lower layer is still a
+      // recoverable "couldn't measure", never a fake 0 Mbps or a hang.
+      throw ThroughputUnmeasurable('download timed out from $uri');
+    }
+  }
+
+  static Future<int> _downloadOnce(Uri uri, Duration maxDuration) async {
     final client = HttpClient()
       ..connectionTimeout = const Duration(seconds: 5);
     try {
@@ -411,9 +441,31 @@ class ThroughputProbe {
   /// at [maxDuration].
   ///
   /// Throws [ThroughputUnmeasurable] when the endpoint returns a non-2xx
-  /// status or no bytes were sent, so a rejected upload becomes an honest
-  /// failure instead of a fake 0 Mbps.
+  /// status, no bytes were sent, OR when the whole transfer exceeds the hard
+  /// wall-clock deadline (a sink that accepts the connection but never ACKs the
+  /// POST or never returns a response would otherwise hang the stage). A
+  /// timed-out upload becomes an honest, recoverable failure, never a fake
+  /// 0 Mbps.
   static Future<int> _defaultUploader(
+    Uri uri,
+    int bytes,
+    Duration maxDuration,
+  ) async {
+    final hardDeadline = maxDuration + _transferDeadlineSlack;
+    try {
+      return await _uploadOnce(uri, bytes, maxDuration).timeout(
+        hardDeadline,
+        onTimeout: () => throw ThroughputUnmeasurable(
+          'upload exceeded hard deadline '
+          '(${hardDeadline.inSeconds}s) to $uri',
+        ),
+      );
+    } on TimeoutException {
+      throw ThroughputUnmeasurable('upload timed out to $uri');
+    }
+  }
+
+  static Future<int> _uploadOnce(
     Uri uri,
     int bytes,
     Duration maxDuration,

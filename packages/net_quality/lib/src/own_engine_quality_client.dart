@@ -29,6 +29,16 @@ class OwnEngineQualityClient implements QualityClient {
   /// Clock seam; defaults to [DateTime.now].
   final DateTime Function() clock;
 
+  /// Stage-level wall-clock backstop for the whole throughput measurement
+  /// (parallel download window + single upload window, each already hard-capped
+  /// inside the probe). Defense-in-depth against the 40%-freeze class of bug:
+  /// even a regressed/unbounded probe path cannot hang the tool past this. Set
+  /// generously to never pre-empt a healthy real measurement — it is a safety
+  /// net, not a tuning knob. Derived from the probe's per-transfer cap so it
+  /// scales when the probe is reconfigured.
+  Duration get _throughputStageBudget =>
+      throughputProbe.maxDuration * 2 + const Duration(seconds: 20);
+
   QualityResult? _lastResult;
 
   /// Creates a client from explicit probes.
@@ -152,7 +162,12 @@ class OwnEngineQualityClient implements QualityClient {
     // --- Throughput ---
     yield const QualityProgress(QualityPhase.download, 0.4);
     try {
-      final t = await throughputProbe.measure();
+      // Stage-level wall-clock backstop. The probe's per-transfer deadlines are
+      // the primary guard; this is defense-in-depth so a future seam regression
+      // can never freeze the whole tool at the download stage (the 40%-freeze
+      // class of bug). Budget covers a parallel download window + an upload
+      // window, each already hard-capped inside the probe, plus slack.
+      final t = await throughputProbe.measure().timeout(_throughputStageBudget);
       yield const QualityProgress(QualityPhase.upload, 0.7);
       metrics
         ..add(QualityMetric(

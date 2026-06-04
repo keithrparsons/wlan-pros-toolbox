@@ -1,7 +1,11 @@
+import 'dart:io';
+
 import 'package:net_quality/net_quality.dart';
 import 'package:test/test.dart';
 
 void main() {
+  _registerRealTransportRegressionTests();
+
   group('ThroughputProbe.mbpsFor', () {
     test('25 MB over 2.0s is 100.0 Mbps', () {
       final mbps = ThroughputProbe.mbpsFor(
@@ -354,4 +358,131 @@ ElapsedTimer _passthroughTimer(Duration d) {
     await body();
     return d;
   };
+}
+
+/// Regression guard for the shipped 40%-freeze: the REAL default downloader /
+/// uploader (not an injected seam) must never hang on a stalled endpoint. These
+/// run against loopback servers that complete the TCP handshake (so
+/// HttpClient.connectionTimeout is satisfied) but then never send response
+/// headers, or stall mid-body — the exact conditions that froze the download
+/// stage at 40% on macOS + iOS. The transfer must ABORT within the hard
+/// deadline, never block forever.
+void _registerRealTransportRegressionTests() {
+  group('ThroughputProbe — real transport hard-deadline (40%-freeze guard)', () {
+    // Short maxDuration so the test's bound (maxDuration + 5s slack) stays well
+    // under the default test timeout, while still proving the deadline fires.
+    const maxDuration = Duration(seconds: 2);
+    // The probe aborts at maxDuration + _transferDeadlineSlack (5s) = 7s.
+    // Allow headroom but assert it is bounded, not hung.
+    const upperBound = Duration(seconds: 12);
+
+    late ServerSocket noHeaderServer; // accepts, never responds
+    late ServerSocket stallServer; // sends headers + 1 chunk, then stalls
+
+    setUp(() async {
+      noHeaderServer = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+      noHeaderServer.listen((socket) {
+        // Hold the socket open; deliberately send nothing.
+      });
+
+      stallServer = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+      stallServer.listen((socket) {
+        socket.listen((_) {}, onError: (_) {}, cancelOnError: false);
+        socket.write('HTTP/1.1 200 OK\r\n'
+            'Content-Type: application/octet-stream\r\n'
+            'Content-Length: 1000000\r\n'
+            'Connection: keep-alive\r\n\r\n');
+        socket.add(List<int>.filled(1024, 0)); // one chunk, then silence
+        // Never close: the response stream stalls awaiting the rest.
+      });
+    });
+
+    tearDown(() async {
+      await noHeaderServer.close();
+      await stallServer.close();
+    });
+
+    test('download aborts (does not hang) when headers never arrive', () async {
+      final probe = ThroughputProbe(
+        downloadStreamCount: 1,
+        maxRetries: 0,
+        maxDuration: maxDuration,
+        downloadEndpoints: <Uri>[
+          Uri.parse('http://127.0.0.1:${noHeaderServer.port}/down'),
+        ],
+      );
+      final sw = Stopwatch()..start();
+      await expectLater(
+        probe.measure(),
+        throwsA(isA<ThroughputUnmeasurable>()),
+      );
+      sw.stop();
+      expect(sw.elapsed, lessThan(upperBound),
+          reason: 'must abort within the hard deadline, not hang');
+    });
+
+    test('download aborts (does not hang) when the body stalls mid-stream',
+        () async {
+      final probe = ThroughputProbe(
+        downloadStreamCount: 1,
+        maxRetries: 0,
+        maxDuration: maxDuration,
+        downloadEndpoints: <Uri>[
+          Uri.parse('http://127.0.0.1:${stallServer.port}/down'),
+        ],
+      );
+      final sw = Stopwatch()..start();
+      await expectLater(
+        probe.measure(),
+        throwsA(isA<ThroughputUnmeasurable>()),
+      );
+      sw.stop();
+      expect(sw.elapsed, lessThan(upperBound),
+          reason: 'must abort within the hard deadline, not hang');
+    });
+
+    test(
+        'a stalled endpoint falls back to a healthy one within the bound '
+        '(stage completes, never freezes)', () async {
+      // Stream starts on the hung server, then falls back to a seam-injected
+      // healthy endpoint. The whole measure() must complete bounded.
+      final probe = ThroughputProbe(
+        downloadStreamCount: 1,
+        maxRetries: 1,
+        maxDuration: maxDuration,
+        downloadEndpoints: <Uri>[
+          Uri.parse('http://127.0.0.1:${noHeaderServer.port}/down'), // hangs
+          Uri.parse('https://healthy.test/down'), // fallback
+        ],
+        // Inject a healthy downloader ONLY for the fallback host; let the real
+        // default handle the loopback host so its hard deadline is exercised.
+        downloader: (uri, max) async {
+          if (uri.host == 'healthy.test') return 25 * 1000 * 1000;
+          // Delegate to the real transport for the loopback (hung) endpoint.
+          return _realDownload(uri, max);
+        },
+        uploader: (uri, bytes, max) async => bytes,
+        uploadBytes: 10 * 1000 * 1000,
+        timer: _passthroughTimer(const Duration(seconds: 2)),
+      );
+      final sw = Stopwatch()..start();
+      final s = await probe.measure();
+      sw.stop();
+      expect(s.downloadBytes, 25 * 1000 * 1000);
+      expect(s.downloadMbps, greaterThan(0.0));
+      expect(sw.elapsed, lessThan(upperBound),
+          reason: 'fallback must engage within the hard deadline');
+    });
+  });
+}
+
+/// Drives the real default downloader through a throwaway probe instance so the
+/// fallback test can exercise the actual hard-deadline transport for the hung
+/// loopback endpoint while seam-injecting the healthy one.
+Future<int> _realDownload(Uri uri, Duration max) {
+  final passthrough = ThroughputProbe(
+    downloadEndpoints: <Uri>[uri],
+    maxDuration: max,
+  );
+  return passthrough.downloader(uri, max);
 }
