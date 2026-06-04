@@ -1,0 +1,913 @@
+{
+  "_meta": {
+    "title": "Educational Resources",
+    "note": "Combined Educational Resources dataset for the WLAN Pros Toolbox. Merges the canonical 25-resource curated library (tools, utilities, and vendor documentation) with the 27-entry wlan-talks learning-destinations set (conference archives, YouTube channels, podcasts, independent blogs, and training/certification paths) into one 52-entry array bundled by Felix. Descriptions are unchanged from the two source datasets (Keith's voice, GL-004, SOP-020 PASS). Every entry carries an 'approval' field driving Keith's pre-publish pruning: 'not_required' for megavendor/org/public/Keith-owned resources, 'pending_outreach' for independent-author resources that received a courtesy blessing-request email. Two resources are deliberately excluded for now: Wi-Fi For Beginners (held, site not confirmed live, pending Keith's browser check) and frames.bitbucketlabs.com (pending Keith's 1-line description). Built 2026-06-03.",
+    "last_updated": "2026-06-03",
+    "count": 52,
+    "topics": [
+      "Tools and utilities",
+      "Vendor documentation and design guides",
+      "Conference and talk archives",
+      "YouTube channels",
+      "Podcasts",
+      "Independent blogs and experts",
+      "Training and certification"
+    ],
+    "attribution": "Inspired by wlan-talks.net by Victor Njoroge. Display this credit line in the Educational Resources category when this destinations set ships.",
+    "attribution_scope": "The attribution line above credits the DESTINATIONS portion of this combined set specifically (the wlan-talks library, inspired by wlan-talks.net by Victor Njoroge). Felix should display it in association with the destinations entries, not the canonical tools/vendor-docs portion. See destinations-outreach-research.md Part C: the creator's exact name is pending Keith's confirmation (brief said 'Victor Gautuna'; public web surfaces 'Victor Njoroge'), so confirm the credited name before it ships publicly."
+  },
+  "resources": [
+    {
+      "id": "mike-albano-clients",
+      "title": "Wi-Fi Clients List — Device Capabilities Database",
+      "summary": "Look up what a client device can actually do on Wi-Fi before you design around it.",
+      "description": "Before you assume a client can use that 160 MHz channel or a third spatial stream, check what it actually supports. Mike Albano's Wi-Fi Clients List is a community-contributed database of client device capabilities: spatial streams, supported bands, and channel support, device by device. When you are sizing capacity or chasing down why one device performs differently from the rest, this is where you confirm what the client is really capable of instead of guessing. Browsing is free. You only need an account if you want to contribute new devices and grow the database.",
+      "url": "https://clients.mikealbano.com/",
+      "topic": "Tools and utilities",
+      "cost": "free",
+      "level": "intermediate",
+      "tags": [
+        "tool",
+        "client-behavior",
+        "reference"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "artofrf-pcap-io-graph",
+      "title": "Wireless PCAP I/O Graph Analyzer",
+      "summary": "Drop in an 802.11 capture and see the airtime over time without the manual Wireshark workflow.",
+      "description": "Mohammad Ali's PCAP I/O Graph Analyzer, from his Art of RF site, takes an 802.11 capture, lets you apply Wireshark-style display filters, and draws an I/O graph of the wireless traffic over time. It is the fast way to see traffic and airtime patterns and spot anomalies, then hand the picture to someone else, without building the I/O graph by hand every time. It works on 802.11 frames only, so a non-Wi-Fi capture will not load. The author calls it a work in progress and notes it is not meant to replace professional analysis tools and may not always display data accurately. Treat it as a quick visual first look, then confirm anything important in your full toolset.",
+      "url": "https://pcap-io-graph.artofrf.com/",
+      "topic": "Tools and utilities",
+      "cost": "mixed",
+      "level": "advanced",
+      "tags": [
+        "tool",
+        "capture",
+        "pcap",
+        "analysis"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "wlan-pi",
+      "title": "WLAN Pi",
+      "summary": "The open-source, pocketable Wi-Fi analysis platform for on-site work.",
+      "description": "WLAN Pi is the open-source Wi-Fi analysis platform built on small single-board hardware, maintained by a community of wireless engineers. It scans, tests, monitors, and troubleshoots wired and wireless networks, which gives you a real diagnostic tool you can carry in a pocket to the job site. The WLAN Pi OS is free and open source. The project funds itself in part by selling hardware, so the software costs nothing and you buy a device only if you want one. If you work in the field, this belongs in your bag.",
+      "url": "https://www.wlanpi.com/",
+      "topic": "Tools and utilities",
+      "cost": "mixed",
+      "level": "all",
+      "tags": [
+        "tool",
+        "hardware",
+        "open-source",
+        "field"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "wlan-pi-cookbook",
+      "title": "WLAN Pi Cookbook",
+      "summary": "The official community how-to guide for actually operating a WLAN Pi.",
+      "description": "The Cookbook is the practical companion to the WLAN Pi project: the official community documentation for setting up and operating the device. It covers getting started, connecting from a phone or a laptop, USB modes, power management, and the access methods you need to know to put the thing to work. If WLAN Pi is the tool, this is the manual that gets you from unboxed to useful. Free to read, no login required.",
+      "url": "https://wlanpi.gitbook.io/cookbook",
+      "topic": "Tools and utilities",
+      "cost": "mixed",
+      "level": "all",
+      "tags": [
+        "docs",
+        "open-source",
+        "how-to"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "wavelify",
+      "title": "Wavelify — Network Planning Platform",
+      "summary": "A web-based Wi-Fi design platform with a companion Android survey app.",
+      "description": "Wavelify is a web-based network planning platform for Wi-Fi and broader low-voltage design. You import a floor plan, place Access Points, and model coverage in 2D and 3D across 2.4, 5, and 6 GHz, with wall and material attenuation and AI-assisted automatic AP placement, then export PDF design reports. A companion Android survey app turns a phone into a capture tool that syncs measurements back into the design project. It is a newer entrant, so give it a look on its own merits. You can get in and try it for free, with the full design capability behind paid tiers.",
+      "url": "https://wavelify.com/",
+      "topic": "Tools and utilities",
+      "cost": "mixed",
+      "level": "intermediate",
+      "tags": [
+        "tool",
+        "design",
+        "planning",
+        "survey"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "hamina-docs",
+      "title": "Hamina Documentation",
+      "summary": "The official how-to for the Hamina cloud Wi-Fi planner.",
+      "description": "This is the official documentation for Hamina, the cloud Wi-Fi network design and planning tool. The docs walk you through creating an account, setting up a project, uploading floor plans, and the design workflow, and they spell out where the free mode ends and the paid subscription begins. If you are evaluating Hamina or already designing in it, start here. The documentation is free to read. The planner itself is largely paid, with a limited free mode.",
+      "url": "https://docs.hamina.com/hamina",
+      "topic": "Vendor documentation and design guides",
+      "cost": "mixed",
+      "level": "intermediate",
+      "tags": [
+        "docs",
+        "design",
+        "planning",
+        "vendor"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "apple-join-wifi",
+      "title": "How Apple devices join Wi-Fi networks",
+      "summary": "Apple's own account of how its devices discover and join Wi-Fi, including enterprise security.",
+      "description": "Apple's deployment guide on how its devices discover and join Wi-Fi networks: auto-join behavior, configuration profiles pushed through MDM, and enterprise security including WPA3 Enterprise 192-bit on supported models. If you support Apple clients on an enterprise network, this is the vendor's own statement of what the client is doing when it associates, which beats reverse-engineering it from packet captures alone.",
+      "url": "https://support.apple.com/guide/deployment/how-apple-devices-join-wi-fi-networks-dep3b0448c58/web",
+      "topic": "Vendor documentation and design guides",
+      "cost": "free",
+      "level": "advanced",
+      "tags": [
+        "apple",
+        "client-behavior",
+        "enterprise"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "apple-roaming",
+      "title": "Wi-Fi roaming support in Apple devices",
+      "summary": "Which roaming standards Apple supports and the RSSI thresholds that trigger a roam.",
+      "description": "Apple's deployment guide on assisted roaming: which standards Apple devices support (802.11k, 802.11r, 802.11u, 802.11v), the signal thresholds that trigger a roam (a Mac holds until -75 dBm, an iPhone or iPad until -70 dBm), and PMKID caching. When a roaming complaint lands on an Apple client, these are the published numbers to design and troubleshoot against.",
+      "url": "https://support.apple.com/guide/deployment/wi-fi-roaming-support-dep98f116c0f/web",
+      "topic": "Vendor documentation and design guides",
+      "cost": "free",
+      "level": "advanced",
+      "tags": [
+        "apple",
+        "roaming",
+        "client-behavior"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "apple-recommended-router-settings",
+      "title": "Recommended settings for Wi-Fi routers and access points",
+      "summary": "Apple's recommended AP settings: WPA3, one SSID across bands, no hidden network.",
+      "description": "Apple's recommended settings for Access Points: WPA3 (or WPA2/WPA3 transitional) security, a single SSID shared across all bands, and hidden networks turned off. It is short, it is opinionated, and it lines up with how good Wi-Fi gets designed anyway. Worth pointing a customer at when they insist on a hidden SSID or a separate name per band, because now it is the device maker saying it, not just you.",
+      "url": "https://support.apple.com/en-us/102766",
+      "topic": "Vendor documentation and design guides",
+      "cost": "free",
+      "level": "all",
+      "tags": [
+        "apple",
+        "design",
+        "best-practice"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "apple-wifi-ethernet-specs",
+      "title": "Wi-Fi and Ethernet specifications for Apple devices",
+      "summary": "The standards and bands each Apple device family supports, with regulatory notes.",
+      "description": "Apple's deployment guide listing 802.11 standard and frequency-band support by device family, plus regulatory notes such as Wi-Fi 6E not being available in mainland China. This is the reference to reach for when you need to know what a specific Apple device can actually do on the air, instead of trusting a spec sheet someone copied wrong. Keep the canonical URL handy; Apple updates this page as new devices ship.",
+      "url": "https://support.apple.com/guide/deployment/wi-fi-ethernet-specifications-apple-devices-dep268652e6c/web",
+      "topic": "Vendor documentation and design guides",
+      "cost": "free",
+      "level": "advanced",
+      "tags": [
+        "apple",
+        "reference",
+        "specifications"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "apple-8021x",
+      "title": "Connect Apple devices to 802.1X networks",
+      "summary": "Apple's 802.1X guide: EAP-TLS, authentication modes, and RADIUS trust requirements.",
+      "description": "Apple's deployment guide for connecting its devices to 802.1X networks: EAP-TLS support (including TLS 1.3 on current iOS, iPadOS, and macOS), the User, System, and System-plus-User authentication modes, and the RADIUS server certificate trust requirements. When an Apple client will not authenticate against your RADIUS infrastructure, the answer is usually in here. Read it before you blame the supplicant.",
+      "url": "https://support.apple.com/guide/deployment/connect-to-8021x-networks-depabc994b84/web",
+      "topic": "Vendor documentation and design guides",
+      "cost": "free",
+      "level": "advanced",
+      "tags": [
+        "apple",
+        "802.1X",
+        "enterprise",
+        "security"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "apple-wifi-privacy",
+      "title": "Wi-Fi privacy with Apple devices",
+      "summary": "The admin and security view of MAC randomization and how MDM controls it.",
+      "description": "Apple's Platform Security guide on Wi-Fi privacy: per-network randomized (private) MAC addresses, peer-to-peer randomization for AirDrop and AirPlay, and the MDM control that turns association MAC randomization off. This is the admin and security treatment of MAC randomization, the side you need when a feature like MAC-based access control or device tracking quietly stops working. For the end-user setting that controls the same behavior on a single device, see \"Use private Wi-Fi addresses on Apple devices.\"",
+      "url": "https://support.apple.com/guide/security/wi-fi-privacy-with-apple-devices-sec31e483abf/web",
+      "topic": "Vendor documentation and design guides",
+      "cost": "free",
+      "level": "advanced",
+      "tags": [
+        "apple",
+        "privacy",
+        "security",
+        "mac-randomization"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "apple-wifi-6e",
+      "title": "Use Wi-Fi 6E networks with Apple devices",
+      "summary": "Apple's Wi-Fi 6E guidance: one SSID across bands, supported devices, how to back off 6E.",
+      "description": "Apple's consumer article on Wi-Fi 6E with its devices: it recommends one SSID across 2.4, 5, and 6 GHz, lists which Apple platforms are 6E-capable, and shows how to turn Wi-Fi 6E mode off if you hit trouble. Useful when a 6E client behaves strangely on a freshly stood-up 6 GHz network and you need a clean way to isolate whether 6E itself is the variable.",
+      "url": "https://support.apple.com/en-us/102285",
+      "topic": "Vendor documentation and design guides",
+      "cost": "free",
+      "level": "all",
+      "tags": [
+        "apple",
+        "6ghz",
+        "design"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "apple-certificate-management",
+      "title": "Intro to certificate management for Apple devices",
+      "summary": "How certificates and trust work on Apple devices, including network authentication.",
+      "description": "Apple's introduction to digital certificates and identities on its devices: what certificates are used for, including network authentication, the preinstalled root CAs, and how you establish enterprise trust through configuration profiles. Certificates are where most 802.1X deployments quietly break. Read this before you push EAP-TLS to a fleet of Apple clients so the trust chain is right the first time.",
+      "url": "https://support.apple.com/guide/deployment/intro-to-certificate-management-depb5eff8914/web",
+      "topic": "Vendor documentation and design guides",
+      "cost": "free",
+      "level": "advanced",
+      "tags": [
+        "apple",
+        "certificates",
+        "802.1X",
+        "enterprise"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "apple-private-wifi-addresses",
+      "title": "Use private Wi-Fi addresses on Apple devices",
+      "summary": "The end-user side of MAC randomization: Off, Fixed, and Rotating settings.",
+      "description": "Apple's consumer article on the Private Wi-Fi Address feature: a per-network MAC and the three settings a user picks, Off, Fixed, or Rotating, with Rotating cycling roughly every two weeks. This is the device-side view of MAC randomization, the one you walk an end user through. For the administrator and security treatment, including the MDM control, see \"Wi-Fi privacy with Apple devices.\"",
+      "url": "https://support.apple.com/en-us/102509",
+      "topic": "Vendor documentation and design guides",
+      "cost": "free",
+      "level": "all",
+      "tags": [
+        "apple",
+        "privacy",
+        "mac-randomization"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "apple-vision-pro-internet",
+      "title": "Connect Apple Vision Pro to the internet",
+      "summary": "How Vision Pro gets online, by Wi-Fi or a shared Personal Hotspot.",
+      "description": "Apple's Vision Pro user guide page on getting the headset online, either over Wi-Fi or through a shared Personal Hotspot from an iPhone or iPad. It is an end-user walkthrough, not a design document, but if Vision Pro is showing up on networks you support, it helps to know exactly how Apple expects it to connect.",
+      "url": "https://support.apple.com/guide/apple-vision-pro/connect-apple-vision-pro-to-the-internet-tan75f632320/visionos",
+      "topic": "Vendor documentation and design guides",
+      "cost": "free",
+      "level": "beginner",
+      "tags": [
+        "apple",
+        "vision-pro",
+        "end-user"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "apple-connect-iphone-ipad",
+      "title": "Connect to Wi-Fi on your iPhone or iPad",
+      "summary": "The basic end-user steps to join a Wi-Fi network on iOS or iPadOS.",
+      "description": "The basic Apple steps for joining a Wi-Fi network on an iPhone or iPad: open Settings, tap Wi-Fi, pick the network, enter the password. Nothing advanced here, and that is the point. It is the page to send a non-technical user when the fix really is that simple, so you can keep your own time for the problems that are not.",
+      "url": "https://support.apple.com/en-us/111107",
+      "topic": "Vendor documentation and design guides",
+      "cost": "free",
+      "level": "beginner",
+      "tags": [
+        "apple",
+        "end-user"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "apple-connect-mac-internet",
+      "title": "Connect to the internet with your Mac",
+      "summary": "The basic end-user steps to get a Mac online over Wi-Fi, Ethernet, or hotspot.",
+      "description": "Apple's basic steps for getting a Mac online, over Wi-Fi, Ethernet, or a Personal Hotspot. Like its iPhone and iPad counterpart, this is end-user-level material. Keep it on hand for the help-desk moments so you can point and move on.",
+      "url": "https://support.apple.com/en-us/101589",
+      "topic": "Vendor documentation and design guides",
+      "cost": "free",
+      "level": "beginner",
+      "tags": [
+        "apple",
+        "mac",
+        "end-user"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "apple-optimize-wifi",
+      "title": "Optimize your Wi-Fi networks for Apple devices",
+      "summary": "Apple's design guidance: keep SSIDs to three or fewer, no hidden SSIDs, scan thresholds.",
+      "description": "Apple's deployment guide on designing a Wi-Fi network for its devices: keep it to three SSIDs or fewer, avoid hidden SSIDs, mind the scan-trigger thresholds (a Mac at -75 dBm, an iPhone or iPad at -70 dBm), and watch AP client capacity. This is the design-side companion to the roaming and join guides, and it is the one to cite when someone wants to bolt a fourth SSID onto an already-crowded network.",
+      "url": "https://support.apple.com/guide/deployment/optimize-your-wi-fi-networks-dep2af1caf35/web",
+      "topic": "Vendor documentation and design guides",
+      "cost": "free",
+      "level": "advanced",
+      "tags": [
+        "apple",
+        "design",
+        "best-practice"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "apple-interference",
+      "title": "Resolve Wi-Fi and Bluetooth issues caused by wireless interference",
+      "summary": "Apple's checklist for interference: placement, band choice, channel, cabling shielding.",
+      "description": "Apple's article on reducing wireless interference that hits Wi-Fi and Bluetooth: device placement and proximity, choosing 2.4 versus 5 GHz, router channel selection, USB 3 and Thunderbolt 3 shielding, and physical obstructions. It is consumer-facing, but the USB 3 interference note in particular catches engineers off guard, so it earns a spot here. Last updated by Apple in April 2025.",
+      "url": "https://support.apple.com/en-us/102319",
+      "topic": "Vendor documentation and design guides",
+      "cost": "free",
+      "level": "all",
+      "tags": [
+        "apple",
+        "interference",
+        "troubleshooting"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "cisco-apple-network-enhancements",
+      "title": "Cisco network enhancements for Apple devices",
+      "summary": "Apple's own doc on how its devices use Cisco features like Adaptive 802.11r and Fastlane.",
+      "description": "This is Apple's deployment guide page, not a Cisco page, documenting how Apple devices use specific Cisco features: Adaptive 802.11r for fast roaming, Cisco Fastlane for QoS and app prioritization, and Fastlane+ for Wi-Fi 6 OFDMA airtime signaling, with a device and OS compatibility table. If you run Apple clients on Cisco wireless, this is the cross-vendor map of what actually lights up between the two.",
+      "url": "https://support.apple.com/guide/deployment/cisco-network-enhancements-dep271900868/web",
+      "topic": "Vendor documentation and design guides",
+      "cost": "free",
+      "level": "intermediate",
+      "tags": [
+        "apple",
+        "cisco",
+        "enterprise",
+        "roaming"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "cisco-optimized-wifi-business-apps",
+      "title": "Optimized Wi-Fi Connectivity and Prioritized Business Apps",
+      "summary": "Cisco's QoS technote for marking apps by importance and mapping them to 802.11 queues.",
+      "description": "A Cisco technote on QoS configuration for a Cisco WLAN: marking applications by business importance and mapping them to the 802.11 user-priority queues, written in the context of the Cisco and Apple Fastlane work. It is AireOS 8.3 vintage, around 2017, so treat it as controller-era guidance and check it against your current code. The QoS mapping principles still hold up.",
+      "url": "https://www.cisco.com/c/dam/en/us/td/docs/wireless/controller/technotes/8-3/Optimizing_WiFi_Connectivity_and_Prioritizing_Business_Apps.pdf",
+      "topic": "Vendor documentation and design guides",
+      "cost": "free",
+      "level": "advanced",
+      "tags": [
+        "cisco",
+        "qos",
+        "enterprise"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "cisco-enterprise-best-practices-apple",
+      "title": "Enterprise Best Practices for iOS, iPadOS, and macOS Devices on Cisco Wireless LAN",
+      "summary": "Cisco's reference design guide for Apple clients on a controller-based Cisco WLAN.",
+      "description": "Cisco's reference design guide for deploying Apple iOS, iPadOS, and macOS clients on a controller-based Cisco WLAN, in both Local and FlexConnect modes. It covers band and data-rate strategy, RSSI cell-edge targets (-67 dBm for iOS, -72 dBm for Mac), roaming with 802.11k, 802.11r, and 802.11v, and QoS, reflecting joint Cisco and Apple recommendations. If you design Cisco wireless for Apple-heavy environments, this is the document to read end to end.",
+      "url": "https://www.cisco.com/c/en/us/products/collateral/wireless/access-points/enterprise-best-practices-ios-ipados-wp.html",
+      "topic": "Vendor documentation and design guides",
+      "cost": "free",
+      "level": "advanced",
+      "tags": [
+        "cisco",
+        "apple",
+        "design",
+        "enterprise"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "aruba-ipad-in-enterprise",
+      "title": "iPad in Enterprise (Aruba / HPE)",
+      "summary": "Aruba's white paper on deploying and tuning iPad on an Aruba enterprise WLAN.",
+      "description": "An Aruba, now HPE Aruba Networking, white paper on deploying and optimizing Apple iPad devices on an Aruba enterprise WLAN. It is an older paper from the PSO series and still hosted, so weigh it against current Aruba guidance, but it is useful when iPad behavior is the question on Aruba gear. Use the HPE-domain link as the durable one; the legacy Aruba Networks address now redirects.",
+      "url": "https://arubanetworking.hpe.com/assets/pso/wp_iPad-in-Enterprise.pdf",
+      "topic": "Vendor documentation and design guides",
+      "cost": "free",
+      "level": "intermediate",
+      "tags": [
+        "aruba",
+        "hpe",
+        "apple",
+        "enterprise"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "aruba-apple-wifi-faq",
+      "title": "Apple Wi-Fi Update FAQ (Aruba / HPE)",
+      "summary": "Aruba's FAQ on Apple Wi-Fi behavior changes relevant to Aruba deployments.",
+      "description": "An Aruba, now HPE Aruba Networking, FAQ covering Apple Wi-Fi behavior and feature updates as they relate to Aruba WLAN deployments. It is part of the PSO series and Aruba also maintains a more recent Apple Wi-Fi Update resource page, so check there for the latest. Reach for this when an Apple client change starts affecting how things behave on Aruba gear. Use the HPE-domain link; the legacy Aruba Networks address redirects.",
+      "url": "https://arubanetworking.hpe.com/assets/pso/FAQ_Apple-Wi-Fi-Update.pdf",
+      "topic": "Vendor documentation and design guides",
+      "cost": "free",
+      "level": "intermediate",
+      "tags": [
+        "aruba",
+        "hpe",
+        "apple",
+        "faq"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "dest-wlpc-youtube",
+      "title": "WLPC Conference Talks (WLAN Pros on YouTube)",
+      "summary": "Over 1,000 recorded WLPC conference talks, free on YouTube, the largest vendor-neutral Wi-Fi talk library anywhere.",
+      "description": "If you want to learn Wi-Fi from the people actually deploying it, this is where you start. The Wireless LAN Professionals YouTube channel holds more than 1,000 recorded WLPC conference presentations going back to 2014, in English and Spanish. Real engineers, real deployments, no vendor pitch. The talks run the full range, from packet analysis and survey method to security, design, and the standards work itself.\n\nThis is the WLPC conference archive, and it is free. Most sessions are short and focused, so you can watch one over lunch and walk away with something you can use the same afternoon. Start with a topic you are weak on and work outward from there.",
+      "url": "https://www.youtube.com/WirelessLANProfessionals",
+      "topic": "Conference and talk archives",
+      "cost": "free",
+      "level": "all",
+      "tags": [
+        "destination",
+        "video-archive",
+        "youtube",
+        "wlpc",
+        "conference",
+        "wlan-pros",
+        "vendor-neutral"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "dest-wlpc-video-library",
+      "title": "WLPC Video Library (wlanprofessionals.com)",
+      "summary": "The WLAN Pros landing page for the WLPC video archive, the front door to the full talk library.",
+      "description": "This is the WLAN Pros video library page, the front door to the WLPC talk archive. It surfaces the latest conference videos and points you to the complete collection on the Wireless LAN Professionals YouTube channel.\n\nIt is a gateway, not a separate searchable index, so think of it as the place to land when you want to browse what is new rather than hunt for one specific talk. Free, no login. If you would rather go straight to everything, the YouTube channel itself is the deeper well.",
+      "url": "https://wlanprofessionals.com/wlpcvideolibrary/",
+      "topic": "Conference and talk archives",
+      "cost": "free",
+      "level": "all",
+      "tags": [
+        "destination",
+        "video-archive",
+        "wlpc",
+        "wlan-pros",
+        "conference",
+        "vendor-neutral"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "dest-wifi-design-day",
+      "title": "Wi-Fi Design Day On-Demand (Open Reality)",
+      "summary": "Free on-demand recordings and handouts from more than 70 Wi-Fi Design Day sessions on survey and design.",
+      "description": "Wi-Fi Design Day is a UK Wi-Fi event run by Open Reality and Ekahau, and this on-demand page opens up the back catalog. You get free access to recordings and session handouts from more than 70 talks covering surveying, design, security, monitoring, and troubleshooting.\n\nThe handouts are the part people overlook. A recording teaches you the thinking, but the slide deck and notes are what you keep on your drive for the next project. Registration is required to get in, and the content itself costs nothing. Strong material if survey and design are where you want to level up.",
+      "url": "https://www.openreality.co.uk/wi-fi-design-day-on-demand/",
+      "topic": "Conference and talk archives",
+      "cost": "mixed",
+      "level": "all",
+      "tags": [
+        "destination",
+        "video-archive",
+        "conference",
+        "design",
+        "survey",
+        "vendor-neutral"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "dest-wifi-design-day-site",
+      "title": "Wi-Fi Design Day",
+      "summary": "The Wi-Fi Design Day event homepage, where the next event gets announced (Open Reality and Ekahau).",
+      "description": "The Wi-Fi Design Day event homepage, run by Open Reality and Ekahau. This is where the next event date and agenda show up when one is scheduled.\n\nIf you want the talks rather than the event, go to the on-demand recordings page instead. Keep this one bookmarked for when you want to know whether a live Design Day is coming up. Free.",
+      "url": "https://www.wifidesignday.com/",
+      "topic": "Conference and talk archives",
+      "cost": "free",
+      "level": "all",
+      "tags": [
+        "destination",
+        "conference",
+        "design",
+        "event"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "dest-cwnp-tv-youtube",
+      "title": "CWNP on YouTube (CWNPTV)",
+      "summary": "CWNP's free webinar and explainer channel, vendor-neutral Wi-Fi education from the certification body.",
+      "description": "The CWNP YouTube channel is the video arm of the vendor-neutral certification program, with free webinars and explainers from CWNP and Tom Carpenter. Expect Wi-Fi Visualized walkthroughs, lab builds, and standards explainers, the kind of material that maps straight onto the CWNA and CWAP body of knowledge.\n\nCWNP sells certifications and training, and the videos are free to watch. If you are working toward a CWNP credential, this channel is teaching the same concepts the exams test, in a format you can replay until it sticks.",
+      "url": "https://www.youtube.com/user/CWNPTV",
+      "topic": "YouTube channels",
+      "cost": "mixed",
+      "level": "all",
+      "tags": [
+        "destination",
+        "youtube",
+        "training",
+        "certification",
+        "vendor-neutral"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "dest-ekahau-youtube",
+      "title": "Ekahau on YouTube",
+      "summary": "Ekahau's Wi-Fi design, survey, and troubleshooting tutorials, free to watch from the survey-tool maker.",
+      "description": "The Ekahau YouTube channel publishes Wi-Fi design, survey, and troubleshooting tutorials alongside product webinars. Even where the demos use Ekahau tools, the underlying method, how to plan a survey, read coverage, and validate a design, carries over to whatever survey tool you run.\n\nThis is a vendor channel, free to watch, and Ekahau sells design tools. Watch it for the survey thinking, and take the workflow lessons with you regardless of what is in your own bag.",
+      "url": "https://www.youtube.com/@EkahauWiFiDesignTools",
+      "topic": "YouTube channels",
+      "cost": "mixed",
+      "level": "all",
+      "tags": [
+        "destination",
+        "youtube",
+        "design",
+        "survey",
+        "vendor"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "dest-hamina-youtube",
+      "title": "Hamina Wireless on YouTube",
+      "summary": "Hamina's Wi-Fi design-method webinars, including Lunch and Learn basics and guest sessions on 6 GHz.",
+      "description": "The Hamina Wireless YouTube channel runs webinars and design-method content, with a Lunch and Learn series on Wi-Fi basics and guest sessions such as Wi-Fi Visualized with Tom Carpenter and 6 GHz with Kevin Robinson. The guest lineup is the draw, since you get named experts walking through real design topics.\n\nThis is a vendor channel, free to watch, and Hamina sells planning software. The Lunch and Learn series is a good entry point if you are still building your fundamentals, and the guest sessions reward intermediate engineers who want a deeper cut.",
+      "url": "https://www.youtube.com/channel/UCCCXgcleh6-c1yukgN3OlOw",
+      "topic": "YouTube channels",
+      "cost": "mixed",
+      "level": "all",
+      "tags": [
+        "destination",
+        "youtube",
+        "design",
+        "planning",
+        "vendor"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "dest-cleartosend-youtube",
+      "title": "Clear To Send on YouTube",
+      "summary": "Video versions of the Clear To Send podcast plus Wi-Fi engineering explainers, free and independent.",
+      "description": "The Clear To Send YouTube channel carries the video edition of the long-running podcast along with standalone Wi-Fi engineering explainers. It is run by Rowell Dionicio and Francois Verges, two working engineers, with no vendor steering the content.\n\nIf you prefer to watch a diagram get drawn rather than just hear it described, the video versions are worth it over the audio-only feed. Free. Aimed at engineers who already have the basics and want to go a layer deeper.",
+      "url": "https://www.youtube.com/channel/UCYWhT-mlCKl6i4pzd3Pg_dA",
+      "topic": "YouTube channels",
+      "cost": "free",
+      "level": "intermediate",
+      "tags": [
+        "destination",
+        "youtube",
+        "podcast",
+        "independent"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "dest-heavy-wireless",
+      "title": "Heavy Wireless (Packet Pushers)",
+      "summary": "Keith Parsons' Packet Pushers podcast on Wi-Fi, IoT, and wireless security, with working engineers as guests.",
+      "description": "Heavy Wireless is the Wi-Fi show on the Packet Pushers network, hosted by Keith Parsons, CWNE #3. New episodes land every other Tuesday and run deep on technical Wi-Fi, IoT, and wireless security, with engineers and vendors who actually build and deploy the technology.\n\nThe format is a working conversation, not a product pitch. Guests get pushed on how things really behave in the field, which is where the value is. Free wherever you get podcasts. Good for any engineer who wants the current thinking on where Wi-Fi is headed and why.",
+      "url": "https://packetpushers.net/podcast/heavy-wireless/",
+      "topic": "Podcasts",
+      "cost": "free",
+      "level": "all",
+      "tags": [
+        "destination",
+        "podcast",
+        "wlan-pros",
+        "keith",
+        "vendor-neutral"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "dest-cleartosend-podcast",
+      "title": "Clear To Send (Podcast)",
+      "summary": "The longest-running Wi-Fi engineering podcast, going since 2015, on design, troubleshooting, and tools.",
+      "description": "Clear To Send is the wireless network engineering podcast, hosted by Rowell Dionicio and Francois Verges and running since August 2015. That is a decade of back catalog on design, troubleshooting, tools, and interviews with people across the industry, which makes it one of the deepest free libraries of Wi-Fi audio you will find.\n\nThe long run is the point. When you hit a topic you are weak on, there is a good chance an episode already covers it. Listening is free, and the site also sells courses. Aimed at engineers who already know the fundamentals and want to keep current.",
+      "url": "https://www.cleartosend.net/",
+      "topic": "Podcasts",
+      "cost": "mixed",
+      "level": "intermediate",
+      "tags": [
+        "destination",
+        "podcast",
+        "independent"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "dest-wifi-of-things",
+      "title": "The Wi-Fi of Things",
+      "summary": "Ferney Munoz's bilingual English and Spanish Wi-Fi education hub, one of the few covering Wi-Fi in Spanish.",
+      "description": "The Wi-Fi of Things, run by Ferney Munoz, is a Wi-Fi education hub published in both English and Spanish, with sessions, industry news, and tool reviews. The Spanish-language coverage is what sets it apart, since very little serious Wi-Fi training exists in Spanish at all.\n\nIf you work with Spanish-speaking teams, or you want a second voice teaching the same concepts in a second language, this is a rare resource. Free, independent. Useful across all levels.",
+      "url": "https://thewifiofthings.com/",
+      "topic": "Podcasts",
+      "cost": "free",
+      "level": "all",
+      "tags": [
+        "destination",
+        "podcast",
+        "blog",
+        "independent",
+        "spanish",
+        "bilingual"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "dest-wifi-ninjas",
+      "title": "Wi-Fi Ninjas",
+      "summary": "Mac and Matt's Wi-Fi podcast and blog on wireless networking, protocol analysis, and industry events.",
+      "description": "Wi-Fi Ninjas is a podcast and blog run by Mac and Matt, covering wireless networking, protocol analysis, and industry events, with some content on how they build and share their work. It is an independent show, no vendor behind it.\n\nThe protocol-analysis episodes are the strongest material here, so reach for those if packet work is where you want to grow. Free. Aimed at engineers comfortable with the fundamentals.",
+      "url": "https://wifininjas.net/",
+      "topic": "Podcasts",
+      "cost": "free",
+      "level": "intermediate",
+      "tags": [
+        "destination",
+        "podcast",
+        "blog",
+        "independent"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "dest-ruckcast",
+      "title": "RUCKCast (RUCKUS)",
+      "summary": "Jim Palmer's informal Wi-Fi and networking podcast from RUCKUS Networks, with guests and product features.",
+      "description": "RUCKCast is an informal Wi-Fi and networking podcast hosted by Jim Palmer, CWNE #304, at RUCKUS Networks. It mixes guest conversations with RUCKUS product features, in a loose, easy-listening format.\n\nThis is a vendor podcast, free to listen. The guest episodes carry the most general value, since the conversations range across Wi-Fi topics beyond any one product. Worth a spot in the rotation if you run RUCKUS gear or want a lighter listen alongside the deeper technical shows.",
+      "url": "https://www.ruckusnetworks.com/resources/ruckcast-podcasts/",
+      "topic": "Podcasts",
+      "cost": "mixed",
+      "level": "intermediate",
+      "tags": [
+        "destination",
+        "podcast",
+        "vendor"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "dest-mrncciew",
+      "title": "mrn-cciew",
+      "summary": "Rasika Nayanajith's deep technical Wi-Fi and packet-analysis blog, one of the best free cert-prep libraries online.",
+      "description": "mrn-cciew, by Rasika Nayanajith (CWNE #153, CCIE #22989), is a long-running, deeply technical blog of Wi-Fi and packet-analysis write-ups. It is one of the most active personal blogs in the field, and the cert-prep coverage for CWNP and CCIE is some of the best free material you will find anywhere.\n\nThe write-ups go frame by frame, which is exactly what you want when you are studying for an analysis exam or trying to truly understand what a capture is telling you. Free, independent. This one is for engineers chasing the advanced certifications.",
+      "url": "https://mrncciew.com/",
+      "topic": "Independent blogs and experts",
+      "cost": "free",
+      "level": "advanced",
+      "tags": [
+        "destination",
+        "blog",
+        "independent",
+        "packet-analysis",
+        "certification"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "dest-wirednot",
+      "title": "wirednot",
+      "summary": "Lee Badman's independent opinion and practitioner commentary on Wi-Fi, the standards bodies, and industry dysfunction.",
+      "description": "wirednot, by Lee Badman, is an active independent blog of opinion and practitioner commentary. Badman writes about Wi-Fi from the operator's chair, and he is not shy about calling out where the IEEE working groups, the Wi-Fi Alliance, and the vendors get it wrong.\n\nThis is the blog to read when you want a working engineer's honest take rather than a vendor's press release. Free, independent. Best for engineers who want perspective and a check against industry hype, not step-by-step how-tos.",
+      "url": "https://wirednot.wordpress.com/",
+      "topic": "Independent blogs and experts",
+      "cost": "free",
+      "level": "intermediate",
+      "tags": [
+        "destination",
+        "blog",
+        "independent",
+        "opinion"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "dest-artofrf",
+      "title": "Art of RF",
+      "summary": "Mohammad Ali's practical Wi-Fi and RF blog: validation tooling, packet capture, 802.1X, and platform how-tos.",
+      "description": "Art of RF, by Mohammad Ali, is an active blog of hands-on Wi-Fi and RF content, with posts going back to 2012. The focus is practical: validation tooling, packet capture, 802.1X, and how-to walkthroughs for platforms like Mist and Nile.\n\nThis is a do-the-work blog, the kind you open when you have a specific job in front of you and want to see how someone else solved it. Mohammad Ali also builds the Wireless PCAP I/O Graph tool, so the analysis posts come from someone who writes his own tooling. Free, independent. Best for intermediate engineers doing real deployment and capture work.",
+      "url": "https://artofrf.com/",
+      "topic": "Independent blogs and experts",
+      "cost": "free",
+      "level": "intermediate",
+      "tags": [
+        "destination",
+        "blog",
+        "independent",
+        "rf",
+        "802.1X"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "dest-packetologist",
+      "title": "The Packetologist",
+      "summary": "Keith Miller's Wi-Fi troubleshooting deep dives and network automation blog, Python plus Mist and Meraki.",
+      "description": "The Packetologist, by Keith Miller, is a blog of Wi-Fi troubleshooting deep dives and network automation, with posts dating back to 2013. The automation angle is the draw, since Miller pairs Wi-Fi work with Python and platform APIs like Mist and Meraki, which is where a lot of the field is heading.\n\nThe cadence is on the slower side, so treat it as a reference archive rather than a daily read. When a troubleshooting post lands, it goes deep. Free, independent. Best for advanced engineers who want to bring automation into their wireless work.",
+      "url": "https://www.thepacketologist.com/",
+      "topic": "Independent blogs and experts",
+      "cost": "free",
+      "level": "advanced",
+      "tags": [
+        "destination",
+        "blog",
+        "independent",
+        "troubleshooting",
+        "automation"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "dest-semfio-blog",
+      "title": "SemFio Networks Blog",
+      "summary": "SemFio Networks' practitioner how-tos on WLAN Pi, Python, and regulatory changes, from Francois Verges' consultancy.",
+      "description": "The SemFio Networks blog is the writing arm of Francois Verges' consultancy, and it runs to practical how-tos: WLAN Pi material, Python for wireless engineers, and regulatory updates such as changes to Canadian 5 GHz rules.\n\nThe regulatory coverage is a useful niche, since spectrum rules shift and most blogs never touch them. The content is free to read, and the consultancy sells services. Best for intermediate engineers who want hands-on technique and want to stay current on the rules that govern what they can actually transmit.",
+      "url": "https://semfionetworks.com/blog/",
+      "topic": "Independent blogs and experts",
+      "cost": "mixed",
+      "level": "intermediate",
+      "tags": [
+        "destination",
+        "blog",
+        "independent",
+        "how-to"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "dest-intuitibits-blog",
+      "title": "Intuitibits Blog",
+      "summary": "Adrian Granados' Wi-Fi analysis, security, and packet-capture blog, from the maker of WiFi Explorer and Airtool.",
+      "description": "The Intuitibits blog, by Adrian Granados, publishes Wi-Fi analysis, security, and packet-capture tutorials, and it stays active. Granados makes WiFi Explorer and Airtool, two macOS tools many of us run every day, so when he writes about a topic like WPA3 or RSN Override, it comes from someone who builds the analysis tooling itself.\n\nThe security write-ups are the standouts, since they unpack new protocol behavior the moment it matters. Free to read, and Intuitibits sells tools. Best for advanced engineers doing analysis and security work on Apple gear.",
+      "url": "https://www.intuitibits.com/blog",
+      "topic": "Independent blogs and experts",
+      "cost": "mixed",
+      "level": "advanced",
+      "tags": [
+        "destination",
+        "blog",
+        "independent",
+        "analysis",
+        "packet-capture"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "dest-hamina-blog",
+      "title": "Hamina Blog",
+      "summary": "Hamina Wireless' Wi-Fi design and survey-method blog, with product notes and conference recaps.",
+      "description": "The Hamina blog covers Wi-Fi design and survey method, with product notes and conference recaps such as WLPC Phoenix 2026. Even where the examples lean on Hamina's planner, the design and survey thinking carries over to any toolset.\n\nThis is a vendor blog (Hamina makes a cloud design tool); the content is free and Hamina sells software. The conference recaps are a fast way to catch what you missed if you could not be in the room. Useful across levels for design and planning work.",
+      "url": "https://blog.hamina.com/",
+      "topic": "Independent blogs and experts",
+      "cost": "mixed",
+      "level": "all",
+      "tags": [
+        "destination",
+        "blog",
+        "design",
+        "planning",
+        "vendor"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "dest-mackenziewifi",
+      "title": "MackenzieWiFi",
+      "summary": "Peter Mackenzie's analysis-focused blog and career reflections, from a CWAP study guide co-author.",
+      "description": "MackenzieWiFi is the blog of Peter Mackenzie (CWNE #33, CWISE #2), who co-authored the CWAP study guide. The writing leans toward protocol analysis with cert and career reflections from someone who has spent years teaching this material to others.\n\nThe analysis pedigree is the reason to read it. When a CWAP-level author writes about captures, it is worth your time. The cadence is on the slower side, so treat it as a reference collection rather than a frequent read. Free, independent. Best for advanced engineers working toward analysis credentials.",
+      "url": "https://mackenziewifi.com/",
+      "topic": "Independent blogs and experts",
+      "cost": "free",
+      "level": "advanced",
+      "tags": [
+        "destination",
+        "blog",
+        "independent",
+        "cwap",
+        "analysis"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "dest-badfi-archive",
+      "title": "BadFi (Archive)",
+      "summary": "Eddie Forero's respected Wi-Fi archive on surveys, captures, 6 GHz, and standards, evergreen and worth reading.",
+      "description": "BadFi, by Eddie Forero, is a well-regarded Wi-Fi blog covering surveys, packet captures, 6 GHz, and standards. The last post landed in March 2023, so treat this as an archive rather than an active feed. Eddie himself is still active in the community elsewhere.\n\nThe RF physics and standards never went out of date, which is why this one is worth keeping on your list even though it is dormant. Read it as a reference collection. Free, independent. Best for intermediate engineers building their survey and capture fundamentals.",
+      "url": "https://badfi.com/blog/",
+      "topic": "Independent blogs and experts",
+      "cost": "free",
+      "level": "intermediate",
+      "tags": [
+        "destination",
+        "blog",
+        "independent",
+        "archive",
+        "dormant"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "dest-wifinigel-archive",
+      "title": "wifinigel (Archive)",
+      "summary": "Nigel Bowden's Wi-Fi scripting and WLAN Pi archive, with RF calculators and cheat sheets still worth keeping.",
+      "description": "wifinigel, by Nigel Bowden (CWNE #135), is an archive of Wi-Fi scripting, WLAN Pi material, Mist API work, RF calculators, and cheat sheets. The last blog post landed in June 2020, so treat the blog itself as an archive. Bowden's WLAN Pi and GitHub tooling carried on well past that, and remains a cornerstone of the field-engineer toolkit.\n\nThe cheat sheets and RF calculators are the parts you will keep coming back to, since the math does not age. Read the blog as a reference, and follow Bowden's tooling for the current work. Free, independent. Best for engineers getting into scripting and WLAN Pi.",
+      "url": "https://wifinigel.blogspot.com/",
+      "topic": "Independent blogs and experts",
+      "cost": "free",
+      "level": "intermediate",
+      "tags": [
+        "destination",
+        "blog",
+        "independent",
+        "archive",
+        "dormant",
+        "wlan-pi"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "dest-revolutionwifi-archive",
+      "title": "Revolution Wi-Fi (Blogspot Archive)",
+      "summary": "Andrew von Nagy's foundational capacity-planning and RF design writing, an evergreen archive worth studying.",
+      "description": "Revolution Wi-Fi, by Andrew von Nagy (CWNE, CCIE-W), is foundational writing on capacity planning and RF design. This Blogspot instance is a dormant archive, with the last post in 2015, but the material has aged remarkably well. The capacity-planning thinking here shaped how a lot of us approach high-density design.\n\nRead it as a reference, not a current feed. The physics and the planning principles are timeless even where the specific hardware references are dated. Free, independent. Best for advanced engineers who want to understand capacity planning from first principles.",
+      "url": "https://revolutionwifi.blogspot.com/",
+      "topic": "Independent blogs and experts",
+      "cost": "free",
+      "level": "advanced",
+      "tags": [
+        "destination",
+        "blog",
+        "independent",
+        "archive",
+        "dormant",
+        "capacity-planning"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "dest-cwnp-certification",
+      "title": "CWNP Certifications and Training",
+      "summary": "The vendor-neutral enterprise Wi-Fi certification body, CWNA through CWNE, plus a free blog, webinars, and forums.",
+      "description": "CWNP is the vendor-neutral enterprise Wi-Fi certification program, going back to 1999. The track runs from CWNA at the foundation up through CWSP, CWDP, CWAP, and CWNE at the top, with additional IoT and administrator paths. If you are serious about Wi-Fi as a career, this is the credential ladder that matters, because it tests how Wi-Fi actually works rather than how one vendor's box is configured.\n\nCWNP sells the exams, training, and study products, and a good amount is free: the blog, webinars, podcasts, whitepapers, and community forums. Start free, learn the body of knowledge, and sit the exam when you are ready. Useful at every level.",
+      "url": "https://www.cwnp.com/",
+      "topic": "Training and certification",
+      "cost": "mixed",
+      "level": "all",
+      "tags": [
+        "destination",
+        "certification",
+        "training",
+        "vendor-neutral"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "dest-cwnp-blog",
+      "title": "CWNP Blog",
+      "summary": "CWNP's free vendor-neutral blog on Wi-Fi fundamentals, RF-myth corrections, and industry news.",
+      "description": "The CWNP blog publishes free vendor-neutral Wi-Fi fundamentals, RF-myth corrections, and industry news, written by Tom Carpenter and guest CWNEs. The myth-correction posts are the ones to read, since they take the confidently-wrong claims that float around the industry and set them straight against how Wi-Fi really behaves.\n\nThe content maps closely to the CWNP body of knowledge, so it doubles as study reinforcement. Free to read, and CWNP sells certs and training. Useful at every level, and a good companion if you are working toward a CWNP credential.",
+      "url": "https://www.cwnp.com/cwnp-wifi-blog/",
+      "topic": "Training and certification",
+      "cost": "mixed",
+      "level": "all",
+      "tags": [
+        "destination",
+        "blog",
+        "certification",
+        "vendor-neutral"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "dest-wifi-alliance-beacon",
+      "title": "Wi-Fi Alliance Beacon Blog",
+      "summary": "The Wi-Fi Alliance's free blog on standards, certification, and emerging technology, straight from the source.",
+      "description": "The Beacon is the Wi-Fi Alliance's blog, and it is the authoritative voice on the Wi-Fi CERTIFIED program. You get explainers on Wi-Fi 7, Wi-Fi 8, 6 GHz, certification, and emerging technology from the organization that actually defines the interoperability tests.\n\nWhen you want to know what a Wi-Fi generation officially includes, rather than what a vendor's marketing claims, this is where you check. Free to read. Useful at every level, and the place to go for the definitive line on certification and standards.",
+      "url": "https://www.wi-fi.org/beacon",
+      "topic": "Training and certification",
+      "cost": "free",
+      "level": "all",
+      "tags": [
+        "destination",
+        "blog",
+        "standards",
+        "wi-fi-alliance",
+        "vendor-neutral"
+      ],
+      "approval": "not_required"
+    }
+  ]
+}

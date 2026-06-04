@@ -808,7 +808,39 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       ),
     ],
   ),
+
+  // ───────────────────── 5. Educational Resources ───────────────────
+  // A data-driven directory of Wi-Fi learning resources (52 entries: tools,
+  // vendor docs, conference/talk archives, YouTube channels, podcasts,
+  // independent blogs, training/certification), loaded from a bundled JSON
+  // asset and grouped by topic. ONE tile for the whole directory — NOT one tile
+  // per resource. The tile is intercepted in HomeScreen._openCategory: instead
+  // of pushing the generic CategoryScreen (which lists ToolEntry routes), it
+  // pushes the dedicated EducationalResourcesScreen, because the 52 resources
+  // are external links with rich detail, not in-app tool routes. The single
+  // placeholder ToolEntry below exists only so the tile reads as live and the
+  // category is non-empty; it is never rendered as a row.
+  ToolCategory(
+    id: 'educational-resources',
+    title: 'Educational Resources',
+    summary: 'Curated places to learn Wi-Fi — talks, channels, podcasts, docs',
+    icon: Icons.school_outlined,
+    tools: <ToolEntry>[
+      ToolEntry(
+        id: 'educational-resources-directory',
+        title: 'Educational Resources',
+        description: 'A directory of Wi-Fi learning resources',
+        routeName: kEducationalResourcesRoute,
+        isLive: true,
+      ),
+    ],
+  ),
 ];
+
+/// Route to the Educational Resources directory screen. Declared here (not only
+/// in AppRouter) so the catalog entry and the home-tile intercept share one
+/// constant. Mirrors the `/tools/...` route namespace of the other tools.
+const String kEducationalResourcesRoute = '/tools/educational-resources';
 
 /// The catalog the UI renders. On native targets this is the full
 /// [_kAllToolCategories]; on web it drops the [kWebGatedCategoryIds]

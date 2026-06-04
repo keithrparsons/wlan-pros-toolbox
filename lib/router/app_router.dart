@@ -10,6 +10,8 @@ import 'package:flutter/material.dart';
 
 import '../screens/about_screen.dart';
 import '../screens/home_screen.dart';
+import '../screens/tools/educational/educational_resources_screen.dart';
+import '../data/tool_catalog.dart' show kEducationalResourcesRoute;
 import '../screens/tools/dbm_watt_converter.dart';
 import '../screens/tools/calculators/cable_loss_screen.dart';
 import '../screens/tools/calculators/downtilt_screen.dart';
@@ -103,6 +105,13 @@ class AppRouter {
   /// App-level "About" surface (SOP-020 copy). Not a tool route — reached from
   /// the HomeScreen AppBar info action, never the tool catalog.
   static const String about = '/about';
+
+  /// Educational Resources directory (the data-driven Wi-Fi learning-resources
+  /// list). Reached from the home grid (HomeScreen intercepts the tile to push
+  /// the dedicated screen) and registered here so a named-route navigation also
+  /// resolves. The constant lives in the catalog (kEducationalResourcesRoute)
+  /// so the tile and route share one source of truth.
+  static const String educationalResources = kEducationalResourcesRoute;
 
   static const String dbmWatt = '/tools/dbm-watt';
 
@@ -240,6 +249,7 @@ class AppRouter {
   static final Map<String, WidgetBuilder> routes = <String, WidgetBuilder>{
     home: (_) => const HomeScreen(),
     about: (_) => const AboutScreen(),
+    educationalResources: (_) => const EducationalResourcesScreen(),
     dbmWatt: (_) => const DbmWattConverterScreen(),
     fspl: (_) => const FsplScreen(),
     eirp: (_) => const EirpScreen(),

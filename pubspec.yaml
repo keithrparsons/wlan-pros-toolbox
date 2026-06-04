@@ -65,11 +65,15 @@ dependencies:
   dart_ping: ^9.0.1
   dart_ping_ios: ^4.0.2
 
-  # url_launcher — opens the external links in the About screen (the WLAN Pros
-  # contact form, wlanpros.com, thewlpc.com). The canonical Flutter-team plugin
-  # for opening URLs; chosen over the iOS-only Shortcuts bridge `openUrl` because
-  # the About screen ships on macOS too (the bridge channel is absent off iOS).
-  # First-party, lightweight, no API key. BSD-3.
+  # url_launcher — opens external links in the SYSTEM BROWSER. Two consumers:
+  # the About screen (WLAN Pros contact form, wlanpros.com, thewlpc.com) and the
+  # Educational Resources detail screen's "Open website" button, both via
+  # launchUrl(..., mode: LaunchMode.externalApplication). The canonical
+  # Flutter-team plugin for opening URLs; chosen over the iOS-only Shortcuts
+  # bridge `openUrl` because both surfaces ship on macOS too (the bridge channel
+  # is absent off iOS). https opens fine on iOS + macOS with NO ATS exception and
+  # NO macOS entitlement (a browser hand-off, not an in-app cleartext fetch —
+  # GL-008). First-party, lightweight, no API key. BSD-3.
   url_launcher: ^6.3.0
 
   # flutter_svg — renders the per-tool Tier-2 icons (assets/tool-icons/<id>.svg)
@@ -194,6 +198,12 @@ flutter:
     # Ports tool (TICKET-007). A field-relevant subset of the IANA registry,
     # loaded + indexed once at startup. Source noted in the asset's _meta block.
     - assets/ports/well_known_ports.json
+    # Educational Resources directory — the 52-entry combined dataset (curated
+    # tools/vendor-docs + the wlan-talks learning destinations) for the
+    # Educational Resources category. Loaded + parsed once when the directory
+    # screen opens, fully offline. Schema + attribution in the asset's _meta
+    # block; the destinations credit is scoped per _meta.attribution_scope.
+    - assets/data/educational_resources.json
     # Per-tool Tier-2 custom icons (GL-003 §8.6 / §8.6.1) and in-tool concept
     # graphics (GL-003 §8.6.2). Convention-based lookup by catalog id:
     #   icon    = assets/tool-icons/<tool-id>.svg

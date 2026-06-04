@@ -13,6 +13,7 @@ import '../router/app_router.dart';
 import '../theme/app_tokens.dart';
 import '../widgets/centered_content.dart';
 import 'category_screen.dart';
+import 'tools/educational/educational_resources_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -99,29 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     final ToolCategory cat = kToolCategories[index];
                     return _CategoryTile(
                       category: cat,
-                      onTap: () {
-                      // Vera F-NEW-02 — the `initState` unfocus only fires on
-                      // first mount. When the user pops back from a category,
-                      // Flutter's focus traversal can leave a tile holding
-                      // primary focus, repainting the lime tint as if it were
-                      // "selected". Hook the route future so we can drop
-                      // focus once the home tree has been re-installed after
-                      // pop. Schedule the unfocus on the next frame so it
-                      // runs after Flutter rebuilds the focus tree.
-                      Navigator.of(context)
-                          .push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => CategoryScreen(category: cat),
-                            ),
-                          )
-                          .then((_) {
-                            if (!mounted) return;
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              if (!mounted) return;
-                              FocusManager.instance.primaryFocus?.unfocus();
-                            });
-                          });
-                      },
+                      onTap: () => _openCategory(cat),
                     );
                   },
                 ),
@@ -131,6 +110,36 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  /// Open a category tile. Most categories push the generic [CategoryScreen]
+  /// (a list of ToolEntry routes). The Educational Resources category is the
+  /// exception: its tile is intercepted to push the dedicated
+  /// [EducationalResourcesScreen] directory, because its 52 entries are external
+  /// learning resources with rich detail, not in-app tool routes
+  /// (kEducationalResourcesRoute). All other behavior (the post-pop unfocus that
+  /// closes Vera F-NEW-02) is shared.
+  void _openCategory(ToolCategory cat) {
+    final Route<void> route = cat.id == 'educational-resources'
+        ? MaterialPageRoute<void>(
+            builder: (_) => const EducationalResourcesScreen(),
+          )
+        : MaterialPageRoute<void>(
+            builder: (_) => CategoryScreen(category: cat),
+          );
+
+    // Vera F-NEW-02 — the `initState` unfocus only fires on first mount. When
+    // the user pops back from a category, Flutter's focus traversal can leave a
+    // tile holding primary focus, repainting the lime tint as if it were
+    // "selected". Hook the route future so we can drop focus once the home tree
+    // has been re-installed after pop, on the next frame.
+    Navigator.of(context).push(route).then((_) {
+      if (!mounted) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        FocusManager.instance.primaryFocus?.unfocus();
+      });
+    });
   }
 
   int _crossAxisCountFor(double width) {
