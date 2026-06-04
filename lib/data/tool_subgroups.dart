@@ -37,6 +37,9 @@ const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
     'Capacity & Power',
     'Coordinates & GPS',
     'Conversions',
+    // Batch 4b/4c: standalone field utilities that aren't unit conversions or
+    // RF math (QR Code Generator, DTMF Generator).
+    'Utilities & Generators',
   ],
 };
 

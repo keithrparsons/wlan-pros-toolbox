@@ -187,6 +187,17 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'decimal', 'binary', 'base converter', 'number base', 'hexadecimal',
     'char code',
   ],
+  'unit-converter': <String>[
+    'convert', 'units', 'mbps to mb/s', 'gigabytes', 'gibibytes', 'bytes',
+    'bits', 'watts to dbm', 'celsius fahrenheit', 'data rate', 'storage',
+  ],
+  'qr-generator': <String>[
+    'qr code', 'barcode', 'scan', 'url to qr', 'encode', 'share link',
+  ],
+  'dtmf-generator': <String>[
+    'touch tone', 'dial tone', 'keypad', 'telephone', 'tone generator',
+    'phone tones',
+  ],
   'poe-budget': <String>[
     'power over ethernet', 'watts', 'switch budget', 'pse', 'pd', '802.3bt',
     'power draw',

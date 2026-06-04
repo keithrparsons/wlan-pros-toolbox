@@ -76,6 +76,21 @@ dependencies:
   # GL-008). First-party, lightweight, no API key. BSD-3.
   url_launcher: ^6.3.0
 
+  # pretty_qr_code — renders the QR Code Generator tool (Batch 4b). Pure-Dart;
+  # MIT, depending on `qr` (BSD-3). Chosen over qr_flutter (4.1.0, last touched
+  # 2022) because pretty_qr_code (3.6.0) is the actively maintained option and
+  # exposes a clean per-module / per-background color API — exactly what GL-003
+  # §8.19 needs (dark modules on a white tile, ≥4-module quiet zone, never an
+  # inverted on-brand QR). No network, no platform channel — local computation.
+  pretty_qr_code: ^3.6.0
+
+  # just_audio — plays the generated DTMF tones (Batch 4c). MIT. Chosen for FULL
+  # macOS coverage (sharedDarwinSource: iOS + macOS) plus Android + web, vs a
+  # mobile-only engine. Tones are synthesized to raw PCM/WAV in pure Dart
+  # (lib/data/dtmf.dart) and streamed to just_audio via an in-memory
+  # StreamAudioSource — no temp file, no bundled asset, no network (GL-008).
+  just_audio: ^0.10.5
+
   # flutter_svg — renders the per-tool Tier-2 icons (assets/tool-icons/<id>.svg)
   # and the in-tool concept graphics (assets/tool-graphics/<id>.svg) per GL-003
   # §8.6 / §8.6.1 / §8.6.2. Icons are single-color and runtime-tinted via

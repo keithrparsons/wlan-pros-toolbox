@@ -25,6 +25,9 @@ import '../screens/tools/calculators/link_budget_screen.dart';
 import '../screens/tools/calculators/rain_fade_screen.dart';
 import '../screens/tools/calculators/wavelength_screen.dart';
 import '../screens/tools/calculators/metric_conversion_screen.dart';
+import '../screens/tools/calculators/unit_converter_screen.dart';
+import '../screens/tools/calculators/qr_generator_screen.dart';
+import '../screens/tools/calculators/dtmf_generator_screen.dart';
 import '../screens/tools/calculators/lat_long_screen.dart';
 import '../screens/tools/calculators/dist_bearing_screen.dart';
 import '../screens/tools/calculators/midpoint_screen.dart';
@@ -258,6 +261,14 @@ class AppRouter {
   // const-derived table, all platforms incl. web).
   static const String hexAscii = '/tools/hex-ascii';
 
+  // Batch 4 standalone utilities.
+  //   unit-converter: pure-math general unit converter (all platforms incl.web).
+  //   qr-generator:   local QR render + share (all platforms; share via share_plus).
+  //   dtmf-generator: local audio synthesis + playback via just_audio.
+  static const String unitConverter = '/tools/unit-converter';
+  static const String qrGenerator = '/tools/qr-generator';
+  static const String dtmfGenerator = '/tools/dtmf-generator';
+
   // Command & Capture category — offline command / filter references (const
   // datasets, all platforms incl. web; reference text, never executed).
   static const String cliCommands = '/tools/cli-commands';
@@ -429,6 +440,9 @@ class AppRouter {
           toolId: 'mcs-index-card',
         ),
     hexAscii: (_) => const HexAsciiScreen(),
+    unitConverter: (_) => const UnitConverterScreen(),
+    qrGenerator: (_) => const QrGeneratorScreen(),
+    dtmfGenerator: (_) => const DtmfGeneratorScreen(),
     cliCommands: (_) => const CliCommandsScreen(),
     linuxWlanCommands: (_) => const LinuxWlanCommandsScreen(),
     wiresharkFilters: (_) => const WiresharkFiltersScreen(),
