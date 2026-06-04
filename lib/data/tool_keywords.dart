@@ -291,6 +291,14 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     '7 layers', 'layer 2', 'layer 3', 'tcp ip', 'pdu', 'encapsulation',
     'networking model',
   ],
+  'top-level-domains': <String>[
+    'tld', 'gtld', 'cctld', 'domain', '.com', '.org', '.io', '.ai', 'dns root',
+    'iana', 'sponsored domain', 'new gtld',
+  ],
+  'rj-connectors': <String>[
+    'rj11', 'rj14', 'rj25', 'rj45', 'rj48', '8p8c', '6p2c', 'modular plug',
+    'registered jack', 'phone connector', 'positions conductors',
+  ],
   'ascii-reference': <String>[
     'character codes', 'hex', 'binary', 'octal', 'control codes', 'char table',
   ],

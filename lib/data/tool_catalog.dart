@@ -808,12 +808,33 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Cabling & Connectors',
       ),
+      // RJ Connectors — registered-jack form factors (RJ11/14/25/45/48 etc.):
+      // positions, conductors, typical use. Cross-links to Ethernet Pinout for
+      // T568A/B wiring rather than duplicating it. Batch 5.
+      ToolEntry(
+        id: 'rj-connectors',
+        title: 'RJ Connectors',
+        description: 'RJ11, RJ45 (8P8C), RJ48: positions, conductors, use',
+        routeName: '/tools/rj-connectors',
+        isLive: true,
+        subgroup: 'Cabling & Connectors',
+      ),
       // OSI Model — NEW (Quick Reference, last per the LOCKED map order).
       ToolEntry(
         id: 'osi-model',
         title: 'OSI Model',
         description: '7 layers, PDUs, and hardware',
         routeName: '/tools/osi-model',
+        isLive: true,
+        subgroup: 'Protocols',
+      ),
+      // Top-Level Domains — curated DNS TLD reference grouped by registry type
+      // (gTLD / ccTLD / sponsored / infrastructure / newer gTLDs). Batch 5.
+      ToolEntry(
+        id: 'top-level-domains',
+        title: 'Top-Level Domains',
+        description: 'gTLD, ccTLD, sponsored and infrastructure domains',
+        routeName: '/tools/top-level-domains',
         isLive: true,
         subgroup: 'Protocols',
       ),

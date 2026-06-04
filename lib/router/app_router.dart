@@ -88,6 +88,8 @@ import '../screens/tools/command/cli_commands_screen.dart';
 import '../screens/tools/command/linux_wlan_commands_screen.dart';
 import '../screens/tools/command/wireshark_filters_screen.dart';
 import '../screens/tools/reference/osi_model_screen.dart';
+import '../screens/tools/reference/top_level_domains_screen.dart';
+import '../screens/tools/reference/rj_connectors_screen.dart';
 import '../screens/tools/reference/ascii_reference_screen.dart';
 import '../screens/tools/reference/emoji_reference_screen.dart';
 import '../screens/tools/reference/pdf_reference_screen.dart';
@@ -234,6 +236,8 @@ class AppRouter {
   // platforms incl. web).
   static const String portReference = '/tools/port-reference';
   static const String osiModel = '/tools/osi-model';
+  static const String topLevelDomains = '/tools/top-level-domains';
+  static const String rjConnectors = '/tools/rj-connectors';
   static const String asciiReference = '/tools/ascii-reference';
   static const String emojiReference = '/tools/emoji-reference';
 
@@ -382,6 +386,8 @@ class AppRouter {
     networkDiscovery: (_) => const NetworkDiscoveryScreen(),
     portReference: (_) => const PortReferenceScreen(),
     osiModel: (_) => const OsiModelScreen(),
+    topLevelDomains: (_) => const TopLevelDomainsScreen(),
+    rjConnectors: (_) => const RjConnectorsScreen(),
     asciiReference: (_) => const AsciiReferenceScreen(),
     emojiReference: (_) => const EmojiReferenceScreen(),
     wifiGlossary: (_) => const WifiGlossaryScreen(),
