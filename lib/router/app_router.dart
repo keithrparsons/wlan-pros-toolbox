@@ -68,7 +68,6 @@ import '../screens/tools/network/mac_oui_screen.dart';
 import '../screens/tools/network/network_discovery_screen.dart';
 import '../screens/tools/network/mobile_traceroute_screen.dart';
 import '../screens/tools/network/net_quality_screen.dart';
-import '../screens/tools/network/wifi_vs_internet_screen.dart';
 import '../screens/tools/network/test_my_connection_screen.dart';
 import '../screens/tools/network/packet_sender_screen.dart';
 import '../screens/tools/network/ping_screen.dart';
@@ -188,12 +187,20 @@ class AppRouter {
   static const String icmpPing = '/tools/icmp-ping';
   static const String pingSweep = '/tools/ping-sweep';
   static const String netQuality = '/tools/net-quality';
+
+  /// `/tools/wifi-vs-internet` — kept ALIVE as a redirect to the merged Test My
+  /// Connection screen (Wave 4, Keith 2026-06-04). The pro `wifi-vs-internet`
+  /// tool was absorbed into Test My Connection's expandable technical section,
+  /// but this deep link is preserved so saved references keep working; it opens
+  /// the merged screen in the EXPANDED (technical) state since a pro hitting the
+  /// old route expects the detail view.
   static const String wifiVsInternet = '/tools/wifi-vs-internet';
 
-  /// Test My Connection — the CONSUMER companion to wifi-vs-internet (Keith,
-  /// 2026-06-01). Same backends + verdict engine, plain-English re-skin. The id
-  /// `test-my-connection` is permanent (backs this route, the catalog entry,
-  /// and tests). The pro `wifi-vs-internet` tool is unchanged.
+  /// Test My Connection — the ONE merged connection tool (Wave 4, Keith
+  /// 2026-06-04): consumer answer up top, the pro "Wi-Fi vs Internet" depth one
+  /// tap away, plus a live Wi-Fi-signal sparkline card. The id
+  /// `test-my-connection` is permanent (backs this route, the home hero, and
+  /// tests). The tile was removed from the catalog; the home hero is the entry.
   static const String testMyConnection = '/tools/test-my-connection';
   static const String wifiInfo = '/tools/wifi-info';
   static const String cellularInfo = '/tools/cellular-info';
@@ -324,10 +331,14 @@ class AppRouter {
     // resolver (category_screen.dart) renders it via ToolAssets.hasIcon, so the
     // Icons.bolt fallback no longer triggers for this row.
     netQuality: (_) => const NetQualityScreen(),
-    wifiVsInternet: (_) => const WifiVsInternetScreen(),
+    // Deep-link redirect: the absorbed pro `wifi-vs-internet` route now resolves
+    // to the merged Test My Connection screen, opened in the EXPANDED technical
+    // state (a pro hitting the old route expects the detail view). It does NOT
+    // auto-run — the user taps Check to populate the verdict + technical data.
+    wifiVsInternet: (_) =>
+        const TestMyConnectionScreen(startExpanded: true),
     // `arguments: true` (passed by the home consumer hero) auto-runs the check
-    // on arrival; the plain tool tile pushes without arguments and stays
-    // tap-to-run.
+    // on arrival; a plain push without arguments stays tap-to-run.
     testMyConnection: (ctx) => TestMyConnectionScreen(
       autoStart: ModalRoute.of(ctx)?.settings.arguments == true,
     ),

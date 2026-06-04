@@ -186,25 +186,17 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
     // Home-tile example list (mockup 01/05). Curated headliners; titles match
     // live tools (GL-005). Falls back to first-N tool titles if left empty.
     exampleToolTitles: <String>[
-      'Wi-Fi vs Internet',
-      'Test My Connection',
       'Network Quality',
+      'Wi-Fi Information',
+      'Cellular Information',
     ],
     tools: <ToolEntry>[
-      // Consumer companion to wifi-vs-internet (Keith, 2026-06-01). Same
-      // backends + verdict engine, plain-English re-skin. Audience-distinct
-      // description: the pro wifi-vs-internet entry below reads "for engineers",
-      // this one is the one-tap consumer answer + what to tell support. Pinned
-      // first so the everyday entry point leads the category.
-      ToolEntry(
-        id: 'test-my-connection',
-        title: 'Test My Connection',
-        description:
-            'Find out fast whether a slowdown is your Wi-Fi or your internet, '
-            'and what to tell support',
-        routeName: '/tools/test-my-connection',
-        isLive: true,
-      ),
+      // Wave 4 (Keith, 2026-06-04): the consumer `test-my-connection` and pro
+      // `wifi-vs-internet` tools merged into ONE tool reached via the home hero
+      // card, so BOTH tiles were removed from this category (full catalog
+      // removal — not tiled, not searchable; the home hero is the entry point).
+      // The merged screen still lives at /tools/test-my-connection, and
+      // /tools/wifi-vs-internet redirects to it (deep links keep working).
       ToolEntry(
         id: 'net-quality',
         title: 'Network Quality',
@@ -221,15 +213,6 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'Live Wi-Fi link details: SSID, BSSID, RSSI, noise, SNR, channel, '
             'width, band, standard (macOS)',
         routeName: '/tools/wifi-info',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'wifi-vs-internet',
-        title: 'Wi-Fi vs Internet',
-        description:
-            'Is the slowdown your Wi-Fi link or the internet upstream? '
-            'Compares link rate to measured throughput',
-        routeName: '/tools/wifi-vs-internet',
         isLive: true,
       ),
       ToolEntry(

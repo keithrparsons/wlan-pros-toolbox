@@ -12,15 +12,16 @@ import 'tool_catalog.dart';
 /// moved out of Networking Tools, which is now plain alphabetical).
 const String kPinnedCategoryId = 'test-network';
 
-/// Tool ids pinned to the top of Test Network, in this exact order (Keith's
-/// ordering, 2026-06-01): the consumer one-tap tool first, then the deeper pro
-/// tools — Test My Connection, Network Quality, Wi-Fi Information,
-/// Wi-Fi vs Internet.
+/// Tool ids pinned to the top of Test Network, in this exact order.
+///
+/// Wave 4 (Keith, 2026-06-04): the consumer `test-my-connection` and pro
+/// `wifi-vs-internet` tools MERGED into one tool reached via the home hero card,
+/// so both tiles were removed from this category entirely. The grid now shows
+/// Network Quality first, then Wi-Fi Information (Cellular Information sorts in
+/// alphabetically after the pins).
 const List<String> kTestNetworkPinnedToolIds = <String>[
-  'test-my-connection',
   'net-quality',
   'wifi-info',
-  'wifi-vs-internet',
 ];
 
 /// Display order for a category's tools: alphabetical by title, EXCEPT the

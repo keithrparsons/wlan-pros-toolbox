@@ -1,17 +1,22 @@
-// WifiVsInternetScreen — widget smoke tests.
+// Wi-Fi vs Internet — redirect + absorbed-technical-section tests (Wave 4).
 //
-// Drives the screen through its injection seams (a Wi-Fi source + fake
-// adapter/bridge, a MockQualityClient with no network) so no real platform
-// channel or socket is touched. Covers: renders with the Run button; a full
-// macOS run produces a verdict card + both data sections + the verbatim
-// footnote; the unknown-rate (iOS, no Shortcut payload) path; the web fallback;
-// and a 320px layout with no overflow.
+// The standalone `wifi-vs-internet` screen was merged into Test My Connection on
+// 2026-06-04: its full pro depth moved into the merged screen's expandable
+// "Wi-Fi vs Internet" technical section, and the `/tools/wifi-vs-internet` route
+// now redirects to the merged screen in the EXPANDED state. These tests prove
+// nothing the pro tool showed was lost — the verdict line, both data sub-cards,
+// and the verbatim methodology footnote all survive the merge and render when
+// the merged screen is opened expanded and a check is run.
+//
+// Live sampling is disabled here (enableLiveSampling: false) so no poll timer
+// ticks; the live sparkline card is covered in test_my_connection_screen_test.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:net_quality/net_quality.dart';
+import 'package:wlan_pros_toolbox/router/app_router.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/network_unavailable_view.dart';
-import 'package:wlan_pros_toolbox/screens/tools/network/wifi_vs_internet_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/network/test_my_connection_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
@@ -40,23 +45,16 @@ ConnectedAp _macSample() => ConnectedAp.fromWifiInfo(
 );
 
 class _FakeMacAdapter implements WifiInfoAdapter {
-  _FakeMacAdapter();
-
   @override
   String get platformLabel => 'macOS CoreWLAN';
-
   @override
   bool get gatesNameBehindPermission => true;
-
   @override
   Future<ConnectedAp> fetch() async => _macSample();
-
   @override
   Future<bool> requestNamePermission() async => true;
-
   @override
   Future<bool> currentNameAuthorization() async => true;
-
   @override
   Future<bool> openNamePermissionSettings() async => true;
 }
@@ -80,40 +78,8 @@ class _NoPayloadBridge implements WiFiDetailsBridge {
   Stream<WiFiDetails> get updates => const Stream<WiFiDetails>.empty();
 }
 
-/// A [QualityClient] that counts how many times [measure] is subscribed,
-/// proving the AppBar Refresh re-runs the SAME check (it re-invokes the screen's
-/// one [_run] handler, which re-subscribes this client). A small first-event
-/// delay keeps the in-progress state observable across a finite pump; no
-/// network I/O.
-class _CountingQualityClient implements QualityClient {
-  _CountingQualityClient(this.scriptedResult);
-
-  final QualityResult scriptedResult;
-  QualityResult? _lastResult;
-
-  /// Number of times the screen has started a run against this client.
-  int measureCount = 0;
-
-  @override
-  bool get isAvailable => true;
-
-  @override
-  QualityResult? get lastResult => _lastResult;
-
-  @override
-  Stream<QualityProgress> measure() async* {
-    measureCount++;
-    await Future<void>.delayed(const Duration(milliseconds: 100));
-    yield const QualityProgress(QualityPhase.latency, 0.25);
-    yield const QualityProgress(QualityPhase.download, 0.5);
-    yield const QualityProgress(QualityPhase.upload, 0.75);
-    _lastResult = scriptedResult;
-    yield const QualityProgress(QualityPhase.complete, 1.0);
-  }
-}
-
-/// A net_quality result graded marginal so a finite link produces a
-/// localizing verdict rather than the grade-gated "Both healthy".
+/// A net_quality result graded marginal so a finite link produces a localizing
+/// verdict rather than the grade-gated "Both healthy".
 QualityResult _marginalInternet() => QualityResult(
   source: QualitySource.mock,
   measuredAt: DateTime.utc(2026, 1, 1),
@@ -172,27 +138,27 @@ void main() {
     ),
   );
 
-  testWidgets('renders the intro card with a Run Check button', (tester) async {
-    await tester.pumpWidget(
-      host(
-        WifiVsInternetScreen(
-          sourceOverride: WifiInfoSource.macosCoreWlan,
-          macAdapter: _FakeMacAdapter(),
-          qualityClient: MockQualityClient(scriptedResult: _marginalInternet()),
-        ),
-      ),
-    );
+  Future<void> runCheck(WidgetTester tester) async {
     await tester.pumpAndSettle();
-    expect(find.text('Run Check'), findsOneWidget);
-    expect(find.text('Wi-Fi vs Internet'), findsOneWidget);
+    await tester.tap(find.text('Check My Connection'));
+    await tester.pumpAndSettle();
+  }
+
+  test('the /tools/wifi-vs-internet route is preserved as a redirect', () {
+    // The deep link survives the merge — a saved reference still resolves.
+    expect(AppRouter.routes.containsKey(AppRouter.wifiVsInternet), isTrue);
+    expect(AppRouter.wifiVsInternet, '/tools/wifi-vs-internet');
   });
 
   testWidgets(
-    'a full run renders the verdict card, both sections, and footnote',
+    'opened expanded, a full macOS run reveals the absorbed "Wi-Fi vs Internet" '
+    'section: verdict line, both sub-cards, and the verbatim footnote',
     (tester) async {
       await tester.pumpWidget(
         host(
-          WifiVsInternetScreen(
+          TestMyConnectionScreen(
+            startExpanded: true,
+            enableLiveSampling: false,
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: _FakeMacAdapter(),
             qualityClient: MockQualityClient(
@@ -201,15 +167,16 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Run Check'));
-      await tester.pumpAndSettle();
+      await runCheck(tester);
 
-      // Verdict: macOS Tx-only 866 → usable 476.3; marginal internet avg 40 →
-      // ratio ≈ 0.084 → upstream.
+      // The named concept survives the merge as the section heading.
+      expect(find.text('Wi-Fi vs Internet'), findsOneWidget);
+
+      // The pro verdict line: macOS Tx-only 866 → usable 476.3; marginal
+      // internet avg 40 → ratio ≈ 0.084 → upstream.
       expect(find.text("It's upstream — not your Wi-Fi"), findsOneWidget);
 
-      // Both data sections render.
+      // Both data sub-cards render.
       expect(find.text('Your Wi-Fi link'), findsOneWidget);
       expect(find.text('Your internet'), findsOneWidget);
 
@@ -221,83 +188,87 @@ void main() {
     },
   );
 
-  testWidgets('iOS with no Shortcut payload takes the unknown-rate path', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      host(
-        WifiVsInternetScreen(
-          sourceOverride: WifiInfoSource.iosShortcuts,
-          iosBridge: _NoPayloadBridge(),
-          qualityClient: MockQualityClient(scriptedResult: _marginalInternet()),
+  testWidgets(
+    'collapsed by default, the technical section is hidden until expanded',
+    (tester) async {
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: false,
+            sourceOverride: WifiInfoSource.macosCoreWlan,
+            macAdapter: _FakeMacAdapter(),
+            qualityClient: MockQualityClient(
+              scriptedResult: _marginalInternet(),
+            ),
+          ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Run Check'));
-    await tester.pumpAndSettle();
-    expect(find.text('Wi-Fi link not measured'), findsOneWidget);
-  });
+      );
+      await runCheck(tester);
+
+      // The expander row is present, the absorbed depth is NOT until tapped.
+      expect(find.text('Show technical details'), findsOneWidget);
+      expect(find.text('Your Wi-Fi link'), findsNothing);
+      expect(find.text(kWifiVsInternetFootnote), findsNothing);
+
+      // Expand → the pro depth appears (scroll the row into view first; the
+      // default test surface is shorter than the scroll body).
+      final Finder expander = find.text('Show technical details');
+      await tester.ensureVisible(expander);
+      await tester.pumpAndSettle();
+      await tester.tap(expander);
+      await tester.pumpAndSettle();
+      expect(find.text('Your Wi-Fi link'), findsOneWidget);
+      expect(find.text('Your internet'), findsOneWidget);
+      expect(find.text(kWifiVsInternetFootnote), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'iOS with no Shortcut payload still computes (link unknown → Couldn\'t check)',
+    (tester) async {
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            startExpanded: true,
+            enableLiveSampling: false,
+            sourceOverride: WifiInfoSource.iosShortcuts,
+            iosBridge: _NoPayloadBridge(),
+            qualityClient: MockQualityClient(
+              scriptedResult: _marginalInternet(),
+            ),
+          ),
+        ),
+      );
+      await runCheck(tester);
+
+      // Link unread → the Wi-Fi axis honestly reports "Couldn't check", and the
+      // absorbed technical verdict line shows the engine's wifiUnknown headline.
+      expect(find.text("Couldn't check"), findsWidgets);
+      expect(find.text('Wi-Fi link not measured'), findsOneWidget);
+    },
+  );
 
   testWidgets('web source shows the download-the-app fallback', (tester) async {
     await tester.pumpWidget(
-      host(const WifiVsInternetScreen(sourceOverride: WifiInfoSource.web)),
+      host(
+        const TestMyConnectionScreen(
+          enableLiveSampling: false,
+          sourceOverride: WifiInfoSource.web,
+        ),
+      ),
     );
     await tester.pumpAndSettle();
     expect(find.byType(NetworkUnavailableView), findsOneWidget);
   });
 
-  testWidgets(
-    'AppBar Refresh re-runs the same check and is disabled while running',
-    (tester) async {
-      final _CountingQualityClient quality =
-          _CountingQualityClient(_marginalInternet());
-      await tester.pumpWidget(
-        host(
-          WifiVsInternetScreen(
-            sourceOverride: WifiInfoSource.macosCoreWlan,
-            macAdapter: _FakeMacAdapter(),
-            qualityClient: quality,
-          ),
-        ),
-      );
-
-      // No Refresh before the first verdict — the in-card Run button is the
-      // first-run affordance.
-      await tester.pumpAndSettle();
-      expect(find.byIcon(Icons.refresh), findsNothing);
-
-      // First run via the in-card button.
-      await tester.tap(find.text('Run Check'));
-      await tester.pumpAndSettle();
-      expect(quality.measureCount, 1);
-
-      // Refresh now appears in the AppBar with the §a11y label.
-      expect(find.byIcon(Icons.refresh), findsOneWidget);
-      expect(find.bySemanticsLabel('Run the test again'), findsOneWidget);
-
-      // Tap Refresh: a single pump lands on the in-progress state — the refresh
-      // IconButton is gone (swapped for the spinner) so the check can't be
-      // double-fired, and the second run has begun.
-      await tester.tap(find.byIcon(Icons.refresh));
-      await tester.pump();
-      expect(find.byIcon(Icons.refresh), findsNothing);
-      expect(find.byType(CircularProgressIndicator), findsWidgets);
-
-      // The re-run settles back to a verdict and the Refresh control restores.
-      await tester.pumpAndSettle();
-      expect(quality.measureCount, 2);
-      expect(find.byIcon(Icons.refresh), findsOneWidget);
-      expect(find.text('Your Wi-Fi link'), findsOneWidget);
-    },
-  );
-
-  testWidgets('no RenderFlex overflow at 320px after a full run', (
+  testWidgets('no RenderFlex overflow at 320px after a full expanded run', (
     tester,
   ) async {
     await tester.pumpWidget(
       host(
-        WifiVsInternetScreen(
+        TestMyConnectionScreen(
+          startExpanded: true,
+          enableLiveSampling: false,
           sourceOverride: WifiInfoSource.macosCoreWlan,
           macAdapter: _FakeMacAdapter(),
           qualityClient: MockQualityClient(scriptedResult: _marginalInternet()),
@@ -305,11 +276,7 @@ void main() {
         size: const Size(320, 700),
       ),
     );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Run Check'));
-    await tester.pumpAndSettle();
-    // tester.takeException() returns the overflow assertion if any RenderFlex
-    // overflowed during layout at 320px.
+    await runCheck(tester);
     expect(tester.takeException(), isNull);
   });
 }

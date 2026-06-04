@@ -1,24 +1,23 @@
-// TestMyConnectionScreen — widget tests for the reworked results.
+// TestMyConnectionScreen — widget tests for the merged Wave 4 tool.
 //
 // Drives the screen through its injection seams (a Wi-Fi source + fake
-// adapter/bridge, a MockQualityClient with no network) so no real platform
-// channel or socket is touched. Covers:
-//   * the removed "Likely cause" fact and the removed "call support" header no
-//     longer render;
-//   * the explanatory verdict conclusion sentence is gone — only the
-//     "Wi-Fi:" / "Internet:" status chips carry the verdict;
-//   * internet speed renders as two separate labeled rows ("Internet Down" /
-//     "Internet Up"), never the old combined "332 Mbps down / 60 Mbps up"
-//     string that wrapped mid-value;
-//   * the new "Wi-Fi details" section renders RSSI / SNR, Wi-Fi Down, Wi-Fi Up;
-//   * the copy-able details text carries internet down/up on separate labeled
-//     lines and the four Wi-Fi values (iOS payload present → real values;
-//     macOS Rx not exposed → "Wi-Fi Down: Unavailable", never fabricated, per
-//     GL-005 / GL-008).
+// adapter/bridge, a MockQualityClient with no network, live sampling disabled)
+// so no real platform channel, socket, or poll timer is touched. Covers the
+// merged layout:
+//   * the verdict header carries the consumer headline + the two side-by-side
+//     "Wi-Fi:" / "Internet:" status chips (Item B), no prose conclusion;
+//   * the core comparison card shows the usable-Wi-Fi vs internet bars;
+//   * the "What to tell support" help-desk card shows Internet Down / Internet
+//     Up on separate labeled rows (never the old combined mid-value string);
+//   * the removed "A few things to try" card no longer renders;
+//   * the copy-able details text carries the two-axis line, internet down/up on
+//     separate labeled lines, and the four Wi-Fi values (iOS payload → real
+//     values; macOS Rx not exposed → "Wi-Fi Down: Unavailable", per GL-005);
+//   * the AppBar Refresh re-runs the same check;
+//   * a hung macOS link read can never hang the check.
 //
-// The copy text is intercepted at the Clipboard platform-channel boundary
-// (Clipboard.setData → SystemChannels.platform) so the test asserts the EXACT
-// payload the user would paste, not a re-derivation of it.
+// The copy text is intercepted at the Clipboard platform-channel boundary so the
+// test asserts the EXACT payload the user would paste.
 
 import 'dart:async';
 
@@ -55,8 +54,7 @@ ConnectedAp _macSample() => ConnectedAp.fromWifiInfo(
   ),
 );
 
-/// macOS sample with the NAME gated off (Location not authorized): SSID/BSSID
-/// null, RF metrics still present. Mirrors a real unauthorized snapshot.
+/// macOS sample with the NAME gated off (Location not authorized).
 ConnectedAp _macSampleNoName() => ConnectedAp.fromWifiInfo(
   WifiInfo(
     interfaceName: 'en0',
@@ -77,9 +75,6 @@ ConnectedAp _macSampleNoName() => ConnectedAp.fromWifiInfo(
   ),
 );
 
-/// A macOS adapter whose snapshot has no name (Location off) and whose
-/// no-prompt status check reports unauthorized — used to assert TMC labels the
-/// name honestly as "(Location access off)" WITHOUT ever prompting.
 class _NoNameMacAdapter implements WifiInfoAdapter {
   bool promptRequested = false;
 
@@ -102,8 +97,6 @@ class _NoNameMacAdapter implements WifiInfoAdapter {
 }
 
 class _FakeMacAdapter implements WifiInfoAdapter {
-  /// Set true if the screen ever calls the INTERACTIVE prompt path. A
-  /// connection check must NEVER prompt, so the tests assert this stays false.
   bool promptRequested = false;
 
   @override
@@ -125,13 +118,8 @@ class _FakeMacAdapter implements WifiInfoAdapter {
 }
 
 /// A macOS adapter whose SNAPSHOT READ never resolves — models the production
-/// hang (stalled CoreWLAN channel that never returns). TMC no longer prompts
-/// for Location (the no-prompt status check resolves immediately), so the path
-/// that can still stall is the snapshot fetch. The real adapter bounds fetch at
-/// the service layer; this fake bypasses that bound so the test exercises the
-/// screen's own safety net (the 8s guard on the link future). The check must
-/// still complete with the link unread (ap = null → "Couldn't check"), never
-/// hang. It also asserts the interactive prompt is never called.
+/// hang. The check must still complete with the link unread (ap = null →
+/// "Couldn't check"), never hang, and never call the interactive prompt.
 class _HangingMacAdapter implements WifiInfoAdapter {
   @override
   String get platformLabel => 'macOS CoreWLAN';
@@ -176,17 +164,13 @@ class _PayloadBridge implements WiFiDetailsBridge {
   Stream<WiFiDetails> get updates => const Stream<WiFiDetails>.empty();
 }
 
-/// A [QualityClient] that counts how many times [measure] is subscribed,
-/// proving the AppBar Refresh re-runs the SAME check (it re-invokes the screen's
-/// one [_run] handler, which re-subscribes this client). Emits the same fixed
-/// progress sequence as [MockQualityClient]; no network I/O.
+/// A [QualityClient] that counts how many times [measure] is subscribed.
 class _CountingQualityClient implements QualityClient {
   _CountingQualityClient(this.scriptedResult);
 
   final QualityResult scriptedResult;
   QualityResult? _lastResult;
 
-  /// Number of times the screen has started a run against this client.
   int measureCount = 0;
 
   @override
@@ -198,10 +182,6 @@ class _CountingQualityClient implements QualityClient {
   @override
   Stream<QualityProgress> measure() async* {
     measureCount++;
-    // A small delay on the first event keeps the in-progress state observable
-    // across a finite-duration pump (the production engine is not instant); the
-    // bare MockQualityClient drains in one microtask, which would make the
-    // running state un-catchable.
     await Future<void>.delayed(const Duration(milliseconds: 100));
     yield const QualityProgress(QualityPhase.latency, 0.25);
     yield const QualityProgress(QualityPhase.download, 0.5);
@@ -257,7 +237,6 @@ void main() {
     ),
   );
 
-  // Captures the last Clipboard.setData payload the screen writes.
   late List<String> clipboardWrites;
 
   setUp(() {
@@ -284,11 +263,13 @@ void main() {
   }
 
   testWidgets(
-    'result drops the "Likely cause" fact and the "call support" header',
+    'verdict header shows the two side-by-side status chips, no prose sentence, '
+    'and no "A few things to try" card',
     (tester) async {
       await tester.pumpWidget(
         host(
           TestMyConnectionScreen(
+            enableLiveSampling: false,
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _PayloadBridge(),
             qualityClient: MockQualityClient(
@@ -299,36 +280,14 @@ void main() {
       );
       await runCheck(tester);
 
-      expect(find.text('Likely cause'), findsNothing);
-      expect(
-        find.text('If you need to call support, here’s what to tell them.'),
-        findsNothing,
-      );
-    },
-  );
-
-  testWidgets(
-    'verdict shows only the Wi-Fi / Internet status chips, no prose sentence',
-    (tester) async {
-      await tester.pumpWidget(
-        host(
-          TestMyConnectionScreen(
-            sourceOverride: WifiInfoSource.iosShortcuts,
-            iosBridge: _PayloadBridge(),
-            qualityClient: MockQualityClient(
-              scriptedResult: _marginalInternet(),
-            ),
-          ),
-        ),
-      );
-      await runCheck(tester);
-
-      // The status chips remain — each axis still carries its own word.
+      // Both labeled chips remain — each axis carries its own word (Item B).
       expect(find.text('Wi-Fi:'), findsOneWidget);
       expect(find.text('Internet:'), findsOneWidget);
 
-      // The explanatory conclusion sentences are GONE for every outcome the
-      // marginal-internet path can produce (A / mostly-Wi-Fi / internet).
+      // The removed self-help card is gone.
+      expect(find.text('A few things to try'), findsNothing);
+
+      // The explanatory conclusion sentences are GONE for every outcome.
       expect(
         find.textContaining('The slow part is between your device'),
         findsNothing,
@@ -337,24 +296,16 @@ void main() {
         find.textContaining('Both your Wi-Fi and your internet are a little'),
         findsNothing,
       );
-      expect(
-        find.textContaining('the internet coming into your'),
-        findsNothing,
-      );
-      expect(
-        find.textContaining('both working well'),
-        findsNothing,
-      );
     },
   );
 
   testWidgets(
-    'internet speed renders as two separate "Internet Down" / "Internet Up" '
-    'rows (no combined mid-value string)',
+    'core comparison card shows the usable-Wi-Fi and internet bars',
     (tester) async {
       await tester.pumpWidget(
         host(
           TestMyConnectionScreen(
+            enableLiveSampling: false,
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _PayloadBridge(),
             qualityClient: MockQualityClient(
@@ -365,48 +316,47 @@ void main() {
       );
       await runCheck(tester);
 
-      // Two separate labeled rows, parallel to the Wi-Fi Down / Wi-Fi Up rows.
-      expect(find.text('Internet Down'), findsOneWidget);
-      expect(find.text('Internet Up'), findsOneWidget);
-      // download 60, upload 20 from _marginalInternet().
-      expect(find.text('60 Mbps'), findsOneWidget);
-      expect(find.text('20 Mbps'), findsOneWidget);
-      // The old combined string must be gone.
-      expect(find.textContaining(' down / '), findsNothing);
-      expect(find.text('Internet speed'), findsNothing);
+      expect(find.text('Wi-Fi usable capacity'), findsOneWidget);
+      expect(find.text('Internet throughput'), findsOneWidget);
     },
   );
 
-  testWidgets('result renders the new "Wi-Fi details" section (iOS payload)', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      host(
-        TestMyConnectionScreen(
-          sourceOverride: WifiInfoSource.iosShortcuts,
-          iosBridge: _PayloadBridge(),
-          qualityClient: MockQualityClient(scriptedResult: _marginalInternet()),
-        ),
-      ),
-    );
-    await runCheck(tester);
-
-    expect(find.text('Wi-Fi details'), findsOneWidget);
-    // RSSI / SNR row: rssi -58, snr = -58 − (-90) = 32.
-    expect(find.text('-58 dBm / 32 dB'), findsOneWidget);
-    // Wi-Fi Down (avg Rx) and Wi-Fi Up (avg Tx) labels + values.
-    expect(find.text('Wi-Fi Down'), findsOneWidget);
-    expect(find.text('Wi-Fi Up'), findsOneWidget);
-    expect(find.text('780 Mbps'), findsOneWidget);
-    expect(find.text('866 Mbps'), findsOneWidget);
-  });
-
   testWidgets(
-    'copy text includes the four Wi-Fi values and drops "Likely cause" (iOS)',
+    '"What to tell support" shows Internet Down / Internet Up on separate rows',
     (tester) async {
       await tester.pumpWidget(
         host(
           TestMyConnectionScreen(
+            enableLiveSampling: false,
+            sourceOverride: WifiInfoSource.iosShortcuts,
+            iosBridge: _PayloadBridge(),
+            qualityClient: MockQualityClient(
+              scriptedResult: _marginalInternet(),
+            ),
+          ),
+        ),
+      );
+      await runCheck(tester);
+
+      expect(find.text('What to tell support'), findsOneWidget);
+      expect(find.text('Internet Down'), findsOneWidget);
+      expect(find.text('Internet Up'), findsOneWidget);
+      // download 60, upload 20 from _marginalInternet() (one each in facts).
+      expect(find.text('60 Mbps'), findsOneWidget);
+      expect(find.text('20 Mbps'), findsOneWidget);
+      // The old combined string must be gone.
+      expect(find.textContaining(' down / '), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'copy text carries the two-axis line, internet down/up rows, and the four '
+    'Wi-Fi values (iOS payload)',
+    (tester) async {
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: false,
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _PayloadBridge(),
             qualityClient: MockQualityClient(
@@ -425,7 +375,8 @@ void main() {
 
       expect(clipboardWrites, isNotEmpty);
       final String copied = clipboardWrites.last;
-      // Internet down/up on their own labeled lines — one value per line.
+      expect(copied, contains('Wi-Fi: '));
+      expect(copied, contains('Internet: '));
       expect(copied, contains('Internet Down: 60 Mbps'));
       expect(copied, contains('Internet Up: 20 Mbps'));
       expect(copied, isNot(contains(' down / ')));
@@ -433,19 +384,18 @@ void main() {
       expect(copied, contains('SNR: 32 dB'));
       expect(copied, contains('Wi-Fi Down: 780 Mbps'));
       expect(copied, contains('Wi-Fi Up: 866 Mbps'));
-      expect(copied, isNot(contains('Likely cause')));
 
-      // Let the 1.5s "Copied" revert timer fire so none is left pending.
       await tester.pump(const Duration(milliseconds: 1600));
     },
   );
 
   testWidgets(
-    'macOS Rx not exposed → "Wi-Fi Down: Unavailable" on screen and in copy',
+    'macOS Rx not exposed → "Wi-Fi Down: Unavailable" in the copy payload',
     (tester) async {
       await tester.pumpWidget(
         host(
           TestMyConnectionScreen(
+            enableLiveSampling: false,
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: _FakeMacAdapter(),
             qualityClient: MockQualityClient(
@@ -455,11 +405,6 @@ void main() {
         ),
       );
       await runCheck(tester);
-
-      // On screen: Rx is "Unavailable", Tx (866) and RSSI/SNR are real.
-      expect(find.text('Unavailable'), findsOneWidget);
-      expect(find.text('-50 dBm / 45 dB'), findsOneWidget);
-      expect(find.text('866 Mbps'), findsOneWidget);
 
       final Finder copyBtn = find.text('Copy these details');
       await tester.ensureVisible(copyBtn);
@@ -473,7 +418,6 @@ void main() {
       expect(copied, contains('Wi-Fi Down: Unavailable'));
       expect(copied, contains('Wi-Fi Up: 866 Mbps'));
 
-      // Let the 1.5s "Copied" revert timer fire so none is left pending.
       await tester.pump(const Duration(milliseconds: 1600));
     },
   );
@@ -485,6 +429,7 @@ void main() {
       await tester.pumpWidget(
         host(
           TestMyConnectionScreen(
+            enableLiveSampling: false,
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: adapter,
             qualityClient: MockQualityClient(
@@ -495,9 +440,7 @@ void main() {
       );
       await runCheck(tester);
 
-      // The interactive prompt path was never invoked during the check.
       expect(adapter.promptRequested, isFalse);
-      // The check still produced a real Wi-Fi verdict from the link rate.
       expect(find.text('Wi-Fi:'), findsOneWidget);
 
       await tester.pump(const Duration(milliseconds: 1600));
@@ -511,6 +454,7 @@ void main() {
       await tester.pumpWidget(
         host(
           TestMyConnectionScreen(
+            enableLiveSampling: false,
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: adapter,
             qualityClient: MockQualityClient(
@@ -521,20 +465,10 @@ void main() {
       );
       await runCheck(tester);
 
-      // Consumer flow: a missing network NAME (macOS Location off) must NOT
-      // surface a technical "enable Location Services" error — the name is
-      // cosmetic, so the row is OMITTED entirely and the check still reads as a
-      // healthy result. No prompt is surfaced either.
       expect(adapter.promptRequested, isFalse);
-      expect(
-        find.text('Unavailable (enable Location Services to show the name)'),
-        findsNothing,
-      );
       expect(find.textContaining('Location Services'), findsNothing);
       expect(find.textContaining('Location access'), findsNothing);
-      // The cosmetic network-name row is simply not shown.
       expect(find.text('Wi-Fi network'), findsNothing);
-      // The check still produced a real verdict from the link rate.
       expect(find.text('Wi-Fi:'), findsOneWidget);
 
       await tester.pump(const Duration(milliseconds: 1600));
@@ -549,6 +483,7 @@ void main() {
       await tester.pumpWidget(
         host(
           TestMyConnectionScreen(
+            enableLiveSampling: false,
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _PayloadBridge(),
             qualityClient: quality,
@@ -556,28 +491,21 @@ void main() {
         ),
       );
 
-      // No Refresh before the first result — the big button is the affordance.
       await tester.pumpAndSettle();
       expect(find.byIcon(Icons.refresh), findsNothing);
 
-      // First run via the big button.
       await tester.tap(find.text('Check My Connection'));
       await tester.pumpAndSettle();
       expect(quality.measureCount, 1);
 
-      // Refresh now appears in the AppBar with the §a11y label.
       expect(find.byIcon(Icons.refresh), findsOneWidget);
       expect(find.bySemanticsLabel('Run the test again'), findsOneWidget);
 
-      // Tap Refresh: a single pump lands on the in-progress state — the
-      // refresh IconButton is gone (swapped for the spinner) so the test can
-      // not be double-fired, and the second run has begun.
       await tester.tap(find.byIcon(Icons.refresh));
       await tester.pump();
       expect(find.byIcon(Icons.refresh), findsNothing);
       expect(find.byType(CircularProgressIndicator), findsWidgets);
 
-      // The re-run settles back to a result and the Refresh control restores.
       await tester.pumpAndSettle();
       expect(quality.measureCount, 2);
       expect(find.byIcon(Icons.refresh), findsOneWidget);
@@ -592,6 +520,7 @@ void main() {
       await tester.pumpWidget(
         host(
           TestMyConnectionScreen(
+            enableLiveSampling: false,
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: _HangingMacAdapter(),
             qualityClient: MockQualityClient(
@@ -603,19 +532,12 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Check My Connection'));
 
-      // The internet measurement drains, onDone fires, and the link future is
-      // still pending (the snapshot read never resolves). Advance fake time
-      // past the screen's 8s safety net so `await linkFuture.timeout(8s)` yields
-      // null and the verdict computes on the internet-only path.
       await tester.pump(const Duration(seconds: 9));
       await tester.pumpAndSettle();
 
-      // The verdict landed — the check did NOT hang.
       expect(find.text('Wi-Fi:'), findsOneWidget);
       expect(find.text('Internet:'), findsOneWidget);
-      // Link unread → the Wi-Fi axis honestly reports "Couldn't check".
       expect(find.text("Couldn't check"), findsWidgets);
-      // The internet result it DID measure is still shown.
       expect(find.text('Internet Down'), findsOneWidget);
       expect(find.text('60 Mbps'), findsOneWidget);
     },

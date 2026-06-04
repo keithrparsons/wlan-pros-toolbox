@@ -79,8 +79,9 @@ void main() {
       final List<ToolSection> sections = groupedCategoryTools(cat('test-network'));
       expect(sections, hasLength(1));
       expect(sections.single.header, isEmpty);
-      // The flat path preserves the pin order: Test My Connection leads.
-      expect(sections.single.tools.first.id, 'test-my-connection');
+      // The flat path preserves the pin order. Wave 4 (2026-06-04): the merged
+      // connection tile was removed from the catalog, so Network Quality leads.
+      expect(sections.single.tools.first.id, 'net-quality');
     });
 
     test('networking returns a single unnamed section', () {

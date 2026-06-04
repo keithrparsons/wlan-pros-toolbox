@@ -1,10 +1,11 @@
 // Unit tests for orderedCategoryTools — the per-category display ordering.
 //
-// Rule (since the 2026-06-01 reorganization): every category lists its tools
-// alphabetically by title, EXCEPT Test Network, which pins Test My Connection,
-// Network Quality, Wi-Fi Information, then Wi-Fi vs Internet to the top and
-// sorts any remainder alphabetically. Networking Tools is now plain
-// alphabetical like the rest.
+// Rule (Wave 4, 2026-06-04): every category lists its tools alphabetically by
+// title, EXCEPT Test Network, which pins Network Quality then Wi-Fi Information
+// to the top and sorts any remainder (e.g. Cellular Information) alphabetically.
+// The merged Test My Connection / Wi-Fi vs Internet tile was removed from the
+// catalog entirely (reached via the home hero card), so neither id pins here.
+// Networking Tools is plain alphabetical like the rest.
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
@@ -26,18 +27,21 @@ void main() {
       }
     });
 
-    test('Test Network pins Test My Connection, Network Quality, Wi-Fi '
-        'Information, Wi-Fi vs Internet, then rest A-Z', () {
+    test('Test Network pins Network Quality, Wi-Fi Information, then rest A-Z', () {
       final ToolCategory net = kToolCategories.firstWhere(
         (ToolCategory c) => c.id == 'test-network',
       );
       final List<ToolEntry> ordered = orderedCategoryTools(net);
 
-      // The pinned ids lead, in Keith's specified order (2026-06-01).
-      expect(ordered[0].id, 'test-my-connection');
-      expect(ordered[1].id, 'net-quality');
-      expect(ordered[2].id, 'wifi-info');
-      expect(ordered[3].id, 'wifi-vs-internet');
+      // The pinned ids lead (Wave 4, 2026-06-04). The merged connection tile is
+      // gone from the catalog, so net-quality + wifi-info are the only pins.
+      expect(ordered[0].id, 'net-quality');
+      expect(ordered[1].id, 'wifi-info');
+
+      // Neither merged-away id appears in the category at all.
+      final Set<String> ids = ordered.map((ToolEntry t) => t.id).toSet();
+      expect(ids.contains('test-my-connection'), isFalse);
+      expect(ids.contains('wifi-vs-internet'), isFalse);
 
       // The remainder (everything after the pins) is alphabetical and
       // contains none of the pinned ids.

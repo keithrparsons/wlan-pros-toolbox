@@ -129,8 +129,10 @@ void main() {
     expect(find.byType(SectionHeader), findsNothing);
 
     // The grouping helper still returns the pinned order for the flat path.
+    // Wave 4 (2026-06-04): the merged connection tile was removed from the
+    // catalog (reached via the home hero), so Network Quality leads the pins.
     final List<ToolSection> sections = groupedCategoryTools(_cat('test-network'));
     expect(sections, hasLength(1));
-    expect(sections.single.tools.first.id, 'test-my-connection');
+    expect(sections.single.tools.first.id, 'net-quality');
   });
 }

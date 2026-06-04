@@ -32,10 +32,10 @@
 /// Tool id → extra search keywords. See file header for the contract.
 const Map<String, List<String>> kToolKeywords = <String, List<String>>{
   // ───────────────────────── Test Network ────────────────────────
-  'test-my-connection': <String>[
-    'speed test', 'slow', 'is it my wifi', 'isp', 'support', 'consumer',
-    'troubleshoot',
-  ],
+  // Wave 4 (2026-06-04): `test-my-connection` and `wifi-vs-internet` merged into
+  // one tool reached via the home hero card. Both were removed from the catalog
+  // (not tiled, not searchable per Keith), so their keyword entries are gone too
+  // — a keyword fold only reads ids that exist in the catalog.
   'net-quality': <String>[
     'speed test', 'bufferbloat', 'responsiveness', 'lag', 'ping',
     'packet loss', 'quality',
@@ -43,10 +43,6 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
   'wifi-info': <String>[
     'rssi', 'bssid', 'ssid', 'snr', 'noise', 'phy', 'mcs', 'link rate',
     'signal', 'connected ap', 'wlan',
-  ],
-  'wifi-vs-internet': <String>[
-    'speed test', 'slow', 'is it my wifi', 'isp', 'upstream', 'throughput',
-    'bottleneck',
   ],
   'cellular-info': <String>[
     'lte', '5g', 'carrier', 'signal bars', 'mobile', 'sim', 'roaming',

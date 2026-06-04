@@ -1,43 +1,31 @@
-// Test My Connection — the consumer companion to the pro `wifi-vs-internet`
-// tool. Same backends, same verdict engine, plain-English re-skin.
+// Test My Connection — the ONE merged connection tool (Wave 4, 2026-06-04).
 //
-// It answers ONE question for a non-technical person — is this my Wi-Fi or my
-// internet? — gives the handful of facts a help desk will ask for, and lists a
-// few safe, FCC-sourced things to try. The pro tool does not change; this is a
-// presentation layer over engines that already ship.
+// Progressive disclosure: it leads with the plain consumer answer (is this my
+// Wi-Fi or my internet?), tucks the full pro "Wi-Fi vs Internet" depth one tap
+// away, and runs a live "Wi-Fi signal" sparkline card so the tool doubles as a
+// walk-around instrument. It replaces BOTH former screens — the consumer
+// `test-my-connection` and the pro `wifi-vs-internet` — so nothing the pro tool
+// showed is lost; it moves into the expandable technical section.
 //
-// REUSE (zero new measurement code):
-//   * the connected-AP link read — the SAME per-platform path the pro screen
-//     uses (WifiInfoSourceResolver → MacWifiInfoAdapter on macOS / the
-//     WiFiDetailsBridge → ConnectedAp.fromWifiDetails on iOS);
-//   * a net_quality FULL run via the QualityClient seam (Keith's decision 2 —
-//     no trimmed engine in v1);
-//   * the same `_compute()` / `_internetHealth()` glue the pro screen carries,
-//     lifted wholesale; then
-//   * [ConsumerVerdictMapper] translates the engine's 5 enums → 4 consumer
-//     outcomes (the only new "brain", pure-Dart + unit-tested).
+// REUSE (zero new measurement / verdict / sampling code):
+//   * the connected-AP link read — the SAME per-platform path wifi-info uses
+//     (MacWifiInfoAdapter on macOS / WiFiDetailsBridge on iOS);
+//   * a net_quality FULL run via the QualityClient seam;
+//   * the duplicated engine glue, now in ONE shared [ConnectionCheck] service;
+//   * [ConsumerVerdictMapper] as the consumer "brain" (untouched);
+//   * the live RF feed + sparklines via the shared [WifiSignalSampler] (the same
+//     MacWifiInfoAdapter poll / WifiMonitorController stream wifi-info ships),
+//     windowed to 30s for this tool; rendered with the shared [Sparkline].
 //
 // HONESTY (GL-005 / GL-008): a Wi-Fi link the platform cannot read (wired, or
-// iOS without the companion Shortcut) lands on Outcome D1 — the internet result
-// it DID measure, plainly told, with a soft optional Shortcut offer on iOS only
-// (decision 4). Nothing is fabricated. The user gets their answer FIRST; the
-// Shortcut offer is secondary and never blocks or nags.
+// iOS without the companion Shortcut) lands on the engine's honest internet-only
+// path — Outcome D — with a soft optional Shortcut offer on iOS only. Any datum
+// the platform never exposes (macOS public CoreWLAN never reports Rx rate)
+// renders "Unavailable" on screen AND in the copy text, never fabricated.
 //
-// LAYOUT reuses the pro screen's shell: SafeArea + centered
-// ConstrainedBox(maxWidth 560) + scroll + surface1 cards with a §8.1 hairline
-// border; overflow-safe at 320px.
-//
-// STATES (SOP-007 §5): web/unsupported → NetworkUnavailableView · idle (intro +
-// one big button) · running (friendly progress card, button disabled) · result
-// (verdict + Wi-Fi details + help-desk facts + self-help cards) · error (in-card
-// message + the button re-enabled to retry).
-//
-// Wi-Fi details (RSSI / SNR, Wi-Fi Down = avg Rx rate, Wi-Fi Up = avg Tx rate)
-// come from the single connected-NIC read [ConnectedAp]; this tool does not
-// sample the rate over the test window, so "average" is the NIC's reported
-// average at read time. Any datum the platform does not expose (macOS public
-// CoreWLAN never reports Rx rate) renders "Unavailable" on screen AND in the
-// copy text — never fabricated or zero-filled (GL-005 / GL-008).
+// LAYOUT: SafeArea + centered ConstrainedBox(maxWidth 560) + scroll; surface1
+// cards with a §8.1 hairline border; overflow-safe at 320px. Per-tool help is a
+// bottom ToolHelpFooter (§8.16.1); copy stays the trailing AppBar action (§8.16).
 
 import 'dart:async';
 
@@ -47,18 +35,36 @@ import 'package:flutter/services.dart';
 import 'package:net_quality/net_quality.dart';
 
 import '../../../services/network/connected_ap.dart';
+import '../../../services/network/connection_check.dart';
 import '../../../services/network/consumer_verdict.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/wifi_details_bridge.dart';
+import '../../../services/network/wifi_grading.dart';
 import '../../../services/network/wifi_info_adapter.dart';
+import '../../../services/network/wifi_signal_sampler.dart';
+import '../../../services/network/wifi_time_series.dart';
 import '../../../services/network/wifi_vs_internet.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/sparkline.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'install_shortcut_sheet.dart';
 import 'network_unavailable_view.dart';
 
-/// Consumer "is it my Wi-Fi or my internet?" screen.
+/// The footnote method-disclosure, VERBATIM from the pro screen's spec. Kept as
+/// a named constant so the test asserts the exact string and the technical
+/// section renders it unchanged after the merge.
+const String kWifiVsInternetFootnote =
+    '* Usable Wi-Fi capacity is estimated at 55% of the average negotiated '
+    'Tx/Rx data rate (real-world Wi-Fi throughput runs about 50 to 60 percent '
+    'of the PHY rate). Internet throughput is the average of the measured '
+    'download and upload speeds. The verdict compares the two: internet within '
+    '70% of usable Wi-Fi capacity points to the Wi-Fi link as the limiter; '
+    'below 40% points upstream to the internet. RSSI and SNR are shown as '
+    'supporting context; the negotiated data rate drives the verdict.';
+
+/// The merged "is it my Wi-Fi or my internet?" screen.
 class TestMyConnectionScreen extends StatefulWidget {
   const TestMyConnectionScreen({
     super.key,
@@ -68,44 +74,66 @@ class TestMyConnectionScreen extends StatefulWidget {
     this.qualityClient,
     this.nowOverride,
     this.autoStart = false,
+    this.startExpanded = false,
+    this.sampler,
+    this.enableLiveSampling = true,
   });
 
   /// When true, the check runs automatically on first mount instead of waiting
   /// for the user to tap "Check My Connection". Used by the home consumer hero
-  /// card so its one tap goes straight into the test; the plain tool tile leaves
-  /// this false so the user starts the check explicitly.
+  /// card so its one tap goes straight into the test.
   final bool autoStart;
 
+  /// When true, the "Wi-Fi vs Internet" technical section starts expanded. The
+  /// old `/tools/wifi-vs-internet` deep link routes here with this set, so a pro
+  /// hitting the old route lands on the detail view.
+  final bool startExpanded;
+
   /// Forces a specific Wi-Fi data source (tests). Defaults to the host platform
-  /// via [WifiInfoSourceResolver] — the same resolver the pro screen uses.
+  /// via [WifiInfoSourceResolver].
   final WifiInfoSource? sourceOverride;
 
   /// Injectable macOS CoreWLAN adapter (tests). Defaults to the real adapter.
   final WifiInfoAdapter? macAdapter;
 
   /// Injectable iOS Shortcuts bridge (tests + the optional install sheet).
-  /// Defaults to the real bridge.
   final WiFiDetailsBridge? iosBridge;
 
-  /// Injectable net_quality backend (tests use a [MockQualityClient] with no
-  /// network); null in production, where a real [OwnEngineQualityClient] runs.
+  /// Injectable net_quality backend (tests use a [MockQualityClient]).
   final QualityClient? qualityClient;
 
-  /// Injectable clock for the "Tested:" timestamp (tests). Defaults to now.
+  /// Injectable clock for the "Tested:" timestamp (tests).
   final DateTime Function()? nowOverride;
+
+  /// Injectable live sampler (tests). Defaults to a real [WifiSignalSampler] on
+  /// the resolved platform.
+  final WifiSignalSampler? sampler;
+
+  /// When false, the live sampler is never started (tests that do not exercise
+  /// the live card disable it so no poll timer ticks). Production leaves it on.
+  final bool enableLiveSampling;
 
   @override
   State<TestMyConnectionScreen> createState() => _TestMyConnectionScreenState();
 }
 
-class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
+class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
+    with WidgetsBindingObserver {
   late final WifiInfoSource _source;
   WifiInfoAdapter? _macAdapter;
   WiFiDetailsBridge? _iosBridge;
   late final QualityClient _quality;
 
+  /// The shared live-RF sampler that feeds the "Wi-Fi signal" sparkline card.
+  /// Continuous while the screen is open (macOS auto-polls; iOS streams via the
+  /// companion Shortcut). Null on web / unsupported.
+  WifiSignalSampler? _sampler;
+
   bool _running = false;
   String? _error;
+
+  /// Whether the "Wi-Fi vs Internet" technical section is expanded.
+  late bool _expanded;
 
   // Internet progress.
   QualityPhase _phase = QualityPhase.idle;
@@ -115,16 +143,15 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
   ConnectedAp? _ap;
   QualityResult? _internet;
   ConsumerVerdict? _verdict;
+  WifiVsInternetResult? _engine;
   DateTime? _testedAt;
 
   StreamSubscription<QualityProgress>? _sub;
 
-  /// True only on iOS (the companion-Shortcut source). macOS never shows the
-  /// optional Shortcut offer and always produces a real verdict (decision 4).
+  /// True only on iOS (the companion-Shortcut source).
   bool get _isIos => _source == WifiInfoSource.iosShortcuts;
 
-  /// Plain platform word for the "Tested … on `<platform>`" fact (GL-005: the
-  /// real platform, never invented).
+  /// Plain platform word for the "Tested … on `<platform>`" fact (GL-005).
   String get _platformLabel {
     switch (_source) {
       case WifiInfoSource.macosCoreWlan:
@@ -142,6 +169,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
   void initState() {
     super.initState();
     _source = widget.sourceOverride ?? WifiInfoSourceResolver.resolve();
+    _expanded = widget.startExpanded;
     switch (_source) {
       case WifiInfoSource.macosCoreWlan:
         _macAdapter = widget.macAdapter ?? MacWifiInfoAdapter();
@@ -154,8 +182,28 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
     _quality =
         widget.qualityClient ??
         OwnEngineQualityClient.forHost('one.one.one.one');
+
+    // Live "Wi-Fi signal" sampler — the same per-platform feed wifi-info uses,
+    // windowed to 30s for this tool (the sampler sets its own capacity; it does
+    // not touch wifi-info's defaults). Only built where a live feed exists.
+    if (widget.enableLiveSampling &&
+        (_source == WifiInfoSource.macosCoreWlan ||
+            _source == WifiInfoSource.iosShortcuts)) {
+      _sampler = widget.sampler ??
+          WifiSignalSampler(
+            source: _source,
+            macAdapter: _macAdapter,
+            iosBridge: _iosBridge,
+          );
+      WidgetsBinding.instance.addObserver(this);
+      _sampler!.load();
+      // macOS auto-polls continuously; iOS waits for the user to Start.
+      if (_source == WifiInfoSource.macosCoreWlan) {
+        _sampler!.start();
+      }
+    }
+
     if (widget.autoStart) {
-      // Consumer hero entry: run the check on arrival so it's a single tap.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _run();
       });
@@ -163,39 +211,46 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final WifiSignalSampler? sampler = _sampler;
+    if (sampler == null) return;
+    if (state == AppLifecycleState.resumed) {
+      sampler.load();
+      sampler.resumeMac();
+    } else if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      sampler.pauseMac();
+    }
+  }
+
+  @override
   void dispose() {
     _sub?.cancel();
+    if (_sampler != null) {
+      WidgetsBinding.instance.removeObserver(this);
+      // Only dispose a sampler we created; an injected one is the test's.
+      if (widget.sampler == null) _sampler!.dispose();
+    }
     super.dispose();
   }
 
-  /// Reads the connected-AP link via the SAME per-platform path as the pro
-  /// screen. Returns null when the link cannot be read (no reading, no Shortcut
-  /// payload, or an unsupported source) — the engine then takes its honest
-  /// wifiUnknown path (consumer Outcome D). Never throws to the caller.
+  /// Reads the connected-AP link via the SAME per-platform path as wifi-info.
+  /// Returns null when the link cannot be read — the engine then takes its
+  /// honest wifiUnknown path (Outcome D). Never throws to the caller.
   Future<ConnectedAp?> _readLink() async {
     try {
       switch (_source) {
         case WifiInfoSource.macosCoreWlan:
           final WifiInfoAdapter? adapter = _macAdapter;
           if (adapter == null) return null;
-          // macOS gates the network NAME (SSID/BSSID) behind Location Services.
-          // A consumer connection check must NEVER pop a Location prompt
-          // mid-test (that is the pro Wi-Fi Information tool's job, via its
-          // explicit "grant Location" button), and it never surfaces a
-          // permission message either — the name is cosmetic here and the
-          // facts row omits it gracefully when absent. So we do NOT touch the
-          // authorization status at all; we just read the snapshot. The link
-          // RATE — hence the Wi-Fi Fine/Slow chip and the verdict — resolves
-          // WITHOUT Location; only the human-readable NAME depends on it.
-          //
-          // Bound the snapshot read: a stalled native channel must not hang the
-          // check. On timeout the link reads as unread (null) and the verdict
-          // degrades to the honest internet-only path (Outcome D).
+          // A consumer check must never pop a Location prompt mid-test (the link
+          // RATE — hence the verdict — resolves WITHOUT Location; only the NAME
+          // needs it). Read the snapshot directly, bounded so a stalled channel
+          // can never hang the check.
           return await adapter.fetch().timeout(
             const Duration(seconds: 5),
-            onTimeout: () => throw TimeoutException(
-              'Wi-Fi link read timed out',
-            ),
+            onTimeout: () =>
+                throw TimeoutException('Wi-Fi link read timed out'),
           );
         case WifiInfoSource.iosShortcuts:
           final WiFiDetailsBridge? bridge = _iosBridge;
@@ -207,14 +262,13 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
           return null;
       }
     } catch (_) {
-      // A link-read failure is non-fatal: the verdict degrades to the
-      // internet-only Outcome D rather than blocking the whole check.
       return null;
     }
   }
 
-  /// Runs the internet measurement and the link read from one tap, then
-  /// computes the engine verdict and translates it for the consumer.
+  /// Runs the internet measurement and the link read from one tap, then computes
+  /// the engine verdict (shared [ConnectionCheck]) and translates it for the
+  /// consumer ([ConsumerVerdictMapper]).
   void _run() {
     setState(() {
       _error = null;
@@ -224,6 +278,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
       _ap = null;
       _internet = null;
       _verdict = null;
+      _engine = null;
       _testedAt = null;
     });
 
@@ -239,24 +294,24 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
       },
       onDone: () async {
         final QualityResult? internet = _quality.lastResult;
-        // Safety net: the link read is already bounded inside _readLink (the
-        // permission request at the adapter and the snapshot fetch here), but
-        // guard this final await as well so the verdict ALWAYS computes even if
-        // the link future stalls for any reason. A timeout yields ap = null →
-        // the honest internet-only / wifiUnknown path (Outcome D).
         final ConnectedAp? ap = await linkFuture.timeout(
           const Duration(seconds: 8),
           onTimeout: () => null,
         );
         if (!mounted) return;
-        final WifiVsInternetResult engine = _compute(ap, internet);
+        final WifiVsInternetResult engine = ConnectionCheck.compute(
+          ap,
+          internet,
+        );
         setState(() {
           _ap = ap;
           _internet = internet;
+          _engine = engine;
           _verdict = ConsumerVerdictMapper.map(
             engine,
             internetHealthy:
-                _internetHealth(internet) == InternetHealth.good,
+                ConnectionCheck.internetHealth(internet) ==
+                InternetHealth.good,
           );
           _testedAt = (widget.nowOverride ?? DateTime.now)();
           _running = false;
@@ -279,50 +334,6 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
     );
   }
 
-  // ---- Backend glue, lifted wholesale from the pro screen ----
-
-  /// Bridges the two engines into the pure [WifiVsInternetEngine]: translates
-  /// the net_quality grades into the engine's [InternetHealth] flag at the
-  /// boundary and forwards the link rates. Identical to the pro screen.
-  WifiVsInternetResult _compute(ConnectedAp? ap, QualityResult? internet) {
-    final double? down = _metricValue(internet, MetricIds.download);
-    final double? up = _metricValue(internet, MetricIds.upload);
-
-    return WifiVsInternetEngine.evaluate(
-      txRateMbps: ap?.txRateMbps,
-      rxRateMbps: ap?.rxRateMbps,
-      rxRateAvailable: ap?.rxRateAvailable ?? false,
-      snrDb: ap?.snrDb,
-      rssiDbm: ap?.rssiDbm,
-      internetDownMbps: down,
-      internetUpMbps: up,
-      internetHealth: _internetHealth(internet),
-    );
-  }
-
-  /// Grade gate input — identical to the pro screen: GOOD only when throughput
-  /// (download AND upload), latency, and loss ALL grade good/excellent.
-  static InternetHealth _internetHealth(QualityResult? r) {
-    if (r == null) return InternetHealth.marginal;
-    bool ok(String id) {
-      final QualityMetric? m = r.metric(id);
-      return m != null &&
-          (m.grade == QualityGrade.good || m.grade == QualityGrade.excellent);
-    }
-
-    final bool throughputGood = ok(MetricIds.download) && ok(MetricIds.upload);
-    final bool latencyGood = ok(MetricIds.latency);
-    final bool lossGood = ok(MetricIds.loss);
-    return (throughputGood && latencyGood && lossGood)
-        ? InternetHealth.good
-        : InternetHealth.marginal;
-  }
-
-  static double? _metricValue(QualityResult? r, String id) {
-    final QualityMetric? m = r?.metric(id);
-    return (m != null && m.isAvailable) ? m.value : null;
-  }
-
   // ---- Build ----
 
   @override
@@ -331,31 +342,20 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
       appBar: AppBar(
         title: const Text('Test My Connection'),
         toolbarHeight: 64,
-        // §8.16 order: copy LEADS, the Refresh action trails. Copy is disabled
-        // until a check has run (same payload as the inline "Copy these
-        // details" button). Refresh re-runs the SAME check in place via _run()
-        // — it appears only once a result exists (before that, the big "Check
-        // My Connection" button is the affordance) and shows the in-progress
-        // spinner while a re-run is underway so the test can't be double-fired.
+        // §8.16: copy LEADS, the Refresh action trails. Help is the bottom
+        // footer (§8.16.1), not an AppBar glyph.
         actions: <Widget>[
           AppCopyAction(textBuilder: _buildCopyText),
           ..._refreshAction(),
-          // Help trails copy + refresh (§8.16).
         ],
       ),
       body: SafeArea(top: false, child: _body()),
     );
   }
 
-  /// The AppBar "Refresh" action — re-runs the SAME check via [_run()] (no
-  /// duplicated logic). Matches the Wi-Fi Information screen's affordance: a
-  /// circular-arrow [IconButton] that swaps to a small in-progress spinner
-  /// while a run is underway. Returns an empty list until a result exists, so
-  /// the affordance only appears once there is something to re-run (the big
-  /// "Check My Connection" button is the first-run affordance). The spinner +
-  /// the run guard in [_run]/onPressed prevent a double-run.
+  /// The AppBar "Refresh" action — re-runs the SAME check via [_run()]. Returns
+  /// an empty list until a result exists.
   List<Widget> _refreshAction() {
-    // Nothing to re-run before the first result lands.
     if (_verdict == null && !_running) return const <Widget>[];
     if (_running) {
       return const <Widget>[
@@ -389,8 +389,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
 
   Widget _body() {
     // The internet measurement needs dart:io sockets the browser does not have;
-    // route web (and any no-socket platform) to the shared download-the-app
-    // fallback — never crash, never a broken screen.
+    // route web (and any no-socket platform) to the shared fallback.
     if (!NetworkSupport.activeNetworkSupported) {
       return NetworkUnavailableView(
         toolName: 'Test My Connection',
@@ -432,20 +431,34 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
                     _progressCard(context),
                   ],
                   if (verdict != null) ...[
-                    _VerdictCard(verdict: verdict),
+                    // 1. Verdict header — headline + two chips side by side.
+                    _VerdictHeader(verdict: verdict),
                     const SizedBox(height: AppSpacing.sm),
-                    _WifiDetailsCard(details: _wifiDetails()),
+                    // 2. Core comparison (the hero) — usable Wi-Fi vs internet.
+                    _ComparisonCard(result: _engine!),
                     const SizedBox(height: AppSpacing.sm),
+                    // 3. Live "Wi-Fi signal" sparkline card.
+                    if (_sampler != null) ...[
+                      _LiveSignalCard(sampler: _sampler!),
+                      const SizedBox(height: AppSpacing.sm),
+                    ],
+                    // 4. "What to tell support".
                     _HelpDeskCard(
                       facts: _facts(),
                       onCopy: _copyDetails,
                       copied: _detailsCopied,
                     ),
                     const SizedBox(height: AppSpacing.sm),
-                    _SelfHelpCard(topic: verdict.selfHelp),
-                    // iOS-only, decision 4: a soft optional Shortcut offer on
-                    // the D1 path only, BELOW the self-help card, after the
-                    // answer. macOS never shows it.
+                    // 5. "Show technical details" expander → the absorbed pro
+                    //    "Wi-Fi vs Internet" section.
+                    _TechnicalSection(
+                      expanded: _expanded,
+                      onToggle: () => setState(() => _expanded = !_expanded),
+                      ap: _ap,
+                      internet: _internet,
+                      result: _engine!,
+                    ),
+                    // iOS-only soft optional Shortcut offer on the D1 path only.
                     if (_isIos &&
                         verdict.outcome ==
                             ConsumerOutcome.couldntCheckWifi) ...[
@@ -533,7 +546,6 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              // Sole liveRegion for the run so AT announces each phase once.
               Semantics(
                 liveRegion: true,
                 child: Text(
@@ -557,8 +569,6 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
             label: '$caption, $pct percent complete',
             child: ClipRRect(
               borderRadius: BorderRadius.circular(AppRadius.control),
-              // Value-tweening: glide the bar between the engine's monotonic,
-              // time-weighted emits so band pivots ease instead of snapping.
               child: TweenAnimationBuilder<double>(
                 tween: Tween<double>(begin: 0, end: _fraction),
                 duration: AppMotion.base,
@@ -586,11 +596,8 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
     );
   }
 
-  /// Friendly, jargon-free phase captions (spec State 2). The user never sees
-  /// "latency / download / upload". The spec sequence is
-  /// "Starting…" → "Testing your internet speed…" → "Checking your Wi-Fi…" →
-  /// "Working out the answer…" — latency/download read as the speed test, upload
-  /// as the Wi-Fi check, complete as the answer.
+  /// Friendly, jargon-free phase captions. The user never sees
+  /// "latency / download / upload".
   static String _friendlyPhase(QualityPhase phase) {
     switch (phase) {
       case QualityPhase.idle:
@@ -616,18 +623,15 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
     final QualityResult? net = _internet;
     final ConnectedAp? ap = _ap;
 
-    final double? down = _metricValue(net, MetricIds.download);
-    final double? up = _metricValue(net, MetricIds.upload);
-    final double? latency = _metricValue(net, MetricIds.latency);
-    final double? loss = _metricValue(net, MetricIds.loss);
+    final double? down = ConnectionCheck.metricValue(net, MetricIds.download);
+    final double? up = ConnectionCheck.metricValue(net, MetricIds.upload);
+    final double? latency =
+        ConnectionCheck.metricValue(net, MetricIds.latency);
+    final double? loss = ConnectionCheck.metricValue(net, MetricIds.loss);
 
     final String? wifiName = _consumerWifiName(ap);
 
     return <_Fact>[
-      // Each speed value on its own labeled row so it can never wrap mid-value
-      // (e.g. "60" / "Mbps" splitting across lines). Parallels the Wi-Fi
-      // Down/Up rows. "Not measured" stands in for any value the run did not
-      // produce (GL-005) — never blank, never invented.
       _Fact('Internet Down', _mbps(down)),
       _Fact('Internet Up', _mbps(up)),
       _Fact(
@@ -635,55 +639,31 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
         '${latency != null ? '${latency.round()} ms' : 'Not measured'} · '
             '${loss != null ? '${loss.round()}%' : 'Not measured'}',
       ),
-      // Consumer flow: the network NAME is cosmetic. When it is unavailable
-      // (macOS Location off, or simply not read) the row is OMITTED entirely
-      // rather than surfacing a technical "enable Location Services" error that
-      // makes a perfectly good connection test look broken. The Wi-Fi Fine/Slow
-      // verdict and the link-detail rows never depend on the name.
       if (wifiName != null) _Fact('Wi-Fi network', wifiName),
       _Fact('Tested', '${_formatTimestamp(_testedAt)} on $_platformLabel'),
     ];
   }
 
-  /// The Wi-Fi link detail rows: RSSI / SNR, Wi-Fi Down (avg Rx rate), and
-  /// Wi-Fi Up (avg Tx rate), read from the connected NIC ([ConnectedAp]). Each
-  /// value is taken from the single link read this tool performs; where the NIC
-  /// does not expose a datum (e.g. macOS public CoreWLAN never reports the Rx
-  /// rate) the value is "Unavailable" — never fabricated or zero-filled
-  /// (GL-005 / GL-008). The same four rows feed the copy text.
-  List<_Fact> _wifiDetails() {
-    final ConnectedAp? ap = _ap;
-    // macOS public CoreWLAN never reports the receive (Rx) data rate, so
-    // "Wi-Fi Down" is always Unavailable there. Explain WHY so it does not read
-    // as a zero or a failed read.
-    final bool macosRxMissing =
-        _source == WifiInfoSource.macosCoreWlan && ap?.rxRateMbps == null;
-    return <_Fact>[
-      _Fact('RSSI / SNR', _rssiSnr(ap)),
-      _Fact(
-        'Wi-Fi Down',
-        _rxRate(ap),
-        note: macosRxMissing
-            ? 'macOS does not report the Wi-Fi download (Rx) rate (a system '
-                  'limit, not a zero).'
-            : null,
-      ),
-      _Fact('Wi-Fi Up', _txRate(ap)),
-    ];
+  /// The Wi-Fi network NAME for the consumer flow, or null when not available.
+  String? _consumerWifiName(ConnectedAp? ap) {
+    final String? ssid = ap?.ssid;
+    if (ssid != null && ssid.trim().isNotEmpty) return ssid;
+    return null;
   }
 
-  /// "RSSI / SNR" as e.g. "-58 dBm / 32 dB". Each half degrades to
-  /// "Unavailable" on its own when the NIC omits it (GL-005).
-  static String _rssiSnr(ConnectedAp? ap) {
+  /// RSSI alone, for the copy line. "Unavailable" when the NIC omits it.
+  static String _rssiOnly(ConnectedAp? ap) {
     final int? rssi = ap?.rssiDbm;
-    final int? snr = ap?.snrDb;
-    final String rssiStr = rssi != null ? '$rssi dBm' : 'Unavailable';
-    final String snrStr = snr != null ? '$snr dB' : 'Unavailable';
-    return '$rssiStr / $snrStr';
+    return rssi != null ? '$rssi dBm' : 'Unavailable';
   }
 
-  /// Wi-Fi Down — the NIC's average Rx data rate. "Unavailable" when the
-  /// platform never exposes Rx (macOS public CoreWLAN) or the read omitted it.
+  /// SNR alone, for the copy line. "Unavailable" when the NIC omits it.
+  static String _snrOnly(ConnectedAp? ap) {
+    final int? snr = ap?.snrDb;
+    return snr != null ? '$snr dB' : 'Unavailable';
+  }
+
+  /// Wi-Fi Down — the NIC's average Rx data rate. "Unavailable" when omitted.
   static String _rxRate(ConnectedAp? ap) {
     final double? rx = ap?.rxRateMbps;
     return rx != null ? '${rx.round()} Mbps' : 'Unavailable';
@@ -695,41 +675,11 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
     return tx != null ? '${tx.round()} Mbps' : 'Unavailable';
   }
 
-  /// RSSI alone, for the separately-labeled copy line. "Unavailable" when the
-  /// NIC omits it.
-  static String _rssiOnly(ConnectedAp? ap) {
-    final int? rssi = ap?.rssiDbm;
-    return rssi != null ? '$rssi dBm' : 'Unavailable';
-  }
-
-  /// SNR alone, for the separately-labeled copy line. "Unavailable" when the
-  /// NIC omits it (SNR is null unless both RSSI and noise are present).
-  static String _snrOnly(ConnectedAp? ap) {
-    final int? snr = ap?.snrDb;
-    return snr != null ? '$snr dB' : 'Unavailable';
-  }
-
-  /// The Wi-Fi network NAME for the consumer flow, or null when it is not
-  /// available. The name is purely cosmetic here — the Wi-Fi Fine/Slow verdict
-  /// and every link-detail row resolve WITHOUT it. So when the platform can not
-  /// give us a real name (macOS gates the SSID behind Location Services per
-  /// Apple's rule, or the link was simply not read) we return null and the
-  /// caller OMITS the row, rather than surfacing a technical
-  /// "enable Location Services" error that makes a healthy connection test read
-  /// as broken. Never fabricates a name (GL-005). The PRO Wi-Fi Information tool
-  /// keeps its explicit Location messaging; this graceful degrade is scoped to
-  /// the consumer experience.
-  String? _consumerWifiName(ConnectedAp? ap) {
-    final String? ssid = ap?.ssid;
-    if (ssid != null && ssid.trim().isNotEmpty) return ssid;
-    return null;
-  }
-
   /// Mbps rounded to a whole number for a consumer, or "Not measured".
   static String _mbps(double? v) =>
       v == null ? 'Not measured' : '${v.round()} Mbps';
 
-  /// "Jun 1, 2:14 PM" — month-day + 12-hour clock, no dependency on intl.
+  /// "Jun 1, 2:14 PM" — month-day + 12-hour clock, no intl dependency.
   static String _formatTimestamp(DateTime? at) {
     if (at == null) return 'Not measured';
     const months = <String>[
@@ -756,13 +706,12 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
         facts.firstWhere((f) => f.label == label).value;
 
     final QualityResult? net = _internet;
-    final double? down = _metricValue(net, MetricIds.download);
-    final double? up = _metricValue(net, MetricIds.upload);
-    final double? latency = _metricValue(net, MetricIds.latency);
-    final double? loss = _metricValue(net, MetricIds.loss);
+    final double? down = ConnectionCheck.metricValue(net, MetricIds.download);
+    final double? up = ConnectionCheck.metricValue(net, MetricIds.upload);
+    final double? latency =
+        ConnectionCheck.metricValue(net, MetricIds.latency);
+    final double? loss = ConnectionCheck.metricValue(net, MetricIds.loss);
 
-    // R1-A — the two-axis status line, reinforcing the Wi-Fi vs Internet model
-    // in the help-desk paste (e.g. "Wi-Fi: Fine · Internet: Slow").
     final ConsumerVerdict? v = _verdict;
     final StringBuffer buf = StringBuffer()
       ..writeln('Test My Connection (WLAN Pros Toolbox)');
@@ -774,23 +723,16 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
     }
     final String? wifiName = _consumerWifiName(_ap);
     buf
-      // Internet down and up on their own labeled lines — one value per line,
-      // parallel to the Wi-Fi Down / Wi-Fi Up lines below.
       ..writeln('Internet Down: ${_mbps(down)}')
       ..writeln('Internet Up: ${_mbps(up)}')
       ..writeln(
         'Delay: ${latency != null ? '${latency.round()} ms' : 'Not measured'}   '
         'Dropped data: ${loss != null ? '${loss.round()}%' : 'Not measured'}',
       );
-    // Consumer copy: include the network NAME line only when we actually have a
-    // name — never paste a "enable Location Services" error into a help-desk
-    // ticket (it reads as a fault, and the name is cosmetic here).
     if (wifiName != null) {
       buf.writeln('Wi-Fi network: $wifiName');
     }
     buf
-      // Wi-Fi link details from the connected NIC — "Unavailable" where the
-      // platform does not expose a datum (GL-005 / GL-008), never fabricated.
       ..writeln('RSSI: ${_rssiOnly(_ap)}')
       ..writeln('SNR: ${_snrOnly(_ap)}')
       ..writeln('Wi-Fi Down: ${_rxRate(_ap)}')
@@ -816,7 +758,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
     });
   }
 
-  // ---- iOS optional Shortcut offer (decision 4) ----
+  // ---- iOS optional Shortcut offer (D1 path) ----
 
   Future<void> _openShortcutSheet() async {
     final WiFiDetailsBridge? bridge = _iosBridge;
@@ -827,8 +769,6 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
       isScrollControlled: true,
       builder: (_) => InstallShortcutSheet(
         bridge: bridge,
-        // The consumer flow does not re-stream; "installed" simply re-runs the
-        // check so the next pass can read the link.
         onInstalled: () async {
           if (mounted) _run();
         },
@@ -852,39 +792,29 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
 // ===========================================================================
 
 class _Fact {
-  const _Fact(this.label, this.value, {this.note});
+  const _Fact(this.label, this.value);
   final String label;
   final String value;
-
-  /// Optional small-font explanation shown under the value — e.g. WHY a datum
-  /// reads "Unavailable" on this platform, so it does not look like a zero.
-  final String? note;
 }
 
 // ===========================================================================
-// Verdict card — status color (§8.13) + the verdict WORD (never color-only).
+// 1. Verdict header — plain headline + the two status chips SIDE BY SIDE.
 // ===========================================================================
 
-/// R1-A — the result verdict card. The card itself is NEUTRAL (surface1 +
-/// hairline, no full-card tint); the COLOR lives in the two status chips.
-///
-/// Layout: two labeled chips ("Wi-Fi:" / "Internet:"). The chips ARE the
-/// verdict — they teach the non-technical reader that Wi-Fi and Internet are
-/// two separate things, and each axis carries its OWN explicit status so a
-/// missing Wi-Fi read shows as "Wi-Fi: Couldn't check", never a silent gap.
-///
-/// The explanatory conclusion sentence was removed 2026-06-02 (Keith) — the
-/// status chips and the measured facts below them speak for themselves. The
-/// chips render for every outcome, including D2 (both axes "Couldn't check").
-class _VerdictCard extends StatelessWidget {
-  const _VerdictCard({required this.verdict});
+/// The collapsed-view verdict header (Item B): the consumer headline word/phrase
+/// on top, then the two labeled axis chips laid out HORIZONTALLY on one row to
+/// save vertical space ("Wi-Fi: [chip]   Internet: [chip]"). The chips wrap to
+/// two rows gracefully at the smallest supported width.
+class _VerdictHeader extends StatelessWidget {
+  const _VerdictHeader({required this.verdict});
 
   final ConsumerVerdict verdict;
 
   @override
   Widget build(BuildContext context) {
-    // SR reads the two axis statuses as one container.
+    final TextTheme text = Theme.of(context).textTheme;
     final String semanticsLabel =
+        '${verdict.headline}. '
         'Wi-Fi ${_TwoAxisChips.word(verdict.wifiStatus)}. '
         'Internet ${_TwoAxisChips.word(verdict.internetStatus)}.';
 
@@ -899,9 +829,22 @@ class _VerdictCard extends StatelessWidget {
             border: Border.all(color: AppColors.border, width: 1),
           ),
           padding: const EdgeInsets.all(AppSpacing.md),
-          child: _TwoAxisChips(
-            wifiStatus: verdict.wifiStatus,
-            internetStatus: verdict.internetStatus,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                verdict.headline,
+                style: text.titleMedium?.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              _TwoAxisChips(
+                wifiStatus: verdict.wifiStatus,
+                internetStatus: verdict.internetStatus,
+              ),
+            ],
           ),
         ),
       ),
@@ -909,8 +852,9 @@ class _VerdictCard extends StatelessWidget {
   }
 }
 
-/// The two labeled axis rows — "Wi-Fi:" and "Internet:", each with a status
-/// chip. Aligned labels keep the two words scannable in under two seconds.
+/// The two labeled axis chips, laid out side by side (Item B) and wrapping to a
+/// second row at the smallest width. Each carries an aligned plain label + a
+/// status chip; the WORD always carries the verdict (never color alone).
 class _TwoAxisChips extends StatelessWidget {
   const _TwoAxisChips({
     required this.wifiStatus,
@@ -934,11 +878,13 @@ class _TwoAxisChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    // Wrap, not Row: the two labeled chips sit side by side on a wide card and
+    // reflow to two rows on a narrow one (320px / large type) without clipping.
+    return Wrap(
+      spacing: AppSpacing.md,
+      runSpacing: AppSpacing.xs,
       children: <Widget>[
         _AxisRow(label: 'Wi-Fi', status: wifiStatus),
-        const SizedBox(height: AppSpacing.xs),
         _AxisRow(label: 'Internet', status: internetStatus),
       ],
     );
@@ -956,32 +902,27 @@ class _AxisRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
     return Row(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
-        SizedBox(
-          width: 84,
-          child: Text(
-            '$label:',
-            style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
-          ),
+        Text(
+          '$label:',
+          style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
         ),
         const SizedBox(width: AppSpacing.xs),
-        Flexible(child: _StatusChip(status: status)),
+        _StatusChip(status: status),
       ],
     );
   }
 }
 
 /// A single status chip: icon + WORD + §8.13 color. The WORD always carries
-/// meaning (WCAG 2.2 SC 1.4.1, never color alone). Fine → status-good, Slow →
-/// status-warn, "Couldn't check" → a neutral/muted token.
+/// meaning (WCAG 2.2 SC 1.4.1).
 class _StatusChip extends StatelessWidget {
   const _StatusChip({required this.status});
 
   final AxisStatus status;
 
-  /// §8.13 token per status. Neutral muted text token for the unknown axis so a
-  /// "couldn't check" never reads as an alarm color.
   Color get _color {
     switch (status) {
       case AxisStatus.fine:
@@ -993,7 +934,6 @@ class _StatusChip extends StatelessWidget {
     }
   }
 
-  /// Glyph reinforcing the word by SHAPE (✓ / ⚠ / –), never color alone.
   IconData get _icon {
     switch (status) {
       case AxisStatus.fine:
@@ -1024,13 +964,11 @@ class _StatusChip extends StatelessWidget {
         children: <Widget>[
           Icon(_icon, size: 18, color: color),
           const SizedBox(width: AppSpacing.xxs),
-          Flexible(
-            child: Text(
-              _TwoAxisChips.word(status),
-              style: text.labelLarge?.copyWith(
-                color: color,
-                fontWeight: FontWeight.w700,
-              ),
+          Text(
+            _TwoAxisChips.word(status),
+            style: text.labelLarge?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -1040,44 +978,533 @@ class _StatusChip extends StatelessWidget {
 }
 
 // ===========================================================================
-// "Wi-Fi details" card — the connected-NIC link facts: RSSI / SNR, Wi-Fi Down
-// (avg Rx rate), Wi-Fi Up (avg Tx rate). Any datum the platform does not
-// expose renders "Unavailable" — never fabricated (GL-005 / GL-008).
+// 2. Core comparison (the hero) — usable Wi-Fi capacity vs internet throughput
+// on a shared scale. Wi-Fi is the lime accent bar; internet is a NEUTRAL bar
+// (surface3 fill + borderStrong outline, NOT a status hue, per Vera §8.13).
 // ===========================================================================
 
-class _WifiDetailsCard extends StatelessWidget {
-  const _WifiDetailsCard({required this.details});
+class _ComparisonCard extends StatelessWidget {
+  const _ComparisonCard({required this.result});
 
-  final List<_Fact> details;
+  final WifiVsInternetResult result;
+
+  /// The plain reading line beneath the bars, derived from the engine verdict so
+  /// the words and the bar heights agree. No new verdict math — it reads the
+  /// already-computed verdict and reuses the engine's usable-capacity figure.
+  String _readingLine() {
+    switch (result.verdict) {
+      case WifiVsInternetVerdict.wifiLimiter:
+        return 'Your internet can carry more than your Wi-Fi link is passing. '
+            'Boost the Wi-Fi signal to raise the ceiling.';
+      case WifiVsInternetVerdict.bothContributing:
+        return 'Your internet is using almost all the headroom your Wi-Fi link '
+            'can carry. Boost the Wi-Fi signal to raise the ceiling.';
+      case WifiVsInternetVerdict.upstream:
+        return 'Your Wi-Fi link has room to spare. The internet coming into '
+            'your home is the slower part right now.';
+      case WifiVsInternetVerdict.bothHealthy:
+        return 'Your Wi-Fi link and your internet are both carrying plenty. No '
+            'bottleneck to chase here.';
+      case WifiVsInternetVerdict.wifiUnknown:
+        return result.internetAvgMbps == null
+            ? 'We could not read your Wi-Fi link, so there is nothing to '
+                'compare the internet against yet.'
+            : 'We could not read your Wi-Fi link, so only the internet side is '
+                'shown.';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            'Wi-Fi details',
-            style: text.titleSmall?.copyWith(color: AppColors.textPrimary),
+    final double? usable = result.usableWifiMbps;
+    final double? internet = result.internetAvgMbps;
+
+    // Shared scale: the larger of the two figures is full width, so the bars are
+    // directly comparable. When one side is unknown, the other still draws.
+    final double scaleMax = <double>[
+      usable ?? 0,
+      internet ?? 0,
+    ].reduce((a, b) => a > b ? a : b);
+    final double safeMax = scaleMax <= 0 ? 1 : scaleMax;
+
+    final String wifiValue =
+        usable != null ? '${usable.round()} Mbps' : 'Unavailable';
+    final String internetValue =
+        internet != null ? '${internet.round()} Mbps' : 'Unavailable';
+
+    return Semantics(
+      container: true,
+      label:
+          'Wi-Fi usable capacity $wifiValue. Internet throughput '
+          '$internetValue. ${_readingLine()}',
+      child: ExcludeSemantics(
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface1,
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            border: Border.all(color: AppColors.border, width: 1),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          ...details.map((f) => _FactRow(fact: f)),
-        ],
+          padding: const EdgeInsets.all(AppSpacing.sm),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              _CompareBar(
+                label: 'Wi-Fi usable capacity',
+                value: wifiValue,
+                fraction: usable == null ? null : (usable / safeMax),
+                accent: true,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              _CompareBar(
+                label: 'Internet throughput',
+                value: internetValue,
+                fraction: internet == null ? null : (internet / safeMax),
+                accent: false,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                _readingLine(),
+                style: text.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 }
 
+/// One labeled bar in the comparison. The lime [accent] bar is the Wi-Fi usable
+/// capacity (the single semantic accent); the non-accent bar is the NEUTRAL
+/// internet bar (surface3 fill + borderStrong outline, never a status hue).
+class _CompareBar extends StatelessWidget {
+  const _CompareBar({
+    required this.label,
+    required this.value,
+    required this.fraction,
+    required this.accent,
+  });
+
+  final String label;
+  final String value;
+
+  /// 0..1 of the shared scale, or null when the figure is unavailable (the bar
+  /// track shows empty and the value reads "Unavailable").
+  final double? fraction;
+  final bool accent;
+
+  static const double _barHeight = 10;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final double f = (fraction ?? 0).clamp(0.0, 1.0);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                label,
+                style: text.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              value,
+              style: mono.robotoMono.copyWith(color: AppColors.textPrimary),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.xxs),
+        // The shared-scale track. surface2 track; the fill is lime (Wi-Fi) or
+        // the neutral surface3 + borderStrong outline (internet).
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.control),
+          child: SizedBox(
+            height: _barHeight,
+            child: Stack(
+              children: <Widget>[
+                Container(color: AppColors.surface2),
+                FractionallySizedBox(
+                  widthFactor: f == 0 ? 0.0 : f,
+                  child: accent
+                      ? Container(color: AppColors.primary)
+                      : Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.surface3,
+                            border: Border.all(
+                              color: AppColors.borderStrong,
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 // ===========================================================================
-// Help-desk facts card — plain measured facts + inline copy button. The copy
-// button serializes the verdict, these facts, AND the Wi-Fi link details.
+// 3. Live "Wi-Fi signal" sparkline card — REUSES the shared WifiSignalSampler
+// and the shared Sparkline. Three rows: Wi-Fi data rate, SNR, RSSI, each with a
+// current value (mono), a trend arrow, and an inline sparkline. macOS auto-polls
+// continuously; iOS streams via the companion Shortcut (Start/Stop), degrading
+// honestly when the Shortcut is absent.
+// ===========================================================================
+
+class _LiveSignalCard extends StatelessWidget {
+  const _LiveSignalCard({required this.sampler});
+
+  final WifiSignalSampler sampler;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: sampler,
+      builder: (context, _) {
+        final ConnectedAp? latest = sampler.latest;
+        final WifiTimeSeries series = sampler.series;
+        final TextTheme text = Theme.of(context).textTheme;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface1,
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            border: Border.all(color: AppColors.border, width: 1),
+          ),
+          padding: const EdgeInsets.all(AppSpacing.sm),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              // Header: title + LIVE indicator (lime dot — NOT a status hue),
+              // or, on iOS while paused, a Start affordance.
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      'Wi-Fi signal',
+                      style: text.titleSmall?.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  if (sampler.isIos && !sampler.isStreaming)
+                    Semantics(
+                      button: true,
+                      label: 'Start live Wi-Fi signal',
+                      child: OutlinedButton.icon(
+                        onPressed: sampler.start,
+                        icon: const Icon(Icons.play_arrow, size: 18),
+                        label: const Text('Start'),
+                      ),
+                    )
+                  else if (sampler.isIos && sampler.isStreaming)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        const _LiveDot(),
+                        const SizedBox(width: AppSpacing.xxs),
+                        Text(
+                          'LIVE',
+                          style: text.labelMedium?.copyWith(
+                            color: AppColors.primary,
+                            letterSpacing: 0.6,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.xs),
+                        Semantics(
+                          button: true,
+                          label: 'Stop live Wi-Fi signal',
+                          child: IconButton(
+                            icon: const Icon(Icons.stop, size: 20),
+                            tooltip: 'Stop',
+                            visualDensity: VisualDensity.compact,
+                            onPressed: sampler.stop,
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        const _LiveDot(),
+                        const SizedBox(width: AppSpacing.xxs),
+                        Text(
+                          'LIVE',
+                          style: text.labelMedium?.copyWith(
+                            color: AppColors.primary,
+                            letterSpacing: 0.6,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              if (sampler.isIos &&
+                  sampler.triggerError) ...<Widget>[
+                _LiveUnavailableNote(
+                  message:
+                      'Could not start the live Wi-Fi feed. The companion '
+                      '"WLAN Pros Live" Shortcut may not be installed. Install '
+                      'it, then tap Start.',
+                ),
+              ] else if (series.isEmpty) ...<Widget>[
+                _LiveUnavailableNote(
+                  message: sampler.isIos
+                      ? 'Tap Start to begin live Wi-Fi signal readings from the '
+                          'companion Shortcut.'
+                      : 'Reading the Wi-Fi link…',
+                ),
+              ] else ...<Widget>[
+                // Wi-Fi data rate (Tx — the rate macOS reliably exposes; iOS
+                // carries both). Trend arrow + lime sparkline (not graded).
+                _SignalRow(
+                  label: 'Wi-Fi data rate',
+                  unit: 'Mbps',
+                  value: _rate(latest?.txRateMbps),
+                  window: series.txRate,
+                  lineColor: AppColors.primary,
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                // SNR — graded line color reinforces the trend (word still leads
+                // via the value; the line tint is reinforcement only).
+                _SignalRow(
+                  label: 'SNR',
+                  unit: 'dB',
+                  value: latest?.snrDb?.toString(),
+                  window: series.snr,
+                  lineColor: _gradeColor(
+                    WifiGrading.gradeSnr(latest?.snrDb),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                // RSSI.
+                _SignalRow(
+                  label: 'RSSI',
+                  unit: 'dBm',
+                  value: latest?.rssiDbm?.toString(),
+                  window: series.rssi,
+                  lineColor: _gradeColor(
+                    WifiGrading.gradeRssi(latest?.rssiDbm),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  static String? _rate(double? mbps) {
+    if (mbps == null) return null;
+    if (mbps == mbps.roundToDouble()) return mbps.toStringAsFixed(0);
+    return mbps.toStringAsFixed(1);
+  }
+
+  /// Tints a sparkline to its grade (reinforcement only; the unavailable case
+  /// stays neutral so it never reads as a verdict).
+  static Color _gradeColor(QualityGrade grade) {
+    switch (grade) {
+      case QualityGrade.excellent:
+      case QualityGrade.good:
+        return AppColors.statusSuccess;
+      case QualityGrade.fair:
+        return AppColors.statusWarning;
+      case QualityGrade.poor:
+        return AppColors.statusDanger;
+      case QualityGrade.unavailable:
+        return AppColors.textTertiary;
+    }
+  }
+}
+
+/// One live-signal row: label, current value (mono), a trend arrow derived from
+/// the window's last two PRESENT samples, and an inline sparkline.
+class _SignalRow extends StatelessWidget {
+  const _SignalRow({
+    required this.label,
+    required this.unit,
+    required this.value,
+    required this.window,
+    required this.lineColor,
+  });
+
+  final String label;
+  final String unit;
+  final String? value;
+  final List<double?> window;
+  final Color lineColor;
+
+  static const double _sparklineHeight = 28;
+
+  /// −1 falling, 0 steady, +1 rising — from the last two present samples.
+  int get _trend {
+    double? prev;
+    double? last;
+    for (final double? v in window) {
+      if (v == null) continue;
+      prev = last;
+      last = v;
+    }
+    if (prev == null || last == null) return 0;
+    if (last > prev) return 1;
+    if (last < prev) return -1;
+    return 0;
+  }
+
+  IconData get _trendIcon {
+    switch (_trend) {
+      case 1:
+        return Icons.trending_up;
+      case -1:
+        return Icons.trending_down;
+      default:
+        return Icons.trending_flat;
+    }
+  }
+
+  String get _trendWord {
+    switch (_trend) {
+      case 1:
+        return 'rising';
+      case -1:
+        return 'falling';
+      default:
+        return 'steady';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final bool hasValue = value != null && value!.trim().isNotEmpty;
+    final String shown = hasValue ? '$value $unit' : 'Unavailable';
+
+    return Semantics(
+      container: true,
+      label: '$label, $shown, $_trendWord',
+      child: ExcludeSemantics(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            // Label + value stack (left).
+            SizedBox(
+              width: 120,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    label,
+                    style: text.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  Row(
+                    children: <Widget>[
+                      Flexible(
+                        child: Text(
+                          shown,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: hasValue
+                              ? mono.robotoMono.copyWith(
+                                  color: AppColors.textPrimary,
+                                )
+                              : text.bodyMedium?.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
+                        ),
+                      ),
+                      if (hasValue) ...<Widget>[
+                        const SizedBox(width: AppSpacing.xxs),
+                        Icon(
+                          _trendIcon,
+                          size: 16,
+                          color: AppColors.textTertiary,
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            // Sparkline (right, fills).
+            Expanded(
+              child: Sparkline(
+                values: window,
+                lineColor: lineColor,
+                semanticLabel: '$label trend',
+                height: _sparklineHeight,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The lime "LIVE" dot. Lime is the §8.3 active-state accent, not a verdict, so
+/// it is explicitly off-limits for status color (§8.13).
+class _LiveDot extends StatelessWidget {
+  const _LiveDot();
+
+  @override
+  Widget build(BuildContext context) {
+    return ExcludeSemantics(
+      child: Container(
+        width: 10,
+        height: 10,
+        decoration: const BoxDecoration(
+          color: AppColors.primary,
+          shape: BoxShape.circle,
+        ),
+      ),
+    );
+  }
+}
+
+/// Honest note inside the live card when no samples exist yet or the iOS feed
+/// could not start (GL-005 — no fabricated trend).
+class _LiveUnavailableNote extends StatelessWidget {
+  const _LiveUnavailableNote({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    return Text(
+      message,
+      style: text.bodyMedium?.copyWith(color: AppColors.textSecondary),
+    );
+  }
+}
+
+// ===========================================================================
+// 4. "What to tell support" — plain measured facts + inline copy button.
 // ===========================================================================
 
 class _HelpDeskCard extends StatelessWidget {
@@ -1093,6 +1520,7 @@ class _HelpDeskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface1,
@@ -1103,6 +1531,11 @@ class _HelpDeskCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
+          Text(
+            'What to tell support',
+            style: text.titleSmall?.copyWith(color: AppColors.textPrimary),
+          ),
+          const SizedBox(height: AppSpacing.sm),
           ...facts.map((f) => _FactRow(fact: f)),
           const SizedBox(height: AppSpacing.sm),
           Semantics(
@@ -1127,7 +1560,7 @@ class _HelpDeskCard extends StatelessWidget {
 }
 
 /// One help-desk fact as a label → value row. The whole row is one semantic
-/// node ("`label, value`"). Value wraps before overflowing at 320px.
+/// node. Value wraps before overflowing at 320px.
 class _FactRow extends StatelessWidget {
   const _FactRow({required this.fact});
 
@@ -1140,9 +1573,7 @@ class _FactRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding / 2),
       child: Semantics(
         container: true,
-        label: fact.note == null
-            ? '${fact.label}, ${fact.value}'
-            : '${fact.label}, ${fact.value}. ${fact.note}',
+        label: '${fact.label}, ${fact.value}',
         excludeSemantics: true,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1159,27 +1590,12 @@ class _FactRow extends StatelessWidget {
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               flex: 3,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: <Widget>[
-                  Text(
-                    fact.value,
-                    textAlign: TextAlign.end,
-                    style: text.bodyMedium?.copyWith(
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  if (fact.note != null) ...<Widget>[
-                    const SizedBox(height: AppSpacing.xxs),
-                    Text(
-                      fact.note!,
-                      textAlign: TextAlign.end,
-                      style: text.bodySmall?.copyWith(
-                        color: AppColors.textTertiary,
-                      ),
-                    ),
-                  ],
-                ],
+              child: Text(
+                fact.value,
+                textAlign: TextAlign.end,
+                style: text.bodyMedium?.copyWith(
+                  color: AppColors.textPrimary,
+                ),
               ),
             ),
           ],
@@ -1190,47 +1606,401 @@ class _FactRow extends StatelessWidget {
 }
 
 // ===========================================================================
-// "A few things to try" card — only the relevant vetted self-help list.
+// 5. "Show technical details" expander → the absorbed pro "Wi-Fi vs Internet"
+// section, recomposed inline. Nothing the pro tool showed is lost.
 // ===========================================================================
 
-class _SelfHelpCard extends StatelessWidget {
-  const _SelfHelpCard({required this.topic});
+class _TechnicalSection extends StatelessWidget {
+  const _TechnicalSection({
+    required this.expanded,
+    required this.onToggle,
+    required this.ap,
+    required this.internet,
+    required this.result,
+  });
 
-  final SelfHelpTopic topic;
-
-  /// The vetted, FCC-sourced self-help copy (spec §Self-help lists), verbatim.
-  /// Easiest-first; all non-destructive.
-  static const Map<SelfHelpTopic, List<String>> _items =
-      <SelfHelpTopic, List<String>>{
-    SelfHelpTopic.wifi: <String>[
-      'Move closer to the router, or move the router to a more central, open '
-          'spot.',
-      'Restart your router: unplug it, wait about 60 seconds, plug it back in, '
-          'give it a couple of minutes.',
-      'Pause other big downloads or streams competing for the connection.',
-    ],
-    SelfHelpTopic.internet: <String>[
-      "Check for an outage: open your provider's website or app and look for a "
-          'reported outage in your area.',
-      'Restart your modem (the box from your provider) first, then your router.',
-      'Still slow? Contact your provider with the copied details above; '
-          'equipment may be outdated or there may be a service issue only they '
-          'can see.',
-    ],
-    SelfHelpTopic.differentApp: <String>[
-      'Try the same thing in a different app or website. If only one app is '
-          'slow, the problem is on their end, and waiting or contacting that '
-          'service is the fix.',
-    ],
-    SelfHelpTopic.reconnect: <String>[
-      "Make sure you're on Wi-Fi and try again.",
-    ],
-  };
+  final bool expanded;
+  final VoidCallback onToggle;
+  final ConnectedAp? ap;
+  final QualityResult? internet;
+  final WifiVsInternetResult result;
 
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
-    final List<String> items = _items[topic] ?? const <String>[];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        // The bordered expander row (chevron + sub-line).
+        Semantics(
+          button: true,
+          toggled: expanded,
+          label: expanded
+              ? 'Hide technical details'
+              : 'Show technical details',
+          child: InkWell(
+            onTap: onToggle,
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.surface1,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                border: Border.all(color: AppColors.border, width: 1),
+              ),
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              child: ExcludeSemantics(
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            expanded
+                                ? 'Hide technical details'
+                                : 'Show technical details',
+                            style: text.titleSmall?.copyWith(
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.xxs),
+                          Text(
+                            'Full Wi-Fi link rates, internet grades, and the '
+                            'verdict math',
+                            style: text.bodySmall?.copyWith(
+                              color: AppColors.textTertiary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Icon(
+                      expanded ? Icons.expand_less : Icons.expand_more,
+                      color: AppColors.textSecondary,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        if (expanded) ...<Widget>[
+          const SizedBox(height: AppSpacing.sm),
+          // Section heading — the named concept "Wi-Fi vs Internet" survives.
+          Text(
+            'Wi-Fi vs Internet',
+            style: text.titleMedium?.copyWith(color: AppColors.textPrimary),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _ProVerdictCard(result: result),
+          const SizedBox(height: AppSpacing.sm),
+          _WifiLinkSection(ap: ap, result: result),
+          const SizedBox(height: AppSpacing.sm),
+          _InternetSection(result: internet),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            kWifiVsInternetFootnote,
+            style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// The pro verdict card (absorbed from wifi_vs_internet_screen): the engineer
+/// verdict word + explanation + supporting SNR context, in the §8.13 status hue.
+class _ProVerdictCard extends StatelessWidget {
+  const _ProVerdictCard({required this.result});
+
+  final WifiVsInternetResult result;
+
+  static Color _statusColor(WifiVsInternetVerdict v) {
+    switch (v) {
+      case WifiVsInternetVerdict.bothHealthy:
+        return AppColors.statusSuccess;
+      case WifiVsInternetVerdict.wifiLimiter:
+      case WifiVsInternetVerdict.upstream:
+      case WifiVsInternetVerdict.bothContributing:
+        return AppColors.statusWarning;
+      case WifiVsInternetVerdict.wifiUnknown:
+        return AppColors.statusInfo;
+    }
+  }
+
+  static IconData _icon(WifiVsInternetVerdict v) {
+    switch (v) {
+      case WifiVsInternetVerdict.bothHealthy:
+        return Icons.check_circle_outline;
+      case WifiVsInternetVerdict.wifiLimiter:
+        return Icons.wifi_outlined;
+      case WifiVsInternetVerdict.upstream:
+        return Icons.cloud_off_outlined;
+      case WifiVsInternetVerdict.bothContributing:
+        return Icons.compare_arrows;
+      case WifiVsInternetVerdict.wifiUnknown:
+        return Icons.help_outline;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final Color status = _statusColor(result.verdict);
+
+    return Semantics(
+      container: true,
+      label:
+          'Verdict: ${result.headline}. ${result.explanation}'
+          '${result.snrContext.isNotEmpty ? ' ${result.snrContext}' : ''}',
+      child: ExcludeSemantics(
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface1,
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            border: Border.all(color: AppColors.border, width: 1),
+          ),
+          padding: const EdgeInsets.all(AppSpacing.sm),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Icon(_icon(result.verdict), size: 24, color: status),
+                  const SizedBox(width: AppSpacing.xs),
+                  Expanded(
+                    child: Text(
+                      result.headline,
+                      style: text.titleMedium?.copyWith(
+                        color: status,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                result.explanation,
+                style: text.bodyLarge?.copyWith(color: AppColors.textPrimary),
+              ),
+              if (result.snrContext.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  result.snrContext,
+                  style: text.bodyMedium?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "Your Wi-Fi link" sub-card (absorbed verbatim from wifi_vs_internet_screen).
+class _WifiLinkSection extends StatelessWidget {
+  const _WifiLinkSection({required this.ap, required this.result});
+
+  final ConnectedAp? ap;
+  final WifiVsInternetResult result;
+
+  @override
+  Widget build(BuildContext context) {
+    final ConnectedAp? a = ap;
+    return _SectionCard(
+      title: 'Your Wi-Fi link',
+      children: <Widget>[
+        _DataRow(
+          label: 'Tx rate',
+          value: _rate(a?.txRateMbps),
+          unit: 'Mbps',
+          mono: true,
+        ),
+        _DataRow(
+          label: 'Rx rate',
+          value: _rate(a?.rxRateMbps),
+          unit: 'Mbps',
+          mono: true,
+          note: (a != null && !a.rxRateAvailable && a.rxRateMbps == null)
+              ? 'Not reported on this platform'
+              : null,
+        ),
+        _DataRow(
+          label: 'Usable capacity',
+          value: _rate(result.usableWifiMbps),
+          unit: 'Mbps',
+          mono: true,
+          note:
+              '55% of ${WifiVsInternetEngine.rateBasisCaption(result.rateBasis)}',
+        ),
+        _DataRow(
+          label: 'SNR',
+          value: a?.snrDb?.toString(),
+          unit: 'dB',
+          mono: true,
+          derived: a?.snrDerived ?? false,
+        ),
+        _DataRow(
+          label: 'RSSI',
+          value: a?.rssiDbm?.toString(),
+          unit: 'dBm',
+          mono: true,
+        ),
+        _DataRow(label: 'Channel', value: a?.channel?.toString(), mono: true),
+        _DataRow(label: 'Standard', value: a?.standard),
+      ],
+    );
+  }
+
+  static String? _rate(double? mbps) {
+    if (mbps == null) return null;
+    final double r = (mbps * 10).round() / 10;
+    return r == r.roundToDouble() ? r.toStringAsFixed(0) : r.toStringAsFixed(1);
+  }
+}
+
+/// "Your internet" sub-card (absorbed verbatim from wifi_vs_internet_screen).
+class _InternetSection extends StatelessWidget {
+  const _InternetSection({required this.result});
+
+  final QualityResult? result;
+
+  @override
+  Widget build(BuildContext context) {
+    final QualityResult? r = result;
+    final double? down = _value(r, MetricIds.download);
+    final double? up = _value(r, MetricIds.upload);
+    final double? avg = (down != null && up != null)
+        ? (down + up) / 2
+        : (down ?? up);
+
+    return _SectionCard(
+      title: 'Your internet',
+      children: <Widget>[
+        _DataRow(
+          label: 'Download',
+          value: _fmt(down),
+          unit: 'Mbps',
+          mono: true,
+          trailing: _GradeChip(grade: _grade(r, MetricIds.download)),
+        ),
+        _DataRow(
+          label: 'Upload',
+          value: _fmt(up),
+          unit: 'Mbps',
+          mono: true,
+          trailing: _GradeChip(grade: _grade(r, MetricIds.upload)),
+        ),
+        _DataRow(
+          label: 'Averaged',
+          value: _fmt(avg),
+          unit: 'Mbps',
+          mono: true,
+          note: 'average of download and upload',
+        ),
+        _DataRow(
+          label: 'Latency',
+          value: _fmtMs(_value(r, MetricIds.latency)),
+          unit: 'ms',
+          mono: true,
+          trailing: _GradeChip(grade: _grade(r, MetricIds.latency)),
+        ),
+        _DataRow(
+          label: 'Jitter',
+          value: _fmtMs(_value(r, MetricIds.jitter)),
+          unit: 'ms',
+          mono: true,
+          trailing: _GradeChip(grade: _grade(r, MetricIds.jitter)),
+        ),
+        _DataRow(
+          label: 'Loss',
+          value: _fmtMs(_value(r, MetricIds.loss)),
+          unit: '%',
+          mono: true,
+          trailing: _GradeChip(grade: _grade(r, MetricIds.loss)),
+        ),
+      ],
+    );
+  }
+
+  static double? _value(QualityResult? r, String id) {
+    final QualityMetric? m = r?.metric(id);
+    return (m != null && m.isAvailable) ? m.value : null;
+  }
+
+  static QualityGrade _grade(QualityResult? r, String id) =>
+      r?.metric(id)?.grade ?? QualityGrade.unavailable;
+
+  static String? _fmt(double? mbps) => mbps?.toStringAsFixed(1);
+
+  static String? _fmtMs(double? v) => v?.round().toString();
+}
+
+/// The §8.13 grade chip (absorbed from wifi_vs_internet_screen).
+class _GradeChip extends StatelessWidget {
+  const _GradeChip({required this.grade});
+
+  final QualityGrade grade;
+
+  static (Color, Color) _colors(QualityGrade grade) {
+    switch (grade) {
+      case QualityGrade.excellent:
+      case QualityGrade.good:
+        return (AppColors.statusSuccess, AppColors.secondary);
+      case QualityGrade.fair:
+        return (AppColors.statusWarning, AppColors.secondary);
+      case QualityGrade.poor:
+        return (AppColors.statusDanger, AppColors.secondary);
+      case QualityGrade.unavailable:
+        return (AppColors.surface2, AppColors.textSecondary);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final (Color bg, Color fg) = _colors(grade);
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: AppSpacing.xxs,
+      ),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(AppRadius.control),
+        border: grade == QualityGrade.unavailable
+            ? Border.all(color: AppColors.borderStrong, width: 1)
+            : null,
+      ),
+      child: Text(
+        grade.label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: text.labelSmall?.copyWith(
+          color: fg,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+/// A titled surface1 card with a §8.1 hairline border (absorbed shell).
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({required this.title, required this.children});
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface1,
@@ -1242,55 +2012,138 @@ class _SelfHelpCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            'A few things to try',
-            style: text.titleSmall?.copyWith(color: AppColors.textPrimary),
+            title,
+            style: text.labelMedium?.copyWith(
+              color: AppColors.textSecondary,
+              letterSpacing: 0.4,
+            ),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          ...items.map((item) => _SelfHelpItem(text: item)),
+          const SizedBox(height: AppSpacing.xs),
+          ...children,
         ],
       ),
     );
   }
 }
 
-class _SelfHelpItem extends StatelessWidget {
-  const _SelfHelpItem({required this.text});
+/// One label → value data row (absorbed verbatim from wifi_vs_internet_screen):
+/// a null value renders "Unavailable", each row is one semantic node, mono for
+/// numerics, an optional trailing grade chip ellipsizes before overflow.
+class _DataRow extends StatelessWidget {
+  const _DataRow({
+    required this.label,
+    required this.value,
+    this.unit,
+    this.mono = false,
+    this.note,
+    this.derived = false,
+    this.trailing,
+  });
 
-  final String text;
+  final String label;
+  final String? value;
+  final String? unit;
+  final bool mono;
+  final String? note;
+  final bool derived;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
-    final TextTheme textTheme = Theme.of(context).textTheme;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText monoText =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+
+    final bool hasValue = value != null && value!.trim().isNotEmpty;
+    final String shown = hasValue
+        ? (unit == null ? value! : '${value!} $unit')
+        : 'Unavailable';
+    final Color valueColor = hasValue
+        ? AppColors.textPrimary
+        : AppColors.textSecondary;
+    final TextStyle? valueStyle = (mono && hasValue)
+        ? monoText.robotoMono.copyWith(color: valueColor)
+        : text.bodyMedium?.copyWith(color: valueColor);
+
+    final String labelSpoken = derived ? '$label, derived' : label;
+    final String semanticLabel = note == null
+        ? '$labelSpoken, $shown'
+        : '$labelSpoken, $shown, $note';
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          const Padding(
-            padding: EdgeInsets.only(top: 2),
-            child: Icon(
-              Icons.chevron_right,
-              size: 20,
-              color: AppColors.textSecondary,
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
+      child: Semantics(
+        container: true,
+        label: semanticLabel,
+        excludeSemantics: true,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Expanded(
+                  flex: 2,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        label,
+                        style: text.bodyMedium?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      if (derived)
+                        Text(
+                          'derived',
+                          style: text.labelSmall?.copyWith(
+                            color: AppColors.textTertiary,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  flex: 3,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: <Widget>[
+                      Flexible(
+                        child: Text(
+                          shown,
+                          textAlign: TextAlign.end,
+                          overflow: TextOverflow.ellipsis,
+                          style: valueStyle,
+                        ),
+                      ),
+                      if (trailing != null) ...[
+                        const SizedBox(width: AppSpacing.xs),
+                        trailing!,
+                      ],
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(width: AppSpacing.xs),
-          Expanded(
-            child: Text(
-              text,
-              style: textTheme.bodyLarge?.copyWith(
-                color: AppColors.textPrimary,
+            if (note != null) ...[
+              const SizedBox(height: AppSpacing.xxs),
+              Text(
+                note!,
+                textAlign: TextAlign.end,
+                style: text.bodySmall?.copyWith(color: AppColors.textTertiary),
               ),
-            ),
-          ),
-        ],
+            ],
+          ],
+        ),
       ),
     );
   }
 }
 
 // ===========================================================================
-// iOS-only optional Shortcut offer (decision 4) — soft, secondary, post-answer.
+// iOS-only optional Shortcut offer (D1 path) — soft, secondary, post-answer.
 // ===========================================================================
 
 class _ShortcutOfferCard extends StatelessWidget {
