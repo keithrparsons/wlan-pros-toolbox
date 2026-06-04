@@ -1,10 +1,23 @@
 // InterfaceInfoService — reads the device's local network state.
 //
 // Surfaces: per-interface IPv4/IPv6 addresses, interface name + type, and
-// (where the platform exposes them) gateway, DNS servers, Wi-Fi SSID/BSSID,
-// and the active interface's IP. Built on `dart:io NetworkInterface` for the
-// address/interface table and `network_info_plus` for Wi-Fi-link details
-// (SSID/BSSID/gateway) that `dart:io` does not expose.
+// (where the platform exposes them) gateway, Wi-Fi SSID/BSSID, the interface
+// hardware (MAC) address, and the active interface's IP.
+//
+// DATA SOURCES (after the Batch-1 enrichment):
+//   * Wi-Fi-link IDENTITY (SSID, BSSID, interface name, hardware/MAC address)
+//     now comes from the native `ConnectedAp` subsystem (WifiInfoSourceResolver
+//     → MacWifiInfoAdapter on macOS / WiFiDetailsBridge on iOS), the SAME source
+//     the Wi-Fi Information tool uses. `network_info_plus` returned null SSID/
+//     BSSID on iOS/macOS, which surfaced as a misleading "not available" — the
+//     native subsystem reads them correctly and carries the honest macOS
+//     Location gate. The read is the no-prompt path (mirrors the consumer
+//     connection check): it never pops a Location prompt; an ungranted macOS
+//     Location simply yields null SSID/BSSID and [WifiLinkInfo.locationNeeded].
+//   * Wi-Fi-link ADDRESSING (gateway, subnet mask, Wi-Fi IPv4/IPv6) stays on
+//     `network_info_plus` — `dart:io` does not expose it and the native AP
+//     subsystem is RF/identity-only.
+//   * The per-interface address table stays on `dart:io NetworkInterface`.
 //
 // This service is the foundation the brief calls out (§ "Interface
 // Information ... also displays the device's own IP, which future iperf-server
@@ -20,9 +33,14 @@
 // null (not 0, not ""), and the UI renders "Not available on this platform"
 // for nulls (brief §10).
 
+import 'dart:async';
 import 'dart:io';
 
 import 'package:network_info_plus/network_info_plus.dart';
+
+import 'connected_ap.dart';
+import 'wifi_details_bridge.dart';
+import 'wifi_info_adapter.dart';
 
 /// The coarse kind of a network interface, inferred from its OS name. Used to
 /// label rows ("Wi-Fi", "Ethernet", "Loopback") rather than show raw `en0`.
@@ -57,9 +75,17 @@ class NetworkInterfaceInfo {
   }
 }
 
-/// Wi-Fi-link details from `network_info_plus`. Each field is nullable because
-/// platforms (and permission states) differ: iOS needs the wifi-info
-/// entitlement + location permission for SSID/BSSID; macOS/Android vary.
+/// Wi-Fi-link details. Each field is nullable because platforms (and permission
+/// states) differ.
+///
+/// SOURCES (Batch-1): [ssid], [bssid], [interfaceName], and [hardwareAddress]
+/// come from the native `ConnectedAp` subsystem (the same source the Wi-Fi
+/// Information tool uses); [gatewayIP], [subnetMask], [wifiIPv4], and [wifiIPv6]
+/// come from `network_info_plus`. [locationNeeded] is true on macOS when the
+/// network name (SSID/BSSID) is gated behind Location Services that the user has
+/// not granted — the honest "needs Location" state the Wi-Fi Information tool
+/// already surfaces, mirrored here so the screen explains the empty name rather
+/// than implying the platform cannot provide it.
 class WifiLinkInfo {
   const WifiLinkInfo({
     this.ssid,
@@ -68,6 +94,9 @@ class WifiLinkInfo {
     this.subnetMask,
     this.wifiIPv4,
     this.wifiIPv6,
+    this.interfaceName,
+    this.hardwareAddress,
+    this.locationNeeded = false,
   });
 
   final String? ssid;
@@ -76,6 +105,21 @@ class WifiLinkInfo {
   final String? subnetMask;
   final String? wifiIPv4;
   final String? wifiIPv6;
+
+  /// BSD interface name (e.g. "en0") for the Wi-Fi link, from `ConnectedAp`.
+  /// Null when the source does not expose it (iOS Shortcut path).
+  final String? interfaceName;
+
+  /// Interface hardware (MAC) address, from `ConnectedAp`. Null when the source
+  /// does not expose it. On iOS this is unreadable (Apple blocks app reads of
+  /// the device Wi-Fi MAC); the UI labels that honestly via
+  /// [MacRandomizationClassifier].
+  final String? hardwareAddress;
+
+  /// macOS only: true when SSID/BSSID are absent BECAUSE Location Services is
+  /// not granted (not because the platform cannot provide them). Drives the
+  /// honest "needs Location" hint.
+  final bool locationNeeded;
 }
 
 /// Aggregate snapshot of the device's network state at the moment of read.
@@ -106,17 +150,32 @@ class InterfaceInfoSnapshot {
   }
 }
 
+/// Reads the connected AP's identity from the native Wi-Fi subsystem WITHOUT
+/// surfacing any OS prompt. Returns null when there is no reading (not connected,
+/// channel error, or — on macOS — Location not granted, in which case the name
+/// fields come back null and the gate is reported separately).
+///
+/// [authorized] reports the CURRENT macOS Location authorization (no prompt), so
+/// the caller can distinguish "name absent because Location is off" from "name
+/// absent for some other reason" and show the honest hint.
+typedef ConnectedApRead = Future<({ConnectedAp? ap, bool authorized})>
+    Function();
+
 /// Reads local interface + Wi-Fi state. Pure I/O, no UI — unit-testable by
-/// injecting a fake [NetworkInfo] and a fake interface lister.
+/// injecting a fake [NetworkInfo], a fake interface lister, and a fake
+/// connected-AP reader.
 class InterfaceInfoService {
   InterfaceInfoService({
     NetworkInfo? networkInfo,
     Future<List<NetworkInterface>> Function()? interfaceLister,
+    ConnectedApRead? connectedApReader,
   })  : _networkInfo = networkInfo ?? NetworkInfo(),
-        _interfaceLister = interfaceLister ?? _defaultLister;
+        _interfaceLister = interfaceLister ?? _defaultLister,
+        _readConnectedAp = connectedApReader ?? _defaultConnectedApRead;
 
   final NetworkInfo _networkInfo;
   final Future<List<NetworkInterface>> Function() _interfaceLister;
+  final ConnectedApRead _readConnectedAp;
 
   static Future<List<NetworkInterface>> _defaultLister() {
     return NetworkInterface.list(
@@ -124,6 +183,52 @@ class InterfaceInfoService {
       includeLinkLocal: true,
       type: InternetAddressType.any,
     );
+  }
+
+  /// Default connected-AP read — the no-prompt path that mirrors the consumer
+  /// connection check. macOS: read the CoreWLAN snapshot via [MacWifiInfoAdapter]
+  /// (its [WifiInfoAdapter.fetch] never pops a Location prompt; an ungranted
+  /// Location simply yields null SSID/BSSID) and report current authorization so
+  /// the gate can be shown. iOS: read the last Shortcut payload via
+  /// [WiFiDetailsBridge.readLatest]. Other platforms: no reading.
+  static Future<({ConnectedAp? ap, bool authorized})>
+      _defaultConnectedApRead() async {
+    switch (WifiInfoSourceResolver.resolve()) {
+      case WifiInfoSource.macosCoreWlan:
+        final WifiInfoAdapter adapter = MacWifiInfoAdapter();
+        try {
+          final ConnectedAp ap = await adapter.fetch().timeout(
+                const Duration(seconds: 5),
+                onTimeout: () =>
+                    throw TimeoutException('Wi-Fi link read timed out'),
+              );
+          final bool authorized = await adapter.currentNameAuthorization();
+          return (ap: ap, authorized: authorized);
+        } catch (_) {
+          // Read failed; still report whether Location is authorized so the gate
+          // hint stays accurate. Swallow any error from that probe too.
+          bool authorized = false;
+          try {
+            authorized = await adapter.currentNameAuthorization();
+          } catch (_) {/* leave false */}
+          return (ap: null, authorized: authorized);
+        }
+      case WifiInfoSource.iosShortcuts:
+        try {
+          final WiFiDetailsBridge bridge = WiFiDetailsBridge();
+          final details = await bridge.readLatest();
+          return (
+            ap: details == null ? null : ConnectedAp.fromWifiDetails(details),
+            // iOS has no in-app Location gate for this path.
+            authorized: true,
+          );
+        } catch (_) {
+          return (ap: null, authorized: true);
+        }
+      case WifiInfoSource.unsupported:
+      case WifiInfoSource.web:
+        return (ap: null, authorized: true);
+    }
   }
 
   /// Take a snapshot. Each sub-read is independently guarded so one failing
@@ -167,10 +272,9 @@ class InterfaceInfoService {
   }
 
   Future<WifiLinkInfo> _readWifi() async {
-    // Each call is wrapped: a denied permission or unsupported platform throws
-    // a PlatformException; we swallow it to null rather than fail the snapshot.
-    final String? ssid = await _tryStr(() => _networkInfo.getWifiName());
-    final String? bssid = await _tryStr(() => _networkInfo.getWifiBSSID());
+    // ADDRESSING from network_info_plus (the native AP subsystem is identity/RF
+    // only). Each call is wrapped: a denied permission or unsupported platform
+    // throws a PlatformException; we swallow it to null rather than fail.
     final String? gateway =
         await _tryStr(() => _networkInfo.getWifiGatewayIP());
     final String? submask =
@@ -178,16 +282,42 @@ class InterfaceInfoService {
     final String? ipv4 = await _tryStr(() => _networkInfo.getWifiIP());
     final String? ipv6 = await _tryStr(() => _networkInfo.getWifiIPv6());
 
+    // IDENTITY (SSID/BSSID/interface/MAC) from the native ConnectedAp subsystem.
+    // network_info_plus returns null SSID/BSSID on iOS/macOS — the misleading
+    // "not available" Keith flagged — so the identity fields are re-sourced here.
+    ({ConnectedAp? ap, bool authorized}) read;
+    try {
+      read = await _readConnectedAp();
+    } catch (_) {
+      read = (ap: null, authorized: true);
+    }
+    final ConnectedAp? ap = read.ap;
+
+    // macOS: SSID/BSSID need Location. When neither is present AND Location is
+    // not authorized, that is the honest "needs Location" state — not a platform
+    // limitation. (iOS reports authorized=true, so this never trips there.)
+    final bool nameMissing =
+        (ap?.ssid == null || ap!.ssid!.trim().isEmpty) &&
+            (ap?.bssid == null || ap!.bssid!.trim().isEmpty);
+    final bool locationNeeded = nameMissing && !read.authorized;
+
     return WifiLinkInfo(
-      // network_info_plus brackets some SSIDs with quotes on some platforms;
-      // strip them so the displayed value is clean.
-      ssid: _cleanSsid(ssid),
-      bssid: bssid,
+      ssid: _cleanSsid(ap?.ssid),
+      bssid: _blankToNull(ap?.bssid),
       gatewayIP: gateway,
       subnetMask: submask,
       wifiIPv4: ipv4,
       wifiIPv6: ipv6,
+      interfaceName: _blankToNull(ap?.interfaceName),
+      hardwareAddress: _blankToNull(ap?.hardwareAddress),
+      locationNeeded: locationNeeded,
     );
+  }
+
+  static String? _blankToNull(String? v) {
+    if (v == null) return null;
+    final String t = v.trim();
+    return t.isEmpty ? null : t;
   }
 
   static Future<String?> _tryStr(Future<String?> Function() fn) async {
@@ -203,9 +333,9 @@ class InterfaceInfoService {
 
   static String? _cleanSsid(String? ssid) {
     if (ssid == null) return null;
-    String s = ssid;
+    String s = ssid.trim();
     if (s.length >= 2 && s.startsWith('"') && s.endsWith('"')) {
-      s = s.substring(1, s.length - 1);
+      s = s.substring(1, s.length - 1).trim();
     }
     // Some platforms return a placeholder when permission is missing.
     if (s.isEmpty || s == '<unknown ssid>') return null;
