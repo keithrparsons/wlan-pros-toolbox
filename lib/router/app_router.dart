@@ -51,6 +51,7 @@ import '../screens/tools/reference/rf_connectors_screen.dart';
 import '../screens/tools/reference/roaming_screen.dart';
 import '../screens/tools/reference/ap_placement_screen.dart';
 import '../screens/tools/reference/non_wifi_channels_screen.dart';
+import '../screens/tools/reference/wifi_glossary_screen.dart';
 import '../screens/tools/reference/poe_reference_screen.dart';
 import '../screens/tools/reference/spectrum_screen.dart';
 import '../screens/tools/network/arp_ndp_screen.dart';
@@ -207,6 +208,11 @@ class AppRouter {
   static const String asciiReference = '/tools/ascii-reference';
   static const String emojiReference = '/tools/emoji-reference';
 
+  /// Wi-Fi Glossary — 92 plain-language Wi-Fi term definitions, grouped by
+  /// category (offline bundled JSON). The id `wifi-glossary` is permanent
+  /// (backs this route, the catalog entry, the asset, and tests).
+  static const String wifiGlossary = '/tools/wifi-glossary';
+
   // PDF reference cards — Keith's 10 laminated reference cards bundled as PDFs
   // (assets/reference-cards/<id>.pdf), rendered pinch-zoomable by the single
   // PdfReferenceScreen. They interleave alphabetically with the other Quick
@@ -336,6 +342,7 @@ class AppRouter {
     osiModel: (_) => const OsiModelScreen(),
     asciiReference: (_) => const AsciiReferenceScreen(),
     emojiReference: (_) => const EmojiReferenceScreen(),
+    wifiGlossary: (_) => const WifiGlossaryScreen(),
     // PDF reference cards — one PdfReferenceScreen per bundled card. Title +
     // asset path are the only per-card inputs; the screen is otherwise shared.
     bubbleDiagram: (_) => const PdfReferenceScreen(

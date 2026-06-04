@@ -1,0 +1,652 @@
+{
+  "schema_version": 1,
+  "title": "Wi-Fi Glossary",
+  "source": "Deliverables/2026-06-03-wifi-glossary curated edition",
+  "term_count": 92,
+  "terms": [
+    {
+      "id": "2-4-ghz-band",
+      "term": "2.4 GHz Band",
+      "abbr": null,
+      "category": "Bands & Spectrum",
+      "definition": "The oldest Wi-Fi band. It travels farther and through walls better than higher bands, but it is crowded, in practice offers only three non-overlapping 20 MHz channels (1, 6, and 11 in most regions), and shares space with Bluetooth, microwaves, and many other devices."
+    },
+    {
+      "id": "5-ghz-band",
+      "term": "5 GHz Band",
+      "abbr": null,
+      "category": "Bands & Spectrum",
+      "definition": "The workhorse Wi-Fi band. It offers many more channels and far more capacity than 2.4 GHz, at the cost of shorter range and weaker wall penetration."
+    },
+    {
+      "id": "6-ghz-band",
+      "term": "6 GHz Band",
+      "abbr": null,
+      "category": "Bands & Spectrum",
+      "definition": "The newest Wi-Fi band, opened for Wi-Fi 6E and Wi-Fi 7. It adds a large block of clean spectrum with many wide channels, but only newer devices can use it and range is the shortest of the three bands."
+    },
+    {
+      "id": "channel",
+      "term": "Channel",
+      "abbr": null,
+      "category": "Bands & Spectrum",
+      "definition": "A specific slice of a band that an access point transmits on. Devices on the same channel take turns; devices on well-separated channels can transmit at the same time without colliding."
+    },
+    {
+      "id": "channel-width",
+      "term": "Channel Width",
+      "abbr": null,
+      "category": "Bands & Spectrum",
+      "definition": "How much spectrum a channel uses, from 20 MHz up to 320 MHz. Wider channels carry more data but cover less area cleanly and leave fewer non-overlapping channels for neighbors."
+    },
+    {
+      "id": "channel-bonding",
+      "term": "Channel Bonding",
+      "abbr": null,
+      "category": "Bands & Spectrum",
+      "definition": "Combining adjacent 20 MHz channels into one wider channel for more speed. The trade-off is fewer separate channels available, which raises the odds of interference in busy areas."
+    },
+    {
+      "id": "co-channel-interference",
+      "term": "Co-Channel Interference",
+      "abbr": "CCI",
+      "category": "Bands & Spectrum",
+      "definition": "What happens when access points and devices share the same channel. They are not colliding so much as taking turns, so the more devices on a channel, the less airtime each one gets. Often the real cause of slow Wi-Fi in dense deployments."
+    },
+    {
+      "id": "dynamic-frequency-selection",
+      "term": "Dynamic Frequency Selection",
+      "abbr": "DFS",
+      "category": "Bands & Spectrum",
+      "definition": "A rule for certain 5 GHz channels that requires Wi-Fi to watch for radar and move off the channel if it appears. DFS channels add capacity but can cause brief interruptions when a radar event forces a change."
+    },
+    {
+      "id": "ieee-802-11",
+      "term": "IEEE 802.11",
+      "abbr": null,
+      "category": "Standards & Wi-Fi Generations",
+      "definition": "The technical standard that defines how Wi-Fi works at the radio and data level. Every Wi-Fi feature traces back to an 802.11 amendment, identified by trailing letters such as 802.11ax."
+    },
+    {
+      "id": "wi-fi-4",
+      "term": "Wi-Fi 4",
+      "abbr": "802.11n",
+      "category": "Standards & Wi-Fi Generations",
+      "definition": "The 2009 generation that introduced MIMO and multiple data streams, working in both 2.4 and 5 GHz. It was the first big leap in Wi-Fi speed."
+    },
+    {
+      "id": "wi-fi-5",
+      "term": "Wi-Fi 5",
+      "abbr": "802.11ac",
+      "category": "Standards & Wi-Fi Generations",
+      "definition": "The 2013 generation, 5 GHz only, that added wider channels, more streams, and the first multi-user MIMO. It pushed Wi-Fi into gigabit territory."
+    },
+    {
+      "id": "wi-fi-6",
+      "term": "Wi-Fi 6",
+      "abbr": "802.11ax",
+      "category": "Standards & Wi-Fi Generations",
+      "definition": "The 2021 generation focused on efficiency in crowded places rather than just peak speed. It introduced OFDMA, Target Wake Time, and better performance when many devices share an access point."
+    },
+    {
+      "id": "wi-fi-6e",
+      "term": "Wi-Fi 6E",
+      "abbr": null,
+      "category": "Standards & Wi-Fi Generations",
+      "definition": "Wi-Fi 6 extended into the new 6 GHz band. Same features as Wi-Fi 6, but with access to clean spectrum and more wide channels. Requires 6 GHz-capable devices."
+    },
+    {
+      "id": "wi-fi-7",
+      "term": "Wi-Fi 7",
+      "abbr": "802.11be",
+      "category": "Standards & Wi-Fi Generations",
+      "definition": "The 2024 generation spanning 2.4, 5, and 6 GHz. It adds 320 MHz channels, denser modulation, and Multi-Link Operation, which lets a device use more than one band at once."
+    },
+    {
+      "id": "wi-fi-8",
+      "term": "Wi-Fi 8",
+      "abbr": "802.11bn",
+      "category": "Standards & Wi-Fi Generations",
+      "definition": "The next generation, in development and expected around 2028. Its goal is reliability rather than higher peak speed: steadier throughput, lower latency, and fewer dropped frames in tough conditions."
+    },
+    {
+      "id": "wi-fi-alliance",
+      "term": "Wi-Fi Alliance",
+      "abbr": null,
+      "category": "Standards & Wi-Fi Generations",
+      "definition": "The industry group that owns the \"Wi-Fi\" name, runs the certification program, and assigns the simple generation numbers (Wi-Fi 6, 7, and so on). It does not write the underlying 802.11 standard; the IEEE does."
+    },
+    {
+      "id": "wi-fi-certified",
+      "term": "Wi-Fi CERTIFIED",
+      "abbr": null,
+      "category": "Standards & Wi-Fi Generations",
+      "definition": "A Wi-Fi Alliance stamp confirming a product was tested to work with other certified devices and meets defined feature and security requirements."
+    },
+    {
+      "id": "backward-compatibility",
+      "term": "Backward Compatibility",
+      "abbr": null,
+      "category": "Standards & Wi-Fi Generations",
+      "definition": "The ability of newer Wi-Fi gear to still serve older devices on the same band. A 6 GHz-only feature, though, cannot reach a device that has no 6 GHz radio."
+    },
+    {
+      "id": "rf",
+      "term": "RF",
+      "abbr": "Radio Frequency",
+      "category": "Signal & RF Basics",
+      "definition": "The radio waves Wi-Fi uses to carry data through the air. Wi-Fi operates in the unlicensed 2.4, 5, and 6 GHz ranges."
+    },
+    {
+      "id": "frequency",
+      "term": "Frequency",
+      "abbr": null,
+      "category": "Signal & RF Basics",
+      "definition": "How many times a radio wave cycles per second, measured in hertz. Higher-frequency bands carry more data but travel shorter distances."
+    },
+    {
+      "id": "wavelength",
+      "term": "Wavelength",
+      "abbr": null,
+      "category": "Signal & RF Basics",
+      "definition": "The physical length of one radio wave cycle. Higher frequencies have shorter wavelengths, which relates to why 6 GHz typically covers less area than 2.4 GHz."
+    },
+    {
+      "id": "db",
+      "term": "dB",
+      "abbr": "Decibel",
+      "category": "Signal & RF Basics",
+      "definition": "A way of expressing how much bigger or smaller one signal level is than another. Every 3 dB is roughly double or half the power, and 10 dB is ten times."
+    },
+    {
+      "id": "dbm",
+      "term": "dBm",
+      "abbr": null,
+      "category": "Signal & RF Basics",
+      "definition": "The standard unit for Wi-Fi signal power, where 0 dBm equals one milliwatt. Received Wi-Fi signals are negative numbers, and closer to zero is stronger (for example, -50 dBm is much better than -80 dBm)."
+    },
+    {
+      "id": "dbi",
+      "term": "dBi",
+      "abbr": null,
+      "category": "Signal & RF Basics",
+      "definition": "A measure of antenna gain, or how tightly an antenna focuses its energy. Higher dBi means a more focused signal, not more transmitter power."
+    },
+    {
+      "id": "rssi",
+      "term": "RSSI",
+      "abbr": "Received Signal Strength Indicator",
+      "category": "Signal & RF Basics",
+      "definition": "A device's reading of how strong a received signal is, usually shown in dBm. It is useful for comparison, but exact values vary between manufacturers, so treat it as a guide rather than an absolute."
+    },
+    {
+      "id": "signal-strength",
+      "term": "Signal Strength",
+      "abbr": null,
+      "category": "Signal & RF Basics",
+      "definition": "How strong a received signal is, best expressed in dBm. A strong signal helps, but it does not guarantee good performance on its own without a clean enough signal-to-noise ratio."
+    },
+    {
+      "id": "noise-floor",
+      "term": "Noise Floor",
+      "abbr": null,
+      "category": "Signal & RF Basics",
+      "definition": "The constant background radio energy in an area. A signal has to stand above this floor to be heard, so a high noise floor hurts performance even when the signal is strong."
+    },
+    {
+      "id": "signal-to-noise-ratio",
+      "term": "Signal-to-Noise Ratio",
+      "abbr": "SNR",
+      "category": "Signal & RF Basics",
+      "definition": "The gap between the signal strength and the noise floor, in dB. A higher SNR allows faster, more reliable connections, and it often predicts real performance better than signal strength alone."
+    },
+    {
+      "id": "eirp",
+      "term": "EIRP",
+      "abbr": "Effective Isotropic Radiated Power",
+      "category": "Signal & RF Basics",
+      "definition": "The actual power radiated out of an antenna in its strongest direction, combining transmit power and antenna gain. Regulators set limits on EIRP rather than on transmitter power alone."
+    },
+    {
+      "id": "attenuation",
+      "term": "Attenuation",
+      "abbr": null,
+      "category": "Signal & RF Basics",
+      "definition": "The weakening of a Wi-Fi signal as it travels through distance, walls, and other materials. Different materials absorb different amounts, which is why concrete and water hurt signals more than drywall."
+    },
+    {
+      "id": "free-space-path-loss",
+      "term": "Free Space Path Loss",
+      "abbr": "FSPL",
+      "category": "Signal & RF Basics",
+      "definition": "The weakening of a signal simply from spreading out over distance, even with nothing in the way. The standard formula shows more loss at higher frequencies, but that comes from the receiving antenna capturing less energy at shorter wavelengths, not from the air absorbing the signal. The net effect is that 6 GHz shows more path loss than 2.4 GHz at the same distance."
+    },
+    {
+      "id": "multipath",
+      "term": "Multipath",
+      "abbr": null,
+      "category": "Signal & RF Basics",
+      "definition": "When a signal reaches the receiver by several paths at once after bouncing off surfaces. It can cause distortion, but modern Wi-Fi makes constructive use of it through MIMO."
+    },
+    {
+      "id": "interference",
+      "term": "Interference",
+      "abbr": null,
+      "category": "Signal & RF Basics",
+      "definition": "Unwanted radio energy that degrades a Wi-Fi signal, from other networks or from non-Wi-Fi sources such as microwaves, radar, and some cordless devices."
+    },
+    {
+      "id": "antenna-gain",
+      "term": "Antenna Gain",
+      "abbr": null,
+      "category": "Signal & RF Basics",
+      "definition": "How effectively an antenna focuses signal in a direction, measured in dBi. Gain shapes coverage; it does not add transmitter power."
+    },
+    {
+      "id": "omnidirectional-antenna",
+      "term": "Omnidirectional Antenna",
+      "abbr": null,
+      "category": "Signal & RF Basics",
+      "definition": "An antenna that radiates fairly evenly in all horizontal directions, giving a doughnut-shaped coverage pattern. Common on access points meant to cover a room from the center."
+    },
+    {
+      "id": "directional-antenna",
+      "term": "Directional Antenna",
+      "abbr": null,
+      "category": "Signal & RF Basics",
+      "definition": "An antenna that concentrates its signal in one direction for longer reach or targeted coverage. Patch, panel, and Yagi antennas are common types."
+    },
+    {
+      "id": "ofdm",
+      "term": "OFDM",
+      "abbr": "Orthogonal Frequency Division Multiplexing",
+      "category": "Speed, Modulation & Capacity",
+      "definition": "The core technique Wi-Fi uses to pack data onto many small subcarriers at once, which resists interference and multipath. It has underpinned every mainstream Wi-Fi generation since 802.11a brought it to 5 GHz in 1999."
+    },
+    {
+      "id": "ofdma",
+      "term": "OFDMA",
+      "abbr": "Orthogonal Frequency Division Multiple Access",
+      "category": "Speed, Modulation & Capacity",
+      "definition": "A Wi-Fi 6 upgrade to OFDM that lets one transmission serve several devices at once by splitting the channel into smaller chunks. It improves efficiency when many devices send small amounts of data."
+    },
+    {
+      "id": "mimo",
+      "term": "MIMO",
+      "abbr": "Multiple Input, Multiple Output",
+      "category": "Speed, Modulation & Capacity",
+      "definition": "Using multiple antennas to send several data streams at the same time, multiplying capacity. It is the foundation of modern Wi-Fi speed."
+    },
+    {
+      "id": "mu-mimo",
+      "term": "MU-MIMO",
+      "abbr": "Multi-User MIMO",
+      "category": "Speed, Modulation & Capacity",
+      "definition": "A form of MIMO that serves several devices at once rather than one at a time. Downlink arrived with Wi-Fi 5, and Wi-Fi 6 added it for uplink."
+    },
+    {
+      "id": "spatial-stream",
+      "term": "Spatial Stream",
+      "abbr": null,
+      "category": "Speed, Modulation & Capacity",
+      "definition": "One independent data stream sent over one antenna path. More spatial streams mean higher speed, up to the lower antenna count of the two devices."
+    },
+    {
+      "id": "beamforming",
+      "term": "Beamforming",
+      "abbr": null,
+      "category": "Speed, Modulation & Capacity",
+      "definition": "Shaping a transmission across multiple antennas so the signal lands more strongly on the intended device. It improves range and reliability without raising power."
+    },
+    {
+      "id": "qam",
+      "term": "QAM",
+      "abbr": "Quadrature Amplitude Modulation",
+      "category": "Speed, Modulation & Capacity",
+      "definition": "The method Wi-Fi uses to pack bits onto the signal. Higher QAM (256, 1024, 4096) carries more data per transmission but needs a cleaner signal to work."
+    },
+    {
+      "id": "mcs",
+      "term": "MCS",
+      "abbr": "Modulation and Coding Scheme",
+      "category": "Speed, Modulation & Capacity",
+      "definition": "The combined setting of modulation and error-correction that, with channel width and streams, sets the connection's data rate. Each combination has an index number, and higher indexes need a stronger, cleaner signal."
+    },
+    {
+      "id": "data-rate-vs-throughput",
+      "term": "Data Rate vs Throughput",
+      "abbr": null,
+      "category": "Speed, Modulation & Capacity",
+      "definition": "Data rate is the raw speed the radio negotiates; throughput is the real usable speed after overhead, retries, and shared airtime. Real throughput runs well below the negotiated rate, frequently only half to two-thirds of it, and lower on a busy channel."
+    },
+    {
+      "id": "guard-interval",
+      "term": "Guard Interval",
+      "abbr": null,
+      "category": "Speed, Modulation & Capacity",
+      "definition": "A tiny gap inserted between transmissions to absorb echoes from multipath and prevent them from corrupting the next symbol. Shorter intervals raise speed slightly; longer ones hold up better in high-multipath spaces."
+    },
+    {
+      "id": "target-wake-time",
+      "term": "Target Wake Time",
+      "abbr": "TWT",
+      "category": "Speed, Modulation & Capacity",
+      "definition": "A Wi-Fi 6 feature that lets a device and access point schedule when the device wakes to send or receive, saving battery for phones and Internet of Things devices."
+    },
+    {
+      "id": "multi-link-operation",
+      "term": "Multi-Link Operation",
+      "abbr": "MLO",
+      "category": "Speed, Modulation & Capacity",
+      "definition": "A key Wi-Fi 7 feature that lets a device use more than one band or channel at the same time, either combining them for speed or switching between them for lower latency and reliability."
+    },
+    {
+      "id": "bss-coloring",
+      "term": "BSS Coloring",
+      "abbr": null,
+      "category": "Speed, Modulation & Capacity",
+      "definition": "A Wi-Fi 6 feature that tags each network with a number so a device can quickly tell its own traffic from a neighbor's and reuse the channel more aggressively when safe."
+    },
+    {
+      "id": "preamble-puncturing",
+      "term": "Preamble Puncturing",
+      "abbr": null,
+      "category": "Speed, Modulation & Capacity",
+      "definition": "A feature that lets a wide channel skip over a busy or blocked portion and keep using the rest, instead of dropping down to a narrow channel. Introduced in Wi-Fi 6 and expanded in Wi-Fi 7."
+    },
+    {
+      "id": "mac-address",
+      "term": "MAC Address",
+      "abbr": null,
+      "category": "How Devices Share the Air",
+      "definition": "The unique hardware identifier of a network device. Wi-Fi uses it to address frames, and modern phones often randomize it for privacy."
+    },
+    {
+      "id": "csma-ca",
+      "term": "CSMA/CA",
+      "abbr": "Carrier Sense Multiple Access with Collision Avoidance",
+      "category": "How Devices Share the Air",
+      "definition": "The basic politeness rule of Wi-Fi: a device listens first, and transmits only when the channel is clear. It is why Wi-Fi performance drops as more devices share a channel."
+    },
+    {
+      "id": "airtime",
+      "term": "Airtime",
+      "abbr": null,
+      "category": "How Devices Share the Air",
+      "definition": "The amount of time a device occupies the channel to send its data. Slow or distant devices use more airtime for the same data, which can starve everyone else on the channel."
+    },
+    {
+      "id": "channel-utilization",
+      "term": "Channel Utilization",
+      "abbr": null,
+      "category": "How Devices Share the Air",
+      "definition": "How busy a channel is, expressed as a percentage of time it is in use. High utilization is one of the clearest signs of a congested, slow network."
+    },
+    {
+      "id": "beacon",
+      "term": "Beacon",
+      "abbr": null,
+      "category": "How Devices Share the Air",
+      "definition": "A small management frame an access point broadcasts regularly to announce its network name and capabilities. It is how devices discover and stay synchronized with a network."
+    },
+    {
+      "id": "dtim",
+      "term": "DTIM",
+      "abbr": "Delivery Traffic Indication Map",
+      "category": "How Devices Share the Air",
+      "definition": "A setting carried in beacons that tells sleeping devices when to wake for buffered traffic. It balances battery life against how quickly a device receives data."
+    },
+    {
+      "id": "rts-cts",
+      "term": "RTS/CTS",
+      "abbr": "Request to Send / Clear to Send",
+      "category": "How Devices Share the Air",
+      "definition": "A short handshake that reserves the channel before sending, used to avoid collisions from devices that cannot hear each other. Helpful in hidden-node situations."
+    },
+    {
+      "id": "hidden-node",
+      "term": "Hidden Node",
+      "abbr": null,
+      "category": "How Devices Share the Air",
+      "definition": "Two devices that can both reach the access point but cannot hear each other, so they transmit at the same time and collide. A classic cause of unexplained retries."
+    },
+    {
+      "id": "qos-wmm",
+      "term": "QoS / WMM",
+      "abbr": "Quality of Service / Wi-Fi Multimedia",
+      "category": "How Devices Share the Air",
+      "definition": "A system that prioritizes time-sensitive traffic such as voice and video over background traffic, so a large download does not ruin a call."
+    },
+    {
+      "id": "access-point",
+      "term": "Access Point",
+      "abbr": "AP",
+      "category": "Access Points, Networks & Roaming",
+      "definition": "The device that provides the Wi-Fi signal and bridges wireless devices onto the wired network. An access point is not a router, even when a consumer box combines both functions."
+    },
+    {
+      "id": "station-sta-client",
+      "term": "Station (STA) / Client",
+      "abbr": null,
+      "category": "Access Points, Networks & Roaming",
+      "definition": "Any device that connects to a Wi-Fi network, such as a phone, laptop, or sensor."
+    },
+    {
+      "id": "ssid",
+      "term": "SSID",
+      "abbr": "Service Set Identifier",
+      "category": "Access Points, Networks & Roaming",
+      "definition": "The network name devices see and join, such as \"HomeNetwork.\" Several access points can share one SSID so devices roam across them as one network."
+    },
+    {
+      "id": "bssid",
+      "term": "BSSID",
+      "abbr": "Basic Service Set Identifier",
+      "category": "Access Points, Networks & Roaming",
+      "definition": "The unique radio identifier of a single access point's network, usually based on its MAC address. One SSID can have many BSSIDs across a building."
+    },
+    {
+      "id": "wireless-lan-controller",
+      "term": "Wireless LAN Controller",
+      "abbr": "WLC",
+      "category": "Access Points, Networks & Roaming",
+      "definition": "A central device or service that manages many access points at once, handling channels, power, roaming, and configuration from one place."
+    },
+    {
+      "id": "cloud-managed-wi-fi",
+      "term": "Cloud-Managed Wi-Fi",
+      "abbr": null,
+      "category": "Access Points, Networks & Roaming",
+      "definition": "An architecture where access points are configured and monitored through an online dashboard instead of an on-site controller. One of several management models used in business Wi-Fi."
+    },
+    {
+      "id": "roaming",
+      "term": "Roaming",
+      "abbr": null,
+      "category": "Access Points, Networks & Roaming",
+      "definition": "The process of a moving device handing off from one access point to another within the same network without dropping the connection."
+    },
+    {
+      "id": "fast-roaming",
+      "term": "Fast Roaming",
+      "abbr": "802.11r/k/v",
+      "category": "Access Points, Networks & Roaming",
+      "definition": "A set of standards that make roaming quick and smooth. 802.11k helps a device find nearby access points, 802.11v helps steer it to the best one, and 802.11r speeds the secure handoff so calls and video survive the move."
+    },
+    {
+      "id": "sticky-client",
+      "term": "Sticky Client",
+      "abbr": null,
+      "category": "Access Points, Networks & Roaming",
+      "definition": "A device that clings to a distant access point instead of roaming to a closer, stronger one. It is a common cause of poor performance while moving around a space."
+    },
+    {
+      "id": "mesh",
+      "term": "Mesh",
+      "abbr": null,
+      "category": "Access Points, Networks & Roaming",
+      "definition": "A design where access points connect to each other wirelessly to extend coverage without running cable to each one. Convenient, but the wireless hops reduce capacity."
+    },
+    {
+      "id": "band-steering",
+      "term": "Band Steering",
+      "abbr": null,
+      "category": "Access Points, Networks & Roaming",
+      "definition": "A feature that nudges capable devices onto a less crowded band, usually pushing them from 2.4 GHz up to 5 or 6 GHz for better performance."
+    },
+    {
+      "id": "power-over-ethernet",
+      "term": "Power over Ethernet",
+      "abbr": "PoE",
+      "category": "Access Points, Networks & Roaming",
+      "definition": "Delivering both data and electrical power to an access point over a single Ethernet cable, so it needs no separate power outlet."
+    },
+    {
+      "id": "site-survey",
+      "term": "Site Survey",
+      "abbr": null,
+      "category": "Access Points, Networks & Roaming",
+      "definition": "The process of measuring and planning Wi-Fi coverage and capacity in a space. Surveys can be predictive (modeled), passive (listening), or active (connected and testing)."
+    },
+    {
+      "id": "heat-map",
+      "term": "Heat Map",
+      "abbr": null,
+      "category": "Access Points, Networks & Roaming",
+      "definition": "A color-coded map showing Wi-Fi signal, coverage, or performance across a floor plan. A common way to visualize survey results and spot weak areas."
+    },
+    {
+      "id": "wpa2",
+      "term": "WPA2",
+      "abbr": "Wi-Fi Protected Access 2",
+      "category": "Security",
+      "definition": "The long-standing Wi-Fi security standard built on AES (CCMP) encryption. Still widely used, but with known weaknesses WPA3 addresses, including the KRACK handshake attack and offline password guessing from a captured handshake or PMKID."
+    },
+    {
+      "id": "wpa3",
+      "term": "WPA3",
+      "abbr": "Wi-Fi Protected Access 3",
+      "category": "Security",
+      "definition": "The current Wi-Fi security standard. It strengthens password-based security, protects management frames by default, and resists the offline guessing attacks that affect WPA2."
+    },
+    {
+      "id": "personal-vs-enterprise-mode",
+      "term": "Personal vs Enterprise Mode",
+      "abbr": null,
+      "category": "Security",
+      "definition": "The two ways to secure a Wi-Fi network. Personal uses a single shared password for everyone; Enterprise gives each user their own login through a central server, which is more secure and manageable for organizations."
+    },
+    {
+      "id": "pre-shared-key",
+      "term": "Pre-Shared Key",
+      "abbr": "PSK",
+      "category": "Security",
+      "definition": "The single shared password used in Personal mode. Everyone on the network uses the same passphrase to connect."
+    },
+    {
+      "id": "sae",
+      "term": "SAE",
+      "abbr": "Simultaneous Authentication of Equals",
+      "category": "Security",
+      "definition": "The handshake WPA3-Personal uses in place of the old WPA2 method. It blocks attackers from capturing the exchange and guessing the password offline."
+    },
+    {
+      "id": "802-1x",
+      "term": "802.1X",
+      "abbr": null,
+      "category": "Security",
+      "definition": "The standard behind Enterprise mode, where each device authenticates to a central server before joining. It enables per-user logins instead of one shared password."
+    },
+    {
+      "id": "eap",
+      "term": "EAP",
+      "abbr": "Extensible Authentication Protocol",
+      "category": "Security",
+      "definition": "The framework that carries the actual login method in 802.1X, with variants such as EAP-TLS (certificate-based) and PEAP (password-based)."
+    },
+    {
+      "id": "radius",
+      "term": "RADIUS",
+      "abbr": null,
+      "category": "Security",
+      "definition": "The central server that checks user credentials in Enterprise Wi-Fi and tells the access point whether to allow a device on."
+    },
+    {
+      "id": "protected-management-frames",
+      "term": "Protected Management Frames",
+      "abbr": "PMF / 802.11w",
+      "category": "Security",
+      "definition": "A protection that secures certain management frames so attackers cannot forge disconnect messages to kick devices off. Required by WPA3."
+    },
+    {
+      "id": "enhanced-open-owe",
+      "term": "Enhanced Open / OWE",
+      "abbr": "Opportunistic Wireless Encryption",
+      "category": "Security",
+      "definition": "A way to encrypt traffic on open networks with no password, common on public Wi-Fi. It hides your data from casual snooping, but it does not verify the network, so it does not stop a fake hotspot."
+    },
+    {
+      "id": "captive-portal",
+      "term": "Captive Portal",
+      "abbr": null,
+      "category": "Security",
+      "definition": "The login or terms page that pops up when you join many public or guest networks before granting Internet access."
+    },
+    {
+      "id": "mac-randomization",
+      "term": "MAC Randomization",
+      "abbr": null,
+      "category": "Security",
+      "definition": "A privacy feature where a device uses a changing, made-up hardware address for each network, so it cannot be easily tracked across locations."
+    },
+    {
+      "id": "rogue-ap-evil-twin",
+      "term": "Rogue AP / Evil Twin",
+      "abbr": null,
+      "category": "Security",
+      "definition": "An unauthorized access point. A rogue AP is one plugged into a network without permission; an evil twin imitates a legitimate network's name to trick devices into connecting."
+    },
+    {
+      "id": "throughput",
+      "term": "Throughput",
+      "abbr": null,
+      "category": "Performance & Troubleshooting",
+      "definition": "The real, usable data speed a connection actually delivers, after all the overhead. This is what users experience, and it is always lower than the advertised data rate."
+    },
+    {
+      "id": "latency",
+      "term": "Latency",
+      "abbr": null,
+      "category": "Performance & Troubleshooting",
+      "definition": "The delay for data to travel to its destination and back, measured in milliseconds. Low latency matters most for calls, video, and gaming, more than raw speed does."
+    },
+    {
+      "id": "jitter",
+      "term": "Jitter",
+      "abbr": null,
+      "category": "Performance & Troubleshooting",
+      "definition": "The variation in latency from one moment to the next. Steady latency feels smooth; high jitter causes choppy calls and video even when average speed looks fine."
+    },
+    {
+      "id": "packet-loss",
+      "term": "Packet Loss",
+      "abbr": null,
+      "category": "Performance & Troubleshooting",
+      "definition": "The percentage of data that never arrives and must be resent. Even small amounts badly hurt calls, video, and responsiveness."
+    },
+    {
+      "id": "bufferbloat",
+      "term": "Bufferbloat",
+      "abbr": null,
+      "category": "Performance & Troubleshooting",
+      "definition": "A delay that builds up when a busy connection overfills its buffers, causing lag during downloads even on fast links. Newer \"responsiveness\" tests measure it directly."
+    },
+    {
+      "id": "coverage-hole",
+      "term": "Coverage Hole",
+      "abbr": null,
+      "category": "Performance & Troubleshooting",
+      "definition": "An area where the Wi-Fi signal is too weak or absent for reliable use. A common survey finding and a frequent source of complaints."
+    }
+  ]
+}

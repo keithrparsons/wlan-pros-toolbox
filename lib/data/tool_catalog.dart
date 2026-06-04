@@ -690,6 +690,17 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         routeName: '/tools/emoji-reference',
         isLive: true,
       ),
+      // Wi-Fi Glossary — searchable, grouped plain-language definitions
+      // (offline bundled JSON). Reuses a generic Material icon for now; a
+      // bespoke Tier-2 SVG icon (assets/tool-icons/wifi-glossary.svg) is a
+      // deliberate follow-up, not part of this build.
+      ToolEntry(
+        id: 'wifi-glossary',
+        title: 'Wi-Fi Glossary',
+        description: 'Plain-language definitions of 92 Wi-Fi terms',
+        routeName: '/tools/wifi-glossary',
+        isLive: true,
+      ),
       // ── PDF reference cards (bundled as PDFs, rendered by the shared
       // PdfReferenceScreen — pinch-zoomable, offline) ──
       // 6 of Keith's 10 laminated cards live here in Quick Reference; the other
