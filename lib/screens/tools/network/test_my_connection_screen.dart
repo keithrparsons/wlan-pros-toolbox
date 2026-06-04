@@ -67,7 +67,14 @@ class TestMyConnectionScreen extends StatefulWidget {
     this.iosBridge,
     this.qualityClient,
     this.nowOverride,
+    this.autoStart = false,
   });
+
+  /// When true, the check runs automatically on first mount instead of waiting
+  /// for the user to tap "Check My Connection". Used by the home consumer hero
+  /// card so its one tap goes straight into the test; the plain tool tile leaves
+  /// this false so the user starts the check explicitly.
+  final bool autoStart;
 
   /// Forces a specific Wi-Fi data source (tests). Defaults to the host platform
   /// via [WifiInfoSourceResolver] — the same resolver the pro screen uses.
@@ -147,6 +154,12 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
     _quality =
         widget.qualityClient ??
         OwnEngineQualityClient.forHost('one.one.one.one');
+    if (widget.autoStart) {
+      // Consumer hero entry: run the check on arrival so it's a single tap.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _run();
+      });
+    }
   }
 
   @override
@@ -630,9 +643,21 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
   /// (GL-005 / GL-008). The same four rows feed the copy text.
   List<_Fact> _wifiDetails() {
     final ConnectedAp? ap = _ap;
+    // macOS public CoreWLAN never reports the receive (Rx) data rate, so
+    // "Wi-Fi Down" is always Unavailable there. Explain WHY so it does not read
+    // as a zero or a failed read.
+    final bool macosRxMissing =
+        _source == WifiInfoSource.macosCoreWlan && ap?.rxRateMbps == null;
     return <_Fact>[
       _Fact('RSSI / SNR', _rssiSnr(ap)),
-      _Fact('Wi-Fi Down', _rxRate(ap)),
+      _Fact(
+        'Wi-Fi Down',
+        _rxRate(ap),
+        note: macosRxMissing
+            ? 'macOS does not report the Wi-Fi download (Rx) rate (a system '
+                  'limit, not a zero).'
+            : null,
+      ),
       _Fact('Wi-Fi Up', _txRate(ap)),
     ];
   }
@@ -817,9 +842,13 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
 // ===========================================================================
 
 class _Fact {
-  const _Fact(this.label, this.value);
+  const _Fact(this.label, this.value, {this.note});
   final String label;
   final String value;
+
+  /// Optional small-font explanation shown under the value — e.g. WHY a datum
+  /// reads "Unavailable" on this platform, so it does not look like a zero.
+  final String? note;
 }
 
 // ===========================================================================
@@ -1101,7 +1130,9 @@ class _FactRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding / 2),
       child: Semantics(
         container: true,
-        label: '${fact.label}, ${fact.value}',
+        label: fact.note == null
+            ? '${fact.label}, ${fact.value}'
+            : '${fact.label}, ${fact.value}. ${fact.note}',
         excludeSemantics: true,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1118,10 +1149,27 @@ class _FactRow extends StatelessWidget {
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               flex: 3,
-              child: Text(
-                fact.value,
-                textAlign: TextAlign.end,
-                style: text.bodyMedium?.copyWith(color: AppColors.textPrimary),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: <Widget>[
+                  Text(
+                    fact.value,
+                    textAlign: TextAlign.end,
+                    style: text.bodyMedium?.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  if (fact.note != null) ...<Widget>[
+                    const SizedBox(height: AppSpacing.xxs),
+                    Text(
+                      fact.note!,
+                      textAlign: TextAlign.end,
+                      style: text.bodySmall?.copyWith(
+                        color: AppColors.textTertiary,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ],

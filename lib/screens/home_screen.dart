@@ -99,8 +99,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     sliver: SliverToBoxAdapter(
                       child: _ConnectionHeroCard(
-                        onTap: () => Navigator.of(context)
-                            .pushNamed(AppRouter.testMyConnection),
+                        // Auto-run the check on arrival so the consumer hero is
+                        // a single tap (not "tap here, then tap again"). The
+                        // route reads this argument to set autoStart; the plain
+                        // tool tile pushes without it and stays tap-to-run.
+                        onTap: () => Navigator.of(context).pushNamed(
+                          AppRouter.testMyConnection,
+                          arguments: true,
+                        ),
                       ),
                     ),
                   ),

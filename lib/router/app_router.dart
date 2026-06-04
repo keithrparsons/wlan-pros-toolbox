@@ -325,7 +325,12 @@ class AppRouter {
     // Icons.bolt fallback no longer triggers for this row.
     netQuality: (_) => const NetQualityScreen(),
     wifiVsInternet: (_) => const WifiVsInternetScreen(),
-    testMyConnection: (_) => const TestMyConnectionScreen(),
+    // `arguments: true` (passed by the home consumer hero) auto-runs the check
+    // on arrival; the plain tool tile pushes without arguments and stays
+    // tap-to-run.
+    testMyConnection: (ctx) => TestMyConnectionScreen(
+      autoStart: ModalRoute.of(ctx)?.settings.arguments == true,
+    ),
     // TICKET-04: the consolidated cross-platform Wi-Fi Information tool
     // (macOS CoreWLAN + iOS companion-Shortcut behind one screen + normalized
     // model). The bespoke 'wifi-info' tool icon now ships at
