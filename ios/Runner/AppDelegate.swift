@@ -16,6 +16,10 @@ import UIKit
   // stays live (replaces the GPL-3.0 bonsoir plugin; NWBrowser-backed).
   private var mdnsBrowseChannel: MdnsBrowseChannel?
 
+  // Batch 6: retained so the Device/System info channel handler (uptime) stays
+  // live for the engine lifetime.
+  private var systemInfoChannel: SystemInfoChannel?
+
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
@@ -32,6 +36,9 @@ import UIKit
     // the OS Bonjour daemon (NSBonjourServices in Info.plist, no multicast
     // entitlement). Replaces the removed GPL-3.0 bonsoir plugin.
     mdnsBrowseChannel = MdnsBrowseChannel(messenger: messenger)
+    // Batch 6 — register the Device/System info channel (uptime via
+    // ProcessInfo.systemUptime). App-owned MethodChannel, no entitlement.
+    systemInfoChannel = SystemInfoChannel(messenger: messenger)
   }
 
   // MARK: - Shortcuts bridge (TICKET-01 spike)

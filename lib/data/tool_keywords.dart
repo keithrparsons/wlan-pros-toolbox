@@ -53,6 +53,11 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'ip address', 'gateway', 'dns', 'nic', 'adapter', 'my ip', 'local ip',
     'default gateway',
   ],
+  'device-info': <String>[
+    'model', 'ram', 'memory', 'uptime', 'cellular ip', 'pdp_ip0', 'hardware',
+    'system info', 'about this device', 'iphone model', 'mac model',
+    'boot time',
+  ],
   'dns-lookup': <String>[
     'nslookup', 'dig', 'resolve', 'a record', 'aaaa', 'mx', 'txt', 'cname',
     'ns', 'soa', 'srv', 'caa', 'spf', 'ptr', 'reverse dns', 'rdns',

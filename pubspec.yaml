@@ -181,6 +181,7 @@ dependencies:
   # covers the iOS + macOS targets the Toolbox ships first
   # (project-toolbox-platform-scope). MIT. No network — loads from rootBundle.
   pdfx: ^2.9.2
+  device_info_plus: ^12.4.0
 
   # mDNS / DNS-SD service discovery for the SPIKE-HSD-01 LAN-discovery prototype
   # is provided by an IN-HOUSE native plugin over Apple's Network framework

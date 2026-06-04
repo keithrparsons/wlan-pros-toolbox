@@ -1461,6 +1461,27 @@
       ],
       "source": "interface_info_service.dart:23-262"
     },
+    "device-info": {
+      "name": "Device Info",
+      "category": "Networking Tools",
+      "purpose": "Show the device's own system facts: model (marketing name plus the raw identifier), total physical memory (RAM), system uptime since the last boot, and the cellular IP address where the device has a cellular interface.",
+      "whyHere": "The companion to Interface Information: that tool answers \"what's my IP, gateway, and Wi-Fi link\"; this one answers \"what device is this, how much RAM, how long since boot, and what's my cellular IP\". Reach for it to confirm the hardware model or to read the cellular-side address that the Wi-Fi-centric interface view doesn't surface.",
+      "howToUse": [
+        "Open the tool; it reads a snapshot. Each field a platform can't provide renders its honest unavailable state rather than a fabricated value.",
+        "Tap Refresh in the top bar to re-read (uptime advances; the rest is stable).",
+        "Use Copy to put the whole snapshot on the clipboard as labeled text."
+      ],
+      "inputs": [],
+      "algorithm": "Model and total memory come from the device_info_plus package (BSD-3): on iOS, modelName (the package maps utsname.machine — e.g. iPhone16,2 — to a marketing name) plus physicalRamSize; on macOS, modelName/model plus memorySize. Uptime comes from a tiny native MethodChannel (com.wlanpros.toolbox/system_info → systemUptime) reading ProcessInfo.processInfo.systemUptime — no package exposes it. The cellular IP comes from dart:io NetworkInterface.list, matching the conventional iOS cellular interface name pdp_ip0 (device_info_service.dart).",
+      "example": null,
+      "fieldNotes": [
+        "Cellular IP uses a heuristic: Apple does not treat interface names as a stable API, so detection matches the conventional iOS cellular name pdp_ip0. \"No cellular interface\" is the normal, honest result on a Wi-Fi-only iPhone, in airplane mode, or on a Mac (which has no cellular interface).",
+        "Total memory is shown in binary units (an 8 GiB device reads \"8 GB\") to match how RAM is physically sized; the label stays the familiar GB/MB.",
+        "Uptime is seconds since boot, formatted as \"3d 4h 12m\"; it always shows at least minutes (a just-booted device reads \"0m\").",
+        "Nulls are honest \"not available\", never 0 or \"\". On Android, model is shown but total RAM is not surfaced by the package, so it reads unavailable."
+      ],
+      "source": "device_info_service.dart; device_info_format.dart; system_uptime_bridge.dart; macos/Runner/SystemInfoChannel.swift; ios/Runner/SystemInfoChannel.swift"
+    },
     "dns-lookup": {
       "name": "Lookup (DNS)",
       "category": "Networking Tools",
