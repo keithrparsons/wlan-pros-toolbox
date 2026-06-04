@@ -29,6 +29,7 @@ import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/field_unit_row.dart';
+import '../../../widgets/tool_help_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -139,7 +140,11 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
         // frequency is empty/invalid/≤0 (no wavelength); copies the four-unit
         // wavelength breakdown as a labeled text block. Copy leads; no help
         // icon here.
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        actions: <Widget>[
+          // §8.16 order: copy LEADS, help TRAILS.
+          AppCopyAction(textBuilder: _buildCopyText),
+          ToolHelpAction(toolId: 'wavelength'),
+        ],
       ),
       body: SafeArea(
         top: false,

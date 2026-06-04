@@ -34,6 +34,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/tool_help_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -207,7 +208,11 @@ class _LatLongScreenState extends State<LatLongScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until at least one
         // coordinate is valid and in range; copies each present coordinate in
         // all three formats (DD / DDM / DMS) as a labeled text block.
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        actions: <Widget>[
+          // §8.16 order: copy LEADS, help TRAILS.
+          AppCopyAction(textBuilder: _buildCopyText),
+          ToolHelpAction(toolId: 'lat-long'),
+        ],
       ),
       body: SafeArea(
         top: false,

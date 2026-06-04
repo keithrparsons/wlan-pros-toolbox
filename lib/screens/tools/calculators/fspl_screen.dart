@@ -29,6 +29,7 @@ import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/field_unit_row.dart';
+import '../../../widgets/tool_help_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -175,7 +176,11 @@ class _FsplScreenState extends State<FsplScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until frequency
         // and distance yield a finite loss; copies the inputs with their
         // selected units and the path loss in dB as a labeled text block.
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        actions: <Widget>[
+          // §8.16 order: copy LEADS, help TRAILS.
+          AppCopyAction(textBuilder: _buildCopyText),
+          ToolHelpAction(toolId: 'fspl'),
+        ],
       ),
       body: SafeArea(
         top: false,

@@ -40,6 +40,7 @@ import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/field_unit_row.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/tool_help_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -210,7 +211,11 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until a valid
         // coverage geometry is computed; copies the result as a labeled text
         // block (the beam-above-horizon verdict copies as its word).
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        actions: <Widget>[
+          // §8.16 order: copy LEADS, help TRAILS.
+          AppCopyAction(textBuilder: _buildCopyText),
+          ToolHelpAction(toolId: 'downtilt-coverage'),
+        ],
       ),
       body: SafeArea(
         top: false,

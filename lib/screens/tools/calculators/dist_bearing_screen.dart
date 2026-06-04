@@ -37,6 +37,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/tool_help_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -210,7 +211,11 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until a valid
         // distance/bearing is computed; copies the result as a labeled text
         // block.
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        actions: <Widget>[
+          // §8.16 order: copy LEADS, help TRAILS.
+          AppCopyAction(textBuilder: _buildCopyText),
+          ToolHelpAction(toolId: 'dist-bearing'),
+        ],
       ),
       body: SafeArea(
         top: false,

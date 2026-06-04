@@ -30,6 +30,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../data/app_version.dart';
+import '../router/app_router.dart';
 import '../theme/app_tokens.dart';
 import '../widgets/app_copy_action.dart';
 import '../widgets/centered_content.dart';
@@ -198,33 +199,10 @@ class AboutScreen extends StatelessWidget {
                     ),
                   ),
 
-                  // 6. Help and Documentation
-                  _Section(
-                    title: 'Help and Documentation',
-                    paragraphs: <String>[
-                      'Each tool does one job. Open a calculator and enter your '
-                          'values. Open a reference table to look something up. '
-                          'Open a live check to measure what\'s actually '
-                          'happening on your connection right now. The result '
-                          'screens are built to be read and copied, not '
-                          'decoded.',
-                      'How we measure. This matters more than any single '
-                          'feature. When a value can be measured on your '
-                          'device, the app measures it and shows you the real '
-                          'number. When the platform will not expose a value, '
-                          'or a measurement can\'t be trusted, the app says so. '
-                          'It does not guess and dress the guess up as data. '
-                          'That\'s the deal, and it\'s why you can trust what '
-                          'you see here on a job.',
-                      'Found a problem, or have an idea? Tell us. Good feedback '
-                          'from working engineers is how this toolbox gets '
-                          'better.',
-                    ],
-                    link: _SectionLink(
-                      label: 'Send feedback',
-                      url: _kFeedbackUrl,
-                    ),
-                  ),
+                  // 6. Help and Documentation — verbatim honesty/methodology
+                  // copy, plus a "Browse tool help" action into the per-tool
+                  // help browse screen and the feedback link.
+                  _HelpDocsSection(),
 
                   // 7. Privacy
                   _Section(
@@ -293,7 +271,9 @@ String _aboutPlainText() {
     ..writeln('Help and Documentation')
     ..writeln(
       'Each tool does one job. The app measures what it can and says so when it '
-      'can\'t. Feedback: $_kFeedbackUrl',
+      'can\'t. Every tool carries its own help (purpose, how to use, inputs, '
+      'field notes); browse it all from the Help & Documentation screen or the '
+      'help icon inside a tool. Feedback: $_kFeedbackUrl',
     )
     ..writeln()
     ..writeln('Privacy')
@@ -435,6 +415,85 @@ class _ExternalLinkButton extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Item 6 — Help and Documentation. Keeps the verbatim honesty/methodology copy
+/// and the feedback link, and adds a "Browse tool help" action that navigates to
+/// the per-tool [HelpBrowseScreen] (AppRouter.helpBrowse). Promoted from a const
+/// [_Section] to its own widget so it can carry an in-app navigation action
+/// (which is not const) alongside the external feedback link.
+class _HelpDocsSection extends StatelessWidget {
+  const _HelpDocsSection();
+
+  static const List<String> _paragraphs = <String>[
+    'Each tool does one job. Open a calculator and enter your values. Open a '
+        'reference table to look something up. Open a live check to measure '
+        'what\'s actually happening on your connection right now. The result '
+        'screens are built to be read and copied, not decoded.',
+    'How we measure. This matters more than any single feature. When a value '
+        'can be measured on your device, the app measures it and shows you the '
+        'real number. When the platform will not expose a value, or a '
+        'measurement can\'t be trusted, the app says so. It does not guess and '
+        'dress the guess up as data. That\'s the deal, and it\'s why you can '
+        'trust what you see here on a job.',
+    'Every tool carries its own help: what it does, why it\'s here, how to use '
+        'it, the inputs it takes, and the honest field notes. Browse it all '
+        'below, or tap the help icon inside a tool.',
+    'Found a problem, or have an idea? Tell us. Good feedback from working '
+        'engineers is how this toolbox gets better.',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.surface1,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Semantics(
+              header: true,
+              child: Text('Help and Documentation', style: text.headlineSmall),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            for (int i = 0; i < _paragraphs.length; i++) ...<Widget>[
+              if (i > 0) const SizedBox(height: AppSpacing.sm),
+              Text(
+                _paragraphs[i],
+                style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+              ),
+            ],
+            const SizedBox(height: AppSpacing.sm),
+            // In-app navigation into the per-tool help browse screen. Uses the
+            // open_in_full glyph (not open_in_new, which means "leaves the app")
+            // so the affordance reads as an in-app jump, not an external link.
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () =>
+                    Navigator.of(context).pushNamed(AppRouter.helpBrowse),
+                icon: const Icon(Icons.menu_book_outlined, size: 20),
+                label: const Text('Browse tool help'),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            _ExternalLinkButton(
+              label: 'Send feedback',
+              url: _kFeedbackUrl,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

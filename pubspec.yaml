@@ -194,6 +194,12 @@ flutter:
     # Ports tool (TICKET-007). A field-relevant subset of the IANA registry,
     # loaded + indexed once at startup. Source noted in the asset's _meta block.
     - assets/ports/well_known_ports.json
+    # In-app tool help — one entry per catalog tool id, keyed for helpForId()
+    # (lib/services/help/). Generated from FIELD-MANUAL.md; loaded + parsed once
+    # at startup and cached for the process lifetime. Drives the per-tool help
+    # sheet and the Help & Documentation browse screen. Honesty (GL-005): a tool
+    # with no entry shows no help affordance; nothing is fabricated.
+    - assets/help/tool_help.json
     # Per-tool Tier-2 custom icons (GL-003 §8.6 / §8.6.1) and in-tool concept
     # graphics (GL-003 §8.6.2). Convention-based lookup by catalog id:
     #   icon    = assets/tool-icons/<tool-id>.svg

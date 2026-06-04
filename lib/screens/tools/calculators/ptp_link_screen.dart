@@ -62,6 +62,7 @@ import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/field_unit_row.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/tool_help_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -408,7 +409,11 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
         // required field is valid (no link budget); copies the link budget as a
         // labeled text block, carrying the §8.13 PASS / MARGINAL / FAIL verdict
         // WORD. Copy leads; no help icon here.
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        actions: <Widget>[
+          // §8.16 order: copy LEADS, help TRAILS.
+          AppCopyAction(textBuilder: _buildCopyText),
+          ToolHelpAction(toolId: 'ptp-link'),
+        ],
       ),
       body: SafeArea(
         top: false,

@@ -9,6 +9,7 @@
 import 'package:flutter/material.dart';
 
 import '../screens/about_screen.dart';
+import '../screens/help_browse_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/tools/dbm_watt_converter.dart';
 import '../screens/tools/calculators/cable_loss_screen.dart';
@@ -103,6 +104,12 @@ class AppRouter {
   /// App-level "About" surface (SOP-020 copy). Not a tool route — reached from
   /// the HomeScreen AppBar info action, never the tool catalog.
   static const String about = '/about';
+
+  /// App-level "Help & Documentation" browse surface — lists every tool with a
+  /// help entry, grouped by catalog category, each opening its help sheet.
+  /// Reached from the About screen's "Help and Documentation" section. Not a
+  /// tool route.
+  static const String helpBrowse = '/help';
 
   static const String dbmWatt = '/tools/dbm-watt';
 
@@ -240,6 +247,7 @@ class AppRouter {
   static final Map<String, WidgetBuilder> routes = <String, WidgetBuilder>{
     home: (_) => const HomeScreen(),
     about: (_) => const AboutScreen(),
+    helpBrowse: (_) => const HelpBrowseScreen(),
     dbmWatt: (_) => const DbmWattConverterScreen(),
     fspl: (_) => const FsplScreen(),
     eirp: (_) => const EirpScreen(),

@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 
 import 'data/tool_assets.dart';
 import 'router/app_router.dart';
+import 'services/help/tool_help_loader.dart';
 import 'services/network/dart_ping_icmp_backend.dart';
 import 'theme/app_theme.dart';
 
@@ -37,6 +38,16 @@ Future<void> main() async {
     await ToolAssets.ensureLoaded();
   } catch (_) {
     // Manifest unavailable → has*() stays false → fallbacks render. No crash.
+  }
+
+  // Load + cache the bundled tool-help JSON once (assets/help/tool_help.json).
+  // Synchronous helpForId() reads the cache after this completes; a failure
+  // here must never block startup — helpForId just returns null (no help
+  // affordance shown), exactly like a tool with no entry. No crash.
+  try {
+    await ToolHelpLoader.ensureLoaded();
+  } catch (_) {
+    // Asset unavailable → helpForId() stays null → help icons hide. No crash.
   }
 
   runApp(const ToolboxApp());

@@ -34,6 +34,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/tool_help_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -262,7 +263,11 @@ class _HexAsciiScreenState extends State<HexAsciiScreen> {
         // conversion: all three representations (decimal/hex/binary) plus the
         // ASCII character when the value is a single printable code point.
         // Disabled when no field holds a valid value (all mirrors blank).
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        actions: <Widget>[
+          // §8.16 order: copy LEADS, help TRAILS.
+          AppCopyAction(textBuilder: _buildCopyText),
+          ToolHelpAction(toolId: 'hex-ascii'),
+        ],
       ),
       body: SafeArea(
         top: false,

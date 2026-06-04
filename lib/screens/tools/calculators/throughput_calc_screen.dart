@@ -37,6 +37,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_select.dart';
+import '../../../widgets/tool_help_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -281,7 +282,11 @@ class _ThroughputCalcScreenState extends State<ThroughputCalcScreen> {
         // disabled only on an invalid bandwidth/GI/MCS combination (no rate).
         // Copies the throughput breakdown as a labeled text block. Copy leads;
         // no help icon here.
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        actions: <Widget>[
+          // §8.16 order: copy LEADS, help TRAILS.
+          AppCopyAction(textBuilder: _buildCopyText),
+          ToolHelpAction(toolId: 'throughput-calc'),
+        ],
       ),
       body: SafeArea(
         top: false,
