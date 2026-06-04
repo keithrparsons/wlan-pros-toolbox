@@ -241,8 +241,10 @@ class _WifiGlossaryScreenState extends State<WifiGlossaryScreen> {
 /// A short, space-free identifier (CCI, DFS, 802.11n, FSPL) reads as a scanned
 /// identifier and renders in the Roboto Mono identifier token (§8.5). A
 /// multi-word expansion ("Received Signal Strength Indicator") is prose, not an
-/// identifier, and renders as plain secondary text.
-bool _abbrIsIdentifier(String abbr) => !abbr.contains(' ');
+/// identifier, and renders as plain secondary text. A single Title-case word
+/// ("Decibel", the expansion of dB) is also prose, not an identifier.
+bool _abbrIsIdentifier(String abbr) =>
+    !abbr.contains(' ') && !RegExp(r'^[A-Z][a-z]+$').hasMatch(abbr);
 
 /// One-line glossary intro + counts.
 class _IntroCard extends StatelessWidget {
@@ -524,7 +526,7 @@ class _PaddedMessage extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSpacing.xxs),
                   Text(
                     body,
                     style: text.labelMedium?.copyWith(
