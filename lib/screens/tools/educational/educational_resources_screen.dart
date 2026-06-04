@@ -228,9 +228,9 @@ class _IntroCard extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Text(
-        '$total curated places to learn Wi-Fi — tools, vendor docs, talk '
-        'archives, channels, podcasts, blogs, and training. Tap any resource '
-        'to read more and open its website.',
+        '$total curated places to learn Wi-Fi — tools, talk archives, channels, '
+        'podcasts, blogs, and training. Tap any resource to read more and open '
+        'its website.',
         style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
       ),
     );

@@ -12,8 +12,8 @@
       "Independent blogs and experts",
       "Training and certification"
     ],
-    "attribution": "Inspired by wlan-talks.net by Victor Njoroge. Display this credit line in the Educational Resources category when this destinations set ships.",
-    "attribution_scope": "The attribution line above credits the DESTINATIONS portion of this combined set specifically (the wlan-talks library, inspired by wlan-talks.net by Victor Njoroge). Felix should display it in association with the destinations entries, not the canonical tools/vendor-docs portion. See destinations-outreach-research.md Part C: the creator's exact name is pending Keith's confirmation (brief said 'Victor Gautuna'; public web surfaces 'Victor Njoroge'), so confirm the credited name before it ships publicly."
+    "attribution": "Inspired by wlan-talks.net by Victor Njoroge.",
+    "attribution_scope": "Credits the DESTINATIONS portion of this set (the wlan-talks library inspired by wlan-talks.net by Victor Njoroge); shown with the destination topic groups, not the tools portion."
   },
   "resources": [
     {
