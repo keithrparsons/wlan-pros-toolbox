@@ -50,9 +50,21 @@
 // gaps. No hardcoded colors or sizes.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:pdfx/pdfx.dart';
 
+import '../../../data/pdf_download.dart';
 import '../../../theme/app_tokens.dart';
+
+/// The share/download seam this screen calls. Defaults to the real [sharePdf]
+/// (native share sheet / web anchor download); widget tests inject a fake so the
+/// test never touches a platform channel. Matches the [sharePdf] signature.
+typedef PdfShareFn =
+    Future<void> Function({
+      required String assetPath,
+      required String title,
+      ShareOrigin? shareOrigin,
+    });
 
 /// Loading lifecycle for the bundled document. Drives which of the three
 /// explicit states the scaffold body renders.
@@ -90,6 +102,7 @@ class PdfReferenceScreen extends StatefulWidget {
   const PdfReferenceScreen({
     required this.title,
     required this.assetPath,
+    this.shareFn = sharePdf,
     super.key,
   });
 
@@ -99,6 +112,10 @@ class PdfReferenceScreen extends StatefulWidget {
   /// Bundled asset path, e.g. `assets/reference-cards/bubble-diagram.pdf`.
   final String assetPath;
 
+  /// Share/download implementation. Defaults to the real [sharePdf]; tests
+  /// inject a fake so they never hit the platform channel.
+  final PdfShareFn shareFn;
+
   @override
   State<PdfReferenceScreen> createState() => _PdfReferenceScreenState();
 }
@@ -106,6 +123,45 @@ class PdfReferenceScreen extends StatefulWidget {
 class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
   late final PdfController _controller;
   _PdfLoadState _state = _PdfLoadState.loading;
+
+  /// Anchors the iPad/macOS share popover to the share button's on-screen rect
+  /// (share_plus throws on those platforms without a source rect).
+  final GlobalKey _shareButtonKey = GlobalKey();
+
+  /// Computes the share button's global rect for the share-popover source.
+  /// Returns null if the button hasn't been laid out yet (the platform then
+  /// falls back to a default anchor).
+  ShareOrigin? _shareButtonOrigin() {
+    final RenderObject? box = _shareButtonKey.currentContext?.findRenderObject();
+    if (box is! RenderBox || !box.hasSize) return null;
+    final Offset topLeft = box.localToGlobal(Offset.zero);
+    return ShareOrigin(
+      topLeft.dx,
+      topLeft.dy,
+      box.size.width,
+      box.size.height,
+    );
+  }
+
+  Future<void> _handleShare() async {
+    try {
+      await widget.shareFn(
+        assetPath: widget.assetPath,
+        title: widget.title,
+        shareOrigin: _shareButtonOrigin(),
+      );
+    } catch (_) {
+      // Honest, quiet failure (§8.16 / GL-005): a screen-reader live-region
+      // announcement, no crash and no SnackBar noise. The asset is bundled, so
+      // this is the rare load/share-channel fault, not a routine empty state.
+      if (!mounted) return;
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        'Could not share this reference card.',
+        TextDirection.ltr,
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -134,7 +190,27 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title), toolbarHeight: 64),
+      appBar: AppBar(
+        title: Text(widget.title),
+        toolbarHeight: 64,
+        // §8.16 ordering: a share/download action leads (no copy on a PDF
+        // viewer; if a help action is ever added it would trail). The global
+        // iconButtonTheme paints the §8.3 lime focus ring on keyboard focus, so
+        // this bare IconButton inherits it for free.
+        actions: <Widget>[
+          IconButton(
+            key: _shareButtonKey,
+            onPressed: _handleShare,
+            iconSize: 24,
+            tooltip: 'Share or download',
+            icon: const Icon(
+              Icons.ios_share,
+              size: 24,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
       body: SafeArea(
         top: false,
         child: Semantics(

@@ -51,11 +51,13 @@ void main() {
     }
 
     // Item count matches catalog length — guards against the grid silently
-    // dropping or duplicating tiles after a layout change. (Vera F-11.)
-    final Finder grid = find.byType(GridView);
+    // dropping or duplicating tiles after a layout change. (Vera F-11.) The IA
+    // redesign moved the grid into a SliverGrid inside a CustomScrollView (the
+    // home search field shares the scroll), so assert the sliver's childCount.
+    final Finder grid = find.byType(SliverGrid);
     expect(grid, findsOneWidget);
-    final GridView view = tester.widget<GridView>(grid);
-    final SliverChildDelegate delegate = view.childrenDelegate;
+    final SliverGrid view = tester.widget<SliverGrid>(grid);
+    final SliverChildDelegate delegate = view.delegate;
     expect(delegate, isA<SliverChildBuilderDelegate>());
     expect(
       (delegate as SliverChildBuilderDelegate).childCount,
@@ -75,10 +77,18 @@ void main() {
         await _pumpApp(tester);
 
         for (final ToolCategory cat in kToolCategories) {
+          // The IA-redesign tile label is: title, then badge (count "N tools."
+          // for live categories — isNew is false on everything in this build),
+          // then the example-tools line. The summary sentence is no longer on
+          // the tile (replaced by the example list).
+          final int liveCount =
+              cat.tools.where((ToolEntry t) => t.isLive).length;
+          final String examples = cat.exampleToolTitles.join(' · ');
           final String expected =
               '${cat.title}. '
               '${cat.hasLiveTool ? "" : "Coming soon. "}'
-              '${cat.summary}';
+              '${cat.hasLiveTool ? "$liveCount tools. " : ""}'
+              '$examples';
 
           // The curated label must appear exactly once across the semantic
           // tree — once per tile, with no second copy bleeding from the
@@ -96,12 +106,6 @@ void main() {
             findsNothing,
             reason:
                 'child Text "${cat.title}" should be excluded from semantics',
-          );
-          expect(
-            find.bySemanticsLabel(cat.summary),
-            findsNothing,
-            reason:
-                'child Text "${cat.summary}" should be excluded from semantics',
           );
         }
 

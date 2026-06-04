@@ -1,70 +1,69 @@
-// CategoryScreen — generic listing for a single category.
+// CategoryScreen — grouped listing for a single category.
 //
-// Live tools route via `Navigator.pushNamed`. Non-live tools render as a
-// disabled "Coming soon" row that does nothing on tap (no SnackBar noise —
-// the disabled affordance is the message).
+// Quick Reference (37) and Calculators & Tools (24) render as ordered SECTIONS
+// (section headers + per-section count chip) in ONE scroll (mockup 02), plus an
+// in-category search field that filters the rendered rows live and a row of
+// section filter chips (selected = lime §8.3, unselected = neutral §8.17).
+// Categories without a subgroup map (Test Network, Networking Tools) render FLAT
+// with no headers, exactly as before — the pinned Test Network order is
+// untouched (it stays on the orderedCategoryTools path via groupedCategoryTools).
+//
+// Live tools route via Navigator.pushNamed (default in ToolRow). Non-live tools
+// render as a disabled "Coming soon" row.
 
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
-import '../data/tool_assets.dart';
+import '../data/content_type.dart';
 import '../data/tool_catalog.dart';
+import '../data/tool_ordering.dart';
+import '../data/tool_search.dart';
+import '../data/tool_subgroups.dart';
 import '../theme/app_tokens.dart';
 import '../widgets/centered_content.dart';
+import '../widgets/section_header.dart';
+import '../widgets/tool_row.dart';
 
-/// The id of the one category with a hand-pinned tool order. Since the
-/// 2026-06-01 reorganization the live diagnostics live in Test Network
-/// (they moved out of Networking Tools, which is now plain alphabetical).
-const String _pinnedCategoryId = 'test-network';
+// Ordering moved to lib/data/tool_ordering.dart (to break a screen↔data import
+// cycle with tool_subgroups). Re-exported here so existing importers
+// (category_tool_order_test.dart and any caller of category_screen.dart) keep
+// resolving `orderedCategoryTools` / `kTestNetworkPinnedToolIds` unchanged.
+export '../data/tool_ordering.dart'
+    show orderedCategoryTools, kTestNetworkPinnedToolIds, kPinnedCategoryId;
 
-/// Tool ids pinned to the top of Test Network, in this exact order (Keith's
-/// ordering, 2026-06-01): the consumer one-tap tool first, then the deeper
-/// pro tools — Test My Connection, Network Quality, Wi-Fi Information,
-/// Wi-Fi vs Internet.
-const List<String> kTestNetworkPinnedToolIds = <String>[
-  'test-my-connection',
-  'net-quality',
-  'wifi-info',
-  'wifi-vs-internet',
-];
-
-/// Display order for a category's tools: alphabetical by title, EXCEPT the
-/// Test Network category, which pins [kTestNetworkPinnedToolIds] to the top
-/// (in that order) and sorts the remainder alphabetically. The catalog stays
-/// the data source-of-truth; this is purely presentation order.
-List<ToolEntry> orderedCategoryTools(ToolCategory category) {
-  int byTitle(ToolEntry a, ToolEntry b) =>
-      a.title.toLowerCase().compareTo(b.title.toLowerCase());
-
-  if (category.id != _pinnedCategoryId) {
-    return <ToolEntry>[...category.tools]..sort(byTitle);
-  }
-
-  final List<ToolEntry> pinned = <ToolEntry>[];
-  for (final String id in kTestNetworkPinnedToolIds) {
-    final int i = category.tools.indexWhere((ToolEntry t) => t.id == id);
-    if (i != -1) pinned.add(category.tools[i]);
-  }
-  final List<ToolEntry> rest =
-      category.tools
-          .where((ToolEntry t) => !kTestNetworkPinnedToolIds.contains(t.id))
-          .toList()
-        ..sort(byTitle);
-  return <ToolEntry>[...pinned, ...rest];
-}
-
-class CategoryScreen extends StatelessWidget {
+class CategoryScreen extends StatefulWidget {
   const CategoryScreen({super.key, required this.category});
 
   final ToolCategory category;
 
   @override
+  State<CategoryScreen> createState() => _CategoryScreenState();
+}
+
+class _CategoryScreenState extends State<CategoryScreen> {
+  final TextEditingController _searchController = TextEditingController();
+
+  /// The live in-category filter query (lower-cased compare happens in search).
+  String _query = '';
+
+  /// The selected section filter, or null for "All". Only meaningful for grouped
+  /// categories; flat categories show no filter row.
+  String? _selectedSection;
+
+  /// Whether this category renders as grouped sections (has a subgroup order).
+  bool get _grouped => kCategorySubgroupOrder.containsKey(widget.category.id);
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
-    final List<ToolEntry> tools = orderedCategoryTools(category);
 
     return Scaffold(
-      appBar: AppBar(title: Text(category.title), toolbarHeight: 64),
+      appBar: AppBar(title: Text(widget.category.title), toolbarHeight: 64),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -73,28 +72,23 @@ class CategoryScreen extends StatelessWidget {
                 ? AppSpacing.screenEdgeDesktop
                 : AppSpacing.screenEdgeMobile;
 
-            if (tools.isEmpty) {
-              return _EmptyState(text: text, edge: edge);
-            }
-
-            // Centered, content-width-capped list so the tool list shares the
-            // same column width as the calculators and reference tables it
-            // links into (Vera web-demo gate, 2026-06-02). topCenter so the
-            // list scrolls from the top, not from a vertically centered block.
             return CenteredContent(
-              child: ListView.separated(
-                padding: EdgeInsets.fromLTRB(
-                  edge,
-                  AppSpacing.sm,
-                  edge,
-                  edge + AppSpacing.sm,
-                ),
-                itemCount: tools.length,
-                separatorBuilder: (_, _) =>
-                    const SizedBox(height: AppSpacing.sm),
-                itemBuilder: (context, index) {
-                  return _ToolRow(tool: tools[index]);
-                },
+              child: CustomScrollView(
+                slivers: <Widget>[
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(
+                      edge,
+                      AppSpacing.sm,
+                      edge,
+                      edge + AppSpacing.sm,
+                    ),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate(
+                        _bodyChildren(text),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             );
           },
@@ -102,162 +96,257 @@ class CategoryScreen extends StatelessWidget {
       ),
     );
   }
+
+  List<Widget> _bodyChildren(TextTheme text) {
+    if (widget.category.tools.isEmpty) {
+      return <Widget>[_EmptyCategoryState(text: text)];
+    }
+
+    final List<Widget> children = <Widget>[
+      // In-category search field (mockup 02). Filters the rendered rows live.
+      _InCategorySearchField(
+        controller: _searchController,
+        hint: 'Search ${widget.category.title}…',
+        onChanged: (String v) => setState(() => _query = v),
+      ),
+    ];
+
+    // Section filter chips — grouped categories only, and only when not actively
+    // typing a free-text query (the two filters would compound confusingly).
+    if (_grouped && _query.trim().isEmpty) {
+      final List<String> sections = groupedCategoryTools(widget.category)
+          .map((ToolSection s) => s.header)
+          .where((String h) => h.isNotEmpty)
+          .toList();
+      if (sections.length > 1) {
+        children
+          ..add(const SizedBox(height: AppSpacing.sm))
+          ..add(_SectionFilterChips(
+            sections: sections,
+            selected: _selectedSection,
+            onSelect: (String? s) => setState(() => _selectedSection = s),
+          ));
+      }
+    }
+
+    children.add(const SizedBox(height: AppSpacing.sm));
+    children.addAll(_resultsChildren(text));
+    return children;
+  }
+
+  /// The section/row content under the search + filter controls.
+  List<Widget> _resultsChildren(TextTheme text) {
+    final bool filtering = _query.trim().isNotEmpty;
+
+    // FREE-TEXT FILTER: flatten to matching rows across the whole category,
+    // hiding section structure (mockup 02 collapse behavior).
+    if (filtering) {
+      final List<ToolSearchHit> hits = searchTools(
+        _query,
+        categoryId: widget.category.id,
+      );
+      if (hits.isEmpty) {
+        return <Widget>[_NoMatchState(query: _query.trim(), text: text)];
+      }
+      return _interleaveRows(
+        hits.map((ToolSearchHit h) => h.tool).toList(),
+      );
+    }
+
+    // FLAT CATEGORY (no subgroup map): a single unnamed section, no headers.
+    if (!_grouped) {
+      final List<ToolEntry> tools = orderedCategoryTools(widget.category);
+      return _interleaveRows(tools);
+    }
+
+    // GROUPED CATEGORY: ordered sections with headers + count chips. When a
+    // section filter is active, render only that section's rows (no header).
+    final List<ToolSection> sections = groupedCategoryTools(widget.category);
+    final List<Widget> out = <Widget>[];
+
+    if (_selectedSection != null) {
+      final ToolSection? sel = sections
+          .where((ToolSection s) => s.header == _selectedSection)
+          .cast<ToolSection?>()
+          .firstWhere((ToolSection? s) => s != null, orElse: () => null);
+      if (sel == null) return <Widget>[];
+      out.addAll(_interleaveRows(sel.tools));
+      return out;
+    }
+
+    for (int i = 0; i < sections.length; i++) {
+      final ToolSection s = sections[i];
+      out.add(SectionHeader(title: s.header, count: s.count));
+      out.add(const SizedBox(height: AppSpacing.xs));
+      for (int j = 0; j < s.tools.length; j++) {
+        out.add(_row(s.tools[j]));
+        if (j < s.tools.length - 1) {
+          out.add(const SizedBox(height: AppSpacing.sm));
+        }
+      }
+    }
+    return out;
+  }
+
+  /// Rows separated by sm gaps (the original ListView.separated spacing).
+  List<Widget> _interleaveRows(List<ToolEntry> tools) {
+    final List<Widget> out = <Widget>[];
+    for (int i = 0; i < tools.length; i++) {
+      out.add(_row(tools[i]));
+      if (i < tools.length - 1) out.add(const SizedBox(height: AppSpacing.sm));
+    }
+    return out;
+  }
+
+  /// A single tool row. Grouped categories show the neutral §8.17 content-type
+  /// chip (mockup 02); flat categories keep the plain description row.
+  Widget _row(ToolEntry tool) {
+    return ToolRow(
+      key: ValueKey<String>(tool.id),
+      tool: tool,
+      contentType: _grouped
+          ? contentTypeFor(tool, widget.category.id)
+          : null,
+    );
+  }
 }
 
-class _ToolRow extends StatefulWidget {
-  const _ToolRow({required this.tool});
+/// The in-category search field (mockup 02), built from the §8.4 input spec.
+class _InCategorySearchField extends StatelessWidget {
+  const _InCategorySearchField({
+    required this.controller,
+    required this.hint,
+    required this.onChanged,
+  });
 
-  final ToolEntry tool;
+  final TextEditingController controller;
+  final String hint;
+  final ValueChanged<String> onChanged;
 
   @override
-  State<_ToolRow> createState() => _ToolRowState();
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      onChanged: onChanged,
+      // 16px field text dodges iOS Safari auto-zoom (§8.4).
+      style: Theme.of(context)
+          .textTheme
+          .bodyLarge
+          ?.copyWith(color: AppColors.textPrimary),
+      decoration: InputDecoration(
+        prefixIcon: const Icon(Icons.search, color: AppColors.textTertiary),
+        hintText: hint,
+      ),
+      textInputAction: TextInputAction.search,
+    );
+  }
 }
 
-class _ToolRowState extends State<_ToolRow> {
-  // §8.9 — keyboard focus must stay visible. The app-wide §8.3 pass cleared
-  // the global `focusColor` to transparent, which stripped the ambient focus
-  // affordance off this bare InkWell. Only live rows are focusable (non-live
-  // rows pass a null onTap). Track focus locally and swap the row border to
-  // the 2px primary ring on keyboard focus, matching the button/chip §8.3
-  // treatment. (Restores SC 2.4.7 / GL-003 §8.9.)
+/// Section filter chips: an "All" chip plus one per section. Selected = lime
+/// (§8.3 active/selected), unselected = neutral §8.17.
+class _SectionFilterChips extends StatelessWidget {
+  const _SectionFilterChips({
+    required this.sections,
+    required this.selected,
+    required this.onSelect,
+  });
+
+  final List<String> sections;
+  final String? selected;
+  final ValueChanged<String?> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final List<({String? value, String label})> chips =
+        <({String? value, String label})>[
+      (value: null, label: 'All'),
+      ...sections.map((String s) => (value: s, label: s)),
+    ];
+
+    return Semantics(
+      container: true,
+      label: 'Filter by section',
+      child: Wrap(
+        spacing: AppSpacing.xs,
+        runSpacing: AppSpacing.xs,
+        children: <Widget>[
+          for (final ({String? value, String label}) c in chips)
+            _SelectableFilterChip(
+              label: c.label,
+              selected: selected == c.value,
+              onTap: () => onSelect(c.value),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One filter chip. Selected → lime fill + charcoal text (§8.3 selected role).
+/// Unselected → neutral §8.17 (surface-2 fill, secondary text). The global
+/// iconButtonTheme does not cover this (it's an InkWell), so it carries its own
+/// §8.3 lime focus ring.
+class _SelectableFilterChip extends StatefulWidget {
+  const _SelectableFilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  State<_SelectableFilterChip> createState() => _SelectableFilterChipState();
+}
+
+class _SelectableFilterChipState extends State<_SelectableFilterChip> {
   bool _focused = false;
 
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
-    final bool live = widget.tool.isLive;
+    final bool sel = widget.selected;
 
-    // §8.3 focus ring (live + focused) vs §8.1 interactive boundary.
-    // Lime 2px on focus (8.59:1 on surface1 — clears SC 1.4.11);
-    // borderStrong 1px for live-at-rest; decorative border for non-live.
-    final Border rowBorder = (live && _focused)
+    final Border border = _focused
         ? Border.all(color: AppColors.primary, width: 2)
         : Border.all(
-            color: live ? AppColors.borderStrong : AppColors.border,
+            color: sel ? AppColors.primary : AppColors.borderStrong,
             width: 1,
           );
 
-    // Vera F-04 — collapse child semantic nodes so VoiceOver hears only the
-    // curated label once.
     return Semantics(
-      container: true,
-      excludeSemantics: true,
-      label: live
-          ? '${widget.tool.title}. ${widget.tool.description}'
-          : '${widget.tool.title}. Coming soon. ${widget.tool.description}',
       button: true,
-      enabled: live,
+      selected: sel,
+      label: widget.label,
+      excludeSemantics: true,
       child: Material(
-        color: AppColors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
+        color: sel ? AppColors.primary : AppColors.surface2,
+        borderRadius: BorderRadius.circular(AppRadius.control),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: live
-              ? () => Navigator.of(context).pushNamed(widget.tool.routeName)
-              : null,
-          onFocusChange: live
-              ? (bool hasFocus) {
-                  if (hasFocus != _focused) {
-                    setState(() => _focused = hasFocus);
-                  }
-                }
-              : null,
+          onTap: widget.onTap,
+          onFocusChange: (bool f) {
+            if (f != _focused) setState(() => _focused = f);
+          },
           child: Container(
             decoration: BoxDecoration(
-              // Live rows are focusable UI components → borderStrong (3:1+
-              // per SC 1.4.11) at rest, 2px primary ring on focus. Disabled
-              // rows are non-interactive, so the decorative `border` is fine.
-              border: rowBorder,
-              borderRadius: BorderRadius.circular(AppRadius.card),
+              border: border,
+              borderRadius: BorderRadius.circular(AppRadius.control),
             ),
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.sm,
-              vertical: 14,
+              vertical: AppSpacing.xs,
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppColors.surface2,
-                    borderRadius: BorderRadius.circular(AppRadius.control),
-                  ),
-                  // Per-tool Tier-2 icon (GL-003 §8.6.1): a single-color SVG
-                  // tinted to the row's foreground via BlendMode.srcIn. Live
-                  // rows render the tool's own glyph in lime; non-live rows show
-                  // the lock. Falls back to Icons.bolt only if the icon SVG was
-                  // not bundled for this tool id, so a missing asset never shows
-                  // a broken box.
-                  child: !live
-                      ? Icon(
-                          Icons.lock_clock_outlined,
-                          color: AppColors.textTertiary,
-                          size: 20,
-                        )
-                      : ToolAssets.hasIcon(widget.tool.id)
-                      ? SvgPicture.asset(
-                          ToolAssets.iconPath(widget.tool.id),
-                          width: 20,
-                          height: 20,
-                          colorFilter: const ColorFilter.mode(
-                            AppColors.primary,
-                            BlendMode.srcIn,
-                          ),
-                          excludeFromSemantics: true,
-                          placeholderBuilder: (_) => const SizedBox.shrink(),
-                        )
-                      : Icon(Icons.bolt, color: AppColors.primary, size: 20),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              widget.tool.title,
-                              style: text.bodyLarge?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: live
-                                    ? AppColors.textPrimary
-                                    : AppColors.textSecondary,
-                              ),
-                            ),
-                          ),
-                          if (!live)
-                            Text(
-                              'Coming soon',
-                              style: text.labelSmall?.copyWith(
-                                color: AppColors.textTertiary,
-                                letterSpacing: 0.4,
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        widget.tool.description,
-                        style: text.labelMedium?.copyWith(
-                          color: AppColors.textTertiary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (live)
-                  const Padding(
-                    padding: EdgeInsets.only(left: AppSpacing.xs),
-                    child: Icon(
-                      Icons.chevron_right,
-                      color: AppColors.textTertiary,
-                      size: 20,
-                    ),
-                  ),
-              ],
+            child: Text(
+              widget.label,
+              style: text.labelLarge?.copyWith(
+                fontSize: AppTextSize.caption,
+                fontWeight: FontWeight.w500,
+                // §8.3: charcoal text on lime when selected; neutral otherwise.
+                color: sel ? AppColors.secondary : AppColors.textSecondary,
+              ),
             ),
           ),
         ),
@@ -266,33 +355,61 @@ class _ToolRowState extends State<_ToolRow> {
   }
 }
 
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.text, required this.edge});
+/// In-category no-results state when the live filter matches nothing.
+class _NoMatchState extends StatelessWidget {
+  const _NoMatchState({required this.query, required this.text});
 
+  final String query;
   final TextTheme text;
-  final double edge;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(edge),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.construction_outlined,
-              size: 48,
-              color: AppColors.textTertiary,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              'No tools in this category yet',
-              style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+      child: Column(
+        children: <Widget>[
+          const Icon(
+            Icons.search_off_outlined,
+            size: 48,
+            color: AppColors.textTertiary,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'No tools match "$query" here',
+            style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Empty state — a category with no tools at all (defensive; not expected).
+class _EmptyCategoryState extends StatelessWidget {
+  const _EmptyCategoryState({required this.text});
+
+  final TextTheme text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          const Icon(
+            Icons.construction_outlined,
+            size: 48,
+            color: AppColors.textTertiary,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'No tools in this category yet',
+            style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

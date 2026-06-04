@@ -80,6 +80,22 @@ dependencies:
   net_quality:
     path: packages/net_quality
 
+  # share_plus + path_provider — power the "share / download" action on the PDF
+  # reference cards (pdf_reference_screen.dart). On native (iOS/macOS/Android) the
+  # bundled asset bytes are copied to a temp file in getTemporaryDirectory() with
+  # a clean human filename, then handed to the OS share sheet (Save to Files /
+  # AirDrop / Mail / Print) via Share.shareXFiles — no macOS entitlement change
+  # (share sheet, not NSSavePanel). On web a browser anchor-download is used
+  # instead (kIsWeb branch in lib/data/pdf_download_*.dart), so neither package's
+  # native channel is exercised on web. share_plus is BSD-3; path_provider BSD-3.
+  share_plus: ^10.1.4
+  path_provider: ^2.1.5
+  # web — the modern, wasm-safe browser interop used by the web body of the PDF
+  # download seam (lib/data/pdf_download_web.dart: Blob + object-URL anchor
+  # download). Declared explicitly because that file imports package:web
+  # directly; it is only compiled on the web target (conditional import).
+  web: ^1.1.0
+
   # pdfx — renders the bundled "PDF reference card" tools (Keith's 10 laminated
   # Excel→PDF exports) in a pinch-zoomable viewer. Chosen over flutter_pdfview
   # because flutter_pdfview is mobile-only (no macOS); pdfx uses Apple PDFKit on

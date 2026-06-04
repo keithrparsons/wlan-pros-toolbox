@@ -9,6 +9,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
+import 'package:wlan_pros_toolbox/data/tool_subgroups.dart';
 import 'package:wlan_pros_toolbox/router/app_router.dart';
 
 /// Every tool entry across all categories, flattened.
@@ -50,6 +51,28 @@ void main() {
         routes.length,
         reason: 'duplicate routeName(s) in the catalog',
       );
+    });
+
+    // IA-redesign schema guards (2026-06-03).
+    test('every tool has a non-null keywords list', () {
+      for (final ToolEntry t in _allTools()) {
+        // keywords defaults to const [] and is folded from the vocabulary; it
+        // must never be null. (Empty is allowed for a tool with no extra terms.)
+        expect(t.keywords, isNotNull, reason: '${t.id} has null keywords');
+      }
+    });
+
+    test('grouped-category tools carry a subgroup that is a known header', () {
+      for (final ToolCategory c in kToolCategories) {
+        final List<String>? order = kCategorySubgroupOrder[c.id];
+        if (order == null) continue; // flat categories don't require a subgroup
+        for (final ToolEntry t in c.tools) {
+          expect(t.subgroup, isNotNull,
+              reason: '${c.id}/${t.id} missing a subgroup');
+          expect(order.contains(t.subgroup), isTrue,
+              reason: '${c.id}/${t.id} subgroup "${t.subgroup}" not in order');
+        }
+      }
     });
   });
 

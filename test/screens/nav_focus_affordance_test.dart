@@ -88,8 +88,16 @@ void main() {
         await tester.pumpWidget(_app(const HomeScreen()));
         await tester.pumpAndSettle();
 
-        // The first home tile's InkWell.
-        final Finder firstInkWell = find.byType(InkWell).first;
+        // The first home TILE's InkWell. The IA-redesign added a search-field
+        // InkWell above the grid, so target a tile by its category title rather
+        // than taking the first InkWell in the tree.
+        final ToolCategory firstCat = kToolCategories.first;
+        final Finder firstInkWell = find
+            .ancestor(
+              of: find.text(firstCat.title),
+              matching: find.byType(InkWell),
+            )
+            .first;
         expect(firstInkWell, findsOneWidget);
 
         // At rest: 1px borderStrong interactive boundary (§8.1), NOT the ring.

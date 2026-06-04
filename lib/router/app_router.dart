@@ -9,6 +9,7 @@
 import 'package:flutter/material.dart';
 
 import '../screens/home_screen.dart';
+import '../screens/search_screen.dart';
 import '../screens/tools/dbm_watt_converter.dart';
 import '../screens/tools/calculators/cable_loss_screen.dart';
 import '../screens/tools/calculators/downtilt_screen.dart';
@@ -97,6 +98,11 @@ class AppRouter {
       GlobalKey<NavigatorState>();
 
   static const String home = '/';
+
+  /// Global cross-category tool search (IA redesign, mockup 04). Reached from the
+  /// home search field; pushes the grouped results screen.
+  static const String search = '/search';
+
   static const String dbmWatt = '/tools/dbm-watt';
 
   // RF Calculators category — pure-math tools (no network, all platforms incl.
@@ -231,6 +237,7 @@ class AppRouter {
   /// directly because each category screen takes a typed `ToolCategory`.
   static final Map<String, WidgetBuilder> routes = <String, WidgetBuilder>{
     home: (_) => const HomeScreen(),
+    search: (_) => const SearchScreen(),
     dbmWatt: (_) => const DbmWattConverterScreen(),
     fspl: (_) => const FsplScreen(),
     eirp: (_) => const EirpScreen(),

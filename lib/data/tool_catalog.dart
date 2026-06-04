@@ -30,6 +30,8 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
+import 'tool_keywords.dart';
+
 /// A single tool that can be launched from a category screen.
 @immutable
 class ToolEntry {
@@ -39,6 +41,8 @@ class ToolEntry {
     required this.description,
     required this.routeName,
     this.isLive = false,
+    this.keywords = const <String>[],
+    this.subgroup,
   });
 
   /// Stable identifier (kebab-case). Used as the route argument and for
@@ -57,6 +61,38 @@ class ToolEntry {
   /// `true` when the tool is shippable; `false` renders as a disabled
   /// "Coming soon" row.
   final bool isLive;
+
+  /// Synonyms, abbreviations, and domain terms a user might TYPE to find this
+  /// tool that are NOT already in the title or description (e.g. `fspl` →
+  /// 'path loss', 'attenuation'). Powers the global + in-category search
+  /// (lib/data/tool_search.dart). Kept out of this file: the vocabulary lives
+  /// in lib/data/tool_keywords.dart (one Keith-reviewable map) and is merged in
+  /// by [_withKeywords] when the catalog is built, so the search index can be
+  /// iterated without touching the catalog structure. Default `const []` keeps
+  /// the constructor backward-compatible. Keywords describe what a tool DOES,
+  /// never aspirational capability (GL-005).
+  final List<String> keywords;
+
+  /// Optional section a tool belongs to WITHIN its category, for the grouped
+  /// category screen (Quick Reference, Calculators & Tools). `null` → the tool
+  /// falls into a trailing "Other" section. Section ORDER is editorial, set by
+  /// [kCategorySubgroupOrder] in lib/data/tool_subgroups.dart — never
+  /// alphabetical on this string. Categories without an entry in that map render
+  /// flat (no headers), so this field is additive and leaves the pinned
+  /// Test Network ordering untouched.
+  final String? subgroup;
+
+  /// Returns a copy of this entry with [keywords] replaced. Used only by the
+  /// catalog builder to fold in the external vocabulary; not for general use.
+  ToolEntry _copyWithKeywords(List<String> keywords) => ToolEntry(
+        id: id,
+        title: title,
+        description: description,
+        routeName: routeName,
+        isLive: isLive,
+        keywords: keywords,
+        subgroup: subgroup,
+      );
 }
 
 /// One of the home-grid categories.
@@ -68,6 +104,9 @@ class ToolCategory {
     required this.summary,
     required this.icon,
     required this.tools,
+    this.exampleToolTitles = const <String>[],
+    this.countLabelOverride,
+    this.isNew = false,
   });
 
   final String id;
@@ -75,6 +114,25 @@ class ToolCategory {
   final String summary;
   final IconData icon;
   final List<ToolEntry> tools;
+
+  /// Curated example tool titles shown on the home tile (mockups 01/05), joined
+  /// by " · " (e.g. "FSPL · EIRP · Link Budget"). When empty, the tile falls
+  /// back to the first few tool titles in display order, so a category always
+  /// previews its contents even if no examples are set. Titles must match live
+  /// tools — never assert a capability that isn't there (GL-005).
+  final List<String> exampleToolTitles;
+
+  /// Optional label shown in place of the numeric count badge on the home tile
+  /// (e.g. "~27" for an illustrative count). When `null`, the tile renders the
+  /// exact live tool count. Today no category sets this — it exists for the
+  /// 6-category future.
+  final String? countLabelOverride;
+
+  /// When `true`, the tile shows a lime "NEW" pill instead of a count badge —
+  /// for a category genuinely NEW TO USERS post-launch. The capability is built
+  /// now (mockups 01/05) but, per Keith (2026-06-03), NOTHING sets it in this
+  /// build: the app hasn't gone public, so nothing is "new to a user" yet.
+  final bool isNew;
 
   /// Whether at least one tool in this category is live. Used to grey the
   /// home-grid tile when the entire category is placeholder.
@@ -115,6 +173,13 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
     title: 'Test Network',
     summary: 'Live Wi-Fi and internet diagnostics',
     icon: Icons.network_check,
+    // Home-tile example list (mockup 01/05). Curated headliners; titles match
+    // live tools (GL-005). Falls back to first-N tool titles if left empty.
+    exampleToolTitles: <String>[
+      'Wi-Fi vs Internet',
+      'Test My Connection',
+      'Network Quality',
+    ],
     tools: <ToolEntry>[
       // Consumer companion to wifi-vs-internet (Keith, 2026-06-01). Same
       // backends + verdict engine, plain-English re-skin. Audience-distinct
@@ -177,6 +242,15 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
     title: 'Networking Tools',
     summary: 'Interface info, lookups, scans, subnetting',
     icon: Icons.lan_outlined,
+    // Mockup 01 showed "Wi-Fi Information" here, but that tool lives in Test
+    // Network — examples must name tools that are actually in this category
+    // (GL-005). Headliners drawn from real Networking Tools entries.
+    exampleToolTitles: <String>[
+      'Ping (TCP)',
+      'Traceroute (System)',
+      'Network Discovery',
+      'Ping Sweep',
+    ],
     tools: <ToolEntry>[
       ToolEntry(
         id: 'interface-info',
@@ -339,6 +413,12 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
     title: 'Calculators & Tools',
     summary: 'RF, GPS, signal, and planning math — FSPL, EIRP, PoE, capacity',
     icon: Icons.calculate_outlined,
+    exampleToolTitles: <String>[
+      'Free Space Path Loss',
+      'EIRP Calculator',
+      'Link Budget',
+      'dBm / Watt Converter',
+    ],
     tools: <ToolEntry>[
       ToolEntry(
         id: 'dbm-watt-converter',
@@ -346,6 +426,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Live two-way conversion across dBm, Watts, and mW',
         routeName: '/tools/dbm-watt',
         isLive: true,
+        subgroup: 'Conversions',
       ),
       ToolEntry(
         id: 'fspl',
@@ -353,6 +434,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'FSPL for any frequency and distance',
         routeName: '/tools/fspl',
         isLive: true,
+        subgroup: 'RF & Propagation',
       ),
       ToolEntry(
         id: 'eirp',
@@ -360,6 +442,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Effective isotropic radiated power',
         routeName: '/tools/eirp',
         isLive: true,
+        subgroup: 'Antenna & Coverage',
       ),
       ToolEntry(
         id: 'fresnel',
@@ -367,6 +450,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'First-zone radius and 60% clearance',
         routeName: '/tools/fresnel',
         isLive: true,
+        subgroup: 'RF & Propagation',
       ),
       ToolEntry(
         id: 'cable-loss',
@@ -374,6 +458,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Coax loss by cable type, length, and frequency',
         routeName: '/tools/cable-loss',
         isLive: true,
+        subgroup: 'RF & Propagation',
       ),
       ToolEntry(
         id: 'link-budget',
@@ -381,6 +466,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Received signal and fade margin end to end',
         routeName: '/tools/link-budget',
         isLive: true,
+        subgroup: 'RF & Propagation',
       ),
       ToolEntry(
         id: 'wavelength',
@@ -388,6 +474,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Wavelength from frequency, m / cm / ft / in',
         routeName: '/tools/wavelength',
         isLive: true,
+        subgroup: 'Antenna & Coverage',
       ),
       ToolEntry(
         id: 'downtilt',
@@ -395,6 +482,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Downtilt angle from height and target distance',
         routeName: '/tools/downtilt',
         isLive: true,
+        subgroup: 'Antenna & Coverage',
       ),
       ToolEntry(
         id: 'earth-curvature',
@@ -402,6 +490,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Earth bulge over a path, with K-factor',
         routeName: '/tools/earth-curvature',
         isLive: true,
+        subgroup: 'RF & Propagation',
       ),
       ToolEntry(
         id: 'rain-fade',
@@ -409,6 +498,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Rain attenuation per ITU-R P.838-3 and P.530',
         routeName: '/tools/rain-fade',
         isLive: true,
+        subgroup: 'RF & Propagation',
       ),
       ToolEntry(
         id: 'downtilt-coverage',
@@ -416,6 +506,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Coverage edges from height, tilt, and beamwidth',
         routeName: '/tools/downtilt-coverage',
         isLive: true,
+        subgroup: 'Antenna & Coverage',
       ),
       // ── from the dissolved GPS Tools category ──
       ToolEntry(
@@ -424,6 +515,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'm, km, mi, ft, cm, in, nmi',
         routeName: '/tools/metric-conversion',
         isLive: true,
+        subgroup: 'Conversions',
       ),
       // ── from the dissolved Infrastructure category ──
       ToolEntry(
@@ -432,6 +524,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Thermal noise floor by channel width and NF',
         routeName: '/tools/noise-floor',
         isLive: true,
+        subgroup: 'RF & Propagation',
       ),
       ToolEntry(
         id: 'rf-attenuation',
@@ -439,6 +532,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Path loss through building materials by band',
         routeName: '/tools/rf-attenuation',
         isLive: true,
+        subgroup: 'RF & Propagation',
       ),
       // ── from the dissolved GPS Tools category ──
       ToolEntry(
@@ -447,6 +541,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Convert between DD, DDM, and DMS',
         routeName: '/tools/lat-long',
         isLive: true,
+        subgroup: 'Coordinates & GPS',
       ),
       ToolEntry(
         id: 'dist-bearing',
@@ -454,6 +549,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Great-circle distance and bearing between two points',
         routeName: '/tools/dist-bearing',
         isLive: true,
+        subgroup: 'Coordinates & GPS',
       ),
       ToolEntry(
         id: 'midpoint',
@@ -461,6 +557,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Great-circle midpoint between two coordinates',
         routeName: '/tools/midpoint',
         isLive: true,
+        subgroup: 'Coordinates & GPS',
       ),
       ToolEntry(
         id: 'final-point',
@@ -468,6 +565,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Destination from a start point, bearing, and distance',
         routeName: '/tools/final-point',
         isLive: true,
+        subgroup: 'Coordinates & GPS',
       ),
       // Hex / ASCII converter + printable-ASCII table — NEW.
       ToolEntry(
@@ -476,6 +574,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Dec/hex/binary converter + ASCII table',
         routeName: '/tools/hex-ascii',
         isLive: true,
+        subgroup: 'Conversions',
       ),
       // ── moved in from the dissolved Planning Tools category (2026-06-01) ──
       ToolEntry(
@@ -484,6 +583,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Switch PoE budget vs connected device draw',
         routeName: '/tools/poe-budget',
         isLive: true,
+        subgroup: 'Capacity & Power',
       ),
       ToolEntry(
         id: 'throughput-calc',
@@ -491,6 +591,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'PHY rate and effective throughput by MCS',
         routeName: '/tools/throughput-calc',
         isLive: true,
+        subgroup: 'Capacity & Power',
       ),
       ToolEntry(
         id: 'capacity-planner',
@@ -498,6 +599,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Recommended AP count by users and demand',
         routeName: '/tools/capacity-planner',
         isLive: true,
+        subgroup: 'Capacity & Power',
       ),
       ToolEntry(
         id: 'ptp-link',
@@ -505,6 +607,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Point-to-point link budget and fade margin',
         routeName: '/tools/ptp-link',
         isLive: true,
+        subgroup: 'RF & Propagation',
       ),
     ],
   ),
@@ -522,6 +625,11 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
     title: 'Quick Reference',
     summary: 'Tables, cards, CLI/Wireshark sheets, and checklists',
     icon: Icons.menu_book_outlined,
+    exampleToolTitles: <String>[
+      'Wi-Fi Channels',
+      '802.11 Standards',
+      'MCS Index',
+    ],
     tools: <ToolEntry>[
       // ── from the dissolved Infrastructure category ──
       ToolEntry(
@@ -530,6 +638,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'PoE class, wattage, and budget',
         routeName: '/tools/poe-reference',
         isLive: true,
+        subgroup: 'Wi-Fi & RF',
       ),
       ToolEntry(
         id: 'wifi-channels',
@@ -537,6 +646,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Channels, center frequencies, widths, DFS by band',
         routeName: '/tools/wifi-channels',
         isLive: true,
+        subgroup: 'Wi-Fi & RF',
       ),
       ToolEntry(
         id: '80211-standards',
@@ -544,6 +654,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Generations, bands, rates, widths, Wi-Fi 4 to 7',
         routeName: '/tools/standards',
         isLive: true,
+        subgroup: 'Wi-Fi & RF',
       ),
       ToolEntry(
         id: 'mcs-index',
@@ -551,6 +662,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Modulation and data rates by MCS, width, streams',
         routeName: '/tools/mcs-index',
         isLive: true,
+        subgroup: 'Wi-Fi & RF',
       ),
       ToolEntry(
         id: 'signal-thresholds',
@@ -558,6 +670,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'RSSI and SNR targets by application',
         routeName: '/tools/signal-thresholds',
         isLive: true,
+        subgroup: 'Wi-Fi & RF',
       ),
       // ── from the dissolved Wi-Fi Design category ──
       ToolEntry(
@@ -566,6 +679,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'WPA2 / WPA3 reference matrix',
         routeName: '/tools/wpa-security',
         isLive: true,
+        subgroup: 'Wi-Fi & RF',
       ),
       ToolEntry(
         id: 'roaming',
@@ -573,6 +687,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: '802.11r/k/v and RSSI/SNR roaming thresholds',
         routeName: '/tools/roaming',
         isLive: true,
+        subgroup: 'Wi-Fi & RF',
       ),
       ToolEntry(
         id: 'ap-placement',
@@ -580,6 +695,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Mounting, spacing, and cell-overlap guidance',
         routeName: '/tools/ap-placement',
         isLive: true,
+        subgroup: 'Wi-Fi & RF',
       ),
       ToolEntry(
         id: 'port-reference',
@@ -588,6 +704,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'Search common TCP/UDP ports by number or service name — offline',
         routeName: '/tools/port-reference',
         isLive: true,
+        subgroup: 'Protocols',
       ),
       ToolEntry(
         id: 'reason-codes',
@@ -595,6 +712,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: '802.11 deauth / disassoc reason and status codes',
         routeName: '/tools/reason-codes',
         isLive: true,
+        subgroup: 'Protocols',
       ),
       ToolEntry(
         id: 'frame-exchange',
@@ -602,6 +720,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: '802.11 association and handshake frame sequences',
         routeName: '/tools/frame-exchange',
         isLive: true,
+        subgroup: 'Protocols',
       ),
       ToolEntry(
         id: 'db-reference',
@@ -609,6 +728,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'dB to ratio and dBm anchor values',
         routeName: '/tools/db-reference',
         isLive: true,
+        subgroup: 'Wi-Fi & RF',
       ),
       ToolEntry(
         id: 'channel-map',
@@ -616,6 +736,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: '5 and 6 GHz channel bonding map by width',
         routeName: '/tools/channel-map',
         isLive: true,
+        subgroup: 'Wi-Fi & RF',
       ),
       ToolEntry(
         id: 'spectrum',
@@ -623,6 +744,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Band allocations, sub-bands, and co-existence',
         routeName: '/tools/spectrum',
         isLive: true,
+        subgroup: 'Wi-Fi & RF',
       ),
       // ── from the dissolved Cabling & Connectors category ──
       ToolEntry(
@@ -631,6 +753,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'T568A / T568B reference',
         routeName: '/tools/ethernet-pinout',
         isLive: true,
+        subgroup: 'Cabling & Connectors',
       ),
       ToolEntry(
         id: 'coax-cable',
@@ -638,6 +761,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Coax types: impedance, velocity factor, max frequency',
         routeName: '/tools/coax-cable',
         isLive: true,
+        subgroup: 'Cabling & Connectors',
       ),
       ToolEntry(
         id: 'ethernet-cable',
@@ -645,6 +769,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Cat5e to Cat8: speed, bandwidth, distance, PoE',
         routeName: '/tools/ethernet-cable',
         isLive: true,
+        subgroup: 'Cabling & Connectors',
       ),
       ToolEntry(
         id: 'fiber-optic',
@@ -652,6 +777,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'OM1 to OM5, OS1/OS2: distance, bandwidth, color code',
         routeName: '/tools/fiber-optic',
         isLive: true,
+        subgroup: 'Cabling & Connectors',
       ),
       ToolEntry(
         id: 'rf-connectors',
@@ -659,6 +785,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'N, SMA, RP-SMA, TNC and more: frequency, impedance',
         routeName: '/tools/rf-connectors',
         isLive: true,
+        subgroup: 'Cabling & Connectors',
       ),
       // OSI Model — NEW (Quick Reference, last per the LOCKED map order).
       ToolEntry(
@@ -667,6 +794,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: '7 layers, PDUs, and hardware',
         routeName: '/tools/osi-model',
         isLive: true,
+        subgroup: 'Protocols',
       ),
       ToolEntry(
         id: 'ascii-reference',
@@ -674,6 +802,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'ASCII table with hex, octal, binary, and control codes',
         routeName: '/tools/ascii-reference',
         isLive: true,
+        subgroup: 'Encoding',
       ),
       ToolEntry(
         id: 'emoji-reference',
@@ -681,6 +810,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'The 30 most-used emoji, names, and common meaning',
         routeName: '/tools/emoji-reference',
         isLive: true,
+        subgroup: 'Encoding',
       ),
       // ── PDF reference cards (bundled as PDFs, rendered by the shared
       // PdfReferenceScreen — pinch-zoomable, offline) ──
@@ -689,12 +819,21 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       // screen sorts alphabetically by title, so these interleave with the
       // tables above automatically — no manual ordering. `mcs-index-card` is
       // deliberately distinct from the existing `mcs-index` table id.
+      // TODO(educational-resources): move these 10 PDF cards (the 6 reference
+      // cards + the 4 checklist PDF cards below) into the Educational Resources
+      // category → "WLAN Pros Laminated Cards" section when that category lands
+      // (separate thread). Until then they live here under the interim
+      // "Reference Cards" subgroup so they don't fall into an unnamed "Other"
+      // section (Keith, 2026-06-03). The two INTERACTIVE checklists
+      // (checklist-ap-install, checklist-client-test) stay in the "Checklists"
+      // section and do NOT move.
       ToolEntry(
         id: 'bubble-diagram',
         title: 'WLAN Pros Bubble Diagram',
         description: 'Wi-Fi design decision bubble diagram',
         routeName: '/tools/bubble-diagram',
         isLive: true,
+        subgroup: 'Reference Cards',
       ),
       ToolEntry(
         id: 'troubleshooting-causes',
@@ -702,6 +841,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Common causes to check when troubleshooting',
         routeName: '/tools/troubleshooting-causes',
         isLive: true,
+        subgroup: 'Reference Cards',
       ),
       ToolEntry(
         id: 'channel-allocations-24ghz',
@@ -709,6 +849,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: '2.4 GHz channel layout and allocations',
         routeName: '/tools/channel-allocations-24ghz',
         isLive: true,
+        subgroup: 'Reference Cards',
       ),
       ToolEntry(
         id: 'channel-allocations-5ghz',
@@ -716,6 +857,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: '5 GHz channel layout and allocations',
         routeName: '/tools/channel-allocations-5ghz',
         isLive: true,
+        subgroup: 'Reference Cards',
       ),
       ToolEntry(
         id: 'channel-allocations-6ghz',
@@ -723,6 +865,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: '6 GHz channel layout and allocations',
         routeName: '/tools/channel-allocations-6ghz',
         isLive: true,
+        subgroup: 'Reference Cards',
       ),
       ToolEntry(
         id: 'mcs-index-card',
@@ -730,6 +873,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'MCS index, rates, and modulation',
         routeName: '/tools/mcs-index-card',
         isLive: true,
+        subgroup: 'Reference Cards',
       ),
       // ── moved in from the dissolved Command & Capture category
       // (2026-06-01): CLI / monitor-mode / Wireshark reference sheets ──
@@ -739,6 +883,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Windows + macOS/Linux troubleshooting',
         routeName: '/tools/cli-commands',
         isLive: true,
+        subgroup: 'CLI & Capture',
       ),
       ToolEntry(
         id: 'linux-wlan-commands',
@@ -746,6 +891,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Linux CLI + monitor-mode for WLAN',
         routeName: '/tools/linux-wlan-commands',
         isLive: true,
+        subgroup: 'CLI & Capture',
       ),
       ToolEntry(
         id: 'wireshark-80211-filters',
@@ -753,15 +899,18 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Display + capture filters for 802.11',
         routeName: '/tools/wireshark-80211-filters',
         isLive: true,
+        subgroup: 'CLI & Capture',
       ),
       // ── moved in from the dissolved Checklists category (2026-06-01):
       // tappable-checklist screens + PDF reference-card checklists ──
+      // The two INTERACTIVE (non-PDF) checklists — these stay in "Checklists".
       ToolEntry(
         id: 'checklist-ap-install',
         title: 'How to NOT Have a Wireless Problem',
         description: 'AP install pre/post-check phases',
         routeName: '/tools/checklist-ap-install',
         isLive: true,
+        subgroup: 'Checklists',
       ),
       ToolEntry(
         id: 'checklist-client-test',
@@ -769,13 +918,17 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: '12 client-side connectivity tests',
         routeName: '/tools/checklist-client-test',
         isLive: true,
+        subgroup: 'Checklists',
       ),
+      // The 4 checklist PDF CARDS — interim "Reference Cards" with the other PDF
+      // cards (TODO(educational-resources) above covers their eventual move).
       ToolEntry(
         id: 'top-20-checklist',
         title: 'Top 20 Wi-Fi Checklist',
         description: 'The Top 20 Wi-Fi design checklist',
         routeName: '/tools/top-20-checklist',
         isLive: true,
+        subgroup: 'Reference Cards',
       ),
       ToolEntry(
         id: 'extended-checklist',
@@ -783,6 +936,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Extended design checklist items',
         routeName: '/tools/extended-checklist',
         isLive: true,
+        subgroup: 'Reference Cards',
       ),
       ToolEntry(
         id: 'extended-checklist-nonadvertised',
@@ -790,6 +944,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Extended checklist, non-advertised items',
         routeName: '/tools/extended-checklist-nonadvertised',
         isLive: true,
+        subgroup: 'Reference Cards',
       ),
       ToolEntry(
         id: 'connection-checklist',
@@ -797,6 +952,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Client connection sequence checklist',
         routeName: '/tools/connection-checklist',
         isLive: true,
+        subgroup: 'Reference Cards',
       ),
     ],
   ),
@@ -809,8 +965,38 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
 /// Every catalog consumer (home grid, category screen) reads this list, so
 /// gating here is sufficient to keep gated tools out of all navigation and
 /// search surfaces on web. Reversible: it's a `kIsWeb` filter, not a deletion.
-final List<ToolCategory> kToolCategories = kIsWeb
-    ? _kAllToolCategories
-          .where((ToolCategory c) => !kWebGatedCategoryIds.contains(c.id))
-          .toList(growable: false)
-    : _kAllToolCategories;
+final List<ToolCategory> kToolCategories = _buildCatalog();
+
+/// Builds the UI catalog: folds the external search vocabulary
+/// ([kToolKeywords], lib/data/tool_keywords.dart) into each [ToolEntry], then
+/// applies the web gate. Keeping the vocabulary in its own file lets Keith
+/// iterate the search terms without editing the catalog structure, and keeps the
+/// catalog the single source of truth for everything else.
+List<ToolCategory> _buildCatalog() {
+  final List<ToolCategory> source = kIsWeb
+      ? _kAllToolCategories
+            .where((ToolCategory c) => !kWebGatedCategoryIds.contains(c.id))
+            .toList(growable: false)
+      : _kAllToolCategories;
+
+  return source
+      .map(
+        (ToolCategory c) => ToolCategory(
+          id: c.id,
+          title: c.title,
+          summary: c.summary,
+          icon: c.icon,
+          exampleToolTitles: c.exampleToolTitles,
+          countLabelOverride: c.countLabelOverride,
+          isNew: c.isNew,
+          tools: c.tools
+              .map(
+                (ToolEntry t) => t._copyWithKeywords(
+                  kToolKeywords[t.id] ?? const <String>[],
+                ),
+              )
+              .toList(growable: false),
+        ),
+      )
+      .toList(growable: false);
+}
