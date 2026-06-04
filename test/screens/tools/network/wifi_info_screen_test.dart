@@ -27,6 +27,7 @@ import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_live_shortcuts_config.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+import 'package:wlan_pros_toolbox/widgets/sparkline.dart';
 
 ConnectedAp _macSample({
   String? ssid = 'KeithNet',
@@ -49,6 +50,30 @@ ConnectedAp _macSample({
       countryCode: 'US',
       hardwareAddress: 'a4:83:e7:aa:bb:cc',
       poweredOn: poweredOn,
+      locationAuthorized: true,
+    ),
+  );
+}
+
+/// A macOS sample with a specific RSSI, so successive polls produce distinct
+/// charted samples.
+ConnectedAp _macSampleRssi(int rssi) {
+  return ConnectedAp.fromWifiInfo(
+    WifiInfo(
+      interfaceName: 'en0',
+      ssid: 'KeithNet',
+      bssid: 'a4:83:e7:00:11:22',
+      rssiDbm: rssi,
+      noiseDbm: -95,
+      snrDb: 95 + rssi, // varies with RSSI
+      txRateMbps: 866,
+      phyMode: '802.11ax',
+      channel: 36,
+      channelWidthMhz: 80,
+      band: '5 GHz',
+      countryCode: 'US',
+      hardwareAddress: 'a4:83:e7:aa:bb:cc',
+      poweredOn: true,
       locationAuthorized: true,
     ),
   );
@@ -99,6 +124,39 @@ class _FakeMacAdapter implements WifiInfoAdapter {
     openSettingsCalls++;
     return true;
   }
+}
+
+/// A macOS adapter that walks a sequence of snapshots, one per [fetch] call
+/// (clamping on the last). Lets the poll test assert successive reads return
+/// distinct values that advance the sparkline series and update the cards.
+class _SequenceMacAdapter implements WifiInfoAdapter {
+  _SequenceMacAdapter({required this.samples})
+      : assert(samples.isNotEmpty, 'need at least one sample');
+
+  final List<ConnectedAp> samples;
+  int fetchCalls = 0;
+
+  @override
+  String get platformLabel => 'macOS CoreWLAN';
+
+  @override
+  bool get gatesNameBehindPermission => true;
+
+  @override
+  Future<ConnectedAp> fetch() async {
+    final int i = fetchCalls < samples.length ? fetchCalls : samples.length - 1;
+    fetchCalls++;
+    return samples[i];
+  }
+
+  @override
+  Future<bool> requestNamePermission() async => true;
+
+  @override
+  Future<bool> currentNameAuthorization() async => true;
+
+  @override
+  Future<bool> openNamePermissionSettings() async => true;
 }
 
 /// A fake iOS Shortcuts bridge driving the Live streaming flow without a
@@ -156,6 +214,19 @@ class _FakeBridge implements WiFiDetailsBridge {
 void main() {
   Widget host(Widget child) => MaterialApp(theme: AppTheme.dark(), home: child);
 
+  // The macOS path arms an automatic CoreWLAN poll (Timer.periodic). A live
+  // periodic timer never lets pumpAndSettle settle, so the default for the suite
+  // is OFF; the dedicated polling group below re-enables it and pumps the
+  // interval deterministically. Always restored in tearDown.
+  setUp(() {
+    WifiInfoScreen.macPollEnabled = false;
+    WifiInfoScreen.macPollInterval = const Duration(seconds: 2);
+  });
+  tearDown(() {
+    WifiInfoScreen.macPollEnabled = true;
+    WifiInfoScreen.macPollInterval = const Duration(seconds: 2);
+  });
+
   group('WifiInfoScreen — macOS source', () {
     testWidgets('loading then success cards', (tester) async {
       await tester.pumpWidget(host(
@@ -172,6 +243,81 @@ void main() {
       expect(find.text('Not exposed by macOS CoreWLAN'), findsOneWidget);
       // macOS DOES expose channel width — no "not reported" note for it.
       expect(find.textContaining('Not reported by macOS'), findsNothing);
+    });
+
+    testWidgets('renders BOTH the live sparklines AND the metric cards',
+        (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          macAdapter: _FakeMacAdapter(snapshot: _macSample()),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      // Sparklines on top: the seed CoreWLAN read fed one sample into the macOS
+      // series, so the shared _LiveCharts surface renders (graded RSSI/SNR +
+      // Tx/Rx trend cards). At least one Sparkline is painted.
+      expect(find.byType(Sparkline), findsWidgets);
+      // The graded RSSI sparkline card carries a grade chip — proof the live
+      // surface (not just the metric cards) is on macOS now.
+      expect(find.text('RSSI'), findsWidgets);
+
+      // Metric cards on the bottom: the grouped Network/Signal/Rate/Channel/
+      // Radio/Status cards still render below.
+      expect(find.text('Network'), findsOneWidget);
+      expect(find.text('Signal'), findsOneWidget);
+      expect(find.text('KeithNet'), findsOneWidget);
+      // macOS-honest per-field note still present (cards path).
+      expect(find.text('Not exposed by macOS CoreWLAN'), findsOneWidget);
+    });
+
+    testWidgets(
+        'automatic poll advances the series and refreshes the cards (no Start '
+        'button needed)', (tester) async {
+      WifiInfoScreen.macPollEnabled = true;
+      WifiInfoScreen.macPollInterval = const Duration(seconds: 2);
+
+      // The adapter returns a CHANGING RSSI each fetch so successive polls add
+      // distinct samples and the latest card value updates.
+      final adapter = _SequenceMacAdapter(
+        samples: <ConnectedAp>[
+          _macSample(),
+          _macSampleRssi(-60),
+          _macSampleRssi(-70),
+        ],
+      );
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          macAdapter: adapter,
+        ),
+      ));
+      // Seed read resolves.
+      await tester.pump();
+      await tester.pump();
+
+      // There is no Start control on macOS — the poll is automatic.
+      expect(find.text('Start'), findsNothing);
+      expect(find.text('Stop'), findsNothing);
+
+      // Advance one poll interval: the timer fires, re-reads (-60), updates.
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pump();
+      expect(adapter.fetchCalls, greaterThanOrEqualTo(2));
+
+      // Advance another interval: re-reads (-70).
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pump();
+      expect(adapter.fetchCalls, greaterThanOrEqualTo(3));
+
+      // The latest RSSI (-70) is reflected in the Signal card.
+      expect(find.textContaining('-70'), findsWidgets);
+
+      // Tear down cleanly so the periodic timer is cancelled (no pending-timer
+      // failure).
+      await tester.pumpWidget(host(const SizedBox.shrink()));
+      await tester.pump();
     });
 
     testWidgets('Wi-Fi off leads with the off card', (tester) async {
@@ -429,12 +575,23 @@ void main() {
       }));
       await tester.pumpAndSettle();
 
-      // The live charts rendered (graded RSSI/SNR + Tx/Rx rate cards).
-      expect(find.text('RSSI'), findsOneWidget);
-      expect(find.text('SNR'), findsOneWidget);
-      expect(find.text('Tx Rate'), findsOneWidget);
+      // The live charts rendered (graded RSSI/SNR + Tx/Rx rate cards) — the
+      // chart 'RSSI' label co-exists with the metric Signal card, so the chart
+      // RSSI title appears with the metric-card RSSI row label.
+      expect(find.text('RSSI'), findsWidgets);
+      expect(find.text('SNR'), findsWidgets);
       // The latest RSSI value (-60) is shown in the readout.
       expect(find.textContaining('-60'), findsWidgets);
+
+      // AND the grouped metric cards render BELOW the charts (the unified
+      // layout): Network / Signal / Channel / Radio / Status group titles.
+      expect(find.text('Network'), findsOneWidget);
+      expect(find.text('Signal'), findsOneWidget);
+      // 'Channel' is both the card title and a row label inside it.
+      expect(find.text('Channel'), findsWidgets);
+      expect(find.text('Radio'), findsOneWidget);
+      expect(find.text('Status'), findsOneWidget);
+      expect(find.text('KeithNet'), findsWidgets);
     });
 
     testWidgets('Stop clears the monitoring flag and freezes the last values',
@@ -465,10 +622,14 @@ void main() {
       await tester.pumpAndSettle();
 
       // Flag cleared; the idle Start control is back; the last reading is frozen
-      // on screen (still charted).
+      // on screen (still charted + still in the metric cards). 'RSSI' now
+      // appears as both the chart title and the Signal-card row label, so
+      // findsWidgets, not findsOneWidget.
       expect(bridge.monitoringActive, isFalse);
       expect(find.text('Start'), findsOneWidget);
-      expect(find.text('RSSI'), findsOneWidget);
+      expect(find.text('RSSI'), findsWidgets);
+      // The grouped cards are still on screen after Stop (frozen snapshot).
+      expect(find.text('Network'), findsOneWidget);
     });
 
     testWidgets('Start failing to open the Shortcut clears the flag + errors',

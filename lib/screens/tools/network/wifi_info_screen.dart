@@ -40,6 +40,8 @@
 // hairline border, mono for addresses/numerics, the concept-graphic band
 // degrades to nothing when the tool has no graphic asset.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:net_quality/net_quality.dart' show QualityGrade, QualityGradeLabel;
 
@@ -79,6 +81,16 @@ class WifiInfoScreen extends StatefulWidget {
   /// Injectable iOS bridge (tests). Defaults to the real Shortcuts bridge.
   final WiFiDetailsBridge? iosBridge;
 
+  /// Poll cadence for the macOS CoreWLAN re-read. Overridable in tests so the
+  /// poll can be pumped deterministically.
+  @visibleForTesting
+  static Duration macPollInterval = const Duration(seconds: 2);
+
+  /// When false, the macOS poll timer is never armed. Tests that exercise the
+  /// one-shot snapshot path without a ticking timer set this to disable it.
+  @visibleForTesting
+  static bool macPollEnabled = true;
+
   @override
   State<WifiInfoScreen> createState() => _WifiInfoScreenState();
 }
@@ -93,6 +105,20 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   ConnectedAp? _macInfo;
   WifiInfoUnavailable? _macError;
   bool _locationGrantAttempted = false;
+
+  /// Rolling window of CoreWLAN snapshots for the macOS sparklines. macOS reads
+  /// the same RF fields as iOS (RSSI / SNR / Tx rate), so the SAME [_LiveCharts]
+  /// surface renders from a series fed by automatic polling rather than a stream.
+  WifiTimeSeries? _macSeries;
+
+  /// The last snapshot folded into [_macSeries], so the poll appends one sample
+  /// per CHANGED reading (an unchanged poll does not duplicate the window).
+  ConnectedAp? _macLastCharted;
+
+  /// Automatic CoreWLAN poll. macOS has no Start/Stop — it polls while the
+  /// screen is mounted (CoreWLAN is local and cheap) and the timer is cancelled
+  /// in [dispose]. Paused while the app is backgrounded (lifecycle observer).
+  Timer? _macPollTimer;
 
   // ---- iOS (Live streaming) state ----
   WiFiDetailsBridge? _iosBridge;
@@ -125,7 +151,11 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     switch (_source) {
       case WifiInfoSource.macosCoreWlan:
         _macAdapter = widget.macAdapter ?? MacWifiInfoAdapter();
-        _fetchMac();
+        _macSeries = WifiTimeSeries();
+        WidgetsBinding.instance.addObserver(this);
+        // Seed the first reading, then begin automatic polling so the
+        // sparklines start filling without a Start button.
+        _fetchMac().then((_) => _startMacPoll());
       case WifiInfoSource.iosShortcuts:
         _iosBridge = widget.iosBridge ?? WiFiDetailsBridge();
         _liveController = WifiMonitorController(bridge: _iosBridge!);
@@ -141,16 +171,31 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // iOS only: on resume, re-resolve so a payload delivered while backgrounded
-    // lands and any persisted monitoring flag resumes the live state.
+    // iOS: on resume, re-resolve so a payload delivered while backgrounded lands
+    // and any persisted monitoring flag resumes the live state.
     if (state == AppLifecycleState.resumed &&
         _source == WifiInfoSource.iosShortcuts) {
       _liveController?.load();
+    }
+
+    // macOS: pause the CoreWLAN poll while backgrounded (no point re-reading a
+    // link the user cannot see), resume + re-read on return to foreground.
+    if (_source == WifiInfoSource.macosCoreWlan) {
+      if (state == AppLifecycleState.resumed) {
+        _fetchMac().then((_) => _startMacPoll());
+      } else if (state == AppLifecycleState.paused ||
+          state == AppLifecycleState.hidden) {
+        _stopMacPoll();
+      }
     }
   }
 
   @override
   void dispose() {
+    if (_source == WifiInfoSource.macosCoreWlan) {
+      WidgetsBinding.instance.removeObserver(this);
+      _stopMacPoll();
+    }
     if (_source == WifiInfoSource.iosShortcuts) {
       WidgetsBinding.instance.removeObserver(this);
       // Hygiene: leaving the screen clears the monitoring flag so the recursive
@@ -246,6 +291,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         _macInfo = info;
         _macLoading = false;
       });
+      _appendMacSample(info);
       if (manual && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -270,6 +316,68 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         );
         _macLoading = false;
       });
+    }
+  }
+
+  /// Appends a CoreWLAN snapshot to [_macSeries] for the sparklines, but only
+  /// when one of the four CHARTED RF fields (RSSI / SNR / Tx / Rx rate) differs
+  /// from the last charted reading (an unchanged poll does not pad the window).
+  /// [ConnectedAp] carries no value equality, so the comparison is field-wise on
+  /// exactly what the sparklines draw. Mirrors [_captureSample] on the iOS path.
+  void _appendMacSample(ConnectedAp info) {
+    final WifiTimeSeries? series = _macSeries;
+    if (series == null) return;
+    final ConnectedAp? last = _macLastCharted;
+    final bool unchanged = last != null &&
+        info.rssiDbm == last.rssiDbm &&
+        info.snrDb == last.snrDb &&
+        info.txRateMbps == last.txRateMbps &&
+        info.rxRateMbps == last.rxRateMbps;
+    if (unchanged) return;
+    _macLastCharted = info;
+    series.add(info);
+  }
+
+  /// Arms the automatic CoreWLAN poll. Idempotent: cancels any existing timer
+  /// first so a resume never double-arms. macOS needs no Start/Stop — the poll
+  /// runs while the screen is foregrounded and is cancelled in [dispose].
+  void _startMacPoll() {
+    if (!WifiInfoScreen.macPollEnabled) return;
+    if (!mounted) return;
+    _macPollTimer?.cancel();
+    _macPollTimer = Timer.periodic(
+      WifiInfoScreen.macPollInterval,
+      (_) => _pollMacSample(),
+    );
+  }
+
+  /// Cancels the CoreWLAN poll (background / teardown).
+  void _stopMacPoll() {
+    _macPollTimer?.cancel();
+    _macPollTimer = null;
+  }
+
+  /// One automatic CoreWLAN re-read. Reuses the same adapter read as the manual
+  /// Refresh, but stays silent (no snackbar, no spinner): it updates [_macInfo]
+  /// so the cards stay current and appends the reading to [_macSeries] so the
+  /// sparklines advance. A failed poll is swallowed — the last good values and
+  /// the existing card/error state stand; the next poll retries.
+  Future<void> _pollMacSample() async {
+    final WifiInfoAdapter? adapter = _macAdapter;
+    if (adapter == null || !mounted) return;
+    try {
+      final ConnectedAp info = await adapter.fetch();
+      if (!mounted) return;
+      setState(() {
+        _macInfo = info;
+        // A recovered poll clears a stale error so the cards return.
+        _macError = null;
+      });
+      _appendMacSample(info);
+    } on WifiInfoUnavailable {
+      // Transient read failure: keep the last good snapshot + series on screen.
+    } catch (_) {
+      // Defensive: a poll never tears down the screen.
     }
   }
 
@@ -545,6 +653,16 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         ..add(const SizedBox(height: AppSpacing.sm));
     }
 
+    // Live RF sparklines on top (same surface as iOS), fed by the automatic
+    // CoreWLAN poll. Shown once at least one sample is in the window; the cards
+    // below carry the full per-field detail regardless.
+    final WifiTimeSeries? series = _macSeries;
+    if (series != null && !series.isEmpty) {
+      children
+        ..add(_LiveCharts(series: series, latest: info))
+        ..add(const SizedBox(height: AppSpacing.sm));
+    }
+
     children.addAll(_metricCards(info, platformLabel: 'macOS CoreWLAN'));
     return children;
   }
@@ -600,6 +718,12 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           triggerError: _liveTriggerError,
           onStart: _startLive,
           onStop: _stopLive,
+          // The grouped metric cards belong to the State (they read the shared
+          // _metricCards builder), so they are passed in as a builder over the
+          // SAME latest reading the charts use. Null until the first sample, so
+          // the cards appear only once there is honest data to group.
+          metricCardsBuilder: (ConnectedAp latest) =>
+              _metricCards(latest, platformLabel: 'iOS Live'),
         );
       },
     );
@@ -1297,6 +1421,7 @@ class _LiveBody extends StatelessWidget {
     required this.triggerError,
     required this.onStart,
     required this.onStop,
+    required this.metricCardsBuilder,
   });
 
   final WifiMonitorController controller;
@@ -1305,6 +1430,11 @@ class _LiveBody extends StatelessWidget {
   final bool triggerError;
   final VoidCallback onStart;
   final VoidCallback onStop;
+
+  /// Builds the grouped metric cards (Network / Signal / Rate / Channel / Radio
+  /// / Status) for the latest reading. Owned by the State so iOS and macOS share
+  /// the identical card presentation; rendered BELOW the live charts.
+  final List<Widget> Function(ConnectedAp latest) metricCardsBuilder;
 
   @override
   Widget build(BuildContext context) {
@@ -1342,8 +1472,16 @@ class _LiveBody extends StatelessWidget {
                     const _LiveStartHint()
                   else if (series.isEmpty)
                     _WaitingForFirstPayload(streaming: controller.isStreaming)
-                  else
+                  else ...<Widget>[
                     _LiveCharts(series: series, latest: ap),
+                    // Grouped metric cards BELOW the sparklines (same surface as
+                    // macOS). Rendered once a sample exists; fields the iOS
+                    // stream does not carry render an honest "Unavailable" row.
+                    if (ap != null) ...<Widget>[
+                      const SizedBox(height: AppSpacing.sm),
+                      ...metricCardsBuilder(ap),
+                    ],
+                  ],
                   // First-time SETUP hint only. Once the app has EVER received a
                   // Live payload (hasEverReceived — mirrors the App Group
                   // shortcuts_bridge.has_received_payload flag), the user clearly
