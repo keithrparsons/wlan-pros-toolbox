@@ -4,7 +4,7 @@
 // - The pure parser (ToolHelpStore.fromJson): a well-formed fixture, malformed
 //   entries dropped, garbage document → empty-but-valid, null algorithm/example
 //   preserved as null, field notes preserved verbatim (GL-005).
-// - The REAL bundled asset (assets/help/tool_help.json): parses to exactly 86
+// - The REAL bundled asset (assets/help/tool_help.json): parses to exactly 88
 //   entries, and every key matches a catalog tool id (the lookup contract).
 // - helpForId() reads the cached store and returns null for an unknown id.
 
@@ -120,8 +120,8 @@ void main() {
       store = ToolHelpStore.fromJson(raw);
     });
 
-    test('parses to exactly 86 entries', () {
-      expect(store.count, 86);
+    test('parses to exactly 88 entries', () {
+      expect(store.count, 88);
     });
 
     test('every help key matches a catalog tool id', () {

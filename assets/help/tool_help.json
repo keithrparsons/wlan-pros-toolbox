@@ -1259,6 +1259,45 @@
       ],
       "source": "lib/screens/tools/reference/osi_model_screen.dart"
     },
+    "top-level-domains": {
+      "name": "Top-Level Domains",
+      "category": "Quick Reference",
+      "purpose": "A curated reference to the DNS top-level domains a network or IT pro actually meets, grouped by registry type: generic (gTLD), country-code (ccTLD), sponsored/restricted, infrastructure, and notable newer gTLDs. Each entry shows the TLD, its type, and a short managed-by / typical-use note.",
+      "whyHere": "Knowing a TLD's type tells you who runs it and what to expect: a sponsored domain like .gov or .edu is eligibility-verified, .arpa is reverse-DNS infrastructure you never register, and .io or .ai are country-code domains used generically rather than true gTLDs.",
+      "howToUse": [
+        "Scroll the grouped cards, or use the Type filter to narrow to one registry class.",
+        "Read the TLD (lime, left) then its note. Copy exports the full curated set as a table, regardless of the active filter."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Curated, not exhaustive: the live root zone has roughly 1,500 generic TLDs and about 250 country-code TLDs. This lists the meaningful, field-relevant set.",
+        "Accuracy: .io (British Indian Ocean Territory), .ai (Anguilla), .co (Colombia), .tv and .me are technically country-code TLDs commonly used generically. They are NOT true generic TLDs, and the notes say so.",
+        "Data source / standard: the IANA Root Zone Database for registry classification and sponsoring organizations; ICANN for new-gTLD program facts."
+      ],
+      "source": "lib/screens/tools/reference/top_level_domains_screen.dart"
+    },
+    "rj-connectors": {
+      "name": "RJ Connectors",
+      "category": "Quick Reference",
+      "purpose": "A reference to the registered-jack connector form factors (RJ11, RJ14, RJ25, RJ45/8P8C, RJ48, RJ48C, RJ48X): positions, conductors, the modular body each uses, and its typical use. This is about the connector body, not the wiring.",
+      "whyHere": "In the field you meet the same modular bodies for very different jobs: RJ11 carries one phone line, RJ45 (8P8C) carries Ethernet, and RJ48 reuses the 8P8C body for T1/E1 with a different pin assignment. Telling them apart keeps you from cabling the wrong jack.",
+      "howToUse": [
+        "Read each connector card: the name, its modular notation (e.g. 8P8C), positions, conductors, and typical use.",
+        "For T568A / T568B pin-to-pair-color wiring on the RJ45 (8P8C) connector, tap the cross-link card to open the Ethernet Pinout tool."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Accuracy: \"RJ45\" is the colloquial name for the 8-position 8-conductor (8P8C) modular connector used for Ethernet. Strictly, RJ45 was a telephone wiring standard; the data connector is properly the 8P8C modular jack.",
+        "The PnCm notation means an n-position body with m conductors populated, e.g. 6P2C is a 6-position body with 2 conductors (RJ11), 8P8C is fully populated (RJ45/RJ48).",
+        "This table does NOT duplicate the T568A/T568B pin colors: that wiring lives in the Ethernet Pinout tool, which this screen cross-links to.",
+        "Data source / standard: the registered-jack (USOC) interface standards and the modular-connector form-factor conventions."
+      ],
+      "source": "lib/screens/tools/reference/rj_connectors_screen.dart"
+    },
     "ascii-reference": {
       "name": "ASCII / Hex / Binary",
       "category": "Quick Reference",
