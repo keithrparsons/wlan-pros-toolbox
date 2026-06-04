@@ -1,7 +1,17 @@
-// HomeScreen — the category landing grid (the LOCKED 6-category map; Command &
-// Capture + Checklists are deferred until their tools land, so 4 categories
-// render today). The grid is data-driven from kToolCategories, so it tracks the
-// catalog automatically as deferred categories are restored.
+// HomeScreen — the category landing grid with a global search field on top.
+//
+// IA redesign (mockups 01 / 05):
+//   * a "Search all tools…" field above the grid that pushes /search (it is a
+//     navigation trigger, not an inline filter — inline-as-you-type lives on the
+//     search screen),
+//   * richer category tiles: a tool-count badge (or a NEW pill / "~27" override
+//     for the 6-category future) top-right, and a line of 2–3 example tool names
+//     instead of the generic summary sentence.
+//
+// The grid is data-driven from kToolCategories, so it scales from the current 4
+// categories to 6 automatically. Per Keith (2026-06-03) NOTHING sets isNew in
+// this build (the app hasn't gone public, so nothing is "new to a user"); the
+// NEW-pill capability is built and ready for the parked categories.
 //
 // Layout per GL-003 §8.7: 16px screen edge on mobile, 24px on tablet+ desktop,
 // 16px grid gutter, tile titles at H3 / IBM Plex Sans 600.
@@ -19,18 +29,7 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   /// Breakpoint for switching from mobile-edge to desktop-edge padding.
-  /// Tablet portrait ~768px+ gets the wider gutter per §8.7.
   static const double _desktopBreakpoint = 720;
-
-  /// Phone-vs-larger breakpoint. Below this we drop tile aspect ratio so the
-  /// icon + 2-line title + 2-line summary fit without RenderFlex overflow at
-  /// 375pt iPhone widths. (Vera F-01.)
-  static const double _phoneBreakpoint = 480;
-
-  /// Narrow-phone breakpoint — covers iPhone SE 1st-gen (320pt) and other
-  /// sub-375pt logical widths. Drops tile aspect a second step so content
-  /// still clears at 320×900. (Vera F-NEW-03.)
-  static const double _narrowPhoneBreakpoint = 360;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -40,10 +39,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Vera F-05 — at macOS cold start Flutter focuses the first focusable
-    // widget, painting the lime hover tint on the first tile. That reads
-    // visually as "selected" rather than "keyboard-focused". Drop focus once
-    // after first frame; Tab still works normally to walk focus through tiles.
+    // Vera F-05 — drop the auto-focus the macOS embedder paints on the first
+    // focusable widget at cold start (it reads as "selected").
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) FocusScope.of(context).unfocus();
     });
@@ -69,11 +66,8 @@ class _HomeScreenState extends State<HomeScreen> {
         top: false,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            // Breakpoints (column count, aspect, edge) are driven by the
-            // CONTENT-column width, not the raw viewport. CenteredContent caps
-            // the grid at AppSpacing.contentMaxWidth, so a 1440px desktop lays
-            // the grid out inside a 680px band — clamp the width the breakpoints
-            // see so we don't render 4 columns inside that narrow band.
+            // Breakpoints are driven by the CONTENT-column width (capped by
+            // CenteredContent), not the raw viewport.
             final double width =
                 constraints.maxWidth > AppSpacing.contentMaxWidth
                 ? AppSpacing.contentMaxWidth
@@ -83,27 +77,54 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? AppSpacing.screenEdgeDesktop
                 : AppSpacing.screenEdgeMobile;
             final int crossAxisCount = _crossAxisCountFor(width);
-            final double aspect = _aspectRatioFor(width);
+            final double tileHeight = _tileHeightFor(width);
 
             return CenteredContent(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(edge, AppSpacing.sm, edge, edge),
-                child: GridView.builder(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: crossAxisCount,
-                    crossAxisSpacing: AppSpacing.sm,
-                    mainAxisSpacing: AppSpacing.sm,
-                    childAspectRatio: aspect,
+              child: CustomScrollView(
+                slivers: <Widget>[
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(
+                      edge,
+                      AppSpacing.sm,
+                      edge,
+                      AppSpacing.sm,
+                    ),
+                    sliver: SliverToBoxAdapter(
+                      child: _HomeSearchField(
+                        onTap: () => Navigator.of(context)
+                            .pushNamed(AppRouter.search),
+                      ),
+                    ),
                   ),
-                  itemCount: kToolCategories.length,
-                  itemBuilder: (context, index) {
-                    final ToolCategory cat = kToolCategories[index];
-                    return _CategoryTile(
-                      category: cat,
-                      onTap: () => _openCategory(cat),
-                    );
-                  },
-                ),
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(edge, 0, edge, edge),
+                    sliver: SliverGrid(
+                      gridDelegate:
+                          SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: AppSpacing.sm,
+                        mainAxisSpacing: AppSpacing.sm,
+                        // Fixed tile HEIGHT (not aspect ratio): the tile content
+                        // is top-aligned and compact, so a content-sized height
+                        // keeps density identical at every width — no dead band
+                        // when the column is narrow (the old aspect-ratio path
+                        // made a 2-col tile ~308pt tall at the 680pt cap). Vera
+                        // IA-redesign density gate.
+                        mainAxisExtent: tileHeight,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final ToolCategory cat = kToolCategories[index];
+                          return _CategoryTile(
+                            category: cat,
+                            onTap: () => _openCategory(cat),
+                          );
+                        },
+                        childCount: kToolCategories.length,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             );
           },
@@ -112,14 +133,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Open a category tile. Most categories push the generic [CategoryScreen]
-  /// (a list of ToolEntry routes). The Educational Resources category is the
-  /// exception: its tile is intercepted to push the dedicated
-  /// [EducationalResourcesScreen] directory, because its 52 entries are external
-  /// learning resources with rich detail, not in-app tool routes
-  /// (kEducationalResourcesRoute). All other behavior (the post-pop unfocus that
-  /// closes Vera F-NEW-02) is shared.
   void _openCategory(ToolCategory cat) {
+    // Most categories push the generic CategoryScreen (a list of ToolEntry
+    // routes). The Educational Resources category is the exception: its tile is
+    // intercepted to push the dedicated EducationalResourcesScreen directory,
+    // because its entries are external learning resources with rich detail, not
+    // in-app tool routes.
     final Route<void> route = cat.id == 'educational-resources'
         ? MaterialPageRoute<void>(
             builder: (_) => const EducationalResourcesScreen(),
@@ -128,11 +147,8 @@ class _HomeScreenState extends State<HomeScreen> {
             builder: (_) => CategoryScreen(category: cat),
           );
 
-    // Vera F-NEW-02 — the `initState` unfocus only fires on first mount. When
-    // the user pops back from a category, Flutter's focus traversal can leave a
-    // tile holding primary focus, repainting the lime tint as if it were
-    // "selected". Hook the route future so we can drop focus once the home tree
-    // has been re-installed after pop, on the next frame.
+    // Vera F-NEW-02 — drop focus once the home tree is reinstalled after pop, so
+    // a returning tile doesn't repaint the lime tint as if "selected".
     Navigator.of(context).push(route).then((_) {
       if (!mounted) return;
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -145,42 +161,101 @@ class _HomeScreenState extends State<HomeScreen> {
   int _crossAxisCountFor(double width) {
     if (width >= 1100) return 4;
     if (width >= 720) return 3;
-    // Vera web-demo gate (2026-06-02): below ~440px the 2nd tile clipped off
-    // the right edge (16px edge + 16px gutter left no room for two tiles at
-    // sub-440 logical widths). Drop to a single column so each tile gets the
-    // full content width and nothing clips.
     if (width >= _singleColumnBreakpoint) return 2;
-    return 1; // very narrow phones — one tile per row, no horizontal clip.
+    return 1;
   }
 
-  /// Below this width the home grid drops from 2 columns to 1 so the 2nd tile
-  /// can't clip off the right edge (Vera web-demo gate, 2026-06-02).
+  /// Below this width the grid drops from 2 columns to 1 (Vera web-demo gate).
   static const double _singleColumnBreakpoint = 440;
 
-  /// Tile vertical room scales with viewport. Phones (<480px) get a taller
-  /// tile so the 28px icon row + 2-line H3 title (22px/1.25) + 2-line caption
-  /// (13px/1.35) fit without RenderFlex overflow at 375pt. Narrow phones
-  /// (<360px, iPhone SE 1st-gen) drop a second step so the same content
-  /// clears at 320pt. (Vera F-01, F-NEW-03.) The tightened leading (2026-06-01)
-  /// only shrinks the text block; the trailing Spacer absorbs the freed
-  /// height, so these aspect ratios stay valid and clear with more slack.
-  double _aspectRatioFor(double width) {
-    // Below the single-column breakpoint each tile spans the full content
-    // width (~one phone width), so a tall 0.75–0.85 ratio would leave a huge
-    // tile. Widen the ratio so a single full-width tile stays a compact card
-    // (icon row + title + summary) instead of a near-square slab.
-    if (width < _singleColumnBreakpoint) return 2.6;
-    if (width < HomeScreen._narrowPhoneBreakpoint) return 0.75;
-    if (width < HomeScreen._phoneBreakpoint) return 0.85;
-    return 1.05;
+  /// Fixed tile HEIGHT per layout. The tile content is TOP-ALIGNED with a fixed
+  /// icon→title gap (no Spacer), so the height is sized to the compact content —
+  /// icon+badge row, up-to-2-line H3 title, up-to-2-line examples — with no
+  /// large empty band in the middle (Vera IA-redesign density gate).
+  ///
+  /// A fixed pixel height (rather than an aspect ratio) keeps the density
+  /// identical at every width. The old aspect-ratio path coupled height to the
+  /// column width, so a 2-col tile ballooned to ~308pt tall at the 680pt content
+  /// cap (the dead band Vera flagged) yet was too short at 440pt.
+  ///
+  /// Height budget (IBM Plex Sans tokens, incl. 1px tile border each side):
+  /// border(1)+pad sm(16) top + icon row (28) + icon→title gap sm(16) + 2-line
+  /// H3 (22×1.25×2 ≈ 55) + title→examples gap xs(8) + 2-line examples
+  /// (13×1.35×2 ≈ 35) + pad sm(16)+border(1) bottom ≈ 176pt. Measured worst case
+  /// (narrow 2-col column wrapping BOTH the title and the examples) needs 178;
+  /// 180 clears it with a margin and no RenderFlex overflow at any width
+  /// (320–1440). The common 1-line-title case top-aligns with a thin bottom
+  /// margin — matching the approved 01-home-phone / 05-home-desktop density (no
+  /// dead band in the middle). Same height single- and multi-column because the
+  /// worst-case content is identical; the narrower multi-column tile just hits
+  /// the 2-line title more often.
+  double _tileHeightFor(double width) => 180;
+}
+
+/// The home "Search all tools…" trigger (mockups 01/05). A tap target styled
+/// like the §8.4 input, but it navigates to /search rather than editing inline.
+class _HomeSearchField extends StatefulWidget {
+  const _HomeSearchField({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  State<_HomeSearchField> createState() => _HomeSearchFieldState();
+}
+
+class _HomeSearchFieldState extends State<_HomeSearchField> {
+  bool _focused = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+
+    // §8.4 input look: input-fill, border-strong idle, lime 2px on focus, 48dp.
+    final Border border = _focused
+        ? Border.all(color: AppColors.primary, width: 2)
+        : Border.all(color: AppColors.borderStrong, width: 1);
+
+    return Semantics(
+      button: true,
+      label: 'Search all tools',
+      excludeSemantics: true,
+      child: Material(
+        color: AppColors.inputFill,
+        borderRadius: BorderRadius.circular(AppRadius.control),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: widget.onTap,
+          onFocusChange: (bool f) {
+            if (f != _focused) setState(() => _focused = f);
+          },
+          child: Container(
+            height: AppSpacing.minTouchTarget, // 48dp §8.4
+            decoration: BoxDecoration(
+              border: border,
+              borderRadius: BorderRadius.circular(AppRadius.control),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+            child: Row(
+              children: <Widget>[
+                const Icon(Icons.search, color: AppColors.textTertiary),
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  'Search all tools…',
+                  style: text.bodyLarge?.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
 class _CategoryTile extends StatefulWidget {
-  const _CategoryTile({
-    required this.category,
-    required this.onTap,
-  });
+  const _CategoryTile({required this.category, required this.onTap});
 
   final ToolCategory category;
   final VoidCallback onTap;
@@ -190,34 +265,37 @@ class _CategoryTile extends StatefulWidget {
 }
 
 class _CategoryTileState extends State<_CategoryTile> {
-  // §8.9 — keyboard focus must stay visible. The app-wide §8.3 pass swapped
-  // every themed button/chip to a 2px lime focus ring and cleared the global
-  // `focusColor` to transparent, which stripped the ambient focus affordance
-  // off this bare InkWell. Track focus locally and swap the tile border to the
-  // same 2px primary ring on keyboard focus so the home grid matches the
-  // button/chip treatment. (Restores SC 2.4.7 / GL-003 §8.9.)
   bool _focused = false;
+
+  /// 2–3 example tool names for the tile preview. Curated when set; otherwise
+  /// the first few tool titles in display order (never an empty preview).
+  String _examplesLine() {
+    final List<String> titles = widget.category.exampleToolTitles.isNotEmpty
+        ? widget.category.exampleToolTitles
+        : orderedCategoryTools(widget.category)
+              .take(3)
+              .map((ToolEntry t) => t.title)
+              .toList();
+    return titles.join(' · ');
+  }
 
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
-    final bool isPlaceholder = !widget.category.hasLiveTool;
+    final ToolCategory cat = widget.category;
+    final bool isPlaceholder = !cat.hasLiveTool;
 
-    // §8.3 focus ring vs §8.1 interactive boundary. Lime 2px on focus
-    // (9.31:1 on surface1 — clears SC 1.4.11); borderStrong 1px at rest.
     final Border tileBorder = _focused
         ? Border.all(color: AppColors.primary, width: 2)
         : Border.all(color: AppColors.borderStrong, width: 1);
 
-    // Vera F-04 — `container: true, excludeSemantics: true` collapses the
-    // child Text semantic nodes so VoiceOver hears only the curated label
-    // once instead of label + each visible Text.
     return Semantics(
       container: true,
       excludeSemantics: true,
-      label: '${widget.category.title}. '
+      label: '${cat.title}. '
           '${isPlaceholder ? "Coming soon. " : ""}'
-          '${widget.category.summary}',
+          '${_badgeSemanticLabel()}'
+          '${_examplesLine()}',
       button: true,
       child: Material(
         color: AppColors.surface1,
@@ -236,45 +314,27 @@ class _CategoryTileState extends State<_CategoryTile> {
             padding: const EdgeInsets.all(AppSpacing.sm),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+              children: <Widget>[
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
                     Icon(
-                      widget.category.icon,
+                      cat.icon,
                       size: 28,
                       color: isPlaceholder
                           ? AppColors.textTertiary
                           : AppColors.primary,
                     ),
-                    if (isPlaceholder)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface2,
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(
-                            color: AppColors.border,
-                            width: 1,
-                          ),
-                        ),
-                        child: Text(
-                          'SOON',
-                          style: text.labelSmall?.copyWith(
-                            color: AppColors.textTertiary,
-                            letterSpacing: 0.8,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
+                    _badge(text, isPlaceholder),
                   ],
                 ),
-                const Spacer(),
+                // Fixed gap (not a Spacer): keep the icon row, title, and
+                // examples grouped at the top so taller tiles don't open a dead
+                // band in the middle (Vera IA-redesign density gate).
+                const SizedBox(height: AppSpacing.sm),
                 Text(
-                  widget.category.title,
+                  cat.title,
                   style: text.headlineSmall?.copyWith(
                     color: isPlaceholder
                         ? AppColors.textSecondary
@@ -283,9 +343,9 @@ class _CategoryTileState extends State<_CategoryTile> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
-                  widget.category.summary,
+                  _examplesLine(),
                   style: text.labelMedium?.copyWith(
                     color: AppColors.textTertiary,
                   ),
@@ -299,4 +359,79 @@ class _CategoryTileState extends State<_CategoryTile> {
       ),
     );
   }
+
+  /// Top-right tile badge. Priority: placeholder "SOON" → NEW pill (if isNew) →
+  /// count override → exact live count. Per Keith (2026-06-03) isNew is false on
+  /// everything in this build, so the NEW pill never renders today.
+  Widget _badge(TextTheme text, bool isPlaceholder) {
+    if (isPlaceholder) {
+      return _pillBadge(
+        text,
+        'SOON',
+        fill: AppColors.surface2,
+        textColor: AppColors.textTertiary,
+        border: AppColors.border,
+      );
+    }
+    if (widget.category.isNew) {
+      // §8.3 primary-button pairing: charcoal on lime, AA-cleared.
+      return _pillBadge(
+        text,
+        'NEW',
+        fill: AppColors.primary,
+        textColor: AppColors.secondary,
+      );
+    }
+    final String label =
+        widget.category.countLabelOverride ??
+        '${_liveCount(widget.category)}';
+    return _pillBadge(
+      text,
+      label,
+      fill: AppColors.surface2,
+      textColor: AppColors.textTertiary,
+    );
+  }
+
+  Widget _pillBadge(
+    TextTheme text,
+    String label, {
+    required Color fill,
+    required Color textColor,
+    Color? border,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: AppSpacing.xxs,
+      ),
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: border == null ? null : Border.all(color: border, width: 1),
+      ),
+      child: Text(
+        label,
+        style: text.labelLarge?.copyWith(
+          fontSize: AppTextSize.caption,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.4,
+          color: textColor,
+        ),
+      ),
+    );
+  }
+
+  String _badgeSemanticLabel() {
+    if (!widget.category.hasLiveTool) return '';
+    if (widget.category.isNew) return 'New. ';
+    final String count =
+        widget.category.countLabelOverride ??
+        '${_liveCount(widget.category)}';
+    return '$count tools. ';
+  }
+
+  /// Number of LIVE tools in a category (the badge counts shippable tools, not
+  /// coming-soon placeholders).
+  int _liveCount(ToolCategory c) => c.tools.where((ToolEntry t) => t.isLive).length;
 }

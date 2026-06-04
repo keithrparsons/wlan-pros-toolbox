@@ -12,6 +12,7 @@ import '../screens/about_screen.dart';
 import '../screens/help_browse_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/tools/educational/educational_resources_screen.dart';
+import '../screens/search_screen.dart';
 import '../data/tool_catalog.dart' show kEducationalResourcesRoute;
 import '../screens/tools/dbm_watt_converter.dart';
 import '../screens/tools/calculators/cable_loss_screen.dart';
@@ -120,6 +121,10 @@ class AppRouter {
   /// resolves. The constant lives in the catalog (kEducationalResourcesRoute)
   /// so the tile and route share one source of truth.
   static const String educationalResources = kEducationalResourcesRoute;
+
+  /// Global cross-category tool search (IA redesign, mockup 04). Reached from the
+  /// home search field; pushes the grouped results screen.
+  static const String search = '/search';
 
   static const String dbmWatt = '/tools/dbm-watt';
 
@@ -264,6 +269,7 @@ class AppRouter {
     about: (_) => const AboutScreen(),
     helpBrowse: (_) => const HelpBrowseScreen(),
     educationalResources: (_) => const EducationalResourcesScreen(),
+    search: (_) => const SearchScreen(),
     dbmWatt: (_) => const DbmWattConverterScreen(),
     fspl: (_) => const FsplScreen(),
     eirp: (_) => const EirpScreen(),
