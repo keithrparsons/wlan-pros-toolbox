@@ -42,9 +42,20 @@ void main() {
     await _withViewport(tester, const Size(800, 1200), () async {
       await tester.pumpWidget(_app());
       await tester.pumpAndSettle();
-      expect(find.text('START HERE'), findsOneWidget);
-      expect(find.text('Is it your Wi-Fi or your internet?'), findsOneWidget);
+      expect(
+        find.text('Is it your Wi-Fi or your Internet?'),
+        findsOneWidget,
+      );
       expect(find.text('Check My Connection'), findsOneWidget);
+      // The lime "START HERE" eyebrow and the descriptive subline were removed
+      // (2026-06-04) to reclaim iOS vertical space — assert they are gone.
+      expect(find.text('START HERE'), findsNothing);
+      expect(
+        find.text(
+          'One tap tells you which side is slow, and what to tell support.',
+        ),
+        findsNothing,
+      );
     });
   });
 

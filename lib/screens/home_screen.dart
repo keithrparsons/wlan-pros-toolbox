@@ -302,15 +302,16 @@ class _HomeSearchFieldState extends State<_HomeSearchField> {
 
 /// The consumer front-door hero (mockup "Option A"). A prominent additive card
 /// at the top of the home content that routes to the existing Test My Connection
-/// tool. Per GL-003: lime eyebrow, H1 headline, secondary subline, full-width
-/// §8.3 primary (lime / charcoal-text) CTA with a leading network glyph.
+/// tool. Per GL-003: H2 headline (§8.5 headlineMedium, one step above the
+/// category-tile titles) above a full-width §8.3 primary (lime / charcoal-text)
+/// CTA with a leading network glyph. The former lime "START HERE" eyebrow and
+/// the descriptive subline were removed (2026-06-04) to reclaim iOS vertical
+/// space — the headline + CTA carry the front door on their own.
 ///
 /// The card surface/border/radius match the category tiles (`surface1`,
 /// `AppRadius.card`, a `borderStrong` hairline). Accessibility: the CTA is a real
 /// [FilledButton] with a clear semantic label and inherits the §8.3 lime focus
-/// ring from the app theme; the heading text reads in eyebrow → headline →
-/// subline order, with the eyebrow excluded from the reading order (it is a
-/// styling label, not content the screen reader needs to announce twice).
+/// ring from the app theme; the heading reads first, then the CTA.
 class _ConnectionHeroCard extends StatelessWidget {
   const _ConnectionHeroCard({required this.onTap});
 
@@ -330,31 +331,16 @@ class _ConnectionHeroCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          // Lime eyebrow — uppercase, letter-spaced. Decorative label.
+          // Headline — H2 bold (§8.5 headlineMedium / h2 = 28). Sits one step
+          // above the category-tile titles (headlineSmall / h3 = 22) so the
+          // front-door hero reads as primary without the former display-scale
+          // headlineLarge (h1 = 36) dominating the iOS viewport. Keeps the
+          // hero's bold w700 so it stays distinct from the w600 tile titles.
           Text(
-            'START HERE',
-            style: text.labelMedium?.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1.2,
-            ),
-            semanticsLabel: '',
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          // Headline — H1 bold.
-          Text(
-            'Is it your Wi-Fi or your internet?',
-            style: text.headlineLarge?.copyWith(
+            'Is it your Wi-Fi or your Internet?',
+            style: text.headlineMedium?.copyWith(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          // Subline — secondary-color supporting copy.
-          Text(
-            'One tap tells you which side is slow, and what to tell support.',
-            style: text.bodyLarge?.copyWith(
-              color: AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: AppSpacing.md),
