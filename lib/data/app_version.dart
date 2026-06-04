@@ -21,7 +21,7 @@ class AppVersion {
   static const String name = '1.0.0';
 
   /// CFBundleVersion — the build number (pubspec `+<build>` part).
-  static const String build = '2';
+  static const String build = '3';
 
   /// The version string shown in the About screen, e.g. `1.0.0 (1)`.
   static const String display = '$name ($build)';
