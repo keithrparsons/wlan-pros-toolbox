@@ -47,6 +47,7 @@ import 'package:net_quality/net_quality.dart' show QualityGrade, QualityGradeLab
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/connected_ap.dart';
+import '../../../services/network/mac_randomization.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/wifi_details.dart';
 import '../../../services/network/wifi_details_bridge.dart';
@@ -538,7 +539,8 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       ..writeln('  Wi-Fi Standard: ${_copyVal(info.standard, null)}')
       ..writeln('  Country: ${_copyVal(info.countryCode, null)}')
       ..writeln('  Interface: ${_copyVal(info.interfaceName, null)}')
-      ..writeln('  Hardware Address: ${_copyVal(info.hardwareAddress, null)}');
+      ..writeln('  Hardware Address: ${_copyVal(info.hardwareAddress, null)}')
+      ..writeln('  MAC type: ${MacRandomizationClassifier.label(info.hardwareAddress)}');
 
     buf
       ..writeln()
@@ -860,9 +862,37 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           value: info.hardwareAddress,
           mono: true,
         ),
+        // Derived MAC type from the locally-administered bit. When the MAC is
+        // unreadable (iOS blocks app reads of the device Wi-Fi MAC), the value
+        // is "Unavailable" and the honest reason rides in the note rather than
+        // a meaningless computed flag (GL-005).
+        _MetricRow(
+          label: 'MAC type',
+          value: _macTypeValue(info.hardwareAddress),
+          note: _macTypeNote(info.hardwareAddress),
+        ),
       ],
     ),
   );
+
+  /// The MAC-type value for the Radio card: the Randomized/Universal label, or
+  /// null (→ "Unavailable") when the MAC is unreadable, so the honest reason
+  /// rides in the [_MetricRow.note] rather than masquerading as a value.
+  static String? _macTypeValue(String? mac) {
+    return switch (MacRandomizationClassifier.classify(mac)) {
+      MacRandomization.randomized => 'Randomized (locally administered)',
+      MacRandomization.universal => 'Universal (burned-in)',
+      MacRandomization.unreadable => null,
+    };
+  }
+
+  /// The honesty note for an unreadable MAC (iOS), or null when the MAC parsed.
+  static String? _macTypeNote(String? mac) {
+    return MacRandomizationClassifier.classify(mac) ==
+            MacRandomization.unreadable
+        ? "Apple does not expose this device's Wi-Fi MAC to apps"
+        : null;
+  }
 
   Widget _statusCard(ConnectedAp info) => _Card(
     title: 'Status',

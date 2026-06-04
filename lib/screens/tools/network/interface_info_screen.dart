@@ -19,10 +19,13 @@
 // numeric/address values.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/interface_info_service.dart';
+import '../../../services/network/mac_randomization.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/public_ip_service.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
@@ -31,17 +34,25 @@ import 'network_unavailable_view.dart';
 import 'value_row.dart';
 
 class InterfaceInfoScreen extends StatefulWidget {
-  const InterfaceInfoScreen({super.key, this.service});
+  const InterfaceInfoScreen({super.key, this.service, this.publicIpService});
 
   /// Injectable for tests; defaults to the real service off-web.
   final InterfaceInfoService? service;
+
+  /// Injectable public-IP fetcher for tests; defaults to the real service.
+  final PublicIpService? publicIpService;
 
   @override
   State<InterfaceInfoScreen> createState() => _InterfaceInfoScreenState();
 }
 
+/// The async state of the Public IP row: a separate network fetch from the local
+/// snapshot, so it carries its own loading / value / unavailable state.
+enum _PublicIpStatus { loading, loaded, unavailable }
+
 class _InterfaceInfoScreenState extends State<InterfaceInfoScreen> {
   InterfaceInfoService? _service;
+  PublicIpService? _publicIpService;
   Future<InterfaceInfoSnapshot>? _future;
 
   // The resolved snapshot, mirrored out of the FutureBuilder so the §8.16 copy
@@ -49,11 +60,18 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen> {
   // read completes. Null while loading / before the first read / on error.
   InterfaceInfoSnapshot? _snapshot;
 
+  // Public IP is a SEPARATE network fetch from the local snapshot, so it carries
+  // its own state. It starts loading and resolves to the IP or "Unavailable"
+  // independently — the local card never waits on it.
+  _PublicIpStatus _publicIpStatus = _PublicIpStatus.loading;
+  String? _publicIp;
+
   @override
   void initState() {
     super.initState();
     if (NetworkSupport.interfaceInfoSupported) {
       _service = widget.service ?? InterfaceInfoService();
+      _publicIpService = widget.publicIpService ?? PublicIpService();
       _load();
     }
   }
@@ -76,6 +94,45 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen> {
           // Errors are surfaced by the FutureBuilder's error branch; copy stays
           // disabled (snapshot null). Swallow here so no unhandled-error fires.
         });
+    _loadPublicIp();
+  }
+
+  /// Fetches the device's public IP independently of the local snapshot. Never
+  /// throws — a failure resolves to the honest "Unavailable" state (GL-005).
+  void _loadPublicIp() {
+    setState(() {
+      _publicIpStatus = _PublicIpStatus.loading;
+      _publicIp = null;
+    });
+    _publicIpService!.fetch().then((String? ip) {
+      if (!mounted) return;
+      setState(() {
+        _publicIp = ip;
+        _publicIpStatus = ip == null
+            ? _PublicIpStatus.unavailable
+            : _PublicIpStatus.loaded;
+      });
+      // WCAG 4.1.3 — an AT user who heard "Public IP, Looking up…" must hear
+      // the resolution, not silence. The loaded row (a ValueRow) and the
+      // unavailable row carry no live region of their own, so announce the
+      // transition explicitly here. The unavailable row is also wrapped in a
+      // liveRegion below for AT that re-reads on rebuild.
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        ip == null
+            ? 'Public IP unavailable, no internet or blocked.'
+            : 'Public IP $ip',
+        Directionality.of(context),
+      );
+    }).catchError((Object _) {
+      if (!mounted) return;
+      setState(() => _publicIpStatus = _PublicIpStatus.unavailable);
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        'Public IP unavailable, no internet or blocked.',
+        Directionality.of(context),
+      );
+    });
   }
 
   @override
@@ -84,8 +141,10 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen> {
       appBar: AppBar(
         title: const Text('Interface Info'),
         toolbarHeight: 64,
-        // §8.16 — copy leads, the meta action (refresh) trails, matching the
-        // copy-before-help order rule. Copy is disabled until a read completes.
+        // §8.16 — copy leads, the meta action (refresh) trails. Help is NOT in
+        // the AppBar: per §8.16.1 it lives in the body footer (`ToolHelpFooter`
+        // in `_Success`), so the AppBar carries only the copy and refresh
+        // actions. Copy is disabled until a read completes.
         actions: [
           if (NetworkSupport.interfaceInfoSupported) ...[
             AppCopyAction(textBuilder: _buildCopyText),
@@ -95,9 +154,6 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen> {
               onPressed: _load,
             ),
           ],
-          // Help trails the result/meta actions (§8.16). Shown on every
-          // platform — the help text is platform-agnostic, unlike the
-          // copy/refresh actions which only make sense where info is supported.
         ],
       ),
       body: SafeArea(top: false, child: _body()),
@@ -126,18 +182,35 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen> {
     buf.writeln();
     buf.writeln('Device');
     line('Primary IPv4', data.primaryIPv4);
+    // Public IP is a separate async fetch; copy reflects whatever state it is in.
+    switch (_publicIpStatus) {
+      case _PublicIpStatus.loaded:
+        line('Public IP', _publicIp);
+      case _PublicIpStatus.unavailable:
+        line('Public IP', 'Unavailable (no internet / blocked)');
+      case _PublicIpStatus.loading:
+        // Omit while still resolving — copy never reports a half-read value.
+        break;
+    }
     line('Hostname', data.hostname);
 
     // Wi-Fi link.
     final WifiLinkInfo w = data.wifi;
     buf.writeln();
     buf.writeln('Wi-Fi link');
-    line('SSID', w.ssid);
-    line('BSSID', w.bssid);
+    if (w.ssid == null && w.locationNeeded) {
+      line('SSID', 'Needs Location Services (macOS)');
+    } else {
+      line('SSID', w.ssid);
+      line('BSSID', w.bssid);
+    }
     line('IPv4', w.wifiIPv4);
     line('IPv6', w.wifiIPv6);
     line('Subnet mask', w.subnetMask);
     line('Gateway', w.gatewayIP);
+    line('Interface', w.interfaceName);
+    line('Hardware Address', w.hardwareAddress);
+    line('MAC type', MacRandomizationClassifier.label(w.hardwareAddress));
 
     // Per-interface, only those with an assigned address (matching _Success).
     final List<NetworkInterfaceInfo> active = data.interfaces
@@ -191,7 +264,13 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen> {
             if (data == null) {
               return _ErrorState(onRetry: _load);
             }
-            return _Success(data: data, edge: edge, isDesktop: isDesktop);
+            return _Success(
+              data: data,
+              edge: edge,
+              isDesktop: isDesktop,
+              publicIpStatus: _publicIpStatus,
+              publicIp: _publicIp,
+            );
           },
         );
       },
@@ -204,11 +283,15 @@ class _Success extends StatelessWidget {
     required this.data,
     required this.edge,
     required this.isDesktop,
+    required this.publicIpStatus,
+    required this.publicIp,
   });
 
   final InterfaceInfoSnapshot data;
   final double edge;
   final bool isDesktop;
+  final _PublicIpStatus publicIpStatus;
+  final String? publicIp;
 
   @override
   Widget build(BuildContext context) {
@@ -266,6 +349,10 @@ class _Success extends StatelessWidget {
             value: data.primaryIPv4,
             emphasize: true,
           ),
+          // Public IP sits directly beneath the local Primary IPv4 so the user
+          // can compare the address their device holds vs the address the
+          // internet sees them as (NAT). Its own async state.
+          _PublicIpRow(status: publicIpStatus, ip: publicIp),
           ValueRow(label: 'Hostname', value: data.hostname),
         ],
       ),
@@ -274,16 +361,25 @@ class _Success extends StatelessWidget {
 
   Widget _wifiCard(BuildContext context) {
     final WifiLinkInfo w = data.wifi;
+    final bool showLocationHint = w.ssid == null && w.locationNeeded;
     return _Card(
       title: 'Wi-Fi link',
       child: Column(
         children: [
           ValueRow(label: 'SSID', value: w.ssid),
+          if (showLocationHint) const _LocationHint(),
           ValueRow(label: 'BSSID', value: w.bssid, identifier: true),
           ValueRow(label: 'IPv4', value: w.wifiIPv4, identifier: true),
           ValueRow(label: 'IPv6', value: w.wifiIPv6, identifier: true),
           ValueRow(label: 'Subnet mask', value: w.subnetMask, identifier: true),
           ValueRow(label: 'Gateway', value: w.gatewayIP, identifier: true),
+          ValueRow(label: 'Interface', value: w.interfaceName, identifier: true),
+          ValueRow(
+            label: 'Hardware Address',
+            value: w.hardwareAddress,
+            identifier: true,
+          ),
+          _MacTypeRow(hardwareAddress: w.hardwareAddress),
         ],
       ),
     );
@@ -352,6 +448,186 @@ class _Card extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           child,
         ],
+      ),
+    );
+  }
+}
+
+/// The Public IP row: a [ValueRow]-shaped line that reflects the separate
+/// public-IP fetch state — a labeled spinner while loading, the address once
+/// fetched, or an honest "Unavailable" when no internet / blocked (GL-005).
+/// Loading/unavailable get their own treatment rather than reusing ValueRow's
+/// "Not available on this platform" copy (the platform is fine; the network is
+/// the variable).
+class _PublicIpRow extends StatelessWidget {
+  const _PublicIpRow({required this.status, required this.ip});
+
+  final _PublicIpStatus status;
+  final String? ip;
+
+  @override
+  Widget build(BuildContext context) {
+    switch (status) {
+      case _PublicIpStatus.loaded:
+        return ValueRow(label: 'Public IP', value: ip, identifier: true);
+      case _PublicIpStatus.loading:
+        return const _PublicIpPendingRow(
+          message: 'Looking up…',
+          showSpinner: true,
+        );
+      case _PublicIpStatus.unavailable:
+        return const _PublicIpPendingRow(
+          message: 'Unavailable (no internet / blocked)',
+          showSpinner: false,
+        );
+    }
+  }
+}
+
+/// The loading / unavailable presentation of the Public IP row. Label left,
+/// status right in muted italic text; the loading variant adds a small spinner.
+///
+/// Both variants are wrapped in a `liveRegion` Semantics so an assistive-tech
+/// user who heard "Public IP, Looking up…" also hears the *resolution* on
+/// rebuild rather than silence (WCAG 4.1.3). The success/failure transition is
+/// additionally announced imperatively from `_loadPublicIp` via
+/// `SemanticsService.announce` — the live region here is the redundant,
+/// rebuild-driven half that AT which re-reads liveRegions will pick up.
+class _PublicIpPendingRow extends StatelessWidget {
+  const _PublicIpPendingRow({required this.message, required this.showSpinner});
+
+  final String message;
+
+  /// Loading-only: shows the inline progress spinner beside the status text.
+  final bool showSpinner;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final Widget statusText = Text(
+      message,
+      textAlign: TextAlign.right,
+      style: (text.bodyLarge ?? const TextStyle()).copyWith(
+        color: AppColors.textTertiary,
+        fontStyle: FontStyle.italic,
+      ),
+    );
+
+    final Widget right = showSpinner
+        ? Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              const SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Flexible(child: statusText),
+            ],
+          )
+        : statusText;
+
+    final Widget content = Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: ValueRow.labelColumnWidth,
+            child: Text(
+              'Public IP',
+              style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(child: right),
+        ],
+      ),
+    );
+
+    return Semantics(
+      liveRegion: true,
+      label: 'Public IP, $message',
+      excludeSemantics: true,
+      child: content,
+    );
+  }
+}
+
+/// The honest "needs Location Services" hint shown under an empty SSID on macOS.
+/// Mirrors the Wi-Fi Information tool's Location messaging so the empty name
+/// reads as a permission gate, not a platform limitation.
+class _LocationHint extends StatelessWidget {
+  const _LocationHint();
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+      child: Text(
+        'The network name needs Location Services for this app on macOS. '
+        'Enable it in System Settings, or read the name in the Wi-Fi '
+        'Information tool, which can request it.',
+        style: text.bodySmall?.copyWith(color: AppColors.textTertiary),
+      ),
+    );
+  }
+}
+
+/// The derived "MAC type" row beneath the Hardware Address: classifies the MAC's
+/// locally-administered bit as Randomized vs Universal, or — when the MAC is
+/// unreadable (null, blank, or the iOS sentinel) — shows the honest
+/// platform-limitation note instead of a meaningless flag (GL-005).
+class _MacTypeRow extends StatelessWidget {
+  const _MacTypeRow({required this.hardwareAddress});
+
+  final String? hardwareAddress;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final MacRandomization kind =
+        MacRandomizationClassifier.classify(hardwareAddress);
+    final String label = MacRandomizationClassifier.label(hardwareAddress);
+    final bool unreadable = kind == MacRandomization.unreadable;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
+      child: Semantics(
+        container: true,
+        label: 'MAC type, $label',
+        excludeSemantics: true,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: ValueRow.labelColumnWidth,
+              child: Text(
+                'MAC type',
+                style:
+                    text.labelMedium?.copyWith(color: AppColors.textSecondary),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            Expanded(
+              child: Text(
+                label,
+                textAlign: TextAlign.right,
+                style: (text.bodyMedium ?? const TextStyle()).copyWith(
+                  color: unreadable
+                      ? AppColors.textTertiary
+                      : AppColors.textPrimary,
+                  fontStyle: unreadable ? FontStyle.italic : FontStyle.normal,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

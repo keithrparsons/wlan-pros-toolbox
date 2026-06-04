@@ -28,6 +28,14 @@ class ValueRow extends StatelessWidget {
     this.emphasize = false,
   });
 
+  /// Fixed width of the left-hand label column, shared by every label/value
+  /// row on the network tool screens (`ValueRow` and the bespoke rows that
+  /// must align under it — the Public IP and MAC-type rows in
+  /// `interface_info_screen.dart`). Named here so the column alignment cannot
+  /// fork across those rows. Not a §4 spacing token — it is a layout column
+  /// width specific to these data rows.
+  static const double labelColumnWidth = 112;
+
   final String label;
 
   /// Null or empty renders the unavailable treatment.
@@ -79,7 +87,7 @@ class ValueRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 112,
+            width: labelColumnWidth,
             child: Text(
               label,
               style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
