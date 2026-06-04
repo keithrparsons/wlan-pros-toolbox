@@ -13,7 +13,57 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/lat_long_screen.dart';
+import 'package:wlan_pros_toolbox/services/location/device_location.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+
+/// A scripted [DeviceLocationService] for the live-GPS widget tests. Each test
+/// sets the permission state it wants and the result a read should return, so
+/// every permission/fix branch is exercised without touching real hardware.
+class _FakeLocation implements DeviceLocationService {
+  _FakeLocation({
+    this.permission = LocationPermissionState.needsPermission,
+    this.afterRequest,
+    this.result = const LocationNeedsPermission(),
+  });
+
+  /// The state [permissionState] reports on entry.
+  LocationPermissionState permission;
+
+  /// The state [requestPermission] resolves to; defaults to [permission].
+  LocationPermissionState? afterRequest;
+
+  /// The sealed result [currentLocation] returns.
+  LocationResult result;
+
+  int settingsOpened = 0;
+
+  @override
+  Future<LocationPermissionState> permissionState() async => permission;
+
+  @override
+  Future<LocationPermissionState> requestPermission() async {
+    final LocationPermissionState next = afterRequest ?? permission;
+    permission = next;
+    return next;
+  }
+
+  @override
+  Future<LocationResult> currentLocation() async => result;
+
+  @override
+  Future<bool> openSettings() async {
+    settingsOpened++;
+    return true;
+  }
+}
+
+const LocationFix _sampleFix = LocationFix(
+  latitude: 40.7128,
+  longitude: -74.0060,
+  altitudeMeters: 12.3,
+  accuracyMeters: 5,
+  altitudeAccuracyMeters: 3,
+);
 
 void main() {
   group('Lat/Long parts (pure) — matches PWA ddToDmsParts', () {
@@ -189,6 +239,160 @@ void main() {
         // Latitude (3 rows) blank; longitude renders its DD value.
         expect(find.text('10.000000'), findsOneWidget);
         expect(find.text('—'), findsNWidgets(3));
+      });
+    });
+  });
+
+  group('LatLongScreen live location', () {
+    testWidgets('needs-permission shows the neutral banner + Use my location',
+        (tester) async {
+      final fake = _FakeLocation(
+        permission: LocationPermissionState.needsPermission,
+      );
+      await _withViewport(tester, const Size(375, 1000), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: LatLongScreen(location: fake),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.textContaining('current latitude and longitude'),
+          findsOneWidget,
+        );
+        expect(find.text('Use my location'), findsOneWidget);
+        // No fix yet → no readout rows.
+        expect(find.text('Altitude'), findsNothing);
+      });
+    });
+
+    testWidgets('granted on entry prefills fields and shows the GPS readout',
+        (tester) async {
+      final fake = _FakeLocation(
+        permission: LocationPermissionState.granted,
+        result: const LocationSuccess(_sampleFix),
+      );
+      await _withViewport(tester, const Size(375, 1000), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: LatLongScreen(location: fake),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Prefilled fields drive the converter → DD strings render in both the
+        // input field and the result row.
+        expect(find.text('40.712800'), findsWidgets);
+        expect(find.text('-74.006000'), findsWidgets);
+        // Read-only altitude + accuracy readout is visible.
+        expect(find.text('Altitude'), findsOneWidget);
+        expect(find.text('12.3 m'), findsOneWidget);
+        expect(find.text('Accuracy'), findsOneWidget);
+        expect(find.text('±5 m'), findsOneWidget);
+        // The action re-reads, so its label flips to "Update location".
+        expect(find.text('Update location'), findsOneWidget);
+      });
+    });
+
+    testWidgets('tapping Use my location requests, reads, and prefills',
+        (tester) async {
+      final fake = _FakeLocation(
+        permission: LocationPermissionState.needsPermission,
+        afterRequest: LocationPermissionState.granted,
+        result: const LocationSuccess(_sampleFix),
+      );
+      await _withViewport(tester, const Size(375, 1000), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: LatLongScreen(location: fake),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Use my location'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('40.712800'), findsWidgets);
+        expect(find.text('Altitude'), findsOneWidget);
+      });
+    });
+
+    testWidgets('blocked shows Open Settings and deep-links on tap',
+        (tester) async {
+      final fake = _FakeLocation(
+        permission: LocationPermissionState.blocked,
+      );
+      await _withViewport(tester, const Size(375, 1000), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: LatLongScreen(location: fake),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Open Settings'), findsOneWidget);
+        expect(find.text('Use my location'), findsNothing);
+
+        await tester.tap(find.text('Open Settings'));
+        await tester.pumpAndSettle();
+        expect(fake.settingsOpened, 1);
+      });
+    });
+
+    testWidgets('granted but no fix shows an honest unavailable message',
+        (tester) async {
+      final fake = _FakeLocation(
+        permission: LocationPermissionState.granted,
+        result: const LocationUnavailable('Timed out waiting for a GPS fix.'),
+      );
+      await _withViewport(tester, const Size(375, 1000), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: LatLongScreen(location: fake),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.text('Timed out waiting for a GPS fix.'),
+          findsOneWidget,
+        );
+        // No fabricated coordinate.
+        expect(find.text('40.712800'), findsNothing);
+      });
+    });
+
+    testWidgets('a coarse Wi-Fi-derived fix is flagged honestly',
+        (tester) async {
+      const coarse = LocationFix(
+        latitude: 47.6,
+        longitude: -122.3,
+        altitudeMeters: null,
+        accuracyMeters: 1500,
+        altitudeAccuracyMeters: null,
+      );
+      final fake = _FakeLocation(
+        permission: LocationPermissionState.granted,
+        result: const LocationSuccess(coarse),
+      );
+      await _withViewport(tester, const Size(375, 1100), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: LatLongScreen(location: fake),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('coarse'), findsOneWidget);
+        // Altitude not reported → honest "Not reported", not a fake 0.
+        expect(find.text('Not reported'), findsWidgets);
       });
     });
   });

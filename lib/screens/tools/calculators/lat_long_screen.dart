@@ -24,13 +24,27 @@
 // - |latitude|  > 90  → out of range; outputs blank.
 // - |longitude| > 180 → out of range; outputs blank.
 //
-// Pure, no network, no platform APIs. Conversion math lives in static methods
-// on the public LatLongScreen class so it is unit-testable against the PWA.
+// Conversion math is pure and lives in static methods on the public
+// LatLongScreen class so it is unit-testable against the PWA.
+//
+// LIVE GPS (Batch 2): the screen also reads the device's current location via
+// the `DeviceLocationService` seam (lib/services/location/device_location.dart,
+// over `geolocator`). When Location permission is already granted, the live fix
+// prefills the lat/long fields on entry; otherwise a NEUTRAL banner (GL-003
+// §8.13 rule 6) offers a lime "Use my location" action that requests it.
+// Altitude + horizontal accuracy surface as a read-only context readout so the
+// GPS detail is always visible, not just consumed by the converter. All
+// permission/no-fix states are explicit and honest (GL-005 / GL-008): a denied
+// permission deep-links to Settings, a Mac without GPS labels its fix coarse,
+// and a failed read shows "Location unavailable." — never a placeholder
+// coordinate presented as real. Coordinates/altitude are IDENTIFIER values, so
+// the readout uses Roboto Mono per §8.5 (NOT DM Mono).
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../services/location/device_location.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -57,7 +71,12 @@ class CoordFormats {
 }
 
 class LatLongScreen extends StatefulWidget {
-  const LatLongScreen({super.key});
+  const LatLongScreen({super.key, this.location = const DeviceLocation()});
+
+  /// The live-location seam. Defaults to the production `geolocator`-backed
+  /// implementation; tests inject a fake to exercise every permission/fix state
+  /// without touching real hardware.
+  final DeviceLocationService location;
 
   // ─── Math (pure) ──────────────────────────────────────────────────────────
   // Mirrors app.js: ddToDmsParts, fmtCoord.
@@ -132,11 +151,37 @@ class _LatLongScreenState extends State<LatLongScreen> {
   CoordFormats? _lat;
   CoordFormats? _lon;
 
+  // ─── Live-location state ──────────────────────────────────────────────────
+  // The most recent live fix (drives the read-only altitude/accuracy readout),
+  // or null before any successful read.
+  LocationFix? _fix;
+
+  // The current permission posture, resolved on entry (null = still checking).
+  // Selects which banner the location card shows.
+  LocationPermissionState? _permission;
+
+  // A read in flight — disables the action + shows the spinner.
+  bool _locating = false;
+
+  // An honest, human reason when a read failed (no fix / blocked). Cleared on a
+  // successful read. Never a stale coordinate.
+  String? _locationError;
+
+  // True once the device's Location Services master switch is reported off, so
+  // the card words its deep-link toward Settings rather than an in-app prompt.
+  bool _serviceDisabled = false;
+
   // Signed decimal: degrees can be negative for S/W. No scientific notation —
   // coordinates are typed by hand, not pasted from instruments.
   static final List<TextInputFormatter> _signedDecimal = [
     FilteringTextInputFormatter.allow(RegExp(r'[0-9.\-]')),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _resolvePermissionThenPrefill();
+  }
 
   @override
   void dispose() {
@@ -145,6 +190,123 @@ class _LatLongScreenState extends State<LatLongScreen> {
     _latFocus.dispose();
     _lonFocus.dispose();
     super.dispose();
+  }
+
+  // ─── Live-location handlers ─────────────────────────────────────────────────
+
+  /// On entry: check the current permission without prompting. If it is already
+  /// granted, read the live fix and prefill the fields straight away (Keith:
+  /// current location is the default when permission exists). Otherwise leave
+  /// the fields empty and let the neutral banner offer the request.
+  Future<void> _resolvePermissionThenPrefill() async {
+    LocationPermissionState state;
+    try {
+      state = await widget.location.permissionState();
+    } catch (_) {
+      // The platform plugin is unavailable (e.g. a headless test host, or a
+      // platform without a location backend). Degrade to the honest
+      // needs-permission banner rather than crashing entry.
+      state = LocationPermissionState.needsPermission;
+    }
+    if (!mounted) return;
+    setState(() {
+      _permission = state;
+      _serviceDisabled = false;
+    });
+    if (state == LocationPermissionState.granted) {
+      await _readLocation(prefill: true);
+    }
+  }
+
+  /// User tapped "Use my location" / "Grant Location": request permission (this
+  /// shows the system prompt) then, if granted, read + prefill. A blocked
+  /// result keeps the card on its Settings deep-link branch.
+  Future<void> _requestThenRead() async {
+    setState(() {
+      _locating = true;
+      _locationError = null;
+    });
+    LocationPermissionState state;
+    try {
+      state = await widget.location.requestPermission();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _locating = false;
+        _locationError = 'Location unavailable.';
+      });
+      return;
+    }
+    if (!mounted) return;
+    setState(() => _permission = state);
+    if (state == LocationPermissionState.granted) {
+      await _readLocation(prefill: true);
+    } else {
+      // Request returned non-granted: either still needs-permission (user
+      // dismissed) or blocked. requestPermission() reports the master-switch-off
+      // case as blocked; surface the Settings branch via _serviceDisabled.
+      setState(() {
+        _locating = false;
+        if (state == LocationPermissionState.blocked) _serviceDisabled = true;
+      });
+    }
+  }
+
+  /// Reads one fix and (optionally) writes it into the lat/long fields. Updates
+  /// the permission posture and error state from the sealed result so the card
+  /// always reflects the true cause.
+  Future<void> _readLocation({required bool prefill}) async {
+    setState(() {
+      _locating = true;
+      _locationError = null;
+    });
+    LocationResult result;
+    try {
+      result = await widget.location.currentLocation();
+    } catch (_) {
+      result = const LocationUnavailable('Location unavailable.');
+    }
+    if (!mounted) return;
+
+    switch (result) {
+      case LocationSuccess(:final fix):
+        setState(() {
+          _fix = fix;
+          _permission = LocationPermissionState.granted;
+          _serviceDisabled = false;
+          _locating = false;
+        });
+        if (prefill) {
+          // Six decimals matches the DD format the converter emits.
+          _latCtrl.text = fix.latitude.toStringAsFixed(6);
+          _lonCtrl.text = fix.longitude.toStringAsFixed(6);
+          _recompute();
+        }
+      case LocationNeedsPermission():
+        setState(() {
+          _permission = LocationPermissionState.needsPermission;
+          _serviceDisabled = false;
+          _locating = false;
+        });
+      case LocationBlocked(:final serviceDisabled):
+        setState(() {
+          _permission = LocationPermissionState.blocked;
+          _serviceDisabled = serviceDisabled;
+          _locating = false;
+        });
+      case LocationUnavailable(:final reason):
+        setState(() {
+          _locationError = reason;
+          _locating = false;
+        });
+    }
+  }
+
+  /// Deep-links to the OS settings page so a blocked user can grant permission
+  /// manually (macOS cannot toggle its own Location permission in code; iOS
+  /// "Allow Once / Never" likewise routes through Settings on a hard denial).
+  Future<void> _openLocationSettings() async {
+    await widget.location.openSettings();
   }
 
   // ─── Handlers ─────────────────────────────────────────────────────────────
@@ -190,7 +352,40 @@ class _LatLongScreenState extends State<LatLongScreen> {
         ..writeln('Longitude DDM: ${lon.ddm}')
         ..writeln('Longitude DMS: ${lon.dms}');
     }
+    // Append the live-GPS context when a fix is present so a copy carries the
+    // altitude/accuracy a coordinate copy alone would drop.
+    final LocationFix? fix = _fix;
+    if (fix != null) {
+      final String? alt = _formatAltitude(fix);
+      final String? acc = _formatAccuracy(fix);
+      if (alt != null) buf.writeln('Altitude: $alt');
+      if (acc != null) buf.writeln('Horizontal accuracy: $acc');
+    }
     return buf.toString().trimRight();
+  }
+
+  // ─── Live-location formatting (honest; null = "not reported") ───────────────
+
+  /// Altitude as "123.4 m", or null when the platform did not report it.
+  static String? _formatAltitude(LocationFix fix) {
+    final double? m = fix.altitudeMeters;
+    if (m == null) return null;
+    return '${m.toStringAsFixed(1)} m';
+  }
+
+  /// Horizontal accuracy as "±5 m", or null when not reported.
+  static String? _formatAccuracy(LocationFix fix) {
+    final double? m = fix.accuracyMeters;
+    if (m == null) return null;
+    return '±${m.toStringAsFixed(0)} m';
+  }
+
+  /// Whether the current fix reads as coarse (likely Wi-Fi-derived rather than
+  /// GPS) so the readout can flag it honestly. A horizontal accuracy worse than
+  /// ~100 m is the practical signal of a non-GPS fix (a Mac without GPS).
+  static bool _isCoarse(LocationFix fix) {
+    final double? m = fix.accuracyMeters;
+    return m != null && m > 100;
   }
 
   // ─── Build ────────────────────────────────────────────────────────────────
@@ -246,6 +441,8 @@ class _LatLongScreenState extends State<LatLongScreen> {
                       ),
                       if (ToolAssets.hasGraphic('lat-long'))
                         const SizedBox(height: AppSpacing.md),
+                      _locationCard(text, mono),
+                      const SizedBox(height: AppSpacing.md),
                       _inputCard(text, mono),
                       const SizedBox(height: AppSpacing.md),
                       _resultCard(text, mono),
@@ -259,6 +456,235 @@ class _LatLongScreenState extends State<LatLongScreen> {
             );
           },
         ),
+      ),
+    );
+  }
+
+  // ─── Live-location card ─────────────────────────────────────────────────
+  //
+  // One card, four states (mirrors the wifi-info `_LocationCard` permission
+  // pattern, GL-003 §8.13 rule 6 — NEUTRAL copy, the action in lime, never a
+  // status-blue/green verdict because a permission prompt is not a verdict):
+  //   1. needs-permission → neutral banner + lime "Use my location" action.
+  //   2. blocked          → neutral banner explaining the denial + a Settings
+  //                          deep-link (and a master-switch note if applicable).
+  //   3. granted, no fix yet → "Use my location" action (re-read).
+  //   4. granted, with fix → the read-only altitude + accuracy readout, plus a
+  //                          quiet "Update" re-read action.
+  Widget _locationCard(TextTheme text, AppMonoText mono) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: _locationCardChildren(text, mono),
+      ),
+    );
+  }
+
+  List<Widget> _locationCardChildren(TextTheme text, AppMonoText mono) {
+    final LocationPermissionState? perm = _permission;
+    final LocationFix? fix = _fix;
+    final bool blocked = perm == LocationPermissionState.blocked;
+
+    // Header: neutral icon + neutral copy. The §8.13 rule-6 rule — the banner
+    // text is neutral (textSecondary), the lime is reserved for the ACTION, not
+    // a status verdict. The location pin is tinted lime as a brand glyph, the
+    // app's single accent, consistent with the wifi-info location card.
+    final String headerCopy;
+    if (perm == null) {
+      headerCopy = 'Checking Location permission…';
+    } else if (blocked) {
+      headerCopy = _serviceDisabled
+          ? 'Location Services are turned off. Turn them on in Settings to fill '
+                'these fields with your current position.'
+          : 'Location permission is off. Allow it in Settings to fill these '
+                'fields with your current position.';
+    } else if (fix != null) {
+      headerCopy = 'Your current location';
+    } else {
+      headerCopy = 'Fill the fields with your current latitude and longitude.';
+    }
+
+    return <Widget>[
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(
+            Icons.location_on_outlined,
+            size: 20,
+            color: AppColors.primary,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              headerCopy,
+              style: text.bodyMedium?.copyWith(color: AppColors.textSecondary),
+            ),
+          ),
+        ],
+      ),
+
+      // The read-only altitude + accuracy readout, shown whenever a fix exists.
+      // Coordinates/altitude are IDENTIFIER values → Roboto Mono (§8.5).
+      if (fix != null) ...[
+        const SizedBox(height: AppSpacing.sm),
+        _fixReadout(fix, text, mono),
+      ],
+
+      // Honest no-fix message (granted, but the read failed). Neutral tertiary
+      // text, never a fabricated coordinate.
+      if (_locationError != null && !blocked) ...[
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          _locationError!,
+          style: text.bodySmall?.copyWith(color: AppColors.textTertiary),
+        ),
+      ],
+
+      // Action row. While checking permission (perm == null) show nothing yet.
+      if (perm != null) ...[
+        const SizedBox(height: AppSpacing.sm),
+        Wrap(
+          spacing: AppSpacing.xs,
+          runSpacing: AppSpacing.xs,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: _locationActions(blocked, fix),
+        ),
+      ],
+
+      // macOS coarse-fix honesty note: a Mac without GPS returns a Wi-Fi-derived
+      // fix. Flag it from the accuracy value rather than claiming GPS precision.
+      if (fix != null && _isCoarse(fix)) ...[
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          'This looks like a coarse, Wi-Fi-derived fix (no GPS hardware). '
+          'Altitude and accuracy are approximate.',
+          style: text.bodySmall?.copyWith(color: AppColors.textTertiary),
+        ),
+      ],
+    ];
+  }
+
+  List<Widget> _locationActions(bool blocked, LocationFix? fix) {
+    if (_locating) {
+      return <Widget>[
+        const SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: AppColors.primary,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        Semantics(
+          liveRegion: true,
+          child: Text(
+            'Reading your location…',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+      ];
+    }
+
+    if (blocked) {
+      // No in-app prompt will help — deep-link to the OS settings page.
+      return <Widget>[
+        Semantics(
+          button: true,
+          label: 'Open Location settings',
+          child: OutlinedButton(
+            onPressed: _openLocationSettings,
+            child: const Text('Open Settings'),
+          ),
+        ),
+      ];
+    }
+
+    // needs-permission OR granted: a single lime action. The label reads
+    // "Use my location" before a fix and "Update location" once one exists, so
+    // the affordance is honest about what it does in each state.
+    return <Widget>[
+      Semantics(
+        button: true,
+        label: fix == null ? 'Use my location' : 'Update location',
+        child: FilledButton.icon(
+          onPressed: () {
+            if (_permission == LocationPermissionState.granted) {
+              _readLocation(prefill: true);
+            } else {
+              _requestThenRead();
+            }
+          },
+          icon: const Icon(Icons.my_location, size: 18),
+          label: Text(fix == null ? 'Use my location' : 'Update location'),
+        ),
+      ),
+    ];
+  }
+
+  /// Read-only altitude + horizontal-accuracy readout. The two identifier-style
+  /// values sit in Roboto Mono (§8.5); each is omitted with an honest "Not
+  /// reported" rather than a fabricated number when the platform did not supply
+  /// it. The live lat/long themselves live in the editable fields below, so the
+  /// readout focuses on the context Keith asked to keep visible.
+  Widget _fixReadout(LocationFix fix, TextTheme text, AppMonoText mono) {
+    final String? alt = _formatAltitude(fix);
+    final String? acc = _formatAccuracy(fix);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        _readoutRow('Altitude', alt, text, mono),
+        const SizedBox(height: AppSpacing.xxs),
+        _readoutRow('Accuracy', acc, text, mono),
+      ],
+    );
+  }
+
+  Widget _readoutRow(
+    String label,
+    String? value,
+    TextTheme text,
+    AppMonoText mono,
+  ) {
+    final bool reported = value != null;
+    return Semantics(
+      label: label,
+      value: reported ? value : 'not reported',
+      excludeSemantics: true,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: <Widget>[
+          SizedBox(
+            width: 88,
+            child: Text(
+              label,
+              style: text.labelMedium?.copyWith(
+                color: AppColors.textTertiary,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ),
+          Expanded(
+            child: SelectableText(
+              reported ? value : 'Not reported',
+              // Identifier values → Roboto Mono per §8.5 (NOT DM Mono).
+              style: mono.robotoMono.copyWith(
+                color: reported
+                    ? AppColors.textPrimary
+                    : AppColors.textTertiary,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
