@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Ping Plotter: latency charted over time. Framed X/Y axes (the gross
+         silhouette that sets it apart from the bare floating pulse lines of
+         ping / icmp-ping / net-quality) with a multi-peak jagged trend line
+         and one emphasized plotted data point. -->
+    <path d="M5 3 V19 H21"/>
+    <path d="M5 15 L9 9 L12 13 L15.5 5.5 L19 11"/>
+    <circle cx="15.5" cy="5.5" r="1.4" fill="currentColor" stroke="none"/>
+  </g>
+</svg>
