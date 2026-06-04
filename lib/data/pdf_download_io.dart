@@ -33,7 +33,12 @@ Future<void> sharePdfImpl({
 
   // 2. Write them to a temp file under the clean human filename. iOS/macOS show
   //    this filename in the share sheet, so it must be the friendly one.
+  //    On the macOS App Sandbox the per-bundle Caches dir that
+  //    getTemporaryDirectory() points at does not exist until something creates
+  //    it, so writing straight into it throws PathNotFoundException (the share
+  //    button appeared to "do nothing"). Ensure the directory exists first.
   final Directory tmpDir = await getTemporaryDirectory();
+  await tmpDir.create(recursive: true);
   final File tmpFile = File('${tmpDir.path}/$filename');
   await tmpFile.writeAsBytes(
     bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
