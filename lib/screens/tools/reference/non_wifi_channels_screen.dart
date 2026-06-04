@@ -38,6 +38,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/tool_help_action.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
@@ -353,7 +354,11 @@ class NonWifiChannelsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Non-Wi-Fi Wireless Channels'),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        // §8.16 order: copy LEADS, help TRAILS.
+        actions: <Widget>[
+          AppCopyAction(textBuilder: _buildCopyText),
+          ToolHelpAction(toolId: 'non-wifi-channels'),
+        ],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );

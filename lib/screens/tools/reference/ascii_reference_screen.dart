@@ -53,6 +53,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/tool_help_action.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../labeled_field.dart';
 import '../concept_graphic_band.dart';
@@ -1535,7 +1536,11 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
         // table plus every supplementary section, independent of the on-screen
         // filter (the filter only narrows what is displayed; the static dataset
         // is the result worth keeping). Always enabled.
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        // §8.16 order: copy LEADS, help TRAILS.
+        actions: <Widget>[
+          AppCopyAction(textBuilder: _buildCopyText),
+          ToolHelpAction(toolId: 'ascii-reference'),
+        ],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );

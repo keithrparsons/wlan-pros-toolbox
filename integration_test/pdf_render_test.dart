@@ -98,6 +98,7 @@ void main() {
           home: PdfReferenceScreen(
             title: card.title,
             assetPath: card.assetPath,
+            toolId: 'top-20-checklist',
           ),
         ),
       );

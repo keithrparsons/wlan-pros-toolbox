@@ -21,6 +21,7 @@ import '../../../theme/app_theme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/tool_help_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
@@ -103,7 +104,11 @@ class _HttpHeaderScreenState extends State<HttpHeaderScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until a successful
         // request has produced a final hop; copies the status line, redirect
         // chain, and response headers as labeled text. Copy leads; no help icon.
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        // §8.16 order: copy LEADS, help TRAILS.
+        actions: <Widget>[
+          AppCopyAction(textBuilder: _buildCopyText),
+          const ToolHelpAction(toolId: 'http-headers'),
+        ],
       ),
       body: SafeArea(top: false, child: _body()),
     );

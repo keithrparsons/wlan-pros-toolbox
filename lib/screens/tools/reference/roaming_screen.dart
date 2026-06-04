@@ -31,6 +31,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/tool_help_action.dart';
 import '../concept_graphic_band.dart';
 
 /// Coarse roaming verdict used to tint a scenario with the §8.13 status
@@ -265,7 +266,11 @@ class RoamingScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Roaming Parameters'),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        // §8.16 order: copy LEADS, help TRAILS.
+        actions: <Widget>[
+          AppCopyAction(textBuilder: _buildCopyText),
+          ToolHelpAction(toolId: 'roaming'),
+        ],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );

@@ -51,6 +51,7 @@ import '../../../services/network/wifi_live_shortcuts_config.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/sparkline.dart';
+import '../../../widgets/tool_help_action.dart';
 import 'network_unavailable_view.dart';
 
 /// The Cellular Information tool screen.
@@ -194,11 +195,15 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
   }
 
   List<Widget> _appBarActions() {
-    if (_source != CellularInfoSource.iosShortcuts) return const [];
+    // Help shows on every platform (the help text is platform-agnostic); copy
+    // only makes sense on iOS where live readings exist. §8.16: copy LEADS,
+    // help TRAILS.
+    if (_source != CellularInfoSource.iosShortcuts) {
+      return const <Widget>[ToolHelpAction(toolId: 'cellular-info')];
+    }
     return <Widget>[
-      // §8.16: copy is the only app-bar action on iOS. Disabled
-      // (textBuilder -> null) until at least one live reading exists.
       AppCopyAction(textBuilder: _buildCopyText),
+      const ToolHelpAction(toolId: 'cellular-info'),
     ];
   }
 

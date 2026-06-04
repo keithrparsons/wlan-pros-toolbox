@@ -33,6 +33,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/tool_help_action.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
 
@@ -203,7 +204,11 @@ class PoeReferenceScreen extends StatelessWidget {
         toolbarHeight: 64,
         // §8.16 — copy both sub-tables as TSV (PoE standards + PD power
         // classes), each its own section. Static data, always enabled.
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        // §8.16 order: copy LEADS, help TRAILS.
+        actions: <Widget>[
+          AppCopyAction(textBuilder: _buildCopyText),
+          ToolHelpAction(toolId: 'poe-reference'),
+        ],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );

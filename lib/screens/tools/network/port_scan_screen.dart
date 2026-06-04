@@ -25,6 +25,7 @@ import '../../../theme/app_theme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/tool_help_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
@@ -153,7 +154,11 @@ class _PortScanScreenState extends State<PortScanScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until a scan has
         // started. Copies a TSV of every probed port with its state + service.
         // Copy leads; no help icon on this screen.
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        // §8.16 order: copy LEADS, help TRAILS.
+        actions: <Widget>[
+          AppCopyAction(textBuilder: _buildCopyText),
+          ToolHelpAction(toolId: 'port-scan'),
+        ],
       ),
       body: SafeArea(top: false, child: _body()),
     );

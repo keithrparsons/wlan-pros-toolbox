@@ -48,6 +48,7 @@ import 'package:flutter/semantics.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/tool_help_action.dart';
 import '../concept_graphic_band.dart';
 
 /// One actionable checklist item: a line of [text] with an optional supporting
@@ -196,6 +197,12 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
       appBar: AppBar(
         title: Text(widget.checklist.title),
         toolbarHeight: 64,
+        // Help keyed to the SPECIFIC checklist id (e.g. checklist-ap-install),
+        // not a generic id — this screen type is reused per checklist. The icon
+        // self-hides when toolId is null or has no help entry.
+        actions: widget.toolId == null
+            ? null
+            : <Widget>[ToolHelpAction(toolId: widget.toolId!)],
       ),
       body: SafeArea(top: false, child: _body()),
     );

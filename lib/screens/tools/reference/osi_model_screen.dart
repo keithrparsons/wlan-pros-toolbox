@@ -30,6 +30,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/tool_help_action.dart';
 import '../concept_graphic_band.dart';
 
 /// One OSI layer row. Field names + values mirror the Pax research model
@@ -147,7 +148,11 @@ class OsiModelScreen extends StatelessWidget {
         title: const Text('OSI Model'),
         toolbarHeight: 64,
         // §8.16 — copy the 7 layers as TSV. Static data, always enabled.
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        // §8.16 order: copy LEADS, help TRAILS.
+        actions: <Widget>[
+          AppCopyAction(textBuilder: _buildCopyText),
+          ToolHelpAction(toolId: 'osi-model'),
+        ],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );

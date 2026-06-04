@@ -53,6 +53,7 @@ import 'package:flutter/material.dart';
 import 'package:pdfx/pdfx.dart';
 
 import '../../../theme/app_tokens.dart';
+import '../../../widgets/tool_help_action.dart';
 
 /// Loading lifecycle for the bundled document. Drives which of the three
 /// explicit states the scaffold body renders.
@@ -84,12 +85,14 @@ Future<PdfPageImage?> renderReferencePage(PdfPage page) => page.render(
 /// A single bundled PDF reference card, rendered pinch-zoomable.
 ///
 /// Reused for every "PDF reference card" tool — pass the card [title] (shown in
-/// the app bar and the Semantics label) and the bundled [assetPath]
-/// (`assets/reference-cards/<id>.pdf`).
+/// the app bar and the Semantics label), the bundled [assetPath]
+/// (`assets/reference-cards/<id>.pdf`), and the catalog [toolId] of the SPECIFIC
+/// card so the help action resolves that card's help entry, not a generic one.
 class PdfReferenceScreen extends StatefulWidget {
   const PdfReferenceScreen({
     required this.title,
     required this.assetPath,
+    required this.toolId,
     super.key,
   });
 
@@ -98,6 +101,11 @@ class PdfReferenceScreen extends StatefulWidget {
 
   /// Bundled asset path, e.g. `assets/reference-cards/bubble-diagram.pdf`.
   final String assetPath;
+
+  /// Catalog id of the specific card being shown (e.g. `top-20-checklist`,
+  /// `mcs-index-card`). Drives the per-card help action; the icon self-hides if
+  /// no help entry exists for the id.
+  final String toolId;
 
   @override
   State<PdfReferenceScreen> createState() => _PdfReferenceScreenState();
@@ -134,7 +142,13 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title), toolbarHeight: 64),
+      appBar: AppBar(
+        title: Text(widget.title),
+        toolbarHeight: 64,
+        // Help keyed to the SPECIFIC card id, not a generic one — this viewer is
+        // shared across all 10 cards.
+        actions: <Widget>[ToolHelpAction(toolId: widget.toolId)],
+      ),
       body: SafeArea(
         top: false,
         child: Semantics(

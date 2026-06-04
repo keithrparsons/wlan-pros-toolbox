@@ -29,6 +29,7 @@ import 'package:flutter/semantics.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/tool_help_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -281,6 +282,7 @@ class _CliCommandsScreenState extends State<CliCommandsScreen> {
       appBar: AppBar(
         title: const Text('Network CLI Commands'),
         toolbarHeight: 64,
+        actions: const <Widget>[ToolHelpAction(toolId: 'cli-commands')],
       ),
       body: SafeArea(top: false, child: _body()),
     );

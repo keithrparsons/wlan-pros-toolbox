@@ -27,6 +27,7 @@ import '../../../services/network/traceroute_service.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/tool_help_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
@@ -159,7 +160,11 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
         // (so it stays disabled in the capability-probe, mobile-notice, and
         // unavailable states, which produce no hops). Copies a hop TSV with a
         // status header. Copy leads; no help icon on this screen.
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        // §8.16 order: copy LEADS, help TRAILS.
+        actions: <Widget>[
+          AppCopyAction(textBuilder: _buildCopyText),
+          const ToolHelpAction(toolId: 'traceroute'),
+        ],
       ),
       body: SafeArea(top: false, child: _body()),
     );

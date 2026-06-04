@@ -341,43 +341,53 @@ class AppRouter {
     bubbleDiagram: (_) => const PdfReferenceScreen(
           title: 'WLAN Pros Bubble Diagram',
           assetPath: 'assets/reference-cards/bubble-diagram.pdf',
+          toolId: 'bubble-diagram',
         ),
     troubleshootingCauses: (_) => const PdfReferenceScreen(
           title: 'Wireless LAN Troubleshooting Causes',
           assetPath: 'assets/reference-cards/troubleshooting-causes.pdf',
+          toolId: 'troubleshooting-causes',
         ),
     top20Checklist: (_) => const PdfReferenceScreen(
           title: 'Top 20 Wi-Fi Checklist',
           assetPath: 'assets/reference-cards/top-20-checklist.pdf',
+          toolId: 'top-20-checklist',
         ),
     extendedChecklist: (_) => const PdfReferenceScreen(
           title: 'Extended Wi-Fi Checklist',
           assetPath: 'assets/reference-cards/extended-checklist.pdf',
+          toolId: 'extended-checklist',
         ),
     extendedChecklistNonadvertised: (_) => const PdfReferenceScreen(
           title: 'Extended Checklist (Non-Advertised Items)',
           assetPath:
               'assets/reference-cards/extended-checklist-nonadvertised.pdf',
+          toolId: 'extended-checklist-nonadvertised',
         ),
     connectionChecklist: (_) => const PdfReferenceScreen(
           title: 'Wi-Fi Connection Checklist',
           assetPath: 'assets/reference-cards/connection-checklist.pdf',
+          toolId: 'connection-checklist',
         ),
     channelAllocations24ghz: (_) => const PdfReferenceScreen(
           title: '2.4 GHz Channel Allocations',
           assetPath: 'assets/reference-cards/channel-allocations-24ghz.pdf',
+          toolId: 'channel-allocations-24ghz',
         ),
     channelAllocations5ghz: (_) => const PdfReferenceScreen(
           title: '5 GHz Channel Allocations',
           assetPath: 'assets/reference-cards/channel-allocations-5ghz.pdf',
+          toolId: 'channel-allocations-5ghz',
         ),
     channelAllocations6ghz: (_) => const PdfReferenceScreen(
           title: '6 GHz Channel Allocations',
           assetPath: 'assets/reference-cards/channel-allocations-6ghz.pdf',
+          toolId: 'channel-allocations-6ghz',
         ),
     mcsIndexCard: (_) => const PdfReferenceScreen(
           title: 'Modulation and Coding Schemes (MCS Index)',
           assetPath: 'assets/reference-cards/mcs-index-card.pdf',
+          toolId: 'mcs-index-card',
         ),
     hexAscii: (_) => const HexAsciiScreen(),
     cliCommands: (_) => const CliCommandsScreen(),

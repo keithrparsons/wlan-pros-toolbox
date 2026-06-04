@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/tool_help_action.dart';
 import '../concept_graphic_band.dart';
 
 /// One row of the security-modes table. Field data verbatim from PWA
@@ -276,7 +277,11 @@ class WpaSecurityScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('WPA Security'),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        // §8.16 order: copy LEADS, help TRAILS.
+        actions: <Widget>[
+          AppCopyAction(textBuilder: _buildCopyText),
+          ToolHelpAction(toolId: 'wpa-security'),
+        ],
       ),
       body: SafeArea(top: false, child: _body()),
     );

@@ -30,6 +30,7 @@ import '../../../services/network/network_support.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/tool_help_action.dart';
 import '../concept_graphic_band.dart';
 import 'network_unavailable_view.dart';
 
@@ -170,7 +171,11 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
         toolbarHeight: 64,
         // §8.16 — shared "Copy results" affordance. No help icon here, so copy
         // is the only action. Disabled until the sweep has found a neighbor.
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        // §8.16 order: copy LEADS, help TRAILS.
+        actions: <Widget>[
+          AppCopyAction(textBuilder: _buildCopyText),
+          const ToolHelpAction(toolId: 'arp-ndp'),
+        ],
       ),
       body: SafeArea(top: false, child: _body()),
     );

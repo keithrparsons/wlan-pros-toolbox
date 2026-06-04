@@ -28,6 +28,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/tool_help_action.dart';
 import '../../../widgets/app_select.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -295,7 +296,11 @@ class _StandardsScreenState extends State<StandardsScreen> {
       appBar: AppBar(
         title: const Text('802.11 Standards'),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        // §8.16 order: copy LEADS, help TRAILS.
+        actions: <Widget>[
+          AppCopyAction(textBuilder: _buildCopyText),
+          ToolHelpAction(toolId: '80211-standards'),
+        ],
       ),
       body: SafeArea(top: false, child: _body()),
     );

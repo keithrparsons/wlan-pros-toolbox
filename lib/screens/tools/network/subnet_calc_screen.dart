@@ -25,6 +25,7 @@ import '../../../data/tool_assets.dart';
 import '../../../services/network/subnet_calc_service.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/tool_help_action.dart';
 import '../concept_graphic_band.dart';
 import 'value_row.dart';
 import '../labeled_field.dart';
@@ -139,7 +140,11 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled while the input is
         // empty or malformed (no valid breakdown); copies the subnet breakdown
         // as a labeled text block. Copy leads; this screen has no help icon.
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        // §8.16 order: copy LEADS, help TRAILS.
+        actions: <Widget>[
+          AppCopyAction(textBuilder: _buildCopyText),
+          ToolHelpAction(toolId: 'ipv4-subnet'),
+        ],
       ),
       body: SafeArea(top: false, child: _body()),
     );

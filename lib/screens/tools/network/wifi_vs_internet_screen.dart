@@ -43,6 +43,7 @@ import '../../../services/network/wifi_vs_internet.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/tool_help_action.dart';
 import '../concept_graphic_band.dart';
 import 'network_unavailable_view.dart';
 
@@ -280,10 +281,11 @@ class _WifiVsInternetScreenState extends State<WifiVsInternetScreen> {
         // check in place via _run() — it appears only once a verdict exists
         // (before that, the in-card "Run Check" button is the affordance) and
         // swaps to the in-progress spinner while a re-run is underway so the
-        // check can't be double-fired. This screen has no help icon.
+        // check can't be double-fired. Help trails copy + refresh (§8.16).
         actions: <Widget>[
           AppCopyAction(textBuilder: _buildCopyText),
           ..._refreshAction(),
+          const ToolHelpAction(toolId: 'wifi-vs-internet'),
         ],
       ),
       body: SafeArea(top: false, child: _body()),

@@ -22,6 +22,7 @@ import 'package:flutter/semantics.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/tool_help_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -192,7 +193,11 @@ class _ReasonCodesScreenState extends State<ReasonCodesScreen> {
         // group. Reflects the active filter when it matches anything; falls
         // back to the full reference when the filter matches nothing (so the
         // action is never empty). Static data, always enabled.
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        // §8.16 order: copy LEADS, help TRAILS.
+        actions: <Widget>[
+          AppCopyAction(textBuilder: _buildCopyText),
+          ToolHelpAction(toolId: 'reason-codes'),
+        ],
       ),
       body: SafeArea(top: false, child: _body()),
     );

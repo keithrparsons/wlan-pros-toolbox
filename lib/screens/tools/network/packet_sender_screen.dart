@@ -27,6 +27,7 @@ import '../../../theme/app_theme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/tool_help_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
@@ -143,7 +144,11 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
         toolbarHeight: 64,
         // §8.16 — shared "Copy results" affordance. No help icon here, so copy
         // is the only action. Disabled until a send produces a result.
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        // §8.16 order: copy LEADS, help TRAILS.
+        actions: <Widget>[
+          AppCopyAction(textBuilder: _buildCopyText),
+          ToolHelpAction(toolId: 'packet-sender'),
+        ],
       ),
       body: SafeArea(top: false, child: _body()),
     );

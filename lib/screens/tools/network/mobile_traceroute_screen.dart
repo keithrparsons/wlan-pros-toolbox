@@ -37,6 +37,7 @@ import '../../../services/network/network_support.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/tool_help_action.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
@@ -152,7 +153,11 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
         // (so it stays disabled on the iOS / sandboxed-desktop unavailable
         // cards, which produce no hops). Copies a hop TSV with a status header.
         // Copy leads; no help icon on this screen.
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        // §8.16 order: copy LEADS, help TRAILS.
+        actions: <Widget>[
+          AppCopyAction(textBuilder: _buildCopyText),
+          const ToolHelpAction(toolId: 'mobile-traceroute'),
+        ],
       ),
       body: SafeArea(top: false, child: _body()),
     );
