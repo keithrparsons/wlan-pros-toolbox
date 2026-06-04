@@ -34,9 +34,9 @@
 	<key>NSHumanReadableCopyright</key>
 	<string>$(PRODUCT_COPYRIGHT)</string>
 	<key>NSLocationUsageDescription</key>
-	<string>Wi-Fi Information uses your location only to read the connected network name (SSID and BSSID); macOS requires this permission to expose those fields. No location data leaves your device.</string>
+	<string>WLAN Pros Toolbox uses your location to read the connected Wi-Fi network name (SSID and BSSID), which macOS gates behind this permission, and to fill in your current latitude and longitude in the Lat / Long tool. No location data leaves your device.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Wi-Fi Information uses your location only to read the connected network name (SSID and BSSID); macOS requires this permission to expose those fields. No location data leaves your device.</string>
+	<string>WLAN Pros Toolbox uses your location to read the connected Wi-Fi network name (SSID and BSSID), which macOS gates behind this permission, and to fill in your current latitude and longitude in the Lat / Long tool. No location data leaves your device.</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>

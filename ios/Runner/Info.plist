@@ -51,12 +51,16 @@
 		<string>_device-info._tcp</string>
 		<string>_workstation._tcp</string>
 	</array>
-	<!-- network_info_plus reads the connected Wi-Fi SSID/BSSID, which iOS
-	     gates behind Location When In Use. Without this the SSID/BSSID fields
-	     return null and the UI shows "Not available" rather than the network
-	     name. -->
+	<!-- Two Location consumers, both When-In-Use:
+	     1. network_info_plus reads the connected Wi-Fi SSID/BSSID, which iOS
+	        gates behind Location When In Use (without this the SSID/BSSID fields
+	        return null and the UI shows "Not available").
+	     2. geolocator reads the device's latitude/longitude/altitude for the
+	        Lat / Long tool's "Use my location" affordance.
+	     Location is used only on-device for these readings and is never stored
+	     or shared. -->
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>WLAN Pros Toolbox uses your location only to read the name (SSID) of the Wi-Fi network you are connected to. Your location is never stored or shared.</string>
+	<string>WLAN Pros Toolbox uses your location to read the name (SSID) of the Wi-Fi network you are connected to, and to fill in your current latitude and longitude in the Lat / Long tool. Your location is never stored or shared.</string>
 	<!-- LSApplicationQueriesSchemes lets the app open the Shortcuts app via the
 	     PLAIN, fire-and-forget `shortcuts://run-shortcut?name=…` URL on iOS 9+
 	     (UIApplication.canOpenURL / open both consult this allow-list). This is

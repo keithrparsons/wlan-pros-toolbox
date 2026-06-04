@@ -94,6 +94,23 @@ dependencies:
   # diagrams rendered as decorative header bands. MIT.
   flutter_svg: ^2.0.17
 
+  # geolocator — live device GPS for the Lat / Long tool's "Use my location"
+  # affordance (latitude / longitude / altitude / horizontal accuracy). The
+  # Flutter-community canonical location plugin. MIT.
+  #   iOS: Core Location via NSLocationWhenInUseUsageDescription (already
+  #     declared in ios/Runner/Info.plist for the SSID gate; the string copy was
+  #     broadened to cover the GPS read).
+  #   macOS: Core Location, gated by com.apple.security.personal-information.
+  #     location (already declared in *.entitlements for the SSID gate) +
+  #     NSLocationUsageDescription / NSLocationWhenInUseUsageDescription in
+  #     macos/Runner/Info.plist (copy broadened to cover the GPS read). On a Mac
+  #     with no GPS hardware, Core Location returns a Wi-Fi-derived (coarse) fix;
+  #     the UI labels accuracy/altitude as approximate accordingly (honest
+  #     state, GL-008 / Truthfulness Audit). Android: deferred — runtime
+  #     ACCESS_FINE_LOCATION permission + manifest entry not yet added (the tool
+  #     degrades to the honest "unavailable" state on Android until then).
+  geolocator: ^14.0.2
+
   # net_quality — the backend-agnostic, pure-Dart network-quality engine
   # (latency / jitter / loss / throughput / responsiveness + popular-site
   # reachability). Local path package under packages/. Consumed by the Network
