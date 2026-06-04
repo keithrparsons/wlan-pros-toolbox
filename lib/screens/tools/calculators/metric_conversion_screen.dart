@@ -35,7 +35,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_select.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -217,9 +217,7 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
         // entered; copies the from-value and unit and the converted to-value
         // and unit as a labeled text block.
         actions: <Widget>[
-          // §8.16 order: copy LEADS, help TRAILS.
           AppCopyAction(textBuilder: _buildCopyText),
-          ToolHelpAction(toolId: 'metric-conversion'),
         ],
       ),
       body: SafeArea(
@@ -259,6 +257,7 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
                       _converterCard(text, mono),
                       const SizedBox(height: AppSpacing.md),
                       _referenceCard(text, mono),
+                      ToolHelpFooter(toolId: 'metric-conversion'),
                     ],
                   ),
                 ),

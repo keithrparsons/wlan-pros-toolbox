@@ -44,7 +44,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
 
@@ -288,10 +288,8 @@ class EmojiReferenceScreen extends StatelessWidget {
         title: const Text('Top 30 Emoji'),
         toolbarHeight: 64,
         // §8.16 — copy the ranked table as TSV. Static data, always enabled.
-        // §8.16 order: copy LEADS, help TRAILS.
         actions: <Widget>[
           AppCopyAction(textBuilder: _buildCopyText),
-          ToolHelpAction(toolId: 'emoji-reference'),
         ],
       ),
       body: SafeArea(top: false, child: _body(context)),
@@ -348,6 +346,7 @@ class EmojiReferenceScreen extends StatelessWidget {
                       child: _EmojiCard(entry: e),
                     ),
                   ),
+                  ToolHelpFooter(toolId: 'emoji-reference'),
                 ],
               ),
             ),

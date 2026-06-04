@@ -24,7 +24,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../../../widgets/app_select.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -570,10 +570,8 @@ class _WifiChannelsScreenState extends State<WifiChannelsScreen> {
       appBar: AppBar(
         title: const Text('Wi-Fi Channels'),
         toolbarHeight: 64,
-        // §8.16 order: copy LEADS, help TRAILS.
         actions: <Widget>[
           AppCopyAction(textBuilder: _buildCopyText),
-          ToolHelpAction(toolId: 'wifi-channels'),
         ],
       ),
       body: SafeArea(top: false, child: _body()),
@@ -613,6 +611,7 @@ class _WifiChannelsScreenState extends State<WifiChannelsScreen> {
                   _bandCard(context),
                   const SizedBox(height: AppSpacing.sm),
                   _tableCard(context, mono),
+                  ToolHelpFooter(toolId: 'wifi-channels'),
                 ],
               ),
             ),

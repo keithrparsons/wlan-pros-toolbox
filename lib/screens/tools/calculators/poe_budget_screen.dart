@@ -35,7 +35,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -254,9 +254,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
         // as a labeled text block, carrying the §8.13 verdict WORD. Copy leads;
         // no help icon here.
         actions: <Widget>[
-          // §8.16 order: copy LEADS, help TRAILS.
           AppCopyAction(textBuilder: _buildCopyText),
-          ToolHelpAction(toolId: 'poe-budget'),
         ],
       ),
       body: SafeArea(
@@ -300,6 +298,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
                       _standardsCard(text, mono),
                       const SizedBox(height: AppSpacing.md),
                       _classesCard(text, mono),
+                      ToolHelpFooter(toolId: 'poe-budget'),
                     ],
                   ),
                 ),

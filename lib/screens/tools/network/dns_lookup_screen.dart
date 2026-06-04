@@ -21,7 +21,7 @@ import '../../../theme/app_theme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
@@ -101,10 +101,8 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until a lookup has
         // resolved at least one record; copies the record list as TSV (Type,
         // Name, Value, TTL — one row per record). Copy leads; no help icon.
-        // §8.16 order: copy LEADS, help TRAILS.
         actions: <Widget>[
           AppCopyAction(textBuilder: _buildCopyText),
-          ToolHelpAction(toolId: 'dns-lookup'),
         ],
       ),
       body: SafeArea(top: false, child: _body()),
@@ -179,6 +177,7 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
                   _queryCard(context),
                   const SizedBox(height: AppSpacing.sm),
                   _resultsSection(context),
+                  ToolHelpFooter(toolId: 'dns-lookup'),
                 ],
               ),
             ),

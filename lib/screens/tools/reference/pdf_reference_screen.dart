@@ -55,7 +55,7 @@ import 'package:pdfx/pdfx.dart';
 
 import '../../../data/pdf_download.dart';
 import '../../../theme/app_tokens.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 
 /// The share/download seam this screen calls. Defaults to the real [sharePdf]
 /// (native share sheet / web anchor download); widget tests inject a fake so the
@@ -201,11 +201,12 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
       appBar: AppBar(
         title: Text(widget.title),
         toolbarHeight: 64,
-        // §8.16 ordering: the share/download action leads; the per-card help
-        // action trails. Help is keyed to the SPECIFIC card id (this viewer is
-        // shared across all 10 cards) and self-hides if the id has no help
-        // entry. The global iconButtonTheme paints the §8.3 lime focus ring on
-        // keyboard focus, so the bare share IconButton inherits it for free.
+        // Share/download is now the only AppBar action (§8.16). The per-card
+        // help moved to the ToolHelpFooter (§8.16.1) below the viewer — this is
+        // a full-bleed non-scrolling PDF surface, so the footer is pinned as the
+        // trailing row beneath the viewer rather than appended to a scroll body
+        // (special case, see the build session log). The global iconButtonTheme
+        // paints the §8.3 lime focus ring on the bare share IconButton.
         actions: <Widget>[
           IconButton(
             key: _shareButtonKey,
@@ -218,21 +219,30 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
               color: AppColors.textSecondary,
             ),
           ),
-          ToolHelpAction(toolId: widget.toolId),
         ],
       ),
       body: SafeArea(
         top: false,
-        child: Semantics(
-          // PDF inner content is rasterized and not SR-readable; the screen
-          // label is the honest description of what this surface is and how to
-          // use it.
-          label: '${widget.title} reference card. Pinch to zoom.',
-          // The pinch-viewer is a custom gesture surface, not a labelled
-          // control — exclude its inner semantics so the one screen-level label
-          // reads cleanly.
-          explicitChildNodes: false,
-          child: _body(context),
+        child: Column(
+          children: <Widget>[
+            Expanded(
+              child: Semantics(
+                // PDF inner content is rasterized and not SR-readable; the
+                // screen label is the honest description of what this surface is
+                // and how to use it.
+                label: '${widget.title} reference card. Pinch to zoom.',
+                // The pinch-viewer is a custom gesture surface, not a labelled
+                // control — exclude its inner semantics so the one screen-level
+                // label reads cleanly.
+                explicitChildNodes: false,
+                child: _body(context),
+              ),
+            ),
+            // §8.16.1 — per-card help, pinned beneath the full-bleed viewer
+            // (this screen has no scroll body). Self-omits when the card id has
+            // no authored help entry.
+            ToolHelpFooter(toolId: widget.toolId),
+          ],
         ),
       ),
     );

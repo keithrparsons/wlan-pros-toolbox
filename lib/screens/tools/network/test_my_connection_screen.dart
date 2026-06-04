@@ -54,7 +54,7 @@ import '../../../services/network/wifi_info_adapter.dart';
 import '../../../services/network/wifi_vs_internet.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import 'install_shortcut_sheet.dart';
 import 'network_unavailable_view.dart';
 
@@ -341,7 +341,6 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
           AppCopyAction(textBuilder: _buildCopyText),
           ..._refreshAction(),
           // Help trails copy + refresh (§8.16).
-          const ToolHelpAction(toolId: 'test-my-connection'),
         ],
       ),
       body: SafeArea(top: false, child: _body()),
@@ -456,6 +455,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
                     const SizedBox(height: AppSpacing.md),
                     _poweredBy(context),
                   ],
+                  ToolHelpFooter(toolId: 'test-my-connection'),
                 ],
               ),
             ),

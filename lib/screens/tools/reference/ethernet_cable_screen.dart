@@ -25,7 +25,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
 
@@ -152,10 +152,8 @@ class EthernetCableScreen extends StatelessWidget {
         title: const Text('Ethernet Cable'),
         toolbarHeight: 64,
         // §8.16 — copy the cable table as TSV. Static data, always enabled.
-        // §8.16 order: copy LEADS, help TRAILS.
         actions: <Widget>[
           AppCopyAction(textBuilder: _buildCopyText),
-          ToolHelpAction(toolId: 'ethernet-cable'),
         ],
       ),
       body: SafeArea(top: false, child: _body(context)),
@@ -239,6 +237,7 @@ class EthernetCableScreen extends StatelessWidget {
                   _tableCard(text, mono),
                   const SizedBox(height: AppSpacing.md),
                   _footnoteCard(text),
+                  ToolHelpFooter(toolId: 'ethernet-cable'),
                 ],
               ),
             ),

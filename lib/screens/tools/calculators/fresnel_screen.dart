@@ -35,7 +35,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -235,9 +235,7 @@ class _FresnelScreenState extends State<FresnelScreen> {
         // and total distance yield a valid midpoint radius; copies the inputs
         // and the midpoint (and at-point, when present) radii as a labeled block.
         actions: <Widget>[
-          // §8.16 order: copy LEADS, help TRAILS.
           AppCopyAction(textBuilder: _buildCopyText),
-          ToolHelpAction(toolId: 'fresnel'),
         ],
       ),
       body: SafeArea(
@@ -281,6 +279,7 @@ class _FresnelScreenState extends State<FresnelScreen> {
                       _formulaCard(text, mono),
                       const SizedBox(height: AppSpacing.md),
                       _referenceCard(text, mono),
+                      ToolHelpFooter(toolId: 'fresnel'),
                     ],
                   ),
                 ),

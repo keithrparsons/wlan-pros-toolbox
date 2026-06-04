@@ -34,7 +34,7 @@ import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/field_unit_row.dart';
 import '../../../widgets/app_toggle.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -249,9 +249,7 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
         // destination is computed; copies the start point, bearing, distance,
         // and the destination lat/long as a labeled text block.
         actions: <Widget>[
-          // §8.16 order: copy LEADS, help TRAILS.
           AppCopyAction(textBuilder: _buildCopyText),
-          ToolHelpAction(toolId: 'final-point'),
         ],
       ),
       body: SafeArea(
@@ -291,6 +289,7 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
                       _inputCard(text, mono),
                       const SizedBox(height: AppSpacing.md),
                       _formulaCard(text, mono),
+                      ToolHelpFooter(toolId: 'final-point'),
                     ],
                   ),
                 ),

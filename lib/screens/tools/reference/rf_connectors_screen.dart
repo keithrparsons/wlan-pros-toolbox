@@ -31,7 +31,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
 
@@ -195,10 +195,8 @@ class RfConnectorsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('RF Connectors'),
         toolbarHeight: 64,
-        // §8.16 order: copy LEADS, help TRAILS.
         actions: <Widget>[
           AppCopyAction(textBuilder: _buildCopyText),
-          ToolHelpAction(toolId: 'rf-connectors'),
         ],
       ),
       body: SafeArea(top: false, child: _body(context)),
@@ -240,6 +238,7 @@ class RfConnectorsScreen extends StatelessWidget {
                   _connectorsCard(text, mono),
                   const SizedBox(height: AppSpacing.md),
                   _footnoteCard(text),
+                  ToolHelpFooter(toolId: 'rf-connectors'),
                 ],
               ),
             ),

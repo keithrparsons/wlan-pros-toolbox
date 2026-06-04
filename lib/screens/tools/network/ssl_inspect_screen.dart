@@ -23,7 +23,7 @@ import '../../../services/network/ssl_inspect_service.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
@@ -114,10 +114,8 @@ class _SslInspectScreenState extends State<SslInspectScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until a successful
         // inspection has produced a certificate; copies the cert as a labeled
         // text block. Copy leads; this screen has no help icon.
-        // §8.16 order: copy LEADS, help TRAILS.
         actions: <Widget>[
           AppCopyAction(textBuilder: _buildCopyText),
-          const ToolHelpAction(toolId: 'ssl-inspect'),
         ],
       ),
       body: SafeArea(top: false, child: _body()),
@@ -269,6 +267,7 @@ class _SslInspectScreenState extends State<SslInspectScreen> {
                   _queryCard(context),
                   const SizedBox(height: AppSpacing.sm),
                   _resultsSection(context),
+                  ToolHelpFooter(toolId: 'ssl-inspect'),
                 ],
               ),
             ),

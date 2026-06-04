@@ -18,7 +18,7 @@ import '../../../services/network/bgp_asn_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'error_card.dart';
@@ -99,10 +99,8 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until routing data
         // is retrieved; copies the ASN/holder/prefix/registry fields as a
         // labeled text block. Copy leads; this screen has no help icon.
-        // §8.16 order: copy LEADS, help TRAILS.
         actions: <Widget>[
           AppCopyAction(textBuilder: _buildCopyText),
-          ToolHelpAction(toolId: 'bgp-asn'),
         ],
       ),
       body: SafeArea(top: false, child: _body()),
@@ -188,6 +186,7 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
                   _queryCard(context),
                   const SizedBox(height: AppSpacing.sm),
                   _resultsSection(context),
+                  ToolHelpFooter(toolId: 'bgp-asn'),
                 ],
               ),
             ),

@@ -25,7 +25,7 @@ import '../../../services/network/interface_info_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'network_unavailable_view.dart';
 import 'value_row.dart';
@@ -98,7 +98,6 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen> {
           // Help trails the result/meta actions (§8.16). Shown on every
           // platform — the help text is platform-agnostic, unlike the
           // copy/refresh actions which only make sense where info is supported.
-          const ToolHelpAction(toolId: 'interface-info'),
         ],
       ),
       body: SafeArea(top: false, child: _body()),
@@ -249,6 +248,7 @@ class _Success extends StatelessWidget {
                     child: _interfaceCard(context, i),
                   ),
                 ),
+              ToolHelpFooter(toolId: 'interface-info'),
             ],
           ),
         ),

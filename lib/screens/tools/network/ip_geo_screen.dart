@@ -23,7 +23,7 @@ import '../../../services/network/network_support.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'error_card.dart';
@@ -104,10 +104,8 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until a successful
         // lookup exists; copies the location/coordinates as a labeled text
         // block. Copy leads; this screen has no help icon.
-        // §8.16 order: copy LEADS, help TRAILS.
         actions: <Widget>[
           AppCopyAction(textBuilder: _buildCopyText),
-          ToolHelpAction(toolId: 'ip-geo'),
         ],
       ),
       body: SafeArea(top: false, child: _body()),
@@ -182,6 +180,7 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
                   _queryCard(context),
                   const SizedBox(height: AppSpacing.sm),
                   _resultsSection(context),
+                  ToolHelpFooter(toolId: 'ip-geo'),
                 ],
               ),
             ),

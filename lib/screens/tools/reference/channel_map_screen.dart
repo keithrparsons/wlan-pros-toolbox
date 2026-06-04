@@ -38,7 +38,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 
 /// Which band's bonding map is shown. 2.4 / 5 / 6 GHz — three short options, so
@@ -872,10 +872,8 @@ class _ChannelMapScreenState extends State<ChannelMapScreen> {
         // §8.16 — copy all three band maps as TSV. The maps are static const
         // data (the band toggle only picks which one renders, all are present),
         // so the affordance is always enabled.
-        // §8.16 order: copy LEADS, help TRAILS.
         actions: <Widget>[
           AppCopyAction(textBuilder: _buildCopyText),
-          ToolHelpAction(toolId: 'channel-map'),
         ],
       ),
       body: SafeArea(top: false, child: _body()),
@@ -997,6 +995,7 @@ class _ChannelMapScreenState extends State<ChannelMapScreen> {
                   _bandCard(context),
                   const SizedBox(height: AppSpacing.sm),
                   _mapCard(context, mono),
+                  ToolHelpFooter(toolId: 'channel-map'),
                 ],
               ),
             ),

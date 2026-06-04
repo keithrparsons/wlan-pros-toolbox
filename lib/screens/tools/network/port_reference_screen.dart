@@ -21,7 +21,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import '../../../data/tool_assets.dart';
 import '../../../services/network/port_reference_service.dart';
 import '../../../theme/app_tokens.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'value_row.dart';
@@ -97,7 +97,6 @@ class _PortReferenceScreenState extends State<PortReferenceScreen> {
       appBar: AppBar(
         title: const Text('Well-Known Ports'),
         toolbarHeight: 64,
-        actions: const <Widget>[ToolHelpAction(toolId: 'port-reference')],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -132,6 +131,7 @@ class _PortReferenceScreenState extends State<PortReferenceScreen> {
                   _searchCard(context),
                   const SizedBox(height: AppSpacing.sm),
                   _resultsSection(context),
+                  ToolHelpFooter(toolId: 'port-reference'),
                 ],
               ),
             ),

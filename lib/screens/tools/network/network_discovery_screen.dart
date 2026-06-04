@@ -52,7 +52,7 @@ import '../../../services/network/network_support.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'network_unavailable_view.dart';
 
@@ -213,10 +213,8 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
         // host). Copy leads; this screen has no help icon, so copy is the only
         // action (it still lands in the same trailing slot the order rule
         // reserves for it).
-        // §8.16 order: copy LEADS, help TRAILS.
         actions: <Widget>[
           AppCopyAction(textBuilder: _buildCopyText),
-          const ToolHelpAction(toolId: 'network-discovery'),
         ],
       ),
       body: SafeArea(top: false, child: _body()),
@@ -320,6 +318,7 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
                     ),
                   ],
                   ..._resultSection(context),
+                  ToolHelpFooter(toolId: 'network-discovery'),
                 ],
               ),
             ),

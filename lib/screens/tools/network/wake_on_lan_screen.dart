@@ -21,7 +21,7 @@ import '../../../theme/app_theme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
@@ -103,10 +103,8 @@ class _WakeOnLanScreenState extends State<WakeOnLanScreen> {
         // §8.16 — shared "Copy results" affordance. No help icon on this
         // screen, so copy is the only action. Disabled until a send has
         // produced a result (sent OR failed).
-        // §8.16 order: copy LEADS, help TRAILS.
         actions: <Widget>[
           AppCopyAction(textBuilder: _buildCopyText),
-          ToolHelpAction(toolId: 'wake-on-lan'),
         ],
       ),
       body: SafeArea(top: false, child: _body()),
@@ -189,6 +187,7 @@ class _WakeOnLanScreenState extends State<WakeOnLanScreen> {
                   _formCard(context),
                   const SizedBox(height: AppSpacing.sm),
                   _resultsSection(context),
+                  ToolHelpFooter(toolId: 'wake-on-lan'),
                 ],
               ),
             ),

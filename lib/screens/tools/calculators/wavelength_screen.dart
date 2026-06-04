@@ -29,7 +29,7 @@ import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/field_unit_row.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -141,9 +141,7 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
         // wavelength breakdown as a labeled text block. Copy leads; no help
         // icon here.
         actions: <Widget>[
-          // §8.16 order: copy LEADS, help TRAILS.
           AppCopyAction(textBuilder: _buildCopyText),
-          ToolHelpAction(toolId: 'wavelength'),
         ],
       ),
       body: SafeArea(
@@ -185,6 +183,7 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
                       _formulaCard(text, mono),
                       const SizedBox(height: AppSpacing.md),
                       _referenceCard(text, mono),
+                      ToolHelpFooter(toolId: 'wavelength'),
                     ],
                   ),
                 ),

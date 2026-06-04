@@ -51,7 +51,7 @@ import '../../../services/network/wifi_live_shortcuts_config.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/sparkline.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import 'network_unavailable_view.dart';
 
 /// The Cellular Information tool screen.
@@ -195,15 +195,14 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
   }
 
   List<Widget> _appBarActions() {
-    // Help shows on every platform (the help text is platform-agnostic); copy
-    // only makes sense on iOS where live readings exist. §8.16: copy LEADS,
-    // help TRAILS.
+    // Copy only makes sense on iOS where live readings exist; it is the only
+    // AppBar action now (§8.16). The per-tool help moved to the footer
+    // (ToolHelpFooter, §8.16.1) at the end of the live body.
     if (_source != CellularInfoSource.iosShortcuts) {
-      return const <Widget>[ToolHelpAction(toolId: 'cellular-info')];
+      return const <Widget>[];
     }
     return <Widget>[
       AppCopyAction(textBuilder: _buildCopyText),
-      const ToolHelpAction(toolId: 'cellular-info'),
     ];
   }
 
@@ -611,6 +610,8 @@ class _LiveBody extends StatelessWidget {
                     const SizedBox(height: AppSpacing.sm),
                     const _LoopShortcutNote(),
                   ],
+                  // §8.16.1 — per-tool help at the end of the scroll body.
+                  const ToolHelpFooter(toolId: 'cellular-info'),
                 ],
               ),
             );

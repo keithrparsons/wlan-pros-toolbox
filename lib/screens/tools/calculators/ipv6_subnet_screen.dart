@@ -34,7 +34,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../network/value_row.dart';
 import '../labeled_field.dart';
@@ -371,9 +371,7 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
         // empty or malformed (no valid breakdown); copies the IPv6 breakdown as
         // a labeled text block. Copy leads; this screen has no help icon.
         actions: <Widget>[
-          // §8.16 order: copy LEADS, help TRAILS.
           AppCopyAction(textBuilder: _buildCopyText),
-          ToolHelpAction(toolId: 'ipv6-subnet'),
         ],
       ),
       body: SafeArea(top: false, child: _body()),
@@ -448,6 +446,7 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
                           : _errorCard(context, _result!.error!),
                     ),
                   ],
+                  ToolHelpFooter(toolId: 'ipv6-subnet'),
                 ],
               ),
             ),

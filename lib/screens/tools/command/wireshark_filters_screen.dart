@@ -37,7 +37,7 @@ import 'package:flutter/semantics.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -218,7 +218,6 @@ class _WiresharkFiltersScreenState extends State<WiresharkFiltersScreen> {
         title: const Text('Wireshark 802.11 Filters'),
         toolbarHeight: 64,
         actions: const <Widget>[
-          ToolHelpAction(toolId: 'wireshark-80211-filters'),
         ],
       ),
       body: SafeArea(top: false, child: _body()),
@@ -258,6 +257,7 @@ class _WiresharkFiltersScreenState extends State<WiresharkFiltersScreen> {
                   _searchCard(context),
                   const SizedBox(height: AppSpacing.sm),
                   ..._results(context),
+                  ToolHelpFooter(toolId: 'wireshark-80211-filters'),
                 ],
               ),
             ),

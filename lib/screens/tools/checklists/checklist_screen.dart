@@ -48,7 +48,7 @@ import 'package:flutter/semantics.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 
 /// One actionable checklist item: a line of [text] with an optional supporting
@@ -197,12 +197,10 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
       appBar: AppBar(
         title: Text(widget.checklist.title),
         toolbarHeight: 64,
-        // Help keyed to the SPECIFIC checklist id (e.g. checklist-ap-install),
-        // not a generic id — this screen type is reused per checklist. The icon
-        // self-hides when toolId is null or has no help entry.
-        actions: widget.toolId == null
-            ? null
-            : <Widget>[ToolHelpAction(toolId: widget.toolId!)],
+        // The per-tool help moved out of the AppBar to the ToolHelpFooter at the
+        // end of the scroll body (§8.16.1). This screen type has no AppBar
+        // action; help is keyed to the SPECIFIC checklist id in the footer below
+        // and self-omits when toolId is null or has no help entry.
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -253,6 +251,13 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
               children.add(const SizedBox(height: AppSpacing.sm));
             }
           }
+        }
+
+        // §8.16.1 — per-tool help footer at the end of the scroll body. Only
+        // when this checklist carries a real tool id (ToolHelpFooter requires a
+        // non-null id; it self-omits when the id has no authored help entry).
+        if (widget.toolId != null) {
+          children.add(ToolHelpFooter(toolId: widget.toolId!));
         }
 
         return Center(

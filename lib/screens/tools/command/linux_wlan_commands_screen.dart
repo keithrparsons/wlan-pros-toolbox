@@ -26,7 +26,7 @@ import 'package:flutter/semantics.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -202,7 +202,6 @@ class _LinuxWlanCommandsScreenState extends State<LinuxWlanCommandsScreen> {
       appBar: AppBar(
         title: const Text('Linux / WLAN Commands'),
         toolbarHeight: 64,
-        actions: const <Widget>[ToolHelpAction(toolId: 'linux-wlan-commands')],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -241,6 +240,7 @@ class _LinuxWlanCommandsScreenState extends State<LinuxWlanCommandsScreen> {
                   _searchCard(context),
                   const SizedBox(height: AppSpacing.sm),
                   ..._results(context),
+                  ToolHelpFooter(toolId: 'linux-wlan-commands'),
                 ],
               ),
             ),

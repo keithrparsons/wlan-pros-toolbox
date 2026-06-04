@@ -24,7 +24,7 @@ import 'package:flutter/services.dart';
 import '../../data/tool_assets.dart';
 import '../../theme/app_tokens.dart';
 import '../../theme/app_typography.dart';
-import '../../widgets/tool_help_action.dart';
+import '../../widgets/tool_help_footer.dart';
 import 'concept_graphic_band.dart';
 import 'labeled_field.dart';
 
@@ -159,7 +159,6 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
         toolbarHeight: 64,
         // This converter has no AppCopyAction, so help is the only action.
         actions: const <Widget>[
-          ToolHelpAction(toolId: 'dbm-watt-converter'),
         ],
       ),
       body: SafeArea(
@@ -201,6 +200,7 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
                       _formulaCard(text, mono),
                       const SizedBox(height: AppSpacing.md),
                       _referenceCard(text, mono),
+                      ToolHelpFooter(toolId: 'dbm-watt-converter'),
                     ],
                   ),
                 ),

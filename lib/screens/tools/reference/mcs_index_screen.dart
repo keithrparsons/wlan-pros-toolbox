@@ -30,7 +30,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../concept_graphic_band.dart';
@@ -395,10 +395,8 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
         // §8.16 — copy the live MCS rate table as TSV, with the selected
         // standard and spatial-stream count recorded in the title (rates are
         // scaled by SS, so the params matter). Static data, always enabled.
-        // §8.16 order: copy LEADS, help TRAILS.
         actions: <Widget>[
           AppCopyAction(textBuilder: _buildCopyText),
-          ToolHelpAction(toolId: 'mcs-index'),
         ],
       ),
       body: SafeArea(
@@ -436,6 +434,7 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
                       _tableCard(text, mono),
                       const SizedBox(height: AppSpacing.md),
                       _notesCard(text),
+                      ToolHelpFooter(toolId: 'mcs-index'),
                     ],
                   ),
                 ),

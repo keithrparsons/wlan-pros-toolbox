@@ -34,7 +34,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 
 /// Which wiring standard's table is shown. Two short options → segmented
@@ -246,10 +246,8 @@ class _EthernetPinoutScreenState extends State<EthernetPinoutScreen> {
         toolbarHeight: 64,
         // §8.16 — copy the selected standard's pin table as TSV. Static data,
         // so the affordance is always enabled.
-        // §8.16 order: copy LEADS, help TRAILS.
         actions: <Widget>[
           AppCopyAction(textBuilder: _buildCopyText),
-          ToolHelpAction(toolId: 'ethernet-pinout'),
         ],
       ),
       body: SafeArea(top: false, child: _body()),
@@ -308,6 +306,7 @@ class _EthernetPinoutScreenState extends State<EthernetPinoutScreen> {
                   _standardCard(context),
                   const SizedBox(height: AppSpacing.sm),
                   _tableCard(context, mono),
+                  ToolHelpFooter(toolId: 'ethernet-pinout'),
                 ],
               ),
             ),

@@ -24,7 +24,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 
 /// Coarse signal verdict used to tint a row with the §8.13 status palette.
@@ -254,10 +254,8 @@ class SignalThresholdsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Signal Thresholds'),
         toolbarHeight: 64,
-        // §8.16 order: copy LEADS, help TRAILS.
         actions: <Widget>[
           AppCopyAction(textBuilder: _buildCopyText),
-          ToolHelpAction(toolId: 'signal-thresholds'),
         ],
       ),
       body: SafeArea(top: false, child: _body(context)),
@@ -299,6 +297,7 @@ class SignalThresholdsScreen extends StatelessWidget {
                   _appThresholdsCard(context),
                   const SizedBox(height: AppSpacing.sm),
                   _snrMcsCard(context),
+                  ToolHelpFooter(toolId: 'signal-thresholds'),
                 ],
               ),
             ),

@@ -36,7 +36,7 @@ import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/field_unit_row.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -236,9 +236,7 @@ class _RfAttenuationScreenState extends State<RfAttenuationScreen> {
         // material is added (no total); copies the per-material breakdown plus
         // total as a labeled text block. Copy leads; no help icon here.
         actions: <Widget>[
-          // §8.16 order: copy LEADS, help TRAILS.
           AppCopyAction(textBuilder: _buildCopyText),
-          ToolHelpAction(toolId: 'rf-attenuation'),
         ],
       ),
       body: SafeArea(
@@ -280,6 +278,7 @@ class _RfAttenuationScreenState extends State<RfAttenuationScreen> {
                       _resultCard(text, mono),
                       const SizedBox(height: AppSpacing.md),
                       _referenceCard(text, mono),
+                      ToolHelpFooter(toolId: 'rf-attenuation'),
                     ],
                   ),
                 ),

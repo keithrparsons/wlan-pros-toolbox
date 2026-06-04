@@ -29,7 +29,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../../../widgets/app_select.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -147,10 +147,8 @@ class _FrameExchangeScreenState extends State<FrameExchangeScreen> {
         toolbarHeight: 64,
         // §8.16 — copy the selected scenario's frame sequence as TSV, one
         // section per phase. Static data, always enabled.
-        // §8.16 order: copy LEADS, help TRAILS.
         actions: <Widget>[
           AppCopyAction(textBuilder: _buildCopyText),
-          ToolHelpAction(toolId: 'frame-exchange'),
         ],
       ),
       body: SafeArea(top: false, child: _body()),
@@ -218,6 +216,7 @@ class _FrameExchangeScreenState extends State<FrameExchangeScreen> {
                   _sequenceCard(context),
                   const SizedBox(height: AppSpacing.sm),
                   _legendCard(context),
+                  ToolHelpFooter(toolId: 'frame-exchange'),
                 ],
               ),
             ),

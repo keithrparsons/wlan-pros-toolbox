@@ -34,7 +34,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
@@ -209,9 +209,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
         // coordinate is valid and in range; copies each present coordinate in
         // all three formats (DD / DDM / DMS) as a labeled text block.
         actions: <Widget>[
-          // §8.16 order: copy LEADS, help TRAILS.
           AppCopyAction(textBuilder: _buildCopyText),
-          ToolHelpAction(toolId: 'lat-long'),
         ],
       ),
       body: SafeArea(
@@ -253,6 +251,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
                       _resultCard(text, mono),
                       const SizedBox(height: AppSpacing.md),
                       _formatCard(text, mono),
+                      ToolHelpFooter(toolId: 'lat-long'),
                     ],
                   ),
                 ),

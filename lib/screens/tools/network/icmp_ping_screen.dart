@@ -35,7 +35,7 @@ import '../../../theme/app_theme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
@@ -150,10 +150,8 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
         // produced replies (and so always disabled on the sandboxed-desktop
         // state, which never reaches `_stats.sent > 0`). Copies the summary
         // line + a reply TSV. Copy leads; no help icon on this screen.
-        // §8.16 order: copy LEADS, help TRAILS.
         actions: <Widget>[
           AppCopyAction(textBuilder: _buildCopyText),
-          const ToolHelpAction(toolId: 'icmp-ping'),
         ],
       ),
       body: SafeArea(top: false, child: _body()),
@@ -255,6 +253,8 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
         const SizedBox(height: AppSpacing.sm),
         _repliesCard(context),
       ],
+      // §8.16.1 — per-tool help footer at the end of the scroll body.
+      const ToolHelpFooter(toolId: 'icmp-ping'),
     ];
   }
 

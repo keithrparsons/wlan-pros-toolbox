@@ -43,7 +43,7 @@ import '../../../services/network/wifi_vs_internet.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/tool_help_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'network_unavailable_view.dart';
 
@@ -285,7 +285,6 @@ class _WifiVsInternetScreenState extends State<WifiVsInternetScreen> {
         actions: <Widget>[
           AppCopyAction(textBuilder: _buildCopyText),
           ..._refreshAction(),
-          const ToolHelpAction(toolId: 'wifi-vs-internet'),
         ],
       ),
       body: SafeArea(top: false, child: _body()),
@@ -498,6 +497,7 @@ class _WifiVsInternetScreenState extends State<WifiVsInternetScreen> {
                     const SizedBox(height: AppSpacing.sm),
                     _footnote(context),
                   ],
+                  ToolHelpFooter(toolId: 'wifi-vs-internet'),
                 ],
               ),
             ),
