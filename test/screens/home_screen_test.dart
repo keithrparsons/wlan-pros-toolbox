@@ -1,9 +1,11 @@
-// Widget tests for the redesigned home tiles (Ticket 3, mockups 01/05).
+// Widget tests for the consumer front-door home (Option A, 2026-06-03).
 //
-// Covers: the search field is present and navigates; each tile shows the live
-// tool-count badge and the example-tools line; NO NEW pill renders anywhere in
-// this build (Keith, 2026-06-03 — nothing is new to a user yet); the grid
-// renders all categories; no RenderFlex overflow at 320/375/768/1440.
+// Covers: the "Check My Connection" hero renders and routes to Test My
+// Connection; the search field is present (now at the BOTTOM) and navigates;
+// each tile shows the live tool-count badge and the example-tools line; NO NEW
+// pill renders anywhere in this build (Keith, 2026-06-03 — nothing is new to a
+// user yet); the grid renders all categories; no RenderFlex overflow at
+// 320/375/768/1440.
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -34,6 +36,41 @@ Future<void> _withViewport(
 }
 
 void main() {
+  testWidgets('the Check My Connection hero renders at the top', (
+    tester,
+  ) async {
+    await _withViewport(tester, const Size(800, 1200), () async {
+      await tester.pumpWidget(_app());
+      await tester.pumpAndSettle();
+      expect(find.text('START HERE'), findsOneWidget);
+      expect(find.text('Is it your Wi-Fi or your internet?'), findsOneWidget);
+      expect(find.text('Check My Connection'), findsOneWidget);
+    });
+  });
+
+  testWidgets('tapping the hero CTA pushes the testMyConnection route', (
+    tester,
+  ) async {
+    bool pushedTest = false;
+    await _withViewport(tester, const Size(800, 1200), () async {
+      await tester.pumpWidget(
+        _app(
+          routes: <String, WidgetBuilder>{
+            AppRouter.testMyConnection: (_) {
+              pushedTest = true;
+              return const Scaffold(body: Text('Test My Connection screen'));
+            },
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Check My Connection'));
+      await tester.pumpAndSettle();
+      expect(pushedTest, isTrue);
+    });
+  });
+
   testWidgets('the home search field is present and pushes /search', (
     tester,
   ) async {

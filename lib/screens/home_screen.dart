@@ -1,17 +1,23 @@
-// HomeScreen — the category landing grid with a global search field on top.
-//
-// IA redesign (mockups 01 / 05):
-//   * a "Search all tools…" field above the grid that pushes /search (it is a
-//     navigation trigger, not an inline filter — inline-as-you-type lives on the
-//     search screen),
+// HomeScreen — the consumer front-door (mockup "Option A"):
+//   * a "Check My Connection" hero card at the TOP that pushes the existing
+//     Test My Connection tool — the prominent consumer entry point,
 //   * richer category tiles: a tool-count badge (or a NEW pill / "~27" override
 //     for the 6-category future) top-right, and a line of 2–3 example tool names
-//     instead of the generic summary sentence.
+//     instead of the generic summary sentence,
+//   * a "Search all tools…" field at the BOTTOM that pushes /search (it is a
+//     navigation trigger, not an inline filter — inline-as-you-type lives on the
+//     search screen).
+//
+// Order (Option A front door, 2026-06-03): hero card → category grid → search.
 //
 // The grid is data-driven from kToolCategories, so it scales from the current 4
 // categories to 6 automatically. Per Keith (2026-06-03) NOTHING sets isNew in
 // this build (the app hasn't gone public, so nothing is "new to a user"); the
 // NEW-pill capability is built and ready for the parked categories.
+//
+// Tiles are tightened for iOS density (2026-06-03, Keith): the hero card adds
+// height up top, so the tiles drop to a ~150pt footprint with xs (8px) vertical
+// grid spacing so more categories stay above the fold on a phone.
 //
 // Layout per GL-003 §8.7: 16px screen edge on mobile, 24px on tablet+ desktop,
 // 16px grid gutter, tile titles at H3 / IBM Plex Sans 600.
@@ -83,28 +89,33 @@ class _HomeScreenState extends State<HomeScreen> {
             return CenteredContent(
               child: CustomScrollView(
                 slivers: <Widget>[
+                  // 1. Consumer hero — "Check My Connection" (Option A front door).
                   SliverPadding(
                     padding: EdgeInsets.fromLTRB(
                       edge,
                       AppSpacing.sm,
                       edge,
-                      AppSpacing.sm,
+                      AppSpacing.md,
                     ),
                     sliver: SliverToBoxAdapter(
-                      child: _HomeSearchField(
+                      child: _ConnectionHeroCard(
                         onTap: () => Navigator.of(context)
-                            .pushNamed(AppRouter.search),
+                            .pushNamed(AppRouter.testMyConnection),
                       ),
                     ),
                   ),
+                  // 2. Category grid — tightened density for iOS (2026-06-03).
                   SliverPadding(
-                    padding: EdgeInsets.fromLTRB(edge, 0, edge, edge),
+                    padding: EdgeInsets.fromLTRB(edge, 0, edge, AppSpacing.md),
                     sliver: SliverGrid(
                       gridDelegate:
                           SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: crossAxisCount,
+                        // Cross-axis stays at sm (16px) so side-by-side tiles
+                        // read as separate; main-axis tightens to xs (8px) to
+                        // recover vertical room for more tiles above the fold.
                         crossAxisSpacing: AppSpacing.sm,
-                        mainAxisSpacing: AppSpacing.sm,
+                        mainAxisSpacing: AppSpacing.xs,
                         // Fixed tile HEIGHT (not aspect ratio): the tile content
                         // is top-aligned and compact, so a content-sized height
                         // keeps density identical at every width — no dead band
@@ -122,6 +133,22 @@ class _HomeScreenState extends State<HomeScreen> {
                           );
                         },
                         childCount: kToolCategories.length,
+                      ),
+                    ),
+                  ),
+                  // 3. Search trigger — moved to the bottom (Option A, 2026-06-03)
+                  //    so the consumer hero leads and the grid is denser up top.
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(
+                      edge,
+                      0,
+                      edge,
+                      AppSpacing.md,
+                    ),
+                    sliver: SliverToBoxAdapter(
+                      child: _HomeSearchField(
+                        onTap: () => Navigator.of(context)
+                            .pushNamed(AppRouter.search),
                       ),
                     ),
                   ),
@@ -179,18 +206,30 @@ class _HomeScreenState extends State<HomeScreen> {
   /// column width, so a 2-col tile ballooned to ~308pt tall at the 680pt content
   /// cap (the dead band Vera flagged) yet was too short at 440pt.
   ///
-  /// Height budget (IBM Plex Sans tokens, incl. 1px tile border each side):
-  /// border(1)+pad sm(16) top + icon row (28) + icon→title gap sm(16) + 2-line
-  /// H3 (22×1.25×2 ≈ 55) + title→examples gap xs(8) + 2-line examples
-  /// (13×1.35×2 ≈ 35) + pad sm(16)+border(1) bottom ≈ 176pt. Measured worst case
-  /// (narrow 2-col column wrapping BOTH the title and the examples) needs 178;
-  /// 180 clears it with a margin and no RenderFlex overflow at any width
-  /// (320–1440). The common 1-line-title case top-aligns with a thin bottom
-  /// margin — matching the approved 01-home-phone / 05-home-desktop density (no
-  /// dead band in the middle). Same height single- and multi-column because the
-  /// worst-case content is identical; the narrower multi-column tile just hits
-  /// the 2-line title more often.
-  double _tileHeightFor(double width) => 180;
+  /// Tightened for iOS density (2026-06-03, Keith): the consumer hero card adds
+  /// height up top, so the phone tiles drop their footprint to keep more
+  /// categories above the fold. The recovered room comes from the icon→title gap
+  /// (sm 16 → xs 8) plus the smaller box.
+  ///
+  /// The height is width-aware so the SINGLE-column phone (320/375/390, below the
+  /// 440 two-column breakpoint) gets the tight density target while the wider
+  /// MULTI-column layouts still clear the worst-case wrap:
+  ///
+  ///   * Phone (1-column, width < 440): a full-width tile gives the H3 title and
+  ///     the examples line a wide column — each fits ONE line for every catalog
+  ///     category — so the real footprint is ~118pt. **150** holds that with a
+  ///     thin bottom margin (no dead band) and is the density win Keith asked
+  ///     for: more categories above the fold than the old 180.
+  ///
+  ///   * Multi-column (width ≥ 440): a narrow column can wrap BOTH the title AND
+  ///     the examples to two lines at once. Height budget (IBM Plex Sans tokens,
+  ///     incl. 1px tile border each side): border(1)+pad sm(16) + icon row(28) +
+  ///     icon→title gap xs(8) + 2-line H3 (22×1.25×2 ≈ 55) + title→examples gap
+  ///     xs(8) + 2-line examples (13×1.35×2 ≈ 35.1) + pad sm(16)+border(1) ≈ 168.
+  ///     **172** clears it with margin and no RenderFlex overflow at 440–1440
+  ///     (verified by the no-overflow gate). Still tighter than the old 180.
+  double _tileHeightFor(double width) =>
+      width < _singleColumnBreakpoint ? 150 : 172;
 }
 
 /// The home "Search all tools…" trigger (mockups 01/05). A tap target styled
@@ -250,6 +289,87 @@ class _HomeSearchFieldState extends State<_HomeSearchField> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// The consumer front-door hero (mockup "Option A"). A prominent additive card
+/// at the top of the home content that routes to the existing Test My Connection
+/// tool. Per GL-003: lime eyebrow, H1 headline, secondary subline, full-width
+/// §8.3 primary (lime / charcoal-text) CTA with a leading network glyph.
+///
+/// The card surface/border/radius match the category tiles (`surface1`,
+/// `AppRadius.card`, a `borderStrong` hairline). Accessibility: the CTA is a real
+/// [FilledButton] with a clear semantic label and inherits the §8.3 lime focus
+/// ring from the app theme; the heading text reads in eyebrow → headline →
+/// subline order, with the eyebrow excluded from the reading order (it is a
+/// styling label, not content the screen reader needs to announce twice).
+class _ConnectionHeroCard extends StatelessWidget {
+  const _ConnectionHeroCard({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.borderStrong, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          // Lime eyebrow — uppercase, letter-spaced. Decorative label.
+          Text(
+            'START HERE',
+            style: text.labelMedium?.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.2,
+            ),
+            semanticsLabel: '',
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          // Headline — H1 bold.
+          Text(
+            'Is it your Wi-Fi or your internet?',
+            style: text.headlineLarge?.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          // Subline — secondary-color supporting copy.
+          Text(
+            'One tap tells you which side is slow, and what to tell support.',
+            style: text.bodyLarge?.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          // Full-width §8.3 primary CTA: lime fill, charcoal text + icon.
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: onTap,
+              icon: const Icon(Icons.network_check),
+              label: const Text('Check My Connection'),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.secondary,
+                minimumSize: const Size.fromHeight(AppSpacing.minTouchTarget),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.control),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -358,8 +478,9 @@ class _CategoryTileState extends State<_CategoryTile> {
                 ),
                 // Fixed gap (not a Spacer): keep the icon row, title, and
                 // examples grouped at the top so taller tiles don't open a dead
-                // band in the middle (Vera IA-redesign density gate).
-                const SizedBox(height: AppSpacing.sm),
+                // band in the middle (Vera IA-redesign density gate). Tightened
+                // sm → xs (2026-06-03) for the denser iOS tile footprint.
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   cat.title,
                   style: text.headlineSmall?.copyWith(
