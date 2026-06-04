@@ -13,6 +13,7 @@ import 'package:wlan_pros_toolbox/screens/tools/network/metric_sparkline.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/net_quality_screen.dart';
 import 'package:wlan_pros_toolbox/theme/app_tokens.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+import 'package:wlan_pros_toolbox/widgets/tool_help_footer.dart';
 
 void main() {
   // A fake reachability prober: 'one.one.one.one' and 'www.google.com' answer
@@ -195,18 +196,28 @@ void main() {
   });
 
   group('help affordance', () {
-    testWidgets('app-bar help icon opens the About these metrics sheet',
+    testWidgets('footer "About this tool" opens the bespoke metrics sheet',
         (tester) async {
       await tester.pumpWidget(harness());
       await tester.pumpAndSettle();
 
-      // The help affordance is the SR-labeled icon button in the app bar.
-      final Finder help = find.bySemanticsLabel('About these metrics');
+      // §8.16.1: the per-tool help affordance is now the shared ToolHelpFooter
+      // at the END of the scroll body, NOT an AppBar icon. It carries the
+      // standard "About this tool" label; wired (via onTap) to this screen's
+      // bespoke showNetQualityHelpSheet so the richer content is unchanged. The
+      // retired AppBar help glyph (tooltip "About these metrics") is gone.
+      expect(find.byTooltip('About these metrics'), findsNothing);
+
+      expect(find.byType(ToolHelpFooter), findsOneWidget);
+      final Finder help = find.text('About this tool');
       expect(help, findsOneWidget);
 
       // Before opening, the help content is not on screen.
       expect(find.text('About Network Quality'), findsNothing);
 
+      // The footer sits at the end of the scroll body; bring it into view.
+      await tester.ensureVisible(help);
+      await tester.pumpAndSettle();
       await tester.tap(help);
       await tester.pumpAndSettle();
 
@@ -234,7 +245,10 @@ void main() {
       await tester.pumpWidget(harness());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.bySemanticsLabel('About these metrics'));
+      final Finder help = find.text('About this tool');
+      await tester.ensureVisible(help);
+      await tester.pumpAndSettle();
+      await tester.tap(help);
       await tester.pumpAndSettle();
 
       // The not-an-Orb/Ookla-score caveat — the load-bearing honesty claim —
@@ -255,7 +269,10 @@ void main() {
       await tester.pumpWidget(harness());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.bySemanticsLabel('About these metrics'));
+      final Finder help = find.text('About this tool');
+      await tester.ensureVisible(help);
+      await tester.pumpAndSettle();
+      await tester.tap(help);
       await tester.pumpAndSettle();
       expect(find.text('About Network Quality'), findsOneWidget);
 

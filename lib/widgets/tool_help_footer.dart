@@ -34,23 +34,56 @@ import 'tool_help_sheet.dart';
 
 /// The §8.16.1 "About this tool" footer for the tool identified by [toolId].
 ///
-/// Renders the footer row only when `helpForId(toolId) != null`; otherwise it
-/// renders a zero-size widget (GL-005 — no help entry, no footer). Tapping it
-/// opens the existing shared [showToolHelpSheet] for that entry. Stateless;
-/// every visual value comes from a GL-003 token (no literal hex / px).
+/// Renders the footer row only when there is real help to lead to; otherwise it
+/// renders a zero-size widget (GL-005 — no help, no footer). Stateless; every
+/// visual value comes from a GL-003 token (no literal hex / px).
+///
+/// Two modes, one identical footer presentation (§8.16.1):
+///   - DEFAULT (no [onTap]): keyed off `helpForId(toolId)`. Renders the footer
+///     only when that lookup returns an entry, and tapping opens the shared
+///     [showToolHelpSheet] for that entry. This is the path the other 73 tool
+///     screens use — unchanged.
+///   - CALLBACK ([onTap] provided): for a screen that owns a richer, bespoke
+///     help presentation (e.g. Network Quality's per-metric `showNetQualityHelpSheet`)
+///     rather than the catalog `helpForId` sheet. The footer renders the SAME
+///     §8.16.1 row (same surface1 / hairline / 24px help_outline / "About this
+///     tool" label / 44pt target / §8.3 focus ring / Semantics button) and
+///     calls [onTap] instead of the default sheet. The catalog `helpForId`
+///     entry is NOT required in this mode — the callback IS the help, so the
+///     GL-005 "affordance must lead to real help" promise is kept by the
+///     caller supplying a real presentation.
 class ToolHelpFooter extends StatelessWidget {
-  const ToolHelpFooter({required this.toolId, super.key});
+  const ToolHelpFooter({required this.toolId, this.onTap, super.key});
 
   /// The catalog tool id whose help to surface — the SAME id the screen passed
   /// to the retired AppBar `ToolHelpAction`, and the id used for the route, the
-  /// icon asset, and the tests.
+  /// icon asset, and the tests. In default mode this id keys the `helpForId`
+  /// lookup; in callback mode it is retained for parity/diagnostics but the
+  /// lookup is bypassed.
   final String toolId;
+
+  /// Optional bespoke help-open callback. When non-null, the footer always
+  /// renders (the callback is the help) and tapping it invokes [onTap] instead
+  /// of opening the catalog `helpForId` sheet. When null, the footer falls back
+  /// to the default `helpForId(toolId)` behavior used by every other screen.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final ToolHelp? help = helpForId(toolId);
-    // No entry → no footer. Never a disabled/empty footer (§8.16.1, GL-005).
-    if (help == null) return const SizedBox.shrink();
+    final VoidCallback? tap = onTap;
+
+    // Resolve the tap action and the render decision once.
+    //   - callback mode → always render; tap = the bespoke callback.
+    //   - default mode  → render only when helpForId resolves; tap opens its sheet.
+    // No render path → no footer (§8.16.1, GL-005): never a disabled/empty footer.
+    final VoidCallback? onActivate;
+    if (tap != null) {
+      onActivate = tap;
+    } else {
+      final ToolHelp? help = helpForId(toolId);
+      if (help == null) return const SizedBox.shrink();
+      onActivate = () => showToolHelpSheet(context, help);
+    }
 
     final TextTheme text = Theme.of(context).textTheme;
 
@@ -82,7 +115,7 @@ class ToolHelpFooter extends StatelessWidget {
           button: true,
           label: 'About this tool',
           child: _FooterButton(
-            onTap: () => showToolHelpSheet(context, help),
+            onTap: onActivate,
             labelStyle: labelStyle,
           ),
         ),

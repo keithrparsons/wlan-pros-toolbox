@@ -38,6 +38,7 @@ import '../../../services/network/network_support.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'live_quality_monitor.dart';
 import 'metric_sparkline.dart';
@@ -194,24 +195,16 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
       appBar: AppBar(
         title: const Text('Network Quality'),
         toolbarHeight: 64,
-        // Help affordance matches wifi_info_screen's idiom: an Icons.help_outline
-        // app-bar action that opens a scrollable help sheet. It surfaces the
-        // approved "About these metrics" copy — the six metrics, the grade
-        // bands, and the honesty caveats. Available on every platform (the copy
-        // is reference content, useful even on the web/unsupported fallback).
-        // §8.16 order: copy LEADS, help (About these metrics) trails. Copy is
-        // disabled until a one-shot run has produced a result.
+        // §8.16.1: copy is the ONLY sanctioned AppBar action on a results
+        // screen. The per-tool help affordance has moved OUT of the AppBar to
+        // the shared ToolHelpFooter at the end of the scroll body (below). The
+        // footer is wired via its onTap callback to this screen's bespoke
+        // showNetQualityHelpSheet, so the richer per-metric help content is
+        // preserved unchanged while the affordance reads identically to every
+        // other tool screen. Copy stays here; it is disabled until a one-shot
+        // run has produced a result.
         actions: <Widget>[
           AppCopyAction(textBuilder: _buildCopyText),
-          Semantics(
-            button: true,
-            label: 'About these metrics',
-            child: IconButton(
-              icon: const Icon(Icons.help_outline),
-              tooltip: 'About these metrics',
-              onPressed: () => showNetQualityHelpSheet(context),
-            ),
-          ),
         ],
       ),
       body: SafeArea(top: false, child: _body()),
@@ -347,6 +340,17 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
                     const SizedBox(height: AppSpacing.sm),
                     _honestyCaption(context),
                   ],
+                  // §8.16.1 tool-help footer — the LAST element in the scroll
+                  // body, inside the content-max-width column. It owns its own
+                  // --space-lg gap above and the bottom safe-area inset, so no
+                  // SizedBox precedes it here. Wired via onTap to the bespoke
+                  // per-metric showNetQualityHelpSheet (richer than the catalog
+                  // helpForId sheet), keeping that content unchanged while the
+                  // affordance matches every other tool screen.
+                  ToolHelpFooter(
+                    toolId: 'net-quality',
+                    onTap: () => showNetQualityHelpSheet(context),
+                  ),
                 ],
               ),
             ),
