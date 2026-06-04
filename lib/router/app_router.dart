@@ -65,6 +65,7 @@ import '../screens/tools/network/arp_ndp_screen.dart';
 import '../screens/tools/network/bgp_asn_screen.dart';
 import '../screens/tools/network/dns_lookup_screen.dart';
 import '../screens/tools/network/http_header_screen.dart';
+import '../screens/tools/network/device_info_screen.dart';
 import '../screens/tools/network/interface_info_screen.dart';
 import '../screens/tools/network/icmp_ping_screen.dart';
 import '../screens/tools/network/ip_geo_screen.dart';
@@ -189,6 +190,11 @@ class AppRouter {
   // download-the-app fallback inside each screen, so the routes are always
   // registered and never crash on web).
   static const String interfaceInfo = '/tools/interface-info';
+
+  /// Device Info — the device's own system facts (model, total memory, uptime,
+  /// cellular IP). Batch 6. The id `device-info` is permanent (backs this route,
+  /// the catalog entry, the help entry, the icon/graphic asset slots, and tests).
+  static const String deviceInfo = '/tools/device-info';
   static const String dnsLookup = '/tools/dns-lookup';
   static const String portScan = '/tools/port-scan';
   static const String ping = '/tools/ping';
@@ -344,6 +350,7 @@ class AppRouter {
     spectrum: (_) => const SpectrumScreen(),
     nonWifiChannels: (_) => const NonWifiChannelsScreen(),
     interfaceInfo: (_) => const InterfaceInfoScreen(),
+    deviceInfo: (_) => const DeviceInfoScreen(),
     dnsLookup: (_) => const DnsLookupScreen(),
     portScan: (_) => const PortScanScreen(),
     ping: (_) => const PingScreen(),

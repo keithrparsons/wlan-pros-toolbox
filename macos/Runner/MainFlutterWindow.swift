@@ -9,6 +9,9 @@ class MainFlutterWindow: NSWindow {
   // SPIKE-HSD-01 — retained so the in-house mDNS EventChannel stream handler
   // stays live (replaces the GPL-3.0 bonsoir plugin; NWBrowser-backed).
   private var mdnsBrowseChannel: MdnsBrowseChannel?
+  // Batch 6 — retained so the Device/System info channel handler (uptime) stays
+  // live for the window lifetime.
+  private var systemInfoChannel: SystemInfoChannel?
 
   override func awakeFromNib() {
     let flutterViewController = FlutterViewController()
@@ -38,6 +41,13 @@ class MainFlutterWindow: NSWindow {
     // available. Drives the OS Bonjour daemon (NSBonjourServices in Info.plist,
     // no multicast entitlement). Replaces the removed GPL-3.0 bonsoir plugin.
     self.mdnsBrowseChannel = MdnsBrowseChannel(
+      messenger: flutterViewController.engine.binaryMessenger
+    )
+
+    // Batch 6 — register the Device/System info channel (uptime via
+    // ProcessInfo.systemUptime). Same binary-messenger pattern as the channels
+    // above so it is unambiguously available.
+    self.systemInfoChannel = SystemInfoChannel(
       messenger: flutterViewController.engine.binaryMessenger
     )
 

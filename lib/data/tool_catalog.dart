@@ -253,6 +253,15 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
       ),
       ToolEntry(
+        id: 'device-info',
+        title: 'Device Info',
+        description:
+            'Device model, total memory, uptime, and cellular IP — the '
+            "device's own system facts",
+        routeName: '/tools/device-info',
+        isLive: true,
+      ),
+      ToolEntry(
         id: 'dns-lookup',
         title: 'Lookup (DNS)',
         description:
