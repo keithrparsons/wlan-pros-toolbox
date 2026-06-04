@@ -858,8 +858,68 @@ void main() {
       ));
       await tester.pumpAndSettle();
       expect(
-        find.textContaining('locally administered — no registered vendor'),
+        find.textContaining('locally administered, no registered vendor'),
         findsOneWidget,
+      );
+    });
+
+    testWidgets(
+        'a globally-administered BSSID with an unlisted OUI reads Unavailable '
+        'with the unregistered-prefix reason (no raw hex as a manufacturer)',
+        (tester) async {
+      // Globally administered (U/L bit clear on 0x00), unicast (I/G bit clear),
+      // but its OUI prefix 00:11:22 is NOT in the bundled IEEE table. The old
+      // behavior leaked the raw hex "00:11:22" into the value as if it were a
+      // resolved manufacturer. The honest behavior: value "Unavailable" + a
+      // note that names the unregistered prefix, never presenting it as a vendor.
+      final ConnectedAp unlisted = ConnectedAp.fromWifiInfo(
+        WifiInfo(
+          interfaceName: 'en0',
+          ssid: 'KeithNet',
+          bssid: '00:11:22:33:44:55', // global + unicast, OUI not in the table
+          rssiDbm: -50,
+          noiseDbm: -95,
+          snrDb: 45,
+          txRateMbps: 866,
+          phyMode: '802.11ax',
+          channel: 36,
+          channelWidthMhz: 80,
+          band: '5 GHz',
+          countryCode: 'US',
+          hardwareAddress: 'a4:83:e7:aa:bb:cc',
+          securityToken: 'wpa2Personal',
+          poweredOn: true,
+          locationAuthorized: true,
+        ),
+      );
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          macAdapter: _FakeMacAdapter(snapshot: unlisted),
+          ouiService: ouiStub(),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      // The AP-vendor row still renders.
+      expect(find.text('AP vendor'), findsOneWidget);
+      // The honest note names the unregistered prefix and surfaces the raw OUI
+      // clearly labeled as such, not as a vendor name.
+      expect(
+        find.textContaining('Unregistered OUI prefix (00:11:22)'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('no IEEE vendor name'),
+        findsOneWidget,
+      );
+      // The bare hex prefix must NEVER appear as the row VALUE (the overclaim).
+      // It appears only inside the parenthetical note above, never standalone.
+      expect(find.text('00:11:22'), findsNothing);
+      // And the matched-manufacturer note must be absent for an unlisted OUI.
+      expect(
+        find.textContaining('not the configured AP name'),
+        findsNothing,
       );
     });
   });

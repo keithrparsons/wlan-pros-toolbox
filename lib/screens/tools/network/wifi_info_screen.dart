@@ -1,4 +1,4 @@
-// Wi-Fi Information — the one cross-platform connected-AP tool (TICKET-04).
+// Wi-Fi Information, the one cross-platform connected-AP tool (TICKET-04).
 //
 // Consolidates the former macOS-only "Wi-Fi Information" and iOS-only "Wi-Fi
 // Details" tools into a SINGLE tool (id/route `wifi-info`, name "Wi-Fi
@@ -15,7 +15,7 @@
 //             raises the monitoring flag and fires the PLAIN, fire-and-forget
 //             run-shortcut trigger once; Stop clears the flag and FREEZES the last
 //             values on screen (the snapshot). There is no separate one-tap "Get
-//             Reading" snapshot on iOS — Live is the only iOS mode.
+//             Reading" snapshot on iOS, Live is the only iOS mode.
 //   * Android / Windows -> honest "coming in a later update" state (clean seam).
 //   * web -> download-the-app fallback.
 //
@@ -131,7 +131,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   /// per CHANGED reading (an unchanged poll does not duplicate the window).
   ConnectedAp? _macLastCharted;
 
-  /// Automatic CoreWLAN poll. macOS has no Start/Stop — it polls while the
+  /// Automatic CoreWLAN poll. macOS has no Start/Stop, it polls while the
   /// screen is mounted (CoreWLAN is local and cheap) and the timer is cancelled
   /// in [dispose]. Paused while the app is backgrounded (lifecycle observer).
   Timer? _macPollTimer;
@@ -313,7 +313,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   // ---- AP-vendor (OUI) lookup ----
 
   /// Loads the bundled IEEE OUI table once (or uses the injected service). The
-  /// lookup is fully offline — no network. A load failure leaves [_ouiService]
+  /// lookup is fully offline, no network. A load failure leaves [_ouiService]
   /// null; the AP-vendor row then shows an honest "vendor database unavailable"
   /// note rather than a wrong or blank value.
   Future<void> _loadOuiTable() async {
@@ -335,18 +335,25 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
 
   /// Resolves the AP vendor (manufacturer) from a BSSID via the bundled OUI
   /// registry. Returns null when the table is not loaded, the BSSID is absent,
-  /// or the BSSID is locally-administered / multicast (no IEEE vendor). This is
-  /// the AP MANUFACTURER, never the configured AP name.
+  /// the BSSID is locally-administered / multicast (no IEEE vendor), OR the
+  /// BSSID is globally administered but its OUI prefix is not in the bundled
+  /// IEEE snapshot. A bare unregistered OUI hex prefix is NOT a resolved
+  /// manufacturer, so we never present it as one here. This is the AP
+  /// MANUFACTURER, never the configured AP name. The precise reason for a null
+  /// rides in the row's note (see [_apVendorNote]).
   String? _apVendorLabel(String? bssid) {
     final MacOuiService? svc = _ouiService;
     if (svc == null || bssid == null || bssid.trim().isEmpty) return null;
-    return svc.vendorLabelFor(bssid);
+    final OuiResult r = svc.lookup(bssid);
+    // Only a real IEEE registry hit is a manufacturer. Invalid, local,
+    // multicast, and unlisted-global all resolve to null (the note explains).
+    return r.matched ? r.vendor : null;
   }
 
   // ---- iOS native security + BSSID (NEHotspotNetwork) ----
 
   /// Reads the iOS coarse security token + BSSID natively and stores it. No-op
-  /// off the iOS source. Never throws — the service resolves to an honest
+  /// off the iOS source. Never throws, the service resolves to an honest
   /// unavailable result on any failure or permission gap.
   Future<void> _fetchIosSecurity() async {
     final WifiSecurityService? svc = _securityService;
@@ -482,7 +489,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   }
 
   /// Arms the automatic CoreWLAN poll. Idempotent: cancels any existing timer
-  /// first so a resume never double-arms. macOS needs no Start/Stop — the poll
+  /// first so a resume never double-arms. macOS needs no Start/Stop, the poll
   /// runs while the screen is foregrounded and is cancelled in [dispose].
   void _startMacPoll() {
     if (!WifiInfoScreen.macPollEnabled) return;
@@ -503,7 +510,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   /// One automatic CoreWLAN re-read. Reuses the same adapter read as the manual
   /// Refresh, but stays silent (no snackbar, no spinner): it updates [_macInfo]
   /// so the cards stay current and appends the reading to [_macSeries] so the
-  /// sparklines advance. A failed poll is swallowed — the last good values and
+  /// sparklines advance. A failed poll is swallowed, the last good values and
   /// the existing card/error state stand; the next poll retries.
   Future<void> _pollMacSample() async {
     final WifiInfoAdapter? adapter = _macAdapter;
@@ -610,7 +617,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       case WifiInfoSource.iosShortcuts:
         final WiFiDetails? d = _liveController?.details;
         // No live RF reading yet, but the native security read may have
-        // resolved on open — surface it so Security / AP vendor show before the
+        // resolved on open, surface it so Security / AP vendor show before the
         // first Shortcut sample. Build a near-empty model carrying just the
         // native security + BSSID so those rows render.
         if (d == null) {
@@ -625,7 +632,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     }
   }
 
-  /// §8.16 copy payload — the connected-AP link as a labeled plain-text block,
+  /// §8.16 copy payload, the connected-AP link as a labeled plain-text block,
   /// mirroring the on-screen metric cards (Network / Signal / Rate / Channel /
   /// Radio / Status). Returns null (→ disabled affordance) until link details
   /// exist. On iOS this copies whatever the live stream currently shows; a tap
@@ -634,7 +641,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   /// Honesty (GL-005): a field the platform cannot expose is written as
   /// "Unavailable", and the two per-platform reasons the cards surface
   /// (Rx rate, Channel width) travel as an explicit "Not reported on this
-  /// platform" note — never a blank, never a fabricated value.
+  /// platform" note, never a blank, never a fabricated value.
   String? _buildCopyText() {
     final ConnectedAp? info = _currentAp();
     if (info == null) return null;
@@ -656,7 +663,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       ..writeln('Security')
       ..writeln(
         '  Security type: ${info.securityAvailable ? _copyVal(info.securityType?.label, null) : 'Not exposed by $platformLabel'}'
-        '${(info.securityType?.isPersonalCoarse ?? false) || (info.securityType?.isEnterpriseCoarse ?? false) ? ' (iOS coarse — WPA2/WPA3 not distinguished)' : ''}',
+        '${(info.securityType?.isPersonalCoarse ?? false) || (info.securityType?.isEnterpriseCoarse ?? false) ? ' (iOS coarse, WPA2/WPA3 not distinguished)' : ''}',
       );
 
     buf
@@ -835,7 +842,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
 
   /// macOS location card (three states). Returns null when no card is needed.
   ///
-  /// macOS-only — the card and its deep-link are never built on iOS (the iOS
+  /// macOS-only, the card and its deep-link are never built on iOS (the iOS
   /// path reads the network name through the Shortcut bridge and has no Location
   /// gate, so it routes through [_iosBody], not here).
   Widget? _buildLocationCard(ConnectedAp info) {
@@ -930,7 +937,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         _MetricRow(label: 'BSSID', value: info.bssid, mono: true),
         // AP vendor (manufacturer) resolved offline from the BSSID's IEEE OUI.
         // This is the AP MANUFACTURER, not the configured AP name (which is not
-        // readable on iOS/macOS) — the note says so.
+        // readable on iOS/macOS), the note says so.
         _MetricRow(
           label: 'AP vendor',
           value: _apVendorValue(info.bssid),
@@ -946,21 +953,44 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   String? _apVendorValue(String? bssid) => _apVendorLabel(bssid);
 
   /// The honest note for the AP-vendor row: explains WHY it is unavailable
-  /// (no BSSID / database loading / randomized BSSID), or clarifies that a
-  /// present value is the manufacturer, not the configured AP name.
+  /// (no BSSID / database loading / randomized BSSID / unregistered OUI), or
+  /// clarifies that a present value is the manufacturer, not the configured AP
+  /// name. Reads the structured [OuiResult] so each not-resolved state gets its
+  /// own honest reason instead of one catch-all.
   String? _apVendorNote(String? bssid) {
     if (bssid == null || bssid.trim().isEmpty) {
       return 'Needs the BSSID (AP MAC) to look up';
     }
-    if (_ouiService == null) {
+    final MacOuiService? svc = _ouiService;
+    if (svc == null) {
       return 'Loading the offline vendor database…';
     }
-    final String? vendor = _apVendorLabel(bssid);
-    if (vendor == null) {
-      // The BSSID resolved but no IEEE vendor — locally-administered/multicast.
-      return 'BSSID is locally administered — no registered vendor';
+    final OuiResult r = svc.lookup(bssid);
+    if (r.matched) {
+      return 'AP manufacturer (from the BSSID), not the configured AP name';
     }
-    return 'AP manufacturer (from the BSSID), not the configured AP name';
+    if (!r.isValid) {
+      return 'BSSID is not a readable MAC address';
+    }
+    if (r.isLocal || r.isMulticast) {
+      // Randomized / software-assigned address, not from an IEEE block.
+      return 'BSSID is locally administered, no registered vendor';
+    }
+    // Globally administered but the OUI prefix is not in the bundled IEEE
+    // snapshot. A bare hex prefix is not a manufacturer, so the value reads
+    // "Unavailable" and we say exactly why, surfacing the raw prefix as such.
+    final String prefix = _ouiPrefixLabel(r.oui);
+    return 'Unregistered OUI prefix$prefix, no IEEE vendor name';
+  }
+
+  /// Formats a 24-bit OUI hex (e.g. `0011225` → `00:11:22`) for display inside
+  /// the note, clearly labeled as a raw prefix rather than a vendor. Returns an
+  /// empty string when there is no usable prefix.
+  String _ouiPrefixLabel(String? oui) {
+    if (oui == null || oui.length < 6) return '';
+    final String p =
+        '${oui.substring(0, 2)}:${oui.substring(2, 4)}:${oui.substring(4, 6)}';
+    return ' ($p)';
   }
 
   /// The Security card. Renders the normalized security label, with the honest
@@ -982,7 +1012,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           ? sec.reason
           : 'Not in this reading';
     } else if (security.isPersonalCoarse || security.isEnterpriseCoarse) {
-      note = 'iOS reports only Open / Personal / Enterprise — it cannot '
+      note = 'iOS reports only Open / Personal / Enterprise. It cannot '
           'distinguish WPA2 from WPA3';
     }
 
@@ -1545,7 +1575,7 @@ class _Card extends StatelessWidget {
   /// Top/bottom inset for the card. Defaults to `sm` (16px) for the macOS
   /// snapshot / idle / error cards. The Live charts pass a tighter `xs` (8px)
   /// so the dense per-metric sparkline stack fits a phone screen without
-  /// clipping — horizontal inset stays `sm` so content edges still align.
+  /// clipping, horizontal inset stays `sm` so content edges still align.
   final double verticalPadding;
 
   @override
@@ -1709,7 +1739,7 @@ class _MetricRow extends StatelessWidget {
 }
 
 // ===========================================================================
-// iOS Live mode — continuous streaming surface (the only iOS mode)
+// iOS Live mode, continuous streaming surface (the only iOS mode)
 // ===========================================================================
 
 /// The Live body: the Start/Stop monitor bar, and either the idle start hint,
@@ -1796,7 +1826,7 @@ class _LiveBody extends StatelessWidget {
                     ],
                   ],
                   // First-time SETUP hint only. Once the app has EVER received a
-                  // Live payload (hasEverReceived — mirrors the App Group
+                  // Live payload (hasEverReceived, mirrors the App Group
                   // shortcuts_bridge.has_received_payload flag), the user clearly
                   // has the companion Shortcut working, so the install/how-to note
                   // is noise and is hidden permanently.
@@ -1874,13 +1904,13 @@ class _LiveTriggerErrorCard extends StatelessWidget {
 /// Live sparkline chart height. A denser glyph metric than the [Sparkline]
 /// default (40) so the four-metric Live stack (RSSI / SNR / Tx / Rx) fits a
 /// phone screen without the bottom card clipping; still tall enough to read the
-/// trend. Live-mode only — the macOS snapshot cards carry no sparkline.
+/// trend. Live-mode only, the macOS snapshot cards carry no sparkline.
 const double _liveSparklineHeight = 32;
 
 /// The Live charting + grading surface. RSSI and SNR each carry a graded chip +
 /// sparkline; Tx and Rx rate each carry a trend label + sparkline (rates are
-/// NOT hard-graded — a "good" rate is relative to band/width/MCS, so the value +
-/// direction is the honest signal). Congestion / CCA is intentionally absent —
+/// NOT hard-graded, a "good" rate is relative to band/width/MCS, so the value +
+/// direction is the honest signal). Congestion / CCA is intentionally absent;
 /// iOS does not expose channel utilization and we do not fabricate it (GL-005).
 class _LiveCharts extends StatelessWidget {
   const _LiveCharts({
@@ -2047,7 +2077,7 @@ class _GradedMetricChart extends StatelessWidget {
 
 /// A trend dimension card (rates): label, current value, and a lime sparkline.
 /// Rates are not hard-graded, so the line stays the §8.3 lime accent (no verdict
-/// tint) and the sparkline alone carries the rising/falling/steady signal — the
+/// tint) and the sparkline alone carries the rising/falling/steady signal, the
 /// redundant trend word was dropped 2026-06-02 (Keith). When the platform does
 /// not expose the rate, an honest [unavailableNote] explains why.
 class _TrendMetricChart extends StatelessWidget {
@@ -2186,7 +2216,7 @@ class _GradeChip extends StatelessWidget {
 /// Honest note about the recursive companion Shortcut for Live mode. While the
 /// looping Shortcut link is still a placeholder (pre-publish), the affordance to
 /// get it is a plain disabled note rather than a tappable link the app could not
-/// open — mirroring how the cellular tool gated its Install action.
+/// open, mirroring how the cellular tool gated its Install action.
 class _LoopShortcutNote extends StatelessWidget {
   const _LoopShortcutNote();
 
