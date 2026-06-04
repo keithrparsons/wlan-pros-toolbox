@@ -579,6 +579,36 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Conversions',
       ),
+      // ── Batch 4a: general-purpose unit converter (sibling of the
+      // distance-only metric-conversion). Custom icon is a follow-up; the
+      // catalog falls back to the category glyph until an SVG ships. ──
+      ToolEntry(
+        id: 'unit-converter',
+        title: 'Unit Converter',
+        description: 'Data rate, storage, length, power, time, and more',
+        routeName: '/tools/unit-converter',
+        isLive: true,
+        subgroup: 'Conversions',
+      ),
+      // ── Batch 4b/4c: standalone field utilities. New "Utilities &
+      // Generators" subgroup (registered in tool_subgroups.dart). Custom icons
+      // are a follow-up; both fall back to the category glyph for now. ──
+      ToolEntry(
+        id: 'qr-generator',
+        title: 'QR Code Generator',
+        description: 'Encode text or a URL to a scannable QR code',
+        routeName: '/tools/qr-generator',
+        isLive: true,
+        subgroup: 'Utilities & Generators',
+      ),
+      ToolEntry(
+        id: 'dtmf-generator',
+        title: 'DTMF Generator',
+        description: 'Play Touch-Tone keypad tones (0-9, *, #, A-D)',
+        routeName: '/tools/dtmf-generator',
+        isLive: true,
+        subgroup: 'Utilities & Generators',
+      ),
       // ── moved in from the dissolved Planning Tools category (2026-06-01) ──
       ToolEntry(
         id: 'poe-budget',
