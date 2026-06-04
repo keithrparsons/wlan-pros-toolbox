@@ -42,12 +42,14 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../services/location/device_location.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/location_map.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -309,6 +311,73 @@ class _LatLongScreenState extends State<LatLongScreen> {
     await widget.location.openSettings();
   }
 
+  // ─── Map actions ────────────────────────────────────────────────────────────
+  //
+  // The currently entered coordinate (GPS-prefilled or hand-typed), as a signed
+  // (lat, lon) pair, or null when either field is empty / non-numeric / out of
+  // range. Drives the "Open in … Maps" + "Copy map link" actions, which are
+  // shown only when there is a real coordinate to point at (honest affordance —
+  // never a button that opens a map of 0,0).
+  ({double lat, double lon})? _mapCoords() {
+    final double? lat = _tryParseDouble(_latCtrl.text);
+    final double? lon = _tryParseDouble(_lonCtrl.text);
+    if (lat == null || lon == null) return null;
+    if (!lat.isFinite || !lon.isFinite) return null;
+    if (lat.abs() > 90 || lon.abs() > 180) return null;
+    return (lat: lat, lon: lon);
+  }
+
+  /// Opens the platform Apple Maps at the current coordinate. The
+  /// `maps.apple.com` universal link resolves to the native Maps app on iOS and
+  /// macOS and to the web map elsewhere. Six decimals matches the DD format.
+  Future<void> _openAppleMaps() async {
+    final c = _mapCoords();
+    if (c == null) return;
+    final String ll = '${c.lat.toStringAsFixed(6)},${c.lon.toStringAsFixed(6)}';
+    await _launch(Uri.parse('https://maps.apple.com/?ll=$ll&q=$ll'));
+  }
+
+  /// Opens Google Maps at the current coordinate via the documented universal
+  /// Maps URL, which hands off to the Google Maps app when installed and falls
+  /// back to the browser otherwise.
+  Future<void> _openGoogleMaps() async {
+    final c = _mapCoords();
+    if (c == null) return;
+    final String q = '${c.lat.toStringAsFixed(6)},${c.lon.toStringAsFixed(6)}';
+    await _launch(
+      Uri.parse('https://www.google.com/maps/search/?api=1&query=$q'),
+    );
+  }
+
+  /// Copies a shareable Google Maps link to the clipboard (works in any
+  /// browser, on any platform, for the person you send it to).
+  Future<void> _copyMapLink() async {
+    final c = _mapCoords();
+    if (c == null) return;
+    final String q = '${c.lat.toStringAsFixed(6)},${c.lon.toStringAsFixed(6)}';
+    final String link = 'https://www.google.com/maps/search/?api=1&query=$q';
+    await Clipboard.setData(ClipboardData(text: link));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Map link copied')),
+    );
+  }
+
+  /// Shared launcher with an honest failure path: if no app/browser can open
+  /// the URL, tell the user rather than failing silently.
+  Future<void> _launch(Uri uri) async {
+    bool ok;
+    try {
+      ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      ok = false;
+    }
+    if (ok || !mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Could not open a maps app.')),
+    );
+  }
+
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
   void _recompute() {
@@ -446,6 +515,12 @@ class _LatLongScreenState extends State<LatLongScreen> {
                       _inputCard(text, mono),
                       const SizedBox(height: AppSpacing.md),
                       _resultCard(text, mono),
+                      if (_mapCoords() case final c?) ...[
+                        const SizedBox(height: AppSpacing.md),
+                        _mapCard(text, c),
+                        const SizedBox(height: AppSpacing.md),
+                        _mapActionsCard(text),
+                      ],
                       const SizedBox(height: AppSpacing.md),
                       _formatCard(text, mono),
                       ToolHelpFooter(toolId: 'lat-long'),
@@ -763,9 +838,114 @@ class _LatLongScreenState extends State<LatLongScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            'Coordinates',
+            style: text.labelMedium?.copyWith(
+              color: AppColors.textSecondary,
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
           _resultBlock('Latitude', _lat, text, mono),
           const SizedBox(height: AppSpacing.md),
           _resultBlock('Longitude', _lon, text, mono),
+        ],
+      ),
+    );
+  }
+
+  // ─── Map-preview card ───────────────────────────────────────────────────────
+  //
+  // Shown only when a valid coordinate exists (same gate as the map-actions
+  // card). An embedded, ONLINE-ONLY OpenStreetMap surface (GL-003 §8.18) that
+  // plots the entered/GPS coordinate with a single lime pin. The map is the
+  // §8.18 container itself (surface-1 / 12px / borderStrong), so this card adds
+  // only the heading above it and the honest "needs internet" note below — the
+  // tiles are online-only (OSMF policy: no offline caching), so when the device
+  // is offline the tiles simply fail to load and this note explains why.
+  Widget _mapCard(TextTheme text, ({double lat, double lon}) c) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+          child: Text(
+            'Map',
+            style: text.labelMedium?.copyWith(
+              color: AppColors.textSecondary,
+              letterSpacing: 0.4,
+            ),
+          ),
+        ),
+        LocationMap(latitude: c.lat, longitude: c.lon),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          'The map needs an internet connection. Tiles © OpenStreetMap '
+          'contributors; loaded live, never stored offline.',
+          style: text.bodySmall?.copyWith(color: AppColors.textTertiary),
+        ),
+      ],
+    );
+  }
+
+  // ─── Map-actions card ───────────────────────────────────────────────────────
+  //
+  // Shown only when a valid coordinate exists. Three secondary actions
+  // (OutlinedButton, not the lime primary which the location card owns):
+  // open the point in Apple Maps, open it in Google Maps, or copy a shareable
+  // map link. Wrap so the row reflows on a narrow phone width.
+  Widget _mapActionsCard(TextTheme text) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Open this location',
+            style: text.labelMedium?.copyWith(
+              color: AppColors.textSecondary,
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Wrap(
+            spacing: AppSpacing.xs,
+            runSpacing: AppSpacing.xs,
+            children: <Widget>[
+              Semantics(
+                button: true,
+                label: 'Open in Apple Maps',
+                child: OutlinedButton.icon(
+                  onPressed: _openAppleMaps,
+                  icon: const Icon(Icons.map_outlined, size: 18),
+                  label: const Text('Apple Maps'),
+                ),
+              ),
+              Semantics(
+                button: true,
+                label: 'Open in Google Maps',
+                child: OutlinedButton.icon(
+                  onPressed: _openGoogleMaps,
+                  icon: const Icon(Icons.public, size: 18),
+                  label: const Text('Google Maps'),
+                ),
+              ),
+              Semantics(
+                button: true,
+                label: 'Copy map link',
+                child: OutlinedButton.icon(
+                  onPressed: _copyMapLink,
+                  icon: const Icon(Icons.link, size: 18),
+                  label: const Text('Copy map link'),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
