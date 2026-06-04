@@ -21,6 +21,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/network_unavailable_view.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/wifi_info_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
+import 'package:wlan_pros_toolbox/services/network/mac_oui_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
@@ -747,6 +748,119 @@ void main() {
       ));
       await tester.pumpAndSettle();
       expect(find.text('Coming in a later update'), findsOneWidget);
+    });
+  });
+
+  // Batch 7 — Security type + AP vendor (entitlement-gated enrichment).
+  group('WifiInfoScreen — Batch 7 Security + AP vendor', () {
+    // A small OUI table standing in for the bundled asset, so the AP-vendor row
+    // resolves a real manufacturer without loading the 50k-line file.
+    MacOuiService ouiStub() => MacOuiService.fromTable(<String, String>{
+          'A483E7': 'Apple, Inc.',
+        });
+
+    // A macOS sample carrying a fine-grained security token + the test BSSID.
+    ConnectedAp macSecuritySample(String token) => ConnectedAp.fromWifiInfo(
+          WifiInfo(
+            interfaceName: 'en0',
+            ssid: 'KeithNet',
+            bssid: 'a4:83:e7:00:11:22',
+            rssiDbm: -50,
+            noiseDbm: -95,
+            snrDb: 45,
+            txRateMbps: 866,
+            phyMode: '802.11ax',
+            channel: 36,
+            channelWidthMhz: 80,
+            band: '5 GHz',
+            countryCode: 'US',
+            hardwareAddress: 'a4:83:e7:aa:bb:cc',
+            securityToken: token,
+            poweredOn: true,
+            locationAuthorized: true,
+          ),
+        );
+
+    testWidgets('macOS renders the fine WPA3 security label + AP vendor',
+        (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          macAdapter:
+              _FakeMacAdapter(snapshot: macSecuritySample('wpa3Transition')),
+          ouiService: ouiStub(),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      // Security card with the FINE macOS truth.
+      expect(find.text('Security'), findsOneWidget);
+      expect(find.text('WPA2/WPA3 Transition'), findsOneWidget);
+      // No iOS-coarse caveat on macOS (it gives the real WPA generation).
+      expect(find.textContaining('cannot distinguish WPA2 from WPA3'),
+          findsNothing);
+
+      // AP-vendor row resolves the manufacturer from the BSSID's OUI.
+      expect(find.text('AP vendor'), findsOneWidget);
+      expect(find.text('Apple, Inc.'), findsOneWidget);
+      // Honest clarification: manufacturer, not the configured AP name.
+      expect(
+        find.textContaining('not the configured AP name'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
+        'macOS WPA2 Personal renders the fine label, no coarse caveat',
+        (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          macAdapter:
+              _FakeMacAdapter(snapshot: macSecuritySample('wpa2Personal')),
+          ouiService: ouiStub(),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.text('WPA2 Personal'), findsOneWidget);
+    });
+
+    testWidgets(
+        'a locally-administered BSSID shows the honest no-vendor reason',
+        (tester) async {
+      // Flip the U/L bit on the first octet → randomized BSSID, no IEEE vendor.
+      final ConnectedAp randomized = ConnectedAp.fromWifiInfo(
+        WifiInfo(
+          interfaceName: 'en0',
+          ssid: 'KeithNet',
+          bssid: 'a6:83:e7:00:11:22', // a6 = a4 with the 0x02 bit set
+          rssiDbm: -50,
+          noiseDbm: -95,
+          snrDb: 45,
+          txRateMbps: 866,
+          phyMode: '802.11ax',
+          channel: 36,
+          channelWidthMhz: 80,
+          band: '5 GHz',
+          countryCode: 'US',
+          hardwareAddress: 'a4:83:e7:aa:bb:cc',
+          securityToken: 'wpa2Personal',
+          poweredOn: true,
+          locationAuthorized: true,
+        ),
+      );
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          macAdapter: _FakeMacAdapter(snapshot: randomized),
+          ouiService: ouiStub(),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('locally administered — no registered vendor'),
+        findsOneWidget,
+      );
     });
   });
 }

@@ -11,5 +11,15 @@
 	<array>
 		<string>group.com.wlanpros.wlanProsToolbox</string>
 	</array>
+	<!-- TICKET-BATCH7: Access Wi-Fi Information entitlement. Required to read the
+	     connected network's security type and BSSID via NEHotspotNetwork
+	     (WifiSecurityChannel.swift). Paired with Location-When-In-Use at runtime.
+	     NEW ENTITLEMENT — needs an App Store justification at submission:
+	     "The app reads the connected Wi-Fi network's security type and AP vendor
+	     (from the BSSID's IEEE OUI) on-device, to help users understand their
+	     own Wi-Fi link. The data is shown to the user and never collected or
+	     transmitted." Apple must enable this capability on the App ID. -->
+	<key>com.apple.developer.networking.wifi-info</key>
+	<true/>
 </dict>
 </plist>

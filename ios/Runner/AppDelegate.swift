@@ -16,6 +16,10 @@ import UIKit
   // stays live (replaces the GPL-3.0 bonsoir plugin; NWBrowser-backed).
   private var mdnsBrowseChannel: MdnsBrowseChannel?
 
+  // TICKET-BATCH7: retained so the NEHotspotNetwork security + BSSID method
+  // channel handler stays live for the engine's lifetime.
+  private var wifiSecurityChannel: WifiSecurityChannel?
+
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
@@ -32,6 +36,10 @@ import UIKit
     // the OS Bonjour daemon (NSBonjourServices in Info.plist, no multicast
     // entitlement). Replaces the removed GPL-3.0 bonsoir plugin.
     mdnsBrowseChannel = MdnsBrowseChannel(messenger: messenger)
+    // TICKET-BATCH7 — register the NEHotspotNetwork security + BSSID channel.
+    // Reads the connected network's (coarse) security type and BSSID directly,
+    // gated by the Access Wi-Fi Information entitlement + Location permission.
+    wifiSecurityChannel = WifiSecurityChannel(messenger: messenger)
   }
 
   // MARK: - Shortcuts bridge (TICKET-01 spike)

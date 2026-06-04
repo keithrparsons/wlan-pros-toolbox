@@ -43,10 +43,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:net_quality/net_quality.dart' show QualityGrade, QualityGradeLabel;
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/connected_ap.dart';
+import '../../../services/network/mac_oui_service.dart';
 import '../../../services/network/mac_randomization.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/wifi_details.dart';
@@ -56,6 +58,8 @@ import '../../../services/network/wifi_info_adapter.dart';
 import '../../../services/network/wifi_info_service.dart';
 import '../../../services/network/wifi_live_shortcuts_config.dart';
 import '../../../services/network/wifi_monitor_controller.dart';
+import '../../../services/network/wifi_security.dart';
+import '../../../services/network/wifi_security_service.dart';
 import '../../../services/network/wifi_time_series.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
@@ -71,6 +75,8 @@ class WifiInfoScreen extends StatefulWidget {
     this.sourceOverride,
     this.macAdapter,
     this.iosBridge,
+    this.ouiService,
+    this.securityService,
   });
 
   /// Forces a specific data source (tests). Defaults to the host platform.
@@ -81,6 +87,15 @@ class WifiInfoScreen extends StatefulWidget {
 
   /// Injectable iOS bridge (tests). Defaults to the real Shortcuts bridge.
   final WiFiDetailsBridge? iosBridge;
+
+  /// Injectable OUI vendor resolver (tests). When provided, the screen skips the
+  /// asset load and uses this service for the AP-vendor row. Defaults to loading
+  /// the bundled IEEE OUI table from `assets/oui/oui_table.tsv`.
+  final MacOuiService? ouiService;
+
+  /// Injectable iOS security service (tests). Defaults to the real
+  /// NEHotspotNetwork channel. Only used on the iOS source.
+  final WifiSecurityService? securityService;
 
   /// Poll cadence for the macOS CoreWLAN re-read. Overridable in tests so the
   /// poll can be pumped deterministically.
@@ -144,10 +159,29 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   /// missing / not installed). Surfaced as the honest error in the Live bar.
   bool _liveTriggerError = false;
 
+  // ---- AP-vendor (OUI) lookup state (both platforms) ----
+
+  /// Bundled IEEE OUI resolver. Loaded once from the bundled asset (or injected
+  /// in tests). Null until the load completes; the AP-vendor row shows a brief
+  /// "loading the vendor database" note until then. The lookup is fully offline.
+  MacOuiService? _ouiService;
+
+  // ---- iOS native security + BSSID state (NEHotspotNetwork) ----
+
+  /// iOS-only service that reads the coarse security token + BSSID directly via
+  /// NEHotspotNetwork. The RF metrics still arrive via the Shortcut; this fills
+  /// the two entitlement-gated fields the Shortcut path does not carry.
+  WifiSecurityService? _securityService;
+
+  /// The latest native iOS security read, or null before the first read. Carries
+  /// the coarse security token, the BSSID, and the honest unavailable reason.
+  WifiSecurityInfo? _iosSecurity;
+
   @override
   void initState() {
     super.initState();
     _source = widget.sourceOverride ?? WifiInfoSourceResolver.resolve();
+    _loadOuiTable();
 
     switch (_source) {
       case WifiInfoSource.macosCoreWlan:
@@ -162,8 +196,12 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         _liveController = WifiMonitorController(bridge: _iosBridge!);
         _series = WifiTimeSeries();
         _liveController!.addListener(_captureSample);
+        _securityService = widget.securityService ?? WifiSecurityService();
         WidgetsBinding.instance.addObserver(this);
         _liveController!.load();
+        // Read the native security type + BSSID once on open. Re-read on resume
+        // (lifecycle) so a Location grant in Settings lands without a relaunch.
+        _fetchIosSecurity();
       case WifiInfoSource.unsupported:
       case WifiInfoSource.web:
         break;
@@ -177,6 +215,9 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     if (state == AppLifecycleState.resumed &&
         _source == WifiInfoSource.iosShortcuts) {
       _liveController?.load();
+      // Re-read the native security + BSSID so a Location grant made in Settings
+      // (while backgrounded) lands without an app relaunch.
+      _fetchIosSecurity();
     }
 
     // macOS: pause the CoreWLAN poll while backgrounded (no point re-reading a
@@ -267,6 +308,107 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   Future<void> _stopLive() async {
     await _liveController?.stopMonitoring();
     if (mounted) setState(() {});
+  }
+
+  // ---- AP-vendor (OUI) lookup ----
+
+  /// Loads the bundled IEEE OUI table once (or uses the injected service). The
+  /// lookup is fully offline — no network. A load failure leaves [_ouiService]
+  /// null; the AP-vendor row then shows an honest "vendor database unavailable"
+  /// note rather than a wrong or blank value.
+  Future<void> _loadOuiTable() async {
+    final MacOuiService? injected = widget.ouiService;
+    if (injected != null) {
+      _ouiService = injected;
+      return;
+    }
+    try {
+      final String raw = await rootBundle.loadString('assets/oui/oui_table.tsv');
+      final Map<String, String> table = MacOuiService.parseTable(raw);
+      if (!mounted) return;
+      setState(() => _ouiService = MacOuiService.fromTable(table));
+    } on Object catch (e) {
+      // Honest: the row will read "vendor database unavailable", never invented.
+      debugPrint('WifiInfoScreen: OUI table load failed: $e');
+    }
+  }
+
+  /// Resolves the AP vendor (manufacturer) from a BSSID via the bundled OUI
+  /// registry. Returns null when the table is not loaded, the BSSID is absent,
+  /// or the BSSID is locally-administered / multicast (no IEEE vendor). This is
+  /// the AP MANUFACTURER, never the configured AP name.
+  String? _apVendorLabel(String? bssid) {
+    final MacOuiService? svc = _ouiService;
+    if (svc == null || bssid == null || bssid.trim().isEmpty) return null;
+    return svc.vendorLabelFor(bssid);
+  }
+
+  // ---- iOS native security + BSSID (NEHotspotNetwork) ----
+
+  /// Reads the iOS coarse security token + BSSID natively and stores it. No-op
+  /// off the iOS source. Never throws — the service resolves to an honest
+  /// unavailable result on any failure or permission gap.
+  Future<void> _fetchIosSecurity() async {
+    final WifiSecurityService? svc = _securityService;
+    if (svc == null) return;
+    final WifiSecurityInfo info = await svc.fetch();
+    if (!mounted) return;
+    setState(() => _iosSecurity = info);
+  }
+
+  /// iOS: requests Location-When-In-Use (the NEHotspotNetwork gate), then
+  /// re-reads the security + BSSID regardless of the result.
+  Future<void> _grantIosSecurityLocation() async {
+    final WifiSecurityService? svc = _securityService;
+    if (svc == null) return;
+    await svc.requestLocationPermission();
+    await _fetchIosSecurity();
+  }
+
+  /// iOS: opens the app's Settings page so the user can enable Location manually.
+  Future<void> _openIosSecuritySettings() async {
+    await _securityService?.openLocationSettings();
+  }
+
+  /// Folds the native iOS security read (security token + BSSID) onto a
+  /// Shortcut-derived [ConnectedAp]. The Shortcut path does not carry the
+  /// security type, and the BSSID may be absent there too, so we enrich both
+  /// from NEHotspotNetwork when available. macOS already carries both directly,
+  /// so this is a no-op off the iOS source.
+  ConnectedAp _enrichIos(ConnectedAp ap) {
+    final WifiSecurityInfo? sec = _iosSecurity;
+    if (sec == null || !sec.available) return ap;
+    final WifiSecurity? security = WifiSecurityClassifier.classify(
+      sec.securityToken,
+    );
+    final ConnectedAp withSec = ap.withSecurity(security);
+    // Prefer a BSSID the Shortcut already supplied; fall back to the native one.
+    if (withSec.bssid == null && sec.bssid != null) {
+      return ConnectedAp(
+        ssid: withSec.ssid,
+        bssid: sec.bssid,
+        rssiDbm: withSec.rssiDbm,
+        noiseDbm: withSec.noiseDbm,
+        snrDb: withSec.snrDb,
+        txRateMbps: withSec.txRateMbps,
+        rxRateMbps: withSec.rxRateMbps,
+        channel: withSec.channel,
+        channelWidthMhz: withSec.channelWidthMhz,
+        band: withSec.band,
+        standard: withSec.standard,
+        countryCode: withSec.countryCode,
+        interfaceName: withSec.interfaceName,
+        hardwareAddress: withSec.hardwareAddress,
+        securityType: withSec.securityType,
+        poweredOn: withSec.poweredOn,
+        rxRateAvailable: withSec.rxRateAvailable,
+        channelWidthAvailable: withSec.channelWidthAvailable,
+        bandDerived: withSec.bandDerived,
+        snrDerived: withSec.snrDerived,
+        securityAvailable: withSec.securityAvailable,
+      );
+    }
+    return withSec;
   }
 
   // ---- macOS data flow ----
@@ -467,7 +609,16 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         return _macInfo;
       case WifiInfoSource.iosShortcuts:
         final WiFiDetails? d = _liveController?.details;
-        return d == null ? null : ConnectedAp.fromWifiDetails(d);
+        // No live RF reading yet, but the native security read may have
+        // resolved on open — surface it so Security / AP vendor show before the
+        // first Shortcut sample. Build a near-empty model carrying just the
+        // native security + BSSID so those rows render.
+        if (d == null) {
+          final WifiSecurityInfo? sec = _iosSecurity;
+          if (sec == null || !sec.available) return null;
+          return _enrichIos(const ConnectedAp(securityAvailable: true));
+        }
+        return _enrichIos(ConnectedAp.fromWifiDetails(d));
       case WifiInfoSource.unsupported:
       case WifiInfoSource.web:
         return null;
@@ -497,7 +648,16 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       ..writeln()
       ..writeln('Network')
       ..writeln('  SSID: ${_copyVal(info.ssid, null)}')
-      ..writeln('  BSSID: ${_copyVal(info.bssid, null)}');
+      ..writeln('  BSSID: ${_copyVal(info.bssid, null)}')
+      ..writeln('  AP vendor: ${_copyVal(_apVendorLabel(info.bssid), null)}');
+
+    buf
+      ..writeln()
+      ..writeln('Security')
+      ..writeln(
+        '  Security type: ${info.securityAvailable ? _copyVal(info.securityType?.label, null) : 'Not exposed by $platformLabel'}'
+        '${(info.securityType?.isPersonalCoarse ?? false) || (info.securityType?.isEnterpriseCoarse ?? false) ? ' (iOS coarse — WPA2/WPA3 not distinguished)' : ''}',
+      );
 
     buf
       ..writeln()
@@ -724,6 +884,10 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           triggerError: _liveTriggerError,
           onStart: _startLive,
           onStop: _stopLive,
+          // Fold the native security token + BSSID onto each live reading so the
+          // Security / AP-vendor rows render from the same enriched model the
+          // rest of the cards use.
+          enrich: _enrichIos,
           // The grouped metric cards belong to the State (they read the shared
           // _metricCards builder), so they are passed in as a builder over the
           // SAME latest reading the charts use. Null until the first sample, so
@@ -744,6 +908,8 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     return <Widget>[
       _networkCard(info),
       const SizedBox(height: AppSpacing.sm),
+      _securityCard(info, platformLabel),
+      const SizedBox(height: AppSpacing.sm),
       _signalCard(info),
       const SizedBox(height: AppSpacing.sm),
       _rateCard(info, platformLabel),
@@ -762,9 +928,110 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       children: [
         _MetricRow(label: 'SSID', value: info.ssid),
         _MetricRow(label: 'BSSID', value: info.bssid, mono: true),
+        // AP vendor (manufacturer) resolved offline from the BSSID's IEEE OUI.
+        // This is the AP MANUFACTURER, not the configured AP name (which is not
+        // readable on iOS/macOS) — the note says so.
+        _MetricRow(
+          label: 'AP vendor',
+          value: _apVendorValue(info.bssid),
+          note: _apVendorNote(info.bssid),
+        ),
       ],
     ),
   );
+
+  /// The AP-vendor row value: the manufacturer resolved from the BSSID's OUI,
+  /// or null (→ "Unavailable") when the BSSID is absent, the table has not
+  /// loaded, or the BSSID is locally-administered (no IEEE vendor).
+  String? _apVendorValue(String? bssid) => _apVendorLabel(bssid);
+
+  /// The honest note for the AP-vendor row: explains WHY it is unavailable
+  /// (no BSSID / database loading / randomized BSSID), or clarifies that a
+  /// present value is the manufacturer, not the configured AP name.
+  String? _apVendorNote(String? bssid) {
+    if (bssid == null || bssid.trim().isEmpty) {
+      return 'Needs the BSSID (AP MAC) to look up';
+    }
+    if (_ouiService == null) {
+      return 'Loading the offline vendor database…';
+    }
+    final String? vendor = _apVendorLabel(bssid);
+    if (vendor == null) {
+      // The BSSID resolved but no IEEE vendor — locally-administered/multicast.
+      return 'BSSID is locally administered — no registered vendor';
+    }
+    return 'AP manufacturer (from the BSSID), not the configured AP name';
+  }
+
+  /// The Security card. Renders the normalized security label, with the honest
+  /// iOS-coarse footnote and the iOS Location-gate affordance when the native
+  /// read is blocked by a missing permission.
+  Widget _securityCard(ConnectedAp info, String platformLabel) {
+    final WifiSecurity? security = info.securityType;
+    final bool isIos = _source == WifiInfoSource.iosShortcuts;
+
+    // Honest note: the coarse-iOS caveat, or the per-platform unavailable reason.
+    String? note;
+    if (!info.securityAvailable) {
+      note = 'Not exposed by $platformLabel';
+    } else if (security == null) {
+      // Available platform, no value this reading. On iOS surface the precise
+      // native reason (permission / no network) when we have one.
+      final WifiSecurityInfo? sec = isIos ? _iosSecurity : null;
+      note = (sec != null && !sec.available && sec.reason != null)
+          ? sec.reason
+          : 'Not in this reading';
+    } else if (security.isPersonalCoarse || security.isEnterpriseCoarse) {
+      note = 'iOS reports only Open / Personal / Enterprise — it cannot '
+          'distinguish WPA2 from WPA3';
+    }
+
+    // iOS-only: when the native read is blocked by Location, offer the grant /
+    // settings affordance (same shape as the macOS Location card).
+    final bool iosNeedsLocation = isIos &&
+        _iosSecurity != null &&
+        !_iosSecurity!.available &&
+        !_iosSecurity!.locationAuthorized;
+
+    return _Card(
+      title: 'Security',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          _MetricRow(
+            label: 'Security type',
+            value: security?.label,
+            note: note,
+          ),
+          if (iosNeedsLocation) ...<Widget>[
+            const SizedBox(height: AppSpacing.sm),
+            Wrap(
+              spacing: AppSpacing.xs,
+              runSpacing: AppSpacing.xs,
+              children: <Widget>[
+                Semantics(
+                  button: true,
+                  label: 'Grant Location permission to read Wi-Fi security',
+                  child: FilledButton(
+                    onPressed: _grantIosSecurityLocation,
+                    child: const Text('Grant Location'),
+                  ),
+                ),
+                Semantics(
+                  button: true,
+                  label: 'Open Location settings',
+                  child: OutlinedButton(
+                    onPressed: _openIosSecuritySettings,
+                    child: const Text('Open Settings'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 
   Widget _signalCard(ConnectedAp info) => _Card(
     title: 'Signal',
@@ -1457,6 +1724,7 @@ class _LiveBody extends StatelessWidget {
     required this.triggerError,
     required this.onStart,
     required this.onStop,
+    required this.enrich,
     required this.metricCardsBuilder,
   });
 
@@ -1466,6 +1734,11 @@ class _LiveBody extends StatelessWidget {
   final bool triggerError;
   final VoidCallback onStart;
   final VoidCallback onStop;
+
+  /// Folds the native iOS security token + BSSID onto a Shortcut-derived reading
+  /// so the Security / AP-vendor rows render from the same model as every other
+  /// card. Identity off the iOS path.
+  final ConnectedAp Function(ConnectedAp) enrich;
 
   /// Builds the grouped metric cards (Network / Signal / Rate / Channel / Radio
   /// / Status) for the latest reading. Owned by the State so iOS and macOS share
@@ -1482,7 +1755,7 @@ class _LiveBody extends StatelessWidget {
           builder: (context, _) {
             final ConnectedAp? ap = controller.details == null
                 ? null
-                : ConnectedAp.fromWifiDetails(controller.details!);
+                : enrich(ConnectedAp.fromWifiDetails(controller.details!));
             return SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
                 edge,

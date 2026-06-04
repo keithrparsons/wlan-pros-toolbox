@@ -126,6 +126,7 @@ final class WifiInfoChannel: NSObject, CLLocationManagerDelegate {
       "band": bandString(wlanChannel?.channelBand),
       "countryCode": interface.countryCode(),
       "hardwareAddress": interface.hardwareAddress(),
+      "securityToken": securityToken(interface.security()),
       "locationAuthorized": authorized,
     ]
   }
@@ -146,6 +147,7 @@ final class WifiInfoChannel: NSObject, CLLocationManagerDelegate {
       "band": nil,
       "countryCode": nil,
       "hardwareAddress": nil,
+      "securityToken": nil,
       "locationAuthorized": locationAuthorized,
     ]
   }
@@ -222,6 +224,71 @@ final class WifiInfoChannel: NSObject, CLLocationManagerDelegate {
     case .bandUnknown:
       return nil
     @unknown default:
+      return nil
+    }
+  }
+
+  /// Maps CWSecurity to a stable lower-camel token string the Dart
+  /// WifiSecurityClassifier resolves. Returns null when the value is unknown so
+  /// the Dart side renders an honest "Unknown"/absent state rather than a guess.
+  ///
+  /// macOS gives the FINE truth (WPA2 vs WPA3, Personal vs Enterprise,
+  /// Transition mixed-mode). Newer cases (WPA3 family, OWE) exist only on later
+  /// SDKs, so each is matched behind an availability guard before the general
+  /// switch rather than as a bare case (a bare case would not compile against an
+  /// older SDK / deployment target). Cases beyond the enumerated set fall
+  /// through to "unknown" — the honest answer, never a fabricated scheme.
+  private func securityToken(_ security: CWSecurity) -> String? {
+    // WPA3 family + OWE landed on the macOS 13 SDK. Guard so the build still
+    // compiles against earlier SDKs; on those SDKs these cases never occur.
+    if #available(macOS 13.0, *) {
+      switch security {
+      case .wpa3Personal:
+        return "wpa3Personal"
+      case .wpa3Enterprise:
+        return "wpa3Enterprise"
+      case .wpa3Transition:
+        return "wpa3Transition"
+      case .OWE:
+        return "owe"
+      case .oweTransition:
+        return "oweTransition"
+      default:
+        break
+      }
+    }
+    switch security {
+    case .none:
+      return "open"
+    case .WEP:
+      return "wep"
+    case .dynamicWEP:
+      return "dynamicWEP"
+    case .wpaPersonal:
+      return "wpaPersonal"
+    case .wpaPersonalMixed:
+      return "wpaPersonalMixed"
+    case .wpa2Personal:
+      return "wpa2Personal"
+    case .personal:
+      // Aggregated "personal" (no WPA generation). Honest coarse token.
+      return "personal"
+    case .wpaEnterprise:
+      return "wpaEnterprise"
+    case .wpaEnterpriseMixed:
+      return "wpaEnterpriseMixed"
+    case .wpa2Enterprise:
+      return "wpa2Enterprise"
+    case .enterprise:
+      // Aggregated "enterprise" (no WPA generation). Honest coarse token.
+      return "enterprise"
+    case .unknown:
+      return "unknown"
+    // Any case beyond those above (including a future scheme not yet labeled)
+    // maps to null → the Dart side shows "Unknown". A plain default is used
+    // rather than @unknown default because this SDK may carry cases beyond the
+    // ones enumerated, so the switch would otherwise be non-exhaustive.
+    default:
       return nil
     }
   }

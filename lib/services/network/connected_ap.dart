@@ -21,6 +21,7 @@
 
 import 'wifi_details.dart';
 import 'wifi_info_service.dart';
+import 'wifi_security.dart';
 
 /// A normalized snapshot of the connected access point, independent of the
 /// platform that produced it. Immutable.
@@ -40,11 +41,13 @@ class ConnectedAp {
     this.countryCode,
     this.interfaceName,
     this.hardwareAddress,
+    this.securityType,
     this.poweredOn = true,
     this.rxRateAvailable = false,
     this.channelWidthAvailable = false,
     this.bandDerived = false,
     this.snrDerived = false,
+    this.securityAvailable = false,
   });
 
   /// Connected network name. Null when not connected, hidden, or omitted.
@@ -94,6 +97,19 @@ class ConnectedAp {
   /// Interface hardware (MAC) address. Null when unavailable.
   final String? hardwareAddress;
 
+  /// The connected network's security type, normalized across platforms. Null
+  /// when this reading carried no security info (or the platform/permission did
+  /// not supply it — see [securityAvailable] to tell those apart). macOS reports
+  /// the fine WPA2-vs-WPA3 truth; iOS reports only the coarse Personal /
+  /// Enterprise / Open distinction (see [WifiSecurity.isPersonalCoarse]).
+  final WifiSecurity? securityType;
+
+  /// Whether THIS platform can ever expose the security type. macOS (CoreWLAN)
+  /// and iOS (NEHotspotNetwork, entitlement + Location gated) both can; an
+  /// unsupported platform cannot. When false the UI shows a precise
+  /// "Not exposed by `<platform>`" reason rather than a generic blank.
+  final bool securityAvailable;
+
   /// Whether the Wi-Fi radio is powered on. Defaults true for sources that do
   /// not report a radio-power state (the iOS Shortcut only runs while connected).
   final bool poweredOn;
@@ -138,6 +154,8 @@ class ConnectedAp {
       countryCode: info.countryCode,
       interfaceName: info.interfaceName,
       hardwareAddress: info.hardwareAddress,
+      // macOS CoreWLAN CWInterface.security() gives the fine WPA2-vs-WPA3 truth.
+      securityType: WifiSecurityClassifier.classify(info.securityToken),
       poweredOn: info.poweredOn,
       // macOS public CoreWLAN never exposes Rx rate or Tx power.
       rxRateAvailable: false,
@@ -145,6 +163,8 @@ class ConnectedAp {
       channelWidthAvailable: true,
       bandDerived: false,
       snrDerived: false,
+      // macOS exposes the security type whenever an interface is present.
+      securityAvailable: true,
     );
   }
 
@@ -169,6 +189,12 @@ class ConnectedAp {
       countryCode: null,
       interfaceName: null,
       hardwareAddress: null,
+      // The Shortcut does not carry the security type. iOS reads it from the
+      // native NEHotspotNetwork channel and enriches this model via
+      // [withSecurity]; until then it is null but [securityAvailable] is true so
+      // the UI shows a "reading…" / honest-absent state rather than "not on this
+      // platform".
+      securityType: null,
       // The Shortcut only runs while connected; treat the radio as on.
       poweredOn: true,
       // iOS DOES expose Rx rate via "Get Network Details".
@@ -178,6 +204,40 @@ class ConnectedAp {
       // On iOS both band and SNR are computed app-side.
       bandDerived: d.band != null,
       snrDerived: d.snr != null,
+      // iOS CAN expose the (coarse) security type via NEHotspotNetwork, gated by
+      // the Access Wi-Fi Information entitlement + Location permission.
+      securityAvailable: true,
+    );
+  }
+
+  /// Returns a copy with the security type filled in. Used by the iOS path,
+  /// where the security token arrives from the native NEHotspotNetwork channel
+  /// (a separate read from the Shortcut RF harvest) and is folded onto the
+  /// Shortcut-derived model. A null [security] leaves the field unset (honest
+  /// "not in this reading"). All other fields are preserved.
+  ConnectedAp withSecurity(WifiSecurity? security) {
+    return ConnectedAp(
+      ssid: ssid,
+      bssid: bssid,
+      rssiDbm: rssiDbm,
+      noiseDbm: noiseDbm,
+      snrDb: snrDb,
+      txRateMbps: txRateMbps,
+      rxRateMbps: rxRateMbps,
+      channel: channel,
+      channelWidthMhz: channelWidthMhz,
+      band: band,
+      standard: standard,
+      countryCode: countryCode,
+      interfaceName: interfaceName,
+      hardwareAddress: hardwareAddress,
+      securityType: security ?? securityType,
+      poweredOn: poweredOn,
+      rxRateAvailable: rxRateAvailable,
+      channelWidthAvailable: channelWidthAvailable,
+      bandDerived: bandDerived,
+      snrDerived: snrDerived,
+      securityAvailable: securityAvailable,
     );
   }
 
