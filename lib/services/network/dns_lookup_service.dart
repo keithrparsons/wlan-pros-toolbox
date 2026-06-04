@@ -246,6 +246,82 @@ class DnsLookupResult {
   bool get isEmpty => !isError && records.isEmpty;
 }
 
+/// One record type's slice of a dig-style multi-type lookup: the type asked
+/// for, the records that came back, and (if the query failed) why. Empty
+/// `records` with a null `errorMessage` is the honest "resolved, no records of
+/// this type" state — distinct from a failure (GL-005).
+class DnsDigSection {
+  const DnsDigSection({
+    required this.type,
+    required this.records,
+    this.errorMessage,
+  });
+
+  final DnsRecordType type;
+  final List<DnsRecord> records;
+  final String? errorMessage;
+
+  bool get isError => errorMessage != null;
+  bool get isEmpty => !isError && records.isEmpty;
+}
+
+/// Outcome of a dig-style "all records" lookup — one [DnsDigSection] per
+/// queried type, in display order. Distinguishes a name that resolved with at
+/// least one record somewhere from one where every section came back empty,
+/// and from a whole-query validation failure (e.g. blank input).
+class DnsDigResult {
+  const DnsDigResult({
+    required this.queriedName,
+    required this.resolver,
+    required this.sections,
+    this.errorMessage,
+  });
+
+  final String queriedName;
+  final DohResolver resolver;
+  final List<DnsDigSection> sections;
+
+  /// Set only for a whole-query failure (validation), not a per-section error.
+  final String? errorMessage;
+
+  bool get isError => errorMessage != null;
+
+  /// Sections that returned at least one record, in order.
+  List<DnsDigSection> get nonEmptySections =>
+      sections.where((DnsDigSection s) => s.records.isNotEmpty).toList();
+
+  /// Sections whose query failed mid-sweep, in order. These carry an
+  /// [DnsDigSection.errorMessage] and must be surfaced honestly (GL-005) — a
+  /// failed type is NOT the same as a type that resolved with zero records.
+  List<DnsDigSection> get erroredSections =>
+      sections.where((DnsDigSection s) => s.isError).toList();
+
+  /// True when at least one queried type failed to resolve. The summary, the
+  /// card body, and the SR announcement must all disclose this so the success
+  /// count never overstates completeness.
+  bool get hasPartialFailure => erroredSections.isNotEmpty;
+
+  /// True when every queried section failed to resolve (no records anywhere and
+  /// no section resolved cleanly). This is a total lookup failure that must NOT
+  /// read as a clean empty result.
+  bool get isAllErrored =>
+      !isError &&
+      sections.isNotEmpty &&
+      sections.every((DnsDigSection s) => s.isError);
+
+  /// Total records across all sections.
+  int get recordCount =>
+      sections.fold(0, (int sum, DnsDigSection s) => sum + s.records.length);
+
+  /// True when the name resolved but every queried type came back empty (no
+  /// per-section had records) and no section errored. The honest "name exists,
+  /// nothing here" state.
+  bool get isAllEmpty =>
+      !isError &&
+      recordCount == 0 &&
+      sections.every((DnsDigSection s) => !s.isError);
+}
+
 /// Resolves DNS records via DoH. Injectable resolver function keeps it
 /// unit-testable without a live network.
 class DnsLookupService {
@@ -369,6 +445,72 @@ class DnsLookupService {
         message: 'Lookup failed: ${_friendlyError(e)}',
       );
     }
+  }
+
+  /// The record types a dig-style "all records" sweep queries, in the order
+  /// `dig` itself presents them: identity/authority first (SOA, NS), then the
+  /// address and routing records, then policy/text. PTR is excluded — it is an
+  /// IP→name query that does not belong in a hostname sweep (it has its own
+  /// one-tap path in the UI). SPF is excluded as a top-level section because it
+  /// is a filtered view of TXT, which the sweep already shows in full.
+  static const List<DnsRecordType> digTypeOrder = <DnsRecordType>[
+    DnsRecordType.soa,
+    DnsRecordType.ns,
+    DnsRecordType.a,
+    DnsRecordType.aaaa,
+    DnsRecordType.mx,
+    DnsRecordType.txt,
+    DnsRecordType.srv,
+    DnsRecordType.caa,
+  ];
+
+  /// Dig-style sweep: resolve every type in [digTypeOrder] for [rawQuery] in a
+  /// single call and return one section per type. Each type is resolved with
+  /// the existing single-type [lookup] path (same DoH transport, same parsing),
+  /// so a per-type failure becomes a per-section error rather than failing the
+  /// whole sweep — the user still sees the records that did resolve.
+  ///
+  /// The queries fan out concurrently (`Future.wait`) so a sweep costs roughly
+  /// one round-trip, not eight in series. Order is restored to [digTypeOrder]
+  /// before returning.
+  Future<DnsDigResult> lookupAll({
+    required String rawQuery,
+    DohResolver resolver = DohResolver.cloudflare,
+  }) async {
+    final String trimmed = rawQuery.trim();
+    if (trimmed.isEmpty) {
+      return DnsDigResult(
+        queriedName: trimmed,
+        resolver: resolver,
+        sections: const <DnsDigSection>[],
+        errorMessage: 'Enter a hostname to look up.',
+      );
+    }
+
+    final List<DnsLookupResult> results = await Future.wait(
+      digTypeOrder.map(
+        (DnsRecordType t) => lookup(
+          rawQuery: trimmed,
+          type: t,
+          resolver: resolver,
+        ),
+      ),
+    );
+
+    final List<DnsDigSection> sections = <DnsDigSection>[
+      for (final DnsLookupResult r in results)
+        DnsDigSection(
+          type: r.type,
+          records: r.records,
+          errorMessage: r.errorMessage,
+        ),
+    ];
+
+    return DnsDigResult(
+      queriedName: trimmed,
+      resolver: resolver,
+      sections: sections,
+    );
   }
 
   /// Map the numeric DNS type code the resolver returns to a readable label.

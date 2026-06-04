@@ -54,8 +54,9 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'default gateway',
   ],
   'dns-lookup': <String>[
-    'nslookup', 'dig', 'resolve', 'a record', 'mx', 'txt', 'cname', 'ptr',
-    'doh', 'name resolution',
+    'nslookup', 'dig', 'resolve', 'a record', 'aaaa', 'mx', 'txt', 'cname',
+    'ns', 'soa', 'srv', 'caa', 'spf', 'ptr', 'reverse dns', 'rdns',
+    'all records', 'doh', 'name resolution',
   ],
   'port-scan': <String>[
     'nmap', 'open ports', 'tcp', 'service scan', 'firewall', 'listening',

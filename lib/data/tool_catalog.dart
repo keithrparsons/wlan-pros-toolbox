@@ -256,7 +256,8 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         id: 'dns-lookup',
         title: 'Lookup (DNS)',
         description:
-            'A, AAAA, MX, TXT, NS, SOA, PTR, SRV, CAA, SPF over DNS-over-HTTPS',
+            'Dig-style all-records view + single-type and reverse PTR over '
+            'DNS-over-HTTPS',
         routeName: '/tools/dns-lookup',
         isLive: true,
       ),

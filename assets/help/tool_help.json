@@ -1404,20 +1404,24 @@
     "dns-lookup": {
       "name": "Lookup (DNS)",
       "category": "Networking Tools",
-      "purpose": "Resolve DNS records — A, AAAA, MX, TXT, NS, SOA, PTR, SRV, CAA, SPF.",
-      "whyHere": "A portable dig for the field that works through captive portals and corporate firewalls. Reach for it to check records authoritatively rather than from the local cache.",
+      "purpose": "A portable dig/nslookup for the field. Resolve a name as a dig-style all-records view (SOA, NS, A, AAAA, MX, TXT, SRV, CAA at once), as a single record type, or run a one-tap reverse PTR for an IP.",
+      "whyHere": "Checks records authoritatively rather than from the local cache, and works through captive portals and corporate firewalls. The all-records view is the fast \"show me everything\" pass; single-type is the focused look; reverse PTR turns an IP back into a hostname without flipping any selector.",
       "howToUse": [
-        "Enter a hostname (or an IP for PTR), pick the record type, pick the resolver (Cloudflare default or Google), and look up."
+        "Enter a hostname (or an IP). Leave the mode on All records for the dig-style sweep, then look up.",
+        "For one record type, switch to Single type and pick A, AAAA, MX, TXT, NS, SOA, PTR, SRV, CAA, or SPF.",
+        "When the input is an IP, a Reverse lookup (PTR) button appears for a one-tap IP to hostname query.",
+        "Pick the resolver (Cloudflare default or Google) if one provider is blocked."
       ],
       "inputs": [],
-      "algorithm": "Resolves over DNS-over-HTTPS (DoH) via basic_utils DnsUtils.lookupRecord — an HTTPS GET to a JSON resolver, NOT raw UDP/53 (dns_lookup_service.dart:1-27, 266-272). This is chosen because raw UDP/53 sits behind iOS's local-network gate and is often blocked, while DoH rides HTTPS:443 cleanly and needs no extra socket capability. PTR rewrites the input IP to its in-addr.arpa/ip6.arpa name before querying (includes a minimal IPv6 literal parser) (dns_lookup_service.dart:279-306, 426-497). SPF is not a separate query: it reads TXT and filters for the v=spf1 policy line (RFC 7208) (dns_lookup_service.dart:66-91, 324-356). Three result states: success, empty (resolved, no records of this type), and failure — distinct so the UI shows the right state (dns_lookup_service.dart:199-247).",
+      "algorithm": "Resolves over DNS-over-HTTPS (DoH) via basic_utils DnsUtils.lookupRecord, an HTTPS GET to a JSON resolver, not raw UDP/53 (dns_lookup_service.dart). DoH is chosen because raw UDP/53 sits behind iOS local-network gating and is often blocked, while DoH rides HTTPS:443 cleanly and needs no extra socket capability. All records mode fans out one DoH query per type (SOA, NS, A, AAAA, MX, TXT, SRV, CAA) concurrently with Future.wait, then groups the answers in dig order; a per-type failure becomes a per-section note, so the records that did resolve still show. Reverse PTR rewrites the input IP to its in-addr.arpa or ip6.arpa name before querying (with a minimal IPv6 literal parser). SPF is not a separate query: it reads TXT and filters for the v=spf1 policy line (RFC 7208). Three result states per query: success, empty (resolved, no records of this type), and failure, kept distinct so the UI shows the right state.",
       "example": null,
       "fieldNotes": [
-        "Platform differences: identical on iOS/Android/macOS/Windows (HTTPS-only). Gated off on web per the native-only product decision (dns_lookup_service.dart:25-27).",
-        "Records resolve against a public resolver (Cloudflare/Google), not the device's configured resolver — usually what a pro wants (authoritative, uncached). The device's configured DNS servers are shown by Interface Information instead. SRV and CAA are parsed into readable fields; an unparseable form is shown raw.",
-        "A blocked resolver is a one-tap failover to the other provider. Empty ≠ error: a name with no MX simply returns the empty state."
+        "Records resolve against a public resolver (Cloudflare or Google), not the device configured resolver, which is usually what a pro wants (authoritative, uncached). The device configured DNS servers are shown by Interface Information instead.",
+        "SRV and CAA are parsed into readable fields; an unparseable form is shown raw. Empty is not an error: a name with no MX simply returns the empty state.",
+        "Platform differences: identical on iOS, Android, macOS, and Windows (HTTPS only). Gated off on web per the native-only product decision.",
+        "dig +trace (the root to TLD to authoritative delegation walk) is not built. DoH only reaches recursive resolvers that return the final answer, so a true iterative trace would need raw UDP/53 to named authoritative servers plus a hand-rolled DNS wire codec, which is heavier and less reliable in the field than this tool is meant to be."
       ],
-      "source": "dns_lookup_service.dart:1-497"
+      "source": "dns_lookup_service.dart, dns_lookup_screen.dart"
     },
     "port-scan": {
       "name": "Port Scan",

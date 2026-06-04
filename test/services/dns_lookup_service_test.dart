@@ -317,4 +317,121 @@ void main() {
           'v=spf1 include:a.example include:b.example ~all');
     });
   });
+
+  group('dig-style sweep (lookupAll)', () {
+    test('sweep queries the dig type order, PTR/SPF excluded', () {
+      // The sweep is over hostname records; PTR (IP query) and SPF (a TXT
+      // filter) are not top-level sections.
+      expect(DnsLookupService.digTypeOrder, <DnsRecordType>[
+        DnsRecordType.soa,
+        DnsRecordType.ns,
+        DnsRecordType.a,
+        DnsRecordType.aaaa,
+        DnsRecordType.mx,
+        DnsRecordType.txt,
+        DnsRecordType.srv,
+        DnsRecordType.caa,
+      ]);
+      expect(DnsLookupService.digTypeOrder.contains(DnsRecordType.ptr), isFalse);
+      expect(DnsLookupService.digTypeOrder.contains(DnsRecordType.spf), isFalse);
+    });
+
+    test('returns one section per type, in dig order', () async {
+      final DnsLookupService svc = DnsLookupService(
+        resolver: (name, type, {required provider}) async => <RRecord>[],
+      );
+      final DnsDigResult dig = await svc.lookupAll(rawQuery: 'example.com');
+      expect(dig.sections.length, DnsLookupService.digTypeOrder.length);
+      expect(
+        dig.sections.map((DnsDigSection s) => s.type).toList(),
+        DnsLookupService.digTypeOrder,
+      );
+    });
+
+    test('aggregates records across types and counts them', () async {
+      final DnsLookupService svc = DnsLookupService(
+        resolver: (name, type, {required provider}) async {
+          switch (type) {
+            case RRecordType.A:
+              return <RRecord>[
+                RRecord(name: 'example.com', rType: 1, ttl: 300, data: '1.2.3.4'),
+                RRecord(name: 'example.com', rType: 1, ttl: 300, data: '5.6.7.8'),
+              ];
+            case RRecordType.MX:
+              return <RRecord>[
+                RRecord(
+                    name: 'example.com',
+                    rType: 15,
+                    ttl: 3600,
+                    data: '10 mail.example.com'),
+              ];
+            default:
+              return <RRecord>[];
+          }
+        },
+      );
+      final DnsDigResult dig = await svc.lookupAll(rawQuery: 'example.com');
+      expect(dig.isError, isFalse);
+      expect(dig.isAllEmpty, isFalse);
+      expect(dig.recordCount, 3);
+      // Only A and MX came back non-empty, A before MX per dig order.
+      expect(
+        dig.nonEmptySections.map((DnsDigSection s) => s.type).toList(),
+        <DnsRecordType>[DnsRecordType.a, DnsRecordType.mx],
+      );
+    });
+
+    test('all types empty → isAllEmpty (not an error)', () async {
+      final DnsLookupService svc = DnsLookupService(
+        resolver: (name, type, {required provider}) async => null,
+      );
+      final DnsDigResult dig = await svc.lookupAll(rawQuery: 'nothing.example');
+      expect(dig.isError, isFalse);
+      expect(dig.isAllEmpty, isTrue);
+      expect(dig.recordCount, 0);
+      expect(dig.nonEmptySections, isEmpty);
+    });
+
+    test('a per-type failure is isolated, other records still resolve',
+        () async {
+      final DnsLookupService svc = DnsLookupService(
+        resolver: (name, type, {required provider}) async {
+          if (type == RRecordType.TXT) {
+            throw Exception('TXT path blocked');
+          }
+          if (type == RRecordType.A) {
+            return <RRecord>[
+              RRecord(name: 'example.com', rType: 1, ttl: 60, data: '9.9.9.9'),
+            ];
+          }
+          return <RRecord>[];
+        },
+      );
+      final DnsDigResult dig = await svc.lookupAll(rawQuery: 'example.com');
+      // The whole sweep did not fail just because TXT did.
+      expect(dig.isError, isFalse);
+      expect(dig.recordCount, 1);
+      final DnsDigSection txt =
+          dig.sections.firstWhere((DnsDigSection s) => s.type == DnsRecordType.txt);
+      expect(txt.isError, isTrue);
+      final DnsDigSection a =
+          dig.sections.firstWhere((DnsDigSection s) => s.type == DnsRecordType.a);
+      expect(a.records.single.data, '9.9.9.9');
+    });
+
+    test('blank query → whole-sweep validation error, resolver never called',
+        () async {
+      bool called = false;
+      final DnsLookupService svc = DnsLookupService(
+        resolver: (name, type, {required provider}) async {
+          called = true;
+          return <RRecord>[];
+        },
+      );
+      final DnsDigResult dig = await svc.lookupAll(rawQuery: '   ');
+      expect(dig.isError, isTrue);
+      expect(dig.errorMessage, isNotNull);
+      expect(called, isFalse);
+    });
+  });
 }
