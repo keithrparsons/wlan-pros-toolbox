@@ -39,30 +39,35 @@ void main() {
   testWidgets('Home grid renders every category from the catalog', (
     tester,
   ) async {
-    await _pumpApp(tester);
+    // A tall viewport so the lazily-built SliverGrid materializes every tile:
+    // the consumer hero card now sits above the grid (and the search field
+    // below it), so the last category would fall off a short default viewport.
+    await _withViewport(tester, const Size(800, 1200), () async {
+      await _pumpApp(tester);
 
-    // Every category title renders, one tile each. (Vera F-11.)
-    for (final ToolCategory cat in kToolCategories) {
+      // Every category title renders, one tile each. (Vera F-11.)
+      for (final ToolCategory cat in kToolCategories) {
+        expect(
+          find.text(cat.title),
+          findsOneWidget,
+          reason: 'expected one tile for "${cat.title}"',
+        );
+      }
+
+      // Item count matches catalog length — guards against the grid silently
+      // dropping or duplicating tiles after a layout change. (Vera F-11.) The IA
+      // redesign moved the grid into a SliverGrid inside a CustomScrollView (the
+      // home search field shares the scroll), so assert the sliver's childCount.
+      final Finder grid = find.byType(SliverGrid);
+      expect(grid, findsOneWidget);
+      final SliverGrid view = tester.widget<SliverGrid>(grid);
+      final SliverChildDelegate delegate = view.delegate;
+      expect(delegate, isA<SliverChildBuilderDelegate>());
       expect(
-        find.text(cat.title),
-        findsOneWidget,
-        reason: 'expected one tile for "${cat.title}"',
+        (delegate as SliverChildBuilderDelegate).childCount,
+        kToolCategories.length,
       );
-    }
-
-    // Item count matches catalog length — guards against the grid silently
-    // dropping or duplicating tiles after a layout change. (Vera F-11.) The IA
-    // redesign moved the grid into a SliverGrid inside a CustomScrollView (the
-    // home search field shares the scroll), so assert the sliver's childCount.
-    final Finder grid = find.byType(SliverGrid);
-    expect(grid, findsOneWidget);
-    final SliverGrid view = tester.widget<SliverGrid>(grid);
-    final SliverChildDelegate delegate = view.delegate;
-    expect(delegate, isA<SliverChildBuilderDelegate>());
-    expect(
-      (delegate as SliverChildBuilderDelegate).childCount,
-      kToolCategories.length,
-    );
+    });
   });
 
   testWidgets(
@@ -83,11 +88,15 @@ void main() {
           // the tile (replaced by the example list).
           final int liveCount =
               cat.tools.where((ToolEntry t) => t.isLive).length;
+          // The badge (and its semantic label) shows countLabelOverride when set
+          // — e.g. Educational Resources pins '42' (10 cards + 32 online) — else
+          // the live tool count.
+          final String count = cat.countLabelOverride ?? '$liveCount';
           final String examples = cat.exampleToolTitles.join(' · ');
           final String expected =
               '${cat.title}. '
               '${cat.hasLiveTool ? "" : "Coming soon. "}'
-              '${cat.hasLiveTool ? "$liveCount tools. " : ""}'
+              '${cat.hasLiveTool ? "$count tools. " : ""}'
               '$examples';
 
           // The curated label must appear exactly once across the semantic
