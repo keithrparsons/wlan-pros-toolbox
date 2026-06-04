@@ -1,9 +1,8 @@
 // EducationalResourcesService unit tests — JSON parsing (incl. malformed-row
 // tolerance), topic grouping in `_meta.topics` order, free-text search across
-// title/summary/description/topic/tags, attribution scoping to the destination
-// buckets, and the approval field surviving onto the model. Most tests use a
-// small in-memory fixture; the last group loads the REAL bundled asset to prove
-// all 52 entries parse and group into the 7 topics.
+// title/summary/description/topic/tags, and the approval field surviving onto
+// the model. Most tests use a small in-memory fixture; the last group loads the
+// REAL bundled asset to prove all 31 entries parse and group into the 6 topics.
 
 import 'dart:convert';
 import 'dart:io';
@@ -21,9 +20,7 @@ const String _fixture = '''
       "Vendor documentation and design guides",
       "Podcasts",
       "Independent blogs and experts"
-    ],
-    "attribution": "Inspired by wlan-talks.net by Victor Njoroge.",
-    "attribution_scope": "destinations only"
+    ]
   },
   "resources": [
     {
@@ -115,9 +112,8 @@ void main() {
       expect(svc.count, 4);
     });
 
-    test('reads the title and attribution from _meta', () {
+    test('reads the title from _meta', () {
       expect(svc.title, 'Educational Resources');
-      expect(svc.attribution, 'Inspired by wlan-talks.net by Victor Njoroge.');
     });
 
     test('drops malformed rows but keeps the good ones', () {
@@ -177,18 +173,6 @@ void main() {
     });
   });
 
-  group('attribution scope', () {
-    test('destination topics are credited; canonical buckets are not', () {
-      expect(svc.isDestinationTopic('Podcasts'), isTrue);
-      expect(svc.isDestinationTopic('Independent blogs and experts'), isTrue);
-      expect(svc.isDestinationTopic('Tools and utilities'), isFalse);
-      expect(
-        svc.isDestinationTopic('Vendor documentation and design guides'),
-        isFalse,
-      );
-    });
-  });
-
   group('search', () {
     test('empty / whitespace query returns the full list in asset order', () {
       expect(svc.search('').length, svc.count);
@@ -215,12 +199,13 @@ void main() {
   });
 
   group('real bundled asset', () {
-    test('parses the 32 curated entries into the 6 topic groups', () {
+    test('parses the 31 curated entries into the 6 topic groups', () {
       // Load the actual bundled JSON from disk (not via rootBundle, so no
       // Flutter binding is needed) and prove the production dataset is healthy.
       // Curated 2026-06-04: independent-author/community materials only; the
       // megavendor/product documentation ("Vendor documentation and design
-      // guides") topic was removed per Keith. 52 -> 32 entries, 7 -> 6 topics.
+      // guides") topic was removed per Keith, and the Revolution Wi-Fi archive
+      // entry was later dropped (32 -> 31).
       final File asset = File('assets/data/educational_resources.json');
       expect(asset.existsSync(), isTrue,
           reason: 'bundled asset must exist at assets/data/');
@@ -228,7 +213,7 @@ void main() {
 
       final EducationalResourcesService real =
           EducationalResourcesService.fromJson(raw);
-      expect(real.count, 32);
+      expect(real.count, 31);
 
       final List<ResourceGroup> groups = real.grouped();
       expect(groups.length, 6);
@@ -241,18 +226,15 @@ void main() {
         reason: 'megavendor/product docs were removed per Keith 2026-06-04',
       );
 
-      // Every entry lands in exactly one group; counts sum to 32.
+      // Every entry lands in exactly one group; counts sum to 31.
       final int sum = groups.fold<int>(
           0, (int acc, ResourceGroup g) => acc + g.count);
-      expect(sum, 32);
-
-      // The credited attribution is present and names the wlan-talks source.
-      expect(real.attribution, contains('wlan-talks.net'));
+      expect(sum, 31);
 
       // _meta.count agrees with the parsed entry count (data-integrity guard).
       final Map<String, dynamic> decoded =
           jsonDecode(raw) as Map<String, dynamic>;
-      expect((decoded['_meta'] as Map<String, dynamic>)['count'], 32);
+      expect((decoded['_meta'] as Map<String, dynamic>)['count'], 31);
     });
   });
 }

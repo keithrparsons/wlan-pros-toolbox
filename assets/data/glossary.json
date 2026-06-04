@@ -590,7 +590,7 @@
       "term": "Captive Portal",
       "abbr": null,
       "category": "Security",
-      "definition": "The login or terms page that pops up when you join many public or guest networks before granting Internet access."
+      "definition": "The login or terms page that pops up when you join many public or guest networks before granting internet access."
     },
     {
       "id": "mac-randomization",

@@ -447,17 +447,33 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
           // WCAG 4.1.3 — a bare bar announces nothing; give it a descriptive
           // label. The live announcement is owned by the caption above (one
           // liveRegion only, so AT does not double-speak the phase change).
+          //
+          // Value-tweening: the engine emits time-weighted fractions, but band
+          // pivots and the instant-metrics step can still arrive as discrete
+          // jumps. A TweenAnimationBuilder glides the bar from its previous
+          // value to each new target over AppMotion.base, so every step eases
+          // instead of snapping. The engine guarantees monotonic fractions, so
+          // the tween only ever animates forward.
           Semantics(
             label: '$caption, $pct percent complete',
             child: ClipRRect(
               borderRadius: BorderRadius.circular(AppRadius.control),
-              child: LinearProgressIndicator(
-                value: _fraction == 0 ? null : _fraction,
-                minHeight: 6,
-                backgroundColor: AppColors.surface2,
-                valueColor: const AlwaysStoppedAnimation<Color>(
-                  AppColors.primary,
-                ),
+              child: TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0, end: _fraction),
+                duration: AppMotion.base,
+                curve: AppMotion.standardEase,
+                builder: (context, value, _) {
+                  return LinearProgressIndicator(
+                    // Indeterminate only at the very start (before the first
+                    // real emit); a tweened zero would read as a stuck bar.
+                    value: _fraction == 0 ? null : value,
+                    minHeight: 6,
+                    backgroundColor: AppColors.surface2,
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      AppColors.primary,
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -477,6 +493,8 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
         return 'Measuring download…';
       case QualityPhase.upload:
         return 'Measuring upload…';
+      case QualityPhase.responsiveness:
+        return 'Checking responsiveness…';
       case QualityPhase.complete:
         return 'Finishing…';
       case QualityPhase.failed:

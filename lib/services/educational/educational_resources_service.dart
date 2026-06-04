@@ -2,9 +2,9 @@
 // (a curated list of Wi-Fi learning destinations) from a bundled JSON asset,
 // fully offline.
 //
-// WHAT IT DOES: parses the 52-entry combined dataset
+// WHAT IT DOES: parses the curated dataset
 // (assets/data/educational_resources.json, declared in pubspec.yaml) into typed
-// Dart models, groups them by `topic` (the 7 editorial topic groups), and
+// Dart models, groups them by `topic` (the editorial topic groups), and
 // answers a free-text search consistent with the app's other reference/list
 // screens (substring match across title, summary, description, topic, and tags).
 //
@@ -18,18 +18,10 @@
 // HONESTY: an unmatched query returns an empty result, never a fabricated row.
 // A malformed entry is dropped, not rendered as a blank line.
 //
-// ATTRIBUTION: the destinations portion of the directory (the wlan-talks library
-// — conference archives, YouTube, podcasts, independent blogs, training) is
-// credited "Inspired by wlan-talks.net by Victor Njoroge" per `_meta.attribution`
-// and scoped per `_meta.attribution_scope` to the destinations buckets only. The
-// service exposes [attribution] and the [destinationTopics] set so the screen can
-// place the credit only under the destination groups, never on the canonical
-// tools / vendor-doc entries.
-//
 // APPROVAL: every entry carries an `approval` field ('not_required' /
 // 'pending_outreach') driving Keith's pre-publish pruning. This build shows ALL
-// 52 entries (the field is kept on the model so a future pre-publish filter is
-// trivial — it is NOT used to hide anything here).
+// entries (the field is kept on the model so a future pre-publish filter is
+// trivial; it is NOT used to hide anything here).
 
 import 'dart:convert';
 
@@ -227,7 +219,6 @@ class EducationalResourcesService {
   EducationalResourcesService.fromEntries(
     List<EducationalResource> entries, {
     this.title = 'Educational Resources',
-    this.attribution = '',
     Set<String>? topicOrder,
   })  : _entries = List<EducationalResource>.unmodifiable(entries),
         _topicOrder = topicOrder == null
@@ -248,13 +239,11 @@ class EducationalResourcesService {
     final List<EducationalResource> entries = parseEntries(decoded);
 
     String title = 'Educational Resources';
-    String attribution = '';
     Set<String>? topicOrder;
     final Object? meta = decoded['_meta'];
     if (meta is Map<String, dynamic>) {
       final String t = EducationalResource._str(meta['title']);
       if (t.isNotEmpty) title = t;
-      attribution = EducationalResource._str(meta['attribution']);
       final Object? rawTopics = meta['topics'];
       if (rawTopics is List) {
         final List<String> order = <String>[];
@@ -268,7 +257,6 @@ class EducationalResourcesService {
     return EducationalResourcesService.fromEntries(
       entries,
       title: title,
-      attribution: attribution,
       topicOrder: topicOrder,
     );
   }
@@ -281,27 +269,6 @@ class EducationalResourcesService {
 
   /// Directory title from `_meta.title`.
   final String title;
-
-  /// The destinations attribution line from `_meta.attribution`. Display ONLY
-  /// in association with the [destinationTopics] groups (never on the canonical
-  /// tools / vendor-doc groups) per `_meta.attribution_scope`.
-  final String attribution;
-
-  /// The topic groups whose entries are the wlan-talks "destinations" set the
-  /// [attribution] credit applies to (per `_meta.attribution_scope`). These are
-  /// the five destination buckets; the two canonical buckets — "Tools and
-  /// utilities" and "Vendor documentation and design guides" — are deliberately
-  /// excluded so the credit never attaches to the vendor-doc / tools entries.
-  static const Set<String> destinationTopics = <String>{
-    'Conference and talk archives',
-    'YouTube channels',
-    'Podcasts',
-    'Independent blogs and experts',
-    'Training and certification',
-  };
-
-  /// `true` when [topic] is one of the credited destination buckets.
-  bool isDestinationTopic(String topic) => destinationTopics.contains(topic);
 
   /// All entries, in asset order.
   List<EducationalResource> get all => _entries;

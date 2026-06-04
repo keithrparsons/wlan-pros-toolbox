@@ -3,8 +3,8 @@
 //
 // Clones the app's existing bundled-JSON reference pattern (Well-Known Ports):
 //   bundled asset → EducationalResourcesService.fromJson → list screen → detail.
-// The 52 entries render in 7 topic groups (ordered by `_meta.topics`), each row
-// showing title + summary. A free-text search field filters the rendered rows
+// The curated entries render in topic groups (ordered by `_meta.topics`), each
+// row showing title + summary. A free-text search field filters the rendered rows
 // live, matching the app's other list/reference search UX (substring match,
 // SC 4.1.3 live count announcement).
 //
@@ -14,13 +14,6 @@
 //    shipped build); an honest message card.
 //  - success → topic groups with rows, OR the filtered subset.
 //  - empty   → a query that matches nothing; an honest "no match" card.
-//
-// ATTRIBUTION: the destinations portion of the directory (the wlan-talks set —
-// conference archives, YouTube, podcasts, independent blogs, training) is
-// credited "Inspired by wlan-talks.net by Victor Njoroge" per `_meta.attribution`
-// and scoped to the destination buckets only (`_meta.attribution_scope`). The
-// credit renders as a small footer note UNDER each destination topic group, and
-// never on the canonical tools / vendor-doc groups.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
@@ -255,7 +248,7 @@ class _EducationalResourcesScreenState
       final List<EducationalResource> filtered = svc.search(_query);
       final List<ResourceGroup> groups = svc.grouped(filtered);
       if (groups.isEmpty) return <Widget>[_NoMatch(query: _query.trim())];
-      return _topicGroupWidgets(svc, groups);
+      return _topicGroupWidgets(groups);
     }
 
     final bool showCards = _selectedSection == null ||
@@ -277,7 +270,7 @@ class _EducationalResourcesScreenState
       }
       if (groups.isNotEmpty) {
         if (out.isNotEmpty) out.add(const SizedBox(height: AppSpacing.lg));
-        out.addAll(_topicGroupWidgets(svc, groups));
+        out.addAll(_topicGroupWidgets(groups));
       }
     }
 
@@ -305,7 +298,6 @@ class _EducationalResourcesScreenState
   }
 
   List<Widget> _topicGroupWidgets(
-    EducationalResourcesService svc,
     List<ResourceGroup> groups,
   ) {
     final List<Widget> out = <Widget>[];
@@ -318,11 +310,6 @@ class _EducationalResourcesScreenState
         if (i < group.resources.length - 1) {
           out.add(const SizedBox(height: AppSpacing.xs));
         }
-      }
-      // Destinations-only credit, scoped per `_meta.attribution_scope`.
-      if (svc.attribution.isNotEmpty && svc.isDestinationTopic(group.topic)) {
-        out.add(const SizedBox(height: AppSpacing.xs));
-        out.add(_AttributionNote(text: svc.attribution));
       }
       if (g < groups.length - 1) {
         out.add(const SizedBox(height: AppSpacing.lg));
@@ -349,7 +336,7 @@ class _IntroCard extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Text(
-        '$total curated places to learn Wi-Fi — tools, talk archives, channels, '
+        '$total curated places to learn Wi-Fi: tools, talk archives, channels, '
         'podcasts, blogs, and training. Tap any resource to read more and open '
         'its website.',
         style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
@@ -756,42 +743,6 @@ class _SelectableFilterChipState extends State<_SelectableFilterChip> {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// The destinations attribution note — a small, quiet footer line under each
-/// destination topic group (`_meta.attribution`, scoped per
-/// `_meta.attribution_scope`).
-class _AttributionNote extends StatelessWidget {
-  const _AttributionNote({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme t = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.only(left: AppSpacing.xxs),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          const Padding(
-            padding: EdgeInsets.only(top: 2, right: AppSpacing.xs),
-            child: Icon(
-              Icons.favorite_outline,
-              size: 14,
-              color: AppColors.textTertiary,
-            ),
-          ),
-          Expanded(
-            child: Text(
-              text,
-              style: t.labelSmall?.copyWith(color: AppColors.textTertiary),
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -3,7 +3,7 @@
     "title": "Educational Resources",
     "note": "Educational Resources for the WLAN Pros Toolbox: independent-author and community materials only. Per Keith (2026-06-04) the megavendor/product documentation entries (Apple, Cisco, Aruba/HPE, and the Hamina product docs) are EXCLUDED; the dataset keeps community tools/utilities, independent blogs and experts, podcasts, conference and talk archives, YouTube channels, and training/certification paths. Independent-author entries are included now with permission chased afterward (approval='pending_outreach'); any owner who declines gets removed. Descriptions are Keith's voice (GL-004, SOP-020 PASS). The full vendor-doc set is retained in the source dataset and git history if ever wanted back. Also still held: Wi-Fi For Beginners (site not confirmed live) and frames.bitbucketlabs.com (pending Keith's 1-line description). Curated 2026-06-04.",
     "last_updated": "2026-06-04",
-    "count": 32,
+    "count": 31,
     "topics": [
       "Tools and utilities",
       "Conference and talk archives",
@@ -11,9 +11,7 @@
       "Podcasts",
       "Independent blogs and experts",
       "Training and certification"
-    ],
-    "attribution": "Inspired by wlan-talks.net by Victor Njoroge.",
-    "attribution_scope": "Credits the DESTINATIONS portion of this set (the wlan-talks library inspired by wlan-talks.net by Victor Njoroge); shown with the destination topic groups, not the tools portion."
+    ]
   },
   "resources": [
     {
@@ -507,25 +505,6 @@
         "archive",
         "dormant",
         "wlan-pi"
-      ],
-      "approval": "pending_outreach"
-    },
-    {
-      "id": "dest-revolutionwifi-archive",
-      "title": "Revolution Wi-Fi (Blogspot Archive)",
-      "summary": "Andrew von Nagy's foundational capacity-planning and RF design writing, an evergreen archive worth studying.",
-      "description": "Revolution Wi-Fi, by Andrew von Nagy (CWNE, CCIE-W), is foundational writing on capacity planning and RF design. This Blogspot instance is a dormant archive, with the last post in 2015, but the material has aged remarkably well. The capacity-planning thinking here shaped how a lot of us approach high-density design.\n\nRead it as a reference, not a current feed. The physics and the planning principles are timeless even where the specific hardware references are dated. Free, independent. Best for advanced engineers who want to understand capacity planning from first principles.",
-      "url": "https://revolutionwifi.blogspot.com/",
-      "topic": "Independent blogs and experts",
-      "cost": "free",
-      "level": "advanced",
-      "tags": [
-        "destination",
-        "blog",
-        "independent",
-        "archive",
-        "dormant",
-        "capacity-planning"
       ],
       "approval": "pending_outreach"
     },

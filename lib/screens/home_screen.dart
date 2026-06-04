@@ -221,11 +221,16 @@ class _HomeScreenState extends State<HomeScreen> {
   /// 440 two-column breakpoint) gets the tight density target while the wider
   /// MULTI-column layouts still clear the worst-case wrap:
   ///
-  ///   * Phone (1-column, width < 440): a full-width tile gives the H3 title and
-  ///     the examples line a wide column — each fits ONE line for every catalog
-  ///     category — so the real footprint is ~118pt. **150** holds that with a
-  ///     thin bottom margin (no dead band) and is the density win Keith asked
-  ///     for: more categories above the fold than the old 180.
+  ///   * Phone (1-column, width < 440): a full-width tile keeps the H3 title on
+  ///     ONE line for every catalog category, but a long examples line (joined
+  ///     with " · ") can still wrap to TWO lines at the narrow 320–390 widths.
+  ///     Height budget (IBM Plex Sans tokens, incl. 1px tile border each side):
+  ///     border(1)+pad sm(16) + icon row(28) + icon→title gap xs(8) + 1-line H3
+  ///     (22×1.25 ≈ 27.5) + title→examples gap xs(8) + 2-line examples
+  ///     (13×1.35×2 ≈ 35.1) + pad sm(16)+border(1) ≈ 140.6. **144** clears that
+  ///     worst case with a thin margin and removes the dead band the old 150
+  ///     opened on the many short-examples categories (Vera flagged the gap at
+  ///     ~360–440), while keeping the density win over the old 180.
   ///
   ///   * Multi-column (width ≥ 440): a narrow column can wrap BOTH the title AND
   ///     the examples to two lines at once. Height budget (IBM Plex Sans tokens,
@@ -235,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen> {
   ///     **172** clears it with margin and no RenderFlex overflow at 440–1440
   ///     (verified by the no-overflow gate). Still tighter than the old 180.
   double _tileHeightFor(double width) =>
-      width < _singleColumnBreakpoint ? 150 : 172;
+      width < _singleColumnBreakpoint ? 144 : 172;
 }
 
 /// The home "Search all tools…" trigger (mockups 01/05). A tap target styled

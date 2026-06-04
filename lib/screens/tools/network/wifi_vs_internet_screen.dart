@@ -590,13 +590,22 @@ class _WifiVsInternetScreenState extends State<WifiVsInternetScreen> {
             label: '$caption, $pct percent complete',
             child: ClipRRect(
               borderRadius: BorderRadius.circular(AppRadius.control),
-              child: LinearProgressIndicator(
-                value: _fraction == 0 ? null : _fraction,
-                minHeight: 6,
-                backgroundColor: AppColors.surface2,
-                valueColor: const AlwaysStoppedAnimation<Color>(
-                  AppColors.primary,
-                ),
+              // Value-tweening: glide the bar between the engine's monotonic,
+              // time-weighted emits so band pivots ease instead of snapping.
+              child: TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0, end: _fraction),
+                duration: AppMotion.base,
+                curve: AppMotion.standardEase,
+                builder: (context, value, _) {
+                  return LinearProgressIndicator(
+                    value: _fraction == 0 ? null : value,
+                    minHeight: 6,
+                    backgroundColor: AppColors.surface2,
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      AppColors.primary,
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -615,6 +624,8 @@ class _WifiVsInternetScreenState extends State<WifiVsInternetScreen> {
         return 'Measuring download…';
       case QualityPhase.upload:
         return 'Measuring upload…';
+      case QualityPhase.responsiveness:
+        return 'Checking responsiveness…';
       case QualityPhase.complete:
         return 'Computing the verdict…';
       case QualityPhase.failed:

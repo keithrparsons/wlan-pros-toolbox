@@ -915,24 +915,24 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
   // non-empty; it never renders as generic ToolEntry rows. The 10 laminated PDF
   // reference cards (moved here from Quick Reference 2026-06-04) ARE its `tools`
   // list: EducationalResourcesScreen reads them and renders a "Reference Cards"
-  // section at the top, above the 32 online resources. No `subgroup` — this is
+  // section at the top, above the 31 online resources. No `subgroup` — this is
   // not a subgroup-ordered category.
   //
   // Tile count: the home badge would show only the live tool count (the 10
-  // cards). The true total is 10 cards + 32 online resources = 42, so
-  // [countLabelOverride] pins '42' (guard test in
+  // cards). The true total is 10 cards + 31 online resources = 41, so
+  // [countLabelOverride] pins '41' (guard test in
   // test/screens/tools/educational/ asserts it equals card-count + the bundled
   // JSON `_meta.count` so the number cannot silently drift).
   ToolCategory(
     id: 'educational-resources',
     title: 'Educational Resources',
-    summary: 'Curated places to learn Wi-Fi — blogs, talks, channels, podcasts',
+    summary: 'Curated places to learn Wi-Fi: blogs, talks, channels, podcasts',
     icon: Icons.school_outlined,
     // Bespoke Tier-2 mortarboard glyph (GL-003 §8.6.1). Falls back to the
     // Material [icon] above if the asset is ever absent from the bundle.
     iconAsset: 'assets/tool-icons/educational-resources.svg',
     exampleToolTitles: <String>['Reference Cards', 'Blogs', 'Podcasts'],
-    countLabelOverride: '42',
+    countLabelOverride: '41',
     tools: <ToolEntry>[
       // The 6 PDF reference cards.
       ToolEntry(

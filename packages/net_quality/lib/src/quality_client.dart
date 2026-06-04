@@ -14,6 +14,9 @@ enum QualityPhase {
   /// Measuring upload throughput.
   upload,
 
+  /// Measuring loaded responsiveness (latency under load).
+  responsiveness,
+
   /// Measurement finished successfully; [QualityClient.lastResult] is set.
   complete,
 

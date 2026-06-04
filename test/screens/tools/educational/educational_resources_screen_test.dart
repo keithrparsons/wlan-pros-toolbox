@@ -1,11 +1,10 @@
 // EducationalResourcesScreen widget tests — the directory renders a "Reference
 // Cards" section at the top (from injected cards), then the online-resource
 // topic groups; filter chips under the search switch between sections; free-text
-// search collapses to matching online resources; the destinations attribution
-// shows ONLY under destination topic groups. A pre-built service and an explicit
-// card list are injected so the tests do not depend on the bundled asset load or
-// the live catalog. A tall viewport is used so all list rows are laid out (a
-// ListView only builds on-screen children).
+// search collapses to matching online resources. A pre-built service and an
+// explicit card list are injected so the tests do not depend on the bundled
+// asset load or the live catalog. A tall viewport is used so all list rows are
+// laid out (a ListView only builds on-screen children).
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -21,9 +20,7 @@ const String _fixture = '''
     "topics": [
       "Tools and utilities",
       "Podcasts"
-    ],
-    "attribution": "Inspired by wlan-talks.net by Victor Njoroge.",
-    "attribution_scope": "destinations only"
+    ]
   },
   "resources": [
     {
@@ -63,7 +60,7 @@ EducationalResourcesService _svc() =>
     EducationalResourcesService.fromJson(_fixture);
 
 /// Pump the screen on a tall viewport so the whole list is laid out (cards +
-/// both topic groups + the attribution all build), and reset it on teardown.
+/// both topic groups all build), and reset it on teardown.
 Future<void> _pump(WidgetTester tester, EducationalResourcesService svc) async {
   addTearDown(() {
     tester.view.resetPhysicalSize();
@@ -143,18 +140,6 @@ void main() {
     expect(find.text('Alpha Tool'), findsNothing);
     // Reference cards are hidden when a topic filter is active.
     expect(find.text('WLAN Pros Bubble Diagram'), findsNothing);
-  });
-
-  testWidgets('shows the destinations credit only under destination groups',
-      (tester) async {
-    await _pump(tester, _svc());
-
-    // The credit appears exactly once — under "Podcasts" (a destination topic),
-    // NOT under "Tools and utilities" (a canonical bucket) or the cards section.
-    expect(
-      find.text('Inspired by wlan-talks.net by Victor Njoroge.'),
-      findsOneWidget,
-    );
   });
 
   testWidgets('live search filters rows, hides cards + chips, collapses groups',

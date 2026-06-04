@@ -100,26 +100,6 @@ void main() {
     expect(find.textContaining('https://example.com/pod'), findsOneWidget);
   });
 
-  testWidgets('destinations credit shows on a destination resource',
-      (tester) async {
-    await tester.pumpWidget(_harness(_destinationResource));
-    await tester.pump();
-    expect(
-      find.text('Inspired by wlan-talks.net by Victor Njoroge.'),
-      findsOneWidget,
-    );
-  });
-
-  testWidgets('destinations credit is absent on a canonical resource',
-      (tester) async {
-    await tester.pumpWidget(_harness(_canonicalResource));
-    await tester.pump();
-    expect(
-      find.text('Inspired by wlan-talks.net by Victor Njoroge.'),
-      findsNothing,
-    );
-  });
-
   testWidgets('copy action writes the metadata words to the clipboard',
       (tester) async {
     // Intercept the platform clipboard channel.

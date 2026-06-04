@@ -248,30 +248,38 @@ void main() {
       expect(progress.last.phase, QualityPhase.complete);
       expect(progress.last.fraction, 1.0);
 
-      // The download band [0.40, 0.70) must produce MULTIPLE intermediate
-      // emits between the 0.40 start and the 0.70 band end — i.e. the bar
-      // actually climbs through the window, not 0.40 → freeze → 0.70.
+      // Time-weighted bands (sized to real ~10s stage durations): download
+      // [0.06, 0.40), upload [0.40, 0.72), responsiveness [0.72, 1.0). The
+      // instant metrics only reach ~0.06 — the bar eases up, no leap to 0.40.
+      final instantEmits = progress
+          .where((p) => p.phase == QualityPhase.latency)
+          .toList();
+      expect(instantEmits.every((p) => p.fraction <= 0.06), isTrue,
+          reason: 'instant metrics must stay in the thin front band, not 0.40');
+
+      // The download band [0.06, 0.40) must produce MULTIPLE intermediate emits
+      // between the 0.06 start and the 0.40 band end — i.e. the bar actually
+      // climbs through the window, not start → freeze → end.
       final downloadClimb = progress
           .where((p) =>
               p.phase == QualityPhase.download &&
-              p.fraction > 0.40 &&
-              p.fraction < 0.70)
+              p.fraction > 0.06 &&
+              p.fraction < 0.40)
           .toList();
       expect(downloadClimb.length, greaterThanOrEqualTo(2),
           reason: 'download stage must climb in multiple steps');
 
-      // The upload band [0.70, 0.90) must likewise produce intermediate emits.
+      // The upload band [0.40, 0.72) must likewise produce intermediate emits.
       final uploadClimb = progress
           .where((p) =>
               p.phase == QualityPhase.upload &&
-              p.fraction > 0.70 &&
-              p.fraction < 0.90)
+              p.fraction > 0.40 &&
+              p.fraction < 0.72)
           .toList();
       expect(uploadClimb.length, greaterThanOrEqualTo(2),
           reason: 'upload stage must climb in multiple steps');
 
-      // No emit ever overshoots its band: nothing exceeds 0.90 until the
-      // post-throughput 0.90 pivot, and nothing exceeds 1.0 at all.
+      // No emit ever overshoots: nothing exceeds 1.0 at all.
       expect(progress.every((p) => p.fraction <= 1.0), isTrue);
 
       // The measurement still completed correctly under real timing.
