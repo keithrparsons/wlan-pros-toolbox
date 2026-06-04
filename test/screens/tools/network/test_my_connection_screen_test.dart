@@ -505,7 +505,7 @@ void main() {
   );
 
   testWidgets(
-    'macOS name honestly "(Location access off)" when not authorized, no prompt',
+    'macOS missing name degrades GRACEFULLY — row omitted, no Location error',
     (tester) async {
       final _NoNameMacAdapter adapter = _NoNameMacAdapter();
       await tester.pumpWidget(
@@ -521,13 +521,21 @@ void main() {
       );
       await runCheck(tester);
 
-      // No prompt was surfaced, and the missing name is labeled honestly —
-      // never a fabricated SSID, never a bare "Not measured".
+      // Consumer flow: a missing network NAME (macOS Location off) must NOT
+      // surface a technical "enable Location Services" error — the name is
+      // cosmetic, so the row is OMITTED entirely and the check still reads as a
+      // healthy result. No prompt is surfaced either.
       expect(adapter.promptRequested, isFalse);
       expect(
         find.text('Unavailable (enable Location Services to show the name)'),
-        findsOneWidget,
+        findsNothing,
       );
+      expect(find.textContaining('Location Services'), findsNothing);
+      expect(find.textContaining('Location access'), findsNothing);
+      // The cosmetic network-name row is simply not shown.
+      expect(find.text('Wi-Fi network'), findsNothing);
+      // The check still produced a real verdict from the link rate.
+      expect(find.text('Wi-Fi:'), findsOneWidget);
 
       await tester.pump(const Duration(milliseconds: 1600));
     },

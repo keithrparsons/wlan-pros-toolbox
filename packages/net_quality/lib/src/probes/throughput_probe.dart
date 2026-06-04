@@ -19,6 +19,18 @@ typedef ElapsedTimer = Future<Duration> Function(
   Future<void> Function() body,
 );
 
+/// The two sub-stages a throughput measurement passes through, in order.
+/// Emitted via [ThroughputProbe.measure]'s `onStage` callback so a caller can
+/// drive smooth elapsed-time progress that pivots its target band the moment
+/// the download window ends and the upload window begins.
+enum ThroughputStage {
+  /// The parallel download window is about to start.
+  download,
+
+  /// The single-stream upload window is about to start.
+  upload,
+}
+
 /// Aggregated throughput statistics.
 class ThroughputStats {
   /// Download rate, megabits per second.
@@ -222,9 +234,20 @@ class ThroughputProbe {
   ///
   /// Upload: a single stream with the multi-CDN fallback chain; tries the next
   /// upload endpoint on failure, up to `1 + [maxRetries]` attempts.
-  Future<ThroughputStats> measure() async {
+  ///
+  /// [onStage], when given, fires synchronously immediately before each
+  /// sub-stage begins ([ThroughputStage.download] then
+  /// [ThroughputStage.upload]). It exists purely so a caller can drive smooth
+  /// elapsed-time progress that pivots its target band at the download→upload
+  /// boundary; it never affects the measurement itself, and a throwing callback
+  /// must not abort the run (callers keep it trivial).
+  Future<ThroughputStats> measure({
+    void Function(ThroughputStage stage)? onStage,
+  }) async {
+    onStage?.call(ThroughputStage.download);
     final dl = await _measureParallelDownload();
 
+    onStage?.call(ThroughputStage.upload);
     var ulBytes = 0;
     final ulElapsed = await _measureUploadWithFallback((max, uri) async {
       ulBytes = await uploader(uri, uploadBytes, max);

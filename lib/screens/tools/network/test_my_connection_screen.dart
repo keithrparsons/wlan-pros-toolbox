@@ -100,12 +100,6 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
   bool _running = false;
   String? _error;
 
-  /// R1-B — whether macOS Location ended up authorized after the in-check
-  /// request. Drives the honest network-name fallback: false → "Name unavailable
-  /// (Location access off)" rather than a bare "Not measured". Stays true for
-  /// non-macOS sources (no Location gate there).
-  bool _macLocationAuthorized = true;
-
   // Internet progress.
   QualityPhase _phase = QualityPhase.idle;
   double _fraction = 0;
@@ -171,31 +165,19 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
         case WifiInfoSource.macosCoreWlan:
           final WifiInfoAdapter? adapter = _macAdapter;
           if (adapter == null) return null;
-          // R1-B — macOS gates the network NAME (SSID/BSSID) behind Location
-          // Services. A connection check must NEVER pop a Location prompt
-          // mid-test, so we do NOT request the permission here (that is the pro
-          // Wi-Fi Information tool's job, via its explicit "grant Location"
-          // button). Instead we read the CURRENT authorization with a no-prompt
-          // status check and read the snapshot regardless. The link RATE —
-          // hence the Wi-Fi Fine/Slow chip and the verdict — resolves WITHOUT
-          // Location; only the human-readable NAME depends on it, and the facts
-          // row degrades honestly when it was not already granted elsewhere.
-          if (adapter.gatesNameBehindPermission) {
-            try {
-              // No-prompt: reflects whether Location was ALREADY granted (in the
-              // pro tool or System Settings), so the facts row can say "Name
-              // unavailable (Location access off)" only when access is genuinely
-              // off, vs a plain not-connected case. Never surfaces a prompt.
-              _macLocationAuthorized = await adapter.currentNameAuthorization();
-            } catch (_) {
-              // A failed status read is non-fatal: fall through to the read; the
-              // name simply stays honestly unavailable.
-              _macLocationAuthorized = false;
-            }
-          }
-          // Bound the snapshot read too: a stalled native channel must not
-          // hang the check. On timeout the link reads as unread (null) and the
-          // verdict degrades to the honest internet-only path (Outcome D).
+          // macOS gates the network NAME (SSID/BSSID) behind Location Services.
+          // A consumer connection check must NEVER pop a Location prompt
+          // mid-test (that is the pro Wi-Fi Information tool's job, via its
+          // explicit "grant Location" button), and it never surfaces a
+          // permission message either — the name is cosmetic here and the
+          // facts row omits it gracefully when absent. So we do NOT touch the
+          // authorization status at all; we just read the snapshot. The link
+          // RATE — hence the Wi-Fi Fine/Slow chip and the verdict — resolves
+          // WITHOUT Location; only the human-readable NAME depends on it.
+          //
+          // Bound the snapshot read: a stalled native channel must not hang the
+          // check. On timeout the link reads as unread (null) and the verdict
+          // degrades to the honest internet-only path (Outcome D).
           return await adapter.fetch().timeout(
             const Duration(seconds: 5),
             onTimeout: () => throw TimeoutException(
@@ -226,7 +208,6 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
       _running = true;
       _phase = QualityPhase.idle;
       _fraction = 0;
-      _macLocationAuthorized = true;
       _ap = null;
       _internet = null;
       _verdict = null;
@@ -617,6 +598,8 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
     final double? latency = _metricValue(net, MetricIds.latency);
     final double? loss = _metricValue(net, MetricIds.loss);
 
+    final String? wifiName = _consumerWifiName(ap);
+
     return <_Fact>[
       // Each speed value on its own labeled row so it can never wrap mid-value
       // (e.g. "60" / "Mbps" splitting across lines). Parallels the Wi-Fi
@@ -629,7 +612,12 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
         '${latency != null ? '${latency.round()} ms' : 'Not measured'} · '
             '${loss != null ? '${loss.round()}%' : 'Not measured'}',
       ),
-      _Fact('Wi-Fi network', _ssidOrNotMeasured(ap)),
+      // Consumer flow: the network NAME is cosmetic. When it is unavailable
+      // (macOS Location off, or simply not read) the row is OMITTED entirely
+      // rather than surfacing a technical "enable Location Services" error that
+      // makes a perfectly good connection test look broken. The Wi-Fi Fine/Slow
+      // verdict and the link-detail rows never depend on the name.
+      if (wifiName != null) _Fact('Wi-Fi network', wifiName),
       _Fact('Tested', '${_formatTimestamp(_testedAt)} on $_platformLabel'),
     ];
   }
@@ -686,18 +674,20 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
     return snr != null ? '$snr dB' : 'Unavailable';
   }
 
-  /// The Wi-Fi network name, or an honest fallback. R1-B: on macOS, when the
-  /// name is missing BECAUSE Location access is off, say so explicitly —
-  /// "Name unavailable (Location access off)" — never a bare "Not measured"
-  /// (which reads as "Wi-Fi unchecked"). The Wi-Fi STATUS chip is independent of
-  /// this; the link rate (hence Fine/Slow) resolves without Location.
-  String _ssidOrNotMeasured(ConnectedAp? ap) {
+  /// The Wi-Fi network NAME for the consumer flow, or null when it is not
+  /// available. The name is purely cosmetic here — the Wi-Fi Fine/Slow verdict
+  /// and every link-detail row resolve WITHOUT it. So when the platform can not
+  /// give us a real name (macOS gates the SSID behind Location Services per
+  /// Apple's rule, or the link was simply not read) we return null and the
+  /// caller OMITS the row, rather than surfacing a technical
+  /// "enable Location Services" error that makes a healthy connection test read
+  /// as broken. Never fabricates a name (GL-005). The PRO Wi-Fi Information tool
+  /// keeps its explicit Location messaging; this graceful degrade is scoped to
+  /// the consumer experience.
+  String? _consumerWifiName(ConnectedAp? ap) {
     final String? ssid = ap?.ssid;
     if (ssid != null && ssid.trim().isNotEmpty) return ssid;
-    if (_source == WifiInfoSource.macosCoreWlan && !_macLocationAuthorized) {
-      return 'Unavailable (enable Location Services to show the name)';
-    }
-    return 'Not measured';
+    return null;
   }
 
   /// Mbps rounded to a whole number for a consumer, or "Not measured".
@@ -747,6 +737,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
         'Internet: ${_TwoAxisChips.word(v.internetStatus)}',
       );
     }
+    final String? wifiName = _consumerWifiName(_ap);
     buf
       // Internet down and up on their own labeled lines — one value per line,
       // parallel to the Wi-Fi Down / Wi-Fi Up lines below.
@@ -755,8 +746,14 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen> {
       ..writeln(
         'Delay: ${latency != null ? '${latency.round()} ms' : 'Not measured'}   '
         'Dropped data: ${loss != null ? '${loss.round()}%' : 'Not measured'}',
-      )
-      ..writeln('Wi-Fi network: ${_ssidOrNotMeasured(_ap)}')
+      );
+    // Consumer copy: include the network NAME line only when we actually have a
+    // name — never paste a "enable Location Services" error into a help-desk
+    // ticket (it reads as a fault, and the name is cosmetic here).
+    if (wifiName != null) {
+      buf.writeln('Wi-Fi network: $wifiName');
+    }
+    buf
       // Wi-Fi link details from the connected NIC — "Unavailable" where the
       // platform does not expose a datum (GL-005 / GL-008), never fabricated.
       ..writeln('RSSI: ${_rssiOnly(_ap)}')

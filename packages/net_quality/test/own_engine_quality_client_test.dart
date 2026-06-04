@@ -197,6 +197,89 @@ void main() {
       expect(dl.note, 'Measurement failed');
     });
 
+    test(
+        'throughput stage emits smooth, monotonic, multi-step elapsed progress',
+        () async {
+      // Real wall-clock download + upload windows so the engine's periodic
+      // ticker fires several times inside each band, climbing the bar instead
+      // of freezing at 0.40 until the stage returns (the 40%-freeze fix).
+      final latency = LatencyProbe(
+        host: 'h',
+        samples: 2,
+        connector: constConnector(10),
+      );
+      final throughput = ThroughputProbe(
+        downloadStreamCount: 1,
+        downloadBytes: 50 * 1000 * 1000,
+        uploadBytes: 10 * 1000 * 1000,
+        // Each transfer takes ~450ms of real time; with a ~120ms tick that is
+        // several intermediate emits per band. Real Stopwatch timing seams (no
+        // passthrough) so the reported rate is computed from the actual window.
+        downloader: (uri, max) async {
+          await Future<void>.delayed(const Duration(milliseconds: 450));
+          return 50 * 1000 * 1000;
+        },
+        uploader: (uri, bytes, max) async {
+          await Future<void>.delayed(const Duration(milliseconds: 450));
+          return bytes;
+        },
+      );
+      final responsiveness = ResponsivenessProbe(
+        idleSamples: 1,
+        loadedSamples: 1,
+        latencySampler: () async => const Duration(milliseconds: 20),
+        loadGenerator: () async {},
+      );
+
+      final client = OwnEngineQualityClient(
+        latencyProbe: latency,
+        throughputProbe: throughput,
+        responsivenessProbe: responsiveness,
+      );
+
+      final progress = await client.measure().toList();
+
+      // Monotonic, never decreasing, ends at complete = 1.0.
+      for (var i = 1; i < progress.length; i++) {
+        expect(progress[i].fraction,
+            greaterThanOrEqualTo(progress[i - 1].fraction),
+            reason: 'progress must never go backwards');
+      }
+      expect(progress.last.phase, QualityPhase.complete);
+      expect(progress.last.fraction, 1.0);
+
+      // The download band [0.40, 0.70) must produce MULTIPLE intermediate
+      // emits between the 0.40 start and the 0.70 band end — i.e. the bar
+      // actually climbs through the window, not 0.40 → freeze → 0.70.
+      final downloadClimb = progress
+          .where((p) =>
+              p.phase == QualityPhase.download &&
+              p.fraction > 0.40 &&
+              p.fraction < 0.70)
+          .toList();
+      expect(downloadClimb.length, greaterThanOrEqualTo(2),
+          reason: 'download stage must climb in multiple steps');
+
+      // The upload band [0.70, 0.90) must likewise produce intermediate emits.
+      final uploadClimb = progress
+          .where((p) =>
+              p.phase == QualityPhase.upload &&
+              p.fraction > 0.70 &&
+              p.fraction < 0.90)
+          .toList();
+      expect(uploadClimb.length, greaterThanOrEqualTo(2),
+          reason: 'upload stage must climb in multiple steps');
+
+      // No emit ever overshoots its band: nothing exceeds 0.90 until the
+      // post-throughput 0.90 pivot, and nothing exceeds 1.0 at all.
+      expect(progress.every((p) => p.fraction <= 1.0), isTrue);
+
+      // The measurement still completed correctly under real timing.
+      final result = client.lastResult!;
+      expect(result.metric(MetricIds.download)!.grade, isNot(QualityGrade.unavailable));
+      expect(result.metric(MetricIds.upload)!.grade, isNot(QualityGrade.unavailable));
+    });
+
     test('transient blip then success: download is graded with a real value',
         () async {
       var calls = 0;
