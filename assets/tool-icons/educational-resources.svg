@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Educational Resources (category glyph): a graduation cap (mortarboard).
+         Silhouette = a flat diamond board over a trapezoidal cap base, plus a
+         tassel dropping from the center. The clearest "learning/education" mark;
+         reads cleanly at the 28px category-tile size and the 20px floor. -->
+    <!-- mortarboard (the flat diamond top), seen in slight perspective -->
+    <path d="M12 4 L21 8 L12 12 L3 8 Z"/>
+    <!-- cap base / head band under the board -->
+    <path d="M6 9.6 L6 14 C 6 15.5 8.7 17 12 17 C 15.3 17 18 15.5 18 14 L 18 9.6"/>
+    <!-- tassel: cord from the board down to a hanging knot -->
+    <path d="M21 8 L21 13"/>
+    <line x1="21" y1="13" x2="21" y2="13.2"/>
+  </g>
+</svg>

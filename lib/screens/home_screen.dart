@@ -17,6 +17,7 @@
 // 16px grid gutter, tile titles at H3 / IBM Plex Sans 600.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../data/tool_catalog.dart';
 import '../router/app_router.dart';
@@ -254,6 +255,38 @@ class _HomeSearchFieldState extends State<_HomeSearchField> {
   }
 }
 
+/// The 28px home-grid category glyph. Renders the category's bespoke Tier-2 SVG
+/// (GL-003 §8.6.1, `currentColor`, runtime-tinted) when [ToolCategory.iconAsset]
+/// is set, and falls back to the Material [ToolCategory.icon] otherwise. The size
+/// (28, the §8.6 `--app-icon-grid` token) and the live/placeholder color logic
+/// (primary vs textTertiary) are identical across both paths, so the swap is a
+/// drop-in that does not disturb the IA-redesign tile layout.
+class _CategoryIcon extends StatelessWidget {
+  const _CategoryIcon({required this.category, required this.isPlaceholder});
+
+  final ToolCategory category;
+  final bool isPlaceholder;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color color =
+        isPlaceholder ? AppColors.textTertiary : AppColors.primary;
+    final String? asset = category.iconAsset;
+    if (asset != null) {
+      return SvgPicture.asset(
+        asset,
+        width: 28,
+        height: 28,
+        colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+        // Decorative: the tile's Semantics already announces the category.
+        excludeFromSemantics: true,
+        placeholderBuilder: (_) => const SizedBox(width: 28, height: 28),
+      );
+    }
+    return Icon(category.icon, size: 28, color: color);
+  }
+}
+
 class _CategoryTile extends StatefulWidget {
   const _CategoryTile({required this.category, required this.onTap});
 
@@ -319,13 +352,7 @@ class _CategoryTileState extends State<_CategoryTile> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Icon(
-                      cat.icon,
-                      size: 28,
-                      color: isPlaceholder
-                          ? AppColors.textTertiary
-                          : AppColors.primary,
-                    ),
+                    _CategoryIcon(category: cat, isPlaceholder: isPlaceholder),
                     _badge(text, isPlaceholder),
                   ],
                 ),

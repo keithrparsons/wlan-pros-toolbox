@@ -104,6 +104,7 @@ class ToolCategory {
     required this.summary,
     required this.icon,
     required this.tools,
+    this.iconAsset,
     this.exampleToolTitles = const <String>[],
     this.countLabelOverride,
     this.isNew = false,
@@ -114,6 +115,15 @@ class ToolCategory {
   final String summary;
   final IconData icon;
   final List<ToolEntry> tools;
+
+  /// Optional bespoke Tier-2 SVG glyph for the home-grid category tile
+  /// (GL-003 §8.6 / §8.6.1). When set, the tile renders this `currentColor`
+  /// line SVG (runtime-tinted lime when live, tertiary when placeholder) in
+  /// place of the Material [icon]. When `null` (the default for most
+  /// categories), the tile falls back to the Material [icon]. The path points
+  /// at the already-registered `assets/tool-icons/` dir (e.g.
+  /// 'assets/tool-icons/educational-resources.svg').
+  final String? iconAsset;
 
   /// Curated example tool titles shown on the home tile (mockups 01/05), joined
   /// by " · " (e.g. "FSPL · EIRP · Link Budget"). When empty, the tile falls
@@ -822,9 +832,9 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Encoding',
       ),
       // Wi-Fi Glossary — searchable, grouped plain-language definitions
-      // (offline bundled JSON). Reuses a generic Material icon for now; a
-      // bespoke Tier-2 SVG icon (assets/tool-icons/wifi-glossary.svg) is a
-      // deliberate follow-up, not part of this build.
+      // (offline bundled JSON). Carries its bespoke Tier-2 SVG icon
+      // (assets/tool-icons/wifi-glossary.svg), resolved by the <id>.svg
+      // convention in ToolAssets — no per-tool wiring needed.
       ToolEntry(
         id: 'wifi-glossary',
         title: 'Wi-Fi Glossary',
@@ -997,6 +1007,9 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
     title: 'Educational Resources',
     summary: 'Curated places to learn Wi-Fi — blogs, talks, channels, podcasts',
     icon: Icons.school_outlined,
+    // Bespoke Tier-2 mortarboard glyph (GL-003 §8.6.1). Falls back to the
+    // Material [icon] above if the asset is ever absent from the bundle.
+    iconAsset: 'assets/tool-icons/educational-resources.svg',
     exampleToolTitles: <String>['Blogs', 'Podcasts', 'Talks'],
     tools: <ToolEntry>[
       ToolEntry(
@@ -1043,6 +1056,7 @@ List<ToolCategory> _buildCatalog() {
           title: c.title,
           summary: c.summary,
           icon: c.icon,
+          iconAsset: c.iconAsset,
           exampleToolTitles: c.exampleToolTitles,
           countLabelOverride: c.countLabelOverride,
           isNew: c.isNew,

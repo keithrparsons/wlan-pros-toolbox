@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Wi-Fi Glossary: an OPEN BOOK (look-up-a-term) with definition lines on
+         the left page and a small Wi-Fi arc-and-dot cue on the right page.
+         Silhouette = two facing pages over a center spine — distinct from the
+         single-page ledger of db-reference and the framed cell of ascii-reference.
+         The Wi-Fi arc + dot reads at 20px (one bold arc, not stacked hairlines)
+         and names this as the *Wi-Fi* glossary. -->
+    <!-- open-book outline: left page, spine valley, right page -->
+    <path d="M12 6 C 10 4.5 6.5 4.5 4 5 L 4 18 C 6.5 17.5 10 17.5 12 19 C 14 17.5 17.5 17.5 20 18 L 20 5 C 17.5 4.5 14 4.5 12 6 Z"/>
+    <!-- center spine -->
+    <line x1="12" y1="6" x2="12" y2="19"/>
+    <!-- two short definition lines on the left page -->
+    <line x1="6" y1="9" x2="9.5" y2="9"/>
+    <line x1="6" y1="12" x2="9.5" y2="12"/>
+    <!-- Wi-Fi cue on the right page: a broadcast arc over a node dot. Drawn bold
+         enough to survive 20px (one arc + a short dot stroke, not stacked hairlines). -->
+    <path d="M13.8 11.6 C 15 10.3 17 10.3 18.2 11.6"/>
+    <line x1="16" y1="13.6" x2="16" y2="13.8"/>
+  </g>
+</svg>
