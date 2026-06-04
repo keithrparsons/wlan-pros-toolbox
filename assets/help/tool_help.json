@@ -1059,6 +1059,27 @@
       ],
       "source": "lib/screens/tools/reference/reason_codes_screen.dart"
     },
+    "http-status-codes": {
+      "name": "HTTP Status Codes",
+      "category": "Quick Reference",
+      "purpose": "The HTTP response status codes, grouped by class, with a plain-English meaning for each. A fast offline lookup when a captive portal, web service, proxy, or API returns a code and you need to know what it means.",
+      "whyHere": "When a check returns 403 or 503, or a captive-portal probe comes back 511, and you want the meaning without leaving the toolbox or going online.",
+      "howToUse": [
+        "Type a code number or keyword (e.g. \"404\" or \"redirect\") to filter; a \"no match\" card appears if nothing matches.",
+        "The filter matches the code number, the reason phrase, and the plain-English meaning, so \"timeout\" finds 408 and 504.",
+        "Use the toolbar copy action to copy the full reference as tab-separated text, one section per class."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "What it shows: codes grouped by class — 1xx Informational, 2xx Success, 3xx Redirection, 4xx Client Error, 5xx Server Error. Each row is the code number, its reason phrase, and a short meaning.",
+        "511 (Network Authentication Required) is the signature of a captive portal: the network blocks access until the client authenticates.",
+        "418 is registered in the IANA registry as \"(Unused)\". It is widely known as the \"I am a teapot\" joke code from RFC 2324; the tool labels it honestly and notes the history.",
+        "Data source: the IANA HTTP Status Code Registry (the authoritative registry), fetched 2026-06-04. Most codes are defined by RFC 9110 (HTTP Semantics). Code numbers and reason phrases are verbatim from the registry; the plain-English meanings are written for this tool. Unassigned and obsoleted codes are omitted; nothing is invented."
+      ],
+      "source": "lib/screens/tools/reference/http_status_codes_screen.dart"
+    },
     "wpa-security": {
       "name": "WPA Security",
       "category": "Quick Reference",

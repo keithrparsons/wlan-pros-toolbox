@@ -42,6 +42,7 @@ import '../screens/tools/reference/standards_screen.dart';
 import '../screens/tools/reference/mcs_index_screen.dart';
 import '../screens/tools/reference/signal_thresholds_screen.dart';
 import '../screens/tools/reference/wpa_security_screen.dart';
+import '../screens/tools/reference/http_status_codes_screen.dart';
 import '../screens/tools/reference/reason_codes_screen.dart';
 import '../screens/tools/reference/frame_exchange_screen.dart';
 import '../screens/tools/reference/db_reference_screen.dart';
@@ -164,6 +165,7 @@ class AppRouter {
   static const String signalThresholds = '/tools/signal-thresholds';
   static const String wpaSecurity = '/tools/wpa-security';
   static const String reasonCodes = '/tools/reason-codes';
+  static const String httpStatusCodes = '/tools/http-status-codes';
   static const String frameExchange = '/tools/frame-exchange';
   static const String dbReference = '/tools/db-reference';
   static const String channelMap = '/tools/channel-map';
@@ -312,6 +314,7 @@ class AppRouter {
     signalThresholds: (_) => const SignalThresholdsScreen(),
     wpaSecurity: (_) => const WpaSecurityScreen(),
     reasonCodes: (_) => const ReasonCodesScreen(),
+    httpStatusCodes: (_) => const HttpStatusCodesScreen(),
     frameExchange: (_) => const FrameExchangeScreen(),
     dbReference: (_) => const DbReferenceScreen(),
     channelMap: (_) => const ChannelMapScreen(),

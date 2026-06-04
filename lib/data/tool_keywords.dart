@@ -249,6 +249,11 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
   'reason-codes': <String>[
     'deauth', 'disassoc', 'status code', '802.11 codes', 'disconnect reason',
   ],
+  'http-status-codes': <String>[
+    'http', 'status code', 'response code', '404', '403', '500', '301', '302',
+    '503', 'captive portal', 'redirect', 'client error', 'server error',
+    'web error',
+  ],
   'frame-exchange': <String>[
     'association', 'handshake', '4-way', 'auth', 'probe', 'beacon',
     'frame sequence', 'management frames',

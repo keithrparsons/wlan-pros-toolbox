@@ -121,9 +121,10 @@ void main() {
       store = ToolHelpStore.fromJson(raw);
     });
 
-    test('parses to exactly 86 entries', () {
-      // 86 = 85 prior + the Ping Plotter help entry (Wave B, 2026-06-04).
-      expect(store.count, 86);
+    test('parses to exactly 87 entries', () {
+      // 87 = 86 prior + the HTTP Status Codes help entry (Wave D, 2026-06-04).
+      // (86 = 85 + the Ping Plotter help entry, Wave B.)
+      expect(store.count, 87);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

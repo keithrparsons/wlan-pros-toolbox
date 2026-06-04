@@ -735,6 +735,15 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Protocols',
       ),
       ToolEntry(
+        id: 'http-status-codes',
+        title: 'HTTP Status Codes',
+        description:
+            'HTTP response status codes by class — 1xx to 5xx, offline',
+        routeName: '/tools/http-status-codes',
+        isLive: true,
+        subgroup: 'Protocols',
+      ),
+      ToolEntry(
         id: 'db-reference',
         title: 'dB Reference',
         description: 'dB to ratio and dBm anchor values',
