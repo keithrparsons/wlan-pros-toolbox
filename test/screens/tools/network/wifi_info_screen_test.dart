@@ -239,8 +239,9 @@ void main() {
       await tester.pumpAndSettle(); // resolve fetch
       expect(find.text('Network'), findsOneWidget);
       expect(find.text('KeithNet'), findsOneWidget);
-      // macOS cannot expose Rx rate — honest per-field note.
-      expect(find.text('Not exposed by macOS CoreWLAN'), findsOneWidget);
+      // macOS cannot expose Rx rate — honest per-field note. Now stated on BOTH
+      // the Rx sparkline and the Rate card with the same permanent wording.
+      expect(find.text('Not exposed by macOS CoreWLAN'), findsWidgets);
       // macOS DOES expose channel width — no "not reported" note for it.
       expect(find.textContaining('Not reported by macOS'), findsNothing);
     });
@@ -268,8 +269,10 @@ void main() {
       expect(find.text('Network'), findsOneWidget);
       expect(find.text('Signal'), findsOneWidget);
       expect(find.text('KeithNet'), findsOneWidget);
-      // macOS-honest per-field note still present (cards path).
-      expect(find.text('Not exposed by macOS CoreWLAN'), findsOneWidget);
+      // macOS-honest per-field note present on BOTH surfaces (the Rx sparkline
+      // and the Rate card), with the same permanent "Not exposed by macOS
+      // CoreWLAN" wording — no misleading "in this reading" on the chart.
+      expect(find.text('Not exposed by macOS CoreWLAN'), findsNWidgets(2));
     });
 
     testWidgets(

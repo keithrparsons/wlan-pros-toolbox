@@ -659,7 +659,11 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     final WifiTimeSeries? series = _macSeries;
     if (series != null && !series.isEmpty) {
       children
-        ..add(_LiveCharts(series: series, latest: info))
+        ..add(_LiveCharts(
+          series: series,
+          latest: info,
+          platformLabel: 'macOS CoreWLAN',
+        ))
         ..add(const SizedBox(height: AppSpacing.sm));
     }
 
@@ -802,9 +806,11 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           value: _formatRate(info.rxRateMbps),
           unit: 'Mbps',
           mono: true,
-          // When the platform never exposes Rx rate, say so precisely
-          // instead of a generic "Unavailable".
-          note: info.rxRateAvailable ? null : 'Not exposed by $platformLabel',
+          // Say WHY precisely: a permanent platform limit (macOS never exposes
+          // Rx) vs a per-sample miss (iOS can, but this reading lacked it).
+          note: !info.rxRateAvailable
+              ? 'Not exposed by $platformLabel'
+              : (info.rxRateMbps == null ? 'Not in this reading' : null),
         ),
       ],
     ),
@@ -1473,7 +1479,11 @@ class _LiveBody extends StatelessWidget {
                   else if (series.isEmpty)
                     _WaitingForFirstPayload(streaming: controller.isStreaming)
                   else ...<Widget>[
-                    _LiveCharts(series: series, latest: ap),
+                    _LiveCharts(
+                      series: series,
+                      latest: ap,
+                      platformLabel: 'iOS Live',
+                    ),
                     // Grouped metric cards BELOW the sparklines (same surface as
                     // macOS). Rendered once a sample exists; fields the iOS
                     // stream does not carry render an honest "Unavailable" row.
@@ -1570,7 +1580,15 @@ const double _liveSparklineHeight = 32;
 /// direction is the honest signal). Congestion / CCA is intentionally absent —
 /// iOS does not expose channel utilization and we do not fabricate it (GL-005).
 class _LiveCharts extends StatelessWidget {
-  const _LiveCharts({required this.series, required this.latest});
+  const _LiveCharts({
+    required this.series,
+    required this.latest,
+    required this.platformLabel,
+  });
+
+  /// Platform label for the honest "unavailable" reasons on the charts, e.g.
+  /// 'macOS CoreWLAN' or 'iOS Live'. Matches the metric cards' wording.
+  final String platformLabel;
 
   final WifiTimeSeries series;
 
@@ -1619,9 +1637,14 @@ class _LiveCharts extends StatelessWidget {
           currentValue:
               rxAvail ? _WifiInfoScreenState._formatRate(rx) : null,
           window: series.rxRate,
-          unavailableNote: (latest != null && !rxAvail)
-              ? 'Not reported in this reading'
-              : null,
+          // Distinguish a permanent platform limit (macOS never exposes Rx →
+          // rxRateAvailable false) from a per-sample miss (iOS can, but this
+          // reading lacked it).
+          unavailableNote: latest == null
+              ? null
+              : !rxAvail
+                  ? 'Not exposed by $platformLabel'
+                  : (rx == null ? 'Not in this reading' : null),
         ),
       ],
     );
