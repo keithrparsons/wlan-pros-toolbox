@@ -126,6 +126,30 @@ dependencies:
   #     degrades to the honest "unavailable" state on Android until then).
   geolocator: ^14.0.2
 
+  # flutter_map — the embedded "plot my location" map preview in the Lat / Long
+  # tool (Batch 3, item #13). BSD-3-Clause; pulls in latlong2 (BSD-3) for its
+  # LatLng type. A pure-Dart Leaflet-style slippy-map widget that fetches raster
+  # tiles over HTTPS — no native plugin, no platform channel, so it adds NO
+  # entitlement and runs identically on iOS + macOS + web.
+  #   TILES: OpenStreetMap standard raster (https://tile.openstreetmap.org),
+  #     ONLINE-ONLY. The OSMF tile-usage policy is honored as a HARD rule:
+  #       * a UNIQUE app User-Agent is set on the tile provider (no library
+  #         default), and
+  #       * NO offline caching / NO tile pre-fetch (the default in-memory image
+  #         cache only; no on-disk tile store, no bulk download) — the policy
+  #         forbids pre-fetching and bulk caching.
+  #     Attribution is mandatory and legal (GL-003 §8.18): a persistent,
+  #     non-dismissable, TAPPABLE "© OpenStreetMap contributors" credit on a
+  #     dark scrim chip, linking to openstreetmap.org/copyright. Rendered via
+  #     flutter_map's RichAttributionWidget so it can never be omitted.
+  #   No routing, no search, no geocoding — a single read-only marker at the
+  #   plotted coordinate with basic pan/zoom.
+  flutter_map: ^8.3.0
+  # latlong2 — the BSD-3 LatLng value type flutter_map uses (and that
+  # LocationMap imports directly to build the marker/center point). Declared
+  # explicitly because lib/widgets/location_map.dart imports it by name.
+  latlong2: ^0.9.1
+
   # net_quality — the backend-agnostic, pure-Dart network-quality engine
   # (latency / jitter / loss / throughput / responsiveness + popular-site
   # reachability). Local path package under packages/. Consumed by the Network

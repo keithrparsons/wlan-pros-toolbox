@@ -49,6 +49,7 @@ import '../../../services/location/device_location.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/location_map.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -514,7 +515,9 @@ class _LatLongScreenState extends State<LatLongScreen> {
                       _inputCard(text, mono),
                       const SizedBox(height: AppSpacing.md),
                       _resultCard(text, mono),
-                      if (_mapCoords() != null) ...[
+                      if (_mapCoords() case final c?) ...[
+                        const SizedBox(height: AppSpacing.md),
+                        _mapCard(text, c),
                         const SizedBox(height: AppSpacing.md),
                         _mapActionsCard(text),
                       ],
@@ -848,6 +851,40 @@ class _LatLongScreenState extends State<LatLongScreen> {
           _resultBlock('Longitude', _lon, text, mono),
         ],
       ),
+    );
+  }
+
+  // ─── Map-preview card ───────────────────────────────────────────────────────
+  //
+  // Shown only when a valid coordinate exists (same gate as the map-actions
+  // card). An embedded, ONLINE-ONLY OpenStreetMap surface (GL-003 §8.18) that
+  // plots the entered/GPS coordinate with a single lime pin. The map is the
+  // §8.18 container itself (surface-1 / 12px / borderStrong), so this card adds
+  // only the heading above it and the honest "needs internet" note below — the
+  // tiles are online-only (OSMF policy: no offline caching), so when the device
+  // is offline the tiles simply fail to load and this note explains why.
+  Widget _mapCard(TextTheme text, ({double lat, double lon}) c) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+          child: Text(
+            'Map',
+            style: text.labelMedium?.copyWith(
+              color: AppColors.textSecondary,
+              letterSpacing: 0.4,
+            ),
+          ),
+        ),
+        LocationMap(latitude: c.lat, longitude: c.lon),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          'The map needs an internet connection. Tiles © OpenStreetMap '
+          'contributors; loaded live, never stored offline.',
+          style: text.bodySmall?.copyWith(color: AppColors.textTertiary),
+        ),
+      ],
     );
   }
 
