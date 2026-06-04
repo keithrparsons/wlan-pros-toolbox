@@ -215,9 +215,12 @@ void main() {
   });
 
   group('real bundled asset', () {
-    test('parses all 52 entries into the 7 topic groups', () {
+    test('parses the 32 curated entries into the 6 topic groups', () {
       // Load the actual bundled JSON from disk (not via rootBundle, so no
       // Flutter binding is needed) and prove the production dataset is healthy.
+      // Curated 2026-06-04: independent-author/community materials only; the
+      // megavendor/product documentation ("Vendor documentation and design
+      // guides") topic was removed per Keith. 52 -> 32 entries, 7 -> 6 topics.
       final File asset = File('assets/data/educational_resources.json');
       expect(asset.existsSync(), isTrue,
           reason: 'bundled asset must exist at assets/data/');
@@ -225,15 +228,23 @@ void main() {
 
       final EducationalResourcesService real =
           EducationalResourcesService.fromJson(raw);
-      expect(real.count, 52);
+      expect(real.count, 32);
 
       final List<ResourceGroup> groups = real.grouped();
-      expect(groups.length, 7);
+      expect(groups.length, 6);
 
-      // Every entry lands in exactly one group; counts sum to 52.
+      // The vendor-doc topic is intentionally gone (curation guard).
+      expect(
+        groups.every((ResourceGroup g) =>
+            g.topic != 'Vendor documentation and design guides'),
+        isTrue,
+        reason: 'megavendor/product docs were removed per Keith 2026-06-04',
+      );
+
+      // Every entry lands in exactly one group; counts sum to 32.
       final int sum = groups.fold<int>(
           0, (int acc, ResourceGroup g) => acc + g.count);
-      expect(sum, 52);
+      expect(sum, 32);
 
       // The credited attribution is present and names the wlan-talks source.
       expect(real.attribution, contains('wlan-talks.net'));
@@ -241,7 +252,7 @@ void main() {
       // _meta.count agrees with the parsed entry count (data-integrity guard).
       final Map<String, dynamic> decoded =
           jsonDecode(raw) as Map<String, dynamic>;
-      expect((decoded['_meta'] as Map<String, dynamic>)['count'], 52);
+      expect((decoded['_meta'] as Map<String, dynamic>)['count'], 32);
     });
   });
 }
