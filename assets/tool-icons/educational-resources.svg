@@ -8,8 +8,7 @@
     <path d="M12 4 L21 8 L12 12 L3 8 Z"/>
     <!-- cap base / head band under the board -->
     <path d="M6 9.6 L6 14 C 6 15.5 8.7 17 12 17 C 15.3 17 18 15.5 18 14 L 18 9.6"/>
-    <!-- tassel: cord from the board down to a hanging knot -->
-    <path d="M21 8 L21 13"/>
-    <line x1="21" y1="13" x2="21" y2="13.2"/>
+    <!-- tassel: cord hanging from the board's corner -->
+    <path d="M21 8 L21 13.5"/>
   </g>
 </svg>
