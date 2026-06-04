@@ -26,11 +26,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
+import '../../../data/tool_catalog.dart';
 import '../../../services/educational/educational_resources_service.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/centered_content.dart';
 import 'educational_resource_detail_screen.dart';
 import 'resource_badges.dart';
+
+/// Header label for the in-app PDF reference-cards section, also the chip label
+/// and the filter sentinel for the "Reference Cards" filter selection.
+const String _kReferenceCardsSection = 'Reference Cards';
+
+/// The PDF reference cards that render at the top of the directory. They are the
+/// `tools` of the Educational Resources catalog category (moved there from Quick
+/// Reference 2026-06-04); each opens its existing `/tools/<id>` PdfReferenceScreen
+/// route. Reading the catalog keeps a single source of truth — the cards are not
+/// re-listed here.
+List<ToolEntry> educationalReferenceCards() {
+  for (final ToolCategory c in kToolCategories) {
+    if (c.id == 'educational-resources') {
+      return c.tools.where((ToolEntry t) => t.isLive).toList(growable: false);
+    }
+  }
+  return const <ToolEntry>[];
+}
 
 /// Asset path for the bundled directory. Overridable in tests so a fixture
 /// string can stand in for the bundled asset.
@@ -38,10 +57,14 @@ const String kEducationalResourcesAsset =
     'assets/data/educational_resources.json';
 
 class EducationalResourcesScreen extends StatefulWidget {
-  const EducationalResourcesScreen({super.key, this.service});
+  const EducationalResourcesScreen({super.key, this.service, this.cards});
 
   /// Inject a pre-built service to bypass the asset load in widget tests.
   final EducationalResourcesService? service;
+
+  /// Inject the reference-card list in tests so the widget test doesn't depend
+  /// on the live catalog. Defaults to [educationalReferenceCards] (the catalog).
+  final List<ToolEntry>? cards;
 
   @override
   State<EducationalResourcesScreen> createState() =>
@@ -55,6 +78,14 @@ class _EducationalResourcesScreenState
   EducationalResourcesService? _service;
   String? _loadError;
   String _query = '';
+
+  /// The selected filter section, or null for "All". Holds either
+  /// [_kReferenceCardsSection] or a topic name. Meaningful only when no free-text
+  /// query is active (the chips hide while the user is typing, mirroring the
+  /// Quick Reference category screen).
+  String? _selectedSection;
+
+  late final List<ToolEntry> _cards = widget.cards ?? educationalReferenceCards();
 
   @override
   void initState() {
@@ -157,8 +188,39 @@ class _EducationalResourcesScreenState
       );
     }
 
-    final List<EducationalResource> filtered = svc.search(_query);
-    final List<ResourceGroup> groups = svc.grouped(filtered);
+    // The total shown in the intro: reference cards + online resources, the
+    // same figure the home tile's countLabelOverride pins.
+    final int total = _cards.length + svc.count;
+
+    final bool filtering = _query.trim().isNotEmpty;
+
+    final List<Widget> children = <Widget>[
+      _IntroCard(total: total),
+      const SizedBox(height: AppSpacing.sm),
+      _SearchField(
+        controller: _queryCtrl,
+        onChanged: _onQueryChanged,
+      ),
+    ];
+
+    // Filter chips — only when not actively typing a free-text query (the two
+    // filters would compound confusingly; mirrors the Quick Reference screen).
+    if (!filtering) {
+      final List<String> sections = _sectionChips(svc);
+      if (sections.length > 1) {
+        children
+          ..add(const SizedBox(height: AppSpacing.sm))
+          ..add(_SectionFilterChips(
+            sections: sections,
+            selected: _selectedSection,
+            onSelect: (String? s) => setState(() => _selectedSection = s),
+          ));
+      }
+    }
+
+    children
+      ..add(const SizedBox(height: AppSpacing.sm))
+      ..addAll(_content(svc, filtering));
 
     return ListView(
       padding: EdgeInsets.fromLTRB(
@@ -167,23 +229,82 @@ class _EducationalResourcesScreenState
         edge,
         edge + AppSpacing.sm,
       ),
-      children: <Widget>[
-        _IntroCard(total: svc.count),
-        const SizedBox(height: AppSpacing.sm),
-        _SearchField(
-          controller: _queryCtrl,
-          onChanged: _onQueryChanged,
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        if (groups.isEmpty)
-          _NoMatch(query: _query.trim())
-        else
-          ..._groupSlivers(svc, groups),
-      ],
+      children: children,
     );
   }
 
-  List<Widget> _groupSlivers(
+  /// The chip labels in order: "Reference Cards" (only when cards exist), then
+  /// one per online topic in `_meta.topics` order. The "All" chip is added by
+  /// [_SectionFilterChips] itself.
+  List<String> _sectionChips(EducationalResourcesService svc) {
+    final List<String> out = <String>[];
+    if (_cards.isNotEmpty) out.add(_kReferenceCardsSection);
+    for (final ResourceGroup g in svc.grouped()) {
+      out.add(g.topic);
+    }
+    return out;
+  }
+
+  /// The content under the search + chips, honoring the active query and the
+  /// selected filter section.
+  List<Widget> _content(EducationalResourcesService svc, bool filtering) {
+    // FREE-TEXT SEARCH: flatten to matching online resources across all topics
+    // (reference cards are not in the search index, so they are hidden while a
+    // query is active — same collapse behavior as the category screen).
+    if (filtering) {
+      final List<EducationalResource> filtered = svc.search(_query);
+      final List<ResourceGroup> groups = svc.grouped(filtered);
+      if (groups.isEmpty) return <Widget>[_NoMatch(query: _query.trim())];
+      return _topicGroupWidgets(svc, groups);
+    }
+
+    final bool showCards = _selectedSection == null ||
+        _selectedSection == _kReferenceCardsSection;
+    final bool showTopics = _selectedSection != _kReferenceCardsSection;
+
+    final List<Widget> out = <Widget>[];
+
+    if (showCards && _cards.isNotEmpty) {
+      out.addAll(_referenceCardWidgets());
+    }
+
+    if (showTopics) {
+      List<ResourceGroup> groups = svc.grouped();
+      if (_selectedSection != null) {
+        groups = groups
+            .where((ResourceGroup g) => g.topic == _selectedSection)
+            .toList(growable: false);
+      }
+      if (groups.isNotEmpty) {
+        if (out.isNotEmpty) out.add(const SizedBox(height: AppSpacing.lg));
+        out.addAll(_topicGroupWidgets(svc, groups));
+      }
+    }
+
+    // Defensive: a filter that matched nothing (should not happen with valid
+    // chips) renders the honest no-match state rather than a blank screen.
+    if (out.isEmpty) out.add(_NoMatch(query: ''));
+    return out;
+  }
+
+  /// The "Reference Cards" section: a header with count, then one tappable row
+  /// per card (reusing the directory row visual style), opening its
+  /// PdfReferenceScreen route by name.
+  List<Widget> _referenceCardWidgets() {
+    final List<Widget> out = <Widget>[
+      _TopicHeader(topic: _kReferenceCardsSection, count: _cards.length),
+      const SizedBox(height: AppSpacing.xs),
+    ];
+    for (int i = 0; i < _cards.length; i++) {
+      out.add(_ReferenceCardRow(card: _cards[i]));
+      if (i < _cards.length - 1) {
+        out.add(const SizedBox(height: AppSpacing.xs));
+      }
+    }
+    return out;
+  }
+
+  List<Widget> _topicGroupWidgets(
     EducationalResourcesService svc,
     List<ResourceGroup> groups,
   ) {
@@ -417,6 +538,221 @@ class _ResourceRowState extends State<_ResourceRow> {
                   ),
                 ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One reference-card row: the card title, tapping it pushes the existing
+/// PdfReferenceScreen route by name. Mirrors [_ResourceRow]'s visual register
+/// (surface-1 card, §8.3 lime focus ring, chevron affordance) but carries no
+/// cost/level badges — a card is an in-app PDF, not an external destination.
+class _ReferenceCardRow extends StatefulWidget {
+  const _ReferenceCardRow({required this.card});
+
+  final ToolEntry card;
+
+  @override
+  State<_ReferenceCardRow> createState() => _ReferenceCardRowState();
+}
+
+class _ReferenceCardRowState extends State<_ReferenceCardRow> {
+  bool _focused = false;
+
+  void _open() {
+    Navigator.of(context).pushNamed(widget.card.routeName);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final ToolEntry card = widget.card;
+
+    final Border rowBorder = _focused
+        ? Border.all(color: AppColors.primary, width: 2)
+        : Border.all(color: AppColors.borderStrong, width: 1);
+
+    return Semantics(
+      container: true,
+      button: true,
+      excludeSemantics: true,
+      label: '${card.title}. ${card.description}.',
+      child: Material(
+        color: AppColors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: _open,
+          onFocusChange: (bool f) {
+            if (f != _focused) setState(() => _focused = f);
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              border: rowBorder,
+              borderRadius: BorderRadius.circular(AppRadius.card),
+            ),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.rowPadding,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                const Padding(
+                  padding: EdgeInsets.only(right: AppSpacing.sm),
+                  child: Icon(
+                    Icons.picture_as_pdf_outlined,
+                    color: AppColors.textTertiary,
+                    size: 20,
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        card.title,
+                        style: text.bodyLarge?.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        card.description,
+                        style: text.labelMedium?.copyWith(
+                          color: AppColors.textTertiary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.only(left: AppSpacing.xs),
+                  child: Icon(
+                    Icons.chevron_right,
+                    color: AppColors.textTertiary,
+                    size: 20,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Section filter chips: an "All" chip plus one per section (Reference Cards +
+/// each online topic). Selected = lime (§8.3 active/selected), unselected =
+/// neutral §8.17. An edu-local copy of the Quick Reference category screen's
+/// `_SectionFilterChips` (kept local so the shared category screen is untouched).
+class _SectionFilterChips extends StatelessWidget {
+  const _SectionFilterChips({
+    required this.sections,
+    required this.selected,
+    required this.onSelect,
+  });
+
+  final List<String> sections;
+  final String? selected;
+  final ValueChanged<String?> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final List<({String? value, String label})> chips =
+        <({String? value, String label})>[
+      (value: null, label: 'All'),
+      ...sections.map((String s) => (value: s, label: s)),
+    ];
+
+    return Semantics(
+      container: true,
+      label: 'Filter by section',
+      child: Wrap(
+        spacing: AppSpacing.xs,
+        runSpacing: AppSpacing.xs,
+        children: <Widget>[
+          for (final ({String? value, String label}) c in chips)
+            _SelectableFilterChip(
+              label: c.label,
+              selected: selected == c.value,
+              onTap: () => onSelect(c.value),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One filter chip. Selected → lime fill + charcoal text (§8.3 selected role).
+/// Unselected → neutral §8.17 (surface-2 fill, secondary text). Carries its own
+/// §8.3 lime focus ring (the global iconButtonTheme does not cover an InkWell).
+class _SelectableFilterChip extends StatefulWidget {
+  const _SelectableFilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  State<_SelectableFilterChip> createState() => _SelectableFilterChipState();
+}
+
+class _SelectableFilterChipState extends State<_SelectableFilterChip> {
+  bool _focused = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final bool sel = widget.selected;
+
+    final Border border = _focused
+        ? Border.all(color: AppColors.primary, width: 2)
+        : Border.all(
+            color: sel ? AppColors.primary : AppColors.borderStrong,
+            width: 1,
+          );
+
+    return Semantics(
+      button: true,
+      selected: sel,
+      label: widget.label,
+      excludeSemantics: true,
+      child: Material(
+        color: sel ? AppColors.primary : AppColors.surface2,
+        borderRadius: BorderRadius.circular(AppRadius.control),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: widget.onTap,
+          onFocusChange: (bool f) {
+            if (f != _focused) setState(() => _focused = f);
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              border: border,
+              borderRadius: BorderRadius.circular(AppRadius.control),
+            ),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.xs,
+            ),
+            child: Text(
+              widget.label,
+              style: text.labelLarge?.copyWith(
+                fontSize: AppTextSize.caption,
+                fontWeight: FontWeight.w500,
+                // §8.3: charcoal text on lime when selected; neutral otherwise.
+                color: sel ? AppColors.secondary : AppColors.textSecondary,
+              ),
             ),
           ),
         ),

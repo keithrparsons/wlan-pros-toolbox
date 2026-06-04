@@ -843,69 +843,14 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Wi-Fi & RF',
         isLive: true,
       ),
-      // ── PDF reference cards (bundled as PDFs, rendered by the shared
-      // PdfReferenceScreen — pinch-zoomable, offline) ──
-      // 6 of Keith's 10 laminated cards live here in Quick Reference; the other
-      // 4 (the checklist cards) live in the Checklists category. The category
-      // screen sorts alphabetically by title, so these interleave with the
-      // tables above automatically — no manual ordering. `mcs-index-card` is
-      // deliberately distinct from the existing `mcs-index` table id.
-      // TODO(educational-resources): move these 10 PDF cards (the 6 reference
-      // cards + the 4 checklist PDF cards below) into the Educational Resources
-      // category → "WLAN Pros Laminated Cards" section when that category lands
-      // (separate thread). Until then they live here under the interim
-      // "Reference Cards" subgroup so they don't fall into an unnamed "Other"
-      // section (Keith, 2026-06-03). The two INTERACTIVE checklists
-      // (checklist-ap-install, checklist-client-test) stay in the "Checklists"
-      // section and do NOT move.
-      ToolEntry(
-        id: 'bubble-diagram',
-        title: 'WLAN Pros Bubble Diagram',
-        description: 'Wi-Fi design decision bubble diagram',
-        routeName: '/tools/bubble-diagram',
-        isLive: true,
-        subgroup: 'Reference Cards',
-      ),
-      ToolEntry(
-        id: 'troubleshooting-causes',
-        title: 'Wireless LAN Troubleshooting Causes',
-        description: 'Common causes to check when troubleshooting',
-        routeName: '/tools/troubleshooting-causes',
-        isLive: true,
-        subgroup: 'Reference Cards',
-      ),
-      ToolEntry(
-        id: 'channel-allocations-24ghz',
-        title: '2.4 GHz Channel Allocations',
-        description: '2.4 GHz channel layout and allocations',
-        routeName: '/tools/channel-allocations-24ghz',
-        isLive: true,
-        subgroup: 'Reference Cards',
-      ),
-      ToolEntry(
-        id: 'channel-allocations-5ghz',
-        title: '5 GHz Channel Allocations',
-        description: '5 GHz channel layout and allocations',
-        routeName: '/tools/channel-allocations-5ghz',
-        isLive: true,
-        subgroup: 'Reference Cards',
-      ),
-      ToolEntry(
-        id: 'channel-allocations-6ghz',
-        title: '6 GHz Channel Allocations',
-        description: '6 GHz channel layout and allocations',
-        routeName: '/tools/channel-allocations-6ghz',
-        isLive: true,
-        subgroup: 'Reference Cards',
-      ),
-      ToolEntry(
-        id: 'mcs-index-card',
-        title: 'Modulation and Coding Schemes (MCS Index)',
-        description: 'MCS index, rates, and modulation',
-        routeName: '/tools/mcs-index-card',
-        isLive: true,
-        subgroup: 'Reference Cards',
-      ),
+      // NOTE: the 10 laminated PDF reference cards (6 reference cards + 4
+      // checklist cards) MOVED to the Educational Resources category on
+      // 2026-06-04 (Keith). They render at the top of EducationalResourcesScreen
+      // as a "Reference Cards" section. The two INTERACTIVE checklists
+      // (checklist-ap-install, checklist-client-test) stayed here in the
+      // "Checklists" section and did NOT move. `mcs-index-card` (a card) is
+      // deliberately distinct from the existing `mcs-index` table id, which
+      // stays in Quick Reference.
       // ── moved in from the dissolved Command & Capture category
       // (2026-06-01): CLI / monitor-mode / Wireshark reference sheets ──
       ToolEntry(
@@ -951,40 +896,8 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Checklists',
       ),
-      // The 4 checklist PDF CARDS — interim "Reference Cards" with the other PDF
-      // cards (TODO(educational-resources) above covers their eventual move).
-      ToolEntry(
-        id: 'top-20-checklist',
-        title: 'Top 20 Wi-Fi Checklist',
-        description: 'The Top 20 Wi-Fi design checklist',
-        routeName: '/tools/top-20-checklist',
-        isLive: true,
-        subgroup: 'Reference Cards',
-      ),
-      ToolEntry(
-        id: 'extended-checklist',
-        title: 'Extended Wi-Fi Checklist',
-        description: 'Extended design checklist items',
-        routeName: '/tools/extended-checklist',
-        isLive: true,
-        subgroup: 'Reference Cards',
-      ),
-      ToolEntry(
-        id: 'extended-checklist-nonadvertised',
-        title: 'Extended Checklist (Non-Advertised Items)',
-        description: 'Extended checklist, non-advertised items',
-        routeName: '/tools/extended-checklist-nonadvertised',
-        isLive: true,
-        subgroup: 'Reference Cards',
-      ),
-      ToolEntry(
-        id: 'connection-checklist',
-        title: 'Wi-Fi Connection Checklist',
-        description: 'Client connection sequence checklist',
-        routeName: '/tools/connection-checklist',
-        isLive: true,
-        subgroup: 'Reference Cards',
-      ),
+      // The 4 checklist PDF cards moved to Educational Resources on 2026-06-04
+      // (see the NOTE above); only the two interactive checklists remain here.
     ],
   ),
 
@@ -999,9 +912,17 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
   // dedicated EducationalResourcesScreen, because the resources are external
   // links with rich detail, not in-app tool routes. The single placeholder
   // ToolEntry below exists only so the tile reads as live and the category is
-  // non-empty; it is never rendered as a row. The curated exampleToolTitles
-  // preview keeps the tile from echoing its own title (the lone tool shares the
-  // category name).
+  // non-empty; it never renders as generic ToolEntry rows. The 10 laminated PDF
+  // reference cards (moved here from Quick Reference 2026-06-04) ARE its `tools`
+  // list: EducationalResourcesScreen reads them and renders a "Reference Cards"
+  // section at the top, above the 32 online resources. No `subgroup` — this is
+  // not a subgroup-ordered category.
+  //
+  // Tile count: the home badge would show only the live tool count (the 10
+  // cards). The true total is 10 cards + 32 online resources = 42, so
+  // [countLabelOverride] pins '42' (guard test in
+  // test/screens/tools/educational/ asserts it equals card-count + the bundled
+  // JSON `_meta.count` so the number cannot silently drift).
   ToolCategory(
     id: 'educational-resources',
     title: 'Educational Resources',
@@ -1010,13 +931,79 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
     // Bespoke Tier-2 mortarboard glyph (GL-003 §8.6.1). Falls back to the
     // Material [icon] above if the asset is ever absent from the bundle.
     iconAsset: 'assets/tool-icons/educational-resources.svg',
-    exampleToolTitles: <String>['Blogs', 'Podcasts', 'Talks'],
+    exampleToolTitles: <String>['Reference Cards', 'Blogs', 'Podcasts'],
+    countLabelOverride: '42',
     tools: <ToolEntry>[
+      // The 6 PDF reference cards.
       ToolEntry(
-        id: 'educational-resources-directory',
-        title: 'Educational Resources',
-        description: 'A directory of Wi-Fi learning resources',
-        routeName: kEducationalResourcesRoute,
+        id: 'bubble-diagram',
+        title: 'WLAN Pros Bubble Diagram',
+        description: 'Wi-Fi design decision bubble diagram',
+        routeName: '/tools/bubble-diagram',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'troubleshooting-causes',
+        title: 'Wireless LAN Troubleshooting Causes',
+        description: 'Common causes to check when troubleshooting',
+        routeName: '/tools/troubleshooting-causes',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'channel-allocations-24ghz',
+        title: '2.4 GHz Channel Allocations',
+        description: '2.4 GHz channel layout and allocations',
+        routeName: '/tools/channel-allocations-24ghz',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'channel-allocations-5ghz',
+        title: '5 GHz Channel Allocations',
+        description: '5 GHz channel layout and allocations',
+        routeName: '/tools/channel-allocations-5ghz',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'channel-allocations-6ghz',
+        title: '6 GHz Channel Allocations',
+        description: '6 GHz channel layout and allocations',
+        routeName: '/tools/channel-allocations-6ghz',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'mcs-index-card',
+        title: 'Modulation and Coding Schemes (MCS Index)',
+        description: 'MCS index, rates, and modulation',
+        routeName: '/tools/mcs-index-card',
+        isLive: true,
+      ),
+      // The 4 checklist PDF cards.
+      ToolEntry(
+        id: 'top-20-checklist',
+        title: 'Top 20 Wi-Fi Checklist',
+        description: 'The Top 20 Wi-Fi design checklist',
+        routeName: '/tools/top-20-checklist',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'extended-checklist',
+        title: 'Extended Wi-Fi Checklist',
+        description: 'Extended design checklist items',
+        routeName: '/tools/extended-checklist',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'extended-checklist-nonadvertised',
+        title: 'Extended Checklist (Non-Advertised Items)',
+        description: 'Extended checklist, non-advertised items',
+        routeName: '/tools/extended-checklist-nonadvertised',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'connection-checklist',
+        title: 'Wi-Fi Connection Checklist',
+        description: 'Client connection sequence checklist',
+        routeName: '/tools/connection-checklist',
         isLive: true,
       ),
     ],

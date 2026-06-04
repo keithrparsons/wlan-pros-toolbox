@@ -17,10 +17,11 @@ import 'tool_ordering.dart';
 /// `tool_subgroups_test` asserts every grouped tool's subgroup is a known header
 /// so a future catalog edit cannot silently drop a tool into "Other".
 ///
-/// NOTE (interim): the "Reference Cards" section under quick-reference holds the
-/// 10 laminated PDF cards until the Educational Resources category lands; see the
-/// TODO(educational-resources) marker in tool_catalog.dart. When that category
-/// is built, the cards move and "Reference Cards" is removed from this list.
+/// NOTE: the 10 laminated PDF cards that used to live under a "Reference Cards"
+/// section here moved to the Educational Resources category on 2026-06-04
+/// (Keith); they now render at the top of EducationalResourcesScreen, not as a
+/// Quick Reference subgroup. The two INTERACTIVE checklists stayed in the
+/// "Checklists" section below.
 const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
   'quick-reference': <String>[
     'Wi-Fi & RF',
@@ -29,7 +30,6 @@ const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
     'Encoding',
     'CLI & Capture',
     'Checklists',
-    'Reference Cards',
   ],
   'rf-calculators': <String>[
     'RF & Propagation',

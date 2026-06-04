@@ -79,11 +79,11 @@ void main() {
   group('PDF reference cards', () {
     // id → title contract for the 10 laminated cards. Titles are kept verbatim
     // from the brief (brand-checked); a rename here is a deliberate breaking
-    // change, not an accident. Since the 2026-06-01 reorganization ALL 10 cards
-    // live in Quick Reference — the former Checklists category was dissolved
-    // and its 4 checklist cards merged into Quick Reference (ids/titles/routes/
-    // assets unchanged by the move).
-    const Map<String, String> quickRefCards = <String, String>{
+    // change, not an accident. Since 2026-06-04 ALL 10 cards live in the
+    // Educational Resources category (moved out of Quick Reference; ids/titles/
+    // routes/assets unchanged by the move). They render as a "Reference Cards"
+    // section at the top of EducationalResourcesScreen.
+    const Map<String, String> referenceCards = <String, String>{
       'bubble-diagram': 'WLAN Pros Bubble Diagram',
       'troubleshooting-causes': 'Wireless LAN Troubleshooting Causes',
       'channel-allocations-24ghz': '2.4 GHz Channel Allocations',
@@ -100,7 +100,7 @@ void main() {
     };
     // Every PDF card, regardless of category — for route-resolution checks.
     final Map<String, String> allCards = <String, String>{
-      ...quickRefCards,
+      ...referenceCards,
       ...checklistCards,
     };
 
@@ -130,12 +130,12 @@ void main() {
       });
     }
 
-    test('the 6 reference PDF cards live in quick-reference', () {
-      expectCardsInCategory('quick-reference', quickRefCards);
+    test('the 6 reference PDF cards live in educational-resources', () {
+      expectCardsInCategory('educational-resources', referenceCards);
     });
 
-    test('the 4 checklist PDF cards now live in quick-reference too', () {
-      expectCardsInCategory('quick-reference', checklistCards);
+    test('the 4 checklist PDF cards now live in educational-resources too', () {
+      expectCardsInCategory('educational-resources', checklistCards);
     });
 
     test('each PDF card route resolves to a builder', () {

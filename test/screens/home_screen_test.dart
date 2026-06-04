@@ -67,11 +67,14 @@ void main() {
 
       for (final ToolCategory cat in kToolCategories) {
         final int liveCount = cat.tools.where((ToolEntry t) => t.isLive).length;
-        // The numeric badge for each live category.
+        // The tile badge shows countLabelOverride when set (e.g. Educational
+        // Resources pins '42' = 10 cards + 32 online resources), else the live
+        // tool count.
+        final String badge = cat.countLabelOverride ?? '$liveCount';
         expect(
-          find.text('$liveCount'),
+          find.text(badge),
           findsWidgets,
-          reason: 'expected a count badge "$liveCount" for ${cat.title}',
+          reason: 'expected a count badge "$badge" for ${cat.title}',
         );
         // The example-tools line (curated, joined by " · ").
         if (cat.exampleToolTitles.isNotEmpty) {
