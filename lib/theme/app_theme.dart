@@ -22,7 +22,7 @@ class AppTheme {
   /// shared theme below — so keyboard focus is a visible lime ring, not
   /// Material's default low-contrast `focusColor` overlay.
   ///
-  /// Contrast: primary #A2CC3A measures 9.31:1 on surface0 (#1A1A1A), 8.59:1 on
+  /// Contrast: primary #A1CC3A measures 9.31:1 on surface0 (#1A1A1A), 8.59:1 on
   /// surface1 (#222222), and 7.36:1 on surface2 (#2A2A2A) — every dark surface a
   /// button or chip sits on clears the SC 1.4.11 / §8.11 3:1 non-text floor with
   /// wide margin. (Computed per §8.12; spot-checked WebAIM.)

@@ -121,10 +121,11 @@ void main() {
       store = ToolHelpStore.fromJson(raw);
     });
 
-    test('parses to exactly 90 entries', () {
-      // 90 = 89 (origin/main: 87 prior + Top-Level Domains + RJ Connectors,
-      // batch5) + 1 from batch6 (Device Info).
-      expect(store.count, 90);
+    test('parses to exactly 93 entries', () {
+      // 93 = 90 (origin/main 2e8dc40: 89 + batch6 Device Info) + 3 batch4 help
+      // entries (Unit Converter, QR Generator, DTMF Generator) added during the
+      // consolidation since batch4 shipped the tools without help entries.
+      expect(store.count, 93);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

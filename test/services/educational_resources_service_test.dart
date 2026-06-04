@@ -199,13 +199,14 @@ void main() {
   });
 
   group('real bundled asset', () {
-    test('parses the 31 curated entries into the 6 topic groups', () {
+    test('parses the 36 curated entries into the 6 topic groups', () {
       // Load the actual bundled JSON from disk (not via rootBundle, so no
       // Flutter binding is needed) and prove the production dataset is healthy.
       // Curated 2026-06-04: independent-author/community materials only; the
       // megavendor/product documentation ("Vendor documentation and design
       // guides") topic was removed per Keith, and the Revolution Wi-Fi archive
-      // entry was later dropped (32 -> 31).
+      // entry was later dropped (32 -> 31). Batch 2026-06-04 appended 5
+      // independent-author entries (31 -> 36), all within the existing 6 topics.
       final File asset = File('assets/data/educational_resources.json');
       expect(asset.existsSync(), isTrue,
           reason: 'bundled asset must exist at assets/data/');
@@ -213,7 +214,7 @@ void main() {
 
       final EducationalResourcesService real =
           EducationalResourcesService.fromJson(raw);
-      expect(real.count, 31);
+      expect(real.count, 36);
 
       final List<ResourceGroup> groups = real.grouped();
       expect(groups.length, 6);
@@ -226,15 +227,15 @@ void main() {
         reason: 'megavendor/product docs were removed per Keith 2026-06-04',
       );
 
-      // Every entry lands in exactly one group; counts sum to 31.
+      // Every entry lands in exactly one group; counts sum to 36.
       final int sum = groups.fold<int>(
           0, (int acc, ResourceGroup g) => acc + g.count);
-      expect(sum, 31);
+      expect(sum, 36);
 
       // _meta.count agrees with the parsed entry count (data-integrity guard).
       final Map<String, dynamic> decoded =
           jsonDecode(raw) as Map<String, dynamic>;
-      expect((decoded['_meta'] as Map<String, dynamic>)['count'], 31);
+      expect((decoded['_meta'] as Map<String, dynamic>)['count'], 36);
     });
   });
 }

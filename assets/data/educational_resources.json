@@ -1,9 +1,9 @@
 {
   "_meta": {
     "title": "Educational Resources",
-    "note": "Educational Resources for the WLAN Pros Toolbox: independent-author and community materials only. Per Keith (2026-06-04) the megavendor/product documentation entries (Apple, Cisco, Aruba/HPE, and the Hamina product docs) are EXCLUDED; the dataset keeps community tools/utilities, independent blogs and experts, podcasts, conference and talk archives, YouTube channels, and training/certification paths. Independent-author entries are included now with permission chased afterward (approval='pending_outreach'); any owner who declines gets removed. Descriptions are Keith's voice (GL-004, SOP-020 PASS). The full vendor-doc set is retained in the source dataset and git history if ever wanted back. Also still held: Wi-Fi For Beginners (site not confirmed live) and frames.bitbucketlabs.com (pending Keith's 1-line description). Curated 2026-06-04.",
+    "note": "Educational Resources for the WLAN Pros Toolbox: independent-author and community materials only. Per Keith (2026-06-04) the megavendor/product documentation entries (Apple, Cisco, Aruba/HPE, and the Hamina product docs) are EXCLUDED; the dataset keeps community tools/utilities, independent blogs and experts, podcasts, conference and talk archives, YouTube channels, and training/certification paths. Independent-author entries are included now with permission chased afterward (approval='pending_outreach'); any owner who declines gets removed. Descriptions are Keith's voice (GL-004, SOP-020 PASS). The full vendor-doc set is retained in the source dataset and git history if ever wanted back. Also still held: Wi-Fi For Beginners (site not confirmed live) and frames.bitbucketlabs.com (pending Keith's 1-line description). Curated 2026-06-04. Batch 2026-06-04: appended 5 independent-author entries (SubnetPro, WiFi Analyser, ShankarWiFi, PotatoFi Interactive Spectrum Chart, BadgerWiFi Tools), all approval='pending_outreach'. frames.bitbucketlabs held until ~2026-06-25.",
     "last_updated": "2026-06-04",
-    "count": 31,
+    "count": 36,
     "topics": [
       "Tools and utilities",
       "Conference and talk archives",
@@ -559,6 +559,92 @@
         "vendor-neutral"
       ],
       "approval": "not_required"
+    },
+    {
+      "id": "subnetpro",
+      "title": "SubnetPro",
+      "summary": "A free, fully offline toolkit of 60-plus interactive networking simulators and subnet labs.",
+      "description": "SubnetPro, by Chaithanya Katari, packs more than 60 interactive networking simulators into a single offline web page. You get IPv4 and IPv6 calculators, VLSM and subnet-tree builders, binary converters, and route summarization, alongside protocol simulators for DHCP, DNS, ARP, the TCP handshake, and NAT. It scaffolds from CCNA fundamentals up through CCNP and CCIE topics, so it works whether you are learning to subnet or drilling for an exam. This is general networking rather than Wi-Fi specific, but subnetting and IP design sit under every wireless deployment, so it earns a place in the kit. It runs entirely in the browser with no ads and no login, and the author lists it as free.",
+      "url": "https://chaithu-lets-code.github.io/SubnetPro/",
+      "topic": "Tools and utilities",
+      "cost": "free",
+      "level": "all",
+      "tags": [
+        "tool",
+        "subnetting",
+        "ip",
+        "training"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "wlananalyser",
+      "title": "WiFi Analyser, Browser-Based PCAP Analysis",
+      "summary": "Upload an 802.11 capture in the browser and get an AI-assisted read on what went wrong.",
+      "description": "WiFi Analyser, by Shankar Korukoppula, is a browser-based 802.11 capture analyzer that runs AI-assisted root-cause diagnosis on a monitor-mode PCAP. You upload a radiotap capture from Wireshark, Airtool, a WLAN Pi, or tcpdump, and it surfaces the things that are hard to eyeball: roaming failures across 802.11k, v, and r, RSN mismatches between WPA2 and WPA3, deauthentication floods, MCS instability, and EAPOL and 802.1X problems. There is no install and no login, which makes it a fast first look when someone hands you a capture and a complaint. The analysis is AI-assisted and the author says so plainly, so treat it as a quick diagnosis to confirm in your full toolset rather than the final word. It needs a monitor-mode capture with radiotap headers, so an ordinary client capture will not load. Free.",
+      "url": "https://app.wlananalyser.com/",
+      "topic": "Tools and utilities",
+      "cost": "free",
+      "level": "advanced",
+      "tags": [
+        "tool",
+        "pcap",
+        "capture",
+        "analysis"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "dest-shankarwifi",
+      "title": "ShankarWiFi",
+      "summary": "A free 802.11 reference library with interactive visualizers for the hard-to-picture parts of modern Wi-Fi.",
+      "description": "ShankarWiFi, by Shankar Korukoppula, is a free 802.11 reference site built around interactive visualizers and cert-prep material. Alongside written reference pages on RF, the MAC layer, frames, security, and roaming, it animates the parts of modern Wi-Fi that are hard to picture from a static diagram: MLO modes, TWT schedules, OFDMA resource units, preamble puncturing, and beamforming. It carries CWNA and CWAP study material with quiz questions, so it doubles as exam practice. Some of the content is AI-assisted, which the author discloses, so cross-check anything you are about to design around. Free, no login, no ads. Best for intermediate engineers and cert candidates who learn better by watching a mechanism move than by reading about it. This site and the WiFi Analyser tool are the same author's two properties.",
+      "url": "https://shankarwifi.com/",
+      "topic": "Independent blogs and experts",
+      "cost": "free",
+      "level": "intermediate",
+      "tags": [
+        "destination",
+        "blog",
+        "reference",
+        "independent",
+        "certification"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "potatofi-spectrum",
+      "title": "Interactive Spectrum Chart (PotatoFi)",
+      "summary": "Pan and zoom across the whole RF spectrum and toggle every technology sharing it.",
+      "description": "The Interactive Spectrum Chart, by Joel Crane, is a free web tool for seeing the RF spectrum the way it actually is: crowded. You pan and zoom across the bands and toggle technologies on and off, Wi-Fi at every channel width from 20 up to 320 MHz, plus Bluetooth, Zigbee, LoRa, DECT, UWB, and cellular, with regulatory domains for the US, EU, Australia, Japan, and worldwide. It draws OFDM subcarriers and resource units, lets you download a snapshot for a slide, and includes what the author believes is the first openly available 802.11ah channel chart. It is a teaching and reference tool, free to use, and it works on a trackpad, mouse, or touch screen. The author asks that you link to it rather than copy or rehost the code. Useful at every level, and a clean way to show someone why their 2.4 GHz is a mess.",
+      "url": "https://spectrum.potatofi.com/",
+      "topic": "Tools and utilities",
+      "cost": "free",
+      "level": "all",
+      "tags": [
+        "tool",
+        "spectrum",
+        "rf",
+        "reference"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "badgerwifi-tools",
+      "title": "BadgerWiFi Tools",
+      "summary": "Automation utilities that take the manual grind out of Ekahau project work.",
+      "description": "BadgerWiFi Tools, by Nick Turner, is a set of utilities aimed at the repetitive parts of Ekahau survey work. The desktop app, free and open source for Windows and macOS, automates project analysis, validation against customizable test suites, bulk AP-name management, data export, and map-asset generation. Two web tools sit alongside it: Griddle, which overlays a measured grid on a floor plan or screenshot, and a 2.4, 5, and 6 GHz channel reference. It is built by a working Wi-Fi engineer for working Wi-Fi engineers, so the core value assumes you already live in Ekahau day to day. The software is free, with a separate store selling physical equipment, so we class it as mixed. Best for professionals running surveys at volume who want their tooling to stop wasting their time.",
+      "url": "https://badgerwifi.tools/",
+      "topic": "Tools and utilities",
+      "cost": "mixed",
+      "level": "advanced",
+      "tags": [
+        "tool",
+        "ekahau",
+        "survey",
+        "automation"
+      ],
+      "approval": "pending_outreach"
     }
   ]
 }
