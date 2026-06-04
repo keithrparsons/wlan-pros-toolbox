@@ -60,7 +60,7 @@ void main() {
 
       // Spot-check the (number, direction, label, type) tuples at the phase
       // boundaries — these are the load-bearing facts ported from FX_SCENARIOS.
-      expect(frames[0].dir, 'STA → AP');
+      expect(frames[0].dir, 'AP → STA'); // a beacon is broadcast by the AP
       expect(frames[0].label, 'Beacon Frame');
       expect(frames[0].type, FxType.mgmt);
 
