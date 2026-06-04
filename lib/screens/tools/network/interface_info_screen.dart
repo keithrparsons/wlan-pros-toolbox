@@ -19,6 +19,7 @@
 // numeric/address values.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/interface_info_service.dart';
@@ -111,9 +112,26 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen> {
             ? _PublicIpStatus.unavailable
             : _PublicIpStatus.loaded;
       });
+      // WCAG 4.1.3 — an AT user who heard "Public IP, Looking up…" must hear
+      // the resolution, not silence. The loaded row (a ValueRow) and the
+      // unavailable row carry no live region of their own, so announce the
+      // transition explicitly here. The unavailable row is also wrapped in a
+      // liveRegion below for AT that re-reads on rebuild.
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        ip == null
+            ? 'Public IP unavailable, no internet or blocked.'
+            : 'Public IP $ip',
+        Directionality.of(context),
+      );
     }).catchError((Object _) {
       if (!mounted) return;
       setState(() => _publicIpStatus = _PublicIpStatus.unavailable);
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        'Public IP unavailable, no internet or blocked.',
+        Directionality.of(context),
+      );
     });
   }
 
@@ -123,8 +141,10 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen> {
       appBar: AppBar(
         title: const Text('Interface Info'),
         toolbarHeight: 64,
-        // §8.16 — copy leads, the meta action (refresh) trails, matching the
-        // copy-before-help order rule. Copy is disabled until a read completes.
+        // §8.16 — copy leads, the meta action (refresh) trails. Help is NOT in
+        // the AppBar: per §8.16.1 it lives in the body footer (`ToolHelpFooter`
+        // in `_Success`), so the AppBar carries only the copy and refresh
+        // actions. Copy is disabled until a read completes.
         actions: [
           if (NetworkSupport.interfaceInfoSupported) ...[
             AppCopyAction(textBuilder: _buildCopyText),
@@ -134,9 +154,6 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen> {
               onPressed: _load,
             ),
           ],
-          // Help trails the result/meta actions (§8.16). Shown on every
-          // platform — the help text is platform-agnostic, unlike the
-          // copy/refresh actions which only make sense where info is supported.
         ],
       ),
       body: SafeArea(top: false, child: _body()),
@@ -456,25 +473,33 @@ class _PublicIpRow extends StatelessWidget {
       case _PublicIpStatus.loading:
         return const _PublicIpPendingRow(
           message: 'Looking up…',
-          announce: true,
+          showSpinner: true,
         );
       case _PublicIpStatus.unavailable:
         return const _PublicIpPendingRow(
           message: 'Unavailable (no internet / blocked)',
-          announce: false,
+          showSpinner: false,
         );
     }
   }
 }
 
 /// The loading / unavailable presentation of the Public IP row. Label left,
-/// status right in muted italic text; the loading variant adds a small spinner
-/// and announces itself for screen readers (WCAG 4.1.3).
+/// status right in muted italic text; the loading variant adds a small spinner.
+///
+/// Both variants are wrapped in a `liveRegion` Semantics so an assistive-tech
+/// user who heard "Public IP, Looking up…" also hears the *resolution* on
+/// rebuild rather than silence (WCAG 4.1.3). The success/failure transition is
+/// additionally announced imperatively from `_loadPublicIp` via
+/// `SemanticsService.announce` — the live region here is the redundant,
+/// rebuild-driven half that AT which re-reads liveRegions will pick up.
 class _PublicIpPendingRow extends StatelessWidget {
-  const _PublicIpPendingRow({required this.message, required this.announce});
+  const _PublicIpPendingRow({required this.message, required this.showSpinner});
 
   final String message;
-  final bool announce;
+
+  /// Loading-only: shows the inline progress spinner beside the status text.
+  final bool showSpinner;
 
   @override
   Widget build(BuildContext context) {
@@ -488,7 +513,7 @@ class _PublicIpPendingRow extends StatelessWidget {
       ),
     );
 
-    final Widget right = announce
+    final Widget right = showSpinner
         ? Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -512,7 +537,7 @@ class _PublicIpPendingRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
-            width: 112,
+            width: ValueRow.labelColumnWidth,
             child: Text(
               'Public IP',
               style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
@@ -524,14 +549,12 @@ class _PublicIpPendingRow extends StatelessWidget {
       ),
     );
 
-    return announce
-        ? Semantics(
-            liveRegion: true,
-            label: 'Public IP, $message',
-            excludeSemantics: true,
-            child: content,
-          )
-        : content;
+    return Semantics(
+      liveRegion: true,
+      label: 'Public IP, $message',
+      excludeSemantics: true,
+      child: content,
+    );
   }
 }
 
@@ -583,7 +606,7 @@ class _MacTypeRow extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
-              width: 112,
+              width: ValueRow.labelColumnWidth,
               child: Text(
                 'MAC type',
                 style:
