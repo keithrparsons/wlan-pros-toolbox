@@ -87,17 +87,10 @@ class ToolHelpSheet extends StatelessWidget {
       addSection('Inputs', _InputsTable(inputs: help.inputs));
     }
 
-    // Algorithm & formula — mono where it reads as a formula.
-    final String? algorithm = help.algorithm;
-    if (algorithm != null) {
-      addSection(
-        'Algorithm & formula',
-        _AlgorithmBlock(
-          text: algorithm,
-          asFormula: help.algorithmReadsAsFormula,
-        ),
-      );
-    }
+    // Algorithm & formula is intentionally NOT rendered in the customer-facing
+    // help sheet. The ToolHelp.algorithm data remains in the model and JSON as
+    // our internal reference; it simply does not surface in-app or in the
+    // copied help text.
 
     // Worked example.
     final String? example = help.example;
@@ -125,7 +118,10 @@ class ToolHelpSheet extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               // Title row: the tool name (the sheet's top heading node for a
-              // screen reader) + the §8.16 copy affordance for the whole entry.
+              // screen reader) + the §8.16 copy affordance + a top-right Close.
+              // The name lives in an Expanded so it wraps/truncates gracefully
+              // at the narrowest width while the two trailing 44pt actions stay
+              // tappable.
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
@@ -142,6 +138,21 @@ class ToolHelpSheet extends StatelessWidget {
                     textBuilder: () => _helpPlainText(help),
                     idleLabel: 'Copy help',
                   ),
+                  // Close — reachable without scrolling. 44pt tap target.
+                  Semantics(
+                    button: true,
+                    label: 'Close help',
+                    child: IconButton(
+                      icon: const Icon(Icons.close),
+                      color: AppColors.textSecondary,
+                      tooltip: 'Close help',
+                      constraints: const BoxConstraints(
+                        minWidth: 44,
+                        minHeight: 44,
+                      ),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ),
                 ],
               ),
               if (help.category.isNotEmpty) ...<Widget>[
@@ -156,19 +167,6 @@ class ToolHelpSheet extends StatelessWidget {
               ],
               const SizedBox(height: AppSpacing.sm),
               ...sections,
-
-              const SizedBox(height: AppSpacing.md),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Semantics(
-                  button: true,
-                  label: 'Close help',
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Close'),
-                  ),
-                ),
-              ),
             ],
           ),
         ),
@@ -214,8 +212,8 @@ String _helpPlainText(ToolHelp help) {
     }
     b.writeln();
   }
-  final String? algorithm = help.algorithm;
-  if (algorithm != null) section('Algorithm & formula', algorithm);
+  // Algorithm & formula is intentionally omitted from the copied help text to
+  // match the on-screen sheet; the model field stays as internal reference.
   final String? example = help.example;
   if (example != null) section('Worked example', example);
   if (help.fieldNotes.isNotEmpty) {
@@ -422,42 +420,6 @@ class _LabeledInline extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// The algorithm / formula block. When the text reads as a formula it renders in
-/// the DM Mono inline-code style on a surface1 card (the §8.5 mono register for
-/// CLI / formula fragments); otherwise it renders as a normal paragraph so a
-/// prose "how it works" note stays readable.
-class _AlgorithmBlock extends StatelessWidget {
-  const _AlgorithmBlock({required this.text, required this.asFormula});
-
-  final String text;
-  final bool asFormula;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme theme = Theme.of(context).textTheme;
-    if (!asFormula) {
-      return _Paragraph(text);
-    }
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: SelectableText(
-        text,
-        // §8.5 inline-code register: DM Mono, body size, prose-floor leading.
-        style: theme.bodyLarge?.copyWith(
-          fontFamily: 'DM Mono',
-          color: AppColors.textPrimary,
-          height: 1.45,
-        ),
-      ),
     );
   }
 }

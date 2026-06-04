@@ -1318,6 +1318,7 @@
         "Platform differences: macOS reads the link via CoreWLAN (Tx rate, RSSI/SNR, no Rx). iOS reads it via the Shortcut (Tx and Rx). If the link can't be read (wired, or iOS without the Shortcut), it falls to the D1/D2 honest path — it does not guess a side. (consumer_verdict.dart:217-247)",
         "The headline is a hedge by design (\"Looks like…\", not \"your Wi-Fi is broken\"). The two chips teach the model that Wi-Fi and internet are two separate things. \"Both look fine\" is the most useful real-world answer — it points the user at the specific app/site instead of the connection.",
         "The verdict copy is deliberately non-diagnostic for a layperson. The underlying numbers and bands are the same as Wi-Fi vs Internet; if you want the numbers, use that tool.",
+        "How it picks a side: it compares how much internet speed you're actually getting against how much your Wi-Fi link could realistically carry. When the internet measures fine on its own, it says both look fine; otherwise it leans toward Wi-Fi or internet depending on which one has the headroom to spare.",
         "D2 (\"Make sure you're on Wi-Fi and try again\") is the honest answer when nothing measured, never a fake zero."
       ],
       "source": "test_my_connection_screen.dart:11-208 / consumer_verdict.dart:33-249"
@@ -1363,26 +1364,6 @@
         "macOS Tx-only and iOS no-width are real platform ceilings, not bugs. On macOS, if the SSID is blank, it's almost always a missing Location grant, not a hidden network. The macOS read has a 5s hang-safety: a stalled CoreWLAN read surfaces an honest \"No Wi-Fi reading\" rather than freezing. (wifi_info_adapter.dart:143-184)"
       ],
       "source": "wifi_info_screen.dart / wifi_info_service.dart / wifi_details.dart / connected_ap.dart / wifi_grading.dart:50-77"
-    },
-    "wifi-vs-internet": {
-      "name": "Wi-Fi vs Internet",
-      "category": "Test Network",
-      "purpose": "Answer, for an engineer, whether a throughput problem is the Wi-Fi link or the internet upstream — and back it with the actual numbers.",
-      "whyHere": "The diagnostic version of Test My Connection. Reach for it on a slow-connection call to localize the bottleneck without guessing.",
-      "howToUse": [
-        "Connect over Wi-Fi (on iOS install the companion Shortcut so the link rate is readable).",
-        "Run the check. It reads the connected link (ConnectedAp) and runs a full net_quality measurement, then evaluates.",
-        "Read the verdict headline, the explanation, and the supporting signal line."
-      ],
-      "inputs": [],
-      "algorithm": "Wi-Fi link rate = avg(Tx, Rx) when both are reported; falls back to whichever single rate exists. The basis (averaged / Tx-only / Rx-only / none) is recorded and disclosed (wifi_vs_internet.dart:187-205, 406-417). Usable Wi-Fi capacity = 0.55 × link rate (real throughput runs ~50–60% of the negotiated PHY rate) (wifi_vs_internet.dart:42-45, 207-209). internet throughput = avg(download, upload) from net_quality (wifi_vs_internet.dart:211-212, 351-358). Headroom ratio = internet throughput ÷ usable Wi-Fi capacity (wifi_vs_internet.dart:214-218). Verdict logic (grade gate first, then ratio): Grade gate — if the internet grades GOOD (download AND upload AND latency AND loss all good/excellent), verdict is \"Both healthy\" regardless of ratio (wifi_vs_internet.dart:249-269; gate computed at test_my_connection_screen.dart:308-324 / the pro screen mirror). Otherwise the ratio diagnoses: ≥ 0.70 → \"It's your Wi-Fi\" (the air link is the limiter); < 0.40 → \"It's upstream — not your Wi-Fi\" (unused link headroom, ISP/modem); 0.40–0.70 → \"Both contributing\" (wifi_vs_internet.dart:46-51, 296-346). Unknown link rate (wired, or iOS without the Shortcut) → \"Wi-Fi link not measured\", an internet-only read with an explicit caveat. Unknown internet → \"Internet not measured\" (wifi_vs_internet.dart:55-75, 227-289). Supporting RSSI/SNR line: explains a low link rate only (under ~200 Mbps): weak signal (SNR <25 dB) flagged as \"holding the rate down\"; strong signal + low rate flagged as \"check interference, retries, or a legacy-rate lock\". It never overrides the headline — rate is the truth, signal is context (wifi_vs_internet.dart:360-391).",
-      "example": null,
-      "fieldNotes": [
-        "Platform differences: same link-read split as Wi-Fi Information — macOS Tx-only (so the link rate is the Tx rate; the basis caption says so), iOS averaged Tx+Rx. A missing link rate routes to the wifiUnknown path, not a guess. (wifi_vs_internet.dart:79-91, 406-417)",
-        "The headline is the verdict; the explanation names the two figures (\"X Mbps internet vs Y Mbps usable Wi-Fi\"). The 0.55 factor means the tool expects internet to use roughly half the PHY rate before it blames the link. A ratio above 1.0 (internet exceeds usable capacity) is a strong \"it's your Wi-Fi\" signal and is kept, not clamped. (wifi_vs_internet.dart:419-423)",
-        "All four numbers and the 0.55/0.70/0.40 constants are disclosed in the screen footnote. The 0.55 factor and the band cut points are deliberate design choices, not measured per-link efficiency. On macOS the verdict rests on Tx rate alone (Rx unavailable), which the basis caption discloses."
-      ],
-      "source": "wifi_vs_internet.dart:42-423"
     },
     "cellular-info": {
       "name": "Cellular Information",

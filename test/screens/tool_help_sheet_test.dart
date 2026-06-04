@@ -83,9 +83,21 @@ void main() {
     expect(find.text("Why it's in the toolbox"), findsOneWidget);
     expect(find.text('How to use'), findsOneWidget);
     expect(find.text('Inputs'), findsOneWidget);
-    expect(find.text('Algorithm & formula'), findsOneWidget);
     expect(find.text('Worked example'), findsOneWidget);
     expect(find.text('Field notes'), findsOneWidget);
+
+    // Algorithm & formula is intentionally NOT rendered in the customer-facing
+    // sheet, even when the entry carries algorithm data (it stays as internal
+    // reference in the model/JSON only).
+    expect(find.text('Algorithm & formula'), findsNothing);
+    expect(
+      find.textContaining('FSPL(dB) = 20'),
+      findsNothing,
+    );
+
+    // The Close affordance lives at the top, reachable without scrolling.
+    expect(find.bySemanticsLabel('Close help'), findsOneWidget);
+    expect(find.byIcon(Icons.close), findsOneWidget);
 
     // The input field names render.
     expect(find.text('Frequency'), findsOneWidget);

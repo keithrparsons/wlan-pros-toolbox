@@ -4,8 +4,9 @@
 // - The pure parser (ToolHelpStore.fromJson): a well-formed fixture, malformed
 //   entries dropped, garbage document → empty-but-valid, null algorithm/example
 //   preserved as null, field notes preserved verbatim (GL-005).
-// - The REAL bundled asset (assets/help/tool_help.json): parses to exactly 86
-//   entries, and every key matches a catalog tool id (the lookup contract).
+// - The REAL bundled asset (assets/help/tool_help.json): parses to exactly 85
+//   entries, and every key matches a catalog tool id (the lookup contract),
+//   except for a small allowlist of known non-catalog help ids.
 // - helpForId() reads the cached store and returns null for an unknown id.
 
 import 'dart:convert';
@@ -120,9 +121,20 @@ void main() {
       store = ToolHelpStore.fromJson(raw);
     });
 
-    test('parses to exactly 86 entries', () {
-      expect(store.count, 86);
+    test('parses to exactly 85 entries', () {
+      expect(store.count, 85);
     });
+
+    // Help ids that intentionally have NO catalog tile but still ship a help
+    // entry, because they back a screen reached by a route other than a
+    // category tile.
+    //
+    // - test-my-connection: the merged consumer tool (Test My Connection + the
+    //   pro Wi-Fi vs Internet folded into one screen, Keith 2026-06-04). It is
+    //   reached via the home consumer hero, NOT a catalog tile, but its screen
+    //   renders ToolHelpFooter(toolId: 'test-my-connection'), so the help entry
+    //   must stay and is exempt from the catalog-match requirement.
+    const Set<String> nonCatalogHelpIds = <String>{'test-my-connection'};
 
     test('every help key matches a catalog tool id', () {
       // Build the set of all catalog tool ids (not category ids).
@@ -131,6 +143,7 @@ void main() {
           for (final ToolEntry t in c.tools) t.id,
       };
       for (final ToolHelp h in store.all) {
+        if (nonCatalogHelpIds.contains(h.id)) continue;
         expect(
           catalogToolIds.contains(h.id),
           isTrue,

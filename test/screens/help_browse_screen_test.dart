@@ -101,7 +101,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // The sheet's Close affordance and a section heading confirm it opened.
-      expect(find.text('Close'), findsOneWidget);
+      // Close moved to the top-right of the title row as a labelled icon button.
+      expect(find.bySemanticsLabel('Close help'), findsOneWidget);
       expect(find.text('Purpose'), findsOneWidget);
     });
 
