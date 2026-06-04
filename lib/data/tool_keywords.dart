@@ -66,6 +66,11 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
   'icmp-ping': <String>[
     'latency', 'rtt', 'echo', 'round trip', 'packet loss', 'real ping',
   ],
+  'ping-plotter': <String>[
+    'latency graph', 'latency trend', 'rtt over time', 'jitter', 'live graph',
+    'performance graph', 'continuous ping', 'monitor', 'chart', 'packet loss',
+    'pingplotter',
+  ],
   'ping-sweep': <String>[
     'host discovery', 'scan subnet', 'live hosts', 'who is on my network',
     'lan scan',

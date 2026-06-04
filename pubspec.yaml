@@ -76,6 +76,17 @@ dependencies:
   # GL-008). First-party, lightweight, no API key. BSD-3.
   url_launcher: ^6.3.0
 
+  # fl_chart — the live latency-trend line chart behind the Ping Plotter tool
+  # (ping_plotter_screen.dart, Wave B 2026-06-04). BSD-3-Clause, App-Store-safe,
+  # pure-Dart Canvas rendering (no platform channel, no network, no native
+  # plugin), so it adds no entitlement and runs identically on iOS + macOS. Used
+  # ONLY for the Ping Plotter chart; the rest of the app's lightweight sparklines
+  # stay on the in-house CustomPaint widgets. The chart is decorative for screen
+  # readers (an accessible text summary of current/min/avg/max/jitter/loss sits
+  # beside it in a live region), so fl_chart carries no a11y obligation of its
+  # own here.
+  fl_chart: ^0.69.0
+
   # flutter_svg — renders the per-tool Tier-2 icons (assets/tool-icons/<id>.svg)
   # and the in-tool concept graphics (assets/tool-graphics/<id>.svg) per GL-003
   # §8.6 / §8.6.1 / §8.6.2. Icons are single-color and runtime-tinted via

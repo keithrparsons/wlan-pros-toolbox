@@ -71,6 +71,7 @@ import '../screens/tools/network/net_quality_screen.dart';
 import '../screens/tools/network/test_my_connection_screen.dart';
 import '../screens/tools/network/packet_sender_screen.dart';
 import '../screens/tools/network/ping_screen.dart';
+import '../screens/tools/network/ping_plotter_screen.dart';
 import '../screens/tools/network/ping_sweep_screen.dart';
 import '../screens/tools/network/port_reference_screen.dart';
 import '../screens/tools/network/port_scan_screen.dart';
@@ -185,6 +186,11 @@ class AppRouter {
   static const String portScan = '/tools/port-scan';
   static const String ping = '/tools/ping';
   static const String icmpPing = '/tools/icmp-ping';
+
+  /// Ping Plotter — a sustained TCP-handshake ping charted over time (Wave B,
+  /// 2026-06-04). The id `ping-plotter` is permanent (backs this route, the
+  /// catalog entry, the help entry, the icon/graphic asset slots, and tests).
+  static const String pingPlotter = '/tools/ping-plotter';
   static const String pingSweep = '/tools/ping-sweep';
   static const String netQuality = '/tools/net-quality';
 
@@ -324,6 +330,7 @@ class AppRouter {
     portScan: (_) => const PortScanScreen(),
     ping: (_) => const PingScreen(),
     icmpPing: (_) => const IcmpPingScreen(),
+    pingPlotter: (_) => const PingPlotterScreen(),
     pingSweep: (_) => const PingSweepScreen(),
     // The bespoke 'net-quality' tool icon now ships at
     // assets/tool-icons/net-quality.svg (ascending signal bars with a live

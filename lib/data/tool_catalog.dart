@@ -160,7 +160,7 @@ class ToolCategory {
 /// assets and run identically in the browser.
 const Set<String> kWebGatedCategoryIds = <String>{
   'test-network', // 5 live Wi-Fi/internet diagnostics
-  'networking', // 20 socket/lookup/scan utilities
+  'networking', // 21 socket/lookup/scan utilities
 };
 
 /// Catalog seed — the 4-category reorganization (Keith, 2026-06-01; see file
@@ -282,6 +282,15 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description:
             'Real ICMP echo round-trip (mobile) — live RTT, min/avg/max, loss',
         routeName: '/tools/icmp-ping',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'ping-plotter',
+        title: 'Ping Plotter',
+        description:
+            'Sustained ping charted over time — live latency trend with '
+            'min/avg/max, jitter, and visible dropped probes',
+        routeName: '/tools/ping-plotter',
         isLive: true,
       ),
       ToolEntry(

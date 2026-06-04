@@ -1455,6 +1455,27 @@
       ],
       "source": "ping_service.dart:1-247"
     },
+    "ping-plotter": {
+      "name": "Ping Plotter",
+      "category": "Networking Tools",
+      "purpose": "Runs a sustained ping to a target and charts round-trip latency over time, instead of the single-shot result the Ping and ICMP Ping tools give. The live trend, jitter, and visible dropped probes show how stable a path is, not just whether it answers once.",
+      "whyHere": "The live performance graph. A single ping says \"reachable now\"; a trend says \"steady, spiky, or dropping packets.\" Reach for this to watch a flaky link over seconds or minutes, the view the single-shot ping tools can't give.",
+      "howToUse": [
+        "Enter a host, optionally pick a probe port (443 default; presets 443/80/53/22/7) and a sample interval (0.5s / 1s / 2s / 5s), then Start plot.",
+        "The chart fills left-to-right as replies land: a lime line for RTT and a red dot on the axis for any lost probe. The readout above shows current / min / avg / max / jitter and loss%.",
+        "It runs until you tap Stop; the chart keeps the most recent samples (a bounded window) so a long run stays fixed-size. Copy exports the summary plus a per-sample table."
+      ],
+      "inputs": [],
+      "algorithm": "Drives the shipped TCP-handshake Ping engine (PingService) in continuous mode (count = 0), one probe per chosen interval. Each reply folds into a bounded rolling window (default last 60 samples); min/avg/max are over the landed RTTs in that window, jitter is the mean absolute difference between consecutive landed RTTs (a lost probe breaks the chain, so jitter never pairs across a gap), and loss% is lost/sent. A timed-out / unreachable probe is recorded as an honest gap (no RTT) and drawn as a red axis dot, never as a fabricated 0 ms (ping_plot_controller.dart; ping_service.dart:1-27, 169-212).",
+      "example": null,
+      "fieldNotes": [
+        "This is a TCP round-trip probe, not ICMP echo. The metric is labeled \"TCP RTT\" and the probe port is shown, so it is never mistaken for ICMP (see Ping (ICMP) for the mobile real-ICMP path).",
+        "Platform: runs anywhere native, including the sandboxed macOS desktop where real ICMP can't (the ICMP path needs a subprocess the App Sandbox blocks). Gated off on web with the download-the-app prompt.",
+        "Dropped probes are shown, never hidden: a lost sample is a red dot on the axis and counts toward loss%, so a flaky path reads honestly instead of as a smooth line.",
+        "The chart retains a bounded window of recent samples (so memory stays flat on a long run); the copy export notes how many of the total samples are shown."
+      ],
+      "source": "ping_plotter_screen.dart; ping_plot_controller.dart; ping_service.dart:1-247"
+    },
     "icmp-ping": {
       "name": "Ping (ICMP)",
       "category": "Networking Tools",
