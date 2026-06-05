@@ -205,14 +205,15 @@ void main() {
       );
       await runCheck(tester);
 
-      // The expander row is present, the absorbed depth is NOT until tapped.
-      expect(find.text('Show technical details'), findsOneWidget);
+      // The v1.1 "See the details" disclosure row is present; the absorbed
+      // depth is NOT in the tree until tapped (collapsed on first paint, §2.D).
+      expect(find.text('See the details'), findsOneWidget);
       expect(find.text('Your Wi-Fi link'), findsNothing);
       expect(find.text(kWifiVsInternetFootnote), findsNothing);
 
       // Expand → the pro depth appears (scroll the row into view first; the
       // default test surface is shorter than the scroll body).
-      final Finder expander = find.text('Show technical details');
+      final Finder expander = find.text('See the details');
       await tester.ensureVisible(expander);
       await tester.pumpAndSettle();
       await tester.tap(expander);

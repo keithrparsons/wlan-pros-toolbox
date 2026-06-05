@@ -1,15 +1,18 @@
-// TestMyConnectionScreen — widget tests for the merged Wave 4 tool.
+// TestMyConnectionScreen — widget tests for the merged Wave 4 tool, updated for
+// the v1.1 result-readability reshape (2026-06-05, Iris spec).
 //
 // Drives the screen through its injection seams (a Wi-Fi source + fake
 // adapter/bridge, a MockQualityClient with no network, live sampling disabled)
 // so no real platform channel, socket, or poll timer is touched. Covers the
-// merged layout:
-//   * the verdict header carries the consumer headline + the two side-by-side
-//     "Wi-Fi:" / "Internet:" status chips (Item B), no prose conclusion;
-//   * the core comparison card shows the usable-Wi-Fi vs internet bars;
-//   * the "What to tell support" help-desk card shows Internet Down / Internet
-//     Up on separate labeled rows (never the old combined mid-value string);
-//   * the removed "A few things to try" card no longer renders;
+// v1.1 readability layout:
+//   * (A) the VERDICT HERO renders the plain-language sentence (H1) + the two
+//     side-by-side "Wi-Fi:" / "Internet:" status chips, each WORD + GLYPH;
+//   * (B) the "what this means" line is always visible (not behind a disclosure);
+//   * (C) the "A few things to try" 2–4 numbered steps render;
+//   * (D) the "See the details" disclosure is COLLAPSED on first paint — the
+//     Mbps / bars / help-desk / pro readout appear only after it is opened;
+//   * "Couldn't check" carries the NEUTRAL help_outline glyph, never an error
+//     glyph or status hue;
 //   * the copy-able details text carries the two-axis line, internet down/up on
 //     separate labeled lines, and the four Wi-Fi values (iOS payload → real
 //     values; macOS Rx not exposed → "Wi-Fi Down: Unavailable", per GL-005);
@@ -228,6 +231,29 @@ QualityResult _marginalInternet() => QualityResult(
   ],
 );
 
+/// A net_quality result with NO available download/upload — the engine takes
+/// its wifiUnknown path with a null internet figure (→ D2, both axes unknown).
+QualityResult _emptyInternet() => QualityResult(
+  source: QualitySource.mock,
+  measuredAt: DateTime.utc(2026, 1, 1),
+  metrics: const <QualityMetric>[
+    QualityMetric(
+      id: MetricIds.download,
+      label: 'Download',
+      value: null,
+      unit: 'Mbps',
+      grade: QualityGrade.unavailable,
+    ),
+    QualityMetric(
+      id: MetricIds.upload,
+      label: 'Upload',
+      value: null,
+      unit: 'Mbps',
+      grade: QualityGrade.unavailable,
+    ),
+  ],
+);
+
 void main() {
   Widget host(Widget child, {Size? size}) => MaterialApp(
     theme: AppTheme.dark(),
@@ -262,9 +288,19 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  /// Opens the (D) "See the details" disclosure so the technical layer (the
+  /// comparison bars, the help-desk card, the pro readout) is in the tree.
+  Future<void> openDetails(WidgetTester tester) async {
+    final Finder row = find.text('See the details');
+    await tester.ensureVisible(row);
+    await tester.pumpAndSettle();
+    await tester.tap(row);
+    await tester.pumpAndSettle();
+  }
+
   testWidgets(
-    'verdict header shows the two side-by-side status chips, no prose sentence, '
-    'and no "A few things to try" card',
+    '(A) verdict hero renders the plain-language sentence (H1) + the two '
+    'side-by-side status chips, each WORD + GLYPH',
     (tester) async {
       await tester.pumpWidget(
         host(
@@ -280,27 +316,28 @@ void main() {
       );
       await runCheck(tester);
 
-      // Both labeled chips remain — each axis carries its own word (Item B).
+      // _marginalInternet (down 60 / up 20) over the high iOS link rate →
+      // ratio < 0.40 → engine `upstream` → outcome `internet` → the hero
+      // sentence is "Your internet is the slow part."
+      final Finder hero = find.text('Your internet is the slow part.');
+      expect(hero, findsOneWidget);
+      // It is the H1 hero — headlineLarge / 36px (§8.5.2 scope extension).
+      final Text heroText = tester.widget<Text>(hero);
+      expect(heroText.style?.fontSize, 36);
+
+      // Both labeled axis chips remain, each carrying its own word + glyph.
+      // internet outcome → Wi-Fi: Fine, Internet: Slow.
       expect(find.text('Wi-Fi:'), findsOneWidget);
       expect(find.text('Internet:'), findsOneWidget);
-
-      // The removed self-help card is gone.
-      expect(find.text('A few things to try'), findsNothing);
-
-      // The explanatory conclusion sentences are GONE for every outcome.
-      expect(
-        find.textContaining('The slow part is between your device'),
-        findsNothing,
-      );
-      expect(
-        find.textContaining('Both your Wi-Fi and your internet are a little'),
-        findsNothing,
-      );
+      expect(find.text('Fine'), findsOneWidget);
+      expect(find.text('Slow'), findsOneWidget);
+      expect(find.byIcon(Icons.check_circle_outline), findsOneWidget); // Fine
+      expect(find.byIcon(Icons.warning_amber_outlined), findsOneWidget); // Slow
     },
   );
 
   testWidgets(
-    'core comparison card shows the usable-Wi-Fi and internet bars',
+    '(B) the "what this means" line is visible without opening any disclosure',
     (tester) async {
       await tester.pumpWidget(
         host(
@@ -316,13 +353,112 @@ void main() {
       );
       await runCheck(tester);
 
+      // internet outcome "what this means" — present at first paint, no tap.
+      expect(
+        find.textContaining(
+          'Your Wi-Fi has room to spare. The internet coming into your home',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    '(C) the "A few things to try" numbered steps render',
+    (tester) async {
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: false,
+            sourceOverride: WifiInfoSource.iosShortcuts,
+            iosBridge: _PayloadBridge(),
+            qualityClient: MockQualityClient(
+              scriptedResult: _marginalInternet(),
+            ),
+          ),
+        ),
+      );
+      await runCheck(tester);
+
+      // The section heading + the easiest-first internet steps (internet
+      // outcome → internet self-help list).
+      expect(find.text('A few things to try'), findsOneWidget);
+      expect(find.text('1.'), findsOneWidget);
+      expect(find.text('2.'), findsOneWidget);
+      expect(find.text('3.'), findsOneWidget);
+      expect(
+        find.text('Check if your provider has an outage in your area.'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    '(D) "See the details" is COLLAPSED on first paint — the bars and the '
+    'help-desk card appear only after it is opened',
+    (tester) async {
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: false,
+            sourceOverride: WifiInfoSource.iosShortcuts,
+            iosBridge: _PayloadBridge(),
+            qualityClient: MockQualityClient(
+              scriptedResult: _marginalInternet(),
+            ),
+          ),
+        ),
+      );
+      await runCheck(tester);
+
+      // The disclosure row exists; its technical content does NOT, collapsed.
+      expect(find.text('See the details'), findsOneWidget);
+      expect(find.text('Wi-Fi usable capacity'), findsNothing);
+      expect(find.text('What to tell support'), findsNothing);
+      expect(find.text('Wi-Fi vs Internet'), findsNothing);
+
+      // Open it — now the technical layer is in the tree.
+      await openDetails(tester);
       expect(find.text('Wi-Fi usable capacity'), findsOneWidget);
       expect(find.text('Internet throughput'), findsOneWidget);
+      expect(find.text('What to tell support'), findsOneWidget);
     },
   );
 
   testWidgets(
-    '"What to tell support" shows Internet Down / Internet Up on separate rows',
+    '"Couldn\'t check" carries the NEUTRAL help_outline glyph (D2), never an '
+    'error glyph',
+    (tester) async {
+      // D2: macOS link read hangs AND internet not measured → both axes unknown.
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: false,
+            sourceOverride: WifiInfoSource.macosCoreWlan,
+            macAdapter: _HangingMacAdapter(),
+            qualityClient: MockQualityClient(
+              scriptedResult: _emptyInternet(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Check My Connection'));
+      await tester.pump(const Duration(seconds: 9));
+      await tester.pumpAndSettle();
+
+      // Both chips read "Couldn't check" with the neutral help_outline glyph.
+      expect(find.text("Couldn't check"), findsNWidgets(2));
+      expect(find.byIcon(Icons.help_outline), findsNWidgets(2));
+      // NOT a fault glyph and NOT the old remove_circle.
+      expect(find.byIcon(Icons.error), findsNothing);
+      expect(find.byIcon(Icons.remove_circle_outline), findsNothing);
+      expect(find.byIcon(Icons.cancel), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'opened details show Internet Down / Internet Up on separate rows',
     (tester) async {
       await tester.pumpWidget(
         host(
@@ -337,6 +473,7 @@ void main() {
         ),
       );
       await runCheck(tester);
+      await openDetails(tester);
 
       expect(find.text('What to tell support'), findsOneWidget);
       expect(find.text('Internet Down'), findsOneWidget);
@@ -366,6 +503,7 @@ void main() {
         ),
       );
       await runCheck(tester);
+      await openDetails(tester);
 
       final Finder copyBtn = find.text('Copy these details');
       await tester.ensureVisible(copyBtn);
@@ -405,6 +543,7 @@ void main() {
         ),
       );
       await runCheck(tester);
+      await openDetails(tester);
 
       final Finder copyBtn = find.text('Copy these details');
       await tester.ensureVisible(copyBtn);
@@ -537,7 +676,11 @@ void main() {
 
       expect(find.text('Wi-Fi:'), findsOneWidget);
       expect(find.text('Internet:'), findsOneWidget);
+      // The Wi-Fi axis read "Couldn't check" (ap unread); the check completed.
       expect(find.text("Couldn't check"), findsWidgets);
+
+      // The measured internet figure lives behind the details disclosure now.
+      await openDetails(tester);
       expect(find.text('Internet Down'), findsOneWidget);
       expect(find.text('60 Mbps'), findsOneWidget);
     },

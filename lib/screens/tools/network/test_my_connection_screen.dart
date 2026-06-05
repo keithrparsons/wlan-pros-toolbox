@@ -437,32 +437,53 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                     _progressCard(context),
                   ],
                   if (verdict != null) ...[
-                    // 1. Verdict header — headline + two chips side by side.
-                    _VerdictHeader(verdict: verdict),
-                    const SizedBox(height: AppSpacing.sm),
-                    // 2. Core comparison (the hero) — usable Wi-Fi vs internet.
-                    _ComparisonCard(result: _engine!),
-                    const SizedBox(height: AppSpacing.sm),
-                    // 3. Live "Wi-Fi signal" sparkline card.
-                    if (_sampler != null) ...[
-                      _LiveSignalCard(sampler: _sampler!),
-                      const SizedBox(height: AppSpacing.sm),
-                    ],
-                    // 4. "What to tell support".
-                    _HelpDeskCard(
-                      facts: _facts(),
-                      onCopy: _copyDetails,
-                      copied: _detailsCopied,
+                    // (A) VERDICT HERO — the H1/36px plain-language sentence +
+                    //     the two axis status chips side by side (§2.A / §2.A2).
+                    _HeroVerdict(
+                      verdict: verdict,
+                      heroSentence: _heroSentence(verdict),
                     ),
-                    const SizedBox(height: AppSpacing.sm),
-                    // 5. "Show technical details" expander → the absorbed pro
-                    //    "Wi-Fi vs Internet" section.
-                    _TechnicalSection(
+                    const SizedBox(height: AppSpacing.md),
+                    // (B) WHAT THIS MEANS — one or two plain sentences, ALWAYS
+                    //     visible (never behind a disclosure), §2.B.
+                    _WhatThisMeans(text: _whatThisMeans(verdict)),
+                    const SizedBox(height: AppSpacing.lg),
+                    // (C) WHAT TO TRY — 2–4 numbered steps, easiest first, from
+                    //     the outcome's SelfHelpTopic (§2.C).
+                    _WhatToTry(steps: _selfHelpSteps(verdict.selfHelp)),
+                    const SizedBox(height: AppSpacing.lg),
+                    // (D) SEE THE DETAILS — the Mbps / bars / live signal / pro
+                    //     readout, COLLAPSED on first paint (§2.D).
+                    _SeeTheDetails(
                       expanded: _expanded,
                       onToggle: () => setState(() => _expanded = !_expanded),
-                      ap: _ap,
-                      internet: _internet,
-                      result: _engine!,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          const SizedBox(height: AppSpacing.sm),
+                          // Core comparison — usable Wi-Fi vs internet bars.
+                          _ComparisonCard(result: _engine!),
+                          const SizedBox(height: AppSpacing.sm),
+                          // Live "Wi-Fi signal" sparkline card.
+                          if (_sampler != null) ...[
+                            _LiveSignalCard(sampler: _sampler!),
+                            const SizedBox(height: AppSpacing.sm),
+                          ],
+                          // "What to tell support".
+                          _HelpDeskCard(
+                            facts: _facts(),
+                            onCopy: _copyDetails,
+                            copied: _detailsCopied,
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          // The absorbed pro "Wi-Fi vs Internet" readout.
+                          _TechnicalSection(
+                            ap: _ap,
+                            internet: _internet,
+                            result: _engine!,
+                          ),
+                        ],
+                      ),
                     ),
                     // iOS-only soft optional Shortcut offer on the D1 path only.
                     if (_isIos &&
@@ -634,6 +655,110 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         return 'Working out the answer…';
       case QualityPhase.failed:
         return 'Something went wrong…';
+    }
+  }
+
+  // ---- v1.1 readability copy (§2–§4) ----
+  //
+  // Every string below is authored to Flesch-Kincaid grade ≤ 8.0 PER STRING
+  // (§4). The hero sentence, the "what this means" line, the D1 number anchor,
+  // and the self-help steps are all measured; the worst is 6.7. The D1 path is
+  // the only one that surfaces a raw number — it carries a use-case ANCHOR (§3),
+  // never a bare figure at the verdict level.
+
+  /// (A) The plain-language VERDICT HERO sentence (§2.A), one per outcome. Short,
+  /// active, second person, most-important-first — FK ≤ 8.0 each.
+  String _heroSentence(ConsumerVerdict verdict) {
+    switch (verdict.outcome) {
+      case ConsumerOutcome.wifi:
+        return 'Your Wi-Fi is the slow part.';
+      case ConsumerOutcome.wifiLead:
+        return 'Your Wi-Fi is mostly the slow part.';
+      case ConsumerOutcome.internet:
+        return 'Your internet is the slow part.';
+      case ConsumerOutcome.bothFine:
+        return 'Your Wi-Fi and internet both look fine.';
+      case ConsumerOutcome.couldntCheckWifi:
+        return 'We checked your internet, but not your Wi-Fi.';
+      case ConsumerOutcome.couldntComplete:
+        return 'We could not finish the check.';
+    }
+  }
+
+  /// (B) The "what this means" line (§2.B), one per outcome — the verdict
+  /// translated into the user's lived problem. ALWAYS visible. The D1 line
+  /// carries the measured internet figure with a use-case ANCHOR (§3).
+  String _whatThisMeans(ConsumerVerdict verdict) {
+    switch (verdict.outcome) {
+      case ConsumerOutcome.wifi:
+        return 'Your internet can go faster than your Wi-Fi is carrying. The '
+            'slow link is between your device and the router.';
+      case ConsumerOutcome.wifiLead:
+        return 'Both sides are a bit slow. The Wi-Fi link is the easiest one '
+            'to fix, so start there.';
+      case ConsumerOutcome.internet:
+        return 'Your Wi-Fi has room to spare. The internet coming into your '
+            'home is the slow part right now.';
+      case ConsumerOutcome.bothFine:
+        return 'Both sides are working well. If something still feels slow, it '
+            'is likely the app or site you are using.';
+      case ConsumerOutcome.couldntCheckWifi:
+        return _couldntCheckWifiMeaning();
+      case ConsumerOutcome.couldntComplete:
+        return 'We could not read your Wi-Fi or your internet. Make sure you '
+            'are on Wi-Fi, then try again.';
+    }
+  }
+
+  /// The D1 "what this means" line WITH the §3 number anchor. The measured
+  /// internet figure is rounded to a whole number and tied to a lived use case
+  /// ("fine for video calls" / "tight for video calls"), never shown bare. Falls
+  /// back to the no-figure form when the engine surfaced no number.
+  String _couldntCheckWifiMeaning() {
+    final double? avg = _engine?.internetAvgMbps;
+    if (avg == null) {
+      return 'We read your internet, but this device would not share its '
+          'Wi-Fi details.';
+    }
+    final int mbps = avg.round();
+    final bool healthy =
+        ConnectionCheck.internetHealth(_internet) == InternetHealth.good;
+    // §3 anchor — the number never appears alone at the verdict level.
+    final String anchor = healthy
+        ? 'fine for video calls and streaming'
+        : 'fine for browsing, but tight for video calls';
+    return 'Your internet measured about $mbps Mbps, $anchor. This device '
+        'would not share its Wi-Fi details.';
+  }
+
+  /// (C) The self-help steps (§2.C) for an outcome's [SelfHelpTopic] — 2–4 real
+  /// FCC-grade fixes, ordered easiest-first, each FK ≤ 8.0. No engagement-bait
+  /// "tap to optimize" steps (GL-005).
+  static List<String> _selfHelpSteps(SelfHelpTopic topic) {
+    switch (topic) {
+      case SelfHelpTopic.wifi:
+        return const <String>[
+          'Move closer to your router.',
+          'Restart your router. Unplug it, wait ten seconds, then plug it '
+              'back in.',
+          'Pause large downloads or video on other devices.',
+        ];
+      case SelfHelpTopic.internet:
+        return const <String>[
+          'Check if your provider has an outage in your area.',
+          'Restart your modem, then your router.',
+          'If it is still slow, call your internet provider.',
+        ];
+      case SelfHelpTopic.differentApp:
+        return const <String>[
+          'Try a different app or website.',
+          'If only one app is slow, the problem is on their end, not yours.',
+        ];
+      case SelfHelpTopic.reconnect:
+        return const <String>[
+          'Make sure you are connected to Wi-Fi.',
+          'Then run the check again.',
+        ];
     }
   }
 
@@ -820,17 +945,21 @@ class _Fact {
 }
 
 // ===========================================================================
-// 1. Verdict header — plain headline + the two status chips SIDE BY SIDE.
+// (A) VERDICT HERO — the H1/36px plain-language sentence (the visual climax)
+// + the two axis status chips SIDE BY SIDE (§2.A / §2.A2).
 // ===========================================================================
 
-/// The collapsed-view verdict header (Item B): the consumer headline word/phrase
-/// on top, then the two labeled axis chips laid out HORIZONTALLY on one row to
-/// save vertical space ("Wi-Fi: [chip]   Internet: [chip]"). The chips wrap to
-/// two rows gracefully at the smallest supported width.
-class _VerdictHeader extends StatelessWidget {
-  const _VerdictHeader({required this.verdict});
+/// The verdict hero: a single result card holding the plain-language verdict
+/// SENTENCE at `headlineLarge` (H1/36px, §8.5.2 scope extension), then the two
+/// labeled axis status chips on one row. The sentence is the comprehension
+/// climax — the screen opens on the answer, not the numbers (§2.A). The chips
+/// teach the two-things model; each carries WORD + GLYPH + color (§1.3), never
+/// color alone. In light, the card takes the §8.20.3-C status accent treatment.
+class _HeroVerdict extends StatelessWidget {
+  const _HeroVerdict({required this.verdict, required this.heroSentence});
 
   final ConsumerVerdict verdict;
+  final String heroSentence;
 
   /// §8.20.3-C #2 — the status tone that colors the result card's accent bar.
   /// "Both fine" reads as success; any slow side is a warning; an unreadable
@@ -855,7 +984,7 @@ class _VerdictHeader extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     final AppColorScheme colors = context.colors;
     final String semanticsLabel =
-        '${verdict.headline}. '
+        '$heroSentence '
         'Wi-Fi ${_TwoAxisChips.word(verdict.wifiStatus)}. '
         'Internet ${_TwoAxisChips.word(verdict.internetStatus)}.';
 
@@ -872,14 +1001,17 @@ class _VerdictHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
+          // §2.A — the plain-language verdict SENTENCE at H1/36px
+          // (`headlineLarge`, §8.5.2 scope extension). The largest in-app
+          // headline; the comprehension climax. Wraps (never clips) under
+          // dynamic type, §8.9.
           Text(
-            verdict.headline,
-            style: text.titleMedium?.copyWith(
-              color: colors.textPrimary,
-              fontWeight: FontWeight.w700,
-            ),
+            heroSentence,
+            style: text.headlineLarge?.copyWith(color: colors.textPrimary),
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.md),
+          // §2.A2 — the two axis chips, side by side, teaching the two-things
+          // model.
           _TwoAxisChips(
             wifiStatus: verdict.wifiStatus,
             internetStatus: verdict.internetStatus,
@@ -1047,7 +1179,11 @@ class _StatusChip extends StatelessWidget {
       case AxisStatus.slow:
         return light ? Icons.warning_amber : Icons.warning_amber_outlined;
       case AxisStatus.unknown:
-        return light ? Icons.remove_circle : Icons.remove_circle_outline;
+        // §1.1 — the "couldn't check" glyph is `help_outline`, NOT error /
+        // cancel / block / remove. Those carry "fault"; this reads "unknown /
+        // not determined", which is the truth. Same outlined glyph the footer
+        // uses, so it reads familiar and non-threatening.
+        return Icons.help_outline;
     }
   }
 
@@ -1093,9 +1229,204 @@ class _StatusChip extends StatelessWidget {
 }
 
 // ===========================================================================
-// 2. Core comparison (the hero) — usable Wi-Fi capacity vs internet throughput
-// on a shared scale. Wi-Fi is the lime accent bar; internet is a NEUTRAL bar
+// (B) WHAT THIS MEANS — one or two plain sentences, ALWAYS visible (§2.B).
+// ===========================================================================
+
+/// The "what this means" line: the verdict translated into the user's lived
+/// problem. It sits directly below the hero (never behind a disclosure) so the
+/// meaning never costs an interaction (§2.B). Plain `bodyLarge` (16px/400) at
+/// textPrimary; the whole line is one readable text node for screen readers.
+class _WhatThisMeans extends StatelessWidget {
+  const _WhatThisMeans({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme theme = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
+    return Text(
+      text,
+      style: theme.bodyLarge?.copyWith(color: colors.textPrimary),
+    );
+  }
+}
+
+// ===========================================================================
+// (C) WHAT TO TRY — 2–4 numbered self-help steps, easiest first (§2.C).
+// ===========================================================================
+
+/// The "A few things to try" list: a section heading plus the outcome's 2–4
+/// easiest-first steps (§2.C). Each step is a real FCC-grade fix (GL-005, no
+/// engagement-bait). The number sits in DM Mono (a tidy sequence index); the
+/// step text is plain `bodyLarge`. Every step is FK ≤ 8.0 (§4).
+class _WhatToTry extends StatelessWidget {
+  const _WhatToTry({required this.steps});
+
+  final List<String> steps;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          'A few things to try',
+          style: text.headlineSmall?.copyWith(
+            color: colors.textPrimary,
+            // §8.20.3-A — light bumps the section head to 700.
+            fontWeight: colors.isLight ? FontWeight.w700 : FontWeight.w600,
+          ),
+        ),
+        // §8.20.3-C #3 — a 4px vivid lime underline under the section head in
+        // light (the bold label carries the meaning; the bar is decorative
+        // brand). No underline in dark.
+        if (colors.isLight) ...<Widget>[
+          const SizedBox(height: AppSpacing.xxs),
+          Container(
+            height: 4,
+            width: 40,
+            decoration: BoxDecoration(
+              color: colors.primary,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ],
+        const SizedBox(height: AppSpacing.sm),
+        for (int i = 0; i < steps.length; i++)
+          _TryStep(index: i + 1, text: steps[i]),
+      ],
+    );
+  }
+}
+
+/// One numbered self-help step: a DM Mono index column + the plain step text.
+class _TryStep extends StatelessWidget {
+  const _TryStep({required this.index, required this.text});
+
+  final int index;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme theme = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final AppColorScheme colors = context.colors;
+    return Padding(
+      // §8.7 — list-row vertical padding.
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding / 2),
+      child: Semantics(
+        container: true,
+        label: 'Step $index. $text',
+        excludeSemantics: true,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            SizedBox(
+              width: 24,
+              child: Text(
+                '$index.',
+                style: mono.robotoMono.copyWith(color: colors.textSecondary),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            Expanded(
+              child: Text(
+                text,
+                style: theme.bodyLarge?.copyWith(color: colors.textPrimary),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ===========================================================================
+// (D) SEE THE DETAILS — a full-width disclosure, COLLAPSED on first paint,
+// holding the Mbps / bars / live signal / pro readout (§2.D). The collapsed
+// content is removed from the tree (not just hidden) so AT users aren't read a
+// wall they didn't open.
+// ===========================================================================
+
+/// The "See the details" disclosure (§2.D). A single bordered full-width row
+/// (chevron + label) that toggles the technical layer. The row mirrors the
+/// §8.16.1 footer construction. The body is built ONLY when [expanded] — so a
+/// screen reader (and the tree) never carries the metrics wall until opened.
+class _SeeTheDetails extends StatelessWidget {
+  const _SeeTheDetails({
+    required this.expanded,
+    required this.onToggle,
+    required this.child,
+  });
+
+  final bool expanded;
+  final VoidCallback onToggle;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Semantics(
+          button: true,
+          toggled: expanded,
+          label: 'See the details',
+          child: InkWell(
+            onTap: onToggle,
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            child: Container(
+              decoration: BoxDecoration(
+                color: colors.surface1,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                border: Border.all(
+                  color: colors.border,
+                  width: colors.isLight ? 1.5 : 1,
+                ),
+              ),
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              child: ExcludeSemantics(
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(
+                        'See the details',
+                        style: text.titleSmall?.copyWith(
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Icon(
+                      // §2.D — chevron_right collapsed / expand_more expanded.
+                      expanded ? Icons.expand_more : Icons.chevron_right,
+                      color: colors.textSecondary,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        // Collapsed → the technical layer is absent from the tree entirely.
+        if (expanded) child,
+      ],
+    );
+  }
+}
+
+// ===========================================================================
+// 2. Core comparison — usable Wi-Fi capacity vs internet throughput on a
+// shared scale. Wi-Fi is the lime accent bar; internet is a NEUTRAL bar
 // (surface3 fill + borderStrong outline, NOT a status hue, per Vera §8.13).
+// Now lives inside the (D) "See the details" disclosure.
 // ===========================================================================
 
 class _ComparisonCard extends StatelessWidget {
@@ -1755,21 +2086,18 @@ class _FactRow extends StatelessWidget {
 }
 
 // ===========================================================================
-// 5. "Show technical details" expander → the absorbed pro "Wi-Fi vs Internet"
-// section, recomposed inline. Nothing the pro tool showed is lost.
+// The absorbed pro "Wi-Fi vs Internet" readout — the technical layer, rendered
+// INSIDE the (D) "See the details" disclosure (which now owns expand/collapse).
+// Nothing the pro tool showed is lost; it just no longer leads the screen.
 // ===========================================================================
 
 class _TechnicalSection extends StatelessWidget {
   const _TechnicalSection({
-    required this.expanded,
-    required this.onToggle,
     required this.ap,
     required this.internet,
     required this.result,
   });
 
-  final bool expanded;
-  final VoidCallback onToggle;
   final ConnectedAp? ap;
   final QualityResult? internet;
   final WifiVsInternetResult result;
@@ -1781,82 +2109,22 @@ class _TechnicalSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        // The bordered expander row (chevron + sub-line).
-        Semantics(
-          button: true,
-          toggled: expanded,
-          label: expanded
-              ? 'Hide technical details'
-              : 'Show technical details',
-          child: InkWell(
-            onTap: onToggle,
-            borderRadius: BorderRadius.circular(AppRadius.card),
-            child: Container(
-              decoration: BoxDecoration(
-                color: colors.surface1,
-                borderRadius: BorderRadius.circular(AppRadius.card),
-                border: Border.all(
-                  color: colors.border,
-                  width: colors.isLight ? 1.5 : 1,
-                ),
-              ),
-              padding: const EdgeInsets.all(AppSpacing.sm),
-              child: ExcludeSemantics(
-                child: Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            expanded
-                                ? 'Hide technical details'
-                                : 'Show technical details',
-                            style: text.titleSmall?.copyWith(
-                              color: colors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.xxs),
-                          Text(
-                            'Full Wi-Fi link rates, internet grades, and the '
-                            'verdict math',
-                            style: text.bodySmall?.copyWith(
-                              color: colors.textTertiary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Icon(
-                      expanded ? Icons.expand_less : Icons.expand_more,
-                      color: colors.textSecondary,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+        // Section heading — the named concept "Wi-Fi vs Internet" survives.
+        Text(
+          'Wi-Fi vs Internet',
+          style: text.titleMedium?.copyWith(color: colors.textPrimary),
         ),
-        if (expanded) ...<Widget>[
-          const SizedBox(height: AppSpacing.sm),
-          // Section heading — the named concept "Wi-Fi vs Internet" survives.
-          Text(
-            'Wi-Fi vs Internet',
-            style: text.titleMedium?.copyWith(color: colors.textPrimary),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          _ProVerdictCard(result: result),
-          const SizedBox(height: AppSpacing.sm),
-          _WifiLinkSection(ap: ap, result: result),
-          const SizedBox(height: AppSpacing.sm),
-          _InternetSection(result: internet),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            kWifiVsInternetFootnote,
-            style: text.labelMedium?.copyWith(color: colors.textSecondary),
-          ),
-        ],
+        const SizedBox(height: AppSpacing.sm),
+        _ProVerdictCard(result: result),
+        const SizedBox(height: AppSpacing.sm),
+        _WifiLinkSection(ap: ap, result: result),
+        const SizedBox(height: AppSpacing.sm),
+        _InternetSection(result: internet),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          kWifiVsInternetFootnote,
+          style: text.labelMedium?.copyWith(color: colors.textSecondary),
+        ),
       ],
     );
   }
