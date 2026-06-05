@@ -1012,8 +1012,8 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       // The 4 checklist PDF cards moved to Educational Resources on 2026-06-04
       // (see the NOTE above); only the two interactive checklists remain here.
       // ── Guides (2026-06-05): step-by-step how-tos that bundle a downloadable
-      // artifact. Distinct from the tappable checklists above (which track
-      // session state) — a Guide is a read-along walkthrough with a download.
+      // companion file. Distinct from the tappable checklists above (which track
+      // session state): a Guide is a read-along walkthrough with a download.
       ToolEntry(
         id: 'dual-orb-wlanpi',
         title: 'Dual Orbs on WLAN Pi',
@@ -1022,6 +1022,31 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         routeName: '/tools/dual-orb-wlanpi',
         isLive: true,
         subgroup: 'Guides',
+      ),
+      ToolEntry(
+        id: 'freeradius-wlanpi',
+        title: 'FreeRADIUS on WLAN Pi',
+        description: 'Stand up a lab RADIUS server for 802.1X (guide + script)',
+        routeName: '/tools/freeradius-wlanpi',
+        isLive: true,
+        subgroup: 'Guides',
+        keywords: <String>[
+          'radius',
+          '802.1X',
+          'dot1x',
+          'peap',
+          'mschapv2',
+          'wpa-enterprise',
+          'wpa2-enterprise',
+          'authentication',
+          'eap',
+          'wlan pi',
+          'wlanpi',
+          'raspberry pi',
+          'aaa',
+          'radtest',
+          'ferney munoz',
+        ],
       ),
     ],
   ),

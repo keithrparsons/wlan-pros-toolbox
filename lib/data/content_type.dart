@@ -16,6 +16,7 @@ enum ContentType {
   card('Card', Icons.crop_portrait_outlined),
   checklist('Checklist', Icons.checklist_outlined),
   cli('CLI', Icons.terminal_outlined),
+  guide('Guide', Icons.menu_book_outlined),
   calculator('Tool', Icons.calculate_outlined),
   diagnostic('Live', Icons.sensors_outlined),
   utility('Tool', Icons.build_outlined);
@@ -57,15 +58,23 @@ const Set<String> _cliSheetIds = <String>{
   'wireshark-80211-filters',
 };
 
+/// The how-to / guide tool ids (the "Guides & How-To" subgroup). A guide is a
+/// step-by-step walkthrough that may bundle a companion file — distinct from a
+/// reference table, card, CLI sheet, or checklist.
+const Set<String> _guideIds = <String>{
+  'freeradius-wlanpi',
+};
+
 /// Classifies a [tool] into a [ContentType] for its §8.17 chip.
 ///
-/// Resolution order: PDF cards → interactive checklists → CLI sheets → by
-/// category (quick-reference tables, rf-calculators calculators, test-network
-/// live diagnostics) → utility fallback for the networking tools.
+/// Resolution order: PDF cards → interactive checklists → CLI sheets → guides →
+/// by category (quick-reference tables, rf-calculators calculators,
+/// test-network live diagnostics) → utility fallback for the networking tools.
 ContentType contentTypeFor(ToolEntry tool, String categoryId) {
   if (_pdfCardIds.contains(tool.id)) return ContentType.card;
   if (_interactiveChecklistIds.contains(tool.id)) return ContentType.checklist;
   if (_cliSheetIds.contains(tool.id)) return ContentType.cli;
+  if (_guideIds.contains(tool.id)) return ContentType.guide;
 
   switch (categoryId) {
     case 'quick-reference':

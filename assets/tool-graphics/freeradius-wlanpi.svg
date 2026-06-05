@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 120" width="360" height="120" role="img">
+  <!-- FreeRADIUS-on-WLAN-Pi concept band (GL-003 §8.6.2). Dark-baked for the
+       #1A1A1A surface; recolored for light via the §8.20.7 allow-list swap in
+       ConceptGraphicBand (scaffold #E5E5E5, muted #9C9C9C, lime #A2CC3A, hatch
+       #3A3A3A all in the allow-list). WLAN Pi board -> RADIUS shield -> 802.1X
+       client, connectors dashed. Decorative: every fact is also in the screen
+       text, so it is ExcludeSemantics'd by the band. -->
+
+  <!-- WLAN Pi board -->
+  <rect x="24" y="40" width="84" height="46" rx="6" fill="none" stroke="#9C9C9C" stroke-width="1.6"/>
+  <rect x="34" y="48" width="20" height="14" rx="2" fill="#3A3A3A"/>
+  <circle cx="84" cy="54" r="6" fill="#A2CC3A"/>
+  <line x1="32" y1="74" x2="100" y2="74" stroke="#3A3A3A" stroke-width="1.4"/>
+  <circle cx="40" cy="74" r="2" fill="#9C9C9C"/>
+  <circle cx="50" cy="74" r="2" fill="#9C9C9C"/>
+  <circle cx="60" cy="74" r="2" fill="#9C9C9C"/>
+
+  <!-- RADIUS shield (lime, with check) -->
+  <path d="M180 30 l30 10 v18 c0 18 -16 26 -30 32 c-14 -6 -30 -14 -30 -32 v-18 z"
+        fill="none" stroke="#A2CC3A" stroke-width="1.8"/>
+  <path d="M167 58 l9 9 l18 -19" fill="none" stroke="#A2CC3A" stroke-width="2.2"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- 802.1X client device -->
+  <rect x="252" y="42" width="52" height="38" rx="5" fill="none" stroke="#9C9C9C" stroke-width="1.6"/>
+  <line x1="264" y1="86" x2="292" y2="86" stroke="#9C9C9C" stroke-width="1.6"/>
+
+  <!-- Connectors (dashed, muted) -->
+  <line x1="108" y1="60" x2="148" y2="60" stroke="#9C9C9C" stroke-width="1.6" stroke-dasharray="4 4"/>
+  <line x1="212" y1="60" x2="252" y2="60" stroke="#9C9C9C" stroke-width="1.6" stroke-dasharray="4 4"/>
+</svg>

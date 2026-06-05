@@ -19,17 +19,15 @@ import 'package:share_plus/share_plus.dart';
 
 import 'pdf_download.dart' show ShareOrigin;
 
-/// Copies [assetPath]'s bytes to a temp file named [filename], then shares it
-/// with the given [mimeType]. Throws if the asset bytes fail to load or the temp
-/// write fails — the caller surfaces the honest error path. Generic over file
-/// type so the same path serves the PDF reference cards
-/// (`mimeType: application/pdf`) and the dual-Orb `.deb`
-/// (`mimeType: application/vnd.debian.binary-package`).
+/// Generic native body: copies the bundled [assetPath] bytes to a temp file
+/// under the clean human [filename], then hands it to the OS share sheet typed
+/// as [mimeType]. Same macOS-sandbox-safe temp-dir handling as the PDF path
+/// (the per-bundle Caches dir must be created before writing). Throws on a
+/// load/write failure so the caller surfaces the honest error path.
 Future<void> shareAssetImpl({
   required String assetPath,
   required String filename,
   required String mimeType,
-  required String title,
   ShareOrigin? shareOrigin,
 }) async {
   // 1. Read the bundled bytes (throws on a missing/corrupt asset).
