@@ -1305,6 +1305,28 @@
       ],
       "source": "lib/screens/tools/reference/plmn_reference_screen.dart"
     },
+    "wifi-glossary": {
+      "name": "Wi-Fi Glossary",
+      "category": "Quick Reference",
+      "purpose": "Plain-language definitions of 92 Wi-Fi terms across 8 categories: bands and spectrum, standards and Wi-Fi generations, signal and RF basics, speed and modulation, how devices share the air, access points and roaming, security, and performance and troubleshooting. Each entry pairs the full term with its companion identifier, where it has one, and a definition written for working engineers. Many terms carry both their IEEE name and their Wi-Fi Alliance name.",
+      "whyHere": "When a term in a spec sheet, a log, or a standards document is the thing standing between you and understanding what is going on. It answers what CCI, DFS, FSPL, or OFDMA actually mean in Wi-Fi terms, and it pairs the IEEE generation number with the Wi-Fi Alliance name so 802.11ax and Wi-Fi 6 read as one thing.",
+      "howToUse": [
+        "Browse the terms grouped by category, in curation order rather than alphabetical, so related ideas sit together.",
+        "Type in the search box to filter live across the term name, abbreviation, and definition.",
+        "Each entry shows the full term, its abbreviation or IEEE / Wi-Fi Alliance identifier when it has one, and a definition in Keith's voice.",
+        "Use the copy action to grab the current view, the filtered subset when searching, otherwise the full list, as plain text."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Vendor-neutral by design. Definitions describe the standards-based behavior, not one vendor's implementation.",
+        "Naming is dual where the standard and the marketing brand differ: the IEEE designation and the Wi-Fi Alliance generation name both appear, so the same term is findable by either.",
+        "This is the general-vocabulary sibling of the Wi-Fi Authentication Glossary; both reuse the same data-driven, searchable, grouped screen with a different bundled dataset.",
+        "Data source: the curated Wi-Fi Glossary edition (Deliverables/2026-06-03-wifi-glossary), 92 terms. The bundled JSON is the source of truth."
+      ],
+      "source": "lib/screens/tools/reference/wifi_glossary_screen.dart (assetPath: assets/data/glossary.json)"
+    },
     "wifi-auth-glossary": {
       "name": "Wi-Fi Authentication Glossary",
       "category": "Quick Reference",
