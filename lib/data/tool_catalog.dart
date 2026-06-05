@@ -905,6 +905,19 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Wi-Fi & RF',
         isLive: true,
       ),
+      // Wi-Fi Authentication Glossary — sibling of the Wi-Fi Glossary,
+      // searchable/grouped/offline, reusing WifiGlossaryScreen + GlossaryService
+      // pointed at assets/data/wifi_auth_glossary.json. No bespoke <id>.svg yet,
+      // so ToolRow shows the lime-bolt fallback (bespoke icon = follow-up).
+      ToolEntry(
+        id: 'wifi-auth-glossary',
+        title: 'Wi-Fi Authentication Glossary',
+        description:
+            'Plain-language definitions of 58 Wi-Fi authentication terms',
+        routeName: '/tools/wifi-auth-glossary',
+        subgroup: 'Wi-Fi & RF',
+        isLive: true,
+      ),
       // NOTE: the 10 laminated PDF reference cards (6 reference cards + 4
       // checklist cards) MOVED to the Educational Resources category on
       // 2026-06-04 (Keith). They render at the top of EducationalResourcesScreen

@@ -37,15 +37,33 @@ import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import 'reference_row_semantics.dart';
 
-/// Asset path for the bundled glossary. Overridable in tests so a fixture string
-/// can stand in for the bundled asset.
+/// Asset path for the bundled Wi-Fi Glossary. Overridable in tests so a fixture
+/// string can stand in for the bundled asset.
 const String kWifiGlossaryAsset = 'assets/data/glossary.json';
 
+/// Asset path for the bundled Wi-Fi Authentication Glossary — the sibling
+/// dataset that reuses this exact data-driven, searchable, grouped screen via
+/// the [WifiGlossaryScreen.assetPath] / [WifiGlossaryScreen.title] hooks.
+const String kWifiAuthGlossaryAsset = 'assets/data/wifi_auth_glossary.json';
+
 class WifiGlossaryScreen extends StatefulWidget {
-  const WifiGlossaryScreen({super.key, this.service});
+  const WifiGlossaryScreen({
+    super.key,
+    this.service,
+    this.assetPath = kWifiGlossaryAsset,
+    this.title = 'Wi-Fi Glossary',
+  });
 
   /// Inject a pre-built service to bypass the asset load in widget tests.
   final GlossaryService? service;
+
+  /// Bundled JSON asset to load when [service] is not injected. Defaults to the
+  /// Wi-Fi Glossary; the Authentication Glossary passes [kWifiAuthGlossaryAsset].
+  final String assetPath;
+
+  /// Screen title and the noun used in the load/empty copy and AT labels.
+  /// Defaults to "Wi-Fi Glossary".
+  final String title;
 
   @override
   State<WifiGlossaryScreen> createState() => _WifiGlossaryScreenState();
@@ -74,15 +92,20 @@ class _WifiGlossaryScreenState extends State<WifiGlossaryScreen> {
     super.dispose();
   }
 
+  /// The screen title lower-cased for use mid-sentence in load/AT copy
+  /// (e.g. "Loading Wi-Fi glossary", "Could not load the Wi-Fi glossary"),
+  /// preserving the "Wi-Fi" capitalization.
+  String get _titleNoun => widget.title.replaceAll('Glossary', 'glossary');
+
   Future<void> _loadAsset() async {
     try {
-      final String raw = await rootBundle.loadString(kWifiGlossaryAsset);
+      final String raw = await rootBundle.loadString(widget.assetPath);
       final GlossaryService svc = GlossaryService.fromJson(raw);
       if (!mounted) return;
       setState(() => _service = svc);
     } on Object catch (e) {
       if (!mounted) return;
-      setState(() => _loadError = 'Could not load the Wi-Fi glossary: $e');
+      setState(() => _loadError = 'Could not load the $_titleNoun: $e');
     }
   }
 
@@ -131,7 +154,7 @@ class _WifiGlossaryScreenState extends State<WifiGlossaryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Wi-Fi Glossary'),
+        title: Text(widget.title),
         toolbarHeight: 64,
         // §8.16 — copy the current (grouped) view as plain text. Disabled until
         // results exist; null payload drops it from focus traversal.
@@ -169,7 +192,7 @@ class _WifiGlossaryScreenState extends State<WifiGlossaryScreen> {
                 width: 24,
                 height: 24,
                 child: Semantics(
-                  label: 'Loading Wi-Fi glossary',
+                  label: 'Loading $_titleNoun',
                   liveRegion: true,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
@@ -205,6 +228,7 @@ class _WifiGlossaryScreenState extends State<WifiGlossaryScreen> {
                 _SearchField(
                   controller: _queryCtrl,
                   onChanged: _onQueryChanged,
+                  titleNoun: _titleNoun,
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 if (groups.isEmpty)
@@ -276,17 +300,22 @@ class _IntroCard extends StatelessWidget {
 
 /// In-screen search field (§8.4 input spec).
 class _SearchField extends StatelessWidget {
-  const _SearchField({required this.controller, required this.onChanged});
+  const _SearchField({
+    required this.controller,
+    required this.onChanged,
+    required this.titleNoun,
+  });
 
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
+  final String titleNoun;
 
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     return Semantics(
       textField: true,
-      label: 'Search Wi-Fi glossary by term, abbreviation, or definition',
+      label: 'Search $titleNoun by term, abbreviation, or definition',
       child: TextField(
         controller: controller,
         onChanged: onChanged,
