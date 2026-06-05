@@ -9,6 +9,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 
 class SectionHeader extends StatelessWidget {
@@ -20,6 +21,7 @@ class SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
     return Semantics(
       header: true,
       label: '$title, $count ${count == 1 ? 'item' : 'items'}',
@@ -35,8 +37,13 @@ class SectionHeader extends StatelessWidget {
               child: Text(
                 title,
                 // §8.5 H3 heading register for an in-screen group.
+                // §8.20.3-A: category labels bump to 700 in light (projector
+                // legibility). This header sits on the gray canvas, so no lime
+                // underline (lime is only 1.7:1 on canvas, §8.20.3-C).
                 style: text.headlineSmall?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
+                  fontWeight:
+                      colors.isLight ? FontWeight.w700 : FontWeight.w600,
                 ),
               ),
             ),
@@ -47,15 +54,18 @@ class SectionHeader extends StatelessWidget {
                 vertical: AppSpacing.xxs,
               ),
               decoration: BoxDecoration(
-                color: AppColors.surface2,
+                color: colors.surface2,
                 borderRadius: BorderRadius.circular(AppRadius.control),
+                border: colors.isLight
+                    ? Border.all(color: colors.border, width: 1)
+                    : null,
               ),
               child: Text(
                 '$count',
                 style: text.labelLarge?.copyWith(
                   fontSize: AppTextSize.caption,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ),

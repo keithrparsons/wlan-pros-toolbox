@@ -49,6 +49,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 
 /// The OSMF-required attribution string. Verbatim per GL-003 §8.18 — do not
@@ -126,6 +127,7 @@ class _LocationMapState extends State<LocationMap> {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
     final LatLng point = LatLng(widget.latitude, widget.longitude);
 
     // §8.18 map container: surface-1 fill, card radius, 1px borderStrong (the
@@ -144,9 +146,13 @@ class _LocationMapState extends State<LocationMap> {
         child: Container(
           height: widget.height,
           decoration: BoxDecoration(
-            color: AppColors.surface1,
+            color: colors.surface1,
             borderRadius: BorderRadius.circular(AppRadius.card),
-            border: Border.all(color: AppColors.borderStrong, width: 1),
+            // Interactive surface → borderStrong; §8.20.3-B 1.5px in light.
+            border: Border.all(
+              color: colors.borderStrong,
+              width: colors.isLight ? 1.5 : 1,
+            ),
           ),
           child: FlutterMap(
             mapController: _controller,
@@ -225,6 +231,11 @@ class _LocationPin extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // THEME-INDEPENDENT BY DESIGN (§8.18): the pin sits over arbitrary OSM tile
+    // imagery, NOT over a light/dark app surface. Its SC 1.4.11 guarantee comes
+    // from the charcoal halo against tiles, independent of the app theme — so it
+    // stays brand lime + charcoal halo in BOTH themes. The §8.20.2 lime-fill-only
+    // rule governs lime on a light *app surface*; it does not apply over tiles.
     return const Stack(
       alignment: Alignment.topCenter,
       children: <Widget>[
@@ -278,8 +289,9 @@ class _OsmAttributionChip extends StatelessWidget {
               label: 'OpenStreetMap copyright',
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  // rgba(0,0,0,0.6) scrim chip (§8.18) — guarantees the credit
-                  // clears AA over any tile color.
+                  // rgba(0,0,0,0.6) dark scrim chip (§8.18) — guarantees the
+                  // credit clears AA over any tile color. THEME-INDEPENDENT: the
+                  // scrim is always dark, so it does not take the light surface.
                   color: AppColors.scrim,
                   borderRadius: BorderRadius.circular(AppRadius.control),
                 ),
@@ -290,7 +302,10 @@ class _OsmAttributionChip extends StatelessWidget {
                   ),
                   child: Text(
                     kOsmAttribution,
-                    // 13px caption / IBM Plex Sans, textSecondary (§8.18). The
+                    // 13px caption / IBM Plex Sans (§8.18). The label color stays
+                    // LIGHT (#E5E5E5) in both themes because it sits on the dark
+                    // scrim chip, not on the app surface — flipping it to the
+                    // light-theme dark text would fail AA on the scrim. The
                     // underline signals the tappable link affordance.
                     style: text.labelMedium?.copyWith(
                       color: AppColors.textSecondary,

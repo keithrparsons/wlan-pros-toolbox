@@ -29,6 +29,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../screens/tools/labeled_field.dart';
+import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 
 /// A single value→display-label pair, mirroring the `AppSelect<T>` /
@@ -186,15 +187,15 @@ class _ToggleTrackState<T> extends State<_ToggleTrack<T>> {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
 
     // §8.14.1 states table — whole-control disabled treatment. Track border is
-    // borderStrong in both states (3.83:1 on inputFill / 3.63:1 on disabledFill,
-    // both pass SC 1.4.11 — disabled is NOT exempt). Track fill drops to
-    // disabledFill when disabled.
-    const Color trackBorder = AppColors.borderStrong;
-    final Color trackFill = widget.enabled
-        ? AppColors.inputFill
-        : AppColors.disabledFill;
+    // borderStrong in both states (passes SC 1.4.11 on both fills — disabled is
+    // NOT exempt). Track fill drops to disabledFill when disabled.
+    final Color trackBorder = colors.borderStrong;
+    final double trackBorderW = colors.isLight ? 1.5 : 1; // §8.20.3-B
+    final Color trackFill =
+        widget.enabled ? colors.inputFill : colors.disabledFill;
 
     final List<Widget> segments = <Widget>[];
     for (int i = 0; i < widget.items.length; i++) {
@@ -230,7 +231,7 @@ class _ToggleTrackState<T> extends State<_ToggleTrack<T>> {
         segments.add(
           Container(
             width: 1,
-            color: drawDivider ? AppColors.borderStrong : Colors.transparent,
+            color: drawDivider ? colors.borderStrong : Colors.transparent,
           ),
         );
       }
@@ -243,7 +244,7 @@ class _ToggleTrackState<T> extends State<_ToggleTrack<T>> {
         decoration: BoxDecoration(
           color: trackFill,
           borderRadius: BorderRadius.circular(AppRadius.control),
-          border: Border.all(color: trackBorder, width: 1),
+          border: Border.all(color: trackBorder, width: trackBorderW),
         ),
         child: Row(
           mainAxisSize: widget.expand ? MainAxisSize.max : MainAxisSize.min,
@@ -287,27 +288,30 @@ class _SegmentState extends State<_Segment> {
   bool _hovered = false;
   bool _pressed = false;
 
-  // §8.3 hover / pressed washes (unselected segment only). rgba lime at 0.08 /
-  // 0.16 per §8.14.1 states table.
-  static const Color _hoverWash = Color(0x14A1CC3A); // 0.08 alpha
-  static const Color _pressedWash = Color(0x29A1CC3A); // 0.16 alpha
-
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+
+    // §8.3 hover / pressed washes (unselected segment only). The wash carries
+    // the FOREGROUND accent hue (lime in dark, darkened-lime in light per
+    // §8.20.2) so it reads on the white track in light; 0.08 / 0.16 alpha.
+    final Color hoverWash = colors.textAccent.withValues(alpha: 0.08);
+    final Color pressedWash = colors.textAccent.withValues(alpha: 0.16);
+
     // Segment fill (§8.14.1 states):
-    //  - selected + enabled  → lime
+    //  - selected + enabled  → lime FILL (kept brand lime — fill use, §8.20.2)
     //  - selected + disabled → loses lime; selection conveyed by Semantics only
     //  - unselected          → transparent (track shows through), with the
     //    §8.3 hover / pressed wash on desktop.
     final Color fill;
     if (widget.selected) {
-      fill = widget.enabled ? AppColors.primary : AppColors.disabledFill;
+      fill = widget.enabled ? colors.primary : colors.disabledFill;
     } else if (!widget.enabled) {
       fill = Colors.transparent;
     } else if (_pressed) {
-      fill = _pressedWash;
+      fill = pressedWash;
     } else if (_hovered) {
-      fill = _hoverWash;
+      fill = hoverWash;
     } else {
       fill = Colors.transparent;
     }
@@ -315,20 +319,23 @@ class _SegmentState extends State<_Segment> {
     // Segment text (§8.14.1 states):
     final Color textColor;
     if (!widget.enabled) {
-      textColor = AppColors.textDisabled;
+      textColor = colors.textDisabled;
     } else if (widget.selected) {
-      textColor = AppColors.secondary; // near-black on lime, like a button.
+      textColor = colors.onPrimary; // dark text on the lime fill, like a button.
     } else {
-      textColor = AppColors.textSecondary; // live target, not placeholder.
+      textColor = colors.textSecondary; // live target, not placeholder.
     }
 
-    // §8.3 focus ring: 2px solid lime + 2px offset, drawn around the focused
-    // segment. Implemented as an outer border that appears only on keyboard
-    // focus — the WCAG 2.4.7 fix the bare `_UnitToggle` InkWell lacked.
+    // §8.3 focus ring. Foreground lime → darkened-lime textAccent + 3px in light
+    // (§8.20.2 / §8.20.3-B); 2px brand lime in dark. The WCAG 2.4.7 fix the bare
+    // `_UnitToggle` InkWell lacked.
     final BoxDecoration? focusRing = (_focused && widget.enabled)
         ? BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.control),
-            border: Border.all(color: AppColors.primary, width: 2),
+            border: Border.all(
+              color: colors.isLight ? colors.textAccent : colors.primary,
+              width: colors.isLight ? 3 : 2,
+            ),
           )
         : null;
 

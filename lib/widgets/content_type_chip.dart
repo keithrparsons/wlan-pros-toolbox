@@ -20,6 +20,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 
 class ContentTypeChip extends StatelessWidget {
@@ -50,6 +51,7 @@ class ContentTypeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -57,12 +59,12 @@ class ContentTypeChip extends StatelessWidget {
         vertical: AppSpacing.xxs, // 4px §4 half-step
       ),
       decoration: BoxDecoration(
-        color: AppColors.surface2, // §8.17 fill
+        color: colors.surface2, // §8.17 fill
         borderRadius: BorderRadius.circular(
           pill ? AppRadius.pill : AppRadius.control,
         ),
         border: showBorder
-            ? Border.all(color: AppColors.borderStrong, width: 1)
+            ? Border.all(color: colors.borderStrong, width: 1)
             : null,
       ),
       child: Row(
@@ -72,7 +74,7 @@ class ContentTypeChip extends StatelessWidget {
             Icon(
               icon,
               size: 16, // --app-icon-sm
-              color: AppColors.textSecondary, // neutral, never status (§8.17)
+              color: colors.textSecondary, // neutral, never status (§8.17)
             ),
             const SizedBox(width: AppSpacing.xxs),
           ],
@@ -81,7 +83,7 @@ class ContentTypeChip extends StatelessWidget {
             style: text.labelLarge?.copyWith(
               fontSize: AppTextSize.caption, // 13px §8.17
               fontWeight: FontWeight.w500, // IBM Plex Sans 500
-              color: AppColors.textSecondary, // §8.17 label text
+              color: colors.textSecondary, // §8.17 label text
             ),
           ),
         ],

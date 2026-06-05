@@ -32,6 +32,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 
+import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 
 /// The §8.16 "Copy results" AppBar action. Place in `AppBar.actions` per the
@@ -105,6 +106,7 @@ class _AppCopyActionState extends State<AppCopyAction> {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final bool enabled = widget.textBuilder() != null;
 
     // §8.8 — cross-fade over `fast` (150ms), collapsed to 0ms under
@@ -119,8 +121,8 @@ class _AppCopyActionState extends State<AppCopyAction> {
     //   idle (enabled) → copy_outlined in textSecondary (#E5E5E5)
     final IconData icon = _confirmed ? Icons.check : Icons.copy_outlined;
     final Color iconColor = !enabled
-        ? AppColors.textDisabled
-        : (_confirmed ? AppColors.statusSuccess : AppColors.textSecondary);
+        ? colors.textDisabled
+        : (_confirmed ? colors.statusSuccess : colors.textSecondary);
 
     // §8.16: the label flips to copiedLabel during the confirm window; the
     // disabled control keeps the idle label with the platform disabled flag.
