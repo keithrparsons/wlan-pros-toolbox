@@ -121,14 +121,14 @@ void main() {
       store = ToolHelpStore.fromJson(raw);
     });
 
-    test('parses to exactly 99 entries', () {
+    test('parses to exactly 100 entries', () {
       // 97 = 95 (origin/main: 93 + Antenna Connectors + Optical Transceivers)
       // + 2 backfilled v1.1 help entries (PLMN ID Reference and the Wi-Fi
       // Authentication Glossary).
-      // 99 = + 2 v1.1 Guides how-tos: Dual Orbs on WLAN Pi and FreeRADIUS on
-      // WLAN Pi (both added 2026-06-05). Antenna Fundamentals and Wi-Fi Tools
-      // Comparison bump this further as those branches merge.
-      expect(store.count, 99);
+      // 100 = + 2 v1.1 Guides how-tos (Dual Orbs on WLAN Pi, FreeRADIUS on
+      // WLAN Pi) + 1 v1.1 teaching reference (Antenna Fundamentals); all added
+      // 2026-06-05. Wi-Fi Tools Comparison bumps this to 101 as that branch merges.
+      expect(store.count, 100);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help
