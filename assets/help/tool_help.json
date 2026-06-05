@@ -2293,6 +2293,30 @@
         "Reliable detection depends on volume, the speaker, and the receiving system. Hold the device close and keep the level up if a stubborn IVR or controller misses a digit."
       ],
       "source": "dtmf_generator_screen.dart"
+    },
+    "optical-transceivers": {
+      "name": "Optical Transceivers",
+      "category": "Quick Reference",
+      "purpose": "Searchable, offline reference of 35 optical Ethernet transceiver variants (1G to 400G) grouped by speed tier, plus the 9-row SFP-to-OSFP form-factor ladder. Each variant lists its designation, data rate, reach, fiber type, wavelength, and connector — with reach as the lead, trust-first column.",
+      "whyHere": "Picking an optic, the field's first question is \"which module, and how far will it go on this fiber?\" This answers it without leaving the app or going online, and keeps the IEEE-vs-vendor line visible so you never quote a vendor reach as a standard guarantee.",
+      "howToUse": [
+        "Browse by speed tier. The commonly-ordered tiers (10G / 25G / 100G) surface first and are flagged \"Commonly ordered\"; 1G / 40G / 200G / 400G follow.",
+        "Search by designation (e.g. LR4), reach, fiber (SMF / MMF / OM4), wavelength (e.g. 850 nm), connector (LC / MPO), or tier (e.g. 100G). The match is a case-insensitive substring across all of those, and it narrows the tiers in place.",
+        "Read the REACH line first — it is the IEEE maximum on the listed fiber. The fiber chip (MMF / SMF) and connector chip (LC / MPO) give the physical-layer specifics at a glance.",
+        "A query that matches nothing shows an honest \"No match\" card; it never fabricates a module. The form-factor table is always available below the variants."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "IEEE vs VENDOR: variants ratified in IEEE 802.3 carry a neutral IEEE chip. Vendor / coherent variants (1000BASE-EX, 1000BASE-ZX, 10GBASE-ZR, and 400GBASE-ZR) carry an amber VENDOR chip and a \"loss-budget dependent\" caveat. Their reach is real and widely sold but NOT an IEEE guarantee — it depends on the link's loss budget. Never quote a vendor reach as a standard figure.",
+        "400GBASE-ZR is coherent DWDM (OIF 400ZR), beyond base IEEE 802.3 — a metro / data-center-interconnect optic, not a base Ethernet PHY. Its 80-120 km reach is loss-budget and DWDM-line-system dependent.",
+        "Reach figures are IEEE-standard maximums on the listed fiber; real vendor modules may differ. Multimode reach is grade-dependent (OM3 vs OM4 vs OM5), so those rows give per-grade numbers rather than one figure.",
+        "What it contains: 35 verified variants spanning 1G to 400G across SFP, SFP+, SFP28, QSFP+, QSFP28, QSFP56, and QSFP-DD / OSFP, plus a 9-row form-factor ladder (max rate, lane count, typical power envelope). Power figures are typical vendor ranges, not a single standard — treat as guidance.",
+        "Fully offline: the table is a bundled asset (assets/data/optical_transceivers.json) parsed once at screen open; malformed rows are skipped, not rendered as blanks. To add or correct an entry, edit that file.",
+        "Verified against IEEE 802.3 standards tables (via Wikipedia's clause-mirroring pages) and Cisco / FS.com vendor datasheets (Pax verification brief, 2026-06-05). Out-of-scope bleeding edge (800G / 1.6T, CPO / LPO, SFP-DD) was deliberately excluded as not yet stable or field-relevant."
+      ],
+      "source": "lib/screens/tools/reference/optical_transceivers_screen.dart"
     }
   }
 }

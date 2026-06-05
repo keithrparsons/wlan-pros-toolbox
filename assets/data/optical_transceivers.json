@@ -1,0 +1,580 @@
+{
+  "_meta": {
+    "source": "Pax verification brief 2026-06-05 (IEEE 802.3 standards tables via Wikipedia + Cisco/FS.com vendor datasheets).",
+    "note": "Reach figures are IEEE-standard maximums on the listed fiber. Rows flagged vendor:true are NOT IEEE-ratified (ZR/ZX/EX, 400G-ZR coherent DWDM); their reach is loss-budget dependent and must never be presented as an IEEE guarantee. Lead tiers (10G/25G/100G) carry lead:true and surface first. Edit this file to add/correct entries; OpticalTransceiverService re-parses it at load.",
+    "schema": "tiers[]: { tier, formFactor, lead:bool, entries[]: { designation, rate, reach, fiber, fiberKind, wavelength, connector, connectorKind, notes, vendor:bool, reachCaveat } }; formFactors[]: { formFactor, maxRate, lanes, power, notes }",
+    "variantCount": 35,
+    "formFactorCount": 9
+  },
+  "tiers": [
+    {
+      "tier": "10G",
+      "formFactor": "SFP+",
+      "lead": true,
+      "entries": [
+        {
+          "designation": "10GBASE-SR",
+          "rate": "10 Gbps",
+          "reach": "300 m (OM3); 400 m (OM4); 33 m (OM1)",
+          "fiber": "MMF (OM1-OM4)",
+          "fiberKind": "mmf",
+          "wavelength": "850 nm",
+          "connector": "LC",
+          "connectorKind": "lc",
+          "notes": "Most common 10G multimode link.",
+          "vendor": false,
+          "reachCaveat": ""
+        },
+        {
+          "designation": "10GBASE-LRM",
+          "rate": "10 Gbps",
+          "reach": "220 m",
+          "fiber": "MMF (OM1-OM3)",
+          "fiberKind": "mmf",
+          "wavelength": "1310 nm",
+          "connector": "LC",
+          "connectorKind": "lc",
+          "notes": "Long-reach multimode for legacy FDDI-grade fiber.",
+          "vendor": false,
+          "reachCaveat": ""
+        },
+        {
+          "designation": "10GBASE-LR",
+          "rate": "10 Gbps",
+          "reach": "10 km",
+          "fiber": "SMF (OS2)",
+          "fiberKind": "smf",
+          "wavelength": "1310 nm",
+          "connector": "LC",
+          "connectorKind": "lc",
+          "notes": "Standard 10G single-mode uplink.",
+          "vendor": false,
+          "reachCaveat": ""
+        },
+        {
+          "designation": "10GBASE-ER",
+          "rate": "10 Gbps",
+          "reach": "40 km",
+          "fiber": "SMF (OS2)",
+          "fiberKind": "smf",
+          "wavelength": "1550 nm",
+          "connector": "LC",
+          "connectorKind": "lc",
+          "notes": "Extended reach over engineered links.",
+          "vendor": false,
+          "reachCaveat": ""
+        },
+        {
+          "designation": "10GBASE-ZR",
+          "rate": "10 Gbps",
+          "reach": "80 km",
+          "fiber": "SMF (OS2)",
+          "fiberKind": "smf",
+          "wavelength": "1550 nm",
+          "connector": "LC",
+          "connectorKind": "lc",
+          "notes": "Vendor variant, not IEEE-standardized.",
+          "vendor": true,
+          "reachCaveat": "vendor · loss-budget dependent"
+        }
+      ]
+    },
+    {
+      "tier": "25G",
+      "formFactor": "SFP28",
+      "lead": true,
+      "entries": [
+        {
+          "designation": "25GBASE-SR",
+          "rate": "25 Gbps",
+          "reach": "70 m (OM3); 100 m (OM4)",
+          "fiber": "MMF (OM3-OM4)",
+          "fiberKind": "mmf",
+          "wavelength": "850 nm",
+          "connector": "LC",
+          "connectorKind": "lc",
+          "notes": "Requires RS-FEC. Common server NIC link.",
+          "vendor": false,
+          "reachCaveat": ""
+        },
+        {
+          "designation": "25GBASE-LR",
+          "rate": "25 Gbps",
+          "reach": "10 km",
+          "fiber": "SMF (OS2)",
+          "fiberKind": "smf",
+          "wavelength": "1310 nm",
+          "connector": "LC",
+          "connectorKind": "lc",
+          "notes": "25G single-mode uplink.",
+          "vendor": false,
+          "reachCaveat": ""
+        },
+        {
+          "designation": "25GBASE-ER",
+          "rate": "25 Gbps",
+          "reach": "40 km",
+          "fiber": "SMF (OS2)",
+          "fiberKind": "smf",
+          "wavelength": "1310 nm",
+          "connector": "LC",
+          "connectorKind": "lc",
+          "notes": "Extended reach single-mode.",
+          "vendor": false,
+          "reachCaveat": ""
+        }
+      ]
+    },
+    {
+      "tier": "100G",
+      "formFactor": "QSFP28",
+      "lead": true,
+      "entries": [
+        {
+          "designation": "100GBASE-SR4",
+          "rate": "100 Gbps",
+          "reach": "70 m (OM3); 100 m (OM4)",
+          "fiber": "MMF (OM3-OM4)",
+          "fiberKind": "mmf",
+          "wavelength": "850 nm",
+          "connector": "MPO-12",
+          "connectorKind": "mpo",
+          "notes": "4x25G parallel. Breakout to 4x 25GBASE-SR. Cisco-confirmed numbers.",
+          "vendor": false,
+          "reachCaveat": ""
+        },
+        {
+          "designation": "100GBASE-DR",
+          "rate": "100 Gbps",
+          "reach": "500 m",
+          "fiber": "SMF (OS2)",
+          "fiberKind": "smf",
+          "wavelength": "1310 nm",
+          "connector": "LC",
+          "connectorKind": "lc",
+          "notes": "Single-lane 100G single-mode.",
+          "vendor": false,
+          "reachCaveat": ""
+        },
+        {
+          "designation": "100GBASE-FR1 / FR",
+          "rate": "100 Gbps",
+          "reach": "2 km",
+          "fiber": "SMF (OS2)",
+          "fiberKind": "smf",
+          "wavelength": "1310 nm",
+          "connector": "LC",
+          "connectorKind": "lc",
+          "notes": "Single-lane 2 km.",
+          "vendor": false,
+          "reachCaveat": ""
+        },
+        {
+          "designation": "100GBASE-LR4",
+          "rate": "100 Gbps",
+          "reach": "10 km",
+          "fiber": "SMF (OS2)",
+          "fiberKind": "smf",
+          "wavelength": "~1295-1310 nm (4x LWDM)",
+          "connector": "LC",
+          "connectorKind": "lc",
+          "notes": "Standard 100G single-mode uplink.",
+          "vendor": false,
+          "reachCaveat": ""
+        },
+        {
+          "designation": "100GBASE-LR1",
+          "rate": "100 Gbps",
+          "reach": "10 km",
+          "fiber": "SMF (OS2)",
+          "fiberKind": "smf",
+          "wavelength": "1310 nm",
+          "connector": "LC",
+          "connectorKind": "lc",
+          "notes": "Single-lane 10 km variant.",
+          "vendor": false,
+          "reachCaveat": ""
+        },
+        {
+          "designation": "100GBASE-ER4",
+          "rate": "100 Gbps",
+          "reach": "40 km",
+          "fiber": "SMF (OS2)",
+          "fiberKind": "smf",
+          "wavelength": "~1295-1310 nm (4x LWDM)",
+          "connector": "LC",
+          "connectorKind": "lc",
+          "notes": "Extended-reach WDM.",
+          "vendor": false,
+          "reachCaveat": ""
+        }
+      ]
+    },
+    {
+      "tier": "1G",
+      "formFactor": "SFP",
+      "lead": false,
+      "entries": [
+        {
+          "designation": "1000BASE-SX",
+          "rate": "1 Gbps",
+          "reach": "550 m (OM3); ~220-275 m (OM1)",
+          "fiber": "MMF (OM1-OM4)",
+          "fiberKind": "mmf",
+          "wavelength": "850 nm",
+          "connector": "LC/SC",
+          "connectorKind": "lc",
+          "notes": "Short-reach multimode.",
+          "vendor": false,
+          "reachCaveat": ""
+        },
+        {
+          "designation": "1000BASE-LX",
+          "rate": "1 Gbps",
+          "reach": "5 km (SMF); 550 m (MMF)",
+          "fiber": "SMF or MMF",
+          "fiberKind": "mixed",
+          "wavelength": "1310 nm",
+          "connector": "LC/SC",
+          "connectorKind": "lc",
+          "notes": "Long-reach; runs on either fiber type.",
+          "vendor": false,
+          "reachCaveat": ""
+        },
+        {
+          "designation": "1000BASE-LX10 / LH",
+          "rate": "1 Gbps",
+          "reach": "10 km",
+          "fiber": "SMF (OS2)",
+          "fiberKind": "smf",
+          "wavelength": "1310 nm",
+          "connector": "LC",
+          "connectorKind": "lc",
+          "notes": "10 km single-mode; 'LH' is the common vendor label.",
+          "vendor": true,
+          "reachCaveat": "vendor · loss-budget dependent"
+        },
+        {
+          "designation": "1000BASE-EX",
+          "rate": "1 Gbps",
+          "reach": "40 km",
+          "fiber": "SMF (OS2)",
+          "fiberKind": "smf",
+          "wavelength": "1310 nm",
+          "connector": "LC/SC",
+          "connectorKind": "lc",
+          "notes": "Extended reach (vendor variant, widely available).",
+          "vendor": true,
+          "reachCaveat": "vendor · loss-budget dependent"
+        },
+        {
+          "designation": "1000BASE-ZX",
+          "rate": "1 Gbps",
+          "reach": "70 km (up to ~120 km)",
+          "fiber": "SMF (OS2)",
+          "fiberKind": "smf",
+          "wavelength": "1550 nm",
+          "connector": "LC/SC",
+          "connectorKind": "lc",
+          "notes": "Vendor variant, not IEEE-ratified; reach depends on fiber loss budget.",
+          "vendor": true,
+          "reachCaveat": "vendor · loss-budget dependent"
+        },
+        {
+          "designation": "1000BASE-BX10",
+          "rate": "1 Gbps",
+          "reach": "10 km",
+          "fiber": "SMF (single strand)",
+          "fiberKind": "smf",
+          "wavelength": "TX 1310 / RX 1490 nm (paired)",
+          "connector": "LC",
+          "connectorKind": "lc",
+          "notes": "BiDi: single fiber, must pair upstream/downstream modules.",
+          "vendor": false,
+          "reachCaveat": ""
+        }
+      ]
+    },
+    {
+      "tier": "40G",
+      "formFactor": "QSFP+",
+      "lead": false,
+      "entries": [
+        {
+          "designation": "40GBASE-SR4",
+          "rate": "40 Gbps",
+          "reach": "100 m (OM3); 150 m (OM4)",
+          "fiber": "MMF (OM3-OM4)",
+          "fiberKind": "mmf",
+          "wavelength": "850 nm",
+          "connector": "MPO-12",
+          "connectorKind": "mpo",
+          "notes": "4x10G parallel. Breakout to 4x 10GBASE-SR.",
+          "vendor": false,
+          "reachCaveat": ""
+        },
+        {
+          "designation": "40GBASE-LR4",
+          "rate": "40 Gbps",
+          "reach": "10 km",
+          "fiber": "SMF (OS2)",
+          "fiberKind": "smf",
+          "wavelength": "1271-1331 nm (4x CWDM)",
+          "connector": "LC",
+          "connectorKind": "lc",
+          "notes": "WDM over a single duplex pair.",
+          "vendor": false,
+          "reachCaveat": ""
+        },
+        {
+          "designation": "40GBASE-ER4",
+          "rate": "40 Gbps",
+          "reach": "40 km",
+          "fiber": "SMF (OS2)",
+          "fiberKind": "smf",
+          "wavelength": "1271-1331 nm (4x CWDM)",
+          "connector": "LC",
+          "connectorKind": "lc",
+          "notes": "Extended-reach WDM.",
+          "vendor": false,
+          "reachCaveat": ""
+        }
+      ]
+    },
+    {
+      "tier": "200G",
+      "formFactor": "QSFP56",
+      "lead": false,
+      "entries": [
+        {
+          "designation": "200GBASE-SR4",
+          "rate": "200 Gbps",
+          "reach": "70 m (OM3); 100 m (OM4)",
+          "fiber": "MMF (OM3-OM4)",
+          "fiberKind": "mmf",
+          "wavelength": "850 nm",
+          "connector": "MPO-12",
+          "connectorKind": "mpo",
+          "notes": "4x50G PAM4 parallel.",
+          "vendor": false,
+          "reachCaveat": ""
+        },
+        {
+          "designation": "200GBASE-DR4",
+          "rate": "200 Gbps",
+          "reach": "500 m",
+          "fiber": "SMF (OS2)",
+          "fiberKind": "smf",
+          "wavelength": "1310 nm",
+          "connector": "MPO-12",
+          "connectorKind": "mpo",
+          "notes": "4-lane single-mode; breakout-friendly.",
+          "vendor": false,
+          "reachCaveat": ""
+        },
+        {
+          "designation": "200GBASE-FR4",
+          "rate": "200 Gbps",
+          "reach": "2 km",
+          "fiber": "SMF (OS2)",
+          "fiberKind": "smf",
+          "wavelength": "1271-1331 nm (CWDM)",
+          "connector": "LC",
+          "connectorKind": "lc",
+          "notes": "WDM over duplex pair.",
+          "vendor": false,
+          "reachCaveat": ""
+        },
+        {
+          "designation": "200GBASE-LR4",
+          "rate": "200 Gbps",
+          "reach": "10 km",
+          "fiber": "SMF (OS2)",
+          "fiberKind": "smf",
+          "wavelength": "~1296-1309 nm (LWDM)",
+          "connector": "LC",
+          "connectorKind": "lc",
+          "notes": "10 km single-mode.",
+          "vendor": false,
+          "reachCaveat": ""
+        }
+      ]
+    },
+    {
+      "tier": "400G",
+      "formFactor": "QSFP-DD / OSFP",
+      "lead": false,
+      "entries": [
+        {
+          "designation": "400GBASE-SR8",
+          "rate": "400 Gbps",
+          "reach": "70 m (OM3); 100 m (OM4/OM5)",
+          "fiber": "MMF (OM3-OM5)",
+          "fiberKind": "mmf",
+          "wavelength": "850 nm",
+          "connector": "MPO-16",
+          "connectorKind": "mpo",
+          "notes": "8x50G parallel.",
+          "vendor": false,
+          "reachCaveat": ""
+        },
+        {
+          "designation": "400GBASE-SR4.2 (BiDi)",
+          "rate": "400 Gbps",
+          "reach": "70 m (OM3); 100 m (OM4); 150 m (OM5)",
+          "fiber": "MMF (OM3-OM5)",
+          "fiberKind": "mmf",
+          "wavelength": "850 / 910 nm (SWDM)",
+          "connector": "MPO-12",
+          "connectorKind": "mpo",
+          "notes": "Two-wavelength bidirectional; OM5 optimized.",
+          "vendor": false,
+          "reachCaveat": ""
+        },
+        {
+          "designation": "400GBASE-DR4",
+          "rate": "400 Gbps",
+          "reach": "500 m",
+          "fiber": "SMF (OS2)",
+          "fiberKind": "smf",
+          "wavelength": "1310 nm",
+          "connector": "MPO-12",
+          "connectorKind": "mpo",
+          "notes": "4x100G parallel single-mode. Breakout to 4x 100GBASE-DR.",
+          "vendor": false,
+          "reachCaveat": ""
+        },
+        {
+          "designation": "400GBASE-FR4",
+          "rate": "400 Gbps",
+          "reach": "2 km",
+          "fiber": "SMF (OS2)",
+          "fiberKind": "smf",
+          "wavelength": "1271-1331 nm (CWDM)",
+          "connector": "LC",
+          "connectorKind": "lc",
+          "notes": "WDM duplex; common 2 km uplink.",
+          "vendor": false,
+          "reachCaveat": ""
+        },
+        {
+          "designation": "400GBASE-LR4-6",
+          "rate": "400 Gbps",
+          "reach": "6 km",
+          "fiber": "SMF (OS2)",
+          "fiberKind": "smf",
+          "wavelength": "1271-1331 nm (CWDM)",
+          "connector": "LC",
+          "connectorKind": "lc",
+          "notes": "6 km WDM variant.",
+          "vendor": false,
+          "reachCaveat": ""
+        },
+        {
+          "designation": "400GBASE-LR8",
+          "rate": "400 Gbps",
+          "reach": "10 km",
+          "fiber": "SMF (OS2)",
+          "fiberKind": "smf",
+          "wavelength": "~1274-1309 nm (LWDM)",
+          "connector": "LC",
+          "connectorKind": "lc",
+          "notes": "8-lambda 10 km.",
+          "vendor": false,
+          "reachCaveat": ""
+        },
+        {
+          "designation": "400GBASE-ER8",
+          "rate": "400 Gbps",
+          "reach": "40 km",
+          "fiber": "SMF (OS2)",
+          "fiberKind": "smf",
+          "wavelength": "~1274-1309 nm (LWDM)",
+          "connector": "LC",
+          "connectorKind": "lc",
+          "notes": "Extended reach.",
+          "vendor": false,
+          "reachCaveat": ""
+        },
+        {
+          "designation": "400GBASE-ZR",
+          "rate": "400 Gbps",
+          "reach": "80-120 km (coherent/DWDM)",
+          "fiber": "SMF (OS2)",
+          "fiberKind": "smf",
+          "wavelength": "~1550 nm (DWDM)",
+          "connector": "LC",
+          "connectorKind": "lc",
+          "notes": "Coherent DWDM (OIF 400ZR), beyond base IEEE 802.3; metro/DCI.",
+          "vendor": true,
+          "reachCaveat": "vendor · loss-budget dependent"
+        }
+      ]
+    }
+  ],
+  "formFactors": [
+    {
+      "formFactor": "SFP",
+      "maxRate": "1 Gbps",
+      "lanes": "1",
+      "power": "<1 W",
+      "notes": "Original small form-factor pluggable; 1G fiber and copper."
+    },
+    {
+      "formFactor": "SFP+",
+      "maxRate": "10 Gbps",
+      "lanes": "1",
+      "power": "~1 W",
+      "notes": "Most common 10G server/switch uplink module."
+    },
+    {
+      "formFactor": "SFP28",
+      "maxRate": "25 Gbps",
+      "lanes": "1",
+      "power": "~1-1.5 W",
+      "notes": "Single-lane 25G; same cage size as SFP+."
+    },
+    {
+      "formFactor": "SFP56",
+      "maxRate": "50 Gbps",
+      "lanes": "1 (PAM4)",
+      "power": "~1.5-2 W",
+      "notes": "50G single-lane using PAM4 signaling."
+    },
+    {
+      "formFactor": "QSFP+",
+      "maxRate": "40 Gbps",
+      "lanes": "4",
+      "power": "~3.5 W",
+      "notes": "Quad SFP; 4x10G. Breakout to 4xSFP+ common."
+    },
+    {
+      "formFactor": "QSFP28",
+      "maxRate": "100 Gbps",
+      "lanes": "4",
+      "power": "~3.5-4.5 W",
+      "notes": "Workhorse 100G module; 4x25G. Breakout to 4xSFP28 or 2x50G."
+    },
+    {
+      "formFactor": "QSFP56",
+      "maxRate": "200 Gbps",
+      "lanes": "4 (PAM4)",
+      "power": "~5-7 W",
+      "notes": "200G; 4x50G PAM4."
+    },
+    {
+      "formFactor": "QSFP-DD",
+      "maxRate": "400 Gbps",
+      "lanes": "8",
+      "power": "~7-14 W",
+      "notes": "Double-density (8 lanes); backward-compatible cage with QSFP. 8x50G (400G) or 8x100G (800G)."
+    },
+    {
+      "formFactor": "OSFP",
+      "maxRate": "400-800 Gbps",
+      "lanes": "8",
+      "power": "~15-20+ W",
+      "notes": "Octal SFP; competing 400/800G form factor, larger than QSFP-DD, integrated heat sink."
+    }
+  ]
+}

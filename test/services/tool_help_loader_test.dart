@@ -121,10 +121,10 @@ void main() {
       store = ToolHelpStore.fromJson(raw);
     });
 
-    test('parses to exactly 94 entries', () {
-      // 94 = 93 (origin/main: 90 + 3 batch4 help entries) + 1 for the new
-      // Antenna Connectors tool (feat/antenna-connectors).
-      expect(store.count, 94);
+    test('parses to exactly 95 entries', () {
+      // 95 = 93 (origin/main: 90 + 3 batch4 help entries) + 1 Antenna Connectors
+      // + 1 Optical Transceivers (both merged 2026-06-05).
+      expect(store.count, 95);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

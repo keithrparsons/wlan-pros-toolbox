@@ -848,6 +848,21 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Cabling & Connectors',
       ),
+      // Optical Transceivers — searchable, offline reference of 35 optical
+      // Ethernet variants (1G–400G) grouped by speed tier (lead tiers
+      // 10G/25G/100G first), plus the SFP→OSFP form-factor ladder. IEEE vs
+      // vendor (ZR/ZX/EX) variants are distinguished and vendor reach is hedged
+      // (loss-budget dependent), never stated as an IEEE guarantee. No bespoke
+      // <id>.svg yet — bespoke icon is a follow-up; ToolRow shows the fallback.
+      ToolEntry(
+        id: 'optical-transceivers',
+        title: 'Optical Transceivers',
+        description:
+            'SFP to OSFP optics by speed tier: reach, fiber, wavelength — offline',
+        routeName: '/tools/optical-transceivers',
+        isLive: true,
+        subgroup: 'Cabling & Connectors',
+      ),
       ToolEntry(
         id: 'rf-connectors',
         title: 'RF Connectors',
