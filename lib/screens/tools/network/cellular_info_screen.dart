@@ -86,6 +86,12 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
   /// Set when the last Live Start could not open the Live Shortcut.
   bool _liveTriggerError = false;
 
+  /// True when live monitoring was paused because the app went to the
+  /// background, so [didChangeAppLifecycleState] resumes streaming on the next
+  /// foreground rather than leaving the user to tap Start again (Batch 8,
+  /// item 5 — pause-and-resume, not a hard stop).
+  bool _pausedForBackground = false;
+
   @override
   void initState() {
     super.initState();
@@ -155,11 +161,27 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // iOS only: on resume, re-resolve so a payload delivered while backgrounded
-    // lands and any persisted monitoring flag resumes the live state.
-    if (state == AppLifecycleState.resumed &&
-        _source == CellularInfoSource.iosShortcuts) {
+    // iOS only: pause the live sampling loop when the app leaves the foreground
+    // and resume on return (Batch 8, item 5), mirroring the Wi-Fi tool and the
+    // macOS poll-pause. Without this the recursive companion Shortcut keeps
+    // sampling cellular while the app is backgrounded.
+    if (_source != CellularInfoSource.iosShortcuts) return;
+    if (state == AppLifecycleState.resumed) {
+      // Re-resolve so a payload delivered while backgrounded lands and any
+      // persisted monitoring flag resumes the live state.
       _liveController?.load();
+      if (_pausedForBackground) {
+        _pausedForBackground = false;
+        _startLive();
+      }
+    } else if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      final CellularMonitorController? c = _liveController;
+      if (c != null && c.isStreaming) {
+        _pausedForBackground = true;
+        c.stopMonitoring();
+      }
     }
   }
 
