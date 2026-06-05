@@ -406,9 +406,11 @@ class _ConnectionHeroCard extends StatelessWidget {
       ),
     );
 
-    // §8.20.3-C #3 — the hero gets a darkened-lime #5A7A1C left-accent bar in
-    // light (the hero card sits on the gray canvas, so it uses textAccent at
-    // 4.6:1, NOT brand lime which is only 1.7:1 on canvas). No bar in dark.
+    // §8.20.3-C #4 — the hero gets a generous 8px vivid lime #A1CC3A FILL band
+    // (an AREA, full brand green) across the top of the card in light. Because
+    // the band is a fill area (not a hairline on canvas), it reads vivid at full
+    // brand lime; it is a decorative brand area clearing the 3:1 graphical floor.
+    // No band in dark.
     if (!colors.isLight) return card;
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.card),
@@ -417,9 +419,9 @@ class _ConnectionHeroCard extends StatelessWidget {
           card,
           Positioned(
             top: 0,
-            bottom: 0,
             left: 0,
-            child: Container(width: 4, color: colors.textAccent),
+            right: 0,
+            child: Container(height: 8, color: colors.primary),
           ),
         ],
       ),

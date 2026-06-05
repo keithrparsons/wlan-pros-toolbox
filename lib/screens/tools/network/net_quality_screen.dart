@@ -476,11 +476,11 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
                     value: _fraction == 0 ? null : value,
                     minHeight: 6,
                     backgroundColor: colors.surface2,
-                    // Progress fill: lime in dark; darkened-lime in light so a
-                    // 6px bar reads on the white surface (§8.20.2).
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      colors.isLight ? colors.textAccent : colors.primary,
-                    ),
+                    // §8.20.3-B/C (vivid placement, 2026-06-05) — a 6px progress
+                    // bar is an AREA, not a thin line, so the fill carries FULL
+                    // brand lime #A1CC3A in both themes. (Reverses the earlier
+                    // olive-substitute, now reserved for thin foregrounds only.)
+                    valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
                   );
                 },
               ),

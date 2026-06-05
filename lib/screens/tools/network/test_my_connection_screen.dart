@@ -834,6 +834,24 @@ class _VerdictHeader extends StatelessWidget {
 
   final ConsumerVerdict verdict;
 
+  /// §8.20.3-C #2 — the status tone that colors the result card's accent bar.
+  /// "Both fine" reads as success; any slow side is a warning; an unreadable
+  /// side is neutral info. The headline + chips carry the precise verdict; the
+  /// bar is a projector-visible reinforcement of the overall tone.
+  StatusTone get _tone {
+    switch (verdict.outcome) {
+      case ConsumerOutcome.bothFine:
+        return StatusTone.success;
+      case ConsumerOutcome.wifi:
+      case ConsumerOutcome.wifiLead:
+      case ConsumerOutcome.internet:
+        return StatusTone.warning;
+      case ConsumerOutcome.couldntCheckWifi:
+      case ConsumerOutcome.couldntComplete:
+        return StatusTone.info;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
@@ -843,38 +861,84 @@ class _VerdictHeader extends StatelessWidget {
         'Wi-Fi ${_TwoAxisChips.word(verdict.wifiStatus)}. '
         'Internet ${_TwoAxisChips.word(verdict.internetStatus)}.';
 
+    final Widget card = Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(
+          color: colors.border,
+          width: colors.isLight ? 1.5 : 1,
+        ),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            verdict.headline,
+            style: text.titleMedium?.copyWith(
+              color: colors.textPrimary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _TwoAxisChips(
+            wifiStatus: verdict.wifiStatus,
+            internetStatus: verdict.internetStatus,
+          ),
+        ],
+      ),
+    );
+
     return Semantics(
       container: true,
       label: semanticsLabel,
       child: ExcludeSemantics(
-        child: Container(
-          decoration: BoxDecoration(
-            color: colors.surface1,
-            borderRadius: BorderRadius.circular(AppRadius.card),
-            border: Border.all(
-              color: colors.border,
-              width: colors.isLight ? 1.5 : 1,
-            ),
+        // §8.20.3-C #2 — in light, the status-bearing result card carries a 6px
+        // full-saturation status-hue left-accent bar plus a 4px top strip in the
+        // same hue (a small AREA, not a thin line, so full saturation). No bars
+        // in dark.
+        child: colors.isLight
+            ? _StatusAccentFrame(tone: _tone, child: card)
+            : card,
+      ),
+    );
+  }
+}
+
+/// Wraps a result card with the §8.20.3-C #2 status accent treatment (light
+/// only): a 6px full-saturation status-hue bar down the left edge and a 4px
+/// strip across the top, both in the relevant status hue. The bars are small
+/// AREAS (≥3:1 vs the white card), so they carry the hue at full saturation; the
+/// card's headline + chips carry the precise meaning.
+class _StatusAccentFrame extends StatelessWidget {
+  const _StatusAccentFrame({required this.tone, required this.child});
+
+  final StatusTone tone;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final Color hue = colors.statusToneColor(tone);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadius.card),
+      child: Stack(
+        children: <Widget>[
+          child,
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Container(height: 4, color: hue), // top strip
           ),
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                verdict.headline,
-                style: text.titleMedium?.copyWith(
-                  color: colors.textPrimary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              _TwoAxisChips(
-                wifiStatus: verdict.wifiStatus,
-                internetStatus: verdict.internetStatus,
-              ),
-            ],
+          Positioned(
+            top: 0,
+            bottom: 0,
+            left: 0,
+            child: Container(width: 6, color: hue), // left accent bar
           ),
-        ),
+        ],
       ),
     );
   }
@@ -1187,9 +1251,11 @@ class _CompareBar extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.xxs),
-        // The shared-scale track. The Wi-Fi fill is lime in dark; darkened-lime
-        // in light so a thin standalone bar reads on the white surface
-        // (§8.20.2). The internet bar is the neutral fill + borderStrong outline.
+        // The shared-scale track. §8.20.3-B/C — the Wi-Fi capacity fill is a bar
+        // AREA, not a thin foreground, so it carries FULL-saturation brand lime
+        // #A1CC3A in both themes (a vivid fill reads at distance; the olive
+        // substitute is only for thin foregrounds, §8.20.2). The internet bar is
+        // the neutral fill + borderStrong outline.
         ClipRRect(
           borderRadius: BorderRadius.circular(AppRadius.control),
           child: SizedBox(
@@ -1200,11 +1266,7 @@ class _CompareBar extends StatelessWidget {
                 FractionallySizedBox(
                   widthFactor: f == 0 ? 0.0 : f,
                   child: accent
-                      ? Container(
-                          color: colors.isLight
-                              ? colors.textAccent
-                              : colors.primary,
-                        )
+                      ? Container(color: colors.primary)
                       : Container(
                           decoration: BoxDecoration(
                             color: neutralFill,
@@ -2199,6 +2261,22 @@ class _SectionCard extends StatelessWidget {
               fontWeight: colors.isLight ? FontWeight.w600 : FontWeight.w500,
             ),
           ),
+          // §8.20.3-C #3 — a 4px vivid lime #A1CC3A FILL underline bar under the
+          // section heading, on the white card surface. Decorative brand area
+          // (the bold label above carries the meaning); the bar reads vivid as a
+          // fill. Light only — no underline in dark (lime is the dark accent
+          // already and the section label needs no extra bar there).
+          if (colors.isLight) ...<Widget>[
+            const SizedBox(height: AppSpacing.xxs),
+            Container(
+              height: 4,
+              width: 40,
+              decoration: BoxDecoration(
+                color: colors.primary,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ],
           const SizedBox(height: AppSpacing.xs),
           ...children,
         ],
