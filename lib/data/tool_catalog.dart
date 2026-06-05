@@ -758,6 +758,15 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Protocols',
       ),
       ToolEntry(
+        id: 'plmn-id-reference',
+        title: 'PLMN ID Reference',
+        description:
+            'US mobile carrier codes — MCC, MNC, PLMN ID — offline',
+        routeName: '/tools/plmn-id-reference',
+        isLive: true,
+        subgroup: 'Protocols',
+      ),
+      ToolEntry(
         id: 'reason-codes',
         title: '802.11 Reason Codes',
         description: '802.11 deauth / disassoc reason and status codes',
