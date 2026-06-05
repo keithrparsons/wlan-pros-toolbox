@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Antenna Connectors: an RF coupling nut shown FACE-ON — the hex coupling
+         nut with the center conductor pin in the bore (RP-SMA / N / RP-TNC
+         coupling + mating). A hex-nut face is distinct from rf-connectors
+         (barrel profile + threads) and rj-connectors (modular plug + latch). -->
+    <!-- hex coupling nut -->
+    <path d="M12 3 L19 7 V15 L12 19 L5 15 V7 Z"/>
+    <!-- threaded bore ring -->
+    <circle cx="12" cy="11" r="4"/>
+    <!-- center conductor pin -->
+    <circle cx="12" cy="11" r="1.2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

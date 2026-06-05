@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Wi-Fi Tools Comparison: a side-by-side comparison chart — two grouped
+         columns of bars weighed against each other (toolkits compared by
+         capability and cost). The grouped two-column bar pair on a baseline is
+         distinct from signal-thresholds (one ascending row of ticks). -->
+    <!-- baseline -->
+    <path d="M3 20 H21"/>
+    <!-- left group: two bars -->
+    <path d="M5 20 V11"/>
+    <path d="M8.5 20 V7"/>
+    <!-- right group: two bars at different heights (the contrast being compared) -->
+    <path d="M15.5 20 V9"/>
+    <path d="M19 20 V13"/>
+  </g>
+</svg>
