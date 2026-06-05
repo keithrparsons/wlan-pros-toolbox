@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- DTMF Generator: a telephone dial-pad — the source of dual-tone keypad signals.
+       Silhouette = a 3-wide x 4-tall matrix of round keys (12-key phone keypad), single
+       currentColor. A dot MATRIX, distinct from channel-map (a 2x2 grid FRAME of lines),
+       port-reference (a dotted LIST inside a card), and lat-long (a line grid + ring). The
+       4-row x 3-col bullet field reads unmistakably as a keypad. -->
+  <g fill="currentColor" stroke="none">
+    <!-- row 1 -->
+    <circle cx="6" cy="4.5" r="1.6"/>
+    <circle cx="12" cy="4.5" r="1.6"/>
+    <circle cx="18" cy="4.5" r="1.6"/>
+    <!-- row 2 -->
+    <circle cx="6" cy="10" r="1.6"/>
+    <circle cx="12" cy="10" r="1.6"/>
+    <circle cx="18" cy="10" r="1.6"/>
+    <!-- row 3 -->
+    <circle cx="6" cy="15.5" r="1.6"/>
+    <circle cx="12" cy="15.5" r="1.6"/>
+    <circle cx="18" cy="15.5" r="1.6"/>
+    <!-- row 4 (* 0 #) -->
+    <circle cx="6" cy="21" r="1.6"/>
+    <circle cx="12" cy="21" r="1.6"/>
+    <circle cx="18" cy="21" r="1.6"/>
+  </g>
+</svg>

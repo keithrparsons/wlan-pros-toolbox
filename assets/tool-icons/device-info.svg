@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Device Info: a handset/phone body with an "i" info mark on its face — model,
+         memory, uptime. Silhouette = a tall rounded phone slab + interior info glyph.
+         Distinct from interface-info (a wide NIC card with an info badge OUTSIDE it to the
+         right); here the device IS the frame and the info lives on the screen. -->
+    <!-- phone body -->
+    <rect x="6" y="3" width="12" height="18" rx="2.5"/>
+    <!-- info dot (the tittle) -->
+    <circle cx="12" cy="8" r="0.7" fill="currentColor" stroke="none"/>
+    <!-- info stem -->
+    <line x1="12" y1="11" x2="12" y2="16"/>
+  </g>
+</svg>

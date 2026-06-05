@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- RJ connectors: a modular plug in PROFILE — the springy retention latch standing up
+         on top, the cable exiting the rear, three contact pins on the leading edge.
+         Silhouette = latch-topped plug body + tail wire. Deliberately NOT ethernet-pinout
+         (that is the RJ45 FRONT face: a wide block with a bottom tab-notch and 8 vertical
+         pin slots). This latch-and-lead profile reads as a connector you plug in. -->
+    <!-- retention latch (spring clip standing up from the top face) -->
+    <path d="M9.5 8 V4 H12.5 V8"/>
+    <!-- plug body -->
+    <rect x="5" y="8" width="11" height="9" rx="1.5"/>
+    <!-- three contact pins on the leading edge -->
+    <path d="M8 17 V19"/>
+    <path d="M10.5 17 V19"/>
+    <path d="M13 17 V19"/>
+    <!-- cable exiting the rear -->
+    <path d="M16 12.5 H21"/>
+  </g>
+</svg>
