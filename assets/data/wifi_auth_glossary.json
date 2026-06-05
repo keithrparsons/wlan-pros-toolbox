@@ -1,0 +1,414 @@
+{
+  "schema_version": 1,
+  "title": "Wi-Fi Authentication Glossary",
+  "source": "Deliverables/2026-06-05-wifi-auth-glossary curated edition",
+  "term_count": 58,
+  "terms": [
+    {
+      "id": "aaa",
+      "term": "Authentication, Authorization and Accounting",
+      "abbr": "AAA",
+      "category": "Core Authentication",
+      "definition": "The framework that confirms who a device is, decides what it may do, and records what it did. In Wi-Fi, a RADIUS server is the usual AAA server."
+    },
+    {
+      "id": "as",
+      "term": "Authentication Server",
+      "abbr": "AS",
+      "category": "Core Authentication",
+      "definition": "The server that validates client credentials in 802.1X, almost always a RADIUS server. It is the third party alongside the supplicant (client) and authenticator (access point or controller)."
+    },
+    {
+      "id": "radius",
+      "term": "Remote Authentication Dial In User Service",
+      "abbr": "RADIUS",
+      "category": "Core Authentication",
+      "definition": "The IETF RFC 2865 protocol that carries AAA messages between an access point or controller and the authentication server. It is the backbone of WPA-Enterprise and 802.1X. RadSec adds TLS encryption."
+    },
+    {
+      "id": "eap",
+      "term": "Extensible Authentication Protocol",
+      "abbr": "EAP",
+      "category": "EAP & Key Exchange",
+      "definition": "An authentication framework (IETF RFC 3748), not a single method, that lets client and server negotiate a credential type. EAP is the language 802.1X speaks. Methods include EAP-TLS, PEAP, EAP-TTLS, and EAP-AKA."
+    },
+    {
+      "id": "eapol",
+      "term": "EAP over LAN",
+      "abbr": "EAPoL",
+      "category": "EAP & Key Exchange",
+      "definition": "The 802.1X encapsulation that carries EAP between client and authenticator. In Wi-Fi it also carries the WPA2 and WPA3 4-Way Handshake key messages, even on personal (pre-shared key) networks."
+    },
+    {
+      "id": "asra",
+      "term": "Additional Step Required for Access",
+      "abbr": "ASRA",
+      "category": "Roaming & Passpoint",
+      "definition": "A bit in the 802.11u Interworking element that warns a client, before association, that extra steps are needed beyond normal authentication. It commonly signals a captive portal, terms acceptance, or online enrollment."
+    },
+    {
+      "id": "anqp",
+      "term": "Access Network Query Protocol",
+      "abbr": "ANQP",
+      "category": "Roaming & Passpoint",
+      "definition": "The query protocol a client uses to ask an access point about a network before associating, such as supported roaming partners and realms. Central to Passpoint; its messages travel over GAS."
+    },
+    {
+      "id": "gas",
+      "term": "Generic Advertisement Service",
+      "abbr": "GAS",
+      "category": "Roaming & Passpoint",
+      "definition": "The 802.11u Layer 2 transport that moves pre-association network queries between client and access point using Public Action frames. GAS is the container that carries ANQP messages."
+    },
+    {
+      "id": "hs2-0",
+      "term": "Hotspot 2.0",
+      "abbr": "HS2.0",
+      "category": "Roaming & Passpoint",
+      "definition": "The Wi-Fi Alliance specification, certified as Passpoint, that lets devices discover and securely authenticate to public Wi-Fi automatically, with no captive portal. Built on 802.11u, ANQP, and GAS."
+    },
+    {
+      "id": "or",
+      "term": "WBA OpenRoaming",
+      "abbr": "OR",
+      "category": "Roaming & Passpoint",
+      "definition": "A Wireless Broadband Alliance federation that lets a device authenticate automatically across any member network using an existing identity. Built on Passpoint, RCOIs, DNS-based dynamic peer discovery, and RadSec."
+    },
+    {
+      "id": "rcoi",
+      "term": "Roaming Consortium Organization Identifier",
+      "abbr": "RCOI",
+      "category": "Roaming & Passpoint",
+      "definition": "An identifier naming a group of identity providers a network accepts, advertised in beacons and ANQP. A client matches a trusted RCOI to decide whether to join. OpenRoaming uses defined RCOI values to signal membership."
+    },
+    {
+      "id": "anp",
+      "term": "Access Network Provider",
+      "abbr": "ANP",
+      "category": "Roaming & Passpoint",
+      "definition": "The party that owns the Wi-Fi infrastructure a roaming user connects through, such as a venue or hotspot operator. In OpenRoaming it advertises which identity providers it accepts."
+    },
+    {
+      "id": "idp",
+      "term": "Identity Provider",
+      "abbr": "IDP",
+      "category": "Identity & Credentials",
+      "definition": "The party that holds a user's credentials and vouches for their identity. In OpenRoaming and eduroam it is the user's home organization, whose assertion the Access Network Provider trusts."
+    },
+    {
+      "id": "nai",
+      "term": "Network Access Identifier",
+      "abbr": "NAI",
+      "category": "Identity & Credentials",
+      "definition": "The user identifier in user@realm form (IETF RFC 7542). The realm after the @ is how RADIUS and EAP route a request to the correct home server, which makes the NAI essential to roaming."
+    },
+    {
+      "id": "dpd",
+      "term": "Dynamic Peer Discovery",
+      "abbr": "DPD",
+      "category": "Roaming & Passpoint",
+      "definition": "The mechanism (IETF RFC 7585) that finds a user's home RADIUS/TLS (RadSec) server automatically by looking up the NAI realm in DNS. It lets any OpenRoaming access network reach any identity provider without pre-configured links."
+    },
+    {
+      "id": "ca",
+      "term": "Certificate Authority",
+      "abbr": "CA",
+      "category": "Identity & Credentials",
+      "definition": "The trusted entity that issues and signs the certificates used to prove identity. In EAP-TLS, the server and (in mutual authentication) the client present certificates chained to a Certificate Authority each side trusts."
+    },
+    {
+      "id": "pki",
+      "term": "Public Key Infrastructure",
+      "abbr": "PKI",
+      "category": "Identity & Credentials",
+      "definition": "The system of certificate authorities, certificates, keys, and policies that issues, manages, and revokes credentials. EAP-TLS depends on a working PKI to issue and trust client and server certificates."
+    },
+    {
+      "id": "aka",
+      "term": "Authentication and Key Agreement",
+      "abbr": "AKA",
+      "category": "Cellular / 3GPP",
+      "definition": "The challenge-response authentication and key-derivation used in 3G, 4G, and 5G, based on a secret shared between the SIM and the carrier. EAP-AKA (RFC 4187) and EAP-AKA' (RFC 9048) carry it over EAP to authenticate Wi-Fi."
+    },
+    {
+      "id": "3gpp",
+      "term": "3rd Generation Partnership Project",
+      "abbr": "3GPP",
+      "category": "Cellular / 3GPP",
+      "definition": "The standards body for cellular technologies including GSM, UMTS, LTE, and 5G. It matters to Wi-Fi because SIM-based EAP methods and carrier offload reuse 3GPP credentials and procedures."
+    },
+    {
+      "id": "gsm",
+      "term": "Global System for Mobile communications",
+      "abbr": "GSM",
+      "category": "Cellular / 3GPP",
+      "definition": "The 2G cellular standard that introduced the SIM card and its authentication model. EAP-SIM lets a GSM SIM authenticate a device to Wi-Fi using the same shared-secret challenge the cellular network uses."
+    },
+    {
+      "id": "sim",
+      "term": "Subscriber Identity Module",
+      "abbr": "SIM",
+      "category": "Cellular / 3GPP",
+      "definition": "The secure chip holding a subscriber's identity and authentication secret. The SIM (USIM on 3G and later) is what EAP-SIM and EAP-AKA use to authenticate a device to Wi-Fi with cellular credentials."
+    },
+    {
+      "id": "imsi",
+      "term": "International Mobile Subscriber Identity",
+      "abbr": "IMSI",
+      "category": "Cellular / 3GPP",
+      "definition": "The globally unique number on a SIM that identifies a subscriber to the cellular network. SIM-based Wi-Fi authentication derives the user identity from the IMSI, letting carrier and OpenRoaming offload route to the right home network."
+    },
+    {
+      "id": "plmn-id",
+      "term": "Public Land Mobile Network Identifier",
+      "abbr": "PLMN ID",
+      "category": "Cellular / 3GPP",
+      "definition": "The code identifying a mobile operator's network, built from the Mobile Country Code and Mobile Network Code. Hotspot 2.0 advertises PLMN IDs in ANQP so a SIM device recognizes its own carrier's hotspots."
+    },
+    {
+      "id": "wba",
+      "term": "Wireless Broadband Alliance",
+      "abbr": "WBA",
+      "category": "Roaming & Passpoint",
+      "definition": "The industry body behind OpenRoaming. It defines how operators, identity providers, and venues federate so users roam between Wi-Fi networks automatically. Distinct from the Wi-Fi Alliance, which certifies Passpoint."
+    },
+    {
+      "id": "psk-auth",
+      "term": "Pre-Shared Key",
+      "abbr": "PSK",
+      "category": "Core Authentication",
+      "definition": "A single passphrase shared by everyone on a network, used by WPA2-Personal and WPA3-Personal. One leaked passphrase exposes the whole network, which is why enterprise Wi-Fi prefers 802.1X. Not the modulation term Phase Shift Keying."
+    },
+    {
+      "id": "dpsk",
+      "term": "Dynamic Pre-Shared Key",
+      "abbr": "DPSK",
+      "category": "Core Authentication",
+      "definition": "A vendor feature, not an IEEE standard, that gives each user or device a unique pre-shared key on one SSID, so a leaked key affects only one user. It adds per-user control without a RADIUS server or certificates."
+    },
+    {
+      "id": "wpa",
+      "term": "Wi-Fi Protected Access",
+      "abbr": "WPA",
+      "category": "Security & Encryption",
+      "definition": "The Wi-Fi Alliance security certification family that replaced WEP, spanning WPA, WPA2, and WPA3. Each defines how clients authenticate (PSK or 802.1X) and how traffic is encrypted (TKIP, then AES-CCMP, then GCMP)."
+    },
+    {
+      "id": "wep",
+      "term": "Wired Equivalent Privacy",
+      "abbr": "WEP",
+      "category": "Security & Encryption",
+      "definition": "The original 802.11 encryption, now thoroughly broken and never to be used. Its RC4 design can be cracked in minutes, which is why WPA, WPA2, and WPA3 replaced it."
+    },
+    {
+      "id": "tkip",
+      "term": "Temporal Key Integrity Protocol",
+      "abbr": "TKIP",
+      "category": "Security & Encryption",
+      "definition": "The stopgap encryption added with the original WPA to patch WEP on legacy hardware by rotating keys per packet. Now deprecated and insecure; modern Wi-Fi uses AES-based CCMP or GCMP. Enabling it can also cap legacy data rates."
+    },
+    {
+      "id": "gtk",
+      "term": "Group Temporal Key",
+      "abbr": "GTK",
+      "category": "EAP & Key Exchange",
+      "definition": "The key an access point uses to encrypt broadcast and multicast traffic to all clients. It is delivered during the 4-Way Handshake and rotated to keep group traffic protected. The group counterpart to the pairwise key."
+    },
+    {
+      "id": "tls",
+      "term": "Transport Layer Security",
+      "abbr": "TLS",
+      "category": "EAP & Key Exchange",
+      "definition": "The standard protocol for encrypted, authenticated connections, successor to SSL. EAP-TLS uses certificates on both sides for the strongest common 802.1X method; PEAP and EAP-TTLS use a TLS tunnel; RadSec protects RADIUS with it."
+    },
+    {
+      "id": "ttls",
+      "term": "Tunneled Transport Layer Security",
+      "abbr": "TTLS",
+      "category": "EAP & Key Exchange",
+      "definition": "An EAP method that builds a TLS tunnel using only a server certificate, then carries client credentials safely inside it. It avoids issuing client certificates while still protecting passwords, a common alternative to PEAP."
+    },
+    {
+      "id": "ecdh",
+      "term": "Elliptic Curve Diffie-Hellman",
+      "abbr": "ECDH",
+      "category": "EAP & Key Exchange",
+      "definition": "A key exchange that lets two parties derive a shared secret over an open channel using elliptic-curve cryptography, never sending the secret. Wi-Fi uses it in modern TLS and in WPA3's SAE, which resists offline password guessing."
+    },
+    {
+      "id": "sha",
+      "term": "Secure Hash Algorithm",
+      "abbr": "SHA",
+      "category": "Security & Encryption",
+      "definition": "A family of cryptographic hash functions (SHA-1, SHA-256, and others) producing a fixed-length fingerprint of data. Wi-Fi uses SHA in key derivation, integrity checks, and certificate signing; WPA3 and EAP-AKA' moved to SHA-256."
+    },
+    {
+      "id": "mac-auth",
+      "term": "Message Authentication Code",
+      "abbr": "MAC",
+      "category": "Security & Encryption",
+      "definition": "A short value computed from a message and a secret key that proves the message was unaltered and came from a key holder. Wi-Fi handshakes use one (the MIC) to verify key messages. Distinct from Media Access Control, the address layer."
+    },
+    {
+      "id": "ap",
+      "term": "Access Point",
+      "abbr": "AP",
+      "category": "Network Fundamentals",
+      "definition": "The Wi-Fi radio device that clients associate with to join a wireless network. In 802.1X it acts as the authenticator, relaying credentials between client and authentication server. An access point is not a router."
+    },
+    {
+      "id": "wlc",
+      "term": "Wireless LAN Controller",
+      "abbr": "WLC",
+      "category": "Network Fundamentals",
+      "definition": "A central device that manages many access points, handling configuration, RF coordination, and often the 802.1X authenticator role. In controller-based designs the WLC, not each access point, talks to the RADIUS server."
+    },
+    {
+      "id": "bss",
+      "term": "Basic Service Set",
+      "abbr": "BSS",
+      "category": "Network Fundamentals",
+      "definition": "A single access point and its associated clients, the basic building block of a Wi-Fi network. Authentication and association happen within a BSS before a client can pass data."
+    },
+    {
+      "id": "bssid",
+      "term": "Basic Service Set Identifier",
+      "abbr": "BSSID",
+      "category": "Network Fundamentals",
+      "definition": "The MAC address of an access point's radio, uniquely identifying one BSS. A client uses it to know exactly which radio it is associated with when several access points share an SSID."
+    },
+    {
+      "id": "ess",
+      "term": "Extended Service Set",
+      "abbr": "ESS",
+      "category": "Network Fundamentals",
+      "definition": "Multiple access points sharing one SSID on the same network, letting clients roam between them. An ESS is what makes a single named Wi-Fi network span a building or campus."
+    },
+    {
+      "id": "hessid",
+      "term": "Homogeneous Extended Service Set Identifier",
+      "abbr": "HESSID",
+      "category": "Roaming & Passpoint",
+      "definition": "An identifier advertised in 802.11u that lets a client recognize when several access points form one logical network run by a single provider, even when other identifiers differ."
+    },
+    {
+      "id": "dcf",
+      "term": "Distributed Coordination Function",
+      "abbr": "DCF",
+      "category": "Network Fundamentals",
+      "definition": "The basic Wi-Fi channel-access method, where devices listen before transmitting and back off randomly to avoid collisions (CSMA/CA). It governs how every device, including during authentication, takes its turn on the medium."
+    },
+    {
+      "id": "fqdn",
+      "term": "Fully Qualified Domain Name",
+      "abbr": "FQDN",
+      "category": "Identity & Credentials",
+      "definition": "A complete domain name pinpointing an exact location in DNS, such as auth.example.com. The realm in an NAI must be a valid FQDN so RADIUS and dynamic peer discovery can route to the right home server."
+    },
+    {
+      "id": "dns",
+      "term": "Domain Name System",
+      "abbr": "DNS",
+      "category": "Network Fundamentals",
+      "definition": "The internet system that translates names like example.com into IP addresses. OpenRoaming's dynamic peer discovery queries DNS NAPTR and SRV records to find the correct home RadSec server."
+    },
+    {
+      "id": "arp",
+      "term": "Address Resolution Protocol",
+      "abbr": "ARP",
+      "category": "Network Fundamentals",
+      "definition": "The protocol that maps an IP address to a MAC (Media Access Control) address on a local network. Not authentication itself, but it runs after a client connects and matters to features like client isolation."
+    },
+    {
+      "id": "http",
+      "term": "Hypertext Transfer Protocol",
+      "abbr": "HTTP",
+      "category": "Network Fundamentals",
+      "definition": "The protocol that carries web traffic. In Wi-Fi it matters most to captive portals, where a network intercepts the first web request and redirects to a sign-in page. Passpoint exists partly to replace that step."
+    },
+    {
+      "id": "isp",
+      "term": "Internet Service Provider",
+      "abbr": "ISP",
+      "category": "Network Fundamentals",
+      "definition": "The company that provides a network's connection to the internet. An ISP can also serve as an identity provider in roaming federations, letting subscribers authenticate to partner Wi-Fi with their existing account."
+    },
+    {
+      "id": "lan",
+      "term": "Local Area Network",
+      "abbr": "LAN",
+      "category": "Network Fundamentals",
+      "definition": "A network confined to one site such as a home, office, or campus. Wi-Fi is the wireless extension of a LAN, and 802.1X decides which devices are admitted onto it."
+    },
+    {
+      "id": "wlan",
+      "term": "Wireless Local Area Network",
+      "abbr": "WLAN",
+      "category": "Network Fundamentals",
+      "definition": "A local area network connecting devices over radio rather than cables, which is what Wi-Fi is. The authentication mechanisms in this guide exist to control which devices join the WLAN and to protect their traffic."
+    },
+    {
+      "id": "vlan",
+      "term": "Virtual Local Area Network",
+      "abbr": "VLAN",
+      "category": "Network Fundamentals",
+      "definition": "A logical network segment that isolates traffic on shared physical infrastructure. A RADIUS server can return a VLAN assignment at authentication, a common way to separate guests, staff, and devices on one SSID."
+    },
+    {
+      "id": "vpn",
+      "term": "Virtual Private Network",
+      "abbr": "VPN",
+      "category": "Security & Encryption",
+      "definition": "An encrypted tunnel that carries traffic across an untrusted network. A VPN protects data after a client joins Wi-Fi; it sits above Wi-Fi authentication and is not a substitute for it on open networks."
+    },
+    {
+      "id": "qos",
+      "term": "Quality of Service",
+      "abbr": "QoS",
+      "category": "Network Fundamentals",
+      "definition": "The mechanisms that prioritize traffic such as voice and video over best-effort data. A RADIUS server can return QoS policy at authentication, tying a user's traffic priority to who they are."
+    },
+    {
+      "id": "qoe",
+      "term": "Quality of Experience",
+      "abbr": "QoE",
+      "category": "Network Fundamentals",
+      "definition": "The user's actual perception of network performance, as opposed to raw metrics. QoE is the goal behind seamless roaming and automatic authentication like Passpoint: connect and stay connected without friction."
+    },
+    {
+      "id": "ieee",
+      "term": "Institute of Electrical and Electronics Engineers",
+      "abbr": "IEEE",
+      "category": "Network Fundamentals",
+      "definition": "The standards body for the 802.11 Wi-Fi family, plus 802.1X for port-based access control and 802.11u for interworking. When a Wi-Fi authentication behavior is standards-based, the source is usually an IEEE specification."
+    },
+    {
+      "id": "ietf",
+      "term": "Internet Engineering Task Force",
+      "abbr": "IETF",
+      "category": "Network Fundamentals",
+      "definition": "The standards body that defines internet protocols through RFCs, including RADIUS, EAP, TLS, and the NAI. Wi-Fi authentication leans heavily on IETF specs even though the radio layer is IEEE's domain."
+    },
+    {
+      "id": "iso",
+      "term": "International Organization for Standardization",
+      "abbr": "ISO",
+      "category": "Network Fundamentals",
+      "definition": "The global standards body best known in networking for the OSI reference model, which helps place where Wi-Fi authentication sits, mainly at Layer 2, relative to the rest of the stack."
+    },
+    {
+      "id": "osi",
+      "term": "Open System Interconnection",
+      "abbr": "OSI",
+      "category": "Network Fundamentals",
+      "definition": "The seven-layer reference model for how network functions stack, from physical up to application. Wi-Fi authentication works mainly at Layer 2, which is why 802.1X is called port-based access control."
+    },
+    {
+      "id": "psk-modulation",
+      "term": "Phase Shift Keying",
+      "abbr": "PSK",
+      "category": "Security & Encryption",
+      "definition": "A modulation technique that encodes data by shifting the radio carrier's phase, used in Wi-Fi schemes such as BPSK and QPSK at lower data rates. A physical-layer term unrelated to Pre-Shared Key; same abbreviation only."
+    }
+  ]
+}
