@@ -1011,6 +1011,18 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       ),
       // The 4 checklist PDF cards moved to Educational Resources on 2026-06-04
       // (see the NOTE above); only the two interactive checklists remain here.
+      // ── Guides (2026-06-05): step-by-step how-tos that bundle a downloadable
+      // artifact. Distinct from the tappable checklists above (which track
+      // session state) — a Guide is a read-along walkthrough with a download.
+      ToolEntry(
+        id: 'dual-orb-wlanpi',
+        title: 'Dual Orbs on WLAN Pi',
+        description:
+            'Turn a WLAN Pi R4/M4+ into two Orb sensors (Ethernet + Wi-Fi)',
+        routeName: '/tools/dual-orb-wlanpi',
+        isLive: true,
+        subgroup: 'Guides',
+      ),
     ],
   ),
 

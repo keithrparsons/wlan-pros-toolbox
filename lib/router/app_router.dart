@@ -101,6 +101,7 @@ import '../screens/tools/reference/ascii_reference_screen.dart';
 import '../screens/tools/reference/emoji_reference_screen.dart';
 import '../screens/tools/reference/pdf_reference_screen.dart';
 import '../screens/tools/checklists/checklist_screen.dart';
+import '../screens/tools/guides/dual_orb_screen.dart';
 import '../data/checklists.dart';
 
 class AppRouter {
@@ -324,6 +325,12 @@ class AppRouter {
   static const String checklistApInstall = '/tools/checklist-ap-install';
   static const String checklistClientTest = '/tools/checklist-client-test';
 
+  // Guides — step-by-step how-tos that bundle a downloadable artifact. The
+  // dual-Orb WLAN Pi guide ships the open-source dual-Orb `.deb`
+  // (assets/downloads/) via the shareAsset seam. All platforms (download is the
+  // existing share sheet / web anchor).
+  static const String dualOrbWlanpi = '/tools/dual-orb-wlanpi';
+
   /// Map of static, argument-less routes. Categories use MaterialPageRoute
   /// directly because each category screen takes a typed `ToolCategory`.
   static final Map<String, WidgetBuilder> routes = <String, WidgetBuilder>{
@@ -510,6 +517,7 @@ class AppRouter {
           checklist: kClientTestChecklist,
           toolId: 'checklist-client-test',
         ),
+    dualOrbWlanpi: (_) => const DualOrbScreen(),
   };
 
   /// Fallback for any unregistered route. Sends the user back to home rather

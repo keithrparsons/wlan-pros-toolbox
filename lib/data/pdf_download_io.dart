@@ -19,12 +19,16 @@ import 'package:share_plus/share_plus.dart';
 
 import 'pdf_download.dart' show ShareOrigin;
 
-/// Copies [assetPath]'s bytes to a temp file named [filename], then shares it.
-/// Throws if the asset bytes fail to load or the temp write fails — the caller
-/// surfaces the honest error path.
-Future<void> sharePdfImpl({
+/// Copies [assetPath]'s bytes to a temp file named [filename], then shares it
+/// with the given [mimeType]. Throws if the asset bytes fail to load or the temp
+/// write fails — the caller surfaces the honest error path. Generic over file
+/// type so the same path serves the PDF reference cards
+/// (`mimeType: application/pdf`) and the dual-Orb `.deb`
+/// (`mimeType: application/vnd.debian.binary-package`).
+Future<void> shareAssetImpl({
   required String assetPath,
   required String filename,
+  required String mimeType,
   required String title,
   ShareOrigin? shareOrigin,
 }) async {
@@ -48,7 +52,7 @@ Future<void> sharePdfImpl({
   // 3. Hand the temp file to the OS share sheet. On iPad/macOS the popover must
   //    anchor to a source rect or the platform throws; pass the button's rect.
   await Share.shareXFiles(
-    <XFile>[XFile(tmpFile.path, mimeType: 'application/pdf')],
+    <XFile>[XFile(tmpFile.path, mimeType: mimeType)],
     sharePositionOrigin: shareOrigin == null
         ? null
         : Rect.fromLTWH(

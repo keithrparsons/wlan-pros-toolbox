@@ -121,11 +121,12 @@ void main() {
       store = ToolHelpStore.fromJson(raw);
     });
 
-    test('parses to exactly 97 entries', () {
-      // 97 = 95 (origin/main: 93 + Antenna Connectors + Optical Transceivers)
-      // + 2 backfilled v1.1 help entries: PLMN ID Reference and the Wi-Fi
-      // Authentication Glossary (both shipped without help; added 2026-06-05).
-      expect(store.count, 97);
+    test('parses to exactly 98 entries', () {
+      // 98 = 95 (origin/main: 93 + Antenna Connectors + Optical Transceivers)
+      // + 2 backfilled v1.1 help entries (PLMN ID Reference and the Wi-Fi
+      // Authentication Glossary) + 1 v1.1 Guides entry: Dual Orbs on WLAN Pi
+      // (added 2026-06-05).
+      expect(store.count, 98);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

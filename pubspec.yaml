@@ -368,6 +368,12 @@ flutter:
     # pinch-zoomable PdfViewPinch (lib/screens/tools/reference/
     # pdf_reference_screen.dart) via pdfx → Apple PDFKit on iOS + macOS.
     - assets/reference-cards/
+    # Bundled downloadable packages exported via the share/download seam
+    # (lib/data/pdf_download.dart → shareAsset). Currently the dual-Orb Debian
+    # package (wlanpi-dual-orb_1.1.3_all.deb) surfaced by the "Dual Orbs on
+    # WLAN Pi" how-to (lib/screens/tools/guides/dual_orb_screen.dart). The
+    # filename is the REAL package name — meaningful to `sudo apt install ./…`.
+    - assets/downloads/
     # WLAN Pros brand lockup (GL-003 §8.21). The transparent-background
     # "wirelessLAN PROFESSIONALS" wordmark + lime #A1CC3A Wi-Fi arc, trimmed to
     # its tight bounding box from the canonical `WLANProsLogo black.png` source.

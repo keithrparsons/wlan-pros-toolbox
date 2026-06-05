@@ -389,4 +389,8 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'connectivity test', 'client side', 'validation', 'roaming test',
     'troubleshoot',
   ],
+  'dual-orb-wlanpi': <String>[
+    'orb', 'orb.net', 'sensor', 'wlanpi', 'wlan pi', 'r4', 'm4',
+    'speed test', 'monitoring', 'deb', 'ferney munoz',
+  ],
 };
