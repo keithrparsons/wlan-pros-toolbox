@@ -255,6 +255,12 @@ class AppRouter {
   /// (backs this route, the catalog entry, the asset, and tests).
   static const String wifiGlossary = '/tools/wifi-glossary';
 
+  /// Wi-Fi Authentication Glossary — 58 plain-language Wi-Fi authentication
+  /// term definitions, grouped by category (offline bundled JSON). Reuses the
+  /// same WifiGlossaryScreen + GlossaryService, pointed at a separate asset.
+  /// The id `wifi-auth-glossary` is permanent (route, catalog, asset, tests).
+  static const String wifiAuthGlossary = '/tools/wifi-auth-glossary';
+
   // PDF reference cards — Keith's 10 laminated reference cards bundled as PDFs
   // (assets/reference-cards/<id>.pdf), rendered pinch-zoomable by the single
   // PdfReferenceScreen. They interleave alphabetically with the other Quick
@@ -409,6 +415,10 @@ class AppRouter {
     asciiReference: (_) => const AsciiReferenceScreen(),
     emojiReference: (_) => const EmojiReferenceScreen(),
     wifiGlossary: (_) => const WifiGlossaryScreen(),
+    wifiAuthGlossary: (_) => const WifiGlossaryScreen(
+          assetPath: kWifiAuthGlossaryAsset,
+          title: 'Wi-Fi Authentication Glossary',
+        ),
     // PDF reference cards — one PdfReferenceScreen per bundled card. Title +
     // asset path are the only per-card inputs; the screen is otherwise shared.
     bubbleDiagram: (_) => const PdfReferenceScreen(

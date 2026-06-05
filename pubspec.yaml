@@ -304,6 +304,12 @@ flutter:
     # within each) is deliberate and preserved. Source noted in the file's
     # top-level `source` field.
     - assets/data/glossary.json
+    # Wi-Fi Authentication Glossary — 58 plain-language Wi-Fi authentication
+    # term definitions across 7 categories, for the Wi-Fi Authentication
+    # Glossary Quick Reference tool. Sibling of glossary.json; same schema,
+    # loaded by the same WifiGlossaryScreen + GlossaryService. Curation order
+    # (categories and terms within each) is deliberate and preserved.
+    - assets/data/wifi_auth_glossary.json
     # In-app tool help — one entry per catalog tool id, keyed for helpForId()
     # (lib/services/help/). Generated from FIELD-MANUAL.md; loaded + parsed once
     # at startup and cached for the process lifetime. Drives the per-tool help

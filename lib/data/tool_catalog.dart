@@ -638,7 +638,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       ToolEntry(
         id: 'capacity-planner',
         title: 'Capacity Planner',
-        description: 'Recommended AP count by users and demand',
+        description: 'Why capacity planning needs a pro, not a calculator',
         routeName: '/tools/capacity-planner',
         isLive: true,
         subgroup: 'Capacity & Power',
@@ -902,6 +902,19 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         title: 'Wi-Fi Glossary',
         description: 'Plain-language definitions of 92 Wi-Fi terms',
         routeName: '/tools/wifi-glossary',
+        subgroup: 'Wi-Fi & RF',
+        isLive: true,
+      ),
+      // Wi-Fi Authentication Glossary — sibling of the Wi-Fi Glossary,
+      // searchable/grouped/offline, reusing WifiGlossaryScreen + GlossaryService
+      // pointed at assets/data/wifi_auth_glossary.json. No bespoke <id>.svg yet,
+      // so ToolRow shows the lime-bolt fallback (bespoke icon = follow-up).
+      ToolEntry(
+        id: 'wifi-auth-glossary',
+        title: 'Wi-Fi Authentication Glossary',
+        description:
+            'Plain-language definitions of 58 Wi-Fi authentication terms',
+        routeName: '/tools/wifi-auth-glossary',
         subgroup: 'Wi-Fi & RF',
         isLive: true,
       ),
