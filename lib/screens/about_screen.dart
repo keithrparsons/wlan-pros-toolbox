@@ -31,8 +31,10 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../data/app_version.dart';
 import '../router/app_router.dart';
+import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 import '../widgets/app_copy_action.dart';
+import '../widgets/appearance_control.dart';
 import '../widgets/centered_content.dart';
 
 /// The WLAN Pros contact form — the single real destination for both consulting
@@ -86,9 +88,14 @@ class AboutScreen extends StatelessWidget {
                   edge,
                   edge + AppSpacing.sm,
                 ),
-                children: const <Widget>[
+                children: <Widget>[
+                  // 0. Appearance — the §8.20.5 theme toggle (System / Light /
+                  // Dark). Placed first as a Settings-style control on the
+                  // app-level About surface, the standard reachable home for it.
+                  const _AppearanceSection(),
+
                   // 1. Why this toolbox
-                  _Section(
+                  const _Section(
                     title: 'Why this toolbox',
                     paragraphs: <String>[
                       'Every number in this app is a real measurement. Nothing '
@@ -113,7 +120,7 @@ class AboutScreen extends StatelessWidget {
                   ),
 
                   // 2. Why Gratis
-                  _Section(
+                  const _Section(
                     title: 'Why Gratis',
                     paragraphs: <String>[
                       'This toolbox is free. No trial, no upgrade nag, no '
@@ -131,7 +138,7 @@ class AboutScreen extends StatelessWidget {
                   ),
 
                   // 3. Who is WLAN Pros
-                  _Section(
+                  const _Section(
                     title: 'Who is WLAN Pros',
                     paragraphs: <String>[
                       'WLAN Pros is the company behind this toolbox. The full '
@@ -155,7 +162,7 @@ class AboutScreen extends StatelessWidget {
                   ),
 
                   // 4. The #WLPC Conference
-                  _Section(
+                  const _Section(
                     title: 'The #WLPC Conference',
                     paragraphs: <String>[
                       'If you work in Wi-Fi, go to WLPC at least once. It '
@@ -182,7 +189,7 @@ class AboutScreen extends StatelessWidget {
                   ),
 
                   // 5. Get in touch
-                  _Section(
+                  const _Section(
                     title: 'Get in touch',
                     paragraphs: <String>[
                       'Need help with a Wi-Fi design, a troubleshooting '
@@ -202,10 +209,10 @@ class AboutScreen extends StatelessWidget {
                   // 6. Help and Documentation — verbatim honesty/methodology
                   // copy, plus a "Browse tool help" action into the per-tool
                   // help browse screen and the feedback link.
-                  _HelpDocsSection(),
+                  const _HelpDocsSection(),
 
                   // 7. Privacy
-                  _Section(
+                  const _Section(
                     title: 'Privacy',
                     paragraphs: <String>[
                       'We don\'t collect your data.',
@@ -218,10 +225,10 @@ class AboutScreen extends StatelessWidget {
 
                   // 8. Version and Feedback — version row is interactive
                   // (copyable) and the feedback link reuses the contact form.
-                  _VersionSection(),
+                  const _VersionSection(),
 
                   // 9. Credits
-                  _CreditsSection(),
+                  const _CreditsSection(),
                 ],
               ),
             );
@@ -286,6 +293,53 @@ String _aboutPlainText() {
     ..writeln('Built by the team at WLAN Pros.')
     ..writeln('This app uses open-source software. See the in-app licenses.');
   return b.toString();
+}
+
+/// Appearance section — wraps the §8.20.5 [AppearanceControl] in the same
+/// titled surface1 card register as the other About sections. Reads
+/// `context.colors` so the card itself switches with the theme it controls.
+class _AppearanceSection extends StatelessWidget {
+  const _AppearanceSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: colors.surface1,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(
+            color: colors.border,
+            width: colors.isLight ? 1.5 : 1, // §8.20.3-B card border
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Semantics(
+              header: true,
+              child: Text(
+                'Appearance',
+                style: text.headlineSmall?.copyWith(
+                  color: colors.textPrimary,
+                  // §8.20.3-A section heading bumps to 700 in light.
+                  fontWeight:
+                      colors.isLight ? FontWeight.w700 : FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            const AppearanceControl(),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 /// A titled About section rendered as a surface1 card, with optional trailing
