@@ -334,10 +334,10 @@ flutter:
     # connector id: assets/connector-diagrams/<connector-id>.svg (e.g. rp-sma,
     # dart, ufl). Resolved by lib/data/connector_diagrams.dart against the asset
     # manifest, so a missing file never throws and never shows a broken box — the
-    # data screen ships fully working without them. UNCOMMENT this directory once
-    # Charta's diagrams are dropped in (the dir must contain at least one asset
-    # for Flutter to accept the entry):
-    # - assets/connector-diagrams/
+    # data screen ships fully working without them. Charta's approved diagrams
+    # are now bundled (rp-sma, rp-tnc, n-type, ufl, qma); the directory entry
+    # pulls every <connector-id>.svg in the folder:
+    - assets/connector-diagrams/
     # Per-tool Tier-2 custom icons (GL-003 §8.6 / §8.6.1) and in-tool concept
     # graphics (GL-003 §8.6.2). Convention-based lookup by catalog id:
     #   icon    = assets/tool-icons/<tool-id>.svg

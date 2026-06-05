@@ -120,18 +120,27 @@ class ConceptGraphicBand extends StatelessWidget {
   // The swap map is theme-independent (light targets only), so build it once.
   static final Map<String, String> _lightSwap = _buildLightSwap();
 
-  /// Test-only: applies the §8.20.7 allow-list swap to an SVG source string,
-  /// exactly as the light render path does. Lets a unit test assert the swap
-  /// recolors scaffold/lime/status and PRESERVES the §1d canonical data colors
-  /// and the #1A1A1A anchor dot, without needing a real asset bundle.
-  @visibleForTesting
-  static String debugApplyLightSwap(String raw) {
+  /// Applies the §8.20.7 allow-list light-mode swap to an SVG source string,
+  /// exactly as the light render path does. The single source of truth for the
+  /// §8.20.7 recolor: the concept-graphic band uses it for the §8.6.2 tool
+  /// graphics, and the Antenna Connectors per-connector diagram slot reuses it
+  /// for its dark-baked diagrams (same scaffold/lime hexes, same light targets),
+  /// so the two cannot drift. Recolors scaffold/lime/status and PRESERVES the
+  /// §1d canonical data colors and the #1A1A1A anchor dot (they are not in the
+  /// allow-list and pass through unchanged).
+  static String applyLightSwap(String raw) {
     String swapped = raw;
     _lightSwap.forEach((String darkHex, String lightHex) {
       swapped = swapped.replaceAll(darkHex, lightHex);
     });
     return swapped;
   }
+
+  /// Test alias for [applyLightSwap]. Retained so existing tests that asserted
+  /// the swap via the old name keep compiling; new call sites use the public
+  /// [applyLightSwap].
+  @visibleForTesting
+  static String debugApplyLightSwap(String raw) => applyLightSwap(raw);
 
   // Per-toolId cache of the already-swapped light SVG source, so the string
   // replace runs once per tool, not on every rebuild.
@@ -146,7 +155,7 @@ class ConceptGraphicBand extends StatelessWidget {
     // Replace on the literal token only. The hex KEYS in the SVGs are uppercase
     // 6-digit; the wash uses the exact authored rgba() string. §1d canonical
     // data hexes and #1A1A1A are not in the map → pass through.
-    final String swapped = debugApplyLightSwap(raw);
+    final String swapped = applyLightSwap(raw);
     _lightSvgCache[toolId] = swapped;
     return swapped;
   }

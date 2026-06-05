@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 220" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- RP-TNC vs TNC: same center-contact gender-reversal story as RP-SMA, larger threaded body.
+       Both shown MALE. Standard TNC male = center PIN. RP-TNC male = center SOCKET.
+       Lime marks the center contact (the identifying feature). -->
+
+  <!-- ================= LEFT: standard TNC male ================= -->
+  <text x="100" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">TNC male</text>
+
+  <!-- larger hex coupling nut + threaded barrel (bigger body than SMA) -->
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M52 72 L66 52 L110 52 L124 72 L110 92 L66 92 Z"/>
+    <path d="M124 56 L158 56 L158 88 L124 88"/>
+  </g>
+  <!-- coupling thread ticks -->
+  <g stroke="#9C9C9C" stroke-width="1.1" stroke-linecap="round">
+    <line x1="130" y1="58" x2="130" y2="86"/>
+    <line x1="138" y1="58" x2="138" y2="86"/>
+    <line x1="146" y1="58" x2="146" y2="86"/>
+    <line x1="154" y1="58" x2="154" y2="86"/>
+  </g>
+
+  <!-- center contact = PIN (lime) -->
+  <line x1="88" y1="72" x2="88" y2="124" stroke="#A2CC3A" stroke-width="3.5" stroke-linecap="round"/>
+  <text x="88" y="144" fill="#A2CC3A" font-size="13" font-weight="600" text-anchor="middle">center PIN</text>
+
+  <!-- ================= RIGHT: RP-TNC male ================= -->
+  <text x="300" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">RP-TNC male</text>
+
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M252 72 L266 52 L310 52 L324 72 L310 92 L266 92 Z"/>
+    <path d="M324 56 L358 56 L358 88 L324 88"/>
+  </g>
+  <g stroke="#9C9C9C" stroke-width="1.1" stroke-linecap="round">
+    <line x1="330" y1="58" x2="330" y2="86"/>
+    <line x1="338" y1="58" x2="338" y2="86"/>
+    <line x1="346" y1="58" x2="346" y2="86"/>
+    <line x1="354" y1="58" x2="354" y2="86"/>
+  </g>
+
+  <!-- center contact = SOCKET / hole (lime ring) -->
+  <circle cx="288" cy="72" r="10" stroke="#A2CC3A" stroke-width="3" fill="none"/>
+  <circle cx="288" cy="72" r="2.5" fill="#A2CC3A"/>
+  <text x="288" y="144" fill="#A2CC3A" font-size="13" font-weight="600" text-anchor="middle">center SOCKET</text>
+
+  <!-- divider -->
+  <line x1="200" y1="44" x2="200" y2="154" stroke="#9C9C9C" stroke-width="1" stroke-dasharray="3 4"/>
+
+  <!-- rule strip -->
+  <text x="200" y="180" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">Same reverse-polarity rule as RP-SMA: the center contact's</text>
+  <text x="200" y="200" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle">gender is swapped while the threaded body stays the same.</text>
+  <text x="200" y="216" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle">Common on enterprise APs (Cisco, Aruba). Larger body than SMA.</text>
+</svg>

@@ -48,6 +48,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../data/connector_diagrams.dart';
 import '../../../services/connectors/antenna_connector_service.dart';
+import '../concept_graphic_band.dart' show ConceptGraphicBand;
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
@@ -587,6 +588,18 @@ class _RpChip extends StatelessWidget {
 /// the data screen ships fully working before Charta's diagrams land. Decorative
 /// for screen readers: every fact a diagram depicts is already in the card's
 /// text fields (GL-003 §8.6.2 a11y rule).
+///
+/// LIGHT/DARK (GL-003 §8.20.7): the diagrams are authored DARK-BAKED — they use
+/// the concept-graphic scaffold/lime hexes (#E5E5E5 / #9C9C9C / #A2CC3A), which
+/// read correctly on the #1A1A1A dark surface but FAIL contrast on a light
+/// surface if drawn raw (a lime stroke on white is ~1.65:1). So this widget
+/// reuses the SAME §8.20.7 recolor path the §8.6.2 concept graphics use, via the
+/// single-source-of-truth swap [ConceptGraphicBand.debugApplyLightSwap]:
+///   * DARK: render the unmodified asset (byte-for-byte, dark goldens unaffected).
+///   * LIGHT: load the SVG source, apply the §8.20.7 allow-list hex swap
+///     (#A2CC3A → #5A7A1C darkened lime, scaffold/muted neutrals → text-safe
+///     light values), then render via SvgPicture.string. The swapped string is
+///     cached per connector id so the replace runs once, not on every rebuild.
 class _ConnectorDiagram extends StatelessWidget {
   const _ConnectorDiagram({required this.connectorId});
 
@@ -594,7 +607,25 @@ class _ConnectorDiagram extends StatelessWidget {
   /// long card stays scannable. Scales to width, never crops.
   static const double _bandHeight = 200;
 
+  // Per-id cache of the already-swapped light SVG source, so the §8.20.7 string
+  // replace runs once per connector, not on every rebuild. Keyed on connector
+  // id (each diagram is its own asset, unlike the per-tool concept-graphic
+  // cache).
+  static final Map<String, String> _lightSvgCache = <String, String>{};
+
   final String connectorId;
+
+  /// Loads the diagram SVG source and applies the §8.20.7 allow-list light swap,
+  /// caching per connector id. Returns the recolored source string.
+  Future<String> _loadSwappedSvg() async {
+    final String cached = _lightSvgCache[connectorId] ?? '';
+    if (cached.isNotEmpty) return cached;
+    final String raw =
+        await rootBundle.loadString(ConnectorDiagrams.path(connectorId));
+    final String swapped = ConceptGraphicBand.applyLightSwap(raw);
+    _lightSvgCache[connectorId] = swapped;
+    return swapped;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -602,6 +633,25 @@ class _ConnectorDiagram extends StatelessWidget {
       return const SizedBox.shrink();
     }
     final AppColorScheme colors = context.colors;
+
+    // DARK: unmodified asset (dark render unchanged). LIGHT: load + §8.20.7 swap
+    // + render via string so no raw lime stroke ever hits a light surface.
+    final Widget svg = colors.isLight
+        ? _LightConnectorSvg(
+            future: _loadSwappedSvg(),
+            bandHeight: _bandHeight,
+          )
+        : SvgPicture.asset(
+            ConnectorDiagrams.path(connectorId),
+            fit: BoxFit.contain,
+            width: double.infinity,
+            height: _bandHeight,
+            excludeFromSemantics: true,
+            // A bundled-but-unparseable SVG collapses to nothing rather than
+            // surfacing a broken-image box.
+            placeholderBuilder: (_) => const SizedBox.shrink(),
+          );
+
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.xs),
       child: ExcludeSemantics(
@@ -615,21 +665,44 @@ class _ConnectorDiagram extends StatelessWidget {
           child: SizedBox(
             height: _bandHeight,
             width: double.infinity,
-            child: Center(
-              child: SvgPicture.asset(
-                ConnectorDiagrams.path(connectorId),
-                fit: BoxFit.contain,
-                width: double.infinity,
-                height: _bandHeight,
-                excludeFromSemantics: true,
-                // A bundled-but-unparseable SVG collapses to nothing rather than
-                // surfacing a broken-image box.
-                placeholderBuilder: (_) => const SizedBox.shrink(),
-              ),
-            ),
+            child: Center(child: svg),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Light-mode connector-diagram render: awaits the §8.20.7-swapped SVG source,
+/// then draws it with `SvgPicture.string`. Collapses to nothing while loading or
+/// on any parse failure — same graceful-degradation contract as the dark asset
+/// path, so no broken-image box or layout jump ever appears. Mirrors
+/// `_LightConceptSvg` in concept_graphic_band.dart.
+class _LightConnectorSvg extends StatelessWidget {
+  const _LightConnectorSvg({required this.future, required this.bandHeight});
+
+  final Future<String> future;
+  final double bandHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String>(
+      future: future,
+      builder: (BuildContext context, AsyncSnapshot<String> snap) {
+        final String? data = snap.data;
+        if (data == null || data.isEmpty) {
+          // Loading or failed — render nothing (no broken box, no jump).
+          return const SizedBox.shrink();
+        }
+        return SvgPicture.string(
+          data,
+          fit: BoxFit.contain,
+          width: double.infinity,
+          height: bandHeight,
+          excludeFromSemantics: true,
+          placeholderBuilder: (_) => const SizedBox.shrink(),
+        );
+      },
     );
   }
 }
