@@ -116,7 +116,7 @@ void main() {
       for (final ToolCategory cat in kToolCategories) {
         final int liveCount = cat.tools.where((ToolEntry t) => t.isLive).length;
         // The tile badge shows countLabelOverride when set (e.g. Educational
-        // Resources pins '42' = 10 cards + 32 online resources), else the live
+        // Resources pins '49' = 10 cards + 39 online resources), else the live
         // tool count.
         final String badge = cat.countLabelOverride ?? '$liveCount';
         expect(

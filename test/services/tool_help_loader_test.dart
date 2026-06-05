@@ -4,7 +4,7 @@
 // - The pure parser (ToolHelpStore.fromJson): a well-formed fixture, malformed
 //   entries dropped, garbage document → empty-but-valid, null algorithm/example
 //   preserved as null, field notes preserved verbatim (GL-005).
-// - The REAL bundled asset (assets/help/tool_help.json): parses to exactly 90
+// - The REAL bundled asset (assets/help/tool_help.json): parses to exactly 97
 //   entries, and every key matches a catalog tool id (the lookup contract),
 //   except for a small allowlist of known non-catalog help ids.
 // - helpForId() reads the cached store and returns null for an unknown id.
@@ -121,10 +121,11 @@ void main() {
       store = ToolHelpStore.fromJson(raw);
     });
 
-    test('parses to exactly 95 entries', () {
-      // 95 = 93 (origin/main: 90 + 3 batch4 help entries) + 1 Antenna Connectors
-      // + 1 Optical Transceivers (both merged 2026-06-05).
-      expect(store.count, 95);
+    test('parses to exactly 97 entries', () {
+      // 97 = 95 (origin/main: 93 + Antenna Connectors + Optical Transceivers)
+      // + 2 backfilled v1.1 help entries: PLMN ID Reference and the Wi-Fi
+      // Authentication Glossary (both shipped without help; added 2026-06-05).
+      expect(store.count, 97);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help
