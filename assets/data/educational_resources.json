@@ -2,8 +2,8 @@
   "_meta": {
     "title": "Educational Resources",
     "note": "Educational Resources for the WLAN Pros Toolbox: independent-author and community materials only. Per Keith (2026-06-04) the megavendor/product documentation entries (Apple, Cisco, Aruba/HPE, and the Hamina product docs) are EXCLUDED; the dataset keeps community tools/utilities, independent blogs and experts, podcasts, conference and talk archives, YouTube channels, and training/certification paths. Independent-author entries are included now with permission chased afterward (approval='pending_outreach'); any owner who declines gets removed. Descriptions are Keith's voice (GL-004, SOP-020 PASS). The full vendor-doc set is retained in the source dataset and git history if ever wanted back. Also still held: Wi-Fi For Beginners (site not confirmed live) and frames.bitbucketlabs.com (pending Keith's 1-line description). Curated 2026-06-04. Batch 2026-06-04: appended 5 independent-author entries (SubnetPro, WiFi Analyser, ShankarWiFi, PotatoFi Interactive Spectrum Chart, BadgerWiFi Tools), all approval='pending_outreach'. frames.bitbucketlabs held until ~2026-06-25.",
-    "last_updated": "2026-06-04",
-    "count": 36,
+    "last_updated": "2026-06-05",
+    "count": 39,
     "topics": [
       "Tools and utilities",
       "Conference and talk archives",
@@ -511,8 +511,8 @@
     {
       "id": "dest-cwnp-certification",
       "title": "CWNP Certifications and Training",
-      "summary": "The vendor-neutral enterprise Wi-Fi certification body, CWNA through CWNE, plus a free blog, webinars, and forums.",
-      "description": "CWNP is the vendor-neutral enterprise Wi-Fi certification program, going back to 1999. The track runs from CWNA at the foundation up through CWSP, CWDP, CWAP, and CWNE at the top, with additional IoT and administrator paths. If you are serious about Wi-Fi as a career, this is the credential ladder that matters, because it tests how Wi-Fi actually works rather than how one vendor's box is configured.\n\nCWNP sells the exams, training, and study products, and a good amount is free: the blog, webinars, podcasts, whitepapers, and community forums. Start free, learn the body of knowledge, and sit the exam when you are ready. Useful at every level.",
+      "summary": "The vendor-neutral enterprise Wi-Fi certification ladder, CWNA up through CWNE, plus a free blog, webinars, quizzes, and forums.",
+      "description": "CWNP is the vendor-neutral enterprise Wi-Fi certification program, running since 1999. It tests how Wi-Fi actually works, not how one vendor's box is configured, which is exactly why it matters if you are serious about Wi-Fi as a career.\n\nThe ladder is simple to read. Two optional on-ramps, CWSS for the sales side and CWTS for the technology side, give you a gentle start if you want one, but neither is required. The foundation is CWNA, the base enterprise Wi-Fi cert and the gate to everything above it. From there you specialize in any order, each on top of a current CWNA: CWSP for security, CWAP for analysis and troubleshooting, CWDP for design. The capstone is CWNE, earned by portfolio and peer review rather than a single exam. If your work runs past Wi-Fi into IoT, there is a parallel track, CWISA at the foundation up to the CWISE expert, and CWISA also feeds the CWNE requirements. CWNT is the instructor credential. Standard certs are valid 3 years; renew by re-exam, by climbing the ladder, or, for the expert tier, by continuing-education credits.\n\nCWNP sells the exams, training, and study products, and a good amount is free: the blog, webinars, podcasts, whitepapers, community forums, and the daily Word and Question of the Day. Start with the free material, learn the body of knowledge, and sit the exam when you are ready. Exam codes, prices, and the full CWNE requirements change over time, so check the CWNP pages for the current detail. Useful at every level.",
       "url": "https://www.cwnp.com/",
       "topic": "Training and certification",
       "cost": "mixed",
@@ -645,6 +645,60 @@
         "automation"
       ],
       "approval": "pending_outreach"
+    },
+    {
+      "id": "dest-framebyframe",
+      "title": "Frame by Frame",
+      "summary": "Jim Vajda's frame-level Wi-Fi blog, deep but readable analysis of how modern 802.11 actually behaves.",
+      "description": "Frame by Frame, by Jim Vajda (CWNE #183), is an independent Wi-Fi blog that works at the frame level. Vajda takes the parts of modern Wi-Fi that get hand-waved in vendor decks, channel access, OFDMA, MLO, 6 GHz behavior, and roaming, and walks through what the frames are actually doing. It is active and current: his WLPC 2026 write-up on Wi-Fi 7 channel access landed in February 2026, a follow-up to the channel-access talk he gave on stage. This is the deep-but-readable analysis the audience values, from a named expert who presents at WLPC. Free, independent. Best for engineers who already have the fundamentals and want to understand the mechanism rather than memorize the marketing.",
+      "url": "https://framebyframewifi.net/",
+      "topic": "Independent blogs and experts",
+      "cost": "free",
+      "level": "intermediate",
+      "tags": [
+        "destination",
+        "blog",
+        "independent",
+        "analysis",
+        "certification"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "dest-divergent-dynamics",
+      "title": "Divergent Dynamics",
+      "summary": "Devin Akin's vendor-neutral Wi-Fi blog and free library, from a 25-year WLAN veteran who co-founded CWNP.",
+      "description": "Divergent Dynamics is the blog and free library of Devin Akin, a 25-year WLAN veteran and a co-founder of CWNP. The free material is the part to read: vendor-neutral write-ups built around his Define, Design, Deploy, Diagnose method, the kind of structured thinking that turns a pile of survey data into an actual design. Akin writes the way you want a teacher to write, active words, no equivocation, and he has the deployment history to back the verdicts. Divergent Dynamics also sells training and consulting; this entry points at the free blog and library, not the paid courses. Free to read, independent. Useful across levels, and especially good for engineers learning how to make design decisions rather than just collect numbers.",
+      "url": "https://divdyn.com/blog/",
+      "topic": "Independent blogs and experts",
+      "cost": "free",
+      "level": "all",
+      "tags": [
+        "destination",
+        "blog",
+        "independent",
+        "design",
+        "vendor-neutral"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "dest-wireshark-wifi-wiki",
+      "title": "Wireshark 802.11 / Wi-Fi Wiki",
+      "summary": "The canonical free reference for capturing and decoding 802.11 in Wireshark, monitor mode, decryption, and filters.",
+      "description": "The Wireshark Wi-Fi wiki is the canonical free reference for capturing and analyzing 802.11 in Wireshark. It covers the things that trip everyone up the first time: why your capture shows fake Ethernet instead of real radio frames, how to get monitor mode working on each operating system, how to decrypt WEP, WPA, and WPA2 traffic, and which display and capture filters actually pull the frames you want. Packet analysis sits at the heart of the CWAP track, and this is the authoritative, vendor-neutral how-to that the analysis tools assume you already know. The companion capture-setup page is the one to bookmark when monitor mode fights you (wiki.wireshark.org/CaptureSetup/WLAN). It is an open community wiki under the Wireshark project, free, no login. Best for engineers doing real capture work who want the primary source rather than a secondhand summary.",
+      "url": "https://wiki.wireshark.org/Wi-Fi",
+      "topic": "Tools and utilities",
+      "cost": "free",
+      "level": "intermediate",
+      "tags": [
+        "reference",
+        "capture",
+        "pcap",
+        "analysis",
+        "open-source"
+      ],
+      "approval": "not_required"
     }
   ]
 }

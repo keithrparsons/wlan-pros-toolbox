@@ -1281,6 +1281,49 @@
       ],
       "source": "Keith Parsons draft, verified and augmented by Pax (2026-06-05)."
     },
+    "plmn-id-reference": {
+      "name": "PLMN ID Reference",
+      "category": "Quick Reference",
+      "purpose": "An offline, searchable, grouped lookup of US Public Land Mobile Network identifiers. Each row pairs a carrier or operator with its MCC, MNC, full PLMN ID, and operational status, covering MCCs 310-316 (US mainland plus Puerto Rico, Guam, the US Virgin Islands, and American Samoa).",
+      "whyHere": "When you have a PLMN ID, MCC, or MNC off a cellular scan, a SIM, or a private-LTE / CBRS deployment and need to know which carrier it belongs to, or you need a carrier's code to configure or verify a private cellular network. It works fully offline, so it is reliable in the field where there is no data connection.",
+      "howToUse": [
+        "Browse the entries grouped by MCC (310 through 316), each group sorted ascending by PLMN ID.",
+        "Type in the search box to filter live by code (MCC, MNC, or full PLMN ID) or by carrier / operator name.",
+        "Each row shows the PLMN ID, the MCC/MNC pair, the carrier (and parent operator when different), and the operational status.",
+        "Use the copy action to grab the current view (the filtered subset when searching, otherwise the full table) as plain text."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "MNC and PLMN ID are strings with significant leading zeros (e.g. MNC 004, PLMN ID 310004). A two-digit and a three-digit MNC are different codes; never read them as numbers.",
+        "Status values include operational, not operational, reserved, and unknown. A reserved or not-operational allocation may still appear on the air or in old records, so the status column matters.",
+        "US-only by design. The dataset covers ITU region 3xx (MCCs 310-316); it does not include non-US carriers.",
+        "Data source: US MCC/MNC (PLMN ID) allocations verified against the live Wikipedia 'Mobile country code' tables (2026-06-05). The bundled JSON is the source of truth and can be edited to add or correct entries."
+      ],
+      "source": "lib/screens/tools/reference/plmn_reference_screen.dart"
+    },
+    "wifi-auth-glossary": {
+      "name": "Wi-Fi Authentication Glossary",
+      "category": "Quick Reference",
+      "purpose": "Plain-language definitions of the Wi-Fi authentication terms, 58 of them, that a network or security pro actually meets: the 802.1X / EAP framework, RADIUS and AAA, WPA2 / WPA3 and SAE, PSK and Enterprise modes, certificates, and the supporting acronyms. Each entry pairs the full term and its abbreviation with a definition written for working engineers, grouped by topic.",
+      "whyHere": "When a term in a config screen, a log, or a standards document is the thing standing between you and understanding the authentication flow. It answers what AAA, SAE, PMF, or EAP-TLS actually mean in Wi-Fi terms, without a vendor's slant.",
+      "howToUse": [
+        "Browse the terms grouped by category (Core Authentication, EAP methods, key management, and the rest).",
+        "Type in the search box to filter live across the term name, abbreviation, and definition.",
+        "Each entry shows the full term, its abbreviation when it has one, and a definition in Keith's voice.",
+        "Use the copy action to grab the current view (the filtered subset when searching, otherwise the full list) as plain text."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Vendor-neutral by design. Definitions describe the standards-based behavior, not one vendor's implementation.",
+        "This is the authentication-focused sibling of the general Wi-Fi Glossary; it reuses the same data-driven, searchable, grouped screen with a different bundled dataset.",
+        "Data source: the curated Wi-Fi Authentication Glossary edition (Deliverables/2026-06-05-wifi-auth-glossary), 58 terms. The bundled JSON is the source of truth."
+      ],
+      "source": "lib/screens/tools/reference/wifi_glossary_screen.dart (assetPath: assets/data/wifi_auth_glossary.json)"
+    },
     "osi-model": {
       "name": "OSI Model",
       "category": "Quick Reference",
