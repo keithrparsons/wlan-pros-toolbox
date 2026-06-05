@@ -600,11 +600,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                     minHeight: 6,
                     backgroundColor:
                         colors.isLight ? colors.surface0 : colors.surface2,
-                    // Progress fill: lime in dark; darkened-lime in light so a
-                    // 6px bar reads on the white surface (§8.20.2).
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      colors.isLight ? colors.textAccent : colors.primary,
-                    ),
+                    // Progress fill: a 6px bar is a vivid AREA, so it carries
+                    // full brand lime in both themes (§8.20.3-B/C).
+                    valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
                   );
                 },
               ),
@@ -1016,7 +1014,8 @@ class _AxisRow extends StatelessWidget {
 /// status glyph (white-on-fill 5.4–5.9:1). DARK keeps the §8.13 outline chip
 /// (surface2 fill + thin colored border + colored label/glyph). The "couldn't
 /// check" neutral state has no status hue, so light fills it with the neutral
-/// textTertiary #646464 (white-on-fill ~4.7:1) for the same solid + white look.
+/// textSecondary #4A4A4A (white-on-fill 8.86:1) for the same solid + white
+/// look, matching the _GradeChip no-hue fills.
 class _StatusChip extends StatelessWidget {
   const _StatusChip({required this.status});
 
@@ -1031,7 +1030,10 @@ class _StatusChip extends StatelessWidget {
       case AxisStatus.slow:
         return colors.statusWarning;
       case AxisStatus.unknown:
-        return colors.textTertiary;
+        // Light: neutral textSecondary #4A4A4A fill, matching the _GradeChip
+        // no-hue fills across TMC / wifi_info / net_quality. Dark stays on
+        // textTertiary so the dark render is byte-identical.
+        return colors.isLight ? colors.textSecondary : colors.textTertiary;
     }
   }
 
