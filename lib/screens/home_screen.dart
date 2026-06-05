@@ -27,6 +27,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../data/tool_catalog.dart';
 import '../router/app_router.dart';
+import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 import '../widgets/centered_content.dart';
 import 'category_screen.dart';
@@ -260,18 +261,26 @@ class _HomeSearchFieldState extends State<_HomeSearchField> {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
 
-    // §8.4 input look: input-fill, border-strong idle, lime 2px on focus, 48dp.
+    // §8.4 / §8.20.3-B input look: input-fill, border-strong idle (1.5px light),
+    // focus ring on focus (2.5px darkened-lime light / 2px lime dark), 48dp.
     final Border border = _focused
-        ? Border.all(color: AppColors.primary, width: 2)
-        : Border.all(color: AppColors.borderStrong, width: 1);
+        ? Border.all(
+            color: colors.isLight ? colors.textAccent : colors.primary,
+            width: colors.isLight ? 2.5 : 2,
+          )
+        : Border.all(
+            color: colors.borderStrong,
+            width: colors.isLight ? 1.5 : 1,
+          );
 
     return Semantics(
       button: true,
       label: 'Search all tools',
       excludeSemantics: true,
       child: Material(
-        color: AppColors.inputFill,
+        color: colors.inputFill,
         borderRadius: BorderRadius.circular(AppRadius.control),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -288,12 +297,12 @@ class _HomeSearchFieldState extends State<_HomeSearchField> {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
             child: Row(
               children: <Widget>[
-                const Icon(Icons.search, color: AppColors.textTertiary),
+                Icon(Icons.search, color: colors.textTertiary),
                 const SizedBox(width: AppSpacing.sm),
                 Text(
                   'Search all tools…',
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
               ],
@@ -325,12 +334,29 @@ class _ConnectionHeroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
 
-    return Container(
+    // §8.20.2 elevation: the hero sits on the gray canvas, so in light it gets a
+    // resting drop shadow (white card elevated by shadow). Dark stays flat.
+    final List<BoxShadow>? shadow = colors.isLight
+        ? const <BoxShadow>[
+            BoxShadow(
+              color: Color(0x14000000), // rgba(0,0,0,0.08)
+              offset: Offset(0, 2),
+              blurRadius: 8,
+            ),
+          ]
+        : null;
+
+    final Widget card = Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
+        border: Border.all(
+          color: colors.borderStrong,
+          width: colors.isLight ? 1.5 : 1,
+        ),
+        boxShadow: shadow,
       ),
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
@@ -340,16 +366,18 @@ class _ConnectionHeroCard extends StatelessWidget {
           // above the category-tile titles (headlineSmall / h3 = 22) so the
           // front-door hero reads as primary without the former display-scale
           // headlineLarge (h1 = 36) dominating the iOS viewport. Keeps the
-          // hero's bold w700 so it stays distinct from the w600 tile titles.
+          // hero's bold w700 (already at the §8.20.3-A ceiling for H1/hero).
           Text(
             'Is it your Wi-Fi or your Internet?',
             style: text.headlineMedium?.copyWith(
-              color: AppColors.textPrimary,
+              color: colors.textPrimary,
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-          // Full-width §8.3 primary CTA: lime fill, charcoal text + icon.
+          // Full-width §8.3 primary CTA: lime FILL, dark text + icon (lime as a
+          // fill is sanctioned on light, §8.20.2). Label bumps to 700 in light
+          // via the filledButtonTheme.
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
@@ -357,14 +385,33 @@ class _ConnectionHeroCard extends StatelessWidget {
               icon: const Icon(Icons.network_check),
               label: const Text('Check My Connection'),
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.secondary,
+                backgroundColor: colors.primary,
+                foregroundColor: colors.onPrimary,
                 minimumSize: const Size.fromHeight(AppSpacing.minTouchTarget),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.control),
                 ),
               ),
             ),
+          ),
+        ],
+      ),
+    );
+
+    // §8.20.3-C #3 — the hero gets a darkened-lime #5A7A1C left-accent bar in
+    // light (the hero card sits on the gray canvas, so it uses textAccent at
+    // 4.6:1, NOT brand lime which is only 1.7:1 on canvas). No bar in dark.
+    if (!colors.isLight) return card;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadius.card),
+      child: Stack(
+        children: <Widget>[
+          card,
+          Positioned(
+            top: 0,
+            bottom: 0,
+            left: 0,
+            child: Container(width: 4, color: colors.textAccent),
           ),
         ],
       ),
@@ -386,8 +433,11 @@ class _CategoryIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color color =
-        isPlaceholder ? AppColors.textTertiary : AppColors.primary;
+    final AppColorScheme colors = context.colors;
+    // §8.20.3-C #4 — live tile icons carry color: brand lime in dark, the
+    // darkened-lime foreground substitute #5A7A1C in light (4.8:1 on white;
+    // brand lime fails as a thin foreground). Placeholders stay tertiary gray.
+    final Color color = isPlaceholder ? colors.textTertiary : colors.textAccent;
     final String? asset = category.iconAsset;
     if (asset != null) {
       return SvgPicture.asset(
@@ -432,12 +482,33 @@ class _CategoryTileState extends State<_CategoryTile> {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
     final ToolCategory cat = widget.category;
     final bool isPlaceholder = !cat.hasLiveTool;
 
+    // §8.20.3-B — focus/selection ring: 3px darkened-lime in light (4.8:1, needs
+    // the extra px over dark's 2px lime at 9.3:1); 1.5px borderStrong idle in
+    // light. Dark keeps 2px lime focus / 1px borderStrong idle.
     final Border tileBorder = _focused
-        ? Border.all(color: AppColors.primary, width: 2)
-        : Border.all(color: AppColors.borderStrong, width: 1);
+        ? Border.all(
+            color: colors.isLight ? colors.textAccent : colors.primary,
+            width: colors.isLight ? 3 : 2,
+          )
+        : Border.all(
+            color: colors.borderStrong,
+            width: colors.isLight ? 1.5 : 1,
+          );
+
+    // §8.20.2 — resting tile shadow in light (white card on gray canvas).
+    final List<BoxShadow>? shadow = (colors.isLight && !_focused)
+        ? const <BoxShadow>[
+            BoxShadow(
+              color: Color(0x14000000), // rgba(0,0,0,0.08)
+              offset: Offset(0, 2),
+              blurRadius: 8,
+            ),
+          ]
+        : null;
 
     return Semantics(
       container: true,
@@ -448,56 +519,67 @@ class _CategoryTileState extends State<_CategoryTile> {
           '${_examplesLine()}',
       button: true,
       child: Material(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
         clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: widget.onTap,
-          onFocusChange: (bool hasFocus) {
-            if (hasFocus != _focused) setState(() => _focused = hasFocus);
-          },
-          child: Container(
-            decoration: BoxDecoration(
-              border: tileBorder,
-              borderRadius: BorderRadius.circular(AppRadius.card),
-            ),
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    _CategoryIcon(category: cat, isPlaceholder: isPlaceholder),
-                    _badge(text, isPlaceholder),
-                  ],
-                ),
-                // Fixed gap (not a Spacer): keep the icon row, title, and
-                // examples grouped at the top so taller tiles don't open a dead
-                // band in the middle (Vera IA-redesign density gate). Tightened
-                // sm → xs (2026-06-03) for the denser iOS tile footprint.
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  cat.title,
-                  style: text.headlineSmall?.copyWith(
-                    color: isPlaceholder
-                        ? AppColors.textSecondary
-                        : AppColors.textPrimary,
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            boxShadow: shadow,
+          ),
+          child: InkWell(
+            onTap: widget.onTap,
+            onFocusChange: (bool hasFocus) {
+              if (hasFocus != _focused) setState(() => _focused = hasFocus);
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                border: tileBorder,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+              ),
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      _CategoryIcon(
+                        category: cat,
+                        isPlaceholder: isPlaceholder,
+                      ),
+                      _badge(text, colors, isPlaceholder),
+                    ],
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  _examplesLine(),
-                  style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                  // Fixed gap (not a Spacer): keep the icon row, title, and
+                  // examples grouped at the top so taller tiles don't open a
+                  // dead band in the middle (Vera IA-redesign density gate).
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    cat.title,
+                    style: text.headlineSmall?.copyWith(
+                      color: isPlaceholder
+                          ? colors.textSecondary
+                          : colors.textPrimary,
+                      // §8.20.3-A home grid category labels bump 600 → 700.
+                      fontWeight:
+                          colors.isLight ? FontWeight.w700 : FontWeight.w600,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    _examplesLine(),
+                    style: text.labelMedium?.copyWith(
+                      color: colors.textTertiary,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -508,23 +590,27 @@ class _CategoryTileState extends State<_CategoryTile> {
   /// Top-right tile badge. Priority: placeholder "SOON" → NEW pill (if isNew) →
   /// count override → exact live count. Per Keith (2026-06-03) isNew is false on
   /// everything in this build, so the NEW pill never renders today.
-  Widget _badge(TextTheme text, bool isPlaceholder) {
+  Widget _badge(TextTheme text, AppColorScheme colors, bool isPlaceholder) {
     if (isPlaceholder) {
+      // On light, surface2 is white (same as the tile), so the SOON pill needs
+      // a fill that reads as recessed against the white card — the gray canvas
+      // (surface0) does that and keeps a perceivable hairline border.
       return _pillBadge(
         text,
         'SOON',
-        fill: AppColors.surface2,
-        textColor: AppColors.textTertiary,
-        border: AppColors.border,
+        fill: colors.isLight ? colors.surface0 : colors.surface2,
+        textColor: colors.textTertiary,
+        border: colors.border,
       );
     }
     if (widget.category.isNew) {
-      // §8.3 primary-button pairing: charcoal on lime, AA-cleared.
+      // §8.3 primary-button pairing: dark text on lime FILL (sanctioned on
+      // light, §8.20.2), AA-cleared.
       return _pillBadge(
         text,
         'NEW',
-        fill: AppColors.primary,
-        textColor: AppColors.secondary,
+        fill: colors.primary,
+        textColor: colors.onPrimary,
       );
     }
     final String label =
@@ -533,8 +619,9 @@ class _CategoryTileState extends State<_CategoryTile> {
     return _pillBadge(
       text,
       label,
-      fill: AppColors.surface2,
-      textColor: AppColors.textTertiary,
+      fill: colors.isLight ? colors.surface0 : colors.surface2,
+      textColor: colors.textTertiary,
+      border: colors.isLight ? colors.border : null,
     );
   }
 
