@@ -262,6 +262,12 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'tcp', 'udp', 'iana', 'service port', 'port number', 'well known',
     'common ports',
   ],
+  'optical-transceivers': <String>[
+    'sfp', 'sfp+', 'qsfp', 'qsfp28', 'qsfp-dd', 'osfp', 'transceiver', 'optic',
+    'optics', 'fiber', 'fibre', 'singlemode', 'multimode', 'smf', 'mmf',
+    'wavelength', 'reach', 'sr', 'lr', 'er', 'zr', '10gbase', '100gbase',
+    '400gbase', 'mpo', 'lc connector', 'gbic', 'pluggable',
+  ],
   'reason-codes': <String>[
     'deauth', 'disassoc', 'status code', '802.11 codes', 'disconnect reason',
   ],

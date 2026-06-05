@@ -46,6 +46,7 @@ import '../screens/tools/reference/mcs_index_screen.dart';
 import '../screens/tools/reference/signal_thresholds_screen.dart';
 import '../screens/tools/reference/wpa_security_screen.dart';
 import '../screens/tools/reference/http_status_codes_screen.dart';
+import '../screens/tools/reference/optical_transceivers_screen.dart';
 import '../screens/tools/reference/reason_codes_screen.dart';
 import '../screens/tools/reference/frame_exchange_screen.dart';
 import '../screens/tools/reference/db_reference_screen.dart';
@@ -244,6 +245,13 @@ class AppRouter {
   // Quick Reference category — offline lookup tables (bundled assets, all
   // platforms incl. web).
   static const String portReference = '/tools/port-reference';
+
+  /// Optical Transceivers — offline reference of optical Ethernet variants
+  /// (1G–400G) grouped by speed tier, plus the SFP→OSFP form-factor ladder
+  /// (bundled JSON). The id `optical-transceivers` is permanent (route, catalog,
+  /// asset, help, tests).
+  static const String opticalTransceivers = '/tools/optical-transceivers';
+
   static const String osiModel = '/tools/osi-model';
   static const String topLevelDomains = '/tools/top-level-domains';
   static const String rjConnectors = '/tools/rj-connectors';
@@ -409,6 +417,7 @@ class AppRouter {
     ipv4Subnet: (_) => const SubnetCalcScreen(),
     networkDiscovery: (_) => const NetworkDiscoveryScreen(),
     portReference: (_) => const PortReferenceScreen(),
+    opticalTransceivers: (_) => const OpticalTransceiversScreen(),
     osiModel: (_) => const OsiModelScreen(),
     topLevelDomains: (_) => const TopLevelDomainsScreen(),
     rjConnectors: (_) => const RjConnectorsScreen(),

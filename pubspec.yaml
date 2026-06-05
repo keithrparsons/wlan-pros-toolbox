@@ -321,6 +321,13 @@ flutter:
     # screen opens, fully offline. Schema + attribution in the asset's _meta
     # block; the destinations credit is scoped per _meta.attribution_scope.
     - assets/data/educational_resources.json
+    # Optical Transceivers — 35 verified optical Ethernet variants (1G–400G)
+    # grouped by speed tier + the 9-row SFP→OSFP form-factor ladder, for the
+    # Optical Transceivers Quick Reference tool. Bundled JSON, loaded + parsed
+    # once at screen open, fully offline. Vendor (non-IEEE) rows carry vendor:true
+    # and a verbatim loss-budget caveat; lead tiers (10G/25G/100G) carry
+    # lead:true. Source/provenance in the asset's _meta block (Pax brief 2026-06-05).
+    - assets/data/optical_transceivers.json
     # Per-tool Tier-2 custom icons (GL-003 §8.6 / §8.6.1) and in-tool concept
     # graphics (GL-003 §8.6.2). Convention-based lookup by catalog id:
     #   icon    = assets/tool-icons/<tool-id>.svg
