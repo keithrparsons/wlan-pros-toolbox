@@ -47,12 +47,15 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../data/connector_diagrams.dart';
+import '../../../data/connector_photos.dart';
+import '../../../data/connector_sections.dart';
 import '../../../services/connectors/antenna_connector_service.dart';
 import '../concept_graphic_band.dart' show ConceptGraphicBand;
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'reference_row_semantics.dart';
 
@@ -146,6 +149,8 @@ class _AntennaConnectorsScreenState extends State<AntennaConnectorsScreen> {
           ..writeln('  Typical use: ${c.typicalWifiUse}')
           ..writeln('  Indoor/outdoor: ${c.indoorOutdoor}')
           ..writeln('  Coupling: ${c.coupling}')
+          ..writeln('  Size: ${c.size}')
+          ..writeln('  RF path: ${c.rfPath}')
           ..writeln('  Impedance: ${c.impedance}')
           ..writeln('  Frequency: ${c.frequency}')
           ..writeln('  Reverse-polarity: ${c.reversePolarity}')
@@ -280,8 +285,17 @@ class _AntennaConnectorsScreenState extends State<AntennaConnectorsScreen> {
                 // view — they are reference context, not search hits.
                 if (unfiltered && groups.isNotEmpty) ...<Widget>[
                   const SizedBox(height: AppSpacing.lg),
+                  // Polarity explained — the standard-vs-reverse-polarity
+                  // teaching diagram (the single most-confused connector fact).
+                  _PolaritySection(),
+                  const SizedBox(height: AppSpacing.lg),
+                  // At-a-glance comparison table: connector / size / RF path /
+                  // typical use. Scrolls horizontally on phone, never clipped.
+                  _ComparisonTableSection(connectors: svc.all),
+                  const SizedBox(height: AppSpacing.lg),
                   _VendorTrendsSection(trends: svc.vendorTrends, mono: mono),
                   const SizedBox(height: AppSpacing.lg),
+                  // Size order list + the to-scale size-comparison diagram.
                   _SizeOrderSection(
                     order: svc.sizeOrder,
                     note: svc.sizeOrderNote,
@@ -475,6 +489,8 @@ class _ConnectorCard extends StatelessWidget {
       'typical use ${connector.typicalWifiUse}',
       connector.indoorOutdoor,
       'coupling ${connector.coupling}',
+      if (connector.size.isNotEmpty) 'size ${connector.size}',
+      if (connector.rfPath.isNotEmpty) 'RF path ${connector.rfPath}',
       'impedance ${connector.impedance}',
       'frequency ${connector.frequency}',
       'mating ${connector.mating}',
@@ -523,6 +539,11 @@ class _ConnectorCard extends StatelessWidget {
                 style: text.labelMedium?.copyWith(color: colors.textTertiary),
               ),
             ],
+            // Optional real, freely-licensed connector PHOTO. Renders only for
+            // the connectors with a vetted CC0/PD photo; omitted (zero cost)
+            // for the rest — N-Type, TNC and RP-TNC keep their line diagram and
+            // get no photo (GL-005: only show a photo we actually have).
+            _ConnectorPhoto(connectorId: connector.id),
             // Optional per-connector line diagram. Renders only when bundled;
             // omitted (zero layout cost) otherwise.
             _ConnectorDiagram(connectorId: connector.id),
@@ -531,6 +552,8 @@ class _ConnectorCard extends StatelessWidget {
             _Field(label: 'Typical use', value: connector.typicalWifiUse),
             _Field(label: 'Indoor/out', value: connector.indoorOutdoor),
             _Field(label: 'Coupling', value: connector.coupling, mono: mono),
+            _Field(label: 'Size', value: connector.size, mono: mono),
+            _Field(label: 'RF path', value: connector.rfPath),
             _Field(label: 'Impedance', value: connector.impedance, mono: mono),
             _Field(label: 'Frequency', value: connector.frequency, mono: mono),
             _Field(label: 'Mating', value: connector.mating),
@@ -707,6 +730,89 @@ class _LightConnectorSvg extends StatelessWidget {
   }
 }
 
+/// The per-connector PHOTO slot. Renders a real, freely-licensed photo
+/// (`assets/connector-photos/<id>.jpg`) inside a card-styled band when one is
+/// bundled AND vetted (ConnectorPhotos.has), and collapses to nothing otherwise
+/// — so connectors with no CC0/PD photo (N-Type, TNC, RP-TNC) show no photo and
+/// no placeholder. A quiet courtesy-credit line sits beneath the photo.
+///
+/// A11y (GL-003 §8.13): unlike the decorative line diagrams, a photo is
+/// informative, so it carries real `Semantics(image: true, label: alt)` from the
+/// vetted metadata — never an unlabeled image node. The credit line is read as
+/// ordinary text after the image.
+///
+/// LIGHT/DARK: a photo is a fixed raster; it is not recolored. It renders the
+/// same bytes in both modes inside the theme-driven card surface (the card
+/// border/fill follow context.colors). The shipped photos are clean, light
+/// studio-style shots that read on both surfaces.
+class _ConnectorPhoto extends StatelessWidget {
+  const _ConnectorPhoto({required this.connectorId});
+
+  /// 180dp photo band — tall enough to recognize the connector, capped so a card
+  /// stays scannable. The image scales to fit (BoxFit.contain), never crops.
+  static const double _bandHeight = 180;
+
+  final String connectorId;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!ConnectorPhotos.has(connectorId)) {
+      return const SizedBox.shrink();
+    }
+    final ConnectorPhotoMeta? meta = ConnectorPhotos.meta(connectorId);
+    if (meta == null) return const SizedBox.shrink();
+
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.xs),
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.surface2,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(color: colors.border, width: 1),
+        ),
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            // The photo carries its own image semantics (alt text) — informative,
+            // not decorative.
+            Semantics(
+              image: true,
+              label: meta.alt,
+              child: SizedBox(
+                height: _bandHeight,
+                width: double.infinity,
+                child: Image.asset(
+                  ConnectorPhotos.path(connectorId),
+                  fit: BoxFit.contain,
+                  // A decode failure collapses to nothing rather than a broken
+                  // box — same graceful contract as the diagram slot.
+                  errorBuilder: (BuildContext _, Object _, StackTrace? _) =>
+                      const SizedBox.shrink(),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xxs),
+            // Quiet courtesy credit. The shipped set is CC0/PD/free-use so this
+            // is not legally required, but it is good practice and reads as
+            // ordinary caption text after the image.
+            Text(
+              'Photo: ${meta.credit}',
+              style: text.labelMedium?.copyWith(
+                color: colors.textTertiary,
+                fontSize: AppTextSize.caption,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// One labeled field row inside a connector card: a fixed-width caption and the
 /// value. The value uses Expanded so long text wraps instead of overflowing at
 /// narrow width. A `mono` value renders in the identifier mono token (coupling /
@@ -815,6 +921,8 @@ class _SizeOrderSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
+          // To-scale size-comparison diagram (Charta), recolored for light.
+          const _SectionDiagram(sectionKey: ConnectorSections.sizeComparison),
           for (int i = 0; i < order.length; i++)
             Padding(
               padding: const EdgeInsets.only(top: 2),
@@ -917,6 +1025,228 @@ class _Top6Section extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// Editorial section: "Polarity explained" — Charta's standard-vs-reverse-
+/// polarity teaching diagram, the single most-confused connector fact. The
+/// diagram is decorative for screen readers (every fact it shows is also in the
+/// caption + the RP chips + each card's mating field), so it carries the same
+/// caption text beneath for AT. Renders nothing if the diagram is not bundled.
+class _PolaritySection extends StatelessWidget {
+  const _PolaritySection();
+
+  @override
+  Widget build(BuildContext context) {
+    if (!ConnectorSections.has(ConnectorSections.polarityExplained)) {
+      return const SizedBox.shrink();
+    }
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return _SectionCard(
+      heading: 'Polarity explained',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const _SectionDiagram(
+            sectionKey: ConnectorSections.polarityExplained,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Reverse polarity (RP) swaps the gender of the center contact, not '
+            'the outer thread. An RP connector threads onto its standard '
+            'counterpart but the center contacts do not connect electrically.',
+            style: text.labelMedium?.copyWith(color: colors.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Editorial section: an at-a-glance comparison TABLE — connector / size / RF
+/// path / typical use, populated from the dataset (size + rf_path fields). It
+/// scrolls horizontally on phone via [HorizontalScrollTable] (always-visible
+/// scrollbar, Vera web-demo gate) so the columns are never clipped at narrow
+/// width. Each row's first cell carries the full row summary for screen readers
+/// and the rest are excluded, so AT reads one coherent node per connector
+/// (mirrors the MCS Index table's DataTable a11y treatment).
+class _ComparisonTableSection extends StatelessWidget {
+  const _ComparisonTableSection({required this.connectors});
+
+  final List<AntennaConnector> connectors;
+
+  @override
+  Widget build(BuildContext context) {
+    if (connectors.isEmpty) return const SizedBox.shrink();
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final TextStyle headStyle = (text.labelMedium ?? const TextStyle())
+        .copyWith(color: colors.textTertiary, letterSpacing: 0.4);
+
+    final DataTable table = DataTable(
+      headingRowHeight: 44,
+      dataRowMinHeight: 40,
+      dataRowMaxHeight: 56,
+      columnSpacing: AppSpacing.md,
+      horizontalMargin: 0,
+      dividerThickness: 1,
+      headingTextStyle: headStyle,
+      columns: const <DataColumn>[
+        DataColumn(label: Text('Connector')),
+        DataColumn(label: Text('Size')),
+        DataColumn(label: Text('RF path')),
+        DataColumn(label: Text('Typical use')),
+      ],
+      rows: connectors.map((AntennaConnector c) {
+        final String summary = rowLabel(c.connector, <String?>[
+          if (c.size.isNotEmpty) 'size ${c.size}',
+          if (c.rfPath.isNotEmpty) 'RF path ${c.rfPath}',
+          if (c.typicalWifiUse.isNotEmpty) 'typical use ${c.typicalWifiUse}',
+        ]);
+        return DataRow(
+          cells: <DataCell>[
+            DataCell(
+              Semantics(
+                label: summary,
+                container: true,
+                child: ExcludeSemantics(
+                  child: Text(
+                    c.connector,
+                    style: text.bodyMedium?.copyWith(
+                      color: colors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            DataCell(
+              ExcludeSemantics(
+                child: Text(
+                  c.size.isEmpty ? '—' : c.size,
+                  style: mono.inlineCode.copyWith(color: colors.textSecondary),
+                ),
+              ),
+            ),
+            DataCell(
+              ExcludeSemantics(
+                child: Text(
+                  c.rfPath.isEmpty ? '—' : c.rfPath,
+                  style: text.bodyMedium?.copyWith(color: colors.textSecondary),
+                ),
+              ),
+            ),
+            DataCell(
+              ExcludeSemantics(
+                child: ConstrainedBox(
+                  // Cap the free-text column so a long use line wraps to two
+                  // rows instead of pushing the table absurdly wide.
+                  constraints: const BoxConstraints(maxWidth: 320),
+                  child: Text(
+                    c.typicalWifiUse.isEmpty ? '—' : c.typicalWifiUse,
+                    style:
+                        text.bodyMedium?.copyWith(color: colors.textSecondary),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      }).toList(),
+    );
+
+    return _SectionCard(
+      heading: 'Compare at a glance',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'Size is the connector body width (across-flats for threaded parts, '
+            'outer diameter for board-level parts), an approximate recognition '
+            'aid. Scroll sideways to see every column.',
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          HorizontalScrollTable(child: table),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shared render for an editorial SECTION diagram (Charta's full-width teaching
+/// SVGs). Mirrors the per-connector diagram slot's light/dark treatment: DARK
+/// renders the unmodified asset; LIGHT loads the source and applies the §8.20.7
+/// allow-list swap (via the single-source-of-truth [ConceptGraphicBand.
+/// applyLightSwap]) so no raw lime stroke ever hits a light surface. Decorative
+/// for screen readers — every fact each diagram depicts is also in the section's
+/// caption text. Collapses to nothing while loading, on parse failure, or when
+/// the section's SVG is not bundled (no broken box, no layout jump).
+class _SectionDiagram extends StatelessWidget {
+  const _SectionDiagram({required this.sectionKey});
+
+  /// Section-diagram band — taller than a per-connector diagram because these
+  /// are denser two-row / multi-connector teaching figures. Scales to width,
+  /// never crops.
+  static const double _bandHeight = 240;
+
+  // Per-key cache of the already-swapped light SVG source.
+  static final Map<String, String> _lightSvgCache = <String, String>{};
+
+  final String sectionKey;
+
+  Future<String> _loadSwappedSvg() async {
+    final String cached = _lightSvgCache[sectionKey] ?? '';
+    if (cached.isNotEmpty) return cached;
+    final String raw =
+        await rootBundle.loadString(ConnectorSections.path(sectionKey));
+    final String swapped = ConceptGraphicBand.applyLightSwap(raw);
+    _lightSvgCache[sectionKey] = swapped;
+    return swapped;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!ConnectorSections.has(sectionKey)) {
+      return const SizedBox.shrink();
+    }
+    final AppColorScheme colors = context.colors;
+
+    final Widget svg = colors.isLight
+        ? _LightConnectorSvg(
+            future: _loadSwappedSvg(),
+            bandHeight: _bandHeight,
+          )
+        : SvgPicture.asset(
+            ConnectorSections.path(sectionKey),
+            fit: BoxFit.contain,
+            width: double.infinity,
+            height: _bandHeight,
+            excludeFromSemantics: true,
+            placeholderBuilder: (_) => const SizedBox.shrink(),
+          );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+      child: ExcludeSemantics(
+        child: Container(
+          decoration: BoxDecoration(
+            color: colors.surface2,
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            border: Border.all(color: colors.border, width: 1),
+          ),
+          padding: const EdgeInsets.all(AppSpacing.sm),
+          child: SizedBox(
+            height: _bandHeight,
+            width: double.infinity,
+            child: Center(child: svg),
+          ),
+        ),
       ),
     );
   }

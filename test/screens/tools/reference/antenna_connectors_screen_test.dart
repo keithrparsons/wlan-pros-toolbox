@@ -10,11 +10,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/data/connector_diagrams.dart';
+import 'package:wlan_pros_toolbox/data/connector_photos.dart';
+import 'package:wlan_pros_toolbox/data/connector_sections.dart';
 import 'package:wlan_pros_toolbox/router/app_router.dart';
 import 'package:wlan_pros_toolbox/screens/tools/concept_graphic_band.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/antenna_connectors_screen.dart';
 import 'package:wlan_pros_toolbox/services/connectors/antenna_connector_service.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+import 'package:wlan_pros_toolbox/widgets/horizontal_scroll_table.dart';
 
 const String _fixture = '''
 {
@@ -32,6 +35,8 @@ const String _fixture = '''
       "typical_wifi_use": "Consumer Wi-Fi routers and adapters",
       "indoor_outdoor": "Mostly indoor",
       "coupling": "Threaded",
+      "size": "~8 mm across flats",
+      "rf_path": "Single coax (1 RF path)",
       "impedance": "50 ohm",
       "frequency": "Up to 18 GHz",
       "mating": "Mates only with RP-SMA.",
@@ -58,6 +63,8 @@ const String _fixture = '''
       "typical_wifi_use": "Cisco external-antenna systems",
       "indoor_outdoor": "Both",
       "coupling": "Multi-port proprietary",
+      "size": "Multi-port body (no single coax barrel)",
+      "rf_path": "8 RF + 16 digital lines (DART-8)",
       "impedance": "50 ohm (RF lines)",
       "frequency": "Covers Wi-Fi bands",
       "mating": "Cisco proprietary.",
@@ -143,10 +150,17 @@ Widget _harness(AntennaConnectorService svc) => MaterialApp(
 
 void main() {
   setUp(() {
-    // Default: no diagrams bundled, so the diagram slot is omitted everywhere.
+    // Default: nothing bundled, so the diagram / photo / section-diagram slots
+    // are deterministically omitted everywhere unless a test opts a path in.
     ConnectorDiagrams.debugSetBundled(const <String>{});
+    ConnectorPhotos.debugSetBundled(const <String>{});
+    ConnectorSections.debugSetBundled(const <String>{});
   });
-  tearDown(ConnectorDiagrams.debugReset);
+  tearDown(() {
+    ConnectorDiagrams.debugReset();
+    ConnectorPhotos.debugReset();
+    ConnectorSections.debugReset();
+  });
 
   // The content scrolls in a ListView, which lazily builds. Pump a tall viewport
   // so off-screen cards + the editorial sections are built and findable by
@@ -193,7 +207,11 @@ void main() {
   testWidgets('DART is named without a spelled-out acronym', (tester) async {
     await pumpTall(tester, _svc());
 
-    expect(find.text('DART'), findsOneWidget);
+    // "DART" now appears on the connector card AND in the Compare-at-a-glance
+    // table's Connector column, so it is findsWidgets, not findsOneWidget.
+    expect(find.text('DART'), findsWidgets);
+    // The full descriptive name only appears on the card (verbatim, no acronym
+    // expansion).
     expect(
       find.text('Cisco Smart Antenna Connector (DART)'),
       findsOneWidget,
@@ -340,6 +358,96 @@ void main() {
       expect(tester.takeException(), isNull, reason: 'overflow at ${width}px');
     }
   });
+
+  testWidgets(
+    'the Compare-at-a-glance table renders with size + RF-path columns and a '
+    'row per connector',
+    (tester) async {
+      await pumpTall(tester, _svc());
+
+      // The new comparison-table section header + its four column headers.
+      expect(find.text('Compare at a glance'), findsOneWidget);
+      expect(find.text('Connector'), findsOneWidget);
+      expect(find.text('Size'), findsWidgets); // table head + card field label
+      expect(find.text('RF path'), findsWidgets);
+      expect(find.text('Typical use'), findsWidgets);
+
+      // Size + RF-path values from the fixture appear in the rendered table.
+      expect(find.text('~8 mm across flats'), findsWidgets); // rp-sma size
+      expect(find.textContaining('Single coax'), findsWidgets);
+      // DART's multi-path RF value is surfaced verbatim (no fabrication).
+      expect(find.textContaining('8 RF + 16 digital'), findsWidgets);
+    },
+  );
+
+  testWidgets(
+    'the comparison table scrolls horizontally (never clips columns on phone)',
+    (tester) async {
+      await pumpTall(tester, _svc());
+      // The shared horizontal-scroll wrapper is present, so wide columns scroll
+      // sideways rather than overflow/clip.
+      expect(find.byType(HorizontalScrollTable), findsOneWidget);
+      expect(find.byType(DataTable), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'a connector with a vetted CC0 photo renders the photo slot (with credit)',
+    (tester) async {
+      // rp-sma has a vetted photo; bundle it.
+      ConnectorPhotos.debugSetBundled(
+        <String>{'assets/connector-photos/rp-sma.jpg'},
+      );
+      await pumpTall(tester, _svc());
+
+      // Exactly one connector (rp-sma) shows a photo → one Image.
+      expect(find.byType(Image), findsOneWidget);
+      // The courtesy credit line renders beneath it.
+      expect(find.textContaining('Photo:'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'a photo-pending connector (n-type) shows NO photo even if a stray file is '
+    'bundled — the resolver gates on vetted metadata, never fakes a photo',
+    (tester) async {
+      // n-type is a documented GAP (no CC0/PD photo). Even if a file with its
+      // id were bundled, ConnectorPhotos.has() is false (no metadata entry), so
+      // no photo renders — honest "only show a photo we actually have".
+      ConnectorPhotos.debugSetBundled(
+        <String>{'assets/connector-photos/n-type.jpg'},
+      );
+      await pumpTall(tester, _svc());
+      expect(find.byType(Image), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'the editorial section diagrams render when bundled (polarity + size '
+    'comparison)',
+    (tester) async {
+      ConnectorSections.debugSetBundled(<String>{
+        'assets/connector-sections/polarity-explained.svg',
+        'assets/connector-sections/size-comparison.svg',
+      });
+      await pumpTall(tester, _svc());
+
+      // The Polarity-explained section header appears (its diagram is bundled).
+      expect(find.text('Polarity explained'), findsOneWidget);
+      // Two section SVGs render (polarity + size-comparison), plus none from the
+      // per-connector diagram slot (no connector diagrams bundled here).
+      expect(find.byType(SvgPicture), findsNWidgets(2));
+    },
+  );
+
+  testWidgets(
+    'the Polarity-explained section is omitted when its diagram is not bundled',
+    (tester) async {
+      // setUp left ConnectorSections empty.
+      await pumpTall(tester, _svc());
+      expect(find.text('Polarity explained'), findsNothing);
+    },
+  );
 
   test('the antenna-connectors route resolves to a registered builder', () {
     expect(

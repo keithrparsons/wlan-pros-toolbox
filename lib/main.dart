@@ -8,6 +8,8 @@
 import 'package:flutter/material.dart';
 
 import 'data/connector_diagrams.dart';
+import 'data/connector_photos.dart';
+import 'data/connector_sections.dart';
 import 'data/tool_assets.dart';
 import 'router/app_router.dart';
 import 'services/help/tool_help_loader.dart';
@@ -51,6 +53,27 @@ Future<void> main() async {
     await ConnectorDiagrams.ensureLoaded();
   } catch (_) {
     // Manifest unavailable → has() stays false → diagram slots omitted. No crash.
+  }
+
+  // Same convention for the Antenna Connectors per-connector PHOTOS
+  // (assets/connector-photos/<id>.jpg). We only ship a photo where a CC0/PD
+  // photo actually exists; ConnectorPhotos.has() gates on both the bundle and
+  // the vetted metadata map. A failure here must never block startup — has()
+  // stays false and the photo slot is omitted (the line diagram still shows).
+  try {
+    await ConnectorPhotos.ensureLoaded();
+  } catch (_) {
+    // Manifest unavailable → has() stays false → photo slots omitted. No crash.
+  }
+
+  // Same convention for the Antenna Connectors editorial SECTION diagrams
+  // (assets/connector-sections/<key>.svg: polarity-explained, size-comparison).
+  // A failure here must never block startup — ConnectorSections.has() stays
+  // false and each section renders its text without the diagram.
+  try {
+    await ConnectorSections.ensureLoaded();
+  } catch (_) {
+    // Manifest unavailable → has() stays false → section diagrams omitted.
   }
 
   // Load + cache the bundled tool-help JSON once (assets/help/tool_help.json).

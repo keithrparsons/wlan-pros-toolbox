@@ -345,6 +345,23 @@ flutter:
     # are now bundled (rp-sma, rp-tnc, n-type, ufl, qma); the directory entry
     # pulls every <connector-id>.svg in the folder:
     - assets/connector-diagrams/
+    # Per-connector PHOTOS for the Antenna Connectors tool, keyed by connector
+    # id: assets/connector-photos/<connector-id>.jpg. Real, freely-licensed
+    # (CC0 / Public Domain / "Copyrighted free use") photos vetted by Pax off
+    # each source File: page (Deliverables/2026-06-05-antenna-connector-photos/
+    # manifest.json). 9 photos cover 9 connectors; N-Type, TNC and RP-TNC have
+    # NO CC0/PD photo and ship NO photo (line diagram only) — never a fake. Per-
+    # photo alt text + license/credit live in lib/data/connector_photos.dart;
+    # the resolver gates on both the bundle and that metadata, so a missing or
+    # unvetted file never shows a broken-image box.
+    - assets/connector-photos/
+    # Editorial SECTION diagrams for the Antenna Connectors tool (full-width
+    # teaching diagrams rendered below the table), keyed by section:
+    # assets/connector-sections/<key>.svg (polarity-explained, size-comparison).
+    # Charta's approved SVGs; dark-baked concept-graphic palette, recolored for
+    # light via the §8.20.7 swap. Resolved by lib/data/connector_sections.dart
+    # against the asset manifest — a missing file never throws.
+    - assets/connector-sections/
     # Optical Transceivers — 35 verified optical Ethernet variants (1G–400G)
     # grouped by speed tier + the 9-row SFP→OSFP form-factor ladder, for the
     # Optical Transceivers Quick Reference tool. Bundled JSON, loaded + parsed
