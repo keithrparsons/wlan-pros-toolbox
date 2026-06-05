@@ -15,6 +15,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:wlan_pros_toolbox/screens/tools/reference/roaming_screen.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+import 'package:wlan_pros_toolbox/theme/app_color_scheme.dart';
 import 'package:wlan_pros_toolbox/theme/app_tokens.dart';
 
 void main() {
@@ -80,12 +81,20 @@ void main() {
     });
 
     test('grade maps to the §8.13 status palette', () {
-      expect(RoamingScreen.gradeColor(RoamGrade.good), AppColors.statusSuccess);
+      // gradeColor is now theme-aware; the dark scheme carries the §8.13 values.
+      final AppColorScheme dark = AppColorScheme.dark();
       expect(
-        RoamingScreen.gradeColor(RoamGrade.marginal),
+        RoamingScreen.gradeColor(dark, RoamGrade.good),
+        AppColors.statusSuccess,
+      );
+      expect(
+        RoamingScreen.gradeColor(dark, RoamGrade.marginal),
         AppColors.statusWarning,
       );
-      expect(RoamingScreen.gradeColor(RoamGrade.bad), AppColors.statusDanger);
+      expect(
+        RoamingScreen.gradeColor(dark, RoamGrade.bad),
+        AppColors.statusDanger,
+      );
     });
   });
 

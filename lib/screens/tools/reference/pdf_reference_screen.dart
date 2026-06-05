@@ -54,6 +54,7 @@ import 'package:flutter/semantics.dart';
 import 'package:pdfx/pdfx.dart';
 
 import '../../../data/pdf_download.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/tool_help_footer.dart';
 
@@ -197,6 +198,7 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
@@ -213,10 +215,10 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
             onPressed: _handleShare,
             iconSize: 24,
             tooltip: 'Share or download',
-            icon: const Icon(
+            icon: Icon(
               Icons.ios_share,
               size: 24,
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
             ),
           ),
         ],
@@ -249,6 +251,7 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
   }
 
   Widget _body(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     // The viewer is always mounted so its load callbacks fire; the loading and
     // error overlays sit on top of it until the document resolves. PhotoView
     // fit-contains the DECODED raster, so each page (including the `/Rotate 90`
@@ -265,7 +268,7 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
             // the default is a light gray that clashes with App Mode
             // (GL-003 §8.1).
             backgroundDecoration:
-                const BoxDecoration(color: AppColors.surface1),
+                BoxDecoration(color: colors.surface1),
             builders: PdfViewBuilders<DefaultBuilderOptions>(
               options: const DefaultBuilderOptions(),
               documentLoaderBuilder: (_) => _LoadingState(),
@@ -290,18 +293,19 @@ class _LoadingState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return ColoredBox(
-      color: AppColors.surface0,
+      color: colors.surface0,
       child: Center(
         child: Semantics(
           label: 'Loading reference card',
           liveRegion: true,
-          child: const SizedBox(
+          child: SizedBox(
             width: 36,
             height: 36,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+              valueColor: AlwaysStoppedAnimation<Color>(colors.textAccent),
             ),
           ),
         ),
@@ -318,9 +322,10 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return ColoredBox(
-      color: AppColors.surface0,
+      color: colors.surface0,
       child: Center(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
@@ -331,17 +336,17 @@ class _ErrorState extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                const Icon(
+                Icon(
                   Icons.picture_as_pdf_outlined,
                   size: 48,
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   'This reference card could not be opened.',
                   textAlign: TextAlign.center,
                   style: text.titleMedium?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
@@ -349,7 +354,7 @@ class _ErrorState extends StatelessWidget {
                   'The bundled PDF failed to load on this device.',
                   textAlign: TextAlign.center,
                   style: text.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: colors.textSecondary,
                   ),
                 ),
               ],

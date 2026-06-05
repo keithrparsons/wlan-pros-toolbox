@@ -21,6 +21,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -189,14 +190,14 @@ class SignalThresholdsScreen extends StatelessWidget {
 
   /// §8.13 verdict tint for a grade. Color is never the only signal — the
   /// quality word always renders beside it.
-  static Color gradeColor(SignalGrade grade) {
+  static Color gradeColor(AppColorScheme colors, SignalGrade grade) {
     switch (grade) {
       case SignalGrade.good:
-        return AppColors.statusSuccess;
+        return colors.statusSuccess;
       case SignalGrade.marginal:
-        return AppColors.statusWarning;
+        return colors.statusWarning;
       case SignalGrade.bad:
-        return AppColors.statusDanger;
+        return colors.statusDanger;
     }
   }
 
@@ -263,6 +264,7 @@ class SignalThresholdsScreen extends StatelessWidget {
   }
 
   Widget _body(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool isDesktop = constraints.maxWidth >= 720;
@@ -290,7 +292,7 @@ class SignalThresholdsScreen extends StatelessWidget {
                   ),
                   if (ToolAssets.hasGraphic('signal-thresholds'))
                     const SizedBox(height: AppSpacing.md),
-                  _intro(context),
+                  _intro(colors, context),
                   const SizedBox(height: AppSpacing.sm),
                   _signalScaleCard(context),
                   const SizedBox(height: AppSpacing.sm),
@@ -308,13 +310,13 @@ class SignalThresholdsScreen extends StatelessWidget {
   }
 
   /// Honest framing — the PWA's own caveat, verbatim in intent.
-  Widget _intro(BuildContext context) {
+  Widget _intro(AppColorScheme colors, BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
     return Text(
       'Reference thresholds for RSSI and SNR. Values vary by client hardware, '
       'environment, and AP vendor. Treat as field-planning guidelines, not '
       'guarantees.',
-      style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+      style: text.labelMedium?.copyWith(color: colors.textTertiary),
     );
   }
 
@@ -375,12 +377,13 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -389,7 +392,7 @@ class _Card extends StatelessWidget {
           Text(
             heading,
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -410,10 +413,11 @@ class _SignalBandRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
-    final Color tint = SignalThresholdsScreen.gradeColor(band.grade);
+    final Color tint = SignalThresholdsScreen.gradeColor(colors, band.grade);
     return Semantics(
       label: '${band.label} signal, ${band.range}',
       excludeSemantics: true,
@@ -439,7 +443,7 @@ class _SignalBandRow extends StatelessWidget {
             ),
             Text(
               band.range,
-              style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+              style: mono.inlineCode.copyWith(color: colors.textPrimary),
             ),
           ],
         ),
@@ -455,8 +459,9 @@ class _ThresholdHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextStyle? style = text.labelMedium?.copyWith(
-      color: AppColors.textTertiary,
+      color: colors.textTertiary,
       letterSpacing: 0.3,
     );
     return ExcludeSemantics(
@@ -493,6 +498,7 @@ class _ThresholdRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Semantics(
       label:
           '${row.application}. Minimum RSSI ${row.minRssi}, '
@@ -512,7 +518,7 @@ class _ThresholdRow extends StatelessWidget {
                   child: Text(
                     row.application,
                     style: (text.bodyLarge ?? const TextStyle()).copyWith(
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                     ),
                   ),
                 ),
@@ -522,7 +528,7 @@ class _ThresholdRow extends StatelessWidget {
                     row.minRssi,
                     textAlign: TextAlign.right,
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                     ),
                   ),
                 ),
@@ -532,7 +538,7 @@ class _ThresholdRow extends StatelessWidget {
                     row.minSnr,
                     textAlign: TextAlign.right,
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                     ),
                   ),
                 ),
@@ -541,7 +547,7 @@ class _ThresholdRow extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               row.notes,
-              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
             ),
           ],
         ),
@@ -557,8 +563,9 @@ class _SnrMcsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextStyle? style = text.labelMedium?.copyWith(
-      color: AppColors.textTertiary,
+      color: colors.textTertiary,
       letterSpacing: 0.3,
     );
     return ExcludeSemantics(
@@ -592,6 +599,7 @@ class _SnrMcsRowTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Semantics(
       label: '${row.minSnr} SNR, ${row.mcs}, ${row.rate}',
       excludeSemantics: true,
@@ -605,7 +613,7 @@ class _SnrMcsRowTile extends StatelessWidget {
               flex: 2,
               child: Text(
                 row.minSnr,
-                style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+                style: mono.inlineCode.copyWith(color: colors.textPrimary),
               ),
             ),
             Expanded(
@@ -613,7 +621,7 @@ class _SnrMcsRowTile extends StatelessWidget {
               child: Text(
                 row.mcs,
                 style: (text.bodyLarge ?? const TextStyle()).copyWith(
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                 ),
               ),
             ),
@@ -622,7 +630,7 @@ class _SnrMcsRowTile extends StatelessWidget {
               child: Text(
                 row.rate,
                 textAlign: TextAlign.right,
-                style: mono.inlineCode.copyWith(color: AppColors.textTertiary),
+                style: mono.inlineCode.copyWith(color: colors.textTertiary),
               ),
             ),
           ],

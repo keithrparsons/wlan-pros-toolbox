@@ -22,6 +22,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
@@ -149,6 +150,7 @@ class ApPlacementScreen extends StatelessWidget {
   }
 
   Widget _body(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool isDesktop = constraints.maxWidth >= 720;
@@ -176,7 +178,7 @@ class ApPlacementScreen extends StatelessWidget {
                   ),
                   if (ToolAssets.hasGraphic('ap-placement'))
                     const SizedBox(height: AppSpacing.md),
-                  _intro(context),
+                  _intro(colors, context),
                   for (final ApRuleGroup group in kApRules) ...<Widget>[
                     const SizedBox(height: AppSpacing.sm),
                     _RuleCard(group: group),
@@ -192,13 +194,13 @@ class ApPlacementScreen extends StatelessWidget {
   }
 
   /// Honest framing — the PWA's own tool description, verbatim in intent.
-  Widget _intro(BuildContext context) {
+  Widget _intro(AppColorScheme colors, BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
     return Text(
       'Field-tested rules for AP location, cell sizing, channel planning, and '
       'high-density deployments. Coverage radii and spacing are starting '
       'points; validate every design with a post-installation survey.',
-      style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+      style: text.labelMedium?.copyWith(color: colors.textTertiary),
     );
   }
 }
@@ -212,15 +214,16 @@ class _RuleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return ReferenceRowSemantics(
       label: group.category,
       merge: false,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface1,
+          color: colors.surface1,
           borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border.all(color: AppColors.border, width: 1),
+          border: Border.all(color: colors.border, width: 1),
         ),
         padding: const EdgeInsets.all(AppSpacing.sm),
         child: Column(
@@ -229,7 +232,7 @@ class _RuleCard extends StatelessWidget {
             Text(
               group.category,
               style: text.labelMedium?.copyWith(
-                color: AppColors.textSecondary,
+                color: colors.textSecondary,
                 letterSpacing: 0.4,
               ),
             ),
@@ -251,6 +254,7 @@ class _RuleLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
@@ -258,15 +262,18 @@ class _RuleLine extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           // Decorative bullet — the rule text beside it is the real signal.
-          const ExcludeSemantics(
+          ExcludeSemantics(
             child: Padding(
-              padding: EdgeInsets.only(top: 7, right: AppSpacing.sm),
+              padding: const EdgeInsets.only(top: 7, right: AppSpacing.sm),
               child: SizedBox(
                 width: 6,
                 height: 6,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: AppColors.primary,
+                    // Small lime bullet — a thin foreground mark, so textAccent
+                    // (lime in dark, darkened-lime on the white light card per
+                    // §8.20.2 lime split), not the primary fill.
+                    color: colors.textAccent,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -277,7 +284,7 @@ class _RuleLine extends StatelessWidget {
             child: Text(
               rule,
               style: (text.bodyLarge ?? const TextStyle()).copyWith(
-                color: AppColors.textPrimary,
+                color: colors.textPrimary,
               ),
             ),
           ),

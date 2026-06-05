@@ -1892,7 +1892,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
                 color: colors.textSecondary,
               ),
             ),
-            const TextSpan(text: '. Unix uses LF alone ('),
+            TextSpan(text: '. Unix uses LF alone ('),
             TextSpan(
               text: '0A',
               style: mono.robotoMono.copyWith(

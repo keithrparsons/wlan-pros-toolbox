@@ -22,6 +22,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -219,6 +220,7 @@ class CoaxCableScreen extends StatelessWidget {
   }
 
   Widget _body(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -252,7 +254,7 @@ class CoaxCableScreen extends StatelessWidget {
                     const SizedBox(height: AppSpacing.md),
                   _tableCard(text, mono),
                   const SizedBox(height: AppSpacing.md),
-                  _footnoteCard(text),
+                  _footnoteCard(colors, text),
                   ToolHelpFooter(toolId: 'coax-cable'),
                 ],
               ),
@@ -279,13 +281,13 @@ class CoaxCableScreen extends StatelessWidget {
     );
   }
 
-  Widget _footnoteCard(TextTheme text) {
+  Widget _footnoteCard(AppColorScheme colors, TextTheme text) {
     return _Card(
       heading: 'Notes',
       headingText: text,
       child: Text(
         footnote,
-        style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+        style: text.labelMedium?.copyWith(color: colors.textTertiary),
       ),
     );
   }
@@ -305,11 +307,12 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -318,7 +321,7 @@ class _Card extends StatelessWidget {
           Text(
             heading,
             style: headingText.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -340,8 +343,9 @@ class _ColumnHeaderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextStyle? style = text.labelMedium?.copyWith(
-      color: AppColors.textTertiary,
+      color: colors.textTertiary,
       letterSpacing: 0.4,
     );
     return Padding(
@@ -370,15 +374,16 @@ class _CoaxRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     // 75Ω is impedance-mismatched for 50Ω Wi-Fi; the PWA dims it. Reuse the
     // muted text tier so it reads as "reference only" without a new token.
     final bool muted = cable.isMismatched;
     final Color nameColor = muted
-        ? AppColors.textTertiary
-        : AppColors.textPrimary;
+        ? colors.textTertiary
+        : colors.textPrimary;
     final Color specColor = muted
-        ? AppColors.textTertiary
-        : AppColors.textSecondary;
+        ? colors.textTertiary
+        : colors.textSecondary;
 
     return ReferenceRowSemantics(
       label: rowLabel(cable.name, <String?>[
@@ -409,7 +414,7 @@ class _CoaxRow extends StatelessWidget {
                   child: Text(
                     cable.impedance,
                     style: mono.inlineCode.copyWith(
-                      color: muted ? AppColors.textTertiary : AppColors.primary,
+                      color: muted ? colors.textTertiary : colors.textAccent,
                     ),
                   ),
                 ),
@@ -440,7 +445,7 @@ class _CoaxRow extends StatelessWidget {
               child: Text(
                 cable.use,
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ),

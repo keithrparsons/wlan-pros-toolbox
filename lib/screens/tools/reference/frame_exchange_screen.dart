@@ -26,6 +26,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -228,13 +229,14 @@ class _FrameExchangeScreenState extends State<FrameExchangeScreen> {
 
   /// Tool description — verbatim from the PWA `tool-desc`.
   Widget _introCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return _card(
       child: Text(
         '802.11 frame sequences for common association and roaming scenarios. '
         'Shows the order of frames exchanged between the STA, AP, RADIUS '
         'server, and DHCP server.',
-        style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+        style: text.labelMedium?.copyWith(color: colors.textSecondary),
       ),
     );
   }
@@ -257,6 +259,7 @@ class _FrameExchangeScreenState extends State<FrameExchangeScreen> {
   }
 
   Widget _sequenceCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final FxScenario s = _selected;
     return _card(
@@ -265,7 +268,7 @@ class _FrameExchangeScreenState extends State<FrameExchangeScreen> {
         children: [
           Text(
             s.title,
-            style: text.headlineSmall?.copyWith(color: AppColors.textPrimary),
+            style: text.headlineSmall?.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.sm),
           for (final FxPhase phase in s.phases) _PhaseBlock(phase: phase),
@@ -275,6 +278,7 @@ class _FrameExchangeScreenState extends State<FrameExchangeScreen> {
   }
 
   Widget _legendCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return _card(
       child: Column(
@@ -283,7 +287,7 @@ class _FrameExchangeScreenState extends State<FrameExchangeScreen> {
           Text(
             'Frame types',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -301,11 +305,12 @@ class _FrameExchangeScreenState extends State<FrameExchangeScreen> {
   }
 
   Widget _card({required Widget child}) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: child,
@@ -321,6 +326,7 @@ class _PhaseBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -330,7 +336,7 @@ class _PhaseBlock extends StatelessWidget {
           Text(
             phase.name,
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -350,6 +356,7 @@ class _FrameRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -378,14 +385,14 @@ class _FrameRow extends StatelessWidget {
                 height: 28,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: AppColors.surface2,
+                  color: colors.surface2,
                   borderRadius: BorderRadius.circular(AppRadius.control),
-                  border: Border.all(color: AppColors.borderStrong, width: 1),
+                  border: Border.all(color: colors.borderStrong, width: 1),
                 ),
                 child: Text(
                   '${frame.n}',
                   style: mono.inlineCode.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -402,7 +409,7 @@ class _FrameRow extends StatelessWidget {
                         child: Text(
                           frame.dir,
                           style: text.labelSmall?.copyWith(
-                            color: AppColors.textTertiary,
+                            color: colors.textTertiary,
                             letterSpacing: 0.4,
                           ),
                         ),
@@ -415,7 +422,7 @@ class _FrameRow extends StatelessWidget {
                   Text(
                     frame.label,
                     style: text.bodyLarge?.copyWith(
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -425,7 +432,7 @@ class _FrameRow extends StatelessWidget {
                       child: Text(
                         frame.note,
                         style: text.labelMedium?.copyWith(
-                          color: AppColors.textTertiary,
+                          color: colors.textTertiary,
                         ),
                       ),
                     ),
@@ -451,20 +458,21 @@ class _TypeTag extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return ExcludeSemantics(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
         decoration: BoxDecoration(
-          color: AppColors.surface2,
+          color: colors.surface2,
           borderRadius: BorderRadius.circular(AppRadius.control),
-          border: Border.all(color: AppColors.border, width: 1),
+          border: Border.all(color: colors.border, width: 1),
         ),
         child: Text(
           code,
           style: mono.inlineCode.copyWith(
             fontSize: 11,
             height: 1.2,
-            color: AppColors.textTertiary,
+            color: colors.textTertiary,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.5,
           ),
@@ -484,6 +492,7 @@ class _LegendItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -501,7 +510,7 @@ class _LegendItem extends StatelessWidget {
             type.legendLabel,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+            style: text.labelMedium?.copyWith(color: colors.textSecondary),
           ),
         ),
       ],

@@ -27,6 +27,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -447,11 +448,12 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
   }
 
   Widget _controlsCard() {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -494,12 +496,13 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
   }
 
   Widget _tableCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     final McsStdData data = McsIndexScreen.dataFor(_std);
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -508,7 +511,7 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
           Text(
             '${data.rows.length} MCS indices  ·  ×$_ss SS (Mbps)',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -525,8 +528,9 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
   }
 
   Widget _dataTable(McsStdData data, TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     final TextStyle headStyle = (text.labelMedium ?? const TextStyle())
-        .copyWith(color: AppColors.textTertiary, letterSpacing: 0.4);
+        .copyWith(color: colors.textTertiary, letterSpacing: 0.4);
 
     return DataTable(
       headingRowHeight: 44,
@@ -574,7 +578,7 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
                 child: ExcludeSemantics(
                   child: Text(
                     '${row.mcs}',
-                    style: mono.outputMedium.copyWith(color: AppColors.primary),
+                    style: mono.outputMedium.copyWith(color: colors.textAccent),
                   ),
                 ),
               ),
@@ -584,7 +588,7 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
                 child: Text(
                   row.modulation,
                   style: text.bodyMedium?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                   ),
                 ),
               ),
@@ -594,7 +598,7 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
                 child: Text(
                   row.codeRate,
                   style: mono.inlineCode.copyWith(
-                    color: AppColors.textSecondary,
+                    color: colors.textSecondary,
                   ),
                 ),
               ),
@@ -608,6 +612,7 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
   }
 
   DataCell _rateCell(McsRow row, int columnIndex, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     final double? scaled = McsIndexScreen.rate(
       std: _std,
       mcs: row.mcs,
@@ -622,7 +627,7 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
           child: Text(
             _formatRate(scaled),
             style: mono.outputMedium.copyWith(
-              color: na ? AppColors.textTertiary : AppColors.textPrimary,
+              color: na ? colors.textTertiary : colors.textPrimary,
             ),
           ),
         ),
@@ -631,11 +636,12 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
   }
 
   Widget _notesCard(TextTheme text) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -644,7 +650,7 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
           Text(
             'Notes',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -656,7 +662,7 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
             'interval. 802.11ac MCS 9 is invalid at 20 and 40 MHz for a single '
             'stream (N/A). Actual '
             'throughput is typically 50 to 65 percent of the PHY rate.',
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),

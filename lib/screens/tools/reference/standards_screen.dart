@@ -25,6 +25,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -357,6 +358,7 @@ class _StandardsScreenState extends State<StandardsScreen> {
   }
 
   Widget _introCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return _Card(
       child: Column(
@@ -366,17 +368,17 @@ class _StandardsScreenState extends State<StandardsScreen> {
             'PHY-layer comparison of all major 802.11 amendments. Max PHY rate '
             'is the theoretical aggregate ceiling. Real-world throughput is '
             'typically 50 to 60 percent of the PHY rate.',
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             namingFootnote,
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: 2),
           Text(
             wifi7Footnote,
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -399,12 +401,13 @@ class _StandardsScreenState extends State<StandardsScreen> {
   }
 
   Widget _emptyCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return _Card(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Icon(Icons.search_off, size: 20, color: AppColors.textTertiary),
+          Icon(Icons.search_off, size: 20, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -413,7 +416,7 @@ class _StandardsScreenState extends State<StandardsScreen> {
                 Text(
                   'No match',
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -421,7 +424,7 @@ class _StandardsScreenState extends State<StandardsScreen> {
                 Text(
                   'No 802.11 standard operates in this band.',
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
               ],
@@ -442,6 +445,7 @@ class _StandardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return ReferenceRowSemantics(
       // merge:false — the card holds SelectableText ValueRows; keep them
@@ -468,7 +472,7 @@ class _StandardCard extends StatelessWidget {
                   child: Text(
                     entry.std,
                     style: text.headlineSmall?.copyWith(
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                     ),
                   ),
                 ),
@@ -479,13 +483,13 @@ class _StandardCard extends StatelessWidget {
                 Text(
                   '${entry.year}',
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: colors.textSecondary,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: AppSpacing.xs),
-            const Divider(color: AppColors.border, height: 1),
+            Divider(color: colors.border, height: 1),
             ValueRow(label: 'Bands (GHz)', value: entry.bands),
             ValueRow(
               label: 'Max PHY rate',
@@ -510,6 +514,7 @@ class _GenerationBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     return Container(
@@ -518,15 +523,15 @@ class _GenerationBadge extends StatelessWidget {
         vertical: 4,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surface2,
+        color: colors.surface2,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
+        border: Border.all(color: colors.borderStrong, width: 1),
       ),
       child: Text(
         label,
         style: mono.inlineCode.copyWith(
           fontSize: AppTextSize.caption,
-          color: AppColors.primary,
+          color: colors.textAccent,
         ),
       ),
     );
@@ -541,11 +546,12 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: child,

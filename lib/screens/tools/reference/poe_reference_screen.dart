@@ -29,6 +29,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../theme/app_typography.dart';
@@ -265,6 +266,7 @@ class PoeReferenceScreen extends StatelessWidget {
   }
 
   Widget _body(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -296,9 +298,9 @@ class PoeReferenceScreen extends StatelessWidget {
                   ),
                   if (ToolAssets.hasGraphic('poe-reference'))
                     const SizedBox(height: AppSpacing.md),
-                  _standardsCard(text, mono),
+                  _standardsCard(colors, text, mono),
                   const SizedBox(height: AppSpacing.md),
-                  _classesCard(text, mono),
+                  _classesCard(colors, text, mono),
                   ToolHelpFooter(toolId: 'poe-reference'),
                 ],
               ),
@@ -309,7 +311,7 @@ class PoeReferenceScreen extends StatelessWidget {
     );
   }
 
-  Widget _standardsCard(TextTheme text, AppMonoText mono) {
+  Widget _standardsCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
     return _TableCard(
       title: 'PoE standards',
       footnote: footnote,
@@ -342,7 +344,7 @@ class PoeReferenceScreen extends StatelessWidget {
                   child: Text(
                     s.standard,
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -352,7 +354,7 @@ class PoeReferenceScreen extends StatelessWidget {
                   child: Text(
                     s.name,
                     style: text.labelMedium?.copyWith(
-                      color: AppColors.textTertiary,
+                      color: colors.textTertiary,
                     ),
                   ),
                 ),
@@ -361,7 +363,7 @@ class PoeReferenceScreen extends StatelessWidget {
                   child: Text(
                     '${_fmt(s.pseWatts)} W',
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.primary,
+                      color: colors.textAccent,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -371,7 +373,7 @@ class PoeReferenceScreen extends StatelessWidget {
                   child: Text(
                     '${_fmt(s.pdWatts)} W',
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.textSecondary,
+                      color: colors.textSecondary,
                     ),
                   ),
                 ),
@@ -380,7 +382,7 @@ class PoeReferenceScreen extends StatelessWidget {
                   child: Text(
                     s.pairs,
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.textTertiary,
+                      color: colors.textTertiary,
                     ),
                   ),
                 ),
@@ -389,7 +391,7 @@ class PoeReferenceScreen extends StatelessWidget {
                   child: Text(
                     s.classes,
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.textTertiary,
+                      color: colors.textTertiary,
                     ),
                   ),
                 ),
@@ -401,7 +403,7 @@ class PoeReferenceScreen extends StatelessWidget {
     );
   }
 
-  Widget _classesCard(TextTheme text, AppMonoText mono) {
+  Widget _classesCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
     return _TableCard(
       title: 'PD power classes',
       header: const Row(
@@ -429,7 +431,7 @@ class PoeReferenceScreen extends StatelessWidget {
                   child: Text(
                     '${c.classNum}',
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -439,7 +441,7 @@ class PoeReferenceScreen extends StatelessWidget {
                   child: Text(
                     '${_fmt(c.maxPdWatts)} W',
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.primary,
+                      color: colors.textAccent,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -449,7 +451,7 @@ class PoeReferenceScreen extends StatelessWidget {
                   child: Text(
                     c.standard,
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.textSecondary,
+                      color: colors.textSecondary,
                     ),
                   ),
                 ),
@@ -458,7 +460,7 @@ class PoeReferenceScreen extends StatelessWidget {
                   child: Text(
                     c.note,
                     style: text.labelMedium?.copyWith(
-                      color: AppColors.textTertiary,
+                      color: colors.textTertiary,
                     ),
                   ),
                 ),
@@ -499,12 +501,13 @@ class _TableCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -513,7 +516,7 @@ class _TableCard extends StatelessWidget {
           Text(
             title,
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -530,7 +533,7 @@ class _TableCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   header,
-                  const Divider(color: AppColors.border, height: AppSpacing.sm),
+                  Divider(color: colors.border, height: AppSpacing.sm),
                   ...rows,
                 ],
               ),
@@ -540,7 +543,7 @@ class _TableCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.xs),
             Text(
               footnote!,
-              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
             ),
           ],
         ],
@@ -558,13 +561,14 @@ class _HeaderCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return SizedBox(
       width: width,
       child: Text(
         label,
         style: text.labelSmall?.copyWith(
-          color: AppColors.textTertiary,
+          color: colors.textTertiary,
           letterSpacing: 0.4,
         ),
       ),
