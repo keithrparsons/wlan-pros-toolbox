@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 320" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- SIZE COMPARISON — original clean-room line art, drawn to TRUE RELATIVE SCALE.
+       Scale: 6 px = 1 mm (horizontal body width). Verified widths from antenna_connectors.json
+       + research brief (line 87): across-flats hex for threaded parts, outer diameter for board parts.
+         N-Type    ~20 mm body OD            -> 120 px
+         RP-TNC/TNC ~11 mm hex (7/16-28)     ->  66 px
+         RP-SMA/SMA  ~8 mm hex (1/4-36)      ->  48 px
+         QMA         ~7 mm body              ->  42 px
+         MMCX      ~2.5 mm OD                ->  15 px
+         U.FL       2.0 mm OD                ->  12 px
+         MHF 4      1.5 mm OD                ->   9 px
+       Lime marks the measured quantity: the body-width dimension callout. -->
+
+  <text x="200" y="22" fill="#E5E5E5" font-size="14" font-weight="600" text-anchor="middle">Connector size, largest to smallest — drawn to scale</text>
+  <text x="200" y="40" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">Across-flats / outer-diameter body width. Scale: 6 px = 1 mm.</text>
+
+  <!-- column geometry: each connector sits in its own band, baseline at y=232 (the ruler) -->
+  <!-- bodies are centered horizontally at the x values below; width = trueWidthPx -->
+
+  <!-- ============ N-Type  (20 mm = 120 px), x-center 78 ============ -->
+  <!-- knurled body 120 wide, 64 tall, baseline 232 -->
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="18" y="168" width="120" height="64" rx="5"/>
+  </g>
+  <g stroke="#9C9C9C" stroke-width="1" stroke-linecap="round">
+    <line x1="36" y1="174" x2="36" y2="226"/><line x1="54" y1="174" x2="54" y2="226"/>
+    <line x1="72" y1="174" x2="72" y2="226"/><line x1="90" y1="174" x2="90" y2="226"/>
+    <line x1="108" y1="174" x2="108" y2="226"/><line x1="120" y1="174" x2="120" y2="226"/>
+  </g>
+  <!-- width callout (lime) -->
+  <g stroke="#A2CC3A" stroke-width="1.5" stroke-linecap="round">
+    <line x1="18" y1="158" x2="138" y2="158"/>
+    <path d="M22 155 L18 158 L22 161 M134 155 L138 158 L134 161"/>
+  </g>
+  <text x="78" y="150" fill="#A2CC3A" font-size="12" font-weight="600" text-anchor="middle">~20 mm</text>
+  <text x="78" y="252" fill="#E5E5E5" font-size="12" font-weight="600" text-anchor="middle">N-Type</text>
+  <text x="78" y="266" fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="middle">outdoor</text>
+
+  <!-- ============ RP-TNC / TNC  (11 mm = 66 px), x-center 196 ============ -->
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="163" y="180" width="66" height="52" rx="4"/>
+  </g>
+  <g stroke="#9C9C9C" stroke-width="1" stroke-linecap="round">
+    <line x1="177" y1="184" x2="177" y2="228"/><line x1="190" y1="184" x2="190" y2="228"/>
+    <line x1="203" y1="184" x2="203" y2="228"/><line x1="216" y1="184" x2="216" y2="228"/>
+  </g>
+  <g stroke="#A2CC3A" stroke-width="1.5" stroke-linecap="round">
+    <line x1="163" y1="170" x2="229" y2="170"/>
+    <path d="M167 167 L163 170 L167 173 M225 167 L229 170 L225 173"/>
+  </g>
+  <text x="196" y="162" fill="#A2CC3A" font-size="12" font-weight="600" text-anchor="middle">~11 mm</text>
+  <text x="196" y="252" fill="#E5E5E5" font-size="12" font-weight="600" text-anchor="middle">RP-TNC / TNC</text>
+  <text x="196" y="266" fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="middle">enterprise AP</text>
+
+  <!-- ============ RP-SMA / SMA  (8 mm = 48 px), x-center 286 ============ -->
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="262" y="188" width="48" height="44" rx="4"/>
+  </g>
+  <g stroke="#9C9C9C" stroke-width="1" stroke-linecap="round">
+    <line x1="274" y1="192" x2="274" y2="228"/><line x1="286" y1="192" x2="286" y2="228"/>
+    <line x1="298" y1="192" x2="298" y2="228"/>
+  </g>
+  <g stroke="#A2CC3A" stroke-width="1.5" stroke-linecap="round">
+    <line x1="262" y1="178" x2="310" y2="178"/>
+    <path d="M266 175 L262 178 L266 181 M306 175 L310 178 L306 181"/>
+  </g>
+  <text x="286" y="170" fill="#A2CC3A" font-size="12" font-weight="600" text-anchor="middle">~8 mm</text>
+  <text x="286" y="252" fill="#E5E5E5" font-size="12" font-weight="600" text-anchor="middle">RP-SMA / SMA</text>
+  <text x="286" y="266" fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="middle">consumer / test</text>
+
+  <!-- ============ QMA  (7 mm = 42 px), x-center 348 ============ -->
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="327" y="192" width="42" height="40" rx="4"/>
+  </g>
+  <!-- smooth (snap, no thread ticks) -->
+  <g stroke="#A2CC3A" stroke-width="1.5" stroke-linecap="round">
+    <line x1="327" y1="182" x2="369" y2="182"/>
+    <path d="M331 179 L327 182 L331 185 M365 179 L369 182 L365 185"/>
+  </g>
+  <text x="348" y="174" fill="#A2CC3A" font-size="12" font-weight="600" text-anchor="middle">~7 mm</text>
+  <text x="348" y="252" fill="#E5E5E5" font-size="12" font-weight="600" text-anchor="middle">QMA</text>
+  <text x="348" y="266" fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="middle">snap-on</text>
+
+  <!-- ============ the three tiny board-level parts, called out together ============ -->
+  <!-- These are so small at true scale they need a magnified inset; draw them to the SAME
+       6 px/mm scale on the ruler, then label. MMCX 15px, U.FL 12px, MHF4 9px. -->
+
+  <!-- MMCX (2.5 mm = 15 px) x-center 196.5 ; sit them low near the ruler on the right of N -->
+  <!-- group the three on the lower band, true scale, with a bracket -->
+
+  <!-- ============ shared mm RULER ============ -->
+  <line x1="18" y1="232" x2="382" y2="232" stroke="#9C9C9C" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- tiny trio drawn to true scale ON the ruler, far right, with a magnifier note -->
+  <!-- MMCX 15px wide -->
+  <g stroke="#E5E5E5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="20" y="288" width="15" height="15" rx="2"/>
+  </g>
+  <text x="27" y="316" fill="#9C9C9C" font-size="9" font-weight="500" text-anchor="middle">MMCX</text>
+  <text x="27" y="284" fill="#A2CC3A" font-size="9" font-weight="600" text-anchor="middle">2.5</text>
+
+  <!-- U.FL 12px wide -->
+  <g stroke="#E5E5E5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="58" y="291" width="12" height="12" rx="2"/>
+  </g>
+  <text x="64" y="316" fill="#9C9C9C" font-size="9" font-weight="500" text-anchor="middle">U.FL</text>
+  <text x="64" y="284" fill="#A2CC3A" font-size="9" font-weight="600" text-anchor="middle">2.0</text>
+
+  <!-- MHF4 9px wide -->
+  <g stroke="#E5E5E5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="92" y="294" width="9" height="9" rx="1.5"/>
+  </g>
+  <text x="96" y="316" fill="#9C9C9C" font-size="9" font-weight="500" text-anchor="middle">MHF 4</text>
+  <text x="96" y="284" fill="#A2CC3A" font-size="9" font-weight="600" text-anchor="middle">1.5</text>
+
+  <text x="118" y="280" fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="start">Board-level parts (mm OD), same scale</text>
+  <text x="118" y="298" fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="start">— a U.FL is ~10x narrower than an</text>
+  <text x="118" y="312" fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="start">N-Type. These live inside the radio.</text>
+</svg>

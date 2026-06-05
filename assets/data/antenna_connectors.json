@@ -21,6 +21,8 @@
       "typical_wifi_use": "Enterprise APs with external antennas (Cisco, Aruba, and others)",
       "indoor_outdoor": "Both",
       "coupling": "Threaded (7/16-28 thread)",
+      "size": "~11 mm across flats",
+      "rf_path": "Single coax (1 RF path)",
       "impedance": "50 ohm",
       "frequency": "Up to ~11 GHz (covers 2.4/5/6 GHz)",
       "mating": "Mates only with RP-TNC. Threads onto a standard TNC but center contacts will not connect.",
@@ -35,6 +37,8 @@
       "typical_wifi_use": "RF systems and some wireless bridges; rare on Wi-Fi gear vs RP-TNC",
       "indoor_outdoor": "Both",
       "coupling": "Threaded",
+      "size": "~11 mm across flats",
+      "rf_path": "Single coax (1 RF path)",
       "impedance": "50 ohm (75 ohm series also exists; not used for Wi-Fi)",
       "frequency": "Up to ~11 GHz",
       "mating": "Mates only with standard TNC. Will not connect with RP-TNC.",
@@ -49,6 +53,8 @@
       "typical_wifi_use": "Consumer Wi-Fi routers, WLAN adapters, many enterprise external antennas",
       "indoor_outdoor": "Mostly indoor",
       "coupling": "Threaded (1/4-36 thread)",
+      "size": "~8 mm across flats",
+      "rf_path": "Single coax (1 RF path)",
       "impedance": "50 ohm",
       "frequency": "Up to 18 GHz (well past 6 GHz / Wi-Fi 6E/7)",
       "mating": "Mates only with RP-SMA. Will physically thread onto a standard SMA, but the center pin/socket are reversed so it will not connect electrically.",
@@ -63,6 +69,8 @@
       "typical_wifi_use": "RF test gear, antennas, SDRs; Wi-Fi gear usually uses RP-SMA instead",
       "indoor_outdoor": "Both",
       "coupling": "Threaded",
+      "size": "~8 mm across flats",
+      "rf_path": "Single coax (1 RF path)",
       "impedance": "50 ohm",
       "frequency": "DC to 18 GHz (some variants to 26.5 GHz)",
       "mating": "Mates only with standard SMA. Will not connect with RP-SMA.",
@@ -77,6 +85,8 @@
       "typical_wifi_use": "Outdoor APs, point-to-point bridges, surge arrestors, outdoor antennas",
       "indoor_outdoor": "Excellent outdoor",
       "coupling": "Threaded (5/8-24 thread), weatherproof",
+      "size": "~20 mm body diameter",
+      "rf_path": "Single coax (1 RF path)",
       "impedance": "50 ohm (75 ohm version exists for cable TV; not used for Wi-Fi)",
       "frequency": "Up to ~11 GHz standard (precision N to 18 GHz)",
       "mating": "Mates only with standard N. RP-N is a separate, incompatible variant.",
@@ -91,6 +101,8 @@
       "typical_wifi_use": "Specialized Wi-Fi deployments; appears in the Cisco DART ecosystem (RP-N-to-DART adapter cables)",
       "indoor_outdoor": "Outdoor",
       "coupling": "Threaded",
+      "size": "~20 mm body diameter",
+      "rf_path": "Single coax (1 RF path)",
       "impedance": "50 ohm",
       "frequency": "Up to ~11 GHz",
       "mating": "Mates only with RP-N. Will not connect with standard N.",
@@ -105,6 +117,8 @@
       "typical_wifi_use": "Some enterprise and industrial WLAN equipment",
       "indoor_outdoor": "Both",
       "coupling": "Push-pull snap (no threading)",
+      "size": "~7 mm body diameter",
+      "rf_path": "Single coax (1 RF path)",
       "impedance": "50 ohm",
       "frequency": "Return-loss optimized to ~6 GHz; usable to 18 GHz",
       "mating": "Mates only with QMA.",
@@ -119,6 +133,8 @@
       "typical_wifi_use": "Industrial RF systems; less common in Wi-Fi",
       "indoor_outdoor": "Outdoor",
       "coupling": "Push-pull snap",
+      "size": "~20 mm body diameter",
+      "rf_path": "Single coax (1 RF path)",
       "impedance": "50 ohm",
       "frequency": "Up to ~11 GHz",
       "mating": "Mates only with QN.",
@@ -133,6 +149,8 @@
       "typical_wifi_use": "Internal AP antennas, IoT radios, embedded modules",
       "indoor_outdoor": "Indoor",
       "coupling": "Snap-on (lock-snap, 360-degree rotation)",
+      "size": "~2.5 mm outer diameter",
+      "rf_path": "Single coax (1 RF path)",
       "impedance": "50 ohm",
       "frequency": "DC to 6 GHz (typical)",
       "mating": "Mates only with MMCX. Smaller than MCX; the two do not interchange.",
@@ -147,6 +165,8 @@
       "typical_wifi_use": "Embedded radios and test equipment",
       "indoor_outdoor": "Indoor",
       "coupling": "Snap-on",
+      "size": "~3.6 mm outer diameter",
+      "rf_path": "Single coax (1 RF path)",
       "impedance": "50 ohm (some 75 ohm variants exist)",
       "frequency": "DC to 6 GHz (typical)",
       "mating": "Mates only with MCX. Larger than MMCX; the two do not interchange.",
@@ -161,6 +181,8 @@
       "typical_wifi_use": "Internal Wi-Fi modules, M.2 cards, AP daughterboards",
       "indoor_outdoor": "Indoor",
       "coupling": "Snap-on",
+      "size": "~2.0 mm outer diameter",
+      "rf_path": "Single coax (1 RF path)",
       "impedance": "50 ohm",
       "frequency": "0 to 6 GHz (typical)",
       "mating": "Intermateable with I-PEX MHF I (MHF1), AMC and UMCC (same 3.0x3.1 mm footprint, 2.0 mm OD). NOT compatible with the smaller MHF 4.",
@@ -175,6 +197,8 @@
       "typical_wifi_use": "Internal Wi-Fi modules",
       "indoor_outdoor": "Indoor",
       "coupling": "Snap-on",
+      "size": "~2.0 mm outer diameter",
+      "rf_path": "Single coax (1 RF path)",
       "impedance": "50 ohm",
       "frequency": "Up to 12 GHz",
       "mating": "Intermateable with U.FL / AMC / UMCC (same footprint). NOT compatible with MHF 4.",
@@ -189,6 +213,8 @@
       "typical_wifi_use": "Wi-Fi 6/6E/7 modules, mobile devices, M.2 cards",
       "indoor_outdoor": "Indoor",
       "coupling": "Snap-on",
+      "size": "~1.5 mm outer diameter",
+      "rf_path": "Single coax (1 RF path)",
       "impedance": "50 ohm",
       "frequency": "Up to 12 GHz",
       "mating": "Does NOT mate with U.FL or MHF I. A physically smaller family (also called W.FL / IPEX4).",
@@ -203,6 +229,8 @@
       "typical_wifi_use": "Cisco external-antenna systems (Catalyst 9130AXE, Aironet 2800/3800 Hyperlocation)",
       "indoor_outdoor": "Both",
       "coupling": "Multi-port proprietary (push-fit)",
+      "size": "Multi-port body (no single coax barrel)",
+      "rf_path": "8 RF + 16 digital lines (DART-8)",
       "impedance": "50 ohm (RF lines)",
       "frequency": "Covers Wi-Fi bands (2.4/5/6 GHz)",
       "mating": "Cisco proprietary. Breaks out to RP-TNC, N-type or RP-N via Cisco adapter cables.",
@@ -217,6 +245,8 @@
       "typical_wifi_use": "AP enclosures, antenna mounting, panel pass-throughs",
       "indoor_outdoor": "Both",
       "coupling": "Threaded",
+      "size": "~8 mm across flats",
+      "rf_path": "Single coax (1 RF path)",
       "impedance": "50 ohm",
       "frequency": "Up to 18 GHz",
       "mating": "Same mating rules as RP-SMA; mates only with RP-SMA.",
@@ -231,6 +261,8 @@
       "typical_wifi_use": "DAS and cellular systems; rare in Wi-Fi",
       "indoor_outdoor": "Outdoor",
       "coupling": "Threaded (also screw/hand/clamp variants)",
+      "size": "~20 mm body diameter",
+      "rf_path": "Single coax (1 RF path)",
       "impedance": "50 ohm",
       "frequency": "Cellular bands (sub-6 GHz)",
       "mating": "Mates only with 4.3-10.",
@@ -245,6 +277,8 @@
       "typical_wifi_use": "High-power RF and DAS; typically cellular, not Wi-Fi",
       "indoor_outdoor": "Outdoor",
       "coupling": "Threaded",
+      "size": "~29 mm body diameter",
+      "rf_path": "Single coax (1 RF path)",
       "impedance": "50 ohm",
       "frequency": "Cellular / broadcast bands (sub-6 GHz)",
       "mating": "Mates only with 7/16 DIN.",
@@ -259,6 +293,8 @@
       "typical_wifi_use": "Test equipment; not typically used for Wi-Fi antennas",
       "indoor_outdoor": "Indoor",
       "coupling": "Bayonet (quarter-turn lock)",
+      "size": "~14 mm bayonet coupling",
+      "rf_path": "Single coax (1 RF path)",
       "impedance": "50 ohm (75 ohm version common in video; not for Wi-Fi)",
       "frequency": "Best below ~4 GHz",
       "mating": "Mates only with BNC. 50 ohm and 75 ohm BNC look alike but should not be mixed.",
@@ -266,12 +302,30 @@
     }
   ],
   "vendor_trends": [
-    { "vendor": "Cisco Systems", "common_connector": "RP-TNC; DART (Smart Antenna Connector) on 9130AXE and 2800/3800" },
-    { "vendor": "HPE Aruba Networking", "common_connector": "RP-SMA, RP-TNC" },
-    { "vendor": "Ruckus Networks", "common_connector": "Mostly internal antennas; RP-SMA on external-antenna models (e.g., E510)" },
-    { "vendor": "Extreme Networks", "common_connector": "RP-SMA on indoor external-antenna APs; N-type on outdoor (e.g., AP460e)" },
-    { "vendor": "Cambium Networks", "common_connector": "RP-SMA on connectorized radios (Force 400C/4600); N-type on some sector/dish antennas" },
-    { "vendor": "Ubiquiti", "common_connector": "RP-SMA; N-type on some airMAX" }
+    {
+      "vendor": "Cisco Systems",
+      "common_connector": "RP-TNC; DART (Smart Antenna Connector) on 9130AXE and 2800/3800"
+    },
+    {
+      "vendor": "HPE Aruba Networking",
+      "common_connector": "RP-SMA, RP-TNC"
+    },
+    {
+      "vendor": "Ruckus Networks",
+      "common_connector": "Mostly internal antennas; RP-SMA on external-antenna models (e.g., E510)"
+    },
+    {
+      "vendor": "Extreme Networks",
+      "common_connector": "RP-SMA on indoor external-antenna APs; N-type on outdoor (e.g., AP460e)"
+    },
+    {
+      "vendor": "Cambium Networks",
+      "common_connector": "RP-SMA on connectorized radios (Force 400C/4600); N-type on some sector/dish antennas"
+    },
+    {
+      "vendor": "Ubiquiti",
+      "common_connector": "RP-SMA; N-type on some airMAX"
+    }
   ],
   "size_order_largest_to_smallest": [
     "N-Type",
@@ -289,12 +343,30 @@
   "troubleshooting_class_top_6": {
     "intro": "The connectors your students are most likely to encounter:",
     "connectors": [
-      { "connector": "RP-TNC", "context": "older enterprise APs" },
-      { "connector": "RP-SMA", "context": "consumer Wi-Fi and many antennas" },
-      { "connector": "N-Type", "context": "outdoor antennas and bridges" },
-      { "connector": "DART", "context": "modern Cisco external-antenna deployments" },
-      { "connector": "U.FL / I-PEX", "context": "internal WLAN modules" },
-      { "connector": "MMCX", "context": "some embedded radios and IoT devices" }
+      {
+        "connector": "RP-TNC",
+        "context": "older enterprise APs"
+      },
+      {
+        "connector": "RP-SMA",
+        "context": "consumer Wi-Fi and many antennas"
+      },
+      {
+        "connector": "N-Type",
+        "context": "outdoor antennas and bridges"
+      },
+      {
+        "connector": "DART",
+        "context": "modern Cisco external-antenna deployments"
+      },
+      {
+        "connector": "U.FL / I-PEX",
+        "context": "internal WLAN modules"
+      },
+      {
+        "connector": "MMCX",
+        "context": "some embedded radios and IoT devices"
+      }
     ],
     "coverage_note": "These six cover the large majority of what most Wi-Fi engineers meet in the field (field estimate, not a measured statistic)."
   }

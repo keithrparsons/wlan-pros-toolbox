@@ -1263,13 +1263,13 @@
     "antenna-connectors": {
       "name": "Antenna Connectors",
       "category": "Quick Reference",
-      "purpose": "An 18-connector practical reference for Wi-Fi antenna systems: each connector's full name, reverse-polarity variant, typical Wi-Fi use, indoor/outdoor fit, coupling mechanism, impedance, frequency rating, mating compatibility, and field notes. Plus enterprise vendor trends, a largest-to-smallest size order, and the top 6 a Wi-Fi engineer actually meets.",
+      "purpose": "An 18-connector practical reference for Wi-Fi antenna systems: each connector's full name, reverse-polarity variant, typical Wi-Fi use, indoor/outdoor fit, coupling mechanism, body size, RF signal path, impedance, frequency rating, mating compatibility, and field notes. Plus a polarity-explained diagram, an at-a-glance comparison table, enterprise vendor trends, a to-scale size comparison, and the top 6 a Wi-Fi engineer actually meets.",
       "whyHere": "When you are identifying or mating an antenna lead in the field. It answers the questions a tech actually asks: is this RP-SMA or SMA, will these two mate, does it cover 6 GHz, and which connector does this vendor ship.",
       "howToUse": [
-        "Browse the connectors grouped by where they live (enterprise panel/external, outdoor/point-to-point, board-level/internal, test/cellular). Each card shows the connector name, full name, and an RP chip when it is a reverse-polarity variant.",
-        "Each card lists typical use, indoor/outdoor, coupling, impedance, frequency, and mating, then a field-notes line.",
-        "Type in the search box to filter live across every field (name, vendor, coupling, frequency, or any word in a note).",
-        "Below the table: enterprise Wi-Fi vendor trends, the size order largest to smallest, and the top 6 connectors most engineers meet in the field."
+        "Browse the connectors grouped by where they live (enterprise panel/external, outdoor/point-to-point, board-level/internal, test/cellular). Each card shows the connector name, full name, an RP chip when it is a reverse-polarity variant, and a real photo where a freely-licensed one exists (some connectors keep a line diagram instead).",
+        "Each card lists typical use, indoor/outdoor, coupling, size, RF path, impedance, frequency, and mating, then a field-notes line.",
+        "Type in the search box to filter live across every field (name, vendor, coupling, size, RF path, frequency, or any word in a note).",
+        "Below the table: a polarity-explained diagram, a Compare-at-a-glance table (connector, size, RF path, typical use) that scrolls sideways on a phone, enterprise vendor trends, the size order largest to smallest with a to-scale diagram, and the top 6 connectors most engineers meet."
       ],
       "inputs": [],
       "algorithm": null,
@@ -1277,7 +1277,9 @@
       "fieldNotes": [
         "The key field gotcha: every connector here is 50 ohm, and an RP connector will thread onto its standard counterpart but the center contacts will not connect.",
         "U.FL intermates with I-PEX MHF I (same footprint); the smaller MHF 4 does NOT mate with either.",
-        "DART is Cisco's Smart Antenna Connector, a proprietary multi-port interface that breaks out to RP-TNC, N-type or RP-N via Cisco adapter cables."
+        "DART is Cisco's Smart Antenna Connector, a proprietary multi-port interface that breaks out to RP-TNC, N-type or RP-N via Cisco adapter cables.",
+        "Size is the connector body width (across-flats for threaded parts, outer diameter for board-level parts) — an approximate field-recognition aid, not a precision mechanical spec.",
+        "Connector photos are shown only where a freely-licensed (CC0/public-domain) photo exists. N-Type, TNC and RP-TNC currently have no such photo, so they keep a line diagram rather than a stand-in."
       ],
       "source": "Keith Parsons draft, verified and augmented by Pax (2026-06-05)."
     },

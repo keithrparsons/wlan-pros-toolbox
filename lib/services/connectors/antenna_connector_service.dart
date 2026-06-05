@@ -44,6 +44,8 @@ class AntennaConnector {
     required this.typicalWifiUse,
     required this.indoorOutdoor,
     required this.coupling,
+    required this.size,
+    required this.rfPath,
     required this.impedance,
     required this.frequency,
     required this.mating,
@@ -76,6 +78,15 @@ class AntennaConnector {
   /// Coupling mechanism (threaded / push-pull snap / bayonet / multi-port).
   final String coupling;
 
+  /// Physical body size — across-flats for threaded parts, outer diameter for
+  /// board-level parts (recognition-aid granularity, not precision metrology).
+  /// Sourced from the size-comparison diagram + photo-manifest size data.
+  final String size;
+
+  /// Signal-path / typical-use shorthand. "Single coax (1 RF path)" for every
+  /// single-coax body; DART is the one multi-path case ("8 RF + 16 digital").
+  final String rfPath;
+
   /// Characteristic impedance (every Wi-Fi connector here is 50 ohm).
   final String impedance;
 
@@ -102,6 +113,8 @@ class AntennaConnector {
         typicalWifiUse,
         indoorOutdoor,
         coupling,
+        size,
+        rfPath,
         impedance,
         frequency,
         mating,
@@ -125,6 +138,8 @@ class AntennaConnector {
       typicalWifiUse: _str(map['typical_wifi_use']),
       indoorOutdoor: _str(map['indoor_outdoor']),
       coupling: _str(map['coupling']),
+      size: _str(map['size']),
+      rfPath: _str(map['rf_path']),
       impedance: _str(map['impedance']),
       frequency: _str(map['frequency']),
       mating: _str(map['mating']),

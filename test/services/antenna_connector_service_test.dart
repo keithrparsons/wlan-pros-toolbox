@@ -29,6 +29,8 @@ const String _fixture = '''
       "typical_wifi_use": "Consumer Wi-Fi routers and adapters",
       "indoor_outdoor": "Mostly indoor",
       "coupling": "Threaded",
+      "size": "~8 mm across flats",
+      "rf_path": "Single coax (1 RF path)",
       "impedance": "50 ohm",
       "frequency": "Up to 18 GHz",
       "mating": "Mates only with RP-SMA.",
@@ -287,6 +289,40 @@ void main() {
           reason: '${c.connector} impedance should be 50 ohm',
         );
       }
+    });
+
+    test('every connector in the real asset has size + RF-path populated', () {
+      final AntennaConnectorService real = loadReal();
+      for (final AntennaConnector c in real.all) {
+        expect(c.size, isNotEmpty,
+            reason: '${c.connector} should have a size');
+        expect(c.rfPath, isNotEmpty,
+            reason: '${c.connector} should have an RF path');
+      }
+    });
+
+    test('DART carries its verbatim multi-path RF value (no fabrication)', () {
+      final AntennaConnector? dart = loadReal().byId('dart');
+      expect(dart, isNotNull);
+      expect(dart!.rfPath, contains('8 RF'));
+      expect(dart.rfPath, contains('16 digital'));
+    });
+  });
+
+  group('size + RF-path fields', () {
+    test('size and rf_path parse from the connector object', () {
+      final AntennaConnector? c = _svc().byId('rp-sma');
+      expect(c, isNotNull);
+      expect(c!.size, '~8 mm across flats');
+      expect(c.rfPath, 'Single coax (1 RF path)');
+    });
+
+    test('search spans the new size and rf_path fields', () {
+      // A query that only matches the size string returns the connector.
+      expect(_svc().search('across flats').map((AntennaConnector c) => c.id),
+          contains('rp-sma'));
+      // A query that only matches the RF-path string returns connectors.
+      expect(_svc().search('single coax'), isNotEmpty);
     });
   });
 }

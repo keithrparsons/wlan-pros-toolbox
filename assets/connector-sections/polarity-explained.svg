@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 310" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- POLARITY EXPLAINED — original clean-room line art (matches the shipped connector
+       diagrams: #E5E5E5 scaffold / #9C9C9C secondary / #A2CC3A accent on the ONE fact).
+       Two rows teach the single most-confused connector fact:
+         ROW 1 STANDARD: male = center PIN, female = center SOCKET.
+         ROW 2 REVERSE-POLARITY: the center-contact GENDER is swapped; outer thread gender unchanged.
+       Lime marks ONLY the center contact — the one thing the rule is about. -->
+
+  <text x="210" y="22" fill="#E5E5E5" font-size="14" font-weight="600" text-anchor="middle">Reverse polarity swaps the center contact, not the thread</text>
+
+  <!-- ===================== ROW 1: STANDARD ===================== -->
+  <!-- row eyebrow, centered above the row -->
+  <text x="210" y="50" fill="#9C9C9C" font-size="11" font-weight="600" text-anchor="middle" letter-spacing="0.12em">STANDARD</text>
+
+  <!-- STANDARD MALE -->
+  <text x="120" y="76" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">Male</text>
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M76 104 L88 90 L124 90 L136 104 L124 118 L88 118 Z"/>
+    <path d="M76 94 L52 94 L52 114 L76 114"/>
+  </g>
+  <!-- EXTERNAL thread ticks = MALE shell (outside the barrel) -->
+  <g stroke="#9C9C9C" stroke-width="1" stroke-linecap="round">
+    <line x1="58" y1="90" x2="58" y2="86"/><line x1="64" y1="90" x2="64" y2="86"/>
+    <line x1="70" y1="90" x2="70" y2="86"/>
+    <line x1="58" y1="118" x2="58" y2="122"/><line x1="64" y1="118" x2="64" y2="122"/>
+    <line x1="70" y1="118" x2="70" y2="122"/>
+  </g>
+  <!-- center contact = PIN (lime) -->
+  <line x1="26" y1="104" x2="62" y2="104" stroke="#A2CC3A" stroke-width="3.5" stroke-linecap="round"/>
+  <text x="44" y="144" fill="#A2CC3A" font-size="12" font-weight="600" text-anchor="middle">center PIN</text>
+
+  <!-- mate arrows -->
+  <g stroke="#9C9C9C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="156" y1="104" x2="178" y2="104"/>
+    <path d="M174 100 L178 104 L174 108"/>
+    <line x1="264" y1="104" x2="242" y2="104"/>
+    <path d="M246 100 L242 104 L246 108"/>
+  </g>
+
+  <!-- STANDARD FEMALE -->
+  <text x="300" y="76" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">Female</text>
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M288 104 L300 90 L336 90 L348 104 L336 118 L300 118 Z"/>
+    <path d="M348 94 L372 94 L372 114 L348 114"/>
+  </g>
+  <!-- INTERNAL thread ticks = FEMALE shell (inside the barrel) -->
+  <g stroke="#9C9C9C" stroke-width="1" stroke-linecap="round">
+    <line x1="354" y1="96" x2="354" y2="112"/><line x1="361" y1="96" x2="361" y2="112"/>
+    <line x1="368" y1="96" x2="368" y2="112"/>
+  </g>
+  <!-- center contact = SOCKET (lime ring) -->
+  <circle cx="318" cy="104" r="9" stroke="#A2CC3A" stroke-width="3" fill="none"/>
+  <circle cx="318" cy="104" r="2.5" fill="#A2CC3A"/>
+  <text x="318" y="144" fill="#A2CC3A" font-size="12" font-weight="600" text-anchor="middle">center SOCKET</text>
+
+  <!-- divider -->
+  <line x1="40" y1="164" x2="380" y2="164" stroke="#9C9C9C" stroke-width="1" stroke-dasharray="3 4"/>
+
+  <!-- ===================== ROW 2: REVERSE-POLARITY ===================== -->
+  <text x="210" y="194" fill="#9C9C9C" font-size="11" font-weight="600" text-anchor="middle" letter-spacing="0.12em">REVERSE POLARITY</text>
+
+  <!-- RP "Male shell" -->
+  <text x="120" y="220" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">Male shell</text>
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M76 248 L88 234 L124 234 L136 248 L124 262 L88 262 Z"/>
+    <path d="M76 238 L52 238 L52 258 L76 258"/>
+  </g>
+  <g stroke="#9C9C9C" stroke-width="1" stroke-linecap="round">
+    <line x1="58" y1="234" x2="58" y2="230"/><line x1="64" y1="234" x2="64" y2="230"/>
+    <line x1="70" y1="234" x2="70" y2="230"/>
+    <line x1="58" y1="262" x2="58" y2="266"/><line x1="64" y1="262" x2="64" y2="266"/>
+    <line x1="70" y1="262" x2="70" y2="266"/>
+  </g>
+  <!-- center SWAPPED to SOCKET (lime ring) -->
+  <circle cx="56" cy="248" r="9" stroke="#A2CC3A" stroke-width="3" fill="none"/>
+  <circle cx="56" cy="248" r="2.5" fill="#A2CC3A"/>
+  <text x="78" y="288" fill="#A2CC3A" font-size="12" font-weight="600" text-anchor="middle">now a SOCKET</text>
+  <text x="78" y="302" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">gender swapped</text>
+
+  <!-- mate arrows -->
+  <g stroke="#9C9C9C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="156" y1="248" x2="178" y2="248"/>
+    <path d="M174 244 L178 248 L174 252"/>
+    <line x1="264" y1="248" x2="242" y2="248"/>
+    <path d="M246 244 L242 248 L246 252"/>
+  </g>
+
+  <!-- RP "Female shell" -->
+  <text x="300" y="220" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">Female shell</text>
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M288 248 L300 234 L336 234 L348 248 L336 262 L300 262 Z"/>
+    <path d="M348 238 L372 238 L372 258 L348 258"/>
+  </g>
+  <g stroke="#9C9C9C" stroke-width="1" stroke-linecap="round">
+    <line x1="354" y1="240" x2="354" y2="256"/><line x1="361" y1="240" x2="361" y2="256"/>
+    <line x1="368" y1="240" x2="368" y2="256"/>
+  </g>
+  <!-- center SWAPPED to PIN (lime) -->
+  <line x1="318" y1="248" x2="354" y2="248" stroke="#A2CC3A" stroke-width="3.5" stroke-linecap="round"/>
+  <text x="332" y="288" fill="#A2CC3A" font-size="12" font-weight="600" text-anchor="middle">now a PIN</text>
+  <text x="332" y="302" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">gender swapped</text>
+</svg>
