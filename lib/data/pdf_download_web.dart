@@ -16,11 +16,29 @@ import 'pdf_download.dart' show ShareOrigin;
 
 /// Triggers a browser download of [assetPath]'s bytes under [filename].
 /// [title] and [shareOrigin] are unused on web (no share sheet); they are part
-/// of the shared seam signature.
+/// of the shared seam signature. PDF MIME wrapper over [shareAssetImpl].
 Future<void> sharePdfImpl({
   required String assetPath,
   required String filename,
   required String title,
+  ShareOrigin? shareOrigin,
+}) {
+  return shareAssetImpl(
+    assetPath: assetPath,
+    filename: filename,
+    mimeType: 'application/pdf',
+    shareOrigin: shareOrigin,
+  );
+}
+
+/// Generic web body: fetches the bundled [assetPath] bytes and triggers a
+/// browser anchor-download under the clean [filename], typed [mimeType].
+/// [shareOrigin] is unused on web. Mirrors [sharePdfImpl]; the only difference
+/// is the Blob MIME type.
+Future<void> shareAssetImpl({
+  required String assetPath,
+  required String filename,
+  required String mimeType,
   ShareOrigin? shareOrigin,
 }) async {
   final ByteData data = await rootBundle.load(assetPath);
@@ -29,11 +47,11 @@ Future<void> sharePdfImpl({
     data.lengthInBytes,
   );
 
-  // Blob from the PDF bytes, typed application/pdf. The byte buffer is a
+  // Blob from the asset bytes, typed [mimeType]. The byte buffer is a
   // BlobPart; the parts array is a JSArray<BlobPart>.
   final web.Blob blob = web.Blob(
     <web.BlobPart>[bytes.toJS].toJS,
-    web.BlobPropertyBag(type: 'application/pdf'),
+    web.BlobPropertyBag(type: mimeType),
   );
   final String url = web.URL.createObjectURL(blob);
 

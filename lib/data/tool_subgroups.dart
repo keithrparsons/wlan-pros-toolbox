@@ -30,6 +30,9 @@ const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
     'Encoding',
     'CLI & Capture',
     'Checklists',
+    // Step-by-step walkthroughs that bundle a companion file (2026-06-05).
+    // First member: FreeRADIUS on WLAN Pi.
+    'Guides & How-To',
   ],
   'rf-calculators': <String>[
     'RF & Propagation',

@@ -95,6 +95,7 @@ import '../screens/tools/command/cli_commands_screen.dart';
 import '../screens/tools/command/linux_wlan_commands_screen.dart';
 import '../screens/tools/command/wireshark_filters_screen.dart';
 import '../screens/tools/reference/osi_model_screen.dart';
+import '../screens/tools/reference/freeradius_wlanpi_screen.dart';
 import '../screens/tools/reference/top_level_domains_screen.dart';
 import '../screens/tools/reference/rj_connectors_screen.dart';
 import '../screens/tools/reference/ascii_reference_screen.dart';
@@ -259,6 +260,14 @@ class AppRouter {
   /// asset, help, tests).
   static const String opticalTransceivers = '/tools/optical-transceivers';
   static const String osiModel = '/tools/osi-model';
+
+  /// FreeRADIUS on WLAN Pi — a how-to / guide screen (v1.1). Bundles Ferney
+  /// Munoz's install script (assets/downloads/install_freeradius.sh), shows it
+  /// inline + offers it as a download, with a prominent lab caveat. The id
+  /// `freeradius-wlanpi` is permanent (route, catalog, concept graphic, help,
+  /// tests).
+  static const String freeradiusWlanpi = '/tools/freeradius-wlanpi';
+
   static const String topLevelDomains = '/tools/top-level-domains';
   static const String rjConnectors = '/tools/rj-connectors';
   static const String asciiReference = '/tools/ascii-reference';
@@ -436,6 +445,7 @@ class AppRouter {
     rjConnectors: (_) => const RjConnectorsScreen(),
     asciiReference: (_) => const AsciiReferenceScreen(),
     emojiReference: (_) => const EmojiReferenceScreen(),
+    freeradiusWlanpi: (_) => const FreeradiusWlanpiScreen(),
     wifiGlossary: (_) => const WifiGlossaryScreen(),
     wifiAuthGlossary: (_) => const WifiGlossaryScreen(
           assetPath: kWifiAuthGlossaryAsset,

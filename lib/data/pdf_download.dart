@@ -62,6 +62,32 @@ Future<void> sharePdf({
   );
 }
 
+/// Shares (native) or downloads (web) the bundled asset at [assetPath] under the
+/// exact [filename], typed [mimeType]. The generalized sibling of [sharePdf]:
+/// where [sharePdf] hardcodes `application/pdf` and derives a `WLAN-Pros-*.pdf`
+/// name from a card title, this passes the filename and MIME through verbatim so
+/// a non-PDF companion file (e.g. `install_freeradius.sh`,
+/// `mimeType: 'text/x-shellscript'`) keeps its real name and type in the share
+/// sheet / download.
+///
+/// On iPad/macOS the share popover anchors to [shareOrigin] (the share control's
+/// global rect); pass `null` to let the platform pick a default. Returns
+/// normally on success; throws on a load/share failure so the caller can surface
+/// the honest error path.
+Future<void> shareAsset({
+  required String assetPath,
+  required String filename,
+  required String mimeType,
+  ShareOrigin? shareOrigin,
+}) {
+  return impl.shareAssetImpl(
+    assetPath: assetPath,
+    filename: filename,
+    mimeType: mimeType,
+    shareOrigin: shareOrigin,
+  );
+}
+
 /// A platform-agnostic rectangle for the iPad/macOS share-popover source.
 /// Carried so the screen does not have to import `dart:ui` Rect into the seam.
 class ShareOrigin {

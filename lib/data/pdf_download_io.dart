@@ -21,11 +21,30 @@ import 'pdf_download.dart' show ShareOrigin;
 
 /// Copies [assetPath]'s bytes to a temp file named [filename], then shares it.
 /// Throws if the asset bytes fail to load or the temp write fails — the caller
-/// surfaces the honest error path.
+/// surfaces the honest error path. PDF MIME wrapper over [shareAssetImpl].
 Future<void> sharePdfImpl({
   required String assetPath,
   required String filename,
   required String title,
+  ShareOrigin? shareOrigin,
+}) {
+  return shareAssetImpl(
+    assetPath: assetPath,
+    filename: filename,
+    mimeType: 'application/pdf',
+    shareOrigin: shareOrigin,
+  );
+}
+
+/// Generic native body: copies the bundled [assetPath] bytes to a temp file
+/// under the clean human [filename], then hands it to the OS share sheet typed
+/// as [mimeType]. Same macOS-sandbox-safe temp-dir handling as the PDF path
+/// (the per-bundle Caches dir must be created before writing). Throws on a
+/// load/write failure so the caller surfaces the honest error path.
+Future<void> shareAssetImpl({
+  required String assetPath,
+  required String filename,
+  required String mimeType,
   ShareOrigin? shareOrigin,
 }) async {
   // 1. Read the bundled bytes (throws on a missing/corrupt asset).
@@ -48,7 +67,7 @@ Future<void> sharePdfImpl({
   // 3. Hand the temp file to the OS share sheet. On iPad/macOS the popover must
   //    anchor to a source rect or the platform throws; pass the button's rect.
   await Share.shareXFiles(
-    <XFile>[XFile(tmpFile.path, mimeType: 'application/pdf')],
+    <XFile>[XFile(tmpFile.path, mimeType: mimeType)],
     sharePositionOrigin: shareOrigin == null
         ? null
         : Rect.fromLTWH(

@@ -368,6 +368,13 @@ flutter:
     # pinch-zoomable PdfViewPinch (lib/screens/tools/reference/
     # pdf_reference_screen.dart) via pdfx → Apple PDFKit on iOS + macOS.
     - assets/reference-cards/
+    # Downloadable companion files — bundled plain-text/script assets a tool
+    # offers the user to export via the share/save seam (lib/data/asset_share.dart).
+    # First entry: install_freeradius.sh for the "FreeRADIUS on WLAN Pi" how-to
+    # guide (assets/downloads/install_freeradius.sh) — Ferney Munoz's lab install
+    # script, bundled VERBATIM and shown inline + offered as a download. Shipped
+    # read-only; never executed in-app (the Toolbox runs no shell — GL-008).
+    - assets/downloads/install_freeradius.sh
     # WLAN Pros brand lockup (GL-003 §8.21). The transparent-background
     # "wirelessLAN PROFESSIONALS" wordmark + lime #A1CC3A Wi-Fi arc, trimmed to
     # its tight bounding box from the canonical `WLANProsLogo black.png` source.

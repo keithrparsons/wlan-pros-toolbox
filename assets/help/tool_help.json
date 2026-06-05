@@ -2360,6 +2360,30 @@
         "Verified against IEEE 802.3 standards tables (via Wikipedia's clause-mirroring pages) and Cisco / FS.com vendor datasheets (Pax verification brief, 2026-06-05). Out-of-scope bleeding edge (800G / 1.6T, CPO / LPO, SFP-DD) was deliberately excluded as not yet stable or field-relevant."
       ],
       "source": "lib/screens/tools/reference/optical_transceivers_screen.dart"
+    },
+    "freeradius-wlanpi": {
+      "name": "FreeRADIUS on WLAN Pi",
+      "category": "Quick Reference",
+      "purpose": "A step-by-step guide to standing up a lab RADIUS server on a WLAN Pi for learning and testing 802.1X (WPA2/WPA3-Enterprise), built around a bundled install script you copy to the Pi and run there.",
+      "whyHere": "Reach for it when you want a working RADIUS server to practice 802.1X against without building a full production AAA stack. The screen shows the install script inline, lets you download it, and points at the two files to customize (the shared secret and the user list).",
+      "howToUse": [
+        "Read the lab caveat: the script ships test accounts (student01-student10) with cleartext passwords and a shared secret named secretwlanpros. Change the secret and use real credentials before anything real.",
+        "Download install_freeradius.sh (or copy it from the inline view).",
+        "Copy it to the Pi: scp install_freeradius.sh wlanpi@<your-Pi-IP>:~",
+        "Make it executable: chmod +x install_freeradius.sh",
+        "Run it on the Pi: ./install_freeradius.sh",
+        "Verify with the listed radtest / journalctl / tcpdump commands."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "The Toolbox runs no shell. This is reference text plus a file you run on your own WLAN Pi, not in the app. The inline script and the download are the exact same bytes.",
+        "Lab use only as shipped: cleartext-password test accounts and a known shared secret. Change the secret in /etc/freeradius/3.0/clients.conf and replace the test users in /etc/freeradius/3.0/users before using it on a real network.",
+        "The script configures PEAP/MSCHAPv2, opens UDP 1812, and runs a radtest against student01 to confirm the server answers.",
+        "Guide and install script by Ferney Munoz; bundled with permission."
+      ],
+      "source": "freeradius_wlanpi_screen.dart + assets/downloads/install_freeradius.sh (Ferney Munoz)"
     }
   }
 }
