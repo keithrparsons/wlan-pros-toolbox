@@ -303,8 +303,11 @@ class _ProgressCard extends StatelessWidget {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final bool complete = total > 0 && done == total;
     final double fraction = total == 0 ? 0 : done / total;
-    final Color barColor =
-        complete ? colors.statusSuccess : colors.primary;
+    // Incomplete fill: lime in dark; darkened-lime in light so the thin bar
+    // reads on the white surface (§8.20.2). Complete uses the success color.
+    final Color barColor = complete
+        ? colors.statusSuccess
+        : (colors.isLight ? colors.textAccent : colors.primary);
 
     return Container(
       decoration: BoxDecoration(

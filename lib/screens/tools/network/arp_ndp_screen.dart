@@ -363,7 +363,9 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
               child: LinearProgressIndicator(
                 value: _total == 0 ? null : _probed / _total,
                 backgroundColor: colors.surface0,
-                color: colors.primary,
+                // Progress fill: lime in dark; darkened-lime in light so a 6px
+                // bar reads on the white surface (§8.20.2).
+                color: colors.isLight ? colors.textAccent : colors.primary,
                 minHeight: 6,
               ),
             ),

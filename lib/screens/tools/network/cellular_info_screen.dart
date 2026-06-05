@@ -407,7 +407,11 @@ class _BarMeter extends StatelessWidget {
               // Ascending heights so the meter reads as a signal staircase.
               height: 8 + i * 4,
               decoration: BoxDecoration(
-                color: i < filled ? colors.primary : colors.border,
+                // Filled segments: lime in dark; darkened-lime in light so the
+                // thin meter bars read on the white surface (§8.20.2).
+                color: i < filled
+                    ? (colors.isLight ? colors.textAccent : colors.primary)
+                    : colors.border,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
