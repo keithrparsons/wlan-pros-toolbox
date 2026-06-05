@@ -21,6 +21,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../../theme/app_color_scheme.dart';
 import '../../theme/app_tokens.dart';
 
 class LabeledField extends StatelessWidget {
@@ -53,6 +54,7 @@ class LabeledField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,9 +79,11 @@ class LabeledField extends StatelessWidget {
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                  // §8.20.3-A: field labels bump 500 → 600 in light.
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
+                    color: colors.textSecondary,
+                    fontWeight:
+                        colors.isLight ? FontWeight.w600 : FontWeight.w500,
                   ),
                 ),
               ),
@@ -94,7 +98,7 @@ class LabeledField extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: text.labelSmall?.copyWith(
-                      color: AppColors.textTertiary,
+                      color: colors.textTertiary,
                     ),
                   ),
                 ),

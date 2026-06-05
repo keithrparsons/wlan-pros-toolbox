@@ -693,5 +693,5 @@ class _SparklinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_SparklinePainter old) =>
-      old.rttsMs.length != rttsMs.length;
+      old.lineColor != lineColor || old.rttsMs.length != rttsMs.length;
 }
