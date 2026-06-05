@@ -1,153 +1,37 @@
-// Tests for the Wi-Fi Capacity Planner calculator.
+// Tests for the Capacity Planner screen.
 //
-// The math is verified against the RF Tools PWA reference (app.js calcCapacity):
-//   concurrent  = ceil(users * conc% / 100)
-//   totalBW     = concurrent * perUser
-//   effectiveAP = apMax * util% / 100
-//   apsByTput   = ceil(totalBW / effectiveAP)
-//   apsByDens   = (maxCli > 0) ? ceil(concurrent / maxCli) : 0
-//   recommended = max(apsByTput, apsByDens, 1)
-// Expected values below were computed from that exact formula so the native app
-// and PWA agree.
+// The screen is no longer a calculator. Keith retired the AP-count math (a
+// single formula can't honestly model real capacity — GL-005 / the truthfulness
+// audit) and replaced it with a read-only informational disclaimer. The tile and
+// the /tools/capacity-planner route are kept so it still resolves where users
+// expect, but there are NO inputs and NO computed result.
 //
-// One widget test confirms the screen pumps inside a phone viewport and renders.
+// These tests verify the disclaimer renders (heading + the three approved body
+// paragraphs) and that the screen exposes no calculator inputs. Both Light and
+// Dark themes pump cleanly (App Mode now ships both). Copy is asserted verbatim
+// against the approved draft.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/capacity_planner_screen.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
+// The approved copy, verbatim — the screen must render this and not reword it.
+const String _heading =
+    'Capacity planning is a design problem, not a calculation.';
+const String _para1Start =
+    'Real Wi-Fi capacity depends on too many moving parts for any single '
+    'formula:';
+const String _para2Start =
+    'A tool that squeezed all of that into a few input boxes would hand you a '
+    'confident number that\'s wrong, which is worse than no number at all.';
+const String _para3Start =
+    'If you need a capacity plan you can trust, bring in a Wi-Fi professional';
+
 void main() {
-  group('Capacity math (pure) — matches PWA app.js calcCapacity', () {
-    test('typical office plan (200 users, 70%, 5/600/50%, 50 max)', () {
-      final CapacityResult? r = CapacityPlannerScreen.compute(
-        users: 200,
-        concurrentPct: 70,
-        perUserMbps: 5,
-        apMaxMbps: 600,
-        targetUtilPct: 50,
-        maxClients: 50,
-      );
-      expect(r, isNotNull);
-      expect(r!.concurrent, 140); // ceil(200 * 0.70)
-      expect(r.totalBwMbps, 700); // 140 * 5
-      expect(r.apsByThroughput, 3); // ceil(700 / 300)
-      expect(r.apsByDensity, 3); // ceil(140 / 50)
-      expect(r.recommended, 3); // max(3, 3, 1)
-    });
-
-    test('concurrent count rounds up (ceil)', () {
-      // ceil(101 * 0.55) = ceil(55.55) = 56
-      final CapacityResult? r = CapacityPlannerScreen.compute(
-        users: 101,
-        concurrentPct: 55,
-        perUserMbps: 2,
-        apMaxMbps: 1000,
-        targetUtilPct: 50,
-      );
-      expect(r!.concurrent, 56);
-      expect(r.totalBwMbps, 112); // 56 * 2
-      expect(r.apsByThroughput, 1); // ceil(112 / 500)
-    });
-
-    test('density check drives the recommendation when it exceeds throughput',
-        () {
-      // throughput needs few APs, but 300 concurrent at 50/AP forces 6.
-      // concurrent = ceil(500 * 0.60) = 300
-      // totalBW = 300 * 2 = 600; effectiveAP = 1000 * 0.50 = 500
-      // apsByTput = ceil(600/500) = 2; apsByDens = ceil(300/50) = 6
-      final CapacityResult? r = CapacityPlannerScreen.compute(
-        users: 500,
-        concurrentPct: 60,
-        perUserMbps: 2,
-        apMaxMbps: 1000,
-        targetUtilPct: 50,
-        maxClients: 50,
-      );
-      expect(r!.apsByThroughput, 2);
-      expect(r.apsByDensity, 6);
-      expect(r.recommended, 6); // max(2, 6, 1)
-    });
-
-    test('no max-clients disables the density check (apsByDensity = 0)', () {
-      final CapacityResult? r = CapacityPlannerScreen.compute(
-        users: 200,
-        concurrentPct: 70,
-        perUserMbps: 5,
-        apMaxMbps: 600,
-        targetUtilPct: 50,
-        maxClients: null,
-      );
-      expect(r!.apsByDensity, 0);
-      expect(r.recommended, r.apsByThroughput); // falls back to throughput
-    });
-
-    test('recommended never drops below 1', () {
-      // Tiny demand: 1 user, 1 Mbps, huge AP. apsByTput = ceil(1/500) = 1.
-      final CapacityResult? r = CapacityPlannerScreen.compute(
-        users: 1,
-        concurrentPct: 100,
-        perUserMbps: 1,
-        apMaxMbps: 1000,
-        targetUtilPct: 50,
-      );
-      expect(r!.recommended, 1);
-    });
-  });
-
-  group('Capacity math — invalid input returns null (PWA showError guards)', () {
-    test('missing required field → null', () {
-      expect(
-        CapacityPlannerScreen.compute(
-          users: null,
-          concurrentPct: 70,
-          perUserMbps: 5,
-          apMaxMbps: 600,
-          targetUtilPct: 50,
-        ),
-        isNull,
-      );
-    });
-
-    test('non-positive required field → null', () {
-      expect(
-        CapacityPlannerScreen.compute(
-          users: 200,
-          concurrentPct: 0,
-          perUserMbps: 5,
-          apMaxMbps: 600,
-          targetUtilPct: 50,
-        ),
-        isNull,
-      );
-      expect(
-        CapacityPlannerScreen.compute(
-          users: 200,
-          concurrentPct: 70,
-          perUserMbps: 5,
-          apMaxMbps: -10,
-          targetUtilPct: 50,
-        ),
-        isNull,
-      );
-    });
-
-    test('non-positive max-clients is treated as no density check', () {
-      final CapacityResult? r = CapacityPlannerScreen.compute(
-        users: 200,
-        concurrentPct: 70,
-        perUserMbps: 5,
-        apMaxMbps: 600,
-        targetUtilPct: 50,
-        maxClients: 0,
-      );
-      expect(r, isNotNull);
-      expect(r!.apsByDensity, 0);
-    });
-  });
-
-  group('CapacityPlannerScreen widget', () {
-    testWidgets('renders title, input labels, and headline output', (
+  group('CapacityPlannerScreen — informational disclaimer', () {
+    testWidgets('renders the AppBar title, heading, and all three paragraphs', (
       tester,
     ) async {
       await _withViewport(tester, const Size(375, 900), () async {
@@ -159,19 +43,21 @@ void main() {
         );
         await tester.pumpAndSettle();
 
+        // AppBar title preserved so the tile resolves where users expect.
         expect(find.text('Capacity Planner'), findsWidgets);
-        expect(find.text('Total users'), findsOneWidget);
-        expect(find.text('Concurrent usage'), findsOneWidget);
-        expect(find.text('AP max throughput'), findsOneWidget);
-        expect(find.text('Recommended access points'), findsOneWidget);
-        // Six inputs: users, conc, per-user, ap-max, util, max-clients.
-        expect(find.byType(TextField), findsNWidgets(6));
+
+        // Heading rendered verbatim.
+        expect(find.text(_heading), findsOneWidget);
+
+        // The three approved body paragraphs. textContaining matches the full
+        // paragraph by its opening clause (paragraphs render as single strings).
+        expect(find.textContaining(_para1Start), findsOneWidget);
+        expect(find.text(_para2Start), findsOneWidget);
+        expect(find.textContaining(_para3Start), findsOneWidget);
       });
     });
 
-    testWidgets('typing a full valid plan renders the recommended AP count', (
-      tester,
-    ) async {
+    testWidgets('exposes NO calculator inputs (no text fields)', (tester) async {
       await _withViewport(tester, const Size(375, 900), () async {
         await tester.pumpWidget(
           MaterialApp(
@@ -181,25 +67,17 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final Finder fields = find.byType(TextField);
-        await tester.enterText(fields.at(0), '200'); // users
-        await tester.enterText(fields.at(1), '70'); // conc %
-        await tester.enterText(fields.at(2), '5'); // per-user Mbps
-        await tester.enterText(fields.at(3), '600'); // AP max Mbps
-        await tester.enterText(fields.at(4), '50'); // util %
-        await tester.enterText(fields.at(5), '50'); // max clients
-        await tester.pump();
-
-        // recommended = 3, concurrent = 140, demand = 700 Mbps.
-        expect(find.text('3'), findsWidgets);
-        expect(find.text('140'), findsOneWidget);
-        expect(find.text('700 Mbps'), findsOneWidget);
+        // The calculator is gone: no input fields, and none of its former
+        // field labels or result headline remain.
+        expect(find.byType(TextField), findsNothing);
+        expect(find.text('Total users'), findsNothing);
+        expect(find.text('Concurrent usage'), findsNothing);
+        expect(find.text('AP max throughput'), findsNothing);
+        expect(find.text('Recommended access points'), findsNothing);
       });
     });
 
-    testWidgets('incomplete input keeps the output blank (dash, no crash)', (
-      tester,
-    ) async {
+    testWidgets('the heading is exposed as a semantic header', (tester) async {
       await _withViewport(tester, const Size(375, 900), () async {
         await tester.pumpWidget(
           MaterialApp(
@@ -209,12 +87,31 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final Finder fields = find.byType(TextField);
-        // Only one required field filled → still blank.
-        await tester.enterText(fields.at(0), '200');
-        await tester.pump();
+        // The heading must carry Semantics(header: true) for WCAG 2.2 SC 1.3.1.
+        // The card's text merges into one semantics node (label spans the whole
+        // card), so assert the isHeader flag directly rather than exact-matching
+        // the label.
+        final SemanticsNode node = tester.getSemantics(find.text(_heading));
+        expect(
+          node.getSemanticsData().flagsCollection.isHeader,
+          isTrue,
+          reason: 'Heading must carry Semantics(header: true) for SC 1.3.1.',
+        );
+      });
+    });
 
-        expect(find.text('—'), findsWidgets);
+    testWidgets('renders cleanly under the Light theme too', (tester) async {
+      await _withViewport(tester, const Size(375, 900), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.light(),
+            home: const CapacityPlannerScreen(),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text(_heading), findsOneWidget);
+        expect(find.byType(TextField), findsNothing);
       });
     });
   });

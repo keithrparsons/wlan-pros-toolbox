@@ -638,7 +638,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       ToolEntry(
         id: 'capacity-planner',
         title: 'Capacity Planner',
-        description: 'Recommended AP count by users and demand',
+        description: 'Why capacity planning needs a pro, not a calculator',
         routeName: '/tools/capacity-planner',
         isLive: true,
         subgroup: 'Capacity & Power',
