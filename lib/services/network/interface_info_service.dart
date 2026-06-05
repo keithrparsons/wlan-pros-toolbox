@@ -39,6 +39,7 @@ import 'dart:io';
 import 'package:network_info_plus/network_info_plus.dart';
 
 import 'connected_ap.dart';
+import 'connected_ap_cache.dart';
 import 'wifi_details_bridge.dart';
 import 'wifi_info_adapter.dart';
 
@@ -169,12 +170,15 @@ class InterfaceInfoService {
     NetworkInfo? networkInfo,
     Future<List<NetworkInterface>> Function()? interfaceLister,
     ConnectedApRead? connectedApReader,
+    ConnectedApCache? connectedApCache,
   })  : _networkInfo = networkInfo ?? NetworkInfo(),
         _interfaceLister = interfaceLister ?? _defaultLister,
+        _cache = connectedApCache ?? ConnectedApCache.instance,
         _readConnectedAp = connectedApReader ?? _defaultConnectedApRead;
 
   final NetworkInfo _networkInfo;
   final Future<List<NetworkInterface>> Function() _interfaceLister;
+  final ConnectedApCache _cache;
   final ConnectedApRead _readConnectedAp;
 
   static Future<List<NetworkInterface>> _defaultLister() {
@@ -285,11 +289,24 @@ class InterfaceInfoService {
     // IDENTITY (SSID/BSSID/interface/MAC) from the native ConnectedAp subsystem.
     // network_info_plus returns null SSID/BSSID on iOS/macOS — the misleading
     // "not available" Keith flagged — so the identity fields are re-sourced here.
+    //
+    // WARM PATH FIRST (Batch 8, item 1). If any tool (the Wi-Fi Information tool)
+    // has already obtained a reading this session, the shared cache holds it, so
+    // Interface Info shows the same SSID/BSSID WITHOUT re-running the iOS
+    // Shortcut. A cached reading came from a successful read, so authorization is
+    // implied (the macOS Location gate already passed when it was cached). Only
+    // when the cache is cold do we fall to the per-platform no-prompt read below
+    // (which, on iOS, is just `readLatest()` — still no Shortcut bounce).
     ({ConnectedAp? ap, bool authorized}) read;
-    try {
-      read = await _readConnectedAp();
-    } catch (_) {
-      read = (ap: null, authorized: true);
+    final ConnectedAp? cached = _cache.latest;
+    if (cached != null && cached.hasAnyData) {
+      read = (ap: cached, authorized: true);
+    } else {
+      try {
+        read = await _readConnectedAp();
+      } catch (_) {
+        read = (ap: null, authorized: true);
+      }
     }
     final ConnectedAp? ap = read.ap;
 

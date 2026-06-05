@@ -26,6 +26,9 @@ import '../../../services/network/interface_info_service.dart';
 import '../../../services/network/mac_randomization.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/public_ip_service.dart';
+import '../../../services/network/shortcuts_config.dart';
+import '../../../services/network/wifi_details_bridge.dart';
+import '../../../services/network/wifi_info_adapter.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
@@ -34,13 +37,30 @@ import 'network_unavailable_view.dart';
 import 'value_row.dart';
 
 class InterfaceInfoScreen extends StatefulWidget {
-  const InterfaceInfoScreen({super.key, this.service, this.publicIpService});
+  const InterfaceInfoScreen({
+    super.key,
+    this.service,
+    this.publicIpService,
+    this.iosBridge,
+    this.wifiSourceOverride,
+  });
 
   /// Injectable for tests; defaults to the real service off-web.
   final InterfaceInfoService? service;
 
   /// Injectable public-IP fetcher for tests; defaults to the real service.
   final PublicIpService? publicIpService;
+
+  /// Injectable iOS Shortcuts bridge (tests). Drives the on-demand "Refresh
+  /// Wi-Fi" affordance (Batch 8, item 1): fires the one-shot "WLAN Pros Wi-Fi"
+  /// Shortcut so the user can populate the shared reading directly when the
+  /// cache is cold, without first visiting the Wi-Fi Information tool. Defaults
+  /// to the real bridge.
+  final WiFiDetailsBridge? iosBridge;
+
+  /// Forces the Wi-Fi data source (tests). Defaults to the host platform, so the
+  /// iOS-only "Refresh Wi-Fi" affordance is shown only on the iOS Shortcut path.
+  final WifiInfoSource? wifiSourceOverride;
 
   @override
   State<InterfaceInfoScreen> createState() => _InterfaceInfoScreenState();
@@ -50,10 +70,22 @@ class InterfaceInfoScreen extends StatefulWidget {
 /// snapshot, so it carries its own loading / value / unavailable state.
 enum _PublicIpStatus { loading, loaded, unavailable }
 
-class _InterfaceInfoScreenState extends State<InterfaceInfoScreen> {
+class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
+    with WidgetsBindingObserver {
   InterfaceInfoService? _service;
   PublicIpService? _publicIpService;
   Future<InterfaceInfoSnapshot>? _future;
+
+  /// iOS Shortcuts bridge for the on-demand "Refresh Wi-Fi" affordance, and the
+  /// resolved Wi-Fi source so the affordance only appears on the iOS Shortcut
+  /// path (item 1). Both null off the supported/native path.
+  WiFiDetailsBridge? _iosBridge;
+  WifiInfoSource? _wifiSource;
+
+  /// True while the one-shot "WLAN Pros Wi-Fi" Shortcut bounce is in flight, so
+  /// the Refresh Wi-Fi button shows a pending state and the resume re-read knows
+  /// to expect a freshly stored payload.
+  bool _refreshingWifi = false;
 
   // The resolved snapshot, mirrored out of the FutureBuilder so the §8.16 copy
   // builder can read the current result and the affordance re-enables when the
@@ -72,8 +104,58 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen> {
     if (NetworkSupport.interfaceInfoSupported) {
       _service = widget.service ?? InterfaceInfoService();
       _publicIpService = widget.publicIpService ?? PublicIpService();
+      _wifiSource = widget.wifiSourceOverride ?? WifiInfoSourceResolver.resolve();
+      // The on-demand Refresh Wi-Fi affordance is the iOS Shortcut path only;
+      // macOS already re-reads the link directly via the AppBar Refresh.
+      if (_wifiSource == WifiInfoSource.iosShortcuts) {
+        _iosBridge = widget.iosBridge ?? WiFiDetailsBridge();
+        WidgetsBinding.instance.addObserver(this);
+      }
       _load();
     }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // iOS: the one-shot "WLAN Pros Wi-Fi" Shortcut bounces the user to the
+    // Shortcuts app and back. On return, re-read so the freshly stored Wi-Fi
+    // payload (now in the shared cache via readLatest) surfaces here without a
+    // manual Refresh tap.
+    if (state == AppLifecycleState.resumed && _refreshingWifi) {
+      _refreshingWifi = false;
+      if (mounted) _load();
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_iosBridge != null) {
+      WidgetsBinding.instance.removeObserver(this);
+    }
+    super.dispose();
+  }
+
+  /// iOS on-demand "Refresh Wi-Fi" (item 1). Fires the one-shot "WLAN Pros Wi-Fi"
+  /// Shortcut, which harvests the connected AP and stores it where the shared
+  /// cache / readLatest path picks it up. This IS a user-initiated bounce to the
+  /// Shortcuts app — acceptable because the user explicitly asked to read the
+  /// Wi-Fi identity; it is NOT an at-launch auto-run. On resume the snapshot
+  /// re-reads (see [didChangeAppLifecycleState]). A failure to open the Shortcut
+  /// leaves the row honestly unchanged.
+  Future<void> _refreshWifi() async {
+    final WiFiDetailsBridge? bridge = _iosBridge;
+    if (bridge == null) return;
+    setState(() => _refreshingWifi = true);
+    final bool opened =
+        await bridge.runShortcut(ShortcutsConfig.kCompanionShortcutName);
+    if (!mounted) return;
+    if (!opened) {
+      // Could not open the Shortcut (missing / not installed). Drop the pending
+      // state; the row stays as-is and the user can install it from the Wi-Fi
+      // Information tool. No fabricated value (GL-005).
+      setState(() => _refreshingWifi = false);
+    }
+    // When opened, the bounce is now in flight; the resume handler re-reads.
   }
 
   void _load() {
@@ -270,6 +352,11 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen> {
               isDesktop: isDesktop,
               publicIpStatus: _publicIpStatus,
               publicIp: _publicIp,
+              // iOS-only on-demand Wi-Fi read. Null off the iOS Shortcut path so
+              // the affordance never shows where the link is read directly.
+              onRefreshWifi:
+                  _wifiSource == WifiInfoSource.iosShortcuts ? _refreshWifi : null,
+              refreshingWifi: _refreshingWifi,
             );
           },
         );
@@ -285,6 +372,8 @@ class _Success extends StatelessWidget {
     required this.isDesktop,
     required this.publicIpStatus,
     required this.publicIp,
+    required this.onRefreshWifi,
+    required this.refreshingWifi,
   });
 
   final InterfaceInfoSnapshot data;
@@ -292,6 +381,13 @@ class _Success extends StatelessWidget {
   final bool isDesktop;
   final _PublicIpStatus publicIpStatus;
   final String? publicIp;
+
+  /// iOS-only: fires the one-shot Wi-Fi Shortcut to populate SSID/BSSID on
+  /// demand (item 1). Null off the iOS Shortcut path.
+  final Future<void> Function()? onRefreshWifi;
+
+  /// True while the Wi-Fi Shortcut bounce is in flight (button pending state).
+  final bool refreshingWifi;
 
   @override
   Widget build(BuildContext context) {
@@ -362,6 +458,11 @@ class _Success extends StatelessWidget {
   Widget _wifiCard(BuildContext context) {
     final WifiLinkInfo w = data.wifi;
     final bool showLocationHint = w.ssid == null && w.locationNeeded;
+    // iOS Refresh Wi-Fi affordance: shown when the iOS path is active AND the
+    // network name has not been read this session (cold cache). Once any tool
+    // has a reading, the cache fills it in and the prompt disappears (item 1).
+    final bool showWifiRefresh =
+        onRefreshWifi != null && w.ssid == null && !w.locationNeeded;
     return _Card(
       title: 'Wi-Fi link',
       child: Column(
@@ -380,6 +481,11 @@ class _Success extends StatelessWidget {
             identifier: true,
           ),
           _MacTypeRow(hardwareAddress: w.hardwareAddress),
+          if (showWifiRefresh)
+            _RefreshWifiPrompt(
+              onRefresh: onRefreshWifi!,
+              pending: refreshingWifi,
+            ),
         ],
       ),
     );
@@ -574,6 +680,62 @@ class _LocationHint extends StatelessWidget {
         'Enable it in System Settings, or read the name in the Wi-Fi '
         'Information tool, which can request it.',
         style: text.bodySmall?.copyWith(color: AppColors.textTertiary),
+      ),
+    );
+  }
+}
+
+/// iOS-only on-demand "Refresh Wi-Fi" prompt (Batch 8, item 1). Shown under the
+/// Wi-Fi link rows when the network name has not been read this session. Tapping
+/// it fires the one-shot "WLAN Pros Wi-Fi" Shortcut (a user-initiated bounce to
+/// the Shortcuts app and back), which harvests the connected AP and stores it
+/// where the shared cache picks it up — so the user can populate SSID/BSSID here
+/// directly, without first opening the Wi-Fi Information tool. This is NOT an
+/// at-launch auto-run; it fires only on an explicit tap.
+class _RefreshWifiPrompt extends StatelessWidget {
+  const _RefreshWifiPrompt({required this.onRefresh, required this.pending});
+
+  final Future<void> Function() onRefresh;
+  final bool pending;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.xs),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'The network name has not been read yet this session. Read it from '
+            'the connected network — this opens the WLAN Pros Wi-Fi Shortcut, '
+            'then returns here.',
+            style: text.bodySmall?.copyWith(color: AppColors.textTertiary),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Semantics(
+              button: true,
+              enabled: !pending,
+              label: 'Refresh Wi-Fi by running the WLAN Pros Wi-Fi Shortcut',
+              child: OutlinedButton.icon(
+                onPressed: pending ? null : () => onRefresh(),
+                icon: pending
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.primary,
+                        ),
+                      )
+                    : const Icon(Icons.wifi_find, size: 18),
+                label: Text(pending ? 'Reading…' : 'Refresh Wi-Fi'),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

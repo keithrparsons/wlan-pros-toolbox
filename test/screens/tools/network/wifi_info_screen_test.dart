@@ -21,6 +21,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/network_unavailable_view.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/wifi_info_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
+import 'package:wlan_pros_toolbox/services/network/connected_ap_cache.dart';
 import 'package:wlan_pros_toolbox/services/network/mac_oui_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
@@ -684,6 +685,96 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(bridge.monitoringActive, isFalse);
+    });
+
+    testWidgets(
+        'backgrounding pauses live sampling; foreground resumes it (item 5)',
+        (tester) async {
+      final bridge = _FakeBridge(
+        everReceived: true,
+        latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
+      );
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        ),
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+      expect(bridge.monitoringActive, isTrue);
+      final int runsAfterStart = bridge.runShortcutCalls;
+
+      // App goes to the background: the live loop must pause (flag cleared) the
+      // same way the macOS poll pauses — no more sampling while backgrounded.
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pumpAndSettle();
+      expect(bridge.monitoringActive, isFalse);
+
+      // App returns to the foreground: streaming resumes automatically (flag set
+      // again + the recursive Shortcut re-fired once), so the user need not tap
+      // Start again.
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(bridge.monitoringActive, isTrue);
+      expect(bridge.runShortcutCalls, greaterThan(runsAfterStart));
+    });
+
+    testWidgets('a streamed reading is written to the shared cache (item 1)',
+        (tester) async {
+      final cache = ConnectedApCache();
+      final bridge = _FakeBridge(
+        everReceived: true,
+        latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
+      );
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          iosBridge: bridge,
+          connectedApCache: cache,
+        ),
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+
+      bridge.controller.add(WiFiDetails.fromMap(const <String, dynamic>{
+        'SSID': 'KeithNet',
+        'BSSID': 'a4:83:e7:00:11:22',
+        'RSSI': -55,
+      }));
+      await tester.pumpAndSettle();
+
+      // The Wi-Fi tool wrote its reading into the shared cache, so Interface Info
+      // can now show the same SSID/BSSID without re-running the iOS Shortcut.
+      expect(cache.hasReading, isTrue);
+      expect(cache.latest?.ssid, 'KeithNet');
+      expect(cache.latest?.bssid, 'a4:83:e7:00:11:22');
+    });
+
+    testWidgets('an idle (not-streaming) screen is not paused on background',
+        (tester) async {
+      final bridge = _FakeBridge(
+        everReceived: true,
+        latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
+      );
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        ),
+      ));
+      await tester.pumpAndSettle();
+      // Never started streaming. Backgrounding must be a no-op, and foreground
+      // must NOT auto-start a stream the user never asked for.
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pumpAndSettle();
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(bridge.monitoringActive, isFalse);
+      expect(bridge.runShortcutCalls, 0);
+      expect(find.text('Start'), findsOneWidget);
     });
   });
 

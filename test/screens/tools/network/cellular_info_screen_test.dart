@@ -268,6 +268,34 @@ void main() {
 
       expect(bridge.monitoringActive, isFalse);
     });
+
+    testWidgets(
+        'backgrounding pauses live sampling; foreground resumes it (item 5)',
+        (tester) async {
+      final bridge = _FakeBridge(everReceived: true, latest: _sample());
+      await tester.pumpWidget(host(
+        CellularInfoScreen(
+          sourceOverride: CellularInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        ),
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+      expect(bridge.monitoringActive, isTrue);
+      final int runsAfterStart = bridge.runShortcutCalls;
+
+      // Background → the cellular live loop pauses (flag cleared).
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pumpAndSettle();
+      expect(bridge.monitoringActive, isFalse);
+
+      // Foreground → streaming resumes automatically.
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(bridge.monitoringActive, isTrue);
+      expect(bridge.runShortcutCalls, greaterThan(runsAfterStart));
+    });
   });
 
   group('CellularInfoScreen — platform fallbacks', () {

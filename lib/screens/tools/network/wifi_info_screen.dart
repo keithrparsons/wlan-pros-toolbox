@@ -48,6 +48,7 @@ import 'package:net_quality/net_quality.dart' show QualityGrade, QualityGradeLab
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/connected_ap.dart';
+import '../../../services/network/connected_ap_cache.dart';
 import '../../../services/network/mac_oui_service.dart';
 import '../../../services/network/mac_randomization.dart';
 import '../../../services/network/network_support.dart';
@@ -77,10 +78,17 @@ class WifiInfoScreen extends StatefulWidget {
     this.iosBridge,
     this.ouiService,
     this.securityService,
+    this.connectedApCache,
   });
 
   /// Forces a specific data source (tests). Defaults to the host platform.
   final WifiInfoSource? sourceOverride;
+
+  /// Injectable shared connected-AP cache (tests). Defaults to the process-wide
+  /// [ConnectedApCache.instance]. The Wi-Fi Information tool WRITES every
+  /// reading it obtains here so the Interface Info tool can read the same
+  /// identity without re-running the iOS Shortcut (Batch 8, item 1).
+  final ConnectedApCache? connectedApCache;
 
   /// Injectable macOS adapter (tests). Defaults to the real CoreWLAN adapter.
   final WifiInfoAdapter? macAdapter;
@@ -114,6 +122,12 @@ class WifiInfoScreen extends StatefulWidget {
 class _WifiInfoScreenState extends State<WifiInfoScreen>
     with WidgetsBindingObserver {
   late final WifiInfoSource _source;
+
+  /// Shared app-wide cache the tool WRITES every reading into (Batch 8, item 1),
+  /// so Interface Info can show the same SSID/BSSID/etc. without re-bouncing to
+  /// the iOS Shortcut. Resolved once in [initState] from the injected cache or
+  /// the process-wide singleton.
+  late final ConnectedApCache _apCache;
 
   // ---- macOS (CoreWLAN snapshot) state ----
   WifiInfoAdapter? _macAdapter;
@@ -159,6 +173,12 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   /// missing / not installed). Surfaced as the honest error in the Live bar.
   bool _liveTriggerError = false;
 
+  /// True when live monitoring was paused because the app went to the
+  /// background, so [didChangeAppLifecycleState] knows to resume streaming on
+  /// the next foreground rather than leaving the user to tap Start again
+  /// (Batch 8, item 5 — pause-and-resume, not a hard stop).
+  bool _pausedForBackground = false;
+
   // ---- AP-vendor (OUI) lookup state (both platforms) ----
 
   /// Bundled IEEE OUI resolver. Loaded once from the bundled asset (or injected
@@ -181,6 +201,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   void initState() {
     super.initState();
     _source = widget.sourceOverride ?? WifiInfoSourceResolver.resolve();
+    _apCache = widget.connectedApCache ?? ConnectedApCache.instance;
     _loadOuiTable();
 
     switch (_source) {
@@ -210,14 +231,36 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // iOS: on resume, re-resolve so a payload delivered while backgrounded lands
-    // and any persisted monitoring flag resumes the live state.
-    if (state == AppLifecycleState.resumed &&
-        _source == WifiInfoSource.iosShortcuts) {
-      _liveController?.load();
-      // Re-read the native security + BSSID so a Location grant made in Settings
-      // (while backgrounded) lands without an app relaunch.
-      _fetchIosSecurity();
+    // iOS: pause the live sampling loop when the app leaves the foreground, and
+    // resume on return — mirroring the macOS poll's background-pause below
+    // (Batch 8, item 5). Without this the recursive companion Shortcut keeps
+    // running while the app is backgrounded; pausing stops the sampling the same
+    // way leaving the screen does.
+    if (_source == WifiInfoSource.iosShortcuts) {
+      if (state == AppLifecycleState.resumed) {
+        // Re-resolve so a payload delivered while backgrounded lands AND any
+        // persisted monitoring flag resumes the live state.
+        _liveController?.load();
+        // Re-read the native security + BSSID so a Location grant made in
+        // Settings (while backgrounded) lands without an app relaunch.
+        _fetchIosSecurity();
+        // If we paused streaming for the background, resume it now (re-arm the
+        // flag and re-fire the recursive Shortcut once) so the user does not
+        // have to tap Start again.
+        if (_pausedForBackground) {
+          _pausedForBackground = false;
+          _startLive();
+        }
+      } else if (state == AppLifecycleState.inactive ||
+          state == AppLifecycleState.paused ||
+          state == AppLifecycleState.hidden) {
+        // Only pause an active stream; an idle screen has nothing to stop.
+        final WifiMonitorController? c = _liveController;
+        if (c != null && c.isStreaming) {
+          _pausedForBackground = true;
+          c.stopMonitoring();
+        }
+      }
     }
 
     // macOS: pause the CoreWLAN poll while backgrounded (no point re-reading a
@@ -278,7 +321,11 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     final WiFiDetails? d = c.details;
     if (d == null || d == _lastCharted) return;
     _lastCharted = d;
-    series.add(ConnectedAp.fromWifiDetails(d));
+    final ConnectedAp reading = ConnectedAp.fromWifiDetails(d);
+    series.add(reading);
+    // Share the security-enriched reading app-wide (item 1): Interface Info then
+    // shows this SSID/BSSID without re-bouncing the user to the Shortcut.
+    _apCache.update(_enrichIos(reading));
   }
 
   /// Live Start: raise the monitoring flag AND fire the recursive Shortcut once
@@ -361,6 +408,15 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     final WifiSecurityInfo info = await svc.fetch();
     if (!mounted) return;
     setState(() => _iosSecurity = info);
+    // The native NEHotspotNetwork read yields SSID/BSSID/security even before
+    // the first Shortcut RF sample. Cache that identity so Interface Info shows
+    // the network name without a Shortcut bounce (item 1). The current live
+    // reading (if any) is enriched and re-cached, otherwise a minimal model
+    // carrying just the native identity is cached.
+    if (info.available) {
+      final ConnectedAp? ap = _currentAp();
+      if (ap != null) _apCache.update(ap);
+    }
   }
 
   /// iOS: requests Location-When-In-Use (the NEHotspotNetwork gate), then
@@ -442,6 +498,8 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         _macLoading = false;
       });
       _appendMacSample(info);
+      // Share the reading app-wide so Interface Info shows the same identity.
+      _apCache.update(info);
       if (manual && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -524,6 +582,8 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         _macError = null;
       });
       _appendMacSample(info);
+      // Keep the shared cache current so Interface Info tracks the live link.
+      _apCache.update(info);
     } on WifiInfoUnavailable {
       // Transient read failure: keep the last good snapshot + series on screen.
     } catch (_) {
