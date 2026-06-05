@@ -30,6 +30,7 @@ import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/ping_sweep_service.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -260,12 +261,13 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
   }
 
   Widget _formCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -282,7 +284,7 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
               keyboardType: TextInputType.url,
               textInputAction: TextInputAction.go,
               onSubmitted: (_) => _sweeping ? null : _start(),
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(hintText: '192.168.1.0/24'),
             ),
           ),
@@ -290,13 +292,13 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
           Text(
             'CIDR (192.168.1.0/24) or a range (192.168.1.1-50). '
             'Capped at ${PingSweepService.maxHosts} hosts (a /24).',
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
             'TCP port',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -314,14 +316,14 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
               'TCP-probe sweep: a host is listed when it answers a TCP '
               'handshake on port $_port. This is reachability on that port — '
               'not ICMP liveness. A host silent on TCP $_port may still be up.',
-              style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
             ),
           ),
           if (_error != null) ...[
             const SizedBox(height: AppSpacing.sm),
             Text(
               _error!,
-              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
             ),
           ],
           const SizedBox(height: AppSpacing.md),
@@ -335,6 +337,7 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
   }
 
   Widget _portChip(BuildContext context, int port) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final bool selected = _port == port;
     return ChoiceChip(
@@ -342,11 +345,11 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
       selected: selected,
       showCheckmark: false,
       labelStyle: text.labelMedium?.copyWith(
-        color: selected ? AppColors.secondary : AppColors.textSecondary,
+        color: selected ? colors.onPrimary : colors.textSecondary,
         fontWeight: FontWeight.w500,
       ),
-      selectedColor: AppColors.primary,
-      backgroundColor: AppColors.surface2,
+      selectedColor: colors.primary,
+      backgroundColor: colors.surface2,
       // WCAG 2.5.8 / §8.3 — guarantee ≥48dp hit region.
       materialTapTargetSize: MaterialTapTargetSize.padded,
       // §8.3 — shared resolver: idle/selected/disabled borders + 2px lime
@@ -360,13 +363,14 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
   }
 
   Widget _progressCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final double fraction = _total == 0 ? 0 : _completed / _total;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -378,14 +382,14 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
               Text(
                 _sweeping ? 'Scanning…' : 'Sweep complete',
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                   letterSpacing: 0.4,
                 ),
               ),
               Text(
                 '$_completed / $_total · $_live live',
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ],
@@ -404,9 +408,9 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
               child: LinearProgressIndicator(
                 value: _sweeping ? fraction : 1.0,
                 minHeight: 6,
-                backgroundColor: AppColors.surface2,
-                valueColor: const AlwaysStoppedAnimation<Color>(
-                  AppColors.primary,
+                backgroundColor: colors.surface2,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  colors.textAccent,
                 ),
               ),
             ),
@@ -417,6 +421,7 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
   }
 
   Widget _resultsCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -434,9 +439,9 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -448,7 +453,7 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
               Text(
                 'Responsive hosts',
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                   letterSpacing: 0.4,
                 ),
               ),
@@ -460,7 +465,7 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
                     textAlign: TextAlign.right,
                     // Address-range label is an identifier → Roboto Mono (§8.5).
                     style: mono.robotoMono.copyWith(
-                      color: AppColors.textTertiary,
+                      color: colors.textTertiary,
                     ),
                   ),
                 ),
@@ -475,7 +480,7 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
                 'address${_total == 1 ? '' : 'es'}. That does not mean the '
                 'subnet is empty — hosts that are ICMP-only or that firewall '
                 'TCP $_port will not appear. Try another common port.',
-                style: text.bodyLarge?.copyWith(color: AppColors.textTertiary),
+                style: text.bodyLarge?.copyWith(color: colors.textTertiary),
               ),
             )
           else ...[
@@ -488,7 +493,7 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
             Text(
               'Responded on TCP $_port — reachability on that port, not ICMP '
               'liveness. Silent hosts may still be up.',
-              style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
             ),
           ],
         ],
@@ -502,6 +507,7 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
     TextTheme text,
     AppMonoText mono,
   ) {
+    final AppColorScheme colors = context.colors;
     final String rttLabel = r.rttMs == null
         ? '—'
         : '${r.rttMs!.toStringAsFixed(1)} ms';
@@ -519,10 +525,10 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
           child: Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.check_circle,
                 size: 16,
-                color: AppColors.primary,
+                color: colors.textAccent,
               ),
               const SizedBox(width: AppSpacing.xs),
               Expanded(
@@ -531,7 +537,7 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
                   // Responsive host IP is an identifier → Roboto Mono (§8.5).
                   // The RTT label stays DM Mono.
                   style: mono.robotoMono.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -539,7 +545,7 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
               Text(
                 rttLabel,
                 style: mono.inlineCode.copyWith(
-                  color: AppColors.primary,
+                  color: colors.textAccent,
                   fontWeight: FontWeight.w500,
                 ),
               ),

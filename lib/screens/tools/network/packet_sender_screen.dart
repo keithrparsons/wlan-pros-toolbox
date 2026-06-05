@@ -24,6 +24,7 @@ import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/packet_sender_service.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -261,12 +262,13 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
   }
 
   Widget _formCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -276,7 +278,7 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
           Text(
             'Transport',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -299,7 +301,7 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
               enableSuggestions: false,
               keyboardType: TextInputType.url,
               textInputAction: TextInputAction.next,
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(hintText: '192.168.1.1'),
             ),
           ),
@@ -316,7 +318,7 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
               inputFormatters: <TextInputFormatter>[
                 FilteringTextInputFormatter.digitsOnly,
               ],
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(hintText: '80'),
             ),
           ),
@@ -332,7 +334,7 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
               keyboardType: TextInputType.text,
               minLines: 1,
               maxLines: 4,
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(
                 hintText: r'GET / HTTP/1.0\r\n\r\n  or  \x00\xff',
               ),
@@ -341,7 +343,7 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
           const SizedBox(height: 2),
           Text(
             r'Plain text, or hex escapes: \xNN for a byte, plus \r \n \t \0 \\.',
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
           if (_inputError != null) ...[
             const SizedBox(height: AppSpacing.sm),
@@ -355,7 +357,7 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
               child: Text(
                 _inputError!,
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ),
@@ -370,9 +372,9 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
                     child: Semantics(
                       label: 'Sending…',
                       liveRegion: true,
-                      child: const CircularProgressIndicator(
+                      child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.secondary,
+                        color: colors.onPrimary,
                       ),
                     ),
                   )
@@ -388,6 +390,7 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
     PacketTransport transport,
     String label,
   ) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final bool selected = _transport == transport;
     return ChoiceChip(
@@ -395,11 +398,11 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
       selected: selected,
       showCheckmark: false,
       labelStyle: text.labelMedium?.copyWith(
-        color: selected ? AppColors.secondary : AppColors.textSecondary,
+        color: selected ? colors.onPrimary : colors.textSecondary,
         fontWeight: FontWeight.w500,
       ),
-      selectedColor: AppColors.primary,
-      backgroundColor: AppColors.surface2,
+      selectedColor: colors.primary,
+      backgroundColor: colors.surface2,
       materialTapTargetSize: MaterialTapTargetSize.padded,
       side: AppTheme.chipSide(Theme.of(context).brightness),
       shape: RoundedRectangleBorder(
@@ -462,6 +465,7 @@ class _ReplyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -472,10 +476,10 @@ class _ReplyCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
-          color: noReply ? AppColors.border : AppColors.borderStrong,
+          color: noReply ? colors.border : colors.borderStrong,
           width: 1,
         ),
       ),
@@ -488,14 +492,14 @@ class _ReplyCard extends StatelessWidget {
               Icon(
                 noReply ? Icons.outbox_outlined : Icons.inbox_outlined,
                 size: 24,
-                color: AppColors.textSecondary,
+                color: colors.textSecondary,
               ),
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(
                   noReply ? 'Sent — no reply' : 'Reply received',
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -514,7 +518,7 @@ class _ReplyCard extends StatelessWidget {
                   : 'Connected and sent $transportLabel '
                         '(${result.bytesSent} bytes), but the service returned '
                         'nothing before the read went idle.',
-              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
             ),
           const SizedBox(height: AppSpacing.sm),
           _row(context, 'Transport', transportLabel, mono),
@@ -541,9 +545,9 @@ class _ReplyCard extends StatelessWidget {
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: AppColors.surface0,
+                color: colors.surface0,
                 borderRadius: BorderRadius.circular(AppRadius.control),
-                border: Border.all(color: AppColors.border, width: 1),
+                border: Border.all(color: colors.border, width: 1),
               ),
               padding: const EdgeInsets.all(AppSpacing.sm),
               child: SelectableText(
@@ -551,7 +555,7 @@ class _ReplyCard extends StatelessWidget {
                     ? PacketSenderService.toHex(result.received)
                     : PacketSenderService.decodeText(result.received),
                 style: mono.inlineCode.copyWith(
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                   fontSize: AppTextSize.caption,
                 ),
               ),
@@ -563,6 +567,7 @@ class _ReplyCard extends StatelessWidget {
   }
 
   Widget _viewChip(BuildContext context, _View v, String label) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final bool selected = view == v;
     return ChoiceChip(
@@ -570,11 +575,11 @@ class _ReplyCard extends StatelessWidget {
       selected: selected,
       showCheckmark: false,
       labelStyle: text.labelMedium?.copyWith(
-        color: selected ? AppColors.secondary : AppColors.textSecondary,
+        color: selected ? colors.onPrimary : colors.textSecondary,
         fontWeight: FontWeight.w500,
       ),
-      selectedColor: AppColors.primary,
-      backgroundColor: AppColors.surface2,
+      selectedColor: colors.primary,
+      backgroundColor: colors.surface2,
       materialTapTargetSize: MaterialTapTargetSize.padded,
       side: AppTheme.chipSide(Theme.of(context).brightness),
       shape: RoundedRectangleBorder(
@@ -592,6 +597,7 @@ class _ReplyCard extends StatelessWidget {
     bool identifier = false,
   }) {
     final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
       child: Row(
@@ -601,7 +607,7 @@ class _ReplyCard extends StatelessWidget {
             width: 96,
             child: Text(
               label,
-              style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+              style: text.labelMedium?.copyWith(color: colors.textSecondary),
             ),
           ),
           const SizedBox(width: AppSpacing.xs),
@@ -609,7 +615,7 @@ class _ReplyCard extends StatelessWidget {
             child: SelectableText(
               value,
               style: (identifier ? mono.robotoMono : mono.inlineCode).copyWith(
-                color: AppColors.textPrimary,
+                color: colors.textPrimary,
               ),
             ),
           ),
@@ -633,18 +639,19 @@ class _MessageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppColors.textTertiary),
+          Icon(icon, size: 20, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -653,7 +660,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   title,
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -661,7 +668,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   body,
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
               ],

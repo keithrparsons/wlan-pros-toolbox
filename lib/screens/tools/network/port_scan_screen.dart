@@ -22,6 +22,7 @@ import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/port_scan_service.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -271,12 +272,13 @@ class _PortScanScreenState extends State<PortScanScreen> {
   }
 
   Widget _formCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -292,7 +294,7 @@ class _PortScanScreenState extends State<PortScanScreen> {
               enableSuggestions: false,
               keyboardType: TextInputType.url,
               textInputAction: TextInputAction.next,
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(hintText: '192.168.1.1'),
             ),
           ),
@@ -300,7 +302,7 @@ class _PortScanScreenState extends State<PortScanScreen> {
           Text(
             'Ports',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -318,7 +320,7 @@ class _PortScanScreenState extends State<PortScanScreen> {
               child: Text(
                 '${PortScanService.commonPorts.ports.length} well-known '
                 'ports (SSH, HTTP, HTTPS, SMB, RDP, iperf3, …).',
-                style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+                style: text.labelSmall?.copyWith(color: colors.textTertiary),
               ),
             )
           else ...[
@@ -335,7 +337,7 @@ class _PortScanScreenState extends State<PortScanScreen> {
                 autocorrect: false,
                 enableSuggestions: false,
                 keyboardType: TextInputType.text,
-                cursorColor: AppColors.primary,
+                cursorColor: colors.textAccent,
                 decoration: const InputDecoration(
                   hintText: '22, 80, 443, 8000-8100',
                 ),
@@ -346,7 +348,7 @@ class _PortScanScreenState extends State<PortScanScreen> {
             const SizedBox(height: AppSpacing.sm),
             Text(
               _error!,
-              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
             ),
           ],
           const SizedBox(height: AppSpacing.md),
@@ -360,6 +362,7 @@ class _PortScanScreenState extends State<PortScanScreen> {
   }
 
   Widget _modeChip(BuildContext context, _Mode mode, String label) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final bool selected = _mode == mode;
     return ChoiceChip(
@@ -367,11 +370,11 @@ class _PortScanScreenState extends State<PortScanScreen> {
       selected: selected,
       showCheckmark: false,
       labelStyle: text.labelMedium?.copyWith(
-        color: selected ? AppColors.secondary : AppColors.textSecondary,
+        color: selected ? colors.onPrimary : colors.textSecondary,
         fontWeight: FontWeight.w500,
       ),
-      selectedColor: AppColors.primary,
-      backgroundColor: AppColors.surface2,
+      selectedColor: colors.primary,
+      backgroundColor: colors.surface2,
       // WCAG 2.5.8 / §8.3 — guarantee ≥48dp hit region.
       materialTapTargetSize: MaterialTapTargetSize.padded,
       // §8.3 — shared resolver: idle/selected/disabled borders + 2px lime
@@ -385,6 +388,7 @@ class _PortScanScreenState extends State<PortScanScreen> {
   }
 
   Widget _progressCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final double fraction = _total == 0 ? 0 : _completed / _total;
     final int openCount = _results
@@ -392,9 +396,9 @@ class _PortScanScreenState extends State<PortScanScreen> {
         .length;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -406,14 +410,14 @@ class _PortScanScreenState extends State<PortScanScreen> {
               Text(
                 _scanning ? 'Scanning…' : 'Scan complete',
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                   letterSpacing: 0.4,
                 ),
               ),
               Text(
                 '$_completed / $_total · $openCount open',
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ],
@@ -432,9 +436,9 @@ class _PortScanScreenState extends State<PortScanScreen> {
               child: LinearProgressIndicator(
                 value: _scanning ? fraction : 1.0,
                 minHeight: 6,
-                backgroundColor: AppColors.surface2,
-                valueColor: const AlwaysStoppedAnimation<Color>(
-                  AppColors.primary,
+                backgroundColor: colors.surface2,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  colors.textAccent,
                 ),
               ),
             ),
@@ -445,6 +449,7 @@ class _PortScanScreenState extends State<PortScanScreen> {
   }
 
   Widget _resultsCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -469,9 +474,9 @@ class _PortScanScreenState extends State<PortScanScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -480,7 +485,7 @@ class _PortScanScreenState extends State<PortScanScreen> {
           Text(
             'Results',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -491,7 +496,7 @@ class _PortScanScreenState extends State<PortScanScreen> {
               child: Text(
                 'No open ports. The host responded on no scanned port — '
                 'every port was closed or filtered.',
-                style: text.bodyLarge?.copyWith(color: AppColors.textTertiary),
+                style: text.bodyLarge?.copyWith(color: colors.textTertiary),
               ),
             ),
           ...sorted.map((PortResult r) => _portRow(context, r, text, mono)),
@@ -506,15 +511,16 @@ class _PortScanScreenState extends State<PortScanScreen> {
     TextTheme text,
     AppMonoText mono,
   ) {
+    final AppColorScheme colors = context.colors;
     final (Color color, String label, IconData icon) = switch (r.status) {
-      PortStatus.open => (AppColors.primary, 'OPEN', Icons.check_circle),
+      PortStatus.open => (colors.textAccent, 'OPEN', Icons.check_circle),
       PortStatus.closed => (
-        AppColors.textTertiary,
+        colors.textTertiary,
         'CLOSED',
         Icons.cancel_outlined,
       ),
       PortStatus.filtered => (
-        AppColors.textTertiary,
+        colors.textTertiary,
         'FILTERED',
         Icons.shield_outlined,
       ),
@@ -540,7 +546,7 @@ class _PortScanScreenState extends State<PortScanScreen> {
                 child: Text(
                   '${r.port}',
                   style: mono.inlineCode.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -549,7 +555,7 @@ class _PortScanScreenState extends State<PortScanScreen> {
                 child: Text(
                   r.serviceName ?? '—',
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: colors.textSecondary,
                   ),
                 ),
               ),

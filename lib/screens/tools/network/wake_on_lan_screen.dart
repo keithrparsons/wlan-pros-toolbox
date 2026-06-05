@@ -18,6 +18,7 @@ import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/wake_on_lan_service.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -198,12 +199,13 @@ class _WakeOnLanScreenState extends State<WakeOnLanScreen> {
   }
 
   Widget _formCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -224,14 +226,14 @@ class _WakeOnLanScreenState extends State<WakeOnLanScreen> {
                 // part of a MAC. Validation still happens in the service.
                 FilteringTextInputFormatter.allow(RegExp(r'[0-9a-fA-F:\-.\s]')),
               ],
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(hintText: 'AA:BB:CC:DD:EE:FF'),
             ),
           ),
           const SizedBox(height: 2),
           Text(
             'Colons, hyphens, dots, or no separators all work.',
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.sm),
           LabeledField(
@@ -244,7 +246,7 @@ class _WakeOnLanScreenState extends State<WakeOnLanScreen> {
               keyboardType: TextInputType.number,
               textInputAction: TextInputAction.done,
               onSubmitted: (_) => _run(),
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(
                 hintText: '255.255.255.255 (default)',
               ),
@@ -254,13 +256,13 @@ class _WakeOnLanScreenState extends State<WakeOnLanScreen> {
           Text(
             'Use a subnet broadcast (e.g. 192.168.1.255) to reach a host '
             'behind a router that drops the all-ones broadcast.',
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Port',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -275,12 +277,12 @@ class _WakeOnLanScreenState extends State<WakeOnLanScreen> {
                 showCheckmark: false,
                 labelStyle: text.labelMedium?.copyWith(
                   color: selected
-                      ? AppColors.secondary
-                      : AppColors.textSecondary,
+                      ? colors.onPrimary
+                      : colors.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
-                selectedColor: AppColors.primary,
-                backgroundColor: AppColors.surface2,
+                selectedColor: colors.primary,
+                backgroundColor: colors.surface2,
                 materialTapTargetSize: MaterialTapTargetSize.padded,
                 // §8.3 — shared resolver: idle/selected/disabled borders + 2px
                 // lime keyboard-focus ring.
@@ -302,9 +304,9 @@ class _WakeOnLanScreenState extends State<WakeOnLanScreen> {
                     child: Semantics(
                       label: 'Sending magic packet…',
                       liveRegion: true,
-                      child: const CircularProgressIndicator(
+                      child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.secondary,
+                        color: colors.onPrimary,
                       ),
                     ),
                   )
@@ -336,6 +338,7 @@ class _SentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -345,9 +348,9 @@ class _SentCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
+        border: Border.all(color: colors.borderStrong, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -361,14 +364,14 @@ class _SentCard extends StatelessWidget {
               Icon(
                 Icons.send_outlined,
                 size: 24,
-                color: AppColors.textSecondary,
+                color: colors.textSecondary,
               ),
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(
                   'Magic packet sent',
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -383,7 +386,7 @@ class _SentCard extends StatelessWidget {
             'this confirms the packet left this device, not that the target '
             'woke. If it does not wake, check that WoL is enabled in the '
             "target's BIOS/OS and that the broadcast reaches its segment.",
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.sm),
           _row(
@@ -400,7 +403,7 @@ class _SentCard extends StatelessWidget {
           Text(
             'Magic packet (102 bytes)',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
               fontWeight: FontWeight.w600,
             ),
@@ -409,16 +412,16 @@ class _SentCard extends StatelessWidget {
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: AppColors.surface0,
+              color: colors.surface0,
               borderRadius: BorderRadius.circular(AppRadius.control),
-              border: Border.all(color: AppColors.border, width: 1),
+              border: Border.all(color: colors.border, width: 1),
             ),
             padding: const EdgeInsets.all(AppSpacing.sm),
             child: SelectableText(
               hex,
               // Magic-packet hex dump is a hex identifier → Roboto Mono (§8.5).
               style: mono.robotoMono.copyWith(
-                color: AppColors.textPrimary,
+                color: colors.textPrimary,
                 fontSize: AppTextSize.caption,
               ),
             ),
@@ -436,6 +439,7 @@ class _SentCard extends StatelessWidget {
     bool identifier = false,
   }) {
     final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -445,7 +449,7 @@ class _SentCard extends StatelessWidget {
             width: 104,
             child: Text(
               label,
-              style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+              style: text.labelMedium?.copyWith(color: colors.textSecondary),
             ),
           ),
           const SizedBox(width: AppSpacing.xs),
@@ -453,7 +457,7 @@ class _SentCard extends StatelessWidget {
             child: SelectableText(
               value,
               style: (identifier ? mono.robotoMono : mono.inlineCode).copyWith(
-                color: AppColors.textPrimary,
+                color: colors.textPrimary,
               ),
             ),
           ),
@@ -476,18 +480,19 @@ class _MessageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppColors.textTertiary),
+          Icon(icon, size: 20, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -496,7 +501,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   title,
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -504,7 +509,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   body,
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
               ],
