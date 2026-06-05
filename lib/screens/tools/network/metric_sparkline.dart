@@ -5,7 +5,7 @@
 // sparkline is a visual trend reference only (spec §3).
 //
 // Visual language is borrowed from the Ping screen's `_Sparkline`: a lime
-// (`AppColors.primary`) polyline on a `surface2` panel, a single-point dot, and
+// (`colors.textAccent`) polyline on a `surface2` panel, a single-point dot, and
 // token-only sizing. A fixed per-metric y-domain keeps the line's vertical
 // placement stable run to run.
 //

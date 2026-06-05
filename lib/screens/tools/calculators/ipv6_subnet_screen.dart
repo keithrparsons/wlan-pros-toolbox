@@ -34,6 +34,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
@@ -494,12 +495,13 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
   }
 
   Widget _formCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -514,7 +516,7 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
               keyboardType: TextInputType.text,
               textInputAction: TextInputAction.next,
               inputFormatters: _addrFormatters,
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(hintText: '2001:db8::1'),
             ),
           ),
@@ -529,7 +531,7 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
               keyboardType: TextInputType.number,
               textInputAction: TextInputAction.done,
               inputFormatters: _prefixFormatters,
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(hintText: '64'),
             ),
           ),
@@ -537,7 +539,7 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
           Text(
             'Enter an IPv6 address (compressed "::" allowed) and a prefix '
             'length 0–128.',
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -545,12 +547,13 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
   }
 
   Widget _resultsCard(BuildContext context, Ipv6Result r) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
+        border: Border.all(color: colors.borderStrong, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -559,7 +562,7 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
           Text(
             'Subnet',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -623,18 +626,19 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
   }
 
   Widget _errorCard(BuildContext context, String message) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.edit_outlined, size: 20, color: AppColors.textTertiary),
+          Icon(Icons.edit_outlined, size: 20, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -643,7 +647,7 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
                 Text(
                   'Check your input',
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -651,7 +655,7 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
                 Text(
                   message,
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
               ],

@@ -24,6 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -229,11 +230,12 @@ class _FsplScreenState extends State<FsplScreen> {
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -277,6 +279,7 @@ class _FsplScreenState extends State<FsplScreen> {
     required TextStyle monoStyle,
     required Widget unitSelector,
   }) {
+    final AppColorScheme colors = context.colors;
     // Field + unit selector via the shared FieldUnitRow: side-by-side on wide
     // rows, unit reflows beneath the field below 440px so the toggle never
     // clips at phone widths (Vera web-demo gate, 2026-06-02).
@@ -297,7 +300,7 @@ class _FsplScreenState extends State<FsplScreen> {
           autocorrect: false,
           enableSuggestions: false,
           style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
-          cursorColor: AppColors.primary,
+          cursorColor: colors.textAccent,
           decoration: InputDecoration(hintText: hintText),
         ),
       ),
@@ -306,6 +309,7 @@ class _FsplScreenState extends State<FsplScreen> {
   }
 
   Widget _resultRow(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     // Single SR node: "Free space path loss: 100.1 dB" (or "not calculated"),
     // instead of the value, unit, and label announcing as separate fragments
     // (Vera finding #6).
@@ -320,7 +324,7 @@ class _FsplScreenState extends State<FsplScreen> {
           Text(
             'Free space path loss',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -332,14 +336,14 @@ class _FsplScreenState extends State<FsplScreen> {
               SelectableText(
                 _formatLoss(_lossDb),
                 style: mono.outputXL.copyWith(
-                  color: blank ? AppColors.textTertiary : AppColors.primary,
+                  color: blank ? colors.textTertiary : colors.textAccent,
                 ),
               ),
               const SizedBox(width: AppSpacing.xxs),
               Text(
                 'dB',
                 style: text.labelLarge?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ],
@@ -387,11 +391,12 @@ class _FsplScreenState extends State<FsplScreen> {
   }
 
   Widget _formulaCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -400,20 +405,20 @@ class _FsplScreenState extends State<FsplScreen> {
           Text(
             'Formula',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
             'FSPL(dB) = 20·log₁₀(f) + 20·log₁₀(d) + 92.45',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'f in GHz, d in km. The 92.45 constant folds in c and the '
             'unit conversion for the GHz/km form.',
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -421,6 +426,7 @@ class _FsplScreenState extends State<FsplScreen> {
   }
 
   Widget _referenceCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     // Compact anchor values. Each is FSPL at 1 km for a common Wi-Fi band,
     // plus a short-range row, computed from the same formula this screen uses.
     final List<List<String>> refs = const [
@@ -433,9 +439,9 @@ class _FsplScreenState extends State<FsplScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -444,7 +450,7 @@ class _FsplScreenState extends State<FsplScreen> {
           Text(
             'Reference points',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -461,7 +467,7 @@ class _FsplScreenState extends State<FsplScreen> {
                     child: Text(
                       row[0],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
@@ -470,7 +476,7 @@ class _FsplScreenState extends State<FsplScreen> {
                     child: Text(
                       row[1],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
@@ -478,7 +484,7 @@ class _FsplScreenState extends State<FsplScreen> {
                     child: Text(
                       row[2],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.primary,
+                        color: colors.textAccent,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

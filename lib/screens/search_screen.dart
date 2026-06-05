@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 
 import '../data/content_type.dart';
 import '../data/tool_search.dart';
+import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 import '../widgets/centered_content.dart';
 import '../widgets/tool_row.dart';
@@ -95,6 +96,7 @@ class _SearchScreenState extends State<SearchScreen> {
     String q,
     List<ToolSearchHit> hits,
   ) {
+    final AppColorScheme colors = context.colors;
     if (q.isEmpty) {
       return _HintState(
         icon: Icons.search,
@@ -128,7 +130,7 @@ class _SearchScreenState extends State<SearchScreen> {
               // Mono count line (mockup 04) — DM Mono tabular feel.
               style: text.bodyMedium?.copyWith(
                 fontFamily: 'DM Mono',
-                color: AppColors.textTertiary,
+                color: colors.textTertiary,
               ),
             ),
           ),
@@ -184,24 +186,25 @@ class _SearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return TextField(
       controller: controller,
       focusNode: focusNode,
       autofocus: true,
       onChanged: onChanged,
-      style: text.bodyLarge?.copyWith(color: AppColors.textPrimary),
+      style: text.bodyLarge?.copyWith(color: colors.textPrimary),
       decoration: InputDecoration(
-        prefixIcon: const Icon(Icons.search, color: AppColors.textTertiary),
+        prefixIcon: Icon(Icons.search, color: colors.textTertiary),
         hintText: 'Search all tools…',
         suffixIcon: controller.text.isEmpty
             ? null
             : IconButton(
                 onPressed: onClear,
                 tooltip: 'Clear search',
-                icon: const Icon(
+                icon: Icon(
                   Icons.cancel_outlined,
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
       ),
@@ -224,18 +227,19 @@ class _HintState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Icon(icon, size: 48, color: AppColors.textTertiary),
+            Icon(icon, size: 48, color: colors.textTertiary),
             const SizedBox(height: AppSpacing.sm),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+              style: text.bodyLarge?.copyWith(color: colors.textSecondary),
             ),
           ],
         ),

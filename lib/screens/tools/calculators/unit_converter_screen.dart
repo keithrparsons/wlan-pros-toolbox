@@ -20,6 +20,7 @@ import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../data/unit_conversion.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -189,11 +190,12 @@ class _UnitConverterScreenState extends State<UnitConverterScreen> {
   }
 
   Widget _categoryCard() {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: LabeledField(
@@ -210,11 +212,12 @@ class _UnitConverterScreenState extends State<UnitConverterScreen> {
   }
 
   Widget _converterCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -244,7 +247,7 @@ class _UnitConverterScreenState extends State<UnitConverterScreen> {
                     style: mono.outputLarge.copyWith(
                       fontSize: AppTextSize.fieldNumeric,
                     ),
-                    cursorColor: AppColors.primary,
+                    cursorColor: colors.textAccent,
                     decoration: const InputDecoration(hintText: '1'),
                   ),
                 ),
@@ -291,6 +294,7 @@ class _UnitConverterScreenState extends State<UnitConverterScreen> {
   }
 
   Widget _resultBlock(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     final bool hasResult = _result != null && _result!.isFinite;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -298,7 +302,7 @@ class _UnitConverterScreenState extends State<UnitConverterScreen> {
         Text(
           'Result',
           style: text.labelMedium?.copyWith(
-            color: AppColors.textSecondary,
+            color: colors.textSecondary,
             letterSpacing: 0.4,
           ),
         ),
@@ -320,8 +324,8 @@ class _UnitConverterScreenState extends State<UnitConverterScreen> {
                   maxLines: 1,
                   style: mono.outputXL.copyWith(
                     color: hasResult
-                        ? AppColors.primary
-                        : AppColors.textTertiary,
+                        ? colors.textAccent
+                        : colors.textTertiary,
                   ),
                 ),
               ),
@@ -329,7 +333,7 @@ class _UnitConverterScreenState extends State<UnitConverterScreen> {
               Text(
                 _toUnit.symbol,
                 style: text.labelLarge?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ],

@@ -50,7 +50,6 @@
 // `excludeFromSemantics: true`; VoiceOver / TalkBack skip it and land on the
 // screen title and content. No verbose alt text (that would double the content).
 
-import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_svg/flutter_svg.dart';

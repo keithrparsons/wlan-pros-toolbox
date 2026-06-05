@@ -25,6 +25,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -232,11 +233,12 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -280,6 +282,7 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
     required TextStyle monoStyle,
     required Widget unitSelector,
   }) {
+    final AppColorScheme colors = context.colors;
     // FieldUnitRow reflows the unit selector beneath the field below 440px so
     // it never clips at phone widths (Vera web-demo gate, 2026-06-02).
     return FieldUnitRow(
@@ -299,7 +302,7 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
           autocorrect: false,
           enableSuggestions: false,
           style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
-          cursorColor: AppColors.primary,
+          cursorColor: colors.textAccent,
           decoration: InputDecoration(hintText: hintText),
         ),
       ),
@@ -308,6 +311,7 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
   }
 
   Widget _resultRow(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     // One SR node: "Downtilt angle: 3.2 degrees" (or "not calculated"), instead
     // of value/unit/label fragments (Vera finding #6).
     final bool blank = _angleDeg == null;
@@ -321,7 +325,7 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
           Text(
             'Downtilt angle',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -333,14 +337,14 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
               SelectableText(
                 _formatAngle(_angleDeg),
                 style: mono.outputXL.copyWith(
-                  color: blank ? AppColors.textTertiary : AppColors.primary,
+                  color: blank ? colors.textTertiary : colors.textAccent,
                 ),
               ),
               const SizedBox(width: AppSpacing.xxs),
               Text(
                 '°',
                 style: text.labelLarge?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ],
@@ -397,11 +401,12 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
   }
 
   Widget _formulaCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -410,20 +415,20 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
           Text(
             'Formula',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
             'tilt(°) = atan(height / coverage) · 180/π',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Height and coverage in meters. The angle aims the beam center at '
             'the coverage radius on the ground.',
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -431,6 +436,7 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
   }
 
   Widget _referenceCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     // Compact anchor values. Each is the downtilt angle for a common ceiling /
     // mount height against a target coverage radius, computed from the same
     // formula this screen uses.
@@ -444,9 +450,9 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -455,7 +461,7 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
           Text(
             'Reference points',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -470,7 +476,7 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
                   child: Text(
                     'Height',
                     style: text.labelSmall?.copyWith(
-                      color: AppColors.textTertiary,
+                      color: colors.textTertiary,
                     ),
                   ),
                 ),
@@ -479,7 +485,7 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
                   child: Text(
                     'Coverage',
                     style: text.labelSmall?.copyWith(
-                      color: AppColors.textTertiary,
+                      color: colors.textTertiary,
                     ),
                   ),
                 ),
@@ -487,7 +493,7 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
                   child: Text(
                     'Tilt',
                     style: text.labelSmall?.copyWith(
-                      color: AppColors.textTertiary,
+                      color: colors.textTertiary,
                     ),
                   ),
                 ),
@@ -506,7 +512,7 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
                     child: Text(
                       row[0],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
@@ -515,7 +521,7 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
                     child: Text(
                       row[1],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
@@ -523,7 +529,7 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
                     child: Text(
                       row[2],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.primary,
+                        color: colors.textAccent,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

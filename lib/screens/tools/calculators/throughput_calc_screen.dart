@@ -33,6 +33,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -374,11 +375,12 @@ class _ThroughputCalcScreenState extends State<ThroughputCalcScreen> {
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -471,6 +473,7 @@ class _ThroughputCalcScreenState extends State<ThroughputCalcScreen> {
   }
 
   Widget _resultRows(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     final double? phy = ThroughputCalcScreen.phyRateMbps(
       std: _std,
       bandwidthMHz: _bandwidth,
@@ -504,7 +507,7 @@ class _ThroughputCalcScreenState extends State<ThroughputCalcScreen> {
         Text(
           'Est. real throughput',
           style: text.labelMedium?.copyWith(
-            color: AppColors.textSecondary,
+            color: colors.textSecondary,
             letterSpacing: 0.4,
           ),
         ),
@@ -523,15 +526,15 @@ class _ThroughputCalcScreenState extends State<ThroughputCalcScreen> {
                 _formatRate(real),
                 style: mono.outputXL.copyWith(
                   color: real == null
-                      ? AppColors.textTertiary
-                      : AppColors.primary,
+                      ? colors.textTertiary
+                      : colors.textAccent,
                 ),
               ),
               const SizedBox(width: AppSpacing.xxs),
               Text(
                 'Mbps',
                 style: text.labelLarge?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ],
@@ -547,6 +550,7 @@ class _ThroughputCalcScreenState extends State<ThroughputCalcScreen> {
     String label,
     String value,
   ) {
+    final AppColorScheme colors = context.colors;
     final bool blank = value == '—';
     // One SR node per detail row: "PHY rate: 960 Mbps" (or "not calculated"),
     // instead of label and value fragments (Vera finding #6).
@@ -561,7 +565,7 @@ class _ThroughputCalcScreenState extends State<ThroughputCalcScreen> {
         children: [
           Text(
             label,
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(width: AppSpacing.sm),
           Flexible(
@@ -569,7 +573,7 @@ class _ThroughputCalcScreenState extends State<ThroughputCalcScreen> {
               value,
               textAlign: TextAlign.right,
               style: mono.outputMedium.copyWith(
-                color: blank ? AppColors.textTertiary : AppColors.textPrimary,
+                color: blank ? colors.textTertiary : colors.textPrimary,
               ),
             ),
           ),
@@ -579,11 +583,12 @@ class _ThroughputCalcScreenState extends State<ThroughputCalcScreen> {
   }
 
   Widget _formulaCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -592,26 +597,26 @@ class _ThroughputCalcScreenState extends State<ThroughputCalcScreen> {
           Text(
             'Formula',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
             'PHY = (Nsd × bits/symbol × streams) ÷ symbol time',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
             'Real ≈ PHY × efficiency',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Nsd is data subcarriers (standard × width); bits/symbol is the '
             'MCS modulation and coding. Efficiency is an approximate real/PHY '
             'factor per standard (HT 0.70, VHT 0.72, HE 0.76, EHT 0.80).',
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),

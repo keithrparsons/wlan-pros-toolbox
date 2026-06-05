@@ -10,6 +10,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../services/educational/educational_resources_service.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 
 /// The cost + level badge pair shown on a resource row and at the top of the
@@ -48,6 +49,7 @@ class _NeutralChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -55,15 +57,15 @@ class _NeutralChip extends StatelessWidget {
         vertical: AppSpacing.xxs,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surface2,
+        color: colors.surface2,
         borderRadius: BorderRadius.circular(AppRadius.control),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
+        border: Border.all(color: colors.borderStrong, width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           if (icon != null) ...<Widget>[
-            Icon(icon, size: 14, color: AppColors.textSecondary),
+            Icon(icon, size: 14, color: colors.textSecondary),
             const SizedBox(width: AppSpacing.xxs),
           ],
           Text(
@@ -71,7 +73,7 @@ class _NeutralChip extends StatelessWidget {
             style: text.labelLarge?.copyWith(
               fontSize: AppTextSize.caption,
               fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
             ),
           ),
         ],
@@ -89,6 +91,7 @@ class ResourceTagChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -96,7 +99,7 @@ class ResourceTagChip extends StatelessWidget {
         vertical: AppSpacing.xxs,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surface2,
+        color: colors.surface2,
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(
@@ -104,7 +107,7 @@ class ResourceTagChip extends StatelessWidget {
         style: text.labelLarge?.copyWith(
           fontSize: AppTextSize.caption,
           fontWeight: FontWeight.w500,
-          color: AppColors.textTertiary,
+          color: colors.textTertiary,
         ),
       ),
     );

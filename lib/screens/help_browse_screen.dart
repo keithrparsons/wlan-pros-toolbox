@@ -25,6 +25,7 @@ import 'package:flutter/material.dart';
 import '../data/tool_catalog.dart';
 import '../services/help/tool_help.dart';
 import '../services/help/tool_help_loader.dart';
+import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 import '../widgets/centered_content.dart';
 import '../widgets/tool_help_sheet.dart';
@@ -72,6 +73,7 @@ class HelpBrowseScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final List<HelpGroup> groups = buildHelpGroups();
 
@@ -108,7 +110,7 @@ class HelpBrowseScreen extends StatelessWidget {
                     'it takes, and the honest field notes. Tap a tool to read '
                     'its help.',
                     style: text.bodyLarge
-                        ?.copyWith(color: AppColors.textSecondary),
+                        ?.copyWith(color: colors.textSecondary),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   for (final HelpGroup group in groups) ...<Widget>[
@@ -141,6 +143,7 @@ class _GroupHeading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final String plural = count == 1 ? 'tool' : 'tools';
     return Semantics(
@@ -158,7 +161,7 @@ class _GroupHeading extends StatelessWidget {
           Text(
             '$count $plural',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textTertiary,
+              color: colors.textTertiary,
               letterSpacing: 0.4,
             ),
           ),
@@ -185,13 +188,14 @@ class _HelpToolRowState extends State<_HelpToolRow> {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final ToolHelp help = widget.row.help;
 
     // §8.3 — borderStrong at rest (focusable UI component), 2px lime on focus.
     final Border border = _focused
-        ? Border.all(color: AppColors.primary, width: 2)
-        : Border.all(color: AppColors.borderStrong, width: 1);
+        ? Border.all(color: colors.textAccent, width: 2)
+        : Border.all(color: colors.borderStrong, width: 1);
 
     return Semantics(
       container: true,
@@ -199,7 +203,7 @@ class _HelpToolRowState extends State<_HelpToolRow> {
       button: true,
       label: '${widget.row.title}. ${help.purpose}',
       child: Material(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -223,12 +227,12 @@ class _HelpToolRowState extends State<_HelpToolRow> {
                   height: 40,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: AppColors.surface2,
+                    color: colors.surface2,
                     borderRadius: BorderRadius.circular(AppRadius.control),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.help_outline,
-                    color: AppColors.primary,
+                    color: colors.textAccent,
                     size: 20,
                   ),
                 ),
@@ -241,7 +245,7 @@ class _HelpToolRowState extends State<_HelpToolRow> {
                         widget.row.title,
                         style: text.bodyLarge?.copyWith(
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                          color: colors.textPrimary,
                         ),
                       ),
                       if (help.purpose.isNotEmpty) ...<Widget>[
@@ -251,18 +255,18 @@ class _HelpToolRowState extends State<_HelpToolRow> {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: text.labelMedium?.copyWith(
-                            color: AppColors.textTertiary,
+                            color: colors.textTertiary,
                           ),
                         ),
                       ],
                     ],
                   ),
                 ),
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(left: AppSpacing.xs),
                   child: Icon(
                     Icons.chevron_right,
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                     size: 20,
                   ),
                 ),
@@ -285,21 +289,22 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Center(
       child: Padding(
         padding: EdgeInsets.all(edge),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            const Icon(
+            Icon(
               Icons.menu_book_outlined,
               size: 48,
-              color: AppColors.textTertiary,
+              color: colors.textTertiary,
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
               'Tool help could not be loaded',
-              style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+              style: text.bodyLarge?.copyWith(color: colors.textSecondary),
               textAlign: TextAlign.center,
             ),
           ],

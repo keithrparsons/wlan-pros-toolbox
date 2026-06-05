@@ -24,6 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -219,11 +220,12 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -253,7 +255,7 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
                 style: mono.outputLarge.copyWith(
                   fontSize: AppTextSize.fieldNumeric,
                 ),
-                cursorColor: AppColors.primary,
+                cursorColor: colors.textAccent,
                 decoration: const InputDecoration(hintText: '2400'),
               ),
             ),
@@ -274,13 +276,14 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
   }
 
   Widget _resultGrid(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Wavelength',
           style: text.labelMedium?.copyWith(
-            color: AppColors.textSecondary,
+            color: colors.textSecondary,
             letterSpacing: 0.4,
           ),
         ),
@@ -333,6 +336,7 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
     AppMonoText mono, {
     bool large = false,
   }) {
+    final AppColorScheme colors = context.colors;
     final TextStyle valueStyle = large ? mono.outputXL : mono.outputLarge;
     // One SR node per unit row: "Wavelength in meters: 0.1250 m" (or "not
     // calculated"), instead of value and unit as separate fragments under the
@@ -351,13 +355,13 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
           SelectableText(
             _fmt(value, decimals),
             style: valueStyle.copyWith(
-              color: value == null ? AppColors.textTertiary : AppColors.primary,
+              color: value == null ? colors.textTertiary : colors.textAccent,
             ),
           ),
           const SizedBox(width: AppSpacing.xxs),
           Text(
             unit,
-            style: text.labelLarge?.copyWith(color: AppColors.textSecondary),
+            style: text.labelLarge?.copyWith(color: colors.textSecondary),
           ),
         ],
       ),
@@ -382,11 +386,12 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
   }
 
   Widget _formulaCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -395,20 +400,20 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
           Text(
             'Formula',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
             'λ(m) = 300 / f',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'f in MHz. The 300 constant is c (3·10⁸ m/s) scaled for the '
             'MHz/meter form. cm = m·100, ft = m·3.28084, in = ft·12.',
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -416,6 +421,7 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
   }
 
   Widget _referenceCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     // Wavelength at the three Wi-Fi band anchors, computed from the same
     // formula this screen uses (300 / f_MHz). Values shown to 4 decimals (m)
     // to match the live output.
@@ -427,9 +433,9 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -438,7 +444,7 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
           Text(
             'Wi-Fi band reference',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -455,7 +461,7 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
                     child: Text(
                       row[0],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
@@ -464,7 +470,7 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
                     child: Text(
                       row[1],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.primary,
+                        color: colors.textAccent,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -473,7 +479,7 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
                     child: Text(
                       row[2],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),

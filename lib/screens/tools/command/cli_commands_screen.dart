@@ -27,6 +27,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/tool_help_footer.dart';
@@ -331,12 +332,13 @@ class _CliCommandsScreenState extends State<CliCommandsScreen> {
   }
 
   Widget _introCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -344,12 +346,12 @@ class _CliCommandsScreenState extends State<CliCommandsScreen> {
         children: [
           Text(
             CliCommandsScreen.intro,
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             CliCommandsScreen.caveat,
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -357,11 +359,12 @@ class _CliCommandsScreenState extends State<CliCommandsScreen> {
   }
 
   Widget _searchCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: LabeledField(
@@ -376,7 +379,7 @@ class _CliCommandsScreenState extends State<CliCommandsScreen> {
           keyboardType: TextInputType.text,
           textInputAction: TextInputAction.search,
           onChanged: _onQueryChanged,
-          cursorColor: AppColors.primary,
+          cursorColor: colors.textAccent,
           decoration: const InputDecoration(
             hintText: 'e.g. ping or DNS',
           ),
@@ -409,10 +412,11 @@ class _CliCommandsScreenState extends State<CliCommandsScreen> {
   }
 
   Widget _footnote(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Text(
       CliCommandsScreen.footnote,
-      style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+      style: text.labelSmall?.copyWith(color: colors.textTertiary),
     );
   }
 }
@@ -425,14 +429,15 @@ class _CommandCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -456,7 +461,7 @@ class _CommandCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             command.description,
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
           if (command.options.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.xs),
@@ -489,6 +494,7 @@ class _PlatformLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final bool present = command != null;
     return Semantics(
       container: true,
@@ -502,7 +508,7 @@ class _PlatformLine extends StatelessWidget {
             child: Text(
               label,
               style: text.labelSmall?.copyWith(
-                color: AppColors.textTertiary,
+                color: colors.textTertiary,
                 letterSpacing: 0.4,
               ),
             ),
@@ -514,15 +520,15 @@ class _PlatformLine extends StatelessWidget {
                     command!,
                     style: mono.inlineCode.copyWith(
                       color: isLime
-                          ? AppColors.primary
-                          : AppColors.textSecondary,
+                          ? colors.textAccent
+                          : colors.textSecondary,
                       fontWeight: FontWeight.w500,
                     ),
                   )
                 : Text(
                     '(no native command)',
                     style: text.labelMedium?.copyWith(
-                      color: AppColors.textTertiary,
+                      color: colors.textTertiary,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -547,6 +553,7 @@ class _OptionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Semantics(
       container: true,
       excludeSemantics: true,
@@ -561,7 +568,7 @@ class _OptionRow extends StatelessWidget {
               child: Text(
                 option.flag,
                 style: mono.inlineCode.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ),
@@ -570,7 +577,7 @@ class _OptionRow extends StatelessWidget {
               child: Text(
                 option.meaning,
                 style: text.labelSmall?.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ),
@@ -595,18 +602,19 @@ class _MessageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppColors.textTertiary),
+          Icon(icon, size: 20, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -615,7 +623,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   title,
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -623,7 +631,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   body,
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
               ],

@@ -33,6 +33,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -282,11 +283,12 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -328,7 +330,7 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
               style: mono.outputLarge.copyWith(
                 fontSize: AppTextSize.fieldNumeric,
               ),
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: InputDecoration(hintText: '7', errorText: _nfError),
             ),
           ),
@@ -352,7 +354,7 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
               style: mono.outputLarge.copyWith(
                 fontSize: AppTextSize.fieldNumeric,
               ),
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(hintText: '20'),
             ),
           ),
@@ -392,6 +394,7 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
     required double? value,
     required bool primary,
   }) {
+    final AppColorScheme colors = context.colors;
     final bool blank = value == null || !value.isFinite;
     // One SR node: "Rx noise floor: -94.0 dBm" (or "not calculated"), instead
     // of value/unit/label as separate fragments (Vera finding #6).
@@ -405,7 +408,7 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
           Text(
             label,
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -418,15 +421,15 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
                 _formatDbm(value),
                 style: (primary ? mono.outputXL : mono.outputLarge).copyWith(
                   color: blank
-                      ? AppColors.textTertiary
-                      : (primary ? AppColors.primary : AppColors.textPrimary),
+                      ? colors.textTertiary
+                      : (primary ? colors.textAccent : colors.textPrimary),
                 ),
               ),
               const SizedBox(width: AppSpacing.xxs),
               Text(
                 'dBm',
                 style: text.labelLarge?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ],
@@ -437,11 +440,12 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
   }
 
   Widget _formulaCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -450,21 +454,21 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
           Text(
             'Formula',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
             'N(dBm) = 10·log₁₀(k·T·B) + 30 + NF',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'k = 1.380649×10⁻²³ J/K, T = °C + 273.15 K, B in Hz. NF is the '
             'receiver noise figure. The rule of thumb uses -174 dBm/Hz + '
             '10·log₁₀(B).',
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -472,6 +476,7 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
   }
 
   Widget _referenceCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     // Thermal noise floor (kTB, no noise figure) at 20°C for each bandwidth,
     // computed from the same formula this screen uses.
     final List<List<String>> refs = const [
@@ -484,9 +489,9 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -495,7 +500,7 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
           Text(
             'Thermal floor at 20°C',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -512,7 +517,7 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
                     child: Text(
                       row[0],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
@@ -520,7 +525,7 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
                     child: Text(
                       row[1],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.primary,
+                        color: colors.textAccent,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

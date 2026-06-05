@@ -33,6 +33,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -250,11 +251,12 @@ class _MidpointScreenState extends State<MidpointScreen> {
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -302,13 +304,14 @@ class _MidpointScreenState extends State<MidpointScreen> {
     required FocusNode latFocus,
     required FocusNode lonFocus,
   }) {
+    final AppColorScheme colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
           heading,
           style: text.labelMedium?.copyWith(
-            color: AppColors.textSecondary,
+            color: colors.textSecondary,
             letterSpacing: 0.4,
           ),
         ),
@@ -342,6 +345,7 @@ class _MidpointScreenState extends State<MidpointScreen> {
     required String hintText,
     required TextStyle monoStyle,
   }) {
+    final AppColorScheme colors = context.colors;
     return LabeledField(
       label: label,
       hint: '(°)',
@@ -359,20 +363,21 @@ class _MidpointScreenState extends State<MidpointScreen> {
         autocorrect: false,
         enableSuggestions: false,
         style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
-        cursorColor: AppColors.primary,
+        cursorColor: colors.textAccent,
         decoration: InputDecoration(hintText: hintText),
       ),
     );
   }
 
   Widget _resultBlock(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Great-circle midpoint',
           style: text.labelMedium?.copyWith(
-            color: AppColors.textSecondary,
+            color: colors.textSecondary,
             letterSpacing: 0.4,
           ),
         ),
@@ -390,6 +395,7 @@ class _MidpointScreenState extends State<MidpointScreen> {
     String tag,
     String value,
   ) {
+    final AppColorScheme colors = context.colors;
     final bool blank = _mid == null;
     // One SR node per row: "Lat: 37.401900" (or "not calculated"), instead of
     // tag and value as separate fragments (Vera finding #6).
@@ -406,7 +412,7 @@ class _MidpointScreenState extends State<MidpointScreen> {
             width: 48,
             child: Text(
               tag,
-              style: text.labelLarge?.copyWith(color: AppColors.textSecondary),
+              style: text.labelLarge?.copyWith(color: colors.textSecondary),
             ),
           ),
           Expanded(
@@ -414,7 +420,7 @@ class _MidpointScreenState extends State<MidpointScreen> {
               value,
               style: mono.outputXL.copyWith(
                 fontSize: 28,
-                color: blank ? AppColors.textTertiary : AppColors.primary,
+                color: blank ? colors.textTertiary : colors.textAccent,
               ),
             ),
           ),
@@ -424,11 +430,12 @@ class _MidpointScreenState extends State<MidpointScreen> {
   }
 
   Widget _formulaCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -437,33 +444,33 @@ class _MidpointScreenState extends State<MidpointScreen> {
           Text(
             'Formula',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
             'Bx = cos(φ₂)·cos(Δλ)',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
             'By = cos(φ₂)·sin(Δλ)',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
             'φm = atan2(sin φ₁ + sin φ₂, √((cos φ₁ + Bx)² + By²))',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
             'λm = λ₁ + atan2(By, cos φ₁ + Bx)',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Great-circle midpoint on a sphere. Decimal degrees in, decimal '
             'degrees out. This is the halfway point on the shortest path, not '
             'the average of the two coordinates.',
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -471,6 +478,7 @@ class _MidpointScreenState extends State<MidpointScreen> {
   }
 
   Widget _referenceCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     // Anchor pairs computed from this screen's own formula so the values agree
     // with the live output to the decimal.
     final List<List<String>> refs = const [
@@ -481,9 +489,9 @@ class _MidpointScreenState extends State<MidpointScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -492,7 +500,7 @@ class _MidpointScreenState extends State<MidpointScreen> {
           Text(
             'Reference points',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -506,13 +514,13 @@ class _MidpointScreenState extends State<MidpointScreen> {
                   Text(
                     'A ${row[0]}  •  B ${row[1]}',
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.textSecondary,
+                      color: colors.textSecondary,
                     ),
                   ),
                   Text(
                     'Mid ${row[2]}',
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.primary,
+                      color: colors.textAccent,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

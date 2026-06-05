@@ -18,6 +18,7 @@ import '../data/tool_catalog.dart';
 import '../data/tool_ordering.dart';
 import '../data/tool_search.dart';
 import '../data/tool_subgroups.dart';
+import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 import '../widgets/centered_content.dart';
 import '../widgets/section_header.dart';
@@ -225,6 +226,7 @@ class _InCategorySearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return TextField(
       controller: controller,
       onChanged: onChanged,
@@ -232,9 +234,9 @@ class _InCategorySearchField extends StatelessWidget {
       style: Theme.of(context)
           .textTheme
           .bodyLarge
-          ?.copyWith(color: AppColors.textPrimary),
+          ?.copyWith(color: colors.textPrimary),
       decoration: InputDecoration(
-        prefixIcon: const Icon(Icons.search, color: AppColors.textTertiary),
+        prefixIcon: Icon(Icons.search, color: colors.textTertiary),
         hintText: hint,
       ),
       textInputAction: TextInputAction.search,
@@ -306,13 +308,14 @@ class _SelectableFilterChipState extends State<_SelectableFilterChip> {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final bool sel = widget.selected;
 
     final Border border = _focused
-        ? Border.all(color: AppColors.primary, width: 2)
+        ? Border.all(color: colors.textAccent, width: 2)
         : Border.all(
-            color: sel ? AppColors.primary : AppColors.borderStrong,
+            color: sel ? colors.textAccent : colors.borderStrong,
             width: 1,
           );
 
@@ -322,7 +325,7 @@ class _SelectableFilterChipState extends State<_SelectableFilterChip> {
       label: widget.label,
       excludeSemantics: true,
       child: Material(
-        color: sel ? AppColors.primary : AppColors.surface2,
+        color: sel ? colors.primary : colors.surface2,
         borderRadius: BorderRadius.circular(AppRadius.control),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -345,7 +348,7 @@ class _SelectableFilterChipState extends State<_SelectableFilterChip> {
                 fontSize: AppTextSize.caption,
                 fontWeight: FontWeight.w500,
                 // §8.3: charcoal text on lime when selected; neutral otherwise.
-                color: sel ? AppColors.secondary : AppColors.textSecondary,
+                color: sel ? colors.onPrimary : colors.textSecondary,
               ),
             ),
           ),
@@ -364,19 +367,20 @@ class _NoMatchState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
       child: Column(
         children: <Widget>[
-          const Icon(
+          Icon(
             Icons.search_off_outlined,
             size: 48,
-            color: AppColors.textTertiary,
+            color: colors.textTertiary,
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
             'No tools match "$query" here',
-            style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+            style: text.bodyLarge?.copyWith(color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
         ],
@@ -393,20 +397,21 @@ class _EmptyCategoryState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          const Icon(
+          Icon(
             Icons.construction_outlined,
             size: 48,
-            color: AppColors.textTertiary,
+            color: colors.textTertiary,
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
             'No tools in this category yet',
-            style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+            style: text.bodyLarge?.copyWith(color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
         ],

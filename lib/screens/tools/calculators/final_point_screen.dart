@@ -29,6 +29,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -302,11 +303,12 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -350,7 +352,7 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
             const SizedBox(height: AppSpacing.sm),
             Text(
               _rangeNote!,
-              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
             ),
           ],
           const SizedBox(height: AppSpacing.md),
@@ -370,6 +372,7 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
     required bool signed,
     required TextStyle monoStyle,
   }) {
+    final AppColorScheme colors = context.colors;
     return LabeledField(
       label: label,
       hint: '($unitHint)',
@@ -387,13 +390,14 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
         autocorrect: false,
         enableSuggestions: false,
         style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
-        cursorColor: AppColors.primary,
+        cursorColor: colors.textAccent,
         decoration: InputDecoration(hintText: hintText),
       ),
     );
   }
 
   Widget _distanceRow(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     // FieldUnitRow reflows the unit selector beneath the field below 440px so
     // it never clips at phone widths (Vera web-demo gate, 2026-06-02).
     return FieldUnitRow(
@@ -415,7 +419,7 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
           style: mono.outputLarge.copyWith(
             fontSize: AppTextSize.fieldNumeric,
           ),
-          cursorColor: AppColors.primary,
+          cursorColor: colors.textAccent,
           decoration: const InputDecoration(hintText: '10'),
         ),
       ),
@@ -446,13 +450,14 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
   }
 
   Widget _resultRow(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Destination',
           style: text.labelMedium?.copyWith(
-            color: AppColors.textSecondary,
+            color: colors.textSecondary,
             letterSpacing: 0.4,
           ),
         ),
@@ -470,6 +475,7 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
     TextTheme text,
     AppMonoText mono,
   ) {
+    final AppColorScheme colors = context.colors;
     final bool blank = value == null || !value.isFinite;
     // One SR node per coordinate: "Latitude: 34.052360" (or "not calculated"),
     // instead of label and value as separate fragments (Vera finding #6).
@@ -485,14 +491,14 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
             width: 96,
             child: Text(
               label,
-              style: text.labelLarge?.copyWith(color: AppColors.textSecondary),
+              style: text.labelLarge?.copyWith(color: colors.textSecondary),
             ),
           ),
           Expanded(
             child: SelectableText(
               _formatCoord(value),
               style: mono.outputLarge.copyWith(
-                color: blank ? AppColors.textTertiary : AppColors.primary,
+                color: blank ? colors.textTertiary : colors.textAccent,
               ),
             ),
           ),
@@ -502,11 +508,12 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
   }
 
   Widget _formulaCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -515,24 +522,24 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
           Text(
             'Formula',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
             'φ₂ = asin(sinφ₁·cosδ + cosφ₁·sinδ·cosθ)',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
             'λ₂ = λ₁ + atan2(sinθ·sinδ·cosφ₁, cosδ − sinφ₁·sinφ₂)',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'δ = distance / R, θ = bearing. Great-circle destination on a '
             'sphere of radius R = 6371 km.',
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),

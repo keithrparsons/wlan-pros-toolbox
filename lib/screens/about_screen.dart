@@ -357,6 +357,7 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
 
     return Padding(
@@ -364,11 +365,11 @@ class _Section extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.surface1,
+          color: colors.surface1,
           borderRadius: BorderRadius.circular(AppRadius.card),
           // Decorative hairline — this card is not an interactive component, so
           // §8.1 decorative `border` is correct (not borderStrong).
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: colors.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -386,7 +387,7 @@ class _Section extends StatelessWidget {
               Text(
                 paragraphs[i],
                 style:
-                    text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+                    text.bodyLarge?.copyWith(color: colors.textSecondary),
               ),
             ],
             if (link != null) ...<Widget>[
@@ -449,6 +450,7 @@ class _ExternalLinkButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -456,7 +458,7 @@ class _ExternalLinkButton extends StatelessWidget {
         if (leadIn != null) ...<Widget>[
           Text(
             leadIn!,
-            style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+            style: text.bodyLarge?.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.xs),
         ],
@@ -501,6 +503,7 @@ class _HelpDocsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
 
     return Padding(
@@ -508,9 +511,9 @@ class _HelpDocsSection extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.surface1,
+          color: colors.surface1,
           borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: colors.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -524,7 +527,7 @@ class _HelpDocsSection extends StatelessWidget {
               if (i > 0) const SizedBox(height: AppSpacing.sm),
               Text(
                 _paragraphs[i],
-                style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+                style: text.bodyLarge?.copyWith(color: colors.textSecondary),
               ),
             ],
             const SizedBox(height: AppSpacing.sm),
@@ -560,6 +563,7 @@ class _VersionSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
 
     return Padding(
@@ -567,9 +571,9 @@ class _VersionSection extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.surface1,
+          color: colors.surface1,
           borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: colors.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -588,7 +592,7 @@ class _VersionSection extends StatelessWidget {
                 'Version ${AppVersion.display}',
                 style: text.bodyLarge?.copyWith(
                   fontFamily: 'DM Mono',
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                 ),
               ),
             ),
@@ -597,7 +601,7 @@ class _VersionSection extends StatelessWidget {
               'Running into something odd, or have an idea to make this '
               'better? Tell us. The toolbox gets better because the people '
               'using it in the field say what they need.',
-              style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+              style: text.bodyLarge?.copyWith(color: colors.textSecondary),
             ),
             const SizedBox(height: AppSpacing.sm),
             _ExternalLinkButton(
@@ -619,6 +623,7 @@ class _CreditsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
 
     return Padding(
@@ -626,9 +631,9 @@ class _CreditsSection extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.surface1,
+          color: colors.surface1,
           borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: colors.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -640,13 +645,13 @@ class _CreditsSection extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             Text(
               'Built by the team at WLAN Pros.',
-              style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+              style: text.bodyLarge?.copyWith(color: colors.textSecondary),
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
               'This app uses open-source software. Full license attributions '
               'are listed below.',
-              style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+              style: text.bodyLarge?.copyWith(color: colors.textSecondary),
             ),
             const SizedBox(height: AppSpacing.sm),
             Align(
