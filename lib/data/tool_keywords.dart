@@ -262,6 +262,10 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'tcp', 'udp', 'iana', 'service port', 'port number', 'well known',
     'common ports',
   ],
+  'plmn-id-reference': <String>[
+    'plmn', 'mcc', 'mnc', 'mobile country code', 'mobile network code',
+    'carrier code', 'cellular', 'imsi', 'hni', 'operator code', 'sim',
+  ],
   'reason-codes': <String>[
     'deauth', 'disassoc', 'status code', '802.11 codes', 'disconnect reason',
   ],

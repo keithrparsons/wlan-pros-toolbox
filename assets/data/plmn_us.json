@@ -1,0 +1,3781 @@
+{
+  "_meta": {
+    "title": "US PLMN IDs",
+    "source": "US MCC/MNC (PLMN ID) allocations — live Wikipedia 'Mobile country code' ITU region 3xx (MCCs 310-316: US, PR, GU, VI, AS)",
+    "verified": "Live Wikipedia verification 2026-06-05; high confidence",
+    "note": "Curated US Public Land Mobile Network identifiers. Edit this file to add or correct entries; PlmnReferenceService loads and indexes it at startup. mnc and plmn_id are STRINGS with significant leading zeros — never store them as numbers.",
+    "description": "US Public Land Mobile Network identifiers (MCC/MNC) by carrier, for offline lookup.",
+    "last_updated": "2026-06-05",
+    "schema_version": 1,
+    "count": 376,
+    "statuses": [
+      "not operational",
+      "operational",
+      "reserved",
+      "unknown"
+    ],
+    "schema": "plmn[]: { mcc:string, mnc:string, plmn_id:string, country:string, region:string, carrier:string, operator:string, status:string }"
+  },
+  "plmn": [
+    {
+      "mcc": "310",
+      "mnc": "004",
+      "plmn_id": "310004",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Verizon",
+      "operator": "Verizon Wireless",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "005",
+      "plmn_id": "310005",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Verizon",
+      "operator": "Verizon Wireless",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "006",
+      "plmn_id": "310006",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Verizon",
+      "operator": "Verizon Wireless",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "010",
+      "plmn_id": "310010",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Verizon",
+      "operator": "Verizon Wireless",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "012",
+      "plmn_id": "310012",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Verizon",
+      "operator": "Verizon Wireless",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "013",
+      "plmn_id": "310013",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Verizon",
+      "operator": "Verizon Wireless",
+      "status": "unknown"
+    },
+    {
+      "mcc": "310",
+      "mnc": "015",
+      "plmn_id": "310015",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Southern LINC",
+      "operator": "Southern Communications Services",
+      "status": "unknown"
+    },
+    {
+      "mcc": "310",
+      "mnc": "016",
+      "plmn_id": "310016",
+      "country": "United States",
+      "region": "US",
+      "carrier": "AT&T",
+      "operator": "AT&T Mobility",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "017",
+      "plmn_id": "310017",
+      "country": "United States",
+      "region": "US",
+      "carrier": "ProxTel",
+      "operator": "North Sight Communications Inc.",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "020",
+      "plmn_id": "310020",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Union Wireless",
+      "operator": "Union Telephone Company",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "030",
+      "plmn_id": "310030",
+      "country": "United States",
+      "region": "US",
+      "carrier": "AT&T",
+      "operator": "AT&T Mobility",
+      "status": "unknown"
+    },
+    {
+      "mcc": "310",
+      "mnc": "032",
+      "plmn_id": "310032",
+      "country": "United States",
+      "region": "GU",
+      "carrier": "IT&E Wireless",
+      "operator": "PTI Pacifica Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "033",
+      "plmn_id": "310033",
+      "country": "United States",
+      "region": "GU",
+      "carrier": "Guam Telephone Authority",
+      "operator": "Guam Telephone Authority",
+      "status": "unknown"
+    },
+    {
+      "mcc": "310",
+      "mnc": "034",
+      "plmn_id": "310034",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Airpeak",
+      "operator": "Airpeak",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "035",
+      "plmn_id": "310035",
+      "country": "United States",
+      "region": "US",
+      "carrier": "ETEX Wireless",
+      "operator": "ETEX Communications LP",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "040",
+      "plmn_id": "310040",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Matanuska Telephone Association",
+      "operator": "Matanuska Telephone Association Inc.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "310",
+      "mnc": "050",
+      "plmn_id": "310050",
+      "country": "United States",
+      "region": "US",
+      "carrier": "GCI",
+      "operator": "Alaska Communications / GCI",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "053",
+      "plmn_id": "310053",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Virgin Mobile",
+      "operator": "T-Mobile US",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "054",
+      "plmn_id": "310054",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Alltel",
+      "operator": "Alltel US",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "059",
+      "plmn_id": "310059",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Cellular One",
+      "operator": "Cellular One",
+      "status": "unknown"
+    },
+    {
+      "mcc": "310",
+      "mnc": "060",
+      "plmn_id": "310060",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Consolidated Telcom",
+      "operator": "Consolidated Telcom",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "066",
+      "plmn_id": "310066",
+      "country": "United States",
+      "region": "US",
+      "carrier": "UScellular",
+      "operator": "United States Cellular Corporation",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "070",
+      "plmn_id": "310070",
+      "country": "United States",
+      "region": "US",
+      "carrier": "AT&T",
+      "operator": "AT&T Mobility",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "080",
+      "plmn_id": "310080",
+      "country": "United States",
+      "region": "US",
+      "carrier": "AT&T",
+      "operator": "AT&T Mobility",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "090",
+      "plmn_id": "310090",
+      "country": "United States",
+      "region": "US",
+      "carrier": "AT&T",
+      "operator": "AT&T Mobility",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "100",
+      "plmn_id": "310100",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Plateau Wireless",
+      "operator": "New Mexico RSA 4 East LP",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "110",
+      "plmn_id": "310110",
+      "country": "United States",
+      "region": "GU",
+      "carrier": "IT&E Wireless",
+      "operator": "PTI Pacifica Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "120",
+      "plmn_id": "310120",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Sprint",
+      "operator": "Sprint Corporation",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "130",
+      "plmn_id": "310130",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Carolina West Wireless",
+      "operator": "Carolina West Wireless",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "140",
+      "plmn_id": "310140",
+      "country": "United States",
+      "region": "GU",
+      "carrier": "GTA Wireless",
+      "operator": "Teleguam Holdings LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "150",
+      "plmn_id": "310150",
+      "country": "United States",
+      "region": "US",
+      "carrier": "AT&T",
+      "operator": "AT&T Mobility",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "160",
+      "plmn_id": "310160",
+      "country": "United States",
+      "region": "US",
+      "carrier": "T-Mobile",
+      "operator": "T-Mobile US",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "170",
+      "plmn_id": "310170",
+      "country": "United States",
+      "region": "US",
+      "carrier": "AT&T",
+      "operator": "AT&T Mobility",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "180",
+      "plmn_id": "310180",
+      "country": "United States",
+      "region": "US",
+      "carrier": "West Central Wireless",
+      "operator": "West Central Wireless",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "190",
+      "plmn_id": "310190",
+      "country": "United States",
+      "region": "US",
+      "carrier": "GCI",
+      "operator": "Alaska Communications / GCI",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "200",
+      "plmn_id": "310200",
+      "country": "United States",
+      "region": "US",
+      "carrier": "T-Mobile",
+      "operator": "T-Mobile US",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "210",
+      "plmn_id": "310210",
+      "country": "United States",
+      "region": "US",
+      "carrier": "T-Mobile",
+      "operator": "T-Mobile US",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "220",
+      "plmn_id": "310220",
+      "country": "United States",
+      "region": "US",
+      "carrier": "T-Mobile",
+      "operator": "T-Mobile US",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "230",
+      "plmn_id": "310230",
+      "country": "United States",
+      "region": "US",
+      "carrier": "T-Mobile",
+      "operator": "T-Mobile US",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "240",
+      "plmn_id": "310240",
+      "country": "United States",
+      "region": "US",
+      "carrier": "T-Mobile",
+      "operator": "T-Mobile US",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "250",
+      "plmn_id": "310250",
+      "country": "United States",
+      "region": "US",
+      "carrier": "T-Mobile",
+      "operator": "T-Mobile US",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "260",
+      "plmn_id": "310260",
+      "country": "United States",
+      "region": "US",
+      "carrier": "T-Mobile",
+      "operator": "T-Mobile US",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "270",
+      "plmn_id": "310270",
+      "country": "United States",
+      "region": "US",
+      "carrier": "T-Mobile",
+      "operator": "T-Mobile US",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "280",
+      "plmn_id": "310280",
+      "country": "United States",
+      "region": "US",
+      "carrier": "AT&T",
+      "operator": "AT&T Mobility",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "290",
+      "plmn_id": "310290",
+      "country": "United States",
+      "region": "US",
+      "carrier": "NEP",
+      "operator": "NEP Cellcorp Inc.",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "300",
+      "plmn_id": "310300",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Big Sky Mobile",
+      "operator": "iSmart Mobile LLC",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "310",
+      "plmn_id": "310310",
+      "country": "United States",
+      "region": "US",
+      "carrier": "T-Mobile",
+      "operator": "T-Mobile US",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "311",
+      "plmn_id": "310311",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Farmers Wireless",
+      "operator": "Smith Bagley Inc.",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "320",
+      "plmn_id": "310320",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Cellular One",
+      "operator": "Smith Bagley Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "330",
+      "plmn_id": "310330",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Wireless Partners",
+      "operator": "Wireless Partners LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "340",
+      "plmn_id": "310340",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Limitless Mobile",
+      "operator": "Limitless Mobile LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "350",
+      "plmn_id": "310350",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Verizon",
+      "operator": "Verizon Wireless",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "360",
+      "plmn_id": "310360",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Pioneer Cellular",
+      "operator": "Cellular Network Partnership",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "370",
+      "plmn_id": "310370",
+      "country": "United States",
+      "region": "GU",
+      "carrier": "Docomo Pacific",
+      "operator": "NTT DoCoMo Pacific",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "380",
+      "plmn_id": "310380",
+      "country": "United States",
+      "region": "US",
+      "carrier": "AT&T",
+      "operator": "AT&T Mobility",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "390",
+      "plmn_id": "310390",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Cellular One of East Texas",
+      "operator": "TX-11 Acquisition LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "400",
+      "plmn_id": "310400",
+      "country": "United States",
+      "region": "US",
+      "carrier": "IT&E Wireless",
+      "operator": "IT&E Overseas Inc.",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "410",
+      "plmn_id": "310410",
+      "country": "United States",
+      "region": "US",
+      "carrier": "AT&T",
+      "operator": "AT&T Mobility",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "420",
+      "plmn_id": "310420",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Cincinnati Bell",
+      "operator": "Cincinnati Bell Wireless",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "430",
+      "plmn_id": "310430",
+      "country": "United States",
+      "region": "US",
+      "carrier": "GCI",
+      "operator": "GCI Communications Corp.",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "440",
+      "plmn_id": "310440",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Numerex",
+      "operator": "Numerex",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "450",
+      "plmn_id": "310450",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Viaero",
+      "operator": "Viaero Wireless",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "460",
+      "plmn_id": "310460",
+      "country": "United States",
+      "region": "US",
+      "carrier": "NewCore Wireless",
+      "operator": "NewCore Wireless LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "470",
+      "plmn_id": "310470",
+      "country": "United States",
+      "region": "GU",
+      "carrier": "Docomo Pacific",
+      "operator": "NTT DoCoMo Pacific",
+      "status": "unknown"
+    },
+    {
+      "mcc": "310",
+      "mnc": "480",
+      "plmn_id": "310480",
+      "country": "United States",
+      "region": "GU",
+      "carrier": "IT&E Wireless",
+      "operator": "PTI Pacifica Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "490",
+      "plmn_id": "310490",
+      "country": "United States",
+      "region": "US",
+      "carrier": "T-Mobile",
+      "operator": "T-Mobile US",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "500",
+      "plmn_id": "310500",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Alltel",
+      "operator": "Public Service Cellular Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "510",
+      "plmn_id": "310510",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Cellcom",
+      "operator": "Nsight",
+      "status": "unknown"
+    },
+    {
+      "mcc": "310",
+      "mnc": "520",
+      "plmn_id": "310520",
+      "country": "United States",
+      "region": "US",
+      "carrier": "TNS",
+      "operator": "Transaction Network Services",
+      "status": "unknown"
+    },
+    {
+      "mcc": "310",
+      "mnc": "530",
+      "plmn_id": "310530",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Iowa Wireless",
+      "operator": "Iowa Wireless Services LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "310",
+      "mnc": "540",
+      "plmn_id": "310540",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Phoenix",
+      "operator": "Hilliary Communications",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "550",
+      "plmn_id": "310550",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Syniverse",
+      "operator": "Syniverse Technologies",
+      "status": "unknown"
+    },
+    {
+      "mcc": "310",
+      "mnc": "560",
+      "plmn_id": "310560",
+      "country": "United States",
+      "region": "US",
+      "carrier": "AT&T",
+      "operator": "AT&T Mobility",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "570",
+      "plmn_id": "310570",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Cellular One of East Texas",
+      "operator": "MTPCS / TX-10 LLC, Central Louisiana Cellular LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "580",
+      "plmn_id": "310580",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Inland Cellular",
+      "operator": "Inland Cellular Telephone Company",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "590",
+      "plmn_id": "310590",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Verizon",
+      "operator": "Verizon Wireless",
+      "status": "unknown"
+    },
+    {
+      "mcc": "310",
+      "mnc": "600",
+      "plmn_id": "310600",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Cellcom",
+      "operator": "NewCell Inc.",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "610",
+      "plmn_id": "310610",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Epic PCS",
+      "operator": "Elkhart Telephone Co.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "310",
+      "mnc": "620",
+      "plmn_id": "310620",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Cellcom",
+      "operator": "Nsighttel Wireless LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "310",
+      "mnc": "630",
+      "plmn_id": "310630",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Choice Wireless",
+      "operator": "Commnet Wireless LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "310",
+      "mnc": "640",
+      "plmn_id": "310640",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Numerex",
+      "operator": "Numerex",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "650",
+      "plmn_id": "310650",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Jasper",
+      "operator": "Jasper Technologies",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "660",
+      "plmn_id": "310660",
+      "country": "United States",
+      "region": "US",
+      "carrier": "T-Mobile",
+      "operator": "T-Mobile US",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "670",
+      "plmn_id": "310670",
+      "country": "United States",
+      "region": "US",
+      "carrier": "AT&T",
+      "operator": "AT&T Mobility",
+      "status": "unknown"
+    },
+    {
+      "mcc": "310",
+      "mnc": "680",
+      "plmn_id": "310680",
+      "country": "United States",
+      "region": "US",
+      "carrier": "AT&T",
+      "operator": "AT&T Mobility",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "690",
+      "plmn_id": "310690",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Limitless Mobile",
+      "operator": "Limitless Mobile LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "700",
+      "plmn_id": "310700",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Bigfoot Cellular",
+      "operator": "Cross Valiant Cellular Partnership",
+      "status": "unknown"
+    },
+    {
+      "mcc": "310",
+      "mnc": "710",
+      "plmn_id": "310710",
+      "country": "United States",
+      "region": "US",
+      "carrier": "ASTAC",
+      "operator": "Arctic Slope Telephone Association Cooperative",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "720",
+      "plmn_id": "310720",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Syniverse",
+      "operator": "Syniverse Technologies",
+      "status": "unknown"
+    },
+    {
+      "mcc": "310",
+      "mnc": "730",
+      "plmn_id": "310730",
+      "country": "United States",
+      "region": "US",
+      "carrier": "UScellular",
+      "operator": "United States Cellular Corporation",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "740",
+      "plmn_id": "310740",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Viaero",
+      "operator": "Viaero Wireless",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "750",
+      "plmn_id": "310750",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Appalachian Wireless",
+      "operator": "East Kentucky Network LLC",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "760",
+      "plmn_id": "310760",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Lynch 3G",
+      "operator": "Lynch 3G Communications Corporation",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "770",
+      "plmn_id": "310770",
+      "country": "United States",
+      "region": "US",
+      "carrier": "iWireless",
+      "operator": "Iowa Wireless Services LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "310",
+      "mnc": "780",
+      "plmn_id": "310780",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Dispatch Direct",
+      "operator": "D. D. Inc.",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "790",
+      "plmn_id": "310790",
+      "country": "United States",
+      "region": "US",
+      "carrier": "BLAZE",
+      "operator": "PinPoint Communications Inc.",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "800",
+      "plmn_id": "310800",
+      "country": "United States",
+      "region": "US",
+      "carrier": "T-Mobile",
+      "operator": "T-Mobile US",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "810",
+      "plmn_id": "310810",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Pacific Lightwave",
+      "operator": "Pacific Lightwave Inc.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "310",
+      "mnc": "820",
+      "plmn_id": "310820",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Verizon",
+      "operator": "Verizon Wireless",
+      "status": "unknown"
+    },
+    {
+      "mcc": "310",
+      "mnc": "830",
+      "plmn_id": "310830",
+      "country": "United States",
+      "region": "US",
+      "carrier": "T-Mobile",
+      "operator": "T-Mobile US",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "840",
+      "plmn_id": "310840",
+      "country": "United States",
+      "region": "US",
+      "carrier": "telna Mobile",
+      "operator": "Telecom North America Mobile Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "850",
+      "plmn_id": "310850",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Aeris",
+      "operator": "Aeris Communications Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "860",
+      "plmn_id": "310860",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Five Star Wireless",
+      "operator": "TX RSA 15B2 LP",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "870",
+      "plmn_id": "310870",
+      "country": "United States",
+      "region": "US",
+      "carrier": "PACE",
+      "operator": "Kaplan Telephone Company",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "880",
+      "plmn_id": "310880",
+      "country": "United States",
+      "region": "US",
+      "carrier": "DTC Wireless",
+      "operator": "Advantage Cellular Systems Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "890",
+      "plmn_id": "310890",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Verizon",
+      "operator": "Verizon Wireless",
+      "status": "unknown"
+    },
+    {
+      "mcc": "310",
+      "mnc": "900",
+      "plmn_id": "310900",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Mid-Rivers Wireless",
+      "operator": "Cable & Communications Corporation",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "910",
+      "plmn_id": "310910",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Verizon",
+      "operator": "Verizon Wireless",
+      "status": "unknown"
+    },
+    {
+      "mcc": "310",
+      "mnc": "920",
+      "plmn_id": "310920",
+      "country": "United States",
+      "region": "US",
+      "carrier": "James Valley Wireless",
+      "operator": "James Valley Wireless LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "930",
+      "plmn_id": "310930",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Copper Valley Wireless",
+      "operator": "Copper Valley Wireless",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "940",
+      "plmn_id": "310940",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Tyntec",
+      "operator": "Tyntec Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "950",
+      "plmn_id": "310950",
+      "country": "United States",
+      "region": "US",
+      "carrier": "AT&T",
+      "operator": "AT&T Mobility",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "960",
+      "plmn_id": "310960",
+      "country": "United States",
+      "region": "US",
+      "carrier": "STRATA",
+      "operator": "UBET Wireless",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "970",
+      "plmn_id": "310970",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Globalstar",
+      "operator": "Globalstar",
+      "status": "operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "980",
+      "plmn_id": "310980",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Peoples Telephone",
+      "operator": "Texas RSA 7B3",
+      "status": "not operational"
+    },
+    {
+      "mcc": "310",
+      "mnc": "990",
+      "plmn_id": "310990",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Evolve Broadband",
+      "operator": "Evolve Cellular Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "010",
+      "plmn_id": "311010",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Chariton Valley",
+      "operator": "Chariton Valley Communications Corporation",
+      "status": "not operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "012",
+      "plmn_id": "311012",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Verizon",
+      "operator": "Verizon Wireless",
+      "status": "not operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "020",
+      "plmn_id": "311020",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Chariton Valley",
+      "operator": "Missouri RSA 5 Partnership",
+      "status": "not operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "030",
+      "plmn_id": "311030",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Indigo Wireless",
+      "operator": "Americell PA 3 Partnership",
+      "status": "not operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "040",
+      "plmn_id": "311040",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Choice Wireless",
+      "operator": "Commnet Wireless",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "050",
+      "plmn_id": "311050",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Thumb Cellular",
+      "operator": "Thumb Cellular LP",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "060",
+      "plmn_id": "311060",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Space Data",
+      "operator": "Space Data Corporation",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "070",
+      "plmn_id": "311070",
+      "country": "United States",
+      "region": "US",
+      "carrier": "AT&T",
+      "operator": "AT&T Mobility",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "080",
+      "plmn_id": "311080",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Pine Cellular",
+      "operator": "Pine Telephone Company",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "090",
+      "plmn_id": "311090",
+      "country": "United States",
+      "region": "US",
+      "carrier": "AT&T",
+      "operator": "AT&T Mobility",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "100",
+      "plmn_id": "311100",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Nex-Tech Wireless",
+      "operator": "Nex-Tech Wireless",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "110",
+      "plmn_id": "311110",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Verizon",
+      "operator": "Verizon Wireless",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "120",
+      "plmn_id": "311120",
+      "country": "United States",
+      "region": "US",
+      "carrier": "iConnect",
+      "operator": "Wave Runner LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "130",
+      "plmn_id": "311130",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Lightsquared",
+      "operator": "LightSquared LP",
+      "status": "not operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "140",
+      "plmn_id": "311140",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Bravado Wireless",
+      "operator": "Cross Telephone Company",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "150",
+      "plmn_id": "311150",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Wilkes Cellular",
+      "operator": "Wilkes Cellular",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "160",
+      "plmn_id": "311160",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Lightsquared",
+      "operator": "LightSquared LP",
+      "status": "not operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "170",
+      "plmn_id": "311170",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Tampnet",
+      "operator": "Tampnet",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "180",
+      "plmn_id": "311180",
+      "country": "United States",
+      "region": "US",
+      "carrier": "AT&T",
+      "operator": "AT&T Mobility",
+      "status": "not operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "190",
+      "plmn_id": "311190",
+      "country": "United States",
+      "region": "US",
+      "carrier": "AT&T",
+      "operator": "AT&T Mobility",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "200",
+      "plmn_id": "311200",
+      "country": "United States",
+      "region": "US",
+      "carrier": "ARINC",
+      "operator": "ARINC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "210",
+      "plmn_id": "311210",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Telnyx",
+      "operator": "Telnyx LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "220",
+      "plmn_id": "311220",
+      "country": "United States",
+      "region": "US",
+      "carrier": "UScellular",
+      "operator": "United States Cellular Corporation",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "230",
+      "plmn_id": "311230",
+      "country": "United States",
+      "region": "US",
+      "carrier": "C Spire Wireless",
+      "operator": "Cellular South Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "240",
+      "plmn_id": "311240",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Cordova Wireless",
+      "operator": "Cordova Wireless",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "250",
+      "plmn_id": "311250",
+      "country": "United States",
+      "region": "US",
+      "carrier": "iConnect",
+      "operator": "Wave Runner LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "260",
+      "plmn_id": "311260",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Sprint",
+      "operator": "Sprint Corporation",
+      "status": "not operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "270",
+      "plmn_id": "311270",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Verizon",
+      "operator": "Verizon Wireless",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "280",
+      "plmn_id": "311280",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Verizon",
+      "operator": "Verizon Wireless",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "290",
+      "plmn_id": "311290",
+      "country": "United States",
+      "region": "US",
+      "carrier": "PinPoint",
+      "operator": "PinPoint Communications Inc.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "300",
+      "plmn_id": "311300",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Nexus Communications",
+      "operator": "Nexus Communications Inc.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "310",
+      "plmn_id": "311310",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Leaco",
+      "operator": "Leaco Rural Telephone Company Inc.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "320",
+      "plmn_id": "311320",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Commnet Wireless",
+      "operator": "Commnet Wireless",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "330",
+      "plmn_id": "311330",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Bug Tussel Wireless",
+      "operator": "Bug Tussel Wireless LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "340",
+      "plmn_id": "311340",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Illinois Valley Cellular",
+      "operator": "Illinois Valley Cellular",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "350",
+      "plmn_id": "311350",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Sagebrush Cellular",
+      "operator": "Sagebrush Cellular Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "360",
+      "plmn_id": "311360",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Stelera Wireless",
+      "operator": "Stelera Wireless",
+      "status": "not operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "370",
+      "plmn_id": "311370",
+      "country": "United States",
+      "region": "US",
+      "carrier": "GCI",
+      "operator": "General Communication Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "380",
+      "plmn_id": "311380",
+      "country": "United States",
+      "region": "US",
+      "carrier": "New Dimension Wireless",
+      "operator": "New Dimension Wireless Ltd.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "390",
+      "plmn_id": "311390",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Verizon",
+      "operator": "Verizon Wireless",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "410",
+      "plmn_id": "311410",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Iowa RSA No. 2",
+      "operator": "Iowa RSA No. 2 LP",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "420",
+      "plmn_id": "311420",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Northwest Missouri Cellular",
+      "operator": "Northwest Missouri Cellular LP",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "430",
+      "plmn_id": "311430",
+      "country": "United States",
+      "region": "US",
+      "carrier": "RSA 1",
+      "operator": "RSA 1 LP",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "440",
+      "plmn_id": "311440",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Bluegrass Cellular",
+      "operator": "Bluegrass Cellular LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "450",
+      "plmn_id": "311450",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Panhandle Telecommunication Systems",
+      "operator": "Panhandle Telecommunication Systems Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "460",
+      "plmn_id": "311460",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Electric Imp",
+      "operator": "Electric Imp Inc.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "470",
+      "plmn_id": "311470",
+      "country": "United States",
+      "region": "VI",
+      "carrier": "Vitelcom Cellular",
+      "operator": "Vitelcom Cellular Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "480",
+      "plmn_id": "311480",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Verizon",
+      "operator": "Verizon Wireless",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "490",
+      "plmn_id": "311490",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Sprint",
+      "operator": "Sprint Corporation",
+      "status": "not operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "500",
+      "plmn_id": "311500",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Mosaic Telecom",
+      "operator": "Mosaic Telecom",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "510",
+      "plmn_id": "311510",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Ligado Networks",
+      "operator": "Ligado Networks",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "520",
+      "plmn_id": "311520",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Lightsquared",
+      "operator": "LightSquared LP",
+      "status": "not operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "530",
+      "plmn_id": "311530",
+      "country": "United States",
+      "region": "US",
+      "carrier": "NewCore Wireless",
+      "operator": "NewCore Wireless LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "540",
+      "plmn_id": "311540",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Proximiti Mobility",
+      "operator": "Proximiti Mobility Inc.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "550",
+      "plmn_id": "311550",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Commnet Wireless",
+      "operator": "Commnet Wireless LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "560",
+      "plmn_id": "311560",
+      "country": "United States",
+      "region": "US",
+      "carrier": "OTZ Communications",
+      "operator": "OTZ Communications Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "570",
+      "plmn_id": "311570",
+      "country": "United States",
+      "region": "US",
+      "carrier": "BendBroadband",
+      "operator": "Bend Cable Communications LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "580",
+      "plmn_id": "311580",
+      "country": "United States",
+      "region": "US",
+      "carrier": "UScellular",
+      "operator": "United States Cellular Corporation",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "590",
+      "plmn_id": "311590",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Verizon",
+      "operator": "Verizon Wireless",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "600",
+      "plmn_id": "311600",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Limitless Mobile",
+      "operator": "Limitless Mobile LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "610",
+      "plmn_id": "311610",
+      "country": "United States",
+      "region": "US",
+      "carrier": "North Dakota Network",
+      "operator": "North Dakota Network Co.",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "620",
+      "plmn_id": "311620",
+      "country": "United States",
+      "region": "US",
+      "carrier": "TerreStar",
+      "operator": "TerreStar Networks Inc.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "630",
+      "plmn_id": "311630",
+      "country": "United States",
+      "region": "US",
+      "carrier": "C Spire Wireless",
+      "operator": "Cellular South Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "640",
+      "plmn_id": "311640",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Standing Rock Telecommunications",
+      "operator": "Standing Rock Telecommunications",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "650",
+      "plmn_id": "311650",
+      "country": "United States",
+      "region": "US",
+      "carrier": "United Wireless",
+      "operator": "United Wireless",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "660",
+      "plmn_id": "311660",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Metro by T-Mobile",
+      "operator": "T-Mobile US",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "670",
+      "plmn_id": "311670",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Pine Belt Cellular",
+      "operator": "Pine Belt Cellular Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "680",
+      "plmn_id": "311680",
+      "country": "United States",
+      "region": "US",
+      "carrier": "GreenFly",
+      "operator": "GreenFly LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "690",
+      "plmn_id": "311690",
+      "country": "United States",
+      "region": "US",
+      "carrier": "TeleBEEPER of New Mexico",
+      "operator": "TeleBEEPER of New Mexico",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "700",
+      "plmn_id": "311700",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Midwest Network Solutions Hub",
+      "operator": "Midwest Network Solutions Hub LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "710",
+      "plmn_id": "311710",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Northeast Wireless Networks",
+      "operator": "Northeast Wireless Networks LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "720",
+      "plmn_id": "311720",
+      "country": "United States",
+      "region": "US",
+      "carrier": "MainePCS",
+      "operator": "MainePCS LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "730",
+      "plmn_id": "311730",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Proximiti Mobility",
+      "operator": "Proximiti Mobility Inc.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "740",
+      "plmn_id": "311740",
+      "country": "United States",
+      "region": "US",
+      "carrier": "TelAlaska Cellular",
+      "operator": "TelAlaska Cellular",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "750",
+      "plmn_id": "311750",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Flat Wireless",
+      "operator": "Flat Wireless LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "760",
+      "plmn_id": "311760",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Edigen",
+      "operator": "Edigen Inc.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "770",
+      "plmn_id": "311770",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Altiostar",
+      "operator": "Altiostar Networks Inc.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "780",
+      "plmn_id": "311780",
+      "country": "United States",
+      "region": "AS",
+      "carrier": "American Samoa Telecommunications",
+      "operator": "American Samoa Telecommunications Authority",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "790",
+      "plmn_id": "311790",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Coleman County Telephone Cooperative",
+      "operator": "Coleman County Telephone Cooperative Inc.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "800",
+      "plmn_id": "311800",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Bluegrass Cellular",
+      "operator": "Bluegrass Cellular LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "810",
+      "plmn_id": "311810",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Bluegrass Cellular",
+      "operator": "Bluegrass Cellular LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "820",
+      "plmn_id": "311820",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Sonus Networks",
+      "operator": "Sonus Networks",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "830",
+      "plmn_id": "311830",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Thumb Cellular",
+      "operator": "Thumb Cellular LP",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "840",
+      "plmn_id": "311840",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Cellcom",
+      "operator": "Nsight",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "850",
+      "plmn_id": "311850",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Cellcom",
+      "operator": "Nsight",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "860",
+      "plmn_id": "311860",
+      "country": "United States",
+      "region": "US",
+      "carrier": "STRATA",
+      "operator": "Uintah Basin Electronic Telecommunications",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "870",
+      "plmn_id": "311870",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Boost Mobile",
+      "operator": "Sprint Corporation",
+      "status": "not operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "880",
+      "plmn_id": "311880",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Sprint",
+      "operator": "Sprint Corporation",
+      "status": "not operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "882",
+      "plmn_id": "311882",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Sprint",
+      "operator": "Sprint Corporation",
+      "status": "not operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "890",
+      "plmn_id": "311890",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Globecomm",
+      "operator": "Globecomm Network Services Corporation",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "900",
+      "plmn_id": "311900",
+      "country": "United States",
+      "region": "US",
+      "carrier": "GigSky",
+      "operator": "GigSky",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "910",
+      "plmn_id": "311910",
+      "country": "United States",
+      "region": "US",
+      "carrier": "SI Wireless",
+      "operator": "SI Wireless LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "920",
+      "plmn_id": "311920",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Chariton Valley",
+      "operator": "Missouri RSA 5 Partnership",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "930",
+      "plmn_id": "311930",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Syringa Wireless",
+      "operator": "Syringa Wireless",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "940",
+      "plmn_id": "311940",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Sprint",
+      "operator": "Sprint Corporation",
+      "status": "not operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "950",
+      "plmn_id": "311950",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Enhanced Telecommunications",
+      "operator": "Enhanced Telecommunications Corp.",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "960",
+      "plmn_id": "311960",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Lycamobile",
+      "operator": "Lycamobile USA Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "970",
+      "plmn_id": "311970",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Big River Broadband",
+      "operator": "Big River Broadband LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "311",
+      "mnc": "980",
+      "plmn_id": "311980",
+      "country": "United States",
+      "region": "US",
+      "carrier": "LigTel Communications",
+      "operator": "LigTel Communications",
+      "status": "unknown"
+    },
+    {
+      "mcc": "311",
+      "mnc": "990",
+      "plmn_id": "311990",
+      "country": "United States",
+      "region": "US",
+      "carrier": "VTel Wireless",
+      "operator": "VTel Wireless",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "010",
+      "plmn_id": "312010",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Chariton Valley",
+      "operator": "Chariton Valley Communications Corporation",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "020",
+      "plmn_id": "312020",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Infrastructure Networks",
+      "operator": "Infrastructure Networks LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "030",
+      "plmn_id": "312030",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Bravado Wireless",
+      "operator": "Cross Wireless",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "040",
+      "plmn_id": "312040",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Custer Telephone Co-op",
+      "operator": "Custer Telephone Cooperative (CTCI)",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "050",
+      "plmn_id": "312050",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Fuego Wireless",
+      "operator": "Fuego Wireless",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "060",
+      "plmn_id": "312060",
+      "country": "United States",
+      "region": "US",
+      "carrier": "CoverageCo",
+      "operator": "CoverageCo",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "070",
+      "plmn_id": "312070",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Adams Networks",
+      "operator": "Adams Networks Inc.",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "080",
+      "plmn_id": "312080",
+      "country": "United States",
+      "region": "US",
+      "carrier": "SyncSouth",
+      "operator": "South Georgia Regional Information Technology Authority",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "090",
+      "plmn_id": "312090",
+      "country": "United States",
+      "region": "US",
+      "carrier": "AT&T",
+      "operator": "AT&T Mobility",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "100",
+      "plmn_id": "312100",
+      "country": "United States",
+      "region": "US",
+      "carrier": "ClearSky Technologies",
+      "operator": "ClearSky Technologies Inc.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "110",
+      "plmn_id": "312110",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Texas Energy Network",
+      "operator": "Texas Energy Network LLC",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "120",
+      "plmn_id": "312120",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Appalachian Wireless",
+      "operator": "East Kentucky Network LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "130",
+      "plmn_id": "312130",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Appalachian Wireless",
+      "operator": "East Kentucky Network LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "140",
+      "plmn_id": "312140",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Revol Wireless",
+      "operator": "Cleveland Unlimited Inc.",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "150",
+      "plmn_id": "312150",
+      "country": "United States",
+      "region": "US",
+      "carrier": "NorthwestCell",
+      "operator": "Northwest Missouri Cellular LP",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "160",
+      "plmn_id": "312160",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Chat Mobility",
+      "operator": "RSA1 Limited Partnership",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "170",
+      "plmn_id": "312170",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Chat Mobility",
+      "operator": "Iowa RSA No. 2 LP",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "180",
+      "plmn_id": "312180",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Limitless Mobile",
+      "operator": "Limitless Mobile LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "190",
+      "plmn_id": "312190",
+      "country": "United States",
+      "region": "US",
+      "carrier": "T-Mobile",
+      "operator": "T-Mobile US",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "200",
+      "plmn_id": "312200",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Voyager Mobility",
+      "operator": "Voyager Mobility LLC",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "210",
+      "plmn_id": "312210",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Aspenta International",
+      "operator": "Aspenta International Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "220",
+      "plmn_id": "312220",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Chariton Valley",
+      "operator": "Chariton Valley Communications Corporation",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "230",
+      "plmn_id": "312230",
+      "country": "United States",
+      "region": "US",
+      "carrier": "SRT Communications",
+      "operator": "North Dakota Network Co.",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "240",
+      "plmn_id": "312240",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Sprint",
+      "operator": "Sprint Corporation",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "250",
+      "plmn_id": "312250",
+      "country": "United States",
+      "region": "US",
+      "carrier": "T-Mobile",
+      "operator": "T-Mobile US",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "260",
+      "plmn_id": "312260",
+      "country": "United States",
+      "region": "US",
+      "carrier": "WorldCell Solutions",
+      "operator": "WorldCell Solutions LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "270",
+      "plmn_id": "312270",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Pioneer Cellular",
+      "operator": "Cellular Network Partnership",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "280",
+      "plmn_id": "312280",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Pioneer Cellular",
+      "operator": "Cellular Network Partnership",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "290",
+      "plmn_id": "312290",
+      "country": "United States",
+      "region": "US",
+      "carrier": "STRATA",
+      "operator": "Uintah Basin Electronic Telecommunications",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "300",
+      "plmn_id": "312300",
+      "country": "United States",
+      "region": "US",
+      "carrier": "telna Mobile",
+      "operator": "Telecom North America Mobile Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "310",
+      "plmn_id": "312310",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Clear Stream Communications",
+      "operator": "Clear Stream Communications LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "320",
+      "plmn_id": "312320",
+      "country": "United States",
+      "region": "US",
+      "carrier": "RTC Communications",
+      "operator": "RTC Communications LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "330",
+      "plmn_id": "312330",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Nemont",
+      "operator": "Nemont Communications Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "340",
+      "plmn_id": "312340",
+      "country": "United States",
+      "region": "US",
+      "carrier": "MTA",
+      "operator": "Matanuska Telephone Association Inc.",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "350",
+      "plmn_id": "312350",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Triangle Communication System",
+      "operator": "Triangle Communication System Inc.",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "360",
+      "plmn_id": "312360",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Wes-Tex Telecommunications",
+      "operator": "Wes-Tex Telecommunications Ltd.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "370",
+      "plmn_id": "312370",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Choice Wireless",
+      "operator": "Commnet Wireless",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "380",
+      "plmn_id": "312380",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Copper Valley Wireless",
+      "operator": "Copper Valley Wireless",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "390",
+      "plmn_id": "312390",
+      "country": "United States",
+      "region": "US",
+      "carrier": "FTC Wireless",
+      "operator": "FTC Communications LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "400",
+      "plmn_id": "312400",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Mid-Rivers Wireless",
+      "operator": "Mid-Rivers Telephone Cooperative",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "410",
+      "plmn_id": "312410",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Eltopia Communications",
+      "operator": "Eltopia Communications LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "420",
+      "plmn_id": "312420",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Nex-Tech Wireless",
+      "operator": "Nex-Tech Wireless",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "430",
+      "plmn_id": "312430",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Silver Star Communications",
+      "operator": "Silver Star Communications",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "440",
+      "plmn_id": "312440",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Kajeet",
+      "operator": "Kajeet Inc.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "450",
+      "plmn_id": "312450",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Cable & Communications Corporation",
+      "operator": "Cable & Communications Corporation",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "460",
+      "plmn_id": "312460",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Ketchikan Public Utilities",
+      "operator": "Ketchikan Public Utilities (KPU)",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "470",
+      "plmn_id": "312470",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Carolina West Wireless",
+      "operator": "Carolina West Wireless",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "480",
+      "plmn_id": "312480",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Nemont",
+      "operator": "Sagebrush Cellular Inc.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "490",
+      "plmn_id": "312490",
+      "country": "United States",
+      "region": "US",
+      "carrier": "TrustComm",
+      "operator": "TrustComm Inc.",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "500",
+      "plmn_id": "312500",
+      "country": "United States",
+      "region": "US",
+      "carrier": "AB Spectrum",
+      "operator": "AB Spectrum LLC",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "510",
+      "plmn_id": "312510",
+      "country": "United States",
+      "region": "US",
+      "carrier": "WUE",
+      "operator": "WUE Inc.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "520",
+      "plmn_id": "312520",
+      "country": "United States",
+      "region": "US",
+      "carrier": "ANIN",
+      "operator": "ANIN",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "530",
+      "plmn_id": "312530",
+      "country": "United States",
+      "region": "US",
+      "carrier": "T-Mobile",
+      "operator": "T-Mobile US",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "540",
+      "plmn_id": "312540",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Broadband In Hand",
+      "operator": "Broadband In Hand LLC",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "550",
+      "plmn_id": "312550",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Great Plains Communications",
+      "operator": "Great Plains Communications Inc.",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "560",
+      "plmn_id": "312560",
+      "country": "United States",
+      "region": "US",
+      "carrier": "NHLT",
+      "operator": "NHLT Inc.",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "570",
+      "plmn_id": "312570",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Impact",
+      "operator": "MHG Telco LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "580",
+      "plmn_id": "312580",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Google",
+      "operator": "Google LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "590",
+      "plmn_id": "312590",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Northern Michigan University",
+      "operator": "Northern Michigan University",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "600",
+      "plmn_id": "312600",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Nemont",
+      "operator": "Sagebrush Cellular Inc.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "610",
+      "plmn_id": "312610",
+      "country": "United States",
+      "region": "US",
+      "carrier": "ShawnTech Communications",
+      "operator": "ShawnTech Communications",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "620",
+      "plmn_id": "312620",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Airlinq",
+      "operator": "Airlinq Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "630",
+      "plmn_id": "312630",
+      "country": "United States",
+      "region": "US",
+      "carrier": "NetGenuity",
+      "operator": "NetGenuity Inc.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "640",
+      "plmn_id": "312640",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Nemont",
+      "operator": "Sagebrush Cellular Inc.",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "650",
+      "plmn_id": "312650",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Brightlink",
+      "operator": "Brightlink",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "660",
+      "plmn_id": "312660",
+      "country": "United States",
+      "region": "US",
+      "carrier": "nTelos",
+      "operator": "nTelos Wireless",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "670",
+      "plmn_id": "312670",
+      "country": "United States",
+      "region": "US",
+      "carrier": "FirstNet",
+      "operator": "AT&T Mobility",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "680",
+      "plmn_id": "312680",
+      "country": "United States",
+      "region": "US",
+      "carrier": "AT&T",
+      "operator": "AT&T Mobility",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "690",
+      "plmn_id": "312690",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Tecore Global Services",
+      "operator": "Tecore Global Services LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "700",
+      "plmn_id": "312700",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Wireless Partners",
+      "operator": "Wireless Partners LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "710",
+      "plmn_id": "312710",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Great North Woods Wireless",
+      "operator": "Great North Woods Wireless LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "720",
+      "plmn_id": "312720",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Southern LINC",
+      "operator": "Southern Communications Services",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "730",
+      "plmn_id": "312730",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Triangle Communication System",
+      "operator": "Triangle Communication System Inc.",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "740",
+      "plmn_id": "312740",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Locus Telecommunications",
+      "operator": "KDDI America Inc.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "750",
+      "plmn_id": "312750",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Artemis Networks",
+      "operator": "Artemis Networks LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "760",
+      "plmn_id": "312760",
+      "country": "United States",
+      "region": "US",
+      "carrier": "ASTAC",
+      "operator": "Arctic Slope Telephone Association Cooperative",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "770",
+      "plmn_id": "312770",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Verizon",
+      "operator": "Verizon Wireless",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "780",
+      "plmn_id": "312780",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Redzone Wireless",
+      "operator": "Redzone Wireless",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "790",
+      "plmn_id": "312790",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Gila Electronics",
+      "operator": "Gila Electronics",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "800",
+      "plmn_id": "312800",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Cirrus Core Networks",
+      "operator": "Cirrus Core Networks",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "810",
+      "plmn_id": "312810",
+      "country": "United States",
+      "region": "US",
+      "carrier": "BBCP",
+      "operator": "Bristol Bay Telephone Cooperative",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "820",
+      "plmn_id": "312820",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Santel Communications Cooperative",
+      "operator": "Santel Communications Cooperative Inc.",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "830",
+      "plmn_id": "312830",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Kings County Office of Education",
+      "operator": "Kings County Office of Education",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "840",
+      "plmn_id": "312840",
+      "country": "United States",
+      "region": "US",
+      "carrier": "SyncSouth",
+      "operator": "South Georgia Regional Information Technology Authority",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "850",
+      "plmn_id": "312850",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Onvoy Spectrum",
+      "operator": "Onvoy Spectrum LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "860",
+      "plmn_id": "312860",
+      "country": "United States",
+      "region": "US",
+      "carrier": "ClearTalk",
+      "operator": "Flat Wireless LLC",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "870",
+      "plmn_id": "312870",
+      "country": "United States",
+      "region": "US",
+      "carrier": "GigSky Mobile",
+      "operator": "GigSky Mobile LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "880",
+      "plmn_id": "312880",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Albemarle County Public Schools",
+      "operator": "Albemarle County Public Schools",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "890",
+      "plmn_id": "312890",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Circle Gx",
+      "operator": "Circle Gx",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "900",
+      "plmn_id": "312900",
+      "country": "United States",
+      "region": "US",
+      "carrier": "ClearTalk",
+      "operator": "Flat West Wireless LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "910",
+      "plmn_id": "312910",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Appalachian Wireless",
+      "operator": "East Kentucky Network LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "920",
+      "plmn_id": "312920",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Northeast Wireless Networks",
+      "operator": "Northeast Wireless Networks LLC",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "930",
+      "plmn_id": "312930",
+      "country": "United States",
+      "region": "US",
+      "carrier": "HNI",
+      "operator": "Hewlett-Packard Communication Services LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "940",
+      "plmn_id": "312940",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Webformix",
+      "operator": "Webformix",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "950",
+      "plmn_id": "312950",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Custer Telephone Co-op",
+      "operator": "Custer Telephone Cooperative (CTCI)",
+      "status": "operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "960",
+      "plmn_id": "312960",
+      "country": "United States",
+      "region": "US",
+      "carrier": "M&A Technology",
+      "operator": "M&A Technology Inc.",
+      "status": "not operational"
+    },
+    {
+      "mcc": "312",
+      "mnc": "970",
+      "plmn_id": "312970",
+      "country": "United States",
+      "region": "US",
+      "carrier": "IOSAZ Intellectual Property",
+      "operator": "IOSAZ Intellectual Property LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "980",
+      "plmn_id": "312980",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Mark Twain Communications",
+      "operator": "Mark Twain Communications Company",
+      "status": "unknown"
+    },
+    {
+      "mcc": "312",
+      "mnc": "990",
+      "plmn_id": "312990",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Premier Broadband",
+      "operator": "Premier Holdings LLC",
+      "status": "not operational"
+    },
+    {
+      "mcc": "313",
+      "mnc": "000",
+      "plmn_id": "313000",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Tennessee Wireless",
+      "operator": "Tennessee Wireless",
+      "status": "not operational"
+    },
+    {
+      "mcc": "313",
+      "mnc": "010",
+      "plmn_id": "313010",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Bravado Wireless",
+      "operator": "Cross Wireless LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "020",
+      "plmn_id": "313020",
+      "country": "United States",
+      "region": "US",
+      "carrier": "CTC Wireless",
+      "operator": "Cambridge Telephone Company Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "313",
+      "mnc": "030",
+      "plmn_id": "313030",
+      "country": "United States",
+      "region": "US",
+      "carrier": "AT&T",
+      "operator": "AT&T Mobility",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "040",
+      "plmn_id": "313040",
+      "country": "United States",
+      "region": "US",
+      "carrier": "NNTC Wireless",
+      "operator": "Nucla-Naturita Telephone Company",
+      "status": "operational"
+    },
+    {
+      "mcc": "313",
+      "mnc": "050",
+      "plmn_id": "313050",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Breakaway Wireless",
+      "operator": "Manti Tele Communications Company Inc.",
+      "status": "not operational"
+    },
+    {
+      "mcc": "313",
+      "mnc": "060",
+      "plmn_id": "313060",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Country Wireless",
+      "operator": "Country Wireless",
+      "status": "operational"
+    },
+    {
+      "mcc": "313",
+      "mnc": "061",
+      "plmn_id": "313061",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Country Wireless",
+      "operator": "Country Wireless",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "070",
+      "plmn_id": "313070",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Midwest Network Solutions Hub",
+      "operator": "Midwest Network Solutions Hub LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "080",
+      "plmn_id": "313080",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Speedwavz",
+      "operator": "Speedwavz LLP",
+      "status": "not operational"
+    },
+    {
+      "mcc": "313",
+      "mnc": "090",
+      "plmn_id": "313090",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Vivint Wireless",
+      "operator": "Vivint Wireless Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "313",
+      "mnc": "100",
+      "plmn_id": "313100",
+      "country": "United States",
+      "region": "US",
+      "carrier": "FirstNet",
+      "operator": "AT&T FirstNet",
+      "status": "operational"
+    },
+    {
+      "mcc": "313",
+      "mnc": "110",
+      "plmn_id": "313110",
+      "country": "United States",
+      "region": "US",
+      "carrier": "FirstNet",
+      "operator": "AT&T FirstNet",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "120",
+      "plmn_id": "313120",
+      "country": "United States",
+      "region": "US",
+      "carrier": "FirstNet",
+      "operator": "AT&T FirstNet",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "130",
+      "plmn_id": "313130",
+      "country": "United States",
+      "region": "US",
+      "carrier": "FirstNet",
+      "operator": "AT&T FirstNet",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "140",
+      "plmn_id": "313140",
+      "country": "United States",
+      "region": "US",
+      "carrier": "FirstNet",
+      "operator": "AT&T FirstNet",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "150",
+      "plmn_id": "313150",
+      "country": "United States",
+      "region": "US",
+      "carrier": "FirstNet",
+      "operator": "700 MHz Public Safety Broadband",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "160",
+      "plmn_id": "313160",
+      "country": "United States",
+      "region": "US",
+      "carrier": "FirstNet",
+      "operator": "700 MHz Public Safety Broadband",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "170",
+      "plmn_id": "313170",
+      "country": "United States",
+      "region": "US",
+      "carrier": "FirstNet",
+      "operator": "700 MHz Public Safety Broadband",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "180",
+      "plmn_id": "313180",
+      "country": "United States",
+      "region": "US",
+      "carrier": "FirstNet",
+      "operator": "700 MHz Public Safety Broadband",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "190",
+      "plmn_id": "313190",
+      "country": "United States",
+      "region": "US",
+      "carrier": "FirstNet",
+      "operator": "700 MHz Public Safety Broadband",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "200",
+      "plmn_id": "313200",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Mercury Network Corporation",
+      "operator": "Mercury Network Corporation",
+      "status": "not operational"
+    },
+    {
+      "mcc": "313",
+      "mnc": "210",
+      "plmn_id": "313210",
+      "country": "United States",
+      "region": "US",
+      "carrier": "AT&T",
+      "operator": "AT&T Mobility",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "220",
+      "plmn_id": "313220",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Custer Telephone Co-op",
+      "operator": "Custer Telephone Cooperative (CTCI)",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "230",
+      "plmn_id": "313230",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Velocity Communications",
+      "operator": "Velocity Communications Inc.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "240",
+      "plmn_id": "313240",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Peak Internet",
+      "operator": "Fundamental Holdings Corp.",
+      "status": "not operational"
+    },
+    {
+      "mcc": "313",
+      "mnc": "250",
+      "plmn_id": "313250",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Imperial County Office of Education",
+      "operator": "Imperial County Office of Education",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "260",
+      "plmn_id": "313260",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Expeto Wireless",
+      "operator": "Expeto Wireless Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "313",
+      "mnc": "270",
+      "plmn_id": "313270",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Blackstar Management",
+      "operator": "Blackstar Management",
+      "status": "not operational"
+    },
+    {
+      "mcc": "313",
+      "mnc": "280",
+      "plmn_id": "313280",
+      "country": "United States",
+      "region": "US",
+      "carrier": "King Street Wireless",
+      "operator": "King Street Wireless LP",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "290",
+      "plmn_id": "313290",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Gulf Coast Broadband",
+      "operator": "Gulf Coast Broadband LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "300",
+      "plmn_id": "313300",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Southern California Edison",
+      "operator": "Southern California Edison",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "310",
+      "plmn_id": "313310",
+      "country": "United States",
+      "region": "US",
+      "carrier": "CAL.NET",
+      "operator": "CAL.NET Inc.",
+      "status": "not operational"
+    },
+    {
+      "mcc": "313",
+      "mnc": "320",
+      "plmn_id": "313320",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Paladin Wireless",
+      "operator": "Paladin Wireless",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "330",
+      "plmn_id": "313330",
+      "country": "United States",
+      "region": "US",
+      "carrier": "CenturyTel Broadband Services",
+      "operator": "CenturyTel Broadband Services LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "340",
+      "plmn_id": "313340",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Boost Mobile",
+      "operator": "Dish Network (Dish Wireless)",
+      "status": "operational"
+    },
+    {
+      "mcc": "313",
+      "mnc": "350",
+      "plmn_id": "313350",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Boost Mobile",
+      "operator": "Dish Network (Dish Wireless)",
+      "status": "not operational"
+    },
+    {
+      "mcc": "313",
+      "mnc": "360",
+      "plmn_id": "313360",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Boost Mobile",
+      "operator": "Dish Network (Dish Wireless)",
+      "status": "not operational"
+    },
+    {
+      "mcc": "313",
+      "mnc": "370",
+      "plmn_id": "313370",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Red Truck Wireless",
+      "operator": "Red Truck Wireless LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "380",
+      "plmn_id": "313380",
+      "country": "United States",
+      "region": "US",
+      "carrier": "OptimERA",
+      "operator": "OptimERA Inc.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "390",
+      "plmn_id": "313390",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Altice USA Wireless",
+      "operator": "Altice USA Wireless Inc.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "400",
+      "plmn_id": "313400",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Texoma Communications",
+      "operator": "Texoma Communications LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "410",
+      "plmn_id": "313410",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Anterix",
+      "operator": "Anterix",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "420",
+      "plmn_id": "313420",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Hudson Valley Wireless",
+      "operator": "Hudson Valley Wireless",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "440",
+      "plmn_id": "313440",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Arvig",
+      "operator": "Arvig Enterprises Inc.",
+      "status": "not operational"
+    },
+    {
+      "mcc": "313",
+      "mnc": "450",
+      "plmn_id": "313450",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Spectrum Wireless Holdings",
+      "operator": "Spectrum Wireless Holdings LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "460",
+      "plmn_id": "313460",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Mobi",
+      "operator": "Mobi Inc.",
+      "status": "operational"
+    },
+    {
+      "mcc": "313",
+      "mnc": "470",
+      "plmn_id": "313470",
+      "country": "United States",
+      "region": "US",
+      "carrier": "San Diego Gas & Electric Company",
+      "operator": "San Diego Gas & Electric Company",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "480",
+      "plmn_id": "313480",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Ready Wireless",
+      "operator": "Ready Wireless LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "490",
+      "plmn_id": "313490",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Puloli",
+      "operator": "Puloli Inc.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "500",
+      "plmn_id": "313500",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Shelcomm",
+      "operator": "Shelcomm Inc.",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "510",
+      "plmn_id": "313510",
+      "country": "United States",
+      "region": "PR",
+      "carrier": "Claro",
+      "operator": "Puerto Rico Telephone Company",
+      "status": "operational"
+    },
+    {
+      "mcc": "313",
+      "mnc": "520",
+      "plmn_id": "313520",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Florida Broadband",
+      "operator": "Florida Broadband Inc.",
+      "status": "not operational"
+    },
+    {
+      "mcc": "313",
+      "mnc": "540",
+      "plmn_id": "313540",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Nokia Innovations US",
+      "operator": "Nokia Innovations US LLC",
+      "status": "unknown"
+    },
+    {
+      "mcc": "313",
+      "mnc": "550",
+      "plmn_id": "313550",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Mile High Networks",
+      "operator": "Mile High Networks LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "313",
+      "mnc": "560",
+      "plmn_id": "313560",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Boldyn Networks US",
+      "operator": "Boldyn Networks US",
+      "status": "operational"
+    },
+    {
+      "mcc": "313",
+      "mnc": "790",
+      "plmn_id": "313790",
+      "country": "United States",
+      "region": "PR",
+      "carrier": "Liberty",
+      "operator": "Liberty Cablevision of Puerto Rico LLC",
+      "status": "operational"
+    },
+    {
+      "mcc": "314",
+      "mnc": "100",
+      "plmn_id": "314100",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Reserved for Public Safety",
+      "operator": "Reserved for Public Safety",
+      "status": "reserved"
+    },
+    {
+      "mcc": "315",
+      "mnc": "010",
+      "plmn_id": "315010",
+      "country": "United States",
+      "region": "US",
+      "carrier": "CBRS",
+      "operator": "Citizens Broadband Radio Service",
+      "status": "reserved"
+    },
+    {
+      "mcc": "316",
+      "mnc": "010",
+      "plmn_id": "316010",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Nextel",
+      "operator": "Nextel Communications",
+      "status": "not operational"
+    },
+    {
+      "mcc": "316",
+      "mnc": "011",
+      "plmn_id": "316011",
+      "country": "United States",
+      "region": "US",
+      "carrier": "Southern LINC",
+      "operator": "Southern Communications Services",
+      "status": "operational"
+    }
+  ]
+}

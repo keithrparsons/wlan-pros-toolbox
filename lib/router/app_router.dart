@@ -59,6 +59,7 @@ import '../screens/tools/reference/roaming_screen.dart';
 import '../screens/tools/reference/ap_placement_screen.dart';
 import '../screens/tools/reference/non_wifi_channels_screen.dart';
 import '../screens/tools/reference/wifi_glossary_screen.dart';
+import '../screens/tools/reference/plmn_reference_screen.dart';
 import '../screens/tools/reference/poe_reference_screen.dart';
 import '../screens/tools/reference/spectrum_screen.dart';
 import '../screens/tools/network/arp_ndp_screen.dart';
@@ -244,6 +245,11 @@ class AppRouter {
   // Quick Reference category — offline lookup tables (bundled assets, all
   // platforms incl. web).
   static const String portReference = '/tools/port-reference';
+
+  /// US PLMN ID Reference — offline MCC/MNC lookup table (376 entries). The id
+  /// `plmn-id-reference` is permanent (backs this route, the catalog entry, the
+  /// asset, and tests; never renamed).
+  static const String plmnReference = '/tools/plmn-id-reference';
   static const String osiModel = '/tools/osi-model';
   static const String topLevelDomains = '/tools/top-level-domains';
   static const String rjConnectors = '/tools/rj-connectors';
@@ -409,6 +415,7 @@ class AppRouter {
     ipv4Subnet: (_) => const SubnetCalcScreen(),
     networkDiscovery: (_) => const NetworkDiscoveryScreen(),
     portReference: (_) => const PortReferenceScreen(),
+    plmnReference: (_) => const PlmnReferenceScreen(),
     osiModel: (_) => const OsiModelScreen(),
     topLevelDomains: (_) => const TopLevelDomainsScreen(),
     rjConnectors: (_) => const RjConnectorsScreen(),
