@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import '../screens/about_screen.dart';
 import '../screens/help_browse_screen.dart';
 import '../screens/home_screen.dart';
+import '../screens/wlanpi/wlanpi_home_screen.dart';
 import '../screens/tools/educational/educational_resources_screen.dart';
 import '../screens/search_screen.dart';
 import '../data/tool_catalog.dart' show kEducationalResourcesRoute;
@@ -324,6 +325,12 @@ class AppRouter {
   static const String checklistApInstall = '/tools/checklist-ap-install';
   static const String checklistClientTest = '/tools/checklist-client-test';
 
+  // WLAN Pi companion — EXPERIMENTAL mode (LAN REST client of wlanpi-core).
+  // Discovery + system/network + profiler render scaffolds. Live device wiring
+  // (mDNS + auth handshake) lands on the on-device spike; until then the screens
+  // render labeled sample data and honest not-yet-wired states. v1.1+.
+  static const String wlanPi = '/wlanpi';
+
   /// Map of static, argument-less routes. Categories use MaterialPageRoute
   /// directly because each category screen takes a typed `ToolCategory`.
   static final Map<String, WidgetBuilder> routes = <String, WidgetBuilder>{
@@ -510,6 +517,7 @@ class AppRouter {
           checklist: kClientTestChecklist,
           toolId: 'checklist-client-test',
         ),
+    wlanPi: (_) => const WlanPiHomeScreen(),
   };
 
   /// Fallback for any unregistered route. Sends the user back to home rather
