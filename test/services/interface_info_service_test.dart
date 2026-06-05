@@ -10,16 +10,21 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
+import 'package:wlan_pros_toolbox/services/network/connected_ap_cache.dart';
 import 'package:wlan_pros_toolbox/services/network/interface_info_service.dart';
 
 void main() {
+  // Each service gets its OWN empty cache so the warm-path (Batch 8 item 1)
+  // never leaks the process-wide singleton's state into these reader-seam tests.
   InterfaceInfoService serviceWith({
     ConnectedAp? ap,
     bool authorized = true,
+    ConnectedApCache? cache,
   }) {
     return InterfaceInfoService(
       interfaceLister: () async => const [],
       connectedApReader: () async => (ap: ap, authorized: authorized),
+      connectedApCache: cache ?? ConnectedApCache(),
     );
   }
 
@@ -83,11 +88,159 @@ void main() {
     final svc = InterfaceInfoService(
       interfaceLister: () async => const [],
       connectedApReader: () async => throw StateError('read failed'),
+      connectedApCache: ConnectedApCache(),
     );
     final snap = await svc.read();
     expect(snap.wifi.ssid, isNull);
     expect(snap.wifi.bssid, isNull);
     // A failed read is not a Location problem (authorized defaults true on error).
     expect(snap.wifi.locationNeeded, isFalse);
+  });
+
+  group('warm shared cache (Batch 8 item 1)', () {
+    test('a warm cache supplies the identity without the cold reader firing',
+        () async {
+      final cache = ConnectedApCache()
+        ..update(const ConnectedAp(
+          ssid: 'KeithNet',
+          bssid: 'a4:83:e7:00:11:22',
+        ));
+      bool coldReaderCalled = false;
+      final svc = InterfaceInfoService(
+        interfaceLister: () async => const [],
+        connectedApReader: () async {
+          coldReaderCalled = true;
+          return (ap: null, authorized: true);
+        },
+        connectedApCache: cache,
+      );
+      final snap = await svc.read();
+      // Identity comes from the cache; the cold (Shortcut-bounce) reader is
+      // never consulted — the whole point of item 1.
+      expect(snap.wifi.ssid, 'KeithNet');
+      expect(snap.wifi.bssid, 'a4:83:e7:00:11:22');
+      expect(coldReaderCalled, isFalse);
+      expect(snap.wifi.locationNeeded, isFalse);
+    });
+
+    test('a cold cache falls through to the per-platform reader', () async {
+      bool coldReaderCalled = false;
+      final svc = InterfaceInfoService(
+        interfaceLister: () async => const [],
+        connectedApReader: () async {
+          coldReaderCalled = true;
+          return (
+            ap: const ConnectedAp(ssid: 'FromReader'),
+            authorized: true,
+          );
+        },
+        connectedApCache: ConnectedApCache(), // empty
+      );
+      final snap = await svc.read();
+      expect(coldReaderCalled, isTrue);
+      expect(snap.wifi.ssid, 'FromReader');
+    });
+
+    test('a data-empty cache entry is ignored and the reader still runs',
+        () async {
+      // An all-null reading never enters the cache (update ignores it), so a
+      // cache that only ever saw empties stays cold and the reader fires.
+      final cache = ConnectedApCache()..update(const ConnectedAp());
+      bool coldReaderCalled = false;
+      final svc = InterfaceInfoService(
+        interfaceLister: () async => const [],
+        connectedApReader: () async {
+          coldReaderCalled = true;
+          return (ap: const ConnectedAp(ssid: 'FromReader'), authorized: true);
+        },
+        connectedApCache: cache,
+      );
+      final snap = await svc.read();
+      expect(coldReaderCalled, isTrue);
+      expect(snap.wifi.ssid, 'FromReader');
+    });
+
+    test('a warm cache stamps cachedAt; the fresh reader path does NOT',
+        () async {
+      // Warm path: cachedAt is the cache updatedAt, isCacheSourced is true.
+      final cache = ConnectedApCache()
+        ..update(const ConnectedAp(ssid: 'KeithNet'));
+      final warmSvc = InterfaceInfoService(
+        interfaceLister: () async => const [],
+        connectedApReader: () async => (ap: null, authorized: true),
+        connectedApCache: cache,
+      );
+      final warm = await warmSvc.read();
+      expect(warm.wifi.ssid, 'KeithNet');
+      expect(warm.wifi.isCacheSourced, isTrue);
+      expect(warm.wifi.cachedAt, isNotNull);
+      expect(warm.wifi.cachedAt, cache.updatedAt);
+
+      // Fresh read path (cold cache): identity comes from the reader and carries
+      // NO as-of stamp — a genuinely live reading is never labelled "as of".
+      final freshSvc = InterfaceInfoService(
+        interfaceLister: () async => const [],
+        connectedApReader: () async =>
+            (ap: const ConnectedAp(ssid: 'FromReader'), authorized: true),
+        connectedApCache: ConnectedApCache(), // cold
+      );
+      final fresh = await freshSvc.read();
+      expect(fresh.wifi.ssid, 'FromReader');
+      expect(fresh.wifi.isCacheSourced, isFalse);
+      expect(fresh.wifi.cachedAt, isNull);
+    });
+
+    test('a cache reading older than the stale threshold is bypassed', () async {
+      // Cache holds the PREVIOUS network; its updatedAt is well past the
+      // threshold, so the service must NOT serve it as current — it falls
+      // through to the fresh per-platform read instead (truthfulness fix).
+      final cache = ConnectedApCache()
+        ..update(const ConnectedAp(ssid: 'OldNetwork'));
+      final DateTime cachedMoment = cache.updatedAt!;
+      bool coldReaderCalled = false;
+      final svc = InterfaceInfoService(
+        interfaceLister: () async => const [],
+        connectedApReader: () async {
+          coldReaderCalled = true;
+          return (ap: const ConnectedAp(ssid: 'CurrentNetwork'), authorized: true);
+        },
+        connectedApCache: cache,
+        // Pretend it is well past the staleness window since the cache was set.
+        now: () => cachedMoment.add(
+          InterfaceInfoService.cacheStaleThreshold + const Duration(minutes: 1),
+        ),
+      );
+      final snap = await svc.read();
+      expect(coldReaderCalled, isTrue);
+      expect(snap.wifi.ssid, 'CurrentNetwork');
+      // A fresh read → no as-of stamp.
+      expect(snap.wifi.isCacheSourced, isFalse);
+      expect(snap.wifi.cachedAt, isNull);
+    });
+
+    test('a cache reading within the stale threshold is served with cachedAt',
+        () async {
+      final cache = ConnectedApCache()
+        ..update(const ConnectedAp(ssid: 'StillCurrent'));
+      final DateTime cachedMoment = cache.updatedAt!;
+      bool coldReaderCalled = false;
+      final svc = InterfaceInfoService(
+        interfaceLister: () async => const [],
+        connectedApReader: () async {
+          coldReaderCalled = true;
+          return (ap: null, authorized: true);
+        },
+        connectedApCache: cache,
+        // Just inside the window.
+        now: () => cachedMoment.add(
+          InterfaceInfoService.cacheStaleThreshold - const Duration(seconds: 1),
+        ),
+      );
+      final snap = await svc.read();
+      expect(coldReaderCalled, isFalse);
+      expect(snap.wifi.ssid, 'StillCurrent');
+      expect(snap.wifi.isCacheSourced, isTrue);
+      expect(snap.wifi.cachedAt, cachedMoment);
+    });
   });
 }

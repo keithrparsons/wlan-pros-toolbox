@@ -268,6 +268,74 @@ void main() {
 
       expect(bridge.monitoringActive, isFalse);
     });
+
+    // REGRESSION — same beta-blocker runaway loop as the Wi-Fi tool. Firing the
+    // combined "WLAN Pros Live" Shortcut opens the Shortcuts app, backgrounding
+    // the Toolbox and then foregrounding it on return. The resume must NEVER
+    // re-fire the Shortcut, or the app ping-pongs to Shortcuts forever.
+    testWidgets(
+        'a Shortcut-run-induced foreground does NOT auto-re-fire the Shortcut '
+        '(no runaway loop)', (tester) async {
+      final bridge = _FakeBridge(everReceived: true, latest: _sample());
+      await tester.pumpWidget(host(
+        CellularInfoScreen(
+          sourceOverride: CellularInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        ),
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+      expect(bridge.monitoringActive, isTrue);
+      expect(bridge.runShortcutCalls, 1);
+
+      // The Shortcut bounce: background then foreground, repeated. A loop would
+      // multiply the run count without bound; the fix pins it at 1.
+      for (int i = 0; i < 5; i++) {
+        tester.binding
+            .handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+        tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+        await tester.pumpAndSettle();
+        tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+        await tester.pumpAndSettle();
+      }
+      expect(bridge.runShortcutCalls, 1,
+          reason: 'resume after a Shortcut bounce must never re-fire the '
+              'Shortcut — that is the runaway loop');
+    });
+
+    testWidgets(
+        'a genuine background stops sampling; foreground does not auto-restart',
+        (tester) async {
+      final bridge = _FakeBridge(everReceived: true, latest: _sample());
+      await tester.pumpWidget(host(
+        CellularInfoScreen(
+          sourceOverride: CellularInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        ),
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+      expect(bridge.monitoringActive, isTrue);
+      expect(bridge.runShortcutCalls, 1);
+
+      // Let the Start's own bounce complete first (resume clears the in-flight
+      // marker), so the next background is a genuine user-driven app switch.
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+
+      // User genuinely leaves: sampling stops (flag cleared).
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pumpAndSettle();
+      expect(bridge.monitoringActive, isFalse);
+
+      // User returns: the Shortcut is NOT re-fired; the user re-taps Start.
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(bridge.runShortcutCalls, 1);
+      expect(bridge.monitoringActive, isFalse);
+    });
   });
 
   group('CellularInfoScreen — platform fallbacks', () {

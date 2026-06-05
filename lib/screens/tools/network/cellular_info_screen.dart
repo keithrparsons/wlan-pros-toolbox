@@ -87,6 +87,23 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
   /// Set when the last Live Start could not open the Live Shortcut.
   bool _liveTriggerError = false;
 
+  /// True from the instant Live Start fires the companion Shortcut until the app
+  /// has returned to the foreground after that Shortcut run completes.
+  ///
+  /// Firing the combined "WLAN Pros Live" Shortcut opens the Shortcuts app,
+  /// which backgrounds the Toolbox and then foregrounds it again on return. That
+  /// app-induced bounce is what [didChangeAppLifecycleState] must NOT mistake
+  /// for a user app-switch: while this is set, the lifecycle transitions are the
+  /// Shortcut round-trip and must not stop sampling or re-fire the Shortcut.
+  /// Re-firing on the app-induced foreground was the runaway loop the user had
+  /// to force-kill (same defect as the Wi-Fi tool).
+  bool _shortcutBounceInFlight = false;
+
+  /// Guards [_startLive] against re-entrancy: a Shortcut trigger fires only on
+  /// an explicit user tap, once, and never while a previous trigger's bounce is
+  /// still resolving. Belt-and-suspenders on top of [_shortcutBounceInFlight].
+  bool _startInFlight = false;
+
   @override
   void initState() {
     super.initState();
@@ -132,18 +149,29 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
   Future<void> _startLive() async {
     final CellularMonitorController? c = _liveController;
     if (c == null) return;
+    if (_startInFlight) return; // re-entrancy guard: never chain a second run
+    _startInFlight = true;
+    // Mark the imminent Shortcut bounce BEFORE the trigger fires so the
+    // background it causes is recognized as the round-trip and ignored.
+    _shortcutBounceInFlight = true;
     setState(() => _liveTriggerError = false);
-    final bool opened = await c.startMonitoring(
-      triggerShortcutName: WifiLiveShortcutsConfig.kLiveShortcutName,
-    );
-    if (!mounted) return;
-    if (!opened) {
-      // Could not open the Shortcut. Surface the honest error immediately, then
-      // clear the shared monitoring flag (the recursion never started, so there
-      // is no producer). Showing the error first means the banner does not wait
-      // on the stop cleanup completing.
-      setState(() => _liveTriggerError = true);
-      await c.stopMonitoring();
+    try {
+      final bool opened = await c.startMonitoring(
+        triggerShortcutName: WifiLiveShortcutsConfig.kLiveShortcutName,
+      );
+      if (!mounted) return;
+      if (!opened) {
+        // Could not open the Shortcut. No bounce is coming, so clear the marker
+        // now. Surface the honest error immediately, then clear the shared
+        // monitoring flag (the recursion never started, so there is no
+        // producer). Showing the error first means the banner does not wait on
+        // the stop cleanup completing.
+        _shortcutBounceInFlight = false;
+        setState(() => _liveTriggerError = true);
+        await c.stopMonitoring();
+      }
+    } finally {
+      _startInFlight = false;
     }
   }
 
@@ -156,11 +184,31 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // iOS only: on resume, re-resolve so a payload delivered while backgrounded
-    // lands and any persisted monitoring flag resumes the live state.
-    if (state == AppLifecycleState.resumed &&
-        _source == CellularInfoSource.iosShortcuts) {
+    // iOS only: stop the live sampling loop when the app genuinely leaves the
+    // foreground, but NEVER auto-re-fire the Shortcut on return. Firing the Live
+    // Shortcut backgrounds the app (it opens Shortcuts) and foregrounds it again
+    // on return; re-firing on that app-induced foreground was the runaway loop.
+    // Mirrors the Wi-Fi tool exactly.
+    if (_source != CellularInfoSource.iosShortcuts) return;
+    if (state == AppLifecycleState.resumed) {
+      // Bounce complete (or user returned). Re-resolve so a payload delivered
+      // while backgrounded lands and the persisted monitoring flag re-attaches
+      // the stream — load() reads cache + re-subscribes only, it never opens a
+      // URL, so it cannot loop. The Shortcut is NEVER re-fired here.
+      _shortcutBounceInFlight = false;
       _liveController?.load();
+    } else if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      // Ignore the background half of the Shortcut bounce (the app opening
+      // Shortcuts), the recursion is supposed to continue.
+      if (_shortcutBounceInFlight) return;
+      // A genuine background: stop sampling (clears the loop-gate flag). The last
+      // values stay frozen on screen; the user re-taps Start to resume.
+      final CellularMonitorController? c = _liveController;
+      if (c != null && c.isStreaming) {
+        c.stopMonitoring();
+      }
     }
   }
 

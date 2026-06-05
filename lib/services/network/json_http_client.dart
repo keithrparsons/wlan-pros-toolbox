@@ -78,7 +78,8 @@ class JsonHttpClient {
 
   final JsonFetcher _fetch;
 
-  /// Public APIs (RIPEstat, ipwho.is) ask callers to identify themselves; a
+  /// Public APIs (RIPEstat, ipinfo.io, geojs.io) ask callers to identify
+  /// themselves; a
   /// stable UA keeps us off anonymous-client rate buckets.
   final String userAgent;
 

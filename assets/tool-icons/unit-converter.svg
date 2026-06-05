@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Unit Converter: two distinct unit "tiles" with a bidirectional swap between them —
+         converting value A into value B. Silhouette = two rounded squares (the from/to units)
+         joined by two opposing arrows. Distinct from metric-conversion (a tick-marked RULER
+         over swap arrows) and dbm-watt-converter (bare arrows, no tiles). The two framed tiles
+         are the differentiator. -->
+    <!-- "from" unit tile -->
+    <rect x="2.5" y="3" width="8" height="8" rx="2"/>
+    <!-- "to" unit tile -->
+    <rect x="13.5" y="13" width="8" height="8" rx="2"/>
+    <!-- top arrow: from -> to -->
+    <path d="M5 16.5 H10.5"/>
+    <path d="M8 14 L10.5 16.5 L8 19"/>
+    <!-- bottom arrow: to -> from -->
+    <path d="M19 7.5 H13.5"/>
+    <path d="M16 5 L13.5 7.5 L16 10"/>
+  </g>
+</svg>

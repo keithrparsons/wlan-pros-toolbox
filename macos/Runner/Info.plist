@@ -34,9 +34,9 @@
 	<key>NSHumanReadableCopyright</key>
 	<string>$(PRODUCT_COPYRIGHT)</string>
 	<key>NSLocationUsageDescription</key>
-	<string>WLAN Pros Toolbox uses your location to read the connected Wi-Fi network name (SSID and BSSID), which macOS gates behind this permission, and to fill in your current latitude and longitude in the Lat / Long tool. No location data leaves your device.</string>
+	<string>WLAN Pros Toolbox uses your location to read the connected Wi-Fi network name (SSID and BSSID), which macOS gates behind this permission, and to fill in your current latitude and longitude in the Lat / Long tool. If your device cannot get a position fix, the app can estimate an approximate city-level location from your public IP instead. When you use the map, your coordinates are sent to OpenStreetMap to load the map tiles. Your location is not stored by us and is never used for tracking or advertising.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>WLAN Pros Toolbox uses your location to read the connected Wi-Fi network name (SSID and BSSID), which macOS gates behind this permission, and to fill in your current latitude and longitude in the Lat / Long tool. No location data leaves your device.</string>
+	<string>WLAN Pros Toolbox uses your location to read the connected Wi-Fi network name (SSID and BSSID), which macOS gates behind this permission, and to fill in your current latitude and longitude in the Lat / Long tool. If your device cannot get a position fix, the app can estimate an approximate city-level location from your public IP instead. When you use the map, your coordinates are sent to OpenStreetMap to load the map tiles. Your location is not stored by us and is never used for tracking or advertising.</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>

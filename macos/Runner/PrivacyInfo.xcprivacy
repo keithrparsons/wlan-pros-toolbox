@@ -20,7 +20,34 @@
 	<key>NSPrivacyTrackingDomains</key>
 	<array/>
 	<key>NSPrivacyCollectedDataTypes</key>
-	<array/>
+	<array>
+		<!-- Precise Location. Two flows transmit a location-derived value off
+		     device, both user-initiated and not retained by the developer:
+		     (1) the Lat / Long tool fills the live GPS fix and the OSM map tool
+		     sends those coordinates to tile.openstreetmap.org to load map tiles;
+		     (2) SSID read is gated behind Location on macOS. Used for app
+		     functionality only. Not linked to identity, not used for tracking.
+
+		     IP-APPROXIMATE FALLBACK (Lat / Long tool): when Core Location returns
+		     no fix, the tool can estimate an approximate city-level location from
+		     the device's public IP via a keyless HTTPS lookup (ipinfo.io / geojs.io).
+		     This flow does NOT transmit the user's coordinates — the provider
+		     derives the location from the public IP, which the app's existing
+		     network tools already send/declare. No new collected-data type or
+		     accessed-API reason is required; this note is for auditor clarity only. -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypePreciseLocation</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSPrivacyAccessedAPITypes</key>
 	<array>
 		<!-- UserDefaults — Flutter framework + plugins read/write app prefs. -->

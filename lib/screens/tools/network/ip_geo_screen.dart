@@ -1,5 +1,5 @@
-// IP Geolocation tool — locate an IP (or your own public IP) via ipwho.is
-// (keyless, HTTPS — see IpGeoService).
+// IP Geolocation tool — locate an IP (or your own public IP) via ipinfo.io
+// with a geojs.io fallback (both keyless, HTTPS — see IpGeoService).
 //
 // States (SOP-007 §5):
 //  - idle     → form only; an empty query means "my public IP".
@@ -223,7 +223,9 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Data from the ipwho.is API. No account or key required.',
+            'Data from the ipinfo.io API, with geojs.io as a fallback. '
+            'No account or key required. IP geolocation is approximate '
+            '(city-level) and can be wrong for some ISPs.',
             style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.md),

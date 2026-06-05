@@ -39,6 +39,7 @@ import 'dart:io';
 import 'package:network_info_plus/network_info_plus.dart';
 
 import 'connected_ap.dart';
+import 'connected_ap_cache.dart';
 import 'wifi_details_bridge.dart';
 import 'wifi_info_adapter.dart';
 
@@ -97,6 +98,7 @@ class WifiLinkInfo {
     this.interfaceName,
     this.hardwareAddress,
     this.locationNeeded = false,
+    this.cachedAt,
   });
 
   final String? ssid;
@@ -120,6 +122,23 @@ class WifiLinkInfo {
   /// not granted (not because the platform cannot provide them). Drives the
   /// honest "needs Location" hint.
   final bool locationNeeded;
+
+  /// Non-null ONLY when the Wi-Fi IDENTITY (SSID/BSSID/interface/MAC) was served
+  /// from the shared [ConnectedApCache] rather than a fresh native/live read —
+  /// it is the wall-clock time that cached reading was taken (`updatedAt`). The
+  /// UI uses it to surface an honest "as of HH:MM" indicator so a remembered
+  /// reading is never presented as a live one (Batch 8 truthfulness fix). A
+  /// genuinely fresh macOS CoreWLAN poll or iOS live read leaves this null — only
+  /// cache-sourced identity carries an as-of stamp.
+  ///
+  /// Readings older than [InterfaceInfoService.cacheStaleThreshold] are treated
+  /// as effectively cold (the cache is bypassed) so stale identity is never
+  /// shown as current, so a non-null [cachedAt] is always within that window.
+  final DateTime? cachedAt;
+
+  /// True when the Wi-Fi identity on this snapshot came from the shared cache
+  /// (a remembered reading) rather than a fresh native/live read.
+  bool get isCacheSourced => cachedAt != null;
 }
 
 /// Aggregate snapshot of the device's network state at the moment of read.
@@ -169,13 +188,31 @@ class InterfaceInfoService {
     NetworkInfo? networkInfo,
     Future<List<NetworkInterface>> Function()? interfaceLister,
     ConnectedApRead? connectedApReader,
+    ConnectedApCache? connectedApCache,
+    DateTime Function()? now,
   })  : _networkInfo = networkInfo ?? NetworkInfo(),
         _interfaceLister = interfaceLister ?? _defaultLister,
-        _readConnectedAp = connectedApReader ?? _defaultConnectedApRead;
+        _cache = connectedApCache ?? ConnectedApCache.instance,
+        _readConnectedAp = connectedApReader ?? _defaultConnectedApRead,
+        _now = now ?? DateTime.now;
 
   final NetworkInfo _networkInfo;
   final Future<List<NetworkInterface>> Function() _interfaceLister;
+  final ConnectedApCache _cache;
   final ConnectedApRead _readConnectedAp;
+
+  /// Wall-clock source, injectable in tests so cache-staleness can be exercised
+  /// deterministically without sleeping.
+  final DateTime Function() _now;
+
+  /// A cached Wi-Fi identity older than this is treated as effectively COLD: the
+  /// service bypasses the cache and falls through to the per-platform read,
+  /// rather than presenting a remembered reading as the current network. After
+  /// an AP switch the cached SSID/BSSID belong to the PREVIOUS network, so a
+  /// few-minute ceiling bounds how long a remembered identity is trusted. Within
+  /// the window the cache is still served, but stamped with [WifiLinkInfo.cachedAt]
+  /// so the UI shows an honest "as of HH:MM" rather than implying it is live.
+  static const Duration cacheStaleThreshold = Duration(minutes: 5);
 
   static Future<List<NetworkInterface>> _defaultLister() {
     return NetworkInterface.list(
@@ -285,11 +322,41 @@ class InterfaceInfoService {
     // IDENTITY (SSID/BSSID/interface/MAC) from the native ConnectedAp subsystem.
     // network_info_plus returns null SSID/BSSID on iOS/macOS — the misleading
     // "not available" Keith flagged — so the identity fields are re-sourced here.
+    //
+    // WARM PATH FIRST (Batch 8, item 1). If any tool (the Wi-Fi Information tool)
+    // has already obtained a reading this session, the shared cache holds it, so
+    // Interface Info shows the same SSID/BSSID WITHOUT re-running the iOS
+    // Shortcut. A cached reading came from a successful read, so authorization is
+    // implied (the macOS Location gate already passed when it was cached). Only
+    // when the cache is cold do we fall to the per-platform no-prompt read below
+    // (which, on iOS, is just `readLatest()` — still no Shortcut bounce).
+    //
+    // STALENESS GATE (Batch 8, truthfulness fix). The cache is sticky on purpose,
+    // but a remembered identity is only trustworthy for a while: after an AP
+    // switch the cached SSID/BSSID belong to the PREVIOUS network. So the warm
+    // path is taken ONLY when the cached reading is within [cacheStaleThreshold].
+    // A reading older than that is treated as effectively cold and we fall
+    // through to a fresh per-platform read instead of presenting stale identity
+    // as current. When the warm path IS taken, [cachedAt] stamps the reading so
+    // the UI surfaces an honest "as of HH:MM" — a fresh native/live read leaves
+    // it null and gets no as-of treatment.
     ({ConnectedAp? ap, bool authorized}) read;
-    try {
-      read = await _readConnectedAp();
-    } catch (_) {
-      read = (ap: null, authorized: true);
+    DateTime? cachedAt;
+    final ConnectedAp? cached = _cache.latest;
+    final DateTime? cacheTime = _cache.updatedAt;
+    final bool cacheFresh = cached != null &&
+        cached.hasAnyData &&
+        cacheTime != null &&
+        _now().difference(cacheTime) < cacheStaleThreshold;
+    if (cacheFresh) {
+      read = (ap: cached, authorized: true);
+      cachedAt = cacheTime;
+    } else {
+      try {
+        read = await _readConnectedAp();
+      } catch (_) {
+        read = (ap: null, authorized: true);
+      }
     }
     final ConnectedAp? ap = read.ap;
 
@@ -311,6 +378,9 @@ class InterfaceInfoService {
       interfaceName: _blankToNull(ap?.interfaceName),
       hardwareAddress: _blankToNull(ap?.hardwareAddress),
       locationNeeded: locationNeeded,
+      // Only set when the identity above came from the warm cache path; null for
+      // a fresh native/live read, which gets no "as of" treatment.
+      cachedAt: cachedAt,
     );
   }
 
