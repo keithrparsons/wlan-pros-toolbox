@@ -20,6 +20,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../services/network/ip_geo_service.dart';
 import '../../../services/network/network_support.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -191,6 +192,7 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
   }
 
   Widget _queryCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
@@ -213,7 +215,7 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
               keyboardType: TextInputType.url,
               textInputAction: TextInputAction.search,
               onSubmitted: (_) => _run(),
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(
                 hintText: 'Leave blank for my public IP',
               ),
@@ -234,9 +236,9 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
                     child: Semantics(
                       label: 'Locating…',
                       liveRegion: true,
-                      child: const CircularProgressIndicator(
+                      child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.secondary,
+                        color: colors.onPrimary,
                       ),
                     ),
                   )

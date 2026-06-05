@@ -48,6 +48,7 @@ import '../../../services/network/cellular_monitor_controller.dart';
 import '../../../services/network/cellular_time_series.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/wifi_live_shortcuts_config.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/sparkline.dart';
@@ -390,6 +391,7 @@ class _BarMeter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     const double gap = AppSpacing.xxs;
     final int total = CellularInfo.maxSignalBars;
     return ExcludeSemantics(
@@ -404,7 +406,7 @@ class _BarMeter extends StatelessWidget {
               // Ascending heights so the meter reads as a signal staircase.
               height: 8 + i * 4,
               decoration: BoxDecoration(
-                color: i < filled ? AppColors.primary : AppColors.border,
+                color: i < filled ? colors.primary : colors.border,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -879,6 +881,7 @@ class _StatusBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final String label = streaming ? 'Live' : 'Paused';
 
@@ -905,8 +908,8 @@ class _StatusBlock extends StatelessWidget {
                   label,
                   style: text.labelLarge?.copyWith(
                     color: streaming
-                        ? AppColors.primary
-                        : AppColors.textSecondary,
+                        ? colors.textAccent
+                        : colors.textSecondary,
                   ),
                 ),
                 if (lastUpdated != null)
@@ -969,12 +972,13 @@ class _LiveIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return ExcludeSemantics(
       child: Container(
         width: 12,
         height: 12,
-        decoration: const BoxDecoration(
-          color: AppColors.primary,
+        decoration: BoxDecoration(
+          color: colors.textAccent,
           shape: BoxShape.circle,
         ),
       ),

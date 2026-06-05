@@ -27,6 +27,7 @@ import '../../../data/tool_assets.dart';
 import '../../../services/network/arp_ndp_service.dart';
 import '../../../services/network/interface_info_service.dart';
 import '../../../services/network/network_support.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -333,6 +334,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
   }
 
   Widget _controlCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
@@ -359,8 +361,8 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
                   '${_neighbors.length} found',
               child: LinearProgressIndicator(
                 value: _total == 0 ? null : _probed / _total,
-                backgroundColor: AppColors.surface0,
-                color: AppColors.primary,
+                backgroundColor: colors.surface0,
+                color: colors.primary,
                 minHeight: 6,
               ),
             ),
@@ -436,6 +438,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
     TextTheme text,
     AppMonoText mono,
   ) {
+    final AppColorScheme colors = context.colors;
     final bool hasMac = n.mac != null && n.mac!.isNotEmpty;
     final String rtt = n.rttMs == null
         ? ''
@@ -459,7 +462,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
                     child: SelectableText(
                       n.ip,
                       style: mono.robotoMono.copyWith(
-                        color: AppColors.primary,
+                        color: colors.textAccent,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

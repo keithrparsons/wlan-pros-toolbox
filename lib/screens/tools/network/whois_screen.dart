@@ -18,6 +18,7 @@ import 'package:flutter/semantics.dart';
 import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/whois_service.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -181,6 +182,7 @@ class _WhoisScreenState extends State<WhoisScreen> {
   }
 
   Widget _queryCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface1,
@@ -202,7 +204,7 @@ class _WhoisScreenState extends State<WhoisScreen> {
               keyboardType: TextInputType.url,
               textInputAction: TextInputAction.search,
               onSubmitted: (_) => _run(),
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(hintText: 'example.com'),
             ),
           ),
@@ -216,9 +218,9 @@ class _WhoisScreenState extends State<WhoisScreen> {
                     child: Semantics(
                       label: 'Looking up WHOIS…',
                       liveRegion: true,
-                      child: const CircularProgressIndicator(
+                      child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.secondary,
+                        color: colors.onPrimary,
                       ),
                     ),
                   )

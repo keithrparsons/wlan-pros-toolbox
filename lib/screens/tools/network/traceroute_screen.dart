@@ -24,6 +24,7 @@ import 'package:flutter/semantics.dart';
 import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/traceroute_service.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -257,6 +258,7 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
   }
 
   List<Widget> _desktopChildren(BuildContext context, bool isDesktop) {
+    final AppColorScheme colors = context.colors;
     final List<Widget> head = <Widget>[
       ConceptGraphicBand(toolId: 'traceroute', isDesktop: isDesktop),
       if (ToolAssets.hasGraphic('traceroute'))
@@ -272,7 +274,7 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
           child: Center(
             child: Semantics(
               label: 'Checking traceroute availability',
-              child: const CircularProgressIndicator(color: AppColors.primary),
+              child: CircularProgressIndicator(color: colors.textAccent),
             ),
           ),
         ),
@@ -366,6 +368,7 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
   }
 
   Widget _formCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
@@ -388,7 +391,7 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
               keyboardType: TextInputType.url,
               textInputAction: TextInputAction.go,
               onSubmitted: (_) => _running ? null : _start(),
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(hintText: 'example.com'),
             ),
           ),
@@ -461,6 +464,7 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
     TextTheme text,
     AppMonoText mono,
   ) {
+    final AppColorScheme colors = context.colors;
     final String rttLabel = h.timedOut
         ? '*'
         : (h.bestRttMs == null ? '—' : '${h.bestRttMs!.toStringAsFixed(1)} ms');
@@ -488,7 +492,7 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
                 child: Text(
                   '${h.ttl}',
                   style: mono.inlineCode.copyWith(
-                    color: AppColors.primary,
+                    color: colors.textAccent,
                     fontWeight: FontWeight.w500,
                   ),
                 ),

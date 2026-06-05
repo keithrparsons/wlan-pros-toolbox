@@ -21,6 +21,7 @@ import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/mac_oui_service.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -227,6 +228,7 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
   }
 
   Widget _formCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final bool ready = _service != null && _loadError == null;
     return Container(
@@ -255,7 +257,7 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
                 // validates length and content.
                 FilteringTextInputFormatter.allow(RegExp(r'[0-9a-fA-F:\-.\s]')),
               ],
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(hintText: 'B8:27:EB:01:23:45'),
             ),
           ),
@@ -274,9 +276,9 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
                     child: Semantics(
                       label: 'Loading vendor database…',
                       liveRegion: true,
-                      child: const CircularProgressIndicator(
+                      child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.secondary,
+                        color: colors.onPrimary,
                       ),
                     ),
                   )

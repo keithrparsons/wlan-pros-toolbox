@@ -26,6 +26,7 @@ import 'package:flutter/material.dart';
 import '../../../data/tool_assets.dart';
 import '../../../services/network/device_info_service.dart';
 import '../../../services/network/network_support.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
@@ -386,12 +387,13 @@ class _LoadingState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     // WCAG 4.1.3 — label the spinner so VoiceOver/TalkBack speak the state.
     return Center(
       child: Semantics(
         label: 'Reading device info…',
         liveRegion: true,
-        child: const CircularProgressIndicator(color: AppColors.primary),
+        child: CircularProgressIndicator(color: colors.textAccent),
       ),
     );
   }

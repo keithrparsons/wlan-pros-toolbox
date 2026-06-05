@@ -20,6 +20,7 @@ import 'package:flutter/services.dart' show rootBundle;
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/port_reference_service.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
@@ -142,6 +143,7 @@ class _PortReferenceScreenState extends State<PortReferenceScreen> {
   }
 
   Widget _searchCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final bool ready = _service != null;
     return Container(
       decoration: BoxDecoration(
@@ -163,7 +165,7 @@ class _PortReferenceScreenState extends State<PortReferenceScreen> {
           keyboardType: TextInputType.text,
           textInputAction: TextInputAction.search,
           onChanged: _onQueryChanged,
-          cursorColor: AppColors.primary,
+          cursorColor: colors.textAccent,
           decoration: const InputDecoration(hintText: 'e.g. 443 or radius'),
         ),
       ),
@@ -171,6 +173,7 @@ class _PortReferenceScreenState extends State<PortReferenceScreen> {
   }
 
   Widget _resultsSection(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     if (_loadError != null) {
       return _MessageCard(
         icon: Icons.error_outline,
@@ -191,9 +194,9 @@ class _PortReferenceScreenState extends State<PortReferenceScreen> {
             child: Semantics(
               label: 'Loading port reference',
               liveRegion: true,
-              child: const CircularProgressIndicator(
+              child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: AppColors.primary,
+                color: colors.textAccent,
               ),
             ),
           ),

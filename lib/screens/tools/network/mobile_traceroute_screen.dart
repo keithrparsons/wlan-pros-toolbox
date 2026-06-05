@@ -34,6 +34,7 @@ import '../../../router/app_router.dart';
 import '../../../services/network/dart_ping_icmp_backend.dart';
 import '../../../services/network/icmp_service.dart';
 import '../../../services/network/network_support.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -347,6 +348,7 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
   }
 
   Widget _formCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
@@ -369,7 +371,7 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
               keyboardType: TextInputType.url,
               textInputAction: TextInputAction.go,
               onSubmitted: (_) => _running ? null : _start(),
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(hintText: 'example.com'),
             ),
           ),
@@ -476,6 +478,7 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
     TextTheme text,
     AppMonoText mono,
   ) {
+    final AppColorScheme colors = context.colors;
     final String rttLabel = h.timedOut
         ? '*'
         : (h.rttMs == null ? '—' : '${h.rttMs!.toStringAsFixed(1)} ms');
@@ -499,7 +502,7 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
                 child: Text(
                   '${h.ttl}',
                   style: mono.inlineCode.copyWith(
-                    color: AppColors.primary,
+                    color: colors.textAccent,
                     fontWeight: FontWeight.w500,
                   ),
                 ),

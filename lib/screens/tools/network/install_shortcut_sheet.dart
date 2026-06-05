@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 
 import '../../../services/network/shortcuts_config.dart';
 import '../../../services/network/wifi_details_bridge.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 
 class InstallShortcutSheet extends StatelessWidget {
@@ -43,6 +44,7 @@ class InstallShortcutSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final bool isPlaceholder = ShortcutsConfig.isShortcutUrlPlaceholder;
 
@@ -70,7 +72,7 @@ class InstallShortcutSheet extends StatelessWidget {
                 'Shortcut you install once. After installing, tap Start to '
                 'begin live readings on this screen.',
                 style:
-                    text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+                    text.bodyLarge?.copyWith(color: colors.textSecondary),
               ),
               const SizedBox(height: AppSpacing.md),
               const _Step(
@@ -97,7 +99,7 @@ class InstallShortcutSheet extends StatelessWidget {
                   'Install link coming soon.',
                   // Muted disabled-affordance caption (F-04).
                   style:
-                      text.bodySmall?.copyWith(color: AppColors.textTertiary),
+                      text.bodySmall?.copyWith(color: colors.textTertiary),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -125,6 +127,7 @@ class _Step extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme textTheme = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -135,14 +138,14 @@ class _Step extends StatelessWidget {
             width: AppSpacing.md,
             height: AppSpacing.md,
             alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: AppColors.surface3,
+            decoration: BoxDecoration(
+              color: colors.surface3,
               shape: BoxShape.circle,
             ),
             child: Text(
               '$number',
               style: textTheme.labelMedium?.copyWith(
-                color: AppColors.textPrimary,
+                color: colors.textPrimary,
               ),
             ),
           ),
@@ -164,22 +167,23 @@ class _NoPermissionNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: colors.border),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             Icons.lock_open_outlined,
             // Reassurance, not a computed verdict -> textSecondary (§8.13
             // rule 1: status tokens are never used decoratively).
-            color: AppColors.textSecondary,
+            color: colors.textSecondary,
             size: 20,
           ),
           const SizedBox(width: AppSpacing.sm),
@@ -187,7 +191,7 @@ class _NoPermissionNote extends StatelessWidget {
             child: Text(
               'No Location permission is required. The Shortcut reads your '
               'network without any location prompt.',
-              style: text.bodyMedium?.copyWith(color: AppColors.textSecondary),
+              style: text.bodyMedium?.copyWith(color: colors.textSecondary),
             ),
           ),
         ],

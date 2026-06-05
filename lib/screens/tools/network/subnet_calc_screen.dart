@@ -23,6 +23,7 @@ import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/subnet_calc_service.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
@@ -239,6 +240,7 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
   }
 
   Widget _formCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
@@ -261,7 +263,7 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
               inputFormatters: <TextInputFormatter>[
                 FilteringTextInputFormatter.allow(RegExp(r'[0-9./]')),
               ],
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(
                 hintText: '10.20.0.0 or 10.20.0.0/22',
               ),
@@ -280,7 +282,7 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
               inputFormatters: <TextInputFormatter>[
                 FilteringTextInputFormatter.allow(RegExp(r'[0-9./]')),
               ],
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(
                 hintText: '22 or 255.255.252.0',
               ),

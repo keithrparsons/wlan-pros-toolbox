@@ -26,6 +26,7 @@ import '../../../services/network/interface_info_service.dart';
 import '../../../services/network/mac_randomization.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/public_ip_service.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
@@ -503,6 +504,7 @@ class _PublicIpPendingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final Widget statusText = Text(
       message,
@@ -517,12 +519,12 @@ class _PublicIpPendingRow extends StatelessWidget {
         ? Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              const SizedBox(
+              SizedBox(
                 width: 14,
                 height: 14,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: AppColors.primary,
+                  color: colors.textAccent,
                 ),
               ),
               const SizedBox(width: AppSpacing.xs),
@@ -655,6 +657,7 @@ class _LoadingState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     // WCAG 4.1.3 — a bare progress indicator announces nothing. Label it so
     // VoiceOver/TalkBack speak the loading state. `Semantics` is not a const
     // constructor, so `Center` cannot be const here; the indicator stays const.
@@ -662,7 +665,7 @@ class _LoadingState extends StatelessWidget {
       child: Semantics(
         label: 'Reading network state…',
         liveRegion: true,
-        child: const CircularProgressIndicator(color: AppColors.primary),
+        child: CircularProgressIndicator(color: colors.textAccent),
       ),
     );
   }

@@ -16,6 +16,7 @@ import 'package:flutter/semantics.dart';
 import '../../../data/tool_assets.dart';
 import '../../../services/network/bgp_asn_service.dart';
 import '../../../services/network/network_support.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
@@ -197,6 +198,7 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
   }
 
   Widget _queryCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
@@ -219,7 +221,7 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
               keyboardType: TextInputType.url,
               textInputAction: TextInputAction.search,
               onSubmitted: (_) => _run(),
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(
                 hintText: '8.8.8.8  or  AS15169',
               ),
@@ -240,9 +242,9 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
                     child: Semantics(
                       label: 'Looking up routing data…',
                       liveRegion: true,
-                      child: const CircularProgressIndicator(
+                      child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.secondary,
+                        color: colors.onPrimary,
                       ),
                     ),
                   )
