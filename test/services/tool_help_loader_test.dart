@@ -121,11 +121,16 @@ void main() {
       store = ToolHelpStore.fromJson(raw);
     });
 
-    test('parses to exactly 97 entries', () {
+    test('parses to exactly 98 entries', () {
       // 97 = 95 (origin/main: 93 + Antenna Connectors + Optical Transceivers)
       // + 2 backfilled v1.1 help entries: PLMN ID Reference and the Wi-Fi
       // Authentication Glossary (both shipped without help; added 2026-06-05).
-      expect(store.count, 97);
+      //
+      // +1 on this branch (feat/v1.1-antenna-fundamentals): the Antenna
+      // Fundamentals teaching reference adds its help entry → 98. This guard is
+      // bumped per branch; Larry (merge-captain) reconciles the final v1.1 total
+      // when the v1.1 branches are merged together.
+      expect(store.count, 98);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

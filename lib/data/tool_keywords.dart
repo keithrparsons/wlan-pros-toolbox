@@ -258,6 +258,11 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'mounting', 'spacing', 'cell overlap', 'where to put aps', 'ceiling',
     'design', 'survey',
   ],
+  'antenna-fundamentals': <String>[
+    'antenna', 'gain', 'dbi', 'beamwidth', 'polarization', 'downtilt',
+    'radiation pattern', 'omni', 'directional', 'dipole', 'azimuth',
+    'elevation', 'polar plot',
+  ],
   'port-reference': <String>[
     'tcp', 'udp', 'iana', 'service port', 'port number', 'well known',
     'common ports',

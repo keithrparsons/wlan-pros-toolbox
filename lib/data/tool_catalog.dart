@@ -815,6 +815,22 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Wi-Fi & RF',
       ),
+      // Antenna Fundamentals — a read-along teaching/reference screen (v1.1):
+      // Penn's approved Keith-voice copy (azimuth/elevation, gain vs beamwidth,
+      // polarization, downtilt, reading a polar plot, and what antenna to use
+      // where) with Charta's seven line diagrams embedded. Not a calculator and
+      // not a how-to-with-download — it sits in Quick Reference as the
+      // antenna-literacy companion to the directional / AP-placement tools.
+      ToolEntry(
+        id: 'antenna-fundamentals',
+        title: 'Antenna Fundamentals',
+        description:
+            'Gain, beamwidth, polarization, downtilt, and reading a radiation '
+            'pattern — with diagrams',
+        routeName: '/tools/antenna-fundamentals',
+        isLive: true,
+        subgroup: 'Wi-Fi & RF',
+      ),
       // ── from the dissolved Cabling & Connectors category ──
       ToolEntry(
         id: 'ethernet-pinout',

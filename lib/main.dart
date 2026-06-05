@@ -7,6 +7,7 @@
 
 import 'package:flutter/material.dart';
 
+import 'data/antenna_fundamentals_diagrams.dart';
 import 'data/connector_diagrams.dart';
 import 'data/tool_assets.dart';
 import 'router/app_router.dart';
@@ -51,6 +52,17 @@ Future<void> main() async {
     await ConnectorDiagrams.ensureLoaded();
   } catch (_) {
     // Manifest unavailable → has() stays false → diagram slots omitted. No crash.
+  }
+
+  // Same convention for the Antenna Fundamentals teaching diagrams
+  // (assets/tool-diagrams/antenna-fundamentals/<slug>.svg). If the manifest is
+  // unavailable, AntennaFundamentalsDiagrams.has() stays false and each diagram
+  // band is omitted — the teaching prose still reads end-to-end. A failure here
+  // must never block startup.
+  try {
+    await AntennaFundamentalsDiagrams.ensureLoaded();
+  } catch (_) {
+    // Manifest unavailable → has() stays false → diagram bands omitted. No crash.
   }
 
   // Load + cache the bundled tool-help JSON once (assets/help/tool_help.json).

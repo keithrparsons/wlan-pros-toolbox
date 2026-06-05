@@ -2360,6 +2360,28 @@
         "Verified against IEEE 802.3 standards tables (via Wikipedia's clause-mirroring pages) and Cisco / FS.com vendor datasheets (Pax verification brief, 2026-06-05). Out-of-scope bleeding edge (800G / 1.6T, CPO / LPO, SFP-DD) was deliberately excluded as not yet stable or field-relevant."
       ],
       "source": "lib/screens/tools/reference/optical_transceivers_screen.dart"
+    },
+    "antenna-fundamentals": {
+      "name": "Antenna Fundamentals",
+      "category": "Quick Reference",
+      "purpose": "A read-along teaching reference for antenna literacy: what an antenna actually does (shapes where the radio's energy goes, it does not add power), azimuth vs elevation, why gain trades against beamwidth, polarization and the wall-clock mistake, downtilt, how to read a radiation-pattern polar plot (main lobe, the -3 dB beamwidth points, side lobes, nulls, front-to-back ratio), and which antenna type (omni, patch, sector, Yagi, dish) fits which space. Seven line diagrams are embedded at the points they teach.",
+      "whyHere": "It is the antenna-literacy companion to the directional tools in the toolbox (AP Placement, Downtilt, Point-to-Point, Fresnel). When you are choosing or mounting an antenna and want to reason about coverage shape rather than chase a gain number, this is the read-first reference.",
+      "howToUse": [
+        "Read top to bottom: it builds from one idea (an antenna is a shaper, not a booster) through azimuth/elevation, orientation, reading a pattern chart, and what to use where.",
+        "Use the embedded diagrams alongside the prose: the polar-plot anatomy diagram labels every feature (main lobe, -3 dB beamwidth, side lobes, nulls, back lobe, front-to-back) so a manufacturer's chart stops being a mystery.",
+        "Section 4's type table and the closing deployment quick-map are the fast lookups: match the space you are covering to the antenna whose pattern fits it."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "This is conceptual teaching copy, not a calculator and not a manufacturer spec sheet. It deliberately gives no formula for gain vs beamwidth: \"more gain means a narrower beam\" is always directionally true, but the exact beamwidth for a given gain depends on the specific antenna's design. Read the published beamwidth on the data sheet; do not try to back it out of the gain number.",
+        "The per-type beamwidth figures (patch ~30-120 degrees, sector ~60-120, Yagi ~15-40, dish ~3-25) are RANGES across real products, not single specs. The antenna in your hand lands somewhere inside its band.",
+        "The cross-polarization penalty is given conceptually: 90 degrees is the worst case (in theory total loss; in practice reflections leave some signal), and a wall-mounted omni costs roughly 6 dB. These are rules-of-thumb to reason with, not an exact loss figure.",
+        "The floor-plan coverage shapes are illustrative of how a pattern fills a space, not survey predictions or measured coverage.",
+        "The point-to-point note is one line by design: a link needs real Fresnel-zone clearance around the straight line between antennas, not just a visible path. Use the Fresnel and Point-to-Point tools to size that clearance."
+      ],
+      "source": "Penn teaching copy (SOP-020 PASS, 2026-06-05), from Pax's research brief; diagrams by Charta. Rendered verbatim in antenna_fundamentals_screen.dart."
     }
   }
 }
