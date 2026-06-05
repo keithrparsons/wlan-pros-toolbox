@@ -103,6 +103,74 @@ void main() {
     });
   });
 
+  group('ConceptGraphicBand light-mode swap (§8.20.7)', () {
+    test('recolors scaffold / muted / lime-foreground / status hues', () {
+      const String svg =
+          '<svg><path stroke="#E5E5E5"/><line stroke="#9C9C9C"/>'
+          '<path stroke="#A2CC3A"/><rect stroke="#3A3A3A"/>'
+          '<path stroke="#F26E6E"/><path stroke="#E0A23A"/>'
+          '<path stroke="#5BD68A"/>'
+          '<circle fill="rgba(162,204,58,0.08)"/></svg>';
+      final String out = ConceptGraphicBand.debugApplyLightSwap(svg);
+
+      // Dark scaffold/lime/status hexes are gone…
+      expect(out.contains('#E5E5E5'), isFalse);
+      expect(out.contains('#9C9C9C'), isFalse);
+      expect(out.contains('#A2CC3A'), isFalse);
+      expect(out.contains('#3A3A3A'), isFalse);
+      expect(out.contains('#F26E6E'), isFalse);
+      expect(out.contains('#E0A23A'), isFalse);
+      expect(out.contains('#5BD68A'), isFalse);
+      expect(out.contains('rgba(162,204,58,0.08)'), isFalse);
+
+      // …replaced by the §8.20.1 / §8.20.2 light values.
+      expect(out.contains('#4A4A4A'), isTrue); // textSecondary
+      expect(out.contains('#646464'), isTrue); // textTertiary
+      expect(out.contains('#5A7A1C'), isTrue); // textAccent (lime split)
+      expect(out.contains('#E2E1E2'), isTrue); // border (faint hatch)
+      expect(out.contains('#C62D2D'), isTrue); // statusDanger
+      expect(out.contains('#8A5A00'), isTrue); // statusWarning (bronze)
+      expect(out.contains('#1E7E45'), isTrue); // statusSuccess
+      expect(out.contains('rgba(90,122,28,0.10)'), isTrue); // lime wash
+    });
+
+    test('PRESERVES §1d canonical T568 / copper data colors and #1A1A1A', () {
+      const String svg =
+          '<svg><rect fill="#C9A227"/><rect fill="#F58A1F"/>'
+          '<rect fill="#3CA03C"/><rect fill="#2D6CDF"/>'
+          '<rect fill="#7A4A22"/><circle fill="#1A1A1A"/></svg>';
+      final String out = ConceptGraphicBand.debugApplyLightSwap(svg);
+
+      // The color IS the information (T568 pinout, copper) — must survive intact.
+      expect(out.contains('#C9A227'), isTrue); // copper/gold
+      expect(out.contains('#F58A1F'), isTrue); // T568 orange
+      expect(out.contains('#3CA03C'), isTrue); // T568 green
+      expect(out.contains('#2D6CDF'), isTrue); // T568 blue
+      expect(out.contains('#7A4A22'), isTrue); // T568 brown
+      expect(out.contains('#1A1A1A'), isTrue); // anchor dot (no-op)
+      // Nothing else changed: input == output for a canonical-only graphic.
+      expect(out, equals(svg));
+    });
+
+    testWidgets('light theme renders the recolored graphic (no broken box)',
+        (tester) async {
+      // fspl IS a real bundled asset, so rootBundle.loadString resolves it.
+      ToolAssets.debugSetBundledAssets({'assets/tool-graphics/fspl.svg'});
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(),
+          home: const Scaffold(
+            body: ConceptGraphicBand(toolId: 'fspl'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // The light path draws via SvgPicture.string once the future resolves.
+      expect(find.byType(SvgPicture), findsOneWidget);
+    });
+  });
+
   group('ToolAssets convention paths', () {
     test('icon and graphic paths derive from the tool id verbatim', () {
       expect(ToolAssets.iconPath('dbm-watt-converter'),
