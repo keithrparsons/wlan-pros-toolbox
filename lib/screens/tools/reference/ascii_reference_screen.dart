@@ -50,6 +50,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -1748,6 +1749,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
   // ─── Cards ───────────────────────────────────────────────────────────────────
 
   Widget _howToReadCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return _Card(
       heading: 'How to read this',
       headingText: text,
@@ -1763,7 +1765,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
           Text(
             'Control codes (0–31 and 127) do not print. Printable characters '
             'run 32–126, a block of 95 glyphs including the space (shown as SP).',
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -1776,6 +1778,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
     TextTheme text,
     AppMonoText mono,
   ) {
+    final AppColorScheme colors = context.colors;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs / 2),
       child: Row(
@@ -1787,7 +1790,9 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
               term,
               style: mono.robotoMono.copyWith(
                 fontSize: AppTextSize.caption,
-                color: AppColors.primary,
+                // Mono legend term is a foreground accent → darkened-lime in
+                // light (§8.20.2).
+                color: colors.textAccent,
               ),
             ),
           ),
@@ -1795,7 +1800,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
           Expanded(
             child: Text(
               def,
-              style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+              style: text.labelMedium?.copyWith(color: colors.textSecondary),
             ),
           ),
         ],
@@ -1804,6 +1809,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
   }
 
   Widget _searchCard() {
+    final AppColorScheme colors = context.colors;
     return _Card(
       heading: null,
       headingText: Theme.of(context).textTheme,
@@ -1819,7 +1825,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
           keyboardType: TextInputType.text,
           textInputAction: TextInputAction.search,
           onChanged: _onQueryChanged,
-          cursorColor: AppColors.primary,
+          cursorColor: colors.textAccent,
           decoration: const InputDecoration(
             hintText: 'e.g. 65, 0x41, LF, or newline',
           ),
@@ -1829,13 +1835,14 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
   }
 
   Widget _noMatchCard(TextTheme text) {
+    final AppColorScheme colors = context.colors;
     return _Card(
       heading: null,
       headingText: text,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Icon(Icons.search_off, size: 20, color: AppColors.textTertiary),
+          Icon(Icons.search_off, size: 20, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -1844,7 +1851,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
                 Text(
                   'No match',
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -1853,7 +1860,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
                   'No ASCII character matches "${_queryCtrl.text.trim()}". The '
                   'quick-reference tables below are unaffected.',
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
               ],
@@ -1865,12 +1872,13 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
   }
 
   Widget _crlfNoteCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return _Card(
       heading: 'Newlines on the wire',
       headingText: text,
       child: Text.rich(
         TextSpan(
-          style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+          style: text.labelMedium?.copyWith(color: colors.textTertiary),
           children: <InlineSpan>[
             const TextSpan(
               text:
@@ -1881,7 +1889,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
               text: '0D 0A',
               style: mono.robotoMono.copyWith(
                 fontSize: AppTextSize.caption,
-                color: AppColors.textSecondary,
+                color: colors.textSecondary,
               ),
             ),
             const TextSpan(text: '. Unix uses LF alone ('),
@@ -1889,7 +1897,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
               text: '0A',
               style: mono.robotoMono.copyWith(
                 fontSize: AppTextSize.caption,
-                color: AppColors.textSecondary,
+                color: colors.textSecondary,
               ),
             ),
             const TextSpan(text: '); classic Mac OS used CR alone ('),
@@ -1897,7 +1905,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
               text: '0D',
               style: mono.robotoMono.copyWith(
                 fontSize: AppTextSize.caption,
-                color: AppColors.textSecondary,
+                color: colors.textSecondary,
               ),
             ),
             const TextSpan(
@@ -1912,6 +1920,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
   }
 
   Widget _rangeBoundariesCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return _Card(
       heading: 'Range boundaries worth memorizing',
       headingText: text,
@@ -1937,7 +1946,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
                           child: Text(
                             b.block,
                             style: text.labelLarge?.copyWith(
-                              color: AppColors.textPrimary,
+                              color: colors.textPrimary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -1947,7 +1956,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
                           '${b.decRange}  ·  ${b.hexRange}',
                           style: mono.robotoMono.copyWith(
                             fontSize: AppTextSize.caption,
-                            color: AppColors.primary,
+                            color: colors.textAccent,
                           ),
                           textAlign: TextAlign.right,
                         ),
@@ -1956,7 +1965,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
                     Text(
                       b.note,
                       style: text.labelMedium?.copyWith(
-                        color: AppColors.textTertiary,
+                        color: colors.textTertiary,
                       ),
                     ),
                   ],
@@ -1967,7 +1976,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
           Text(
             'ASCII digit → value: subtract 48 (0x30). Value → ASCII digit: add '
             '48. The digit n is byte 0x30 + n.',
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -1975,6 +1984,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
   }
 
   Widget _caseBitCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return _Card(
       heading: 'The case bit (0x20)',
       headingText: text,
@@ -1991,7 +2001,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
           children: <Widget>[
             Text(
               AsciiReferenceScreen.caseBitSummary,
-              style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+              style: text.labelMedium?.copyWith(color: colors.textSecondary),
             ),
             const SizedBox(height: AppSpacing.xs),
             _opLine(AsciiReferenceScreen.caseBitToLower, text, mono),
@@ -2000,7 +2010,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
             const SizedBox(height: AppSpacing.xs),
             Text(
               AsciiReferenceScreen.caseBitNote,
-              style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
             ),
           ],
         ),
@@ -2009,6 +2019,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
   }
 
   Widget _opLine(String op, TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs / 2),
       child: Row(
@@ -2016,14 +2027,14 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
         children: <Widget>[
           Text(
             '·  ',
-            style: text.labelMedium?.copyWith(color: AppColors.primary),
+            style: text.labelMedium?.copyWith(color: colors.textAccent),
           ),
           Expanded(
             child: Text(
               op,
               style: mono.robotoMono.copyWith(
                 fontSize: AppTextSize.caption,
-                color: AppColors.textSecondary,
+                color: colors.textSecondary,
               ),
             ),
           ),
@@ -2033,8 +2044,9 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
   }
 
   Widget _nibbleToHexCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     final TextStyle headStyle = (text.labelMedium ?? const TextStyle())
-        .copyWith(color: AppColors.textTertiary, letterSpacing: 0.4);
+        .copyWith(color: colors.textTertiary, letterSpacing: 0.4);
     return _Card(
       heading: 'Nibble → hex map',
       headingText: text,
@@ -2070,7 +2082,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
                           child: Text(
                             n.bin,
                             style: mono.robotoMono.copyWith(
-                              color: AppColors.textPrimary,
+                              color: colors.textPrimary,
                             ),
                           ),
                         ),
@@ -2081,7 +2093,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
                         child: Text(
                           n.hex,
                           style: mono.robotoMono.copyWith(
-                            color: AppColors.primary,
+                            color: colors.textAccent,
                           ),
                         ),
                       ),
@@ -2091,7 +2103,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
                         child: Text(
                           '${n.dec}',
                           style: mono.robotoMono.copyWith(
-                            color: AppColors.textSecondary,
+                            color: colors.textSecondary,
                           ),
                         ),
                       ),
@@ -2105,7 +2117,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
           Text(
             'A byte is two nibbles. Convert each independently, then concatenate. '
             'Example: 1100 1010 → high C, low A → 0xCA = 202.',
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -2113,6 +2125,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
   }
 
   Widget _powersOfTwoCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return _Card(
       heading: 'Powers of two',
       headingText: text,
@@ -2134,7 +2147,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
                         '2^${p.exp}',
                         style: mono.robotoMono.copyWith(
                           fontSize: AppTextSize.caption,
-                          color: AppColors.primary,
+                          color: colors.textAccent,
                         ),
                       ),
                     ),
@@ -2144,7 +2157,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
                         p.value,
                         style: mono.robotoMono.copyWith(
                           fontSize: AppTextSize.caption,
-                          color: AppColors.textPrimary,
+                          color: colors.textPrimary,
                         ),
                         textAlign: TextAlign.right,
                       ),
@@ -2157,7 +2170,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
           Text(
             'The eight bits of a byte carry place values 128, 64, 32, 16, 8, 4, '
             '2, 1. They sum to 255 — the largest value one byte holds.',
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -2165,6 +2178,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
   }
 
   Widget _hexPlaceValuesCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return _Card(
       heading: 'Hex place values',
       headingText: text,
@@ -2186,7 +2200,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
                         h.position,
                         style: mono.robotoMono.copyWith(
                           fontSize: AppTextSize.caption,
-                          color: AppColors.primary,
+                          color: colors.textAccent,
                         ),
                       ),
                     ),
@@ -2196,7 +2210,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
                         h.weight,
                         style: mono.robotoMono.copyWith(
                           fontSize: AppTextSize.caption,
-                          color: AppColors.textPrimary,
+                          color: colors.textPrimary,
                         ),
                         textAlign: TextAlign.right,
                       ),
@@ -2209,7 +2223,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
           Text(
             'Two hex digits = one byte (0–255). Four = 16 bits. Eight = a 32-bit '
             'IPv4 word. Twelve = a 48-bit MAC address.',
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -2217,6 +2231,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
   }
 
   Widget _highRangeCard(TextTheme text) {
+    final AppColorScheme colors = context.colors;
     return _Card(
       heading: 'High range (128–255): no single "extended ASCII"',
       headingText: text,
@@ -2225,7 +2240,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
         children: <Widget>[
           Text(
             AsciiReferenceScreen.highRangeSummary,
-            style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+            style: text.labelMedium?.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.xs),
           for (final HighRangeEncoding e
@@ -2240,14 +2255,14 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
                     Text(
                       e.name,
                       style: text.labelLarge?.copyWith(
-                        color: AppColors.textPrimary,
+                        color: colors.textPrimary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     Text(
                       e.note,
                       style: text.labelMedium?.copyWith(
-                        color: AppColors.textTertiary,
+                        color: colors.textTertiary,
                       ),
                     ),
                   ],
@@ -2257,7 +2272,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
           const SizedBox(height: AppSpacing.xs),
           Text(
             AsciiReferenceScreen.highRangeRule,
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -2285,11 +2300,12 @@ class _AsciiTableCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -2298,7 +2314,7 @@ class _AsciiTableCard extends StatelessWidget {
           Text(
             heading,
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
               fontWeight: FontWeight.w600,
             ),
@@ -2306,11 +2322,11 @@ class _AsciiTableCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             subheading,
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.xs),
           const _AsciiHeaderRow(),
-          const Divider(color: AppColors.border, height: AppSpacing.sm),
+          Divider(color: colors.border, height: AppSpacing.sm),
           for (final AsciiEntry e in rows)
             _AsciiRow(entry: e, text: text, mono: mono),
         ],
@@ -2326,9 +2342,10 @@ class _AsciiHeaderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final TextStyle? style = text.labelSmall?.copyWith(
-      color: AppColors.textTertiary,
+      color: colors.textTertiary,
       letterSpacing: 0.4,
     );
     return ExcludeSemantics(
@@ -2387,16 +2404,17 @@ class _AsciiRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final bool isControl = entry.category == AsciiCategory.control;
     // Char token: lime for a control mnemonic (it is the row's identity), high-
     // contrast primary text for a printable glyph.
     final Color charColor = isControl
-        ? AppColors.primary
-        : AppColors.textPrimary;
+        ? colors.textAccent
+        : colors.textPrimary;
 
     final TextStyle idStyle = mono.robotoMono.copyWith(
       fontSize: AppTextSize.caption,
-      color: AppColors.textSecondary,
+      color: colors.textSecondary,
     );
 
     return ReferenceRowSemantics(
@@ -2424,7 +2442,7 @@ class _AsciiRow extends StatelessWidget {
                   width: decW,
                   child: Text(
                     '${entry.dec}',
-                    style: idStyle.copyWith(color: AppColors.textPrimary),
+                    style: idStyle.copyWith(color: colors.textPrimary),
                   ),
                 ),
                 SizedBox(
@@ -2457,7 +2475,7 @@ class _AsciiRow extends StatelessWidget {
               child: Text(
                 entry.description,
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ),
@@ -2484,11 +2502,12 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -2498,7 +2517,7 @@ class _Card extends StatelessWidget {
             Text(
               heading!,
               style: headingText.labelMedium?.copyWith(
-                color: AppColors.textSecondary,
+                color: colors.textSecondary,
                 letterSpacing: 0.4,
                 fontWeight: FontWeight.w600,
               ),
