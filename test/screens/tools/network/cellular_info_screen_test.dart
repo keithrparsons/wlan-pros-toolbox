@@ -352,7 +352,7 @@ void main() {
       expect(find.byType(NetworkUnavailableView), findsOneWidget);
       expect(find.text('Cellular is not available here'), findsOneWidget);
       expect(
-        find.textContaining('requires an iPhone with a cellular connection'),
+        find.textContaining('reads cellular details from an iPhone only'),
         findsOneWidget,
       );
     });

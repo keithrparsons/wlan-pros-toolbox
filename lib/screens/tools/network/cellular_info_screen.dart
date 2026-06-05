@@ -12,10 +12,14 @@
 //             shared monitoring flag and fires the PLAIN, fire-and-forget
 //             run-shortcut trigger once; the app then passively consumes the
 //             cellular side of the combined Live stream.
-//   * macOS -> HONEST UNAVAILABLE state. Macs ship with no cellular radio, so
-//             the tool says so plainly via NetworkUnavailableView.
-//   * Android / Windows / desktop Linux -> the same honest unavailable state
-//             (no cellular bridge built for this iOS-parallel tool).
+//   * macOS -> HONEST UNAVAILABLE state. This is an iPhone-only tool (cellular
+//             read via the iOS Shortcuts bridge); macOS shows the honest
+//             unavailable state because no cellular bridge was built for it,
+//             NOT because the hardware lacks a radio. Said plainly via
+//             NetworkUnavailableView.
+//   * Android / Windows / desktop Linux -> the same honest unavailable state,
+//             for the same reason: no cellular bridge built for this
+//             iOS-parallel tool (some of those devices do have a WWAN modem).
 //   * web -> download-the-app fallback.
 //
 // There is intentionally NO native CoreTelephony path and NO private signal
@@ -314,10 +318,11 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
           icon: Icons.signal_cellular_off_outlined,
           headline: 'Cellular is not available here',
           message:
-              'Cellular information is not available on this platform. This '
-              'tool requires an iPhone with a cellular connection. Macs and '
-              'desktops ship with no cellular radio, so there is nothing to '
-              'read. The rest of the toolbox works normally here.',
+              "Cellular information isn't available on this platform. This "
+              "tool reads cellular details from an iPhone only. It doesn't read "
+              'a cellular or WWAN modem on other devices, even the Windows '
+              'laptops that ship with one. The rest of the toolbox works '
+              'normally here.',
         );
       case CellularInfoSource.iosShortcuts:
         return _iosBody();

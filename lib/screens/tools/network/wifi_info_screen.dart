@@ -826,7 +826,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     buf
       ..writeln()
       ..writeln('Status')
-      ..writeln('  Wi-Fi Power: ${info.poweredOn ? 'On' : 'Off'}');
+      ..writeln('  Wi-Fi Radio: ${info.poweredOn ? 'On' : 'Off'}');
 
     return buf.toString().trimRight();
   }
@@ -1309,7 +1309,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     title: 'Status',
     child: Column(
       children: [
-        _MetricRow(label: 'Wi-Fi Power', value: info.poweredOn ? 'On' : 'Off'),
+        _MetricRow(label: 'Wi-Fi Radio', value: info.poweredOn ? 'On' : 'Off'),
       ],
     ),
   );
