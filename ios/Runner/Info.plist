@@ -61,6 +61,13 @@
 	     or shared. -->
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>WLAN Pros Toolbox uses your location to read the name (SSID) of the Wi-Fi network you are connected to, and to fill in your current latitude and longitude in the Lat / Long tool. When you use the map, your coordinates are sent to OpenStreetMap to load the map tiles. Your location is not stored by us and is never used for tracking or advertising.</string>
+	<!-- NSLocationAlwaysAndWhenInUseUsageDescription is required because the
+	     geolocator SDK references the "Always" location API in its code, which
+	     Apple's static scanner flags (ITMS-90683) even though this app only ever
+	     requests location While In Use. The string mirrors the When-In-Use one;
+	     the app never requests nor uses background/Always location. -->
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>WLAN Pros Toolbox uses your location to read the name (SSID) of the Wi-Fi network you are connected to, and to fill in your current latitude and longitude in the Lat / Long tool. When you use the map, your coordinates are sent to OpenStreetMap to load the map tiles. Your location is not stored by us and is never used for tracking or advertising.</string>
 	<!-- LSApplicationQueriesSchemes lets the app open the Shortcuts app via the
 	     PLAIN, fire-and-forget `shortcuts://run-shortcut?name=…` URL on iOS 9+
 	     (UIApplication.canOpenURL / open both consult this allow-list). This is
