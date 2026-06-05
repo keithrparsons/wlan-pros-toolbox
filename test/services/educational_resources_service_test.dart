@@ -204,11 +204,11 @@ void main() {
       // Flutter binding is needed) and prove the production dataset is healthy.
       // Curated 2026-06-04: independent-author/community materials only; the
       // megavendor/product documentation ("Vendor documentation and design
-      // guides") topic was removed per Keith, and the Revolution Wi-Fi archive
-      // entry was later dropped (32 -> 31). Batch 2026-06-04 appended 5
+      // guides") topic was removed per Keith, and one archived planner entry
+      // was later dropped (32 -> 31). Batch 2026-06-04 appended 5
       // independent-author entries (31 -> 36), all within the existing 6 topics.
-      // Batch 2026-06-05 (v1.1) appended 3 entries — Frame by Frame, Divergent
-      // Dynamics, Wireshark 802.11 Wiki — and enhanced the CWNP entry in place
+      // Batch 2026-06-05 (v1.1) appended 3 entries (Frame by Frame, Divergent
+      // Dynamics, Wireshark 802.11 Wiki) and enhanced the CWNP entry in place
       // (36 -> 39), still within the existing 6 topics.
       final File asset = File('assets/data/educational_resources.json');
       expect(asset.existsSync(), isTrue,
