@@ -325,12 +325,13 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
   }
 
   Widget _mobileNotice(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
@@ -338,17 +339,17 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.route_outlined,
                 size: 24,
-                color: AppColors.textSecondary,
+                color: colors.textSecondary,
               ),
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(
                   'Traceroute runs on desktop',
                   style: text.headlineSmall?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                   ),
                 ),
               ),
@@ -360,7 +361,7 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
             'which mobile sandboxes do not expose to apps. Run Traceroute from '
             'the macOS or Windows build. On this device, use Ping to measure '
             'reachability and latency to the target.',
-            style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+            style: text.bodyLarge?.copyWith(color: colors.textSecondary),
           ),
         ],
       ),
@@ -372,9 +373,9 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -399,7 +400,7 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
             const SizedBox(height: AppSpacing.sm),
             Text(
               _error!,
-              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
             ),
           ],
           const SizedBox(height: AppSpacing.md),
@@ -413,6 +414,7 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
   }
 
   Widget _hopsCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -432,9 +434,9 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -446,7 +448,7 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
             child: Text(
               header,
               style: text.labelMedium?.copyWith(
-                color: AppColors.textSecondary,
+                color: colors.textSecondary,
                 letterSpacing: 0.4,
               ),
             ),
@@ -504,10 +506,10 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
                   // (GL-003 §8.5). TTL counter and RTT stay DM Mono.
                   style: h.timedOut
                       ? text.bodyLarge?.copyWith(
-                          color: AppColors.textTertiary,
+                          color: colors.textTertiary,
                           fontStyle: FontStyle.italic,
                         )
-                      : mono.robotoMono.copyWith(color: AppColors.textPrimary),
+                      : mono.robotoMono.copyWith(color: colors.textPrimary),
                 ),
               ),
               const SizedBox(width: AppSpacing.xs),
@@ -515,8 +517,8 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
                 rttLabel,
                 style: mono.inlineCode.copyWith(
                   color: h.timedOut
-                      ? AppColors.textTertiary
-                      : AppColors.textSecondary,
+                      ? colors.textTertiary
+                      : colors.textSecondary,
                 ),
               ),
             ],
@@ -527,6 +529,7 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
   }
 
   Widget _unavailableCard(BuildContext context, TracerouteUnavailable u) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final String body = switch (u.reason) {
       TracerouteUnavailableReason.unsupportedPlatform =>
@@ -537,18 +540,18 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
     };
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             Icons.info_outline,
             size: 20,
-            color: AppColors.textTertiary,
+            color: colors.textTertiary,
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
@@ -558,7 +561,7 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
                 Text(
                   'Traceroute unavailable',
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -566,7 +569,7 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
                 Text(
                   body,
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
               ],

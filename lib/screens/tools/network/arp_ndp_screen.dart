@@ -272,6 +272,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
   }
 
   Widget _capabilityCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final (String title, String body) = switch (_capability) {
       ArpCapability.sweepWithMac => (
@@ -291,9 +292,9 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
     };
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
@@ -304,7 +305,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
                 ? Icons.lan_outlined
                 : Icons.info_outline,
             size: 20,
-            color: AppColors.textTertiary,
+            color: colors.textTertiary,
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
@@ -314,7 +315,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
                 Text(
                   title,
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -322,7 +323,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
                 Text(
                   body,
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
               ],
@@ -338,9 +339,9 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -350,7 +351,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
             _subnetLabel == null
                 ? 'Scans the local /24 around your primary IPv4.'
                 : 'Scanning $_subnetLabel',
-            style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+            style: text.labelMedium?.copyWith(color: colors.textSecondary),
           ),
           if (_running) ...[
             const SizedBox(height: AppSpacing.sm),
@@ -369,7 +370,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
             const SizedBox(height: 6),
             Text(
               '$_probed of $_total probed · ${_neighbors.length} found',
-              style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
             ),
           ],
           const SizedBox(height: AppSpacing.md),
@@ -383,6 +384,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
   }
 
   Widget _resultsCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -407,9 +409,9 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
+        border: Border.all(color: colors.borderStrong, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -418,7 +420,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
           Text(
             header,
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
               fontWeight: FontWeight.w600,
             ),
@@ -471,7 +473,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
                     Text(
                       rtt,
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textTertiary,
+                        color: colors.textTertiary,
                         fontSize: AppTextSize.caption,
                       ),
                     ),
@@ -482,14 +484,14 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
                   ? SelectableText(
                       n.mac!,
                       style: mono.robotoMono.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                         fontSize: AppTextSize.caption,
                       ),
                     )
                   : Text(
                       'MAC not exposed on this platform',
                       style: text.labelSmall?.copyWith(
-                        color: AppColors.textTertiary,
+                        color: colors.textTertiary,
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -501,12 +503,13 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
   }
 
   Widget _unavailableCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
@@ -514,17 +517,17 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.devices_other_outlined,
                 size: 24,
-                color: AppColors.textSecondary,
+                color: colors.textSecondary,
               ),
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(
                   'Not available on iOS',
                   style: text.headlineSmall?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                   ),
                 ),
               ),
@@ -538,7 +541,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
             'Windows, Linux, or Android build. On macOS and Windows the toolbox '
             'lists reachable hosts; on Linux and Android it also attaches the '
             'real MAC addresses.',
-            style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+            style: text.bodyLarge?.copyWith(color: colors.textSecondary),
           ),
         ],
       ),
@@ -559,18 +562,19 @@ class _MessageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppColors.textTertiary),
+          Icon(icon, size: 20, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -579,7 +583,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   title,
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -587,7 +591,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   body,
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
               ],

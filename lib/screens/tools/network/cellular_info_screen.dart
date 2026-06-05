@@ -314,6 +314,7 @@ class _SignalBarsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final bool hasValue = bars != null;
     final int value = bars ?? 0;
@@ -335,7 +336,7 @@ class _SignalBarsRow extends StatelessWidget {
               child: Text(
                 'Signal Bars',
                 style: text.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ),
@@ -352,7 +353,7 @@ class _SignalBarsRow extends StatelessWidget {
                         Text(
                           '$value of ${CellularInfo.maxSignalBars}',
                           style: text.bodyMedium?.copyWith(
-                            color: AppColors.textPrimary,
+                            color: colors.textPrimary,
                           ),
                         ),
                       ],
@@ -361,7 +362,7 @@ class _SignalBarsRow extends StatelessWidget {
                       'Unavailable',
                       textAlign: TextAlign.end,
                       style: text.bodyMedium?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
             ),
@@ -424,6 +425,7 @@ class _SignalFootnote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
@@ -431,7 +433,7 @@ class _SignalFootnote extends StatelessWidget {
         'Signal bars are a coarse 0 to 4 indicator, the same scale as the iOS '
         'status bar. Apple does not expose a raw signal reading (RSRP, RSRQ, or '
         'dBm) to apps, so bars are the only signal value available.',
-        style: text.bodySmall?.copyWith(color: AppColors.textTertiary),
+        style: text.bodySmall?.copyWith(color: colors.textTertiary),
       ),
     );
   }
@@ -461,12 +463,13 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: EdgeInsets.symmetric(
         horizontal: AppSpacing.sm,
@@ -478,7 +481,7 @@ class _Card extends StatelessWidget {
           Text(
             title,
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -502,11 +505,12 @@ class _MetricRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final bool hasValue = value != null && value!.trim().isNotEmpty;
     final String shown = hasValue ? value! : 'Unavailable';
     final Color valueColor =
-        hasValue ? AppColors.textPrimary : AppColors.textSecondary;
+        hasValue ? colors.textPrimary : colors.textSecondary;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
@@ -522,7 +526,7 @@ class _MetricRow extends StatelessWidget {
               child: Text(
                 label,
                 style: text.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ),
@@ -714,6 +718,7 @@ class _LiveStartHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
@@ -721,7 +726,7 @@ class _LiveStartHint extends StatelessWidget {
         'Tap Start to begin live readings. Your carrier, radio technology, '
         'signal bars, country code, and roaming status update here as each '
         'sample arrives. Stop freezes the last values on screen.',
-        style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+        style: text.bodyLarge?.copyWith(color: colors.textSecondary),
         textAlign: TextAlign.center,
       ),
     );
@@ -734,18 +739,19 @@ class _LiveTriggerErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Icon(Icons.error_outline, size: 20, color: AppColors.statusDanger),
+          Icon(Icons.error_outline, size: 20, color: colors.statusDanger),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Semantics(
@@ -754,7 +760,7 @@ class _LiveTriggerErrorCard extends StatelessWidget {
                 'Could not start live streaming. The looping companion Shortcut '
                 'may not be installed, or the run was cancelled. Install it, '
                 'then press Start again.',
-                style: text.bodyMedium?.copyWith(color: AppColors.textSecondary),
+                style: text.bodyMedium?.copyWith(color: colors.textSecondary),
               ),
             ),
           ),
@@ -770,6 +776,7 @@ class _LoopShortcutNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final bool placeholder =
         WifiLiveShortcutsConfig.isLiveShortcutUrlPlaceholder;
@@ -780,20 +787,20 @@ class _LoopShortcutNote extends StatelessWidget {
               'Shortcut. Install it, then tap Start.';
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Icon(Icons.info_outline, size: 20, color: AppColors.textTertiary),
+          Icon(Icons.info_outline, size: 20, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               message,
-              style: text.bodyMedium?.copyWith(color: AppColors.textSecondary),
+              style: text.bodyMedium?.copyWith(color: colors.textSecondary),
             ),
           ),
         ],
@@ -827,12 +834,13 @@ class _MonitorControlBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: colors.border),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -894,10 +902,10 @@ class _StatusBlock extends StatelessWidget {
           if (streaming)
             const _LiveIndicator()
           else
-            const Icon(
+            Icon(
               Icons.pause_circle_outline,
               size: 20,
-              color: AppColors.textTertiary,
+              color: colors.textTertiary,
             ),
           const SizedBox(width: AppSpacing.xs),
           Expanded(
@@ -993,6 +1001,7 @@ class _WaitingForFirstPayload extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
@@ -1000,7 +1009,7 @@ class _WaitingForFirstPayload extends StatelessWidget {
         streaming
             ? 'Listening. The recursive Shortcut is sending cellular details.'
             : 'Press Start to begin streaming cellular details.',
-        style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+        style: text.bodyLarge?.copyWith(color: colors.textSecondary),
         textAlign: TextAlign.center,
       ),
     );

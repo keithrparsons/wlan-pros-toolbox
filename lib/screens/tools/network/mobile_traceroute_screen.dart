@@ -289,13 +289,14 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
   );
 
   Widget _unavailableCard(BuildContext context, _UnavailableCopy copy) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final bool isDesktopCopy = identical(copy, _desktopCopy);
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
@@ -303,13 +304,13 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
         children: [
           Row(
             children: [
-              Icon(copy.icon, size: 24, color: AppColors.textSecondary),
+              Icon(copy.icon, size: 24, color: colors.textSecondary),
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(
                   copy.title,
                   style: text.headlineSmall?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                   ),
                 ),
               ),
@@ -318,7 +319,7 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
           const SizedBox(height: AppSpacing.xs),
           Text(
             copy.body,
-            style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+            style: text.bodyLarge?.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.md),
           Align(
@@ -352,9 +353,9 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -381,7 +382,7 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
               'Walks the IP TTL from 1 upward, naming each router that returns '
               'an ICMP Time-Exceeded — an ICMP TTL-walk, not the system '
               'traceroute.',
-              style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
             ),
           ),
           _devicePendingNote(context),
@@ -389,7 +390,7 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
             const SizedBox(height: AppSpacing.sm),
             Text(
               _error!,
-              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
             ),
           ],
           const SizedBox(height: AppSpacing.md),
@@ -403,16 +404,17 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
   }
 
   Widget _devicePendingNote(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.xs),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             Icons.info_outline,
             size: 16,
-            color: AppColors.textTertiary,
+            color: colors.textTertiary,
           ),
           const SizedBox(width: AppSpacing.xs),
           Expanded(
@@ -420,7 +422,7 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
               'Uses the device\'s real ICMP TTL-walk. The native path is wired '
               'but still pending on-device verification; if it cannot run, a run '
               'reports that plainly rather than showing made-up hops.',
-              style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
             ),
           ),
         ],
@@ -429,6 +431,7 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
   }
 
   Widget _hopsCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -446,9 +449,9 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -460,7 +463,7 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
             child: Text(
               header,
               style: text.labelMedium?.copyWith(
-                color: AppColors.textSecondary,
+                color: colors.textSecondary,
                 letterSpacing: 0.4,
               ),
             ),
@@ -514,10 +517,10 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
                   // TTL counter and RTT stay DM Mono.
                   style: h.timedOut
                       ? text.bodyLarge?.copyWith(
-                          color: AppColors.textTertiary,
+                          color: colors.textTertiary,
                           fontStyle: FontStyle.italic,
                         )
-                      : mono.robotoMono.copyWith(color: AppColors.textPrimary),
+                      : mono.robotoMono.copyWith(color: colors.textPrimary),
                 ),
               ),
               const SizedBox(width: AppSpacing.xs),
@@ -525,8 +528,8 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
                 rttLabel,
                 style: mono.inlineCode.copyWith(
                   color: h.timedOut
-                      ? AppColors.textTertiary
-                      : AppColors.textSecondary,
+                      ? colors.textTertiary
+                      : colors.textSecondary,
                 ),
               ),
             ],

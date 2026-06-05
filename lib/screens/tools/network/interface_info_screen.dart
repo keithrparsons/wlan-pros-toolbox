@@ -428,12 +428,13 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -442,7 +443,7 @@ class _Card extends StatelessWidget {
           Text(
             title,
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -510,7 +511,7 @@ class _PublicIpPendingRow extends StatelessWidget {
       message,
       textAlign: TextAlign.right,
       style: (text.bodyLarge ?? const TextStyle()).copyWith(
-        color: AppColors.textTertiary,
+        color: colors.textTertiary,
         fontStyle: FontStyle.italic,
       ),
     );
@@ -542,7 +543,7 @@ class _PublicIpPendingRow extends StatelessWidget {
             width: ValueRow.labelColumnWidth,
             child: Text(
               'Public IP',
-              style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+              style: text.labelMedium?.copyWith(color: colors.textSecondary),
             ),
           ),
           const SizedBox(width: AppSpacing.xs),
@@ -568,6 +569,7 @@ class _LocationHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.xs),
@@ -575,7 +577,7 @@ class _LocationHint extends StatelessWidget {
         'The network name needs Location Services for this app on macOS. '
         'Enable it in System Settings, or read the name in the Wi-Fi '
         'Information tool, which can request it.',
-        style: text.bodySmall?.copyWith(color: AppColors.textTertiary),
+        style: text.bodySmall?.copyWith(color: colors.textTertiary),
       ),
     );
   }
@@ -592,6 +594,7 @@ class _MacTypeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final MacRandomization kind =
         MacRandomizationClassifier.classify(hardwareAddress);
@@ -612,7 +615,7 @@ class _MacTypeRow extends StatelessWidget {
               child: Text(
                 'MAC type',
                 style:
-                    text.labelMedium?.copyWith(color: AppColors.textSecondary),
+                    text.labelMedium?.copyWith(color: colors.textSecondary),
               ),
             ),
             const SizedBox(width: AppSpacing.xs),
@@ -622,8 +625,8 @@ class _MacTypeRow extends StatelessWidget {
                 textAlign: TextAlign.right,
                 style: (text.bodyMedium ?? const TextStyle()).copyWith(
                   color: unreadable
-                      ? AppColors.textTertiary
-                      : AppColors.textPrimary,
+                      ? colors.textTertiary
+                      : colors.textPrimary,
                   fontStyle: unreadable ? FontStyle.italic : FontStyle.normal,
                 ),
               ),
@@ -638,6 +641,7 @@ class _MacTypeRow extends StatelessWidget {
 class _NoInterfaces extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return _Card(
       title: 'Interfaces',
@@ -645,7 +649,7 @@ class _NoInterfaces extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
         child: Text(
           'No active interfaces with an assigned address.',
-          style: text.bodyLarge?.copyWith(color: AppColors.textTertiary),
+          style: text.bodyLarge?.copyWith(color: colors.textTertiary),
         ),
       ),
     );
@@ -678,6 +682,7 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Center(
       child: Padding(
@@ -685,15 +690,15 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.error_outline,
               size: 48,
-              color: AppColors.textTertiary,
+              color: colors.textTertiary,
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
               'Could not read network state',
-              style: text.headlineSmall?.copyWith(color: AppColors.textPrimary),
+              style: text.headlineSmall?.copyWith(color: colors.textPrimary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.md),

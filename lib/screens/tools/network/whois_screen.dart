@@ -185,9 +185,9 @@ class _WhoisScreenState extends State<WhoisScreen> {
     final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -281,15 +281,16 @@ class _HighlightsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
+        border: Border.all(color: colors.borderStrong, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -298,7 +299,7 @@ class _HighlightsCard extends StatelessWidget {
           Text(
             'Highlights',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
               fontWeight: FontWeight.w600,
             ),
@@ -315,7 +316,7 @@ class _HighlightsCard extends StatelessWidget {
                     child: Text(
                       h.label,
                       style: text.labelMedium?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
@@ -324,7 +325,7 @@ class _HighlightsCard extends StatelessWidget {
                     child: SelectableText(
                       h.value,
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textPrimary,
+                        color: colors.textPrimary,
                       ),
                     ),
                   ),
@@ -345,15 +346,16 @@ class _RawRecordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -362,7 +364,7 @@ class _RawRecordCard extends StatelessWidget {
           Text(
             'Raw record',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
               fontWeight: FontWeight.w600,
             ),
@@ -371,22 +373,22 @@ class _RawRecordCard extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               'via ${result.serversQueried.join(' → ')}',
-              style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
             ),
           ],
           const SizedBox(height: AppSpacing.xs),
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: AppColors.surface0,
+              color: colors.surface0,
               borderRadius: BorderRadius.circular(AppRadius.control),
-              border: Border.all(color: AppColors.border, width: 1),
+              border: Border.all(color: colors.border, width: 1),
             ),
             padding: const EdgeInsets.all(AppSpacing.sm),
             child: SelectableText(
               result.rawRecord,
               style: mono.inlineCode.copyWith(
-                color: AppColors.textPrimary,
+                color: colors.textPrimary,
                 fontSize: AppTextSize.caption,
               ),
             ),
@@ -410,18 +412,19 @@ class _MessageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppColors.textTertiary),
+          Icon(icon, size: 20, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -430,7 +433,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   title,
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -438,7 +441,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   body,
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
               ],

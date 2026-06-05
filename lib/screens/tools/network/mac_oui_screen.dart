@@ -233,9 +233,9 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
     final bool ready = _service != null && _loadError == null;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -264,7 +264,7 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
           const SizedBox(height: 2),
           Text(
             'Colons, hyphens, Cisco dots, or no separators all work.',
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.md),
           FilledButton(
@@ -290,6 +290,7 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
   }
 
   Widget _resultCard(BuildContext context, OuiResult r) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -324,10 +325,10 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
     final bool matched = r.matched;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
-          color: matched ? AppColors.borderStrong : AppColors.border,
+          color: matched ? colors.borderStrong : colors.border,
           width: 1,
         ),
       ),
@@ -342,14 +343,14 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
               Icon(
                 matched ? Icons.verified_outlined : Icons.help_outline,
                 size: 24,
-                color: AppColors.textSecondary,
+                color: colors.textSecondary,
               ),
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(
                   matched ? r.vendor! : 'Not in registry',
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -361,7 +362,7 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
             Text(
               'This OUI is not in the bundled IEEE registry. It may be an '
               'unassigned block, or the table may need a refresh.',
-              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
             ),
           ],
           const SizedBox(height: AppSpacing.sm),
@@ -381,6 +382,7 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
     AppMonoText mono, {
     bool identifier = false,
   }) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
@@ -391,7 +393,7 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
             width: 88,
             child: Text(
               label,
-              style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+              style: text.labelMedium?.copyWith(color: colors.textSecondary),
             ),
           ),
           const SizedBox(width: AppSpacing.xs),
@@ -399,7 +401,7 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
             child: SelectableText(
               value,
               style: (identifier ? mono.robotoMono : mono.inlineCode).copyWith(
-                color: AppColors.textPrimary,
+                color: colors.textPrimary,
               ),
             ),
           ),
@@ -427,12 +429,13 @@ class _NoVendorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -441,13 +444,13 @@ class _NoVendorCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Icon(Icons.shuffle, size: 24, color: AppColors.textSecondary),
+              Icon(Icons.shuffle, size: 24, color: colors.textSecondary),
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(
                   title,
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -457,7 +460,7 @@ class _NoVendorCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             reason,
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.sm),
           Padding(
@@ -472,7 +475,7 @@ class _NoVendorCard extends StatelessWidget {
                   child: Text(
                     'MAC',
                     style: text.labelMedium?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: colors.textSecondary,
                     ),
                   ),
                 ),
@@ -481,7 +484,7 @@ class _NoVendorCard extends StatelessWidget {
                   child: SelectableText(
                     mac,
                     style: mono.robotoMono.copyWith(
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                     ),
                   ),
                 ),
@@ -509,18 +512,19 @@ class _MessageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppColors.textTertiary),
+          Icon(icon, size: 20, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -529,7 +533,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   title,
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -537,7 +541,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   body,
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
               ],

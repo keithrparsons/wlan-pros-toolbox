@@ -202,9 +202,9 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -230,7 +230,7 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
           const SizedBox(height: 6),
           Text(
             'Data from the RIPEstat API. No account or key required.',
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.md),
           FilledButton(
@@ -286,13 +286,14 @@ class _ResultCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final BgpAsnResult r = result;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
+        border: Border.all(color: colors.borderStrong, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -303,7 +304,7 @@ class _ResultCard extends StatelessWidget {
                 ? 'AS overview'
                 : 'Routing for ${r.query}',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
               fontWeight: FontWeight.w600,
             ),
@@ -371,18 +372,19 @@ class _MessageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppColors.textTertiary),
+          Icon(icon, size: 20, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -391,7 +393,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   title,
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -399,7 +401,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   body,
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
               ],

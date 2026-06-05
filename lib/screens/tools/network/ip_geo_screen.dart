@@ -196,9 +196,9 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -224,7 +224,7 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
           const SizedBox(height: 6),
           Text(
             'Data from the ipwho.is API. No account or key required.',
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.md),
           FilledButton(
@@ -272,12 +272,13 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
   }
 
   Widget _detailsCard(BuildContext context, IpGeoResult r) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
+        border: Border.all(color: colors.borderStrong, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -286,7 +287,7 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
           Text(
             'Location',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
               fontWeight: FontWeight.w600,
             ),
@@ -307,6 +308,7 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
   }
 
   Widget _coordinatesCard(BuildContext context, IpGeoResult r) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -315,9 +317,9 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -326,7 +328,7 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
           Text(
             'Coordinates',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
               fontWeight: FontWeight.w600,
             ),
@@ -345,14 +347,14 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Map link',
-            style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+            style: text.labelMedium?.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: 4),
           if (url != null)
             SelectableText(
               url,
               style: mono.inlineCode.copyWith(
-                color: AppColors.textPrimary,
+                color: colors.textPrimary,
                 fontSize: AppTextSize.caption,
               ),
             ),
@@ -381,7 +383,7 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
           const SizedBox(height: 6),
           Text(
             'An interactive in-app map is a planned future addition.',
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
