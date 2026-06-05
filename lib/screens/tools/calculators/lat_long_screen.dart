@@ -580,7 +580,9 @@ class _LatLongScreenState extends State<LatLongScreen> {
           : 'Location permission is off. Allow it in Settings to fill these '
                 'fields with your current position.';
     } else if (fix != null) {
-      headerCopy = 'Your current location';
+      headerCopy = fix.isApproximate
+          ? 'Your approximate location'
+          : 'Your current location';
     } else {
       headerCopy = 'Fill the fields with your current latitude and longitude.';
     }
@@ -632,9 +634,20 @@ class _LatLongScreenState extends State<LatLongScreen> {
         ),
       ],
 
+      // IP-approximate honesty note: Core Location returned no fix, so this came
+      // from the public IP. City-level, not GPS — say so plainly (GL-005).
+      if (fix != null && fix.isApproximate) ...[
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          'Approximate location from your public IP (city-level, not GPS). '
+          'Your device could not get a GPS or Wi-Fi position fix.',
+          style: text.bodySmall?.copyWith(color: AppColors.textTertiary),
+        ),
+      ]
       // macOS coarse-fix honesty note: a Mac without GPS returns a Wi-Fi-derived
       // fix. Flag it from the accuracy value rather than claiming GPS precision.
-      if (fix != null && _isCoarse(fix)) ...[
+      // (Skipped for an IP-approximate fix, which has its own note above.)
+      else if (fix != null && _isCoarse(fix)) ...[
         const SizedBox(height: AppSpacing.xs),
         Text(
           'This looks like a coarse, Wi-Fi-derived fix (no GPS hardware). '

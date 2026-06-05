@@ -20,10 +20,25 @@
 // fix. We do not try to detect "is this GPS or Wi-Fi" (the OS does not tell
 // us); instead the result always carries [accuracyMeters], and the UI labels a
 // coarse fix honestly from that value rather than claiming GPS precision.
+//
+// IP-APPROXIMATE FALLBACK: on some macOS setups (and iOS indoors) Core Location
+// produces NO fix at all even with Wi-Fi on — `getCurrentPosition` times out.
+// Rather than show the user nothing, we fall back to an IP-derived approximate
+// location (via [IpGeoService] → ipinfo.io/geojs.io) ONLY when the permission
+// is granted and the failure is a genuine no-fix (timeout / PositionUpdate),
+// NOT a permission-denied or services-disabled state (those are user-fixable in
+// Settings and must keep routing the user there). The fallback fix is flagged
+// [LocationSource.ipApproximate] with no altitude and a coarse/null accuracy, so
+// the UI labels it honestly as "from your public IP (city-level, not GPS)" and
+// never presents it as a real GPS reading (GL-005 / GL-008). The IP-geo provider
+// derives the location from the public IP; the user's coordinates are NOT
+// transmitted by this flow.
 
 import 'dart:async';
 
 import 'package:geolocator/geolocator.dart';
+
+import '../network/ip_geo_service.dart';
 
 /// Where the permission currently stands. A flattened view of geolocator's
 /// [LocationPermission] + the Location-services master switch, so the screen
@@ -41,6 +56,17 @@ enum LocationPermissionState {
   granted,
 }
 
+/// Where a [LocationFix] came from. Lets the UI label an IP-derived approximate
+/// fix honestly instead of presenting it as a GPS reading (GL-005).
+enum LocationSource {
+  /// Core Location (GPS, or a Wi-Fi-derived coarse fix on hardware without GPS).
+  coreLocation,
+
+  /// Derived from the device's public IP via [IpGeoService] because Core
+  /// Location produced no fix. City-level, approximate, never GPS-precise.
+  ipApproximate,
+}
+
 /// A single immutable location reading the UI renders. Coordinates are
 /// IDENTIFIER values (GL-003 §8.5) → rendered in Roboto Mono, not DM Mono.
 class LocationFix {
@@ -50,6 +76,7 @@ class LocationFix {
     required this.altitudeMeters,
     required this.accuracyMeters,
     required this.altitudeAccuracyMeters,
+    this.source = LocationSource.coreLocation,
   });
 
   /// Signed decimal degrees. Feeds the Lat / Long converter's latitude field.
@@ -59,7 +86,8 @@ class LocationFix {
   final double longitude;
 
   /// Meters above the WGS-84 reference ellipsoid. `null` when the platform did
-  /// not supply altitude (e.g. a coarse Wi-Fi fix on a Mac without GPS).
+  /// not supply altitude (e.g. a coarse Wi-Fi fix on a Mac without GPS, or an
+  /// IP-derived fix which has no altitude at all).
   final double? altitudeMeters;
 
   /// Horizontal accuracy radius in meters (smaller is better). `null` when not
@@ -69,6 +97,14 @@ class LocationFix {
   /// Vertical (altitude) accuracy in meters. `null` when not reported. iOS/
   /// macOS report a non-positive sentinel when altitude is not measured.
   final double? altitudeAccuracyMeters;
+
+  /// Where this fix came from. [LocationSource.ipApproximate] tells the UI to
+  /// show the honest "approximate, from your public IP" label.
+  final LocationSource source;
+
+  /// True when this fix was derived from the public IP rather than Core
+  /// Location — a convenience for the UI's honest labeling branch.
+  bool get isApproximate => source == LocationSource.ipApproximate;
 }
 
 /// The sealed outcome of a location request. The UI switches over the runtime
@@ -125,9 +161,21 @@ abstract interface class DeviceLocationService {
   Future<bool> openSettings();
 }
 
-/// Production implementation over `geolocator`.
+/// Production implementation over `geolocator`, with an IP-derived approximate
+/// fallback (via [IpGeoService]) for the Core-Location-no-fix case.
 class DeviceLocation implements DeviceLocationService {
-  const DeviceLocation();
+  /// [_ipGeo] is injectable so tests can script the fallback without a network
+  /// call; production leaves it null and a real [IpGeoService] is built on
+  /// demand inside [_ipApproximateFix]. Kept nullable so the constructor can
+  /// stay `const` for the screen's default instance.
+  // A public `ipGeo:` parameter assigns the private `_ipGeo` field so the
+  // injected seam stays out of the public surface. An initializing formal
+  // (`this._ipGeo`) would expose the private name in the API, so the explicit
+  // assignment is deliberate here.
+  // ignore: prefer_initializing_formals
+  const DeviceLocation({IpGeoService? ipGeo}) : _ipGeo = ipGeo;
+
+  final IpGeoService? _ipGeo;
 
   @override
   Future<LocationPermissionState> permissionState() async {
@@ -175,8 +223,69 @@ class DeviceLocation implements DeviceLocationService {
         ),
       );
       return LocationSuccess(_fromPosition(pos));
+    } on TimeoutException catch (e) {
+      // GENUINE NO-FIX: permission is granted and Location Services are on, but
+      // Core Location did not lock in time (the iOS-indoors case). Try an
+      // IP-derived approximate location so the user gets something rather than
+      // nothing, clearly flagged approximate.
+      return _fallbackOrUnavailable(e);
+    } on PositionUpdateException catch (e) {
+      // GENUINE NO-FIX: the platform reported it could not determine a position
+      // (the macOS-no-GPS case). Same IP-approximate fallback path.
+      return _fallbackOrUnavailable(e);
+    } on PermissionDeniedException {
+      // A permission denial thrown from getCurrentPosition is a user-fixable
+      // state, NOT a no-fix. Route it to LocationBlocked so the UI keeps the
+      // user in Settings — never silently swap it for an IP lookup. (The checks
+      // above usually catch this first; this guards the race where the OS
+      // revokes permission between the check and the read.)
+      return const LocationBlocked(serviceDisabled: false);
+    } on LocationServiceDisabledException {
+      // Location Services were turned off between our check and the read. Also
+      // user-fixable → Settings, not an IP fallback.
+      return const LocationBlocked(serviceDisabled: true);
     } catch (e) {
+      // Any other unexpected error: stay honest with "Location unavailable."
+      // and do NOT reach for the IP fallback — only genuine no-fix cases above
+      // earn the approximate fix.
       return LocationUnavailable(_describe(e));
+    }
+  }
+
+  /// Shared no-fix tail: try the IP-derived approximate fix and, if that
+  /// produces nothing, fall back to the honest [LocationUnavailable] state with
+  /// a reason derived from the originating no-fix error.
+  Future<LocationResult> _fallbackOrUnavailable(Object e) async {
+    final LocationFix? ipFix = await _ipApproximateFix();
+    if (ipFix != null) return LocationSuccess(ipFix);
+    return LocationUnavailable(_describe(e));
+  }
+
+  /// Best-effort IP-derived approximate fix for the no-GPS-fix case. Returns
+  /// null when the lookup fails or carries no coordinates — the caller then
+  /// shows the honest "Location unavailable." state rather than a fabricated
+  /// point. The fix is flagged [LocationSource.ipApproximate] with no altitude
+  /// and a coarse accuracy floor so the UI can never mistake it for GPS.
+  Future<LocationFix?> _ipApproximateFix() async {
+    final IpGeoService geo = _ipGeo ?? IpGeoService();
+    try {
+      final IpGeoResult r = await geo.lookup(rawQuery: '');
+      if (r.isError || !r.hasCoordinates) return null;
+      return LocationFix(
+        latitude: r.latitude!,
+        longitude: r.longitude!,
+        altitudeMeters: null,
+        // IP geolocation is city-level. We do not invent a precise radius; the
+        // accuracy is reported as null ("not reported") and the source flag is
+        // the honest signal the UI labels from.
+        accuracyMeters: null,
+        altitudeAccuracyMeters: null,
+        source: LocationSource.ipApproximate,
+      );
+    } catch (_) {
+      // IpGeoService.lookup never throws, but guard defensively so a no-fix
+      // never becomes a crash on entry.
+      return null;
     }
   }
 
