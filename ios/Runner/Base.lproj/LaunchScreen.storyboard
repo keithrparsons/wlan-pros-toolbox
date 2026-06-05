@@ -16,13 +16,26 @@
                     <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="LaunchImage" translatesAutoresizingMaskIntoConstraints="NO" id="YRO-k0-Ey4">
+                            <!-- GL-003 §8.21 white containment plate. The charcoal "wirelessLAN
+                                 PROFESSIONALS" wordmark cannot sit bare on the #1A1A1A canvas
+                                 (it computes ~1.1:1 and goes invisible — the §8.21 broken-brand
+                                 failure), so the lockup renders on a rounded white plate, the
+                                 same §8.19 white-tile-on-dark pattern the app uses in-app.
+                                 Launch screens are static / not theme-switchable and may NOT
+                                 carry user-defined runtime attributes, so the rounded white
+                                 plate + 24pt clear-space padding is BAKED INTO the LaunchImage
+                                 asset (rounded corners, transparent outside the plate). The
+                                 storyboard just centers that one image on the dark canvas. -->
+                            <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleAspectFit" image="LaunchImage" translatesAutoresizingMaskIntoConstraints="NO" id="YRO-k0-Ey4">
                             </imageView>
                         </subviews>
-                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <!-- §8.1 / §2 launch canvas = #1A1A1A (app-surface-0). -->
+                        <color key="backgroundColor" red="0.10196078431372549" green="0.10196078431372549" blue="0.10196078431372549" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
+                            <!-- Plate centered horizontally, nudged slightly above true-center
+                                 (multiplier 0.9) — reads better on launch per §8.21. -->
                             <constraint firstItem="YRO-k0-Ey4" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="1a2-6s-vTC"/>
-                            <constraint firstItem="YRO-k0-Ey4" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="4X2-HB-R7a"/>
+                            <constraint firstItem="YRO-k0-Ey4" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" multiplier="0.9" id="4X2-HB-R7a"/>
                         </constraints>
                     </view>
                 </viewController>
@@ -32,6 +45,6 @@
         </scene>
     </scenes>
     <resources>
-        <image name="LaunchImage" width="168" height="185"/>
+        <image name="LaunchImage" width="268" height="110"/>
     </resources>
 </document>
