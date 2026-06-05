@@ -600,7 +600,11 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                     minHeight: 6,
                     backgroundColor:
                         colors.isLight ? colors.surface0 : colors.surface2,
-                    valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
+                    // Progress fill: lime in dark; darkened-lime in light so a
+                    // 6px bar reads on the white surface (§8.20.2).
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      colors.isLight ? colors.textAccent : colors.primary,
+                    ),
                   );
                 },
               ),
@@ -1183,8 +1187,9 @@ class _CompareBar extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.xxs),
-        // The shared-scale track. The fill is lime (Wi-Fi — a sanctioned FILL,
-        // §8.20.2) or the neutral bar + borderStrong outline (internet).
+        // The shared-scale track. The Wi-Fi fill is lime in dark; darkened-lime
+        // in light so a thin standalone bar reads on the white surface
+        // (§8.20.2). The internet bar is the neutral fill + borderStrong outline.
         ClipRRect(
           borderRadius: BorderRadius.circular(AppRadius.control),
           child: SizedBox(
@@ -1195,7 +1200,11 @@ class _CompareBar extends StatelessWidget {
                 FractionallySizedBox(
                   widthFactor: f == 0 ? 0.0 : f,
                   child: accent
-                      ? Container(color: colors.primary)
+                      ? Container(
+                          color: colors.isLight
+                              ? colors.textAccent
+                              : colors.primary,
+                        )
                       : Container(
                           decoration: BoxDecoration(
                             color: neutralFill,
@@ -2089,6 +2098,22 @@ class _GradeChip extends StatelessWidget {
     }
   }
 
+  /// §8.20.4 — the Material status glyph that reinforces the verdict word
+  /// (so meaning is never carried by color alone).
+  static IconData _glyph(QualityGrade grade) {
+    switch (grade) {
+      case QualityGrade.excellent:
+      case QualityGrade.good:
+        return Icons.check_circle;
+      case QualityGrade.fair:
+        return Icons.warning_amber_rounded;
+      case QualityGrade.poor:
+        return Icons.error;
+      case QualityGrade.unavailable:
+        return Icons.info_outline;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
@@ -2111,15 +2136,29 @@ class _GradeChip extends StatelessWidget {
             ? null
             : Border.all(color: borderColor, width: colors.isLight ? 2 : 1),
       ),
-      child: Text(
-        grade.label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: text.labelSmall?.copyWith(
-          color: fg,
-          // §8.20.4 / §8.20.3-A verdict word bumps to 700 in light.
-          fontWeight: colors.isLight ? FontWeight.w700 : FontWeight.w600,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          // §8.20.4 — the filled-pill light chip carries a 16px Material status
+          // glyph in the border/label color, so the verdict is reinforced by
+          // shape + word, not color alone. Dark keeps its solid-fill chip as-is.
+          if (colors.isLight) ...<Widget>[
+            Icon(_glyph(grade), size: 16, color: fg),
+            const SizedBox(width: AppSpacing.xxs),
+          ],
+          Flexible(
+            child: Text(
+              grade.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: text.labelSmall?.copyWith(
+                color: fg,
+                // §8.20.4 / §8.20.3-A verdict word bumps to 700 in light.
+                fontWeight: colors.isLight ? FontWeight.w700 : FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
