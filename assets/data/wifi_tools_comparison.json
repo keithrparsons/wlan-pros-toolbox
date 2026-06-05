@@ -1,0 +1,340 @@
+{
+  "_meta": {
+    "title": "Wi-Fi Tools Comparison",
+    "pricingDate": "February 2026",
+    "pricingNote": "Pricing as of February 2026. Confirm current pricing with the vendor before you buy.",
+    "estimateNote": "Cost figures are modeled estimates assembled by WLAN Pros from vendor-supplied numbers and list pricing, not vendor-published quotes. Treat every dollar amount as a planning estimate, not a binding price.",
+    "betaNote": "This comparison is in beta review. Vendors are being consulted on the figures, and a few may change before the final release.",
+    "neutralityNote": "This is a capability and cost reference, not a ranking. Tools are listed alphabetically within each activity. The same vendor can appear under more than one activity. Real toolkits are assembled across vendors. This reflects vendors interviewed by WLAN Pros, not every tool that exists.",
+    "noLogosNote": "No vendor logos or product photos appear here. Those are trademarks and copyrighted images that need each vendor's written permission, which is still being gathered.",
+    "currency": "USD",
+    "tcoLabel": "3-year TCO",
+    "source": "Wi-Fi Design, Validation, Spectrum Analysis & Troubleshooting Tools V6 (Keith Parsons, vendor-interviewed workbook, last revised 2026-02-16); neutral writeups from the Pax research brief, 2026-06-05."
+  },
+  "activities": [
+    {
+      "id": "design",
+      "title": "Wi-Fi Design",
+      "intro": "Design is the planning phase, done before climbing a ladder. A designer models a building, places access points on a floor plan, and predicts how Wi-Fi will behave: where coverage reaches, where signal overlaps, which channels go where, and how many APs an area needs. The output is a plan: AP locations, mounting notes, channel and power settings, and a bill of materials. Design answers what to install, and where, before any hardware is bought.",
+      "configs": [
+        {
+          "vendor": "Ekahau",
+          "product": "Ekahau AI Pro + Connect",
+          "costModel": "subscription",
+          "upFront": 7990,
+          "tco3yr": 11980,
+          "notes": "AI Pro desktop and online, with 4G and 5G planning. First year is $5,995 plus $1,995 Connect."
+        },
+        {
+          "vendor": "Hamina",
+          "product": "Planner",
+          "costModel": "subscription",
+          "upFront": 980,
+          "tco3yr": 2940,
+          "notes": "Browser-based design. SaaS model pricing."
+        },
+        {
+          "vendor": "Hamina",
+          "product": "Planner Plus + Live with LTE/4G/5G",
+          "costModel": "subscription",
+          "upFront": 1560,
+          "tco3yr": 4680,
+          "notes": "Adds live network visibility and private cellular planning. SaaS model pricing."
+        },
+        {
+          "vendor": "NetAlly",
+          "product": "AirMagnet Survey Pro with Planner",
+          "costModel": "perpetual",
+          "upFront": 4150,
+          "tco3yr": 5536,
+          "notes": "Perpetual license. Years 2 and 3 support optional."
+        },
+        {
+          "vendor": "Sidos",
+          "product": "Sidos Wave, Cloud & MicroApps",
+          "costModel": "subscription",
+          "upFront": 2988,
+          "tco3yr": 8964,
+          "notes": "Includes the Sidos Wave device and cloud access for up to 3 users."
+        }
+      ]
+    },
+    {
+      "id": "validation",
+      "title": "Wi-Fi Validation",
+      "intro": "Validation is the proof step. After a network is installed, or when a designer wants to confirm a predictive model against reality, validation measures the actual RF environment on site and compares it to the design goals. The engineer walks the space collecting real signal strength, signal-to-noise, data rates, and coverage, then produces a heatmap and a report. Validation answers whether the installed network does what was promised.",
+      "configs": [
+        {
+          "vendor": "Ekahau",
+          "product": "Ekahau Measure + Sidekick 2",
+          "costModel": "subscription",
+          "upFront": 6290,
+          "tco3yr": 8880,
+          "notes": "4 triband radios with spectrum analysis, the Survey app, and Sidekick support. First year is $4,995 plus $1,295."
+        },
+        {
+          "vendor": "Hamina",
+          "product": "Hamina Clip + Onsite",
+          "costModel": "subscription",
+          "upFront": 1180,
+          "tco3yr": 2740,
+          "notes": "2 triband radios. This config does not include spectrum analysis."
+        },
+        {
+          "vendor": "Hamina",
+          "product": "Onsite, Live + Oscium Nomad",
+          "costModel": "subscription",
+          "upFront": 2490,
+          "tco3yr": 4050,
+          "notes": "4 triband radios across a cross-vendor kit. First year is $1,710 plus $780."
+        },
+        {
+          "vendor": "NetAlly",
+          "product": "AirCheck G3 Pro",
+          "costModel": "perpetual",
+          "upFront": 4195,
+          "tco3yr": 5301,
+          "notes": "Handheld tester. Perpetual license. Years 2 and 3 support optional."
+        },
+        {
+          "vendor": "Sidos",
+          "product": "Sidos Wave, Cloud & MicroApps",
+          "costModel": "subscription",
+          "upFront": 2988,
+          "tco3yr": 8964,
+          "notes": "3 triband radios, up to 3 users. This config does not include spectrum analysis."
+        }
+      ]
+    },
+    {
+      "id": "spectrum",
+      "title": "Spectrum Analysis",
+      "intro": "Spectrum analysis looks below Wi-Fi at the raw radio frequencies, including energy that Wi-Fi adapters cannot see or report. A spectrum analyzer shows all RF activity in the 2.4, 5, and 6/7 GHz bands, including non-Wi-Fi interference: microwave ovens, Bluetooth, video bridges, motion sensors, and other sources that degrade Wi-Fi without showing up as a network. It answers what else is using the airspace, and whether something non-Wi-Fi is hurting performance.",
+      "configs": [
+        {
+          "vendor": "Ekahau",
+          "product": "Ekahau Measure Pro + Sidekick 2",
+          "costModel": "subscription",
+          "upFront": 6990,
+          "tco3yr": 10980,
+          "notes": "4 radios with spectrum analysis, the Survey and Analyzer apps, and Sidekick support. First year is $4,995 plus $1,995."
+        },
+        {
+          "vendor": "Hamina",
+          "product": "Onsite + Oscium Nomad + Wi-Spy Lucid",
+          "costModel": "subscription",
+          "upFront": 3485,
+          "tco3yr": 5045,
+          "notes": "Triband spectrum analyzer, assembled across vendors. First year is $780 plus $1,710 plus $995."
+        },
+        {
+          "vendor": "Hamina",
+          "product": "Onsite + Nomad + NetAlly NXT-2000",
+          "costModel": "subscription",
+          "upFront": 3685,
+          "tco3yr": 5245,
+          "notes": "Triband spectrum analyzer, assembled across vendors. First year is $780 plus $1,710 plus $1,195."
+        },
+        {
+          "vendor": "Intuitibits",
+          "product": "WiFi Explorer Pro 3 + NXT-2000",
+          "costModel": "perpetual",
+          "upFront": 3755,
+          "tco3yr": 3755,
+          "notes": "Pairs the Mac analyzer with a NetAlly spectrum accessory. One-time software with the NXT-2000 hardware."
+        },
+        {
+          "vendor": "NetAlly",
+          "product": "AirCheck G3 Kit + NXT-2000",
+          "costModel": "perpetual",
+          "upFront": 5095,
+          "tco3yr": 6201,
+          "notes": "Perpetual license. Years 2 and 3 optional."
+        },
+        {
+          "vendor": "Oscium",
+          "product": "Chanalyzer + Wi-Spy Lucid",
+          "costModel": "perpetual",
+          "upFront": 1599,
+          "tco3yr": 1899,
+          "notes": "Triband spectrum analyzer with 1 year of MetaCare."
+        }
+      ]
+    },
+    {
+      "id": "troubleshooting",
+      "title": "Wi-Fi Troubleshooting",
+      "intro": "Troubleshooting is the diagnostic phase, used when a working network starts misbehaving or a new one fails to meet expectations. It pulls together pieces of the other three activities, a quick survey, a spectrum check, packet capture, and connectivity tests, to isolate a root cause: a bad channel plan, an interference source, a misconfigured AP, a wired-side problem, or a client issue. Troubleshooting tools are portable and fast, built to get an answer on site. They answer why a network is not working, and where the fault is.",
+      "configs": [
+        {
+          "vendor": "Ekahau",
+          "product": "Ekahau Measure Pro + Sidekick 2",
+          "costModel": "subscription",
+          "upFront": 6990,
+          "tco3yr": 10980,
+          "notes": "4 radios with spectrum analysis, the Survey and Analyzer apps, and Sidekick support."
+        },
+        {
+          "vendor": "Hamina",
+          "product": "Hamina Clip + Onsite",
+          "costModel": "subscription",
+          "upFront": 1180,
+          "tco3yr": 2740,
+          "notes": "2 triband radios. This config does not include spectrum analysis."
+        },
+        {
+          "vendor": "Hamina",
+          "product": "Onsite + Oscium Nomad + NXT-2000",
+          "costModel": "subscription",
+          "upFront": 3685,
+          "tco3yr": 5245,
+          "notes": "4 triband radios with spectrum analysis, assembled across vendors. First year is $780 plus $1,710 plus $1,195."
+        },
+        {
+          "vendor": "Intuitibits",
+          "product": "WiFi Explorer Pro 3 + Airtool 2",
+          "costModel": "perpetual",
+          "upFront": 165,
+          "tco3yr": 165,
+          "notes": "Scanning, analysis, and packet capture. Requires macOS or a WLAN Pi for data collection. This config does not include Wi-Fi design or coverage validation."
+        },
+        {
+          "vendor": "NetAlly",
+          "product": "AirCheck G3 Kit",
+          "costModel": "perpetual",
+          "upFront": 5095,
+          "tco3yr": 6201,
+          "notes": "Perpetual license. Years 2 and 3 support optional."
+        },
+        {
+          "vendor": "NetViews",
+          "product": "NetViews Pro + MacBook Air M4",
+          "costModel": "one-time",
+          "upFront": 900,
+          "tco3yr": 900,
+          "notes": "Includes a 13-inch MacBook Air. A fast on-Mac diagnostic toolkit. This config does not include spectrum analysis."
+        },
+        {
+          "vendor": "Oscium",
+          "product": "Chanalyzer + Lucid + MetaGeek + 3x WLAN Pi Go",
+          "costModel": "perpetual",
+          "upFront": 4199,
+          "tco3yr": 4999,
+          "notes": "Includes a directional antenna and 1 year of MetaCare."
+        },
+        {
+          "vendor": "Sidos",
+          "product": "Sidos Wave, Cloud & MicroApps",
+          "costModel": "subscription",
+          "upFront": 2988,
+          "tco3yr": 8964,
+          "notes": "3 triband radios, up to 3 users."
+        },
+        {
+          "vendor": "WLAN Pi",
+          "product": "WLAN Pi M4+",
+          "costModel": "one-time",
+          "upFront": 600,
+          "tco3yr": 600,
+          "notes": "Internal Wi-Fi 7 NIC. Open hardware probe for capture and analysis."
+        },
+        {
+          "vendor": "WLAN Pi",
+          "product": "WLAN Pi R4 + Wi-Fi NIC",
+          "costModel": "one-time",
+          "upFront": 400,
+          "tco3yr": 400,
+          "notes": "External Wi-Fi 6E NIC."
+        }
+      ]
+    }
+  ],
+  "toolkits": [
+    {
+      "vendor": "Ekahau",
+      "product": "Ekahau AI Pro/Connect + Sidekick 2",
+      "tco3yr": 16975,
+      "notes": "AI Pro, Survey, Analyzer, Optimizer. Sidekick support optional."
+    },
+    {
+      "vendor": "Hamina",
+      "product": "Planner Plus + Live + Onsite + Nomad + NXT-2000",
+      "tco3yr": 9925,
+      "notes": "Add Intuitibits Airtool 2 for frame capture."
+    },
+    {
+      "vendor": "Intuitibits",
+      "product": "WiFi Explorer Pro 3 + Airtool 2 + MacBook Air + WLAN Pi M4+",
+      "tco3yr": 1564,
+      "notes": "No Wi-Fi design or validation. Spectrum analysis available."
+    },
+    {
+      "vendor": "NetAlly",
+      "product": "AirMagnet Survey + AirCheck G3 + NXT-2000",
+      "tco3yr": 11737,
+      "notes": "Devices can be shared between users."
+    },
+    {
+      "vendor": "Oscium",
+      "product": "Chanalyzer + Lucid + MetaGeek + 3x WLAN Pi Go",
+      "tco3yr": 4999,
+      "notes": "Includes a directional antenna and 1 year of MetaCare."
+    },
+    {
+      "vendor": "Sidos",
+      "product": "Sidos Wave, Cloud & MicroApps",
+      "tco3yr": 8964,
+      "notes": "No spectrum analysis. 3 users can share the license."
+    }
+  ],
+  "vendors": [
+    {
+      "name": "Ekahau",
+      "summary": "A long-established Wi-Fi design and survey company, now part of Ookla. Its platform centers on Ekahau AI Pro for design and analysis, paired with Connect services and the Sidekick 2 measurement device, plus mobile Survey, Measure, and Analyzer apps. Together the suite spans predictive design, on-site survey and validation, spectrum analysis with the Sidekick, and troubleshooting.",
+      "website": "https://www.ekahau.com",
+      "docs": "https://support.ekahau.com"
+    },
+    {
+      "name": "Hamina",
+      "summary": "A Wi-Fi design and survey company built around a browser-based platform. Planner handles network design with real-time heatmaps and planning for Wi-Fi, IoT, and private 4G/5G. Onsite is the mobile survey, troubleshooting, and spectrum tool, and Live adds 3D network visibility. The Clip is a purpose-built survey device. Spectrum capability depends on which config is assembled.",
+      "website": "https://www.hamina.com",
+      "docs": "https://docs.hamina.com/planner/"
+    },
+    {
+      "name": "Intuitibits",
+      "summary": "A Mac-focused wireless software maker founded by Adrian Granados. WiFi Explorer Pro 3 is a professional Wi-Fi scanner and analyzer for designing, validating, and troubleshooting, with filtering and visualization of channel use and interference. Airtool 2 handles Wi-Fi packet capture with Wireshark integration. A Windows version of WiFi Explorer Pro also exists.",
+      "website": "https://www.intuitibits.com/",
+      "docs": "https://www.intuitibits.com/support/"
+    },
+    {
+      "name": "NetAlly",
+      "summary": "Makes portable, ruggedized network test instruments for wired and wireless networks, from the former Fluke Networks and NetScout enterprise test line. AirMagnet Survey PRO plans and validates Wi-Fi, AirCheck G3 Pro is a handheld tester, the NXT-2000 is a triband spectrum analyzer accessory used in many cross-vendor kits, and EtherScope nXG is a combined wired and wireless analyzer.",
+      "website": "https://www.netally.com",
+      "docs": "https://support.netally.com"
+    },
+    {
+      "name": "NetViews",
+      "summary": "A modern macOS network and Wi-Fi diagnostic app built by network engineer Bill Bushong, formerly named PingStalker. It bundles live network monitoring and scanning, host probing, speed tests, Wi-Fi tools, and calculators into one Mac app. A one-time-purchase app rather than an enterprise survey platform, positioned as a fast on-Mac diagnostic toolkit.",
+      "website": "https://www.netviews.app/",
+      "docs": "https://www.netviews.app/about/"
+    },
+    {
+      "name": "Oscium",
+      "summary": "Makes portable RF and spectrum diagnostic hardware and the software that drives it, carrying the MetaGeek lineage of spectrum tools. Wi-Spy Lucid is a triband spectrum analyzer covering roughly 2.2 to 7.25 GHz, Nomad is a wearable multi-radio measurement and capture device, Chanalyzer turns spectrum data into clear graphs and locates interference, and inSSIDer is a long-running Wi-Fi scanner.",
+      "website": "https://www.oscium.com/",
+      "docs": "https://support.oscium.com/hc/en-us"
+    },
+    {
+      "name": "Sidos",
+      "summary": "A newer entrant offering an integrated Wi-Fi survey and troubleshooting system. The Sidos Wave is a touchscreen multi-band survey instrument supporting 2.4/5/6 GHz, paired with Sidos Cloud for survey data, simulation, and reporting, plus a mobile app and on-device micro-apps that run guided tasks directly on the Wave. The license model shares the hardware and cloud across users.",
+      "website": "https://www.sidos.com/",
+      "docs": "https://help.sidos.com/"
+    },
+    {
+      "name": "WLAN Pi",
+      "summary": "An open-hardware Wi-Fi probe and toolkit used widely in the community. The WLAN Pi M4+ carries an internal Wi-Fi 7 NIC, the R4 takes an external Wi-Fi 6E NIC, and the Go is a portable model. It is a flexible capture and analysis platform that frequently pairs with other vendors' software in cross-vendor toolkits.",
+      "website": "https://www.wlanpi.com/",
+      "docs": "https://docs.wlanpi.com/"
+    }
+  ]
+}

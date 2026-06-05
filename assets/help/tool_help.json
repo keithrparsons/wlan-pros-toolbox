@@ -2433,6 +2433,31 @@
         "The point-to-point note is one line by design: a link needs real Fresnel-zone clearance around the straight line between antennas, not just a visible path. Use the Fresnel and Point-to-Point tools to size that clearance."
       ],
       "source": "Penn teaching copy (SOP-020 PASS, 2026-06-05), from Pax's research brief; diagrams by Charta. Rendered verbatim in antenna_fundamentals_screen.dart."
+    },
+    "wifi-tools-comparison": {
+      "name": "Wi-Fi Tools Comparison",
+      "category": "Quick Reference",
+      "purpose": "A vendor-neutral, offline reference that compares professional Wi-Fi survey, design, spectrum-analysis, and troubleshooting toolkits, grouped by the activity each one serves. Each config lists its vendor, product, license model, up-front cost, and 3-year total cost of ownership, with a neutral note on what the bundle does and does not include. A per-vendor summary and a typical-toolkit roll-up ride alongside.",
+      "whyHere": "There is no neutral, capability-level map of the professional Wi-Fi tooling landscape. This is that map, built from Keith's vendor-interviewed workbook, so a leveling-up engineer can see the four activities and which tools serve which job without a vendor sales pitch.",
+      "howToUse": [
+        "Browse by activity: Design, Validation, Spectrum Analysis, then Troubleshooting. Within each activity, configs are listed alphabetically by vendor.",
+        "Search by vendor (e.g. Ekahau), product, activity (e.g. spectrum), capability (e.g. survey), or license model (e.g. perpetual). The match is a case-insensitive substring and narrows the activities in place.",
+        "Read the up-front and 3-year TCO figures as planning estimates, not quotes. Use the vendor Website and Docs links to confirm current pricing and product details before you buy.",
+        "A query that matches nothing shows an honest \"No match\" card; it never fabricates a tool. The typical-toolkit roll-up and the per-vendor summaries are always available below the activities."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "This comparison is in BETA REVIEW. Vendors are being consulted on the figures, and a few may change before the final release.",
+        "Pricing is dated. The figures are as of February 2026; confirm current pricing with each vendor, because prices, bundles, and product names change often.",
+        "Cost figures are MODELED ESTIMATES assembled by WLAN Pros from vendor-supplied numbers and list pricing, not vendor-published quotes. Treat every dollar amount as a planning estimate, never a binding price.",
+        "This is NOT a ranking. There is no score and no \"best\". Tools are listed alphabetically and the same vendor can appear under more than one activity, because real toolkits are assembled across vendors. The set reflects vendors interviewed by WLAN Pros, not every tool that exists, so an omitted tool is not a snub.",
+        "No vendor logos or product photos appear here. Those are trademarks and copyrighted images that need each vendor's written permission, which is still being gathered. The reference is text and data only for now.",
+        "Fully offline: the comparison is a bundled asset (assets/data/wifi_tools_comparison.json) parsed once at screen open; malformed rows are skipped, not rendered as blanks. To add or correct an entry, edit that file.",
+        "Source: the Wi-Fi Design, Validation, Spectrum Analysis & Troubleshooting Tools V6 workbook (Keith Parsons, vendor-interviewed, last revised 2026-02-16), with neutral writeups from the Pax research brief, 2026-06-05."
+      ],
+      "source": "lib/screens/tools/reference/wifi_tools_comparison_screen.dart"
     }
   }
 }

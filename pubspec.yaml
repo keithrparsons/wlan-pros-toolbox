@@ -369,6 +369,15 @@ flutter:
     # and a verbatim loss-budget caveat; lead tiers (10G/25G/100G) carry
     # lead:true. Source/provenance in the asset's _meta block (Pax brief 2026-06-05).
     - assets/data/optical_transceivers.json
+    # Wi-Fi Tools Comparison Quick Reference tool (v1.1 beta). Bundled JSON,
+    # loaded + parsed once at screen open, fully offline. A vendor-neutral
+    # capability-and-cost comparison of professional Wi-Fi survey/design/spectrum/
+    # troubleshooting toolkits grouped by activity. TCO + up-front figures are
+    # MODELED ESTIMATES carried with a date-stamp + modeled-estimate + beta-review
+    # disclaimer in the asset _meta. No vendor logos or product photos (trademarks/
+    # copyright, permission pending). Source/provenance in _meta (V6 workbook +
+    # Pax brief 2026-06-05). Tamosoft intentionally excluded (Keith 2026-06-05).
+    - assets/data/wifi_tools_comparison.json
     # Per-tool Tier-2 custom icons (GL-003 §8.6 / §8.6.1) and in-tool concept
     # graphics (GL-003 §8.6.2). Convention-based lookup by catalog id:
     #   icon    = assets/tool-icons/<tool-id>.svg
