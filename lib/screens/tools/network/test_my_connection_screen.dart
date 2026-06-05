@@ -947,15 +947,19 @@ class _AxisRow extends StatelessWidget {
 /// A single status chip: icon + WORD + §8.13/§8.20.4 color. The WORD always
 /// carries meaning (WCAG 2.2 SC 1.4.1).
 ///
-/// LIGHT (§8.20.4) renders the FILLED-PILL design — tinted fill + 2px colored
-/// border + 700 colored label + matching glyph, three reinforcing layers of one
-/// hue. DARK keeps the §8.13 outline chip (surface2 fill + thin colored border).
+/// LIGHT (§8.20.4 Style A) renders the SOLID-FILL pill — the full-strength
+/// status hue as a solid fill carrying a WHITE 700 label and a WHITE Material
+/// status glyph (white-on-fill 5.4–5.9:1). DARK keeps the §8.13 outline chip
+/// (surface2 fill + thin colored border + colored label/glyph). The "couldn't
+/// check" neutral state has no status hue, so light fills it with the neutral
+/// textTertiary #646464 (white-on-fill ~4.7:1) for the same solid + white look.
 class _StatusChip extends StatelessWidget {
   const _StatusChip({required this.status});
 
   final AxisStatus status;
 
-  /// The full-strength status color (label + border + glyph), theme-aware.
+  /// The full-strength status hue, theme-aware. In dark this colors the label,
+  /// glyph and border; in light it is the §8.20.4 solid pill fill.
   Color _color(AppColorScheme colors) {
     switch (status) {
       case AxisStatus.fine:
@@ -967,27 +971,17 @@ class _StatusChip extends StatelessWidget {
     }
   }
 
-  /// The §8.20.4 12%-on-white tint fill in light; the dark chip surface in dark.
-  Color _fill(AppColorScheme colors) {
-    if (!colors.isLight) return colors.surface2;
+  /// The Material status glyph. Light uses the FILLED variant (a solid white
+  /// knockout on the solid pill, §8.20.4); dark keeps the original OUTLINED
+  /// variant so the dark render is byte-identical.
+  IconData _icon(bool light) {
     switch (status) {
       case AxisStatus.fine:
-        return colors.statusSuccessFill;
+        return light ? Icons.check_circle : Icons.check_circle_outline;
       case AxisStatus.slow:
-        return colors.statusWarningFill;
+        return light ? Icons.warning_amber : Icons.warning_amber_outlined;
       case AxisStatus.unknown:
-        return colors.surface0; // neutral "couldn't check" reads as recessed
-    }
-  }
-
-  IconData get _icon {
-    switch (status) {
-      case AxisStatus.fine:
-        return Icons.check_circle_outline;
-      case AxisStatus.slow:
-        return Icons.warning_amber_outlined;
-      case AxisStatus.unknown:
-        return Icons.remove_circle_outline;
+        return light ? Icons.remove_circle : Icons.remove_circle_outline;
     }
   }
 
@@ -995,14 +989,20 @@ class _StatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
     final AppColorScheme colors = context.colors;
-    final Color color = _color(colors);
-    // §8.20.4 — 2px border in light (filled pill); thin 1px in dark.
-    final double borderW = colors.isLight ? 2 : 1;
+    final Color hue = _color(colors);
+
+    // §8.20.4 Style A (light): solid hue fill, white label + white glyph, no
+    // border. §8.13 (dark): surface2 fill, thin colored border, colored content.
+    final Color fill = colors.isLight ? hue : colors.surface2;
+    final Color content = colors.isLight ? const Color(0xFFFFFFFF) : hue;
+    final BoxBorder? border =
+        colors.isLight ? null : Border.all(color: hue, width: 1);
+
     return Container(
       decoration: BoxDecoration(
-        color: _fill(colors),
+        color: fill,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: color, width: borderW),
+        border: border,
       ),
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.xs,
@@ -1011,12 +1011,12 @@ class _StatusChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(_icon, size: 18, color: color),
+          Icon(_icon(colors.isLight), size: 18, color: content),
           const SizedBox(width: AppSpacing.xxs),
           Text(
             _TwoAxisChips.word(status),
             style: text.labelLarge?.copyWith(
-              color: color,
+              color: content,
               fontWeight: FontWeight.w700, // §8.20.4 / §8.20.3-A verdict word
             ),
           ),
@@ -2068,21 +2068,24 @@ class _GradeChip extends StatelessWidget {
 
   final QualityGrade grade;
 
-  /// DARK (§8.13): solid status fill + dark text. LIGHT (§8.20.4): filled-pill —
-  /// the 12%-on-white tint fill + 2px colored border + status-colored 700 label.
-  /// Returns (fill, border, label) per theme.
+  /// DARK (§8.13): solid status fill + dark text. LIGHT (§8.20.4 Style A): the
+  /// SOLID full-strength status hue fill + WHITE 700 label + WHITE glyph, no
+  /// border. Returns (fill, border, label) per theme. The "unavailable" grade
+  /// has no status hue, so it stays neutral in both themes.
   static (Color, Color?, Color) _colors(AppColorScheme c, QualityGrade grade) {
     if (c.isLight) {
+      const Color white = Color(0xFFFFFFFF);
       switch (grade) {
         case QualityGrade.excellent:
         case QualityGrade.good:
-          return (c.statusSuccessFill, c.statusSuccess, c.statusSuccess);
+          return (c.statusSuccess, null, white);
         case QualityGrade.fair:
-          return (c.statusWarningFill, c.statusWarning, c.statusWarning);
+          return (c.statusWarning, null, white);
         case QualityGrade.poor:
-          return (c.statusDangerFill, c.statusDanger, c.statusDanger);
+          return (c.statusDanger, null, white);
         case QualityGrade.unavailable:
-          return (c.surface0, c.borderStrong, c.textSecondary);
+          // Neutral solid fill (textSecondary #4A4A4A, white-on-fill 9.0:1).
+          return (c.textSecondary, null, white);
       }
     }
     switch (grade) {
@@ -2127,21 +2130,21 @@ class _GradeChip extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: bg,
-        // §8.20.4 — light filled-pill takes a 2px colored border; dark keeps the
-        // borderless solid fill (only "unavailable" carries a 1px boundary).
+        // §8.20.4 Style A — light is a borderless solid-fill PILL; dark keeps its
+        // control-radius solid fill (only dark "unavailable" carries a 1px
+        // boundary off borderColor).
         borderRadius: BorderRadius.circular(
           colors.isLight ? AppRadius.pill : AppRadius.control,
         ),
-        border: borderColor == null
-            ? null
-            : Border.all(color: borderColor, width: colors.isLight ? 2 : 1),
+        border:
+            borderColor == null ? null : Border.all(color: borderColor, width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          // §8.20.4 — the filled-pill light chip carries a 16px Material status
-          // glyph in the border/label color, so the verdict is reinforced by
-          // shape + word, not color alone. Dark keeps its solid-fill chip as-is.
+          // §8.20.4 Style A — the solid-fill light pill carries a 16px WHITE
+          // Material status glyph, so the verdict is reinforced by shape + word,
+          // not color alone. Dark keeps its solid-fill chip with no glyph.
           if (colors.isLight) ...<Widget>[
             Icon(_glyph(grade), size: 16, color: fg),
             const SizedBox(width: AppSpacing.xxs),

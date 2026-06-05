@@ -837,31 +837,27 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
 
-    // §8.20.4 — light renders a FILLED PILL: tinted fill + 2px colored border +
-    // 700 colored label + status glyph (three reinforcing layers of one hue).
-    // Dark keeps its solid-fill chip with dark text.
+    // §8.20.4 Style A — light renders a SOLID-FILL PILL: the full-strength
+    // status hue fill carrying a WHITE 700 label + WHITE Material glyph, no
+    // border (white-on-fill 5.4–5.9:1). Dark keeps its solid-fill chip with
+    // dark text.
     if (colors.isLight) {
-      final (Color status, Color fill, IconData? glyph) =
-          _lightGradeParts(grade, colors);
-      final bool isUnavailable = grade == QualityGrade.unavailable;
+      const Color white = Color(0xFFFFFFFF);
+      final (Color fill, IconData? glyph) = _lightGradeParts(grade, colors);
       return Container(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.xs,
           vertical: 4,
         ),
         decoration: BoxDecoration(
-          color: isUnavailable ? colors.surface1 : fill,
+          color: fill,
           borderRadius: BorderRadius.circular(AppRadius.pill),
-          border: Border.all(
-            color: isUnavailable ? colors.borderStrong : status,
-            width: 2,
-          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             if (glyph != null) ...<Widget>[
-              Icon(glyph, size: 16, color: status),
+              Icon(glyph, size: 16, color: white),
               const SizedBox(width: AppSpacing.xxs),
             ],
             Flexible(
@@ -870,7 +866,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: text.labelSmall?.copyWith(
-                  color: isUnavailable ? colors.textSecondary : status,
+                  color: white,
                   fontWeight: FontWeight.w700, // §8.20.3-A verdict words
                 ),
               ),
@@ -907,20 +903,22 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     );
   }
 
-  /// §8.20.4 light filled-pill parts: full-strength status color, 12%-on-white
-  /// tint fill, and the matching Material status glyph.
-  static (Color status, Color fill, IconData? glyph) _lightGradeParts(
+  /// §8.20.4 Style A light parts: the SOLID full-strength status hue fill and
+  /// its matching Material status glyph. Label + glyph render in WHITE on the
+  /// fill. Unavailable has no status hue, so it fills with neutral textSecondary.
+  static (Color fill, IconData? glyph) _lightGradeParts(
       QualityGrade grade, AppColorScheme c) {
     switch (grade) {
       case QualityGrade.excellent:
       case QualityGrade.good:
-        return (c.statusSuccess, c.statusSuccessFill, Icons.check_circle);
+        return (c.statusSuccess, Icons.check_circle);
       case QualityGrade.fair:
-        return (c.statusWarning, c.statusWarningFill, Icons.warning_amber);
+        return (c.statusWarning, Icons.warning_amber);
       case QualityGrade.poor:
-        return (c.statusDanger, c.statusDangerFill, Icons.error);
+        return (c.statusDanger, Icons.error);
       case QualityGrade.unavailable:
-        return (c.textTertiary, c.surface1, null);
+        // Neutral solid fill (textSecondary #4A4A4A, white-on-fill 9.0:1).
+        return (c.textSecondary, Icons.info);
     }
   }
 
