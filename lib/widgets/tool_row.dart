@@ -305,9 +305,14 @@ class _ToolRowState extends State<ToolRow> {
   }
 }
 
-/// The leading 40×40 surface-2 tile holding the tool's Tier-2 SVG icon (lime,
-/// §8.6.1), the lock for non-live rows, or the Icons.bolt fallback when no SVG
-/// is bundled for this id.
+/// The leading 40×40 tile holding the tool's Tier-2 SVG icon, the lock for
+/// non-live rows, or the Icons.bolt fallback when no SVG is bundled for this id.
+///
+/// DARK (§8.6.1): a surface-2 tile holding a lime (#A1CC3A) glyph — unchanged.
+/// LIGHT (§8.20.3-C item 1, the headline pop change): a vivid lime #A1CC3A
+/// filled chip at card radius (12px) with the glyph knocked out in charcoal
+/// #30302F (`onPrimary`), 7.05:1. Replaces the prior dull-olive #5A7A1C line
+/// icon on light. Non-live rows keep the neutral lock treatment in both themes.
 class _LeadingIcon extends StatelessWidget {
   const _LeadingIcon({required this.tool, required this.live});
 
@@ -317,17 +322,28 @@ class _LeadingIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
-    // §8.20.3-C item 4: tool-list icons are a FOREGROUND lime tint, so light
-    // substitutes darkened-lime textAccent (#5A7A1C, 4.8:1) — never thin brand
-    // lime on a light surface (§8.20.2). Dark keeps brand lime.
-    final Color iconTint = colors.textAccent;
+    final bool light = colors.isLight;
+
+    // LIGHT live row → lime knockout chip (vivid lime fill + charcoal glyph).
+    // DARK (or non-live) → the original surface-2 tile + foreground tint, byte
+    // for byte unchanged.
+    final Color tileFill =
+        (light && live) ? colors.primary : colors.surface2;
+    final double tileRadius =
+        (light && live) ? AppRadius.card : AppRadius.control;
+    // Glyph tint: charcoal #30302F knocked out of the lime chip on light;
+    // brand-lime #A1CC3A foreground on the dark surface-2 tile (textAccent
+    // resolves to lime in dark, darkened-lime in light — but on light the live
+    // glyph rides the lime fill as onPrimary, so it never uses the olive).
+    final Color iconTint = (light && live) ? colors.onPrimary : colors.textAccent;
+
     return Container(
       width: 40,
       height: 40,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: colors.surface2,
-        borderRadius: BorderRadius.circular(AppRadius.control),
+        color: tileFill,
+        borderRadius: BorderRadius.circular(tileRadius),
       ),
       child: !live
           ? Icon(

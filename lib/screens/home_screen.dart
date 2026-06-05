@@ -85,7 +85,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? AppSpacing.screenEdgeDesktop
                 : AppSpacing.screenEdgeMobile;
             final int crossAxisCount = _crossAxisCountFor(width);
-            final double tileHeight = _tileHeightFor(width);
+            final double tileHeight =
+                _tileHeightFor(width, light: context.colors.isLight);
 
             return CenteredContent(
               child: CustomScrollView(
@@ -240,8 +241,15 @@ class _HomeScreenState extends State<HomeScreen> {
   ///     xs(8) + 2-line examples (13×1.35×2 ≈ 35.1) + pad sm(16)+border(1) ≈ 168.
   ///     **172** clears it with margin and no RenderFlex overflow at 440–1440
   ///     (verified by the no-overflow gate). Still tighter than the old 180.
-  double _tileHeightFor(double width) =>
-      width < _singleColumnBreakpoint ? 144 : 172;
+  ///   * LIGHT (§8.20.3-C item 1): the category icon becomes a 40×40 lime
+  ///     knockout chip (vs the bare 28px glyph in dark), so the icon row grows
+  ///     by 12px. The tile budget gains the same 12px in light to preserve the
+  ///     same margin and keep the no-overflow gate green (144 → 156 phone,
+  ///     172 → 184 multi-column). Dark is unchanged.
+  double _tileHeightFor(double width, {required bool light}) {
+    final double base = width < _singleColumnBreakpoint ? 144 : 172;
+    return light ? base + 12 : base;
+  }
 }
 
 /// The home "Search all tools…" trigger (mockups 01/05). A tap target styled
@@ -421,36 +429,58 @@ class _ConnectionHeroCard extends StatelessWidget {
 
 /// The 28px home-grid category glyph. Renders the category's bespoke Tier-2 SVG
 /// (GL-003 §8.6.1, `currentColor`, runtime-tinted) when [ToolCategory.iconAsset]
-/// is set, and falls back to the Material [ToolCategory.icon] otherwise. The size
-/// (28, the §8.6 `--app-icon-grid` token) and the live/placeholder color logic
-/// (primary vs textTertiary) are identical across both paths, so the swap is a
-/// drop-in that does not disturb the IA-redesign tile layout.
+/// is set, and falls back to the Material [ToolCategory.icon] otherwise.
+///
+/// DARK (§8.6.1): a 28px lime (#A1CC3A) glyph sitting bare on the tile — the
+/// original treatment, unchanged.
+/// LIGHT (§8.20.3-C item 1, the headline pop change): a 40×40 vivid lime
+/// #A1CC3A filled chip at card radius (12px) with the 28px glyph knocked out in
+/// charcoal #30302F (`onPrimary`), 7.05:1. Replaces the prior dull-olive #5A7A1C
+/// bare line glyph on light. Placeholder categories keep the neutral tertiary
+/// glyph (no lime chip) in both themes.
 class _CategoryIcon extends StatelessWidget {
   const _CategoryIcon({required this.category, required this.isPlaceholder});
 
   final ToolCategory category;
   final bool isPlaceholder;
 
+  /// §8.20.3-C item 1: category-tile knockout chip ≈40×40, card radius (12px).
+  static const double _chipSize = 40;
+
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
-    // §8.20.3-C #4 — live tile icons carry color: brand lime in dark, the
-    // darkened-lime foreground substitute #5A7A1C in light (4.8:1 on white;
-    // brand lime fails as a thin foreground). Placeholders stay tertiary gray.
-    final Color color = isPlaceholder ? colors.textTertiary : colors.textAccent;
+    final bool limeChip = colors.isLight && !isPlaceholder;
+    // Glyph tint: charcoal #30302F (onPrimary) knocked out of the lime chip on
+    // light; otherwise the original foreground tint (brand lime on the dark
+    // tile via textAccent, or tertiary gray for a placeholder in either theme).
+    final Color color =
+        limeChip ? colors.onPrimary : (isPlaceholder ? colors.textTertiary : colors.textAccent);
+
     final String? asset = category.iconAsset;
-    if (asset != null) {
-      return SvgPicture.asset(
-        asset,
-        width: 28,
-        height: 28,
-        colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
-        // Decorative: the tile's Semantics already announces the category.
-        excludeFromSemantics: true,
-        placeholderBuilder: (_) => const SizedBox(width: 28, height: 28),
-      );
-    }
-    return Icon(category.icon, size: 28, color: color);
+    final Widget glyph = asset != null
+        ? SvgPicture.asset(
+            asset,
+            width: 28,
+            height: 28,
+            colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+            // Decorative: the tile's Semantics already announces the category.
+            excludeFromSemantics: true,
+            placeholderBuilder: (_) => const SizedBox(width: 28, height: 28),
+          )
+        : Icon(category.icon, size: 28, color: color);
+
+    if (!limeChip) return glyph;
+    return Container(
+      width: _chipSize,
+      height: _chipSize,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: colors.primary, // vivid brand lime #A1CC3A FILL
+        borderRadius: BorderRadius.circular(AppRadius.card),
+      ),
+      child: glyph,
+    );
   }
 }
 
