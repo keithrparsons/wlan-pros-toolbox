@@ -378,15 +378,25 @@ class _AppearanceSection extends StatelessWidget {
 }
 
 /// GL-003 §8.21 — the WLAN Pros brand lockup ("wirelessLAN PROFESSIONALS" +
-/// the lime #A1CC3A Wi-Fi arc) on a white containment plate, centered at the top
-/// of the About column.
+/// the lime #A1CC3A Wi-Fi arc) on a containment plate, centered at the top of
+/// the About column.
 ///
-/// The charcoal wordmark would compute ~1.1:1 on the #1A1A1A canvas (effectively
-/// invisible — the §8.21 broken-brand failure), so the lockup sits on a white
-/// plate, the same §8.19 white-tile-on-dark pattern the app already uses for QR
-/// codes. The 24px plate padding IS the logo's protected clear-space; the asset
-/// is the transparent, tight-bbox-trimmed PNG, rendered at its native aspect
-/// ratio (never stretched or recolored).
+/// Theme-aware plate, mirroring the sibling [_Section] / [_AppearanceSection]
+/// cards in this file:
+///   - Dark mode: a bare white (#FFFFFF) plate with no border — the deliberate
+///     §8.21 light brand inset on the dark canvas (the §8.19 white-tile-on-dark
+///     pattern). The charcoal wordmark would compute ~1.1:1 on the #1A1A1A
+///     canvas (effectively invisible — the §8.21 broken-brand failure), so the
+///     white plate carries it.
+///   - Light mode: the plate switches to `surface1` + the §8.20.3-B 1.5px
+///     hairline border, so it reads as a normal white card consistent with the
+///     sibling section cards (the bare white-on-#F7F6F7 plate was invisible —
+///     Vera's MEDIUM finding). The charcoal wordmark reads fine on light
+///     surfaces, so no inset is needed.
+///
+/// The 24px plate padding IS the logo's protected clear-space; the asset is the
+/// transparent, tight-bbox-trimmed PNG, rendered at its native aspect ratio
+/// (never stretched or recolored).
 class _LogoHeader extends StatelessWidget {
   const _LogoHeader();
 
@@ -396,16 +406,29 @@ class _LogoHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final bool isLight = colors.isLight;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Align(
         child: Container(
-          // §8.21 plate: white fill, §8.11 card radius, §4 --space-md padding
-          // that doubles as the protected clear-space.
+          // §8.21 plate: §8.11 card radius, §4 --space-md padding that doubles
+          // as the protected clear-space. Fill + border are theme-aware:
+          //   - Light: surface1 + §8.20.3-B 1.5px hairline (a normal white card,
+          //     consistent with the sibling section cards).
+          //   - Dark: bare white (#FFFFFF) inset, no border (the §8.21 light
+          //     brand plate on the dark canvas).
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            color: AppColors.neutral0,
+            color: isLight ? colors.surface1 : AppColors.neutral0,
             borderRadius: BorderRadius.circular(AppRadius.card),
+            border: isLight
+                ? Border.all(
+                    color: colors.border,
+                    width: 1.5, // §8.20.3-B card border
+                  )
+                : null,
           ),
           child: Semantics(
             label: 'WLAN Pros — Wireless LAN Professionals',
