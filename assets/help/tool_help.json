@@ -2187,6 +2187,91 @@
         "To add or correct an entry, edit the asset file; PortReferenceService re-indexes it at load. Malformed rows are skipped, not rendered as blanks."
       ],
       "source": "lib/screens/tools/network/port_reference_screen.dart"
+    },
+    "unit-converter": {
+      "name": "Unit Converter",
+      "category": "Calculators & Tools",
+      "purpose": "Converts a value between units in one of eight categories: data transfer rate, data storage, length, power, metric prefix, speed, temperature, and time.",
+      "whyHere": "Field work mixes units constantly. A datasheet quotes throughput in Mbps, your test rig reports MB/s, an RF reading lands in dBm when you wanted milliwatts. Pick a category, pick the two units, read the answer.",
+      "howToUse": [
+        "Pick a category (data transfer rate, data storage, length, power, metric prefix, speed, temperature, or time).",
+        "Type a value, then pick the \"from\" unit and the \"to\" unit.",
+        "Read the converted result. It blanks until the value parses to a valid number."
+      ],
+      "inputs": [
+        {
+          "name": "Category",
+          "unit": "one of eight categories",
+          "range": ""
+        },
+        {
+          "name": "Value, from-unit, to-unit",
+          "unit": "the units offered in the chosen category",
+          "range": "signed and scientific input accepted (a temperature can be negative)"
+        }
+      ],
+      "algorithm": "Linear categories convert through a single base unit: value × factor(from) ÷ factor(to). Power and temperature are not linear and route through their own helpers. Power treats dBm with the same log math as the dBm/Watt converter (W = 10^(dBm/10)/1000; dBm = 10·log10(W·1000)); temperature is affine through Kelvin. (unit_conversion.dart)",
+      "example": "100 MB → 800 Mbit (storage, decimal). 100 °C → 212 °F (temperature). 1 W → 30 dBm (power).",
+      "fieldNotes": [
+        "Decimal and binary are kept separate. A KB is 1000 bytes; a KiB is 1024 bytes. The tool never conflates the two, so a storage answer reads true to the standard you picked.",
+        "Bits and bytes are different units, not a display toggle. 1 byte = 8 bits, and the converter treats them that way across both the storage and the rate categories.",
+        "Temperature and dBm are not simple multiply-by-a-factor conversions. They are handled with the correct affine and logarithmic math, so a negative temperature or a sub-milliwatt power reads correctly."
+      ],
+      "source": "unit_converter_screen.dart"
+    },
+    "qr-generator": {
+      "name": "QR Code Generator",
+      "category": "Calculators & Tools",
+      "purpose": "Turns any text or URL you type into a scannable QR code, then lets you share or save it as an image.",
+      "whyHere": "Handing off a config URL, a guest Wi-Fi link, or a site address without making someone type it. Generate the code on the spot and let them scan it with a phone camera.",
+      "howToUse": [
+        "Type the text or URL you want to encode.",
+        "The QR code renders live as you type.",
+        "Tap Share / Save to send the image through the system share sheet or save it."
+      ],
+      "inputs": [
+        {
+          "name": "Text or URL",
+          "unit": "any string",
+          "range": "empty input shows a prompt and renders no code"
+        }
+      ],
+      "algorithm": "The code is generated locally with no network call. It renders as dark modules on a white background with a 4-module quiet zone, which is what scanners expect. Share / Save captures that white tile to a PNG. (qr_generator_screen.dart)",
+      "example": "Type https://wlanpros.com and the matching QR code appears below the field, ready to scan or share.",
+      "fieldNotes": [
+        "Dark code on a white background, always. Inverted light-on-dark codes look on-brand but many scanners fail to read them, so the tool does not offer that option.",
+        "The white border around the code is the quiet zone, and it is part of the code. Do not crop it out when you share the image, or the QR may not scan.",
+        "Everything happens on the device. The text you encode never leaves the app except through the share sheet you trigger.",
+        "Encodes plain text and URLs. It is a generator, not a scanner, so it makes codes rather than reading them."
+      ],
+      "source": "qr_generator_screen.dart"
+    },
+    "dtmf-generator": {
+      "name": "DTMF Generator",
+      "category": "Calculators & Tools",
+      "purpose": "Plays the Touch-Tone keypad tones (0-9, *, #, and A-D) from a standard 4×4 DTMF grid, one tap at a time or as a continuous loop.",
+      "whyHere": "Driving a system that still listens for Touch-Tones over the air or down a line: an IVR menu, a repeater controller, a legacy PBX, or a piece of test gear. Hold the device near the microphone and play the digit.",
+      "howToUse": [
+        "Tap a key to play its tone for a short burst. The selected key and its two frequencies show at the top.",
+        "Tap Play to loop the selected key's tone continuously; tap Stop to end it.",
+        "Tapping a different key during a loop retargets the loop to the new key."
+      ],
+      "inputs": [
+        {
+          "name": "Keypad key",
+          "unit": "one of 1-9, 0, *, #, A-D",
+          "range": "defaults to the center key, 5"
+        }
+      ],
+      "algorithm": "Each DTMF key is the sum of two sine waves, one low-group frequency (the row) and one high-group frequency (the column), per ITU-T Q.23. Low group: 697, 770, 852, 941 Hz. High group: 1209, 1336, 1477, 1633 Hz. A single key tap plays the pair for about 200 ms. Synthesis is local; nothing is dialed or transmitted by the app itself. (dtmf.dart, dtmf_generator_screen.dart)",
+      "example": "Key 5 is 770 Hz + 1336 Hz. Key 1 is 697 Hz + 1209 Hz. The * key is 941 Hz + 1209 Hz.",
+      "fieldNotes": [
+        "Every key is two tones added together, which is what \"Dual-Tone Multi-Frequency\" means. That is why the readout shows two frequencies, not one.",
+        "The A, B, C, and D keys are real DTMF tones that never appeared on consumer phones. They show up in radio, military, and control systems, which is why the full 4×4 grid is here.",
+        "Tones come out of the device speaker. The app generates audio; it does not place a call or send anything down a phone line. To control remote gear, play the tone into that system's microphone or audio input.",
+        "Reliable detection depends on volume, the speaker, and the receiving system. Hold the device close and keep the level up if a stubborn IVR or controller misses a digit."
+      ],
+      "source": "dtmf_generator_screen.dart"
     }
   }
 }

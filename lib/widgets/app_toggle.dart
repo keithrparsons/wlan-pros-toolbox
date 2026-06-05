@@ -289,8 +289,8 @@ class _SegmentState extends State<_Segment> {
 
   // §8.3 hover / pressed washes (unselected segment only). rgba lime at 0.08 /
   // 0.16 per §8.14.1 states table.
-  static const Color _hoverWash = Color(0x14A2CC3A); // 0.08 alpha
-  static const Color _pressedWash = Color(0x29A2CC3A); // 0.16 alpha
+  static const Color _hoverWash = Color(0x14A1CC3A); // 0.08 alpha
+  static const Color _pressedWash = Color(0x29A1CC3A); // 0.16 alpha
 
   @override
   Widget build(BuildContext context) {

@@ -12,7 +12,7 @@ class AppColors {
   AppColors._();
 
   // §2 — brand palette.
-  static const Color primary = Color(0xFFA2CC3A); // Lime — only app accent.
+  static const Color primary = Color(0xFFA1CC3A); // Brand green — only app accent.
   static const Color secondary = Color(
     0xFF1A1A1A,
   ); // Charcoal (also surface-0).
