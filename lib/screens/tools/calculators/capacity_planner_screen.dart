@@ -31,6 +31,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -282,11 +283,12 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -358,6 +360,7 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
     required String hintText,
     required TextStyle monoStyle,
   }) {
+    final AppColorScheme colors = context.colors;
     return LabeledField(
       label: label,
       hint: '($unitHint)',
@@ -372,20 +375,21 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
         autocorrect: false,
         enableSuggestions: false,
         style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
-        cursorColor: AppColors.primary,
+        cursorColor: colors.textAccent,
         decoration: InputDecoration(hintText: hintText),
       ),
     );
   }
 
   Widget _resultsCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     final CapacityResult? r = _result;
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -395,7 +399,7 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
           Text(
             'Recommended access points',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -414,15 +418,15 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
                   r == null ? '—' : r.recommended.toString(),
                   style: mono.outputXL.copyWith(
                     color: r == null
-                        ? AppColors.textTertiary
-                        : AppColors.primary,
+                        ? colors.textTertiary
+                        : colors.textAccent,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xxs),
                 Text(
                   'APs',
                   style: text.labelLarge?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: colors.textSecondary,
                   ),
                 ),
               ],
@@ -456,6 +460,7 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
   }
 
   Widget _outputRow(AppMonoText mono, String label, String value) {
+    final AppColorScheme colors = context.colors;
     // One SR node per supporting row: "Concurrent users: 120" (or "not
     // calculated"), instead of label and value fragments (Vera finding #6).
     return Semantics(
@@ -470,7 +475,7 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
             Expanded(
               child: Text(
                 label,
-                style: mono.inlineCode.copyWith(color: AppColors.textSecondary),
+                style: mono.inlineCode.copyWith(color: colors.textSecondary),
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
@@ -478,8 +483,8 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
               value,
               style: mono.inlineCode.copyWith(
                 color: value == '—'
-                    ? AppColors.textTertiary
-                    : AppColors.textPrimary,
+                    ? colors.textTertiary
+                    : colors.textPrimary,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -496,11 +501,12 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
   }
 
   Widget _formulaCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -509,7 +515,7 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
           Text(
             'Formula',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -520,13 +526,13 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
             'usable/AP = AP max · util%/100\n'
             'APs = ⌈demand / usable⌉, density = ⌈concurrent / max-clients⌉\n'
             'recommended = max(throughput, density, 1)',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Capacity-first model. AP counts round up. Max clients per AP is '
             'optional and only adds the density floor when set.',
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -534,6 +540,7 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
   }
 
   Widget _referenceCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     // Typical planning anchors so a field tech can sanity-check inputs.
     final List<List<String>> refs = const [
       ['Concurrent', 'office', '60–80%'],
@@ -545,9 +552,9 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -556,7 +563,7 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
           Text(
             'Planning anchors',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -573,7 +580,7 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
                     child: Text(
                       row[0],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
@@ -582,7 +589,7 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
                     child: Text(
                       row[1],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
@@ -590,7 +597,7 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
                     child: Text(
                       row[2],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.primary,
+                        color: colors.textAccent,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

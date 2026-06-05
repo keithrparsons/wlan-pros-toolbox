@@ -32,6 +32,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -292,11 +293,12 @@ class _FresnelScreenState extends State<FresnelScreen> {
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -340,14 +342,15 @@ class _FresnelScreenState extends State<FresnelScreen> {
   }
 
   Widget _resultCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     final FresnelResult? r = _result;
     final bool hasPoint = r?.radiusAtPoint != null;
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -356,7 +359,7 @@ class _FresnelScreenState extends State<FresnelScreen> {
           Text(
             'At midpoint',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -378,7 +381,7 @@ class _FresnelScreenState extends State<FresnelScreen> {
             Text(
               'At entered point',
               style: text.labelMedium?.copyWith(
-                color: AppColors.textSecondary,
+                color: colors.textSecondary,
                 letterSpacing: 0.4,
               ),
             ),
@@ -407,6 +410,7 @@ class _FresnelScreenState extends State<FresnelScreen> {
     required String label,
     required double? meters,
   }) {
+    final AppColorScheme colors = context.colors;
     // One SR node per row: "First zone radius: 4.5 m, 14.8 ft" (or "not
     // calculated"), instead of label/value/unit fragments (Vera finding #6).
     final bool blank = meters == null || !meters.isFinite;
@@ -424,7 +428,7 @@ class _FresnelScreenState extends State<FresnelScreen> {
             Expanded(
               child: Text(
                 label,
-                style: text.labelLarge?.copyWith(color: AppColors.textPrimary),
+                style: text.labelLarge?.copyWith(color: colors.textPrimary),
               ),
             ),
             Column(
@@ -433,13 +437,13 @@ class _FresnelScreenState extends State<FresnelScreen> {
                 Text(
                   '${_fmtMeters(meters)} m',
                   style: mono.outputMedium.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                   ),
                 ),
                 Text(
                   '${_fmtFeet(meters)} ft',
                   style: mono.inlineCode.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
               ],
@@ -451,11 +455,12 @@ class _FresnelScreenState extends State<FresnelScreen> {
   }
 
   Widget _formulaCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -464,22 +469,22 @@ class _FresnelScreenState extends State<FresnelScreen> {
           Text(
             'Formula',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
             'λ = 0.3 / f(GHz)',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
             'r = √(λ · d₁ · d₂ / (d₁ + d₂))',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
             'clearance = 0.6 · r',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
         ],
       ),
@@ -487,6 +492,7 @@ class _FresnelScreenState extends State<FresnelScreen> {
   }
 
   Widget _referenceCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     // Compact anchor values: first-zone midpoint radius for common Wi-Fi
     // point-to-point bands over a 1 km path, computed from this screen's math.
     // Gives a quick sanity feel for the live result.
@@ -499,9 +505,9 @@ class _FresnelScreenState extends State<FresnelScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -510,7 +516,7 @@ class _FresnelScreenState extends State<FresnelScreen> {
           Text(
             'Reference points',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -526,7 +532,7 @@ class _FresnelScreenState extends State<FresnelScreen> {
                     child: Text(
                       row[0],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.primary,
+                        color: colors.textAccent,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -536,7 +542,7 @@ class _FresnelScreenState extends State<FresnelScreen> {
                     child: Text(
                       row[1],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
@@ -544,7 +550,7 @@ class _FresnelScreenState extends State<FresnelScreen> {
                     child: Text(
                       row[2],
                       style: text.labelMedium?.copyWith(
-                        color: AppColors.textTertiary,
+                        color: colors.textTertiary,
                       ),
                     ),
                   ),
@@ -583,6 +589,7 @@ class _InputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return LabeledField(
       label: label,
       hint: '($unitHint)',
@@ -597,7 +604,7 @@ class _InputField extends StatelessWidget {
         autocorrect: false,
         enableSuggestions: false,
         style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
-        cursorColor: AppColors.primary,
+        cursorColor: colors.textAccent,
         decoration: InputDecoration(hintText: hintText),
       ),
     );

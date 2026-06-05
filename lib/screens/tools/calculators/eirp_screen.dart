@@ -21,6 +21,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -255,11 +256,12 @@ class _EirpScreenState extends State<EirpScreen> {
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -290,7 +292,7 @@ class _EirpScreenState extends State<EirpScreen> {
                 style: mono.outputLarge.copyWith(
                   fontSize: AppTextSize.fieldNumeric,
                 ),
-                cursorColor: AppColors.primary,
+                cursorColor: colors.textAccent,
                 decoration: const InputDecoration(hintText: '20'),
               ),
               unit: _unitSelector(),
@@ -348,15 +350,16 @@ class _EirpScreenState extends State<EirpScreen> {
   }
 
   Widget _resultCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     final bool hasResult = _eirpDbm != null;
     final String dbmText = hasResult ? _formatDbm(_eirpDbm!) : '—';
     final String powerText = hasResult ? _formatPower(_eirpDbm!) : '—';
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       // One SR node for the readout: "EIRP: 36.0 dBm, 4.0 W" (or "not
@@ -372,7 +375,7 @@ class _EirpScreenState extends State<EirpScreen> {
             Text(
               'EIRP',
               style: text.labelMedium?.copyWith(
-                color: AppColors.textSecondary,
+                color: colors.textSecondary,
                 letterSpacing: 0.4,
               ),
             ),
@@ -387,8 +390,8 @@ class _EirpScreenState extends State<EirpScreen> {
                   dbmText,
                   style: mono.outputXL.copyWith(
                     color: hasResult
-                        ? AppColors.primary
-                        : AppColors.textTertiary,
+                        ? colors.textAccent
+                        : colors.textTertiary,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xs),
@@ -397,7 +400,7 @@ class _EirpScreenState extends State<EirpScreen> {
                   child: Text(
                     'dBm',
                     style: text.labelLarge?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: colors.textSecondary,
                     ),
                   ),
                 ),
@@ -408,8 +411,8 @@ class _EirpScreenState extends State<EirpScreen> {
               powerText,
               style: mono.outputMedium.copyWith(
                 color: hasResult
-                    ? AppColors.textSecondary
-                    : AppColors.textTertiary,
+                    ? colors.textSecondary
+                    : colors.textTertiary,
               ),
             ),
           ],
@@ -419,11 +422,12 @@ class _EirpScreenState extends State<EirpScreen> {
   }
 
   Widget _formulaCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -432,18 +436,18 @@ class _EirpScreenState extends State<EirpScreen> {
           Text(
             'Formula',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
             'EIRP = TX power − cable loss + antenna gain',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
             'dBm  = dBm − dB + dBi',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
         ],
       ),
@@ -451,6 +455,7 @@ class _EirpScreenState extends State<EirpScreen> {
   }
 
   Widget _referenceCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     // Compact regulatory EIRP ceilings, common Wi-Fi planning anchors. Figures
     // are widely-cited band maxima for point-to-multipoint client access; exact
     // limits vary by sub-band, channel width, and power-control rules. ASCII
@@ -465,9 +470,9 @@ class _EirpScreenState extends State<EirpScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -476,7 +481,7 @@ class _EirpScreenState extends State<EirpScreen> {
           Text(
             'Regulatory EIRP limits',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -494,7 +499,7 @@ class _EirpScreenState extends State<EirpScreen> {
                     child: Text(
                       row[0],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
@@ -503,7 +508,7 @@ class _EirpScreenState extends State<EirpScreen> {
                     child: Text(
                       row[1],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.primary,
+                        color: colors.textAccent,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -512,7 +517,7 @@ class _EirpScreenState extends State<EirpScreen> {
                     child: Text(
                       row[2],
                       style: text.labelMedium?.copyWith(
-                        color: AppColors.textTertiary,
+                        color: colors.textTertiary,
                       ),
                     ),
                   ),
@@ -553,6 +558,7 @@ class _ConverterField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return LabeledField(
       label: label,
       hint: '($unitHint)',
@@ -567,7 +573,7 @@ class _ConverterField extends StatelessWidget {
         autocorrect: false,
         enableSuggestions: false,
         style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
-        cursorColor: AppColors.primary,
+        cursorColor: colors.textAccent,
         decoration: InputDecoration(hintText: hint),
       ),
     );

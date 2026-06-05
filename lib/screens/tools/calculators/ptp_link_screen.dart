@@ -57,6 +57,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -510,11 +511,12 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -648,6 +650,7 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
     required TextStyle monoStyle,
     bool signed = false,
   }) {
+    final AppColorScheme colors = context.colors;
     return TextField(
       controller: controller,
       focusNode: focusNode,
@@ -661,7 +664,7 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
       autocorrect: false,
       enableSuggestions: false,
       style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
-      cursorColor: AppColors.primary,
+      cursorColor: colors.textAccent,
       decoration: InputDecoration(hintText: hintText),
     );
   }
@@ -694,13 +697,14 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
   }
 
   Widget _polRow(TextTheme text) {
+    final AppColorScheme colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Polarization',
           style: text.labelMedium?.copyWith(
-            color: AppColors.textSecondary,
+            color: colors.textSecondary,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -723,7 +727,7 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
         const SizedBox(height: AppSpacing.xs),
         Text(
           'Only applied when rain rate is above 0.',
-          style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+          style: text.labelSmall?.copyWith(color: colors.textTertiary),
         ),
       ],
     );
@@ -732,13 +736,14 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
   // ─── Result + verdict ───────────────────────────────────────────────────────
 
   Widget _resultCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     final PtpResult? r = _result;
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -783,6 +788,7 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
   }
 
   Widget _verdictBlock(TextTheme text, AppMonoText mono, PtpResult? r) {
+    final AppColorScheme colors = context.colors;
     // No valid input yet → neutral placeholder, no status color.
     if (r == null) {
       return Column(
@@ -791,7 +797,7 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
           Text(
             'Link margin',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -808,13 +814,13 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
               children: [
                 SelectableText(
                   '—',
-                  style: mono.outputXL.copyWith(color: AppColors.textTertiary),
+                  style: mono.outputXL.copyWith(color: colors.textTertiary),
                 ),
                 const SizedBox(width: AppSpacing.xxs),
                 Text(
                   'dB',
                   style: text.labelLarge?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: colors.textSecondary,
                   ),
                 ),
               ],
@@ -823,7 +829,7 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Enter the required fields to check the link.',
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
         ],
       );
@@ -838,18 +844,18 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
     final String detail;
     switch (verdict) {
       case PtpVerdict.pass:
-        statusColor = AppColors.statusSuccess;
+        statusColor = colors.statusSuccess;
         word = 'PASS';
         detail = '${_fmt(r.margin, 1)} dB margin';
         break;
       case PtpVerdict.marginal:
-        statusColor = AppColors.statusWarning;
+        statusColor = colors.statusWarning;
         word = 'MARGINAL';
         detail =
             '${_fmt(r.margin, 1)} dB, below the ${_fmt(_reqMarginUsed, 0)} dB required';
         break;
       case PtpVerdict.fail:
-        statusColor = AppColors.statusDanger;
+        statusColor = colors.statusDanger;
         word = 'FAIL';
         detail = '${_fmt(r.margin.abs(), 1)} dB short';
         break;
@@ -861,7 +867,7 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
         Text(
           'Link margin',
           style: text.labelMedium?.copyWith(
-            color: AppColors.textSecondary,
+            color: colors.textSecondary,
             letterSpacing: 0.4,
           ),
         ),
@@ -886,7 +892,7 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
               Text(
                 'dB',
                 style: text.labelLarge?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ],
@@ -922,7 +928,7 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
                 child: Text(
                   detail,
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: colors.textSecondary,
                   ),
                 ),
               ),
@@ -940,6 +946,7 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
     required String value,
     required String unit,
   }) {
+    final AppColorScheme colors = context.colors;
     // One SR node per row: "EIRP: 36.0 dBm" (or "not calculated"), instead of
     // label/value/unit fragments (Vera finding #6).
     return Semantics(
@@ -953,7 +960,7 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
           Expanded(
             child: Text(
               label,
-              style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+              style: text.labelMedium?.copyWith(color: colors.textSecondary),
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
@@ -961,15 +968,15 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
             value,
             style: mono.inlineCode.copyWith(
               color: value == '—'
-                  ? AppColors.textTertiary
-                  : AppColors.textPrimary,
+                  ? colors.textTertiary
+                  : colors.textPrimary,
               fontWeight: FontWeight.w500,
             ),
           ),
           const SizedBox(width: AppSpacing.xxs),
           Text(
             unit,
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -977,11 +984,12 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
   }
 
   Widget _formulaCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -990,26 +998,26 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
           Text(
             'Formula',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
             'EIRP   = Tx + Gtx - Ltx',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
             'FSPL   = 20·log₁₀(d) + 20·log₁₀(f) + 92.45',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
             'Rx     = EIRP - FSPL - rain + Grx - Lrx',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
             'Margin = Rx - sensitivity',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
@@ -1018,7 +1026,7 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
             'FAIL when the margin goes negative. Rain fade uses ITU-R '
             'P.838-3 with the simplified P.530 path reduction and only '
             'applies above 0 mm/hr.',
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),

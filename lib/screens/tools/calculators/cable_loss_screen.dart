@@ -32,6 +32,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -398,11 +399,12 @@ class _CableLossScreenState extends State<CableLossScreen> {
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -467,6 +469,7 @@ class _CableLossScreenState extends State<CableLossScreen> {
     required TextStyle monoStyle,
     required Widget unitSelector,
   }) {
+    final AppColorScheme colors = context.colors;
     // FieldUnitRow reflows the unit selector beneath the field below 440px so
     // it never clips at phone widths (Vera web-demo gate, 2026-06-02).
     return FieldUnitRow(
@@ -486,7 +489,7 @@ class _CableLossScreenState extends State<CableLossScreen> {
           autocorrect: false,
           enableSuggestions: false,
           style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
-          cursorColor: AppColors.primary,
+          cursorColor: colors.textAccent,
           decoration: InputDecoration(hintText: hintText),
         ),
       ),
@@ -495,6 +498,7 @@ class _CableLossScreenState extends State<CableLossScreen> {
   }
 
   Widget _resultRow(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     // One SR node for the readout: "Total cable loss: 3.42 dB, 1.71 dB per 100
     // feet" (or "not calculated"), instead of value/unit/label fragments
     // across two lines (Vera finding #6).
@@ -512,7 +516,7 @@ class _CableLossScreenState extends State<CableLossScreen> {
           Text(
             'Total cable loss',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -525,15 +529,15 @@ class _CableLossScreenState extends State<CableLossScreen> {
                 _format2(_totalLossDb),
                 style: mono.outputXL.copyWith(
                   color: _totalLossDb == null
-                      ? AppColors.textTertiary
-                      : AppColors.primary,
+                      ? colors.textTertiary
+                      : colors.textAccent,
                 ),
               ),
               const SizedBox(width: AppSpacing.xxs),
               Text(
                 'dB',
                 style: text.labelLarge?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ],
@@ -548,7 +552,7 @@ class _CableLossScreenState extends State<CableLossScreen> {
               Text(
                 'Loss per 100 ft',
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
               const SizedBox(width: AppSpacing.xs),
@@ -556,15 +560,15 @@ class _CableLossScreenState extends State<CableLossScreen> {
                 _format2(_lossPer100),
                 style: mono.inlineCode.copyWith(
                   color: _lossPer100 == null
-                      ? AppColors.textTertiary
-                      : AppColors.textSecondary,
+                      ? colors.textTertiary
+                      : colors.textSecondary,
                 ),
               ),
               const SizedBox(width: 4),
               Text(
                 'dB',
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ],
@@ -597,11 +601,12 @@ class _CableLossScreenState extends State<CableLossScreen> {
   }
 
   Widget _formulaCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -610,21 +615,21 @@ class _CableLossScreenState extends State<CableLossScreen> {
           Text(
             'Formula',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
             'Loss(dB) = (dB/100ft × length_ft) / 100',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'dB/100ft is interpolated from manufacturer spec points on a '
             'sqrt(frequency) axis. Lengths in meters convert at 3.28084 ft/m '
             'before the math.',
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -632,6 +637,7 @@ class _CableLossScreenState extends State<CableLossScreen> {
   }
 
   Widget _referenceCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     // Per-100ft loss at 2.4 GHz for a few common runs, read straight off the
     // CABLE_DATA 2400 MHz knot this screen uses. Anchors the user's intuition
     // for "thicker cable, less loss" without a second computation.
@@ -645,9 +651,9 @@ class _CableLossScreenState extends State<CableLossScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -656,7 +662,7 @@ class _CableLossScreenState extends State<CableLossScreen> {
           Text(
             'Loss per 100 ft at 2.4 GHz',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -673,7 +679,7 @@ class _CableLossScreenState extends State<CableLossScreen> {
                     child: Text(
                       row[0],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
@@ -682,7 +688,7 @@ class _CableLossScreenState extends State<CableLossScreen> {
                     child: Text(
                       row[1],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
@@ -690,7 +696,7 @@ class _CableLossScreenState extends State<CableLossScreen> {
                     child: Text(
                       row[2],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.primary,
+                        color: colors.textAccent,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
