@@ -794,7 +794,7 @@ class _RefreshWifiPrompt extends StatelessWidget {
                         height: 16,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: colors.primary,
+                          color: colors.textAccent,
                         ),
                       )
                     : const Icon(Icons.wifi_find, size: 18),
