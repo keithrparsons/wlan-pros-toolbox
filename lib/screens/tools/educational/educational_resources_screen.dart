@@ -21,6 +21,7 @@ import 'package:flutter/services.dart' show rootBundle;
 
 import '../../../data/tool_catalog.dart';
 import '../../../services/educational/educational_resources_service.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/centered_content.dart';
 import 'educational_resource_detail_screen.dart';
@@ -150,6 +151,7 @@ class _EducationalResourcesScreenState
   }
 
   Widget _body(double edge) {
+    final AppColorScheme colors = context.colors;
     if (_loadError != null) {
       return _PaddedMessage(
         edge: edge,
@@ -171,9 +173,9 @@ class _EducationalResourcesScreenState
             child: Semantics(
               label: 'Loading educational resources',
               liveRegion: true,
-              child: const CircularProgressIndicator(
+              child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: AppColors.primary,
+                color: colors.textAccent,
               ),
             ),
           ),
@@ -327,19 +329,20 @@ class _IntroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Text(
         '$total curated places to learn Wi-Fi: tools, talk archives, channels, '
         'podcasts, blogs, and training. Tap any resource to read more and open '
         'its website.',
-        style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+        style: text.labelMedium?.copyWith(color: colors.textSecondary),
       ),
     );
   }
@@ -354,6 +357,7 @@ class _SearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Semantics(
       textField: true,
       label: 'Search educational resources by name, topic, or tag',
@@ -366,11 +370,11 @@ class _SearchField extends StatelessWidget {
         style: Theme.of(context)
             .textTheme
             .bodyLarge
-            ?.copyWith(color: AppColors.textPrimary),
-        cursorColor: AppColors.primary,
+            ?.copyWith(color: colors.textPrimary),
+        cursorColor: colors.textAccent,
         textInputAction: TextInputAction.search,
-        decoration: const InputDecoration(
-          prefixIcon: Icon(Icons.search, color: AppColors.textTertiary),
+        decoration: InputDecoration(
+          prefixIcon: Icon(Icons.search, color: colors.textTertiary),
           hintText: 'Search resources…',
         ),
       ),
@@ -388,6 +392,7 @@ class _TopicHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Semantics(
       header: true,
@@ -401,7 +406,7 @@ class _TopicHeader extends StatelessWidget {
               child: Text(
                 topic,
                 style: text.headlineSmall?.copyWith(
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                 ),
               ),
             ),
@@ -412,7 +417,7 @@ class _TopicHeader extends StatelessWidget {
                 vertical: AppSpacing.xxs,
               ),
               decoration: BoxDecoration(
-                color: AppColors.surface2,
+                color: colors.surface2,
                 borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
               child: Text(
@@ -420,7 +425,7 @@ class _TopicHeader extends StatelessWidget {
                 style: text.labelLarge?.copyWith(
                   fontSize: AppTextSize.caption,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ),
@@ -456,12 +461,19 @@ class _ResourceRowState extends State<_ResourceRow> {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final EducationalResource r = widget.resource;
 
     final Border rowBorder = _focused
-        ? Border.all(color: AppColors.primary, width: 2)
-        : Border.all(color: AppColors.borderStrong, width: 1);
+        ? Border.all(
+            color: colors.isLight ? colors.textAccent : colors.primary,
+            width: colors.isLight ? 3 : 2,
+          )
+        : Border.all(
+            color: colors.borderStrong,
+            width: colors.isLight ? 1.5 : 1,
+          );
 
     return Semantics(
       container: true,
@@ -470,7 +482,7 @@ class _ResourceRowState extends State<_ResourceRow> {
       label: '${r.title}. ${r.summary} '
           '${r.cost.label}. ${r.level.label}.',
       child: Material(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -497,7 +509,7 @@ class _ResourceRowState extends State<_ResourceRow> {
                       Text(
                         r.title,
                         style: text.bodyLarge?.copyWith(
-                          color: AppColors.textPrimary,
+                          color: colors.textPrimary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -505,7 +517,7 @@ class _ResourceRowState extends State<_ResourceRow> {
                       Text(
                         r.summary,
                         style: text.labelMedium?.copyWith(
-                          color: AppColors.textTertiary,
+                          color: colors.textTertiary,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.xs),
@@ -516,11 +528,11 @@ class _ResourceRowState extends State<_ResourceRow> {
                     ],
                   ),
                 ),
-                const Padding(
-                  padding: EdgeInsets.only(left: AppSpacing.xs),
+                Padding(
+                  padding: const EdgeInsets.only(left: AppSpacing.xs),
                   child: Icon(
                     Icons.chevron_right,
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                     size: 20,
                   ),
                 ),
@@ -555,12 +567,19 @@ class _ReferenceCardRowState extends State<_ReferenceCardRow> {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final ToolEntry card = widget.card;
 
     final Border rowBorder = _focused
-        ? Border.all(color: AppColors.primary, width: 2)
-        : Border.all(color: AppColors.borderStrong, width: 1);
+        ? Border.all(
+            color: colors.isLight ? colors.textAccent : colors.primary,
+            width: colors.isLight ? 3 : 2,
+          )
+        : Border.all(
+            color: colors.borderStrong,
+            width: colors.isLight ? 1.5 : 1,
+          );
 
     return Semantics(
       container: true,
@@ -568,7 +587,7 @@ class _ReferenceCardRowState extends State<_ReferenceCardRow> {
       excludeSemantics: true,
       label: '${card.title}. ${card.description}.',
       child: Material(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -588,11 +607,11 @@ class _ReferenceCardRowState extends State<_ReferenceCardRow> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const Padding(
-                  padding: EdgeInsets.only(right: AppSpacing.sm),
+                Padding(
+                  padding: const EdgeInsets.only(right: AppSpacing.sm),
                   child: Icon(
                     Icons.picture_as_pdf_outlined,
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                     size: 20,
                   ),
                 ),
@@ -603,7 +622,7 @@ class _ReferenceCardRowState extends State<_ReferenceCardRow> {
                       Text(
                         card.title,
                         style: text.bodyLarge?.copyWith(
-                          color: AppColors.textPrimary,
+                          color: colors.textPrimary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -611,17 +630,17 @@ class _ReferenceCardRowState extends State<_ReferenceCardRow> {
                       Text(
                         card.description,
                         style: text.labelMedium?.copyWith(
-                          color: AppColors.textTertiary,
+                          color: colors.textTertiary,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const Padding(
-                  padding: EdgeInsets.only(left: AppSpacing.xs),
+                Padding(
+                  padding: const EdgeInsets.only(left: AppSpacing.xs),
                   child: Icon(
                     Icons.chevron_right,
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                     size: 20,
                   ),
                 ),
@@ -699,14 +718,20 @@ class _SelectableFilterChipState extends State<_SelectableFilterChip> {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final bool sel = widget.selected;
 
     final Border border = _focused
-        ? Border.all(color: AppColors.primary, width: 2)
+        ? Border.all(
+            color: colors.isLight ? colors.textAccent : colors.primary,
+            width: colors.isLight ? 3 : 2,
+          )
+        // Selected chip carries the lime FILL; its border matches the fill, so
+        // brand lime is fine here (it borders a fill, §8.20.3-C item 6).
         : Border.all(
-            color: sel ? AppColors.primary : AppColors.borderStrong,
-            width: 1,
+            color: sel ? colors.primary : colors.borderStrong,
+            width: colors.isLight ? 1.5 : 1,
           );
 
     return Semantics(
@@ -715,7 +740,7 @@ class _SelectableFilterChipState extends State<_SelectableFilterChip> {
       label: widget.label,
       excludeSemantics: true,
       child: Material(
-        color: sel ? AppColors.primary : AppColors.surface2,
+        color: sel ? colors.primary : colors.surface2,
         borderRadius: BorderRadius.circular(AppRadius.control),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -738,7 +763,7 @@ class _SelectableFilterChipState extends State<_SelectableFilterChip> {
                 fontSize: AppTextSize.caption,
                 fontWeight: FontWeight.w500,
                 // §8.3: charcoal text on lime when selected; neutral otherwise.
-                color: sel ? AppColors.secondary : AppColors.textSecondary,
+                color: sel ? colors.onPrimary : colors.textSecondary,
               ),
             ),
           ),
@@ -756,22 +781,23 @@ class _NoMatch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
       child: Column(
         children: <Widget>[
-          const Icon(
+          Icon(
             Icons.search_off_outlined,
             size: 48,
-            color: AppColors.textTertiary,
+            color: colors.textTertiary,
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
             query.isEmpty
                 ? 'No resources loaded.'
                 : 'No resources match "$query".',
-            style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+            style: text.bodyLarge?.copyWith(color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
         ],
@@ -797,20 +823,21 @@ class _PaddedMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Padding(
       padding: EdgeInsets.all(edge),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface1,
+          color: colors.surface1,
           borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border.all(color: AppColors.border, width: 1),
+          border: Border.all(color: colors.border, width: 1),
         ),
         padding: const EdgeInsets.all(AppSpacing.sm),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Icon(icon, size: 20, color: AppColors.textTertiary),
+            Icon(icon, size: 20, color: colors.textTertiary),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Column(
@@ -819,7 +846,7 @@ class _PaddedMessage extends StatelessWidget {
                   Text(
                     title,
                     style: text.bodyLarge?.copyWith(
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -827,7 +854,7 @@ class _PaddedMessage extends StatelessWidget {
                   Text(
                     body,
                     style: text.labelMedium?.copyWith(
-                      color: AppColors.textTertiary,
+                      color: colors.textTertiary,
                     ),
                   ),
                 ],

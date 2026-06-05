@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../theme/app_typography.dart';
@@ -622,11 +623,12 @@ class _WifiChannelsScreenState extends State<WifiChannelsScreen> {
   }
 
   Widget _bandCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       // 2.4 / 5 / 6 GHz + HaLow — FOUR options, so an AppSelect, not a
@@ -678,12 +680,13 @@ class _TableCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -692,7 +695,7 @@ class _TableCard extends StatelessWidget {
           Text(
             title,
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -710,7 +713,7 @@ class _TableCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   header,
-                  const Divider(color: AppColors.border, height: AppSpacing.sm),
+                  Divider(color: colors.border, height: AppSpacing.sm),
                   ...rows,
                 ],
               ),
@@ -720,7 +723,7 @@ class _TableCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.xs),
             Text(
               footnote!,
-              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
             ),
           ],
         ],
@@ -738,13 +741,14 @@ class _HeaderCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return SizedBox(
       width: width,
       child: Text(
         label,
         style: text.labelSmall?.copyWith(
-          color: AppColors.textTertiary,
+          color: colors.textTertiary,
           letterSpacing: 0.4,
         ),
       ),
@@ -766,18 +770,19 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: neutral ? AppColors.surface2 : color.withValues(alpha: 0.15),
+        color: neutral ? colors.surface2 : color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: neutral ? AppColors.border : color, width: 1),
+        border: Border.all(color: neutral ? colors.border : color, width: 1),
       ),
       child: Text(
         label,
         style: text.labelSmall?.copyWith(
-          color: neutral ? AppColors.textTertiary : color,
+          color: neutral ? colors.textTertiary : color,
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -792,6 +797,7 @@ class _Table24 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return _TableCard(
       title: '2.4 GHz — ${WifiChannelsScreen.channels24.length} channels',
@@ -826,7 +832,7 @@ class _Table24 extends StatelessWidget {
                   child: Text(
                     '${c.channel}',
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -836,7 +842,7 @@ class _Table24 extends StatelessWidget {
                   child: Text(
                     c.centerGhz.toStringAsFixed(3),
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.textSecondary,
+                      color: colors.textSecondary,
                     ),
                   ),
                 ),
@@ -845,7 +851,7 @@ class _Table24 extends StatelessWidget {
                   child: Text(
                     '${c.rangeMhzLow}-${c.rangeMhzHigh}',
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.textTertiary,
+                      color: colors.textTertiary,
                     ),
                   ),
                 ),
@@ -854,13 +860,13 @@ class _Table24 extends StatelessWidget {
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: c.nonOverlap
-                        ? const _Chip('Non-overlap', color: AppColors.primary)
+                        ? _Chip('Non-overlap', color: colors.textAccent)
                         : (c.regulatory != 'US'
                               // §8.15 R-02: EU/JP is a regulatory-domain *category*,
                               // not a caution verdict — no status hue. Neutral chip.
                               ? _Chip(
                                   c.regulatory,
-                                  color: AppColors.textTertiary,
+                                  color: colors.textTertiary,
                                   neutral: true,
                                 )
                               : Text('', style: text.labelSmall)),
@@ -882,16 +888,17 @@ class _Table5 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     String lastBand = '';
     final List<Widget> rows = [];
     for (final c in WifiChannelsScreen.channels5) {
       // PWA draws a 2px rule at each UNII sub-band boundary; mirror with a
       // thin divider above the first row of a new band.
       if (c.band != lastBand && lastBand.isNotEmpty) {
-        rows.add(const Divider(color: AppColors.border, height: AppSpacing.sm));
+        rows.add(Divider(color: colors.border, height: AppSpacing.sm));
       }
       lastBand = c.band;
-      rows.add(_row5(c));
+      rows.add(_row5(c, colors));
     }
     return _TableCard(
       title: '5 GHz — ${WifiChannelsScreen.channels5.length} channels (US)',
@@ -910,7 +917,7 @@ class _Table5 extends StatelessWidget {
     );
   }
 
-  Widget _row5(Channel5 c) {
+  Widget _row5(Channel5 c, AppColorScheme colors) {
     return ReferenceRowSemantics(
       label: rowLabel('Channel ${c.channel}', <String?>[
         '${c.centerGhz.toStringAsFixed(3)} gigahertz',
@@ -927,7 +934,7 @@ class _Table5 extends StatelessWidget {
               child: Text(
                 '${c.channel}',
                 style: mono.inlineCode.copyWith(
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -936,25 +943,25 @@ class _Table5 extends StatelessWidget {
               width: 72,
               child: Text(
                 c.centerGhz.toStringAsFixed(3),
-                style: mono.inlineCode.copyWith(color: AppColors.textSecondary),
+                style: mono.inlineCode.copyWith(color: colors.textSecondary),
               ),
             ),
             SizedBox(
               width: 88,
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: _Chip(c.band, color: AppColors.statusInfo),
+                child: _Chip(c.band, color: colors.statusInfo),
               ),
             ),
             SizedBox(
               width: 56,
               child: c.dfs
-                  ? const _Chip('DFS', color: AppColors.statusWarning)
+                  ? _Chip('DFS', color: colors.statusWarning)
                   : Builder(
                       builder: (context) => Text(
                         '—',
                         style: Theme.of(context).textTheme.labelMedium
-                            ?.copyWith(color: AppColors.textTertiary),
+                            ?.copyWith(color: colors.textTertiary),
                       ),
                     ),
             ),
@@ -972,6 +979,7 @@ class _Table6 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return _TableCard(
       title: '6 GHz — ${WifiChannelsScreen.channels6.length} PSC channels',
       header: const Row(
@@ -1002,7 +1010,7 @@ class _Table6 extends StatelessWidget {
                   child: Text(
                     '${c.channel}',
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -1012,15 +1020,15 @@ class _Table6 extends StatelessWidget {
                   child: Text(
                     c.centerGhz.toStringAsFixed(3),
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.textSecondary,
+                      color: colors.textSecondary,
                     ),
                   ),
                 ),
-                const SizedBox(
+                SizedBox(
                   width: 88,
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: _Chip('PSC', color: AppColors.primary),
+                    child: _Chip('PSC', color: colors.textAccent),
                   ),
                 ),
               ],
@@ -1057,6 +1065,7 @@ class _TableHalow extends StatelessWidget {
   }
 
   Widget _usChannelsCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return _TableCard(
       title: 'HaLow — US 902-928 MHz, 26 × 1 MHz channels',
       header: const Row(
@@ -1086,7 +1095,7 @@ class _TableHalow extends StatelessWidget {
                   child: Text(
                     '${c.channel}',
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -1096,7 +1105,7 @@ class _TableHalow extends StatelessWidget {
                   child: Text(
                     c.centerMhz.toStringAsFixed(1),
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.textSecondary,
+                      color: colors.textSecondary,
                     ),
                   ),
                 ),
@@ -1109,6 +1118,7 @@ class _TableHalow extends StatelessWidget {
   }
 
   Widget _widthsCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return _TableCard(
       title: 'HaLow — US channel widths',
       header: const Row(
@@ -1137,7 +1147,7 @@ class _TableHalow extends StatelessWidget {
                   child: Text(
                     '${w.widthMhz} MHz',
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -1147,7 +1157,7 @@ class _TableHalow extends StatelessWidget {
                   child: Text(
                     '${w.count}',
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.primary,
+                      color: colors.textAccent,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -1157,7 +1167,7 @@ class _TableHalow extends StatelessWidget {
                   child: Text(
                     w.numbering,
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.textTertiary,
+                      color: colors.textTertiary,
                     ),
                   ),
                 ),
@@ -1170,6 +1180,7 @@ class _TableHalow extends StatelessWidget {
   }
 
   Widget _regionsCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return _TableCard(
       title: 'HaLow — operating ranges by region',
       header: const Row(
@@ -1200,7 +1211,7 @@ class _TableHalow extends StatelessWidget {
                     builder: (context) => Text(
                       r.region,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textPrimary,
+                        color: colors.textPrimary,
                       ),
                     ),
                   ),
@@ -1210,7 +1221,7 @@ class _TableHalow extends StatelessWidget {
                   child: Text(
                     r.rangeMhz,
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.textSecondary,
+                      color: colors.textSecondary,
                     ),
                   ),
                 ),
@@ -1220,7 +1231,7 @@ class _TableHalow extends StatelessWidget {
                     builder: (context) => Text(
                       r.note,
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: AppColors.textTertiary,
+                        color: colors.textTertiary,
                       ),
                     ),
                   ),
