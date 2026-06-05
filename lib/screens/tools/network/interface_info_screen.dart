@@ -455,6 +455,15 @@ class _Success extends StatelessWidget {
     );
   }
 
+  /// "as of 2:14 PM" — 12-hour clock, no intl dependency. Matches the
+  /// time-format convention already used in test_my_connection_screen.dart.
+  static String _asOfClock(DateTime at) {
+    final int hour12 = at.hour % 12 == 0 ? 12 : at.hour % 12;
+    final String minute = at.minute.toString().padLeft(2, '0');
+    final String meridiem = at.hour < 12 ? 'AM' : 'PM';
+    return '$hour12:$minute $meridiem';
+  }
+
   Widget _wifiCard(BuildContext context) {
     final WifiLinkInfo w = data.wifi;
     final bool showLocationHint = w.ssid == null && w.locationNeeded;
@@ -481,6 +490,12 @@ class _Success extends StatelessWidget {
             identifier: true,
           ),
           _MacTypeRow(hardwareAddress: w.hardwareAddress),
+          // When the Wi-Fi identity was served FROM THE CACHE (a remembered
+          // reading, not a fresh native/live read), say so honestly with an
+          // "as of HH:MM" line so it is never mistaken for a live reading. A
+          // fresh read leaves cachedAt null and this line never shows
+          // (Batch 8 truthfulness fix).
+          if (w.cachedAt != null) _CacheAsOfLine(at: w.cachedAt!),
           if (showWifiRefresh)
             _RefreshWifiPrompt(
               onRefresh: onRefreshWifi!,
@@ -685,6 +700,46 @@ class _LocationHint extends StatelessWidget {
   }
 }
 
+/// The honest "as of HH:MM" line shown beneath the Wi-Fi identity rows when that
+/// identity was served from the shared cache (a remembered reading) rather than
+/// a fresh native/live read (Batch 8 truthfulness fix). It tells the user the
+/// SSID/BSSID/MAC are a remembered reading and when it was taken, so a cached
+/// identity is never silently presented as current. Fresh reads carry no
+/// `cachedAt`, so this line never appears for them.
+class _CacheAsOfLine extends StatelessWidget {
+  const _CacheAsOfLine({required this.at});
+
+  final DateTime at;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final String clock = _Success._asOfClock(at);
+    final String message = 'Remembered reading, as of $clock. '
+        'Refresh to read the connected network live.';
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.xs),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.history,
+            size: 14,
+            color: AppColors.textTertiary,
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: Text(
+              message,
+              style: text.bodySmall?.copyWith(color: AppColors.textTertiary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// iOS-only on-demand "Refresh Wi-Fi" prompt (Batch 8, item 1). Shown under the
 /// Wi-Fi link rows when the network name has not been read this session. Tapping
 /// it fires the one-shot "WLAN Pros Wi-Fi" Shortcut (a user-initiated bounce to
@@ -718,7 +773,13 @@ class _RefreshWifiPrompt extends StatelessWidget {
             child: Semantics(
               button: true,
               enabled: !pending,
-              label: 'Refresh Wi-Fi by running the WLAN Pros Wi-Fi Shortcut',
+              // Fold the pending state into the explicit label, and
+              // excludeSemantics so the OutlinedButton.icon's own label does not
+              // double-announce (matches _MacTypeRow / _PublicIpPendingRow).
+              label: pending
+                  ? 'Reading Wi-Fi, running the WLAN Pros Wi-Fi Shortcut'
+                  : 'Refresh Wi-Fi by running the WLAN Pros Wi-Fi Shortcut',
+              excludeSemantics: true,
               child: OutlinedButton.icon(
                 onPressed: pending ? null : () => onRefresh(),
                 icon: pending
