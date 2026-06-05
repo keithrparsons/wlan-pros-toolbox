@@ -53,6 +53,7 @@ import '../screens/tools/reference/channel_map_screen.dart';
 import '../screens/tools/reference/ethernet_pinout_screen.dart';
 import '../screens/tools/reference/coax_cable_screen.dart';
 import '../screens/tools/reference/ethernet_cable_screen.dart';
+import '../screens/tools/reference/antenna_connectors_screen.dart';
 import '../screens/tools/reference/fiber_optic_screen.dart';
 import '../screens/tools/reference/rf_connectors_screen.dart';
 import '../screens/tools/reference/roaming_screen.dart';
@@ -267,6 +268,12 @@ class AppRouter {
   /// The id `wifi-auth-glossary` is permanent (route, catalog, asset, tests).
   static const String wifiAuthGlossary = '/tools/wifi-auth-glossary';
 
+  /// Antenna Connectors — an 18-connector practical Wi-Fi antenna-connector
+  /// reference, grouped and searchable (offline bundled JSON). The id
+  /// `antenna-connectors` is permanent (route, catalog, asset, diagram lookup,
+  /// tests).
+  static const String antennaConnectors = '/tools/antenna-connectors';
+
   // PDF reference cards — Keith's 10 laminated reference cards bundled as PDFs
   // (assets/reference-cards/<id>.pdf), rendered pinch-zoomable by the single
   // PdfReferenceScreen. They interleave alphabetically with the other Quick
@@ -426,6 +433,7 @@ class AppRouter {
           assetPath: kWifiAuthGlossaryAsset,
           title: 'Wi-Fi Authentication Glossary',
         ),
+    antennaConnectors: (_) => const AntennaConnectorsScreen(),
     // PDF reference cards — one PdfReferenceScreen per bundled card. Title +
     // asset path are the only per-card inputs; the screen is otherwise shared.
     bubbleDiagram: (_) => const PdfReferenceScreen(

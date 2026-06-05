@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 220" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- QMA / MCX / MMCX snap-on family. The identifying feature: NO THREADS — push-on / snap-on
+       coupling. Shown side by side, sized largest to smallest (QMA > MCX > MMCX). Lime marks the
+       snap coupling collar (the push-pull / snap-on interface = the family's identifying feature). -->
+
+  <text x="200" y="22" fill="#E5E5E5" font-size="14" font-weight="600" text-anchor="middle">Snap-on family — push-on coupling, no threads</text>
+
+  <!-- common board / panel line -->
+  <line x1="36" y1="150" x2="364" y2="150" stroke="#9C9C9C" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- ============ QMA (largest) ============ -->
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="50" y="112" width="58" height="38" rx="4"/>          <!-- body -->
+    <path d="M79 112 L79 92"/>                                     <!-- center coax -->
+  </g>
+  <!-- snap collar (lime, SMOOTH = no thread ticks) -->
+  <rect x="46" y="104" width="66" height="14" rx="7" stroke="#A2CC3A" stroke-width="2.5" fill="none"/>
+  <!-- push-on motion cue -->
+  <g stroke="#A2CC3A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="79" y1="74" x2="79" y2="90"/>
+    <path d="M75 86 L79 90 L83 86"/>
+  </g>
+  <text x="79" y="178" fill="#E5E5E5" font-size="13" font-weight="600" text-anchor="middle">QMA</text>
+  <text x="79" y="194" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">push-pull,</text>
+  <text x="79" y="208" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">SMA-derived</text>
+
+  <!-- ============ MCX (medium) ============ -->
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="178" y="118" width="44" height="32" rx="4"/>
+    <path d="M200 118 L200 100"/>
+  </g>
+  <rect x="174" y="112" width="52" height="12" rx="6" stroke="#A2CC3A" stroke-width="2.5" fill="none"/>
+  <g stroke="#A2CC3A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="200" y1="84" x2="200" y2="98"/>
+    <path d="M196 94 L200 98 L204 94"/>
+  </g>
+  <text x="200" y="178" fill="#E5E5E5" font-size="13" font-weight="600" text-anchor="middle">MCX</text>
+  <text x="200" y="194" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">snap-on</text>
+
+  <!-- ============ MMCX (smallest) ============ -->
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="296" y="124" width="34" height="26" rx="3"/>
+    <path d="M313 124 L313 108"/>
+  </g>
+  <rect x="293" y="119" width="40" height="10" rx="5" stroke="#A2CC3A" stroke-width="2.5" fill="none"/>
+  <g stroke="#A2CC3A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="313" y1="94" x2="313" y2="106"/>
+    <path d="M309 102 L313 106 L317 102"/>
+  </g>
+  <text x="313" y="178" fill="#E5E5E5" font-size="13" font-weight="600" text-anchor="middle">MMCX</text>
+  <text x="313" y="194" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">snap-on,</text>
+  <text x="313" y="208" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">smallest</text>
+
+  <!-- size-ladder note -->
+  <text x="200" y="44" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle">Largest to smallest. They snap on instead of screwing — faster to mate in dense installs.</text>
+</svg>
