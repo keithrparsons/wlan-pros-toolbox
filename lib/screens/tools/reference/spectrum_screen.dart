@@ -31,6 +31,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
@@ -47,7 +48,7 @@ class SpectrumBandInfo {
     required this.band,
     required this.label,
     required this.range,
-    required this.accent,
+    required this.accentTone,
     required this.total,
     required this.standards,
     required this.channels,
@@ -66,9 +67,11 @@ class SpectrumBandInfo {
   /// Frequency range shown in the badge (e.g. "2400 - 2484 MHz").
   final String range;
 
-  /// Decorative badge accent — a design-system status token, NOT the PWA hex.
-  /// Always paired with the `label` text, never color-only.
-  final Color accent;
+  /// Decorative badge accent tone — a design-system status token, NOT the PWA
+  /// hex. Resolved to a theme-aware §8.13/§8.20.1 color at render via
+  /// `context.colors.statusToneColor`. Always paired with the `label` text,
+  /// never color-only.
+  final StatusTone accentTone;
 
   /// Total usable spectrum (US, with EU note where the PWA carries one).
   final String total;
@@ -109,7 +112,7 @@ class SpectrumScreen extends StatefulWidget {
       band: SpectrumBand.ghz24,
       label: '2.4 GHz',
       range: '2400 - 2484 MHz',
-      accent: AppColors.statusWarning,
+      accentTone: StatusTone.warning,
       total: '84 MHz (US)',
       standards: '802.11b / g / n / ax (Wi-Fi 4 / 6)',
       channels: 'Ch 1-11 (US) · Ch 1-13 (EU) · Ch 1-14 (JP)',
@@ -128,7 +131,7 @@ class SpectrumScreen extends StatefulWidget {
       band: SpectrumBand.ghz5,
       label: '5 GHz',
       range: '5150 - 5850 MHz (US UNII-1/2A/2C/3)',
-      accent: AppColors.statusInfo,
+      accentTone: StatusTone.info,
       total: '~580 MHz usable (US UNII-1/2A/2C/3)',
       standards: '802.11a / n / ac / ax (Wi-Fi 5 / 6)',
       channels: '25 channels at 20 MHz (US, including DFS)',
@@ -149,7 +152,7 @@ class SpectrumScreen extends StatefulWidget {
       band: SpectrumBand.ghz6,
       label: '6 GHz',
       range: '5925 - 7125 MHz',
-      accent: AppColors.statusSuccess,
+      accentTone: StatusTone.success,
       total: '1200 MHz',
       standards: '802.11ax / be (Wi-Fi 6E / 7)',
       channels:
@@ -272,12 +275,13 @@ class _SpectrumScreenState extends State<SpectrumScreen> {
   }
 
   Widget _bandCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -286,7 +290,7 @@ class _SpectrumScreenState extends State<SpectrumScreen> {
           Text(
             'Band',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -299,12 +303,13 @@ class _SpectrumScreenState extends State<SpectrumScreen> {
   }
 
   Widget _factCard(BuildContext context, SpectrumBandInfo info) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -322,14 +327,14 @@ class _SpectrumScreenState extends State<SpectrumScreen> {
             final (String key, String value) = entry.value;
             return [
               if (entry.key > 0)
-                const Divider(color: AppColors.border, height: AppSpacing.sm),
+                Divider(color: colors.border, height: AppSpacing.sm),
               _FactRow(label: key, value: value),
             ];
           }),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'US (FCC) regulatory domain. Verify local rules before deployment.',
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -346,16 +351,18 @@ class _BandBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
+    final Color accent = colors.statusToneColor(info.accentTone);
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.sm,
         vertical: AppSpacing.xs,
       ),
       decoration: BoxDecoration(
-        color: info.accent.withValues(alpha: 0.12),
+        color: accent.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AppRadius.control),
-        border: Border(left: BorderSide(color: info.accent, width: 4)),
+        border: Border(left: BorderSide(color: accent, width: 4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -363,14 +370,14 @@ class _BandBadge extends StatelessWidget {
           Text(
             info.label,
             style: text.titleLarge?.copyWith(
-              color: info.accent,
+              color: accent,
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             info.range,
-            style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+            style: text.labelMedium?.copyWith(color: colors.textSecondary),
           ),
         ],
       ),
@@ -390,6 +397,7 @@ class _FactRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return ReferenceRowSemantics(
       label: rowLabel(label, <String?>[value]),
@@ -406,7 +414,7 @@ class _FactRow extends StatelessWidget {
               child: Text(
                 label,
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                   letterSpacing: 0.2,
                 ),
               ),
@@ -415,7 +423,7 @@ class _FactRow extends StatelessWidget {
             Expanded(
               child: Text(
                 value,
-                style: text.bodyMedium?.copyWith(color: AppColors.textPrimary),
+                style: text.bodyMedium?.copyWith(color: colors.textPrimary),
               ),
             ),
           ],
@@ -443,12 +451,13 @@ class _BandToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.inputFill,
+        color: colors.inputFill,
         borderRadius: BorderRadius.circular(AppRadius.control),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
+        border: Border.all(color: colors.borderStrong, width: 1),
       ),
       child: Row(
         children: _options.map((opt) {
@@ -470,15 +479,15 @@ class _BandToggle extends StatelessWidget {
                   alignment: Alignment.center,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    color: selected ? AppColors.primary : Colors.transparent,
+                    color: selected ? colors.primary : Colors.transparent,
                     borderRadius: BorderRadius.circular(AppRadius.control),
                   ),
                   child: Text(
                     opt.$2,
                     style: text.labelLarge?.copyWith(
                       color: selected
-                          ? AppColors.secondary
-                          : AppColors.textSecondary,
+                          ? colors.onPrimary
+                          : colors.textSecondary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

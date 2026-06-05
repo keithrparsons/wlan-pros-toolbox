@@ -311,6 +311,28 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
   }
 }
 
+/// Theme-independent verdict tone for const data tables. Reference screens store
+/// a [StatusTone] (not a baked Color, which would be dark-only and break under
+/// light) and resolve it to the §8.13 / §8.20.1 status color at render via
+/// [AppColorScheme.statusToneColor].
+enum StatusTone { danger, warning, success, info }
+
+extension StatusToneResolver on AppColorScheme {
+  /// Resolves a [StatusTone] to this scheme's theme-aware status color.
+  Color statusToneColor(StatusTone tone) {
+    switch (tone) {
+      case StatusTone.danger:
+        return statusDanger;
+      case StatusTone.warning:
+        return statusWarning;
+      case StatusTone.success:
+        return statusSuccess;
+      case StatusTone.info:
+        return statusInfo;
+    }
+  }
+}
+
 /// `context.colors` — the canonical accessor (§8.20.6). Resolves the registered
 /// [AppColorScheme] extension off the active theme. Falls back to the dark
 /// scheme if (somehow) unregistered, so a widget can never throw on a missing

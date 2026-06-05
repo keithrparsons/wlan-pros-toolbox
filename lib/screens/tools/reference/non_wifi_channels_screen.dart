@@ -35,6 +35,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -433,6 +434,7 @@ class NonWifiChannelsScreen extends StatelessWidget {
   }
 
   Widget _body(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -461,13 +463,14 @@ class NonWifiChannelsScreen extends StatelessWidget {
                   ConceptGraphicBand(toolId: _toolId, isDesktop: isDesktop),
                   if (ToolAssets.hasGraphic(_toolId))
                     const SizedBox(height: AppSpacing.md),
-                  _introCard(text),
+                  _introCard(colors, text),
                   const SizedBox(height: AppSpacing.md),
-                  _loraWanCard(text, mono),
+                  _loraWanCard(colors, text, mono),
                   const SizedBox(height: AppSpacing.md),
-                  _ieee802154Card(text, mono),
+                  _ieee802154Card(colors, text, mono),
                   const SizedBox(height: AppSpacing.md),
                   _factCard(
+                    colors: colors,
                     text: text,
                     mono: mono,
                     title: 'Bluetooth Classic (BR/EDR)',
@@ -475,9 +478,10 @@ class NonWifiChannelsScreen extends StatelessWidget {
                     facts: bluetoothClassicFacts,
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  _bleCard(text, mono),
+                  _bleCard(colors, text, mono),
                   const SizedBox(height: AppSpacing.md),
                   _factCard(
+                    colors: colors,
                     text: text,
                     mono: mono,
                     title: 'Zigbee',
@@ -495,7 +499,7 @@ class NonWifiChannelsScreen extends StatelessWidget {
     );
   }
 
-  Widget _introCard(TextTheme text) {
+  Widget _introCard(AppColorScheme colors, TextTheme text) {
     return _Card(
       heading: 'About',
       headingText: text,
@@ -505,12 +509,12 @@ class NonWifiChannelsScreen extends StatelessWidget {
         '802.15.4 use globally fixed channel grids; LoRaWAN frequency plans are '
         'region-dependent. Verify local regulator rules and transmit-power '
         'limits before deployment.',
-        style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+        style: text.labelMedium?.copyWith(color: colors.textTertiary),
       ),
     );
   }
 
-  Widget _loraWanCard(TextTheme text, AppMonoText mono) {
+  Widget _loraWanCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
     return _Card(
       heading: 'LoRaWAN',
       headingText: text,
@@ -531,12 +535,12 @@ class NonWifiChannelsScreen extends StatelessWidget {
                       _HeaderCell('Channel plan', width: 280),
                     ],
                   ),
-                  const Divider(
-                    color: AppColors.border,
+                  Divider(
+                    color: colors.border,
                     height: AppSpacing.sm,
                   ),
                   for (final LoraWanPlan p in loraWanPlans)
-                    _loraWanRow(text, mono, p),
+                    _loraWanRow(colors, text, mono, p),
                 ],
               ),
             ),
@@ -544,14 +548,14 @@ class NonWifiChannelsScreen extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             loraWanFootnote,
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
     );
   }
 
-  Widget _loraWanRow(TextTheme text, AppMonoText mono, LoraWanPlan p) {
+  Widget _loraWanRow(AppColorScheme colors, TextTheme text, AppMonoText mono, LoraWanPlan p) {
     return ReferenceRowSemantics(
       label: rowLabel(p.plan, <String?>[
         p.verify ? 'verify — region-dependent or version-dependent' : null,
@@ -571,15 +575,15 @@ class NonWifiChannelsScreen extends StatelessWidget {
                   Text(
                     p.plan,
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   if (p.verify) ...[
                     const SizedBox(height: 2),
-                    const _Chip(
+                    _Chip(
                       'verify',
-                      color: AppColors.statusWarning,
+                      color: colors.statusWarning,
                     ),
                   ],
                 ],
@@ -590,7 +594,7 @@ class NonWifiChannelsScreen extends StatelessWidget {
               child: Text(
                 p.rangeMhz,
                 style: mono.inlineCode.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ),
@@ -599,7 +603,7 @@ class NonWifiChannelsScreen extends StatelessWidget {
               child: Text(
                 p.channels,
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ),
@@ -609,7 +613,7 @@ class NonWifiChannelsScreen extends StatelessWidget {
     );
   }
 
-  Widget _ieee802154Card(TextTheme text, AppMonoText mono) {
+  Widget _ieee802154Card(AppColorScheme colors, TextTheme text, AppMonoText mono) {
     return _Card(
       heading: 'IEEE 802.15.4',
       headingText: text,
@@ -632,12 +636,12 @@ class NonWifiChannelsScreen extends StatelessWidget {
                       _HeaderCell('Region', width: 160),
                     ],
                   ),
-                  const Divider(
-                    color: AppColors.border,
+                  Divider(
+                    color: colors.border,
                     height: AppSpacing.sm,
                   ),
                   for (final Ieee802154Band b in ieee802154Bands)
-                    _ieee802154Row(text, mono, b),
+                    _ieee802154Row(colors, text, mono, b),
                 ],
               ),
             ),
@@ -645,14 +649,14 @@ class NonWifiChannelsScreen extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             ieee802154Footnote,
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
     );
   }
 
-  Widget _ieee802154Row(TextTheme text, AppMonoText mono, Ieee802154Band b) {
+  Widget _ieee802154Row(AppColorScheme colors, TextTheme text, AppMonoText mono, Ieee802154Band b) {
     return ReferenceRowSemantics(
       label: rowLabel('${b.band} band', <String?>[
         'channels ${b.channels}',
@@ -670,7 +674,7 @@ class NonWifiChannelsScreen extends StatelessWidget {
               child: Text(
                 b.band,
                 style: mono.inlineCode.copyWith(
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -679,7 +683,7 @@ class NonWifiChannelsScreen extends StatelessWidget {
               width: 64,
               child: Text(
                 b.channels,
-                style: mono.inlineCode.copyWith(color: AppColors.primary),
+                style: mono.inlineCode.copyWith(color: colors.textAccent),
               ),
             ),
             SizedBox(
@@ -687,7 +691,7 @@ class NonWifiChannelsScreen extends StatelessWidget {
               child: Text(
                 b.spacing,
                 style: mono.inlineCode.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ),
@@ -696,7 +700,7 @@ class NonWifiChannelsScreen extends StatelessWidget {
               child: Text(
                 b.centers,
                 style: mono.inlineCode.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ),
@@ -705,7 +709,7 @@ class NonWifiChannelsScreen extends StatelessWidget {
               child: Text(
                 b.region,
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ),
@@ -715,7 +719,7 @@ class NonWifiChannelsScreen extends StatelessWidget {
     );
   }
 
-  Widget _bleCard(TextTheme text, AppMonoText mono) {
+  Widget _bleCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
     return _Card(
       heading: 'Bluetooth LE',
       headingText: text,
@@ -736,11 +740,11 @@ class NonWifiChannelsScreen extends StatelessWidget {
                       _HeaderCell('Kind', width: 120),
                     ],
                   ),
-                  const Divider(
-                    color: AppColors.border,
+                  Divider(
+                    color: colors.border,
                     height: AppSpacing.sm,
                   ),
-                  for (final BleChannel c in bleChannels) _bleRow(text, mono, c),
+                  for (final BleChannel c in bleChannels) _bleRow(colors, text, mono, c),
                 ],
               ),
             ),
@@ -748,14 +752,14 @@ class NonWifiChannelsScreen extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             bleFootnote,
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
     );
   }
 
-  Widget _bleRow(TextTheme text, AppMonoText mono, BleChannel c) {
+  Widget _bleRow(AppColorScheme colors, TextTheme text, AppMonoText mono, BleChannel c) {
     final bool adv = c.kind == 'Advertising';
     return ReferenceRowSemantics(
       label: rowLabel('Index ${c.index}', <String?>[
@@ -772,7 +776,7 @@ class NonWifiChannelsScreen extends StatelessWidget {
               child: Text(
                 '${c.index}',
                 style: mono.inlineCode.copyWith(
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -782,7 +786,7 @@ class NonWifiChannelsScreen extends StatelessWidget {
               child: Text(
                 '${c.freqMhz}',
                 style: mono.inlineCode.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ),
@@ -793,11 +797,11 @@ class NonWifiChannelsScreen extends StatelessWidget {
                 // Advertising channels get the primary-tinted chip; data
                 // channels read as a neutral label (never color-only, §8.13).
                 child: adv
-                    ? const _Chip('Advertising', color: AppColors.primary)
+                    ? _Chip('Advertising', color: colors.textAccent)
                     : Text(
                         c.kind,
                         style: text.labelMedium?.copyWith(
-                          color: AppColors.textTertiary,
+                          color: colors.textTertiary,
                         ),
                       ),
               ),
@@ -812,6 +816,7 @@ class NonWifiChannelsScreen extends StatelessWidget {
   /// fact is a label column + a value that wraps; no fixed-width cells, so no
   /// horizontal overflow on a narrow phone.
   Widget _factCard({
+    required AppColorScheme colors,
     required TextTheme text,
     required AppMonoText mono,
     required String title,
@@ -831,7 +836,7 @@ class NonWifiChannelsScreen extends StatelessWidget {
             final (String key, String value) = entry.value;
             return [
               if (entry.key > 0)
-                const Divider(color: AppColors.border, height: AppSpacing.sm),
+                Divider(color: colors.border, height: AppSpacing.sm),
               ReferenceRowSemantics(
                 label: rowLabel(key, <String?>[value]),
                 child: Padding(
@@ -844,7 +849,7 @@ class NonWifiChannelsScreen extends StatelessWidget {
                         child: Text(
                           key,
                           style: text.labelMedium?.copyWith(
-                            color: AppColors.textSecondary,
+                            color: colors.textSecondary,
                             letterSpacing: 0.2,
                           ),
                         ),
@@ -854,7 +859,7 @@ class NonWifiChannelsScreen extends StatelessWidget {
                         child: Text(
                           value,
                           style: text.bodyMedium?.copyWith(
-                            color: AppColors.textPrimary,
+                            color: colors.textPrimary,
                           ),
                         ),
                       ),
@@ -868,7 +873,7 @@ class NonWifiChannelsScreen extends StatelessWidget {
             const SizedBox(height: AppSpacing.xs),
             Text(
               footnote,
-              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
             ),
           ],
         ],
@@ -885,10 +890,11 @@ class _UseLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme t = Theme.of(context).textTheme;
     return Text(
       text,
-      style: t.labelMedium?.copyWith(color: AppColors.textSecondary),
+      style: t.labelMedium?.copyWith(color: colors.textSecondary),
     );
   }
 }
@@ -907,11 +913,12 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -920,7 +927,7 @@ class _Card extends StatelessWidget {
           Text(
             heading,
             style: headingText.titleMedium?.copyWith(
-              color: AppColors.textPrimary,
+              color: colors.textPrimary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -941,13 +948,14 @@ class _HeaderCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return SizedBox(
       width: width,
       child: Text(
         label,
         style: text.labelSmall?.copyWith(
-          color: AppColors.textTertiary,
+          color: colors.textTertiary,
           letterSpacing: 0.4,
         ),
       ),

@@ -15,6 +15,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
@@ -37,7 +38,7 @@ class WpaMode {
     required this.encryption,
     required this.keyMethod,
     required this.pmf,
-    required this.statusColor,
+    required this.statusTone,
     required this.status,
   });
 
@@ -56,8 +57,9 @@ class WpaMode {
   /// Protected Management Frames support: "No" / "Opt" / "Req".
   final String pmf;
 
-  /// Verdict color for the status word. Ported from the PWA per-row hex.
-  final Color statusColor;
+  /// Verdict tone for the status word. Resolved to a §8.13/§8.20.1 status color
+  /// at render via [statusToneColor]; never a baked Color (theme-dependent).
+  final StatusTone statusTone;
 
   /// Deployment verdict, e.g. "Recommended" / "Do not deploy".
   final String status;
@@ -96,7 +98,7 @@ class WpaSecurityScreen extends StatelessWidget {
       encryption: 'RC4 (broken)',
       keyMethod: 'Static key',
       pmf: 'No',
-      statusColor: AppColors.statusDanger,
+      statusTone: StatusTone.danger,
       status: 'Do not deploy',
     ),
     WpaMode(
@@ -105,7 +107,7 @@ class WpaSecurityScreen extends StatelessWidget {
       encryption: 'TKIP',
       keyMethod: 'PSK / 802.1X',
       pmf: 'No',
-      statusColor: AppColors.statusDanger,
+      statusTone: StatusTone.danger,
       status: 'Deprecated',
     ),
     WpaMode(
@@ -114,7 +116,7 @@ class WpaSecurityScreen extends StatelessWidget {
       encryption: 'AES-CCMP (128-bit)',
       keyMethod: 'PSK passphrase',
       pmf: 'Opt',
-      statusColor: AppColors.statusWarning,
+      statusTone: StatusTone.warning,
       status: 'Acceptable',
     ),
     WpaMode(
@@ -123,7 +125,7 @@ class WpaSecurityScreen extends StatelessWidget {
       encryption: 'AES-CCMP (128-bit)',
       keyMethod: 'SAE',
       pmf: 'Req',
-      statusColor: AppColors.statusSuccess,
+      statusTone: StatusTone.success,
       status: 'Recommended',
     ),
     WpaMode(
@@ -132,7 +134,7 @@ class WpaSecurityScreen extends StatelessWidget {
       encryption: 'OWE (AES-CCMP)',
       keyMethod: 'None (auto)',
       pmf: 'Req',
-      statusColor: AppColors.statusInfo,
+      statusTone: StatusTone.info,
       status: 'Open networks',
     ),
     WpaMode(
@@ -141,7 +143,7 @@ class WpaSecurityScreen extends StatelessWidget {
       encryption: 'AES-CCMP (128-bit)',
       keyMethod: '802.1X + EAP',
       pmf: 'Opt',
-      statusColor: AppColors.statusInfo,
+      statusTone: StatusTone.info,
       status: 'Enterprise std',
     ),
     WpaMode(
@@ -150,7 +152,7 @@ class WpaSecurityScreen extends StatelessWidget {
       encryption: 'GCMP-256 (192-bit)',
       keyMethod: '802.1X + EAP',
       pmf: 'Req',
-      statusColor: AppColors.statusSuccess,
+      statusTone: StatusTone.success,
       status: 'Recommended',
     ),
   ];
@@ -347,10 +349,11 @@ class _IntroText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme t = Theme.of(context).textTheme;
     return Text(
       text,
-      style: t.labelMedium?.copyWith(color: AppColors.textSecondary),
+      style: t.labelMedium?.copyWith(color: colors.textSecondary),
     );
   }
 }
@@ -364,21 +367,22 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme t = Theme.of(context).textTheme;
     final List<Widget> rows = <Widget>[];
     for (int i = 0; i < children.length; i++) {
       if (i > 0) {
         rows.add(
-          const Divider(height: 1, thickness: 1, color: AppColors.border),
+          Divider(height: 1, thickness: 1, color: colors.border),
         );
       }
       rows.add(children[i]);
     }
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -387,7 +391,7 @@ class _SectionCard extends StatelessWidget {
           Text(
             title,
             style: t.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -408,6 +412,7 @@ class _ModeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme t = Theme.of(context).textTheme;
     return Semantics(
       container: true,
@@ -431,21 +436,24 @@ class _ModeRow extends StatelessWidget {
                       Text(
                         mode.mode,
                         style: t.bodyLarge?.copyWith(
-                          color: AppColors.textPrimary,
+                          color: colors.textPrimary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       Text(
                         mode.category,
                         style: t.labelSmall?.copyWith(
-                          color: AppColors.textTertiary,
+                          color: colors.textTertiary,
                         ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                _StatusChip(label: mode.status, color: mode.statusColor),
+                _StatusChip(
+                  label: mode.status,
+                  color: colors.statusToneColor(mode.statusTone),
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.xs),
@@ -482,6 +490,7 @@ class _Attr extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme t = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
@@ -492,13 +501,13 @@ class _Attr extends StatelessWidget {
             width: 92,
             child: Text(
               label,
-              style: t.labelMedium?.copyWith(color: AppColors.textTertiary),
+              style: t.labelMedium?.copyWith(color: colors.textTertiary),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: t.labelMedium?.copyWith(color: AppColors.textSecondary),
+              style: t.labelMedium?.copyWith(color: colors.textSecondary),
             ),
           ),
         ],
@@ -519,6 +528,7 @@ class _StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme t = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -533,7 +543,7 @@ class _StatusChip extends StatelessWidget {
       child: Text(
         label,
         style: t.labelMedium?.copyWith(
-          color: AppColors.textPrimary,
+          color: colors.textPrimary,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -549,6 +559,7 @@ class _FeatureRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme t = Theme.of(context).textTheme;
     return Semantics(
       container: true,
@@ -563,19 +574,19 @@ class _FeatureRow extends StatelessWidget {
             Text(
               feature.feature,
               style: t.bodyLarge?.copyWith(
-                color: AppColors.textPrimary,
+                color: colors.textPrimary,
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 2),
             Text(
               feature.appliesTo,
-              style: t.labelSmall?.copyWith(color: AppColors.textAccent),
+              style: t.labelSmall?.copyWith(color: colors.textAccent),
             ),
             const SizedBox(height: 2),
             Text(
               feature.description,
-              style: t.labelMedium?.copyWith(color: AppColors.textTertiary),
+              style: t.labelMedium?.copyWith(color: colors.textTertiary),
             ),
           ],
         ),
