@@ -66,7 +66,8 @@ dependencies:
   dart_ping_ios: ^4.0.2
 
   # url_launcher — opens external links in the SYSTEM BROWSER. Two consumers:
-  # the About screen (WLAN Pros contact form, wlanpros.com, thewlpc.com) and the
+  # the About screen (WLAN Pros contact form, wlanprofessionals.com, thewlpc.com)
+  # and the
   # Educational Resources detail screen's "Open website" button, both via
   # launchUrl(..., mode: LaunchMode.externalApplication). The canonical
   # Flutter-team plugin for opening URLs; chosen over the iOS-only Shortcuts
@@ -316,6 +317,12 @@ flutter:
     # pinch-zoomable PdfViewPinch (lib/screens/tools/reference/
     # pdf_reference_screen.dart) via pdfx → Apple PDFKit on iOS + macOS.
     - assets/reference-cards/
+    # WLAN Pros brand lockup (GL-003 §8.21). The transparent-background
+    # "wirelessLAN PROFESSIONALS" wordmark + lime #A1CC3A Wi-Fi arc, trimmed to
+    # its tight bounding box from the canonical `WLANProsLogo black.png` source.
+    # Rendered on a white containment plate (the §8.19 white-tile-on-dark
+    # pattern) in the About-screen header; never placed bare on a dark surface.
+    - assets/brand/wlan_pros_logo.png
 
   # Original commented-out scaffold examples removed for clarity.
 

@@ -94,12 +94,33 @@ void main() {
   ) async {
     await _pumpAboutTall(tester);
 
-    // Item 3, 4, 5, 6/8 each surface a tappable external link.
-    expect(find.text('Visit wlanpros.com'), findsOneWidget);
-    expect(find.text('Open thewlpc.com'), findsOneWidget);
-    expect(find.text('Open the contact form'), findsOneWidget);
+    // The five brand links (2026-06-05), slotted across the linked sections:
+    //   item 3 → Main site and resource library (wlanprofessionals.com)
+    //   item 4 → The conference (thewlpc.com) + #WLPC Weekly signup
+    //   item 5 → Training and classes + Contact and feedback
+    expect(find.text('Main site and resource library'), findsOneWidget);
+    expect(find.text('The conference'), findsOneWidget);
+    expect(find.text('#WLPC Weekly signup'), findsOneWidget);
+    expect(find.text('Training and classes'), findsOneWidget);
+    expect(find.text('Contact and feedback'), findsOneWidget);
     // "Send feedback" appears in both Help (item 6) and Version (item 8).
     expect(find.text('Send feedback'), findsNWidgets(2));
+  });
+
+  testWidgets('Brand lockup renders on its §8.21 white plate at the top', (
+    tester,
+  ) async {
+    await _pumpAboutTall(tester);
+
+    // The §8.21 lockup image is bundled and surfaced with an accessible name.
+    expect(
+      find.image(const AssetImage('assets/brand/wlan_pros_logo.png')),
+      findsOneWidget,
+    );
+    expect(
+      find.bySemanticsLabel('WLAN Pros — Wireless LAN Professionals'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('About screen fits a 375x900 iPhone viewport without overflow', (

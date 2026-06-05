@@ -11,20 +11,25 @@
 // Copy is verbatim from the SOP-020-approved draft
 // (Deliverables/2026-06-03-toolbox-about-content/about-draft.md, items 1-9).
 // Placeholders resolved per Keith's finalized decisions:
-//   - Items 5/6/8 contact + feedback → the live wlanpros.com contact form (one
-//     real destination). A `toolbox@` feedback alias can replace it later (see
-//     [_kFeedbackUrl]).
+//   - Items 5/6/8 contact + feedback → the live wlanprofessionals.com/contact
+//     form (the working form; the dropped `toolbox@` alias idea is gone).
 //   - Item 4 #WLPC → thewlpc.com + the #WLPC Weekly newsletter, NO date.
 //   - Item 7 Privacy → "Data not collected."
 //   - Item 8 Version → the real shipped value via [AppVersion.display].
 //   - Item 9 Credits → two-line version + a "View licenses" entry that opens
 //     Flutter's built-in license registry (showLicensePage), not a hand list.
 //
+// Branding (2026-06-05): the WLAN Pros brand lockup (GL-003 §8.21) anchors the
+// top of the screen on a white containment plate (the §8.19 white-tile-on-dark
+// pattern), and the official site links now use the wlanprofessionals.com
+// domain. Five external links are surfaced (site/resource library, the
+// conference, #WLPC Weekly signup, training, contact + feedback).
+//
 // Tokens: GL-003 §8.1 surface stack, §4 spacing, §8.5 type, §8.3 focus rings
-// (inherited via the themed TextButton / IconButton), §8.16 AppCopyAction on
-// the version row. External links open via url_launcher (cross-platform: iOS +
-// macOS, the two primary targets — the iOS-only Shortcuts bridge cannot serve
-// macOS).
+// (inherited via the themed TextButton / IconButton), §8.11 card radius +
+// §8.21 logo plate on the header, §8.16 AppCopyAction on the version row.
+// External links open via url_launcher (cross-platform: iOS + macOS, the two
+// primary targets — the iOS-only Shortcuts bridge cannot serve macOS).
 
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -35,22 +40,27 @@ import '../theme/app_tokens.dart';
 import '../widgets/app_copy_action.dart';
 import '../widgets/centered_content.dart';
 
-/// The WLAN Pros contact form — the single real destination for both consulting
-/// (item 5) and feedback (items 6 & 8) per Keith's decision (2026-06-03).
-const String _kContactUrl = 'https://www.wlanpros.com/contact/';
+/// Main site and resource library — the WLAN Pros home, the official-site link.
+const String _kWlanProsUrl = 'https://wlanprofessionals.com';
 
-/// Feedback destination. Today this is the same live contact form as
-/// [_kContactUrl]. When a dedicated `toolbox@wlanpros.com` (or `support@`) alias
-/// goes live, point this at `mailto:toolbox@wlanpros.com` and the feedback links
-/// in items 6 & 8 follow automatically — no other change needed.
+/// The WLPC conference site. No hardcoded date; thewlpc.com plus the #WLPC
+/// Weekly newsletter are the live source (Keith's decision).
+const String _kWlpcUrl = 'https://thewlpc.com';
+
+/// #WLPC Weekly newsletter signup — the LeadPages capture form.
+const String _kWlpcWeeklyUrl = 'https://wlanpros.lpages.co/wlpcweekly';
+
+/// Training and classes — Keith's Wi-Fi troubleshooting training site.
+const String _kTrainingUrl = 'https://wifitroubleshooting.com';
+
+/// Contact and feedback — the live wlanprofessionals.com contact form, the
+/// single real destination for both consulting (item 5) and feedback (items 6 &
+/// 8). The earlier `toolbox@` alias idea is dropped; this form is the working
+/// path.
+const String _kContactUrl = 'https://wlanprofessionals.com/contact';
+
+/// Feedback destination — the same live contact form as [_kContactUrl].
 const String _kFeedbackUrl = _kContactUrl;
-
-/// WLAN Pros home — item 3 ("Visit wlanpros.com").
-const String _kWlanProsUrl = 'https://www.wlanpros.com/';
-
-/// The WLPC conference site — item 4. No hardcoded date; thewlpc.com plus the
-/// #WLPC Weekly newsletter are the live source (Keith's decision).
-const String _kWlpcUrl = 'https://thewlpc.com/';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -87,6 +97,12 @@ class AboutScreen extends StatelessWidget {
                   edge + AppSpacing.sm,
                 ),
                 children: const <Widget>[
+                  // §8.21 — the WLAN Pros brand lockup on a white containment
+                  // plate, centered at the top of the About column. The charcoal
+                  // wordmark cannot sit bare on the dark canvas, so the plate
+                  // (the §8.19 white-tile-on-dark pattern) carries it.
+                  _LogoHeader(),
+
                   // 1. Why this toolbox
                   _Section(
                     title: 'Why this toolbox',
@@ -147,11 +163,13 @@ class AboutScreen extends StatelessWidget {
                           'credential. He has spent more than 25 years '
                           'building, breaking, and teaching Wi-Fi.',
                     ],
-                    link: _SectionLink(
-                      leadIn: 'Want the full story?',
-                      label: 'Visit wlanpros.com',
-                      url: _kWlanProsUrl,
-                    ),
+                    links: <_SectionLink>[
+                      _SectionLink(
+                        leadIn: 'Want the full story?',
+                        label: 'Main site and resource library',
+                        url: _kWlanProsUrl,
+                      ),
+                    ],
                   ),
 
                   // 4. The #WLPC Conference
@@ -160,8 +178,8 @@ class AboutScreen extends StatelessWidget {
                     paragraphs: <String>[
                       'If you work in Wi-Fi, go to WLPC at least once. It '
                           'changes how engineers think about the craft.',
-                      'WLPC is the conference for Wireless LAN professionals, '
-                          'by Wireless LAN professionals. It is vendor-neutral '
+                      'WLPC is the conference for Wireless LAN Professionals, '
+                          'by Wireless LAN Professionals. It is vendor-neutral '
                           'and free of sales pitches. The talks come from '
                           'working engineers sharing what they actually found '
                           'in the field, not marketing departments reading '
@@ -175,10 +193,16 @@ class AboutScreen extends StatelessWidget {
                           'never miss one, go to thewlpc.com and sign up for '
                           'the #WLPC Weekly newsletter.',
                     ],
-                    link: _SectionLink(
-                      label: 'Open thewlpc.com',
-                      url: _kWlpcUrl,
-                    ),
+                    links: <_SectionLink>[
+                      _SectionLink(
+                        label: 'The conference',
+                        url: _kWlpcUrl,
+                      ),
+                      _SectionLink(
+                        label: '#WLPC Weekly signup',
+                        url: _kWlpcWeeklyUrl,
+                      ),
+                    ],
                   ),
 
                   // 5. Get in touch
@@ -190,13 +214,20 @@ class AboutScreen extends StatelessWidget {
                           'job at WLAN Pros. We do design and consulting for '
                           'networks around the world, and we teach the '
                           'engineers who run them.',
-                      'Reach out through the contact form at wlanpros.com and '
-                          'tell us what you\'re working on.',
+                      'Reach out through the contact form at '
+                          'wlanprofessionals.com and tell us what you\'re '
+                          'working on.',
                     ],
-                    link: _SectionLink(
-                      label: 'Open the contact form',
-                      url: _kContactUrl,
-                    ),
+                    links: <_SectionLink>[
+                      _SectionLink(
+                        label: 'Training and classes',
+                        url: _kTrainingUrl,
+                      ),
+                      _SectionLink(
+                        label: 'Contact and feedback',
+                        url: _kContactUrl,
+                      ),
+                    ],
                   ),
 
                   // 6. Help and Documentation — verbatim honesty/methodology
@@ -261,12 +292,15 @@ String _aboutPlainText() {
     ..writeln()
     ..writeln('The #WLPC Conference')
     ..writeln(
-      'Vendor-neutral conference for Wireless LAN professionals. For the next '
-      'event and the #WLPC Weekly newsletter: $_kWlpcUrl',
+      'Vendor-neutral conference for Wireless LAN Professionals. For the next '
+      'event: $_kWlpcUrl. #WLPC Weekly signup: $_kWlpcWeeklyUrl',
     )
     ..writeln()
     ..writeln('Get in touch')
-    ..writeln('Design, troubleshooting, or training: $_kContactUrl')
+    ..writeln(
+      'Design, troubleshooting, or training: $_kContactUrl. '
+      'Training and classes: $_kTrainingUrl',
+    )
     ..writeln()
     ..writeln('Help and Documentation')
     ..writeln(
@@ -288,18 +322,70 @@ String _aboutPlainText() {
   return b.toString();
 }
 
-/// A titled About section rendered as a surface1 card, with optional trailing
-/// external link. Pure presentation; all copy comes from the parent.
+/// GL-003 §8.21 — the WLAN Pros brand lockup ("wirelessLAN PROFESSIONALS" +
+/// the lime #A1CC3A Wi-Fi arc) on a white containment plate, centered at the top
+/// of the About column.
+///
+/// The charcoal wordmark would compute ~1.1:1 on the #1A1A1A canvas (effectively
+/// invisible — the §8.21 broken-brand failure), so the lockup sits on a white
+/// plate, the same §8.19 white-tile-on-dark pattern the app already uses for QR
+/// codes. The 24px plate padding IS the logo's protected clear-space; the asset
+/// is the transparent, tight-bbox-trimmed PNG, rendered at its native aspect
+/// ratio (never stretched or recolored).
+class _LogoHeader extends StatelessWidget {
+  const _LogoHeader();
+
+  /// §8.21 About-header lockup width band is 160–200px; 180px sits in the
+  /// middle and keeps the plate well under the §8.7 content max-width.
+  static const double _lockupWidth = 180;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: Align(
+        child: Container(
+          // §8.21 plate: white fill, §8.11 card radius, §4 --space-md padding
+          // that doubles as the protected clear-space.
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: AppColors.neutral0,
+            borderRadius: BorderRadius.circular(AppRadius.card),
+          ),
+          child: Semantics(
+            label: 'WLAN Pros — Wireless LAN Professionals',
+            image: true,
+            // The raster carries no text layer; the Semantics label above is the
+            // accessible name, so the bare Image is hidden from the a11y tree.
+            child: ExcludeSemantics(
+              child: Image.asset(
+                'assets/brand/wlan_pros_logo.png',
+                width: _lockupWidth,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A titled About section rendered as a surface1 card, with zero or more
+/// trailing external links. Pure presentation; all copy comes from the parent.
 class _Section extends StatelessWidget {
   const _Section({
     required this.title,
     required this.paragraphs,
-    this.link,
+    this.links = const <_SectionLink>[],
   });
 
   final String title;
   final List<String> paragraphs;
-  final _SectionLink? link;
+
+  /// External links rendered at the foot of the card, in order. Empty for
+  /// sections with no link.
+  final List<_SectionLink> links;
 
   @override
   Widget build(BuildContext context) {
@@ -335,12 +421,12 @@ class _Section extends StatelessWidget {
                     text.bodyLarge?.copyWith(color: AppColors.textSecondary),
               ),
             ],
-            if (link != null) ...<Widget>[
+            for (final _SectionLink l in links) ...<Widget>[
               const SizedBox(height: AppSpacing.sm),
               _ExternalLinkButton(
-                label: link!.label,
-                url: link!.url,
-                leadIn: link!.leadIn,
+                label: l.label,
+                url: l.url,
+                leadIn: l.leadIn,
               ),
             ],
           ],
