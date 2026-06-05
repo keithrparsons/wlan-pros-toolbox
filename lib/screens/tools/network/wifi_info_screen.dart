@@ -173,11 +173,28 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   /// missing / not installed). Surfaced as the honest error in the Live bar.
   bool _liveTriggerError = false;
 
-  /// True when live monitoring was paused because the app went to the
-  /// background, so [didChangeAppLifecycleState] knows to resume streaming on
-  /// the next foreground rather than leaving the user to tap Start again
-  /// (Batch 8, item 5 — pause-and-resume, not a hard stop).
-  bool _pausedForBackground = false;
+  /// True from the instant Live Start fires the companion Shortcut until the app
+  /// has returned to the foreground after that Shortcut run completes.
+  ///
+  /// On iOS the Live trigger opens the Shortcuts app (`UIApplication.shared.open`
+  /// in AppDelegate.runShortcut), which VISIBLY backgrounds the Toolbox and then
+  /// foregrounds it again when the run returns. That background→foreground bounce
+  /// is caused by the app itself, NOT by the user leaving and coming back. This
+  /// flag lets [didChangeAppLifecycleState] tell the two apart: while it is set,
+  /// the lifecycle transitions are the Shortcut round-trip and MUST NOT stop
+  /// sampling or (critically) re-fire the Shortcut. Re-firing on that
+  /// app-induced foreground was the runaway: fire → background → resume →
+  /// fire → background → … an unbreakable loop the user had to force-kill. The
+  /// foreground that clears this flag never re-arms anything; the stream simply
+  /// keeps running off the already-recursing Shortcut.
+  bool _shortcutBounceInFlight = false;
+
+  /// Guards [_startLive] against re-entrancy. A Shortcut trigger may only be
+  /// fired by an explicit user tap, never automatically, and never while a
+  /// previous trigger's bounce is still resolving. Belt-and-suspenders on top of
+  /// [_shortcutBounceInFlight]: even a stray programmatic call cannot chain one
+  /// Shortcut run into the next.
+  bool _startInFlight = false;
 
   // ---- AP-vendor (OUI) lookup state (both platforms) ----
 
@@ -231,33 +248,48 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // iOS: pause the live sampling loop when the app leaves the foreground, and
-    // resume on return — mirroring the macOS poll's background-pause below
-    // (Batch 8, item 5). Without this the recursive companion Shortcut keeps
-    // running while the app is backgrounded; pausing stops the sampling the same
-    // way leaving the screen does.
+    // iOS: stop the live sampling loop when the app genuinely leaves the
+    // foreground, but NEVER auto-re-fire the Shortcut on return.
+    //
+    // The hard constraint: firing the Live Shortcut itself backgrounds the app
+    // (it opens the Shortcuts app) and then foregrounds it again when the run
+    // returns. That app-induced bounce is indistinguishable, at the lifecycle
+    // level, from the user switching away and back — EXCEPT for the
+    // [_shortcutBounceInFlight] flag the Start path sets. So:
+    //
+    //   * A background that is part of the Shortcut bounce is ignored (the
+    //     recursion is meant to keep going; stopping it here would also fight
+    //     the resume).
+    //   * A genuine background (user left the app) stops sampling — the original
+    //     auto-stop goal — and the last reading stays frozen on screen.
+    //   * A foreground NEVER re-fires the Shortcut. The recursion, if still
+    //     armed, keeps streaming on its own; if it was stopped, the user taps
+    //     Start to resume. This is what makes a runaway impossible: there is no
+    //     code path where returning to the foreground triggers another run.
     if (_source == WifiInfoSource.iosShortcuts) {
       if (state == AppLifecycleState.resumed) {
-        // Re-resolve so a payload delivered while backgrounded lands AND any
-        // persisted monitoring flag resumes the live state.
+        // The Shortcut bounce has completed (or the user returned). Either way,
+        // re-resolve so a payload delivered while we were backgrounded lands and
+        // the persisted monitoring flag re-attaches the stream WITHOUT firing
+        // the Shortcut. load() reads cache + re-subscribes only; it never opens
+        // a URL, so it cannot loop.
+        _shortcutBounceInFlight = false;
         _liveController?.load();
         // Re-read the native security + BSSID so a Location grant made in
         // Settings (while backgrounded) lands without an app relaunch.
         _fetchIosSecurity();
-        // If we paused streaming for the background, resume it now (re-arm the
-        // flag and re-fire the recursive Shortcut once) so the user does not
-        // have to tap Start again.
-        if (_pausedForBackground) {
-          _pausedForBackground = false;
-          _startLive();
-        }
       } else if (state == AppLifecycleState.inactive ||
           state == AppLifecycleState.paused ||
           state == AppLifecycleState.hidden) {
-        // Only pause an active stream; an idle screen has nothing to stop.
+        // Ignore the background half of the Shortcut bounce — that backgrounding
+        // is the app opening Shortcuts, not the user leaving, and the recursion
+        // is supposed to continue.
+        if (_shortcutBounceInFlight) return;
+        // A genuine background: stop sampling (clears the loop-gate flag so the
+        // recursive Shortcut halts on its next check). The last values stay on
+        // screen. The user re-taps Start to resume — no auto-resume, no loop.
         final WifiMonitorController? c = _liveController;
         if (c != null && c.isStreaming) {
-          _pausedForBackground = true;
           c.stopMonitoring();
         }
       }
@@ -331,21 +363,41 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   /// Live Start: raise the monitoring flag AND fire the recursive Shortcut once
   /// to kick off the stream. The app then passively consumes the bridge updates;
   /// it never loops itself.
+  ///
+  /// Re-entrancy guarded. Firing the Shortcut backgrounds the app and then
+  /// foregrounds it on return; this must be the ONLY place a Shortcut run is
+  /// triggered, and it must run only once per explicit user tap.
+  /// [_startInFlight] rejects an overlapping call, and [_shortcutBounceInFlight]
+  /// tells the lifecycle observer the following background→foreground is the
+  /// Shortcut round-trip, not a user app-switch — so the observer neither stops
+  /// the stream nor re-fires the trigger. Together they make a self-sustaining
+  /// loop impossible: nothing automatic can chain one run into another.
   Future<void> _startLive() async {
     final WifiMonitorController? c = _liveController;
     if (c == null) return;
+    if (_startInFlight) return; // re-entrancy guard: never chain a second run
+    _startInFlight = true;
+    // Mark the imminent Shortcut bounce BEFORE the trigger fires, so the
+    // background it causes is recognized as the round-trip and ignored.
+    _shortcutBounceInFlight = true;
     setState(() => _liveTriggerError = false);
-    final bool opened = await c.startMonitoring(
-      triggerShortcutName: WifiLiveShortcutsConfig.kLiveShortcutName,
-    );
-    if (!mounted) return;
-    if (!opened) {
-      // Could not open the Shortcut. Surface the honest error immediately, then
-      // clear the monitoring flag (the recursion never started, so there is no
-      // producer). Showing the error first means the banner does not wait on the
-      // stop cleanup completing.
-      setState(() => _liveTriggerError = true);
-      await c.stopMonitoring();
+    try {
+      final bool opened = await c.startMonitoring(
+        triggerShortcutName: WifiLiveShortcutsConfig.kLiveShortcutName,
+      );
+      if (!mounted) return;
+      if (!opened) {
+        // Could not open the Shortcut. There is no bounce coming, so clear the
+        // in-flight marker now. Surface the honest error immediately, then clear
+        // the monitoring flag (the recursion never started, so there is no
+        // producer). Showing the error first means the banner does not wait on
+        // the stop cleanup completing.
+        _shortcutBounceInFlight = false;
+        setState(() => _liveTriggerError = true);
+        await c.stopMonitoring();
+      }
+    } finally {
+      _startInFlight = false;
     }
   }
 

@@ -687,9 +687,71 @@ void main() {
       expect(bridge.monitoringActive, isFalse);
     });
 
+    // REGRESSION — beta-blocker runaway loop (force-kill required).
+    //
+    // On iOS, Live Start fires the "WLAN Pros Live" Shortcut, which opens the
+    // Shortcuts app. That VISIBLY backgrounds the Toolbox (inactive/paused) and
+    // then foregrounds it again (resumed) when the run returns. The earlier
+    // "pause-and-resume" code auto-re-fired the Shortcut on that resume, so:
+    //   fire -> background -> resume -> fire -> background -> resume -> ...
+    // an unbreakable loop the user had to force-kill. This test reproduces the
+    // exact Start -> background -> foreground sequence the Shortcut bounce
+    // produces and proves the Shortcut is fired EXACTLY ONCE — the resume does
+    // NOT re-fire it — so the app can never ping-pong to Shortcuts on its own.
     testWidgets(
-        'backgrounding pauses live sampling; foreground resumes it (item 5)',
-        (tester) async {
+        'a Shortcut-run-induced foreground does NOT auto-re-fire the Shortcut '
+        '(no runaway loop)', (tester) async {
+      final bridge = _FakeBridge(
+        everReceived: true,
+        latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
+      );
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      // User taps Start: the Shortcut fires exactly once.
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+      expect(bridge.runShortcutCalls, 1);
+      expect(bridge.monitoringActive, isTrue);
+
+      // The bounce: opening Shortcuts backgrounds the Toolbox...
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pumpAndSettle();
+      // ...and the Shortcut run returns, foregrounding the Toolbox again.
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+
+      // THE FIX: the app-induced foreground did NOT fire the Shortcut again.
+      // Still exactly one run; the recursion (modeled by the live bridge stream)
+      // carries the streaming, not a re-trigger from the app.
+      expect(bridge.runShortcutCalls, 1,
+          reason: 'resume after a Shortcut bounce must never re-fire the '
+              'Shortcut — that is the runaway loop');
+
+      // Hammer the bounce a few more times: a real loop would multiply the run
+      // count without bound. The count must stay pinned at 1.
+      for (int i = 0; i < 5; i++) {
+        tester.binding
+            .handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+        tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+        await tester.pumpAndSettle();
+        tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+        await tester.pumpAndSettle();
+      }
+      expect(bridge.runShortcutCalls, 1,
+          reason: 'repeated foreground transitions must never accumulate '
+              'Shortcut runs');
+    });
+
+    testWidgets(
+        'a genuine background (not a Shortcut bounce) stops sampling and the '
+        'foreground does not auto-restart it', (tester) async {
       final bridge = _FakeBridge(
         everReceived: true,
         latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
@@ -704,21 +766,26 @@ void main() {
       await tester.tap(find.text('Start'));
       await tester.pumpAndSettle();
       expect(bridge.monitoringActive, isTrue);
-      final int runsAfterStart = bridge.runShortcutCalls;
+      expect(bridge.runShortcutCalls, 1);
 
-      // App goes to the background: the live loop must pause (flag cleared) the
-      // same way the macOS poll pauses — no more sampling while backgrounded.
+      // Simulate the Start's Shortcut bounce fully completing first (resume
+      // clears the in-flight marker), so the NEXT background is a genuine
+      // user-driven app switch, not the Start trigger's own bounce.
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+
+      // User genuinely leaves the app: sampling stops (the auto-stop goal — the
+      // loop-gate flag is cleared so the recursive Shortcut halts).
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
       await tester.pumpAndSettle();
       expect(bridge.monitoringActive, isFalse);
 
-      // App returns to the foreground: streaming resumes automatically (flag set
-      // again + the recursive Shortcut re-fired once), so the user need not tap
-      // Start again.
+      // User returns: the Shortcut is NOT auto-re-fired. Still one run; the user
+      // re-taps Start to resume (no auto-resume → no loop).
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await tester.pumpAndSettle();
-      expect(bridge.monitoringActive, isTrue);
-      expect(bridge.runShortcutCalls, greaterThan(runsAfterStart));
+      expect(bridge.runShortcutCalls, 1);
+      expect(bridge.monitoringActive, isFalse);
     });
 
     testWidgets('a streamed reading is written to the shared cache (item 1)',
