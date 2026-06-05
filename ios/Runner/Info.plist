@@ -60,7 +60,7 @@
 	     Location is used only on-device for these readings and is never stored
 	     or shared. -->
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>WLAN Pros Toolbox uses your location to read the name (SSID) of the Wi-Fi network you are connected to, and to fill in your current latitude and longitude in the Lat / Long tool. Your location is never stored or shared.</string>
+	<string>WLAN Pros Toolbox uses your location to read the name (SSID) of the Wi-Fi network you are connected to, and to fill in your current latitude and longitude in the Lat / Long tool. When you use the map, your coordinates are sent to OpenStreetMap to load the map tiles. Your location is not stored by us and is never used for tracking or advertising.</string>
 	<!-- LSApplicationQueriesSchemes lets the app open the Shortcuts app via the
 	     PLAIN, fire-and-forget `shortcuts://run-shortcut?name=…` URL on iOS 9+
 	     (UIApplication.canOpenURL / open both consult this allow-list). This is
