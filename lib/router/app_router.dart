@@ -47,6 +47,7 @@ import '../screens/tools/reference/signal_thresholds_screen.dart';
 import '../screens/tools/reference/wpa_security_screen.dart';
 import '../screens/tools/reference/http_status_codes_screen.dart';
 import '../screens/tools/reference/optical_transceivers_screen.dart';
+import '../screens/tools/reference/wifi_tools_comparison_screen.dart';
 import '../screens/tools/reference/reason_codes_screen.dart';
 import '../screens/tools/reference/frame_exchange_screen.dart';
 import '../screens/tools/reference/db_reference_screen.dart';
@@ -258,6 +259,13 @@ class AppRouter {
   /// (bundled JSON). The id `optical-transceivers` is permanent (route, catalog,
   /// asset, help, tests).
   static const String opticalTransceivers = '/tools/optical-transceivers';
+
+  /// Wi-Fi Tools Comparison — v1.1 beta. Offline, vendor-neutral capability-and-
+  /// cost reference of professional Wi-Fi survey/design/spectrum/troubleshooting
+  /// toolkits, grouped by activity (bundled JSON). TCO figures are modeled
+  /// estimates carried with a date-stamp + beta-review disclaimer. The id
+  /// `wifi-tools-comparison` is permanent (route, catalog, asset, help, tests).
+  static const String wifiToolsComparison = '/tools/wifi-tools-comparison';
   static const String osiModel = '/tools/osi-model';
   static const String topLevelDomains = '/tools/top-level-domains';
   static const String rjConnectors = '/tools/rj-connectors';
@@ -431,6 +439,7 @@ class AppRouter {
     portReference: (_) => const PortReferenceScreen(),
     plmnReference: (_) => const PlmnReferenceScreen(),
     opticalTransceivers: (_) => const OpticalTransceiversScreen(),
+    wifiToolsComparison: (_) => const WifiToolsComparisonScreen(),
     osiModel: (_) => const OsiModelScreen(),
     topLevelDomains: (_) => const TopLevelDomainsScreen(),
     rjConnectors: (_) => const RjConnectorsScreen(),

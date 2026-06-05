@@ -956,6 +956,23 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Wi-Fi & RF',
         isLive: true,
       ),
+      // Wi-Fi Tools Comparison — v1.1 beta. A vendor-neutral capability-and-cost
+      // reference of professional Wi-Fi survey/design/spectrum/troubleshooting
+      // toolkits, grouped by activity (offline bundled JSON). TCO + up-front
+      // figures are MODELED ESTIMATES shown with a date-stamp + modeled-estimate
+      // + beta-review disclaimer. No vendor logos/photos (permission pending).
+      // Not a ranking; alphabetical by vendor. Tamosoft excluded (Keith
+      // 2026-06-05). No bespoke <id>.svg yet, so ToolRow shows the lime-bolt
+      // fallback (bespoke icon = follow-up).
+      ToolEntry(
+        id: 'wifi-tools-comparison',
+        title: 'Wi-Fi Tools Comparison',
+        description:
+            'Survey, design, spectrum and troubleshooting toolkits compared by capability and cost — offline',
+        routeName: '/tools/wifi-tools-comparison',
+        subgroup: 'Wi-Fi & RF',
+        isLive: true,
+      ),
       // NOTE: the 10 laminated PDF reference cards (6 reference cards + 4
       // checklist cards) MOVED to the Educational Resources category on
       // 2026-06-04 (Keith). They render at the top of EducationalResourcesScreen

@@ -272,6 +272,10 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'wavelength', 'reach', 'sr', 'lr', 'er', 'zr', '10gbase', '100gbase',
     '400gbase', 'mpo', 'lc connector', 'gbic', 'pluggable',
   ],
+  'wifi-tools-comparison': <String>[
+    'tools', 'comparison', 'survey', 'planner', 'spectrum', 'ekahau', 'hamina',
+    'netally', 'intuitibits', 'oscium', 'vendor', 'tco', 'cost',
+  ],
   'reason-codes': <String>[
     'deauth', 'disassoc', 'status code', '802.11 codes', 'disconnect reason',
   ],
