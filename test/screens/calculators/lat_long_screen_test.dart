@@ -65,6 +65,17 @@ const LocationFix _sampleFix = LocationFix(
   altitudeAccuracyMeters: 3,
 );
 
+/// An IP-derived approximate fix: no altitude, no accuracy, flagged source.
+/// Mirrors what DeviceLocation returns when Core Location gives no fix.
+const LocationFix _ipApproxFix = LocationFix(
+  latitude: 40.5,
+  longitude: -111.9,
+  altitudeMeters: null,
+  accuracyMeters: null,
+  altitudeAccuracyMeters: null,
+  source: LocationSource.ipApproximate,
+);
+
 void main() {
   group('Lat/Long parts (pure) — matches PWA ddToDmsParts', () {
     test('40.7128 splits to 40° 42\' 46.08"', () {
@@ -365,6 +376,34 @@ void main() {
         );
         // No fabricated coordinate.
         expect(find.text('40.712800'), findsNothing);
+      });
+    });
+
+    testWidgets('an IP-approximate fix prefills and is labeled honestly',
+        (tester) async {
+      final fake = _FakeLocation(
+        permission: LocationPermissionState.granted,
+        result: const LocationSuccess(_ipApproxFix),
+      );
+      await _withViewport(tester, const Size(375, 1100), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: LatLongScreen(location: fake),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // The IP coordinate prefills the fields → DD renders.
+        expect(find.text('40.500000'), findsWidgets);
+        expect(find.text('-111.900000'), findsWidgets);
+        // Honest "from your public IP" label, not a GPS claim.
+        expect(find.textContaining('public IP'), findsOneWidget);
+        expect(find.text('Your approximate location'), findsOneWidget);
+        // No altitude reported → honest "Not reported", not a fake 0.
+        expect(find.text('Not reported'), findsWidgets);
+        // It must NOT also show the Wi-Fi-coarse note (mutually exclusive).
+        expect(find.textContaining('Wi-Fi-derived'), findsNothing);
       });
     });
 

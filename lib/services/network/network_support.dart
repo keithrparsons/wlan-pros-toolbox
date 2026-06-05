@@ -102,9 +102,9 @@ class NetworkSupport {
   /// web is routed to the download-the-app fallback. Same `!kIsWeb` gate.
   static bool get bgpAsnSupported => !kIsWeb;
 
-  /// IP Geolocation support. Talks to the ipwho.is API over HTTPS via
-  /// `dart:io HttpClient`. Native-only for the same reason as [bgpAsnSupported]
-  /// (no `dart:io` on web; CORS unverified). Web → fallback.
+  /// IP Geolocation support. Talks to the ipinfo.io API (geojs.io fallback)
+  /// over HTTPS via `dart:io HttpClient`. Native-only for the same reason as
+  /// [bgpAsnSupported] (no `dart:io` on web; CORS unverified). Web → fallback.
   static bool get ipGeoSupported => !kIsWeb;
 
   /// ARP / NDP neighbor discovery support. The *screen* is reachable off-web on

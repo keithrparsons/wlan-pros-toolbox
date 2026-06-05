@@ -26,7 +26,15 @@
 		     (1) the Lat / Long tool fills the live GPS fix and the OSM map tool
 		     sends those coordinates to tile.openstreetmap.org to load map tiles;
 		     (2) SSID read is gated behind Location on iOS. Used for app
-		     functionality only. Not linked to identity, not used for tracking. -->
+		     functionality only. Not linked to identity, not used for tracking.
+
+		     IP-APPROXIMATE FALLBACK (Lat / Long tool): when Core Location returns
+		     no fix, the tool can estimate an approximate city-level location from
+		     the device's public IP via a keyless HTTPS lookup (ipinfo.io / geojs.io).
+		     This flow does NOT transmit the user's coordinates — the provider
+		     derives the location from the public IP, which the app's existing
+		     network tools already send/declare. No new collected-data type or
+		     accessed-API reason is required; this note is for auditor clarity only. -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypePreciseLocation</string>

@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+7
+version: 1.0.0+8
 
 environment:
   sdk: ^3.12.0
@@ -202,6 +202,13 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+  # plugin_platform_interface — used ONLY in tests (MockPlatformInterfaceMixin)
+  # to mock GeolocatorPlatform.instance so the DeviceLocation IP-approximate
+  # fallback can be exercised without real GPS hardware. Already present
+  # transitively via geolocator; declared here so the test import is a direct
+  # dependency (satisfies depend_on_referenced_packages).
+  plugin_platform_interface: ^2.1.8
 
   # integration_test — drives widget tests against the REAL platform embedder
   # (here: macOS, via `flutter test -d macos`) so native PDFKit is available.
