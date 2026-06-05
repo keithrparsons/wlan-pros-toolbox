@@ -401,7 +401,7 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
       selectedColor: AppColors.primary,
       backgroundColor: AppColors.surface2,
       materialTapTargetSize: MaterialTapTargetSize.padded,
-      side: AppTheme.chipSide(),
+      side: AppTheme.chipSide(Theme.of(context).brightness),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.control),
       ),
@@ -576,7 +576,7 @@ class _ReplyCard extends StatelessWidget {
       selectedColor: AppColors.primary,
       backgroundColor: AppColors.surface2,
       materialTapTargetSize: MaterialTapTargetSize.padded,
-      side: AppTheme.chipSide(),
+      side: AppTheme.chipSide(Theme.of(context).brightness),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.control),
       ),

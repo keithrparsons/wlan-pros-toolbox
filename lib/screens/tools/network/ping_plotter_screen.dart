@@ -354,7 +354,7 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
       selectedColor: AppColors.primary,
       backgroundColor: AppColors.surface2,
       materialTapTargetSize: MaterialTapTargetSize.padded,
-      side: AppTheme.chipSide(),
+      side: AppTheme.chipSide(Theme.of(context).brightness),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.control),
       ),

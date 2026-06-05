@@ -282,7 +282,7 @@ class _HttpHeaderScreenState extends State<HttpHeaderScreen> {
                 materialTapTargetSize: MaterialTapTargetSize.padded,
                 // §8.3 — shared resolver: idle/selected/disabled borders + 2px
                 // lime keyboard-focus ring.
-                side: AppTheme.chipSide(),
+                side: AppTheme.chipSide(Theme.of(context).brightness),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.control),
                 ),
