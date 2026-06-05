@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- PLMN ID Reference: a SIM card (cut-corner card body) with the carrier
+         contact pad inside — the offline lookup of MCC / MNC / PLMN ID codes
+         that identify a mobile carrier. Cut-corner SIM silhouette is distinct
+         from cellular-info's signal-bar staircase. -->
+    <!-- SIM card body with the canonical bevelled top-right corner -->
+    <path d="M5 4 H15.5 L19 7.5 V20 H5 Z"/>
+    <!-- contact pad: outline + the divider lines that read as the carrier code chip -->
+    <rect x="8" y="10" width="8" height="6" rx="1"/>
+    <path d="M12 10 V16"/>
+    <path d="M8 13 H16"/>
+  </g>
+</svg>

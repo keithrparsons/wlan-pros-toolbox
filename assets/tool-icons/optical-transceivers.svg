@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Optical Transceivers: a pluggable optic module (SFP/QSFP/OSFP) in
+         profile — the module body, the bail latch handle on the front, and the
+         duplex fiber port at the mating end. Pluggable-module silhouette is
+         distinct from fiber-optic's bent glass strand + light rays. -->
+    <!-- module body -->
+    <rect x="4" y="9" width="11" height="8" rx="1.5"/>
+    <!-- bail latch handle: a full loop standing up off the rear (the SFP tell) -->
+    <path d="M5 9 V4 H10 V9"/>
+    <!-- duplex fiber port: two bores at the mating face -->
+    <circle cx="19" cy="11.5" r="1.2" fill="currentColor" stroke="none"/>
+    <circle cx="19" cy="14.5" r="1.2" fill="currentColor" stroke="none"/>
+    <!-- mating end face linking body to the two ports -->
+    <path d="M15 11.5 H17.4"/>
+    <path d="M15 14.5 H17.4"/>
+  </g>
+</svg>

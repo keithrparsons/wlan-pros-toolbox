@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Wi-Fi Authentication Glossary: a KEY above an open book — look up an
+         authentication term. The key (auth) over the open book (glossary)
+         silhouette is the sibling of wifi-glossary (Wi-Fi mark over a book):
+         same book base, different topper, so the pair survives 20px. -->
+    <!-- open book (lower): left page, spine valley, right page -->
+    <path d="M12 12 C 10 10.5 6.5 10.5 4 11 L 4 19.5 C 6.5 19 10 19 12 20.5 C 14 19 17.5 19 20 19.5 L 20 11 C 17.5 10.5 14 10.5 12 12 Z"/>
+    <line x1="12" y1="12" x2="12" y2="20.5"/>
+    <!-- key (upper), centered over the book: ring bow + stem + two bit teeth -->
+    <circle cx="9.5" cy="5" r="2.5"/>
+    <path d="M11.7 6.3 L16 9"/>
+    <path d="M14.2 8.5 L13.2 10"/>
+    <path d="M16 9 L15 10.6"/>
+  </g>
+</svg>
