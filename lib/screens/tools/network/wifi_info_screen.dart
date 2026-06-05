@@ -61,6 +61,7 @@ import '../../../services/network/wifi_monitor_controller.dart';
 import '../../../services/network/wifi_security.dart';
 import '../../../services/network/wifi_security_service.dart';
 import '../../../services/network/wifi_time_series.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -572,15 +573,16 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         return [
           AppCopyAction(textBuilder: _buildCopyText),
           _macLoading
-              ? const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                   child: Center(
                     child: SizedBox(
                       width: 18,
                       height: 18,
+                      // Foreground accent → darkened-lime in light (§8.20.2).
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.primary,
+                        color: context.colors.textAccent,
                       ),
                     ),
                   ),
@@ -1229,6 +1231,7 @@ class _PlatformComingSoon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Center(
       child: ConstrainedBox(
@@ -1238,16 +1241,16 @@ class _PlatformComingSoon extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
+              Icon(
                 Icons.wifi_find_outlined,
                 size: 48,
-                color: AppColors.textTertiary,
+                color: colors.textTertiary,
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 'Coming in a later update',
                 style: text.headlineSmall?.copyWith(
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -1257,7 +1260,7 @@ class _PlatformComingSoon extends StatelessWidget {
                 "later update. On macOS, Wi-Fi Information reads the link "
                 'directly through CoreWLAN; on iOS, it reads the connected '
                 "access point's RF metrics through a companion Shortcut.",
-                style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+                style: text.bodyLarge?.copyWith(color: colors.textSecondary),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -1274,22 +1277,24 @@ class _LoadingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         children: [
-          const SizedBox(
+          SizedBox(
             width: 20,
             height: 20,
+            // Foreground accent → darkened-lime in light (§8.20.2).
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: AppColors.primary,
+              color: colors.textAccent,
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
@@ -1299,7 +1304,7 @@ class _LoadingCard extends StatelessWidget {
               child: Text(
                 'Reading Wi-Fi link state…',
                 style: text.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ),
@@ -1333,12 +1338,13 @@ class _LocationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -1347,17 +1353,17 @@ class _LocationCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
+              Icon(
                 Icons.location_on_outlined,
                 size: 20,
-                color: AppColors.primary,
+                color: colors.textAccent, // foreground accent (§8.20.2)
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
                   message,
                   style: text.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: colors.textSecondary,
                   ),
                 ),
               ),
@@ -1418,9 +1424,10 @@ class _LocationSteps extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final TextStyle? style = text.bodySmall?.copyWith(
-      color: AppColors.textTertiary,
+      color: colors.textTertiary,
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1444,18 +1451,19 @@ class _WifiOffCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.wifi_off, size: 20, color: AppColors.textTertiary),
+          Icon(Icons.wifi_off, size: 20, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -1464,7 +1472,7 @@ class _WifiOffCard extends StatelessWidget {
                 Text(
                   'Wi-Fi is off',
                   style: text.titleMedium?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
@@ -1472,7 +1480,7 @@ class _WifiOffCard extends StatelessWidget {
                   'Turn Wi-Fi on to read live link details. Any values still '
                   'reported by the system are shown below.',
                   style: text.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: colors.textSecondary,
                   ),
                 ),
               ],
@@ -1494,13 +1502,14 @@ class _ErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final String? detail = error?.detail;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -1509,10 +1518,10 @@ class _ErrorCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
+              Icon(
                 Icons.info_outline,
                 size: 20,
-                color: AppColors.textTertiary,
+                color: colors.textTertiary,
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
@@ -1522,7 +1531,7 @@ class _ErrorCard extends StatelessWidget {
                     Text(
                       'No Wi-Fi reading available',
                       style: text.titleMedium?.copyWith(
-                        color: AppColors.textPrimary,
+                        color: colors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xs),
@@ -1532,7 +1541,7 @@ class _ErrorCard extends StatelessWidget {
                           : 'The system did not return a Wi-Fi snapshot. '
                                 'There may be no active Wi-Fi interface.',
                       style: text.bodyMedium?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ],
@@ -1580,12 +1589,13 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: EdgeInsets.symmetric(
         horizontal: AppSpacing.sm,
@@ -1597,7 +1607,7 @@ class _Card extends StatelessWidget {
           Text(
             title,
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -1651,6 +1661,7 @@ class _MetricRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final bool hasValue = value != null && value!.trim().isNotEmpty;
     final String shown = hasValue
@@ -1672,8 +1683,8 @@ class _MetricRow extends StatelessWidget {
     final AppMonoText monoText =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final Color valueColor = hasValue
-        ? AppColors.textPrimary
-        : AppColors.textSecondary;
+        ? colors.textPrimary
+        : colors.textSecondary;
     final TextStyle? valueStyle = (mono && hasValue)
         ? monoText.robotoMono.copyWith(color: valueColor)
         : text.bodyMedium?.copyWith(color: valueColor);
@@ -1698,14 +1709,14 @@ class _MetricRow extends StatelessWidget {
                       Text(
                         label,
                         style: text.bodyMedium?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: colors.textSecondary,
                         ),
                       ),
                       if (derived)
                         Text(
                           'derived',
                           style: text.labelSmall?.copyWith(
-                            color: AppColors.textTertiary,
+                            color: colors.textTertiary,
                             letterSpacing: 0.4,
                           ),
                         ),
@@ -1728,7 +1739,7 @@ class _MetricRow extends StatelessWidget {
               Text(
                 footnote,
                 textAlign: TextAlign.end,
-                style: text.bodySmall?.copyWith(color: AppColors.textTertiary),
+                style: text.bodySmall?.copyWith(color: colors.textTertiary),
               ),
             ],
           ],
@@ -1851,6 +1862,7 @@ class _LiveStartHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
@@ -1858,7 +1870,7 @@ class _LiveStartHint extends StatelessWidget {
         'Tap Start to begin live readings. The companion Shortcut sends a sample '
         'each cycle; each one charts here and the signal dimensions are graded as '
         'they arrive. Stop freezes the last values on screen.',
-        style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+        style: text.bodyLarge?.copyWith(color: colors.textSecondary),
         textAlign: TextAlign.center,
       ),
     );
@@ -1871,18 +1883,19 @@ class _LiveTriggerErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Icon(Icons.error_outline, size: 20, color: AppColors.statusDanger),
+          Icon(Icons.error_outline, size: 20, color: colors.statusDanger),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Semantics(
@@ -1891,7 +1904,7 @@ class _LiveTriggerErrorCard extends StatelessWidget {
                 'Could not start live streaming. The looping companion Shortcut '
                 'may not be installed, or the run was cancelled. Install it, '
                 'then press Start again.',
-                style: text.bodyMedium?.copyWith(color: AppColors.textSecondary),
+                style: text.bodyMedium?.copyWith(color: colors.textSecondary),
               ),
             ),
           ),
@@ -2012,7 +2025,8 @@ class _GradedMetricChart extends StatelessWidget {
     final String shown = hasValue ? '$currentValue $unit' : 'Unavailable';
     final String semantic =
         '$label${derived ? ', derived' : ''}, $shown, ${grade.label}';
-    final Color lineColor = _gradeLineColor(grade);
+    final AppColorScheme colors = context.colors;
+    final Color lineColor = _gradeLineColor(grade, colors);
 
     return _Card(
       title: label,
@@ -2039,7 +2053,7 @@ class _GradedMetricChart extends StatelessWidget {
                 Text(
                   'derived',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                     letterSpacing: 0.4,
                   ),
                 ),
@@ -2060,17 +2074,17 @@ class _GradedMetricChart extends StatelessWidget {
 
   /// Tints the sparkline to match the grade chip (reinforcement only). The
   /// unavailable case stays neutral tertiary so it does not read as a verdict.
-  static Color _gradeLineColor(QualityGrade grade) {
+  static Color _gradeLineColor(QualityGrade grade, AppColorScheme colors) {
     switch (grade) {
       case QualityGrade.excellent:
       case QualityGrade.good:
-        return AppColors.statusSuccess;
+        return colors.statusSuccess;
       case QualityGrade.fair:
-        return AppColors.statusWarning;
+        return colors.statusWarning;
       case QualityGrade.poor:
-        return AppColors.statusDanger;
+        return colors.statusDanger;
       case QualityGrade.unavailable:
-        return AppColors.textTertiary;
+        return colors.textTertiary;
     }
   }
 }
@@ -2097,6 +2111,7 @@ class _TrendMetricChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final bool hasValue =
         currentValue != null && currentValue!.trim().isNotEmpty;
@@ -2121,7 +2136,7 @@ class _TrendMetricChart extends StatelessWidget {
                 Text(
                   unavailableNote!,
                   style: text.bodySmall?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
               ],
@@ -2148,19 +2163,20 @@ class _CurrentReadout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final TextTheme text = Theme.of(context).textTheme;
     return hasValue
         ? Text(
             value,
-            style: mono.outputMedium.copyWith(color: AppColors.textPrimary),
+            style: mono.outputMedium.copyWith(color: colors.textPrimary),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           )
         : Text(
             value,
-            style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+            style: text.bodyLarge?.copyWith(color: colors.textSecondary),
           );
   }
 }
@@ -2173,24 +2189,88 @@ class _GradeChip extends StatelessWidget {
 
   final QualityGrade grade;
 
-  static (Color, Color) _colors(QualityGrade grade) {
+  /// Dark grade chip: solid status fill + dark (onPrimary) text. Unavailable is
+  /// a neutral surface2 chip with a borderStrong outline.
+  static (Color, Color) _darkColors(QualityGrade grade, AppColorScheme c) {
     switch (grade) {
       case QualityGrade.excellent:
       case QualityGrade.good:
-        return (AppColors.statusSuccess, AppColors.secondary);
+        return (c.statusSuccess, c.onPrimary);
       case QualityGrade.fair:
-        return (AppColors.statusWarning, AppColors.secondary);
+        return (c.statusWarning, c.onPrimary);
       case QualityGrade.poor:
-        return (AppColors.statusDanger, AppColors.secondary);
+        return (c.statusDanger, c.onPrimary);
       case QualityGrade.unavailable:
-        return (AppColors.surface2, AppColors.textSecondary);
+        return (c.surface2, c.textSecondary);
+    }
+  }
+
+  /// Light status color (full-strength), tint fill, and glyph for the §8.20.4
+  /// filled-pill. Unavailable stays neutral.
+  static (Color status, Color fill, IconData? glyph) _lightParts(
+      QualityGrade grade, AppColorScheme c) {
+    switch (grade) {
+      case QualityGrade.excellent:
+      case QualityGrade.good:
+        return (c.statusSuccess, c.statusSuccessFill, Icons.check_circle);
+      case QualityGrade.fair:
+        return (c.statusWarning, c.statusWarningFill, Icons.warning_amber);
+      case QualityGrade.poor:
+        return (c.statusDanger, c.statusDangerFill, Icons.error);
+      case QualityGrade.unavailable:
+        return (c.textTertiary, c.surface1, null);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
-    final (Color bg, Color fg) = _colors(grade);
+    final AppColorScheme colors = context.colors;
+
+    // §8.20.4 — light renders status as a FILLED PILL: tinted fill + 2px colored
+    // border + 700 colored label + matching glyph (three reinforcing layers of
+    // one hue). Dark keeps its solid-fill chip unchanged.
+    if (colors.isLight) {
+      final (Color status, Color fill, IconData? glyph) =
+          _lightParts(grade, colors);
+      final bool isUnavailable = grade == QualityGrade.unavailable;
+      return Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xs,
+          vertical: AppSpacing.xxs,
+        ),
+        decoration: BoxDecoration(
+          color: isUnavailable ? colors.surface1 : fill,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          border: Border.all(
+            color: isUnavailable ? colors.borderStrong : status,
+            width: 2,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            if (glyph != null) ...<Widget>[
+              Icon(glyph, size: 16, color: status),
+              const SizedBox(width: AppSpacing.xxs),
+            ],
+            Flexible(
+              child: Text(
+                grade.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: text.labelSmall?.copyWith(
+                  color: isUnavailable ? colors.textSecondary : status,
+                  fontWeight: FontWeight.w700, // §8.20.3-A verdict words
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final (Color bg, Color fg) = _darkColors(grade, colors);
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.xs,
@@ -2200,7 +2280,7 @@ class _GradeChip extends StatelessWidget {
         color: bg,
         borderRadius: BorderRadius.circular(AppRadius.control),
         border: grade == QualityGrade.unavailable
-            ? Border.all(color: AppColors.borderStrong, width: 1)
+            ? Border.all(color: colors.borderStrong, width: 1)
             : null,
       ),
       child: Text(
@@ -2222,6 +2302,7 @@ class _LoopShortcutNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final bool placeholder =
         WifiLiveShortcutsConfig.isLiveShortcutUrlPlaceholder;
@@ -2232,20 +2313,20 @@ class _LoopShortcutNote extends StatelessWidget {
               'Shortcut. Install it, then tap Start.';
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Icon(Icons.info_outline, size: 20, color: AppColors.textTertiary),
+          Icon(Icons.info_outline, size: 20, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               message,
-              style: text.bodyMedium?.copyWith(color: AppColors.textSecondary),
+              style: text.bodyMedium?.copyWith(color: colors.textSecondary),
             ),
           ),
         ],
@@ -2279,12 +2360,13 @@ class _MonitorControlBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: colors.border),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -2335,6 +2417,7 @@ class _StatusBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final String label = streaming ? 'Live' : 'Paused';
 
@@ -2347,10 +2430,10 @@ class _StatusBlock extends StatelessWidget {
           if (streaming)
             const _LiveIndicator()
           else
-            const Icon(
+            Icon(
               Icons.pause_circle_outline,
               size: 20,
-              color: AppColors.textTertiary,
+              color: colors.textTertiary,
             ),
           const SizedBox(width: AppSpacing.xs),
           Expanded(
@@ -2360,9 +2443,11 @@ class _StatusBlock extends StatelessWidget {
                 Text(
                   label,
                   style: text.labelLarge?.copyWith(
+                    // "Live" label is a foreground accent → darkened-lime in
+                    // light (§8.20.2); the word carries the meaning regardless.
                     color: streaming
-                        ? AppColors.primary
-                        : AppColors.textSecondary,
+                        ? colors.textAccent
+                        : colors.textSecondary,
                   ),
                 ),
                 if (lastUpdated != null)
@@ -2426,12 +2511,15 @@ class _LiveIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Small lime dot is information-bearing (paired with the "Live" word). On a
+    // white surface a 12px brand-lime dot is ~1.65:1 and vanishes, so light uses
+    // the darkened-lime textAccent (§8.20.2); the word still carries the state.
     return ExcludeSemantics(
       child: Container(
         width: 12,
         height: 12,
-        decoration: const BoxDecoration(
-          color: AppColors.primary,
+        decoration: BoxDecoration(
+          color: context.colors.textAccent,
           shape: BoxShape.circle,
         ),
       ),
@@ -2446,6 +2534,7 @@ class _WaitingForFirstPayload extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
@@ -2453,7 +2542,7 @@ class _WaitingForFirstPayload extends StatelessWidget {
         streaming
             ? 'Listening. The recursive Shortcut is sending Wi-Fi details.'
             : 'Press Start to begin streaming Wi-Fi details.',
-        style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+        style: text.bodyLarge?.copyWith(color: colors.textSecondary),
         textAlign: TextAlign.center,
       ),
     );
