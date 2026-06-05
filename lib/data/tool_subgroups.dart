@@ -30,6 +30,9 @@ const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
     'Encoding',
     'CLI & Capture',
     'Checklists',
+    // Step-by-step how-tos that bundle a downloadable artifact (e.g. Dual Orbs
+    // on WLAN Pi). Added 2026-06-05.
+    'Guides',
   ],
   'rf-calculators': <String>[
     'RF & Propagation',

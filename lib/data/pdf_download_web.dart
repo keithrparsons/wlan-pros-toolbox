@@ -14,12 +14,14 @@ import 'package:web/web.dart' as web;
 
 import 'pdf_download.dart' show ShareOrigin;
 
-/// Triggers a browser download of [assetPath]'s bytes under [filename].
-/// [title] and [shareOrigin] are unused on web (no share sheet); they are part
-/// of the shared seam signature.
-Future<void> sharePdfImpl({
+/// Triggers a browser download of [assetPath]'s bytes under [filename], with the
+/// blob typed [mimeType]. [title] and [shareOrigin] are unused on web (no share
+/// sheet); they are part of the shared seam signature. Generic over file type so
+/// the same path serves the PDF reference cards and the dual-Orb `.deb`.
+Future<void> shareAssetImpl({
   required String assetPath,
   required String filename,
+  required String mimeType,
   required String title,
   ShareOrigin? shareOrigin,
 }) async {
@@ -29,11 +31,11 @@ Future<void> sharePdfImpl({
     data.lengthInBytes,
   );
 
-  // Blob from the PDF bytes, typed application/pdf. The byte buffer is a
+  // Blob from the asset bytes, typed by [mimeType]. The byte buffer is a
   // BlobPart; the parts array is a JSArray<BlobPart>.
   final web.Blob blob = web.Blob(
     <web.BlobPart>[bytes.toJS].toJS,
-    web.BlobPropertyBag(type: 'application/pdf'),
+    web.BlobPropertyBag(type: mimeType),
   );
   final String url = web.URL.createObjectURL(blob);
 

@@ -323,6 +323,55 @@ class AppTheme {
         ),
       ),
 
+      // Elevated button — the Material `ElevatedButton`/`ElevatedButton.icon`
+      // variant used by the bundled-asset download buttons (Dual Orb, FreeRADIUS).
+      // It reads from `elevatedButtonTheme`, NOT `filledButtonTheme`, so without
+      // this slot every ElevatedButton.icon shipped with NO keyboard focus ring
+      // (§8.3 SC 2.4.7 gap). Mirrors filledButtonTheme exactly — lime fill / dark
+      // text, the same focused-state `_focusRingSide(brightness)` ring the other
+      // four button themes carry. Focus-only state; no at-rest/golden change.
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.disabled)) return c.disabledFill;
+            if (states.contains(WidgetState.pressed)) return c.pressed;
+            if (states.contains(WidgetState.hovered)) return c.accent;
+            return c.primary;
+          }),
+          foregroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.disabled)) return c.textDisabled;
+            return c.onPrimary;
+          }),
+          // §8.20.2 — shadow invisible on dark; light leans on the card/elevation
+          // shadow scale. Keep elevation flat so it matches filledButtonTheme.
+          elevation: WidgetStateProperty.all(0),
+          shadowColor: WidgetStateProperty.all(Colors.black),
+          surfaceTintColor: WidgetStateProperty.all(Colors.transparent),
+          minimumSize: WidgetStateProperty.all(
+            const Size(AppSpacing.minTouchTarget, AppSpacing.minTouchTarget),
+          ),
+          padding: WidgetStateProperty.all(
+            const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          ),
+          textStyle: WidgetStateProperty.all(
+            textTheme.labelLarge?.copyWith(
+              fontWeight: light ? FontWeight.w700 : FontWeight.w600,
+            ),
+          ),
+          side: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.focused)) {
+              return _focusRingSide(brightness);
+            }
+            return null;
+          }),
+          shape: WidgetStateProperty.all(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.control),
+            ),
+          ),
+        ),
+      ),
+
       // Secondary outline button — foreground-accent border + text. Light uses
       // the darkened-lime foreground substitute (#5A7A1C) for both border and
       // text (§8.20.2) and thickens the idle border to 1.5px (§8.20.3-B).

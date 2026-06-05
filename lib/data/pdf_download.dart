@@ -54,9 +54,38 @@ Future<void> sharePdf({
   required String title,
   ShareOrigin? shareOrigin,
 }) {
-  return impl.sharePdfImpl(
+  return impl.shareAssetImpl(
     assetPath: assetPath,
     filename: pdfDownloadFilename(title),
+    mimeType: 'application/pdf',
+    title: title,
+    shareOrigin: shareOrigin,
+  );
+}
+
+/// Shares (native) or downloads (web) ANY bundled binary asset at [assetPath]
+/// under the explicit [filename] and [mimeType]. The non-PDF sibling of
+/// [sharePdf] for bundled downloads such as the dual-Orb `.deb` package — same
+/// temp-file-then-share-sheet path on native, same anchor download on web. The
+/// caller owns the exact [filename] (e.g. `wlanpi-dual-orb_1.1.3_all.deb`)
+/// because, unlike a PDF reference card, the package filename is meaningful to
+/// the install command (`sudo apt install ./<filename>`) and must not be
+/// slugified. On iPad/macOS pass [shareOrigin] (the button rect) so the popover
+/// anchors; pass `null` to let the platform pick a default.
+///
+/// Returns normally on success; throws on a load/share failure so the caller can
+/// surface the honest error path.
+Future<void> shareAsset({
+  required String assetPath,
+  required String filename,
+  required String mimeType,
+  required String title,
+  ShareOrigin? shareOrigin,
+}) {
+  return impl.shareAssetImpl(
+    assetPath: assetPath,
+    filename: filename,
+    mimeType: mimeType,
     title: title,
     shareOrigin: shareOrigin,
   );
