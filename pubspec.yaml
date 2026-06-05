@@ -321,6 +321,23 @@ flutter:
     # screen opens, fully offline. Schema + attribution in the asset's _meta
     # block; the destinations credit is scoped per _meta.attribution_scope.
     - assets/data/educational_resources.json
+    # Antenna Connectors — 18-connector practical Wi-Fi antenna-connector
+    # reference (full name, RP variant, typical use, indoor/outdoor, coupling,
+    # impedance, frequency, mating, notes) + three editorial sections (vendor
+    # trends, size order, top-6 in the field). For the Antenna Connectors Quick
+    # Reference tool. Bundled JSON, loaded + parsed once at screen open; group
+    # and connector order is deliberate and preserved. Source + verification in
+    # the file's top-level `source` field. The DART entry is rendered verbatim
+    # and deliberately does NOT spell out the acronym (unverified, GL-005).
+    - assets/data/antenna_connectors.json
+    # Per-connector line diagrams for the Antenna Connectors tool, keyed by
+    # connector id: assets/connector-diagrams/<connector-id>.svg (e.g. rp-sma,
+    # dart, ufl). Resolved by lib/data/connector_diagrams.dart against the asset
+    # manifest, so a missing file never throws and never shows a broken box — the
+    # data screen ships fully working without them. UNCOMMENT this directory once
+    # Charta's diagrams are dropped in (the dir must contain at least one asset
+    # for Flutter to accept the entry):
+    # - assets/connector-diagrams/
     # Per-tool Tier-2 custom icons (GL-003 §8.6 / §8.6.1) and in-tool concept
     # graphics (GL-003 §8.6.2). Convention-based lookup by catalog id:
     #   icon    = assets/tool-icons/<tool-id>.svg

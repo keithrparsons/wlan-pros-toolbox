@@ -847,6 +847,20 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Cabling & Connectors',
       ),
+      // Antenna Connectors — searchable, grouped 18-connector reference for
+      // Wi-Fi antenna systems (full name, RP variant, coupling, impedance,
+      // frequency, mating, notes) + vendor trends, size order, and the top-6
+      // a Wi-Fi engineer meets. Offline bundled JSON. Distinct from
+      // `rf-connectors` (the smaller coaxial-only card): this is the
+      // antenna-side reference with the field-identification detail.
+      ToolEntry(
+        id: 'antenna-connectors',
+        title: 'Antenna Connectors',
+        description: 'RP-SMA, RP-TNC, N, DART, U.FL: use, coupling, mating',
+        routeName: '/tools/antenna-connectors',
+        isLive: true,
+        subgroup: 'Cabling & Connectors',
+      ),
       // RJ Connectors — registered-jack form factors (RJ11/14/25/45/48 etc.):
       // positions, conductors, typical use. Cross-links to Ethernet Pinout for
       // T568A/B wiring rather than duplicating it. Batch 5.

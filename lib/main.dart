@@ -7,6 +7,7 @@
 
 import 'package:flutter/material.dart';
 
+import 'data/connector_diagrams.dart';
 import 'data/tool_assets.dart';
 import 'router/app_router.dart';
 import 'services/help/tool_help_loader.dart';
@@ -39,6 +40,17 @@ Future<void> main() async {
     await ToolAssets.ensureLoaded();
   } catch (_) {
     // Manifest unavailable → has*() stays false → fallbacks render. No crash.
+  }
+
+  // Same convention for the Antenna Connectors per-connector diagram SVGs
+  // (assets/connector-diagrams/<id>.svg). Until Charta's diagrams are bundled,
+  // ConnectorDiagrams.has() stays false and each connector's diagram slot is
+  // simply omitted — the data screen ships fully working today. A failure here
+  // must never block startup.
+  try {
+    await ConnectorDiagrams.ensureLoaded();
+  } catch (_) {
+    // Manifest unavailable → has() stays false → diagram slots omitted. No crash.
   }
 
   // Load + cache the bundled tool-help JSON once (assets/help/tool_help.json).
