@@ -874,7 +874,14 @@ class _Links extends StatelessWidget {
   }
 }
 
-class _LinkRow extends StatelessWidget {
+// A bare InkWell suppresses Material's default focus highlight here (the app
+// theme sets focusColor transparent, §8.3), so this row carried NO visible
+// keyboard focus indicator (SC 2.4.7 gap). Like _FooterButton in
+// lib/widgets/tool_help_footer.dart, _LinkRow is a custom composite that cannot
+// inherit the global iconButtonTheme ring, so it self-paints the §8.3 lime focus
+// ring via FocusableActionDetector — 2px brand lime in dark, 3px darkened-lime
+// textAccent in light (§8.20.2 / §8.20.3-B). Focus-only; no at-rest change.
+class _LinkRow extends StatefulWidget {
   const _LinkRow({
     required this.label,
     required this.subtitle,
@@ -888,50 +895,87 @@ class _LinkRow extends StatelessWidget {
   final Future<void> Function(String url) onOpen;
 
   @override
+  State<_LinkRow> createState() => _LinkRowState();
+}
+
+class _LinkRowState extends State<_LinkRow> {
+  bool _focused = false;
+
+  @override
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Semantics(
       button: true,
-      label: '$label. Opens in browser.',
-      child: Material(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.control),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.control),
-          onTap: () => onOpen(url),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: AppSpacing.minTouchTarget),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.sm,
-                vertical: AppSpacing.rowPadding,
-              ),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          label,
-                          style: (text.bodyLarge ?? const TextStyle()).copyWith(
-                            color: colors.textAccent,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.xxs),
-                        Text(
-                          subtitle,
-                          style: (text.bodySmall ?? const TextStyle())
-                              .copyWith(color: colors.textTertiary),
-                        ),
-                      ],
-                    ),
+      label: '${widget.label}. Opens in browser.',
+      child: FocusableActionDetector(
+        actions: <Type, Action<Intent>>{
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (_) {
+              widget.onOpen(widget.url);
+              return null;
+            },
+          ),
+        },
+        onShowFocusHighlight: (bool value) {
+          if (value != _focused) setState(() => _focused = value);
+        },
+        child: Container(
+          // §8.3 focus ring drawn as a foreground decoration so it never disturbs
+          // the row's resting render: 2px brand lime in dark, 3px darkened-lime
+          // textAccent in light (§8.20.2 / §8.20.3-B). Focus-only.
+          foregroundDecoration: _focused
+              ? BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppRadius.control),
+                  border: Border.all(
+                    color: colors.isLight ? colors.textAccent : colors.primary,
+                    width: colors.isLight ? 3 : 2,
                   ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Icon(Icons.open_in_new, size: 20, color: colors.textSecondary),
-                ],
+                )
+              : null,
+          child: Material(
+            color: colors.surface1,
+            borderRadius: BorderRadius.circular(AppRadius.control),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(AppRadius.control),
+              onTap: () => widget.onOpen(widget.url),
+              child: ConstrainedBox(
+                constraints:
+                    const BoxConstraints(minHeight: AppSpacing.minTouchTarget),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.rowPadding,
+                  ),
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              widget.label,
+                              style: (text.bodyLarge ?? const TextStyle())
+                                  .copyWith(
+                                color: colors.textAccent,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.xxs),
+                            Text(
+                              widget.subtitle,
+                              style: (text.bodySmall ?? const TextStyle())
+                                  .copyWith(color: colors.textTertiary),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Icon(Icons.open_in_new,
+                          size: 20, color: colors.textSecondary),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
