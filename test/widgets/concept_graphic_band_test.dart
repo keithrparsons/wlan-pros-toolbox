@@ -130,7 +130,7 @@ void main() {
       expect(out.contains('#E2E1E2'), isTrue); // border (faint hatch)
       expect(out.contains('#C62D2D'), isTrue); // statusDanger
       expect(out.contains('#8A5A00'), isTrue); // statusWarning (bronze)
-      expect(out.contains('#1E7E45'), isTrue); // statusSuccess
+      expect(out.contains('#1B7340'), isTrue); // statusSuccess (Iris nudge for AA)
       expect(out.contains('rgba(90,122,28,0.10)'), isTrue); // lime wash
     });
 

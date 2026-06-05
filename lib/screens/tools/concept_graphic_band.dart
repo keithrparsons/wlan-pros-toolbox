@@ -108,7 +108,7 @@ class ConceptGraphicBand extends StatelessWidget {
       '#F26E6E': hex(light.statusDanger),
       // status warning (#E0A23A)  → statusWarning   #8A5A00 bronze (6.0:1)
       '#E0A23A': hex(light.statusWarning),
-      // status success (#5BD68A)  → statusSuccess   #1E7E45 (5.2:1)
+      // status success (#5BD68A)  → statusSuccess   #1B7340 (5.4:1)
       '#5BD68A': hex(light.statusSuccess),
       // lime region wash — tint of the darkened lime, alpha nudged 0.08 → 0.10
       // so it stays perceptible on white (§8.20.7). No token field for the

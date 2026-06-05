@@ -199,12 +199,13 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
       onPrimary: Color(0xFF30302F), // 8.9:1 dark text on the lime fill
       accent: Color(0xFF7A9E26), // hover fill (darker lime)
       pressed: Color(0xFF6B8C20), // pressed fill (darker still)
-      statusSuccess: Color(0xFF1E7E45), // 5.2:1 / 5.0:1
+      statusSuccess: Color(0xFF1B7340), // 5.4:1 / 5.2:1 — nudged darker so the
+      // success label clears 4.5:1 on the §8.20.4 success tint (was #1E7E45 @ 4.45:1)
       statusWarning: Color(0xFF8A5A00), // bronze — 6.0:1 / 5.7:1
       statusDanger: Color(0xFFC62D2D), // 5.4:1 / 5.2:1
       statusInfo: Color(0xFF1F6FA8), // 5.1:1 / 4.9:1
       // §8.20.4 filled-pill tints — the flattened 12%-on-white hexes.
-      statusSuccessFill: Color(0xFFE8F2EC),
+      statusSuccessFill: Color(0xFFE4EEE8),
       statusWarningFill: Color(0xFFF3EDE2),
       statusDangerFill: Color(0xFFFAE9E9),
       statusInfoFill: Color(0xFFE8F1F7),
