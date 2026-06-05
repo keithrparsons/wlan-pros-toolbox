@@ -28,6 +28,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -428,6 +429,7 @@ class _TopLevelDomainsScreenState extends State<TopLevelDomainsScreen> {
   }
 
   Widget _introCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return _Card(
       child: Column(
@@ -435,12 +437,12 @@ class _TopLevelDomainsScreenState extends State<TopLevelDomainsScreen> {
         children: <Widget>[
           Text(
             TopLevelDomainsScreen.intro,
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             TopLevelDomainsScreen.footnote,
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -463,12 +465,13 @@ class _TopLevelDomainsScreenState extends State<TopLevelDomainsScreen> {
   }
 
   Widget _emptyCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return _Card(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Icon(Icons.search_off, size: 20, color: AppColors.textTertiary),
+          Icon(Icons.search_off, size: 20, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -477,7 +480,7 @@ class _TopLevelDomainsScreenState extends State<TopLevelDomainsScreen> {
                 Text(
                   'No match',
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -485,7 +488,7 @@ class _TopLevelDomainsScreenState extends State<TopLevelDomainsScreen> {
                 Text(
                   'No domains in this type.',
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
               ],
@@ -506,6 +509,7 @@ class _TypeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return _Card(
       child: Column(
@@ -513,15 +517,15 @@ class _TypeCard extends StatelessWidget {
         children: <Widget>[
           Text(
             type.label,
-            style: text.headlineSmall?.copyWith(color: AppColors.textPrimary),
+            style: text.headlineSmall?.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: 2),
           Text(
             type.blurb,
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.xs),
-          const Divider(color: AppColors.border, height: 1),
+          Divider(color: colors.border, height: 1),
           ...entries.map((TldEntry e) => _TldRow(entry: e)),
         ],
       ),
@@ -539,6 +543,7 @@ class _TldRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -556,7 +561,7 @@ class _TldRow extends StatelessWidget {
               child: Text(
                 entry.tld,
                 style: mono.robotoMono.copyWith(
-                  color: AppColors.primary,
+                  color: colors.textAccent,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -566,7 +571,7 @@ class _TldRow extends StatelessWidget {
               child: Text(
                 entry.note,
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ),
@@ -585,11 +590,12 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: child,

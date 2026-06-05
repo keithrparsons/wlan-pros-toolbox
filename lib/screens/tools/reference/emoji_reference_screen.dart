@@ -41,6 +41,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -314,6 +315,7 @@ class EmojiReferenceScreen extends StatelessWidget {
   }
 
   Widget _body(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         final bool isDesktop = constraints.maxWidth >= 720;
@@ -338,7 +340,7 @@ class EmojiReferenceScreen extends StatelessWidget {
                   ConceptGraphicBand(toolId: 'emoji', isDesktop: isDesktop),
                   if (ToolAssets.hasGraphic('emoji'))
                     const SizedBox(height: AppSpacing.md),
-                  _introCard(context),
+                  _introCard(colors, context),
                   const SizedBox(height: AppSpacing.sm),
                   ...emoji.map(
                     (EmojiEntry e) => Padding(
@@ -356,7 +358,7 @@ class EmojiReferenceScreen extends StatelessWidget {
     );
   }
 
-  Widget _introCard(BuildContext context) {
+  Widget _introCard(AppColorScheme colors, BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
     return _Card(
       child: Text(
@@ -364,7 +366,7 @@ class EmojiReferenceScreen extends StatelessWidget {
         'Unicode canon). "Common use" is how people usually read each one '
         'today, not an official Unicode definition — meanings drift by '
         'audience, region, and generation.',
-        style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+        style: text.labelMedium?.copyWith(color: colors.textTertiary),
       ),
     );
   }
@@ -380,6 +382,7 @@ class _EmojiCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return ReferenceRowSemantics(
       // The row reads as one node keyed by rank + official name + common use.
@@ -411,7 +414,7 @@ class _EmojiCard extends StatelessWidget {
                   child: Text(
                     entry.name,
                     style: text.bodyLarge?.copyWith(
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -419,11 +422,11 @@ class _EmojiCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.xs),
-            const Divider(color: AppColors.border, height: 1),
+            Divider(color: colors.border, height: 1),
             const SizedBox(height: AppSpacing.xs),
             Text(
               entry.commonUse,
-              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
             ),
           ],
         ),
@@ -441,6 +444,7 @@ class _RankBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     return Container(
@@ -451,15 +455,15 @@ class _RankBadge extends StatelessWidget {
         vertical: 4,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surface2,
+        color: colors.surface2,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
+        border: Border.all(color: colors.borderStrong, width: 1),
       ),
       child: Text(
         '#$rank',
         style: mono.inlineCode.copyWith(
           fontSize: AppTextSize.caption,
-          color: AppColors.primary,
+          color: colors.textAccent,
         ),
       ),
     );
@@ -474,11 +478,12 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: child,

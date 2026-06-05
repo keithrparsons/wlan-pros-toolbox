@@ -46,6 +46,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/tool_help_footer.dart';
@@ -296,19 +297,23 @@ class _ProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final bool complete = total > 0 && done == total;
     final double fraction = total == 0 ? 0 : done / total;
-    final Color barColor =
-        complete ? AppColors.statusSuccess : AppColors.primary;
+    // Incomplete fill: lime in dark; darkened-lime in light so the thin bar
+    // reads on the white surface (§8.20.2). Complete uses the success color.
+    final Color barColor = complete
+        ? colors.statusSuccess
+        : (colors.isLight ? colors.textAccent : colors.primary);
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       // The progress count is announced live on toggle; this node carries the
@@ -328,7 +333,7 @@ class _ProgressCard extends StatelessWidget {
                   child: Text(
                     'Progress',
                     style: text.labelMedium?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: colors.textSecondary,
                       letterSpacing: 0.4,
                     ),
                   ),
@@ -337,8 +342,8 @@ class _ProgressCard extends StatelessWidget {
                   '$done / $total done',
                   style: mono.inlineCode.copyWith(
                     color: complete
-                        ? AppColors.statusSuccess
-                        : AppColors.textPrimary,
+                        ? colors.statusSuccess
+                        : colors.textPrimary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -350,7 +355,7 @@ class _ProgressCard extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: fraction,
                 minHeight: 6,
-                backgroundColor: AppColors.surface2,
+                backgroundColor: colors.surface2,
                 valueColor: AlwaysStoppedAnimation<Color>(barColor),
               ),
             ),
@@ -369,17 +374,18 @@ class _IntroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Text(
         intro,
-        style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+        style: text.labelMedium?.copyWith(color: colors.textTertiary),
       ),
     );
   }
@@ -400,12 +406,13 @@ class _PhaseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -415,7 +422,7 @@ class _PhaseCard extends StatelessWidget {
             Text(
               phase.label!,
               style: text.labelMedium?.copyWith(
-                color: AppColors.textSecondary,
+                color: colors.textSecondary,
                 letterSpacing: 0.4,
                 fontWeight: FontWeight.w600,
               ),
@@ -462,6 +469,7 @@ class _ChecklistRowState extends State<_ChecklistRow> {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final bool done = widget.done;
 
@@ -470,7 +478,7 @@ class _ChecklistRowState extends State<_ChecklistRow> {
     final BoxDecoration decoration = _focused
         ? BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.control),
-            border: Border.all(color: AppColors.primary, width: 2),
+            border: Border.all(color: colors.textAccent, width: 2),
           )
         : const BoxDecoration();
 
@@ -519,7 +527,7 @@ class _ChecklistRowState extends State<_ChecklistRow> {
                         ? Icons.check_box_outlined
                         : Icons.check_box_outline_blank,
                     size: 24,
-                    color: done ? AppColors.primary : AppColors.borderStrong,
+                    color: done ? colors.textAccent : colors.borderStrong,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
@@ -531,11 +539,11 @@ class _ChecklistRowState extends State<_ChecklistRow> {
                         widget.item.text,
                         style: text.bodyMedium?.copyWith(
                           color: done
-                              ? AppColors.textTertiary
-                              : AppColors.textPrimary,
+                              ? colors.textTertiary
+                              : colors.textPrimary,
                           decoration:
                               done ? TextDecoration.lineThrough : null,
-                          decorationColor: AppColors.textTertiary,
+                          decorationColor: colors.textTertiary,
                         ),
                       ),
                       if (widget.item.note != null) ...[
@@ -543,7 +551,7 @@ class _ChecklistRowState extends State<_ChecklistRow> {
                         Text(
                           widget.item.note!,
                           style: text.labelMedium?.copyWith(
-                            color: AppColors.textTertiary,
+                            color: colors.textTertiary,
                           ),
                         ),
                       ],
@@ -566,27 +574,28 @@ class _EmptyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             Icons.checklist_outlined,
             size: 20,
-            color: AppColors.textTertiary,
+            color: colors.textTertiary,
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               'This checklist has no items yet.',
-              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
             ),
           ),
         ],

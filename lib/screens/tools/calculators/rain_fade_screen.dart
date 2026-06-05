@@ -39,6 +39,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -345,11 +346,12 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -383,7 +385,7 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Typical: light 2, moderate 12, heavy 25, extreme 50 mm/hr.',
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.sm),
           // Path length — km / mi toggle.
@@ -404,6 +406,7 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
     required String hintText,
     required TextStyle monoStyle,
   }) {
+    final AppColorScheme colors = context.colors;
     return TextField(
       controller: controller,
       focusNode: focusNode,
@@ -414,7 +417,7 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
       autocorrect: false,
       enableSuggestions: false,
       style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
-      cursorColor: AppColors.primary,
+      cursorColor: colors.textAccent,
       decoration: InputDecoration(hintText: hintText),
     );
   }
@@ -447,13 +450,14 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
   }
 
   Widget _polRow(TextTheme text) {
+    final AppColorScheme colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Polarization',
           style: text.labelMedium?.copyWith(
-            color: AppColors.textSecondary,
+            color: colors.textSecondary,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -474,13 +478,14 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
   }
 
   Widget _resultRow(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Rain attenuation',
           style: text.labelMedium?.copyWith(
-            color: AppColors.textSecondary,
+            color: colors.textSecondary,
             letterSpacing: 0.4,
           ),
         ),
@@ -501,15 +506,15 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
                 _fmt(_attenDb, 2),
                 style: mono.outputXL.copyWith(
                   color: _attenDb == null
-                      ? AppColors.textTertiary
-                      : AppColors.primary,
+                      ? colors.textTertiary
+                      : colors.textAccent,
                 ),
               ),
               const SizedBox(width: AppSpacing.xxs),
               Text(
                 'dB',
                 style: text.labelLarge?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ],
@@ -543,6 +548,7 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
     required String value,
     required String unit,
   }) {
+    final AppColorScheme colors = context.colors;
     // One SR node per row: "Specific attenuation (γ): 0.0123 dB/km" (or "not
     // calculated"), instead of label/value/unit fragments (Vera finding #6).
     return Semantics(
@@ -556,7 +562,7 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
           Expanded(
             child: Text(
               label,
-              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
@@ -564,15 +570,15 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
             value,
             style: mono.inlineCode.copyWith(
               color: value == '—'
-                  ? AppColors.textTertiary
-                  : AppColors.textPrimary,
+                  ? colors.textTertiary
+                  : colors.textPrimary,
               fontWeight: FontWeight.w500,
             ),
           ),
           const SizedBox(width: AppSpacing.xxs),
           Text(
             unit,
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -580,11 +586,12 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
   }
 
   Widget _formulaCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -593,29 +600,29 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
           Text(
             'Formula',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
             'γ = k · R^α            (dB/km)',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
             'L_eff = L / (1 + L/d₀)  (km)',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
             'A = γ · L_eff          (dB)',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'k and α from ITU-R P.838-3 by frequency and polarization. '
             'd₀ = 35 · e^(-0.015·R) per the simplified ITU-R P.530 path '
             'reduction. R is rain rate in mm/hr.',
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -623,6 +630,7 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
   }
 
   Widget _referenceCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     // Anchor values computed from the same coefficients this screen uses, at a
     // 10 km horizontal path. Shows how rain fade explodes with frequency.
     final List<List<String>> refs = const [
@@ -635,9 +643,9 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -646,14 +654,14 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
           Text(
             'Reference points',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             '10 km horizontal path.',
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.xs),
           ...refs.map((row) {
@@ -668,7 +676,7 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
                     child: Text(
                       row[0],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
@@ -677,7 +685,7 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
                     child: Text(
                       row[1],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
@@ -685,7 +693,7 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
                     child: Text(
                       row[2],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.primary,
+                        color: colors.textAccent,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

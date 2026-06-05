@@ -35,6 +35,7 @@ import 'package:net_quality/net_quality.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -361,12 +362,13 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
   }
 
   Widget _runCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -378,13 +380,13 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
             'public CDN servers, then checks reachability to a list of popular '
             'sites. Each dimension is graded on its own; there is no single '
             'score.',
-            style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+            style: text.bodyLarge?.copyWith(color: colors.textSecondary),
           ),
           if (_error != null) ...[
             const SizedBox(height: AppSpacing.sm),
             Text(
               _error!,
-              style: text.labelMedium?.copyWith(color: AppColors.statusDanger),
+              style: text.labelMedium?.copyWith(color: colors.statusDanger),
             ),
           ],
           const SizedBox(height: AppSpacing.md),
@@ -409,15 +411,16 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
   }
 
   Widget _progressCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final int pct = (_fraction * 100).round();
     final String caption = _phaseCaption(_phase);
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -434,7 +437,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
                 child: Text(
                   caption,
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: colors.textSecondary,
                     letterSpacing: 0.4,
                   ),
                 ),
@@ -442,7 +445,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
               Text(
                 '$pct%',
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ],
@@ -472,10 +475,12 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
                     // real emit); a tweened zero would read as a stuck bar.
                     value: _fraction == 0 ? null : value,
                     minHeight: 6,
-                    backgroundColor: AppColors.surface2,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      AppColors.primary,
-                    ),
+                    backgroundColor: colors.surface2,
+                    // §8.20.3-B/C (vivid placement, 2026-06-05) — a 6px progress
+                    // bar is an AREA, not a thin line, so the fill carries FULL
+                    // brand lime #A1CC3A in both themes. (Reverses the earlier
+                    // olive-substitute, now reserved for thin foregrounds only.)
+                    valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
                   );
                 },
               ),
@@ -537,13 +542,14 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
       };
 
   Widget _metricsCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -555,7 +561,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
               Text(
                 'Transport',
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                   letterSpacing: 0.4,
                 ),
               ),
@@ -576,14 +582,15 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
   /// control. It states exactly what is live (latency, every 30 s) and never
   /// implies the speed metrics are live — they are not (spec §3).
   Widget _liveIndicator(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final bool running = _monitor.isRunning;
     final String caption = running
         ? 'Live · sampling latency every 30s'
         : 'Paused';
     final Color dotColor = running
-        ? AppColors.statusSuccess
-        : AppColors.textTertiary;
+        ? colors.statusSuccess
+        : colors.textTertiary;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
@@ -602,7 +609,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
           child: Text(
             caption,
             overflow: TextOverflow.ellipsis,
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
         ),
         const SizedBox(width: AppSpacing.xs),
@@ -614,7 +621,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
           child: IconButton(
             visualDensity: VisualDensity.compact,
             iconSize: 20,
-            color: AppColors.textSecondary,
+            color: colors.textSecondary,
             tooltip: running ? 'Pause' : 'Resume',
             onPressed: () => running ? _monitor.pause() : _monitor.resume(),
             icon: Icon(running ? Icons.pause : Icons.play_arrow),
@@ -625,6 +632,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
   }
 
   Widget _metricRow(BuildContext context, String id) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -690,7 +698,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
                         Text(
                           label,
                           style: text.bodyLarge?.copyWith(
-                            color: AppColors.textPrimary,
+                            color: colors.textPrimary,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -699,7 +707,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
                           Text(
                             note,
                             style: text.labelSmall?.copyWith(
-                              color: AppColors.textTertiary,
+                              color: colors.textTertiary,
                             ),
                           ),
                         ],
@@ -718,7 +726,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
                         textAlign: TextAlign.right,
                         overflow: TextOverflow.ellipsis,
                         style: mono.outputMedium.copyWith(
-                          color: AppColors.primary,
+                          color: colors.textAccent,
                         ),
                       ),
                     ),
@@ -752,6 +760,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
   /// run; the latency trio only shows this for the brief moment before the
   /// first live tick lands.
   Widget _trackingHint(BuildContext context, String id) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final String message = _liveTrio.contains(id)
         ? 'Sampling…'
@@ -761,13 +770,13 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
       width: double.infinity,
       alignment: Alignment.centerLeft,
       decoration: BoxDecoration(
-        color: AppColors.surface2,
+        color: colors.surface2,
         borderRadius: BorderRadius.circular(AppRadius.control),
       ),
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
       child: Text(
         message,
-        style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+        style: text.labelSmall?.copyWith(color: colors.textTertiary),
       ),
     );
   }
@@ -825,10 +834,50 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
   /// to the GL-003 §8.13 status palette; the unavailable grade takes a neutral
   /// surface so it never reads as a verdict.
   Widget _gradeChip(BuildContext context, QualityGrade grade) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
-    final (Color bg, Color fg) = _gradeColors(grade);
-    // Contrast: dark chip label clears WCAG 4.5:1 on all grade backgrounds;
-    // bespoke successStrong/onWarningStrong tokens are an Iris call (GL-003).
+
+    // §8.20.4 Style A — light renders a SOLID-FILL PILL: the full-strength
+    // status hue fill carrying a WHITE 700 label + WHITE Material glyph, no
+    // border (white-on-fill 5.4–5.9:1). Dark keeps its solid-fill chip with
+    // dark text.
+    if (colors.isLight) {
+      const Color white = Color(0xFFFFFFFF);
+      final (Color fill, IconData? glyph) = _lightGradeParts(grade, colors);
+      return Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xs,
+          vertical: 4,
+        ),
+        decoration: BoxDecoration(
+          color: fill,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            if (glyph != null) ...<Widget>[
+              Icon(glyph, size: 16, color: white),
+              const SizedBox(width: AppSpacing.xxs),
+            ],
+            Flexible(
+              child: Text(
+                grade.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: text.labelSmall?.copyWith(
+                  color: white,
+                  fontWeight: FontWeight.w700, // §8.20.3-A verdict words
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final (Color bg, Color fg) = _gradeColors(grade, colors);
+    // Contrast: dark chip label clears WCAG 4.5:1 on all grade backgrounds.
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.xs,
@@ -839,7 +888,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
         borderRadius: BorderRadius.circular(AppRadius.control),
         // The neutral chip needs a perceivable boundary on its surface.
         border: grade == QualityGrade.unavailable
-            ? Border.all(color: AppColors.borderStrong, width: 1)
+            ? Border.all(color: colors.borderStrong, width: 1)
             : null,
       ),
       child: Text(
@@ -854,6 +903,25 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     );
   }
 
+  /// §8.20.4 Style A light parts: the SOLID full-strength status hue fill and
+  /// its matching Material status glyph. Label + glyph render in WHITE on the
+  /// fill. Unavailable has no status hue, so it fills with neutral textSecondary.
+  static (Color fill, IconData? glyph) _lightGradeParts(
+      QualityGrade grade, AppColorScheme c) {
+    switch (grade) {
+      case QualityGrade.excellent:
+      case QualityGrade.good:
+        return (c.statusSuccess, Icons.check_circle);
+      case QualityGrade.fair:
+        return (c.statusWarning, Icons.warning_amber);
+      case QualityGrade.poor:
+        return (c.statusDanger, Icons.error);
+      case QualityGrade.unavailable:
+        // Neutral solid fill (textSecondary #4A4A4A, white-on-fill 9.0:1).
+        return (c.textSecondary, Icons.info);
+    }
+  }
+
   /// GL-003 §8.13 status-token mapping for grade chips. Foreground is the dark
   /// `secondary` (#1A1A1A) on every verdict chip — dark text clears WCAG 4.5:1
   /// on all three grade backgrounds, so no per-grade white exception is needed:
@@ -862,17 +930,17 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
   ///   poor             → statusDanger  (#F26E6E), dark text (5.99:1)
   ///   unavailable      → neutral surface2 + textSecondary (11.39:1, no verdict)
   /// Every pairing clears WCAG 2.2 AA for normal text (see app_tokens.dart).
-  static (Color, Color) _gradeColors(QualityGrade grade) {
+  static (Color, Color) _gradeColors(QualityGrade grade, AppColorScheme colors) {
     switch (grade) {
       case QualityGrade.excellent:
       case QualityGrade.good:
-        return (AppColors.statusSuccess, AppColors.secondary);
+        return (colors.statusSuccess, colors.onPrimary);
       case QualityGrade.fair:
-        return (AppColors.statusWarning, AppColors.secondary);
+        return (colors.statusWarning, colors.onPrimary);
       case QualityGrade.poor:
-        return (AppColors.statusDanger, AppColors.secondary);
+        return (colors.statusDanger, colors.onPrimary);
       case QualityGrade.unavailable:
-        return (AppColors.surface2, AppColors.textSecondary);
+        return (colors.surface2, colors.textSecondary);
     }
   }
 
@@ -910,12 +978,13 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
   }
 
   Widget _sitesCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -924,7 +993,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
           Text(
             'Popular sites',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -935,7 +1004,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
               child: Text(
                 'No reachability results. The check did not return — your '
                 'connection may be down.',
-                style: text.bodyLarge?.copyWith(color: AppColors.textTertiary),
+                style: text.bodyLarge?.copyWith(color: colors.textTertiary),
               ),
             )
           else
@@ -946,6 +1015,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
   }
 
   Widget _siteRow(BuildContext context, SiteReachability s) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -955,8 +1025,8 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     // color alone.
     final IconData icon = ok ? Icons.check_circle : Icons.cancel;
     final Color iconColor = ok
-        ? AppColors.statusSuccess
-        : AppColors.statusDanger;
+        ? colors.statusSuccess
+        : colors.statusDanger;
     final String status = ok ? 'reachable' : 'unreachable';
     final String rtt = ok && s.latencyMs != null
         ? '${s.latencyMs!.round()} ms'
@@ -977,13 +1047,13 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
               Expanded(
                 child: Text(
                   s.site.name,
-                  style: text.bodyLarge?.copyWith(color: AppColors.textPrimary),
+                  style: text.bodyLarge?.copyWith(color: colors.textPrimary),
                 ),
               ),
               Text(
                 status,
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -993,7 +1063,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
                   rtt,
                   textAlign: TextAlign.right,
                   style: mono.inlineCode.copyWith(
-                    color: ok ? AppColors.primary : AppColors.textTertiary,
+                    color: ok ? colors.textAccent : colors.textTertiary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -1006,6 +1076,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
   }
 
   Widget _honestyCaption(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     // MINOR 5 (legibility): this honesty note reads at the §3 caption size
     // (13px, the next step up from the prior 11px) and stays secondary-toned
@@ -1015,7 +1086,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
       'These are this app\'s own measurements, not an Orb or Ookla score. '
       'The Responsiveness grade is an indicative figure inspired by RFC 9097, '
       'not the full standard.',
-      style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+      style: text.labelMedium?.copyWith(color: colors.textSecondary),
     );
   }
 }

@@ -23,6 +23,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../theme/app_typography.dart';
@@ -254,6 +255,7 @@ class FiberOpticScreen extends StatelessWidget {
   }
 
   Widget _body(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -289,7 +291,7 @@ class FiberOpticScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.md),
                   _jacketCard(text, mono),
                   const SizedBox(height: AppSpacing.md),
-                  _footnoteCard(text),
+                  _footnoteCard(colors, text),
                   ToolHelpFooter(toolId: 'fiber-optic'),
                 ],
               ),
@@ -338,13 +340,13 @@ class FiberOpticScreen extends StatelessWidget {
     );
   }
 
-  Widget _footnoteCard(TextTheme text) {
+  Widget _footnoteCard(AppColorScheme colors, TextTheme text) {
     return _Card(
       heading: 'Notes',
       headingText: text,
       child: Text(
         footnote,
-        style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+        style: text.labelMedium?.copyWith(color: colors.textTertiary),
       ),
     );
   }
@@ -364,11 +366,12 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -377,7 +380,7 @@ class _Card extends StatelessWidget {
           Text(
             heading,
             style: headingText.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -404,8 +407,9 @@ class _DistanceHeaderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextStyle? style = text.labelMedium?.copyWith(
-      color: AppColors.textTertiary,
+      color: colors.textTertiary,
       letterSpacing: 0.4,
     );
     return Padding(
@@ -461,13 +465,14 @@ class _DistanceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     // Legacy rows fade to tertiary; current types read at primary text.
     final Color cellColor = fiber.legacy
-        ? AppColors.textTertiary
-        : AppColors.textSecondary;
+        ? colors.textTertiary
+        : colors.textSecondary;
     final Color typeColor = fiber.legacy
-        ? AppColors.textTertiary
-        : AppColors.primary;
+        ? colors.textTertiary
+        : colors.textAccent;
     return ReferenceRowSemantics(
       label: rowLabel(fiber.type, <String?>[
         'core ${fiber.core}',
@@ -542,9 +547,10 @@ class _JacketRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final Color typeColor = fiber.legacy
-        ? AppColors.textTertiary
-        : AppColors.primary;
+        ? colors.textTertiary
+        : colors.textAccent;
     return ReferenceRowSemantics(
       label: rowLabel(fiber.type, <String?>[
         'jacket ${fiber.jacketName}',
@@ -567,7 +573,7 @@ class _JacketRow extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Color(fiber.jacketHex),
                     borderRadius: BorderRadius.circular(3),
-                    border: Border.all(color: AppColors.border, width: 1),
+                    border: Border.all(color: colors.border, width: 1),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xs),
@@ -585,7 +591,7 @@ class _JacketRow extends StatelessWidget {
                   child: Text(
                     fiber.jacketName,
                     style: text.bodyLarge?.copyWith(
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                     ),
                   ),
                 ),
@@ -596,7 +602,7 @@ class _JacketRow extends StatelessWidget {
               child: Text(
                 fiber.notes,
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ),

@@ -18,6 +18,7 @@ import 'package:flutter/semantics.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../services/educational/educational_resources_service.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/centered_content.dart';
@@ -101,6 +102,7 @@ class _EducationalResourceDetailScreenState
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final EducationalResource r = widget.resource;
     return Scaffold(
       appBar: AppBar(
@@ -133,7 +135,7 @@ class _EducationalResourceDetailScreenState
                   Text(
                     r.title,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          color: AppColors.textPrimary,
+                          color: colors.textPrimary,
                         ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
@@ -171,20 +173,21 @@ class _TopicLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Row(
       children: <Widget>[
-        const Icon(
+        Icon(
           Icons.folder_outlined,
           size: 16,
-          color: AppColors.textTertiary,
+          color: colors.textTertiary,
         ),
         const SizedBox(width: AppSpacing.xs),
         Expanded(
           child: Text(
             topic,
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -203,6 +206,7 @@ class _DescriptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final List<String> paragraphs = description
         .split('\n\n')
@@ -212,9 +216,9 @@ class _DescriptionCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
@@ -224,7 +228,7 @@ class _DescriptionCard extends StatelessWidget {
             if (i > 0) const SizedBox(height: AppSpacing.sm),
             Text(
               paragraphs[i],
-              style: text.bodyLarge?.copyWith(color: AppColors.textPrimary),
+              style: text.bodyLarge?.copyWith(color: colors.textPrimary),
             ),
           ],
         ],
@@ -241,6 +245,7 @@ class _TagsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,7 +255,7 @@ class _TagsSection extends StatelessWidget {
           style: text.labelLarge?.copyWith(
             fontSize: AppTextSize.caption,
             fontWeight: FontWeight.w600,
-            color: AppColors.textSecondary,
+            color: colors.textSecondary,
             letterSpacing: 0.4,
           ),
         ),
@@ -303,28 +308,29 @@ class _LaunchError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.statusDanger, width: 1),
+        border: Border.all(color: colors.statusDanger, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Icon(
+          Icon(
             Icons.error_outline,
             size: 20,
-            color: AppColors.statusDanger,
+            color: colors.statusDanger,
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               message,
               style: text.labelMedium?.copyWith(
-                color: AppColors.textPrimary,
+                color: colors.textPrimary,
               ),
             ),
           ),

@@ -30,6 +30,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../theme/app_typography.dart';
@@ -317,12 +318,13 @@ class _EthernetPinoutScreenState extends State<EthernetPinoutScreen> {
   }
 
   Widget _standardCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -331,7 +333,7 @@ class _EthernetPinoutScreenState extends State<EthernetPinoutScreen> {
           Text(
             'Standard',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -341,7 +343,7 @@ class _EthernetPinoutScreenState extends State<EthernetPinoutScreen> {
           const SizedBox(height: AppSpacing.sm),
           Text(
             EthernetPinoutScreen.orientationNote,
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -383,12 +385,13 @@ class _TableCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -397,7 +400,7 @@ class _TableCard extends StatelessWidget {
           Text(
             title,
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -414,7 +417,7 @@ class _TableCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   header,
-                  const Divider(color: AppColors.border, height: AppSpacing.sm),
+                  Divider(color: colors.border, height: AppSpacing.sm),
                   ...rows,
                 ],
               ),
@@ -424,7 +427,7 @@ class _TableCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.xs),
             Text(
               footnote!,
-              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
             ),
           ],
         ],
@@ -442,13 +445,14 @@ class _HeaderCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return SizedBox(
       width: width,
       child: Text(
         label,
         style: text.labelSmall?.copyWith(
-          color: AppColors.textTertiary,
+          color: colors.textTertiary,
           letterSpacing: 0.4,
         ),
       ),
@@ -467,6 +471,7 @@ class _PinRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final bool striped = pin.colorName.contains('/');
     // Pin function and pair carried by text, so the color swatch is never the
@@ -485,7 +490,7 @@ class _PinRow extends StatelessWidget {
                 child: Text(
                   '${pin.pin}',
                   style: mono.inlineCode.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -502,7 +507,7 @@ class _PinRow extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: text.labelMedium?.copyWith(
-                          color: AppColors.textPrimary,
+                          color: colors.textPrimary,
                         ),
                       ),
                     ),
@@ -521,7 +526,7 @@ class _PinRow extends StatelessWidget {
                     Text(
                       '${pin.pair}',
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ],
@@ -532,7 +537,7 @@ class _PinRow extends StatelessWidget {
                 child: Text(
                   pin.function,
                   style: mono.inlineCode.copyWith(
-                    color: AppColors.textSecondary,
+                    color: colors.textSecondary,
                   ),
                 ),
               ),
@@ -558,6 +563,7 @@ class _WireSwatch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final Color wire = Color(colorHex);
     return Container(
       width: _size,
@@ -566,13 +572,18 @@ class _WireSwatch extends StatelessWidget {
         shape: BoxShape.circle,
         // Hairline keeps the swatch visible on the dark card (§8.1 decorative
         // border is correct here — the swatch is non-interactive).
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
         gradient: striped
             ? LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 stops: const [0.5, 0.5],
-                colors: [wire, AppColors.neutral0],
+                // Canonical T568 data swatch (§8.6.2 / §8.20.7 exception): the
+                // striped half is the literal "white" of a white/colour pair,
+                // the same data-glyph status as the wire hexes themselves. It
+                // stays literal white in both themes (the 1px border keeps it
+                // visible on the white light card), never a theme token.
+                colors: [wire, const Color(0xFFFFFFFF)],
               )
             : null,
         color: striped ? null : wire,
@@ -596,12 +607,13 @@ class _StandardToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.inputFill,
+        color: colors.inputFill,
         borderRadius: BorderRadius.circular(AppRadius.control),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
+        border: Border.all(color: colors.borderStrong, width: 1),
       ),
       child: Row(
         children: _options.map((opt) {
@@ -623,15 +635,15 @@ class _StandardToggle extends StatelessWidget {
                   alignment: Alignment.center,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    color: selected ? AppColors.primary : Colors.transparent,
+                    color: selected ? colors.primary : Colors.transparent,
                     borderRadius: BorderRadius.circular(AppRadius.control),
                   ),
                   child: Text(
                     opt.$2,
                     style: text.labelLarge?.copyWith(
                       color: selected
-                          ? AppColors.secondary
-                          : AppColors.textSecondary,
+                          ? colors.onPrimary
+                          : colors.textSecondary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

@@ -28,6 +28,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -204,6 +205,7 @@ class RfConnectorsScreen extends StatelessWidget {
   }
 
   Widget _body(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -235,9 +237,9 @@ class RfConnectorsScreen extends StatelessWidget {
                   ),
                   if (ToolAssets.hasGraphic('rf-connectors'))
                     const SizedBox(height: AppSpacing.md),
-                  _connectorsCard(text, mono),
+                  _connectorsCard(colors, text, mono),
                   const SizedBox(height: AppSpacing.md),
-                  _footnoteCard(text),
+                  _footnoteCard(colors, text),
                   ToolHelpFooter(toolId: 'rf-connectors'),
                 ],
               ),
@@ -248,7 +250,7 @@ class RfConnectorsScreen extends StatelessWidget {
     );
   }
 
-  Widget _connectorsCard(TextTheme text, AppMonoText mono) {
+  Widget _connectorsCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
     return _Card(
       heading: 'Coaxial RF Connectors',
       headingText: text,
@@ -257,10 +259,10 @@ class RfConnectorsScreen extends StatelessWidget {
         children: [
           for (int i = 0; i < rfConnectors.length; i++) ...[
             if (i > 0)
-              const Divider(
+              Divider(
                 height: AppSpacing.md,
                 thickness: 1,
-                color: AppColors.border,
+                color: colors.border,
               ),
             _ConnectorBlock(connector: rfConnectors[i], text: text, mono: mono),
           ],
@@ -269,13 +271,13 @@ class RfConnectorsScreen extends StatelessWidget {
     );
   }
 
-  Widget _footnoteCard(TextTheme text) {
+  Widget _footnoteCard(AppColorScheme colors, TextTheme text) {
     return _Card(
       heading: 'Notes',
       headingText: text,
       child: Text(
         footnote,
-        style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+        style: text.labelMedium?.copyWith(color: colors.textTertiary),
       ),
     );
   }
@@ -296,11 +298,12 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -309,7 +312,7 @@ class _Card extends StatelessWidget {
           Text(
             heading,
             style: headingText.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -337,6 +340,7 @@ class _ConnectorBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     // Group the whole connector block as one container labelled by the
     // connector name, so a screen reader announces "BNC" then steps through
     // its impedance / frequency / mating / notes as a coherent unit rather
@@ -358,7 +362,7 @@ class _ConnectorBlock extends StatelessWidget {
                   child: Text(
                     connector.name,
                     style: text.bodyLarge?.copyWith(
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -377,7 +381,7 @@ class _ConnectorBlock extends StatelessWidget {
               child: Text(
                 connector.notes,
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ),
@@ -399,15 +403,16 @@ class _ImpedanceChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final bool mismatch = connector.isImpedanceMismatch;
     final Color fg = mismatch
-        ? AppColors.statusWarning
-        : AppColors.textSecondary;
+        ? colors.statusWarning
+        : colors.textSecondary;
     // §8.13 rule 3 sanctions a low-alpha status tint band. Derive it from the
     // statusWarning token (no literal hex) at ~10% alpha over the card.
     final Color bg = mismatch
-        ? AppColors.statusWarning.withValues(alpha: 0.10)
-        : AppColors.surface2;
+        ? colors.statusWarning.withValues(alpha: 0.10)
+        : colors.surface2;
     final String semanticValue = mismatch
         ? '${connector.impedance}, impedance mismatch for Wi-Fi'
         : connector.impedance;
@@ -451,6 +456,7 @@ class _DataRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.only(top: 2),
@@ -462,7 +468,7 @@ class _DataRow extends StatelessWidget {
             child: Text(
               label,
               style: text.labelMedium?.copyWith(
-                color: AppColors.textTertiary,
+                color: colors.textTertiary,
                 letterSpacing: 0.4,
               ),
             ),
@@ -470,7 +476,7 @@ class _DataRow extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: mono.inlineCode.copyWith(color: AppColors.textSecondary),
+              style: mono.inlineCode.copyWith(color: colors.textSecondary),
             ),
           ),
         ],

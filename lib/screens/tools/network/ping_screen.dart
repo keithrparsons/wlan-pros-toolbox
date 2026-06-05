@@ -24,6 +24,7 @@ import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/ping_service.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -236,12 +237,13 @@ class _PingScreenState extends State<PingScreen> {
   }
 
   Widget _formCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -258,7 +260,7 @@ class _PingScreenState extends State<PingScreen> {
               keyboardType: TextInputType.url,
               textInputAction: TextInputAction.go,
               onSubmitted: (_) => _running ? null : _start(),
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(hintText: '1.1.1.1'),
             ),
           ),
@@ -266,7 +268,7 @@ class _PingScreenState extends State<PingScreen> {
           Text(
             'TCP port',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -282,7 +284,7 @@ class _PingScreenState extends State<PingScreen> {
           Text(
             'Count',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -302,14 +304,14 @@ class _PingScreenState extends State<PingScreen> {
             child: Text(
               'Measures TCP handshake round-trip time to port $_port — a '
               'reachability + latency probe, not ICMP echo.',
-              style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
             ),
           ),
           if (_error != null) ...[
             const SizedBox(height: AppSpacing.sm),
             Text(
               _error!,
-              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
             ),
           ],
           const SizedBox(height: AppSpacing.md),
@@ -323,6 +325,7 @@ class _PingScreenState extends State<PingScreen> {
   }
 
   Widget _portChip(BuildContext context, int port) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final bool selected = _port == port;
     return ChoiceChip(
@@ -330,15 +333,15 @@ class _PingScreenState extends State<PingScreen> {
       selected: selected,
       showCheckmark: false,
       labelStyle: text.labelMedium?.copyWith(
-        color: selected ? AppColors.secondary : AppColors.textSecondary,
+        color: selected ? colors.onPrimary : colors.textSecondary,
         fontWeight: FontWeight.w500,
       ),
-      selectedColor: AppColors.primary,
-      backgroundColor: AppColors.surface2,
+      selectedColor: colors.primary,
+      backgroundColor: colors.surface2,
       materialTapTargetSize: MaterialTapTargetSize.padded,
       // §8.3 — shared resolver: idle/selected/disabled borders + 2px lime
       // keyboard-focus ring.
-      side: AppTheme.chipSide(),
+      side: AppTheme.chipSide(Theme.of(context).brightness),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.control),
       ),
@@ -347,6 +350,7 @@ class _PingScreenState extends State<PingScreen> {
   }
 
   Widget _countChip(BuildContext context, int count) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final bool selected = _count == count;
     final String label = count == 0 ? 'Until stopped' : '$count';
@@ -355,15 +359,15 @@ class _PingScreenState extends State<PingScreen> {
       selected: selected,
       showCheckmark: false,
       labelStyle: text.labelMedium?.copyWith(
-        color: selected ? AppColors.secondary : AppColors.textSecondary,
+        color: selected ? colors.onPrimary : colors.textSecondary,
         fontWeight: FontWeight.w500,
       ),
-      selectedColor: AppColors.primary,
-      backgroundColor: AppColors.surface2,
+      selectedColor: colors.primary,
+      backgroundColor: colors.surface2,
       materialTapTargetSize: MaterialTapTargetSize.padded,
       // §8.3 — shared resolver: idle/selected/disabled borders + 2px lime
       // keyboard-focus ring.
-      side: AppTheme.chipSide(),
+      side: AppTheme.chipSide(Theme.of(context).brightness),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.control),
       ),
@@ -372,6 +376,7 @@ class _PingScreenState extends State<PingScreen> {
   }
 
   Widget _statsCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -395,9 +400,9 @@ class _PingScreenState extends State<PingScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -409,14 +414,14 @@ class _PingScreenState extends State<PingScreen> {
               Text(
                 _running ? 'Pinging…' : 'Summary',
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                   letterSpacing: 0.4,
                 ),
               ),
               Text(
                 '${_stats.received} / ${_stats.sent} · $lossPct% loss',
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ],
@@ -450,6 +455,7 @@ class _PingScreenState extends State<PingScreen> {
     String label,
     String value,
   ) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Expanded(
       child: Column(
@@ -457,7 +463,7 @@ class _PingScreenState extends State<PingScreen> {
         children: [
           Text(
             label,
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: 2),
           Row(
@@ -466,14 +472,14 @@ class _PingScreenState extends State<PingScreen> {
             children: [
               Text(
                 value,
-                style: mono.outputMedium.copyWith(color: AppColors.primary),
+                style: mono.outputMedium.copyWith(color: colors.textAccent),
               ),
               const SizedBox(width: 2),
               if (value != '—')
                 Text(
                   'ms',
                   style: text.labelSmall?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
             ],
@@ -484,6 +490,7 @@ class _PingScreenState extends State<PingScreen> {
   }
 
   Widget _repliesCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -493,9 +500,9 @@ class _PingScreenState extends State<PingScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -504,7 +511,7 @@ class _PingScreenState extends State<PingScreen> {
           Text(
             'Replies',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -515,7 +522,7 @@ class _PingScreenState extends State<PingScreen> {
               child: Text(
                 'No replies. The host did not answer on TCP $_port — it may be '
                 'down, the port may be filtered, or ICMP-only.',
-                style: text.bodyLarge?.copyWith(color: AppColors.textTertiary),
+                style: text.bodyLarge?.copyWith(color: colors.textTertiary),
               ),
             ),
           ..._replies.reversed.map(
@@ -532,6 +539,7 @@ class _PingScreenState extends State<PingScreen> {
     TextTheme text,
     AppMonoText mono,
   ) {
+    final AppColorScheme colors = context.colors;
     // WCAG 1.4.1 — outcome is carried by the text label + icon shape, never
     // color alone. The whole row is one semantic node.
     final (
@@ -541,7 +549,7 @@ class _PingScreenState extends State<PingScreen> {
       String semantic,
     ) = r.success
         ? (
-            AppColors.primary,
+            colors.textAccent,
             Icons.south_east,
             '${(r.rtt!.inMicroseconds / 1000.0).toStringAsFixed(1)} ms',
             'Reply ${r.sequence}, '
@@ -549,7 +557,7 @@ class _PingScreenState extends State<PingScreen> {
                 'milliseconds',
           )
         : (
-            AppColors.textTertiary,
+            colors.textTertiary,
             Icons.block,
             r.errorLabel ?? 'lost',
             'Probe ${r.sequence} lost, ${r.errorLabel ?? 'no reply'}',
@@ -570,7 +578,7 @@ class _PingScreenState extends State<PingScreen> {
                 child: Text(
                   '#${r.sequence}',
                   style: mono.inlineCode.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
               ),
@@ -578,7 +586,7 @@ class _PingScreenState extends State<PingScreen> {
                 child: Text(
                   r.success ? 'reply' : (r.errorLabel ?? 'no reply'),
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: colors.textSecondary,
                   ),
                 ),
               ),
@@ -607,6 +615,7 @@ class _Sparkline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Semantics(
       excludeSemantics: true,
       child: ClipRRect(
@@ -614,12 +623,14 @@ class _Sparkline extends StatelessWidget {
         child: Container(
           height: 56,
           width: double.infinity,
-          color: AppColors.surface2,
+          color: colors.surface2,
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.xs,
             vertical: AppSpacing.xs,
           ),
-          child: CustomPaint(painter: _SparklinePainter(rttsMs)),
+          child: CustomPaint(
+            painter: _SparklinePainter(rttsMs, colors.textAccent),
+          ),
         ),
       ),
     );
@@ -627,9 +638,12 @@ class _Sparkline extends StatelessWidget {
 }
 
 class _SparklinePainter extends CustomPainter {
-  _SparklinePainter(this.rttsMs);
+  _SparklinePainter(this.rttsMs, this.lineColor);
 
   final List<double> rttsMs;
+
+  /// The line + dot color — foreground accent (darkened-lime on light, §8.20.2).
+  final Color lineColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -659,7 +673,7 @@ class _SparklinePainter extends CustomPainter {
     }
 
     final Paint line = Paint()
-      ..color = AppColors.primary
+      ..color = lineColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2
       ..strokeJoin = StrokeJoin.round
@@ -670,7 +684,7 @@ class _SparklinePainter extends CustomPainter {
       canvas.drawCircle(
         Offset(size.width / 2, size.height / 2),
         2.5,
-        Paint()..color = AppColors.primary,
+        Paint()..color = lineColor,
       );
       return;
     }
@@ -679,5 +693,5 @@ class _SparklinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_SparklinePainter old) =>
-      old.rttsMs.length != rttsMs.length;
+      old.lineColor != lineColor || old.rttsMs.length != rttsMs.length;
 }

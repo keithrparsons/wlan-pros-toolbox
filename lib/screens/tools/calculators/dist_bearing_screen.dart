@@ -34,6 +34,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -294,11 +295,12 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -335,7 +337,7 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
             const SizedBox(height: AppSpacing.sm),
             Text(
               _rangeNote!,
-              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
             ),
           ],
         ],
@@ -344,10 +346,11 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
   }
 
   Widget _pointHeader(String label, TextTheme text) {
+    final AppColorScheme colors = context.colors;
     return Text(
       label,
       style: text.labelMedium?.copyWith(
-        color: AppColors.textSecondary,
+        color: colors.textSecondary,
         letterSpacing: 0.4,
         fontWeight: FontWeight.w500,
       ),
@@ -401,6 +404,7 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
     required String hintText,
     required TextStyle monoStyle,
   }) {
+    final AppColorScheme colors = context.colors;
     return LabeledField(
       label: label,
       hint: '(°)',
@@ -418,18 +422,19 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
         autocorrect: false,
         enableSuggestions: false,
         style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
-        cursorColor: AppColors.primary,
+        cursorColor: colors.textAccent,
         decoration: InputDecoration(hintText: hintText),
       ),
     );
   }
 
   Widget _resultCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -438,7 +443,7 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
           Text(
             'Great-circle distance',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -458,15 +463,15 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
                   _kmText,
                   style: mono.outputXL.copyWith(
                     color: _km == null
-                        ? AppColors.textTertiary
-                        : AppColors.primary,
+                        ? colors.textTertiary
+                        : colors.textAccent,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xxs),
                 Text(
                   'km',
                   style: text.labelLarge?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: colors.textSecondary,
                   ),
                 ),
               ],
@@ -477,12 +482,12 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
           _dataRow('m', _mText, mono, text),
           _dataRow('ft', _ftText, mono, text),
           const SizedBox(height: AppSpacing.sm),
-          Container(height: 1, color: AppColors.border),
+          Container(height: 1, color: colors.border),
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Initial bearing',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -501,6 +506,7 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
     TextTheme text, {
     bool emphasize = false,
   }) {
+    final AppColorScheme colors = context.colors;
     // One SR node per row: "Forward (1→2): 258.0°" (or "not calculated"),
     // instead of label and value fragments (Vera finding #6).
     return Semantics(
@@ -519,7 +525,7 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
               child: Text(
                 label,
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ),
@@ -528,8 +534,8 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
                 value,
                 style: mono.inlineCode.copyWith(
                   color: value == '—'
-                      ? AppColors.textTertiary
-                      : (emphasize ? AppColors.primary : AppColors.textPrimary),
+                      ? colors.textTertiary
+                      : (emphasize ? colors.textAccent : colors.textPrimary),
                   fontWeight: emphasize ? FontWeight.w500 : FontWeight.w400,
                 ),
               ),
@@ -541,11 +547,12 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
   }
 
   Widget _formulaCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -554,24 +561,24 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
           Text(
             'Formula',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
             'd = 2R · atan2(√a, √(1−a)),  R = 6371 km',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
             'a = sin²(Δφ/2) + cos φ₁ · cos φ₂ · sin²(Δλ/2)',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Haversine great-circle distance and initial bearing on a sphere '
             'of mean radius 6371 km. Coordinates are decimal degrees.',
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),

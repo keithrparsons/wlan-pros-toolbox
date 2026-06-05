@@ -32,6 +32,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -218,23 +219,23 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
   }
 
   /// Status-word color (GL-003 §8.13 palette). PWA: red / orange / green.
-  static Color _verdictColor(PoeVerdict v) {
+  static Color _verdictColor(PoeVerdict v, AppColorScheme colors) {
     switch (v) {
       case PoeVerdict.over:
-        return AppColors.statusDanger;
+        return colors.statusDanger;
       case PoeVerdict.caution:
-        return AppColors.statusWarning;
+        return colors.statusWarning;
       case PoeVerdict.ok:
-        return AppColors.statusSuccess;
+        return colors.statusSuccess;
     }
   }
 
   /// Utilization-bar tint. PWA uses a different cut than the status word:
   /// pct > 90 red, > 75 orange, else green.
-  static Color _barColor(double pct) {
-    if (pct > 90) return AppColors.statusDanger;
-    if (pct > 75) return AppColors.statusWarning;
-    return AppColors.statusSuccess;
+  static Color _barColor(double pct, AppColorScheme colors) {
+    if (pct > 90) return colors.statusDanger;
+    if (pct > 75) return colors.statusWarning;
+    return colors.statusSuccess;
   }
 
   // ─── Build ────────────────────────────────────────────────────────────────
@@ -346,11 +347,12 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -373,7 +375,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
               style: mono.outputLarge.copyWith(
                 fontSize: AppTextSize.fieldNumeric,
               ),
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(hintText: '370'),
             ),
           ),
@@ -381,7 +383,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
           Text(
             'Connected devices',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -397,8 +399,9 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
   }
 
   Widget _deviceHeader(TextTheme text) {
+    final AppColorScheme colors = context.colors;
     final TextStyle? style = text.labelSmall?.copyWith(
-      color: AppColors.textTertiary,
+      color: colors.textTertiary,
     );
     return Row(
       children: [
@@ -410,6 +413,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
   }
 
   Widget _deviceRow(int i, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     final int rowNum = i + 1;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -432,7 +436,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
               style: mono.outputLarge.copyWith(
                 fontSize: AppTextSize.fieldNumeric,
               ),
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(hintText: 'W'),
             ),
           ),
@@ -454,7 +458,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
               style: mono.outputLarge.copyWith(
                 fontSize: AppTextSize.fieldNumeric,
               ),
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(hintText: 'Qty'),
             ),
           ),
@@ -464,13 +468,14 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
   }
 
   Widget _resultCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     final PoeBudgetResult? r = _result;
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -479,7 +484,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
           Text(
             'Result',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -488,7 +493,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
             // Empty / invalid budget → blank, no crash.
             Text(
               'Enter a switch PoE budget to calculate.',
-              style: text.bodyMedium?.copyWith(color: AppColors.textTertiary),
+              style: text.bodyMedium?.copyWith(color: colors.textTertiary),
             )
           else ...[
             _utilizationBar(r, text, mono),
@@ -500,7 +505,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
               mono,
               'Remaining',
               _remainingLabel(r.remaining),
-              valueColor: _verdictColor(r.verdict),
+              valueColor: _verdictColor(r.verdict, colors),
             ),
             _resultRow(
               text,
@@ -517,7 +522,8 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
   }
 
   Widget _utilizationBar(PoeBudgetResult r, TextTheme text, AppMonoText mono) {
-    final Color fill = _barColor(r.pct);
+    final AppColorScheme colors = context.colors;
+    final Color fill = _barColor(r.pct, colors);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -528,7 +534,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
             borderRadius: BorderRadius.circular(AppRadius.control),
             child: Stack(
               children: [
-                Container(height: AppSpacing.sm, color: AppColors.inputFill),
+                Container(height: AppSpacing.sm, color: colors.inputFill),
                 FractionallySizedBox(
                   // pct is capped at 100, so the fraction never exceeds 1.
                   widthFactor: (r.pct / 100).clamp(0.0, 1.0),
@@ -549,6 +555,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
     String value, {
     Color? valueColor,
   }) {
+    final AppColorScheme colors = context.colors;
     // One SR node per row: "Total draw: 142.0 W", instead of label and value as
     // separate fragments (Vera finding #6). The "Remaining" row's verdict color
     // is never the only signal — the worded verdict lives in the status line
@@ -567,14 +574,14 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
               child: Text(
                 label,
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ),
             SelectableText(
               value,
               style: mono.inlineCode.copyWith(
-                color: valueColor ?? AppColors.textPrimary,
+                color: valueColor ?? colors.textPrimary,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -586,7 +593,8 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
 
   /// The §8.13 status verdict — colored word never standing on color alone.
   Widget _statusLine(PoeVerdict verdict, TextTheme text) {
-    final Color color = _verdictColor(verdict);
+    final AppColorScheme colors = context.colors;
+    final Color color = _verdictColor(verdict, colors);
     final IconData icon;
     switch (verdict) {
       case PoeVerdict.over:
@@ -599,7 +607,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.xs),
       decoration: BoxDecoration(
-        color: AppColors.inputFill,
+        color: colors.inputFill,
         borderRadius: BorderRadius.circular(AppRadius.control),
         border: Border.all(color: color, width: 1),
       ),
@@ -622,6 +630,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
   }
 
   Widget _standardsCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     // POE_STDS mirror: [standard, name, PSE W, PD W].
     final List<List<String>> rows = const [
       ['802.3af', 'PoE', '15.4 W', '12.95 W'],
@@ -632,9 +641,9 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -643,7 +652,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
           Text(
             'PoE standards',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -659,7 +668,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
                     child: Text(
                       row[0],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
@@ -667,7 +676,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
                     child: Text(
                       row[1],
                       style: text.labelMedium?.copyWith(
-                        color: AppColors.textTertiary,
+                        color: colors.textTertiary,
                       ),
                     ),
                   ),
@@ -677,7 +686,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
                       row[3],
                       textAlign: TextAlign.right,
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.primary,
+                        color: colors.textAccent,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -689,7 +698,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
           const SizedBox(height: AppSpacing.xs),
           Text(
             'PD W is the power available at the device (after cable loss).',
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -697,6 +706,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
   }
 
   Widget _classesCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     // POE_CLASSES mirror: [class, max PD W, standard].
     final List<List<String>> rows = const [
       ['0', '12.95 W', '802.3af'],
@@ -712,9 +722,9 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -723,7 +733,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
           Text(
             'PD power classes',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -738,7 +748,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
                     child: Text(
                       'Class ${row[0]}',
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
@@ -746,7 +756,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
                     child: Text(
                       row[2],
                       style: text.labelMedium?.copyWith(
-                        color: AppColors.textTertiary,
+                        color: colors.textTertiary,
                       ),
                     ),
                   ),
@@ -756,7 +766,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
                       row[1],
                       textAlign: TextAlign.right,
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.primary,
+                        color: colors.textAccent,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

@@ -24,6 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -235,11 +236,12 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -256,6 +258,7 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
   }
 
   Widget _pathRow(AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     // FieldUnitRow reflows the unit selector beneath the field below 440px so
     // it never clips at phone widths (Vera web-demo gate, 2026-06-02).
     return FieldUnitRow(
@@ -277,7 +280,7 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
           style: mono.outputLarge.copyWith(
             fontSize: AppTextSize.fieldNumeric,
           ),
-          cursorColor: AppColors.primary,
+          cursorColor: colors.textAccent,
           decoration: const InputDecoration(hintText: '20'),
         ),
       ),
@@ -293,13 +296,14 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
   }
 
   Widget _kFactorRow(TextTheme text) {
+    final AppColorScheme colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'K-Factor (effective earth radius)',
           style: text.labelMedium?.copyWith(
-            color: AppColors.textSecondary,
+            color: colors.textSecondary,
             letterSpacing: 0.4,
           ),
         ),
@@ -317,13 +321,14 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
         const SizedBox(height: AppSpacing.xs),
         Text(
           'Use 4/3 for typical planning. Lower k means more bulge.',
-          style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+          style: text.labelMedium?.copyWith(color: colors.textTertiary),
         ),
       ],
     );
   }
 
   Widget _resultRow(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     final double? bulgeFt = _bulgeM == null
         ? null
         : EarthCurvatureScreen.metersToFeet(_bulgeM!);
@@ -343,7 +348,7 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
           Text(
             'Earth bulge at midpoint',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -356,15 +361,15 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
                 _formatFixed(_bulgeM),
                 style: mono.outputXL.copyWith(
                   color: _bulgeM == null
-                      ? AppColors.textTertiary
-                      : AppColors.primary,
+                      ? colors.textTertiary
+                      : colors.textAccent,
                 ),
               ),
               const SizedBox(width: AppSpacing.xxs),
               Text(
                 'm',
                 style: text.labelLarge?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ],
@@ -378,15 +383,15 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
                 _formatFixed(bulgeFt),
                 style: mono.outputLarge.copyWith(
                   color: _bulgeM == null
-                      ? AppColors.textTertiary
-                      : AppColors.textSecondary,
+                      ? colors.textTertiary
+                      : colors.textSecondary,
                 ),
               ),
               const SizedBox(width: AppSpacing.xxs),
               Text(
                 'ft',
                 style: text.labelLarge?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ],
@@ -406,11 +411,12 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
   }
 
   Widget _formulaCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -419,25 +425,25 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
           Text(
             'Formula',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
             'h(m) = d² · 1000 / (8 · Rₑ)',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
             'Rₑ   = 6371 · k',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'd in km, Rₑ is the effective earth radius in km. h is the bulge '
             'at the path midpoint. The K-factor scales the radius for '
             'atmospheric refraction.',
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -445,6 +451,7 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
   }
 
   Widget _referenceCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     // Anchor values at the default 4/3 K-factor, computed from the same formula
     // this screen uses. Columns are path length → bulge in meters.
     final List<List<String>> refs = const [
@@ -457,9 +464,9 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -468,7 +475,7 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
           Text(
             'Reference points (k = 4/3)',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -484,7 +491,7 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
                     child: Text(
                       row[0],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
@@ -492,7 +499,7 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
                     child: Text(
                       row[1],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.primary,
+                        color: colors.textAccent,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

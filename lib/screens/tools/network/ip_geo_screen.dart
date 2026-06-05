@@ -20,6 +20,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../services/network/ip_geo_service.dart';
 import '../../../services/network/network_support.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -191,12 +192,13 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
   }
 
   Widget _queryCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -213,7 +215,7 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
               keyboardType: TextInputType.url,
               textInputAction: TextInputAction.search,
               onSubmitted: (_) => _run(),
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(
                 hintText: 'Leave blank for my public IP',
               ),
@@ -224,7 +226,7 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
             'Data from the ipinfo.io API, with geojs.io as a fallback. '
             'No account or key required. IP geolocation is approximate '
             '(city-level) and can be wrong for some ISPs.',
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.md),
           FilledButton(
@@ -236,9 +238,9 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
                     child: Semantics(
                       label: 'Locating…',
                       liveRegion: true,
-                      child: const CircularProgressIndicator(
+                      child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.secondary,
+                        color: colors.onPrimary,
                       ),
                     ),
                   )
@@ -272,12 +274,13 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
   }
 
   Widget _detailsCard(BuildContext context, IpGeoResult r) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
+        border: Border.all(color: colors.borderStrong, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -286,7 +289,7 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
           Text(
             'Location',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
               fontWeight: FontWeight.w600,
             ),
@@ -307,6 +310,7 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
   }
 
   Widget _coordinatesCard(BuildContext context, IpGeoResult r) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -315,9 +319,9 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -326,7 +330,7 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
           Text(
             'Coordinates',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
               fontWeight: FontWeight.w600,
             ),
@@ -345,14 +349,14 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Map link',
-            style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+            style: text.labelMedium?.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: 4),
           if (url != null)
             SelectableText(
               url,
               style: mono.inlineCode.copyWith(
-                color: AppColors.textPrimary,
+                color: colors.textPrimary,
                 fontSize: AppTextSize.caption,
               ),
             ),
@@ -381,7 +385,7 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
           const SizedBox(height: 6),
           Text(
             'An interactive in-app map is a planned future addition.',
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),

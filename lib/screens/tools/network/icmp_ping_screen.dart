@@ -32,6 +32,7 @@ import '../../../services/network/dart_ping_icmp_backend.dart';
 import '../../../services/network/icmp_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -262,12 +263,13 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
   /// blocks (GL-008). Point the user at the TCP Ping tool, which IS the desktop
   /// reachability/latency path.
   Widget _sandboxedDesktopCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
@@ -275,17 +277,17 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.shield_outlined,
                 size: 24,
-                color: AppColors.textSecondary,
+                color: colors.textSecondary,
               ),
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(
                   'ICMP ping runs on mobile',
                   style: text.headlineSmall?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                   ),
                 ),
               ),
@@ -298,7 +300,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
             'Use the TCP Ping tool here — it measures reachability and '
             'round-trip latency over a TCP handshake (not ICMP). Run ICMP Ping '
             'from the iOS or Android build.',
-            style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+            style: text.bodyLarge?.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.md),
           Align(
@@ -320,12 +322,13 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
   }
 
   Widget _formCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -342,7 +345,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
               keyboardType: TextInputType.url,
               textInputAction: TextInputAction.go,
               onSubmitted: (_) => _running ? null : _start(),
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(hintText: '1.1.1.1'),
             ),
           ),
@@ -350,7 +353,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
           Text(
             'Count',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -370,7 +373,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
             child: Text(
               'Sends ICMP echo requests and measures the echo-reply round-trip '
               'time — true ICMP, not a TCP probe.',
-              style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
             ),
           ),
           _devicePendingNote(context),
@@ -378,7 +381,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
             const SizedBox(height: AppSpacing.sm),
             Text(
               _error!,
-              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
             ),
           ],
           const SizedBox(height: AppSpacing.md),
@@ -394,16 +397,17 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
   /// Honest disclosure that the native ICMP layer is not yet device-verified.
   /// Never claims it works; tells the user exactly what state the build is in.
   Widget _devicePendingNote(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.xs),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             Icons.info_outline,
             size: 16,
-            color: AppColors.textTertiary,
+            color: colors.textTertiary,
           ),
           const SizedBox(width: AppSpacing.xs),
           Expanded(
@@ -411,7 +415,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
               'Uses the device\'s real ICMP echo. The native path is wired but '
               'still pending on-device verification; if it cannot run, a run '
               'reports that plainly rather than showing made-up results.',
-              style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
             ),
           ),
         ],
@@ -420,6 +424,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
   }
 
   Widget _countChip(BuildContext context, int count) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final bool selected = _count == count;
     final String label = count == 0 ? 'Until stopped' : '$count';
@@ -428,15 +433,15 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
       selected: selected,
       showCheckmark: false,
       labelStyle: text.labelMedium?.copyWith(
-        color: selected ? AppColors.secondary : AppColors.textSecondary,
+        color: selected ? colors.onPrimary : colors.textSecondary,
         fontWeight: FontWeight.w500,
       ),
-      selectedColor: AppColors.primary,
-      backgroundColor: AppColors.surface2,
+      selectedColor: colors.primary,
+      backgroundColor: colors.surface2,
       materialTapTargetSize: MaterialTapTargetSize.padded,
       // §8.3 — shared resolver: idle/selected/disabled borders + 2px lime
       // keyboard-focus ring.
-      side: AppTheme.chipSide(),
+      side: AppTheme.chipSide(Theme.of(context).brightness),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.control),
       ),
@@ -445,6 +450,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
   }
 
   Widget _statsCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -468,9 +474,9 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -482,14 +488,14 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
               Text(
                 _running ? 'ICMP echo…' : 'Summary',
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                   letterSpacing: 0.4,
                 ),
               ),
               Text(
                 '${_stats.received} / ${_stats.sent} · $lossPct% loss',
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ],
@@ -517,6 +523,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
     String label,
     String value,
   ) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Expanded(
       child: Column(
@@ -524,7 +531,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
         children: [
           Text(
             label,
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: 2),
           Row(
@@ -533,14 +540,14 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
             children: [
               Text(
                 value,
-                style: mono.outputMedium.copyWith(color: AppColors.primary),
+                style: mono.outputMedium.copyWith(color: colors.textAccent),
               ),
               const SizedBox(width: 2),
               if (value != '—')
                 Text(
                   'ms',
                   style: text.labelSmall?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
             ],
@@ -551,6 +558,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
   }
 
   Widget _repliesCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -560,9 +568,9 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -571,7 +579,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
           Text(
             'Replies',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -582,7 +590,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
               child: Text(
                 'No replies. The host did not answer the ICMP echo — it may be '
                 'down, or ICMP may be filtered on the path.',
-                style: text.bodyLarge?.copyWith(color: AppColors.textTertiary),
+                style: text.bodyLarge?.copyWith(color: colors.textTertiary),
               ),
             ),
           ..._replies.reversed.map(
@@ -599,6 +607,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
     TextTheme text,
     AppMonoText mono,
   ) {
+    final AppColorScheme colors = context.colors;
     // WCAG 1.4.1 — outcome carried by text + icon shape, never color alone.
     final (
       Color color,
@@ -607,14 +616,14 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
       String semantic,
     ) = r.success
         ? (
-            AppColors.primary,
+            colors.textAccent,
             Icons.south_east,
             r.rttMs == null ? 'reply' : '${r.rttMs!.toStringAsFixed(1)} ms',
             'Reply ${r.sequence}, '
                 '${r.rttMs == null ? 'no time' : '${r.rttMs!.toStringAsFixed(1)} milliseconds'}',
           )
         : (
-            AppColors.textTertiary,
+            colors.textTertiary,
             Icons.block,
             r.errorLabel ?? 'lost',
             'Probe ${r.sequence} lost, ${r.errorLabel ?? 'no reply'}',
@@ -636,7 +645,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
                 child: Text(
                   '#${r.sequence}',
                   style: mono.inlineCode.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
               ),
@@ -644,7 +653,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
                 child: Text(
                   r.success ? 'reply' : (r.errorLabel ?? 'no reply'),
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: colors.textSecondary,
                   ),
                 ),
               ),

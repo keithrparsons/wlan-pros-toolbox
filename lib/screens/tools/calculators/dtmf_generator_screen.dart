@@ -23,6 +23,7 @@ import 'package:flutter/material.dart';
 
 import '../../../data/dtmf.dart';
 import '../../../services/audio/dtmf_player.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/tool_help_footer.dart';
 
@@ -124,12 +125,13 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
   /// hearing" readout. Frequencies are neutral data (no verdict), so no status
   /// hue; the key label is lime as the active/selected cue (§8.3).
   Widget _selectionCard(TextTheme text) {
+    final AppColorScheme colors = context.colors;
     final DtmfKey key = _selectedKey;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
@@ -141,7 +143,7 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
             child: Text(
               key.label,
               style: text.headlineMedium?.copyWith(
-                color: AppColors.primary,
+                color: colors.textAccent,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -154,7 +156,7 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
                 Text(
                   'Dual-tone frequencies',
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: colors.textSecondary,
                     letterSpacing: 0.4,
                   ),
                 ),
@@ -163,7 +165,7 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
                   '${key.lowHz.toStringAsFixed(0)} Hz '
                   '+ ${key.highHz.toStringAsFixed(0)} Hz',
                   style: text.bodyMedium?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                   ),
                 ),
               ],
@@ -234,12 +236,13 @@ class _DtmfKeyButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final bool reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ??
         false;
 
     final Color borderColor =
-        selected ? AppColors.primary : AppColors.borderStrong;
+        selected ? colors.textAccent : colors.borderStrong;
     final double borderWidth = selected ? 2 : 1;
 
     return Semantics(
@@ -254,9 +257,9 @@ class _DtmfKeyButton extends StatelessWidget {
           // §8.3 secondary/outline: transparent fill, borderStrong outline, lime
           // text. Selected → lime border + lime fill wash.
           backgroundColor: selected
-              ? AppColors.primary.withValues(alpha: 0.08)
+              ? colors.textAccent.withValues(alpha: 0.08)
               : Colors.transparent,
-          foregroundColor: AppColors.primary,
+          foregroundColor: colors.textAccent,
           side: BorderSide(color: borderColor, width: borderWidth),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.control),
@@ -275,7 +278,7 @@ class _DtmfKeyButton extends StatelessWidget {
           label,
           style: text.headlineSmall?.copyWith(
             // IBM Plex Sans (theme default), lime label (§8.3 secondary text).
-            color: AppColors.primary,
+            color: colors.textAccent,
             fontWeight: FontWeight.w600,
           ),
         ),

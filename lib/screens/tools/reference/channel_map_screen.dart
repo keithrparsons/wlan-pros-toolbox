@@ -34,6 +34,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
@@ -954,7 +955,7 @@ class _ChannelMapScreenState extends State<ChannelMapScreen> {
           b.alt ? '${b.centerChannel} (alt)' : '${b.centerChannel}',
           '${b.lowChannel}',
           '${b.highChannel}',
-          _dfsStyle(b.dfs).label,
+          _dfsLabel(b.dfs),
         ].join(tab),
       );
     }
@@ -1006,22 +1007,24 @@ class _ChannelMapScreenState extends State<ChannelMapScreen> {
   }
 
   Widget _intro(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Text(
       'Visual channel bonding map: center channels, bonded widths, and '
       'non-overlapping groupings for 2.4, 5, and 6 GHz. Scroll the 5 GHz and '
       '6 GHz maps horizontally.',
-      style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+      style: text.labelMedium?.copyWith(color: colors.textTertiary),
     );
   }
 
   Widget _bandCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -1030,7 +1033,7 @@ class _ChannelMapScreenState extends State<ChannelMapScreen> {
           Text(
             'Band',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -1068,7 +1071,22 @@ class _DfsStyle {
   final bool neutral;
 }
 
-_DfsStyle _dfsStyle(DfsClass d) {
+// Theme-independent label lookup (used by the copy/share text buffer, which has
+// no color or BuildContext in scope).
+String _dfsLabel(DfsClass d) {
+  switch (d) {
+    case DfsClass.noDfs:
+      return 'No DFS';
+    case DfsClass.dfs:
+      return 'DFS';
+    case DfsClass.mixed:
+      return 'Mixed / DFS';
+    case DfsClass.psc:
+      return 'PSC';
+  }
+}
+
+_DfsStyle _dfsStyle(DfsClass d, AppColorScheme colors) {
   switch (d) {
     case DfsClass.noDfs:
       // §8.15 R-03: "No DFS" is an attribute (the absence of a regulatory
@@ -1076,13 +1094,16 @@ _DfsStyle _dfsStyle(DfsClass d) {
       // neutral (surface tint + decorative border + tertiary text). It stays
       // distinguishable from DFS (amber) and Mixed (danger) by being the only
       // un-tinted, neutral class.
-      return const _DfsStyle(AppColors.textTertiary, 'No DFS', neutral: true);
+      return _DfsStyle(colors.textTertiary, _dfsLabel(d), neutral: true);
     case DfsClass.dfs:
-      return const _DfsStyle(AppColors.statusWarning, 'DFS');
+      return _DfsStyle(colors.statusWarning, _dfsLabel(d));
     case DfsClass.mixed:
-      return const _DfsStyle(AppColors.statusDanger, 'Mixed / DFS');
+      return _DfsStyle(colors.statusDanger, _dfsLabel(d));
     case DfsClass.psc:
-      return const _DfsStyle(AppColors.primary, 'PSC');
+      // PSC is the lime-marked "preferred scanning channel" class. The color is
+      // a FOREGROUND marker (chip text + border), so it uses textAccent — lime
+      // in dark, darkened-lime in light (§8.20.2 lime split).
+      return _DfsStyle(colors.textAccent, _dfsLabel(d));
   }
 }
 
@@ -1106,12 +1127,13 @@ class _MapCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -1120,7 +1142,7 @@ class _MapCard extends StatelessWidget {
           Text(
             title,
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -1135,14 +1157,14 @@ class _MapCard extends StatelessWidget {
             spacing: AppSpacing.xs,
             runSpacing: AppSpacing.xs,
             children: legend.map((d) {
-              final _DfsStyle st = _dfsStyle(d);
+              final _DfsStyle st = _dfsStyle(d, colors);
               return _Chip(st.label, color: st.color, neutral: st.neutral);
             }).toList(),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             footnote,
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -1181,14 +1203,15 @@ class _Block extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _DfsStyle st = _dfsStyle(block.dfs);
+    final AppColorScheme colors = context.colors;
+    final _DfsStyle st = _dfsStyle(block.dfs, colors);
     // Neutral (No DFS) blocks use the §8.1/§8.2 neutral stack — a faint surface
     // tint + decorative border — matching the 2.4 GHz overlapping-channel idiom
     // already in this file. Verdict classes keep their status-hue tint.
     final Color blockFill = st.neutral
-        ? AppColors.textTertiary.withValues(alpha: 0.06)
+        ? colors.textTertiary.withValues(alpha: 0.06)
         : st.color.withValues(alpha: 0.18);
-    final Color blockBorder = st.neutral ? AppColors.border : st.color;
+    final Color blockBorder = st.neutral ? colors.border : st.color;
     final String label = block.alt
         ? '${block.centerChannel} alt'
         : '${block.centerChannel}';
@@ -1216,7 +1239,7 @@ class _Block extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: mono.inlineCode.copyWith(
-            color: AppColors.textPrimary,
+            color: colors.textPrimary,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -1240,6 +1263,7 @@ class _BondRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: _kRowGap),
@@ -1251,7 +1275,7 @@ class _BondRow extends StatelessWidget {
             child: Text(
               widthLabel,
               style: text.labelSmall?.copyWith(
-                color: AppColors.textTertiary,
+                color: colors.textTertiary,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.4,
               ),
@@ -1273,12 +1297,16 @@ class _Map24 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     // 11 channels, each a 20 MHz block. Non-overlapping 1/6/11 emphasized in
     // lime; overlapping 2–5/7–10 rendered faint (decorative border tint).
     final List<Widget> blocks = ChannelMapScreen.map24.map((c) {
       final bool primary = c.nonOverlap;
-      final Color tint = primary ? AppColors.primary : AppColors.textTertiary;
+      // Lime emphasis is a thin border line + low-alpha tint fill. Per §8.20.2
+      // lime is forbidden as a thin foreground on light, so this reads from
+      // textAccent (lime in dark, darkened-lime in light).
+      final Color tint = primary ? colors.textAccent : colors.textTertiary;
       return Semantics(
         label: c.nonOverlap
             ? 'Channel ${c.channel}, ${c.freqMhz} megahertz, non-overlapping'
@@ -1292,7 +1320,7 @@ class _Map24 extends StatelessWidget {
             color: tint.withValues(alpha: primary ? 0.18 : 0.06),
             borderRadius: BorderRadius.circular(AppRadius.control),
             border: Border.all(
-              color: primary ? AppColors.primary : AppColors.border,
+              color: primary ? colors.textAccent : colors.border,
               width: 1,
             ),
           ),
@@ -1304,14 +1332,14 @@ class _Map24 extends StatelessWidget {
                 '${c.channel}',
                 style: mono.inlineCode.copyWith(
                   color: primary
-                      ? AppColors.textPrimary
-                      : AppColors.textTertiary,
+                      ? colors.textPrimary
+                      : colors.textTertiary,
                   fontWeight: primary ? FontWeight.w700 : FontWeight.w400,
                 ),
               ),
               Text(
                 '${c.freqMhz}',
-                style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+                style: text.labelSmall?.copyWith(color: colors.textTertiary),
               ),
             ],
           ),
@@ -1449,18 +1477,19 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: neutral ? AppColors.surface2 : color.withValues(alpha: 0.15),
+        color: neutral ? colors.surface2 : color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: neutral ? AppColors.border : color, width: 1),
+        border: Border.all(color: neutral ? colors.border : color, width: 1),
       ),
       child: Text(
         label,
         style: text.labelSmall?.copyWith(
-          color: neutral ? AppColors.textTertiary : color,
+          color: neutral ? colors.textTertiary : color,
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -1486,12 +1515,13 @@ class _BandToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.inputFill,
+        color: colors.inputFill,
         borderRadius: BorderRadius.circular(AppRadius.control),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
+        border: Border.all(color: colors.borderStrong, width: 1),
       ),
       child: Row(
         children: _options.map((opt) {
@@ -1513,15 +1543,15 @@ class _BandToggle extends StatelessWidget {
                   alignment: Alignment.center,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    color: selected ? AppColors.primary : Colors.transparent,
+                    color: selected ? colors.primary : Colors.transparent,
                     borderRadius: BorderRadius.circular(AppRadius.control),
                   ),
                   child: Text(
                     opt.$2,
                     style: text.labelLarge?.copyWith(
                       color: selected
-                          ? AppColors.secondary
-                          : AppColors.textSecondary,
+                          ? colors.onPrimary
+                          : colors.textSecondary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

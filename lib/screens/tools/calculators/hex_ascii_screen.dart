@@ -31,6 +31,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -315,11 +316,12 @@ class _HexAsciiScreenState extends State<HexAsciiScreen> {
   }
 
   Widget _introCard(TextTheme text) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -327,12 +329,12 @@ class _HexAsciiScreenState extends State<HexAsciiScreen> {
         children: [
           Text(
             HexAsciiScreen.intro,
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             HexAsciiScreen.caveat,
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -340,11 +342,12 @@ class _HexAsciiScreenState extends State<HexAsciiScreen> {
   }
 
   Widget _converterCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -388,11 +391,12 @@ class _HexAsciiScreenState extends State<HexAsciiScreen> {
   }
 
   Widget _tableCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -401,7 +405,7 @@ class _HexAsciiScreenState extends State<HexAsciiScreen> {
           Text(
             'Printable ASCII (32-126)',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -421,7 +425,7 @@ class _HexAsciiScreenState extends State<HexAsciiScreen> {
                       _HeaderCell('Name', width: 160),
                     ],
                   ),
-                  const Divider(color: AppColors.border, height: AppSpacing.sm),
+                  Divider(color: colors.border, height: AppSpacing.sm),
                   ...HexAsciiScreen.rows.map(
                     (AsciiRow r) => _AsciiTableRow(row: r, mono: mono),
                   ),
@@ -432,7 +436,7 @@ class _HexAsciiScreenState extends State<HexAsciiScreen> {
           const SizedBox(height: AppSpacing.xs),
           Text(
             HexAsciiScreen.footnote,
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -451,6 +455,7 @@ class _AsciiTableRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final bool isSpace = row.dec == 32;
     final String charDisplay = isSpace ? '(space)' : row.char;
@@ -471,7 +476,7 @@ class _AsciiTableRow extends StatelessWidget {
               child: Text(
                 '${row.dec}',
                 style: mono.inlineCode.copyWith(
-                  color: AppColors.primary,
+                  color: colors.textAccent,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -480,14 +485,14 @@ class _AsciiTableRow extends StatelessWidget {
               width: 44,
               child: Text(
                 row.hex,
-                style: mono.inlineCode.copyWith(color: AppColors.textSecondary),
+                style: mono.inlineCode.copyWith(color: colors.textSecondary),
               ),
             ),
             SizedBox(
               width: 88,
               child: Text(
                 row.bin,
-                style: mono.inlineCode.copyWith(color: AppColors.textTertiary),
+                style: mono.inlineCode.copyWith(color: colors.textTertiary),
               ),
             ),
             SizedBox(
@@ -495,7 +500,7 @@ class _AsciiTableRow extends StatelessWidget {
               child: Text(
                 charDisplay,
                 style: mono.inlineCode.copyWith(
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -505,7 +510,7 @@ class _AsciiTableRow extends StatelessWidget {
               child: Text(
                 row.name,
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ),
@@ -540,6 +545,7 @@ class _ConverterField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return LabeledField(
       label: label,
       hint: '($unitHint)',
@@ -554,7 +560,7 @@ class _ConverterField extends StatelessWidget {
         autocorrect: false,
         enableSuggestions: false,
         style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
-        cursorColor: AppColors.primary,
+        cursorColor: colors.textAccent,
         decoration: InputDecoration(hintText: hint),
       ),
     );
@@ -570,13 +576,14 @@ class _HeaderCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return SizedBox(
       width: width,
       child: Text(
         label,
         style: text.labelSmall?.copyWith(
-          color: AppColors.textTertiary,
+          color: colors.textTertiary,
           letterSpacing: 0.4,
         ),
       ),

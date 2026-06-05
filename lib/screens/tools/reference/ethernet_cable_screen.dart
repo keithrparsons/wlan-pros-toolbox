@@ -21,6 +21,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../theme/app_typography.dart';
@@ -203,6 +204,7 @@ class EthernetCableScreen extends StatelessWidget {
   }
 
   Widget _body(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -234,9 +236,9 @@ class EthernetCableScreen extends StatelessWidget {
                   ),
                   if (ToolAssets.hasGraphic('ethernet-cable'))
                     const SizedBox(height: AppSpacing.md),
-                  _tableCard(text, mono),
+                  _tableCard(colors, text, mono),
                   const SizedBox(height: AppSpacing.md),
-                  _footnoteCard(text),
+                  _footnoteCard(colors, text),
                   ToolHelpFooter(toolId: 'ethernet-cable'),
                 ],
               ),
@@ -247,12 +249,12 @@ class EthernetCableScreen extends StatelessWidget {
     );
   }
 
-  Widget _tableCard(TextTheme text, AppMonoText mono) {
+  Widget _tableCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -261,27 +263,27 @@ class EthernetCableScreen extends StatelessWidget {
           Text(
             '${ethData.length} cable categories',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
           // Horizontal scroll: seven columns exceed phone width, so the data
           // table scrolls sideways inside the fixed card (mcs_index idiom).
-          HorizontalScrollTable(child: _dataTable(text, mono)),
+          HorizontalScrollTable(child: _dataTable(colors, text, mono)),
         ],
       ),
     );
   }
 
-  Widget _dataTable(TextTheme text, AppMonoText mono) {
+  Widget _dataTable(AppColorScheme colors, TextTheme text, AppMonoText mono) {
     final TextStyle headStyle = (text.labelMedium ?? const TextStyle())
-        .copyWith(color: AppColors.textTertiary, letterSpacing: 0.4);
+        .copyWith(color: colors.textTertiary, letterSpacing: 0.4);
     final TextStyle cellStyle = (text.bodyMedium ?? const TextStyle()).copyWith(
-      color: AppColors.textPrimary,
+      color: colors.textPrimary,
     );
     final TextStyle smallStyle = (text.labelMedium ?? const TextStyle())
-        .copyWith(color: AppColors.textSecondary);
+        .copyWith(color: colors.textSecondary);
 
     return DataTable(
       headingRowHeight: 44,
@@ -324,7 +326,7 @@ class EthernetCableScreen extends StatelessWidget {
                   child: Text(
                     e.category,
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.primary,
+                      color: colors.textAccent,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -338,7 +340,7 @@ class EthernetCableScreen extends StatelessWidget {
                   child: Text(
                     '${e.maxMhz}',
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                     ),
                   ),
                 ),
@@ -353,8 +355,8 @@ class EthernetCableScreen extends StatelessWidget {
                   e.dist1g,
                   style: mono.inlineCode.copyWith(
                     color: e.dist1g == 'N/A'
-                        ? AppColors.textTertiary
-                        : AppColors.textPrimary,
+                        ? colors.textTertiary
+                        : colors.textPrimary,
                   ),
                 ),
               ),
@@ -365,8 +367,8 @@ class EthernetCableScreen extends StatelessWidget {
                   e.dist10g,
                   style: mono.inlineCode.copyWith(
                     color: e.dist10g == 'N/A'
-                        ? AppColors.textTertiary
-                        : AppColors.textPrimary,
+                        ? colors.textTertiary
+                        : colors.textPrimary,
                   ),
                 ),
               ),
@@ -381,12 +383,12 @@ class EthernetCableScreen extends StatelessWidget {
     );
   }
 
-  Widget _footnoteCard(TextTheme text) {
+  Widget _footnoteCard(AppColorScheme colors, TextTheme text) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -395,14 +397,14 @@ class EthernetCableScreen extends StatelessWidget {
           Text(
             'Notes',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             footnote,
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.xs),
           // The "typical use" column is dropped from the scroll table to keep
@@ -413,13 +415,13 @@ class EthernetCableScreen extends StatelessWidget {
               child: RichText(
                 text: TextSpan(
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                   children: [
                     TextSpan(
                       text: '${e.category}: ',
                       style: text.labelMedium?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

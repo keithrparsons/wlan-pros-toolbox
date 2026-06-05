@@ -21,6 +21,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../data/content_type.dart';
 import '../data/tool_assets.dart';
 import '../data/tool_catalog.dart';
+import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 import 'content_type_chip.dart';
 
@@ -82,14 +83,20 @@ class _ToolRowState extends State<ToolRow> {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
     final bool live = _live;
 
-    // §8.3 focus ring (live + focused) vs §8.1 interactive boundary.
+    // §8.3 focus ring (live + focused) vs §8.1 interactive boundary. Lime is a
+    // FOREGROUND ring here, so light substitutes darkened-lime textAccent and
+    // bumps to 3px (§8.20.2 / §8.20.3-B selection ring).
     final Border rowBorder = (live && _focused)
-        ? Border.all(color: AppColors.primary, width: 2)
+        ? Border.all(
+            color: colors.isLight ? colors.textAccent : colors.primary,
+            width: colors.isLight ? 3 : 2,
+          )
         : Border.all(
-            color: live ? AppColors.borderStrong : AppColors.border,
-            width: 1,
+            color: live ? colors.borderStrong : colors.border,
+            width: colors.isLight ? 1.5 : 1,
           );
 
     // §8.9 — collapse child semantic nodes; VoiceOver hears one curated label.
@@ -102,7 +109,7 @@ class _ToolRowState extends State<ToolRow> {
       button: true,
       enabled: live,
       child: Material(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -130,14 +137,14 @@ class _ToolRowState extends State<ToolRow> {
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(child: _content(text, live)),
                 if (live)
-                  const Padding(
-                    padding: EdgeInsets.only(
+                  Padding(
+                    padding: const EdgeInsets.only(
                       left: AppSpacing.xs,
                       top: 2,
                     ),
                     child: Icon(
                       Icons.chevron_right,
-                      color: AppColors.textTertiary,
+                      color: colors.textTertiary,
                       size: 20,
                     ),
                   ),
@@ -150,6 +157,7 @@ class _ToolRowState extends State<ToolRow> {
   }
 
   Widget _content(TextTheme text, bool live) {
+    final AppColorScheme colors = context.colors;
     final List<Widget> children = <Widget>[
       Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,7 +169,7 @@ class _ToolRowState extends State<ToolRow> {
               child: Text(
                 'Coming soon',
                 style: text.labelSmall?.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                   letterSpacing: 0.4,
                 ),
               ),
@@ -182,7 +190,7 @@ class _ToolRowState extends State<ToolRow> {
         ..add(
           Text(
             widget.tool.description,
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         );
       if (widget.contentType != null) {
@@ -206,6 +214,7 @@ class _ToolRowState extends State<ToolRow> {
   /// The source tag + optional match note for a search row (mockup 04). The
   /// source tag is a neutral §8.17 chip; the note is quiet tertiary text.
   Widget _sourceLine(TextTheme text) {
+    final AppColorScheme colors = context.colors;
     return Wrap(
       crossAxisAlignment: WrapCrossAlignment.center,
       spacing: AppSpacing.xs,
@@ -218,7 +227,7 @@ class _ToolRowState extends State<ToolRow> {
         if (widget.matchNote != null)
           Text(
             widget.matchNote!,
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
       ],
     );
@@ -226,10 +235,11 @@ class _ToolRowState extends State<ToolRow> {
 
   /// Title, with the lime match highlight applied when [highlightQuery] is set.
   Widget _title(TextTheme text, bool live) {
+    final AppColorScheme colors = context.colors;
     final TextStyle base =
         text.bodyLarge?.copyWith(
           fontWeight: FontWeight.w600,
-          color: live ? AppColors.textPrimary : AppColors.textSecondary,
+          color: live ? colors.textPrimary : colors.textSecondary,
         ) ??
         const TextStyle();
 
@@ -245,11 +255,14 @@ class _ToolRowState extends State<ToolRow> {
   /// [query] in [source] with lime (§8.3 active/match accent), preserving the
   /// source's original casing.
   TextSpan _highlightSpan(String source, String query, TextStyle base) {
+    final AppColorScheme colors = context.colors;
     final String lowerSource = source.toLowerCase();
     final String lowerQuery = query.toLowerCase();
+    // Lime as a FILL (highlight background) with dark text on top — a fill use,
+    // so it stays brand lime in both themes (§8.20.2 lime-fill-only rule).
     final TextStyle hit = base.copyWith(
-      color: AppColors.secondary, // charcoal text on the lime highlight (§8.3)
-      backgroundColor: AppColors.primary,
+      color: colors.onPrimary, // dark text on the lime highlight (§8.3)
+      backgroundColor: colors.primary,
     );
 
     final List<TextSpan> spans = <TextSpan>[];
@@ -292,9 +305,14 @@ class _ToolRowState extends State<ToolRow> {
   }
 }
 
-/// The leading 40×40 surface-2 tile holding the tool's Tier-2 SVG icon (lime,
-/// §8.6.1), the lock for non-live rows, or the Icons.bolt fallback when no SVG
-/// is bundled for this id.
+/// The leading 40×40 tile holding the tool's Tier-2 SVG icon, the lock for
+/// non-live rows, or the Icons.bolt fallback when no SVG is bundled for this id.
+///
+/// DARK (§8.6.1): a surface-2 tile holding a lime (#A1CC3A) glyph — unchanged.
+/// LIGHT (§8.20.3-C item 1, the headline pop change): a vivid lime #A1CC3A
+/// filled chip at card radius (12px) with the glyph knocked out in charcoal
+/// #30302F (`onPrimary`), 7.05:1. Replaces the prior dull-olive #5A7A1C line
+/// icon on light. Non-live rows keep the neutral lock treatment in both themes.
 class _LeadingIcon extends StatelessWidget {
   const _LeadingIcon({required this.tool, required this.live});
 
@@ -303,18 +321,34 @@ class _LeadingIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final bool light = colors.isLight;
+
+    // LIGHT live row → lime knockout chip (vivid lime fill + charcoal glyph).
+    // DARK (or non-live) → the original surface-2 tile + foreground tint, byte
+    // for byte unchanged.
+    final Color tileFill =
+        (light && live) ? colors.primary : colors.surface2;
+    final double tileRadius =
+        (light && live) ? AppRadius.card : AppRadius.control;
+    // Glyph tint: charcoal #30302F knocked out of the lime chip on light;
+    // brand-lime #A1CC3A foreground on the dark surface-2 tile (textAccent
+    // resolves to lime in dark, darkened-lime in light — but on light the live
+    // glyph rides the lime fill as onPrimary, so it never uses the olive).
+    final Color iconTint = (light && live) ? colors.onPrimary : colors.textAccent;
+
     return Container(
       width: 40,
       height: 40,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: AppColors.surface2,
-        borderRadius: BorderRadius.circular(AppRadius.control),
+        color: tileFill,
+        borderRadius: BorderRadius.circular(tileRadius),
       ),
       child: !live
-          ? const Icon(
+          ? Icon(
               Icons.lock_clock_outlined,
-              color: AppColors.textTertiary,
+              color: colors.textTertiary,
               size: 20,
             )
           : ToolAssets.hasIcon(tool.id)
@@ -322,14 +356,14 @@ class _LeadingIcon extends StatelessWidget {
               ToolAssets.iconPath(tool.id),
               width: 20,
               height: 20,
-              colorFilter: const ColorFilter.mode(
-                AppColors.primary,
+              colorFilter: ColorFilter.mode(
+                iconTint,
                 BlendMode.srcIn,
               ),
               excludeFromSemantics: true,
               placeholderBuilder: (_) => const SizedBox.shrink(),
             )
-          : const Icon(Icons.bolt, color: AppColors.primary, size: 20),
+          : Icon(Icons.bolt, color: iconTint, size: 20),
     );
   }
 }

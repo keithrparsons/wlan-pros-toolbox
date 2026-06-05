@@ -15,6 +15,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 
@@ -58,26 +59,27 @@ class ValueRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
     final AppMonoText monoStyle =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     final TextStyle valueStyle = _available
         ? (identifier
               ? monoStyle.robotoMono.copyWith(
-                  color: emphasize ? AppColors.primary : AppColors.textPrimary,
+                  color: emphasize ? colors.textAccent : colors.textPrimary,
                   fontWeight: emphasize ? FontWeight.w500 : FontWeight.w400,
                 )
               : mono
               ? monoStyle.inlineCode.copyWith(
-                  color: emphasize ? AppColors.primary : AppColors.textPrimary,
+                  color: emphasize ? colors.textAccent : colors.textPrimary,
                   fontWeight: emphasize ? FontWeight.w500 : FontWeight.w400,
                 )
               : (text.bodyLarge ?? const TextStyle()).copyWith(
-                  color: emphasize ? AppColors.primary : AppColors.textPrimary,
+                  color: emphasize ? colors.textAccent : colors.textPrimary,
                   fontWeight: emphasize ? FontWeight.w600 : FontWeight.w400,
                 ))
         : (text.bodyLarge ?? const TextStyle()).copyWith(
-            color: AppColors.textTertiary,
+            color: colors.textTertiary,
             fontStyle: FontStyle.italic,
           );
 
@@ -90,7 +92,7 @@ class ValueRow extends StatelessWidget {
             width: labelColumnWidth,
             child: Text(
               label,
-              style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+              style: text.labelMedium?.copyWith(color: colors.textSecondary),
             ),
           ),
           const SizedBox(width: AppSpacing.xs),

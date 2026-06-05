@@ -41,6 +41,7 @@ import '../../../services/network/network_support.dart';
 import '../../../services/network/ping_plot_controller.dart';
 import '../../../services/network/ping_service.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -242,12 +243,13 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
   }
 
   Widget _formCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -264,7 +266,7 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
               keyboardType: TextInputType.url,
               textInputAction: TextInputAction.go,
               onSubmitted: (_) => _running ? null : _start(),
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(hintText: '1.1.1.1'),
             ),
           ),
@@ -305,14 +307,14 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
               'reachability and latency trend, not ICMP echo. Runs until you '
               'stop it; the chart keeps the most recent '
               '${_controller.windowSize} samples.',
-              style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
             ),
           ),
           if (_error != null) ...[
             const SizedBox(height: AppSpacing.sm),
             Text(
               _error!,
-              style: text.labelMedium?.copyWith(color: AppColors.statusDanger),
+              style: text.labelMedium?.copyWith(color: colors.statusDanger),
             ),
           ],
           const SizedBox(height: AppSpacing.md),
@@ -326,11 +328,12 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
   }
 
   Widget _chipGroupLabel(BuildContext context, String label) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Text(
       label,
       style: text.labelMedium?.copyWith(
-        color: AppColors.textSecondary,
+        color: colors.textSecondary,
         fontWeight: FontWeight.w500,
       ),
     );
@@ -343,18 +346,19 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
     required VoidCallback onSelected,
   }) {
     final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
     return ChoiceChip(
       label: Text(label),
       selected: selected,
       showCheckmark: false,
       labelStyle: text.labelMedium?.copyWith(
-        color: selected ? AppColors.secondary : AppColors.textSecondary,
+        color: selected ? colors.onPrimary : colors.textSecondary,
         fontWeight: FontWeight.w500,
       ),
-      selectedColor: AppColors.primary,
-      backgroundColor: AppColors.surface2,
+      selectedColor: colors.primary,
+      backgroundColor: colors.surface2,
       materialTapTargetSize: MaterialTapTargetSize.padded,
-      side: AppTheme.chipSide(),
+      side: AppTheme.chipSide(Theme.of(context).brightness),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.control),
       ),
@@ -368,6 +372,7 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
   // ── Live readout (the accessible text summary) ─────────────────────────────
 
   Widget _readoutCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -390,9 +395,9 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -404,14 +409,14 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
               Text(
                 _running ? 'Plotting…' : 'Summary',
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                   letterSpacing: 0.4,
                 ),
               ),
               Text(
                 '${_state.totalReceived} / ${_state.totalSent} · $lossPct% loss',
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ],
@@ -443,7 +448,7 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
             Text(
               'No replies. The host did not answer on TCP $_port. It may be '
               'down, the port may be filtered, or ICMP-only.',
-              style: text.bodyLarge?.copyWith(color: AppColors.textTertiary),
+              style: text.bodyLarge?.copyWith(color: colors.textTertiary),
             ),
           ],
         ],
@@ -458,13 +463,14 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
     String value,
   ) {
     final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           label,
-          style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+          style: text.labelSmall?.copyWith(color: colors.textTertiary),
         ),
         const SizedBox(height: 2),
         Row(
@@ -474,13 +480,13 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
           children: [
             Text(
               value,
-              style: mono.outputMedium.copyWith(color: AppColors.primary),
+              style: mono.outputMedium.copyWith(color: colors.textAccent),
             ),
             if (value != '—') ...[
               const SizedBox(width: AppSpacing.xxs),
               Text(
                 'ms',
-                style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+                style: text.labelSmall?.copyWith(color: colors.textTertiary),
               ),
             ],
           ],
@@ -492,15 +498,16 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
   // ── Latency-trend chart (fl_chart) ─────────────────────────────────────────
 
   Widget _chartCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final List<PingSample> samples = _state.samples;
     final List<double> landed = _state.landedRttsMs;
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -512,14 +519,14 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
               Text(
                 'Latency trend',
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                   letterSpacing: 0.4,
                 ),
               ),
               Text(
                 'ms over time',
                 style: text.labelSmall?.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ],
@@ -534,7 +541,7 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
                       ? 'Waiting for the first reply…'
                       : 'No replies yet. Every probe so far was lost.',
                   style:
-                      text.bodyLarge?.copyWith(color: AppColors.textTertiary),
+                      text.bodyLarge?.copyWith(color: colors.textTertiary),
                 ),
               ),
             )
@@ -555,8 +562,8 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
             spacing: AppSpacing.md,
             runSpacing: AppSpacing.xs,
             children: [
-              _legend(context, AppColors.primary, 'RTT'),
-              _legend(context, AppColors.statusDanger, 'Lost probe'),
+              _legend(context, colors.textAccent, 'RTT'),
+              _legend(context, colors.statusDanger, 'Lost probe'),
             ],
           ),
         ],
@@ -565,6 +572,7 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
   }
 
   Widget _legend(BuildContext context, Color color, String label) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -580,7 +588,7 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
         const SizedBox(width: AppSpacing.xs),
         Text(
           label,
-          style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+          style: text.labelSmall?.copyWith(color: colors.textTertiary),
         ),
       ],
     );
@@ -636,6 +644,7 @@ class _LatencyChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
 
     // X = elapsed seconds; Y = RTT ms. Build the landed line and the lost-dot
@@ -661,7 +670,7 @@ class _LatencyChart extends StatelessWidget {
 
     final TextStyle axisStyle =
         (text.labelSmall ?? const TextStyle()).copyWith(
-      color: AppColors.textTertiary,
+      color: colors.textTertiary,
     );
 
     return LineChart(
@@ -676,7 +685,7 @@ class _LatencyChart extends StatelessWidget {
           drawVerticalLine: false,
           horizontalInterval: yMax / 4,
           getDrawingHorizontalLine: (double _) => FlLine(
-            color: AppColors.border,
+            color: colors.border,
             strokeWidth: 1,
           ),
         ),
@@ -715,7 +724,9 @@ class _LatencyChart extends StatelessWidget {
           LineChartBarData(
             spots: line,
             isCurved: false,
-            color: AppColors.primary,
+            // Data line is a colored LINE (foreground) → darkened-lime on light
+            // so it reads on white (§8.20.2).
+            color: colors.textAccent,
             barWidth: 2,
             dotData: FlDotData(
               show: line.length <= 40,
@@ -723,16 +734,16 @@ class _LatencyChart extends StatelessWidget {
                       int _) =>
                   FlDotCirclePainter(
                 radius: 2,
-                color: AppColors.primary,
+                color: colors.textAccent,
                 strokeWidth: 0,
-                strokeColor: AppColors.primary,
+                strokeColor: colors.textAccent,
               ),
             ),
           ),
           // Lost-probe markers pinned to the X axis.
           LineChartBarData(
             spots: lost,
-            color: AppColors.statusDanger.withValues(alpha: 0),
+            color: colors.statusDanger.withValues(alpha: 0),
             barWidth: 0,
             dotData: FlDotData(
               show: true,
@@ -740,9 +751,9 @@ class _LatencyChart extends StatelessWidget {
                       int _) =>
                   FlDotCirclePainter(
                 radius: 3,
-                color: AppColors.statusDanger,
+                color: colors.statusDanger,
                 strokeWidth: 0,
-                strokeColor: AppColors.statusDanger,
+                strokeColor: colors.statusDanger,
               ),
             ),
           ),

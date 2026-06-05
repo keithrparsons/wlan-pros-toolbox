@@ -5,7 +5,7 @@
 // sparkline is a visual trend reference only (spec §3).
 //
 // Visual language is borrowed from the Ping screen's `_Sparkline`: a lime
-// (`AppColors.primary`) polyline on a `surface2` panel, a single-point dot, and
+// (`colors.textAccent`) polyline on a `surface2` panel, a single-point dot, and
 // token-only sizing. A fixed per-metric y-domain keeps the line's vertical
 // placement stable run to run.
 //
@@ -32,6 +32,7 @@
 import 'package:flutter/material.dart';
 import 'package:net_quality/net_quality.dart';
 
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import 'live_quality_monitor.dart';
 
@@ -139,6 +140,7 @@ class MetricSparkline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Semantics(
       excludeSemantics: true,
       child: ClipRRect(
@@ -146,7 +148,7 @@ class MetricSparkline extends StatelessWidget {
         child: Container(
           height: 40,
           width: double.infinity,
-          color: AppColors.surface2,
+          color: colors.surface2,
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.xs,
             vertical: 6,
@@ -156,6 +158,7 @@ class MetricSparkline extends StatelessWidget {
               samples: samples,
               domain: domain,
               dotsOnly: dotsOnly,
+              lineColor: colors.textAccent,
             ),
           ),
         ),
@@ -169,11 +172,15 @@ class _BandSparklinePainter extends CustomPainter {
     required this.samples,
     required this.domain,
     required this.dotsOnly,
+    required this.lineColor,
   });
 
   final List<MetricSample> samples;
   final SparklineDomain domain;
   final bool dotsOnly;
+
+  /// Foreground accent line/dot — darkened-lime on light (§8.20.2).
+  final Color lineColor;
 
   double _yFor(double value, Size size) {
     final double span = (domain.max - domain.min);
@@ -201,7 +208,7 @@ class _BandSparklinePainter extends CustomPainter {
     final int n = samples.length;
     final double dx = n == 1 ? 0 : size.width / (n - 1);
 
-    final Paint dotPaint = Paint()..color = AppColors.primary;
+    final Paint dotPaint = Paint()..color = lineColor;
 
     // Single point → one dot (defensive; the caller normally shows a hint).
     if (n == 1) {
@@ -231,7 +238,7 @@ class _BandSparklinePainter extends CustomPainter {
       }
     }
     final Paint line = Paint()
-      ..color = AppColors.primary
+      ..color = lineColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2
       ..strokeJoin = StrokeJoin.round
@@ -246,6 +253,7 @@ class _BandSparklinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_BandSparklinePainter old) =>
+      old.lineColor != lineColor ||
       old.samples.length != samples.length ||
       (samples.isNotEmpty &&
           old.samples.isNotEmpty &&

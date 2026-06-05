@@ -22,6 +22,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../data/tool_assets.dart';
+import '../../theme/app_color_scheme.dart';
 import '../../theme/app_tokens.dart';
 import '../../theme/app_typography.dart';
 import '../../widgets/tool_help_footer.dart';
@@ -152,6 +153,7 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final AppColorScheme colors = context.colors;
 
     return Scaffold(
       appBar: AppBar(
@@ -195,11 +197,11 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
                       ),
                       if (ToolAssets.hasGraphic('dbm-watt-converter'))
                         const SizedBox(height: AppSpacing.md),
-                      _converterCard(text, mono),
+                      _converterCard(text, mono, colors),
                       const SizedBox(height: AppSpacing.md),
-                      _formulaCard(text, mono),
+                      _formulaCard(text, mono, colors),
                       const SizedBox(height: AppSpacing.md),
-                      _referenceCard(text, mono),
+                      _referenceCard(text, mono, colors),
                       ToolHelpFooter(toolId: 'dbm-watt-converter'),
                     ],
                   ),
@@ -212,12 +214,15 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
     );
   }
 
-  Widget _converterCard(TextTheme text, AppMonoText mono) {
+  Widget _converterCard(TextTheme text, AppMonoText mono, AppColorScheme colors) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(
+          color: colors.border,
+          width: colors.isLight ? 1.5 : 1, // §8.20.3-B card border
+        ),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -269,12 +274,15 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
     );
   }
 
-  Widget _formulaCard(TextTheme text, AppMonoText mono) {
+  Widget _formulaCard(TextTheme text, AppMonoText mono, AppColorScheme colors) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(
+          color: colors.border,
+          width: colors.isLight ? 1.5 : 1,
+        ),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -283,25 +291,27 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
           Text(
             'Formula',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
+              // §8.20.3-A field labels/captions bump 500 → 600 in light.
+              fontWeight: colors.isLight ? FontWeight.w600 : FontWeight.w500,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
             'dBm = 10 · log₁₀(mW)',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
             'W   = 10^(dBm/10) / 1000',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
         ],
       ),
     );
   }
 
-  Widget _referenceCard(TextTheme text, AppMonoText mono) {
+  Widget _referenceCard(TextTheme text, AppMonoText mono, AppColorScheme colors) {
     // Compact, high-signal anchor values pulled from the PWA DBM_REFS list.
     // Kept short here — the full table belongs in a dedicated Reference tool.
     // Vera F-08 — standardize on ASCII hyphen-minus (U+002D) here so the
@@ -318,9 +328,12 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(
+          color: colors.border,
+          width: colors.isLight ? 1.5 : 1,
+        ),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -329,8 +342,9 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
           Text(
             'Reference points',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
+              fontWeight: colors.isLight ? FontWeight.w600 : FontWeight.w500,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -348,7 +362,8 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
                     child: Text(
                       row[0],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.primary,
+                        // Foreground lime → darkened-lime in light (§8.20.2).
+                        color: colors.textAccent,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -358,7 +373,7 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
                     child: Text(
                       row[1],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
@@ -366,7 +381,7 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
                     child: Text(
                       row[2],
                       style: text.labelMedium?.copyWith(
-                        color: AppColors.textTertiary,
+                        color: colors.textTertiary,
                       ),
                     ),
                   ),
@@ -420,7 +435,9 @@ class _ConverterField extends StatelessWidget {
         autocorrect: false,
         enableSuggestions: false,
         style: monoStyle.copyWith(fontSize: 20),
-        cursorColor: AppColors.primary,
+        // Foreground lime → darkened-lime in light (§8.20.2): the caret is a
+        // thin foreground, so brand lime would vanish on white.
+        cursorColor: context.colors.textAccent,
         decoration: InputDecoration(
           hintText: _hintFor(label),
         ),

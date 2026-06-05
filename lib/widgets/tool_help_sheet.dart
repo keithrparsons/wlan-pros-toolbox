@@ -30,6 +30,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/help/tool_help.dart';
+import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 import 'app_copy_action.dart';
 
@@ -40,7 +41,7 @@ Future<void> showToolHelpSheet(BuildContext context, ToolHelp help) {
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    backgroundColor: AppColors.surface2,
+    backgroundColor: context.colors.surface2,
     builder: (_) => ToolHelpSheet(help: help),
   );
 }
@@ -55,6 +56,7 @@ class ToolHelpSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
 
     final List<Widget> sections = <Widget>[];
 
@@ -144,7 +146,7 @@ class ToolHelpSheet extends StatelessWidget {
                     label: 'Close help',
                     child: IconButton(
                       icon: const Icon(Icons.close),
-                      color: AppColors.textSecondary,
+                      color: colors.textSecondary,
                       tooltip: 'Close help',
                       constraints: const BoxConstraints(
                         minWidth: 44,
@@ -160,7 +162,7 @@ class ToolHelpSheet extends StatelessWidget {
                 Text(
                   help.category,
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                     letterSpacing: 0.4,
                   ),
                 ),
@@ -243,7 +245,7 @@ class _SectionHeading extends StatelessWidget {
         style: Theme.of(context)
             .textTheme
             .titleMedium
-            ?.copyWith(color: AppColors.textPrimary),
+            ?.copyWith(color: context.colors.textPrimary),
       ),
     );
   }
@@ -262,7 +264,7 @@ class _Paragraph extends StatelessWidget {
       style: Theme.of(context)
           .textTheme
           .bodyLarge
-          ?.copyWith(color: AppColors.textSecondary),
+          ?.copyWith(color: context.colors.textSecondary),
     );
   }
 }
@@ -277,6 +279,7 @@ class _NumberedSteps extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -294,7 +297,7 @@ class _NumberedSteps extends StatelessWidget {
                   child: Text(
                     '${i + 1}.',
                     style: text.bodyLarge?.copyWith(
-                      color: AppColors.textTertiary,
+                      color: colors.textTertiary,
                       fontFeatures: const <FontFeature>[
                         FontFeature.tabularFigures(),
                       ],
@@ -305,7 +308,7 @@ class _NumberedSteps extends StatelessWidget {
                   child: Text(
                     steps[i],
                     style: text.bodyLarge
-                        ?.copyWith(color: AppColors.textSecondary),
+                        ?.copyWith(color: colors.textSecondary),
                   ),
                 ),
               ],
@@ -348,6 +351,7 @@ class _InputCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
 
     // Build a curated single SR label so the card reads as one passage.
     final List<String> srParts = <String>[
@@ -362,9 +366,12 @@ class _InputCard extends StatelessWidget {
       excludeSemantics: true,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface1,
+          color: colors.surface1,
           borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border.all(color: AppColors.border, width: 1),
+          border: Border.all(
+            color: colors.border,
+            width: colors.isLight ? 1.5 : 1, // §8.20.3-B card border
+          ),
         ),
         padding: const EdgeInsets.all(AppSpacing.sm),
         child: Column(
@@ -372,7 +379,7 @@ class _InputCard extends StatelessWidget {
           children: <Widget>[
             Text(
               input.name,
-              style: text.titleSmall?.copyWith(color: AppColors.textPrimary),
+              style: text.titleSmall?.copyWith(color: colors.textPrimary),
             ),
             if (input.unit.isNotEmpty) ...<Widget>[
               const SizedBox(height: AppSpacing.xxs),
@@ -400,6 +407,7 @@ class _LabeledInline extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -408,7 +416,7 @@ class _LabeledInline extends StatelessWidget {
           child: Text(
             label,
             style: text.labelMedium?.copyWith(
-              color: AppColors.textTertiary,
+              color: colors.textTertiary,
               letterSpacing: 0.4,
             ),
           ),
@@ -416,7 +424,7 @@ class _LabeledInline extends StatelessWidget {
         Expanded(
           child: Text(
             value,
-            style: text.bodyMedium?.copyWith(color: AppColors.textSecondary),
+            style: text.bodyMedium?.copyWith(color: colors.textSecondary),
           ),
         ),
       ],
@@ -435,6 +443,7 @@ class _BulletedNotes extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -448,8 +457,8 @@ class _BulletedNotes extends StatelessWidget {
                 child: Container(
                   width: 4,
                   height: 4,
-                  decoration: const BoxDecoration(
-                    color: AppColors.textTertiary,
+                  decoration: BoxDecoration(
+                    color: colors.textTertiary,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -458,7 +467,7 @@ class _BulletedNotes extends StatelessWidget {
                 child: Text(
                   notes[i],
                   style: text.bodyLarge
-                      ?.copyWith(color: AppColors.textSecondary),
+                      ?.copyWith(color: colors.textSecondary),
                 ),
               ),
             ],

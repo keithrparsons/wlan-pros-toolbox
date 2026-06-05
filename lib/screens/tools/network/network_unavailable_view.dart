@@ -18,6 +18,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../services/network/network_support.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 
 class NetworkUnavailableView extends StatelessWidget {
@@ -53,6 +54,7 @@ class NetworkUnavailableView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
 
     final (IconData defaultIcon, String defaultHeadline, String defaultBody) =
@@ -84,19 +86,19 @@ class NetworkUnavailableView extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(resolvedIcon, size: 48, color: AppColors.textTertiary),
+              Icon(resolvedIcon, size: 48, color: colors.textTertiary),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 resolvedHeadline,
                 style: text.headlineSmall?.copyWith(
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
                 resolvedBody,
-                style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+                style: text.bodyLarge?.copyWith(color: colors.textSecondary),
                 textAlign: TextAlign.center,
               ),
             ],

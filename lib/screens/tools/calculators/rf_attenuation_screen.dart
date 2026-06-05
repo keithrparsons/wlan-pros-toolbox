@@ -30,6 +30,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -313,11 +314,12 @@ class _RfAttenuationScreenState extends State<RfAttenuationScreen> {
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -332,7 +334,7 @@ class _RfAttenuationScreenState extends State<RfAttenuationScreen> {
           Text(
             '${RfAttenuationScreen.lossPerLayer(_selected, _band)} dB each '
             'at ${_bandLabel(_band)}',
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.sm),
           _qtyRow(text, mono),
@@ -378,6 +380,7 @@ class _RfAttenuationScreenState extends State<RfAttenuationScreen> {
   }
 
   Widget _qtyRow(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     // FieldUnitRow reflows the Add button beneath the field below 440px so the
     // quantity field + button never clip at phone widths (Vera web-demo gate,
     // 2026-06-02).
@@ -403,7 +406,7 @@ class _RfAttenuationScreenState extends State<RfAttenuationScreen> {
           style: mono.outputLarge.copyWith(
             fontSize: AppTextSize.fieldNumeric,
           ),
-          cursorColor: AppColors.primary,
+          cursorColor: colors.textAccent,
           decoration: InputDecoration(hintText: '1', errorText: _qtyError),
         ),
       ),
@@ -412,13 +415,14 @@ class _RfAttenuationScreenState extends State<RfAttenuationScreen> {
   }
 
   Widget _resultCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     final bool hasRows = _quantities.values.any((int q) => q > 0);
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -430,7 +434,7 @@ class _RfAttenuationScreenState extends State<RfAttenuationScreen> {
               Text(
                 'Total loss',
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                   letterSpacing: 0.4,
                 ),
               ),
@@ -453,14 +457,14 @@ class _RfAttenuationScreenState extends State<RfAttenuationScreen> {
                   // PWA fmt(total, 0). Blank ("—") until a material is added.
                   hasRows ? _total.toString() : '—',
                   style: mono.outputXL.copyWith(
-                    color: hasRows ? AppColors.primary : AppColors.textTertiary,
+                    color: hasRows ? colors.textAccent : colors.textTertiary,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xxs),
                 Text(
                   'dB',
                   style: text.labelLarge?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: colors.textSecondary,
                   ),
                 ),
               ],
@@ -474,11 +478,12 @@ class _RfAttenuationScreenState extends State<RfAttenuationScreen> {
   }
 
   Widget _breakdown(TextTheme text, AppMonoText mono, bool hasRows) {
+    final AppColorScheme colors = context.colors;
     if (!hasRows) {
       // Empty state — mirrors the PWA "Add quantities above to see breakdown."
       return Text(
         'Add a material above to see the breakdown.',
-        style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+        style: text.labelMedium?.copyWith(color: colors.textTertiary),
       );
     }
 
@@ -497,7 +502,7 @@ class _RfAttenuationScreenState extends State<RfAttenuationScreen> {
                   // PWA breakdown line: "${qty}× ${name}: ${loss} dB".
                   '${e.value}× ${e.key.name}: $loss dB',
                   style: mono.inlineCode.copyWith(
-                    color: AppColors.textSecondary,
+                    color: colors.textSecondary,
                   ),
                 ),
               ),
@@ -519,11 +524,12 @@ class _RfAttenuationScreenState extends State<RfAttenuationScreen> {
   }
 
   Widget _referenceCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -532,7 +538,7 @@ class _RfAttenuationScreenState extends State<RfAttenuationScreen> {
           Text(
             'Per-layer loss at ${_bandLabel(_band)}',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -548,7 +554,7 @@ class _RfAttenuationScreenState extends State<RfAttenuationScreen> {
                     child: Text(
                       m.name,
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
@@ -559,7 +565,7 @@ class _RfAttenuationScreenState extends State<RfAttenuationScreen> {
                       '$loss dB',
                       textAlign: TextAlign.right,
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.primary,
+                        color: colors.textAccent,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -572,7 +578,7 @@ class _RfAttenuationScreenState extends State<RfAttenuationScreen> {
           Text(
             'Typical dB per layer. Real-world loss varies with thickness, '
             'moisture, and angle of incidence.',
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -600,19 +606,20 @@ class _AddButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Semantics(
       button: true,
       label: 'Add material',
       child: Material(
-        color: AppColors.primary,
+        color: colors.primary,
         borderRadius: BorderRadius.circular(AppRadius.control),
         child: InkWell(
           borderRadius: BorderRadius.circular(AppRadius.control),
           onTap: onPressed,
-          child: const SizedBox(
+          child: SizedBox(
             height: AppSpacing.minTouchTarget,
             width: AppSpacing.minTouchTarget,
-            child: Icon(Icons.add, color: AppColors.secondary),
+            child: Icon(Icons.add, color: colors.onPrimary),
           ),
         ),
       ),
@@ -629,19 +636,20 @@ class _RemoveButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Semantics(
       button: true,
       label: label,
       child: InkWell(
         borderRadius: BorderRadius.circular(AppRadius.control),
         onTap: onPressed,
-        child: const SizedBox(
+        child: SizedBox(
           height: AppSpacing.minTouchTarget,
           width: AppSpacing.minTouchTarget,
           child: Icon(
             Icons.close,
             size: AppSpacing.sm,
-            color: AppColors.textTertiary,
+            color: colors.textTertiary,
           ),
         ),
       ),
@@ -657,6 +665,7 @@ class _ClearButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Semantics(
       button: true,
@@ -672,7 +681,7 @@ class _ClearButton extends StatelessWidget {
           child: Text(
             'Clear',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
           ),

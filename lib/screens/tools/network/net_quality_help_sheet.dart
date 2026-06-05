@@ -29,6 +29,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 
 /// Opens the Network Quality help sheet. Matches [WifiInfoScreen]'s
@@ -38,7 +39,7 @@ Future<void> showNetQualityHelpSheet(BuildContext context) {
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    backgroundColor: AppColors.surface2,
+    backgroundColor: context.colors.surface2,
     builder: (_) => const NetQualityHelpSheet(),
   );
 }
@@ -150,6 +151,7 @@ class NetQualityHelpSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
 
     return SafeArea(
@@ -182,7 +184,7 @@ class NetQualityHelpSheet extends StatelessWidget {
                 'for large uploads at the same time, and one headline number '
                 'would hide that. Each metric below stands alone.',
                 style:
-                    text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+                    text.bodyLarge?.copyWith(color: colors.textSecondary),
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(
@@ -190,7 +192,7 @@ class NetQualityHelpSheet extends StatelessWidget {
                 'measure is shown as Unavailable. We never fill that gap with a '
                 'guess.',
                 style:
-                    text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+                    text.bodyLarge?.copyWith(color: colors.textSecondary),
               ),
 
               const SizedBox(height: AppSpacing.md),
@@ -209,7 +211,7 @@ class NetQualityHelpSheet extends StatelessWidget {
                 'bands below. Where an industry standard exists, it guides the '
                 'direction; the exact cut points are ours.',
                 style:
-                    text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+                    text.bodyLarge?.copyWith(color: colors.textSecondary),
               ),
               const SizedBox(height: AppSpacing.sm),
               for (final _GradeBand b in _bands) ...<Widget>[
@@ -223,7 +225,7 @@ class NetQualityHelpSheet extends StatelessWidget {
                 'are our own practical bands, mapped to common broadband tiers '
                 'and everyday needs, not a published standard.',
                 style:
-                    text.bodyMedium?.copyWith(color: AppColors.textTertiary),
+                    text.bodyMedium?.copyWith(color: colors.textTertiary),
               ),
 
               const SizedBox(height: AppSpacing.md),
@@ -256,12 +258,13 @@ class _SectionHeading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Semantics(
       header: true,
       child: Text(
         text,
         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: AppColors.textPrimary,
+              color: colors.textPrimary,
             ),
       ),
     );
@@ -278,12 +281,13 @@ class _MetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -291,7 +295,7 @@ class _MetricCard extends StatelessWidget {
         children: <Widget>[
           Text(
             metric.name,
-            style: text.titleMedium?.copyWith(color: AppColors.textPrimary),
+            style: text.titleMedium?.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           _LabeledBlock(label: 'What it is', body: metric.whatItIs),
@@ -304,7 +308,7 @@ class _MetricCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.xs),
             Text(
               metric.note!,
-              style: text.bodyMedium?.copyWith(color: AppColors.textTertiary),
+              style: text.bodyMedium?.copyWith(color: colors.textTertiary),
             ),
           ],
         ],
@@ -323,6 +327,7 @@ class _LabeledBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -330,14 +335,14 @@ class _LabeledBlock extends StatelessWidget {
         Text(
           label,
           style: text.labelMedium?.copyWith(
-            color: AppColors.textTertiary,
+            color: colors.textTertiary,
             letterSpacing: 0.4,
           ),
         ),
         const SizedBox(height: 2),
         Text(
           body,
-          style: text.bodyMedium?.copyWith(color: AppColors.textSecondary),
+          style: text.bodyMedium?.copyWith(color: colors.textSecondary),
         ),
       ],
     );
@@ -355,12 +360,13 @@ class _GradeBandCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -368,7 +374,7 @@ class _GradeBandCard extends StatelessWidget {
         children: <Widget>[
           Text(
             band.metric,
-            style: text.titleSmall?.copyWith(color: AppColors.textPrimary),
+            style: text.titleSmall?.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           _BandRow(grade: 'Excellent', threshold: band.excellent),
@@ -392,6 +398,7 @@ class _BandRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Semantics(
       container: true,
@@ -407,7 +414,7 @@ class _BandRow extends StatelessWidget {
               child: Text(
                 grade,
                 style: text.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ),
@@ -418,7 +425,7 @@ class _BandRow extends StatelessWidget {
                 threshold,
                 textAlign: TextAlign.end,
                 style: text.bodyMedium?.copyWith(
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                 ),
               ),
             ),
@@ -436,12 +443,13 @@ class _HonestyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -452,17 +460,17 @@ class _HonestyCard extends StatelessWidget {
             children: <Widget>[
               // Reassurance/information, not a computed verdict -> textSecondary
               // (§8.13 rule 6: status hues are verdict-only, never decorative).
-              const Icon(
+              Icon(
                 Icons.info_outline,
                 size: 20,
-                color: AppColors.textSecondary,
+                color: colors.textSecondary,
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
                   'How to read these results',
                   style: text.titleSmall?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                   ),
                 ),
               ),
@@ -477,7 +485,7 @@ class _HonestyCard extends StatelessWidget {
             'cannot send one. The Responsiveness grade is a simplified '
             'single-stream figure inspired by RFC 9097 and Apple\'s '
             'networkQuality tool, not the full multi-stream standard.',
-            style: text.bodyMedium?.copyWith(color: AppColors.textSecondary),
+            style: text.bodyMedium?.copyWith(color: colors.textSecondary),
           ),
         ],
       ),

@@ -35,6 +35,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -299,11 +300,12 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -358,6 +360,7 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
     required TextStyle monoStyle,
     required Widget unitSelector,
   }) {
+    final AppColorScheme colors = context.colors;
     // FieldUnitRow reflows the unit selector beneath the field below 440px so
     // it never clips at phone widths (Vera web-demo gate, 2026-06-02).
     return FieldUnitRow(
@@ -377,7 +380,7 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
           autocorrect: false,
           enableSuggestions: false,
           style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
-          cursorColor: AppColors.primary,
+          cursorColor: colors.textAccent,
           decoration: InputDecoration(hintText: hintText),
         ),
       ),
@@ -427,6 +430,7 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
     String value, {
     required bool primary,
   }) {
+    final AppColorScheme colors = context.colors;
     // One SR node per row: "Near edge: 12.4 m" (or "not calculated"), instead
     // of label and value as separate fragments (Vera finding #6).
     return Semantics(
@@ -439,7 +443,7 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
           Text(
             label,
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -447,7 +451,7 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
           SelectableText(
             value,
             style: mono.outputLarge.copyWith(
-              color: primary ? AppColors.primary : AppColors.textTertiary,
+              color: primary ? colors.textAccent : colors.textTertiary,
             ),
           ),
         ],
@@ -469,19 +473,20 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
   // Degrees has no alternate unit, so render a static chip that matches the
   // toggle footprint rather than inventing a one-option toggle.
   Widget _degreeUnitChip(TextTheme text) {
+    final AppColorScheme colors = context.colors;
     return Container(
       constraints: const BoxConstraints(minHeight: AppSpacing.minTouchTarget),
       alignment: Alignment.center,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: AppColors.inputFill,
+        color: colors.inputFill,
         borderRadius: BorderRadius.circular(AppRadius.control),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
+        border: Border.all(color: colors.borderStrong, width: 1),
       ),
       child: Text(
         '°',
         style: text.labelLarge?.copyWith(
-          color: AppColors.textSecondary,
+          color: colors.textSecondary,
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -498,11 +503,12 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
   }
 
   Widget _formulaCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -511,21 +517,21 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
           Text(
             'Formula',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
             'edge = height / tan(tilt ∓ beamwidth/2)',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Height in meters, angles in degrees. The far edge uses '
             'tilt - beamwidth/2 and the near edge tilt + beamwidth/2. If the '
             'upper beam edge reaches the horizon the far edge is unbounded.',
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -533,6 +539,7 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
   }
 
   Widget _referenceCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     // Compact anchor values. Each row is a mount height, downtilt, and vertical
     // beamwidth against the near / far edge, computed from the same formula
     // this screen uses (rounded to 0 decimals, meters).
@@ -546,9 +553,9 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -557,7 +564,7 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
           Text(
             'Reference points',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -572,7 +579,7 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
                   child: Text(
                     'Height',
                     style: text.labelSmall?.copyWith(
-                      color: AppColors.textTertiary,
+                      color: colors.textTertiary,
                     ),
                   ),
                 ),
@@ -581,7 +588,7 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
                   child: Text(
                     'Tilt / BW',
                     style: text.labelSmall?.copyWith(
-                      color: AppColors.textTertiary,
+                      color: colors.textTertiary,
                     ),
                   ),
                 ),
@@ -589,7 +596,7 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
                   child: Text(
                     'Near / Far',
                     style: text.labelSmall?.copyWith(
-                      color: AppColors.textTertiary,
+                      color: colors.textTertiary,
                     ),
                   ),
                 ),
@@ -608,7 +615,7 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
                     child: Text(
                       row[0],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
@@ -617,7 +624,7 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
                     child: Text(
                       row[1],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
@@ -625,7 +632,7 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
                     child: Text(
                       row[2],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.primary,
+                        color: colors.textAccent,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

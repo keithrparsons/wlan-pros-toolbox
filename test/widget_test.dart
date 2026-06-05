@@ -28,6 +28,7 @@ import 'package:wlan_pros_toolbox/screens/tools/reference/mcs_index_screen.dart'
 import 'package:wlan_pros_toolbox/screens/tools/reference/roaming_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/signal_thresholds_screen.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+import 'package:wlan_pros_toolbox/theme/theme_controller.dart';
 
 void main() {
   testWidgets('Home screen mounts with app title', (tester) async {
@@ -397,9 +398,11 @@ Future<void> _expectNoOverflowAt(WidgetTester tester, Size size) async {
   });
 }
 
-/// Helper — pump the real `ToolboxApp` and let async font loads settle.
+/// Helper — pump the real `ToolboxApp` and let async font loads settle. The app
+/// now takes a [ThemeController] (§8.20.5); the test pumps one in System mode so
+/// the smoke/grid/focus assertions exercise the real app shell unchanged.
 Future<void> _pumpApp(WidgetTester tester) async {
-  await tester.pumpWidget(const ToolboxApp());
+  await tester.pumpWidget(ToolboxApp(themeController: ThemeController()));
   await tester.pumpAndSettle();
 }
 

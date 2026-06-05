@@ -31,6 +31,7 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 import '../../../services/glossary/glossary_service.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -170,9 +171,9 @@ class _WifiGlossaryScreenState extends State<WifiGlossaryScreen> {
                 child: Semantics(
                   label: 'Loading Wi-Fi glossary',
                   liveRegion: true,
-                  child: const CircularProgressIndicator(
+                  child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: AppColors.primary,
+                    color: context.colors.textAccent,
                   ),
                 ),
               ),
@@ -255,18 +256,19 @@ class _IntroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Text(
         'Plain-language definitions of $total Wi-Fi terms across $categories '
         'categories. Search by term, abbreviation, or any word in a definition.',
-        style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+        style: text.labelMedium?.copyWith(color: colors.textSecondary),
       ),
     );
   }
@@ -281,6 +283,7 @@ class _SearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Semantics(
       textField: true,
       label: 'Search Wi-Fi glossary by term, abbreviation, or definition',
@@ -293,11 +296,11 @@ class _SearchField extends StatelessWidget {
         style: Theme.of(context)
             .textTheme
             .bodyLarge
-            ?.copyWith(color: AppColors.textPrimary),
-        cursorColor: AppColors.primary,
+            ?.copyWith(color: colors.textPrimary),
+        cursorColor: colors.textAccent,
         textInputAction: TextInputAction.search,
-        decoration: const InputDecoration(
-          prefixIcon: Icon(Icons.search, color: AppColors.textTertiary),
+        decoration: InputDecoration(
+          prefixIcon: Icon(Icons.search, color: colors.textTertiary),
           hintText: 'Search terms…',
         ),
       ),
@@ -315,6 +318,7 @@ class _CategoryHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Semantics(
       header: true,
@@ -328,7 +332,7 @@ class _CategoryHeader extends StatelessWidget {
               child: Text(
                 category,
                 style: text.headlineSmall?.copyWith(
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                 ),
               ),
             ),
@@ -339,7 +343,7 @@ class _CategoryHeader extends StatelessWidget {
                 vertical: AppSpacing.xxs,
               ),
               decoration: BoxDecoration(
-                color: AppColors.surface2,
+                color: colors.surface2,
                 borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
               child: Text(
@@ -347,7 +351,7 @@ class _CategoryHeader extends StatelessWidget {
                 style: text.labelLarge?.copyWith(
                   fontSize: AppTextSize.caption,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ),
@@ -369,6 +373,7 @@ class _TermRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final String? abbr = term.abbr;
 
@@ -379,9 +384,9 @@ class _TermRow extends StatelessWidget {
       label: srLabel,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface1,
+          color: colors.surface1,
           borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border.all(color: AppColors.border, width: 1),
+          border: Border.all(color: colors.border, width: 1),
         ),
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.sm,
@@ -394,7 +399,7 @@ class _TermRow extends StatelessWidget {
             const SizedBox(height: AppSpacing.xxs),
             Text(
               term.definition,
-              style: text.bodyMedium?.copyWith(color: AppColors.textSecondary),
+              style: text.bodyMedium?.copyWith(color: colors.textSecondary),
             ),
           ],
         ),
@@ -422,6 +427,7 @@ class _TermLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final String? a = abbr;
     return Wrap(
       crossAxisAlignment: WrapCrossAlignment.center,
@@ -431,7 +437,7 @@ class _TermLine extends StatelessWidget {
         Text(
           term,
           style: text.bodyLarge?.copyWith(
-            color: AppColors.textPrimary,
+            color: colors.textPrimary,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -439,12 +445,12 @@ class _TermLine extends StatelessWidget {
           if (_abbrIsIdentifier(a))
             Text(
               a,
-              style: mono.robotoMono.copyWith(color: AppColors.textTertiary),
+              style: mono.robotoMono.copyWith(color: colors.textTertiary),
             )
           else
             Text(
               a,
-              style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
             ),
       ],
     );
@@ -459,22 +465,23 @@ class _NoMatch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
       child: Column(
         children: <Widget>[
-          const Icon(
+          Icon(
             Icons.search_off_outlined,
             size: 48,
-            color: AppColors.textTertiary,
+            color: colors.textTertiary,
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
             query.isEmpty
                 ? 'No terms loaded.'
                 : 'No terms match "$query".',
-            style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+            style: text.bodyLarge?.copyWith(color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
         ],
@@ -500,20 +507,21 @@ class _PaddedMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Padding(
       padding: EdgeInsets.all(edge),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface1,
+          color: colors.surface1,
           borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border.all(color: AppColors.border, width: 1),
+          border: Border.all(color: colors.border, width: 1),
         ),
         padding: const EdgeInsets.all(AppSpacing.sm),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Icon(icon, size: 20, color: AppColors.textTertiary),
+            Icon(icon, size: 20, color: colors.textTertiary),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Column(
@@ -522,7 +530,7 @@ class _PaddedMessage extends StatelessWidget {
                   Text(
                     title,
                     style: text.bodyLarge?.copyWith(
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -530,7 +538,7 @@ class _PaddedMessage extends StatelessWidget {
                   Text(
                     body,
                     style: text.labelMedium?.copyWith(
-                      color: AppColors.textTertiary,
+                      color: colors.textTertiary,
                     ),
                   ),
                 ],

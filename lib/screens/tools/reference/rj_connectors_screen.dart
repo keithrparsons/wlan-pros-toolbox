@@ -32,6 +32,7 @@ import 'package:flutter/material.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../router/app_router.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -199,6 +200,7 @@ class RjConnectorsScreen extends StatelessWidget {
   }
 
   Widget _body(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         final bool isDesktop = constraints.maxWidth >= 720;
@@ -226,7 +228,7 @@ class RjConnectorsScreen extends StatelessWidget {
                   ),
                   if (ToolAssets.hasGraphic('rj-connectors'))
                     const SizedBox(height: AppSpacing.md),
-                  _introCard(context),
+                  _introCard(colors, context),
                   const SizedBox(height: AppSpacing.sm),
                   ...connectors.map(
                     (RjConnectorEntry c) => Padding(
@@ -234,7 +236,7 @@ class RjConnectorsScreen extends StatelessWidget {
                       child: _ConnectorCard(entry: c),
                     ),
                   ),
-                  _pinoutLinkCard(context),
+                  _pinoutLinkCard(colors, context),
                   ToolHelpFooter(toolId: 'rj-connectors'),
                 ],
               ),
@@ -245,19 +247,19 @@ class RjConnectorsScreen extends StatelessWidget {
     );
   }
 
-  Widget _introCard(BuildContext context) {
+  Widget _introCard(AppColorScheme colors, BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
     return _Card(
       child: Text(
         intro,
-        style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+        style: text.labelMedium?.copyWith(color: colors.textTertiary),
       ),
     );
   }
 
   /// Cross-link to the Ethernet Pinout tool — the T568A/B wiring content this
   /// table deliberately does not duplicate. A focusable, tappable card.
-  Widget _pinoutLinkCard(BuildContext context) {
+  Widget _pinoutLinkCard(AppColorScheme colors, BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.xs, bottom: AppSpacing.sm),
@@ -270,17 +272,17 @@ class RjConnectorsScreen extends StatelessWidget {
               .pushNamed(AppRouter.ethernetPinout),
           child: Container(
             decoration: BoxDecoration(
-              color: AppColors.surface1,
+              color: colors.surface1,
               borderRadius: BorderRadius.circular(AppRadius.card),
-              border: Border.all(color: AppColors.borderStrong, width: 1),
+              border: Border.all(color: colors.borderStrong, width: 1),
             ),
             padding: const EdgeInsets.all(AppSpacing.sm),
             child: Row(
               children: <Widget>[
-                const Icon(
+                Icon(
                   Icons.cable_outlined,
                   size: 20,
-                  color: AppColors.primary,
+                  color: colors.textAccent,
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
@@ -290,7 +292,7 @@ class RjConnectorsScreen extends StatelessWidget {
                       Text(
                         'Need the wiring?',
                         style: text.bodyLarge?.copyWith(
-                          color: AppColors.textPrimary,
+                          color: colors.textPrimary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -299,17 +301,17 @@ class RjConnectorsScreen extends StatelessWidget {
                         'Open Ethernet Pinout for T568A / T568B '
                         'pin-to-pair-color wiring.',
                         style: text.labelMedium?.copyWith(
-                          color: AppColors.textTertiary,
+                          color: colors.textTertiary,
                         ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xs),
-                const Icon(
+                Icon(
                   Icons.chevron_right,
                   size: 20,
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ],
             ),
@@ -328,6 +330,7 @@ class _ConnectorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return ReferenceRowSemantics(
       // merge:false — the card holds SelectableText ValueRows; keep them
@@ -350,7 +353,7 @@ class _ConnectorCard extends StatelessWidget {
                   child: Text(
                     entry.name,
                     style: text.headlineSmall?.copyWith(
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                     ),
                   ),
                 ),
@@ -358,7 +361,7 @@ class _ConnectorCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.xs),
-            const Divider(color: AppColors.border, height: 1),
+            Divider(color: colors.border, height: 1),
             ValueRow(
               label: 'Positions',
               value: '${entry.positions}',
@@ -385,6 +388,7 @@ class _ModularBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     return Container(
@@ -393,15 +397,15 @@ class _ModularBadge extends StatelessWidget {
         vertical: 4,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surface2,
+        color: colors.surface2,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
+        border: Border.all(color: colors.borderStrong, width: 1),
       ),
       child: Text(
         label,
         style: mono.inlineCode.copyWith(
           fontSize: AppTextSize.caption,
-          color: AppColors.primary,
+          color: colors.textAccent,
         ),
       ),
     );
@@ -416,11 +420,12 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: child,

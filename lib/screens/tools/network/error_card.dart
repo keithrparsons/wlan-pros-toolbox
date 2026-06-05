@@ -19,6 +19,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../services/network/json_http_client.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 
 /// The presentation a given [JsonHttpErrorKind] maps to: a short [title], a
@@ -126,13 +127,14 @@ class LookupErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final LookupErrorPresentation p = errorPresentationFor(errorKind);
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -141,7 +143,7 @@ class LookupErrorCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(p.icon, size: 20, color: AppColors.textTertiary),
+              Icon(p.icon, size: 20, color: colors.textTertiary),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Column(
@@ -150,7 +152,7 @@ class LookupErrorCard extends StatelessWidget {
                     Text(
                       p.title,
                       style: text.bodyLarge?.copyWith(
-                        color: AppColors.textPrimary,
+                        color: colors.textPrimary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -158,7 +160,7 @@ class LookupErrorCard extends StatelessWidget {
                     Text(
                       message,
                       style: text.labelMedium
-                          ?.copyWith(color: AppColors.textTertiary),
+                          ?.copyWith(color: colors.textTertiary),
                     ),
                   ],
                 ),

@@ -46,6 +46,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../services/location/device_location.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -547,11 +548,12 @@ class _LatLongScreenState extends State<LatLongScreen> {
   //   4. granted, with fix → the read-only altitude + accuracy readout, plus a
   //                          quiet "Update" re-read action.
   Widget _locationCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -562,6 +564,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
   }
 
   List<Widget> _locationCardChildren(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     final LocationPermissionState? perm = _permission;
     final LocationFix? fix = _fix;
     final bool blocked = perm == LocationPermissionState.blocked;
@@ -591,16 +594,16 @@ class _LatLongScreenState extends State<LatLongScreen> {
       Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Icon(
+          Icon(
             Icons.location_on_outlined,
             size: 20,
-            color: AppColors.primary,
+            color: colors.textAccent,
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               headerCopy,
-              style: text.bodyMedium?.copyWith(color: AppColors.textSecondary),
+              style: text.bodyMedium?.copyWith(color: colors.textSecondary),
             ),
           ),
         ],
@@ -619,7 +622,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
         const SizedBox(height: AppSpacing.xs),
         Text(
           _locationError!,
-          style: text.bodySmall?.copyWith(color: AppColors.textTertiary),
+          style: text.bodySmall?.copyWith(color: colors.textTertiary),
         ),
       ],
 
@@ -641,7 +644,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
         Text(
           'Approximate location from your public IP (city-level, not GPS). '
           'Your device could not get a GPS or Wi-Fi position fix.',
-          style: text.bodySmall?.copyWith(color: AppColors.textTertiary),
+          style: text.bodySmall?.copyWith(color: colors.textTertiary),
         ),
       ]
       // macOS coarse-fix honesty note: a Mac without GPS returns a Wi-Fi-derived
@@ -652,21 +655,22 @@ class _LatLongScreenState extends State<LatLongScreen> {
         Text(
           'This looks like a coarse, Wi-Fi-derived fix (no GPS hardware). '
           'Altitude and accuracy are approximate.',
-          style: text.bodySmall?.copyWith(color: AppColors.textTertiary),
+          style: text.bodySmall?.copyWith(color: colors.textTertiary),
         ),
       ],
     ];
   }
 
   List<Widget> _locationActions(bool blocked, LocationFix? fix) {
+    final AppColorScheme colors = context.colors;
     if (_locating) {
       return <Widget>[
-        const SizedBox(
+        SizedBox(
           width: 20,
           height: 20,
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            color: AppColors.primary,
+            color: colors.textAccent,
           ),
         ),
         const SizedBox(width: AppSpacing.xs),
@@ -675,7 +679,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
           child: Text(
             'Reading your location…',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
             ),
           ),
         ),
@@ -742,6 +746,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
     TextTheme text,
     AppMonoText mono,
   ) {
+    final AppColorScheme colors = context.colors;
     final bool reported = value != null;
     return Semantics(
       label: label,
@@ -756,7 +761,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
             child: Text(
               label,
               style: text.labelMedium?.copyWith(
-                color: AppColors.textTertiary,
+                color: colors.textTertiary,
                 letterSpacing: 0.4,
               ),
             ),
@@ -767,8 +772,8 @@ class _LatLongScreenState extends State<LatLongScreen> {
               // Identifier values → Roboto Mono per §8.5 (NOT DM Mono).
               style: mono.robotoMono.copyWith(
                 color: reported
-                    ? AppColors.textPrimary
-                    : AppColors.textTertiary,
+                    ? colors.textPrimary
+                    : colors.textTertiary,
               ),
             ),
           ),
@@ -778,11 +783,12 @@ class _LatLongScreenState extends State<LatLongScreen> {
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -822,6 +828,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
     required String hintText,
     required TextStyle monoStyle,
   }) {
+    final AppColorScheme colors = context.colors;
     return TextField(
       controller: controller,
       focusNode: focusNode,
@@ -835,17 +842,18 @@ class _LatLongScreenState extends State<LatLongScreen> {
       autocorrect: false,
       enableSuggestions: false,
       style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
-      cursorColor: AppColors.primary,
+      cursorColor: colors.textAccent,
       decoration: InputDecoration(hintText: hintText),
     );
   }
 
   Widget _resultCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -854,7 +862,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
           Text(
             'Coordinates',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -877,6 +885,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
   // tiles are online-only (OSMF policy: no offline caching), so when the device
   // is offline the tiles simply fail to load and this note explains why.
   Widget _mapCard(TextTheme text, ({double lat, double lon}) c) {
+    final AppColorScheme colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -885,7 +894,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
           child: Text(
             'Map',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -895,7 +904,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
         Text(
           'The map needs an internet connection. Tiles © OpenStreetMap '
           'contributors; loaded live, never stored offline.',
-          style: text.bodySmall?.copyWith(color: AppColors.textTertiary),
+          style: text.bodySmall?.copyWith(color: colors.textTertiary),
         ),
       ],
     );
@@ -908,11 +917,12 @@ class _LatLongScreenState extends State<LatLongScreen> {
   // open the point in Apple Maps, open it in Google Maps, or copy a shareable
   // map link. Wrap so the row reflows on a narrow phone width.
   Widget _mapActionsCard(TextTheme text) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -921,7 +931,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
           Text(
             'Open this location',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -970,13 +980,14 @@ class _LatLongScreenState extends State<LatLongScreen> {
     TextTheme text,
     AppMonoText mono,
   ) {
+    final AppColorScheme colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           heading,
           style: text.labelMedium?.copyWith(
-            color: AppColors.textSecondary,
+            color: colors.textSecondary,
             letterSpacing: 0.4,
           ),
         ),
@@ -996,6 +1007,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
     String? value,
     AppMonoText mono,
   ) {
+    final AppColorScheme colors = context.colors;
     final bool blank = value == null;
     // One SR node per row: "Latitude DD: 40.712800" (or "not calculated"),
     // instead of tag and value as separate fragments (Vera finding #6). The
@@ -1012,14 +1024,14 @@ class _LatLongScreenState extends State<LatLongScreen> {
             width: 56,
             child: Text(
               tag,
-              style: mono.inlineCode.copyWith(color: AppColors.textTertiary),
+              style: mono.inlineCode.copyWith(color: colors.textTertiary),
             ),
           ),
           Expanded(
             child: SelectableText(
               blank ? '—' : value,
               style: mono.inlineCode.copyWith(
-                color: blank ? AppColors.textTertiary : AppColors.primary,
+                color: blank ? colors.textTertiary : colors.textAccent,
                 fontWeight: blank ? FontWeight.w400 : FontWeight.w500,
               ),
             ),
@@ -1030,6 +1042,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
   }
 
   Widget _formatCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     // Legend examples use a reference coordinate (London, 51.5074°) that is
     // deliberately distinct from any coordinate the result card is likely to
     // be showing. The earlier examples reused the New York anchor (40.7128°),
@@ -1044,9 +1057,9 @@ class _LatLongScreenState extends State<LatLongScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -1055,7 +1068,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
           Text(
             'Formats',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -1071,7 +1084,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
                     child: Text(
                       row[0],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.primary,
+                        color: colors.textAccent,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -1081,7 +1094,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
                     child: Text(
                       row[1],
                       style: text.labelMedium?.copyWith(
-                        color: AppColors.textTertiary,
+                        color: colors.textTertiary,
                       ),
                     ),
                   ),
@@ -1090,7 +1103,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
                     child: Text(
                       row[2],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),

@@ -29,6 +29,7 @@ import 'package:flutter/rendering.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
 
 import '../../../data/qr_share.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
@@ -173,11 +174,12 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
   }
 
   Widget _inputCard(TextTheme text) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: LabeledField(
@@ -191,7 +193,7 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
           maxLines: 4,
           autocorrect: false,
           enableSuggestions: false,
-          cursorColor: AppColors.primary,
+          cursorColor: colors.textAccent,
           style: text.bodyLarge,
           decoration: const InputDecoration(
             hintText: 'https://wlanpros.com',
@@ -208,6 +210,7 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
   /// it (the RepaintBoundary wraps only the white tile so the captured PNG is
   /// white-on-white-quiet-zone, not the dark canvas).
   Widget _qrTile() {
+    final AppColorScheme colors = context.colors;
     return Center(
       child: ConstrainedBox(
         // Cap the tile so it reads as a deliberate inset, not full-bleed.
@@ -218,9 +221,9 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
           // is never visually clipped by the dark surface.
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            color: AppColors.surface1,
+            color: colors.surface1,
             borderRadius: BorderRadius.circular(AppRadius.card),
-            border: Border.all(color: AppColors.border, width: 1),
+            border: Border.all(color: colors.border, width: 1),
           ),
           child: RepaintBoundary(
             key: _qrBoundaryKey,
@@ -228,7 +231,7 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
               // §8.19: white --color-neutral-0 tile, card radius. The dark
               // modules need this light background to scan.
               decoration: BoxDecoration(
-                color: AppColors.neutral0,
+                color: const Color(0xFFFFFFFF), // §8.19 QR tile: white, never theme-flipped
                 borderRadius: BorderRadius.circular(AppRadius.card),
               ),
               // Inner white padding = the same-white margin around the QR. This
@@ -247,12 +250,12 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
                     // scannability beats brand here. roundFactor: 0 keeps the
                     // modules crisp squares (best scan reliability).
                     shape: PrettyQrSmoothSymbol(
-                      color: AppColors.secondary,
+                      color: Color(0xFF30302F), // §8.19 QR modules: charcoal, never inverted
                       roundFactor: 0,
                     ),
                     // Explicit white background so the modules always sit on
                     // --color-neutral-0, independent of the enclosing tile.
-                    background: AppColors.neutral0,
+                    background: Color(0xFFFFFFFF), // §8.19 QR background: white, never inverted
                     // §8.19: mandatory ≥4-module quiet zone of the same white,
                     // never cropped to the module edge.
                     quietZone: PrettyQrQuietZone.modules(4),
@@ -283,26 +286,27 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
   }
 
   Widget _emptyState(TextTheme text) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Row(
         children: <Widget>[
-          const Icon(
+          Icon(
             Icons.qr_code_2,
             size: 24,
-            color: AppColors.textTertiary,
+            color: colors.textTertiary,
           ),
           const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: Text(
               'Enter text or a URL above to generate a QR code.',
               style: text.bodyMedium?.copyWith(
-                color: AppColors.textTertiary,
+                color: colors.textTertiary,
               ),
             ),
           ),

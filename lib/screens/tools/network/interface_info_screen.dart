@@ -29,6 +29,7 @@ import '../../../services/network/public_ip_service.dart';
 import '../../../services/network/shortcuts_config.dart';
 import '../../../services/network/wifi_details_bridge.dart';
 import '../../../services/network/wifi_info_adapter.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
@@ -548,12 +549,13 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -562,7 +564,7 @@ class _Card extends StatelessWidget {
           Text(
             title,
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -624,12 +626,13 @@ class _PublicIpPendingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final Widget statusText = Text(
       message,
       textAlign: TextAlign.right,
       style: (text.bodyLarge ?? const TextStyle()).copyWith(
-        color: AppColors.textTertiary,
+        color: colors.textTertiary,
         fontStyle: FontStyle.italic,
       ),
     );
@@ -638,12 +641,12 @@ class _PublicIpPendingRow extends StatelessWidget {
         ? Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              const SizedBox(
+              SizedBox(
                 width: 14,
                 height: 14,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: AppColors.primary,
+                  color: colors.textAccent,
                 ),
               ),
               const SizedBox(width: AppSpacing.xs),
@@ -661,7 +664,7 @@ class _PublicIpPendingRow extends StatelessWidget {
             width: ValueRow.labelColumnWidth,
             child: Text(
               'Public IP',
-              style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+              style: text.labelMedium?.copyWith(color: colors.textSecondary),
             ),
           ),
           const SizedBox(width: AppSpacing.xs),
@@ -687,6 +690,7 @@ class _LocationHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.xs),
@@ -694,7 +698,7 @@ class _LocationHint extends StatelessWidget {
         'The network name needs Location Services for this app on macOS. '
         'Enable it in System Settings, or read the name in the Wi-Fi '
         'Information tool, which can request it.',
-        style: text.bodySmall?.copyWith(color: AppColors.textTertiary),
+        style: text.bodySmall?.copyWith(color: colors.textTertiary),
       ),
     );
   }
@@ -714,6 +718,7 @@ class _CacheAsOfLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
     final String clock = _Success._asOfClock(at);
     final String message = 'Remembered reading, as of $clock. '
         'Refresh to read the connected network live.';
@@ -722,16 +727,16 @@ class _CacheAsOfLine extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             Icons.history,
             size: 14,
-            color: AppColors.textTertiary,
+            color: colors.textTertiary,
           ),
           const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: Text(
               message,
-              style: text.bodySmall?.copyWith(color: AppColors.textTertiary),
+              style: text.bodySmall?.copyWith(color: colors.textTertiary),
             ),
           ),
         ],
@@ -756,6 +761,7 @@ class _RefreshWifiPrompt extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.xs),
       child: Column(
@@ -765,7 +771,7 @@ class _RefreshWifiPrompt extends StatelessWidget {
             'The network name has not been read yet this session. Read it from '
             'the connected network — this opens the WLAN Pros Wi-Fi Shortcut, '
             'then returns here.',
-            style: text.bodySmall?.copyWith(color: AppColors.textTertiary),
+            style: text.bodySmall?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Align(
@@ -783,12 +789,12 @@ class _RefreshWifiPrompt extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: pending ? null : () => onRefresh(),
                 icon: pending
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 16,
                         height: 16,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: AppColors.primary,
+                          color: colors.textAccent,
                         ),
                       )
                     : const Icon(Icons.wifi_find, size: 18),
@@ -813,6 +819,7 @@ class _MacTypeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final MacRandomization kind =
         MacRandomizationClassifier.classify(hardwareAddress);
@@ -833,7 +840,7 @@ class _MacTypeRow extends StatelessWidget {
               child: Text(
                 'MAC type',
                 style:
-                    text.labelMedium?.copyWith(color: AppColors.textSecondary),
+                    text.labelMedium?.copyWith(color: colors.textSecondary),
               ),
             ),
             const SizedBox(width: AppSpacing.xs),
@@ -843,8 +850,8 @@ class _MacTypeRow extends StatelessWidget {
                 textAlign: TextAlign.right,
                 style: (text.bodyMedium ?? const TextStyle()).copyWith(
                   color: unreadable
-                      ? AppColors.textTertiary
-                      : AppColors.textPrimary,
+                      ? colors.textTertiary
+                      : colors.textPrimary,
                   fontStyle: unreadable ? FontStyle.italic : FontStyle.normal,
                 ),
               ),
@@ -859,6 +866,7 @@ class _MacTypeRow extends StatelessWidget {
 class _NoInterfaces extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return _Card(
       title: 'Interfaces',
@@ -866,7 +874,7 @@ class _NoInterfaces extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
         child: Text(
           'No active interfaces with an assigned address.',
-          style: text.bodyLarge?.copyWith(color: AppColors.textTertiary),
+          style: text.bodyLarge?.copyWith(color: colors.textTertiary),
         ),
       ),
     );
@@ -878,6 +886,7 @@ class _LoadingState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     // WCAG 4.1.3 — a bare progress indicator announces nothing. Label it so
     // VoiceOver/TalkBack speak the loading state. `Semantics` is not a const
     // constructor, so `Center` cannot be const here; the indicator stays const.
@@ -885,7 +894,7 @@ class _LoadingState extends StatelessWidget {
       child: Semantics(
         label: 'Reading network state…',
         liveRegion: true,
-        child: const CircularProgressIndicator(color: AppColors.primary),
+        child: CircularProgressIndicator(color: colors.textAccent),
       ),
     );
   }
@@ -898,6 +907,7 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Center(
       child: Padding(
@@ -905,15 +915,15 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.error_outline,
               size: 48,
-              color: AppColors.textTertiary,
+              color: colors.textTertiary,
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
               'Could not read network state',
-              style: text.headlineSmall?.copyWith(color: AppColors.textPrimary),
+              style: text.headlineSmall?.copyWith(color: colors.textPrimary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.md),

@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
@@ -271,29 +272,31 @@ class _ReasonCodesScreenState extends State<ReasonCodesScreen> {
   }
 
   Widget _introCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Text(
         '802.11 deauthentication reason codes and association status codes — '
         'referenced in Deauth, Disassoc, Auth, and Association Response frames '
         'during PCAP analysis.',
-        style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+        style: text.labelMedium?.copyWith(color: colors.textTertiary),
       ),
     );
   }
 
   Widget _searchCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: LabeledField(
@@ -308,7 +311,7 @@ class _ReasonCodesScreenState extends State<ReasonCodesScreen> {
           keyboardType: TextInputType.text,
           textInputAction: TextInputAction.search,
           onChanged: _onQueryChanged,
-          cursorColor: AppColors.primary,
+          cursorColor: colors.textAccent,
           decoration: const InputDecoration(hintText: 'e.g. 15 or handshake'),
         ),
       ),
@@ -350,13 +353,14 @@ class _ReasonCodesScreenState extends State<ReasonCodesScreen> {
   }
 
   Widget _footnote(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Text(
       'Reason codes (RC) appear in Deauthentication and Disassociation frames. '
       'Status codes (SC) appear in Authentication, Association, and '
       'Reassociation Response frames. Source: IEEE 802.11-2020 §9.4.1.7 and '
       '§9.4.1.9.',
-      style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+      style: text.labelSmall?.copyWith(color: colors.textTertiary),
     );
   }
 }
@@ -372,12 +376,13 @@ class _GroupCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -386,7 +391,7 @@ class _GroupCard extends StatelessWidget {
           Text(
             group.label,
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
               fontWeight: FontWeight.w600,
             ),
@@ -413,13 +418,14 @@ class _CodeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final Color codeColor = highlight
-        ? AppColors.statusSuccess
-        : AppColors.textPrimary;
+        ? colors.statusSuccess
+        : colors.textPrimary;
     final Color meaningColor = highlight
-        ? AppColors.statusSuccess
-        : AppColors.textSecondary;
+        ? colors.statusSuccess
+        : colors.textSecondary;
     // Merge code + meaning into one semantic node so AT reads "15, 4-Way
     // Handshake timeout" as a single row instead of two fragments.
     return Semantics(
@@ -472,18 +478,19 @@ class _MessageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppColors.textTertiary),
+          Icon(icon, size: 20, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -492,7 +499,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   title,
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -500,7 +507,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   body,
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
               ],

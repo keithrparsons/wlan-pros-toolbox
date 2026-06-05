@@ -18,6 +18,7 @@ import '../../../data/tool_assets.dart';
 import '../../../services/network/http_header_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -226,12 +227,13 @@ class _HttpHeaderScreenState extends State<HttpHeaderScreen> {
   }
 
   Widget _queryCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -248,7 +250,7 @@ class _HttpHeaderScreenState extends State<HttpHeaderScreen> {
               keyboardType: TextInputType.url,
               textInputAction: TextInputAction.go,
               onSubmitted: (_) => _run(),
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(
                 hintText: 'https://example.com',
               ),
@@ -258,7 +260,7 @@ class _HttpHeaderScreenState extends State<HttpHeaderScreen> {
           Text(
             'Method',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -273,16 +275,16 @@ class _HttpHeaderScreenState extends State<HttpHeaderScreen> {
                 showCheckmark: false,
                 labelStyle: text.labelMedium?.copyWith(
                   color: selected
-                      ? AppColors.secondary
-                      : AppColors.textSecondary,
+                      ? colors.onPrimary
+                      : colors.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
-                selectedColor: AppColors.primary,
-                backgroundColor: AppColors.surface2,
+                selectedColor: colors.primary,
+                backgroundColor: colors.surface2,
                 materialTapTargetSize: MaterialTapTargetSize.padded,
                 // §8.3 — shared resolver: idle/selected/disabled borders + 2px
                 // lime keyboard-focus ring.
-                side: AppTheme.chipSide(),
+                side: AppTheme.chipSide(Theme.of(context).brightness),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.control),
                 ),
@@ -302,9 +304,9 @@ class _HttpHeaderScreenState extends State<HttpHeaderScreen> {
                     child: Semantics(
                       label: 'Requesting…',
                       liveRegion: true,
-                      child: const CircularProgressIndicator(
+                      child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.secondary,
+                        color: colors.onPrimary,
                       ),
                     ),
                   )
@@ -365,6 +367,7 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -373,9 +376,9 @@ class _SummaryCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
+        border: Border.all(color: colors.borderStrong, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -387,14 +390,14 @@ class _SummaryCard extends StatelessWidget {
               Icon(
                 Icons.swap_horiz_outlined,
                 size: 24,
-                color: AppColors.textSecondary,
+                color: colors.textSecondary,
               ),
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: SelectableText(
                   last?.statusLine ?? '—',
                   style: mono.outputMedium.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                   ),
                 ),
               ),
@@ -404,7 +407,7 @@ class _SummaryCard extends StatelessWidget {
           Text(
             '$hops hop${hops == 1 ? '' : 's'} · ${result.totalMs} ms total'
             '${last == null ? '' : ' · ${last.method.label}'}',
-            style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+            style: text.labelMedium?.copyWith(color: colors.textSecondary),
           ),
           if (result.headFellBackToGet) ...[
             const SizedBox(height: AppSpacing.xs),
@@ -460,6 +463,7 @@ class _HopRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -476,7 +480,7 @@ class _HopRow extends StatelessWidget {
                 child: Text(
                   '$index',
                   style: mono.inlineCode.copyWith(
-                    color: AppColors.primary,
+                    color: colors.textAccent,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -489,14 +493,14 @@ class _HopRow extends StatelessWidget {
                       '${hop.method.label} · ${hop.statusLine}'
                       ' · ${hop.elapsedMs} ms',
                       style: text.labelMedium?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 2),
                     SelectableText(
                       hop.url,
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textPrimary,
+                        color: colors.textPrimary,
                         fontSize: AppTextSize.caption,
                       ),
                     ),
@@ -505,7 +509,7 @@ class _HopRow extends StatelessWidget {
                       SelectableText(
                         '→ ${hop.location}',
                         style: mono.inlineCode.copyWith(
-                          color: AppColors.textTertiary,
+                          color: colors.textTertiary,
                           fontSize: AppTextSize.caption,
                         ),
                       ),
@@ -528,6 +532,7 @@ class _HeadersCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -538,7 +543,7 @@ class _HeadersCard extends StatelessWidget {
         child: Text(
           'The final response carried no headers.',
           style: text.bodyLarge?.copyWith(
-            color: AppColors.textTertiary,
+            color: colors.textTertiary,
             fontStyle: FontStyle.italic,
           ),
         ),
@@ -558,7 +563,7 @@ class _HeadersCard extends StatelessWidget {
                 Text(
                   h.name,
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -566,7 +571,7 @@ class _HeadersCard extends StatelessWidget {
                 SelectableText(
                   h.value,
                   style: mono.inlineCode.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontSize: AppTextSize.caption,
                   ),
                 ),
@@ -587,16 +592,17 @@ class _Note extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme t = Theme.of(context).textTheme;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 16, color: AppColors.textTertiary),
+        Icon(icon, size: 16, color: colors.textTertiary),
         const SizedBox(width: AppSpacing.xs),
         Expanded(
           child: Text(
             text,
-            style: t.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: t.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ),
       ],
@@ -612,12 +618,13 @@ class _Shell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -626,7 +633,7 @@ class _Shell extends StatelessWidget {
           Text(
             title,
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
               fontWeight: FontWeight.w600,
             ),
@@ -652,18 +659,19 @@ class _MessageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppColors.textTertiary),
+          Icon(icon, size: 20, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -672,7 +680,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   title,
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -680,7 +688,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   body,
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
               ],

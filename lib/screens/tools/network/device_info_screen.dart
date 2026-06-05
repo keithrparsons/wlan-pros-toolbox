@@ -26,6 +26,7 @@ import 'package:flutter/material.dart';
 import '../../../data/tool_assets.dart';
 import '../../../services/network/device_info_service.dart';
 import '../../../services/network/network_support.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
@@ -313,12 +314,13 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -327,7 +329,7 @@ class _Card extends StatelessWidget {
           Text(
             title,
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -348,6 +350,7 @@ class _NoCellularHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Semantics(
       container: true,
@@ -363,7 +366,7 @@ class _NoCellularHint extends StatelessWidget {
             Text(
               'No cellular interface',
               style: (text.bodyLarge ?? const TextStyle()).copyWith(
-                color: AppColors.textTertiary,
+                color: colors.textTertiary,
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -372,7 +375,7 @@ class _NoCellularHint extends StatelessWidget {
               'Normal on Wi-Fi-only devices, in airplane mode, or on a Mac. '
               'Detection looks for the $kCellularInterfaceName interface, the '
               'conventional iOS cellular name.',
-              style: text.bodySmall?.copyWith(color: AppColors.textTertiary),
+              style: text.bodySmall?.copyWith(color: colors.textTertiary),
             ),
           ],
         ),
@@ -386,12 +389,13 @@ class _LoadingState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     // WCAG 4.1.3 — label the spinner so VoiceOver/TalkBack speak the state.
     return Center(
       child: Semantics(
         label: 'Reading device info…',
         liveRegion: true,
-        child: const CircularProgressIndicator(color: AppColors.primary),
+        child: CircularProgressIndicator(color: colors.textAccent),
       ),
     );
   }
@@ -404,6 +408,7 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Center(
       child: Padding(
@@ -411,15 +416,15 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.error_outline,
               size: 48,
-              color: AppColors.textTertiary,
+              color: colors.textTertiary,
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
               'Could not read device info',
-              style: text.headlineSmall?.copyWith(color: AppColors.textPrimary),
+              style: text.headlineSmall?.copyWith(color: colors.textPrimary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.md),

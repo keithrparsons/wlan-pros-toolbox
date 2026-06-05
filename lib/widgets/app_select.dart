@@ -29,6 +29,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 
 /// A single value→display-label pair, mirroring the `_UnitToggle` tuple
@@ -98,6 +99,7 @@ class AppSelect<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
     final bool hasError = errorText != null;
 
     // §8.14 state table — border + foreground per enabled / error / idle.
@@ -107,28 +109,31 @@ class AppSelect<T> extends StatelessWidget {
     final Color valueColor;
     final Color chevronColor;
 
+    // §8.20.3-B: idle input borders bias to 1.5px in light, dark keeps 1px.
+    final double idleBorderW = colors.isLight ? 1.5 : 1;
+
     if (!enabled) {
       // §8.14 States table (border corrected 2026-06-01, Vera finding #4): the
-      // disabled border is `borderStrong` (#808080) = 3.63:1 on the #2A2A2A
-      // disabled fill (SC 1.4.11), not `disabledFill` — that was ~1.1:1,
-      // imperceptible, leaving the disabled control with no visible boundary.
-      borderColor = AppColors.borderStrong;
-      borderWidth = 1;
-      fillColor = AppColors.disabledFill;
-      valueColor = AppColors.textDisabled;
-      chevronColor = AppColors.textDisabled;
+      // disabled border is `borderStrong` = 3.63:1 on the disabled fill
+      // (SC 1.4.11), not `disabledFill` — that was ~1.1:1, imperceptible,
+      // leaving the disabled control with no visible boundary.
+      borderColor = colors.borderStrong;
+      borderWidth = idleBorderW;
+      fillColor = colors.disabledFill;
+      valueColor = colors.textDisabled;
+      chevronColor = colors.textDisabled;
     } else if (hasError) {
-      borderColor = AppColors.statusDanger;
+      borderColor = colors.statusDanger;
       borderWidth = 2;
-      fillColor = AppColors.inputFill;
-      valueColor = AppColors.textPrimary;
-      chevronColor = AppColors.textSecondary;
+      fillColor = colors.inputFill;
+      valueColor = colors.textPrimary;
+      chevronColor = colors.textSecondary;
     } else {
-      borderColor = AppColors.borderStrong;
-      borderWidth = 1;
-      fillColor = AppColors.inputFill;
-      valueColor = AppColors.textPrimary;
-      chevronColor = AppColors.textSecondary;
+      borderColor = colors.borderStrong;
+      borderWidth = idleBorderW;
+      fillColor = colors.inputFill;
+      valueColor = colors.textPrimary;
+      chevronColor = colors.textSecondary;
     }
 
     // The value text style: §8.4 field text — body / IBM Plex Sans / textPrimary
@@ -148,11 +153,19 @@ class AppSelect<T> extends StatelessWidget {
       valueStyle: valueStyle,
       chevronColor: chevronColor,
       minWidth: minWidth,
+      // Foreground lime substitute (§8.20.2): the open/focus border, selected
+      // item text, and check glyph are FOREGROUND lime → textAccent (lime in
+      // dark, darkened-lime in light). idleBorder lets the control identify the
+      // resting border so it never overrides the error border.
+      accentColor: colors.textAccent,
+      idleBorderColor: colors.borderStrong,
+      surface2: colors.surface2,
+      isLight: colors.isLight,
       menuItemStyle: (text.bodyLarge ?? const TextStyle()).copyWith(
-        color: AppColors.textPrimary,
+        color: colors.textPrimary,
       ),
       selectedItemStyle: (text.bodyLarge ?? const TextStyle()).copyWith(
-        color: AppColors.primary,
+        color: colors.textAccent,
         fontWeight: FontWeight.w500,
       ),
     );
@@ -179,7 +192,7 @@ class AppSelect<T> extends StatelessWidget {
         Text(
           errorText!,
           style: (text.labelSmall ?? const TextStyle()).copyWith(
-            color: AppColors.statusDanger,
+            color: colors.statusDanger,
           ),
         ),
       ],
@@ -205,6 +218,10 @@ class _SelectControl<T> extends StatefulWidget {
     required this.minWidth,
     required this.menuItemStyle,
     required this.selectedItemStyle,
+    required this.accentColor,
+    required this.idleBorderColor,
+    required this.surface2,
+    required this.isLight,
   });
 
   final T value;
@@ -220,6 +237,19 @@ class _SelectControl<T> extends StatefulWidget {
   final double? minWidth;
   final TextStyle menuItemStyle;
   final TextStyle selectedItemStyle;
+
+  /// Foreground lime substitute (lime dark, darkened-lime light) for the
+  /// open/focus border ring and the selected-item check glyph.
+  final Color accentColor;
+
+  /// The resting idle border color, so the control never promotes an error
+  /// border to the accent ring.
+  final Color idleBorderColor;
+
+  /// The popped menu surface (§8.1 surface2 in dark, white in light).
+  final Color surface2;
+
+  final bool isLight;
 
   @override
   State<_SelectControl<T>> createState() => _SelectControlState<T>();
@@ -237,13 +267,15 @@ class _SelectControlState<T> extends State<_SelectControl<T>> {
     // the failing state visible). Error is signalled by borderWidth == 2 with a
     // non-primary color, so only promote to lime when the resting border is the
     // idle borderStrong.
-    final bool isIdleBorder = widget.borderColor == AppColors.borderStrong;
+    final bool isIdleBorder = widget.borderColor == widget.idleBorderColor;
     final bool active = widget.enabled && (_open || _focused) && isIdleBorder;
 
+    // §8.20.3-B: input focus border is 2.5px in light (darkened-lime), 2px dark.
     final Color effectiveBorder = active
-        ? AppColors.primary
+        ? widget.accentColor
         : widget.borderColor;
-    final double effectiveWidth = active ? 2 : widget.borderWidth;
+    final double effectiveWidth =
+        active ? (widget.isLight ? 2.5 : 2) : widget.borderWidth;
 
     return Container(
       constraints: BoxConstraints(
@@ -277,7 +309,7 @@ class _SelectControlState<T> extends State<_SelectControl<T>> {
             isExpanded: true,
             // Menu surface: §8.1 surface2, §8.11 card radius (the menu is a
             // separate container, so it takes the card curve, not the control's).
-            dropdownColor: AppColors.surface2,
+            dropdownColor: widget.surface2,
             borderRadius: BorderRadius.circular(AppRadius.card),
             // Chevron flips while open (§8.14). 24px nav-icon affordance.
             icon: Icon(
@@ -337,10 +369,10 @@ class _SelectControlState<T> extends State<_SelectControl<T>> {
                     // lime text — the active/selected role (§8.14), distinct
                     // from a status verdict.
                     if (selected)
-                      const Icon(
+                      Icon(
                         Icons.check,
                         size: AppSpacing.sm, // 16px == --app-icon-sm
-                        color: AppColors.primary,
+                        color: widget.accentColor,
                       ),
                   ],
                 ),

@@ -25,7 +25,7 @@
 
 import 'package:flutter/material.dart';
 
-import '../theme/app_tokens.dart';
+import '../theme/app_color_scheme.dart';
 
 /// A compact inline time-series chart. Stateless and cheap to rebuild on each
 /// streamed sample. Pass the rolling window oldest→newest; nulls render as gaps.
@@ -34,7 +34,7 @@ class Sparkline extends StatelessWidget {
     super.key,
     required this.values,
     required this.semanticLabel,
-    this.lineColor = AppColors.primary,
+    this.lineColor,
     this.height = _defaultHeight,
   });
 
@@ -47,10 +47,13 @@ class Sparkline extends StatelessWidget {
   /// decorative). E.g. "RSSI trend, currently -54 dBm".
   final String semanticLabel;
 
-  /// Line + latest-dot color. Defaults to the §8.3 lime accent. A graded caller
-  /// may pass the matching §8.13 status color so the line reinforces the grade
+  /// Line + latest-dot color. When null, defaults to the FOREGROUND accent
+  /// (`context.colors.textAccent`): lime in dark, darkened-lime #5A7A1C in light
+  /// — a sparkline is a colored LINE (foreground), so brand lime cannot be used
+  /// on a light surface (§8.20.2 lime-fill-only rule). A graded caller may pass
+  /// the matching §8.13/§8.20.1 status color so the line reinforces the grade
   /// (the grade word still carries the meaning; SC 1.4.1).
-  final Color lineColor;
+  final Color? lineColor;
 
   /// Chart height. Width fills the parent; the painter scales the window to fit.
   final double height;
@@ -59,6 +62,8 @@ class Sparkline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Foreground accent line — resolves to darkened-lime in light (§8.20.2).
+    final Color resolvedLine = lineColor ?? context.colors.textAccent;
     return Semantics(
       label: semanticLabel,
       child: ExcludeSemantics(
@@ -66,7 +71,8 @@ class Sparkline extends StatelessWidget {
           height: height,
           width: double.infinity,
           child: CustomPaint(
-            painter: _SparklinePainter(values: values, lineColor: lineColor),
+            painter:
+                _SparklinePainter(values: values, lineColor: resolvedLine),
           ),
         ),
       ),

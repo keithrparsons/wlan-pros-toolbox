@@ -25,6 +25,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -550,12 +551,13 @@ class _HttpStatusCodesScreenState extends State<HttpStatusCodesScreen> {
   }
 
   Widget _introCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Text(
@@ -563,17 +565,18 @@ class _HttpStatusCodesScreenState extends State<HttpStatusCodesScreen> {
         'meet checking a captive portal, a web service, a proxy, or an API. '
         'The first digit sets the class: 1xx informational, 2xx success, 3xx '
         'redirection, 4xx client error, 5xx server error.',
-        style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+        style: text.labelMedium?.copyWith(color: colors.textTertiary),
       ),
     );
   }
 
   Widget _searchCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: LabeledField(
@@ -588,7 +591,7 @@ class _HttpStatusCodesScreenState extends State<HttpStatusCodesScreen> {
           keyboardType: TextInputType.text,
           textInputAction: TextInputAction.search,
           onChanged: _onQueryChanged,
-          cursorColor: AppColors.primary,
+          cursorColor: colors.textAccent,
           decoration: const InputDecoration(hintText: 'e.g. 404 or redirect'),
         ),
       ),
@@ -624,12 +627,13 @@ class _HttpStatusCodesScreenState extends State<HttpStatusCodesScreen> {
   }
 
   Widget _footnote(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Text(
       'Codes and names are from the IANA HTTP Status Code Registry; most are '
       'defined by RFC 9110 (HTTP Semantics). Unassigned and obsoleted codes are '
       'omitted.',
-      style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+      style: text.labelSmall?.copyWith(color: colors.textTertiary),
     );
   }
 }
@@ -642,12 +646,13 @@ class _ClassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -656,7 +661,7 @@ class _ClassCard extends StatelessWidget {
           Text(
             statusClass.label,
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
               fontWeight: FontWeight.w600,
             ),
@@ -683,6 +688,7 @@ class _StatusRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -703,7 +709,7 @@ class _StatusRow extends StatelessWidget {
               child: Text(
                 '${entry.code}',
                 style: mono.robotoMono.copyWith(
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -716,7 +722,7 @@ class _StatusRow extends StatelessWidget {
                   Text(
                     entry.reason,
                     style: text.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: colors.textSecondary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -724,7 +730,7 @@ class _StatusRow extends StatelessWidget {
                   Text(
                     entry.meaning,
                     style: text.labelMedium?.copyWith(
-                      color: AppColors.textTertiary,
+                      color: colors.textTertiary,
                     ),
                   ),
                 ],
@@ -751,18 +757,19 @@ class _MessageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppColors.textTertiary),
+          Icon(icon, size: 20, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -771,7 +778,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   title,
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -779,7 +786,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   body,
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
               ],

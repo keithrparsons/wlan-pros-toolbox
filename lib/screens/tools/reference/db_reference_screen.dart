@@ -18,6 +18,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -227,6 +228,7 @@ class DbReferenceScreen extends StatelessWidget {
   }
 
   Widget _body(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -262,7 +264,7 @@ class DbReferenceScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.md),
                   _dbmCard(text, mono),
                   const SizedBox(height: AppSpacing.md),
-                  _footnoteCard(text),
+                  _footnoteCard(colors, text),
                   ToolHelpFooter(toolId: 'db-reference'),
                 ],
               ),
@@ -303,13 +305,13 @@ class DbReferenceScreen extends StatelessWidget {
     );
   }
 
-  Widget _footnoteCard(TextTheme text) {
+  Widget _footnoteCard(AppColorScheme colors, TextTheme text) {
     return _Card(
       heading: 'Notes',
       headingText: text,
       child: Text(
         footnote,
-        style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+        style: text.labelMedium?.copyWith(color: colors.textTertiary),
       ),
     );
   }
@@ -329,11 +331,12 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -342,7 +345,7 @@ class _Card extends StatelessWidget {
           Text(
             heading,
             style: headingText.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -363,8 +366,9 @@ class _RatioHeaderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextStyle? style = text.labelMedium?.copyWith(
-      color: AppColors.textTertiary,
+      color: colors.textTertiary,
       letterSpacing: 0.4,
     );
     return Padding(
@@ -394,10 +398,11 @@ class _RatioRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     // Positive gains read in lime; losses in the danger color — matches the
     // PWA's green/red dB-change coloring (app.js buildDBRefCard).
     final bool positive = ratio.db.startsWith('+');
-    final Color dbColor = positive ? AppColors.primary : AppColors.statusDanger;
+    final Color dbColor = positive ? colors.textAccent : colors.statusDanger;
     return ReferenceRowSemantics(
       label: rowLabel('${ratio.db} dB', <String?>[
         'power ratio ${ratio.powerRatio}',
@@ -427,7 +432,7 @@ class _RatioRow extends StatelessWidget {
                   child: Text(
                     ratio.powerRatio,
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                     ),
                   ),
                 ),
@@ -435,7 +440,7 @@ class _RatioRow extends StatelessWidget {
                   child: Text(
                     ratio.voltageRatio,
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.textSecondary,
+                      color: colors.textSecondary,
                     ),
                   ),
                 ),
@@ -446,7 +451,7 @@ class _RatioRow extends StatelessWidget {
               child: Text(
                 ratio.note,
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ),
@@ -467,6 +472,7 @@ class _DbmRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return ReferenceRowSemantics(
       label: rowLabel(ref.dbm, <String?>[ref.power, ref.context]),
       child: Padding(
@@ -482,7 +488,7 @@ class _DbmRow extends StatelessWidget {
                   child: Text(
                     ref.dbm,
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.primary,
+                      color: colors.textAccent,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -491,7 +497,7 @@ class _DbmRow extends StatelessWidget {
                   child: Text(
                     ref.power,
                     style: mono.inlineCode.copyWith(
-                      color: AppColors.textSecondary,
+                      color: colors.textSecondary,
                     ),
                   ),
                 ),
@@ -502,7 +508,7 @@ class _DbmRow extends StatelessWidget {
               child: Text(
                 ref.context,
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ),

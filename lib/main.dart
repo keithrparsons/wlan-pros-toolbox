@@ -12,6 +12,7 @@ import 'router/app_router.dart';
 import 'services/help/tool_help_loader.dart';
 import 'services/network/dart_ping_icmp_backend.dart';
 import 'theme/app_theme.dart';
+import 'theme/theme_controller.dart';
 
 Future<void> main() async {
   // Binding up first so the async asset-manifest load below can run before the
@@ -50,21 +51,45 @@ Future<void> main() async {
     // Asset unavailable → helpForId() stays null → help icons hide. No crash.
   }
 
-  runApp(const ToolboxApp());
+  // §8.20.5 — appearance controller. Default System; loads the persisted
+  // Light/Dark pick (if any) before the first frame so there is no theme flash.
+  // A storage failure leaves it on System (load() never throws).
+  final ThemeController themeController = ThemeController();
+  await themeController.load();
+
+  runApp(ToolboxApp(themeController: themeController));
 }
 
 class ToolboxApp extends StatelessWidget {
-  const ToolboxApp({super.key});
+  const ToolboxApp({super.key, required this.themeController});
+
+  /// Owns the §8.20.5 ThemeMode (System / Light / Dark). Exposed via the
+  /// inherited [ThemeControllerScope] so the Appearance toggle can drive it.
+  final ThemeController themeController;
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = AppTheme.dark();
+    return ThemeControllerScope(
+      controller: themeController,
+      child: ListenableBuilder(
+        listenable: themeController,
+        builder: (BuildContext context, Widget? _) {
+          return _buildApp(themeController.mode);
+        },
+      ),
+    );
+  }
+
+  Widget _buildApp(ThemeMode themeMode) {
     return MaterialApp(
       title: 'WLAN Pros Toolbox',
       debugShowCheckedModeBanner: false,
-      theme: theme,
-      darkTheme: theme,
-      themeMode: ThemeMode.dark,
+      // §8.20.6 — light theme on `theme:`, dark on `darkTheme:`, selection via
+      // `themeMode:`. `ThemeMode.system` resolves to the dark brand default on a
+      // dark-set OS and the §8.20 light theme on a light-set OS.
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: themeMode,
       // Shared navigator key so the one-tap-trigger deep-link router (TICKET-03)
       // can navigate to a tool route on the cold-relaunch path, where no screen
       // is listening. Reuses this Navigator; adds no second nav system.

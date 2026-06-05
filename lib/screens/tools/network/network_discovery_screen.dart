@@ -49,6 +49,7 @@ import '../../../services/network/lan_discovery/lan_discovery_engine.dart';
 import '../../../services/network/lan_discovery/lan_host.dart';
 import '../../../services/network/mac_oui_service.dart';
 import '../../../services/network/network_support.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -329,12 +330,13 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
   }
 
   Widget _controlCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -344,7 +346,7 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
             'Scan the local subnet for live hosts, then enrich each with its '
             'hostname, advertised services, a device-type guess, and — on '
             'desktop — its MAC address and vendor.',
-            style: text.bodyMedium?.copyWith(color: AppColors.textSecondary),
+            style: text.bodyMedium?.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.md),
           if (_scanning)
@@ -360,6 +362,7 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
   }
 
   Widget _progressCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -368,9 +371,9 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -390,9 +393,9 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
                     child: LinearProgressIndicator(
                       value: _fraction == 0 ? null : _fraction,
                       minHeight: 6,
-                      backgroundColor: AppColors.surface2,
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppColors.primary,
+                      backgroundColor: colors.surface2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        colors.textAccent,
                       ),
                     ),
                   ),
@@ -404,14 +407,14 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
                         child: Text(
                           _phaseLabel(_phase),
                           style: text.labelMedium?.copyWith(
-                            color: AppColors.textSecondary,
+                            color: colors.textSecondary,
                           ),
                         ),
                       ),
                       Text(
                         '$pct%',
                         style: mono.inlineCode.copyWith(
-                          color: AppColors.textSecondary,
+                          color: colors.textSecondary,
                         ),
                       ),
                     ],
@@ -425,7 +428,7 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
             ExcludeSemantics(
               child: Text(
                 _note!,
-                style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+                style: text.labelSmall?.copyWith(color: colors.textTertiary),
               ),
             ),
           ],
@@ -435,7 +438,7 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
               child: Text(
                 'Listening for Bonjour / mDNS responders (~4 seconds) — slow '
                 'devices answer late, so the scan waits.',
-                style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+                style: text.labelSmall?.copyWith(color: colors.textTertiary),
               ),
             ),
           ],
@@ -481,6 +484,7 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
   }
 
   Widget _summaryCard(BuildContext context, DiscoveryResult r) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -488,9 +492,9 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -499,7 +503,7 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
           Text(
             '$n host${n == 1 ? '' : 's'} found',
             style: text.bodyLarge?.copyWith(
-              color: AppColors.textPrimary,
+              color: colors.textPrimary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -522,6 +526,7 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
     String value,
     AppMonoText mono,
   ) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
@@ -532,7 +537,7 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
             width: 96,
             child: Text(
               label,
-              style: text.labelMedium?.copyWith(color: AppColors.textSecondary),
+              style: text.labelMedium?.copyWith(color: colors.textSecondary),
             ),
           ),
           const SizedBox(width: AppSpacing.xs),
@@ -541,7 +546,7 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
             // Roboto Mono identifier register (GL-003 §8.5).
             child: SelectableText(
               value,
-              style: mono.robotoMono.copyWith(color: AppColors.textPrimary),
+              style: mono.robotoMono.copyWith(color: colors.textPrimary),
             ),
           ),
         ],
@@ -554,6 +559,7 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
   /// is unavailable — say so once here, plainly, rather than render an empty
   /// "Manufacturer: —" on every row (brief anti-pattern #2).
   Widget _macAvailabilityNote(BuildContext context, DiscoveryResult r) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final ArpReadResult? arp = r.arp;
     final String message;
@@ -571,12 +577,12 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Icon(Icons.info_outline, size: 16, color: AppColors.textTertiary),
+        Icon(Icons.info_outline, size: 16, color: colors.textTertiary),
         const SizedBox(width: AppSpacing.xs),
         Expanded(
           child: Text(
             message,
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
         ),
       ],
@@ -584,11 +590,12 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
   }
 
   Widget _hostListCard(BuildContext context, DiscoveryResult r) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
       child: Column(
@@ -596,7 +603,7 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
         children: <Widget>[
           for (int i = 0; i < r.hosts.length; i++) ...<Widget>[
             if (i > 0)
-              const Divider(height: 1, thickness: 1, color: AppColors.border),
+              Divider(height: 1, thickness: 1, color: colors.border),
             _HostRow(host: r.hosts[i]),
           ],
         ],
@@ -643,6 +650,7 @@ class _HostRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -665,7 +673,7 @@ class _HostRow extends StatelessWidget {
               child: Icon(
                 _deviceIcon(host.deviceType),
                 size: 20,
-                color: AppColors.textTertiary,
+                color: colors.textTertiary,
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
@@ -682,7 +690,7 @@ class _HostRow extends StatelessWidget {
                           host.ip,
                           // Discovered host IP is an identifier → Roboto Mono.
                           style: mono.robotoMono.copyWith(
-                            color: AppColors.textPrimary,
+                            color: colors.textPrimary,
                           ),
                         ),
                       ),
@@ -690,7 +698,7 @@ class _HostRow extends StatelessWidget {
                       Text(
                         host.deviceType.label,
                         style: text.labelSmall?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: colors.textSecondary,
                         ),
                       ),
                     ],
@@ -700,7 +708,7 @@ class _HostRow extends StatelessWidget {
                     Text(
                       name,
                       style: text.bodyMedium?.copyWith(
-                        color: AppColors.textPrimary,
+                        color: colors.textPrimary,
                       ),
                     ),
                   ],
@@ -716,11 +724,12 @@ class _HostRow extends StatelessWidget {
                   ],
                   if (services.isNotEmpty) ...<Widget>[
                     const SizedBox(height: 2),
-                    _caption(text, 'Services: $services'),
+                    _caption(text, colors, 'Services: $services'),
                   ],
                   const SizedBox(height: 2),
                   _caption(
                     text,
+                    colors,
                     'Ports: ${ports.isEmpty ? 'none open' : ports}',
                   ),
                 ],
@@ -733,18 +742,19 @@ class _HostRow extends StatelessWidget {
   }
 
   Widget _detail(BuildContext context, AppMonoText mono, String value) {
+    final AppColorScheme colors = context.colors;
     // The detail line leads with the host MAC (optionally " · vendor") — a MAC
     // identifier → Roboto Mono (GL-003 §8.5).
     return SelectableText(
       value,
-      style: mono.robotoMono.copyWith(color: AppColors.textSecondary),
+      style: mono.robotoMono.copyWith(color: colors.textSecondary),
     );
   }
 
-  Widget _caption(TextTheme text, String value) {
+  Widget _caption(TextTheme text, AppColorScheme colors, String value) {
     return Text(
       value,
-      style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+      style: text.labelSmall?.copyWith(color: colors.textTertiary),
     );
   }
 
@@ -785,18 +795,19 @@ class _MessageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(icon, size: 20, color: AppColors.textTertiary),
+          Icon(icon, size: 20, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -805,7 +816,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   title,
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -813,7 +824,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   body,
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
               ],

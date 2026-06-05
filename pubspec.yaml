@@ -76,6 +76,14 @@ dependencies:
   # GL-008). First-party, lightweight, no API key. BSD-3.
   url_launcher: ^6.3.0
 
+  # shared_preferences — persists the user's Light/Dark/System appearance pick
+  # (GL-003 §8.20.5) across launches. BSD-3-Clause, first-party Flutter plugin,
+  # App-Store-safe; backed by NSUserDefaults (iOS/macOS) / SharedPreferences
+  # (Android) / localStorage (web). No network, no entitlement. Only consumer is
+  # the ThemeController (lib/theme/theme_controller.dart): an explicit Light/Dark
+  # choice is stored and restored; System re-reads the OS appearance each launch.
+  shared_preferences: ^2.3.0
+
   # fl_chart — the live latency-trend line chart behind the Ping Plotter tool
   # (ping_plotter_screen.dart, Wave B 2026-06-04). BSD-3-Clause, App-Store-safe,
   # pure-Dart Canvas rendering (no platform channel, no network, no native

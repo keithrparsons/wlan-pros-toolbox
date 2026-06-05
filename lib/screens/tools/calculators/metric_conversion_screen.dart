@@ -31,6 +31,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -270,11 +271,12 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
   }
 
   Widget _converterCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -305,7 +307,7 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
                     style: mono.outputLarge.copyWith(
                       fontSize: AppTextSize.fieldNumeric,
                     ),
-                    cursorColor: AppColors.primary,
+                    cursorColor: colors.textAccent,
                     decoration: const InputDecoration(hintText: '1'),
                   ),
                 ),
@@ -352,13 +354,14 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
   }
 
   Widget _resultBlock(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Result',
           style: text.labelMedium?.copyWith(
-            color: AppColors.textSecondary,
+            color: colors.textSecondary,
             letterSpacing: 0.4,
           ),
         ),
@@ -382,8 +385,8 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
                   maxLines: 1,
                   style: mono.outputXL.copyWith(
                     color: _result == null
-                        ? AppColors.textTertiary
-                        : AppColors.primary,
+                        ? colors.textTertiary
+                        : colors.textAccent,
                   ),
                 ),
               ),
@@ -391,7 +394,7 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
               Text(
                 MetricConversionScreen.symbolFor(_toUnit),
                 style: text.labelLarge?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ],
@@ -402,6 +405,7 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
   }
 
   Widget _referenceCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     // Anchor conversions to meters — the PWA toM factors, made visible so a
     // field tech can sanity-check a result against a known constant.
     final List<List<String>> refs = const [
@@ -415,9 +419,9 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -426,7 +430,7 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
           Text(
             'Reference points',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -443,7 +447,7 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
                     child: Text(
                       row[0],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.primary,
+                        color: colors.textAccent,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -452,7 +456,7 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
                     child: Text(
                       row[1],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),

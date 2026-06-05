@@ -20,6 +20,7 @@ import 'package:flutter/services.dart' show rootBundle;
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/port_reference_service.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
@@ -142,12 +143,13 @@ class _PortReferenceScreenState extends State<PortReferenceScreen> {
   }
 
   Widget _searchCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final bool ready = _service != null;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: LabeledField(
@@ -163,7 +165,7 @@ class _PortReferenceScreenState extends State<PortReferenceScreen> {
           keyboardType: TextInputType.text,
           textInputAction: TextInputAction.search,
           onChanged: _onQueryChanged,
-          cursorColor: AppColors.primary,
+          cursorColor: colors.textAccent,
           decoration: const InputDecoration(hintText: 'e.g. 443 or radius'),
         ),
       ),
@@ -171,6 +173,7 @@ class _PortReferenceScreenState extends State<PortReferenceScreen> {
   }
 
   Widget _resultsSection(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     if (_loadError != null) {
       return _MessageCard(
         icon: Icons.error_outline,
@@ -191,9 +194,9 @@ class _PortReferenceScreenState extends State<PortReferenceScreen> {
             child: Semantics(
               label: 'Loading port reference',
               liveRegion: true,
-              child: const CircularProgressIndicator(
+              child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: AppColors.primary,
+                color: colors.textAccent,
               ),
             ),
           ),
@@ -228,13 +231,14 @@ class _ResultsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final bool showingAll = query.trim().isEmpty;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -245,7 +249,7 @@ class _ResultsCard extends StatelessWidget {
                 ? 'All $total ports'
                 : '${results.length} of $total ports',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -266,6 +270,7 @@ class _PortRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -283,7 +288,7 @@ class _PortRow extends StatelessWidget {
               child: Text(
                 entry.description,
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ),
@@ -306,18 +311,19 @@ class _MessageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppColors.textTertiary),
+          Icon(icon, size: 20, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -326,7 +332,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   title,
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -334,7 +340,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   body,
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
               ],

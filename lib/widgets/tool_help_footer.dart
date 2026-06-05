@@ -29,6 +29,7 @@ import 'package:flutter/material.dart';
 
 import '../services/help/tool_help.dart';
 import '../services/help/tool_help_loader.dart';
+import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 import 'tool_help_sheet.dart';
 
@@ -86,14 +87,15 @@ class ToolHelpFooter extends StatelessWidget {
     }
 
     final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
 
     // §8.16.1 label style: --text-body (16px) / IBM Plex Sans 500 / leading 1.45
-    // / --app-text-secondary. Derived from the bodyLarge slot (16/1.45) with the
-    // medium weight and the quiet secondary color the footer reads in.
+    // / --app-text-secondary. §8.20.3-A bumps labels/captions one step in light
+    // for projector legibility (500 → 600).
     final TextStyle labelStyle =
         (text.bodyLarge ?? const TextStyle()).copyWith(
-          fontWeight: FontWeight.w500,
-          color: AppColors.textSecondary,
+          fontWeight: colors.isLight ? FontWeight.w600 : FontWeight.w500,
+          color: colors.textSecondary,
         );
 
     return Padding(
@@ -145,6 +147,7 @@ class _FooterButtonState extends State<_FooterButton> {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     // §8.16.1 motion: the existing showToolHelpSheet governs the open
     // transition; the footer introduces no animation of its own. Under reduced
     // motion that sheet still collapses appropriately — there is nothing extra
@@ -170,19 +173,21 @@ class _FooterButtonState extends State<_FooterButton> {
           // 44pt hit region, not this divider). The §8.3 lime focus ring is a
           // 2px solid --color-primary outline with a 2px offset, focus-only.
           decoration: BoxDecoration(
-            color: AppColors.surface1,
+            color: colors.surface1,
             border: Border(
-              top: const BorderSide(color: AppColors.border, width: 1),
+              top: BorderSide(color: colors.border, width: 1),
               // The §8.3 ring on the other three sides + the offset is drawn via
               // the outer foregroundDecoration below so it never disturbs the
               // 1px content hairline at rest.
             ),
           ),
+          // §8.3 focus ring. Foreground lime → darkened-lime textAccent + 3px in
+          // light (§8.20.2 / §8.20.3-B); 2px brand lime in dark.
           foregroundDecoration: _focused
               ? BoxDecoration(
                   border: Border.all(
-                    color: AppColors.primary,
-                    width: 2,
+                    color: colors.isLight ? colors.textAccent : colors.primary,
+                    width: colors.isLight ? 3 : 2,
                   ),
                 )
               : null,
@@ -201,10 +206,10 @@ class _FooterButtonState extends State<_FooterButton> {
               // §8.16.1 leading icon: Icons.help_outline, 24px (--app-icon-nav),
               // --app-text-secondary — the same glyph + idle treatment it carried
               // in the AppBar, so it reads as a sibling to the copy glyph.
-              const Icon(
+              Icon(
                 Icons.help_outline,
                 size: 24,
-                color: AppColors.textSecondary,
+                color: colors.textSecondary,
               ),
               // §8.16.1 icon → label gap: --space-xs (8px).
               const SizedBox(width: AppSpacing.xs),
@@ -217,10 +222,10 @@ class _FooterButtonState extends State<_FooterButton> {
               // §8.16.1 optional trailing chevron: Icons.chevron_right, 24px,
               // --app-text-tertiary. Included as the disclosure cue because the
               // footer opens a bottom sheet (help is not expanded in place).
-              const Icon(
+              Icon(
                 Icons.chevron_right,
                 size: 24,
-                color: AppColors.textTertiary,
+                color: colors.textTertiary,
               ),
             ],
           ),

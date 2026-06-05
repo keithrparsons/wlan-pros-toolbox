@@ -27,6 +27,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../theme/app_typography.dart';
@@ -183,14 +184,14 @@ class RoamingScreen extends StatelessWidget {
 
   /// §8.13 verdict tint for a grade. Color is never the only signal — the
   /// scenario word always renders beside it.
-  static Color gradeColor(RoamGrade grade) {
+  static Color gradeColor(AppColorScheme colors, RoamGrade grade) {
     switch (grade) {
       case RoamGrade.good:
-        return AppColors.statusSuccess;
+        return colors.statusSuccess;
       case RoamGrade.marginal:
-        return AppColors.statusWarning;
+        return colors.statusWarning;
       case RoamGrade.bad:
-        return AppColors.statusDanger;
+        return colors.statusDanger;
     }
   }
 
@@ -275,6 +276,7 @@ class RoamingScreen extends StatelessWidget {
   }
 
   Widget _body(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool isDesktop = constraints.maxWidth >= 720;
@@ -299,9 +301,9 @@ class RoamingScreen extends StatelessWidget {
                   ConceptGraphicBand(toolId: 'roaming', isDesktop: isDesktop),
                   if (ToolAssets.hasGraphic('roaming'))
                     const SizedBox(height: AppSpacing.md),
-                  _intro(context),
+                  _intro(colors, context),
                   const SizedBox(height: AppSpacing.sm),
-                  _protocolsCard(context),
+                  _protocolsCard(colors, context),
                   const SizedBox(height: AppSpacing.sm),
                   _thresholdsCard(context),
                   ToolHelpFooter(toolId: 'roaming'),
@@ -315,17 +317,17 @@ class RoamingScreen extends StatelessWidget {
   }
 
   /// Honest framing — the PWA tool description, in intent.
-  Widget _intro(BuildContext context) {
+  Widget _intro(AppColorScheme colors, BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
     return Text(
       '802.11k/r/v protocol overview and RSSI/SNR thresholds for enterprise '
       'roaming design. Targets vary by client hardware and AP vendor; treat as '
       'design guidelines, not guarantees.',
-      style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+      style: text.labelMedium?.copyWith(color: colors.textTertiary),
     );
   }
 
-  Widget _protocolsCard(BuildContext context) {
+  Widget _protocolsCard(AppColorScheme colors, BuildContext context) {
     return _Card(
       heading: 'Protocols',
       child: Column(
@@ -333,9 +335,9 @@ class RoamingScreen extends StatelessWidget {
         children: [
           for (int i = 0; i < kProtocols.length; i++) ...<Widget>[
             if (i > 0)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
-                child: Divider(height: 1, color: AppColors.border),
+                child: Divider(height: 1, color: colors.border),
               ),
             _ProtocolBlock(protocol: kProtocols[i]),
           ],
@@ -387,12 +389,13 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -401,7 +404,7 @@ class _Card extends StatelessWidget {
           Text(
             heading,
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -423,6 +426,7 @@ class _ProtocolBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Semantics(
       label:
@@ -444,14 +448,14 @@ class _ProtocolBlock extends StatelessWidget {
                   TextSpan(
                     text: protocol.proto,
                     style: (text.bodyLarge ?? const TextStyle()).copyWith(
-                      color: AppColors.primary,
+                      color: colors.textAccent,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   TextSpan(
                     text: '  ${protocol.name}',
                     style: (text.bodyLarge ?? const TextStyle()).copyWith(
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -466,7 +470,7 @@ class _ProtocolBlock extends StatelessWidget {
             Text(
               protocol.note,
               style: text.labelMedium?.copyWith(
-                color: AppColors.textTertiary,
+                color: colors.textTertiary,
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -487,6 +491,7 @@ class _LabeledLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Text.rich(
       TextSpan(
@@ -494,14 +499,14 @@ class _LabeledLine extends StatelessWidget {
           TextSpan(
             text: '$label: ',
             style: (text.bodyMedium ?? const TextStyle()).copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               fontWeight: FontWeight.w600,
             ),
           ),
           TextSpan(
             text: body,
             style: (text.bodyMedium ?? const TextStyle()).copyWith(
-              color: AppColors.textPrimary,
+              color: colors.textPrimary,
             ),
           ),
         ],
@@ -518,8 +523,9 @@ class _ThresholdHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextStyle? style = text.labelMedium?.copyWith(
-      color: AppColors.textTertiary,
+      color: colors.textTertiary,
       letterSpacing: 0.3,
     );
     return ExcludeSemantics(
@@ -570,9 +576,10 @@ class _ThresholdRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color tint = RoamingScreen.gradeColor(row.grade);
+    final AppColorScheme colors = context.colors;
+    final Color tint = RoamingScreen.gradeColor(colors, row.grade);
     final TextStyle monoCell = mono.inlineCode.copyWith(
-      color: AppColors.textPrimary,
+      color: colors.textPrimary,
       fontSize: AppTextSize.caption,
     );
     return Semantics(
@@ -629,7 +636,7 @@ class _ThresholdRow extends StatelessWidget {
               width: _kLatencyW,
               child: Text(
                 row.roamLatency,
-                style: monoCell.copyWith(color: AppColors.textTertiary),
+                style: monoCell.copyWith(color: colors.textTertiary),
               ),
             ),
             SizedBox(
@@ -637,7 +644,7 @@ class _ThresholdRow extends StatelessWidget {
               child: Text(
                 row.designRule,
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ),

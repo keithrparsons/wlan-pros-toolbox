@@ -20,6 +20,7 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/ssl_inspect_service.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -278,11 +279,12 @@ class _SslInspectScreenState extends State<SslInspectScreen> {
   }
 
   Widget _queryCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -298,7 +300,7 @@ class _SslInspectScreenState extends State<SslInspectScreen> {
               enableSuggestions: false,
               keyboardType: TextInputType.url,
               textInputAction: TextInputAction.next,
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(hintText: 'example.com'),
             ),
           ),
@@ -315,7 +317,7 @@ class _SslInspectScreenState extends State<SslInspectScreen> {
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.go,
                 onSubmitted: (_) => _run(),
-                cursorColor: AppColors.primary,
+                cursorColor: colors.textAccent,
                 decoration: const InputDecoration(hintText: '443'),
               ),
             ),
@@ -330,9 +332,9 @@ class _SslInspectScreenState extends State<SslInspectScreen> {
                     child: Semantics(
                       label: 'Inspecting certificate…',
                       liveRegion: true,
-                      child: const CircularProgressIndicator(
+                      child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.secondary,
+                        color: colors.onPrimary,
                       ),
                     ),
                   )
@@ -435,6 +437,7 @@ class _ValidityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -467,9 +470,9 @@ class _ValidityCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
+        border: Border.all(color: colors.borderStrong, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -479,13 +482,13 @@ class _ValidityCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Neutral icon color; meaning carried by icon shape + the word.
-              Icon(icon, size: 24, color: AppColors.textSecondary),
+              Icon(icon, size: 24, color: colors.textSecondary),
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(
                   verdict,
                   style: text.headlineSmall?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -495,7 +498,7 @@ class _ValidityCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             detail,
-            style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+            style: text.bodyLarge?.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.xs),
           LayoutBuilder(
@@ -564,19 +567,20 @@ class _DatePair extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+          style: text.labelMedium?.copyWith(color: colors.textTertiary),
         ),
         const SizedBox(height: 2),
         SelectableText(
           value,
           style: mono.inlineCode.copyWith(
-            color: AppColors.textPrimary,
+            color: colors.textPrimary,
             fontSize: AppTextSize.caption,
           ),
         ),
@@ -617,6 +621,7 @@ class _DnCardState extends State<_DnCard> {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -643,7 +648,7 @@ class _DnCardState extends State<_DnCard> {
             ),
             if (_expanded) ...<Widget>[
               const SizedBox(height: AppSpacing.xs),
-              const Divider(height: 1, thickness: 1, color: AppColors.border),
+              Divider(height: 1, thickness: 1, color: colors.border),
               const SizedBox(height: AppSpacing.xs),
               ...widget.fields.map(
                 (DnField f) => Padding(
@@ -656,7 +661,7 @@ class _DnCardState extends State<_DnCard> {
                         child: Text(
                           f.label,
                           style: text.labelMedium?.copyWith(
-                            color: AppColors.textTertiary,
+                            color: colors.textTertiary,
                           ),
                         ),
                       ),
@@ -665,7 +670,7 @@ class _DnCardState extends State<_DnCard> {
                         child: SelectableText(
                           f.value,
                           style: mono.inlineCode.copyWith(
-                            color: AppColors.textPrimary,
+                            color: colors.textPrimary,
                             fontSize: AppTextSize.caption,
                           ),
                         ),
@@ -700,6 +705,7 @@ class _DisclosureButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
     return Semantics(
       button: true,
       label: semanticsLabel,
@@ -713,7 +719,7 @@ class _DisclosureButton extends StatelessWidget {
         // overlay locally with an explicit lime focusColor (16% alpha — the
         // §8.3 pressed-overlay value). Keeps SC 2.4.7 without re-introducing a
         // global non-transparent focusColor.
-        focusColor: AppColors.primary.withValues(alpha: 0.16),
+        focusColor: colors.textAccent.withValues(alpha: 0.16),
         child: ConstrainedBox(
           constraints: const BoxConstraints(
             minHeight: AppSpacing.minTouchTarget,
@@ -726,7 +732,7 @@ class _DisclosureButton extends StatelessWidget {
                 Icon(
                   expanded ? Icons.expand_less : Icons.expand_more,
                   size: 20,
-                  color: AppColors.primary,
+                  color: colors.textAccent,
                 ),
                 const SizedBox(width: AppSpacing.xs),
                 Flexible(
@@ -734,7 +740,7 @@ class _DisclosureButton extends StatelessWidget {
                     child: Text(
                       label,
                       style: text.bodyLarge?.copyWith(
-                        color: AppColors.primary,
+                        color: colors.textAccent,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -784,6 +790,7 @@ class _PemCardState extends State<_PemCard> {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -798,9 +805,9 @@ class _PemCardState extends State<_PemCard> {
           Container(
             constraints: const BoxConstraints(maxHeight: 200),
             decoration: BoxDecoration(
-              color: AppColors.surface0,
+              color: colors.surface0,
               borderRadius: BorderRadius.circular(AppRadius.control),
-              border: Border.all(color: AppColors.border, width: 1),
+              border: Border.all(color: colors.border, width: 1),
             ),
             padding: const EdgeInsets.all(AppSpacing.xs),
             child: Scrollbar(
@@ -808,7 +815,7 @@ class _PemCardState extends State<_PemCard> {
                 child: SelectableText(
                   widget.pem.trim(),
                   style: mono.inlineCode.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontSize: AppTextSize.caption,
                     height: 1.4,
                   ),
@@ -847,6 +854,7 @@ class _SanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -858,7 +866,7 @@ class _SanCard extends StatelessWidget {
           ? Text(
               'None listed on this certificate.',
               style: text.bodyLarge?.copyWith(
-                color: AppColors.textTertiary,
+                color: colors.textTertiary,
                 fontStyle: FontStyle.italic,
               ),
             )
@@ -873,7 +881,7 @@ class _SanCard extends StatelessWidget {
                         // SANs are DNS-name / IP identifiers → Roboto Mono
                         // (GL-003 §8.5 identifier rule), not DM Mono.
                         style: mono.robotoMono.copyWith(
-                          color: AppColors.textPrimary,
+                          color: colors.textPrimary,
                         ),
                       ),
                     ),
@@ -914,6 +922,7 @@ class _Fingerprint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -923,7 +932,7 @@ class _Fingerprint extends StatelessWidget {
       children: [
         Text(
           label,
-          style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+          style: text.labelMedium?.copyWith(color: colors.textTertiary),
         ),
         const SizedBox(height: 2),
         SelectableText(
@@ -932,11 +941,11 @@ class _Fingerprint extends StatelessWidget {
               // Hex fingerprint (SHA-256 / SHA-1) is an identifier → Roboto
               // Mono (GL-003 §8.5), not DM Mono.
               ? mono.robotoMono.copyWith(
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                   fontSize: AppTextSize.caption,
                 )
               : (text.bodyLarge ?? const TextStyle()).copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                   fontStyle: FontStyle.italic,
                 ),
         ),
@@ -976,18 +985,19 @@ class _ConnectionCard extends StatelessWidget {
 class _ChainNoteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline, size: 20, color: AppColors.textTertiary),
+          Icon(Icons.info_outline, size: 20, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -996,7 +1006,7 @@ class _ChainNoteCard extends StatelessWidget {
                 Text(
                   'Leaf certificate only',
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -1004,7 +1014,7 @@ class _ChainNoteCard extends StatelessWidget {
                 Text(
                   SslInspectResult.chainNote,
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
@@ -1012,7 +1022,7 @@ class _ChainNoteCard extends StatelessWidget {
                   'TLS protocol version and cipher suite are not exposed by '
                   'the platform TLS API and are therefore not shown.',
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
               ],
@@ -1053,12 +1063,13 @@ class _SectionShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -1067,7 +1078,7 @@ class _SectionShell extends StatelessWidget {
           Text(
             title,
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
               fontWeight: FontWeight.w600,
             ),
@@ -1093,18 +1104,19 @@ class _MessageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppColors.textTertiary),
+          Icon(icon, size: 20, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -1113,7 +1125,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   title,
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -1121,7 +1133,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   body,
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
               ],

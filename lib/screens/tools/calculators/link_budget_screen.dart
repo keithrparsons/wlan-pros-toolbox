@@ -32,6 +32,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -241,16 +242,17 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
   /// carry the number, and the §8.13-aligned Margin guide card spells out the
   /// bands in words (§8.13 rule 2, never color-only).
   Color _marginColor() {
+    final AppColorScheme colors = context.colors;
     if (_marginDb == null || !_marginDb!.isFinite) {
-      return AppColors.textTertiary;
+      return colors.textTertiary;
     }
     switch (LinkBudgetScreen.marginHealth(_marginDb!)) {
       case MarginHealth.healthy:
-        return AppColors.statusSuccess;
+        return colors.statusSuccess;
       case MarginHealth.marginal:
-        return AppColors.statusWarning;
+        return colors.statusWarning;
       case MarginHealth.negative:
-        return AppColors.statusDanger;
+        return colors.statusDanger;
     }
   }
 
@@ -371,11 +373,12 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
   }
 
   Widget _inputCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -480,10 +483,11 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
   }
 
   Widget _sectionTitle(TextTheme text, String label) {
+    final AppColorScheme colors = context.colors;
     return Text(
       label,
       style: text.labelMedium?.copyWith(
-        color: AppColors.textSecondary,
+        color: colors.textSecondary,
         letterSpacing: 0.4,
         fontWeight: FontWeight.w500,
       ),
@@ -503,6 +507,7 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
     String? helper,
     TextTheme? text,
   }) {
+    final AppColorScheme colors = context.colors;
     final Widget input = LabeledField(
       label: label,
       hint: '($unitHint)',
@@ -520,7 +525,7 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
         autocorrect: false,
         enableSuggestions: false,
         style: monoStyle.copyWith(fontSize: AppTextSize.fieldNumeric),
-        cursorColor: AppColors.primary,
+        cursorColor: colors.textAccent,
         decoration: InputDecoration(hintText: hintText),
       ),
     );
@@ -534,7 +539,7 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
         const SizedBox(height: AppSpacing.xs),
         Text(
           helper,
-          style: text?.labelSmall?.copyWith(color: AppColors.textTertiary),
+          style: text?.labelSmall?.copyWith(color: colors.textTertiary),
         ),
       ],
     );
@@ -567,11 +572,12 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
   }
 
   Widget _resultCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -584,12 +590,12 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
             value: _format(_receivedDbm),
             unit: 'dBm',
             valueColor: _receivedDbm == null
-                ? AppColors.textTertiary
-                : AppColors.textPrimary,
+                ? colors.textTertiary
+                : colors.textPrimary,
             blank: _receivedDbm == null,
           ),
           const SizedBox(height: AppSpacing.sm),
-          Divider(height: 1, color: AppColors.border),
+          Divider(height: 1, color: colors.border),
           const SizedBox(height: AppSpacing.sm),
           _resultRow(
             text: text,
@@ -618,6 +624,7 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
     required bool blank,
     String? verdictWord,
   }) {
+    final AppColorScheme colors = context.colors;
     // One SR node per readout: "Link margin: 12.0 dB, healthy" instead of the
     // value, unit, and verdict color announcing as separate fragments (finding
     // #6). The verdict word rides in the value so it never depends on color.
@@ -636,7 +643,7 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
           Text(
             label,
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -653,7 +660,7 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
               Text(
                 unit,
                 style: text.labelLarge?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ],
@@ -664,11 +671,12 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
   }
 
   Widget _formulaCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -677,24 +685,24 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
           Text(
             'Formula',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
             'RX = Tx + Gtx − Ltx − FSPL − Lrx + Grx − Lmisc',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
             'Margin = RX − Sensitivity',
-            style: mono.inlineCode.copyWith(color: AppColors.textPrimary),
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'All terms in dB except Tx (dBm or W/mW) and Sensitivity (dBm). '
             'A positive margin means the link closes; aim for 10 dB or more.',
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -702,6 +710,7 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
   }
 
   Widget _referenceCard(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
     // Margin-health bands matching the PWA color thresholds, with plain-language
     // guidance alongside the §8.13 status tint on the live readout (§8.13 rule 2
     // — the verdict is carried by words here, never color alone).
@@ -713,9 +722,9 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -724,7 +733,7 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
           Text(
             'Margin guide',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -741,7 +750,7 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
                     child: Text(
                       row[0],
                       style: mono.inlineCode.copyWith(
-                        color: AppColors.primary,
+                        color: colors.textAccent,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -750,7 +759,7 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
                     child: Text(
                       row[1],
                       style: text.labelMedium?.copyWith(
-                        color: AppColors.textTertiary,
+                        color: colors.textTertiary,
                       ),
                     ),
                   ),

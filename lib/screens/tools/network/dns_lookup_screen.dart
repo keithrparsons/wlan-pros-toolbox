@@ -34,6 +34,7 @@ import '../../../data/tool_assets.dart';
 import '../../../services/network/dns_lookup_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -316,15 +317,16 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
   }
 
   Widget _queryCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final bool isPtr = !_digMode && _type == DnsRecordType.ptr;
     final bool showReverse = _looksLikeIp(_hostCtrl.text);
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -343,7 +345,7 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
               onSubmitted: (_) => _run(),
               // Re-evaluate the reverse-PTR affordance as the user types an IP.
               onChanged: (_) => setState(() {}),
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: InputDecoration(
                 hintText: isPtr ? '8.8.8.8' : 'example.com',
               ),
@@ -353,7 +355,7 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
           // Query mode: dig-style all-records sweep vs single record type.
           Text(
             'Query',
-            style: _fieldLabelStyle(text),
+            style: _fieldLabelStyle(text, colors),
           ),
           const SizedBox(height: AppSpacing.xs),
           Wrap(
@@ -379,7 +381,7 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
             const SizedBox(height: AppSpacing.sm),
             Text(
               'Record type',
-              style: _fieldLabelStyle(text),
+              style: _fieldLabelStyle(text, colors),
             ),
             const SizedBox(height: AppSpacing.xs),
             Wrap(
@@ -398,7 +400,7 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Resolver',
-            style: _fieldLabelStyle(text),
+            style: _fieldLabelStyle(text, colors),
           ),
           const SizedBox(height: AppSpacing.xs),
           Wrap(
@@ -435,8 +437,9 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
     );
   }
 
-  TextStyle? _fieldLabelStyle(TextTheme text) => text.labelMedium?.copyWith(
-        color: AppColors.textSecondary,
+  TextStyle? _fieldLabelStyle(TextTheme text, AppColorScheme colors) =>
+      text.labelMedium?.copyWith(
+        color: colors.textSecondary,
         fontWeight: FontWeight.w500,
       );
 
@@ -462,21 +465,22 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
     required VoidCallback onSelected,
   }) {
     final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
     return ChoiceChip(
       label: Text(label),
       selected: selected,
       showCheckmark: false,
       labelStyle: text.labelMedium?.copyWith(
-        color: selected ? AppColors.secondary : AppColors.textSecondary,
+        color: selected ? colors.onPrimary : colors.textSecondary,
         fontWeight: FontWeight.w500,
       ),
-      selectedColor: AppColors.primary,
-      backgroundColor: AppColors.surface2,
+      selectedColor: colors.primary,
+      backgroundColor: colors.surface2,
       // WCAG 2.5.8 / §8.3 — guarantee ≥48dp hit region.
       materialTapTargetSize: MaterialTapTargetSize.padded,
       // §8.3 — shared resolver: idle/selected/disabled borders plus the 2px
       // lime keyboard-focus ring.
-      side: AppTheme.chipSide(),
+      side: AppTheme.chipSide(Theme.of(context).brightness),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.control),
       ),
@@ -547,7 +551,8 @@ class _ButtonSpinner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox(
+    final AppColorScheme colors = context.colors;
+    return SizedBox(
       width: 20,
       height: 20,
       // The button is disabled while loading; the screen sends a one-shot
@@ -555,7 +560,7 @@ class _ButtonSpinner extends StatelessWidget {
       // avoid double-speaking on the spinner appear/disappear).
       child: CircularProgressIndicator(
         strokeWidth: 2,
-        color: AppColors.secondary,
+        color: colors.onPrimary,
       ),
     );
   }
@@ -568,13 +573,14 @@ class _RecordsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -585,7 +591,7 @@ class _RecordsCard extends StatelessWidget {
             'record${result.records.length == 1 ? '' : 's'} '
             '· ${result.resolver.label}',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -615,6 +621,7 @@ class _DigCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final List<DnsDigSection> sections = result.nonEmptySections;
     final List<DnsDigSection> errored = result.erroredSections;
@@ -623,9 +630,9 @@ class _DigCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -636,7 +643,7 @@ class _DigCard extends StatelessWidget {
             '${result.recordCount == 1 ? '' : 's'} · '
             '$types type${types == 1 ? '' : 's'} · ${result.resolver.label}',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -648,7 +655,7 @@ class _DigCard extends StatelessWidget {
               '$failed of ${result.sections.length} types '
               'failed to resolve',
               style: text.labelMedium?.copyWith(
-                color: AppColors.statusDanger,
+                color: colors.statusDanger,
                 letterSpacing: 0.4,
               ),
             ),
@@ -681,6 +688,7 @@ class _DigSectionGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final int n = section.records.length;
@@ -696,7 +704,7 @@ class _DigSectionGroup extends StatelessWidget {
             child: Text(
               '${section.type.label}  ($n)',
               style: mono.inlineCode.copyWith(
-                color: AppColors.primary,
+                color: colors.textAccent,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -719,6 +727,7 @@ class _DigFailedRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -733,7 +742,7 @@ class _DigFailedRow extends StatelessWidget {
             child: Text(
               section.type.label,
               style: mono.inlineCode.copyWith(
-                color: AppColors.statusDanger,
+                color: colors.statusDanger,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -744,7 +753,7 @@ class _DigFailedRow extends StatelessWidget {
               // then add the resolver's message when it carries detail.
               _failureText(section),
               style: text.labelMedium?.copyWith(
-                color: AppColors.statusDanger,
+                color: colors.statusDanger,
               ),
             ),
           ),
@@ -770,6 +779,7 @@ class _RecordRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -784,7 +794,7 @@ class _RecordRow extends StatelessWidget {
             child: Text(
               rec.type,
               style: mono.inlineCode.copyWith(
-                color: AppColors.primary,
+                color: colors.textAccent,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -796,7 +806,7 @@ class _RecordRow extends StatelessWidget {
               // hostname for CNAME/MX/NS) → Roboto Mono (GL-003 §8.5). The type
               // token (left) stays DM Mono.
               style: mono.robotoMono.copyWith(
-                color: AppColors.textPrimary,
+                color: colors.textPrimary,
               ),
             ),
           ),
@@ -806,7 +816,7 @@ class _RecordRow extends StatelessWidget {
               child: Text(
                 '${rec.ttl}s',
                 style: text.labelSmall?.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ),
@@ -848,18 +858,19 @@ class _MessageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppColors.textTertiary),
+          Icon(icon, size: 20, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -868,7 +879,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   title,
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -876,7 +887,7 @@ class _MessageCard extends StatelessWidget {
                 Text(
                   body,
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
                 if (failedTypes.isNotEmpty) ...<Widget>[

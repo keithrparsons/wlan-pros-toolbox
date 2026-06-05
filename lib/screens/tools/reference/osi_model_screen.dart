@@ -26,6 +26,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../theme/app_typography.dart';
@@ -189,6 +190,7 @@ class OsiModelScreen extends StatelessWidget {
   }
 
   Widget _body(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -217,9 +219,9 @@ class OsiModelScreen extends StatelessWidget {
                   ConceptGraphicBand(toolId: 'osi-model', isDesktop: isDesktop),
                   if (ToolAssets.hasGraphic('osi-model'))
                     const SizedBox(height: AppSpacing.md),
-                  _introCard(text),
+                  _introCard(colors, text),
                   const SizedBox(height: AppSpacing.md),
-                  _tableCard(text, mono),
+                  _tableCard(colors, text, mono),
                   ToolHelpFooter(toolId: 'osi-model'),
                 ],
               ),
@@ -230,27 +232,27 @@ class OsiModelScreen extends StatelessWidget {
     );
   }
 
-  Widget _introCard(TextTheme text) {
+  Widget _introCard(AppColorScheme colors, TextTheme text) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Text(
         intro,
-        style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+        style: text.labelMedium?.copyWith(color: colors.textTertiary),
       ),
     );
   }
 
-  Widget _tableCard(TextTheme text, AppMonoText mono) {
+  Widget _tableCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -259,7 +261,7 @@ class OsiModelScreen extends StatelessWidget {
           Text(
             'The 7 layers',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -279,7 +281,7 @@ class OsiModelScreen extends StatelessWidget {
                       _HeaderCell('Hardware', width: 184),
                     ],
                   ),
-                  const Divider(color: AppColors.border, height: AppSpacing.sm),
+                  Divider(color: colors.border, height: AppSpacing.sm),
                   ...layers.map(
                     (OsiLayer l) => _LayerRow(layer: l, mono: mono),
                   ),
@@ -290,7 +292,7 @@ class OsiModelScreen extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             footnote,
-            style: text.labelMedium?.copyWith(color: AppColors.textTertiary),
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -308,6 +310,7 @@ class _LayerRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Semantics(
       container: true,
@@ -326,7 +329,7 @@ class _LayerRow extends StatelessWidget {
               child: Text(
                 '${layer.num}',
                 style: mono.inlineCode.copyWith(
-                  color: AppColors.primary,
+                  color: colors.textAccent,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -336,7 +339,7 @@ class _LayerRow extends StatelessWidget {
               child: Text(
                 layer.name,
                 style: text.bodyMedium?.copyWith(
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -346,7 +349,7 @@ class _LayerRow extends StatelessWidget {
               child: Text(
                 layer.keyword,
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ),
@@ -354,7 +357,7 @@ class _LayerRow extends StatelessWidget {
               width: 88,
               child: Text(
                 layer.pdu,
-                style: mono.inlineCode.copyWith(color: AppColors.textSecondary),
+                style: mono.inlineCode.copyWith(color: colors.textSecondary),
               ),
             ),
             SizedBox(
@@ -362,7 +365,7 @@ class _LayerRow extends StatelessWidget {
               child: Text(
                 layer.protocols,
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ),
@@ -371,7 +374,7 @@ class _LayerRow extends StatelessWidget {
               child: Text(
                 layer.hardware,
                 style: text.labelMedium?.copyWith(
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ),
             ),
@@ -391,13 +394,14 @@ class _HeaderCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return SizedBox(
       width: width,
       child: Text(
         label,
         style: text.labelSmall?.copyWith(
-          color: AppColors.textTertiary,
+          color: colors.textTertiary,
           letterSpacing: 0.4,
         ),
       ),

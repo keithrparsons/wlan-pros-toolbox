@@ -31,8 +31,10 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../data/app_version.dart';
 import '../router/app_router.dart';
+import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 import '../widgets/app_copy_action.dart';
+import '../widgets/appearance_control.dart';
 import '../widgets/centered_content.dart';
 
 /// The WLAN Pros contact form — the single real destination for both consulting
@@ -86,9 +88,14 @@ class AboutScreen extends StatelessWidget {
                   edge,
                   edge + AppSpacing.sm,
                 ),
-                children: const <Widget>[
+                children: <Widget>[
+                  // 0. Appearance — the §8.20.5 theme toggle (System / Light /
+                  // Dark). Placed first as a Settings-style control on the
+                  // app-level About surface, the standard reachable home for it.
+                  const _AppearanceSection(),
+
                   // 1. Why this toolbox
-                  _Section(
+                  const _Section(
                     title: 'Why this toolbox',
                     paragraphs: <String>[
                       'Every number in this app is a real measurement. Nothing '
@@ -113,7 +120,7 @@ class AboutScreen extends StatelessWidget {
                   ),
 
                   // 2. Why Gratis
-                  _Section(
+                  const _Section(
                     title: 'Why Gratis',
                     paragraphs: <String>[
                       'This toolbox is free. No trial, no upgrade nag, no '
@@ -131,7 +138,7 @@ class AboutScreen extends StatelessWidget {
                   ),
 
                   // 3. Who is WLAN Pros
-                  _Section(
+                  const _Section(
                     title: 'Who is WLAN Pros',
                     paragraphs: <String>[
                       'WLAN Pros is the company behind this toolbox. The full '
@@ -155,7 +162,7 @@ class AboutScreen extends StatelessWidget {
                   ),
 
                   // 4. The #WLPC Conference
-                  _Section(
+                  const _Section(
                     title: 'The #WLPC Conference',
                     paragraphs: <String>[
                       'If you work in Wi-Fi, go to WLPC at least once. It '
@@ -182,7 +189,7 @@ class AboutScreen extends StatelessWidget {
                   ),
 
                   // 5. Get in touch
-                  _Section(
+                  const _Section(
                     title: 'Get in touch',
                     paragraphs: <String>[
                       'Need help with a Wi-Fi design, a troubleshooting '
@@ -202,10 +209,10 @@ class AboutScreen extends StatelessWidget {
                   // 6. Help and Documentation — verbatim honesty/methodology
                   // copy, plus a "Browse tool help" action into the per-tool
                   // help browse screen and the feedback link.
-                  _HelpDocsSection(),
+                  const _HelpDocsSection(),
 
                   // 7. Privacy
-                  _Section(
+                  const _Section(
                     title: 'Privacy',
                     paragraphs: <String>[
                       'We don\'t collect your data.',
@@ -218,10 +225,10 @@ class AboutScreen extends StatelessWidget {
 
                   // 8. Version and Feedback — version row is interactive
                   // (copyable) and the feedback link reuses the contact form.
-                  _VersionSection(),
+                  const _VersionSection(),
 
                   // 9. Credits
-                  _CreditsSection(),
+                  const _CreditsSection(),
                 ],
               ),
             );
@@ -288,6 +295,53 @@ String _aboutPlainText() {
   return b.toString();
 }
 
+/// Appearance section — wraps the §8.20.5 [AppearanceControl] in the same
+/// titled surface1 card register as the other About sections. Reads
+/// `context.colors` so the card itself switches with the theme it controls.
+class _AppearanceSection extends StatelessWidget {
+  const _AppearanceSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: colors.surface1,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(
+            color: colors.border,
+            width: colors.isLight ? 1.5 : 1, // §8.20.3-B card border
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Semantics(
+              header: true,
+              child: Text(
+                'Appearance',
+                style: text.headlineSmall?.copyWith(
+                  color: colors.textPrimary,
+                  // §8.20.3-A section heading bumps to 700 in light.
+                  fontWeight:
+                      colors.isLight ? FontWeight.w700 : FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            const AppearanceControl(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// A titled About section rendered as a surface1 card, with optional trailing
 /// external link. Pure presentation; all copy comes from the parent.
 class _Section extends StatelessWidget {
@@ -303,6 +357,7 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
 
     return Padding(
@@ -310,11 +365,11 @@ class _Section extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.surface1,
+          color: colors.surface1,
           borderRadius: BorderRadius.circular(AppRadius.card),
           // Decorative hairline — this card is not an interactive component, so
           // §8.1 decorative `border` is correct (not borderStrong).
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: colors.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,7 +387,7 @@ class _Section extends StatelessWidget {
               Text(
                 paragraphs[i],
                 style:
-                    text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+                    text.bodyLarge?.copyWith(color: colors.textSecondary),
               ),
             ],
             if (link != null) ...<Widget>[
@@ -395,6 +450,7 @@ class _ExternalLinkButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -402,7 +458,7 @@ class _ExternalLinkButton extends StatelessWidget {
         if (leadIn != null) ...<Widget>[
           Text(
             leadIn!,
-            style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+            style: text.bodyLarge?.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.xs),
         ],
@@ -447,6 +503,7 @@ class _HelpDocsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
 
     return Padding(
@@ -454,9 +511,9 @@ class _HelpDocsSection extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.surface1,
+          color: colors.surface1,
           borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: colors.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -470,7 +527,7 @@ class _HelpDocsSection extends StatelessWidget {
               if (i > 0) const SizedBox(height: AppSpacing.sm),
               Text(
                 _paragraphs[i],
-                style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+                style: text.bodyLarge?.copyWith(color: colors.textSecondary),
               ),
             ],
             const SizedBox(height: AppSpacing.sm),
@@ -506,6 +563,7 @@ class _VersionSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
 
     return Padding(
@@ -513,9 +571,9 @@ class _VersionSection extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.surface1,
+          color: colors.surface1,
           borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: colors.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -534,7 +592,7 @@ class _VersionSection extends StatelessWidget {
                 'Version ${AppVersion.display}',
                 style: text.bodyLarge?.copyWith(
                   fontFamily: 'DM Mono',
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                 ),
               ),
             ),
@@ -543,7 +601,7 @@ class _VersionSection extends StatelessWidget {
               'Running into something odd, or have an idea to make this '
               'better? Tell us. The toolbox gets better because the people '
               'using it in the field say what they need.',
-              style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+              style: text.bodyLarge?.copyWith(color: colors.textSecondary),
             ),
             const SizedBox(height: AppSpacing.sm),
             _ExternalLinkButton(
@@ -565,6 +623,7 @@ class _CreditsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
 
     return Padding(
@@ -572,9 +631,9 @@ class _CreditsSection extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.surface1,
+          color: colors.surface1,
           borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: colors.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -586,13 +645,13 @@ class _CreditsSection extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             Text(
               'Built by the team at WLAN Pros.',
-              style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+              style: text.bodyLarge?.copyWith(color: colors.textSecondary),
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
               'This app uses open-source software. Full license attributions '
               'are listed below.',
-              style: text.bodyLarge?.copyWith(color: AppColors.textSecondary),
+              style: text.bodyLarge?.copyWith(color: colors.textSecondary),
             ),
             const SizedBox(height: AppSpacing.sm),
             Align(

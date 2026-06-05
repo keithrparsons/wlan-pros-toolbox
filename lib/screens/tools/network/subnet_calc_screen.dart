@@ -23,6 +23,7 @@ import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/subnet_calc_service.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
@@ -239,12 +240,13 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
   }
 
   Widget _formCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -261,7 +263,7 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
               inputFormatters: <TextInputFormatter>[
                 FilteringTextInputFormatter.allow(RegExp(r'[0-9./]')),
               ],
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(
                 hintText: '10.20.0.0 or 10.20.0.0/22',
               ),
@@ -280,7 +282,7 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
               inputFormatters: <TextInputFormatter>[
                 FilteringTextInputFormatter.allow(RegExp(r'[0-9./]')),
               ],
-              cursorColor: AppColors.primary,
+              cursorColor: colors.textAccent,
               decoration: const InputDecoration(
                 hintText: '22 or 255.255.252.0',
               ),
@@ -290,7 +292,7 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
           Text(
             'Enter a CIDR prefix (e.g. 22) or a dotted mask (255.255.252.0). '
             'A /prefix typed after the address wins.',
-            style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
         ],
       ),
@@ -298,6 +300,7 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
   }
 
   Widget _resultsCard(BuildContext context, SubnetResult r) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     // RFC 3021 / single-host annotations so the host counts aren't surprising.
     final String? hostNote = switch (r.prefix) {
@@ -308,9 +311,9 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.borderStrong, width: 1),
+        border: Border.all(color: colors.borderStrong, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
@@ -319,7 +322,7 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
           Text(
             'Subnet',
             style: text.labelMedium?.copyWith(
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               letterSpacing: 0.4,
             ),
           ),
@@ -355,7 +358,7 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
             const SizedBox(height: AppSpacing.xs),
             Text(
               hostNote,
-              style: text.labelSmall?.copyWith(color: AppColors.textTertiary),
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
             ),
           ],
         ],
@@ -364,18 +367,19 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
   }
 
   Widget _errorCard(BuildContext context, String message) {
+    final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: colors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.edit_outlined, size: 20, color: AppColors.textTertiary),
+          Icon(Icons.edit_outlined, size: 20, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -384,7 +388,7 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
                 Text(
                   'Check your input',
                   style: text.bodyLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -392,7 +396,7 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
                 Text(
                   message,
                   style: text.labelMedium?.copyWith(
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
                 ),
               ],
