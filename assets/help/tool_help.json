@@ -2385,6 +2385,28 @@
       ],
       "source": "lib/screens/tools/reference/optical_transceivers_screen.dart"
     },
+    "wifi-exposure-perspective": {
+      "name": "How Strong Is Wi-Fi, Really?",
+      "category": "Quick Reference",
+      "purpose": "A vendor-neutral comparison of how much energy Wi-Fi puts into your body versus the everyday sun, using verified, stated numbers. No inputs and no runtime math — it is a read-along reference.",
+      "whyHere": "Wi-Fi exposure questions come up constantly, and most answers are either hand-waving or fear. This puts the energy in perspective against a thing everyone already lives with: sunlight. Using stated assumptions (ten access points at 30 dBm / 1 watt EIRP, four meters away, free-space spread), the ring of APs delivers about 0.05 W/m². The midday sun delivers about 1,000 W/m², full spectrum, which makes it about 20,000 times stronger per square meter.",
+      "howToUse": [
+        "Read the short version first: one hour of midday sun puts about as much energy into your body as roughly 2.3 years sitting inside a ring of ten Wi-Fi access points 4 meters (13 feet) away.",
+        "The energy-parity table shows the same idea as time — 10 seconds of sun ≈ 2.3 days in the ring, 1 minute ≈ two weeks, 1 hour ≈ 2.3 years.",
+        "The assumptions card states every input behind the numbers, so nothing is hidden: 10 APs at 1 W EIRP, 4 m free-space spread, the sun at 1,000 W/m² full spectrum.",
+        "The safety-limit card states where this sits against the FCC (47 CFR 1.1310) and ICNIRP 2020 public limit of 10 W/m² — the ring is about 200 times below it."
+      ],
+      "inputs": [],
+      "algorithm": "S = EIRP / (4πr²), free space at 4 m, stated as approximate.",
+      "example": "At 30 dBm (1 W) EIRP and 4 m, each AP is 0.00497 W/m²; ten of them ≈ 0.05 W/m². The sun at 1,000 W/m² is ≈ 20,000× stronger, so 1 hour of sun ≈ 2.3 years in the ring.",
+      "fieldNotes": [
+        "Honest note on mechanism: Wi-Fi radio energy is non-ionizing. It can only gently warm tissue. It cannot cause the photochemical or DNA damage that sunburn does, at any Wi-Fi power level. This is a comparison of total energy and warmth, never of sunburn — the UV in sunlight burns; Wi-Fi has no UV and no comparable mechanism.",
+        "The basis is 30 dBm (1 W) EIRP per AP (the US 2.4 GHz maximum) at 4 meters (13 feet). 4 m is realistic for how far a person sits from the access points around them; free-space density falls with r², so the figures are conservative for the point.",
+        "Where it sits against the limit: the FCC and ICNIRP cap public RF exposure at 10 W/m². The 10-AP ring at about 0.05 W/m² is roughly 200× below that limit, and measured real-world Wi-Fi runs far lower still.",
+        "Every figure is stated as approximate and traces to a verified brief: FCC 47 CFR 1.1310 and OET-65; ICNIRP 2020 RF guidelines; ASTM G173 / NREL reference solar spectrum; WHO and IARC on non-ionizing RF (Group 2B) versus solar UV (Group 1); peer-reviewed Wi-Fi exposure surveys (PMC5927334, PMC8172712)."
+      ],
+      "source": "lib/screens/tools/reference/wifi_exposure_perspective_screen.dart"
+    },
     "dual-orb-wlanpi": {
       "name": "Dual Orbs on WLAN Pi",
       "category": "Quick Reference",

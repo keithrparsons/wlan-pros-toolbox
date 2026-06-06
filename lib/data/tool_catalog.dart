@@ -707,6 +707,20 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Wi-Fi & RF',
       ),
+      // How Strong Is Wi-Fi, Really? — v1.1 read-along reference. Puts Wi-Fi RF
+      // exposure in perspective against everyday sunlight (one hour of sun ≈ 2.3
+      // years inside a ring of ten APs at 4 m), with the FCC/ICNIRP safety-limit
+      // context and an honest non-ionizing-mechanism note. No inputs, no runtime
+      // math — every figure is a verified, stated number (Pax brief). Bespoke
+      // concept graphic ships; bespoke <id>.svg icon is a follow-up.
+      ToolEntry(
+        id: 'wifi-exposure-perspective',
+        title: 'How Strong Is Wi-Fi, Really?',
+        description: 'Wi-Fi vs sunlight: RF exposure in perspective',
+        routeName: '/tools/wifi-exposure-perspective',
+        isLive: true,
+        subgroup: 'Wi-Fi & RF',
+      ),
       ToolEntry(
         id: 'mcs-index',
         title: 'MCS Index',
