@@ -55,8 +55,9 @@ class StandardEntry {
   /// IEEE designation, e.g. `802.11ax`.
   final String std;
 
-  /// Marketing generation, e.g. `Wi-Fi 6`. The dash `—` for the original
-  /// 802.11 (no marketing name).
+  /// Marketing generation, e.g. `Wi-Fi 6`. The dash `—` for pre-Wi-Fi-4
+  /// amendments (802.11, 802.11b, 802.11a, 802.11g), which have no official
+  /// Wi-Fi Alliance generation name.
   final String generation;
 
   /// Ratification year.
@@ -109,7 +110,7 @@ class StandardsScreen extends StatefulWidget {
     ),
     StandardEntry(
       std: '802.11b',
-      generation: 'Wi-Fi 1',
+      generation: '—',
       year: 1999,
       bands: '2.4',
       maxRate: '11 Mbps',
@@ -119,7 +120,7 @@ class StandardsScreen extends StatefulWidget {
     ),
     StandardEntry(
       std: '802.11a',
-      generation: 'Wi-Fi 2',
+      generation: '—',
       year: 1999,
       bands: '5',
       maxRate: '54 Mbps',
@@ -129,7 +130,7 @@ class StandardsScreen extends StatefulWidget {
     ),
     StandardEntry(
       std: '802.11g',
-      generation: 'Wi-Fi 3',
+      generation: '—',
       year: 2003,
       bands: '2.4',
       maxRate: '54 Mbps',
@@ -199,10 +200,10 @@ enum _BandFilter { all, band24, band5, band6 }
 class _StandardsScreenState extends State<StandardsScreen> {
   _BandFilter _filter = _BandFilter.all;
 
-  /// Footnote — the early generation labels predate official WFA branding.
+  /// Footnote — the early amendments predate official WFA generation branding.
   static const String namingFootnote =
-      'Wi-Fi 1/2/3 are informal/retroactive labels; official Wi-Fi Alliance '
-      'naming begins at Wi-Fi 4.';
+      'Official Wi-Fi Alliance generation naming begins at Wi-Fi 4 (802.11n); '
+      'earlier amendments are shown by their 802.11 names only.';
 
   /// Footnote — the Wi-Fi 7 cert year and the IEEE publication year differ.
   static const String wifi7Footnote =
