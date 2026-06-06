@@ -1,12 +1,13 @@
 // Wi-Fi vs Internet — redirect + absorbed-technical-section tests (Wave 4).
 //
 // The standalone `wifi-vs-internet` screen was merged into Test My Connection on
-// 2026-06-04: its full pro depth moved into the merged screen's expandable
-// "Wi-Fi vs Internet" technical section, and the `/tools/wifi-vs-internet` route
-// now redirects to the merged screen in the EXPANDED state. These tests prove
-// nothing the pro tool showed was lost — the verdict line, both data sub-cards,
-// and the verbatim methodology footnote all survive the merge and render when
-// the merged screen is opened expanded and a check is run.
+// 2026-06-04: its full pro depth moved into the merged screen's "Wi-Fi vs
+// Internet" technical section, and the `/tools/wifi-vs-internet` route redirects
+// to the merged screen. In the v1.1 "show more" pass (2026-06-05) the "See the
+// details" disclosure was removed and that technical section is now ALWAYS
+// rendered. These tests prove nothing the pro tool showed was lost — the verdict
+// line, both data sub-cards, and the verbatim methodology footnote all survive
+// the merge and render once a check is run.
 //
 // Live sampling is disabled here (enableLiveSampling: false) so no poll timer
 // ticks; the live sparkline card is covered in test_my_connection_screen_test.
@@ -151,8 +152,8 @@ void main() {
   });
 
   testWidgets(
-    'opened expanded, a full macOS run reveals the absorbed "Wi-Fi vs Internet" '
-    'section: verdict line, both sub-cards, and the verbatim footnote',
+    'a full macOS run shows the absorbed "Wi-Fi vs Internet" section ALWAYS: '
+    'verdict line, both sub-cards, and the verbatim footnote',
     (tester) async {
       await tester.pumpWidget(
         host(
@@ -189,7 +190,8 @@ void main() {
   );
 
   testWidgets(
-    'collapsed by default, the technical section is hidden until expanded',
+    'the technical section is ALWAYS rendered — no "See the details" disclosure '
+    'and no tap required (v1.1 show-more pass)',
     (tester) async {
       await tester.pumpWidget(
         host(
@@ -205,19 +207,8 @@ void main() {
       );
       await runCheck(tester);
 
-      // The v1.1 "See the details" disclosure row is present; the absorbed
-      // depth is NOT in the tree until tapped (collapsed on first paint, §2.D).
-      expect(find.text('See the details'), findsOneWidget);
-      expect(find.text('Your Wi-Fi link'), findsNothing);
-      expect(find.text(kWifiVsInternetFootnote), findsNothing);
-
-      // Expand → the pro depth appears (scroll the row into view first; the
-      // default test surface is shorter than the scroll body).
-      final Finder expander = find.text('See the details');
-      await tester.ensureVisible(expander);
-      await tester.pumpAndSettle();
-      await tester.tap(expander);
-      await tester.pumpAndSettle();
+      // The disclosure row is gone; the absorbed depth is in the tree at once.
+      expect(find.text('See the details'), findsNothing);
       expect(find.text('Your Wi-Fi link'), findsOneWidget);
       expect(find.text('Your internet'), findsOneWidget);
       expect(find.text(kWifiVsInternetFootnote), findsOneWidget);
