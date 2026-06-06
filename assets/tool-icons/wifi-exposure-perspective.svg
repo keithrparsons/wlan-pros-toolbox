@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- How Strong Is Wi-Fi, Really? — Wi-Fi RF exposure in perspective against
+         everyday sunlight. A SUN (the dominant everyday source) upper-left, set
+         beside a WI-FI signal fan lower-right, so the icon depicts the real
+         comparison the tool makes: sun vs Wi-Fi. GL-005 honest — the big
+         everyday source (sun) next to the small one (Wi-Fi). Redrawn for 20px:
+         the sun has six evenly-spaced rays around a filled core, and the Wi-Fi
+         fan is enlarged with a base dot so it survives the legibility floor. -->
+    <!-- sun: filled core -->
+    <circle cx="7.5" cy="7.5" r="3" fill="currentColor" stroke="none"/>
+    <!-- six evenly-spaced sun rays -->
+    <path d="M7.5 1.5 V3"/>
+    <path d="M7.5 12 V13.5"/>
+    <path d="M1.5 7.5 H3"/>
+    <path d="M12 7.5 H13.5"/>
+    <path d="M3.25 3.25 L4.3 4.3"/>
+    <path d="M10.7 10.7 L11.75 11.75"/>
+    <!-- Wi-Fi signal, lower-right: two-arc fan over a base dot (the small
+         source being put in perspective against the sun) -->
+    <path d="M13.5 14.5 A6 6 0 0 1 22.5 14.5"/>
+    <path d="M15.7 16.9 A2.9 2.9 0 0 1 20.3 16.9"/>
+    <circle cx="18" cy="19.6" r="1.2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>
