@@ -8,16 +8,23 @@
 // - Route integrity: AppRouter registers the /about route to AboutScreen.
 // - Responsive: renders at a 375x900 iPhone viewport without RenderFlex
 //   overflow.
-// - Version SSOT: AppVersion.display matches the pubspec format `name (build)`.
+// - Runtime version: the build badge + item-8 line render the RUNTIME version +
+//   build number (package_info_plus, mocked) in the "Version X (build Y)" form.
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'package:wlan_pros_toolbox/data/app_version.dart';
 import 'package:wlan_pros_toolbox/router/app_router.dart';
 import 'package:wlan_pros_toolbox/screens/about_screen.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+
+/// A deterministic build identity used across the runtime-version tests. The
+/// buildNumber mimics the CFBundleVersion timestamp ship_ios.sh injects.
+const String _kMockVersion = '1.1.0';
+const String _kMockBuild = '202606052247';
 
 Future<void> _pumpAbout(WidgetTester tester) async {
   await tester.pumpWidget(
@@ -41,6 +48,18 @@ Future<void> _pumpAboutTall(WidgetTester tester) async {
 }
 
 void main() {
+  setUp(() {
+    // Bind a deterministic runtime build identity so PackageInfo.fromPlatform
+    // resolves immediately to known values inside widget tests.
+    PackageInfo.setMockInitialValues(
+      appName: 'WLAN Pros Toolbox',
+      packageName: 'com.wlanpros.toolbox',
+      version: _kMockVersion,
+      buildNumber: _kMockBuild,
+      buildSignature: '',
+    );
+  });
+
   testWidgets('About screen mounts with the About app-bar title', (
     tester,
   ) async {
@@ -78,9 +97,14 @@ void main() {
   ) async {
     await _pumpAboutTall(tester);
 
-    // Item 8 — the REAL shipped version, not a placeholder.
-    expect(find.text('Version ${AppVersion.display}'), findsOneWidget);
+    // The REAL runtime version + build (package_info_plus), in the labeled
+    // "Version X (build Y)" form, rendered in BOTH the top build badge and the
+    // item-8 Version section — so it appears exactly twice.
+    const String expected = 'Version $_kMockVersion (build $_kMockBuild)';
+    expect(find.text(expected), findsNWidgets(2));
     expect(find.textContaining('[BUILD'), findsNothing);
+    // No placeholder left behind once the Future resolves.
+    expect(find.text('Version…'), findsNothing);
 
     // Item 7 — privacy verdict.
     expect(find.text('We don\'t collect your data.'), findsOneWidget);
@@ -158,10 +182,39 @@ void main() {
     expect(AppRouter.about, '/about');
   });
 
-  test('AppVersion.display matches the "name (build)" format', () {
-    expect(AppVersion.display, '${AppVersion.name} (${AppVersion.build})');
-    // Sanity: the build value is non-empty and the name looks semver-ish.
-    expect(AppVersion.name, isNotEmpty);
-    expect(AppVersion.build, isNotEmpty);
+  test('AppVersion.load reads the runtime version + build number', () async {
+    final AppVersionInfo info = await AppVersion.load();
+    expect(info.version, _kMockVersion);
+    expect(info.buildNumber, _kMockBuild);
+    expect(info.display, 'Version $_kMockVersion (build $_kMockBuild)');
+  });
+
+  test('AppVersionInfo.display omits the build clause when blank', () {
+    const AppVersionInfo info = AppVersionInfo(version: '2.0.0', buildNumber: '');
+    expect(info.display, 'Version 2.0.0');
+  });
+
+  testWidgets('Build badge resolves the runtime value without crashing', (
+    tester,
+  ) async {
+    // initState kicks off the PackageInfo Future; the badge starts at its
+    // placeholder ('Version…', _version == null) and swaps to the real value
+    // once it resolves. The mocked PackageInfo resolves on a microtask, so by
+    // pumpAndSettle the placeholder is gone and the real value is shown — and
+    // the screen never throws while the value is in flight.
+    await tester.pumpWidget(
+      MaterialApp(theme: AppTheme.dark(), home: const AboutScreen()),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Version…'), findsNothing);
+    expect(find.text('Version $_kMockVersion (build $_kMockBuild)'),
+        findsWidgets);
+  });
+
+  testWidgets('Build badge carries a copy affordance', (tester) async {
+    await _pumpAboutTall(tester);
+    // §8.16 AppCopyAction renders an enabled copy control once the runtime
+    // value resolves; its tooltip mirrors the idle label.
+    expect(find.byTooltip('Copy version and build'), findsOneWidget);
   });
 }

@@ -64,8 +64,27 @@ const String _kContactUrl = 'https://wlanprofessionals.com/contact';
 /// Feedback destination — the same live contact form as [_kContactUrl].
 const String _kFeedbackUrl = _kContactUrl;
 
-class AboutScreen extends StatelessWidget {
+class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
+
+  @override
+  State<AboutScreen> createState() => _AboutScreenState();
+}
+
+class _AboutScreenState extends State<AboutScreen> {
+  // Runtime build identity, read once via package_info_plus. Null until the
+  // PackageInfo Future resolves — the UI shows a brief placeholder in that
+  // window (no crash, no flash of a wrong/hardcoded value).
+  AppVersionInfo? _version;
+
+  @override
+  void initState() {
+    super.initState();
+    AppVersion.load().then((AppVersionInfo info) {
+      if (!mounted) return;
+      setState(() => _version = info);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +96,7 @@ class AboutScreen extends StatelessWidget {
           // §8.16 — copy the full About text. textBuilder is non-null always
           // (the copy is static), so the action renders enabled.
           AppCopyAction(
-            textBuilder: () => _aboutPlainText(),
+            textBuilder: () => _aboutPlainText(_version),
             idleLabel: 'Copy About text',
           ),
         ],
@@ -104,6 +123,15 @@ class AboutScreen extends StatelessWidget {
                   // wordmark cannot sit bare on the dark canvas, so the plate
                   // (the §8.19 white-tile-on-dark pattern) carries it.
                   const _LogoHeader(),
+
+                  // Build badge — version + build number read at RUNTIME,
+                  // placed directly under the brand lockup so a beta tester can
+                  // find and report the EXACT build at a glance. Copyable via
+                  // the §8.16 AppCopyAction pattern. The fuller "Version and
+                  // Feedback" section (item 8) still lives lower with the
+                  // feedback link; both read the same runtime value so they
+                  // never disagree.
+                  _BuildBadge(info: _version),
 
                   // 0. Appearance — the §8.20.5 theme toggle (System / Light /
                   // Dark). Placed below the brand lockup as a Settings-style
@@ -257,7 +285,8 @@ class AboutScreen extends StatelessWidget {
 
                   // 8. Version and Feedback — version row is interactive
                   // (copyable) and the feedback link reuses the contact form.
-                  const _VersionSection(),
+                  // Reads the same runtime build identity as the top badge.
+                  _VersionSection(info: _version),
 
                   // 9. Credits
                   const _CreditsSection(),
@@ -273,7 +302,10 @@ class AboutScreen extends StatelessWidget {
 
 /// A copy-friendly plain-text rendering of the whole About screen, for the
 /// §8.16 AppCopyAction in the AppBar. Mirrors the on-screen sections in order.
-String _aboutPlainText() {
+/// Takes the runtime [AppVersionInfo] (null before it resolves) so the copied
+/// text carries the real shipped version + build number.
+String _aboutPlainText(AppVersionInfo? info) {
+  final AppVersionInfo v = info ?? AppVersion.fallback;
   final StringBuffer b = StringBuffer()
     ..writeln('WLAN Pros Toolbox — About')
     ..writeln()
@@ -322,7 +354,7 @@ String _aboutPlainText() {
     ..writeln('Data not collected.')
     ..writeln()
     ..writeln('Version and Feedback')
-    ..writeln('Version ${AppVersion.display}')
+    ..writeln(v.display)
     ..writeln()
     ..writeln('Credits')
     ..writeln('Built by the team at WLAN Pros.')
@@ -665,16 +697,98 @@ class _HelpDocsSection extends StatelessWidget {
   }
 }
 
-/// Item 8 — Version and Feedback. The version line is selectable + copyable so
-/// a support call can read it back exactly; the feedback link reuses the
-/// contact form (same destination resolved in item 6).
-class _VersionSection extends StatelessWidget {
-  const _VersionSection();
+/// Build badge — the easy-to-find, clearly-labeled version + build line at the
+/// top of About, directly under the brand lockup. Reads the runtime
+/// [AppVersionInfo] (null until package_info_plus resolves) so a beta tester can
+/// find and report the EXACT build at a glance. The line is `SelectableText`
+/// (copy on desktop) and carries a §8.16 [AppCopyAction] glyph (copy on touch)
+/// so a tester can paste the exact build straight into feedback.
+class _BuildBadge extends StatelessWidget {
+  const _BuildBadge({required this.info});
+
+  /// Runtime build identity; null until resolved → brief placeholder.
+  final AppVersionInfo? info;
 
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
+    final bool resolved = info != null;
+    // Pre-resolve placeholder keeps the row stable and never shows a wrong or
+    // hardcoded value while the Future is in flight.
+    final String display = resolved ? info!.display : 'Version…';
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: colors.surface1,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(
+            color: colors.border,
+            width: colors.isLight ? 1.5 : 1, // §8.20.3-B card border
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            Expanded(
+              child: Semantics(
+                // One labelled node carrying the full identity for AT; the inner
+                // mono SelectableText is the visible/desktop-copyable carrier.
+                label: resolved
+                    ? 'App ${info!.display}'
+                    : 'App version loading',
+                child: ExcludeSemantics(
+                  // §8.5 — a build identifier is a computed/technical value, so
+                  // DM Mono. Primary text once resolved; tertiary placeholder
+                  // while loading.
+                  child: SelectableText(
+                    display,
+                    style: text.bodyLarge?.copyWith(
+                      fontFamily: 'DM Mono',
+                      color:
+                          resolved ? colors.textPrimary : colors.textTertiary,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            // §8.16 copy affordance — copies JUST the version+build line so a
+            // tester can paste the exact build into feedback. Disabled (null
+            // builder) until the runtime value resolves, per the §8.16
+            // "disabled, not hidden" rule for an eventually-available payload.
+            AppCopyAction(
+              textBuilder: resolved ? () => info!.display : () => null,
+              idleLabel: 'Copy version and build',
+              copiedLabel: 'Version copied',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Item 8 — Version and Feedback. The version line is selectable + copyable so
+/// a support call can read it back exactly; the feedback link reuses the
+/// contact form (same destination resolved in item 6). Reads the runtime
+/// [AppVersionInfo] (null before it resolves) so the value matches the top
+/// build badge and the actual shipped build.
+class _VersionSection extends StatelessWidget {
+  const _VersionSection({required this.info});
+
+  /// Runtime build identity; null until package_info_plus resolves.
+  final AppVersionInfo? info;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final String display = (info ?? AppVersion.fallback).display;
+    final bool resolved = info != null;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -693,16 +807,18 @@ class _VersionSection extends StatelessWidget {
               child: Text('Version and Feedback', style: text.headlineSmall),
             ),
             const SizedBox(height: AppSpacing.sm),
-            // Real shipped version. Mono per §8.5 (a build identifier reads as a
-            // computed/technical value). SelectableText so it can be copied on
-            // desktop without a dedicated action.
+            // Real shipped version + build, read at runtime. Mono per §8.5 (a
+            // build identifier reads as a computed/technical value).
+            // SelectableText so it can be copied on desktop without a dedicated
+            // action. Tertiary placeholder text in the brief pre-resolve window.
             Semantics(
-              label: 'App version ${AppVersion.display}',
+              label: resolved ? 'App $display' : 'App version loading',
               child: SelectableText(
-                'Version ${AppVersion.display}',
+                resolved ? display : 'Version…',
                 style: text.bodyLarge?.copyWith(
                   fontFamily: 'DM Mono',
-                  color: colors.textPrimary,
+                  color:
+                      resolved ? colors.textPrimary : colors.textTertiary,
                 ),
               ),
             ),
