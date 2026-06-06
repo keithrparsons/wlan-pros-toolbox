@@ -77,6 +77,25 @@ void main() {
       expect(first.maxRate, '2 Mbps');
     });
 
+    test('no entry carries an unofficial Wi-Fi 1/2/3 generation label', () {
+      const Set<String> unofficial = <String>{'Wi-Fi 1', 'Wi-Fi 2', 'Wi-Fi 3'};
+      for (final StandardEntry e in StandardsScreen.standards) {
+        expect(
+          unofficial.contains(e.generation),
+          isFalse,
+          reason: '${e.std} must not use an unofficial WFA generation name',
+        );
+      }
+    });
+
+    test('pre-Wi-Fi-4 amendments show — for generation', () {
+      for (final String std in <String>['802.11', '802.11b', '802.11a', '802.11g']) {
+        final StandardEntry e = StandardsScreen.standards
+            .firstWhere((StandardEntry s) => s.std == std);
+        expect(e.generation, '—', reason: '$std should have no generation name');
+      }
+    });
+
     test('only two amendments reach the 6 GHz band', () {
       final List<StandardEntry> band6 = StandardsScreen.standards
           .where((StandardEntry e) => e.hasBand6)

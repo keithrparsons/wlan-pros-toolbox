@@ -983,14 +983,14 @@
       "howToUse": [
         "Scan by generation badge (Wi-Fi 4 through Wi-Fi 7).",
         "The band filter answers \"which generations reach 6 GHz\" (Wi-Fi 6E and Wi-Fi 7).",
-        "The original 802.11 shows \"—\" for generation and MIMO (it predates both)."
+        "Pre-Wi-Fi-4 amendments (802.11, 802.11b, 802.11a, 802.11g) show \"—\" for generation, since official Wi-Fi Alliance naming begins at Wi-Fi 4."
       ],
       "inputs": [],
       "algorithm": null,
       "example": null,
       "fieldNotes": [
         "What it shows: one card per amendment with the IEEE designation, a Wi-Fi generation badge, year, and rows for Bands (GHz), Max PHY rate, MIMO, Channel width (MHz), and Modulation. An optional band filter (All / 2.4 / 5 / 6 GHz) narrows the list.",
-        "Two footnotes ship in the code: (1) \"Wi-Fi 1/2/3 are informal/retroactive labels; official Wi-Fi Alliance naming begins at Wi-Fi 4\"; (2) \"Wi-Fi 7 certification began 2024; IEEE 802.11be was published 2025.\"",
+        "Two footnotes ship in the code: (1) \"Official Wi-Fi Alliance generation naming begins at Wi-Fi 4 (802.11n); earlier amendments are shown by their 802.11 names only\"; (2) \"Wi-Fi 7 certification began 2024; IEEE 802.11be was published 2025.\"",
         "Max PHY rate is the theoretical aggregate ceiling; real-world throughput is typically 50 to 60% of it.",
         "Data source: IEEE 802.11 amendments; ported verbatim from the rf-tools-pwa STANDARDS const. Key rows: 802.11ac = Wi-Fi 5 (2013, 6.9 Gbps); 802.11ax = Wi-Fi 6 (2019) and Wi-Fi 6E (2021, adds 6 GHz); 802.11be = Wi-Fi 7 (2024, 46 Gbps MLO, 4K-QAM, up to 320 MHz).",
         "CATALOG NOTE: catalog id is 80211-standards, route /tools/standards."
