@@ -29,9 +29,34 @@ Future<void> shareAssetImpl({
     data.offsetInBytes,
     data.lengthInBytes,
   );
+  _anchorDownload(bytes: bytes, filename: filename, mimeType: mimeType);
+}
 
-  // Blob from the asset bytes, typed by [mimeType]. The byte buffer is a
-  // BlobPart; the parts array is a JSArray<BlobPart>.
+/// Bytes-in-hand web body: triggers a browser anchor-download of an already
+/// decoded [bytes] payload under the clean [filename]. No asset-bundle read here
+/// — used by the base64-encoded bundled downloads (the screen loads the `.b64`
+/// asset, decodes it, and hands the bytes here). [shareOrigin] is unused on web.
+Future<void> shareBytesImpl({
+  required List<int> bytes,
+  required String filename,
+  required String mimeType,
+  ShareOrigin? shareOrigin,
+}) async {
+  _anchorDownload(
+    bytes: Uint8List.fromList(bytes),
+    filename: filename,
+    mimeType: mimeType,
+  );
+}
+
+/// Wraps [bytes] in a typed Blob, makes an object URL, and clicks a hidden
+/// `<a download="...">` so the browser saves the file under [filename]. The byte
+/// buffer is a BlobPart; the parts array is a `JSArray<BlobPart>`.
+void _anchorDownload({
+  required Uint8List bytes,
+  required String filename,
+  required String mimeType,
+}) {
   final web.Blob blob = web.Blob(
     <web.BlobPart>[bytes.toJS].toJS,
     web.BlobPropertyBag(type: mimeType),

@@ -12,6 +12,8 @@
 //   (d) the screen renders in BOTH light and dark themes,
 //   (e) a real help entry exists for the id so the §8.16.1 footer is not faked.
 
+import 'dart:convert' show utf8;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/data/pdf_download.dart' show ShareOrigin;
@@ -29,22 +31,23 @@ ToolEntry _entry() => kToolCategories
     .expand((ToolCategory c) => c.tools)
     .firstWhere((ToolEntry t) => t.id == 'dual-orb-wlanpi');
 
-/// Records the arguments passed to the share seam, returning success.
+/// Records the arguments passed to the share seam, returning success. The screen
+/// now hands the seam already-decoded BYTES (not an asset path).
 class _FakeShare {
-  String? assetPath;
+  List<int>? bytes;
   String? filename;
   String? mimeType;
   int calls = 0;
 
   Future<void> call({
-    required String assetPath,
+    required List<int> bytes,
     required String filename,
     required String mimeType,
-    required String title,
+    String? title,
     ShareOrigin? shareOrigin,
   }) async {
     calls++;
-    this.assetPath = assetPath;
+    this.bytes = bytes;
     this.filename = filename;
     this.mimeType = mimeType;
   }
@@ -163,8 +166,9 @@ void main() {
   });
 
   group('download action', () {
-    testWidgets('calls the share seam with the .deb filename and MIME type',
-        (tester) async {
+    testWidgets(
+        'loads + decodes the base64 asset and calls the share seam with the '
+        'real .deb BYTES, filename, and MIME type', (tester) async {
       final _FakeShare fake = _FakeShare();
       await tester.binding.setSurfaceSize(const Size(420, 1600));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -176,9 +180,13 @@ void main() {
 
       expect(fake.calls, 1);
       expect(fake.filename, 'wlanpi-dual-orb_1.1.3_all.deb');
-      expect(
-          fake.assetPath, 'assets/downloads/wlanpi-dual-orb_1.1.3_all.deb.bin');
       expect(fake.mimeType, 'application/vnd.debian.binary-package');
+      // The screen loaded the real `.b64` asset and decoded it: the shared bytes
+      // are the genuine Debian package, which begins with the `ar` archive magic
+      // `!<arch>\n`. (Proves the runtime base64.decode path, not just the wiring.)
+      final List<int> shared = fake.bytes!;
+      expect(shared, isNotEmpty);
+      expect(utf8.decode(shared.sublist(0, 8)), '!<arch>\n');
     });
   });
 }

@@ -2,8 +2,10 @@
 //
 // Turns a WLAN Pi R4/M4+ into TWO Orb sensors (one on Ethernet, one on Wi-Fi)
 // by installing the bundled `wlanpi-dual-orb_1.1.3_all.deb` (bundled in-app as
-// `wlanpi-dual-orb_1.1.3_all.deb.bin` for iOS signing; downloads under the real
-// `.deb` name). This screen renders
+// `wlanpi-dual-orb_1.1.3_all.deb.b64` — the real `.deb` bytes stored
+// BASE64-ENCODED so nothing in the app bundle carries Mach-O magic or a shebang
+// that iOS distribution signing treats as unsigned code, error 90035; decoded at
+// runtime, downloads under the real `.deb` name). This screen renders
 // the approved preview (Deliverables/2026-06-05-dual-orb-wlanpi/mockup, dark +
 // light): a concept band, an intro line, an ACCURATE caveat box, the numbered
 // install steps (scp / apt install / reboot), the cloned-image identity-reset
@@ -17,12 +19,14 @@
 // (free for up to 5 devices). The caveat box states exactly that — no more, no
 // fewer claims (the truthfulness rule).
 //
-// PRIMARY ACTION: a "Download wlanpi-dual-orb.deb" button that reuses the app's
-// existing bundled-asset share/download seam (lib/data/pdf_download.dart →
-// shareAsset), the SAME mechanism the PDF reference cards use. On native it
-// copies the bundled bytes to a temp file under the real package filename and
-// hands it to the OS share sheet (Save-to-Files / AirDrop / Mail); on web it
-// triggers a browser anchor download. The filename is the REAL package name
+// PRIMARY ACTION: a "Download wlanpi-dual-orb.deb" button that loads the bundled
+// base64 asset, decodes it to the real `.deb` bytes, and hands those bytes to the
+// app's bundled-download share/download seam (lib/data/pdf_download.dart →
+// shareBytes), the SAME mechanism the PDF reference cards use (which share via
+// the sibling asset-path path). On native it copies the decoded bytes to a temp
+// file under the real package filename and hands it to the OS share sheet
+// (Save-to-Files / AirDrop / Mail); on web it triggers a browser anchor
+// download. The filename is the REAL package name
 // (`wlanpi-dual-orb_1.1.3_all.deb`) because it is meaningful to the install
 // command — it is NOT slugified.
 //
@@ -34,8 +38,12 @@
 // throughout. Every value reads from `context.colors` so the screen renders
 // correctly in BOTH themes (no hardcoded hex / px). DM Mono for every CLI line.
 
+import 'dart:convert' show base64;
+import 'dart:typed_data' show Uint8List;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../data/pdf_download.dart';
@@ -45,24 +53,27 @@ import '../../../theme/app_typography.dart';
 import '../../../widgets/centered_content.dart';
 import '../../../widgets/tool_help_footer.dart';
 
-/// The share/download seam this screen calls. Defaults to the real [shareAsset]
+/// The share/download seam this screen calls. Defaults to the real [shareBytes]
 /// (native share sheet / web anchor download); widget tests inject a fake so the
-/// test never touches a platform channel. Matches the [shareAsset] signature.
+/// test never touches a platform channel. Matches the [shareBytes] signature —
+/// the screen hands it the already-decoded `.deb` bytes (not an asset path).
 typedef AssetShareFn =
     Future<void> Function({
-      required String assetPath,
+      required List<int> bytes,
       required String filename,
       required String mimeType,
-      required String title,
+      String? title,
       ShareOrigin? shareOrigin,
     });
 
-/// Bundled package asset path (declared in pubspec.yaml). Bundled under a `.bin`
-/// extension so iOS distribution signing does not treat the `.deb` as unsigned
-/// code (error 90035); the download still hands the user a file named
-/// `wlanpi-dual-orb_1.1.3_all.deb` via [kDualOrbDebFilename].
+/// Bundled package asset path (declared in pubspec.yaml). Stored BASE64-ENCODED
+/// (`.b64`) so nothing in the app bundle carries Mach-O magic or a shebang that
+/// iOS distribution signing treats as unsigned code (error 90035); the real
+/// `.deb` bytes are recovered at runtime via `base64.decode`. The download still
+/// hands the user a file named `wlanpi-dual-orb_1.1.3_all.deb` via
+/// [kDualOrbDebFilename].
 const String kDualOrbAssetPath =
-    'assets/downloads/wlanpi-dual-orb_1.1.3_all.deb.bin';
+    'assets/downloads/wlanpi-dual-orb_1.1.3_all.deb.b64';
 
 /// The real package filename — meaningful to the install command, never
 /// slugified.
@@ -74,9 +85,9 @@ const String kDebMimeType = 'application/vnd.debian.binary-package';
 /// "Dual Orbs on WLAN Pi" how-to guide. Static content + one download action;
 /// the only runtime state is the share-failure path (announced, never a crash).
 class DualOrbScreen extends StatefulWidget {
-  const DualOrbScreen({this.shareFn = shareAsset, super.key});
+  const DualOrbScreen({this.shareFn = shareBytes, super.key});
 
-  /// Share/download implementation. Defaults to the real [shareAsset]; tests
+  /// Share/download implementation. Defaults to the real [shareBytes]; tests
   /// inject a fake so they never hit the platform channel.
   final AssetShareFn shareFn;
 
@@ -107,8 +118,13 @@ class _DualOrbScreenState extends State<DualOrbScreen> {
 
   Future<void> _handleDownload() async {
     try {
+      // Load the base64 asset, strip any whitespace/newlines (base64 can be
+      // line-wrapped), and decode to the real `.deb` bytes before sharing.
+      final String b64 = await rootBundle.loadString(kDualOrbAssetPath);
+      final Uint8List bytes =
+          base64.decode(b64.replaceAll(RegExp(r'\s'), ''));
       await widget.shareFn(
-        assetPath: kDualOrbAssetPath,
+        bytes: bytes,
         filename: kDualOrbDebFilename,
         mimeType: kDebMimeType,
         title: 'WLAN Pi Dual Orb package',

@@ -359,8 +359,8 @@ class AppRouter {
 
   // Guides — step-by-step how-tos that bundle a downloadable artifact. The
   // dual-Orb WLAN Pi guide ships the open-source dual-Orb `.deb`
-  // (assets/downloads/) via the shareAsset seam. All platforms (download is the
-  // existing share sheet / web anchor).
+  // (assets/downloads/, base64-encoded; decoded at runtime) via the shareBytes
+  // seam. All platforms (download is the existing share sheet / web anchor).
   static const String dualOrbWlanpi = '/tools/dual-orb-wlanpi';
 
   /// Map of static, argument-less routes. Categories use MaterialPageRoute

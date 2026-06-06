@@ -92,6 +92,41 @@ Future<void> shareAsset({
   );
 }
 
+/// Shares (native) or downloads (web) an IN-MEMORY [bytes] payload under the
+/// explicit [filename], typed [mimeType]. The bytes-in-hand sibling of
+/// [shareAsset]: the caller already owns the exact bytes (e.g. it loaded a
+/// base64-encoded bundled asset and decoded it), so the seam does NOT touch the
+/// asset bundle here — it writes [bytes] straight to the temp file / Blob.
+///
+/// This is the share path for the bundled download payloads that are stored
+/// base64-encoded so nothing in the app bundle looks like a script or Mach-O
+/// (iOS distribution signing error 90035): the screen loads the `.b64` asset,
+/// `base64.decode`s it, and hands the decoded bytes here under the real
+/// filename (`install_freeradius.sh` / `wlanpi-dual-orb_1.1.3_all.deb`). The
+/// inline-view-and-download-same-bytes invariant holds because the screen
+/// derives both from the same decoded bytes.
+///
+/// [title] is accepted so this matches the screens' injected share-fn typedef
+/// (the Dual Orb screen passes one, the FreeRADIUS screen does not); the share
+/// sheet uses [filename], so [title] is otherwise unused. On iPad/macOS pass
+/// [shareOrigin] (the button rect) so the popover anchors; pass `null` for a
+/// platform default. Returns normally on success; throws on a share failure so
+/// the caller can surface the honest error path.
+Future<void> shareBytes({
+  required List<int> bytes,
+  required String filename,
+  required String mimeType,
+  String? title,
+  ShareOrigin? shareOrigin,
+}) {
+  return impl.shareBytesImpl(
+    bytes: bytes,
+    filename: filename,
+    mimeType: mimeType,
+    shareOrigin: shareOrigin,
+  );
+}
+
 /// A platform-agnostic rectangle for the iPad/macOS share-popover source.
 /// Carried so the screen does not have to import `dart:ui` Rect into the seam.
 class ShareOrigin {

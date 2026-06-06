@@ -17,6 +17,8 @@
 // touch a real asset bundle or a platform share channel.
 
 import 'dart:async';
+import 'dart:convert' show utf8;
+import 'dart:typed_data' show Uint8List;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -30,25 +32,29 @@ const String _fakeScript = '#!/bin/bash\n'
     'sudo apt-get install -y freeradius freeradius-utils\n'
     'SECRET=secretwlanpros\n';
 
+final Uint8List _fakeScriptBytes = Uint8List.fromList(utf8.encode(_fakeScript));
+
 void main() {
-  // Captures the args the screen passes to the share seam.
-  late List<({String assetPath, String filename, String mimeType})> calls;
+  // Captures the args the screen passes to the share seam. The screen now hands
+  // the seam already-decoded BYTES (not an asset path), proving the download
+  // shares the exact bytes the inline view rendered.
+  late List<({List<int> bytes, String filename, String mimeType})> calls;
 
   Future<void> fakeShare({
-    required String assetPath,
+    required List<int> bytes,
     required String filename,
     required String mimeType,
     ShareOrigin? shareOrigin,
   }) async {
-    calls.add((assetPath: assetPath, filename: filename, mimeType: mimeType));
+    calls.add((bytes: bytes, filename: filename, mimeType: mimeType));
   }
 
   setUp(
-    () => calls = <({String assetPath, String filename, String mimeType})>[],
+    () => calls = <({List<int> bytes, String filename, String mimeType})>[],
   );
 
   // A guide screen with both seams faked; the script loader resolves
-  // immediately with the fake script text by default.
+  // immediately with the fake script BYTES by default.
   Widget harness({
     Brightness brightness = Brightness.dark,
     ScriptLoader? loader,
@@ -59,7 +65,7 @@ void main() {
             : AppTheme.light(),
         home: FreeradiusWlanpiScreen(
           shareFn: fakeShare,
-          scriptLoader: loader ?? () async => _fakeScript,
+          scriptLoader: loader ?? () async => _fakeScriptBytes,
         ),
       );
 
@@ -124,8 +130,8 @@ void main() {
   });
 
   testWidgets(
-      'tapping download invokes the share seam with the bundled script '
-      'asset, clean filename, and shell-script MIME', (tester) async {
+      'tapping download invokes the share seam with the decoded script '
+      'BYTES, clean filename, and shell-script MIME', (tester) async {
     await tester.pumpWidget(harness());
     await tester.pumpAndSettle();
 
@@ -136,7 +142,11 @@ void main() {
     await tester.pump();
 
     expect(calls, hasLength(1));
-    expect(calls.single.assetPath, 'assets/downloads/install_freeradius.sh.txt');
+    // The download shares the EXACT bytes the inline view rendered (the
+    // inline-and-download-same-bytes invariant): the shared bytes round-trip to
+    // the loaded script text.
+    expect(calls.single.bytes, _fakeScriptBytes);
+    expect(utf8.decode(calls.single.bytes), _fakeScript);
     expect(calls.single.filename, 'install_freeradius.sh');
     expect(calls.single.mimeType, 'text/x-shellscript');
   });
@@ -159,14 +169,14 @@ void main() {
     tester,
   ) async {
     // A loader that never completes within the test keeps the loading state.
-    final Completer<String> pending = Completer<String>();
+    final Completer<Uint8List> pending = Completer<Uint8List>();
     await tester.pumpWidget(harness(loader: () => pending.future));
     await tester.pump(); // let initState's future register
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
     // Resolve so the pending timer/future doesn't leak past the test.
-    pending.complete(_fakeScript);
+    pending.complete(_fakeScriptBytes);
     await tester.pumpAndSettle();
   });
 
