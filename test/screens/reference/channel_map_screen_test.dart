@@ -83,45 +83,111 @@ void main() {
     });
   });
 
-  group('ChannelMapScreen 6 GHz bonding', () {
-    test('20 MHz row is UNII-5 ch 1–93 (24 channels)', () {
-      expect(ChannelMapScreen.map6_20.length, 24);
+  group('ChannelMapScreen 6 GHz bonding (full US band, ch 1–233)', () {
+    test('20 MHz row is the full band ch 1,5,9,…,233 (59 channels)', () {
+      // v1.1.1 fix: the map was truncated at ch 93 (UNII-5 only). The full US
+      // 6 GHz plan (5925–7125 MHz) is 59 × 20 MHz channels, ch 1 to 233 step 4.
+      expect(ChannelMapScreen.map6_20.length, 59);
       expect(ChannelMapScreen.map6_20.first.centerChannel, 1);
-      expect(ChannelMapScreen.map6_20.last.centerChannel, 93);
+      expect(ChannelMapScreen.map6_20.last.centerChannel, 233);
+      expect(
+        ChannelMapScreen.map6_20.map((BondedBlock b) => b.centerChannel),
+        List<int>.generate(59, (int i) => 1 + i * 4),
+      );
     });
 
-    test('PSC channels are exactly 5, 21, 37, 53, 69, 85', () {
+    test('every 20 MHz block is itself a 1-wide span at its own channel', () {
+      for (final BondedBlock b in ChannelMapScreen.map6_20) {
+        expect(b.widthMhz, 20);
+        expect(b.lowChannel, b.centerChannel);
+        expect(b.highChannel, b.centerChannel);
+        expect(b.subChannels, 1);
+      }
+    });
+
+    test('PSC channels are every 4th 20 MHz channel from 5 (15 total)', () {
       final List<int> psc = ChannelMapScreen.map6_20
           .where((BondedBlock b) => b.dfs == DfsClass.psc)
           .map((BondedBlock b) => b.centerChannel)
           .toList();
-      expect(psc, [5, 21, 37, 53, 69, 85]);
+      expect(psc, [
+        5, 21, 37, 53, 69, 85, 101, 117, 133, 149, 165, 181, 197, 213, 229,
+      ]);
     });
 
-    test('40 MHz centers = c1+2 (PWA CM6_40)', () {
+    test('40 MHz bonds: 29 blocks, centers = low+2, up to ch 227', () {
+      expect(ChannelMapScreen.map6_40.length, 29);
       expect(
         ChannelMapScreen.map6_40.map((BondedBlock b) => b.centerChannel),
-        [3, 11, 19, 27, 35, 43, 51, 59, 67, 75, 83, 91],
+        List<int>.generate(29, (int i) => 3 + i * 8),
       );
+      expect(ChannelMapScreen.map6_40.last.centerChannel, 227);
+      expect(ChannelMapScreen.map6_40.last.highChannel, 229);
+      for (final BondedBlock b in ChannelMapScreen.map6_40) {
+        expect(b.centerChannel, b.lowChannel + 2);
+        expect(b.highChannel, b.lowChannel + 4);
+        expect(b.subChannels, 2);
+      }
     });
 
-    test('160 MHz bonds: 3 blocks, first centers ch 15 (1+14)', () {
-      expect(ChannelMapScreen.map6_160.length, 3);
+    test('80 MHz bonds: 14 blocks, centers = low+6, up to ch 215', () {
+      expect(ChannelMapScreen.map6_80.length, 14);
+      expect(ChannelMapScreen.map6_80.first.centerChannel, 7);
+      expect(ChannelMapScreen.map6_80.last.centerChannel, 215);
+      expect(ChannelMapScreen.map6_80.last.highChannel, 221);
+      for (final BondedBlock b in ChannelMapScreen.map6_80) {
+        expect(b.centerChannel, b.lowChannel + 6);
+        expect(b.highChannel, b.lowChannel + 12);
+        expect(b.subChannels, 4);
+      }
+    });
+
+    test('160 MHz bonds: 7 blocks, centers = low+14, up to ch 207', () {
+      expect(ChannelMapScreen.map6_160.length, 7);
       expect(ChannelMapScreen.map6_160.first.centerChannel, 15);
       expect(ChannelMapScreen.map6_160.first.lowChannel, 1);
       expect(ChannelMapScreen.map6_160.first.highChannel, 29);
+      expect(ChannelMapScreen.map6_160.last.centerChannel, 207);
+      expect(ChannelMapScreen.map6_160.last.highChannel, 221);
+      for (final BondedBlock b in ChannelMapScreen.map6_160) {
+        expect(b.centerChannel, b.lowChannel + 14);
+        expect(b.highChannel, b.lowChannel + 28);
+        expect(b.subChannels, 8);
+      }
     });
 
-    test('320 MHz: ch 31 primary, ch 63 alternative', () {
-      expect(ChannelMapScreen.map6_320.length, 2);
-      final BondedBlock primary = ChannelMapScreen.map6_320[0];
-      final BondedBlock alt = ChannelMapScreen.map6_320[1];
-      expect(primary.centerChannel, 31);
-      expect(primary.alt, isFalse);
-      expect(primary.widthMhz, 320);
-      expect(primary.subChannels, 16);
-      expect(alt.centerChannel, 63);
-      expect(alt.alt, isTrue);
+    test('320 MHz: 3 primary (31/95/159) + 3 alternative (63/127/191)', () {
+      expect(ChannelMapScreen.map6_320.length, 6);
+      final List<BondedBlock> primary = ChannelMapScreen.map6_320
+          .where((BondedBlock b) => !b.alt)
+          .toList();
+      final List<BondedBlock> alt = ChannelMapScreen.map6_320
+          .where((BondedBlock b) => b.alt)
+          .toList();
+      expect(primary.map((BondedBlock b) => b.centerChannel), [31, 95, 159]);
+      expect(alt.map((BondedBlock b) => b.centerChannel), [63, 127, 191]);
+      for (final BondedBlock b in ChannelMapScreen.map6_320) {
+        expect(b.widthMhz, 320);
+        expect(b.subChannels, 16);
+        expect(b.centerChannel, b.lowChannel + 30);
+        expect(b.highChannel, b.lowChannel + 60);
+      }
+      // Top 320 MHz alternative reaches ch 221 (highest 320 MHz sub-channel).
+      expect(alt.last.highChannel, 221);
+    });
+
+    test('no bonded block exceeds the band ceiling of ch 233', () {
+      final Iterable<BondedBlock> all = <BondedBlock>[
+        ...ChannelMapScreen.map6_20,
+        ...ChannelMapScreen.map6_40,
+        ...ChannelMapScreen.map6_80,
+        ...ChannelMapScreen.map6_160,
+        ...ChannelMapScreen.map6_320,
+      ];
+      for (final BondedBlock b in all) {
+        expect(b.highChannel, lessThanOrEqualTo(233));
+        expect(b.lowChannel, greaterThanOrEqualTo(1));
+      }
     });
   });
 
@@ -159,12 +225,21 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('5 GHz — bonded widths (US, FCC)'), findsOneWidget);
         expect(find.text('42'), findsWidgets);
+        // 3-digit 5 GHz channel renders fully (no ellipsis) — the clipping fix.
+        expect(find.text('100'), findsWidgets);
+        expect(find.text('161'), findsWidgets);
 
-        // Switch to 6 GHz — the 320 MHz alternative block is labelled "63 alt".
+        // Switch to 6 GHz — full band now reaches ch 233; alt 320 MHz blocks
+        // are labelled "63 alt" / "127 alt" / "191 alt".
         await tester.tap(find.text('6 GHz'));
         await tester.pumpAndSettle();
-        expect(find.text('6 GHz — UNII-5, ch 1–93'), findsOneWidget);
+        expect(
+          find.text('6 GHz — full US band, ch 1–233 (UNII-5 to UNII-8)'),
+          findsOneWidget,
+        );
+        expect(find.text('233'), findsWidgets);
         expect(find.text('63 alt'), findsOneWidget);
+        expect(find.text('191 alt'), findsOneWidget);
 
         expect(
           overflow,
