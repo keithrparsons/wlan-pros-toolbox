@@ -1,37 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
   <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <!-- Antenna Fundamentals: a feed element on a footed mast projecting a single
-         directional MAIN LOBE (the polar radiation pattern the tool teaches —
-         gain, beamwidth, lobe shape). Vera FAIL history: prior versions read as a
-         hand-mirror/lollipop because the lobe closed into a near-symmetric oval
-         RING on a stem. Fix: a TRUE TEARDROP lobe with a real CUSP at the feed
-         point (4,11). The two curves leave/return the feed from OPPOSING steep
-         tangents — the upper curve departs heading up-right, the lower curve
-         arrives heading down-left into the same point — so they form a POINT, not
-         a loop. ASYMMETRIC: pinched cusp at the feed, swelling to a fat rounded
-         bulge at the far right (a lobe, not an egg). Three short radiating ticks
-         fan off the FEED NODE pointing LEFT (away from the lobe body) to assert
-         "radiation pattern" over "object" — directed back from the feed so they
-         read as emanation, not a knot at the cusp. Verified at the 20px floor: the
-         interior no longer reads as a closed mirror. -->
-    <!-- footed mast so the source reads as a mounted antenna -->
-    <path d="M4 21 V12"/>
-    <path d="M1.5 21 H6.5"/>
-    <!-- directional main lobe: single open path forming a leftward TEARDROP with
-         a sharp CUSP at the feed (4,12). The upper edge departs the feed SHALLOW
-         (control (8,9) — almost along the boresight) and sweeps out and over a
-         FAT far bulb (top control (12,4.5), right at x~20); the lower edge drops
-         down the right side and returns into the feed STEEPLY from below (last
-         control (7,15)). Shallow-out + steep-in at the feed gives an acute,
-         genuinely pointed cusp — not the symmetric oval/loop of prior versions —
-         and the bulb's mass sits far from the point, so it reads asymmetric. -->
-    <path d="M4 12 C 8 9 11 4.5 16 5 C 21 5.5 22 11 19 14.5 C 16 18 9 18 4 12"/>
-    <!-- feed / radiating-element node at the cusp -->
-    <circle cx="4" cy="12" r="1.2" fill="currentColor" stroke="none"/>
-    <!-- three short radiating ticks off the feed, fanned LEFT (back-radiation),
-         clear of the lobe body so they read as emanation not a knot -->
-    <path d="M2.4 9.6 L1.1 8.3"/>
-    <path d="M1.7 12 L0.2 12"/>
-    <path d="M2.4 14.4 L1.1 15.7"/>
+    <!-- Antenna Fundamentals: a radiating element on a mast with its main-lobe
+         radiation pattern — the polar-plot beam the tool teaches (gain,
+         beamwidth, the lobe shape). The teardrop lobe silhouette is distinct
+         from eirp's stacked broadcast arcs and downtilt-coverage's beam wedge. -->
+    <!-- mast with a ground base (so the source reads as an antenna, not a stick) -->
+    <path d="M4 21 V8"/>
+    <path d="M2 21 H6"/>
+    <!-- radiating element node at the feed point -->
+    <circle cx="4" cy="8" r="1.3" fill="currentColor" stroke="none"/>
+    <!-- main lobe: a teardrop radiation pattern projecting out to the right -->
+    <path d="M4 8 C 12 2 22 4 22 8 C 22 12 12 14 4 8 Z"/>
+    <!-- beam axis through the lobe -->
+    <path d="M4 8 H17"/>
   </g>
 </svg>
