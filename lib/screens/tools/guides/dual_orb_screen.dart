@@ -1,7 +1,9 @@
 // Dual Orbs on WLAN Pi — a how-to / guide screen (v1.1).
 //
 // Turns a WLAN Pi R4/M4+ into TWO Orb sensors (one on Ethernet, one on Wi-Fi)
-// by installing the bundled `wlanpi-dual-orb_1.1.3_all.deb`. This screen renders
+// by installing the bundled `wlanpi-dual-orb_1.1.3_all.deb` (bundled in-app as
+// `wlanpi-dual-orb_1.1.3_all.deb.bin` for iOS signing; downloads under the real
+// `.deb` name). This screen renders
 // the approved preview (Deliverables/2026-06-05-dual-orb-wlanpi/mockup, dark +
 // light): a concept band, an intro line, an ACCURATE caveat box, the numbered
 // install steps (scp / apt install / reboot), the cloned-image identity-reset
@@ -55,8 +57,12 @@ typedef AssetShareFn =
       ShareOrigin? shareOrigin,
     });
 
-/// Bundled package asset path (declared in pubspec.yaml).
-const String kDualOrbAssetPath = 'assets/downloads/wlanpi-dual-orb_1.1.3_all.deb';
+/// Bundled package asset path (declared in pubspec.yaml). Bundled under a `.bin`
+/// extension so iOS distribution signing does not treat the `.deb` as unsigned
+/// code (error 90035); the download still hands the user a file named
+/// `wlanpi-dual-orb_1.1.3_all.deb` via [kDualOrbDebFilename].
+const String kDualOrbAssetPath =
+    'assets/downloads/wlanpi-dual-orb_1.1.3_all.deb.bin';
 
 /// The real package filename — meaningful to the install command, never
 /// slugified.

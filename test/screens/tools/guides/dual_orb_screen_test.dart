@@ -176,7 +176,8 @@ void main() {
 
       expect(fake.calls, 1);
       expect(fake.filename, 'wlanpi-dual-orb_1.1.3_all.deb');
-      expect(fake.assetPath, 'assets/downloads/wlanpi-dual-orb_1.1.3_all.deb');
+      expect(
+          fake.assetPath, 'assets/downloads/wlanpi-dual-orb_1.1.3_all.deb.bin');
       expect(fake.mimeType, 'application/vnd.debian.binary-package');
     });
   });
