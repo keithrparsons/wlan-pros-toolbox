@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 540" width="760" height="540" role="img" aria-label="A person sits relaxed in the center of the scene. A large radiant sun above pours many strong beams of energy down onto the person. Around the person, four meters away, is a ring of ten small, faint Wi-Fi access points giving off only tiny, weak signals. The sun's energy is shown as vastly larger than all the access points combined.">
+  <defs>
+    <!-- soft glow for the sun so its visual weight dominates -->
+    <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#E5E5E5" stop-opacity="0.30"/>
+      <stop offset="60%" stop-color="#E5E5E5" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#E5E5E5" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- ============================================================= -->
+  <!-- THE SUN — large, bold, radiant, top center. Dominates the frame. -->
+  <!-- ============================================================= -->
+
+  <!-- glow halo (decorative weight) -->
+  <circle cx="380" cy="92" r="150" fill="url(#sunGlow)"/>
+
+  <!-- long bold beams pouring DOWN onto the person below -->
+  <g stroke="#E5E5E5" stroke-linecap="round" fill="none">
+    <!-- downward beams (heaviest — these reach the person) -->
+    <line x1="312" y1="150" x2="276" y2="336" stroke-width="3.4"/>
+    <line x1="346" y1="158" x2="334" y2="346" stroke-width="3.4"/>
+    <line x1="380" y1="162" x2="380" y2="350" stroke-width="3.6"/>
+    <line x1="414" y1="158" x2="426" y2="346" stroke-width="3.4"/>
+    <line x1="448" y1="150" x2="484" y2="336" stroke-width="3.4"/>
+    <!-- side and upward rays (still bold, full radiant burst) -->
+    <line x1="270" y1="120" x2="232" y2="92"  stroke-width="3"/>
+    <line x1="252" y1="92"  x2="208" y2="78"  stroke-width="3"/>
+    <line x1="248" y1="62"  x2="214" y2="34"  stroke-width="3"/>
+    <line x1="300" y1="44"  x2="282" y2="8"   stroke-width="3"/>
+    <line x1="380" y1="34"  x2="380" y2="0"   stroke-width="3"/>
+    <line x1="460" y1="44"  x2="478" y2="8"   stroke-width="3"/>
+    <line x1="512" y1="62"  x2="546" y2="34"  stroke-width="3"/>
+    <line x1="508" y1="92"  x2="552" y2="78"  stroke-width="3"/>
+    <line x1="490" y1="120" x2="528" y2="92"  stroke-width="3"/>
+  </g>
+
+  <!-- sun body: big, heavy stroke = maximum visual weight -->
+  <circle cx="380" cy="92" r="62" stroke="#E5E5E5" stroke-width="5" fill="none"/>
+
+  <!-- sun label (no numbers) -->
+  <text x="380" y="98" font-family="'IBM Plex Sans','Helvetica Neue',Arial,sans-serif" font-size="16" fill="#E5E5E5" text-anchor="middle" font-weight="700" dominant-baseline="middle">The&#160;sun</text>
+
+  <!-- ============================================================= -->
+  <!-- THE RING — ten tiny, faint APs, 4 m away, around the person -->
+  <!-- ============================================================= -->
+
+  <!-- ring guide (very faint) -->
+  <ellipse cx="380" cy="392" rx="250" ry="96" stroke="#9C9C9C" stroke-width="1.2" fill="none" stroke-dasharray="3 6" opacity="0.55"/>
+
+  <!-- ten APs around the ring. Tiny body + one faint, short signal tick each. -->
+  <!-- Each AP is small and low-weight so it reads as "barely any energy". -->
+  <g>
+    <!-- top arc -->
+    <g transform="translate(380,298)"><rect x="-5" y="-3.2" width="10" height="6.4" rx="1.5" stroke="#9C9C9C" stroke-width="1.2" fill="none" opacity="0.85"/><path d="M-5 -5 A4 4 0 0 1 5 -5" stroke="#A2CC3A" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.75"/></g>
+    <g transform="translate(515,312)"><rect x="-5" y="-3.2" width="10" height="6.4" rx="1.5" stroke="#9C9C9C" stroke-width="1.2" fill="none" opacity="0.85"/><path d="M-5 -5 A4 4 0 0 1 5 -5" stroke="#A2CC3A" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.75"/></g>
+    <g transform="translate(605,352)"><rect x="-5" y="-3.2" width="10" height="6.4" rx="1.5" stroke="#9C9C9C" stroke-width="1.2" fill="none" opacity="0.85"/><path d="M-5 -5 A4 4 0 0 1 5 -5" stroke="#A2CC3A" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.75"/></g>
+    <g transform="translate(628,418)"><rect x="-5" y="-3.2" width="10" height="6.4" rx="1.5" stroke="#9C9C9C" stroke-width="1.2" fill="none" opacity="0.85"/><path d="M-5 -5 A4 4 0 0 1 5 -5" stroke="#A2CC3A" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.75"/></g>
+    <g transform="translate(560,470)"><rect x="-5" y="-3.2" width="10" height="6.4" rx="1.5" stroke="#9C9C9C" stroke-width="1.2" fill="none" opacity="0.85"/><path d="M-5 -5 A4 4 0 0 1 5 -5" stroke="#A2CC3A" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.75"/></g>
+    <!-- bottom arc -->
+    <g transform="translate(380,486)"><rect x="-5" y="-3.2" width="10" height="6.4" rx="1.5" stroke="#9C9C9C" stroke-width="1.2" fill="none" opacity="0.85"/><path d="M-5 -5 A4 4 0 0 1 5 -5" stroke="#A2CC3A" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.75"/></g>
+    <g transform="translate(200,470)"><rect x="-5" y="-3.2" width="10" height="6.4" rx="1.5" stroke="#9C9C9C" stroke-width="1.2" fill="none" opacity="0.85"/><path d="M-5 -5 A4 4 0 0 1 5 -5" stroke="#A2CC3A" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.75"/></g>
+    <g transform="translate(132,418)"><rect x="-5" y="-3.2" width="10" height="6.4" rx="1.5" stroke="#9C9C9C" stroke-width="1.2" fill="none" opacity="0.85"/><path d="M-5 -5 A4 4 0 0 1 5 -5" stroke="#A2CC3A" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.75"/></g>
+    <g transform="translate(155,352)"><rect x="-5" y="-3.2" width="10" height="6.4" rx="1.5" stroke="#9C9C9C" stroke-width="1.2" fill="none" opacity="0.85"/><path d="M-5 -5 A4 4 0 0 1 5 -5" stroke="#A2CC3A" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.75"/></g>
+    <g transform="translate(245,312)"><rect x="-5" y="-3.2" width="10" height="6.4" rx="1.5" stroke="#9C9C9C" stroke-width="1.2" fill="none" opacity="0.85"/><path d="M-5 -5 A4 4 0 0 1 5 -5" stroke="#A2CC3A" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.75"/></g>
+  </g>
+
+  <!-- ============================================================= -->
+  <!-- THE PERSON — clearly seated on a simple chair, relaxed, centered -->
+  <!-- ============================================================= -->
+  <!-- chair: seat + back + front leg (read "sitting") -->
+  <g stroke="#9C9C9C" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.8">
+    <path d="M362 420 L406 420"/>            <!-- seat -->
+    <path d="M362 420 L362 392"/>            <!-- chair back -->
+    <path d="M404 420 L408 452"/>            <!-- front leg -->
+    <path d="M366 420 L362 452"/>            <!-- back leg -->
+  </g>
+  <g stroke="#E5E5E5" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <!-- head -->
+    <circle cx="378" cy="368" r="14"/>
+    <!-- torso, slightly reclined / relaxed -->
+    <path d="M378 382 L382 418"/>
+    <!-- relaxed arm resting on thigh -->
+    <path d="M380 392 L400 408"/>
+    <!-- thigh forward (seated) then shin down to the floor -->
+    <path d="M382 418 L416 420 L418 452"/>
+    <path d="M382 418 L392 420"/>
+  </g>
+
+  <!-- ring spacing label: the ONLY measurement allowed -->
+  <line x1="390" y1="414" x2="600" y2="360" stroke="#9C9C9C" stroke-width="1" stroke-dasharray="2 5" opacity="0.5"/>
+  <text x="505" y="376" font-family="'IBM Plex Sans','Helvetica Neue',Arial,sans-serif" font-size="13" fill="#9C9C9C" text-anchor="middle" font-weight="500" dominant-baseline="middle" opacity="0.9">4 m (13 ft)</text>
+
+  <!-- ============================================================= -->
+  <!-- CAPTION — plain language, no numbers -->
+  <!-- ============================================================= -->
+  <text x="380" y="514" font-family="'IBM Plex Sans','Helvetica Neue',Arial,sans-serif" font-size="16" fill="#E5E5E5" text-anchor="middle" font-weight="600" dominant-baseline="middle">The sun gives you far more energy than every access point</text>
+  <text x="380" y="534" font-family="'IBM Plex Sans','Helvetica Neue',Arial,sans-serif" font-size="16" fill="#E5E5E5" text-anchor="middle" font-weight="600" dominant-baseline="middle">around you, combined.</text>
+</svg>

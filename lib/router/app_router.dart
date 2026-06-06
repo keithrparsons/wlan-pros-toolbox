@@ -47,6 +47,7 @@ import '../screens/tools/reference/signal_thresholds_screen.dart';
 import '../screens/tools/reference/wpa_security_screen.dart';
 import '../screens/tools/reference/http_status_codes_screen.dart';
 import '../screens/tools/reference/optical_transceivers_screen.dart';
+import '../screens/tools/reference/wifi_exposure_perspective_screen.dart';
 import '../screens/tools/reference/wifi_tools_comparison_screen.dart';
 import '../screens/tools/reference/reason_codes_screen.dart';
 import '../screens/tools/reference/frame_exchange_screen.dart';
@@ -263,6 +264,12 @@ class AppRouter {
   /// asset, help, tests).
   static const String opticalTransceivers = '/tools/optical-transceivers';
 
+  /// How Strong Is Wi-Fi, Really? — a read-along Quick Reference screen putting
+  /// Wi-Fi RF exposure in perspective against everyday sunlight (verified, stated
+  /// numbers; no inputs). The id `wifi-exposure-perspective` is permanent (route,
+  /// catalog, concept graphic, help, tests) even if the display title is renamed.
+  static const String wifiExposurePerspective = '/tools/wifi-exposure-perspective';
+
   /// Wi-Fi Tools Comparison — v1.1 beta. Offline, vendor-neutral capability-and-
   /// cost reference of professional Wi-Fi survey/design/spectrum/troubleshooting
   /// toolkits, grouped by activity (bundled JSON). TCO figures are modeled
@@ -463,6 +470,7 @@ class AppRouter {
     portReference: (_) => const PortReferenceScreen(),
     plmnReference: (_) => const PlmnReferenceScreen(),
     opticalTransceivers: (_) => const OpticalTransceiversScreen(),
+    wifiExposurePerspective: (_) => const WifiExposurePerspectiveScreen(),
     wifiToolsComparison: (_) => const WifiToolsComparisonScreen(),
     osiModel: (_) => const OsiModelScreen(),
     topLevelDomains: (_) => const TopLevelDomainsScreen(),

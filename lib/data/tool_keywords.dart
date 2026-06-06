@@ -271,6 +271,10 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'plmn', 'mcc', 'mnc', 'mobile country code', 'mobile network code',
     'carrier code', 'cellular', 'imsi', 'hni', 'operator code', 'sim',
   ],
+  'wifi-exposure-perspective': <String>[
+    'wifi', 'exposure', 'safety', 'radiation', 'sun', 'rf', 'emf', 'health',
+    'power', 'icnirp', 'fcc', 'non-ionizing',
+  ],
   'optical-transceivers': <String>[
     'sfp', 'sfp+', 'qsfp', 'qsfp28', 'qsfp-dd', 'osfp', 'transceiver', 'optic',
     'optics', 'fiber', 'fibre', 'singlemode', 'multimode', 'smf', 'mmf',
