@@ -505,10 +505,10 @@ class NonWifiChannelsScreen extends StatelessWidget {
       headingText: text,
       child: Text(
         'Channel and frequency reference for the common non-Wi-Fi radios in '
-        'and around the bands a Wi-Fi pro works in. Bluetooth, BLE, and '
-        '802.15.4 use globally fixed channel grids; LoRaWAN frequency plans are '
-        'region-dependent. Verify local regulator rules and transmit-power '
-        'limits before deployment.',
+        'and around the bands a Wi-Fi pro works in. Bluetooth, Bluetooth Low '
+        'Energy (BLE), and 802.15.4 use globally fixed channel grids; LoRaWAN '
+        'frequency plans are region-dependent. Verify local regulator rules '
+        'and transmit-power limits before deployment.',
         style: text.labelMedium?.copyWith(color: colors.textTertiary),
       ),
     );
