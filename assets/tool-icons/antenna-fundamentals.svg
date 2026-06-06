@@ -1,24 +1,37 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
   <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <!-- Antenna Fundamentals: a feed element on a mast projecting a single
-         CLOSED directional main lobe (the polar-pattern beam the tool teaches —
-         gain, beamwidth, lobe shape). Iterated three times: the open-loop+axis
-         version read as a lollipop (Vera); a filled lobe read as an egg/blob at
-         20px. This is a CLOSED (complete, no open mouth) OUTLINED teardrop lobe
-         — a sharp pointed tip at the feed point swelling to a rounded far end —
-         matching the stroke-based house style (cf. eirp, downtilt-coverage,
-         which read far better outlined than filled at the 20px floor). No
-         interior axis line. The closed pointed teardrop is an unmistakable
-         directional radiation lobe, distinct from eirp's stacked broadcast arcs
-         and downtilt-coverage's open beam wedge. -->
-    <!-- mast with a ground base so the source reads as an antenna -->
-    <path d="M4 21 V11"/>
+    <!-- Antenna Fundamentals: a feed element on a footed mast projecting a single
+         directional MAIN LOBE (the polar radiation pattern the tool teaches —
+         gain, beamwidth, lobe shape). Vera FAIL history: prior versions read as a
+         hand-mirror/lollipop because the lobe closed into a near-symmetric oval
+         RING on a stem. Fix: a TRUE TEARDROP lobe with a real CUSP at the feed
+         point (4,11). The two curves leave/return the feed from OPPOSING steep
+         tangents — the upper curve departs heading up-right, the lower curve
+         arrives heading down-left into the same point — so they form a POINT, not
+         a loop. ASYMMETRIC: pinched cusp at the feed, swelling to a fat rounded
+         bulge at the far right (a lobe, not an egg). Three short radiating ticks
+         fan off the FEED NODE pointing LEFT (away from the lobe body) to assert
+         "radiation pattern" over "object" — directed back from the feed so they
+         read as emanation, not a knot at the cusp. Verified at the 20px floor: the
+         interior no longer reads as a closed mirror. -->
+    <!-- footed mast so the source reads as a mounted antenna -->
+    <path d="M4 21 V12"/>
     <path d="M1.5 21 H6.5"/>
-    <!-- feed / radiating element node at the lobe tip -->
-    <circle cx="4" cy="11" r="1.2" fill="currentColor" stroke="none"/>
-    <!-- main lobe: a CLOSED outlined teardrop. Sharp tip at the feed (4,11),
-         swelling to a rounded bulge to the upper-right, then back to the tip —
-         a directional beam silhouette, not an egg. -->
-    <path d="M4 11 C 8 3 21 4 21 10 C 21 16 9 17 4 11 Z"/>
+    <!-- directional main lobe: single open path forming a leftward TEARDROP with
+         a sharp CUSP at the feed (4,12). The upper edge departs the feed SHALLOW
+         (control (8,9) — almost along the boresight) and sweeps out and over a
+         FAT far bulb (top control (12,4.5), right at x~20); the lower edge drops
+         down the right side and returns into the feed STEEPLY from below (last
+         control (7,15)). Shallow-out + steep-in at the feed gives an acute,
+         genuinely pointed cusp — not the symmetric oval/loop of prior versions —
+         and the bulb's mass sits far from the point, so it reads asymmetric. -->
+    <path d="M4 12 C 8 9 11 4.5 16 5 C 21 5.5 22 11 19 14.5 C 16 18 9 18 4 12"/>
+    <!-- feed / radiating-element node at the cusp -->
+    <circle cx="4" cy="12" r="1.2" fill="currentColor" stroke="none"/>
+    <!-- three short radiating ticks off the feed, fanned LEFT (back-radiation),
+         clear of the lobe body so they read as emanation not a knot -->
+    <path d="M2.4 9.6 L1.1 8.3"/>
+    <path d="M1.7 12 L0.2 12"/>
+    <path d="M2.4 14.4 L1.1 15.7"/>
   </g>
 </svg>
