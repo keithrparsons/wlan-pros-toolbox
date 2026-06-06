@@ -1274,7 +1274,8 @@ class _VerdictLine extends StatelessWidget {
 // 2. Core comparison — usable Wi-Fi capacity vs internet throughput on a
 // shared scale. Wi-Fi is the lime accent bar; internet is a NEUTRAL bar
 // (surface3 fill + borderStrong outline, NOT a status hue, per Vera §8.13).
-// Now lives inside the (D) "See the details" disclosure.
+// Always rendered in the result detail (the "See the details" disclosure was
+// removed in v1.1; the detail no longer collapses).
 // ===========================================================================
 
 class _ComparisonCard extends StatelessWidget {
@@ -1330,6 +1331,11 @@ class _ComparisonCard extends StatelessWidget {
     final AppColorScheme colors = context.colors;
     return Semantics(
       container: true,
+      // §1.3.1 — mark the comparison card as an SR heading node so heading-rotor
+      // navigation can land on it (previously the card carried no heading
+      // semantic at all). SR-only: the visible bar label "Wi-Fi usable capacity"
+      // is the de-facto card title and is unchanged. No layout shift.
+      header: true,
       label:
           'Wi-Fi usable capacity $wifiValue. Internet throughput '
           '$internetValue. ${_readingLine()}',
@@ -1511,10 +1517,13 @@ class _LiveSignalCard extends StatelessWidget {
               Row(
                 children: <Widget>[
                   Expanded(
-                    child: Text(
-                      'Wi-Fi signal',
-                      style: text.titleSmall?.copyWith(
-                        color: colors.textPrimary,
+                    child: Semantics(
+                      header: true,
+                      child: Text(
+                        'Wi-Fi signal',
+                        style: text.titleSmall?.copyWith(
+                          color: colors.textPrimary,
+                        ),
                       ),
                     ),
                   ),
@@ -1868,9 +1877,12 @@ class _HelpDeskCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            'What to tell support',
-            style: text.titleSmall?.copyWith(color: colors.textPrimary),
+          Semantics(
+            header: true,
+            child: Text(
+              'What to tell support',
+              style: text.titleSmall?.copyWith(color: colors.textPrimary),
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
           ...facts.map((f) => _FactRow(fact: f)),
@@ -1942,8 +1954,9 @@ class _FactRow extends StatelessWidget {
 }
 
 // ===========================================================================
-// The absorbed pro "Wi-Fi vs Internet" readout — the technical layer, rendered
-// INSIDE the (D) "See the details" disclosure (which now owns expand/collapse).
+// The absorbed pro "Wi-Fi vs Internet" readout — the technical layer, now
+// ALWAYS rendered in the result detail (the "See the details" disclosure was
+// removed in v1.1; this section no longer collapses).
 // Nothing the pro tool showed is lost; it just no longer leads the screen.
 // ===========================================================================
 
@@ -1966,9 +1979,13 @@ class _TechnicalSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         // Section heading — the named concept "Wi-Fi vs Internet" survives.
-        Text(
-          'Wi-Fi vs Internet',
-          style: text.titleMedium?.copyWith(color: colors.textPrimary),
+        // Marked as an SR heading so heading-rotor navigation can land on it.
+        Semantics(
+          header: true,
+          child: Text(
+            'Wi-Fi vs Internet',
+            style: text.titleMedium?.copyWith(color: colors.textPrimary),
+          ),
         ),
         const SizedBox(height: AppSpacing.sm),
         _ProVerdictCard(result: result),
@@ -2379,12 +2396,19 @@ class _SectionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            title,
-            style: text.labelMedium?.copyWith(
-              color: colors.textSecondary,
-              letterSpacing: 0.4,
-              fontWeight: colors.isLight ? FontWeight.w600 : FontWeight.w500,
+          // §1.3.1 — the section heading is marked as an SR heading so VoiceOver
+          // / TalkBack heading-rotor navigation can land on it. SR-only; no
+          // layout change. Applied once here so every _SectionCard ("Your Wi-Fi
+          // link", "Your internet") inherits the heading semantic.
+          Semantics(
+            header: true,
+            child: Text(
+              title,
+              style: text.labelMedium?.copyWith(
+                color: colors.textSecondary,
+                letterSpacing: 0.4,
+                fontWeight: colors.isLight ? FontWeight.w600 : FontWeight.w500,
+              ),
             ),
           ),
           // §8.20.3-C #3 — a 4px vivid lime #A1CC3A FILL underline bar under the
