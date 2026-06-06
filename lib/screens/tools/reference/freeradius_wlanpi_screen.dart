@@ -1,8 +1,10 @@
 // FreeRADIUS on WLAN Pi — a how-to / guide screen (v1.1).
 //
 // A standing-up-a-lab-RADIUS-server walkthrough built around Ferney Munoz's
-// bundled install script (assets/downloads/install_freeradius.sh.txt — bundled
-// under a .txt extension for iOS signing; downloads AS install_freeradius.sh).
+// bundled install script (assets/downloads/install_freeradius.sh.b64 — the real
+// script bytes stored BASE64-ENCODED so nothing in the app bundle looks like a
+// script (no `#!` shebang on disk) for iOS distribution signing, error 90035;
+// decoded at runtime, downloads AS install_freeradius.sh).
 // The screen
 // renders the approved preview (Deliverables/2026-06-05-freeradius-wlanpi/
 // mockup, dark + light):
@@ -12,7 +14,8 @@
 //      never color-only; the word "Lab" + full caveat text carry the meaning
 //   4. numbered steps (scp / chmod +x / ./install_freeradius.sh)
 //   5. a primary "Download install_freeradius.sh" button (reuses the
-//      share/save seam the PDF cards use — shareAsset, §macOS-sandbox-safe)
+//      share/save seam the PDF cards use — shareBytes, §macOS-sandbox-safe;
+//      shares the decoded script bytes)
 //   6. the script shown inline in a scrollable mono code block (the REAL
 //      bundled bytes, loaded at runtime — not a hand-copied excerpt, so it can
 //      never drift from what downloads)
@@ -25,10 +28,13 @@
 // executed in-app. The script is bundled VERBATIM and is read-only; the inline
 // view and the download hand the user the exact same bytes.
 //
-// STATES: the script body is a bundled asset loaded once via rootBundle, so the
-// code block has explicit loading (spinner while the asset string resolves),
-// error (asset failed to load — honest, no retry, a bundled asset that fails
-// won't succeed on retry), and success (the script renders). The rest of the
+// STATES: the script body is a bundled base64 asset loaded once via rootBundle
+// and decoded, so the code block has explicit loading (spinner while the asset
+// resolves + decodes), error (asset failed to load/decode — honest, no retry, a
+// bundled asset that fails won't succeed on retry), and success (the script
+// renders). The inline view (utf8.decode of the decoded bytes) and the download
+// (the same decoded bytes) derive from ONE decode, so they can never drift. The
+// rest of the
 // screen is static reference content (always "success"). The download control
 // surfaces its own honest failure path (a screen-reader announcement, no
 // crash), mirroring PdfReferenceScreen.
@@ -36,6 +42,9 @@
 // TOKENS (GL-003 §8 / §8.20): context.colors for every color (light + dark via
 // AppColorScheme), AppSpacing for gaps, AppRadius for corners, DM Mono for all
 // command / code text. No literal hex, no magic spacing.
+
+import 'dart:convert' show base64, utf8;
+import 'dart:typed_data' show Uint8List;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
@@ -49,20 +58,24 @@ import '../../../widgets/centered_content.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 
-/// The share/download seam this screen calls. Defaults to the real [shareAsset]
+/// The share/download seam this screen calls. Defaults to the real [shareBytes]
 /// (native share sheet / web anchor download); widget tests inject a fake so the
-/// test never touches a platform channel. Matches the [shareAsset] signature.
+/// test never touches a platform channel. Matches the [shareBytes] signature —
+/// the screen hands it the already-decoded script bytes (not an asset path), so
+/// the download shares the EXACT bytes the inline view rendered.
 typedef AssetShareFn =
     Future<void> Function({
-      required String assetPath,
+      required List<int> bytes,
       required String filename,
       required String mimeType,
       ShareOrigin? shareOrigin,
     });
 
-/// Loads the bundled script string. Injected in tests so the code block can be
-/// driven to its loading / error / success states without an asset bundle.
-typedef ScriptLoader = Future<String> Function();
+/// Loads the bundled script BYTES (the real script, base64-decoded). Injected in
+/// tests so the code block can be driven to its loading / error / success states
+/// without an asset bundle. The inline view utf8-decodes these bytes and the
+/// download shares them, so both derive from one source.
+typedef ScriptLoader = Future<Uint8List> Function();
 
 /// Loading lifecycle for the inline script body. Drives the three explicit
 /// states the code block renders.
@@ -73,7 +86,7 @@ enum _ScriptState { loading, ready, error }
 /// as a download); everything else is const reference content.
 class FreeradiusWlanpiScreen extends StatefulWidget {
   const FreeradiusWlanpiScreen({
-    this.shareFn = shareAsset,
+    this.shareFn = shareBytes,
     this.scriptLoader = _loadBundledScript,
     super.key,
   });
@@ -83,10 +96,12 @@ class FreeradiusWlanpiScreen extends StatefulWidget {
   static const String toolId = 'freeradius-wlanpi';
 
   /// The bundled script asset — shown inline AND downloaded (same bytes).
-  /// Bundled under a `.txt` extension so iOS distribution signing does not treat
-  /// it as unsigned code (error 90035); the download still hands the user a file
-  /// named `install_freeradius.sh` via [scriptFilename].
-  static const String scriptAsset = 'assets/downloads/install_freeradius.sh.txt';
+  /// Stored BASE64-ENCODED (`.b64`) so nothing in the app bundle carries a `#!`
+  /// shebang or Mach-O magic that iOS distribution signing treats as unsigned
+  /// code (error 90035); the real script bytes are recovered at runtime via
+  /// `base64.decode`. The download still hands the user a file named
+  /// `install_freeradius.sh` via [scriptFilename].
+  static const String scriptAsset = 'assets/downloads/install_freeradius.sh.b64';
 
   /// The clean filename the download/share offers (the script's real name).
   static const String scriptFilename = 'install_freeradius.sh';
@@ -95,7 +110,7 @@ class FreeradiusWlanpiScreen extends StatefulWidget {
   /// script rather than a generic octet-stream.
   static const String scriptMime = 'text/x-shellscript';
 
-  /// Share/download implementation. Defaults to the real [shareAsset]; tests
+  /// Share/download implementation. Defaults to the real [shareBytes]; tests
   /// inject a fake so they never hit the platform channel.
   final AssetShareFn shareFn;
 
@@ -103,8 +118,12 @@ class FreeradiusWlanpiScreen extends StatefulWidget {
   /// drive the loading / error / success states deterministically.
   final ScriptLoader scriptLoader;
 
-  static Future<String> _loadBundledScript() =>
-      rootBundle.loadString(scriptAsset);
+  /// Loads the base64 asset, strips any whitespace/newlines (base64 can be
+  /// line-wrapped), and decodes to the real script bytes.
+  static Future<Uint8List> _loadBundledScript() async {
+    final String b64 = await rootBundle.loadString(scriptAsset);
+    return base64.decode(b64.replaceAll(RegExp(r'\s'), ''));
+  }
 
   @override
   State<FreeradiusWlanpiScreen> createState() => _FreeradiusWlanpiScreenState();
@@ -112,6 +131,12 @@ class FreeradiusWlanpiScreen extends StatefulWidget {
 
 class _FreeradiusWlanpiScreenState extends State<FreeradiusWlanpiScreen> {
   _ScriptState _state = _ScriptState.loading;
+
+  /// The decoded script bytes — the single source for both the inline view
+  /// (utf8-decoded into [_script]) and the download (shared verbatim).
+  Uint8List _scriptBytes = Uint8List(0);
+
+  /// The inline-rendered text, derived from [_scriptBytes] via utf8.decode.
   String _script = '';
 
   /// Anchors the iPad/macOS share popover to the download button's on-screen
@@ -126,10 +151,15 @@ class _FreeradiusWlanpiScreenState extends State<FreeradiusWlanpiScreen> {
 
   Future<void> _loadScript() async {
     try {
-      final String raw = await widget.scriptLoader();
+      final Uint8List bytes = await widget.scriptLoader();
+      // One decode feeds both the inline view and the download, so they can
+      // never drift. utf8.decode here surfaces a corrupt-asset fault as the
+      // honest error state rather than mojibake.
+      final String text = utf8.decode(bytes);
       if (!mounted) return;
       setState(() {
-        _script = raw;
+        _scriptBytes = bytes;
+        _script = text;
         _state = _ScriptState.ready;
       });
     } catch (_) {
@@ -156,8 +186,15 @@ class _FreeradiusWlanpiScreenState extends State<FreeradiusWlanpiScreen> {
 
   Future<void> _handleDownload() async {
     try {
+      // Share the already-decoded bytes when the inline view has them (the
+      // common path: download shares the EXACT bytes shown inline). If the
+      // inline load hasn't completed (or failed to utf8-decode for display), the
+      // download still works — re-run the loader to recover the script bytes.
+      final Uint8List bytes = _state == _ScriptState.ready
+          ? _scriptBytes
+          : await widget.scriptLoader();
       await widget.shareFn(
-        assetPath: FreeradiusWlanpiScreen.scriptAsset,
+        bytes: bytes,
         filename: FreeradiusWlanpiScreen.scriptFilename,
         mimeType: FreeradiusWlanpiScreen.scriptMime,
         shareOrigin: _downloadButtonOrigin(),
