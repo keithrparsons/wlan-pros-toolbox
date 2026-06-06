@@ -1,16 +1,20 @@
 // TestMyConnectionScreen — widget tests for the merged Wave 4 tool, updated for
-// the v1.1 result-readability reshape (2026-06-05, Iris spec).
+// the v1.1 "show more" pass (2026-06-05, Keith) that walked back the
+// over-simplified readability reshape toward MORE information.
 //
 // Drives the screen through its injection seams (a Wi-Fi source + fake
 // adapter/bridge, a MockQualityClient with no network, live sampling disabled)
 // so no real platform channel, socket, or poll timer is touched. Covers the
-// v1.1 readability layout:
+// v1.1 "show more" layout:
 //   * (A) the VERDICT HERO renders the plain-language sentence (H1) + the two
 //     side-by-side "Wi-Fi:" / "Internet:" status chips, each WORD + GLYPH;
-//   * (B) the "what this means" line is always visible (not behind a disclosure);
-//   * (C) the "A few things to try" 2–4 numbered steps render;
-//   * (D) the "See the details" disclosure is COLLAPSED on first paint — the
-//     Mbps / bars / help-desk / pro readout appear only after it is opened;
+//   * the state-driven VERDICT LINE names the limiter, and the DIRECT % comparison
+//     sentence ("{N}% faster/slower" / "about the same speed") is always visible;
+//   * the removed copy is gone: no "A few things to try", no "See the details"
+//     disclosure, no "This won't change any of your settings.", no old "carrying
+//     plenty" verdict line;
+//   * the full detail (comparison bars, help-desk card, pro readout) is ALWAYS
+//     rendered — no tap to reveal;
 //   * "Couldn't check" carries the NEUTRAL help_outline glyph, never an error
 //     glyph or status hue;
 //   * the copy-able details text carries the two-axis line, internet down/up on
@@ -254,14 +258,94 @@ QualityResult _emptyInternet() => QualityResult(
   ],
 );
 
+/// A net_quality result whose averaged throughput (down 600 / up 304 → avg 452)
+/// sits within +/-10% of the iOS payload's usable Wi-Fi capacity (452.65 Mbps),
+/// so the direct-comparison line reads "about the same speed". Graded good, so
+/// the verdict is "Both fine".
+QualityResult _aboutSameInternet() => QualityResult(
+  source: QualitySource.mock,
+  measuredAt: DateTime.utc(2026, 1, 1),
+  metrics: const <QualityMetric>[
+    QualityMetric(
+      id: MetricIds.latency,
+      label: 'Latency',
+      value: 8,
+      unit: 'ms',
+      grade: QualityGrade.excellent,
+    ),
+    QualityMetric(
+      id: MetricIds.loss,
+      label: 'Loss',
+      value: 0,
+      unit: '%',
+      grade: QualityGrade.excellent,
+    ),
+    QualityMetric(
+      id: MetricIds.download,
+      label: 'Download',
+      value: 600,
+      unit: 'Mbps',
+      grade: QualityGrade.excellent,
+    ),
+    QualityMetric(
+      id: MetricIds.upload,
+      label: 'Upload',
+      value: 304,
+      unit: 'Mbps',
+      grade: QualityGrade.excellent,
+    ),
+  ],
+);
+
+/// A macOS adapter whose link rate is LOW (Tx 30 Mbps) so usable Wi-Fi capacity
+/// (16.5 Mbps) sits well below a marginal internet (avg 40), producing the
+/// `wifiLimiter` verdict → outcome `wifi` and a "slower" % comparison.
+ConnectedAp _macSampleSlowLink() => ConnectedAp.fromWifiInfo(
+  WifiInfo(
+    interfaceName: 'en0',
+    ssid: 'KeithNet',
+    bssid: 'a4:83:e7:00:11:22',
+    rssiDbm: -78,
+    noiseDbm: -92,
+    snrDb: 14,
+    txRateMbps: 30,
+    phyMode: '802.11ax',
+    channel: 36,
+    channelWidthMhz: 80,
+    band: '5 GHz',
+    countryCode: 'US',
+    hardwareAddress: 'a4:83:e7:aa:bb:cc',
+    poweredOn: true,
+    locationAuthorized: true,
+  ),
+);
+
+class _SlowLinkMacAdapter implements WifiInfoAdapter {
+  @override
+  String get platformLabel => 'macOS CoreWLAN';
+  @override
+  bool get gatesNameBehindPermission => true;
+  @override
+  Future<ConnectedAp> fetch() async => _macSampleSlowLink();
+  @override
+  Future<bool> requestNamePermission() async => true;
+  @override
+  Future<bool> currentNameAuthorization() async => true;
+  @override
+  Future<bool> openNamePermissionSettings() async => true;
+}
+
 void main() {
-  Widget host(Widget child, {Size? size}) => MaterialApp(
-    theme: AppTheme.dark(),
+  Widget hostTheme(Widget child, ThemeData theme, {Size? size}) => MaterialApp(
+    theme: theme,
     home: MediaQuery(
       data: MediaQueryData(size: size ?? const Size(390, 844)),
       child: child,
     ),
   );
+
+  Widget host(Widget child, {Size? size}) =>
+      hostTheme(child, AppTheme.dark(), size: size);
 
   late List<String> clipboardWrites;
 
@@ -288,13 +372,10 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  /// Opens the (D) "See the details" disclosure so the technical layer (the
-  /// comparison bars, the help-desk card, the pro readout) is in the tree.
-  Future<void> openDetails(WidgetTester tester) async {
-    final Finder row = find.text('See the details');
-    await tester.ensureVisible(row);
-    await tester.pumpAndSettle();
-    await tester.tap(row);
+  /// In v1.1 the technical layer (comparison bars, help-desk card, pro readout)
+  /// is ALWAYS rendered, so there is no disclosure to open. This just settles
+  /// any pending frames before the detail assertions run.
+  Future<void> settleDetails(WidgetTester tester) async {
     await tester.pumpAndSettle();
   }
 
@@ -337,7 +418,7 @@ void main() {
   );
 
   testWidgets(
-    '(B) the "what this means" line is visible without opening any disclosure',
+    'the state-driven VERDICT LINE names the limiter (internet limiter case)',
     (tester) async {
       await tester.pumpWidget(
         host(
@@ -353,10 +434,155 @@ void main() {
       );
       await runCheck(tester);
 
-      // internet outcome "what this means" — present at first paint, no tap.
+      // usable Wi-Fi (452.65) clearly exceeds measured internet (40) → internet
+      // is the limiter. Present at first paint, no tap.
+      expect(
+        find.text('Your internet is the limit right now, not your Wi-Fi.'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'the VERDICT LINE names Wi-Fi as the weak link when usable Wi-Fi is below '
+    'the internet rate',
+    (tester) async {
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: false,
+            sourceOverride: WifiInfoSource.macosCoreWlan,
+            macAdapter: _SlowLinkMacAdapter(),
+            qualityClient: MockQualityClient(
+              scriptedResult: _marginalInternet(),
+            ),
+          ),
+        ),
+      );
+      await runCheck(tester);
+
+      // usable Wi-Fi (16.5) sits below measured internet (40) → Wi-Fi limits.
+      expect(
+        find.text('Your Wi-Fi is the weak link right now.'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'the DIRECT % comparison line renders "faster" from real measured numbers',
+    (tester) async {
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: false,
+            sourceOverride: WifiInfoSource.iosShortcuts,
+            iosBridge: _PayloadBridge(),
+            qualityClient: MockQualityClient(
+              scriptedResult: _marginalInternet(),
+            ),
+          ),
+        ),
+      );
+      await runCheck(tester);
+
+      // usable Wi-Fi = 0.55 * avg(866, 780) = 452.65; internet avg = 40.
+      // N = round(100 * (452.65 - 40) / 40) = 1032, faster.
+      expect(
+        find.text(
+          'Your Wi-Fi link is 1032% faster than your internet connection.',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'the DIRECT % comparison line renders "slower" when Wi-Fi is the weak link',
+    (tester) async {
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: false,
+            sourceOverride: WifiInfoSource.macosCoreWlan,
+            macAdapter: _SlowLinkMacAdapter(),
+            qualityClient: MockQualityClient(
+              scriptedResult: _marginalInternet(),
+            ),
+          ),
+        ),
+      );
+      await runCheck(tester);
+
+      // usable Wi-Fi = 0.55 * 30 = 16.5; internet avg = 40.
+      // N = round(100 * (16.5 - 40) / 40) = 59, slower.
+      expect(
+        find.text(
+          'Your Wi-Fi link is 59% slower than your internet connection.',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'the DIRECT % comparison line reads "about the same speed" within +/-10%',
+    (tester) async {
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: false,
+            sourceOverride: WifiInfoSource.iosShortcuts,
+            iosBridge: _PayloadBridge(),
+            qualityClient: MockQualityClient(
+              scriptedResult: _aboutSameInternet(),
+            ),
+          ),
+        ),
+      );
+      await runCheck(tester);
+
+      // usable Wi-Fi 452.65 vs internet avg 452 → within +/-10% → "about the
+      // same speed", and the percentage figure is NOT shown.
+      expect(
+        find.text(
+          'Your Wi-Fi link and your internet connection are running at about '
+          'the same speed.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('% faster'), findsNothing);
+      expect(find.textContaining('% slower'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'the % comparison line is SUPPRESSED and the honest neutral verdict shows '
+    'when the internet side could not be measured (D2)',
+    (tester) async {
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: false,
+            sourceOverride: WifiInfoSource.macosCoreWlan,
+            macAdapter: _HangingMacAdapter(),
+            qualityClient: MockQualityClient(scriptedResult: _emptyInternet()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Check My Connection'));
+      await tester.pump(const Duration(seconds: 9));
+      await tester.pumpAndSettle();
+
+      // No fabricated % when there is no internet figure to compare against.
+      expect(find.textContaining('% faster'), findsNothing);
+      expect(find.textContaining('% slower'), findsNothing);
+      expect(find.textContaining('about the same speed'), findsNothing);
+      // The honest neutral verdict line stands alone.
       expect(
         find.textContaining(
-          'Your Wi-Fi has room to spare. The internet coming into your home',
+          'We could not read your Wi-Fi or your internet.',
         ),
         findsOneWidget,
       );
@@ -364,7 +590,8 @@ void main() {
   );
 
   testWidgets(
-    '(C) the "A few things to try" numbered steps render',
+    'the removed copy is GONE: no "A few things to try", no "See the details" '
+    'disclosure, no "This won\'t change any of your settings."',
     (tester) async {
       await tester.pumpWidget(
         host(
@@ -380,22 +607,21 @@ void main() {
       );
       await runCheck(tester);
 
-      // The section heading + the easiest-first internet steps (internet
-      // outcome → internet self-help list).
-      expect(find.text('A few things to try'), findsOneWidget);
-      expect(find.text('1.'), findsOneWidget);
-      expect(find.text('2.'), findsOneWidget);
-      expect(find.text('3.'), findsOneWidget);
+      expect(find.text('A few things to try'), findsNothing);
+      expect(find.text('See the details'), findsNothing);
       expect(
-        find.text('Check if your provider has an outage in your area.'),
-        findsOneWidget,
+        find.text("This won't change any of your settings."),
+        findsNothing,
       );
+      // The old "Both fine" verdict line copy must be gone too.
+      expect(find.textContaining('carrying plenty'), findsNothing);
+      expect(find.textContaining('No bottleneck to chase'), findsNothing);
     },
   );
 
   testWidgets(
-    '(D) "See the details" is COLLAPSED on first paint — the bars and the '
-    'help-desk card appear only after it is opened',
+    'the full detail is ALWAYS rendered (no tap): comparison bars, help-desk '
+    'card, and pro readout are present at first paint',
     (tester) async {
       await tester.pumpWidget(
         host(
@@ -411,14 +637,7 @@ void main() {
       );
       await runCheck(tester);
 
-      // The disclosure row exists; its technical content does NOT, collapsed.
-      expect(find.text('See the details'), findsOneWidget);
-      expect(find.text('Wi-Fi usable capacity'), findsNothing);
-      expect(find.text('What to tell support'), findsNothing);
-      expect(find.text('Wi-Fi vs Internet'), findsNothing);
-
-      // Open it — now the technical layer is in the tree.
-      await openDetails(tester);
+      // No disclosure tap required — the technical layer is in the tree.
       expect(find.text('Wi-Fi usable capacity'), findsOneWidget);
       expect(find.text('Internet throughput'), findsOneWidget);
       expect(find.text('What to tell support'), findsOneWidget);
@@ -448,8 +667,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Both chips read "Couldn't check" with the neutral help_outline glyph.
+      // (The always-shown help footer also uses help_outline, so the two chips
+      // are a floor, not an exact count, now that details aren't behind a tap.)
       expect(find.text("Couldn't check"), findsNWidgets(2));
-      expect(find.byIcon(Icons.help_outline), findsNWidgets(2));
+      expect(find.byIcon(Icons.help_outline), findsAtLeastNWidgets(2));
       // NOT a fault glyph and NOT the old remove_circle.
       expect(find.byIcon(Icons.error), findsNothing);
       expect(find.byIcon(Icons.remove_circle_outline), findsNothing);
@@ -473,7 +694,7 @@ void main() {
         ),
       );
       await runCheck(tester);
-      await openDetails(tester);
+      await settleDetails(tester);
 
       expect(find.text('What to tell support'), findsOneWidget);
       expect(find.text('Internet Down'), findsOneWidget);
@@ -503,7 +724,7 @@ void main() {
         ),
       );
       await runCheck(tester);
-      await openDetails(tester);
+      await settleDetails(tester);
 
       final Finder copyBtn = find.text('Copy these details');
       await tester.ensureVisible(copyBtn);
@@ -543,7 +764,7 @@ void main() {
         ),
       );
       await runCheck(tester);
-      await openDetails(tester);
+      await settleDetails(tester);
 
       final Finder copyBtn = find.text('Copy these details');
       await tester.ensureVisible(copyBtn);
@@ -679,10 +900,59 @@ void main() {
       // The Wi-Fi axis read "Couldn't check" (ap unread); the check completed.
       expect(find.text("Couldn't check"), findsWidgets);
 
-      // The measured internet figure lives behind the details disclosure now.
-      await openDetails(tester);
+      // The measured internet figure is in the always-shown detail.
+      await settleDetails(tester);
       expect(find.text('Internet Down'), findsOneWidget);
       expect(find.text('60 Mbps'), findsOneWidget);
     },
   );
+
+  // Render the full v1.1 result state in BOTH themes at mobile / tablet / desktop
+  // widths — the always-shown detail must paint without overflow in light + dark.
+  for (final (String themeName, ThemeData theme) in <(String, ThemeData)>[
+    ('dark', AppTheme.dark()),
+    ('light', AppTheme.light()),
+  ]) {
+    for (final (String sizeName, Size size) in <(String, Size)>[
+      ('mobile', Size(360, 800)),
+      ('tablet', Size(768, 1024)),
+      ('desktop', Size(1200, 900)),
+    ]) {
+      testWidgets(
+        'renders the full result with no overflow — $themeName / $sizeName',
+        (tester) async {
+          await tester.pumpWidget(
+            hostTheme(
+              TestMyConnectionScreen(
+                enableLiveSampling: false,
+                sourceOverride: WifiInfoSource.iosShortcuts,
+                iosBridge: _PayloadBridge(),
+                qualityClient: MockQualityClient(
+                  scriptedResult: _marginalInternet(),
+                ),
+              ),
+              theme,
+              size: size,
+            ),
+          );
+          await runCheck(tester);
+
+          // The verdict line, the % comparison, and the always-shown detail are
+          // all present and painted clean (no RenderFlex overflow).
+          expect(
+            find.text('Your internet is the limit right now, not your Wi-Fi.'),
+            findsOneWidget,
+          );
+          expect(
+            find.text(
+              'Your Wi-Fi link is 1032% faster than your internet connection.',
+            ),
+            findsOneWidget,
+          );
+          expect(find.text('Wi-Fi usable capacity'), findsOneWidget);
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
+  }
 }
