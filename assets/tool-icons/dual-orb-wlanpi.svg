@@ -1,20 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
   <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <!-- Dual Orbs on WLAN Pi: a single-board computer (the WLAN Pi) running TWO
-         sensor orbs — one over Ethernet, one over Wi-Fi. The board with a GPIO
-         header tick row PLUS two distinct sensor nodes is honest to "two Orb
-         sensors on one device" and reads apart from freeradius-wlanpi (board +
-         auth shield). -->
+    <!-- Dual Orbs on WLAN Pi: TWO matching sensor orbs are the symmetric
+         subject (the "dual orb" idea — two Orb probes on one device).
+         Redrawn from the board + GPIO-ticks + third raised node version that
+         read as "router + antenna + two LEDs": the competing third node and
+         the GPIO pin row (which read as an antenna) are gone. Now a single
+         board carries two identical orbs, each a ringed sensor with a filled
+         core, sitting level and symmetric. Reads apart from freeradius-wlanpi
+         (board + a single auth shield with a check). -->
     <!-- WLAN Pi board -->
-    <rect x="3" y="11" width="18" height="9" rx="1.5"/>
-    <!-- GPIO header pin row -->
-    <path d="M6 11 V9"/>
-    <path d="M9 11 V9"/>
-    <path d="M12 11 V9"/>
-    <!-- two sensor orbs rising off the board (the dual Orbs) -->
-    <circle cx="8" cy="15.5" r="1.4" fill="currentColor" stroke="none"/>
-    <circle cx="16" cy="15.5" r="1.4" fill="currentColor" stroke="none"/>
-    <path d="M16 11 V5"/>
-    <circle cx="16" cy="4" r="1.4" fill="currentColor" stroke="none"/>
+    <rect x="2.5" y="14" width="19" height="6.5" rx="1.5"/>
+    <!-- two matching sensor orbs, symmetric on the board (ring + filled core) -->
+    <circle cx="8" cy="8" r="3.6"/>
+    <circle cx="8" cy="8" r="1.1" fill="currentColor" stroke="none"/>
+    <circle cx="16" cy="8" r="3.6"/>
+    <circle cx="16" cy="8" r="1.1" fill="currentColor" stroke="none"/>
+    <!-- short stems seating each orb on the board -->
+    <path d="M8 11.6 V14"/>
+    <path d="M16 11.6 V14"/>
   </g>
 </svg>

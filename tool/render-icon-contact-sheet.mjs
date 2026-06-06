@@ -9,16 +9,25 @@ import path from 'path';
 import puppeteer from '/Users/keithparsons/.npm/_npx/7d92d9a2d2ccc630/node_modules/puppeteer-core/lib/puppeteer/puppeteer-core.js';
 
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-const ROOT = '/Users/keithparsons/Developer/wlan_pros_toolbox-v11icons';
+// ROOT resolves to the repo root from this file's location (tool/...), so the
+// renderer works in any worktree. Previously hardcoded to a non-existent
+// '/Users/keithparsons/Developer/wlan_pros_toolbox-v11icons' path.
+const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const DIR = path.join(ROOT, 'assets/tool-icons');
 const OUT = path.join(ROOT, 'tool/icon-contact-sheets');
 await fs.mkdir(OUT, { recursive: true });
 
+// The three v1.1.1 polish icons under re-gate.
 const NEW = new Set([
-  'plmn-id-reference','antenna-fundamentals','optical-transceivers',
-  'antenna-connectors','wifi-auth-glossary','wifi-tools-comparison',
-  'dual-orb-wlanpi','freeradius-wlanpi',
+  'antenna-fundamentals','wifi-exposure-perspective','dual-orb-wlanpi',
 ]);
+
+// Each v1.1.1 icon shown beside the neighbors that share its visual vocabulary,
+// so Vera can judge silhouette differentiation at the legibility floor.
+const FOCUS = [
+  'antenna-fundamentals','eirp','downtilt-coverage','antenna-connectors',
+  'wifi-exposure-perspective','dual-orb-wlanpi','freeradius-wlanpi',
+];
 
 const files = (await fs.readdir(DIR)).filter(f => f.endsWith('.svg')).sort();
 const svgs = {};
@@ -35,6 +44,30 @@ function grid(list, { icColor, cellBg, cellBorder, lblColor, newBorder }) {
       <div class="lbl" style="color:${lblColor}">${f.replace('.svg','')}${isNew ? ' ●' : ''}</div>
     </div>`;
   }).join('');
+}
+
+// Focused side-by-side: v1.1.1 icons beside their neighbors, at BOTH the 20px
+// legibility floor and 72px, so a redraw can be judged tiny and large at once.
+function focusGrid(list, { icColor, cellBg, cellBorder, lblColor, newBorder }) {
+  return list.map(f => {
+    const fn = f + '.svg';
+    const isNew = NEW.has(f);
+    return `<div class="cell" style="background:${cellBg};border:1px solid ${isNew ? newBorder : cellBorder}">
+      <div class="fic" style="color:${icColor}">
+        <span class="f20">${svgs[fn]}</span>
+        <span class="f72">${svgs[fn]}</span>
+      </div>
+      <div class="lbl" style="color:${lblColor}">${f}${isNew ? ' ●' : ''}</div>
+    </div>`;
+  }).join('');
+}
+
+function focusSheet(title, sub, theme) {
+  return `<section style="background:${theme.pageBg};padding:24px">
+    <h1 style="color:${theme.h1};font-size:18px;margin:0 0 4px;font-family:system-ui">${title}</h1>
+    <p style="color:${theme.sub};font-size:12px;margin:0 0 18px;font-family:system-ui">${sub}</p>
+    <div class="fgrid">${focusGrid(FOCUS, theme)}</div>
+  </section>`;
 }
 
 function sheet(title, sub, theme, list) {
@@ -60,9 +93,18 @@ const css = `<style>
   .zoom .grid{grid-template-columns:repeat(8,1fr)}
   .zoom .ic{height:80px} .zoom .ic .s20 svg{width:48px;height:48px} .zoom .ic .s24 svg{display:none}
   .zoom .lbl{font-size:11px}
+  .fgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:14px}
+  .fic{height:96px;display:flex;align-items:center;justify-content:center;gap:14px}
+  .fic .f20 svg{width:20px;height:20px} .fic .f72 svg{width:72px;height:72px}
 </style>`;
 
 const html = `<!doctype html><html><head><meta charset="utf-8">${css}</head><body>
+  ${focusSheet('v1.1.1 polish — three icons beside neighbors · 20px + 72px · DARK',
+    'antenna-fundamentals, wifi-exposure-perspective, dual-orb-wlanpi (●) beside their visual-vocabulary neighbors · lime #A2CC3A on app surface #222222 · each cell: 20px floor (left) + 72px (right)',
+    dark)}
+  ${focusSheet('v1.1.1 polish — three icons beside neighbors · 20px + 72px · LIGHT',
+    'darkened-lime #5A7A1C on white (§8.20.7) · each cell: 20px floor (left) + 72px (right)',
+    light)}
   ${sheet(`WLAN Pros Toolbox — Full Tier-2 Icon Set (${files.length} icons) · DARK`,
     'Each cell shows the glyph at the 20px legibility floor AND 24px nav size · lime #A2CC3A on app surface #222222 · ● = new in v1.1',
     dark, files)}
