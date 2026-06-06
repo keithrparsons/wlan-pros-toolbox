@@ -845,9 +845,12 @@ class _Customize extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         _CustomizeItem(
-          lead: 'Change the shared secret.',
-          rest: ' Edit it in ',
+          lead: 'Change the shared secret and add your own networks.',
+          rest: ' Edit both in ',
           path: '/etc/freeradius/3.0/clients.conf',
+          tail: ' — change the shared secret, then add a client block for '
+              'each network (your APs or controllers) that will send '
+              'authentication requests.',
         ),
         SizedBox(height: AppSpacing.sm),
         _CustomizeItem(
