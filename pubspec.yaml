@@ -77,6 +77,17 @@ dependencies:
   # GL-008). First-party, lightweight, no API key. BSD-3.
   url_launcher: ^6.3.0
 
+  # package_info_plus — reads the running build's version + build number at
+  # RUNTIME (PackageInfo.fromPlatform → version = CFBundleShortVersionString,
+  # buildNumber = CFBundleVersion). The About screen surfaces this so a beta
+  # tester can report the EXACT build they are on (the buildNumber is the
+  # timestamp ship_ios.sh injects, e.g. 202606052247). First-party Flutter
+  # community plugin, App-Store-safe: no entitlement, no network, no API key —
+  # it only reads the bundle's own Info.plist / build metadata. Replaces the
+  # hand-mirrored AppVersion constant so the displayed version can never drift
+  # from the actual shipped build. BSD-3-Clause.
+  package_info_plus: ^8.0.0
+
   # shared_preferences — persists the user's Light/Dark/System appearance pick
   # (GL-003 §8.20.5) across launches. BSD-3-Clause, first-party Flutter plugin,
   # App-Store-safe; backed by NSUserDefaults (iOS/macOS) / SharedPreferences

@@ -1,28 +1,94 @@
-// App version — the SSOT mirror of pubspec.yaml `version:`.
+// App version — runtime-read build identity for the About screen.
 //
-// The Toolbox does not depend on `package_info_plus` (a native plugin that
-// would need iOS/macOS/Android registration just to read one string the build
-// already knows). Until that dependency is added, the About screen reads the
-// real shipped version from this single constant, which MUST be kept in lockstep
-// with the `version:` line in pubspec.yaml.
+// As of v1.1.1 the version + build number are read at RUNTIME via
+// `package_info_plus` (PackageInfo.fromPlatform), so what the About screen
+// shows is always the actual running build — never a hand-mirrored constant
+// that can drift from pubspec / the injected CFBundleVersion. This matters for
+// beta triage: a tester needs to report the EXACT build, and the buildNumber at
+// runtime is the CFBundleVersion timestamp ship_ios.sh injects (e.g.
+// 202606052247).
 //
-// pubspec format is `<name>+<build>` (e.g. `1.0.0+1`); we surface it as
-// `<name> (<build>)` per the App Store convention CFBundleShortVersionString
-// (<name>) + CFBundleVersion (<build>). This is the TRUE current value, not a
-// placeholder — if pubspec's `version:` changes, update both halves here.
+// PackageInfo maps to:
+//   - version     → CFBundleShortVersionString (iOS/macOS) / versionName
+//                   (Android) — the marketing version, pubspec's `<name>` part.
+//   - buildNumber → CFBundleVersion (iOS/macOS) / versionCode (Android) —
+//                   pubspec's `+<build>` part, overridden per-build by
+//                   --build-number (the ship_ios.sh timestamp).
 //
-// FOLLOW-UP (non-blocking): if/when `package_info_plus` is added for other
-// reasons, swap [AppVersion.display] to read PackageInfo.fromPlatform() at
-// runtime and delete the manual mirror, so the version can never drift.
+// The pubspec-mirrored [fallback*] constants remain ONLY as a safe, synchronous
+// default for the brief window before [load] resolves and for widget tests that
+// do not bind the platform channel. They are NOT the runtime source of truth;
+// PackageInfo is. The legacy [name] / [build] / [display] aliases are retained
+// so pre-existing callers/tests keep compiling, but new code should read the
+// runtime [AppVersionInfo] from [AppVersion.load].
+
+import 'package:package_info_plus/package_info_plus.dart';
+
+/// An immutable snapshot of the running build's version + build number.
+///
+/// Carries the two halves separately (so the UI can label them) plus a
+/// pre-formatted [display] string. Const-constructible so it doubles as the
+/// synchronous fallback before the async [AppVersion.load] resolves.
+class AppVersionInfo {
+  const AppVersionInfo({required this.version, required this.buildNumber});
+
+  /// Marketing version — CFBundleShortVersionString, e.g. `1.1.0`.
+  final String version;
+
+  /// Build number — CFBundleVersion, e.g. `202606052247`. May be empty on
+  /// platforms/builds that did not set one.
+  final String buildNumber;
+
+  /// The labeled, copy-ready line, e.g. `Version 1.1.0 (build 202606052247)`.
+  /// When the build number is empty, the `(build …)` clause is omitted rather
+  /// than printing an empty paren.
+  String get display => buildNumber.isEmpty
+      ? 'Version $version'
+      : 'Version $version (build $buildNumber)';
+}
+
+/// Reads the running build's version identity at runtime.
 class AppVersion {
   AppVersion._();
 
-  /// CFBundleShortVersionString — the marketing version (pubspec name part).
-  static const String name = '1.0.0';
+  /// Pubspec-mirrored marketing version — the synchronous fallback only.
+  static const String fallbackVersion = '1.1.0';
 
-  /// CFBundleVersion — the build number (pubspec `+<build>` part).
-  static const String build = '11';
+  /// Pubspec-mirrored build number — the synchronous fallback only.
+  static const String fallbackBuildNumber = '12';
 
-  /// The version string shown in the About screen, e.g. `1.0.0 (1)`.
+  /// A const fallback snapshot, used before [load] resolves and in tests that
+  /// do not bind the platform channel.
+  static const AppVersionInfo fallback = AppVersionInfo(
+    version: fallbackVersion,
+    buildNumber: fallbackBuildNumber,
+  );
+
+  /// Reads version + build number from the running bundle via
+  /// `PackageInfo.fromPlatform`. On any failure (e.g. an unbound test channel)
+  /// it falls back to the const [fallback] so the UI never throws or shows
+  /// nothing useful.
+  static Future<AppVersionInfo> load() async {
+    try {
+      final PackageInfo info = await PackageInfo.fromPlatform();
+      final String version =
+          info.version.isNotEmpty ? info.version : fallbackVersion;
+      return AppVersionInfo(version: version, buildNumber: info.buildNumber);
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  // --- Legacy synchronous aliases (retained for backward compatibility) ------
+  // These point at the pubspec-mirrored fallback values, NOT the runtime read.
+  // Kept so existing callers/tests keep compiling during the runtime migration.
+
+  /// Legacy alias for [fallbackVersion].
+  static const String name = fallbackVersion;
+
+  /// Legacy alias for [fallbackBuildNumber].
+  static const String build = fallbackBuildNumber;
+
+  /// Legacy synchronous display, `name (build)` — the pre-runtime format.
   static const String display = '$name ($build)';
 }
