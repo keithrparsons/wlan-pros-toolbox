@@ -136,7 +136,7 @@ void main() {
     await tester.pump();
 
     expect(calls, hasLength(1));
-    expect(calls.single.assetPath, 'assets/downloads/install_freeradius.sh');
+    expect(calls.single.assetPath, 'assets/downloads/install_freeradius.sh.txt');
     expect(calls.single.filename, 'install_freeradius.sh');
     expect(calls.single.mimeType, 'text/x-shellscript');
   });

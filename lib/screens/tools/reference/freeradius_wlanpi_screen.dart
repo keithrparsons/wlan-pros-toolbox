@@ -1,7 +1,9 @@
 // FreeRADIUS on WLAN Pi — a how-to / guide screen (v1.1).
 //
 // A standing-up-a-lab-RADIUS-server walkthrough built around Ferney Munoz's
-// bundled install script (assets/downloads/install_freeradius.sh). The screen
+// bundled install script (assets/downloads/install_freeradius.sh.txt — bundled
+// under a .txt extension for iOS signing; downloads AS install_freeradius.sh).
+// The screen
 // renders the approved preview (Deliverables/2026-06-05-freeradius-wlanpi/
 // mockup, dark + light):
 //   1. concept band (Pi -> RADIUS shield -> 802.1X client)
@@ -81,7 +83,10 @@ class FreeradiusWlanpiScreen extends StatefulWidget {
   static const String toolId = 'freeradius-wlanpi';
 
   /// The bundled script asset — shown inline AND downloaded (same bytes).
-  static const String scriptAsset = 'assets/downloads/install_freeradius.sh';
+  /// Bundled under a `.txt` extension so iOS distribution signing does not treat
+  /// it as unsigned code (error 90035); the download still hands the user a file
+  /// named `install_freeradius.sh` via [scriptFilename].
+  static const String scriptAsset = 'assets/downloads/install_freeradius.sh.txt';
 
   /// The clean filename the download/share offers (the script's real name).
   static const String scriptFilename = 'install_freeradius.sh';
