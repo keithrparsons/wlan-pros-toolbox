@@ -6,8 +6,8 @@
 // hands the raw string to SvgPicture.string (the same parser the app uses),
 // pumps it, and asserts a non-empty render with no parse exception. It also
 // guards the two structural invariants this lane is responsible for:
-//   - the antenna-fundamentals g1-g5/g7 carry NO <marker> defs or refs;
-//   - g6 is left untouched (still has its markers — that is the other lane).
+//   - the antenna-fundamentals g1-g7 carry NO <marker> defs or refs
+//     (all converted to inline-path arrowheads across the two graphics lanes).
 
 import 'dart:io';
 
@@ -34,6 +34,7 @@ const List<String> _convertedDiagrams = <String>[
   'assets/tool-diagrams/antenna-fundamentals/g3-polar-plot-anatomy.svg',
   'assets/tool-diagrams/antenna-fundamentals/g4-pattern-comparison.svg',
   'assets/tool-diagrams/antenna-fundamentals/g5-coverage-floorplan.svg',
+  'assets/tool-diagrams/antenna-fundamentals/g6-downtilt.svg',
   'assets/tool-diagrams/antenna-fundamentals/g7-polarization.svg',
 ];
 
@@ -81,7 +82,7 @@ void main() {
   });
 
   group('structural invariants', () {
-    test('g1-g5/g7 carry no <marker> defs or marker-* refs', () {
+    test('g1-g7 carry no <marker> defs or marker-* refs', () {
       for (final String path in _convertedDiagrams) {
         final String svg = File(path).readAsStringSync();
         expect(svg.contains('<marker'), isFalse, reason: '$path has <marker> def');
@@ -89,13 +90,6 @@ void main() {
         expect(svg.contains('marker-start'), isFalse,
             reason: '$path has marker-start');
       }
-    });
-
-    test('g6 is untouched (still uses markers — other lane owns it)', () {
-      final String svg = File(
-        'assets/tool-diagrams/antenna-fundamentals/g6-downtilt.svg',
-      ).readAsStringSync();
-      expect(svg.contains('<marker'), isTrue);
     });
 
     test('no decorative ground-hatching idiom remains in redrawn graphics', () {
