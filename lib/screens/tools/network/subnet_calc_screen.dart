@@ -22,6 +22,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../services/network/interface_info_service.dart';
 import '../../../services/network/subnet_calc_service.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
@@ -32,9 +33,14 @@ import 'value_row.dart';
 import '../labeled_field.dart';
 
 class SubnetCalcScreen extends StatefulWidget {
-  const SubnetCalcScreen({super.key, this.service});
+  const SubnetCalcScreen({super.key, this.service, this.interfaceInfo});
 
   final SubnetCalcService? service;
+
+  /// Injectable interface-info reader so a test can script (or skip) the
+  /// device-IP prefill. Defaults to the production reader; null after default
+  /// when constructed const-free.
+  final InterfaceInfoService? interfaceInfo;
 
   @override
   State<SubnetCalcScreen> createState() => _SubnetCalcScreenState();
@@ -42,6 +48,10 @@ class SubnetCalcScreen extends StatefulWidget {
 
 class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
   late final SubnetCalcService _service;
+  // BF5-6: prefilled with the device's own IP network + mask on open (see
+  // _prefillFromDevice). These are the fallback worked-example values used when
+  // the device IP can't be read (web, no network, permission), so the screen
+  // never opens blank.
   final TextEditingController _addrCtrl = TextEditingController(
     text: '10.20.0.0',
   );
@@ -58,6 +68,35 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
     // Seed an initial result so the screen opens on the success state with a
     // worked example rather than a blank panel.
     WidgetsBinding.instance.addPostFrameCallback((_) => _recompute());
+    // BF5-6: try to replace the worked example with the device's current IP +
+    // subnet mask. Best-effort and non-blocking — on web / no-network / no
+    // permission the worked example above stays.
+    _prefillFromDevice();
+  }
+
+  /// BF5-6 — read the device's primary IPv4 + subnet mask and prefill the form
+  /// so the calculator opens on the user's own network. Honest fallback: if no
+  /// usable IPv4/mask comes back, the worked-example defaults remain untouched.
+  Future<void> _prefillFromDevice() async {
+    final InterfaceInfoService reader =
+        widget.interfaceInfo ?? InterfaceInfoService();
+    InterfaceInfoSnapshot snap;
+    try {
+      snap = await reader.read();
+    } catch (_) {
+      return; // keep the worked example
+    }
+    if (!mounted) return;
+    final String? ip = snap.primaryIPv4;
+    final String? mask = snap.wifi.subnetMask;
+    // Only prefill when BOTH a routable IPv4 and a dotted mask are known — a
+    // bare IP with no mask would change the example to something half-real.
+    if (ip == null || ip.isEmpty || mask == null || mask.isEmpty) return;
+    // Don't clobber the field if the user has already started typing.
+    if (_addrCtrl.text != '10.20.0.0' || _prefixCtrl.text != '22') return;
+    _addrCtrl.text = ip;
+    _prefixCtrl.text = mask;
+    _recompute();
   }
 
   @override

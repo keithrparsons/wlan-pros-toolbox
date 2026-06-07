@@ -23,12 +23,12 @@ void main() {
     test('"channel" matches across at least 3 categories (mockup 04)', () {
       final List<ToolSearchHit> hits = searchTools('channel');
       expect(hits, isNotEmpty);
-      // Wi-Fi Channels, Channel Map (quick-reference), the channel-allocation
-      // cards, Wi-Fi Information (test-network, keyword), throughput/etc.
+      // Channel Map (quick-reference), the channel-allocation cards, Wi-Fi
+      // Information (test-network, keyword), throughput/etc. (The plainer
+      // Wi-Fi Channels table was removed 2026-06-06 — BF6-13.)
       expect(distinctCategoryCount(hits), greaterThanOrEqualTo(3));
       // Spot-check some expected tools are present.
       final Set<String> ids = hits.map((ToolSearchHit h) => h.tool.id).toSet();
-      expect(ids.contains('wifi-channels'), isTrue);
       expect(ids.contains('channel-map'), isTrue);
     });
 

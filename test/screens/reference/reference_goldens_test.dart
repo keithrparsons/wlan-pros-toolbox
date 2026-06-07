@@ -51,12 +51,10 @@ import 'package:wlan_pros_toolbox/screens/tools/reference/non_wifi_channels_scre
 import 'package:wlan_pros_toolbox/screens/tools/reference/osi_model_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/poe_reference_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/reason_codes_screen.dart';
-import 'package:wlan_pros_toolbox/screens/tools/reference/rf_connectors_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/roaming_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/signal_thresholds_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/spectrum_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/standards_screen.dart';
-import 'package:wlan_pros_toolbox/screens/tools/reference/wifi_channels_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/wpa_security_screen.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
@@ -82,12 +80,10 @@ final List<_RefScreen> _screens = <_RefScreen>[
   (slug: 'osi_model', build: () => const OsiModelScreen()),
   (slug: 'poe_reference', build: () => const PoeReferenceScreen()),
   (slug: 'reason_codes', build: () => const ReasonCodesScreen()),
-  (slug: 'rf_connectors', build: () => const RfConnectorsScreen()),
   (slug: 'roaming', build: () => const RoamingScreen()),
   (slug: 'signal_thresholds', build: () => const SignalThresholdsScreen()),
   (slug: 'spectrum', build: () => const SpectrumScreen()),
   (slug: 'standards', build: () => const StandardsScreen()),
-  (slug: 'wifi_channels', build: () => const WifiChannelsScreen()),
   (slug: 'wpa_security', build: () => const WpaSecurityScreen()),
 ];
 

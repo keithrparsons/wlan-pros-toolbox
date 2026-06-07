@@ -2,7 +2,7 @@
 // tolerance), group ordering in FILE ORDER (never alphabetized), free-text
 // search across every field, and the three editorial sections (vendor trends,
 // size order, top-6). Most tests use a small in-memory fixture; the last group
-// loads the REAL bundled asset to prove all 18 connectors parse, the editorial
+// loads the REAL bundled asset to prove all 19 connectors parse, the editorial
 // sections survive, and the DART entry is named WITHOUT a spelled-out acronym.
 
 import 'dart:io';
@@ -223,8 +223,10 @@ void main() {
       return AntennaConnectorService.fromJson(asset.readAsStringSync());
     }
 
-    test('parses all 18 connectors', () {
-      expect(loadReal().count, 18);
+    test('parses all 19 connectors', () {
+      // 19 = 18 + F-Type, folded in 2026-06-06 (BF6-18) from the merged
+      // RF Connectors tool.
+      expect(loadReal().count, 19);
     });
 
     test('groups into the 4 curated groups in first-seen order', () {
@@ -243,12 +245,12 @@ void main() {
       );
     });
 
-    test('every connector lands in one group; counts sum to 18', () {
+    test('every connector lands in one group; counts sum to 19', () {
       final AntennaConnectorService real = loadReal();
       final int sum = real
           .grouped()
           .fold<int>(0, (int acc, AntennaConnectorGroup g) => acc + g.count);
-      expect(sum, 18);
+      expect(sum, 19);
     });
 
     test('the three editorial sections are populated', () {

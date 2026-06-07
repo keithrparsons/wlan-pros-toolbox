@@ -20,11 +20,13 @@
 //   * §8.8: under prefers-reduced-motion the active-key flash collapses to 0 ms.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../data/dtmf.dart';
 import '../../../services/audio/dtmf_player.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../theme/app_typography.dart';
 import '../../../widgets/tool_help_footer.dart';
 
 class DtmfGeneratorScreen extends StatefulWidget {
@@ -44,10 +46,51 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
   // Whether the continuous Play/Stop loop is on.
   bool _looping = false;
 
+  // ─── Sequence mode (BF6-1) ─────────────────────────────────────────────────
+  // The user types a string of DTMF characters (e.g. 18013185522) and plays it
+  // as tones in order. Non-DTMF characters are ignored on play (and stripped by
+  // the input formatter), so a pasted phone number with spaces/dashes still
+  // works.
+  final TextEditingController _seqCtrl = TextEditingController();
+
+  // True while a sequence is playing; gates the Stop affordance and cancels the
+  // in-flight playSequence via the shouldContinue callback.
+  bool _playingSeq = false;
+
   @override
   void dispose() {
+    _seqCtrl.dispose();
     _player.dispose();
     super.dispose();
+  }
+
+  /// The DTMF keys parsed from the sequence field, in order. Non-DTMF
+  /// characters are dropped; letters are upper-cased (A-D are valid keys).
+  List<DtmfKey> get _sequenceKeys {
+    final List<DtmfKey> out = <DtmfKey>[];
+    for (final String ch in _seqCtrl.text.toUpperCase().split('')) {
+      final DtmfKey? k = Dtmf.keyFor(ch);
+      if (k != null) out.add(k);
+    }
+    return out;
+  }
+
+  Future<void> _playSequence() async {
+    final List<DtmfKey> keys = _sequenceKeys;
+    if (keys.isEmpty) return;
+    // A running loop and a sequence are mutually exclusive — stop the loop first.
+    if (_looping) {
+      setState(() => _looping = false);
+    }
+    setState(() => _playingSeq = true);
+    await _player.playSequence(keys, shouldContinue: () => _playingSeq);
+    if (!mounted) return;
+    setState(() => _playingSeq = false);
+  }
+
+  Future<void> _stopSequence() async {
+    setState(() => _playingSeq = false);
+    await _player.stop();
   }
 
   DtmfKey get _selectedKey => Dtmf.keyFor(_selectedLabel)!;
@@ -111,6 +154,8 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
                   _keypad(text),
                   const SizedBox(height: AppSpacing.md),
                   _playStopToggle(text),
+                  const SizedBox(height: AppSpacing.md),
+                  _sequenceCard(text),
                   ToolHelpFooter(toolId: 'dtmf-generator'),
                 ],
               ),
@@ -212,6 +257,78 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
       icon: Icon(_looping ? Icons.stop : Icons.play_arrow),
       label: Text(
         _looping ? 'Stop (${_selectedKey.label})' : 'Play (${_selectedKey.label})',
+      ),
+    );
+  }
+
+  /// BF6-1 — pre-load a string of digits, then play the whole sequence in order.
+  /// The field is an identifier input (digits/*/#/A-D) rendered in Roboto Mono
+  /// (GL-003 §8.5 identifier rule). The Play button becomes Stop while playing.
+  Widget _sequenceCard(TextTheme text) {
+    final AppColorScheme colors = context.colors;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final int count = _sequenceKeys.length;
+    final bool hasDigits = count > 0;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'Play a sequence',
+            style: text.labelMedium?.copyWith(
+              color: colors.textSecondary,
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            'Type a string of digits (e.g. 18013185522) and play it as tones in '
+            'order.',
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          TextField(
+            controller: _seqCtrl,
+            // Only DTMF characters are meaningful; allow the user to type the
+            // common ones (and paste a number) — non-DTMF chars are dropped on
+            // play, and the formatter keeps the field to the valid set.
+            inputFormatters: <TextInputFormatter>[
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9A-Da-d*#]')),
+            ],
+            keyboardType: TextInputType.phone,
+            autocorrect: false,
+            enableSuggestions: false,
+            cursorColor: colors.textAccent,
+            // Identifier string → Roboto Mono (§8.5).
+            style: mono.robotoMono.copyWith(color: colors.textPrimary),
+            onChanged: (_) => setState(() {}),
+            decoration: const InputDecoration(
+              hintText: '18013185522',
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          FilledButton.icon(
+            // Disabled until there is at least one valid DTMF character.
+            onPressed: !hasDigits && !_playingSeq
+                ? null
+                : (_playingSeq ? _stopSequence : _playSequence),
+            icon: Icon(_playingSeq ? Icons.stop : Icons.play_arrow),
+            label: Text(
+              _playingSeq
+                  ? 'Stop'
+                  : hasDigits
+                      ? 'Play sequence ($count)'
+                      : 'Play sequence',
+            ),
+          ),
+        ],
       ),
     );
   }

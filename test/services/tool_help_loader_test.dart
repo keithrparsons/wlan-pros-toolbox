@@ -121,7 +121,7 @@ void main() {
       store = ToolHelpStore.fromJson(raw);
     });
 
-    test('parses to exactly 103 entries', () {
+    test('parses to exactly 101 entries', () {
       // 97 = 95 (origin/main: 93 + Antenna Connectors + Optical Transceivers)
       // + 2 backfilled v1.1 help entries (PLMN ID Reference and the Wi-Fi
       // Authentication Glossary).
@@ -133,7 +133,10 @@ void main() {
       // 103 = + the "How Strong Is Wi-Fi, Really?" Quick Reference screen
       // (id wifi-exposure-perspective), added 2026-06-05 — Wi-Fi vs sunlight RF
       // exposure in perspective.
-      expect(store.count, 103);
+      // v1.1.2 net change 2026-06-06: −3 removed (wifi-channels BF6-13,
+      // rf-connectors BF6-18, capacity-planner BF5-13) + 1 added
+      // (my-current-location BF5-16) = 103 − 3 + 1 = 101.
+      expect(store.count, 101);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

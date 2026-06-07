@@ -1,10 +1,12 @@
-// Antenna Connectors — a data-driven, searchable, grouped reference of the 18
-// antenna connectors a Wi-Fi engineer meets in the field, fully offline (bundled
-// JSON asset).
+// Antenna Connectors — a data-driven, searchable, grouped reference of the
+// antenna and RF connectors a Wi-Fi engineer meets in the field, fully offline
+// (bundled JSON asset). RF Connectors merged into this single tool 2026-06-06
+// (BF6-18); F-Type (75 ohm CATV) was folded in from the former RF Connectors
+// card. Count is data-driven (connector_count in the JSON).
 //
 // Mirrors the app's bundled-JSON reference pattern (Wi-Fi Glossary / Well-Known
 // Ports): bundled asset → AntennaConnectorService.fromJson → grouped list
-// screen. The 18 connectors render in their curated groups in file order (never
+// screen. The connectors render in their curated groups in file order (never
 // alphabetized), each row showing the connector name, full name, an optional
 // reverse-polarity chip, and its labeled fields (typical Wi-Fi use,
 // indoor/outdoor, coupling, impedance, frequency, mating) plus field notes. A
@@ -352,8 +354,8 @@ class _IntroCard extends StatelessWidget {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final String summary =
-        '$total antenna connectors across $groups groups. Search by name, '
-        'vendor, coupling, frequency, or any word in a note.';
+        '$total antenna and RF connectors across $groups groups. Search by '
+        'name, vendor, coupling, frequency, or any word in a note.';
     return Container(
       decoration: BoxDecoration(
         color: colors.surface1,

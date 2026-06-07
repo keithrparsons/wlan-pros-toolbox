@@ -1,9 +1,9 @@
 {
   "_meta": {
     "title": "Educational Resources",
-    "note": "Educational Resources for the WLAN Pros Toolbox: independent-author and community materials only. Per Keith (2026-06-04) the megavendor/product documentation entries (Apple, Cisco, Aruba/HPE, and the Hamina product docs) are EXCLUDED; the dataset keeps community tools/utilities, independent blogs and experts, podcasts, conference and talk archives, YouTube channels, and training/certification paths. Independent-author entries are included now with permission chased afterward (approval='pending_outreach'); any owner who declines gets removed. Descriptions are Keith's voice (GL-004, SOP-020 PASS). The full vendor-doc set is retained in the source dataset and git history if ever wanted back. Also still held: Wi-Fi For Beginners (site not confirmed live) and frames.bitbucketlabs.com (pending Keith's 1-line description). Curated 2026-06-04. Batch 2026-06-04: appended 5 independent-author entries (SubnetPro, WiFi Analyser, ShankarWiFi, PotatoFi Interactive Spectrum Chart, BadgerWiFi Tools), all approval='pending_outreach'. frames.bitbucketlabs held until ~2026-06-25.",
-    "last_updated": "2026-06-05",
-    "count": 39,
+    "note": "Educational Resources for the WLAN Pros Toolbox: independent-author and community materials only. Per Keith (2026-06-04) the megavendor/product documentation entries (Apple, Cisco, Aruba/HPE, and the Hamina product docs) are EXCLUDED; the dataset keeps community tools/utilities, independent blogs and experts, podcasts, conference and talk archives, YouTube channels, and training/certification paths. Independent-author entries are included now with permission chased afterward (approval='pending_outreach'); any owner who declines gets removed. Descriptions are Keith's voice (GL-004, SOP-020 PASS). The full vendor-doc set is retained in the source dataset and git history if ever wanted back. Also still held: Wi-Fi For Beginners (site not confirmed live) and frames.bitbucketlabs.com (pending Keith's 1-line description). Curated 2026-06-04. Batch 2026-06-04: appended 5 independent-author entries (SubnetPro, WiFi Analyser, ShankarWiFi, PotatoFi Interactive Spectrum Chart, BadgerWiFi Tools), all approval='pending_outreach'. frames.bitbucketlabs held until ~2026-06-25. 2026-06-06 (BF6-21): removed the two Wi-Fi Design Day entries (Open Reality/Ekahau charge for the videos); they are not kept in the YouTube section.",
+    "last_updated": "2026-06-06",
+    "count": 37,
     "topics": [
       "Tools and utilities",
       "Conference and talk archives",
@@ -133,42 +133,6 @@
         "wlan-pros",
         "conference",
         "vendor-neutral"
-      ],
-      "approval": "not_required"
-    },
-    {
-      "id": "dest-wifi-design-day",
-      "title": "Wi-Fi Design Day On-Demand (Open Reality)",
-      "summary": "Free on-demand recordings and handouts from more than 70 Wi-Fi Design Day sessions on survey and design.",
-      "description": "Wi-Fi Design Day is a UK Wi-Fi event run by Open Reality and Ekahau, and this on-demand page opens up the back catalog. You get free access to recordings and session handouts from more than 70 talks covering surveying, design, security, monitoring, and troubleshooting.\n\nThe handouts are the part people overlook. A recording teaches you the thinking, but the slide deck and notes are what you keep on your drive for the next project. Registration is required to get in, and the content itself costs nothing. Strong material if survey and design are where you want to level up.",
-      "url": "https://www.openreality.co.uk/wi-fi-design-day-on-demand/",
-      "topic": "Conference and talk archives",
-      "cost": "mixed",
-      "level": "all",
-      "tags": [
-        "destination",
-        "video-archive",
-        "conference",
-        "design",
-        "survey",
-        "vendor-neutral"
-      ],
-      "approval": "not_required"
-    },
-    {
-      "id": "dest-wifi-design-day-site",
-      "title": "Wi-Fi Design Day",
-      "summary": "The Wi-Fi Design Day event homepage, where the next event gets announced (Open Reality and Ekahau).",
-      "description": "The Wi-Fi Design Day event homepage, run by Open Reality and Ekahau. This is where the next event date and agenda show up when one is scheduled.\n\nIf you want the talks rather than the event, go to the on-demand recordings page instead. Keep this one bookmarked for when you want to know whether a live Design Day is coming up. Free.",
-      "url": "https://www.wifidesignday.com/",
-      "topic": "Conference and talk archives",
-      "cost": "free",
-      "level": "all",
-      "tags": [
-        "destination",
-        "conference",
-        "design",
-        "event"
       ],
       "approval": "not_required"
     },

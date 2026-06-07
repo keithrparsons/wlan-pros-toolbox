@@ -2,9 +2,9 @@
   "schema_version": 1,
   "title": "Antenna Connectors",
   "source": "Keith Parsons draft (Antenna connectors.docx), verified + augmented by Pax 2026-06-05. See antenna-connectors-research-brief.md.",
-  "last_updated": "2026-06-05",
-  "note": "Practical Wi-Fi antenna-connector reference: enterprise APs, outdoor bridges, embedded radios, and WLAN test gear. Every connector here is 50 ohm. RP (reverse-polarity) variants exist on Wi-Fi gear to satisfy FCC rules that discourage swapping in higher-gain antennas. Key field gotcha: an RP connector will thread onto its standard counterpart but the center contacts will not connect.",
-  "connector_count": 18,
+  "last_updated": "2026-06-06",
+  "note": "Practical Wi-Fi antenna-connector reference: enterprise APs, outdoor bridges, embedded radios, and WLAN test gear. Almost every connector here is 50 ohm; the F-Type (75 ohm CATV) is the lone exception. RP (reverse-polarity) variants exist on Wi-Fi gear to satisfy FCC rules that discourage swapping in higher-gain antennas. Key field gotcha: an RP connector will thread onto its standard counterpart but the center contacts will not connect. 2026-06-06: RF Connectors merged into this single Antenna Connectors reference.",
+  "connector_count": 19,
   "groups": [
     "Enterprise (panel/external)",
     "Outdoor / point-to-point",
@@ -299,6 +299,22 @@
       "frequency": "Best below ~4 GHz",
       "mating": "Mates only with BNC. 50 ohm and 75 ohm BNC look alike but should not be mixed.",
       "notes": "Quick bayonet coupling. Common on lab/test gear, rare on Wi-Fi antennas."
+    },
+    {
+      "id": "f-type",
+      "connector": "F-Type",
+      "full_name": "F connector (75 ohm CATV / TV)",
+      "group": "Test & cellular (Wi-Fi-adjacent)",
+      "reverse_polarity": "No",
+      "typical_wifi_use": "None — this is a 75 ohm TV/CATV connector, not a Wi-Fi connector",
+      "indoor_outdoor": "Indoor",
+      "coupling": "Threaded (screw)",
+      "size": "~9 mm thread",
+      "rf_path": "Single coax (1 RF path)",
+      "impedance": "75 ohm (NOT 50 ohm)",
+      "frequency": "DC to ~3 GHz",
+      "mating": "Mates only with F-Type.",
+      "notes": "75 ohm CATV/TV standard. The 75 ohm vs 50 ohm impedance mismatch causes significant loss on Wi-Fi gear. Do not use for WLAN — folded in here from the former RF Connectors reference so the merge loses nothing."
     }
   ],
   "vendor_trends": [

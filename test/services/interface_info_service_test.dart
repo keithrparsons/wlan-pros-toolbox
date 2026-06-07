@@ -243,4 +243,34 @@ void main() {
       expect(snap.wifi.cachedAt, cachedMoment);
     });
   });
+
+  // BF5-4: the hostname normalizer must never surface "localhost" (the iOS
+  // loopback name) — it collapses to null so the UI shows the honest
+  // "Not available on this platform" treatment. Real machine hostnames pass
+  // through unchanged.
+  group('hostname normalization (BF5-4)', () {
+    test('loopback-style names collapse to null', () {
+      expect(InterfaceInfoService.normalizeHostname('localhost'), isNull);
+      expect(InterfaceInfoService.normalizeHostname('LocalHost'), isNull);
+      expect(
+          InterfaceInfoService.normalizeHostname('localhost.localdomain'),
+          isNull);
+      expect(InterfaceInfoService.normalizeHostname('ip6-localhost'), isNull);
+      expect(InterfaceInfoService.normalizeHostname('loopback'), isNull);
+      expect(InterfaceInfoService.normalizeHostname(''), isNull);
+      expect(InterfaceInfoService.normalizeHostname('   '), isNull);
+      expect(InterfaceInfoService.normalizeHostname(null), isNull);
+    });
+
+    test('a real machine hostname passes through (trimmed)', () {
+      expect(InterfaceInfoService.normalizeHostname('Keiths-MacBook-Pro'),
+          'Keiths-MacBook-Pro');
+      expect(InterfaceInfoService.normalizeHostname('  wlan-pi.local  '),
+          'wlan-pi.local');
+      // "localhostnamed" is a real name that merely starts with the letters —
+      // it must NOT be treated as the loopback name.
+      expect(InterfaceInfoService.normalizeHostname('localhostnamed'),
+          'localhostnamed');
+    });
+  });
 }
