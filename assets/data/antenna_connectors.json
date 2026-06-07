@@ -3,7 +3,7 @@
   "title": "Antenna Connectors",
   "source": "Keith Parsons draft (Antenna connectors.docx), verified + augmented by Pax 2026-06-05. See antenna-connectors-research-brief.md.",
   "last_updated": "2026-06-06",
-  "note": "Practical Wi-Fi antenna-connector reference: enterprise APs, outdoor bridges, embedded radios, and WLAN test gear. Every connector here is 50 ohm. RP (reverse-polarity) variants exist on Wi-Fi gear to satisfy FCC rules that discourage swapping in higher-gain antennas. Key field gotcha: an RP connector will thread onto its standard counterpart but the center contacts will not connect. 2026-06-06 (BF6-18): RF Connectors merged into this single Antenna Connectors reference; F-Type (75 ohm CATV) folded in from the former RF Connectors card.",
+  "note": "Practical Wi-Fi antenna-connector reference: enterprise APs, outdoor bridges, embedded radios, and WLAN test gear. Almost every connector here is 50 ohm; the F-Type (75 ohm CATV) is the lone exception. RP (reverse-polarity) variants exist on Wi-Fi gear to satisfy FCC rules that discourage swapping in higher-gain antennas. Key field gotcha: an RP connector will thread onto its standard counterpart but the center contacts will not connect. 2026-06-06: RF Connectors merged into this single Antenna Connectors reference.",
   "connector_count": 19,
   "groups": [
     "Enterprise (panel/external)",
