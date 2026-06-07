@@ -43,3 +43,11 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // androidx.core provides ContextCompat / ActivityCompat used by the Wi-Fi
+    // Information runtime-permission flow in MainActivity.kt. The Flutter
+    // embedding pulls a compatible version transitively; declaring it makes the
+    // permission API an explicit, version-pinned contract.
+    implementation("androidx.core:core-ktx:1.13.1")
+}
