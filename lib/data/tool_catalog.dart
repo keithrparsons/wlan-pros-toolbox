@@ -1111,8 +1111,8 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
   // — this is not a subgroup-ordered category.
   //
   // Tile count: the home badge would show only the live tool count (the 11 in-
-  // app references). The true total is 11 + 37 online resources = 48, so
-  // [countLabelOverride] pins '48' (guard test in
+  // app references). The true total is 11 + 36 online resources = 47, so
+  // [countLabelOverride] pins '47' (guard test in
   // test/screens/tools/educational/ asserts it equals card-count + the bundled
   // JSON `_meta.count` so the number cannot silently drift).
   ToolCategory(
@@ -1124,11 +1124,11 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
     // Material [icon] above if the asset is ever absent from the bundle.
     iconAsset: 'assets/tool-icons/educational-resources.svg',
     exampleToolTitles: <String>['Reference Cards', 'Blogs', 'Podcasts'],
-    // 48 = 11 in-app references (10 PDF cards + Antenna Fundamentals, moved here
-    // 2026-06-06 BF6-3) + 37 online resources (39 − the 2 Wi-Fi Design Day
-    // entries removed 2026-06-06 BF6-21). The count-guard test recomputes this
-    // from the catalog tool count + the bundled JSON `_meta.count`.
-    countLabelOverride: '48',
+    // 47 = 11 in-app references (10 PDF cards + Antenna Fundamentals, moved here
+    // 2026-06-06 BF6-3) + 36 online resources (MackenzieWiFi removed 2026-06-07,
+    // site down). The count-guard test recomputes this from the catalog tool
+    // count + the bundled JSON `_meta.count`.
+    countLabelOverride: '47',
     tools: <ToolEntry>[
       // The 6 PDF reference cards.
       ToolEntry(

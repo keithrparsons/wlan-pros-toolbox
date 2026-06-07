@@ -3,7 +3,7 @@
     "title": "Educational Resources",
     "note": "Educational Resources for the WLAN Pros Toolbox: independent-author and community materials only. Per Keith (2026-06-04) the megavendor/product documentation entries (Apple, Cisco, Aruba/HPE, and the Hamina product docs) are EXCLUDED; the dataset keeps community tools/utilities, independent blogs and experts, podcasts, conference and talk archives, YouTube channels, and training/certification paths. Independent-author entries are included now with permission chased afterward (approval='pending_outreach'); any owner who declines gets removed. Descriptions are Keith's voice (GL-004, SOP-020 PASS). The full vendor-doc set is retained in the source dataset and git history if ever wanted back. Also still held: Wi-Fi For Beginners (site not confirmed live) and frames.bitbucketlabs.com (pending Keith's 1-line description). Curated 2026-06-04. Batch 2026-06-04: appended 5 independent-author entries (SubnetPro, WiFi Analyser, ShankarWiFi, PotatoFi Interactive Spectrum Chart, BadgerWiFi Tools), all approval='pending_outreach'. frames.bitbucketlabs held until ~2026-06-25. 2026-06-06 (BF6-21): removed the two Wi-Fi Design Day entries (Open Reality/Ekahau charge for the videos); they are not kept in the YouTube section.",
     "last_updated": "2026-06-06",
-    "count": 37,
+    "count": 36,
     "topics": [
       "Tools and utilities",
       "Conference and talk archives",
@@ -416,24 +416,6 @@
         "vendor"
       ],
       "approval": "not_required"
-    },
-    {
-      "id": "dest-mackenziewifi",
-      "title": "MackenzieWiFi",
-      "summary": "Peter Mackenzie's analysis-focused blog and career reflections, from a CWAP study guide co-author.",
-      "description": "MackenzieWiFi is the blog of Peter Mackenzie (CWNE #33, CWISE #2), who co-authored the CWAP study guide. The writing leans toward protocol analysis with cert and career reflections from someone who has spent years teaching this material to others.\n\nThe analysis pedigree is the reason to read it. When a CWAP-level author writes about captures, it is worth your time. The cadence is on the slower side, so treat it as a reference collection rather than a frequent read. Free, independent. Best for advanced engineers working toward analysis credentials.",
-      "url": "https://mackenziewifi.com/",
-      "topic": "Independent blogs and experts",
-      "cost": "free",
-      "level": "advanced",
-      "tags": [
-        "destination",
-        "blog",
-        "independent",
-        "cwap",
-        "analysis"
-      ],
-      "approval": "pending_outreach"
     },
     {
       "id": "dest-badfi-archive",
