@@ -202,6 +202,7 @@ dependencies:
   # (project-toolbox-platform-scope). MIT. No network — loads from rootBundle.
   pdfx: ^2.9.2
   device_info_plus: ^12.4.0
+  markdown_widget: ^2.3.2+8
 
   # mDNS / DNS-SD service discovery for the SPIKE-HSD-01 LAN-discovery prototype
   # is provided by an IN-HOUSE native plugin over Apple's Network framework
@@ -229,6 +230,14 @@ dev_dependencies:
   # transitively via geolocator; declared here so the test import is a direct
   # dependency (satisfies depend_on_referenced_packages).
   plugin_platform_interface: ^2.1.8
+
+  # visibility_detector — used ONLY in the guide-reader widget tests to zero
+  # VisibilityDetectorController.updateInterval. markdown_widget wraps each block
+  # in a VisibilityDetector whose periodic timer otherwise leaves a pending
+  # timer at test teardown; zeroing the interval lets the tree settle. Already
+  # present transitively via markdown_widget; declared here so the test import is
+  # a direct dependency (satisfies depend_on_referenced_packages).
+  visibility_detector: ^0.4.0+2
 
   # integration_test — drives widget tests against the REAL platform embedder
   # (here: macOS, via `flutter test -d macos`) so native PDFKit is available.
@@ -428,6 +437,18 @@ flutter:
     # Rendered on a white containment plate (the §8.19 white-tile-on-dark
     # pattern) in the About-screen header; never placed bare on a dark surface.
     - assets/brand/wlan_pros_logo.png
+    # In-app written guides (help-embed, 2026-06-07) — the two narrative guides
+    # rendered natively in the in-app markdown reader (GuideReaderScreen). Plain
+    # `.md` only, NO executable content (App Store 90035-safe). Bundled so they
+    # ship offline with every build — no remote download, no login.
+    #   user-guide.md   — "A Guide for Everyone" (consumer on-ramp; home entry).
+    #   field-manual.md — the professional Field Manual (Educational Resources).
+    # SOURCE OF TRUTH lives in myPKA (treat these as copies; re-copy on edit):
+    #   Deliverables/2026-06-07-toolbox-guides/WLAN-Pros-Toolbox-User-Guide.md
+    #   Deliverables/2026-06-07-toolbox-guides/field-guide-current-v1.1.2/
+    #     WLAN-Pros-Toolbox-Field-Manual.md  (canonical v1.1.2 regen)
+    - assets/guides/user-guide.md
+    - assets/guides/field-manual.md
 
   # Original commented-out scaffold examples removed for clarity.
 

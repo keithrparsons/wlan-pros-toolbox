@@ -24,6 +24,7 @@ import '../../../services/educational/educational_resources_service.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/centered_content.dart';
+import '../../guides/guide_reader_screen.dart';
 import 'educational_resource_detail_screen.dart';
 import 'resource_badges.dart';
 
@@ -183,9 +184,10 @@ class _EducationalResourcesScreenState
       );
     }
 
-    // The total shown in the intro: reference cards + online resources, the
-    // same figure the home tile's countLabelOverride pins.
-    final int total = _cards.length + svc.count;
+    // The total shown in the intro: the in-app Field Manual (1) + reference
+    // cards + online resources. The home tile's countLabelOverride is a pinned
+    // "~N" label, so adding the manual here does not require a tile change.
+    final int total = 1 + _cards.length + svc.count;
 
     final bool filtering = _query.trim().isNotEmpty;
 
@@ -258,6 +260,19 @@ class _EducationalResourcesScreenState
     final bool showTopics = _selectedSection != _kReferenceCardsSection;
 
     final List<Widget> out = <Widget>[];
+
+    // In-app Field Manual (help-embed, 2026-06-07). Keith's decision: the
+    // professional Field Manual lives HERE in Educational Resources (not About,
+    // not Quick Reference). It is a bundled in-app reader entry, not an external
+    // URL, so it leads the directory under its own labeled section when the user
+    // is on "All" (no section filter active).
+    if (_selectedSection == null) {
+      out
+        ..add(const _TopicHeader(topic: 'In-Depth Guide', count: 1))
+        ..add(const SizedBox(height: AppSpacing.xs))
+        ..add(const _FieldManualRow())
+        ..add(const SizedBox(height: AppSpacing.lg));
+    }
 
     if (showCards && _cards.isNotEmpty) {
       out.addAll(_referenceCardWidgets());
@@ -629,6 +644,122 @@ class _ReferenceCardRowState extends State<_ReferenceCardRow> {
                       const SizedBox(height: 2),
                       Text(
                         card.description,
+                        style: text.labelMedium?.copyWith(
+                          color: colors.textTertiary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: AppSpacing.xs),
+                  child: Icon(
+                    Icons.chevron_right,
+                    color: colors.textTertiary,
+                    size: 20,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The in-app Field Manual row (help-embed, 2026-06-07). Opens the professional
+/// Field Manual in the bundled in-app [GuideReaderScreen] (offline, themed, with
+/// section navigation) rather than launching a URL. Mirrors [_ReferenceCardRow]'s
+/// visual register (surface1 card, §8.3 lime focus ring, chevron) with a leading
+/// book glyph and a clear "for professionals" label so it is not mistaken for a
+/// quick reference card.
+class _FieldManualRow extends StatefulWidget {
+  const _FieldManualRow();
+
+  @override
+  State<_FieldManualRow> createState() => _FieldManualRowState();
+}
+
+class _FieldManualRowState extends State<_FieldManualRow> {
+  bool _focused = false;
+
+  void _open() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const GuideReaderScreen(
+          assetPath: kFieldManualAsset,
+          title: 'Field Manual',
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+
+    final Border rowBorder = _focused
+        ? Border.all(
+            color: colors.isLight ? colors.textAccent : colors.primary,
+            width: colors.isLight ? 3 : 2,
+          )
+        : Border.all(
+            color: colors.borderStrong,
+            width: colors.isLight ? 1.5 : 1,
+          );
+
+    return Semantics(
+      container: true,
+      button: true,
+      excludeSemantics: true,
+      label: 'Field Manual. The in-depth technical manual for professionals, '
+          'covering every tool. Opens the manual.',
+      child: Material(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: _open,
+          onFocusChange: (bool f) {
+            if (f != _focused) setState(() => _focused = f);
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              border: rowBorder,
+              borderRadius: BorderRadius.circular(AppRadius.card),
+            ),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.rowPadding,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.only(right: AppSpacing.sm),
+                  child: Icon(
+                    Icons.menu_book_outlined,
+                    color: colors.textAccent,
+                    size: 24,
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        'Field Manual',
+                        style: text.bodyLarge?.copyWith(
+                          color: colors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'The in-depth technical manual for professionals — '
+                        'every tool, what it measures, and how to read it.',
                         style: text.labelMedium?.copyWith(
                           color: colors.textTertiary,
                         ),

@@ -31,6 +31,7 @@ import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 import '../widgets/centered_content.dart';
 import 'category_screen.dart';
+import 'guides/guide_reader_screen.dart';
 import 'tools/educational/educational_resources_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -108,6 +109,26 @@ class _HomeScreenState extends State<HomeScreen> {
                         onTap: () => Navigator.of(context).pushNamed(
                           AppRouter.testMyConnection,
                           arguments: true,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // 1b. Small "A Guide for Everyone" entry (help-embed,
+                  //     2026-06-07). Keith's decision: keep it SMALL — a compact
+                  //     single-row card near the Check My Connection front door,
+                  //     NOT a second hero. Opens the consumer guide in the
+                  //     in-app reader (offline, themed).
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(edge, 0, edge, AppSpacing.md),
+                    sliver: SliverToBoxAdapter(
+                      child: _UserGuideEntry(
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const GuideReaderScreen(
+                              assetPath: kUserGuideAsset,
+                              title: 'A Guide for Everyone',
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -314,6 +335,126 @@ class _HomeSearchFieldState extends State<_HomeSearchField> {
                   ),
                 ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The small "A Guide for Everyone" entry (help-embed, 2026-06-07). A compact
+/// single-row card — leading book glyph, title + one-line subtitle, trailing
+/// chevron — that opens the consumer guide in the in-app [GuideReaderScreen].
+/// Deliberately understated (Keith: keep it small) so it sits under the
+/// "Check My Connection" hero without competing with it. Matches the category
+/// tile / resource-row visual register: surface1, card radius, borderStrong
+/// hairline, §8.3 lime focus ring on keyboard focus, §8.20.2 light shadow.
+class _UserGuideEntry extends StatefulWidget {
+  const _UserGuideEntry({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  State<_UserGuideEntry> createState() => _UserGuideEntryState();
+}
+
+class _UserGuideEntryState extends State<_UserGuideEntry> {
+  bool _focused = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
+
+    final Border border = _focused
+        ? Border.all(
+            color: colors.isLight ? colors.textAccent : colors.primary,
+            width: colors.isLight ? 3 : 2,
+          )
+        : Border.all(
+            color: colors.borderStrong,
+            width: colors.isLight ? 1.5 : 1,
+          );
+
+    final List<BoxShadow>? shadow = (colors.isLight && !_focused)
+        ? const <BoxShadow>[
+            BoxShadow(
+              color: Color(0x14000000), // rgba(0,0,0,0.08)
+              offset: Offset(0, 2),
+              blurRadius: 8,
+            ),
+          ]
+        : null;
+
+    return Semantics(
+      container: true,
+      button: true,
+      excludeSemantics: true,
+      label: 'New here? A Guide for Everyone. A plain-language tour of the app. '
+          'Opens the guide.',
+      child: Material(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        clipBehavior: Clip.antiAlias,
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            boxShadow: shadow,
+          ),
+          child: InkWell(
+            onTap: widget.onTap,
+            onFocusChange: (bool f) {
+              if (f != _focused) setState(() => _focused = f);
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                border: border,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.rowPadding,
+              ),
+              child: Row(
+                children: <Widget>[
+                  Icon(
+                    Icons.menu_book_outlined,
+                    color: colors.textAccent,
+                    size: 24,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          'New here? A Guide for Everyone',
+                          style: text.bodyLarge?.copyWith(
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'A plain-language tour of the app',
+                          style: text.labelMedium?.copyWith(
+                            color: colors.textTertiary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: AppSpacing.xs),
+                    child: Icon(
+                      Icons.chevron_right,
+                      color: colors.textTertiary,
+                      size: 20,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

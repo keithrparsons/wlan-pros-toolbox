@@ -10,8 +10,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
 import 'package:wlan_pros_toolbox/router/app_router.dart';
+import 'package:wlan_pros_toolbox/screens/guides/guide_reader_screen.dart';
 import 'package:wlan_pros_toolbox/screens/home_screen.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
@@ -79,6 +81,32 @@ void main() {
       await tester.tap(find.text('Check My Connection'));
       await tester.pumpAndSettle();
       expect(pushedTest, isTrue);
+    });
+  });
+
+  testWidgets('the "A Guide for Everyone" entry renders and opens the reader', (
+    tester,
+  ) async {
+    // markdown_widget's VisibilityDetector leaves a pending timer otherwise.
+    VisibilityDetectorController.instance.updateInterval = Duration.zero;
+    await _withViewport(tester, const Size(800, 1200), () async {
+      await tester.pumpWidget(_app());
+      await tester.pumpAndSettle();
+
+      // The compact home entry is present (Keith: small, near the front door).
+      expect(find.text('New here? A Guide for Everyone'), findsOneWidget);
+      expect(find.text('A plain-language tour of the app'), findsOneWidget);
+
+      // Tapping it opens the in-app reader on the user guide.
+      await tester.tap(find.text('New here? A Guide for Everyone'));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      final Finder reader = find.byType(GuideReaderScreen);
+      expect(reader, findsOneWidget);
+      expect(
+        tester.widget<GuideReaderScreen>(reader).assetPath,
+        kUserGuideAsset,
+      );
     });
   });
 
