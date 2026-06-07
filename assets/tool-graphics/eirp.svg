@@ -12,10 +12,11 @@
   <path d="M41 108 L41 64 L96 64" stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
   <text x="24" y="86" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle" transform="rotate(-90 24 86)" font-family="DM Mono, monospace">&#8722; loss</text>
 
-  <!-- Antenna element at the feed point (gain added here) -->
-  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Antenna element at the feed point (gain added here) — schematic aerial symbol -->
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
     <line x1="96" y1="48" x2="96" y2="88"/>
-    <path d="M96 48 L88 38 M96 48 L104 38"/>
+    <line x1="90" y1="88" x2="102" y2="88"/>
+    <path d="M96 48 L88 40 M96 48 V36 M96 48 L104 40"/>
   </g>
   <text x="96" y="104" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">+ gain</text>
 

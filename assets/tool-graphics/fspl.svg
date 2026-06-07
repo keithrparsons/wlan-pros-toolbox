@@ -1,17 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
   <!-- Free Space Path Loss: Tx antenna -> weakening wave over distance -> Rx antenna -->
 
-  <!-- Tx antenna (left) -->
-  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Tx antenna (left) — schematic aerial symbol (mast + base + 3 splayed rays) -->
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
     <line x1="34" y1="48" x2="34" y2="104"/>
-    <path d="M34 48 L24 36 M34 48 L44 36"/>
     <line x1="22" y1="104" x2="46" y2="104"/>
+    <path d="M34 48 L26 40 M34 48 V36 M34 48 L42 40"/>
   </g>
-  <!-- Rx antenna (right) -->
-  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Rx antenna (right) — schematic aerial symbol -->
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
     <line x1="286" y1="48" x2="286" y2="104"/>
-    <path d="M286 48 L276 36 M286 48 L296 36"/>
     <line x1="274" y1="104" x2="298" y2="104"/>
+    <path d="M286 48 L278 40 M286 48 V36 M286 48 L294 40"/>
   </g>
 
   <!-- Weakening signal arcs: lime accent = the loss (the measured quantity). Opacity fades with distance. -->

@@ -14,22 +14,21 @@
   <line x1="160" y1="64" x2="160" y2="100" stroke="#A2CC3A" stroke-width="1.5" stroke-linecap="round"/>
   <text x="168" y="86" fill="#A2CC3A" font-size="13" font-weight="500">r</text>
 
-  <!-- Tx antenna (left) -->
-  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Tx antenna (left) — schematic aerial symbol (mast + base + 3 splayed rays) -->
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
     <line x1="44" y1="64" x2="44" y2="130"/>
-    <path d="M44 64 L36 54 M44 64 L52 54"/>
+    <line x1="38" y1="130" x2="50" y2="130"/>
+    <path d="M44 64 L36 56 M44 64 V52 M44 64 L52 56"/>
   </g>
-  <!-- Rx antenna (right) -->
-  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Rx antenna (right) — schematic aerial symbol -->
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
     <line x1="276" y1="64" x2="276" y2="130"/>
-    <path d="M276 64 L268 54 M276 64 L284 54"/>
+    <line x1="270" y1="130" x2="282" y2="130"/>
+    <path d="M276 64 L268 56 M276 64 V52 M276 64 L284 56"/>
   </g>
 
   <!-- Ground line -->
   <line x1="16" y1="130" x2="304" y2="130" stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round"/>
-  <g stroke="#9C9C9C" stroke-width="1" stroke-linecap="round" opacity="0.7">
-    <path d="M24 130 l6 6 M44 130 l6 6 M64 130 l6 6 M256 130 l6 6 M276 130 l6 6 M296 130 l6 6"/>
-  </g>
 
   <!-- Ground clearance gap cue: between ellipse bottom (y=100) and ground (y=130), drawn left of the zone -->
   <g stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round">

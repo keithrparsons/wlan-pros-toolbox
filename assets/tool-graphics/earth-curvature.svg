@@ -1,35 +1,42 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
-  <!-- Earth curvature: a straight line-of-sight chord over a curved earth arc (exaggerated, not to scale).
-       Lime = the bulge height at midpath. -->
+  <!-- Earth bulge: a straight line-of-sight chord between two masts, over a curved
+       earth arc (exaggerated, not to scale). The bulge is the rise of the earth
+       at midpath. Lime = the bulge height, measured AT the curvature, BELOW the
+       line-of-sight (from the LoS chord down to the arc apex). No hatching. -->
 
-  <!-- Curved earth arc (exaggerated bulge), neutral. Endpoints at the two mast bases, bulging up at midpath. -->
-  <path d="M40 132 Q160 70 280 132" stroke="#E5E5E5" stroke-width="2" stroke-linecap="round" fill="none"/>
-  <!-- ground hatching under the arc, sparse -->
-  <g stroke="#9C9C9C" stroke-width="1" stroke-linecap="round" opacity="0.6">
-    <path d="M70 118 l5 7 M120 100 l5 7 M160 94 l5 7 M200 100 l5 7 M250 118 l5 7"/>
-  </g>
+  <!-- Header -->
+  <text x="160" y="18" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">earth bulge over path</text>
 
-  <!-- Two masts standing on the curved surface -->
-  <line x1="40" y1="132" x2="40" y2="52" stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round"/>
-  <line x1="280" y1="132" x2="280" y2="52" stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round"/>
-  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M40 52 L33 43 M40 52 L47 43"/>
-    <path d="M280 52 L273 43 M280 52 L287 43"/>
+  <!-- Curved earth arc (exaggerated bulge), neutral. Endpoints at the two mast bases. -->
+  <path d="M26 138 Q160 64 294 138" stroke="#E5E5E5" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+  <!-- Two masts standing on the curved surface — schematic aerial symbol (mast + base + 3 splayed rays) -->
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- left aerial -->
+    <line x1="26" y1="138" x2="26" y2="60"/>
+    <line x1="20" y1="138" x2="32" y2="138"/>
+    <path d="M26 60 L18 52 M26 60 V48 M26 60 L34 52"/>
+    <!-- right aerial -->
+    <line x1="294" y1="138" x2="294" y2="60"/>
+    <line x1="288" y1="138" x2="300" y2="138"/>
+    <path d="M294 60 L286 52 M294 60 V48 M294 60 L302 52"/>
   </g>
 
   <!-- Straight line-of-sight chord between the two antenna tops (dashed neutral, the "flat" path) -->
-  <line x1="40" y1="52" x2="280" y2="52" stroke="#9C9C9C" stroke-width="1.25" stroke-dasharray="5 4"/>
+  <line x1="26" y1="60" x2="294" y2="60" stroke="#9C9C9C" stroke-width="1.25" stroke-dasharray="5 4"/>
+  <text x="160" y="52" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">line of sight</text>
 
-  <!-- Bulge height at midpath (lime): from the chord (y=52) down to the arc apex (y=70) -->
-  <g stroke="#A2CC3A" stroke-width="2" stroke-linecap="round">
-    <line x1="160" y1="52" x2="160" y2="70"/>
-    <path d="M157 57 L160 52 L163 57 M157 65 L160 70 L163 65"/>
+  <!-- Bulge: the vertical gap AT midpath between the LoS chord (y=60) and the earth arc apex (y=86).
+       It sits at the curvature, below the line of sight. -->
+  <g stroke="#A2CC3A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <line x1="160" y1="60" x2="160" y2="86"/>
+    <!-- arrowheads: pointing up to the LoS and down to the arc apex -->
+    <path d="M156 65 L160 60 L164 65"/>
+    <path d="M156 81 L160 86 L164 81"/>
   </g>
-  <circle cx="160" cy="70" r="2.5" fill="#A2CC3A"/>
-  <text x="170" y="66" fill="#A2CC3A" font-size="12" font-weight="500">bulge</text>
+  <circle cx="160" cy="86" r="2.5" fill="#A2CC3A"/>
+  <text x="170" y="78" fill="#A2CC3A" font-size="12" font-weight="500" text-anchor="start">bulge</text>
 
-  <!-- Header -->
-  <text x="160" y="20" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">earth bulge over path</text>
   <!-- Footer note -->
-  <text x="160" y="152" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">exaggerated, not to scale</text>
+  <text x="160" y="154" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">exaggerated, not to scale</text>
 </svg>
