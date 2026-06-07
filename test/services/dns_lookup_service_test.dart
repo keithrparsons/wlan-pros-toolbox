@@ -10,7 +10,7 @@ void main() {
   group('lookup result states', () {
     test('returns records on success', () async {
       final DnsLookupService svc = DnsLookupService(
-        resolver: (name, type, {required provider}) async => <RRecord>[
+        resolver: (name, type, {required resolver}) async => <RRecord>[
           RRecord(name: 'example.com', rType: 1, ttl: 300, data: '93.184.216.34'),
         ],
       );
@@ -27,7 +27,7 @@ void main() {
 
     test('null resolver response → empty state (not error)', () async {
       final DnsLookupService svc = DnsLookupService(
-        resolver: (name, type, {required provider}) async => null,
+        resolver: (name, type, {required resolver}) async => null,
       );
       final DnsLookupResult r = await svc.lookup(
         rawQuery: 'no-records.example',
@@ -39,7 +39,7 @@ void main() {
 
     test('empty list response → empty state', () async {
       final DnsLookupService svc = DnsLookupService(
-        resolver: (name, type, {required provider}) async => <RRecord>[],
+        resolver: (name, type, {required resolver}) async => <RRecord>[],
       );
       final DnsLookupResult r = await svc.lookup(
         rawQuery: 'example.com',
@@ -50,7 +50,7 @@ void main() {
 
     test('resolver throwing → error state with message', () async {
       final DnsLookupService svc = DnsLookupService(
-        resolver: (name, type, {required provider}) async =>
+        resolver: (name, type, {required resolver}) async =>
             throw Exception('network down'),
       );
       final DnsLookupResult r = await svc.lookup(
@@ -64,7 +64,7 @@ void main() {
     test('blank query → validation error before any resolve', () async {
       bool called = false;
       final DnsLookupService svc = DnsLookupService(
-        resolver: (name, type, {required provider}) async {
+        resolver: (name, type, {required resolver}) async {
           called = true;
           return <RRecord>[];
         },
@@ -80,7 +80,7 @@ void main() {
     test('IPv4 PTR queries the in-addr.arpa name', () async {
       String? queried;
       final DnsLookupService svc = DnsLookupService(
-        resolver: (name, type, {required provider}) async {
+        resolver: (name, type, {required resolver}) async {
           queried = name;
           return <RRecord>[
             RRecord(name: name, rType: 12, ttl: 60, data: 'dns.google'),
@@ -99,7 +99,7 @@ void main() {
         () async {
       bool called = false;
       final DnsLookupService svc = DnsLookupService(
-        resolver: (name, type, {required provider}) async {
+        resolver: (name, type, {required resolver}) async {
           called = true;
           return <RRecord>[];
         },
@@ -115,7 +115,7 @@ void main() {
     test('IPv6 PTR builds a nibble-reversed ip6.arpa name', () async {
       String? queried;
       final DnsLookupService svc = DnsLookupService(
-        resolver: (name, type, {required provider}) async {
+        resolver: (name, type, {required resolver}) async {
           queried = name;
           return <RRecord>[];
         },
@@ -126,6 +126,77 @@ void main() {
       expect(queried!.split('.').length, 32 + 2);
       // Last nibble of the address (8) becomes the first label.
       expect(queried!.startsWith('8.'), isTrue);
+    });
+  });
+
+  group('resolver selection', () {
+    test('three resolvers are offered: Google, Cloudflare, Quad9', () {
+      expect(DohResolver.values, <DohResolver>[
+        DohResolver.google,
+        DohResolver.cloudflare,
+        DohResolver.quad9,
+      ]);
+    });
+
+    test('each resolver carries an IP-tagged label', () {
+      expect(DohResolver.google.label, 'Google (8.8.8.8)');
+      expect(DohResolver.cloudflare.label, 'Cloudflare (1.1.1.1)');
+      expect(DohResolver.quad9.label, 'Quad9 (9.9.9.9)');
+    });
+
+    test('Google/Cloudflare map to a basic_utils provider; Quad9 does not', () {
+      expect(DohResolver.google.provider, DnsApiProvider.GOOGLE);
+      expect(DohResolver.cloudflare.provider, DnsApiProvider.CLOUDFLARE);
+      // Quad9 is not a basic_utils provider — reading .provider must fail loud
+      // rather than silently fall back to Google.
+      expect(() => DohResolver.quad9.provider, throwsStateError);
+    });
+
+    test('only Quad9 exposes a direct JSON DoH endpoint (HTTPS, keyless)', () {
+      expect(DohResolver.google.jsonEndpoint, isNull);
+      expect(DohResolver.cloudflare.jsonEndpoint, isNull);
+      expect(DohResolver.quad9.jsonEndpoint,
+          'https://dns.quad9.net:5053/dns-query');
+      // GL-008: HTTPS only.
+      expect(DohResolver.quad9.jsonEndpoint!.startsWith('https://'), isTrue);
+    });
+
+    test('the selected resolver is threaded to the resolver seam', () async {
+      DohResolver? seen;
+      final DnsLookupService svc = DnsLookupService(
+        resolver: (name, type, {required resolver}) async {
+          seen = resolver;
+          return <RRecord>[
+            RRecord(name: 'example.com', rType: 1, ttl: 60, data: '9.9.9.9'),
+          ];
+        },
+      );
+      final DnsLookupResult r = await svc.lookup(
+        rawQuery: 'example.com',
+        type: DnsRecordType.a,
+        resolver: DohResolver.quad9,
+      );
+      expect(seen, DohResolver.quad9);
+      // The result echoes the resolver it ran against (drives the summary line).
+      expect(r.resolver, DohResolver.quad9);
+      expect(r.records.single.data, '9.9.9.9');
+    });
+
+    test('a Quad9 query that resolves nothing is the empty state, not an error',
+        () async {
+      // Quad9 returns no answer for a blocked/malicious domain. That is the
+      // honest empty result (GL-005), never a synthesized failure.
+      final DnsLookupService svc = DnsLookupService(
+        resolver: (name, type, {required resolver}) async => null,
+      );
+      final DnsLookupResult r = await svc.lookup(
+        rawQuery: 'malware.example',
+        type: DnsRecordType.a,
+        resolver: DohResolver.quad9,
+      );
+      expect(r.isError, isFalse);
+      expect(r.isEmpty, isTrue);
+      expect(r.resolver, DohResolver.quad9);
     });
   });
 
@@ -175,7 +246,7 @@ void main() {
 
     test('end-to-end SRV lookup keeps the wire data on the record', () async {
       final DnsLookupService svc = DnsLookupService(
-        resolver: (name, type, {required provider}) async => <RRecord>[
+        resolver: (name, type, {required resolver}) async => <RRecord>[
           RRecord(
             name: '_sip._tcp.example.com',
             rType: 33,
@@ -227,7 +298,7 @@ void main() {
 
     test('end-to-end CAA lookup labels the row CAA', () async {
       final DnsLookupService svc = DnsLookupService(
-        resolver: (name, type, {required provider}) async => <RRecord>[
+        resolver: (name, type, {required resolver}) async => <RRecord>[
           RRecord(
             name: 'example.com',
             rType: 257,
@@ -249,7 +320,7 @@ void main() {
     test('SPF query targets TXT and keeps only the v=spf1 line', () async {
       RRecordType? wireType;
       final DnsLookupService svc = DnsLookupService(
-        resolver: (name, type, {required provider}) async {
+        resolver: (name, type, {required resolver}) async {
           wireType = type;
           return <RRecord>[
             RRecord(
@@ -281,7 +352,7 @@ void main() {
 
     test('no SPF policy among TXT records → empty state, not error', () async {
       final DnsLookupService svc = DnsLookupService(
-        resolver: (name, type, {required provider}) async => <RRecord>[
+        resolver: (name, type, {required resolver}) async => <RRecord>[
           RRecord(
             name: 'example.com',
             rType: 16,
@@ -300,7 +371,7 @@ void main() {
 
     test('joins multi-chunk quoted TXT into one SPF string', () async {
       final DnsLookupService svc = DnsLookupService(
-        resolver: (name, type, {required provider}) async => <RRecord>[
+        resolver: (name, type, {required resolver}) async => <RRecord>[
           RRecord(
             name: 'example.com',
             rType: 16,
@@ -338,7 +409,7 @@ void main() {
 
     test('returns one section per type, in dig order', () async {
       final DnsLookupService svc = DnsLookupService(
-        resolver: (name, type, {required provider}) async => <RRecord>[],
+        resolver: (name, type, {required resolver}) async => <RRecord>[],
       );
       final DnsDigResult dig = await svc.lookupAll(rawQuery: 'example.com');
       expect(dig.sections.length, DnsLookupService.digTypeOrder.length);
@@ -350,7 +421,7 @@ void main() {
 
     test('aggregates records across types and counts them', () async {
       final DnsLookupService svc = DnsLookupService(
-        resolver: (name, type, {required provider}) async {
+        resolver: (name, type, {required resolver}) async {
           switch (type) {
             case RRecordType.A:
               return <RRecord>[
@@ -383,7 +454,7 @@ void main() {
 
     test('all types empty → isAllEmpty (not an error)', () async {
       final DnsLookupService svc = DnsLookupService(
-        resolver: (name, type, {required provider}) async => null,
+        resolver: (name, type, {required resolver}) async => null,
       );
       final DnsDigResult dig = await svc.lookupAll(rawQuery: 'nothing.example');
       expect(dig.isError, isFalse);
@@ -395,7 +466,7 @@ void main() {
     test('a per-type failure is isolated, other records still resolve',
         () async {
       final DnsLookupService svc = DnsLookupService(
-        resolver: (name, type, {required provider}) async {
+        resolver: (name, type, {required resolver}) async {
           if (type == RRecordType.TXT) {
             throw Exception('TXT path blocked');
           }
@@ -423,7 +494,7 @@ void main() {
         () async {
       bool called = false;
       final DnsLookupService svc = DnsLookupService(
-        resolver: (name, type, {required provider}) async {
+        resolver: (name, type, {required resolver}) async {
           called = true;
           return <RRecord>[];
         },

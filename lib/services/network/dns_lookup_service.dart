@@ -163,15 +163,56 @@ class CaaData {
 }
 
 /// Which public DoH resolver to query. Failover target if one is blocked.
-enum DohResolver { google, cloudflare }
+///
+/// Quad9 (9.9.9.9) is a security/malware-filtering resolver: it refuses to
+/// resolve domains on its threat-intel blocklists, so a name that resolves on
+/// Google/Cloudflare but comes back empty on Quad9 is a signal the domain is
+/// flagged as malicious. That is a feature for a Wi-Fi pro vetting a network,
+/// not a bug — the empty state is the honest answer (GL-005), and the help
+/// entry documents the filtering so the result is never misread as a lookup
+/// failure.
+enum DohResolver { google, cloudflare, quad9 }
 
 extension DohResolverProvider on DohResolver {
-  DnsApiProvider get provider => this == DohResolver.google
-      ? DnsApiProvider.GOOGLE
-      : DnsApiProvider.CLOUDFLARE;
+  /// The `basic_utils` provider for Google/Cloudflare. Quad9 has no
+  /// `DnsApiProvider` (the package only ships Google + Cloudflare), so it is
+  /// resolved directly against its JSON DoH endpoint — see [DohResolverEndpoint]
+  /// and the service's default resolver. Reading `.provider` on Quad9 throws so
+  /// a wrong code path fails loud rather than silently querying Google.
+  DnsApiProvider get provider {
+    switch (this) {
+      case DohResolver.google:
+        return DnsApiProvider.GOOGLE;
+      case DohResolver.cloudflare:
+        return DnsApiProvider.CLOUDFLARE;
+      case DohResolver.quad9:
+        throw StateError(
+          'Quad9 has no basic_utils DnsApiProvider; resolve it via its '
+          'JSON DoH endpoint instead.',
+        );
+    }
+  }
 
-  String get label =>
-      this == DohResolver.google ? 'Google (8.8.8.8)' : 'Cloudflare (1.1.1.1)';
+  String get label {
+    switch (this) {
+      case DohResolver.google:
+        return 'Google (8.8.8.8)';
+      case DohResolver.cloudflare:
+        return 'Cloudflare (1.1.1.1)';
+      case DohResolver.quad9:
+        return 'Quad9 (9.9.9.9)';
+    }
+  }
+}
+
+extension DohResolverEndpoint on DohResolver {
+  /// Quad9's JSON DoH endpoint (Google/Cloudflare-compatible `application/
+  /// dns-json` GET API). Port 5053 serves the JSON API; the 443 `/dns-query`
+  /// path is RFC 8484 wireformat, which this tool does not speak. HTTPS only,
+  /// keyless — satisfies GL-008 (no cleartext, no key to leak). Null for the
+  /// resolvers that `basic_utils` already routes via [DnsApiProvider].
+  String? get jsonEndpoint =>
+      this == DohResolver.quad9 ? 'https://dns.quad9.net:5053/dns-query' : null;
 }
 
 /// One resolved record row.
@@ -329,22 +370,54 @@ class DnsLookupService {
     Future<List<RRecord>?> Function(
       String name,
       RRecordType type, {
-      required DnsApiProvider provider,
+      required DohResolver resolver,
     })? resolver,
   }) : _resolve = resolver ?? _defaultResolve;
 
+  // The injected seam routes by the app's own [DohResolver] (not the package's
+  // [DnsApiProvider]) so all three resolvers — including Quad9, which has no
+  // DnsApiProvider — share one path that tests can fake. The default
+  // implementation maps each resolver to its transport.
   final Future<List<RRecord>?> Function(
     String name,
     RRecordType type, {
-    required DnsApiProvider provider,
+    required DohResolver resolver,
   }) _resolve;
 
   static Future<List<RRecord>?> _defaultResolve(
     String name,
     RRecordType type, {
-    required DnsApiProvider provider,
+    required DohResolver resolver,
   }) {
-    return DnsUtils.lookupRecord(name, type, provider: provider);
+    // Quad9 isn't a basic_utils DnsApiProvider, so issue the same JSON DoH GET
+    // the package makes (name/type/dnssec params, Accept: application/dns-json),
+    // then parse with the package's own ResolveResponse so the RRecord shape is
+    // identical to the Google/Cloudflare path. HTTPS only, keyless (GL-008).
+    final String? endpoint = resolver.jsonEndpoint;
+    if (endpoint != null) {
+      return _resolveViaJson(name, type, endpoint);
+    }
+    return DnsUtils.lookupRecord(name, type, provider: resolver.provider);
+  }
+
+  /// Direct JSON-DoH resolve for resolvers `basic_utils` does not ship (Quad9).
+  /// Mirrors `DnsUtils.lookupRecord`'s request exactly so the answer parses the
+  /// same way.
+  static Future<List<RRecord>?> _resolveViaJson(
+    String name,
+    RRecordType type,
+    String endpoint,
+  ) async {
+    final Map<String, dynamic> body = await HttpUtils.getForJson(
+      endpoint,
+      queryParameters: <String, dynamic>{
+        'name': name,
+        'type': DnsUtils.rRecordTypeToInt(type).toString(),
+        'dnssec': 'false',
+      },
+      headers: <String, String>{'Accept': 'application/dns-json'},
+    );
+    return ResolveResponse.fromJson(body).answer;
   }
 
   /// Resolve [rawQuery] for [type] against [resolver].
@@ -385,7 +458,7 @@ class DnsLookupService {
       final List<RRecord>? raw = await _resolve(
         queryName,
         type.rrType,
-        provider: resolver.provider,
+        resolver: resolver,
       );
 
       if (raw == null || raw.isEmpty) {
