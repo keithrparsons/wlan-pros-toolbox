@@ -75,21 +75,34 @@ class _HomeScreenState extends State<HomeScreen> {
         top: false,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            // Breakpoints are driven by the CONTENT-column width (capped by
-            // CenteredContent), not the raw viewport.
-            final double width =
-                constraints.maxWidth > AppSpacing.contentMaxWidth
-                ? AppSpacing.contentMaxWidth
+            // The TILE GRID is allowed to stretch to the wider gridMaxWidth so a
+            // desktop window fills with 3/4 columns instead of stranding ~2
+            // centered columns in big side margins (Kjetil desktop beta finding,
+            // 2026-06-07). The grid's breakpoints (gridCrossAxisCountFor) are
+            // driven by this wider GRID-column width — capping at contentMaxWidth
+            // (680) here is exactly what made the 3-col (≥720) and 4-col (≥1100)
+            // paths unreachable on desktop.
+            final double gridWidth =
+                constraints.maxWidth > AppSpacing.gridMaxWidth
+                ? AppSpacing.gridMaxWidth
                 : constraints.maxWidth;
-            final bool isDesktop = width >= HomeScreen._desktopBreakpoint;
+            // Edge padding still keys off the raw viewport (desktop vs mobile).
+            final bool isDesktop =
+                constraints.maxWidth >= HomeScreen._desktopBreakpoint;
             final double edge = isDesktop
                 ? AppSpacing.screenEdgeDesktop
                 : AppSpacing.screenEdgeMobile;
-            final int crossAxisCount = _crossAxisCountFor(width);
+            final int crossAxisCount =
+                AppSpacing.gridCrossAxisCountFor(gridWidth);
             final double tileHeight =
-                _tileHeightFor(width, light: context.colors.isLight);
+                _tileHeightFor(gridWidth, light: context.colors.isLight);
 
+            // The grid uses the wide gridMaxWidth column. Long-form reading and
+            // single-column surfaces (the hero, the guide entry, the search
+            // trigger) stay capped at the readable contentMaxWidth (680) so they
+            // don't stretch full-width on desktop — only the tile grid widens.
             return CenteredContent(
+              maxWidth: AppSpacing.gridMaxWidth,
               child: CustomScrollView(
                 slivers: <Widget>[
                   // 1. Consumer hero — "Check My Connection" (Option A front door).
@@ -101,14 +114,16 @@ class _HomeScreenState extends State<HomeScreen> {
                       AppSpacing.md,
                     ),
                     sliver: SliverToBoxAdapter(
-                      child: _ConnectionHeroCard(
-                        // Auto-run the check on arrival so the consumer hero is
-                        // a single tap (not "tap here, then tap again"). The
-                        // route reads this argument to set autoStart; the plain
-                        // tool tile pushes without it and stays tap-to-run.
-                        onTap: () => Navigator.of(context).pushNamed(
-                          AppRouter.testMyConnection,
-                          arguments: true,
+                      child: CenteredContent(
+                        child: _ConnectionHeroCard(
+                          // Auto-run the check on arrival so the consumer hero
+                          // is a single tap (not "tap here, then tap again").
+                          // The route reads this argument to set autoStart; the
+                          // plain tool tile pushes without it (stays tap-to-run).
+                          onTap: () => Navigator.of(context).pushNamed(
+                            AppRouter.testMyConnection,
+                            arguments: true,
+                          ),
                         ),
                       ),
                     ),
@@ -121,12 +136,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   SliverPadding(
                     padding: EdgeInsets.fromLTRB(edge, 0, edge, AppSpacing.md),
                     sliver: SliverToBoxAdapter(
-                      child: _UserGuideEntry(
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const GuideReaderScreen(
-                              assetPath: kUserGuideAsset,
-                              title: 'A Guide for Everyone',
+                      child: CenteredContent(
+                        child: _UserGuideEntry(
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const GuideReaderScreen(
+                                assetPath: kUserGuideAsset,
+                                title: 'A Guide for Everyone',
+                              ),
                             ),
                           ),
                         ),
@@ -175,9 +192,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       AppSpacing.md,
                     ),
                     sliver: SliverToBoxAdapter(
-                      child: _HomeSearchField(
-                        onTap: () => Navigator.of(context)
-                            .pushNamed(AppRouter.search),
+                      child: CenteredContent(
+                        child: _HomeSearchField(
+                          onTap: () => Navigator.of(context)
+                              .pushNamed(AppRouter.search),
+                        ),
                       ),
                     ),
                   ),
@@ -214,16 +233,6 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     });
   }
-
-  int _crossAxisCountFor(double width) {
-    if (width >= 1100) return 4;
-    if (width >= 720) return 3;
-    if (width >= _singleColumnBreakpoint) return 2;
-    return 1;
-  }
-
-  /// Below this width the grid drops from 2 columns to 1 (Vera web-demo gate).
-  static const double _singleColumnBreakpoint = 440;
 
   /// Fixed tile HEIGHT per layout. The tile content is TOP-ALIGNED with a fixed
   /// icon→title gap (no Spacer), so the height is sized to the compact content —
@@ -268,7 +277,8 @@ class _HomeScreenState extends State<HomeScreen> {
   ///     same margin and keep the no-overflow gate green (144 → 156 phone,
   ///     172 → 184 multi-column). Dark is unchanged.
   double _tileHeightFor(double width, {required bool light}) {
-    final double base = width < _singleColumnBreakpoint ? 144 : 172;
+    final double base =
+        width < AppSpacing.gridTwoColBreakpoint ? 144 : 172;
     return light ? base + 12 : base;
   }
 }
