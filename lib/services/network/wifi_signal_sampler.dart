@@ -100,6 +100,22 @@ class WifiSignalSampler extends ChangeNotifier {
   late final WifiTimeSeries _series;
   bool _disposed = false;
 
+  /// True only after [start] was deliberately invoked in THIS screen session.
+  ///
+  /// Why this exists (iOS first-run bug, 2026-06-07): the underlying
+  /// [WifiMonitorController.load] resumes its phase to `streaming` whenever the
+  /// persisted App Group monitoring flag is still set — a flag that can be left
+  /// stale `true` when a prior session's looping companion Shortcut was killed
+  /// without a clean Stop (the flag is only cleared by [stop], not by dispose).
+  /// On that resume the controller merely re-subscribes passively; it does NOT
+  /// re-fire the recursive Shortcut, so no producer exists and no sample ever
+  /// arrives. The Test My Connection live card read `isStreaming` alone and so
+  /// rendered a "LIVE" header with nothing behind it — the dead/stuck first-run
+  /// state Keith hit. Gating the live presentation on a real in-session [start]
+  /// (this flag) makes the card show the actionable Start control instead, with
+  /// no auto-fire (the Shortcut still only runs on the user's deliberate tap).
+  bool _startedThisSession = false;
+
   /// The rolling 30s window of RF samples that feeds the sparklines.
   WifiTimeSeries get series => _series;
 
@@ -128,9 +144,19 @@ class WifiSignalSampler extends ChangeNotifier {
     }
   }
 
-  /// True while the iOS live stream is running. Always false on macOS (which
-  /// auto-polls with no Start/Stop) and on unsupported platforms.
-  bool get isStreaming => _controller?.isStreaming ?? false;
+  /// True while the iOS live stream is running AS A RESULT OF A DELIBERATE,
+  /// IN-SESSION [start]. Always false on macOS (which auto-polls with no
+  /// Start/Stop) and on unsupported platforms.
+  ///
+  /// This is intentionally NOT a bare passthrough of the controller phase. A
+  /// stale persisted monitoring flag can resume the controller to its
+  /// `streaming` phase on [load] with no live producer behind it (see
+  /// [_startedThisSession]); reporting that as "streaming" is what produced the
+  /// dead "LIVE" first-run card. We only report streaming once the user has
+  /// actually started the feed this session, so the card falls back to the
+  /// actionable Start control whenever the feed is not genuinely live.
+  bool get isStreaming =>
+      _startedThisSession && (_controller?.isStreaming ?? false);
 
   /// Wall-clock time of the most recent iOS payload, for the "Updated" stamp.
   DateTime? get lastUpdated => _controller?.lastUpdated;
@@ -147,6 +173,7 @@ class WifiSignalSampler extends ChangeNotifier {
   /// the auto-poll; on iOS it raises the monitoring flag and fires the trigger
   /// once. Idempotent on macOS (re-arming cancels any prior timer first).
   Future<void> start() async {
+    _startedThisSession = true;
     switch (source) {
       case WifiInfoSource.macosCoreWlan:
         await _pollMac(); // seed
@@ -177,7 +204,20 @@ class WifiSignalSampler extends ChangeNotifier {
   /// No-op on macOS. Call on first build and on app resume.
   Future<void> load() async {
     if (source == WifiInfoSource.iosShortcuts) {
-      await _controller?.load();
+      final WifiMonitorController? c = _controller;
+      if (c == null) return;
+      await c.load();
+      // If load() resumed the controller to `streaming` purely from a stale
+      // persisted monitoring flag (no deliberate in-session start, so no live
+      // producer), tear that phantom stream down and clear the flag. This is
+      // the iOS first-run fix: without it the card would read `isStreaming` and
+      // render a dead "LIVE" header with no data behind it. We do NOT auto-fire
+      // the Shortcut here — we drop back to the honest idle state so the card
+      // shows the actionable Start control, which the user taps to begin.
+      if (!_startedThisSession && c.isStreaming) {
+        await c.stopMonitoring();
+        _safeNotify();
+      }
     }
   }
 
@@ -185,6 +225,7 @@ class WifiSignalSampler extends ChangeNotifier {
   /// values stay on screen); on iOS it clears the monitoring flag so the
   /// looping Shortcut halts and freezes the last values.
   Future<void> stop() async {
+    _startedThisSession = false;
     switch (source) {
       case WifiInfoSource.macosCoreWlan:
         _stopMacPoll();

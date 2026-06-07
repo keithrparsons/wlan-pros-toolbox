@@ -38,6 +38,7 @@ import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_signal_sampler.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
 /// macOS sample: Tx 866 present, Rx NOT exposed by public CoreWLAN, SNR 45.
@@ -333,6 +334,48 @@ class _SlowLinkMacAdapter implements WifiInfoAdapter {
   Future<bool> currentNameAuthorization() async => true;
   @override
   Future<bool> openNamePermissionSettings() async => true;
+}
+
+/// iOS bridge modeling the FIRST-RUN stuck condition: a payload was received
+/// before AND a STALE App Group monitoring flag is still set `true` (a prior
+/// session's loop was killed without a clean Stop). No live producer exists. The
+/// live card must still present the actionable Start, never a dead "LIVE".
+class _StaleFlagBridge implements WiFiDetailsBridge {
+  bool monitoringFlag = true;
+  int runShortcutCalls = 0;
+  String? lastRunShortcutName;
+
+  @override
+  Future<bool> hasEverReceivedPayload() async => true;
+  @override
+  Future<WiFiDetails?> readLatest() async => const WiFiDetails(
+    ssid: 'KeithNet',
+    bssid: 'a4:83:e7:00:11:22',
+    channel: 36,
+    rssi: -58,
+    noise: -90,
+    standard: '802.11ax - Wi-Fi 6',
+    rxRate: 780,
+    txRate: 866,
+  );
+  @override
+  Future<bool> isMonitoringActive() async => monitoringFlag;
+  @override
+  Future<void> setMonitoringActive(bool active) async {
+    monitoringFlag = active;
+  }
+
+  @override
+  Future<bool> openUrl(String url) async => true;
+  @override
+  Future<bool> runShortcut(String name) async {
+    runShortcutCalls++;
+    lastRunShortcutName = name;
+    return true;
+  }
+
+  @override
+  Stream<WiFiDetails> get updates => const Stream<WiFiDetails>.empty();
 }
 
 void main() {
@@ -955,4 +998,85 @@ void main() {
       );
     }
   }
+
+  // ---- iOS first-run live-card fix (2026-06-07) -------------------------------
+  //
+  // Reproduces Keith's beta 1.1.3 bug: the FIRST run rendered a "LIVE" header in
+  // the Wi-Fi signal card with nothing behind it because a stale persisted
+  // monitoring flag resumed the controller to `streaming` with no producer. The
+  // fix makes the live state honest (in-session start required), so the card
+  // shows the actionable Start, and tapping it fires the Shortcut.
+  group('iOS first-run Wi-Fi signal card', () {
+    testWidgets(
+      'first run with a STALE monitoring flag shows the actionable Start '
+      'control, not a stuck LIVE state',
+      (tester) async {
+        final bridge = _StaleFlagBridge();
+        final sampler = WifiSignalSampler(
+          source: WifiInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        );
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              sourceOverride: WifiInfoSource.iosShortcuts,
+              iosBridge: bridge,
+              sampler: sampler,
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+
+        // The live card is in the result detail. It must present Start, never a
+        // dead LIVE header with no data behind it.
+        expect(find.text('Start'), findsOneWidget);
+        expect(find.text('LIVE'), findsNothing);
+        // No Shortcut fired yet (no auto-fire on load — the bounce gotcha).
+        expect(bridge.runShortcutCalls, 0);
+      },
+    );
+
+    testWidgets(
+      'tapping Start fires the companion Shortcut and flips the card to LIVE',
+      (tester) async {
+        final bridge = _StaleFlagBridge();
+        final sampler = WifiSignalSampler(
+          source: WifiInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        );
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              sourceOverride: WifiInfoSource.iosShortcuts,
+              iosBridge: bridge,
+              sampler: sampler,
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+
+        // The live card sits deep in the scroll view; bring Start into the
+        // viewport before tapping so the gesture lands on the button.
+        await tester.ensureVisible(find.text('Start'));
+        await tester.pumpAndSettle();
+        // Tap Start, then let the async start() chain (flag write → runShortcut →
+        // notify) flush before asserting.
+        await tester.tap(find.text('Start'));
+        await tester.pumpAndSettle();
+
+        // The deliberate tap fired the Shortcut exactly once and the card is now
+        // genuinely live.
+        expect(bridge.runShortcutCalls, 1);
+        expect(sampler.isStreaming, isTrue);
+        expect(find.text('LIVE'), findsOneWidget);
+        expect(find.text('Start'), findsNothing);
+      },
+    );
+  });
 }
