@@ -61,6 +61,22 @@ const String kWifiToolsComparisonAsset =
 class WifiToolsComparisonScreen extends StatefulWidget {
   const WifiToolsComparisonScreen({super.key, this.service, this.launcher});
 
+  /// Intro line for the "Typical professional toolkit" roll-up — a neutral
+  /// description in the same register as the activity intros (BF6-15: the
+  /// section previously carried only a heading). States what the roll-up is
+  /// without ranking or recommending.
+  static const String toolkitIntro =
+      'A representative bundle a working professional might carry across all '
+      'four activities, with its modeled three-year cost of ownership. '
+      'Illustrative, not a recommendation.';
+
+  /// Intro line for the "Vendors" section (BF6-15: the last section had no
+  /// description). Neutral, matching the activity-intro style.
+  static const String vendorsIntro =
+      'The vendors referenced above, with a neutral capability summary and '
+      'links to their own site and documentation. Listed alphabetically, not '
+      'ranked.';
+
   /// Inject a pre-built service to bypass the asset load in widget tests.
   final WifiToolsComparisonService? service;
 
@@ -335,11 +351,15 @@ class _WifiToolsComparisonScreenState extends State<WifiToolsComparisonScreen> {
             const SizedBox(height: AppSpacing.lg),
             _SectionHeading(label: 'Typical professional toolkit'),
             const SizedBox(height: AppSpacing.xs),
+            _SectionIntro(text: WifiToolsComparisonScreen.toolkitIntro),
+            const SizedBox(height: AppSpacing.xs),
             _ToolkitTable(meta: svc.meta, rows: svc.toolkits),
           ],
           if (svc.vendors.isNotEmpty) ...<Widget>[
             const SizedBox(height: AppSpacing.lg),
             _SectionHeading(label: 'Vendors'),
+            const SizedBox(height: AppSpacing.xs),
+            _SectionIntro(text: WifiToolsComparisonScreen.vendorsIntro),
             const SizedBox(height: AppSpacing.xs),
             ...svc.vendors.map(
               (WifiToolVendor v) =>
@@ -940,7 +960,9 @@ class _LinkChip extends StatelessWidget {
 }
 
 /// A section heading with a short lime underbar accent and an optional trailing
-/// count.
+/// count. BF6-14: the category/section headings stand out — rendered at the
+/// larger `headlineSmall` (H3, §8.5) in the lime accent so they read clearly
+/// above their config cards, not as just-bigger body text.
 class _SectionHeading extends StatelessWidget {
   const _SectionHeading({required this.label, this.count});
 
@@ -958,9 +980,12 @@ class _SectionHeading extends StatelessWidget {
           Flexible(
             child: Text(
               label,
-              style: (t.titleMedium ?? const TextStyle()).copyWith(
-                color: colors.textPrimary,
-                fontWeight: FontWeight.w600,
+              // BF6-14: larger (H3 headlineSmall) + lime accent so the activity
+              // categories visibly lead their groups. textAccent = lime in dark,
+              // darkened-lime in light (§8.20.2), AA-safe as heading text.
+              style: (t.headlineSmall ?? const TextStyle()).copyWith(
+                color: colors.textAccent,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
@@ -982,6 +1007,25 @@ class _SectionHeading extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// A neutral one-paragraph section intro, styled exactly like the activity
+/// intros (bodySmall / textSecondary) so the toolkit and vendor sections read as
+/// siblings of the activity categories (BF6-15).
+class _SectionIntro extends StatelessWidget {
+  const _SectionIntro({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme t = Theme.of(context).textTheme;
+    return Text(
+      text,
+      style: t.bodySmall?.copyWith(color: colors.textSecondary),
     );
   }
 }

@@ -1718,6 +1718,8 @@ class _Block extends StatelessWidget {
         height: _kBlockH,
         margin: const EdgeInsets.only(right: _kGap),
         alignment: Alignment.center,
+        // Small horizontal inset so the label never butts the rounded border.
+        padding: const EdgeInsets.symmetric(horizontal: 2),
         decoration: BoxDecoration(
           color: blockFill,
           borderRadius: BorderRadius.circular(AppRadius.control),
@@ -1728,13 +1730,22 @@ class _Block extends StatelessWidget {
             // marked by its label suffix and a lighter fill. (PWA dashed = alt.)
           ),
         ),
-        child: Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: mono.inlineCode.copyWith(
-            color: colors.textPrimary,
-            fontWeight: FontWeight.w500,
+        // BF6-7: a 3-digit center channel (100–233) in the narrow single-slot
+        // (20 MHz) bonded cell was clipping/ellipsizing at the uniform 16px DM
+        // Mono size. FittedBox scaleDown guarantees the full label fits any
+        // cell width — it only shrinks when the text would otherwise overflow
+        // (3-digit labels in a 40px slot), leaving wider bonded blocks
+        // unaffected — so no channel number is ever truncated, light or dark.
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label,
+            maxLines: 1,
+            softWrap: false,
+            style: mono.inlineCode.copyWith(
+              color: colors.textPrimary,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
       ),

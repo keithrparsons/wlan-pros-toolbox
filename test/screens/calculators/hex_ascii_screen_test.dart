@@ -47,6 +47,38 @@ void main() {
     });
   });
 
+  group('HexAsciiConvert — ASCII conversion (BF5-17)', () {
+    test('a single printable glyph parses to its code point', () {
+      expect(HexAsciiConvert.parseAscii('A'), BigInt.from(65));
+      expect(HexAsciiConvert.parseAscii(' '), BigInt.from(32));
+      expect(HexAsciiConvert.parseAscii('~'), BigInt.from(126));
+      expect(HexAsciiConvert.parseAscii('|'), BigInt.from(124));
+    });
+
+    test('non-single / non-printable input parses to null', () {
+      expect(HexAsciiConvert.parseAscii(''), isNull);
+      expect(HexAsciiConvert.parseAscii('AB'), isNull); // more than one char
+      expect(HexAsciiConvert.parseAscii('\n'), isNull); // control code (10)
+    });
+
+    test('a code point in 32-126 renders its glyph; outside it is null', () {
+      expect(HexAsciiConvert.toAscii(BigInt.from(65)), 'A');
+      expect(HexAsciiConvert.toAscii(BigInt.from(32)), ' ');
+      expect(HexAsciiConvert.toAscii(BigInt.from(126)), '~');
+      // No single ASCII glyph for a control code or a multi-byte value.
+      expect(HexAsciiConvert.toAscii(BigInt.from(10)), isNull);
+      expect(HexAsciiConvert.toAscii(BigInt.from(255)), isNull);
+      expect(HexAsciiConvert.toAscii(BigInt.from(31)), isNull);
+    });
+
+    test('round-trips a glyph through its code point', () {
+      final BigInt? code = HexAsciiConvert.parseAscii('Z');
+      expect(code, BigInt.from(90));
+      expect(HexAsciiConvert.toAscii(code!), 'Z');
+      expect(HexAsciiConvert.toHex(code), '5A');
+    });
+  });
+
   group('ASCII reference table — derived rows', () {
     AsciiRow rowFor(int dec) =>
         HexAsciiScreen.rows.firstWhere((AsciiRow r) => r.dec == dec);
@@ -104,6 +136,38 @@ void main() {
         // Hex field should now read FF, binary 11111111.
         expect(find.text('FF'), findsWidgets);
         expect(find.text('11111111'), findsWidgets);
+      });
+    });
+
+    testWidgets('typing an ASCII glyph fills dec/hex/binary (BF5-17)',
+        (tester) async {
+      await _withViewport(tester, const Size(375, 2400), () async {
+        await tester.pumpWidget(
+          MaterialApp(theme: AppTheme.dark(), home: const HexAsciiScreen()),
+        );
+        // The fourth converter field is "ASCII character".
+        await tester.enterText(find.byType(TextField).at(3), 'A');
+        await tester.pump();
+        // 'A' is decimal 65 / hex 41 / binary 1000001.
+        expect(find.text('65'), findsWidgets);
+        expect(find.text('41'), findsWidgets);
+        expect(find.text('1000001'), findsWidgets);
+      });
+    });
+
+    testWidgets('typing decimal 65 shows the ASCII glyph A (BF5-17)',
+        (tester) async {
+      await _withViewport(tester, const Size(375, 2400), () async {
+        await tester.pumpWidget(
+          MaterialApp(theme: AppTheme.dark(), home: const HexAsciiScreen()),
+        );
+        final Finder asciiField = find.byType(TextField).at(3);
+        await tester.enterText(find.byType(TextField).first, '65');
+        await tester.pump();
+        expect(
+          tester.widget<TextField>(asciiField).controller!.text,
+          'A',
+        );
       });
     });
 

@@ -53,6 +53,7 @@ class AppSelect<T> extends StatelessWidget {
     this.enabled = true,
     this.errorText,
     this.minWidth,
+    this.maxLines = 1,
   });
 
   /// The currently selected value. Must be present in [items].
@@ -85,6 +86,13 @@ class AppSelect<T> extends StatelessWidget {
   /// (the §8.14 floor that fits "nmi"/"GHz"); full-width selects pass null and
   /// take the row width via the surrounding `Expanded`/`Flexible`.
   final double? minWidth;
+
+  /// Maximum lines for the value label in the closed control and each menu row.
+  /// Defaults to 1 (the §8.14 single-line norm). A select with spelled-out
+  /// labels that would otherwise ellipsize on a narrow control (e.g. Metric
+  /// Conversion's "Nautical Mile (nmi)" — BF5-19) passes 2 so the label wraps
+  /// instead of truncating.
+  final int maxLines;
 
   /// Resolve the display label for [value] from [items]; falls back to the raw
   /// `toString()` only if the value is somehow absent (defensive — items should
@@ -153,6 +161,7 @@ class AppSelect<T> extends StatelessWidget {
       valueStyle: valueStyle,
       chevronColor: chevronColor,
       minWidth: minWidth,
+      maxLines: maxLines,
       // Foreground lime substitute (§8.20.2): the open/focus border, selected
       // item text, and check glyph are FOREGROUND lime → textAccent (lime in
       // dark, darkened-lime in light). idleBorder lets the control identify the
@@ -216,6 +225,7 @@ class _SelectControl<T> extends StatefulWidget {
     required this.valueStyle,
     required this.chevronColor,
     required this.minWidth,
+    required this.maxLines,
     required this.menuItemStyle,
     required this.selectedItemStyle,
     required this.accentColor,
@@ -235,6 +245,7 @@ class _SelectControl<T> extends StatefulWidget {
   final TextStyle valueStyle;
   final Color chevronColor;
   final double? minWidth;
+  final int maxLines;
   final TextStyle menuItemStyle;
   final TextStyle selectedItemStyle;
 
@@ -321,6 +332,10 @@ class _SelectControlState<T> extends State<_SelectControl<T>> {
             focusColor: Colors.transparent,
             // Cap the open menu to ~5 rows then scroll (§8.14 sizing).
             menuMaxHeight: AppSpacing.minTouchTarget * 5,
+            // Single-line items keep the fixed 48dp row; multi-line labels
+            // (maxLines > 1, e.g. spelled-out units) need variable height so the
+            // second line is not clipped — null lets each row size to content.
+            itemHeight: widget.maxLines > 1 ? null : kMinInteractiveDimension,
             onTap: widget.enabled
                 ? () {
                     if (mounted) setState(() => _open = true);
@@ -342,7 +357,7 @@ class _SelectControlState<T> extends State<_SelectControl<T>> {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     item.$2,
-                    maxLines: 1,
+                    maxLines: widget.maxLines,
                     overflow: TextOverflow.ellipsis,
                     style: widget.valueStyle,
                   ),
@@ -358,7 +373,7 @@ class _SelectControlState<T> extends State<_SelectControl<T>> {
                     Expanded(
                       child: Text(
                         item.$2,
-                        maxLines: 1,
+                        maxLines: widget.maxLines,
                         overflow: TextOverflow.ellipsis,
                         style: selected
                             ? widget.selectedItemStyle

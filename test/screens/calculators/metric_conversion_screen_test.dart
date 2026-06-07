@@ -215,15 +215,61 @@ void main() {
         expect(find.text('3.2808'), findsOneWidget);
 
         // The To-unit select is the second AppSelect. Open it and pick cm.
+        // BF5-19: the option label is now spelled out, "Centimeter (cm)".
         // 1 m = 100.00 cm at the cm 2-decimal precision.
         final Finder toSelect = find.byType(AppSelect<LengthUnit>).at(1);
         await tester.tap(toSelect);
         await tester.pumpAndSettle();
-        await tester.tap(find.text('cm').last);
+        await tester.tap(find.text('Centimeter (cm)').last);
         await tester.pumpAndSettle();
 
         expect(find.text('100.00'), findsOneWidget);
       });
+    });
+
+    testWidgets('unit selectors spell out the unit name (BF5-19)',
+        (tester) async {
+      await _withViewport(tester, const Size(375, 900), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: const MetricConversionScreen(),
+          ),
+        );
+        // Default from = m → "Meter (m)"; default to = ft → "Foot (ft)" on the
+        // closed controls. The selectedItemBuilder renders one visible label per
+        // select, so each spelled-out label appears exactly once.
+        expect(find.text('Meter (m)'), findsOneWidget);
+        expect(find.text('Foot (ft)'), findsOneWidget);
+        // Open the To select and confirm a spelled-out option appears in the
+        // menu (Kilometer is near the top, so it is built within the scroll
+        // viewport; mirrors the working "changing the To unit" test).
+        await tester.tap(find.byType(AppSelect<LengthUnit>).at(1));
+        await tester.pumpAndSettle();
+        expect(find.text('Kilometer (km)'), findsWidgets);
+      });
+    });
+  });
+
+  group('Metric conversion labels (BF5-19)', () {
+    test('selectorLabelFor spells out the unit with its symbol', () {
+      expect(
+        MetricConversionScreen.selectorLabelFor(LengthUnit.nmi),
+        'Nautical Mile (nmi)',
+      );
+      expect(
+        MetricConversionScreen.selectorLabelFor(LengthUnit.mi),
+        'Mile (mi)',
+      );
+      expect(
+        MetricConversionScreen.selectorLabelFor(LengthUnit.km),
+        'Kilometer (km)',
+      );
+    });
+
+    test('symbolFor stays the short form for the result readout', () {
+      expect(MetricConversionScreen.symbolFor(LengthUnit.nmi), 'nmi');
+      expect(MetricConversionScreen.symbolFor(LengthUnit.inch), 'in');
     });
   });
 }

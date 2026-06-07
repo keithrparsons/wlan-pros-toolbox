@@ -98,6 +98,27 @@ class SpectrumBandInfo {
   ];
 }
 
+/// One regulatory-domain row: the geography and the body that governs Wi-Fi /
+/// RF spectrum there. The Wi-Fi channels and power limits in the band fact
+/// sheets above are US (FCC); this table is the reminder that other geographies
+/// answer to a different regulator (BF6-12).
+class RegulatoryDomain {
+  const RegulatoryDomain({
+    required this.geography,
+    required this.regulator,
+    required this.acronym,
+  });
+
+  /// Country / region — e.g. "United States", "European Union".
+  final String geography;
+
+  /// The regulator's full name — e.g. "Federal Communications Commission".
+  final String regulator;
+
+  /// The short name engineers actually say — e.g. "FCC", "ISED (IC)".
+  final String acronym;
+}
+
 class SpectrumScreen extends StatefulWidget {
   const SpectrumScreen({super.key});
 
@@ -175,6 +196,63 @@ class SpectrumScreen extends StatefulWidget {
     ),
   ];
 
+  /// Regulatory domains by geography (BF6-12). The band fact sheets above are
+  /// US (FCC); these are the bodies that set the channels, power limits, and DFS
+  /// rules in other major geographies. Concise, not exhaustive — verify the
+  /// local rules of any region not listed before deployment.
+  static const List<RegulatoryDomain> regulatoryDomains = [
+    RegulatoryDomain(
+      geography: 'United States',
+      regulator: 'Federal Communications Commission',
+      acronym: 'FCC',
+    ),
+    RegulatoryDomain(
+      geography: 'Canada',
+      regulator: 'Innovation, Science and Economic Development Canada',
+      acronym: 'ISED (IC)',
+    ),
+    RegulatoryDomain(
+      geography: 'European Union',
+      regulator: 'European Telecommunications Standards Institute',
+      acronym: 'ETSI',
+    ),
+    RegulatoryDomain(
+      geography: 'United Kingdom',
+      regulator: 'Office of Communications',
+      acronym: 'Ofcom',
+    ),
+    RegulatoryDomain(
+      geography: 'Australia',
+      regulator: 'Australian Communications and Media Authority',
+      acronym: 'ACMA',
+    ),
+    RegulatoryDomain(
+      geography: 'Japan',
+      regulator: 'Ministry of Internal Affairs and Communications',
+      acronym: 'MIC',
+    ),
+    RegulatoryDomain(
+      geography: 'China',
+      regulator: 'Ministry of Industry and Information Technology',
+      acronym: 'MIIT',
+    ),
+    RegulatoryDomain(
+      geography: 'India',
+      regulator: 'Wireless Planning and Coordination Wing',
+      acronym: 'WPC',
+    ),
+    RegulatoryDomain(
+      geography: 'Brazil',
+      regulator: 'Agência Nacional de Telecomunicações',
+      acronym: 'ANATEL',
+    ),
+    RegulatoryDomain(
+      geography: 'South Korea',
+      regulator: 'Ministry of Science and ICT',
+      acronym: 'MSIT',
+    ),
+  ];
+
   @override
   State<SpectrumScreen> createState() => _SpectrumScreenState();
 }
@@ -215,8 +293,17 @@ class _SpectrumScreenState extends State<SpectrumScreen> {
     }
     buf
       ..writeln()
+      ..writeln('Regulatory domains by geography')
+      ..writeln(<String>['Geography', 'Regulator', 'Acronym'].join(tab));
+    for (final RegulatoryDomain d in SpectrumScreen.regulatoryDomains) {
+      buf.writeln(
+        <String>[d.geography, d.regulator, d.acronym].join(tab),
+      );
+    }
+    buf
+      ..writeln()
       ..writeln(
-        'US (FCC) regulatory domain. Verify local rules before '
+        'Band facts above are US (FCC). Verify local rules before '
         'deployment.',
       );
     return buf.toString().trimRight();
@@ -264,6 +351,8 @@ class _SpectrumScreenState extends State<SpectrumScreen> {
                   _bandCard(context),
                   const SizedBox(height: AppSpacing.sm),
                   _factCard(context, _info(_band)),
+                  const SizedBox(height: AppSpacing.sm),
+                  _regulatoryCard(context),
                   ToolHelpFooter(toolId: 'spectrum'),
                 ],
               ),
@@ -337,6 +426,110 @@ class _SpectrumScreenState extends State<SpectrumScreen> {
             style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Regulatory-domains-by-geography reference (BF6-12). A concise table of the
+  /// major regulators so the US-centric band facts above carry an explicit
+  /// "other regions answer to a different body" reminder.
+  Widget _regulatoryCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Regulatory domains by geography',
+            style: text.labelMedium?.copyWith(
+              color: colors.textSecondary,
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          ...SpectrumScreen.regulatoryDomains.asMap().entries.expand((entry) {
+            final RegulatoryDomain d = entry.value;
+            return [
+              if (entry.key > 0)
+                Divider(color: colors.border, height: AppSpacing.sm),
+              _RegulatoryRow(domain: d),
+            ];
+          }),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'A concise list, not exhaustive. Channels, power limits, and DFS '
+            'rules vary by domain; verify local rules before deployment.',
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One regulatory-domain row: the geography on the left, the regulator acronym
+/// (accent) and its full name on the right. Mirrors the `_FactRow` two-column
+/// idiom so the new section reads as a sibling of the band fact sheet.
+class _RegulatoryRow extends StatelessWidget {
+  const _RegulatoryRow({required this.domain});
+
+  final RegulatoryDomain domain;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return ReferenceRowSemantics(
+      label: rowLabel(domain.geography, <String?>[
+        domain.acronym,
+        domain.regulator,
+      ]),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 116,
+              child: Text(
+                domain.geography,
+                style: text.labelMedium?.copyWith(
+                  color: colors.textSecondary,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    domain.acronym,
+                    style: text.bodyMedium?.copyWith(
+                      color: colors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    domain.regulator,
+                    style: text.labelSmall?.copyWith(
+                      color: colors.textTertiary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

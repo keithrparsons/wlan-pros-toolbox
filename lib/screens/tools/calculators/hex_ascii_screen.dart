@@ -2,13 +2,16 @@
 // reference table.
 //
 // PART A — CONVERTER (pure Felix math, the dbm_watt_converter idiom):
-//   Three linked unsigned-integer fields — decimal, hexadecimal, binary. Type
-//   in any one; the other two update live. Empty/invalid input blanks the
+//   Four linked fields — decimal, hexadecimal, binary, and ASCII character.
+//   Type in any one; the others update live. Empty/invalid input blanks the
 //   mirror fields (no crash), exactly like the dBm/Watt converter's empty path.
 //   Unsigned-integer domain (BigInt-backed so a long hex/bin string never
 //   overflows). Hex accepts 0-9 a-f A-F (with an optional 0x prefix stripped);
 //   binary accepts 0/1 (with an optional 0b prefix stripped); decimal accepts
-//   digits only.
+//   digits only. The ASCII field (BF5-17) takes ONE printable character (decimal
+//   32-126) and round-trips it to/from its code point; when the current value
+//   is outside the single-printable range it blanks (a multi-byte value has no
+//   single ASCII glyph), which is honest, not a crash.
 //
 // PART B — ASCII REFERENCE TABLE (printable, decimal 32-126):
 //   Each row's decimal, hex (2-digit), binary (8-bit), char, and name. The
@@ -96,6 +99,30 @@ class HexAsciiConvert {
   static String toDecimal(BigInt v) => v.toString();
   static String toHex(BigInt v) => v.toRadixString(16).toUpperCase();
   static String toBinary(BigInt v) => v.toRadixString(2);
+
+  /// Lowest / highest printable-ASCII code points (space .. tilde).
+  static final BigInt asciiMin = BigInt.from(32);
+  static final BigInt asciiMax = BigInt.from(126);
+
+  /// Parse a single printable-ASCII character to its code point, or `null` if
+  /// the string is empty, longer than one character, or not a printable ASCII
+  /// glyph (decimal 32-126). A single character is the contract — the ASCII
+  /// field maps one glyph to one byte.
+  static BigInt? parseAscii(String raw) {
+    if (raw.isEmpty) return null;
+    if (raw.runes.length != 1) return null;
+    final int code = raw.runes.first;
+    if (code < 32 || code > 126) return null;
+    return BigInt.from(code);
+  }
+
+  /// The printable-ASCII glyph for [v], or `null` when [v] is outside the
+  /// single-printable range (no single ASCII character represents it). The
+  /// ASCII field shows blank in that honest case rather than a fabricated glyph.
+  static String? toAscii(BigInt v) {
+    if (v < asciiMin || v > asciiMax) return null;
+    return String.fromCharCode(v.toInt());
+  }
 }
 
 class HexAsciiScreen extends StatefulWidget {
@@ -173,10 +200,12 @@ class _HexAsciiScreenState extends State<HexAsciiScreen> {
   final TextEditingController _decCtrl = TextEditingController();
   final TextEditingController _hexCtrl = TextEditingController();
   final TextEditingController _binCtrl = TextEditingController();
+  final TextEditingController _asciiCtrl = TextEditingController();
 
   final FocusNode _decFocus = FocusNode();
   final FocusNode _hexFocus = FocusNode();
   final FocusNode _binFocus = FocusNode();
+  final FocusNode _asciiFocus = FocusNode();
 
   static final List<TextInputFormatter> _decFmt = <TextInputFormatter>[
     FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
@@ -187,15 +216,22 @@ class _HexAsciiScreenState extends State<HexAsciiScreen> {
   static final List<TextInputFormatter> _binFmt = <TextInputFormatter>[
     FilteringTextInputFormatter.allow(RegExp(r'[01bB]')),
   ];
+  // The ASCII field takes exactly one character — limit length to 1 so a paste
+  // of multiple glyphs cannot smuggle in a multi-character value.
+  static final List<TextInputFormatter> _asciiFmt = <TextInputFormatter>[
+    LengthLimitingTextInputFormatter(1),
+  ];
 
   @override
   void dispose() {
     _decCtrl.dispose();
     _hexCtrl.dispose();
     _binCtrl.dispose();
+    _asciiCtrl.dispose();
     _decFocus.dispose();
     _hexFocus.dispose();
     _binFocus.dispose();
+    _asciiFocus.dispose();
     super.dispose();
   }
 
@@ -203,6 +239,7 @@ class _HexAsciiScreenState extends State<HexAsciiScreen> {
     if (keep != _decCtrl) _decCtrl.text = '';
     if (keep != _hexCtrl) _hexCtrl.text = '';
     if (keep != _binCtrl) _binCtrl.text = '';
+    if (keep != _asciiCtrl) _asciiCtrl.text = '';
   }
 
   void _spreadFrom(BigInt? v, TextEditingController source) {
@@ -214,6 +251,12 @@ class _HexAsciiScreenState extends State<HexAsciiScreen> {
     if (source != _decCtrl) _decCtrl.text = HexAsciiConvert.toDecimal(v);
     if (source != _hexCtrl) _hexCtrl.text = HexAsciiConvert.toHex(v);
     if (source != _binCtrl) _binCtrl.text = HexAsciiConvert.toBinary(v);
+    if (source != _asciiCtrl) {
+      // The ASCII glyph exists only for a single printable code point (32-126).
+      // Outside that range the field is honestly blank — a multi-byte value has
+      // no single ASCII character to show.
+      _asciiCtrl.text = HexAsciiConvert.toAscii(v) ?? '';
+    }
     setState(() {});
   }
 
@@ -223,6 +266,8 @@ class _HexAsciiScreenState extends State<HexAsciiScreen> {
       _spreadFrom(HexAsciiConvert.parseHex(raw), _hexCtrl);
   void _onBinChanged(String raw) =>
       _spreadFrom(HexAsciiConvert.parseBinary(raw), _binCtrl);
+  void _onAsciiChanged(String raw) =>
+      _spreadFrom(HexAsciiConvert.parseAscii(raw), _asciiCtrl);
 
   /// §8.16 copy payload — the CURRENT conversion as a labeled text block.
   ///
@@ -385,6 +430,20 @@ class _HexAsciiScreenState extends State<HexAsciiScreen> {
             monoStyle: mono.outputLarge,
             hint: '1000001',
           ),
+          const SizedBox(height: AppSpacing.sm),
+          // BF5-17 — the missing ASCII conversion field. One printable glyph
+          // (decimal 32-126) round-trips to/from its code point. Blank when the
+          // value has no single ASCII character (outside 32-126).
+          _ConverterField(
+            label: 'ASCII character',
+            unitHint: 'one printable glyph, decimal 32-126',
+            controller: _asciiCtrl,
+            focusNode: _asciiFocus,
+            formatters: _asciiFmt,
+            onChanged: _onAsciiChanged,
+            monoStyle: mono.outputLarge,
+            hint: 'A',
+          ),
         ],
       ),
     );
@@ -421,7 +480,8 @@ class _HexAsciiScreenState extends State<HexAsciiScreen> {
                       _HeaderCell('Dec', width: 44),
                       _HeaderCell('Hex', width: 44),
                       _HeaderCell('Binary', width: 88),
-                      _HeaderCell('Char', width: 48),
+                      // BF5-18 — Char header centered to match the centered cell.
+                      _HeaderCell('Char', width: 48, center: true),
                       _HeaderCell('Name', width: 160),
                     ],
                   ),
@@ -497,8 +557,11 @@ class _AsciiTableRow extends StatelessWidget {
             ),
             SizedBox(
               width: 48,
+              // BF5-18 — center the Char column so the lone glyph reads as a
+              // centered cell value, not a left-flushed run.
               child: Text(
                 charDisplay,
+                textAlign: TextAlign.center,
                 style: mono.inlineCode.copyWith(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w500,
@@ -507,9 +570,12 @@ class _AsciiTableRow extends StatelessWidget {
             ),
             SizedBox(
               width: 160,
+              // BF5-18 — reduce the Name-column font (labelMedium → labelSmall)
+              // so longer names ("Right parenthesis", "Hyphen-minus") fit the
+              // column without wrapping/truncating.
               child: Text(
                 row.name,
-                style: text.labelMedium?.copyWith(
+                style: text.labelSmall?.copyWith(
                   color: colors.textTertiary,
                 ),
               ),
@@ -569,10 +635,11 @@ class _ConverterField extends StatelessWidget {
 
 /// One column-header label, caption-styled to align with the data cells.
 class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label, {required this.width});
+  const _HeaderCell(this.label, {required this.width, this.center = false});
 
   final String label;
   final double width;
+  final bool center;
 
   @override
   Widget build(BuildContext context) {
@@ -582,6 +649,7 @@ class _HeaderCell extends StatelessWidget {
       width: width,
       child: Text(
         label,
+        textAlign: center ? TextAlign.center : TextAlign.start,
         style: text.labelSmall?.copyWith(
           color: colors.textTertiary,
           letterSpacing: 0.4,

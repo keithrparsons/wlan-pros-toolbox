@@ -9,10 +9,15 @@
 // rendered table (success). No NetworkUnavailableView: works on every
 // platform, no OS data, no I/O.
 //
-// Data is ported VERBATIM from the rf-tools-pwa `rssi` tool (data-tool="rssi",
-// "Signal Thresholds" view in www/index.html). Three blocks: the RSSI quality
-// scale, the per-application RSSI/SNR threshold table, and the SNR→MCS table.
-// Thresholds are reproduced, not invented.
+// Three blocks: the RSSI quality scale, the per-application RSSI/SNR threshold
+// table, and the SNR→MCS table.
+//
+// The RSSI quality scale uses KEITH PARSONS' OWN authoritative thresholds
+// (Excellent > -55, Good -55..-65, Fair -65..-75, Weak -75..-80, Poor < -80) —
+// his domain expertise over the internet/vendor-appropriated values that
+// previously shipped (GL-005, domain-proof-over-consensus). The per-application
+// and SNR→MCS tables are ported from the rf-tools-pwa `rssi` tool; thresholds
+// are reproduced, not invented.
 //
 // Signal quality and MCS bands carry a GL-003 §8.13 status verdict color
 // (statusSuccess / statusWarning / statusDanger) ALWAYS paired with the quality
@@ -86,13 +91,15 @@ class SignalThresholdsScreen extends StatelessWidget {
   // the PWA source are rendered as hyphens here per the no-em-dash rule; the
   // numeric thresholds are unchanged.
 
-  /// RSSI quality scale. Excellent/Good read as a passing verdict, Fair as
-  /// marginal, Weak/Poor as failing — paired with the word, never color-only.
+  /// RSSI quality scale — Keith Parsons' authoritative field thresholds
+  /// (domain-proof over internet/vendor consensus, GL-005). Excellent/Good read
+  /// as a passing verdict, Fair as marginal, Weak/Poor as failing — paired with
+  /// the word, never color-only.
   static const List<SignalBand> kSignalBands = <SignalBand>[
-    SignalBand(label: 'Excellent', range: '> -50 dBm', grade: SignalGrade.good),
-    SignalBand(label: 'Good', range: '-50 to -67', grade: SignalGrade.good),
-    SignalBand(label: 'Fair', range: '-67 to -70', grade: SignalGrade.marginal),
-    SignalBand(label: 'Weak', range: '-70 to -80', grade: SignalGrade.bad),
+    SignalBand(label: 'Excellent', range: '> -55 dBm', grade: SignalGrade.good),
+    SignalBand(label: 'Good', range: '-55 to -65', grade: SignalGrade.good),
+    SignalBand(label: 'Fair', range: '-65 to -75', grade: SignalGrade.marginal),
+    SignalBand(label: 'Weak', range: '-75 to -80', grade: SignalGrade.bad),
     SignalBand(label: 'Poor', range: '< -80 dBm', grade: SignalGrade.bad),
   ];
 
