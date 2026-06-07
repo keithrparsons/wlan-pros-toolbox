@@ -1,45 +1,54 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
-  <!-- Signal thresholds: an RSSI (dBm) axis with quality bands by application.
-       Status palette (GL-003 8.13) for good / marginal / bad, each paired with text (never color-only).
-       Lime = the target threshold for the application. Archetype B (scale / axis). -->
+  <!-- Signal thresholds: an RSSI (dBm) axis with five quality bands matching the
+       screen data (Excellent > -55, Good -55..-65, Fair -65..-75, Weak -75..-80,
+       Poor < -80). Status palette (GL-003 §8.13) grouped Poor/Weak = danger,
+       Fair = warning, Good/Excellent = success; each band labeled (never color-only).
+       Lime = the target threshold for the application. No hatching. -->
 
   <!-- Header -->
-  <text x="160" y="20" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">RSSI quality thresholds (dBm)</text>
+  <text x="160" y="18" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">RSSI quality thresholds (dBm)</text>
 
-  <!-- RSSI axis (neutral) -->
-  <line x1="22" y1="100" x2="294" y2="100" stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round"/>
+  <!-- Five quality bands above the axis. Axis spans x=14..306 (292px) over -90..-45 (45 dB).
+       px/dB = 292/45 = 6.49. Boundaries: -90,-80,-75,-65,-55,-45. -->
+  <!-- Poor  (< -80)  danger -->
+  <rect x="14" y="40" width="59" height="40" rx="2" stroke="#F26E6E" stroke-width="1.75" fill="#F26E6E" fill-opacity="0.08"/>
+  <text x="43" y="64" fill="#F26E6E" font-size="12" font-weight="500" text-anchor="middle">Poor</text>
+  <!-- Weak  (-80..-75) danger -->
+  <rect x="73" y="40" width="32" height="40" rx="2" stroke="#F26E6E" stroke-width="1.75" fill="#F26E6E" fill-opacity="0.08"/>
+  <text x="89" y="64" fill="#F26E6E" font-size="11" font-weight="500" text-anchor="middle">Weak</text>
+  <!-- Fair  (-75..-65) warning -->
+  <rect x="105" y="40" width="65" height="40" rx="2" stroke="#E0A23A" stroke-width="1.75" fill="#E0A23A" fill-opacity="0.08"/>
+  <text x="137" y="64" fill="#E0A23A" font-size="12" font-weight="500" text-anchor="middle">Fair</text>
+  <!-- Good  (-65..-55) success -->
+  <rect x="170" y="40" width="65" height="40" rx="2" stroke="#5BD68A" stroke-width="1.75" fill="#5BD68A" fill-opacity="0.08"/>
+  <text x="202" y="64" fill="#5BD68A" font-size="12" font-weight="500" text-anchor="middle">Good</text>
+  <!-- Excellent (> -55) success -->
+  <rect x="235" y="40" width="71" height="40" rx="2" stroke="#5BD68A" stroke-width="1.75" fill="#5BD68A" fill-opacity="0.08"/>
+  <text x="270" y="64" fill="#5BD68A" font-size="11" font-weight="500" text-anchor="middle">Excellent</text>
 
-  <!-- Quality bands above the axis, each labelled (status color + text, never color-only) -->
-  <!-- bad (-90..-75) danger -->
-  <rect x="34" y="56" width="78" height="36" rx="2" stroke="#F26E6E" stroke-width="1.75" fill="#F26E6E" fill-opacity="0.08"/>
-  <text x="73" y="78" fill="#F26E6E" font-size="12" font-weight="500" text-anchor="middle">bad</text>
-  <!-- marginal (-75..-67) warning -->
-  <rect x="114" y="56" width="78" height="36" rx="2" stroke="#E0A23A" stroke-width="1.75" fill="#E0A23A" fill-opacity="0.08"/>
-  <text x="153" y="78" fill="#E0A23A" font-size="12" font-weight="500" text-anchor="middle">marginal</text>
-  <!-- good (-67..-40) success -->
-  <rect x="194" y="56" width="86" height="36" rx="2" stroke="#5BD68A" stroke-width="1.75" fill="#5BD68A" fill-opacity="0.08"/>
-  <text x="237" y="78" fill="#5BD68A" font-size="12" font-weight="500" text-anchor="middle">good</text>
+  <!-- RSSI axis -->
+  <line x1="14" y1="100" x2="306" y2="100" stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round"/>
 
-  <!-- axis ticks at band boundaries (neutral) -->
+  <!-- axis ticks at band boundaries -->
   <g stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round">
-    <line x1="34"  y1="96" x2="34"  y2="104"/>
-    <line x1="114" y1="96" x2="114" y2="104"/>
-    <line x1="194" y1="96" x2="194" y2="104"/>
-    <line x1="280" y1="96" x2="280" y2="104"/>
+    <line x1="73"  y1="96" x2="73"  y2="104"/>
+    <line x1="105" y1="96" x2="105" y2="104"/>
+    <line x1="170" y1="96" x2="170" y2="104"/>
+    <line x1="235" y1="96" x2="235" y2="104"/>
   </g>
 
-  <!-- dBm labels (below axis, DM Mono) -->
+  <!-- dBm boundary labels (below axis, DM Mono) -->
   <g fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">
-    <text x="34"  y="118">-90</text>
-    <text x="114" y="118">-75</text>
-    <text x="194" y="118">-67</text>
-    <text x="280" y="118">-40</text>
+    <text x="73"  y="118">-80</text>
+    <text x="105" y="118">-75</text>
+    <text x="170" y="118">-65</text>
+    <text x="235" y="118">-55</text>
   </g>
 
-  <!-- Target threshold (lime = the application target, e.g. VoIP needs >= -67) -->
-  <line x1="194" y1="44" x2="194" y2="100" stroke="#A2CC3A" stroke-width="2" stroke-dasharray="3 3"/>
-  <text x="194" y="38" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">VoIP &#8805; -67</text>
+  <!-- Target threshold (lime = the application target, e.g. VoIP needs >= -65) -->
+  <line x1="170" y1="34" x2="170" y2="100" stroke="#A2CC3A" stroke-width="2" stroke-dasharray="3 3"/>
+  <text x="170" y="30" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">VoIP &#8805; -65</text>
 
   <!-- Footer -->
-  <text x="160" y="140" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">stronger signal (higher dBm) &#8594;</text>
+  <text x="160" y="138" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">stronger signal (higher dBm) &#8594;</text>
 </svg>
