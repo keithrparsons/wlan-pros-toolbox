@@ -8,7 +8,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
+import 'package:wlan_pros_toolbox/screens/guides/guide_reader_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/educational/educational_resources_screen.dart';
 import 'package:wlan_pros_toolbox/services/educational/educational_resources_service.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
@@ -89,6 +91,28 @@ void main() {
     // The "Reference Cards" string appears in the section header AND the chip,
     // so it is present at least twice.
     expect(find.text('Reference Cards'), findsWidgets);
+  });
+
+  testWidgets('renders the in-app Field Manual entry and opens the reader',
+      (tester) async {
+    // markdown_widget's VisibilityDetector leaves a pending timer otherwise.
+    VisibilityDetectorController.instance.updateInterval = Duration.zero;
+    await _pump(tester, _svc());
+
+    // The "In-Depth Guide" section + the Field Manual row lead the directory.
+    expect(find.text('In-Depth Guide'), findsOneWidget);
+    expect(find.text('Field Manual'), findsOneWidget);
+
+    // Tapping it opens the in-app reader on the field manual (not a URL).
+    await tester.tap(find.text('Field Manual'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    final Finder reader = find.byType(GuideReaderScreen);
+    expect(reader, findsOneWidget);
+    expect(
+      tester.widget<GuideReaderScreen>(reader).assetPath,
+      kFieldManualAsset,
+    );
   });
 
   testWidgets('renders topic group headers and resource rows', (tester) async {
