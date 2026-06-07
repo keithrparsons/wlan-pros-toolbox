@@ -949,7 +949,7 @@
       "purpose": "The frame-by-frame sequences for common association and roaming scenarios, showing the order and direction of frames between the STA, AP, RADIUS server, and DHCP server.",
       "whyHere": "When analyzing a capture or explaining an association/roam, confirm what frame should come next and which entities exchange it.",
       "howToUse": [
-        "Pick a scenario (Open / WPA2-PSK, WPA3-SAE, WPA2-Enterprise (802.1X/EAP), 802.11r Roam); read the phases top to bottom.",
+        "Pick a scenario (Open / WPA2-PSK, WPA3-SAE, OWE / Enhanced Open, Passpoint / Hotspot 2.0, WPA2-Enterprise (802.1X/EAP), 802.11r Roam); read the phases top to bottom.",
         "Each frame carries a neutral type code: MGMT (management frame), EAP (EAP / EAPOL key), WIRED (RADIUS/DHCP over the wire), DHCP.",
         "The legend at the bottom expands each code. Type is carried by the text code, not by color."
       ],
@@ -957,9 +957,12 @@
       "algorithm": null,
       "example": null,
       "fieldNotes": [
-        "What it shows: a scenario selector with four scenarios. Each scenario is broken into named phases (e.g. Probe & Auth, Association, 4-Way Handshake, EAP Authentication, DHCP); each frame shows a step number, direction, frame name, a frame-type code, and an explanatory note.",
+        "What it shows: a scenario selector with six scenarios. Each scenario is broken into named phases (e.g. Probe & Auth, Association, 4-Way Handshake, EAP Authentication, DHCP); each frame shows a step number, direction, frame name, a frame-type code, and an explanatory note.",
+        "OWE / Enhanced Open: Open System auth, then an Association exchange that carries each side's ECDH public key in a Diffie-Hellman Parameter element (Assoc Request = STA key, Assoc Response = AP key); the PMK is derived from the DH shared secret, then a normal 4-Way Handshake runs. No passphrase.",
+        "Passpoint / Hotspot 2.0: the distinct part is the pre-association GAS/ANQP Public Action query (the STA learns which realms an AP can authenticate before joining), then ordinary 802.1X/EAP + 4-Way Handshake.",
+        "eduroam and OpenRoaming are NOT separate diagrams: they are backend federations that run an existing air exchange. eduroam = 802.1X/EAP with RADIUS proxying by realm (noted on the WPA2-Enterprise scenario); OpenRoaming = a Passpoint+EAP federation triggered by an RCOI match (noted on the Passpoint scenario). The 802.11r scenario also notes the over-the-DS Action-frame roam variant alongside the over-the-air FT auth frames.",
         "These are representative sequences, not exhaustive; optional/passive-scan paths and EAP-method round-trips are summarized (e.g. the WPA3 DHCP phase is shown as one combined Discover/Offer/Request/Ack line \"identical to WPA2 flow\").",
-        "Data source: IEEE 802.11 association/handshake behavior; ported verbatim from the rf-tools-pwa frames tool (FX_SCENARIOS). Reflects the real frame exchanges (e.g. SAE Dragonfly commit/confirm for WPA3, the 4-way handshake, 802.1X/EAP over RADIUS, 802.11r FT over-the-air). Standard reference, not region-specific."
+        "Data source: IEEE 802.11 association/handshake behavior; the four core scenarios ported verbatim from the rf-tools-pwa frames tool (FX_SCENARIOS), OWE/Passpoint added from Pax's 2026-06-07 cross-verified research (RFC 8110 for OWE, 802.11u/GAS-ANQP for Passpoint). Reflects the real frame exchanges (SAE Dragonfly commit/confirm for WPA3, the DH-in-Assoc key ride for OWE, the GAS/ANQP pre-association query for Passpoint, 802.1X/EAP over RADIUS, 802.11r FT over-the-air and over-the-DS). Standard reference, not region-specific."
       ],
       "source": "lib/screens/tools/reference/frame_exchange_screen.dart"
     },

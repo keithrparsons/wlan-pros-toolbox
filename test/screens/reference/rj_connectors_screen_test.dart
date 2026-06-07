@@ -8,7 +8,9 @@
 //     rows render; the Ethernet Pinout cross-link routes; no overflow.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:wlan_pros_toolbox/data/connector_diagrams.dart';
 import 'package:wlan_pros_toolbox/router/app_router.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/ethernet_pinout_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/rj_connectors_screen.dart';
@@ -72,9 +74,38 @@ void main() {
             reason: '${c.name} cannot have more conductors than positions');
       }
     });
+
+    // Each connector carries a stable diagram id matching a shipped SVG so the
+    // per-connector line drawing resolves. The eight ids are the filenames in
+    // assets/connector-diagrams/.
+    test('every connector maps to a known diagram id', () {
+      final List<String> ids = RjConnectorsScreen.connectors
+          .map((RjConnectorEntry c) => c.diagramId)
+          .toList();
+      expect(ids, <String>[
+        'rj11',
+        'rj14',
+        'rj25',
+        'rj45-8p8c',
+        'rj48',
+        'rj48c',
+        'rj48x',
+        'rj9-rj22',
+      ]);
+      // Ids are unique (no two cards collide on the same drawing).
+      expect(ids.toSet().length, ids.length);
+    });
   });
 
   group('RjConnectorsScreen widget', () {
+    setUp(() {
+      // Default: nothing bundled, so the diagram slots collapse and the
+      // data-only screen renders (matches the resolver's pre-load behavior).
+      ConnectorDiagrams.debugSetBundled(const <String>{});
+    });
+
+    tearDown(ConnectorDiagrams.debugReset);
+
     testWidgets('renders title and representative connectors in a phone '
         'viewport', (WidgetTester tester) async {
       await _withViewport(tester, const Size(375, 1400), () async {
@@ -134,6 +165,47 @@ void main() {
               reason: 'overflow at ${width}px');
         });
       }
+    });
+
+    testWidgets('connector diagrams are omitted when none are bundled', (
+      WidgetTester tester,
+    ) async {
+      ConnectorDiagrams.debugSetBundled(const <String>{});
+      await _withViewport(tester, const Size(375, 1400), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: const RjConnectorsScreen(),
+          ),
+        );
+        await tester.pump();
+        // No per-connector SVG drawings render when the bundle is empty.
+        expect(find.byType(SvgPicture), findsNothing);
+      });
+    });
+
+    testWidgets('each connector with a bundled diagram renders one drawing', (
+      WidgetTester tester,
+    ) async {
+      // Bundle all eight RJ drawings. Dark mode renders SvgPicture.asset
+      // directly (one per connector card).
+      ConnectorDiagrams.debugSetBundled(<String>{
+        for (final RjConnectorEntry c in RjConnectorsScreen.connectors)
+          'assets/connector-diagrams/${c.diagramId}.svg',
+      });
+      await _withViewport(tester, const Size(375, 4000), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: const RjConnectorsScreen(),
+          ),
+        );
+        await tester.pump();
+        expect(
+          find.byType(SvgPicture),
+          findsNWidgets(RjConnectorsScreen.connectors.length),
+        );
+      });
     });
   });
 }

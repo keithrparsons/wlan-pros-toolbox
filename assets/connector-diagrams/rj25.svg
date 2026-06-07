@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- RJ25 - 6P6C. Same 6-position body, fully populated: all 6 gold contacts.
+       Lime marks the fully-loaded 6-position field (three pairs). -->
+
+  <text x="200" y="22" fill="#E5E5E5" font-size="14" font-weight="600" text-anchor="middle">RJ25 - 6P6C</text>
+
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M178 52 L178 40 L222 40 L222 52"/>
+  </g>
+
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M140 52 L260 52 L260 138 L140 138 Z"/>
+  </g>
+  <g stroke="#9C9C9C" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M168 138 L168 152 L232 152 L232 138"/>
+  </g>
+
+  <g stroke="#9C9C9C" stroke-width="1" stroke-linecap="round">
+    <line x1="160" y1="60" x2="160" y2="120"/>
+    <line x1="180" y1="60" x2="180" y2="120"/>
+    <line x1="200" y1="60" x2="200" y2="120"/>
+    <line x1="220" y1="60" x2="220" y2="120"/>
+    <line x1="240" y1="60" x2="240" y2="120"/>
+  </g>
+
+  <!-- gold contacts: all 6 loaded (slot centers 150,170,190,210,230,250) -->
+  <g stroke="#C9A227" stroke-width="3.5" stroke-linecap="round">
+    <line x1="150" y1="64" x2="150" y2="116"/>
+    <line x1="170" y1="64" x2="170" y2="116"/>
+    <line x1="190" y1="64" x2="190" y2="116"/>
+    <line x1="210" y1="64" x2="210" y2="116"/>
+    <line x1="230" y1="64" x2="230" y2="116"/>
+    <line x1="250" y1="64" x2="250" y2="116"/>
+  </g>
+
+  <rect x="140" y="58" width="120" height="64" rx="4" stroke="#A2CC3A" stroke-width="2" fill="none"/>
+  <line x1="200" y1="138" x2="200" y2="160" stroke="#A2CC3A" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="200" y="176" fill="#A2CC3A" font-size="13" font-weight="600" text-anchor="middle">3 pairs loaded (6 of 6)</text>
+
+  <text x="200" y="194" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle">Three phone lines, fully populated 6-position body.</text>
+</svg>

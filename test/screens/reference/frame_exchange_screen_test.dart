@@ -14,11 +14,21 @@ import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
 void main() {
   group('FrameExchangeScreen dataset (verbatim from rf-tools-pwa)', () {
-    test('exposes the four PWA scenarios in tab order', () {
+    test('exposes the scenarios in tab order (4 PWA + OWE + Passpoint)', () {
       final List<String> keys = FrameExchangeScreen.scenarios
           .map((FxScenario s) => s.key)
           .toList();
-      expect(keys, <String>['open', 'wpa3', 'dot1x', 'ft']);
+      // The four ported PWA scenarios plus the two air-distinct adds (OWE,
+      // Passpoint). eduroam / OpenRoaming are NOT separate scenarios — they are
+      // backend federations that run an existing air exchange (asserted below).
+      expect(keys, <String>[
+        'open',
+        'wpa3',
+        'owe',
+        'passpoint',
+        'dot1x',
+        'ft',
+      ]);
 
       final List<String> labels = FrameExchangeScreen.scenarios
           .map((FxScenario s) => s.tabLabel)
@@ -26,9 +36,84 @@ void main() {
       expect(labels, <String>[
         'Open / WPA2-PSK',
         'WPA3-SAE',
+        'OWE / Enhanced Open',
+        'Passpoint / Hotspot 2.0',
         'WPA2-Enterprise',
         '802.11r Roam',
       ]);
+    });
+
+    test('OWE carries the DH public keys in the Association frames', () {
+      final FxScenario owe = FrameExchangeScreen.scenarios
+          .firstWhere((FxScenario s) => s.key == 'owe');
+      final List<FxFrame> frames =
+          owe.phases.expand((FxPhase p) => p.frames).toList();
+
+      // The two Association frames each carry the Diffie-Hellman Parameter
+      // element — the technical crux of OWE.
+      final List<FxFrame> assoc = frames
+          .where((FxFrame f) => f.label.contains('Association'))
+          .toList();
+      expect(assoc.length, 2);
+      expect(assoc[0].dir, 'STA → AP');
+      expect(assoc[0].label, contains('DH Parameter element'));
+      expect(assoc[1].dir, 'AP → STA');
+      expect(assoc[1].label, contains('DH Parameter element'));
+      // Ends in a standard 4-Way Handshake (EAPOL keys) using the OWE PMK.
+      expect(frames.last.label, contains('Msg 4/4'));
+      expect(frames.last.type, FxType.eap);
+    });
+
+    test('Passpoint shows the pre-association GAS/ANQP query', () {
+      final FxScenario pp = FrameExchangeScreen.scenarios
+          .firstWhere((FxScenario s) => s.key == 'passpoint');
+      final List<FxFrame> frames =
+          pp.phases.expand((FxPhase p) => p.frames).toList();
+
+      // The distinct over-the-air part is GAS Initial Request/Response, sent
+      // pre-association as Public Action management frames.
+      expect(
+        frames.any((FxFrame f) =>
+            f.label.contains('GAS Initial Request') &&
+            f.type == FxType.mgmt),
+        isTrue,
+      );
+      // OpenRoaming is covered as a NOTE on the Passpoint EAP frame, not a
+      // separate scenario.
+      expect(
+        frames.any((FxFrame f) =>
+            f.note.toLowerCase().contains('openroaming')),
+        isTrue,
+      );
+    });
+
+    test('eduroam is a backend note on 802.1X, not its own scenario', () {
+      // No scenario keyed 'eduroam'.
+      expect(
+        FrameExchangeScreen.scenarios.any((FxScenario s) => s.key == 'eduroam'),
+        isFalse,
+      );
+      final FxScenario d = FrameExchangeScreen.scenarios
+          .firstWhere((FxScenario s) => s.key == 'dot1x');
+      final List<FxFrame> frames =
+          d.phases.expand((FxPhase p) => p.frames).toList();
+      expect(
+        frames.any((FxFrame f) => f.note.toLowerCase().contains('eduroam')),
+        isTrue,
+      );
+    });
+
+    test('FT carries the over-the-DS Action-frame variant as a note', () {
+      final FxScenario ft = FrameExchangeScreen.scenarios
+          .firstWhere((FxScenario s) => s.key == 'ft');
+      final List<FxFrame> frames =
+          ft.phases.expand((FxPhase p) => p.frames).toList();
+      expect(
+        frames.any((FxFrame f) =>
+            f.note.toLowerCase().contains('over-the-ds') &&
+            f.note.contains('Action frames')),
+        isTrue,
+      );
     });
 
     test('open scenario reproduces the PWA step sequence exactly', () {

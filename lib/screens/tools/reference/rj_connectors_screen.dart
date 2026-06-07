@@ -29,7 +29,10 @@
 // (8P8C / 6P*C) form-factor conventions.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../../data/connector_diagrams.dart';
 import '../../../data/tool_assets.dart';
 import '../../../router/app_router.dart';
 import '../../../theme/app_color_scheme.dart';
@@ -50,10 +53,17 @@ class RjConnectorEntry {
     required this.positions,
     required this.conductors,
     required this.typicalUse,
+    required this.diagramId,
   });
 
   /// Connector designation, e.g. `RJ45`.
   final String name;
+
+  /// Stable diagram asset id. Resolves the per-connector line drawing at
+  /// `assets/connector-diagrams/<diagramId>.svg` via [ConnectorDiagrams],
+  /// gated on the build-time asset manifest so a missing file degrades
+  /// silently (matches the coax/antenna-connector diagram pattern).
+  final String diagramId;
 
   /// Modular-body notation, e.g. `8P8C` (8 positions, 8 conductors) or
   /// `6P2C` (6-position body, 2 conductors populated).
@@ -84,6 +94,7 @@ class RjConnectorsScreen extends StatelessWidget {
       conductors: 2,
       typicalUse: 'Single analog phone line (one pair). The common home '
           'telephone / DSL jack.',
+      diagramId: 'rj11',
     ),
     RjConnectorEntry(
       name: 'RJ14',
@@ -92,6 +103,7 @@ class RjConnectorsScreen extends StatelessWidget {
       conductors: 4,
       typicalUse: 'Two phone lines (two pairs) in the same 6-position body as '
           'RJ11.',
+      diagramId: 'rj14',
     ),
     RjConnectorEntry(
       name: 'RJ25',
@@ -100,6 +112,7 @@ class RjConnectorsScreen extends StatelessWidget {
       conductors: 6,
       typicalUse: 'Three phone lines (three pairs), fully populated '
           '6-position body. Sometimes loosely called RJ12.',
+      diagramId: 'rj25',
     ),
     RjConnectorEntry(
       name: 'RJ45 (8P8C)',
@@ -108,6 +121,7 @@ class RjConnectorsScreen extends StatelessWidget {
       conductors: 8,
       typicalUse: 'Ethernet (10/100/1000/2.5G/5G/10GBASE-T) over twisted pair. '
           '"RJ45" is the colloquial name for the 8P8C modular connector.',
+      diagramId: 'rj45-8p8c',
     ),
     RjConnectorEntry(
       name: 'RJ48',
@@ -116,6 +130,7 @@ class RjConnectorsScreen extends StatelessWidget {
       conductors: 8,
       typicalUse: 'T1 / E1 / ISDN / DDS over twisted pair. Same 8P8C body as '
           'RJ45 but a different pin assignment (and often shielded).',
+      diagramId: 'rj48',
     ),
     RjConnectorEntry(
       name: 'RJ48C',
@@ -124,6 +139,7 @@ class RjConnectorsScreen extends StatelessWidget {
       conductors: 8,
       typicalUse: 'T1 on a standard wall jack; the most common RJ48 variant. '
           'Uses pins 1/2 (Rx) and 4/5 (Tx).',
+      diagramId: 'rj48c',
     ),
     RjConnectorEntry(
       name: 'RJ48X',
@@ -132,6 +148,7 @@ class RjConnectorsScreen extends StatelessWidget {
       conductors: 8,
       typicalUse: 'T1 with a shorting bar that loops the line when the plug is '
           'removed, for loopback testing.',
+      diagramId: 'rj48x',
     ),
     RjConnectorEntry(
       name: 'RJ9 / RJ22',
@@ -139,6 +156,7 @@ class RjConnectorsScreen extends StatelessWidget {
       positions: 4,
       conductors: 4,
       typicalUse: 'Telephone handset-to-base coil cord (4P4C). Not a wall jack.',
+      diagramId: 'rj9-rj22',
     ),
   ];
 
@@ -362,6 +380,12 @@ class _ConnectorCard extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xs),
             Divider(color: colors.border, height: 1),
+            // Per-connector line drawing (front mating-face view: positions,
+            // loaded conductors, latch). Renders only when the SVG is bundled;
+            // collapses to nothing otherwise so the data screen ships working
+            // even before the drawings land. Decorative for AT (every fact it
+            // shows is in the rows + the merged card label) — GL-003 §8.6.2.
+            _RjConnectorDiagram(diagramId: entry.diagramId),
             ValueRow(
               label: 'Positions',
               value: '${entry.positions}',
@@ -408,6 +432,111 @@ class _ModularBadge extends StatelessWidget {
           color: colors.textAccent,
         ),
       ),
+    );
+  }
+}
+
+/// The per-connector RJ diagram slot. Renders the bundled SVG line drawing
+/// (`assets/connector-diagrams/<diagramId>.svg`) inside a card-styled band when
+/// one exists, and collapses to nothing when it does not — so the data screen
+/// ships fully working even before the drawings land. Decorative for screen
+/// readers (every fact it depicts is already in the card's rows + the merged
+/// `ReferenceRowSemantics` label), per GL-003 §8.6.2.
+///
+/// LIGHT/DARK (GL-003 §8.20.7): the drawings are authored DARK-BAKED on the
+/// concept-graphic swap-list hexes (#E5E5E5 / #9C9C9C / #A2CC3A) plus the
+/// domain-canonical gold (#C9A227) for the gold contacts, which passes the swap
+/// unchanged because the color IS the data. On a light surface a raw lime stroke
+/// is ~1.65:1, so this reuses the single-source §8.20.7 recolor path
+/// ([ConceptGraphicBand.applyLightSwap]) — identical treatment to the antenna /
+/// coax connector diagrams:
+///   * DARK: render the unmodified asset (dark goldens unaffected).
+///   * LIGHT: load the source, apply the §8.20.7 allow-list hex swap, render via
+///     `SvgPicture.string`. The swapped string is cached per diagram id.
+class _RjConnectorDiagram extends StatelessWidget {
+  const _RjConnectorDiagram({required this.diagramId});
+
+  /// 120dp band — the drawings are a 400×200 (2:1) front-face view; capped so a
+  /// card stays scannable. Scales to width, never crops.
+  static const double _bandHeight = 120;
+
+  // Per-id cache of the already-swapped light SVG source so the §8.20.7 string
+  // replace runs once per diagram, not on every rebuild.
+  static final Map<String, String> _lightSvgCache = <String, String>{};
+
+  final String diagramId;
+
+  Future<String> _loadSwappedSvg() async {
+    final String cached = _lightSvgCache[diagramId] ?? '';
+    if (cached.isNotEmpty) return cached;
+    final String raw =
+        await rootBundle.loadString(ConnectorDiagrams.path(diagramId));
+    final String swapped = ConceptGraphicBand.applyLightSwap(raw);
+    _lightSvgCache[diagramId] = swapped;
+    return swapped;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!ConnectorDiagrams.has(diagramId)) {
+      return const SizedBox.shrink();
+    }
+    final AppColorScheme colors = context.colors;
+
+    final Widget svg = colors.isLight
+        ? _LightRjSvg(future: _loadSwappedSvg(), bandHeight: _bandHeight)
+        : SvgPicture.asset(
+            ConnectorDiagrams.path(diagramId),
+            fit: BoxFit.contain,
+            width: double.infinity,
+            height: _bandHeight,
+            excludeFromSemantics: true,
+            // A bundled-but-unparseable SVG collapses to nothing rather than
+            // surfacing a broken-image box.
+            placeholderBuilder: (_) => const SizedBox.shrink(),
+          );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      child: ExcludeSemantics(
+        child: SizedBox(
+          height: _bandHeight,
+          width: double.infinity,
+          child: Center(child: svg),
+        ),
+      ),
+    );
+  }
+}
+
+/// Light-mode RJ-diagram render: awaits the §8.20.7-swapped SVG source, then
+/// draws it with `SvgPicture.string`. Collapses to nothing while loading or on
+/// any parse failure — same graceful-degradation contract as the dark asset
+/// path, so no broken-image box or layout jump ever appears.
+class _LightRjSvg extends StatelessWidget {
+  const _LightRjSvg({required this.future, required this.bandHeight});
+
+  final Future<String> future;
+  final double bandHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String>(
+      future: future,
+      builder: (BuildContext context, AsyncSnapshot<String> snap) {
+        final String? data = snap.data;
+        if (data == null || data.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        return SvgPicture.string(
+          data,
+          fit: BoxFit.contain,
+          width: double.infinity,
+          height: bandHeight,
+          excludeFromSemantics: true,
+          placeholderBuilder: (_) => const SizedBox.shrink(),
+        );
+      },
     );
   }
 }

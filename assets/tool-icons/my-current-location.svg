@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Current Location (Tier-2, GL-003 8.6.1): a standalone map-pin whose
+         point rests on a wide ground arc = "you are here, on the ground".
+         The pin+ground-arc silhouette differentiates it from ip-geo
+         (pin over three horizontal lines) and lat-long (grid + crosshair
+         ring) by gross shape, not by an accent that would die at 20px.
+         Single color, currentColor, no decorative fills beyond the
+         center position dot. -->
+    <!-- map pin: teardrop body, point down -->
+    <path d="M12 2.5
+             C8.41 2.5 5.5 5.41 5.5 9
+             C5.5 13.5 12 19.5 12 19.5
+             C12 19.5 18.5 13.5 18.5 9
+             C18.5 5.41 15.59 2.5 12 2.5 Z"/>
+    <!-- center position dot -->
+    <circle cx="12" cy="9" r="1.4" fill="currentColor" stroke="none"/>
+    <!-- ground arc the pin stands on (the locating base) -->
+    <path d="M6 21 A9 9 0 0 0 18 21"/>
+  </g>
+</svg>

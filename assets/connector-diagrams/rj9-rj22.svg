@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- RJ9 / RJ22 - 4P4C. The handset coil-cord plug: narrowest modular body
+       (4 positions), all 4 gold contacts loaded. Not a wall jack. Lime marks the
+       narrow 4-position body (the identifying feature vs the 6P / 8P family). -->
+
+  <text x="200" y="22" fill="#E5E5E5" font-size="14" font-weight="600" text-anchor="middle">RJ9 / RJ22 - 4P4C</text>
+
+  <!-- latch / spring tab -->
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M184 52 L184 40 L216 40 L216 52"/>
+  </g>
+
+  <!-- 4-position body housing (narrowest: x 160 to 240) -->
+  <g stroke="#A2CC3A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M160 52 L240 52 L240 138 L160 138 Z"/>
+  </g>
+  <g stroke="#9C9C9C" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M180 138 L180 152 L220 152 L220 138"/>
+  </g>
+
+  <!-- 4 position slot dividers (centers 170,190,210,230) -->
+  <g stroke="#9C9C9C" stroke-width="1" stroke-linecap="round">
+    <line x1="180" y1="60" x2="180" y2="120"/>
+    <line x1="200" y1="60" x2="200" y2="120"/>
+    <line x1="220" y1="60" x2="220" y2="120"/>
+  </g>
+
+  <!-- all 4 gold contacts loaded -->
+  <g stroke="#C9A227" stroke-width="3.5" stroke-linecap="round">
+    <line x1="170" y1="64" x2="170" y2="116"/>
+    <line x1="190" y1="64" x2="190" y2="116"/>
+    <line x1="210" y1="64" x2="210" y2="116"/>
+    <line x1="230" y1="64" x2="230" y2="116"/>
+  </g>
+
+  <line x1="200" y1="138" x2="200" y2="160" stroke="#A2CC3A" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="200" y="176" fill="#A2CC3A" font-size="13" font-weight="600" text-anchor="middle">narrow 4-position body (4 of 4)</text>
+
+  <text x="200" y="194" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle">Telephone handset-to-base coil cord. Not a wall jack.</text>
+</svg>

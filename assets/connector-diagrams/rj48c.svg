@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- RJ48C - 8P8C. The common T1 variant on a wall jack. Body is identical
+       8P8C; the distinguishing fact is the active pin set: 1/2 = Rx, 4/5 = Tx.
+       Lime marks the four pins T1 actually uses (1,2,4,5). Pins 3,6,7,8 unused. -->
+
+  <text x="200" y="22" fill="#E5E5E5" font-size="14" font-weight="600" text-anchor="middle">RJ48C - 8P8C (T1)</text>
+
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M176 52 L176 40 L224 40 L224 52"/>
+  </g>
+
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M116 52 L284 52 L284 138 L116 138 Z"/>
+  </g>
+  <g stroke="#9C9C9C" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M160 138 L160 152 L240 152 L240 138"/>
+  </g>
+
+  <g stroke="#9C9C9C" stroke-width="1" stroke-linecap="round">
+    <line x1="140" y1="60" x2="140" y2="120"/>
+    <line x1="160" y1="60" x2="160" y2="120"/>
+    <line x1="180" y1="60" x2="180" y2="120"/>
+    <line x1="200" y1="60" x2="200" y2="120"/>
+    <line x1="220" y1="60" x2="220" y2="120"/>
+    <line x1="240" y1="60" x2="240" y2="120"/>
+    <line x1="260" y1="60" x2="260" y2="120"/>
+  </g>
+
+  <!-- all 8 contacts present (gold). Pin centers: 1=130 2=150 3=170 4=190
+       5=210 6=230 7=250 8=270 -->
+  <g stroke="#C9A227" stroke-width="3.5" stroke-linecap="round">
+    <line x1="130" y1="64" x2="130" y2="116"/>
+    <line x1="150" y1="64" x2="150" y2="116"/>
+    <line x1="170" y1="64" x2="170" y2="116"/>
+    <line x1="190" y1="64" x2="190" y2="116"/>
+    <line x1="210" y1="64" x2="210" y2="116"/>
+    <line x1="230" y1="64" x2="230" y2="116"/>
+    <line x1="250" y1="64" x2="250" y2="116"/>
+    <line x1="270" y1="64" x2="270" y2="116"/>
+  </g>
+
+  <!-- lime: the active T1 pairs 1/2 (Rx) and 4/5 (Tx) -->
+  <rect x="122" y="58" width="36" height="64" rx="4" stroke="#A2CC3A" stroke-width="2" fill="none"/>
+  <rect x="182" y="58" width="36" height="64" rx="4" stroke="#A2CC3A" stroke-width="2" fill="none"/>
+  <text x="140" y="134" fill="#A2CC3A" font-size="11" font-weight="600" text-anchor="middle">1/2 Rx</text>
+  <text x="200" y="134" fill="#A2CC3A" font-size="11" font-weight="600" text-anchor="middle">4/5 Tx</text>
+
+  <text x="200" y="160" fill="#E5E5E5" font-size="12" font-weight="500" text-anchor="middle">Most common RJ48 variant. Same 8P8C body as RJ45.</text>
+  <text x="200" y="178" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle">T1 on a standard wall jack; uses pins 1/2 (Rx) and 4/5 (Tx).</text>
+  <text x="200" y="194" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">Difference from RJ45 is the pinout, not the connector shape.</text>
+</svg>

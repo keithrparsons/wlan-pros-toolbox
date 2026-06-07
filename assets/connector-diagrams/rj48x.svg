@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- RJ48X - 8P8C. T1 variant with a SHORTING BAR (in the JACK) that loops the
+       line back when the plug is removed, for loopback testing. Body is the same
+       8P8C. Lime marks the shorting bar bridging the outer pins (the identifying
+       feature). NOTE: the shorting bar lives in the jack, not the plug. -->
+
+  <text x="200" y="22" fill="#E5E5E5" font-size="14" font-weight="600" text-anchor="middle">RJ48X - 8P8C (loopback)</text>
+
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M176 52 L176 40 L224 40 L224 52"/>
+  </g>
+
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M116 52 L284 52 L284 138 L116 138 Z"/>
+  </g>
+  <g stroke="#9C9C9C" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M160 138 L160 150 L240 150 L240 138"/>
+  </g>
+
+  <g stroke="#9C9C9C" stroke-width="1" stroke-linecap="round">
+    <line x1="140" y1="60" x2="140" y2="120"/>
+    <line x1="160" y1="60" x2="160" y2="120"/>
+    <line x1="180" y1="60" x2="180" y2="120"/>
+    <line x1="200" y1="60" x2="200" y2="120"/>
+    <line x1="220" y1="60" x2="220" y2="120"/>
+    <line x1="240" y1="60" x2="240" y2="120"/>
+    <line x1="260" y1="60" x2="260" y2="120"/>
+  </g>
+
+  <g stroke="#C9A227" stroke-width="3.5" stroke-linecap="round">
+    <line x1="130" y1="72" x2="130" y2="120"/>
+    <line x1="150" y1="72" x2="150" y2="120"/>
+    <line x1="170" y1="72" x2="170" y2="120"/>
+    <line x1="190" y1="72" x2="190" y2="120"/>
+    <line x1="210" y1="72" x2="210" y2="120"/>
+    <line x1="230" y1="72" x2="230" y2="120"/>
+    <line x1="250" y1="72" x2="250" y2="120"/>
+    <line x1="270" y1="72" x2="270" y2="120"/>
+  </g>
+
+  <!-- shorting bar (LIME): bridges Rx pair (pins 1,2 = x130,150) to Tx pair
+       (pins 4,5 = x190,210) when the plug is removed -->
+  <path d="M130 72 L130 66 L190 66 L190 72" stroke="#A2CC3A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M150 72 L150 60 L210 60 L210 72" stroke="#A2CC3A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+  <text x="200" y="160" fill="#A2CC3A" font-size="12" font-weight="600" text-anchor="middle">shorting bar loops the line when unplugged</text>
+
+  <text x="200" y="178" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle">T1 with loopback for line testing. Same 8P8C body.</text>
+  <text x="200" y="194" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">The shorting bar is in the jack, not the plug.</text>
+</svg>

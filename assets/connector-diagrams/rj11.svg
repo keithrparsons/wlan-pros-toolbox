@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- RJ11 - 6P2C. Front mating-face view of the modular plug, latch on top.
+       6-position body (medium width); 2 gold contacts loaded center-out (slots 3,4).
+       Lime marks the identifying feature: the single populated pair. -->
+
+  <text x="200" y="22" fill="#E5E5E5" font-size="14" font-weight="600" text-anchor="middle">RJ11 - 6P2C</text>
+
+  <!-- latch / spring tab on top of the plug -->
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M178 52 L178 40 L222 40 L222 52"/>
+  </g>
+
+  <!-- 6-position body housing (medium width: x 140 to 260) -->
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M140 52 L260 52 L260 138 L140 138 Z"/>
+  </g>
+  <!-- cable / strain relief behind the body -->
+  <g stroke="#9C9C9C" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M168 138 L168 152 L232 152 L232 138"/>
+  </g>
+
+  <!-- 6 position slots, 20px pitch, field x150..250 (slot centers 155,175,...,245) -->
+  <g stroke="#9C9C9C" stroke-width="1" stroke-linecap="round">
+    <line x1="160" y1="60" x2="160" y2="120"/>
+    <line x1="180" y1="60" x2="180" y2="120"/>
+    <line x1="200" y1="60" x2="200" y2="120"/>
+    <line x1="220" y1="60" x2="220" y2="120"/>
+    <line x1="240" y1="60" x2="240" y2="120"/>
+  </g>
+
+  <!-- gold contacts: 2 loaded, center-out (slots 3 and 4 -> centers 190,210) -->
+  <g stroke="#C9A227" stroke-width="3.5" stroke-linecap="round">
+    <line x1="190" y1="64" x2="190" y2="116"/>
+    <line x1="210" y1="64" x2="210" y2="116"/>
+  </g>
+
+  <!-- lime accent ring around the loaded pair (identifying feature) -->
+  <rect x="180" y="58" width="40" height="64" rx="4" stroke="#A2CC3A" stroke-width="2" fill="none"/>
+  <line x1="200" y1="138" x2="200" y2="160" stroke="#A2CC3A" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="200" y="176" fill="#A2CC3A" font-size="13" font-weight="600" text-anchor="middle">1 pair loaded (2 of 6)</text>
+
+  <text x="200" y="194" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle">Single analog phone line. The common home telephone / DSL jack.</text>
+</svg>

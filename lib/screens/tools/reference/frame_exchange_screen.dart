@@ -780,6 +780,222 @@ const List<FxScenario> _kScenarios = <FxScenario>[
     ],
   ),
   FxScenario(
+    key: 'owe',
+    tabLabel: 'OWE / Enhanced Open',
+    title: 'OWE / Enhanced Open (Opportunistic Wireless Encryption)',
+    phases: <FxPhase>[
+      FxPhase(
+        name: 'Discovery',
+        frames: <FxFrame>[
+          FxFrame(
+            n: 1,
+            dir: 'AP → STA',
+            label: 'Beacon / Probe Response',
+            type: FxType.mgmt,
+            note:
+                'AP advertises OWE via the RSN element with AKM suite '
+                '00-0F-AC:18 (OWE). No passphrase, no certificate.',
+          ),
+          FxFrame(
+            n: 2,
+            dir: 'STA → AP',
+            label: 'Probe Request',
+            type: FxType.mgmt,
+            note:
+                'STA discovers / queries the BSS (optional if it already has '
+                'the Beacon).',
+          ),
+        ],
+      ),
+      FxPhase(
+        name: 'Open System Authentication',
+        frames: <FxFrame>[
+          FxFrame(
+            n: 3,
+            dir: 'STA → AP',
+            label: 'Auth Request (Open), seq 1',
+            type: FxType.mgmt,
+            note: 'Open System authentication request. No keys yet.',
+          ),
+          FxFrame(
+            n: 4,
+            dir: 'AP → STA',
+            label: 'Auth Response (Open), seq 2',
+            type: FxType.mgmt,
+            note: 'Open System authentication response, status success.',
+          ),
+        ],
+      ),
+      FxPhase(
+        name: 'Association — Diffie-Hellman key exchange (the OWE crux)',
+        frames: <FxFrame>[
+          FxFrame(
+            n: 5,
+            dir: 'STA → AP',
+            label: 'Association Request (+ DH Parameter element)',
+            type: FxType.mgmt,
+            note:
+                'Carries the RSN element (OWE AKM) PLUS the Diffie-Hellman '
+                "Parameter element with the STA's ECDH public key and group ID. "
+                'This is where OWE differs from open: the key ride is in the '
+                'Assoc Request.',
+          ),
+          FxFrame(
+            n: 6,
+            dir: 'AP → STA',
+            label: 'Association Response (+ DH Parameter element)',
+            type: FxType.mgmt,
+            note:
+                "Carries the AP's ECDH public key in its own Diffie-Hellman "
+                'Parameter element. Both sides now compute the DH shared secret '
+                '→ PMK (PMK = HKDF over the DH result and both public keys). No '
+                'pre-shared material is used.',
+          ),
+        ],
+      ),
+      FxPhase(
+        name: '4-Way Handshake (standard, using the OWE-derived PMK)',
+        frames: <FxFrame>[
+          FxFrame(
+            n: 7,
+            dir: 'AP → STA',
+            label: 'EAPOL Key (Msg 1/4)',
+            type: FxType.eap,
+            note: 'AP sends ANonce. Identical handshake to WPA2/WPA3, but the '
+                'PMK came from the DH exchange above.',
+          ),
+          FxFrame(
+            n: 8,
+            dir: 'STA → AP',
+            label: 'EAPOL Key (Msg 2/4)',
+            type: FxType.eap,
+            note: 'STA sends SNonce + MIC; STA derives the PTK.',
+          ),
+          FxFrame(
+            n: 9,
+            dir: 'AP → STA',
+            label: 'EAPOL Key (Msg 3/4)',
+            type: FxType.eap,
+            note: 'GTK delivered + MIC; install keys.',
+          ),
+          FxFrame(
+            n: 10,
+            dir: 'STA → AP',
+            label: 'EAPOL Key (Msg 4/4)',
+            type: FxType.eap,
+            note:
+                'ACK; both install the PTK. Every client gets a unique session '
+                'key, so passive sniffing on the open SSID is defeated. '
+                'Transition mode: an AP can pair a legacy Open BSS with a hidden '
+                'OWE BSS so OWE-capable clients silently move to the encrypted '
+                'one.',
+          ),
+        ],
+      ),
+    ],
+  ),
+  FxScenario(
+    key: 'passpoint',
+    tabLabel: 'Passpoint / Hotspot 2.0',
+    title: 'Passpoint / Hotspot 2.0 (pre-association GAS/ANQP, then EAP)',
+    phases: <FxPhase>[
+      FxPhase(
+        name: 'Discovery',
+        frames: <FxFrame>[
+          FxFrame(
+            n: 1,
+            dir: 'AP → STA',
+            label: 'Beacon / Probe Response',
+            type: FxType.mgmt,
+            note:
+                'AP advertises Hotspot 2.0 via the Interworking element (and '
+                'HS2.0 Indication).',
+          ),
+        ],
+      ),
+      FxPhase(
+        name: 'Pre-association query (GAS / ANQP — the distinct part)',
+        frames: <FxFrame>[
+          FxFrame(
+            n: 2,
+            dir: 'STA → AP',
+            label: 'GAS Initial Request (Public Action)',
+            type: FxType.mgmt,
+            note:
+                'Carries an ANQP query (NAI Realm List, Roaming Consortium / '
+                'RCOI, 3GPP Cellular, Domain Name). Sent unauthenticated and '
+                'unassociated — the STA has no IP yet, so GAS Public Action '
+                'frames are the transport.',
+          ),
+          FxFrame(
+            n: 3,
+            dir: 'AP → STA',
+            label: 'GAS Initial Response (Public Action)',
+            type: FxType.mgmt,
+            note:
+                'Returns the ANQP data — or a delay token / comeback if the '
+                'response is large or not ready. The STA can now decide WHETHER '
+                'this network can authenticate it before committing.',
+          ),
+          FxFrame(
+            n: 4,
+            dir: 'STA ↔ AP',
+            label: 'GAS Comeback Request / Response (optional)',
+            type: FxType.mgmt,
+            note:
+                'Only when the ANQP response is fragmented or delayed: the STA '
+                'fetches the remaining ANQP fragments. Skipped on short '
+                'responses.',
+          ),
+        ],
+      ),
+      FxPhase(
+        name: 'Association',
+        frames: <FxFrame>[
+          FxFrame(
+            n: 5,
+            dir: 'STA → AP',
+            label: 'Auth Request (Open) + Association',
+            type: FxType.mgmt,
+            note:
+                'STA has decided to join: Open System auth, then Association '
+                'Request/Response negotiating the 802.1X AKM in the RSN '
+                'element.',
+          ),
+        ],
+      ),
+      FxPhase(
+        name: 'EAP authentication + 4-Way Handshake (ordinary 802.1X)',
+        frames: <FxFrame>[
+          FxFrame(
+            n: 6,
+            dir: 'STA ↔ AP ↔ RADIUS',
+            label: '802.1X / EAP method exchange',
+            type: FxType.eap,
+            note:
+                'Full EAP runs — typically EAP-TLS, EAP-TTLS, or EAP-SIM/AKA '
+                'for carrier SIM auth. After association the air sequence is the '
+                'ordinary 802.1X/EAP flow (see the WPA2-Enterprise scenario).',
+          ),
+          FxFrame(
+            n: 7,
+            dir: 'STA ↔ AP',
+            label: '4-Way Handshake (Msg 1/4 … 4/4)',
+            type: FxType.eap,
+            note:
+                'Standard handshake using the EAP-derived PMK. '
+                'OpenRoaming note: OpenRoaming (WBA) is a federation built ON '
+                'this Passpoint exchange — an RCOI match in the ANQP query '
+                'triggers the EAP auth shown here. The roaming agreements and '
+                'identity federation are backend (WBA WRIX), not new '
+                'over-the-air frames. It can also be paired with OWE for its '
+                'settlement-free open tier.',
+          ),
+        ],
+      ),
+    ],
+  ),
+  FxScenario(
     key: 'dot1x',
     tabLabel: 'WPA2-Enterprise',
     title: 'WPA2-Enterprise (802.1X / EAP) Association',
@@ -914,7 +1130,13 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             dir: 'STA → AP',
             label: 'EAPOL Key (Msg 4/4)',
             type: FxType.eap,
-            note: 'PTK/GTK installed. Data can now flow',
+            note:
+                'PTK/GTK installed. Data can now flow. '
+                'eduroam note: eduroam uses this EXACT air sequence — the '
+                "difference is backend RADIUS proxying that routes auth to the "
+                "user's home institution by the realm in the outer identity "
+                '(user@institution.edu). There is no eduroam-specific over-the-'
+                'air frame.',
           ),
         ],
       ),
@@ -1002,7 +1224,14 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             type: FxType.mgmt,
             note:
                 'Status = 0. STA is now associated to AP2. Total roam latency '
-                '< 50 ms with 802.11r vs > 150 ms without',
+                '< 50 ms with 802.11r vs > 150 ms without. '
+                'Over-the-DS variant: instead of the FT Auth frames above going '
+                'over the air to AP2, the STA sends an FT Action Request to its '
+                'CURRENT AP, which relays it to the target AP through the '
+                'distribution system; the FT Action Response comes back the same '
+                'way. The roam then finishes with the same Reassociation '
+                'Request/Response. Over-the-air uses Authentication frames (FT '
+                'algorithm); over-the-DS uses Action frames.',
           ),
         ],
       ),

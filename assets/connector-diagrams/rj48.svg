@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- RJ48 - 8P8C. Same physical 8-position body as RJ45; all 8 gold contacts.
+       Difference is the pin assignment (T1/E1/ISDN) and frequent shielding,
+       NOT the connector shape. Lime marks the shield shell (the identifying
+       physical difference: RJ48 is commonly the shielded 8P8C). -->
+
+  <text x="200" y="22" fill="#E5E5E5" font-size="14" font-weight="600" text-anchor="middle">RJ48 - 8P8C (often shielded)</text>
+
+  <!-- shield shell outline (LIME = identifying feature: metal shield around 8P8C) -->
+  <rect x="108" y="44" width="184" height="102" rx="6" stroke="#A2CC3A" stroke-width="2" fill="none" stroke-dasharray="6 4"/>
+
+  <!-- latch / spring tab -->
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M176 52 L176 40 L224 40 L224 52"/>
+  </g>
+
+  <!-- 8-position body housing -->
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M116 52 L284 52 L284 138 L116 138 Z"/>
+  </g>
+  <g stroke="#9C9C9C" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M160 138 L160 150 L240 150 L240 138"/>
+  </g>
+
+  <g stroke="#9C9C9C" stroke-width="1" stroke-linecap="round">
+    <line x1="140" y1="60" x2="140" y2="120"/>
+    <line x1="160" y1="60" x2="160" y2="120"/>
+    <line x1="180" y1="60" x2="180" y2="120"/>
+    <line x1="200" y1="60" x2="200" y2="120"/>
+    <line x1="220" y1="60" x2="220" y2="120"/>
+    <line x1="240" y1="60" x2="240" y2="120"/>
+    <line x1="260" y1="60" x2="260" y2="120"/>
+  </g>
+
+  <g stroke="#C9A227" stroke-width="3.5" stroke-linecap="round">
+    <line x1="130" y1="64" x2="130" y2="116"/>
+    <line x1="150" y1="64" x2="150" y2="116"/>
+    <line x1="170" y1="64" x2="170" y2="116"/>
+    <line x1="190" y1="64" x2="190" y2="116"/>
+    <line x1="210" y1="64" x2="210" y2="116"/>
+    <line x1="230" y1="64" x2="230" y2="116"/>
+    <line x1="250" y1="64" x2="250" y2="116"/>
+    <line x1="270" y1="64" x2="270" y2="116"/>
+  </g>
+
+  <line x1="200" y1="146" x2="200" y2="162" stroke="#A2CC3A" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="200" y="178" fill="#A2CC3A" font-size="13" font-weight="600" text-anchor="middle">same 8P8C body, different pinout + shield</text>
+
+  <text x="200" y="195" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle">T1 / E1 / ISDN / DDS over twisted pair.</text>
+</svg>

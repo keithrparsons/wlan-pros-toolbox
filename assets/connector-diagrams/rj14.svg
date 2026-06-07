@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- RJ14 - 6P4C. Same 6-position body as RJ11; 4 gold contacts loaded
+       center-out (slots 2,3,4,5). Lime marks the two populated pairs. -->
+
+  <text x="200" y="22" fill="#E5E5E5" font-size="14" font-weight="600" text-anchor="middle">RJ14 - 6P4C</text>
+
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M178 52 L178 40 L222 40 L222 52"/>
+  </g>
+
+  <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M140 52 L260 52 L260 138 L140 138 Z"/>
+  </g>
+  <g stroke="#9C9C9C" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M168 138 L168 152 L232 152 L232 138"/>
+  </g>
+
+  <g stroke="#9C9C9C" stroke-width="1" stroke-linecap="round">
+    <line x1="160" y1="60" x2="160" y2="120"/>
+    <line x1="180" y1="60" x2="180" y2="120"/>
+    <line x1="200" y1="60" x2="200" y2="120"/>
+    <line x1="220" y1="60" x2="220" y2="120"/>
+    <line x1="240" y1="60" x2="240" y2="120"/>
+  </g>
+
+  <!-- gold contacts: 4 loaded center-out (slot centers 170,190,210,230) -->
+  <g stroke="#C9A227" stroke-width="3.5" stroke-linecap="round">
+    <line x1="170" y1="64" x2="170" y2="116"/>
+    <line x1="190" y1="64" x2="190" y2="116"/>
+    <line x1="210" y1="64" x2="210" y2="116"/>
+    <line x1="230" y1="64" x2="230" y2="116"/>
+  </g>
+
+  <rect x="160" y="58" width="80" height="64" rx="4" stroke="#A2CC3A" stroke-width="2" fill="none"/>
+  <line x1="200" y1="138" x2="200" y2="160" stroke="#A2CC3A" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="200" y="176" fill="#A2CC3A" font-size="13" font-weight="600" text-anchor="middle">2 pairs loaded (4 of 6)</text>
+
+  <text x="200" y="194" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle">Two phone lines in the same 6-position body as RJ11.</text>
+</svg>
