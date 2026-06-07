@@ -135,8 +135,9 @@ class ChannelMapScreen extends StatefulWidget {
   //   straddles a boundary→ mixed (160 MHz across UNII-1+2A)
   // Center channel per PWA: round((c1+c2)/2). Slot order from CM5_SLOTS.
 
-  /// 5 GHz 20 MHz primaries — verbatim from PWA `CH5` (ch + DFS). noDfs for
-  /// UNII-1 (36–48) and UNII-3 (149–165); dfs for UNII-2A (52–64) and UNII-2C
+  /// 5 GHz 20 MHz primaries — from PWA `CH5` plus UNII-4 (169–177) added per
+  /// Keith's RF Channel Allocations chart. noDfs for UNII-1 (36–48), UNII-3
+  /// (149–165), and UNII-4 (169–177); dfs for UNII-2A (52–64) and UNII-2C
   /// (100–144).
   static const List<BondedBlock> map5_20 = [
     BondedBlock(
@@ -314,6 +315,28 @@ class ChannelMapScreen extends StatefulWidget {
       highChannel: 165,
       dfs: DfsClass.noDfs,
     ),
+    // UNII-4 (169–177), non-DFS. Per Keith's RF Channel Allocations chart.
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 169,
+      lowChannel: 169,
+      highChannel: 169,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 173,
+      lowChannel: 173,
+      highChannel: 173,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 20,
+      centerChannel: 177,
+      lowChannel: 177,
+      highChannel: 177,
+      dfs: DfsClass.noDfs,
+    ),
   ];
 
   /// 5 GHz 40 MHz bonds — verbatim from PWA `CM5_40`. Center = round((c1+c2)/2).
@@ -402,6 +425,21 @@ class ChannelMapScreen extends StatefulWidget {
       highChannel: 161,
       dfs: DfsClass.noDfs,
     ),
+    // UNII-3/UNII-4 40 MHz bonds (167 = 165+169, 175 = 173+177), non-DFS.
+    BondedBlock(
+      widthMhz: 40,
+      centerChannel: 167,
+      lowChannel: 165,
+      highChannel: 169,
+      dfs: DfsClass.noDfs,
+    ),
+    BondedBlock(
+      widthMhz: 40,
+      centerChannel: 175,
+      lowChannel: 173,
+      highChannel: 177,
+      dfs: DfsClass.noDfs,
+    ),
   ];
 
   /// 5 GHz 80 MHz bonds — verbatim from PWA `CM5_80`. Center = round((c1+c2)/2).
@@ -448,6 +486,14 @@ class ChannelMapScreen extends StatefulWidget {
       highChannel: 161,
       dfs: DfsClass.noDfs,
     ),
+    // UNII-3/UNII-4 80 MHz bond (171 = 165+169+173+177), non-DFS.
+    BondedBlock(
+      widthMhz: 80,
+      centerChannel: 171,
+      lowChannel: 165,
+      highChannel: 177,
+      dfs: DfsClass.noDfs,
+    ),
   ];
 
   /// 5 GHz 160 MHz bonds — verbatim from PWA `CM5_160`. Center = round((c1+c2)/2).
@@ -474,6 +520,14 @@ class ChannelMapScreen extends StatefulWidget {
       lowChannel: 116,
       highChannel: 144,
       dfs: DfsClass.dfs,
+    ),
+    // UNII-3/UNII-4 160 MHz bond (163 spans 149→177), all non-DFS.
+    BondedBlock(
+      widthMhz: 160,
+      centerChannel: 163,
+      lowChannel: 149,
+      highChannel: 177,
+      dfs: DfsClass.noDfs,
     ),
   ];
 

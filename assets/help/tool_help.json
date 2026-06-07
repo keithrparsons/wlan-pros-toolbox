@@ -830,9 +830,9 @@
       "algorithm": null,
       "example": null,
       "fieldNotes": [
-        "What it shows: a three-option band toggle. 2.4 GHz: the 11 US channels as 20 MHz blocks, with 1/6/11 emphasized (non-overlapping) and the rest faint. 5 GHz: rows for 20/40/80/160 MHz bonded widths, each block labelled with its primary/center channel and tinted by DFS class. 6 GHz: rows for 20/40/80/160/320 MHz across UNII-5 (ch 1 to 93), with PSC channels marked.",
-        "US-default. The full US 6 GHz band extends to ch 233 (UNII-6/7/8 follow the same bonding pattern); the map shows UNII-5 only. 6 GHz UNII-5 needs no DFS and no AFC indoors (LPI).",
-        "Data source: US (FCC). Ported verbatim from the rf-tools-pwa chanmap tool. 5 GHz DFS: No DFS = UNII-1 (36 to 48) and UNII-3 (149 to 165); DFS = UNII-2A/2C. The original PWA's literal hex colors were re-expressed in the design-system status palette; the meaning (DFS/PSC/mixed) is preserved."
+        "What it shows: a three-option band toggle. 2.4 GHz: the 11 US channels as 20 MHz blocks, with 1/6/11 emphasized (non-overlapping) and the rest faint. 5 GHz: rows for 20/40/80/160 MHz bonded widths, each block labelled with its primary/center channel and tinted by DFS class. 6 GHz: rows for 20/40/80/160/320 MHz across the full US band (ch 1 to 233, UNII-5 through UNII-8), with PSC channels marked.",
+        "US-default. The map covers the full US 6 GHz band, ch 1 to 233 (UNII-5 through UNII-8). 6 GHz needs no DFS, and no AFC for low-power indoor (LPI) use.",
+        "Data source: US (FCC). Ported verbatim from the rf-tools-pwa chanmap tool. 5 GHz DFS: No DFS = UNII-1 (36 to 48), UNII-3 (149 to 165), and UNII-4 (169 to 177); DFS = UNII-2A/2C. UNII-4 (169/173/177) is included per Keith’s RF Channel Allocations chart. The original PWA's literal hex colors were re-expressed in the design-system status palette; the meaning (DFS/PSC/mixed) is preserved."
       ],
       "source": "lib/screens/tools/reference/channel_map_screen.dart"
     },

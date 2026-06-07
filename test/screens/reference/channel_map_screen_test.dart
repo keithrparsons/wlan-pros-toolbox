@@ -42,12 +42,23 @@ void main() {
   });
 
   group('ChannelMapScreen 5 GHz bonding', () {
-    test('20 MHz row has 25 channels (UNII-1/2A/2C/3)', () {
-      expect(ChannelMapScreen.map5_20.length, 25);
+    test('20 MHz row has 28 channels (UNII-1/2A/2C/3/4)', () {
+      // UNII-4 (169/173/177) added per Keith's RF Channel Allocations chart.
+      expect(ChannelMapScreen.map5_20.length, 28);
     });
 
-    test('40 MHz bonds: 12 blocks, first centers ch 38 (36+40)', () {
-      expect(ChannelMapScreen.map5_40.length, 12);
+    test('UNII-4 (169–177) is present and non-DFS', () {
+      for (final int ch in <int>[169, 173, 177]) {
+        final BondedBlock b = ChannelMapScreen.map5_20
+            .firstWhere((BondedBlock b) => b.centerChannel == ch);
+        expect(b.widthMhz, 20);
+        expect(b.dfs, DfsClass.noDfs, reason: 'ch $ch should be non-DFS');
+      }
+      expect(ChannelMapScreen.map5_20.last.centerChannel, 177);
+    });
+
+    test('40 MHz bonds: 14 blocks, first centers ch 38 (36+40)', () {
+      expect(ChannelMapScreen.map5_40.length, 14);
       final BondedBlock first = ChannelMapScreen.map5_40.first;
       expect(first.centerChannel, 38);
       expect(first.lowChannel, 36);
@@ -59,7 +70,7 @@ void main() {
     test('80 MHz bonds match PWA CM5_80 centers', () {
       expect(
         ChannelMapScreen.map5_80.map((BondedBlock b) => b.centerChannel),
-        [42, 58, 106, 122, 138, 155],
+        [42, 58, 106, 122, 138, 155, 171],
       );
     });
 
