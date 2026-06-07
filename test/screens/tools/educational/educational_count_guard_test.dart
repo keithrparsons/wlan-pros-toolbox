@@ -1,10 +1,13 @@
 // Counter guard — the Educational Resources home-tile badge shows a pinned
-// countLabelOverride ('42') rather than the live tool count (which is only the
-// 10 reference cards). This test asserts that override equals the true total:
-// the number of reference-card tools in the catalog category + the bundled JSON
-// `_meta.count` (the online-resource count). If a card is added/removed, or the
-// dataset's count changes, the override must be updated in lockstep or this
-// test fails — the number cannot silently drift.
+// countLabelOverride rather than the live tool count (the in-app references).
+// This test asserts that override equals the true total: the number of in-app
+// reference tools in the catalog category + the bundled JSON `_meta.count` (the
+// online-resource count). If a tool is added/removed, or the dataset's count
+// changes, the override must be updated in lockstep or this test fails — the
+// number cannot silently drift.
+//
+// 2026-06-06: the in-app references are now 11 = the 10 PDF reference cards +
+// Antenna Fundamentals (moved here from Quick Reference, BF6-3).
 
 import 'dart:convert';
 import 'dart:io';
@@ -19,9 +22,11 @@ void main() {
       (ToolCategory c) => c.id == 'educational-resources',
     );
 
-    // Reference-card tools live in the category's `tools` list.
+    // In-app reference tools live in the category's `tools` list (10 PDF cards
+    // + Antenna Fundamentals, moved here 2026-06-06 BF6-3).
     final int cardCount = edu.tools.length;
-    expect(cardCount, 10, reason: 'expected the 10 PDF reference cards');
+    expect(cardCount, 11,
+        reason: 'expected 10 PDF reference cards + Antenna Fundamentals');
 
     // Online-resource count from the bundled dataset's _meta block.
     final File asset = File('assets/data/educational_resources.json');

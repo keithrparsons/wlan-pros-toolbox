@@ -90,7 +90,37 @@ class DtmfPlayer {
     await _player.play();
   }
 
-  /// Stop any playback (single tone or continuous loop).
+  /// Play a SEQUENCE of DTMF keys in order (BF6-1: the "pre-load a string of
+  /// digits, then play" mode). Each key plays for [toneMs], followed by a
+  /// [gapMs] silence so adjacent tones are distinguishable (real DTMF dialers
+  /// insert an inter-digit gap). The returned future completes when the whole
+  /// sequence has played (or is cancelled).
+  ///
+  /// Cancellation: [shouldContinue] is checked before each tone; returning false
+  /// (e.g. the user pressed Stop, or left the screen) ends the sequence early.
+  /// This keeps the player from holding the audio session after a Stop.
+  Future<void> playSequence(
+    List<DtmfKey> keys, {
+    int toneMs = Dtmf.defaultDurationMs,
+    int gapMs = 80,
+    bool Function()? shouldContinue,
+  }) async {
+    if (_disposed) return;
+    await _player.setLoopMode(LoopMode.off);
+    for (final DtmfKey key in keys) {
+      if (_disposed) return;
+      if (shouldContinue != null && !shouldContinue()) return;
+      final Uint8List wav = Dtmf.wavForKey(key, durationMs: toneMs);
+      await _player.stop();
+      await _player.setAudioSource(_BytesAudioSource(wav));
+      await _player.play();
+      // Wait out the tone, then the inter-digit gap, honoring cancellation.
+      await Future<void>.delayed(Duration(milliseconds: toneMs + gapMs));
+    }
+    if (!_disposed) await _player.stop();
+  }
+
+  /// Stop any playback (single tone, continuous loop, or sequence).
   Future<void> stop() async {
     if (_disposed) return;
     await _player.setLoopMode(LoopMode.off);

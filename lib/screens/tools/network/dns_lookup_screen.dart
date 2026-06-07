@@ -54,7 +54,11 @@ class DnsLookupScreen extends StatefulWidget {
 
 class _DnsLookupScreenState extends State<DnsLookupScreen> {
   late final DnsLookupService _service;
-  final TextEditingController _hostCtrl = TextEditingController();
+  // BF5-7: pre-populate with WLANPros.com (a real, resolvable WLAN Pros name)
+  // instead of leaving the field blank with an "example.com" hint — gives the
+  // user a one-tap working query on open.
+  final TextEditingController _hostCtrl =
+      TextEditingController(text: 'WLANPros.com');
   final FocusNode _hostFocus = FocusNode();
 
   // Query mode. `_digMode` true → dig-style sweep of all common types.
@@ -347,7 +351,7 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
               onChanged: (_) => setState(() {}),
               cursorColor: colors.textAccent,
               decoration: InputDecoration(
-                hintText: isPtr ? '8.8.8.8' : 'example.com',
+                hintText: isPtr ? '8.8.8.8' : 'WLANPros.com',
               ),
             ),
           ),

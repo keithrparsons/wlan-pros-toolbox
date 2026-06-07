@@ -116,6 +116,11 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'geolocation', 'where is this ip', 'location', 'country', 'isp lookup',
     'maxmind',
   ],
+  'my-current-location': <String>[
+    'gps', 'where am i', 'my location', 'current location', 'latitude',
+    'longitude', 'altitude', 'coordinates', 'lat long', 'elevation', 'fix',
+    'accuracy',
+  ],
   'mac-oui-lookup': <String>[
     'vendor', 'manufacturer', 'ieee', 'oui', 'who makes', 'mac vendor',
   ],
@@ -230,10 +235,9 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'power over ethernet', '802.3af', '802.3at', '802.3bt', 'wattage',
     'class', 'pse pd',
   ],
-  'wifi-channels': <String>[
-    'frequency', 'dfs', '2.4', '5', '6 ghz', 'channel plan', 'non overlapping',
-    'center frequency',
-  ],
+  // 'wifi-channels' keywords removed 2026-06-06 (BF6-13): the tool was deleted as
+  // a duplicate of Channel Map. Channel Map's keywords now carry the channel/
+  // frequency/HaLow search terms below.
   '80211-standards': <String>[
     'wifi 4', 'wifi 5', 'wifi 6', 'wifi 7', 'ac', 'ax', 'be', 'n', 'be',
     'generations', 'phy',
@@ -303,6 +307,10 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
   'channel-map': <String>[
     'bonding', '40', '80', '160 mhz', 'channel width', '5 ghz', '6 ghz',
     'overlap',
+    // Folded in from the removed Wi-Fi Channels table (BF6-13) so those search
+    // terms still land on the survivor.
+    'frequency', 'dfs', '2.4', 'channel plan', 'non overlapping',
+    'center frequency', 'halow', '802.11ah', 'sub-1 ghz', '900 mhz',
   ],
   'spectrum': <String>[
     'band plan', 'unii', 'ism', 'sub band', 'allocation', 'coexistence',
@@ -322,9 +330,12 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'singlemode', 'multimode', 'om3', 'om4', 'os2', 'sfp', 'jacket color',
     'optical',
   ],
-  'rf-connectors': <String>[
-    'sma', 'rp-sma', 'n type', 'tnc', 'pigtail', 'antenna connector',
-    'impedance',
+  // 'rf-connectors' MERGED into 'antenna-connectors' 2026-06-06 (BF6-18). Its
+  // search terms are folded into the antenna-connectors keyword set below.
+  'antenna-connectors': <String>[
+    'sma', 'rp-sma', 'n type', 'n connector', 'tnc', 'rp-tnc', 'pigtail',
+    'antenna connector', 'rf connector', 'impedance', 'dart', 'u.fl', 'ufl',
+    'coupling', 'mating', 'coaxial connector',
   ],
   'osi-model': <String>[
     '7 layers', 'layer 2', 'layer 3', 'tcp ip', 'pdu', 'encapsulation',

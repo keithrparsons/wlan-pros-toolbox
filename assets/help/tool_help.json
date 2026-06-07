@@ -586,57 +586,6 @@
       ],
       "source": "poe_budget_screen.dart"
     },
-    "capacity-planner": {
-      "name": "Capacity Planner",
-      "category": "Calculators & Tools",
-      "purpose": "Recommends the number of access points needed for a space, based on user count, concurrency, per-user demand, AP capacity, target utilization, and an optional clients-per-AP density cap.",
-      "whyHere": "High-density design. Size AP count by both throughput demand and client-density limits, taking the larger of the two.",
-      "howToUse": [
-        "Enter total users, concurrent usage %, per-user throughput (Mbps), AP max throughput (Mbps), and target channel utilization %.",
-        "Optionally enter max clients per AP for a density check.",
-        "Read concurrent users, total bandwidth demand, APs by throughput, APs by density, and the recommended AP count."
-      ],
-      "inputs": [
-        {
-          "name": "Total users",
-          "unit": "count",
-          "range": "must be > 0 (default hint 200)"
-        },
-        {
-          "name": "Concurrent usage",
-          "unit": "%",
-          "range": "must be > 0 (default hint 70)"
-        },
-        {
-          "name": "Per-user throughput",
-          "unit": "Mbps",
-          "range": "must be > 0 (default hint 5)"
-        },
-        {
-          "name": "AP max throughput",
-          "unit": "Mbps",
-          "range": "must be > 0 (default hint 600)"
-        },
-        {
-          "name": "Target channel utilization",
-          "unit": "%",
-          "range": "must be > 0 (default hint 50)"
-        },
-        {
-          "name": "Max clients per AP",
-          "unit": "count",
-          "range": "optional (default hint 50); ≤ 0 or blank disables the density check"
-        }
-      ],
-      "algorithm": "concurrent = ceil(users · concurrentPct/100). totalBw = concurrent · perUserMbps. effectiveAp = apMaxMbps · targetUtilPct/100. apsByThroughput = ceil(totalBw / effectiveAp). apsByDensity = ceil(concurrent / maxClients) (0 when no cap). recommended = max(apsByThroughput, apsByDensity, 1). (capacity_planner_screen.dart, compute)",
-      "example": "200 users, 70% concurrent, 5 Mbps/user, 600 Mbps/AP, 50% util, 50 clients/AP → concurrent = 140; totalBw = 700 Mbps; effectiveAp = 300; apsByThroughput = ceil(700/300) = 3; apsByDensity = ceil(140/50) = 3; recommended = 3.",
-      "fieldNotes": [
-        "A planning model, not a survey. It ignores RF coverage, building layout, and co-channel interference, which often drive AP count higher than capacity math alone.",
-        "\"AP max throughput\" should be a realistic per-AP usable rate, not a marketing PHY peak.",
-        "Concurrency and per-user demand are the biggest assumptions; size them from the actual application mix."
-      ],
-      "source": "capacity_planner_screen.dart"
-    },
     "metric-conversion": {
       "name": "Metric Conversion",
       "category": "Calculators & Tools",
@@ -842,30 +791,6 @@
         "MANUAL-VS-CATALOG NOTE: the manual labels this tool's category as \"Networking (calculator screen; grouped under Networking in the catalog, tool_catalog.dart:324)\". In the current 4-category catalog this id sits under the \"Networking Tools\" category (id networking)."
       ],
       "source": "ipv6_subnet_screen.dart:94-295"
-    },
-    "wifi-channels": {
-      "name": "Wi-Fi Channels",
-      "category": "Quick Reference",
-      "purpose": "Look up Wi-Fi channel numbers, center frequencies, channel widths, and DFS status across all four Wi-Fi bands: 2.4 GHz, 5 GHz, 6 GHz, and sub-1 GHz Wi-Fi HaLow.",
-      "whyHere": "When you need to confirm a channel's center frequency, whether it requires DFS, whether it's a Preferred Scanning Channel, or whether a 2.4 GHz channel is even legal in your region.",
-      "howToUse": [
-        "Pick a band from the selector (2.4 / 5 / 6 GHz / HaLow).",
-        "2.4 GHz: a \"Non-overlap\" chip marks channels 1, 6, 11 (the only non-overlapping 20 MHz channels in the US); a neutral \"EU\"/\"JP\" chip marks channels 12 to 14 as not US-usable.",
-        "5 GHz: an amber \"DFS\" chip means radar detection is required (UNII-2A/2C); UNII-1/UNII-3 carry no DFS.",
-        "6 GHz: every shown channel is a PSC (clients scan these first).",
-        "HaLow: the per-region table is the headline; only the US scheme is shown per-channel."
-      ],
-      "inputs": [],
-      "algorithm": null,
-      "example": null,
-      "fieldNotes": [
-        "What it shows: four-option band selector. 2.4 GHz: channel (1 to 14), center GHz, occupied range in MHz (±11 MHz of the 20 MHz channel), non-overlapping channels (1/6/11) or the regulatory domain. 5 GHz: channel (36 to 165), center GHz, UNII sub-band (UNII-1 / 2A / 2C / 3), and a DFS flag. 6 GHz: the 15 Preferred Scanning Channels (PSC), each with center GHz. HaLow (802.11ah): three stacked tables, namely US 902 to 928 MHz 1 MHz channels (odd 1 to 51, center = 902.5 + 0.5 × (ch−1) MHz), US channel-width blocks (1/2/4/8/16 MHz), and per-region operating ranges.",
-        "US-default throughout. 2.4 GHz footnote: EU adds 12 to 13, JP adds 14. 5 GHz footnote warns to verify UNII-4 (ch 169 to 177) local rules before use. 6 GHz full band is 59 × 20 MHz (ch 1 to 233); indoor/LPI needs no AFC, outdoor/standard-power needs AFC; Wi-Fi 7 adds 320 MHz channels.",
-        "HaLow is region-dependent and only the US scheme is verified per-channel; other regions show operating ranges only, marked \"region-dependent,\" and China is explicitly flagged UNCERTAIN (\"varies, reported 755 to 787, confirm with CMIIT\").",
-        "The code notes a faulty 930.5 MHz HaLow extraction was rejected by a band-edge check; ch 51 = 927.5 MHz.",
-        "Data source / standard: US (FCC) regulatory by default. 6 GHz centers and HaLow centers derive from IEEE 802.11ax / 802.11ah formulas; ported from the rf-tools-pwa channels tool. 2.4 GHz channel 14 uses the special 2484 MHz (JP) step."
-      ],
-      "source": "lib/screens/tools/reference/wifi_channels_screen.dart"
     },
     "non-wifi-channels": {
       "name": "Non-Wi-Fi Wireless Channels",
@@ -1239,26 +1164,6 @@
         "Data source / standard: TIA-568 / ISO 11801 (cited in the footnote); ported verbatim from the rf-tools-pwa fiber tool (FIBER_DATA)."
       ],
       "source": "lib/screens/tools/reference/fiber_optic_screen.dart"
-    },
-    "rf-connectors": {
-      "name": "RF Connectors",
-      "category": "Quick Reference",
-      "purpose": "Common coaxial RF connectors (N, TNC, BNC, SMA, RP-SMA, MCX, MMCX, U.FL/IPEX, F-Type) with impedance, max frequency, mating style, and field notes.",
-      "whyHere": "When matching a pigtail or antenna lead, confirm a connector's impedance, frequency ceiling, and the RP-SMA vs SMA / 50 Ω vs 75 Ω gotchas.",
-      "howToUse": [
-        "Each block shows the connector name with an impedance chip, then Max freq. and Mating as data rows, then notes.",
-        "The 50 Ω connectors read as a quiet neutral chip; the 75 Ω F-Type reads in the warning hue with a text flag marking it not for WLAN (the cue is text plus color, not color alone).",
-        "Notes carry the practical context (e.g. N-Type is the outdoor WLAN standard; RP-SMA has a reversed center pin and is NOT interchangeable with SMA; U.FL is fragile, ~30 mate cycles)."
-      ],
-      "inputs": [],
-      "algorithm": null,
-      "example": null,
-      "fieldNotes": [
-        "What it shows: per connector: name, impedance chip, max frequency, mating style, and a field-notes line. Rendered as stacked blocks (the original 5-column table is too wide for a phone).",
-        "Footnote: Wi-Fi is a 50 Ω system, so F-Type (75 Ω) carries an impedance mismatch and significant loss; do not use on WLAN antenna runs. Frequency ranges are typical maximums, verify against the specific part. Standard reference, not region-specific.",
-        "Data source: ported verbatim from the rf-tools-pwa rfconn tool (RF_CONN_DATA); industry connector specs."
-      ],
-      "source": "lib/screens/tools/reference/rf_connectors_screen.dart"
     },
     "antenna-connectors": {
       "name": "Antenna Connectors",
@@ -1864,6 +1769,26 @@
         "Geolocation accuracy is the provider's, especially for mobile/CGNAT IPs. A rate-limit response is surfaced explicitly (\"wait a minute and try again\")."
       ],
       "source": "ip_geo_service.dart:1-268"
+    },
+    "my-current-location": {
+      "name": "My Current Location",
+      "category": "Networking Tools",
+      "purpose": "Reads the device's GPS location on open and shows latitude, longitude, altitude, and horizontal accuracy directly — no conversion step.",
+      "whyHere": "The fast \"where am I right now\" answer. The same fix is available inside the Lat / Long converter, but people expect a dedicated location tool rather than a coordinate calculator.",
+      "howToUse": [
+        "Open the tool; it requests Location permission (if needed) and reads one fix automatically.",
+        "Read latitude / longitude (decimal degrees), altitude (meters), and horizontal accuracy (meters).",
+        "Tap Update to read a fresh fix. Grant Location or open Settings if prompted."
+      ],
+      "inputs": [],
+      "algorithm": "Reuses the DeviceLocationService seam behind the Lat / Long tool (geolocator, LocationAccuracy.best, 15 s cap). Resolves Location permission/services first and renders the matching sealed state (granted -> fix; needs-permission -> request; blocked -> Settings deep-link; no-fix -> honest unavailable). A genuine no-fix on a granted/enabled device falls back to an IP-derived approximate location, clearly labeled approximate (never presented as GPS). Coordinates render in Roboto Mono as identifier values (GL-003 8.5). (my_current_location_screen.dart; device_location.dart)",
+      "example": "Granted + outdoors: 40.712800, -74.006000, altitude 12 m, accuracy 5 m.",
+      "fieldNotes": [
+        "Altitude and accuracy can read \"Not reported\" on hardware without GPS (e.g. a Mac on a coarse Wi-Fi fix).",
+        "An approximate fix derived from your public IP is labeled as such and is city-level, not GPS-precise.",
+        "No coordinates are transmitted; the IP-approximate fallback derives location from the public IP only."
+      ],
+      "source": "my_current_location_screen.dart"
     },
     "mac-oui-lookup": {
       "name": "MAC Vendor OUI Lookup",

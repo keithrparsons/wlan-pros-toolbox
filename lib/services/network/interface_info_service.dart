@@ -414,11 +414,31 @@ class InterfaceInfoService {
 
   String? _safeHostname() {
     try {
-      final String h = Platform.localHostname;
-      return h.isEmpty ? null : h;
+      return normalizeHostname(Platform.localHostname);
     } on Object {
       return null;
     }
+  }
+
+  /// BF5-4: normalize the OS-reported hostname. On iOS, `Platform.localHostname`
+  /// returns the loopback name "localhost" (the device's real hostname is not
+  /// exposed to apps). Showing "localhost" reads as a bug, so any loopback-style
+  /// name collapses to null → the UI renders the honest "Not available on this
+  /// platform" treatment (ValueRow). On macOS / Linux / Windows the real machine
+  /// hostname is legitimately available and passes through unchanged. Static and
+  /// pure so it is unit-testable without a Platform mock.
+  static String? normalizeHostname(String? raw) {
+    if (raw == null) return null;
+    final String h = raw.trim();
+    if (h.isEmpty) return null;
+    final String lower = h.toLowerCase();
+    if (lower == 'localhost' ||
+        lower.startsWith('localhost.') ||
+        lower == 'ip6-localhost' ||
+        lower == 'loopback') {
+      return null;
+    }
+    return h;
   }
 
   /// Best-effort interface-kind inference from the OS interface name. Names are

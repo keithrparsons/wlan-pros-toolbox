@@ -61,18 +61,21 @@ void main() {
   tearDown(() => AntennaFundamentalsDiagrams.debugReset());
 
   group('catalog + route + keyword wiring', () {
-    test('the tool id resolves to a live ToolEntry in Quick Reference', () {
+    test('the tool id resolves to a live ToolEntry in Educational Resources',
+        () {
+      // Moved 2026-06-06 (BF6-3) from Quick Reference to Educational Resources.
       final ToolEntry entry = _entry();
       expect(entry.title, 'Antenna Fundamentals');
       expect(entry.routeName, '/tools/antenna-fundamentals');
       expect(entry.isLive, isTrue);
-      expect(entry.subgroup, 'Wi-Fi & RF');
+      // Educational Resources is not a subgroup-ordered category → no subgroup.
+      expect(entry.subgroup, isNull);
 
       final ToolCategory cat = kToolCategories.firstWhere(
         (ToolCategory c) =>
             c.tools.any((ToolEntry t) => t.id == 'antenna-fundamentals'),
       );
-      expect(cat.id, 'quick-reference');
+      expect(cat.id, 'educational-resources');
     });
 
     test('the route is registered and follows the /tools/<id> convention', () {

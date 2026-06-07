@@ -26,7 +26,7 @@ import 'package:wlan_pros_toolbox/screens/tools/command/linux_wlan_commands_scre
 import 'package:wlan_pros_toolbox/screens/tools/command/wireshark_filters_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/mcs_index_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/pdf_reference_screen.dart';
-import 'package:wlan_pros_toolbox/screens/tools/reference/wifi_channels_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/reference/channel_map_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/wpa_security_screen.dart';
 import 'package:wlan_pros_toolbox/services/help/tool_help_loader.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
@@ -60,8 +60,8 @@ void main() {
   }
 
   group('help footer wired onto reference screens', () {
-    testWidgets('Wi-Fi channels', (t) async {
-      await pump(t, const WifiChannelsScreen());
+    testWidgets('Channel Map', (t) async {
+      await pump(t, const ChannelMapScreen());
       expectFooterPresentNoAppBarHelp(t);
     });
     testWidgets('MCS index', (t) async {

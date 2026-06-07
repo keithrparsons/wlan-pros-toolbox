@@ -40,7 +40,6 @@ import '../screens/tools/calculators/throughput_calc_screen.dart';
 import '../screens/tools/calculators/rf_attenuation_screen.dart';
 import '../screens/tools/calculators/noise_floor_screen.dart';
 import '../screens/tools/calculators/poe_budget_screen.dart';
-import '../screens/tools/reference/wifi_channels_screen.dart';
 import '../screens/tools/reference/standards_screen.dart';
 import '../screens/tools/reference/mcs_index_screen.dart';
 import '../screens/tools/reference/signal_thresholds_screen.dart';
@@ -59,7 +58,6 @@ import '../screens/tools/reference/ethernet_cable_screen.dart';
 import '../screens/tools/reference/antenna_connectors_screen.dart';
 import '../screens/tools/reference/antenna_fundamentals_screen.dart';
 import '../screens/tools/reference/fiber_optic_screen.dart';
-import '../screens/tools/reference/rf_connectors_screen.dart';
 import '../screens/tools/reference/roaming_screen.dart';
 import '../screens/tools/reference/ap_placement_screen.dart';
 import '../screens/tools/reference/non_wifi_channels_screen.dart';
@@ -75,6 +73,7 @@ import '../screens/tools/network/device_info_screen.dart';
 import '../screens/tools/network/interface_info_screen.dart';
 import '../screens/tools/network/icmp_ping_screen.dart';
 import '../screens/tools/network/ip_geo_screen.dart';
+import '../screens/tools/network/my_current_location_screen.dart';
 import '../screens/tools/network/mac_oui_screen.dart';
 import '../screens/tools/network/network_discovery_screen.dart';
 import '../screens/tools/network/mobile_traceroute_screen.dart';
@@ -173,7 +172,9 @@ class AppRouter {
   static const String poeBudget = '/tools/poe-budget';
 
   // Reference tables (read-only lookup data, all platforms incl. web).
-  static const String wifiChannels = '/tools/wifi-channels';
+  // NOTE: `/tools/wifi-channels` (the plainer channels table) was REMOVED
+  // 2026-06-06 (BF6-13) as a duplicate of Channel Map; its HaLow data folded
+  // into Channel Map.
   static const String standards = '/tools/standards';
   static const String mcsIndex = '/tools/mcs-index';
   static const String signalThresholds = '/tools/signal-thresholds';
@@ -187,7 +188,8 @@ class AppRouter {
   static const String coaxCable = '/tools/coax-cable';
   static const String ethernetCable = '/tools/ethernet-cable';
   static const String fiberOptic = '/tools/fiber-optic';
-  static const String rfConnectors = '/tools/rf-connectors';
+  // `/tools/rf-connectors` was REMOVED 2026-06-06 (BF6-18): RF Connectors merged
+  // into the single Antenna Connectors tool.
   static const String roaming = '/tools/roaming';
   static const String apPlacement = '/tools/ap-placement';
   static const String poeReference = '/tools/poe-reference';
@@ -240,6 +242,11 @@ class AppRouter {
   static const String arpNdp = '/tools/arp-ndp';
   static const String bgpAsn = '/tools/bgp-asn';
   static const String ipGeo = '/tools/ip-geo';
+
+  /// My Current Location (BF5-16) — auto-runs the GPS fix on open and shows
+  /// latitude / longitude / altitude / accuracy directly. Reuses the
+  /// DeviceLocationService backend behind the Lat / Long calculator.
+  static const String myCurrentLocation = '/tools/my-current-location';
   static const String macOui = '/tools/mac-oui';
   static const String packetSender = '/tools/packet-sender';
   static const String ipv4Subnet = '/tools/ipv4-subnet';
@@ -394,7 +401,6 @@ class AppRouter {
     rfAttenuation: (_) => const RfAttenuationScreen(),
     noiseFloor: (_) => const NoiseFloorScreen(),
     poeBudget: (_) => const PoeBudgetScreen(),
-    wifiChannels: (_) => const WifiChannelsScreen(),
     standards: (_) => const StandardsScreen(),
     mcsIndex: (_) => const McsIndexScreen(),
     signalThresholds: (_) => const SignalThresholdsScreen(),
@@ -408,7 +414,6 @@ class AppRouter {
     coaxCable: (_) => const CoaxCableScreen(),
     ethernetCable: (_) => const EthernetCableScreen(),
     fiberOptic: (_) => const FiberOpticScreen(),
-    rfConnectors: (_) => const RfConnectorsScreen(),
     roaming: (_) => const RoamingScreen(),
     apPlacement: (_) => const ApPlacementScreen(),
     poeReference: (_) => const PoeReferenceScreen(),
@@ -463,6 +468,7 @@ class AppRouter {
     arpNdp: (_) => const ArpNdpScreen(),
     bgpAsn: (_) => const BgpAsnScreen(),
     ipGeo: (_) => const IpGeoScreen(),
+    myCurrentLocation: (_) => const MyCurrentLocationScreen(),
     macOui: (_) => const MacOuiScreen(),
     packetSender: (_) => const PacketSenderScreen(),
     ipv4Subnet: (_) => const SubnetCalcScreen(),

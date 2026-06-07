@@ -384,6 +384,19 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         routeName: '/tools/ip-geo',
         isLive: true,
       ),
+      // My Current Location (BF5-16): auto-runs the GPS fix on open and shows
+      // latitude / longitude / altitude / accuracy directly. Reuses the
+      // DeviceLocationService backend behind the Lat / Long calculator so the
+      // answers are not buried in a converter people don't find.
+      ToolEntry(
+        id: 'my-current-location',
+        title: 'My Current Location',
+        description:
+            'Your GPS latitude, longitude, altitude, and accuracy — read on '
+            'open',
+        routeName: '/tools/my-current-location',
+        isLive: true,
+      ),
       ToolEntry(
         id: 'mac-oui-lookup',
         title: 'MAC Vendor OUI Lookup',
@@ -682,15 +695,10 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Wi-Fi & RF',
       ),
-      ToolEntry(
-        id: 'wifi-channels',
-        title: 'Wi-Fi Channels',
-        description:
-            'Channels, center frequencies, widths, DFS by band incl. HaLow',
-        routeName: '/tools/wifi-channels',
-        isLive: true,
-        subgroup: 'Wi-Fi & RF',
-      ),
+      // Wi-Fi Channels (the plainer channels reference table) was REMOVED
+      // 2026-06-06 (BF6-13): it duplicated the visual "Channel Map". Channel Map
+      // is the survivor; the one band Channel Map lacked (sub-1 GHz Wi-Fi HaLow)
+      // was folded into Channel Map as its own HaLow reference section.
       ToolEntry(
         id: 'non-wifi-channels',
         title: 'Non-Wi-Fi Wireless Channels',
@@ -829,22 +837,10 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Wi-Fi & RF',
       ),
-      // Antenna Fundamentals — a read-along teaching/reference screen (v1.1):
-      // Penn's approved Keith-voice copy (azimuth/elevation, gain vs beamwidth,
-      // polarization, downtilt, reading a polar plot, and what antenna to use
-      // where) with Charta's seven line diagrams embedded. Not a calculator and
-      // not a how-to-with-download — it sits in Quick Reference as the
-      // antenna-literacy companion to the directional / AP-placement tools.
-      ToolEntry(
-        id: 'antenna-fundamentals',
-        title: 'Antenna Fundamentals',
-        description:
-            'Gain, beamwidth, polarization, downtilt, and reading a radiation '
-            'pattern — with diagrams',
-        routeName: '/tools/antenna-fundamentals',
-        isLive: true,
-        subgroup: 'Wi-Fi & RF',
-      ),
+      // Antenna Fundamentals MOVED 2026-06-06 (BF6-3) from Quick Reference into
+      // the Educational Resources category (it is a read-along teaching screen,
+      // not a quick-lookup table). Its ToolEntry now lives in that category's
+      // `tools` list; the route, id, asset, and help entry are unchanged.
       // ── from the dissolved Cabling & Connectors category ──
       ToolEntry(
         id: 'ethernet-pinout',
@@ -893,24 +889,22 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Cabling & Connectors',
       ),
-      ToolEntry(
-        id: 'rf-connectors',
-        title: 'RF Connectors',
-        description: 'N, SMA, RP-SMA, TNC and more: frequency, impedance',
-        routeName: '/tools/rf-connectors',
-        isLive: true,
-        subgroup: 'Cabling & Connectors',
-      ),
-      // Antenna Connectors — searchable, grouped 18-connector reference for
-      // Wi-Fi antenna systems (full name, RP variant, coupling, impedance,
-      // frequency, mating, notes) + vendor trends, size order, and the top-6
-      // a Wi-Fi engineer meets. Offline bundled JSON. Distinct from
-      // `rf-connectors` (the smaller coaxial-only card): this is the
-      // antenna-side reference with the field-identification detail.
+      // RF Connectors + Antenna Connectors MERGED 2026-06-06 (BF6-18) into the
+      // single "Antenna Connectors" tool below (Keith: "we only need one"). The
+      // former `rf-connectors` coaxial-only card's unique connector rows were
+      // folded into the antenna-connectors dataset; its route/help/keywords were
+      // removed.
+      // Antenna Connectors — searchable, grouped connector reference for Wi-Fi
+      // antenna + RF systems (full name, RP variant, coupling, impedance,
+      // frequency, mating, notes) + vendor trends, size order, and the connectors
+      // a Wi-Fi engineer meets. Offline bundled JSON. Now the single connector
+      // reference after the RF Connectors merge.
       ToolEntry(
         id: 'antenna-connectors',
         title: 'Antenna Connectors',
-        description: 'RP-SMA, RP-TNC, N, DART, U.FL: use, coupling, mating',
+        description:
+            'N, SMA, RP-SMA, TNC, RP-TNC, DART, U.FL: use, frequency, '
+            'impedance, coupling, mating',
         routeName: '/tools/antenna-connectors',
         isLive: true,
         subgroup: 'Cabling & Connectors',
@@ -1110,14 +1104,15 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
   // links with rich detail, not in-app tool routes. The single placeholder
   // ToolEntry below exists only so the tile reads as live and the category is
   // non-empty; it never renders as generic ToolEntry rows. The 10 laminated PDF
-  // reference cards (moved here from Quick Reference 2026-06-04) ARE its `tools`
-  // list: EducationalResourcesScreen reads them and renders a "Reference Cards"
-  // section at the top, above the 39 online resources. No `subgroup` — this is
-  // not a subgroup-ordered category.
+  // reference cards (moved here from Quick Reference 2026-06-04) plus the
+  // Antenna Fundamentals teaching screen (moved here 2026-06-06, BF6-3) ARE its
+  // `tools` list: EducationalResourcesScreen reads them and renders an in-app
+  // references section at the top, above the 37 online resources. No `subgroup`
+  // — this is not a subgroup-ordered category.
   //
-  // Tile count: the home badge would show only the live tool count (the 10
-  // cards). The true total is 10 cards + 39 online resources = 49, so
-  // [countLabelOverride] pins '49' (guard test in
+  // Tile count: the home badge would show only the live tool count (the 11 in-
+  // app references). The true total is 11 + 37 online resources = 48, so
+  // [countLabelOverride] pins '48' (guard test in
   // test/screens/tools/educational/ asserts it equals card-count + the bundled
   // JSON `_meta.count` so the number cannot silently drift).
   ToolCategory(
@@ -1129,7 +1124,11 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
     // Material [icon] above if the asset is ever absent from the bundle.
     iconAsset: 'assets/tool-icons/educational-resources.svg',
     exampleToolTitles: <String>['Reference Cards', 'Blogs', 'Podcasts'],
-    countLabelOverride: '49',
+    // 48 = 11 in-app references (10 PDF cards + Antenna Fundamentals, moved here
+    // 2026-06-06 BF6-3) + 37 online resources (39 − the 2 Wi-Fi Design Day
+    // entries removed 2026-06-06 BF6-21). The count-guard test recomputes this
+    // from the catalog tool count + the bundled JSON `_meta.count`.
+    countLabelOverride: '48',
     tools: <ToolEntry>[
       // The 6 PDF reference cards.
       ToolEntry(
@@ -1201,6 +1200,20 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         title: 'Wi-Fi Connection Checklist',
         description: 'Client connection sequence checklist',
         routeName: '/tools/connection-checklist',
+        isLive: true,
+      ),
+      // Antenna Fundamentals — MOVED here 2026-06-06 (BF6-3) from Quick
+      // Reference. A read-along teaching screen (not a PDF card), so it renders
+      // in the in-app references section of the Educational Resources directory.
+      // Route, id, asset, and help entry are unchanged from its Quick Reference
+      // life.
+      ToolEntry(
+        id: 'antenna-fundamentals',
+        title: 'Antenna Fundamentals',
+        description:
+            'Gain, beamwidth, polarization, downtilt, and reading a radiation '
+            'pattern — with diagrams',
+        routeName: '/tools/antenna-fundamentals',
         isLive: true,
       ),
     ],

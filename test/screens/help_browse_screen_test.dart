@@ -19,7 +19,7 @@ import 'package:wlan_pros_toolbox/services/help/tool_help_loader.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
 // A small store keyed by REAL catalog tool ids so grouping resolves against the
-// live catalog. fspl + wavelength are Calculators & Tools; wifi-channels is
+// live catalog. fspl + wavelength are Calculators & Tools; channel-map is
 // Quick Reference. test-my-connection is Test Network. unknown-id is not in the
 // catalog and must be ignored by the grouping.
 const String _fixture = '''
@@ -27,7 +27,7 @@ const String _fixture = '''
   "tools": {
     "fspl": { "name": "Free Space Path Loss", "category": "Calculators & Tools", "purpose": "Path loss.", "whyHere": "Link budget.", "howToUse": [], "inputs": [], "algorithm": null, "example": null, "fieldNotes": [], "source": "x" },
     "wavelength": { "name": "Wavelength", "category": "Calculators & Tools", "purpose": "Wavelength from frequency.", "whyHere": "Antenna sizing.", "howToUse": [], "inputs": [], "algorithm": null, "example": null, "fieldNotes": [], "source": "x" },
-    "wifi-channels": { "name": "Wi-Fi Channels", "category": "Quick Reference", "purpose": "Channels by band.", "whyHere": "Lookup.", "howToUse": [], "inputs": [], "algorithm": null, "example": null, "fieldNotes": [], "source": "x" },
+    "channel-map": { "name": "Channel Map", "category": "Quick Reference", "purpose": "Channels by band.", "whyHere": "Lookup.", "howToUse": [], "inputs": [], "algorithm": null, "example": null, "fieldNotes": [], "source": "x" },
     "unknown-id-not-in-catalog": { "name": "Ghost", "category": "Nowhere", "purpose": "n/a", "whyHere": "n/a", "howToUse": [], "inputs": [], "algorithm": null, "example": null, "fieldNotes": [], "source": "x" }
   }
 }
@@ -91,7 +91,7 @@ void main() {
       // Catalog titles appear as rows.
       expect(find.text('Free Space Path Loss'), findsOneWidget);
       expect(find.text('Wavelength'), findsOneWidget);
-      expect(find.text('Wi-Fi Channels'), findsOneWidget);
+      expect(find.text('Channel Map'), findsOneWidget);
     });
 
     testWidgets('tapping a row opens the help sheet', (tester) async {

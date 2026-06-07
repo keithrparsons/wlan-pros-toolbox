@@ -1323,8 +1323,92 @@ class ChannelMapScreen extends StatefulWidget {
     ),
   ];
 
+  // ── Wi-Fi HaLow (802.11ah) — sub-1 GHz ───────────────────────────────────────
+  // Folded in 2026-06-06 (BF6-13) from the removed Wi-Fi Channels table: HaLow
+  // was the one band Channel Map did not cover. HaLow does not bond on the
+  // 20/40/80/160/320 MHz grid (it uses 1/2/4/8/16 MHz channels), so it renders
+  // below the band map as its own static reference section rather than as a
+  // fourth bonding band. Data verified against IEEE 802.11ah and the Wikipedia
+  // List-of-WLAN-channels 802.11ah table (US is the fully verified scheme).
+
+  /// US (902-928 MHz) HaLow channel-width blocks. 1 MHz is the base unit;
+  /// wider channels bond and take the center number of their block.
+  static const List<HalowWidthBlock> halowUsWidths = <HalowWidthBlock>[
+    HalowWidthBlock(widthMhz: 1, count: 26, numbering: '1, 3, 5 … 51 (odd)'),
+    HalowWidthBlock(widthMhz: 2, count: 13, numbering: '2, 6, 10 … 50'),
+    HalowWidthBlock(widthMhz: 4, count: 6, numbering: '4, 12, 20, 28, 36, 44'),
+    HalowWidthBlock(widthMhz: 8, count: 3, numbering: '8, 24, 40'),
+    HalowWidthBlock(widthMhz: 16, count: 1, numbering: '16'),
+  ];
+
+  /// HaLow operating ranges by region. The range is the headline fact; outside
+  /// the US the channel count/numbering are region-dependent and lower-confidence
+  /// (not stated as hard numbers). China is UNCERTAIN (conflicting reports).
+  static const List<HalowRegion> halowRegions = <HalowRegion>[
+    HalowRegion(
+        region: 'United States',
+        rangeMhz: '902-928',
+        note: '26 × 1 MHz channels (full US scheme)'),
+    HalowRegion(
+        region: 'Europe (EU)',
+        rangeMhz: '863-868.6',
+        note: 'Region-dependent; duty-cycle limited'),
+    HalowRegion(
+        region: 'Japan',
+        rangeMhz: '916.5-927.5',
+        note: 'Region-dependent; grid shifted 0.5 MHz'),
+    HalowRegion(
+        region: 'South Korea',
+        rangeMhz: '917.5-923.5',
+        note: 'Region-dependent'),
+    HalowRegion(
+        region: 'Australia / NZ',
+        rangeMhz: '915-928',
+        note: 'Region-dependent'),
+    HalowRegion(
+        region: 'Singapore',
+        rangeMhz: '866-869 and 920-925',
+        note: 'Two sub-bands; region-dependent'),
+    HalowRegion(
+        region: 'India',
+        rangeMhz: '865-867',
+        note: 'Region-dependent; narrow allocation'),
+    HalowRegion(
+        region: 'China',
+        rangeMhz: 'varies (reported 755-787)',
+        note: 'UNCERTAIN — confirm with CMIIT'),
+  ];
+
   @override
   State<ChannelMapScreen> createState() => _ChannelMapScreenState();
+}
+
+/// One Wi-Fi HaLow channel-width block in the US scheme (BF6-13 fold-in).
+@immutable
+class HalowWidthBlock {
+  const HalowWidthBlock({
+    required this.widthMhz,
+    required this.count,
+    required this.numbering,
+  });
+
+  final int widthMhz;
+  final int count;
+  final String numbering;
+}
+
+/// One Wi-Fi HaLow regional operating range (BF6-13 fold-in).
+@immutable
+class HalowRegion {
+  const HalowRegion({
+    required this.region,
+    required this.rangeMhz,
+    required this.note,
+  });
+
+  final String region;
+  final String rangeMhz;
+  final String note;
 }
 
 class _ChannelMapScreenState extends State<ChannelMapScreen> {
@@ -1415,6 +1499,29 @@ class _ChannelMapScreenState extends State<ChannelMapScreen> {
     _writeBonded(buf, tab, '160 MHz', ChannelMapScreen.map6_160);
     _writeBonded(buf, tab, '320 MHz', ChannelMapScreen.map6_320);
 
+    // ── Wi-Fi HaLow (802.11ah), sub-1 GHz (BF6-13 fold-in) ──
+    buf
+      ..writeln()
+      ..writeln('Wi-Fi HaLow (802.11ah) — sub-1 GHz')
+      ..writeln('US channel widths (902-928 MHz)')
+      ..writeln(
+        <String>['Width (MHz)', 'Channels', 'Numbering'].join(tab),
+      );
+    for (final HalowWidthBlock w in ChannelMapScreen.halowUsWidths) {
+      buf.writeln(
+        <String>['${w.widthMhz}', '${w.count}', w.numbering].join(tab),
+      );
+    }
+    buf
+      ..writeln()
+      ..writeln('Operating ranges by region')
+      ..writeln(<String>['Region', 'Range (MHz)', 'Note'].join(tab));
+    for (final HalowRegion r in ChannelMapScreen.halowRegions) {
+      buf.writeln(
+        <String>[r.region, r.rangeMhz, r.note].join(tab),
+      );
+    }
+
     return buf.toString().trimRight();
   }
 
@@ -1484,6 +1591,10 @@ class _ChannelMapScreenState extends State<ChannelMapScreen> {
                   _bandCard(context),
                   const SizedBox(height: AppSpacing.sm),
                   _mapCard(context, mono),
+                  const SizedBox(height: AppSpacing.sm),
+                  // BF6-13: HaLow (sub-1 GHz) folded in from the removed Wi-Fi
+                  // Channels table — always-on reference card below the band map.
+                  const _HalowCard(),
                   ToolHelpFooter(toolId: 'channel-map'),
                 ],
               ),
@@ -1500,7 +1611,8 @@ class _ChannelMapScreenState extends State<ChannelMapScreen> {
     return Text(
       'Visual channel bonding map: center channels, bonded widths, and '
       'non-overlapping groupings for 2.4, 5, and 6 GHz. Scroll the 5 GHz and '
-      '6 GHz maps horizontally.',
+      '6 GHz maps horizontally. Sub-1 GHz Wi-Fi HaLow (802.11ah) is summarized '
+      'at the bottom.',
       style: text.labelMedium?.copyWith(color: colors.textTertiary),
     );
   }
@@ -1654,6 +1766,159 @@ class _MapCard extends StatelessWidget {
             footnote,
             style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Wi-Fi HaLow (802.11ah) sub-1 GHz reference card (BF6-13 fold-in). Static
+/// content; renders the US channel-width blocks and the per-region operating
+/// ranges. HaLow does not bond on the 20-MHz grid, so it is a reference card,
+/// not a bonding-map band. All values come from GL-003 tokens (no literal
+/// hex/px).
+class _HalowCard extends StatelessWidget {
+  const _HalowCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'Wi-Fi HaLow (802.11ah) — sub-1 GHz',
+            style: text.labelMedium?.copyWith(
+              color: colors.textSecondary,
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            'Long-range, low-power Wi-Fi in the sub-1 GHz band. US channel widths '
+            '(902-928 MHz):',
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          _HalowWidthsTable(),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Operating ranges by region',
+            style: text.labelMedium?.copyWith(
+              color: colors.textSecondary,
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          _HalowRegionsTable(),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'US is the fully verified scheme; other regions are range-dependent. '
+            'China is uncertain — confirm with CMIIT.',
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HalowWidthsTable extends StatelessWidget {
+  const _HalowWidthsTable();
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final TextStyle head = (text.labelMedium ?? const TextStyle())
+        .copyWith(color: colors.textSecondary, fontWeight: FontWeight.w600);
+    final TextStyle cell = mono.inlineCode.copyWith(color: colors.textPrimary);
+    final TextStyle noteStyle =
+        (text.labelMedium ?? const TextStyle()).copyWith(color: colors.textSecondary);
+    return HorizontalScrollTable(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              SizedBox(width: 88, child: Text('Width (MHz)', style: head)),
+              SizedBox(width: 80, child: Text('Channels', style: head)),
+              SizedBox(width: 220, child: Text('Numbering', style: head)),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          for (final HalowWidthBlock w in ChannelMapScreen.halowUsWidths)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+              child: Row(
+                children: <Widget>[
+                  SizedBox(width: 88, child: Text('${w.widthMhz}', style: cell)),
+                  SizedBox(width: 80, child: Text('${w.count}', style: cell)),
+                  SizedBox(
+                    width: 220,
+                    child: Text(w.numbering, style: noteStyle),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HalowRegionsTable extends StatelessWidget {
+  const _HalowRegionsTable();
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final TextStyle head = (text.labelMedium ?? const TextStyle())
+        .copyWith(color: colors.textSecondary, fontWeight: FontWeight.w600);
+    final TextStyle nameStyle =
+        (text.labelMedium ?? const TextStyle()).copyWith(color: colors.textPrimary);
+    final TextStyle rangeStyle =
+        mono.inlineCode.copyWith(color: colors.textPrimary);
+    final TextStyle noteStyle =
+        (text.labelMedium ?? const TextStyle()).copyWith(color: colors.textTertiary);
+    return HorizontalScrollTable(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              SizedBox(width: 130, child: Text('Region', style: head)),
+              SizedBox(width: 120, child: Text('Range (MHz)', style: head)),
+              SizedBox(width: 230, child: Text('Note', style: head)),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          for (final HalowRegion r in ChannelMapScreen.halowRegions)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  SizedBox(width: 130, child: Text(r.region, style: nameStyle)),
+                  SizedBox(
+                      width: 120, child: Text(r.rangeMhz, style: rangeStyle)),
+                  SizedBox(width: 230, child: Text(r.note, style: noteStyle)),
+                ],
+              ),
+            ),
         ],
       ),
     );
