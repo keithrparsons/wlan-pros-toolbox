@@ -189,7 +189,12 @@ class WifiInfoService {
   final String _platform;
 
   /// Whether this platform has a native Wi-Fi info bridge.
-  bool get isSupportedPlatform => !kIsWeb && _platform == 'macos';
+  ///
+  /// macOS reads CoreWLAN; Android reads WifiManager + ConnectivityManager
+  /// (MainActivity.kt). Both back the same `com.wlanpros.toolbox/wifi_info`
+  /// channel and the same [WifiInfo] payload shape.
+  bool get isSupportedPlatform =>
+      !kIsWeb && (_platform == 'macos' || _platform == 'android');
 
   /// Reads a live snapshot of the connected Wi-Fi interface.
   ///

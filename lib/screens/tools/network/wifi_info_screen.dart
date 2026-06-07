@@ -224,7 +224,16 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
 
     switch (_source) {
       case WifiInfoSource.macosCoreWlan:
-        _macAdapter = widget.macAdapter ?? MacWifiInfoAdapter();
+      case WifiInfoSource.androidWifiManager:
+        // Both the macOS CoreWLAN and the Android WifiManager sources are
+        // pull-only snapshot adapters behind the SAME [WifiInfoAdapter] seam
+        // and render the SAME snapshot body; only the per-field platform label
+        // differs (see [_snapshotPlatformLabel]). Pick the right adapter for
+        // the source, then drive the shared snapshot flow.
+        _macAdapter = widget.macAdapter ??
+            (_source == WifiInfoSource.androidWifiManager
+                ? AndroidWifiInfoAdapter()
+                : MacWifiInfoAdapter());
         _macSeries = WifiTimeSeries();
         WidgetsBinding.instance.addObserver(this);
         // Seed the first reading, then begin automatic polling so the
@@ -246,6 +255,22 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         break;
     }
   }
+
+  /// True for the pull-only snapshot sources (macOS CoreWLAN, Android
+  /// WifiManager). Both share the `_macAdapter` snapshot machinery, the poll
+  /// timer, the location-grant flow, and the `_macBody` rendering — only the
+  /// per-field platform label differs (see [_snapshotPlatformLabel]).
+  bool get _isSnapshotSource =>
+      _source == WifiInfoSource.macosCoreWlan ||
+      _source == WifiInfoSource.androidWifiManager;
+
+  /// The per-field platform label the snapshot cards use in honest
+  /// "not exposed by `<platform>`" copy. Android exposes a different field subset
+  /// than macOS (no noise/SNR), so the reason text names the real source.
+  String get _snapshotPlatformLabel =>
+      _source == WifiInfoSource.androidWifiManager
+          ? 'Android'
+          : 'macOS CoreWLAN';
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -296,9 +321,10 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       }
     }
 
-    // macOS: pause the CoreWLAN poll while backgrounded (no point re-reading a
-    // link the user cannot see), resume + re-read on return to foreground.
-    if (_source == WifiInfoSource.macosCoreWlan) {
+    // Snapshot sources (macOS CoreWLAN / Android WifiManager): pause the poll
+    // while backgrounded (no point re-reading a link the user cannot see),
+    // resume + re-read on return to foreground.
+    if (_isSnapshotSource) {
       if (state == AppLifecycleState.resumed) {
         _fetchMac().then((_) => _startMacPoll());
       } else if (state == AppLifecycleState.paused ||
@@ -310,7 +336,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
 
   @override
   void dispose() {
-    if (_source == WifiInfoSource.macosCoreWlan) {
+    if (_isSnapshotSource) {
       WidgetsBinding.instance.removeObserver(this);
       _stopMacPoll();
     }
@@ -679,6 +705,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   List<Widget> _appBarActions() {
     switch (_source) {
       case WifiInfoSource.macosCoreWlan:
+      case WifiInfoSource.androidWifiManager:
         // §8.16 order: copy LEADS, the Refresh action trails. Copy is disabled
         // until a snapshot has resolved (textBuilder → null while loading or on
         // error with no info), enabled once link details exist.
@@ -727,6 +754,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   ConnectedAp? _currentAp() {
     switch (_source) {
       case WifiInfoSource.macosCoreWlan:
+      case WifiInfoSource.androidWifiManager:
         return _macInfo;
       case WifiInfoSource.iosShortcuts:
         final WiFiDetails? d = _liveController?.details;
@@ -762,7 +790,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
 
     final String platformLabel = _source == WifiInfoSource.iosShortcuts
         ? 'iOS'
-        : 'macOS CoreWLAN';
+        : _snapshotPlatformLabel;
     final StringBuffer buf = StringBuffer()..writeln('Wi-Fi Information');
 
     buf
@@ -848,6 +876,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       case WifiInfoSource.unsupported:
         return const _PlatformComingSoon();
       case WifiInfoSource.macosCoreWlan:
+      case WifiInfoSource.androidWifiManager:
         return _macBody();
       case WifiInfoSource.iosShortcuts:
         return _iosBody();
@@ -945,43 +974,62 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         ..add(_LiveCharts(
           series: series,
           latest: info,
-          platformLabel: 'macOS CoreWLAN',
+          platformLabel: _snapshotPlatformLabel,
         ))
         ..add(const SizedBox(height: AppSpacing.sm));
     }
 
-    children.addAll(_metricCards(info, platformLabel: 'macOS CoreWLAN'));
+    children.addAll(_metricCards(info, platformLabel: _snapshotPlatformLabel));
     return children;
   }
 
-  /// macOS location card (three states). Returns null when no card is needed.
+  /// Location card for the snapshot sources (macOS CoreWLAN / Android
+  /// WifiManager), three states. Returns null when no card is needed.
   ///
-  /// macOS-only, the card and its deep-link are never built on iOS (the iOS
-  /// path reads the network name through the Shortcut bridge and has no Location
-  /// gate, so it routes through [_iosBody], not here).
+  /// Both snapshot platforms gate the SSID/BSSID behind a Location permission;
+  /// the copy and post-grant behavior differ (macOS Location Services + likely
+  /// relaunch; Android ACCESS_FINE_LOCATION runtime grant that takes effect on
+  /// the next read). Never built on iOS (that path reads the name through the
+  /// Shortcut bridge and routes through [_iosBody]).
   Widget? _buildLocationCard(ConnectedAp info) {
     final bool nameMissing = info.ssid == null && info.bssid == null;
     if (info.ssid != null) return null;
 
+    final bool isAndroid = _source == WifiInfoSource.androidWifiManager;
+
     if (info.ssid == null && _locationGrantAttempted) {
-      return const _LocationCard(
-        message:
-            'Permission granted. macOS may need an app relaunch before the '
-            'network name appears. The signal and channel details below are '
-            'unaffected.',
-        onGrant: null,
-        onOpenSettings: null,
+      // Android: a granted runtime permission lands on the next poll (no
+      // relaunch). macOS: the grant may need an app relaunch before the name
+      // surfaces. A still-null name after granting on Android most often means
+      // the user denied (or permanently denied) the dialog — the card keeps the
+      // Open Settings affordance below for the permanently-denied case.
+      return _LocationCard(
+        message: isAndroid
+            ? 'If you allowed Location, the network name appears on the next '
+                'refresh. If it is still blank, the permission was denied — open '
+                'Settings to enable Location for this app. Signal, rate, and '
+                'channel details work without it.'
+            : 'Permission granted. macOS may need an app relaunch before the '
+                'network name appears. The signal and channel details below are '
+                'unaffected.',
+        onGrant: isAndroid ? (_macLoading ? null : _grantLocation) : null,
+        onOpenSettings: isAndroid ? _openLocationSettings : null,
+        platformIsAndroid: isAndroid,
       );
     }
 
     if (nameMissing) {
       return _LocationCard(
-        message:
-            'The network name (SSID and BSSID) needs Location Services for this '
-            'app. macOS requires it to read the name. Signal, rate, and channel '
-            'details already work without it.',
+        message: isAndroid
+            ? 'The network name (SSID and BSSID) needs the Location permission '
+                'on Android. Android requires it to read the connected network '
+                'name. Signal, rate, and channel details already work without it.'
+            : 'The network name (SSID and BSSID) needs Location Services for '
+                'this app. macOS requires it to read the name. Signal, rate, and '
+                'channel details already work without it.',
         onGrant: _macLoading ? null : _grantLocation,
         onOpenSettings: _openLocationSettings,
+        platformIsAndroid: isAndroid,
       );
     }
 
@@ -1428,13 +1476,15 @@ class _LoadingCard extends StatelessWidget {
 }
 
 
-// ---- macOS location card ----
+// ---- Snapshot-source location card (macOS Location Services / Android
+// ACCESS_FINE_LOCATION) ----
 
 class _LocationCard extends StatelessWidget {
   const _LocationCard({
     required this.message,
     required this.onGrant,
     required this.onOpenSettings,
+    this.platformIsAndroid = false,
   });
 
   final String message;
@@ -1443,10 +1493,14 @@ class _LocationCard extends StatelessWidget {
   /// button to avoid an endless re-tap loop.
   final VoidCallback? onGrant;
 
-  /// Deep-links to System Settings → Privacy & Security → Location Services.
-  /// When null (the post-grant informational state) the settings affordance and
-  /// the numbered steps are hidden.
+  /// Deep-links to the OS settings pane (macOS Location Services / Android app
+  /// permissions). When null the settings affordance and the numbered steps are
+  /// hidden.
   final VoidCallback? onOpenSettings;
+
+  /// Whether the card is shown for the Android source (drives the button labels
+  /// and the manual-enable steps wording).
+  final bool platformIsAndroid;
 
   @override
   Widget build(BuildContext context) {
@@ -1503,10 +1557,16 @@ class _LocationCard extends StatelessWidget {
                 if (onOpenSettings != null)
                   Semantics(
                     button: true,
-                    label: 'Open macOS Location Services settings',
+                    label: platformIsAndroid
+                        ? 'Open app Location settings'
+                        : 'Open macOS Location Services settings',
                     child: OutlinedButton(
                       onPressed: onOpenSettings,
-                      child: const Text('Open Location Settings'),
+                      child: Text(
+                        platformIsAndroid
+                            ? 'Open App Settings'
+                            : 'Open Location Settings',
+                      ),
                     ),
                   ),
               ],
@@ -1514,7 +1574,7 @@ class _LocationCard extends StatelessWidget {
           ],
           if (onOpenSettings != null) ...[
             const SizedBox(height: AppSpacing.sm),
-            const _LocationSteps(),
+            _LocationSteps(platformIsAndroid: platformIsAndroid),
           ],
         ],
       ),
@@ -1522,15 +1582,24 @@ class _LocationCard extends StatelessWidget {
   }
 }
 
-/// Short numbered steps for enabling Location Services manually on macOS. Shown
-/// under the Location card's buttons. Each step is plain text; the whole block
-/// reads as one list to a screen reader.
+/// Short numbered steps for enabling the Location permission manually (macOS
+/// Location Services / Android app permissions). Shown under the Location card's
+/// buttons. Each step is plain text; the whole block reads as one list to a
+/// screen reader.
 class _LocationSteps extends StatelessWidget {
-  const _LocationSteps();
+  const _LocationSteps({this.platformIsAndroid = false});
 
-  static const List<String> _steps = <String>[
+  final bool platformIsAndroid;
+
+  static const List<String> _macSteps = <String>[
     'Open Location Settings (button above).',
     'Turn on WLAN Pros Toolbox.',
+    'Come back and tap Refresh.',
+  ];
+
+  static const List<String> _androidSteps = <String>[
+    'Open App Settings (button above).',
+    'Tap Permissions, then Location, and allow it.',
     'Come back and tap Refresh.',
   ];
 
@@ -1541,15 +1610,17 @@ class _LocationSteps extends StatelessWidget {
     final TextStyle? style = text.bodySmall?.copyWith(
       color: colors.textTertiary,
     );
+    final List<String> steps =
+        platformIsAndroid ? _androidSteps : _macSteps;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        for (int i = 0; i < _steps.length; i++)
+        for (int i = 0; i < steps.length; i++)
           Padding(
             padding: EdgeInsets.only(
               top: i == 0 ? 0 : AppSpacing.xxs,
             ),
-            child: Text('${i + 1}. ${_steps[i]}', style: style),
+            child: Text('${i + 1}. ${steps[i]}', style: style),
           ),
       ],
     );

@@ -206,5 +206,79 @@ void main() {
       expect(calls, 1);
       expect(opened, isTrue);
     });
+
+    // ---- Android platform gate (Phase 2) -------------------------------
+
+    test('isSupportedPlatform is true on Android (Phase 2 native bridge)', () {
+      final service = WifiInfoService(
+        invoke: (m, [a]) async => null,
+        platformOverride: 'android',
+      );
+      expect(service.isSupportedPlatform, isTrue);
+    });
+
+    test('isSupportedPlatform stays true on macOS', () {
+      final service = WifiInfoService(
+        invoke: (m, [a]) async => null,
+        platformOverride: 'macos',
+      );
+      expect(service.isSupportedPlatform, isTrue);
+    });
+
+    test('isSupportedPlatform is false on an unsupported native platform', () {
+      final service = WifiInfoService(
+        invoke: (m, [a]) async => null,
+        platformOverride: 'linux',
+      );
+      expect(service.isSupportedPlatform, isFalse);
+    });
+
+    test('fetch() reaches the channel on Android and maps the payload',
+        () async {
+      var calls = 0;
+      Future<Object?> fakeInvoke(String method, [dynamic args]) async {
+        calls++;
+        expect(method, 'getWifiInfo');
+        return <dynamic, dynamic>{
+          'interfaceName': 'wlan0',
+          'poweredOn': true,
+          'ssid': 'WLANPros',
+          'bssid': 'aa:bb:cc:dd:ee:ff',
+          'rssiDbm': -47,
+          // Android exposes no noise floor → SNR cannot be computed.
+          'noiseDbm': null,
+          'snrDb': null,
+          'txRateMbps': 866,
+          'rxRateMbps': 780,
+          'phyMode': '802.11ax (Wi-Fi 6)',
+          'channel': 36,
+          'channelWidthMhz': null,
+          'band': '5 GHz',
+          'countryCode': null,
+          'hardwareAddress': null,
+          'securityToken': 'wpa3Personal',
+          'locationAuthorized': true,
+        };
+      }
+
+      final service = WifiInfoService(
+        invoke: fakeInvoke,
+        platformOverride: 'android',
+      );
+      final info = await service.fetch();
+
+      expect(calls, 1);
+      expect(info.ssid, 'WLANPros');
+      expect(info.bssid, 'aa:bb:cc:dd:ee:ff');
+      expect(info.rssiDbm, -47);
+      // Honest nulls: Android cannot read noise / SNR.
+      expect(info.noiseDbm, isNull);
+      expect(info.snrDb, isNull);
+      expect(info.txRateMbps, 866.0);
+      expect(info.channel, 36);
+      expect(info.band, '5 GHz');
+      expect(info.securityToken, 'wpa3Personal');
+      expect(info.locationAuthorized, isTrue);
+    });
   });
 }

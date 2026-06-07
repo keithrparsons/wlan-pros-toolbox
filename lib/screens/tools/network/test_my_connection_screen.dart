@@ -156,6 +156,8 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     switch (_source) {
       case WifiInfoSource.macosCoreWlan:
         return 'macOS';
+      case WifiInfoSource.androidWifiManager:
+        return 'Android';
       case WifiInfoSource.iosShortcuts:
         return 'iOS';
       case WifiInfoSource.unsupported:
@@ -172,6 +174,8 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     switch (_source) {
       case WifiInfoSource.macosCoreWlan:
         _macAdapter = widget.macAdapter ?? MacWifiInfoAdapter();
+      case WifiInfoSource.androidWifiManager:
+        _macAdapter = widget.macAdapter ?? AndroidWifiInfoAdapter();
       case WifiInfoSource.iosShortcuts:
         _iosBridge = widget.iosBridge ?? WiFiDetailsBridge();
       case WifiInfoSource.unsupported:
@@ -187,6 +191,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     // not touch wifi-info's defaults). Only built where a live feed exists.
     if (widget.enableLiveSampling &&
         (_source == WifiInfoSource.macosCoreWlan ||
+            _source == WifiInfoSource.androidWifiManager ||
             _source == WifiInfoSource.iosShortcuts)) {
       _sampler = widget.sampler ??
           WifiSignalSampler(
@@ -212,7 +217,12 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       // test still auto-runs on the home-hero path; only the iOS RF stream waits
       // for the one deliberate tap (GL-008: build to the platform, no fabricated
       // auto-behavior that the bridge cannot honor).
-      if (_source == WifiInfoSource.macosCoreWlan) {
+      // macOS and Android both source the live feed from NATIVE polling (no app
+      // switch), so they auto-start cleanly on screen entry. iOS waits for the
+      // single deliberate Start tap (firing the Shortcut would bounce the user
+      // out of the app).
+      if (_source == WifiInfoSource.macosCoreWlan ||
+          _source == WifiInfoSource.androidWifiManager) {
         _sampler!.start();
       }
     }
@@ -255,6 +265,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     try {
       switch (_source) {
         case WifiInfoSource.macosCoreWlan:
+        case WifiInfoSource.androidWifiManager:
           final WifiInfoAdapter? adapter = _macAdapter;
           if (adapter == null) return null;
           // A consumer check must never pop a Location prompt mid-test (the link

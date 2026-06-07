@@ -57,6 +57,35 @@ ConnectedAp _macSample({
   );
 }
 
+/// An Android WifiManager sample: SSID/BSSID present, RF fields populated, and
+/// noise/SNR honestly null (Android exposes neither).
+ConnectedAp _androidSample({
+  String? ssid = 'KeithNet',
+  String? bssid = 'a4:83:e7:00:11:22',
+  bool poweredOn = true,
+}) {
+  return ConnectedAp.fromAndroidWifiInfo(
+    WifiInfo(
+      interfaceName: 'wlan0',
+      ssid: ssid,
+      bssid: bssid,
+      rssiDbm: -48,
+      noiseDbm: null,
+      snrDb: null,
+      txRateMbps: 866,
+      phyMode: '802.11ax (Wi-Fi 6)',
+      channel: 36,
+      channelWidthMhz: null,
+      band: '5 GHz',
+      countryCode: null,
+      hardwareAddress: null,
+      securityToken: 'wpa3Personal',
+      poweredOn: poweredOn,
+      locationAuthorized: ssid != null,
+    ),
+  );
+}
+
 /// A macOS sample with a specific RSSI, so successive polls produce distinct
 /// charted samples.
 ConnectedAp _macSampleRssi(int rssi) {
@@ -887,6 +916,91 @@ void main() {
         });
       });
     }
+  });
+
+  group('WifiInfoScreen — Android source (Phase 2)', () {
+    testWidgets('loading then success cards with Android-honest field notes',
+        (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.androidWifiManager,
+          macAdapter: _FakeMacAdapter(snapshot: _androidSample()),
+        ),
+      ));
+      await tester.pump(); // loading frame
+      await tester.pumpAndSettle(); // resolve fetch
+      expect(find.text('Network'), findsOneWidget);
+      expect(find.text('KeithNet'), findsOneWidget);
+      // Android cannot read channel width via the public API → honest note that
+      // names the real platform (not "macOS").
+      expect(find.textContaining('Not reported by Android'), findsWidgets);
+      // No macOS wording leaks onto the Android path.
+      expect(find.textContaining('macOS'), findsNothing);
+    });
+
+    testWidgets(
+        'name gated without Location → the Android-worded Location card with '
+        'the runtime-permission Grant + Open App Settings affordances',
+        (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.androidWifiManager,
+          macAdapter: _FakeMacAdapter(
+            // Both SSID and BSSID null models an ungranted ACCESS_FINE_LOCATION.
+            snapshot: _androidSample(ssid: null, bssid: null),
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      // The gated card surfaces the runtime-permission request and the manual
+      // settings fallback, with Android wording (not macOS Location Services).
+      expect(find.text('Grant Location'), findsWidgets);
+      expect(find.text('Open App Settings'), findsOneWidget);
+      expect(find.textContaining('on Android'), findsWidgets);
+      expect(find.textContaining('macOS'), findsNothing);
+    });
+
+    testWidgets(
+        'tapping Grant Location drives the runtime request, then the name '
+        'appears on the re-read', (tester) async {
+      final adapter = _FakeMacAdapter(
+        snapshot: _androidSample(ssid: null, bssid: null),
+        snapshotAfterGrant: _androidSample(),
+      );
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.androidWifiManager,
+          macAdapter: adapter,
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Grant Location').first);
+      await tester.pumpAndSettle();
+
+      // The runtime permission was requested exactly once, and the granted
+      // re-read populated the network name.
+      expect(adapter.grantCalls, 1);
+      expect(find.text('KeithNet'), findsOneWidget);
+      expect(find.text('a4:83:e7:00:11:22'), findsOneWidget);
+    });
+
+    testWidgets('channel error shows an error card with retry', (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.androidWifiManager,
+          macAdapter: _FakeMacAdapter(
+            error: const WifiInfoUnavailable(
+              WifiInfoUnavailableReason.channelError,
+              'No interface',
+            ),
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.text('No Wi-Fi reading available'), findsOneWidget);
+      expect(find.text('Retry'), findsOneWidget);
+    });
   });
 
   group('WifiInfoScreen — platform fallbacks', () {

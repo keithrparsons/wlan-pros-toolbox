@@ -132,15 +132,23 @@ void main() {
       );
     });
 
-    test('other native platforms resolve to unsupported', () {
+    test('Android resolves to the WifiManager source', () {
       expect(
         WifiInfoSourceResolver.resolve(
             platformOverride: TargetPlatform.android),
+        WifiInfoSource.androidWifiManager,
+      );
+    });
+
+    test('other native platforms resolve to unsupported', () {
+      expect(
+        WifiInfoSourceResolver.resolve(
+            platformOverride: TargetPlatform.windows),
         WifiInfoSource.unsupported,
       );
       expect(
         WifiInfoSourceResolver.resolve(
-            platformOverride: TargetPlatform.windows),
+            platformOverride: TargetPlatform.linux),
         WifiInfoSource.unsupported,
       );
     });

@@ -16,6 +16,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_security.dart';
 
 void main() {
   // A WifiInfoService whose native channel NEVER answers — models the stalled
@@ -171,4 +172,184 @@ void main() {
       expect(ap.poweredOn, isTrue);
     },
   );
+
+  // ---- AndroidWifiInfoAdapter (Phase 2) --------------------------------
+
+  // A WifiInfoService on the Android supported path with an injectable invoke.
+  WifiInfoService androidService(
+    Future<Object?> Function(String method, [dynamic args]) invoke,
+  ) =>
+      WifiInfoService(invoke: invoke, platformOverride: 'android');
+
+  group('AndroidWifiInfoAdapter', () {
+    test('platformLabel is "Android" and it gates the name behind a permission',
+        () {
+      final adapter = AndroidWifiInfoAdapter(
+        service: androidService((m, [a]) async => null),
+      );
+      expect(adapter.platformLabel, 'Android');
+      expect(adapter.gatesNameBehindPermission, isTrue);
+    });
+
+    test('fetch() maps a connected WifiManager snapshot, noise/SNR honest-null',
+        () async {
+      final adapter = AndroidWifiInfoAdapter(
+        service: androidService((method, [args]) async {
+          expect(method, 'getWifiInfo');
+          return <String, Object?>{
+            'poweredOn': true,
+            'ssid': 'WLANPros',
+            'bssid': 'aa:bb:cc:dd:ee:ff',
+            'rssiDbm': -52,
+            'noiseDbm': null,
+            'snrDb': null,
+            'txRateMbps': 1200,
+            'phyMode': '802.11ax (Wi-Fi 6)',
+            'channel': 36,
+            'band': '5 GHz',
+            'securityToken': 'wpa2Personal',
+            'locationAuthorized': true,
+          };
+        }),
+      );
+
+      final ConnectedAp ap = await adapter.fetch();
+      expect(ap.ssid, 'WLANPros');
+      expect(ap.bssid, 'aa:bb:cc:dd:ee:ff');
+      expect(ap.rssiDbm, -52);
+      expect(ap.txRateMbps, 1200.0);
+      expect(ap.standard, '802.11ax (Wi-Fi 6)');
+      expect(ap.band, '5 GHz');
+      expect(ap.securityType, WifiSecurity.wpa2Personal);
+      // GL-005: Android exposes neither, so they are never estimated.
+      expect(ap.noiseDbm, isNull);
+      expect(ap.snrDb, isNull);
+      expect(ap.snrDerived, isFalse);
+      // Android CAN expose Rx (so the row is shown when present, "not in this
+      // reading" otherwise) — never "not on this platform".
+      expect(ap.rxRateAvailable, isTrue);
+      // No channel width in this reading → the row says "Not reported".
+      expect(ap.channelWidthAvailable, isFalse);
+      expect(ap.securityAvailable, isTrue);
+    });
+
+    test('fetch() maps a Location-denied snapshot to null SSID/BSSID', () async {
+      final adapter = AndroidWifiInfoAdapter(
+        service: androidService((method, [args]) async => <String, Object?>{
+              'poweredOn': true,
+              'ssid': null,
+              'bssid': null,
+              'rssiDbm': -60,
+              'txRateMbps': 200,
+              'channel': 6,
+              'band': '2.4 GHz',
+              'securityToken': null,
+              'locationAuthorized': false,
+            }),
+      );
+
+      final ConnectedAp ap = await adapter.fetch();
+      // The RF fields resolve without Location; only the NAME is gated.
+      expect(ap.ssid, isNull);
+      expect(ap.bssid, isNull);
+      expect(ap.rssiDbm, -60);
+      expect(ap.txRateMbps, 200.0);
+      expect(ap.band, '2.4 GHz');
+    });
+
+    test('fetch() throws channelError (does not hang) on a stalled channel',
+        () async {
+      final adapter = AndroidWifiInfoAdapter(
+        service: WifiInfoService(
+          invoke: (m, [a]) => Completer<Object?>().future,
+          platformOverride: 'android',
+        ),
+        fetchTimeout: const Duration(milliseconds: 50),
+      );
+
+      await expectLater(
+        adapter.fetch().timeout(const Duration(seconds: 2)),
+        throwsA(
+          isA<WifiInfoUnavailable>().having(
+            (e) => e.reason,
+            'reason',
+            WifiInfoUnavailableReason.channelError,
+          ),
+        ),
+      );
+    });
+
+    test('requestNamePermission() passes through the runtime grant result',
+        () async {
+      var seen = '';
+      final adapter = AndroidWifiInfoAdapter(
+        service: androidService((method, [args]) async {
+          seen = method;
+          return true;
+        }),
+      );
+      expect(await adapter.requestNamePermission(), isTrue);
+      expect(seen, 'requestLocationPermission');
+    });
+
+    test('requestNamePermission() degrades to false (no hang) on a stalled '
+        'permission dialog callback', () async {
+      final adapter = AndroidWifiInfoAdapter(
+        service: WifiInfoService(
+          invoke: (m, [a]) => Completer<Object?>().future,
+          platformOverride: 'android',
+        ),
+        permissionTimeout: const Duration(milliseconds: 50),
+      );
+      final bool granted =
+          await adapter.requestNamePermission().timeout(const Duration(seconds: 2));
+      expect(granted, isFalse);
+    });
+
+    test('currentNameAuthorization() reports status without a prompt', () async {
+      var seen = '';
+      final adapter = AndroidWifiInfoAdapter(
+        service: androidService((method, [args]) async {
+          seen = method;
+          return false;
+        }),
+      );
+      expect(await adapter.currentNameAuthorization(), isFalse);
+      expect(seen, 'isLocationAuthorized');
+    });
+  });
+
+  // ---- ConnectedAp.fromAndroidWifiInfo mapping -------------------------
+
+  group('ConnectedAp.fromAndroidWifiInfo', () {
+    test('classifies the Android security token and never derives SNR', () {
+      final ConnectedAp ap = ConnectedAp.fromAndroidWifiInfo(
+        const WifiInfo(
+          interfaceName: 'wlan0',
+          ssid: 'Net',
+          bssid: 'aa:bb:cc:dd:ee:ff',
+          rssiDbm: -50,
+          noiseDbm: null,
+          snrDb: null,
+          txRateMbps: 540,
+          phyMode: '802.11ac (Wi-Fi 5)',
+          channel: 149,
+          channelWidthMhz: null,
+          band: '5 GHz',
+          countryCode: null,
+          hardwareAddress: null,
+          securityToken: 'wpa3Personal',
+          poweredOn: true,
+          locationAuthorized: true,
+        ),
+      );
+
+      expect(ap.securityType, WifiSecurity.wpa3Personal);
+      expect(ap.securityAvailable, isTrue);
+      expect(ap.standard, '802.11ac (Wi-Fi 5)');
+      expect(ap.snrDb, isNull);
+      expect(ap.snrDerived, isFalse);
+      expect(ap.bandDerived, isFalse);
+    });
+  });
 }

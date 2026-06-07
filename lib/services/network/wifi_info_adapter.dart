@@ -41,8 +41,14 @@ enum WifiInfoSource {
   /// drives WiFiDetailsBridge / WifiMonitorController directly for this source.
   iosShortcuts,
 
-  /// A native platform with no Wi-Fi adapter yet (Android, Windows, desktop
-  /// Linux). Honest "coming in a later update" state.
+  /// Android WifiManager + ConnectivityManager snapshot via
+  /// [AndroidWifiInfoAdapter]. Pull-only snapshot + a Location-permission flow
+  /// (ACCESS_FINE_LOCATION gates SSID/BSSID on Android 8.0+), the same shape as
+  /// the macOS source.
+  androidWifiManager,
+
+  /// A native platform with no Wi-Fi adapter yet (Windows, desktop Linux).
+  /// Honest "coming in a later update" state.
   unsupported,
 
   /// Running in a browser — download-the-app fallback.
@@ -63,6 +69,7 @@ class WifiInfoSourceResolver {
     return switch (platform) {
       TargetPlatform.macOS => WifiInfoSource.macosCoreWlan,
       TargetPlatform.iOS => WifiInfoSource.iosShortcuts,
+      TargetPlatform.android => WifiInfoSource.androidWifiManager,
       _ => WifiInfoSource.unsupported,
     };
   }
@@ -211,6 +218,100 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
   /// permission in code (TCC), so this deep-link plus on-screen steps is the
   /// honest path when the in-app prompt does not surface. Bounded by
   /// [fetchTimeout] as a hang-safety; on timeout it resolves to `false`.
+  @override
+  Future<bool> openNamePermissionSettings() => _service
+      .openLocationSettings()
+      .timeout(_fetchTimeout, onTimeout: () => false);
+}
+
+/// Android WifiManager + ConnectivityManager adapter. Wraps the same
+/// [WifiInfoService] the macOS adapter uses (shared `com.wlanpros.toolbox/
+/// wifi_info` channel — MainActivity.kt provides the Android handler) and maps
+/// its snapshot into the normalized [ConnectedAp].
+///
+/// Android, like macOS, gates the network NAME (SSID/BSSID) behind a Location
+/// permission: ACCESS_FINE_LOCATION must be granted at RUNTIME on Android 8.0+
+/// or WifiManager returns null/redacted SSID and BSSID. Unlike macOS, Android
+/// CAN toggle the app's own permission via the standard runtime request dialog,
+/// so [requestNamePermission] surfaces the real Android permission prompt
+/// (handled natively in MainActivity.kt) and resolves with the grant result.
+///
+/// Fields Android cannot supply stay honestly null (GL-005 / GL-008): the
+/// public Android API exposes no noise floor or SNR, so those rows render
+/// "Unavailable" rather than an estimate — the same contract macOS uses for
+/// the Rx rate. Android does NOT expose channel width before API 31 reliably;
+/// when the native side cannot read it, [ConnectedAp.channelWidthAvailable]
+/// rides false so the UI says so rather than guessing.
+class AndroidWifiInfoAdapter implements WifiInfoAdapter {
+  /// [service] is injectable so tests drive a fake invoker + platform override
+  /// without a real platform channel.
+  ///
+  /// [permissionTimeout] bounds the INTERACTIVE runtime-permission request. The
+  /// Android dialog resolves on the user's tap; the ceiling (default 60s) is a
+  /// hang-safety for the pathological case where no result callback arrives. On
+  /// timeout the request resolves to `false` (treated as "not granted") and the
+  /// network NAME degrades honestly while the RF fields, which never need
+  /// Location, still render.
+  ///
+  /// [fetchTimeout] bounds the native WifiManager snapshot read for the same
+  /// reason a stalled channel must never hang a caller; on timeout [fetch]
+  /// throws a typed [WifiInfoUnavailable] (`channelError`).
+  AndroidWifiInfoAdapter({
+    WifiInfoService? service,
+    Duration permissionTimeout = const Duration(seconds: 60),
+    Duration fetchTimeout = const Duration(seconds: 5),
+  })  : _service = service ?? WifiInfoService(),
+        // ignore: prefer_initializing_formals
+        _permissionTimeout = permissionTimeout,
+        // ignore: prefer_initializing_formals
+        _fetchTimeout = fetchTimeout;
+
+  final WifiInfoService _service;
+  final Duration _permissionTimeout;
+  final Duration _fetchTimeout;
+
+  @override
+  String get platformLabel => 'Android';
+
+  /// Android gates SSID/BSSID behind ACCESS_FINE_LOCATION at runtime.
+  @override
+  bool get gatesNameBehindPermission => true;
+
+  /// Reads a fresh Android WifiManager snapshot with a hard upper bound. A
+  /// native channel that never returns raises a typed [WifiInfoUnavailable]
+  /// (`channelError`) after [fetchTimeout] rather than hanging the caller.
+  @override
+  Future<ConnectedAp> fetch() async {
+    final WifiInfo info = await _service.fetch().timeout(
+      _fetchTimeout,
+      onTimeout: () => throw const WifiInfoUnavailable(
+        WifiInfoUnavailableReason.channelError,
+        'Wi-Fi snapshot read timed out.',
+      ),
+    );
+    return ConnectedAp.fromAndroidWifiInfo(info);
+  }
+
+  /// Requests ACCESS_FINE_LOCATION (INTERACTIVE — surfaces the Android runtime
+  /// permission dialog and waits for the user) with a generous
+  /// [permissionTimeout] ceiling. Returns whether location is granted after the
+  /// dialog resolves. On the pathological no-callback hang, resolves to `false`.
+  @override
+  Future<bool> requestNamePermission() => _service
+      .requestLocationPermission()
+      .timeout(_permissionTimeout, onTimeout: () => false);
+
+  /// Reports the CURRENT ACCESS_FINE_LOCATION grant WITHOUT surfacing a prompt.
+  /// Bounded by [fetchTimeout] as a hang-safety; on timeout resolves to `false`.
+  @override
+  Future<bool> currentNameAuthorization() => _service
+      .isLocationAuthorized()
+      .timeout(_fetchTimeout, onTimeout: () => false);
+
+  /// Opens the app's system Settings page so the user can enable Location
+  /// manually after a permanent denial ("Don't ask again"). Android cannot
+  /// re-prompt once permanently denied, so the deep-link is the honest path.
+  /// Bounded by [fetchTimeout]; on timeout resolves to `false`.
   @override
   Future<bool> openNamePermissionSettings() => _service
       .openLocationSettings()
