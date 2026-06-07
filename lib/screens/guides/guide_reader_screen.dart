@@ -318,20 +318,28 @@ class _GuideReaderScreenState extends State<GuideReaderScreen> {
           data.refreshIndexCallback(data.index);
           Navigator.of(sheetContext).pop();
         },
-        child: Padding(
-          padding: EdgeInsets.only(
-            left: AppSpacing.md + AppSpacing.sm * (level - 1),
-            right: AppSpacing.md,
-            top: AppSpacing.xs,
-            bottom: AppSpacing.xs,
-          ),
-          child: Text(
-            label,
-            style: (isCurrent ? text.bodyLarge : text.bodyMedium)?.copyWith(
-              color: isCurrent ? colors.textAccent : colors.textSecondary,
-              fontWeight: level == 1
-                  ? FontWeight.w600
-                  : (isCurrent ? FontWeight.w600 : FontWeight.w400),
+        // Guarantee the WCAG 2.2 / GL-003 §8.3 44pt minimum touch target on the
+        // TOC rows (the most-tapped control in the longest document).
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 44),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: AppSpacing.md + AppSpacing.sm * (level - 1),
+                right: AppSpacing.md,
+                top: AppSpacing.xs,
+                bottom: AppSpacing.xs,
+              ),
+              child: Text(
+                label,
+                style: (isCurrent ? text.bodyLarge : text.bodyMedium)?.copyWith(
+                  color: isCurrent ? colors.textAccent : colors.textSecondary,
+                  fontWeight: level == 1
+                      ? FontWeight.w600
+                      : (isCurrent ? FontWeight.w600 : FontWeight.w400),
+                ),
+              ),
             ),
           ),
         ),
