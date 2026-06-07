@@ -82,6 +82,60 @@ void main() {
     });
   });
 
+  group('802.11be (Wi-Fi 7 / EHT) — BF6-9', () {
+    test('EHT exposes the 320 MHz column', () {
+      const McsStdData eht = McsIndexScreen.eht;
+      expect(eht.columns, ['20 MHz', '40 MHz', '80 MHz', '160 MHz', '320 MHz']);
+    });
+
+    test('EHT adds 4096-QAM MCS 12 and 13', () {
+      const McsStdData eht = McsIndexScreen.eht;
+      expect(eht.rows.length, 14);
+      final McsRow m12 = eht.rows[12];
+      expect(m12.mcs, 12);
+      expect(m12.modulation, '4096-QAM');
+      expect(m12.codeRate, '3/4');
+      final McsRow m13 = eht.rows[13];
+      expect(m13.mcs, 13);
+      expect(m13.modulation, '4096-QAM');
+      expect(m13.codeRate, '5/6');
+    });
+
+    test('EHT MCS 13 @ 320 MHz = 2882.4 Mbps (1 SS)', () {
+      expect(
+        McsIndexScreen.rate(
+          std: McsStd.be,
+          mcs: 13,
+          columnIndex: 4,
+          spatialStreams: 1,
+        ),
+        2882.4,
+      );
+    });
+
+    test('EHT MCS 0 @ 320 MHz = 144.1 Mbps (1 SS)', () {
+      expect(
+        McsIndexScreen.rate(
+          std: McsStd.be,
+          mcs: 0,
+          columnIndex: 4,
+          spatialStreams: 1,
+        ),
+        144.1,
+      );
+    });
+
+    test('EHT MCS 13 @ 320 MHz × 8 SS = 23059.2 Mbps', () {
+      final double? r = McsIndexScreen.rate(
+        std: McsStd.be,
+        mcs: 13,
+        columnIndex: 4,
+        spatialStreams: 8,
+      );
+      expect(r, closeTo(2882.4 * 8, 1e-6));
+    });
+  });
+
   group('Spatial-stream scaling (PWA r * ss)', () {
     test('802.11ax MCS 11 @ 160 MHz × 4 SS = 4803.6 Mbps', () {
       final double? r = McsIndexScreen.rate(
@@ -147,6 +201,7 @@ void main() {
       expect(McsIndexScreen.dataFor(McsStd.n).rows.length, 8);
       expect(McsIndexScreen.dataFor(McsStd.ac).rows.length, 10);
       expect(McsIndexScreen.dataFor(McsStd.ax).rows.length, 12);
+      expect(McsIndexScreen.dataFor(McsStd.be).rows.length, 14);
     });
   });
 

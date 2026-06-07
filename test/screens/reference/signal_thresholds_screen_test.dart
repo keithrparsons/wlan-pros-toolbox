@@ -1,9 +1,11 @@
 // Tests for the Signal Thresholds reference screen.
 //
-// Dataset tests assert the load-bearing thresholds ported VERBATIM from the
-// rf-tools-pwa `rssi` tool (data-tool="rssi"): the per-application RSSI/SNR
-// targets, the RSSI quality-scale bands, and the SNR/MCS floor. If a value
-// here drifts from the PWA, these break — that is the point.
+// Dataset tests assert the load-bearing thresholds: the RSSI quality-scale
+// bands use KEITH PARSONS' OWN authoritative values (Excellent > -55, Good
+// -55..-65, Fair -65..-75, Weak -75..-80, Poor < -80 — domain-proof over
+// consensus, GL-005). The per-application RSSI/SNR targets and the SNR/MCS
+// floor are ported from the rf-tools-pwa `rssi` tool. If a value here drifts,
+// these break — that is the point.
 //
 // The widget-viewport smoke test lives in test/widget_test.dart (uses the
 // shared private `_withViewport` phone-viewport helper there). A multi-width
@@ -15,7 +17,7 @@ import 'package:wlan_pros_toolbox/screens/tools/reference/signal_thresholds_scre
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
 void main() {
-  group('Signal Thresholds dataset (verbatim from rf-tools-pwa rssi)', () {
+  group('Signal Thresholds dataset', () {
     AppThreshold byApp(String name) => SignalThresholdsScreen.kAppThresholds
         .firstWhere((AppThreshold t) => t.application == name);
 
@@ -53,11 +55,19 @@ void main() {
       expect(SignalThresholdsScreen.kAppThresholds.length, 6);
     });
 
-    test('"good" RSSI band floor is -50 to -67 dBm and grades good', () {
-      final SignalBand good = SignalThresholdsScreen.kSignalBands
-          .firstWhere((SignalBand b) => b.label == 'Good');
-      expect(good.range, '-50 to -67');
-      expect(good.grade, SignalGrade.good);
+    test("Keith's RSSI bands carry his authoritative ranges", () {
+      String range(String label) => SignalThresholdsScreen.kSignalBands
+          .firstWhere((SignalBand b) => b.label == label)
+          .range;
+      expect(range('Excellent'), '> -55 dBm');
+      expect(range('Good'), '-55 to -65');
+      expect(range('Fair'), '-65 to -75');
+      expect(range('Weak'), '-75 to -80');
+      expect(range('Poor'), '< -80 dBm');
+    });
+
+    test('all five RSSI quality bands are present', () {
+      expect(SignalThresholdsScreen.kSignalBands.length, 5);
     });
 
     test('"Excellent" grades good, "Fair" marginal, "Poor" bad', () {

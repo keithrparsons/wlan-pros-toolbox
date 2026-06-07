@@ -155,6 +155,21 @@ void main() {
       expect(find.text('Docs'), findsOneWidget);
     });
 
+    testWidgets('the toolkit and vendor sections carry an intro (BF6-15)',
+        (tester) async {
+      await tester.pumpWidget(_harness(_svc()));
+      await tester.pump();
+      // The previously description-less sections now read like the activities.
+      expect(
+        find.textContaining('representative bundle a working professional'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('with a neutral capability summary'),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('tapping a link chip invokes the launcher with the URL',
         (tester) async {
       Uri? opened;

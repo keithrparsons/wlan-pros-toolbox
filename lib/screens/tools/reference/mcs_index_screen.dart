@@ -38,9 +38,10 @@ import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'reference_row_semantics.dart';
 
-/// 802.11 standard shown in the MCS table, mirroring the PWA tab data-tab
-/// values (n / ac / ax).
-enum McsStd { n, ac, ax }
+/// 802.11 standard shown in the MCS table. n / ac / ax mirror the PWA tab
+/// data-tab values; be is the 802.11be (Wi-Fi 7 / EHT) addition — 320 MHz and
+/// 4096-QAM (MCS 12-13), which the PWA never carried.
+enum McsStd { n, ac, ax, be }
 
 /// One MCS index row: index, modulation, coding rate, and the per-column
 /// single-spatial-stream data rates in Mbps. A null rate is an invalid cell
@@ -286,11 +287,106 @@ class McsIndexScreen extends StatefulWidget {
     ],
   );
 
+  /// 802.11be (EHT / Wi-Fi 7) — columns are 800 ns GI rates per width
+  /// [20, 40, 80, 160, 320]. MCS 0-11 share HE's modulation/rates; EHT adds the
+  /// 320 MHz column and two 4096-QAM indices (MCS 12-13). Single-stream,
+  /// GI 0.8 us, per the 802.11be EHT PHY MCS table.
+  static const McsStdData eht = McsStdData(
+    columns: ['20 MHz', '40 MHz', '80 MHz', '160 MHz', '320 MHz'],
+    rows: [
+      McsRow(
+        mcs: 0,
+        modulation: 'BPSK',
+        codeRate: '1/2',
+        ratesPerSs: [8.6, 17.2, 36.0, 72.1, 144.1],
+      ),
+      McsRow(
+        mcs: 1,
+        modulation: 'QPSK',
+        codeRate: '1/2',
+        ratesPerSs: [17.2, 34.4, 72.1, 144.1, 288.2],
+      ),
+      McsRow(
+        mcs: 2,
+        modulation: 'QPSK',
+        codeRate: '3/4',
+        ratesPerSs: [25.8, 51.6, 108.1, 216.2, 432.4],
+      ),
+      McsRow(
+        mcs: 3,
+        modulation: '16-QAM',
+        codeRate: '1/2',
+        ratesPerSs: [34.4, 68.8, 144.1, 288.2, 576.5],
+      ),
+      McsRow(
+        mcs: 4,
+        modulation: '16-QAM',
+        codeRate: '3/4',
+        ratesPerSs: [51.6, 103.2, 216.2, 432.4, 864.7],
+      ),
+      McsRow(
+        mcs: 5,
+        modulation: '64-QAM',
+        codeRate: '2/3',
+        ratesPerSs: [68.8, 137.6, 288.2, 576.5, 1152.9],
+      ),
+      McsRow(
+        mcs: 6,
+        modulation: '64-QAM',
+        codeRate: '3/4',
+        ratesPerSs: [77.4, 154.9, 324.3, 648.5, 1297.1],
+      ),
+      McsRow(
+        mcs: 7,
+        modulation: '64-QAM',
+        codeRate: '5/6',
+        ratesPerSs: [86.0, 172.1, 360.3, 720.6, 1441.2],
+      ),
+      McsRow(
+        mcs: 8,
+        modulation: '256-QAM',
+        codeRate: '3/4',
+        ratesPerSs: [103.2, 206.5, 432.4, 864.7, 1729.4],
+      ),
+      McsRow(
+        mcs: 9,
+        modulation: '256-QAM',
+        codeRate: '5/6',
+        ratesPerSs: [114.7, 229.4, 480.4, 960.8, 1921.6],
+      ),
+      McsRow(
+        mcs: 10,
+        modulation: '1024-QAM',
+        codeRate: '3/4',
+        ratesPerSs: [129.0, 258.1, 540.4, 1080.9, 2161.8],
+      ),
+      McsRow(
+        mcs: 11,
+        modulation: '1024-QAM',
+        codeRate: '5/6',
+        ratesPerSs: [143.4, 286.8, 600.4, 1200.9, 2401.9],
+      ),
+      McsRow(
+        mcs: 12,
+        modulation: '4096-QAM',
+        codeRate: '3/4',
+        ratesPerSs: [154.9, 309.7, 648.5, 1297.1, 2594.1],
+      ),
+      McsRow(
+        mcs: 13,
+        modulation: '4096-QAM',
+        codeRate: '5/6',
+        ratesPerSs: [172.1, 344.1, 720.6, 1441.2, 2882.4],
+      ),
+    ],
+  );
+
   /// Lookup table keyed by standard.
   static const Map<McsStd, McsStdData> dataset = {
     McsStd.n: ht,
     McsStd.ac: vht,
     McsStd.ax: he,
+    McsStd.be: eht,
   };
 
   // ─── Lookups (pure, testable) ───────────────────────────────────────────────
@@ -340,6 +436,8 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
         return '802.11ac — Wi-Fi 5 (VHT)';
       case McsStd.ax:
         return '802.11ax — Wi-Fi 6 (HE)';
+      case McsStd.be:
+        return '802.11be — Wi-Fi 7 (EHT)';
     }
   }
 
@@ -658,9 +756,10 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
           Text(
             'Rates are per-stream values multiplied by the spatial-stream count '
             'above. 802.11n: LGI = 800 ns long guard interval, SGI = 400 ns '
-            'short. 802.11ac: short guard interval. 802.11ax: 800 ns guard '
-            'interval. 802.11ac MCS 9 is invalid at 20 and 40 MHz for a single '
-            'stream (N/A). Actual '
+            'short. 802.11ac: short guard interval. 802.11ax and 802.11be: '
+            '800 ns guard interval. 802.11be (Wi-Fi 7 / EHT) adds the 320 MHz '
+            'channel width and 4096-QAM (MCS 12 and 13). 802.11ac MCS 9 is '
+            'invalid at 20 and 40 MHz for a single stream (N/A). Actual '
             'throughput is typically 50 to 65 percent of the PHY rate.',
             style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),

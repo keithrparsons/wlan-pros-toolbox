@@ -102,7 +102,8 @@ class MetricConversionScreen extends StatefulWidget {
     }
   }
 
-  /// Short symbol shown in selectors / hints.
+  /// Short symbol shown in hints and the result readout (kept concise so a
+  /// computed value reads "1.609 km", not "1.609 Kilometer").
   static String symbolFor(LengthUnit unit) {
     switch (unit) {
       case LengthUnit.m:
@@ -122,6 +123,32 @@ class MetricConversionScreen extends StatefulWidget {
     }
   }
 
+  /// Spelled-out unit name (BF5-19) — Keith's beta finding that the bare
+  /// abbreviations ("nmi", "mi") are not obvious. US spelling, singular.
+  static String nameFor(LengthUnit unit) {
+    switch (unit) {
+      case LengthUnit.m:
+        return 'Meter';
+      case LengthUnit.km:
+        return 'Kilometer';
+      case LengthUnit.mi:
+        return 'Mile';
+      case LengthUnit.ft:
+        return 'Foot';
+      case LengthUnit.cm:
+        return 'Centimeter';
+      case LengthUnit.inch:
+        return 'Inch';
+      case LengthUnit.nmi:
+        return 'Nautical Mile';
+    }
+  }
+
+  /// The dropdown label: the spelled-out name with its symbol in parentheses,
+  /// e.g. "Nautical Mile (nmi)". Used for the from/to selectors (BF5-19).
+  static String selectorLabelFor(LengthUnit unit) =>
+      '${nameFor(unit)} (${symbolFor(unit)})';
+
   @override
   State<MetricConversionScreen> createState() => _MetricConversionScreenState();
 }
@@ -133,9 +160,11 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
   LengthUnit _fromUnit = LengthUnit.m;
   LengthUnit _toUnit = LengthUnit.ft;
 
-  /// Value→symbol pairs for the from/to unit `AppSelect`s, in enum order.
+  /// Value→label pairs for the from/to unit `AppSelect`s, in enum order. BF5-19:
+  /// the labels spell out the unit name with its symbol — "Nautical Mile (nmi)"
+  /// — instead of the bare abbreviation, with two-line wrapping allowed.
   static final List<AppSelectItem<LengthUnit>> _unitItems = LengthUnit.values
-      .map((LengthUnit u) => (u, MetricConversionScreen.symbolFor(u)))
+      .map((LengthUnit u) => (u, MetricConversionScreen.selectorLabelFor(u)))
       .toList();
 
   // Computed result in `_toUnit`, or null when input is empty / invalid.
@@ -313,12 +342,15 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
-              Flexible(
+              // BF5-19: the spelled-out unit labels need more room than the bare
+              // symbol did; the select takes a fixed share of the row and wraps
+              // to two lines rather than ellipsizing.
+              Expanded(
                 child: AppSelect<LengthUnit>(
                   value: _fromUnit,
                   items: _unitItems,
                   semanticLabel: 'From unit',
-                  minWidth: 88,
+                  maxLines: 2,
                   onChanged: (u) {
                     setState(() => _fromUnit = u);
                     _recompute();
@@ -334,12 +366,12 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
             children: [
               Expanded(child: _resultBlock(text, mono)),
               const SizedBox(width: AppSpacing.sm),
-              Flexible(
+              Expanded(
                 child: AppSelect<LengthUnit>(
                   value: _toUnit,
                   items: _unitItems,
                   semanticLabel: 'To unit',
-                  minWidth: 88,
+                  maxLines: 2,
                   onChanged: (u) {
                     setState(() => _toUnit = u);
                     _recompute();

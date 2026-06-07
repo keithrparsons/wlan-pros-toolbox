@@ -95,6 +95,35 @@ void main() {
     });
   });
 
+  group('Regulatory domains by geography (BF6-12)', () {
+    RegulatoryDomain byGeo(String name) => SpectrumScreen.regulatoryDomains
+        .firstWhere((RegulatoryDomain d) => d.geography == name);
+
+    test('carries the major geographies with their regulators', () {
+      expect(byGeo('United States').acronym, 'FCC');
+      expect(byGeo('Canada').acronym, 'ISED (IC)');
+      expect(byGeo('United Kingdom').acronym, 'Ofcom');
+      expect(byGeo('European Union').acronym, 'ETSI');
+      expect(byGeo('Australia').acronym, 'ACMA');
+      expect(byGeo('Japan').acronym, 'MIC');
+    });
+
+    test('lists at least the six core domains plus a few more', () {
+      expect(
+        SpectrumScreen.regulatoryDomains.length,
+        greaterThanOrEqualTo(6),
+      );
+    });
+
+    test('no domain row has an empty field', () {
+      for (final RegulatoryDomain d in SpectrumScreen.regulatoryDomains) {
+        expect(d.geography.trim(), isNotEmpty);
+        expect(d.regulator.trim(), isNotEmpty);
+        expect(d.acronym.trim(), isNotEmpty);
+      }
+    });
+  });
+
   group('SpectrumScreen widget', () {
     testWidgets('renders title + 2.4 GHz fact sheet, switches to 6 GHz, '
         'in a 375x900 phone viewport without overflow', (tester) async {
