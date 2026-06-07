@@ -4,8 +4,10 @@
 // Connection; the search field is present (now at the BOTTOM) and navigates;
 // each tile shows the live tool-count badge and the example-tools line; NO NEW
 // pill renders anywhere in this build (Keith, 2026-06-03 — nothing is new to a
-// user yet); the grid renders all categories; no RenderFlex overflow at
-// 320/375/768/1440.
+// user yet); the grid renders all categories; the TILE GRID stretches to 3 then
+// 4 columns on wide desktop widths and reflows back down to 2/1 on narrow ones
+// (Kjetil desktop beta finding, 2026-06-07); no RenderFlex overflow across the
+// phone → 4-column desktop width band.
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -186,6 +188,42 @@ void main() {
     });
   });
 
+  // The tile grid must use WIDTH-BASED breakpoints (not platform detection) so a
+  // Mac window resized narrow reflows back to 2/1 columns exactly like a phone.
+  // gridCrossAxisCountFor: <440 → 1, ≥440 → 2, ≥720 → 3, ≥1100 → 4.
+  for (final ({double width, int columns}) c in <({double width, int columns})>[
+    (width: 320, columns: 1), // phone (single column)
+    (width: 390, columns: 1), // phone (single column)
+    (width: 440, columns: 2), // 2-column lower bound
+    (width: 680, columns: 2), // old content cap — still 2-up
+    (width: 720, columns: 3), // 3-column lower bound (was unreachable pre-fix)
+    (width: 820, columns: 3), // mid desktop / large iPad — 3-up
+    (width: 1100, columns: 4), // 4-column lower bound
+    (width: 1280, columns: 4), // wide desktop — 4-up (grid cap)
+    (width: 1600, columns: 4), // ultrawide — capped at 4, no 5th column
+  ]) {
+    testWidgets(
+      'the tile grid shows ${c.columns} column(s) at ${c.width.toInt()}px wide',
+      (tester) async {
+        await _withViewport(tester, Size(c.width, 1200), () async {
+          await tester.pumpWidget(_app());
+          await tester.pumpAndSettle();
+
+          final SliverGrid grid = tester.widget<SliverGrid>(
+            find.byType(SliverGrid),
+          );
+          final delegate =
+              grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
+          expect(
+            delegate.crossAxisCount,
+            c.columns,
+            reason: 'expected ${c.columns} grid column(s) at ${c.width.toInt()}px',
+          );
+        });
+      },
+    );
+  }
+
   for (final Size size in <Size>[
     const Size(320, 900),
     const Size(375, 900),
@@ -193,6 +231,8 @@ void main() {
     const Size(440, 900), // 2-column lower bound (IA-redesign density gate)
     const Size(680, 900), // content-cap width, 2-column
     const Size(768, 1100),
+    const Size(820, 1100), // 3-column desktop / large iPad
+    const Size(1280, 1100), // 4-column wide desktop
     const Size(1440, 1100),
   ]) {
     testWidgets(

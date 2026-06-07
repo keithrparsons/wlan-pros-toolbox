@@ -138,6 +138,48 @@ class AppSpacing {
   /// [contentMaxWidth] (or [CenteredContent]) directly.
   static const double calculatorMaxWidth = contentMaxWidth;
 
+  /// Wider content cap for the category/tool TILE GRIDS only — the home category
+  /// grid (`home_screen.dart`) and any future tile grid. Reading surfaces (guide
+  /// reader, educational-resource detail, single-column calculators/forms, and
+  /// the category tool LIST) stay at [contentMaxWidth] (680) so prose holds a
+  /// readable measure; a tile grid is scanned, not read, so it may stretch wider
+  /// to use a desktop window's width instead of stranding ~2 centered columns in
+  /// big side margins (Kjetil desktop beta finding, 2026-06-07).
+  ///
+  /// 1280 lets the width-based breakpoints in `_crossAxisCountFor` actually
+  /// reach their 3-column (≥720) and 4-column (≥1100) paths — which the old 680
+  /// cap made unreachable — while still capping the grid before tiles grow
+  /// absurdly wide on an ultrawide display (a 5th column would need ≥1480, above
+  /// this cap, so the grid tops out at 4 columns by design). TUNABLE — adjust
+  /// here and both tile grids widen together. Maps to GL-003 §8.7
+  /// `--app-grid-max-width` (proposed to Iris alongside this fix).
+  ///
+  /// Width-based, NOT platform-based: a Mac window resized narrow reflows back
+  /// down to 2 or 1 column exactly like a phone, which platform detection would
+  /// get wrong.
+  static const double gridMaxWidth = 1280;
+
+  /// Width at and above which the tile grid shows 4 columns.
+  static const double gridFourColBreakpoint = 1100;
+
+  /// Width at and above which the tile grid shows 3 columns.
+  static const double gridThreeColBreakpoint = 720;
+
+  /// Width below which the tile grid drops from 2 columns to a single column
+  /// (phone). Above it (and below [gridThreeColBreakpoint]) the grid is 2-up.
+  static const double gridTwoColBreakpoint = 440;
+
+  /// Tile cross-axis count for a given AVAILABLE grid width (post screen-edge
+  /// padding is applied by the grid delegate's spacing, so pass the raw capped
+  /// grid width here). Shared by the home grid and any future tile grid so the
+  /// breakpoints live in one place. Width-based by design — see [gridMaxWidth].
+  static int gridCrossAxisCountFor(double width) {
+    if (width >= gridFourColBreakpoint) return 4;
+    if (width >= gridThreeColBreakpoint) return 3;
+    if (width >= gridTwoColBreakpoint) return 2;
+    return 1;
+  }
+
   /// Short-viewport height threshold for the calculator scroll-column alignment
   /// (see [calculatorVerticalAlignment]). At or below this, the column is
   /// top-aligned so the result readout (GL-003 §8.5 visual climax) reads from
