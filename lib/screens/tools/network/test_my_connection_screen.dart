@@ -1601,9 +1601,19 @@ class _LiveSignalCard extends StatelessWidget {
                 ),
               ] else if (series.isEmpty) ...<Widget>[
                 _LiveUnavailableNote(
+                  // iOS, not yet started → invite the deliberate Start tap.
+                  // iOS, started but the first sample has not landed yet →
+                  // an HONEST "waiting" indicator (the Shortcut WAS fired; we
+                  // are genuinely waiting on it, never a fake "LIVE" with
+                  // nothing behind it). macOS auto-polls, so it is simply
+                  // reading the link.
                   message: sampler.isIos
-                      ? 'Tap Start to begin live Wi-Fi signal readings from the '
-                          'companion Shortcut.'
+                      ? (sampler.isStreaming
+                          ? 'Starting the live Wi-Fi feed from the companion '
+                              'Shortcut. The first reading should arrive in a '
+                              'moment…'
+                          : 'Tap Start to begin live Wi-Fi signal readings from '
+                              'the companion Shortcut.')
                       : 'Reading the Wi-Fi link…',
                 ),
               ] else ...<Widget>[
