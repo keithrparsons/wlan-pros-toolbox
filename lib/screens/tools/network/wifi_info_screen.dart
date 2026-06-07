@@ -68,6 +68,8 @@ import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/sparkline.dart';
 import '../concept_graphic_band.dart';
+import 'install_shortcut_sheet.dart';
+import 'live_setup_card.dart';
 import 'network_unavailable_view.dart';
 
 /// The one Wi-Fi Information tool screen.
@@ -408,6 +410,25 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   Future<void> _stopLive() async {
     await _liveController?.stopMonitoring();
     if (mounted) setState(() {});
+  }
+
+  /// iOS: opens the one-time companion-Shortcut install sheet. Surfaced by the
+  /// [LiveSetupCard] prompts when the app has never received a live payload
+  /// (the honest "not set up" signal). After the user adds the Shortcut and taps
+  /// "I've added it", the controller re-resolves install-state and Start is
+  /// kicked off so live readings begin without a second manual tap.
+  Future<void> _openInstallSheet() async {
+    final WiFiDetailsBridge? bridge = _iosBridge;
+    if (bridge == null) return;
+    await showInstallShortcutSheet(
+      context: context,
+      openUrl: bridge.openUrl,
+      onInstalled: () async {
+        await _liveController?.load();
+        if (!mounted) return;
+        await _startLive();
+      },
+    );
   }
 
   // ---- AP-vendor (OUI) lookup ----
@@ -1005,6 +1026,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           triggerError: _liveTriggerError,
           onStart: _startLive,
           onStop: _stopLive,
+          onSetUp: _openInstallSheet,
           // Fold the native security token + BSSID onto each live reading so the
           // Security / AP-vendor rows render from the same enriched model the
           // rest of the cards use.
@@ -1877,6 +1899,7 @@ class _LiveBody extends StatelessWidget {
     required this.triggerError,
     required this.onStart,
     required this.onStop,
+    required this.onSetUp,
     required this.enrich,
     required this.metricCardsBuilder,
   });
@@ -1887,6 +1910,10 @@ class _LiveBody extends StatelessWidget {
   final bool triggerError;
   final VoidCallback onStart;
   final VoidCallback onStop;
+
+  /// Opens the one-time companion-Shortcut install sheet. Wired to both the
+  /// first-run setup prompt and the post-failure setup card.
+  final VoidCallback onSetUp;
 
   /// Folds the native iOS security token + BSSID onto a Shortcut-derived reading
   /// so the Security / AP-vendor rows render from the same model as every other
@@ -1927,7 +1954,13 @@ class _LiveBody extends StatelessWidget {
                   ),
                   if (triggerError) ...[
                     const SizedBox(height: AppSpacing.sm),
-                    const _LiveTriggerErrorCard(),
+                    // A failed Start now leads with the actionable setup card —
+                    // the honest "could not start" message PLUS the one-time
+                    // "Set up live Wi-Fi" button — instead of a dead-end error.
+                    LiveSetupCard.error(
+                      label: 'Set up live Wi-Fi (one-time)',
+                      onSetUp: onSetUp,
+                    ),
                   ],
                   const SizedBox(height: AppSpacing.sm),
                   if (!controller.isStreaming && series.isEmpty)
@@ -1948,14 +1981,20 @@ class _LiveBody extends StatelessWidget {
                       ...metricCardsBuilder(ap),
                     ],
                   ],
-                  // First-time SETUP hint only. Once the app has EVER received a
-                  // Live payload (hasEverReceived, mirrors the App Group
+                  // First-time SETUP prompt only. Once the app has EVER received
+                  // a Live payload (hasEverReceived, mirrors the App Group
                   // shortcuts_bridge.has_received_payload flag), the user clearly
-                  // has the companion Shortcut working, so the install/how-to note
-                  // is noise and is hidden permanently.
-                  if (!controller.hasEverReceived) ...[
+                  // has the companion Shortcut working, so the setup prompt is
+                  // noise and is hidden permanently — it never nags. While a
+                  // Start error is showing, the error card above already carries
+                  // the setup button, so this neutral prompt is suppressed to
+                  // avoid two setup cards at once.
+                  if (!controller.hasEverReceived && !triggerError) ...[
                     const SizedBox(height: AppSpacing.sm),
-                    const _LoopShortcutNote(),
+                    LiveSetupCard.prompt(
+                      label: 'Set up live Wi-Fi (one-time)',
+                      onSetUp: onSetUp,
+                    ),
                   ],
                 ],
               ),
@@ -1984,43 +2023,6 @@ class _LiveStartHint extends StatelessWidget {
         'they arrive. Stop freezes the last values on screen.',
         style: text.bodyLarge?.copyWith(color: colors.textSecondary),
         textAlign: TextAlign.center,
-      ),
-    );
-  }
-}
-
-/// Honest error card when Live Start could not open the looping Shortcut.
-class _LiveTriggerErrorCard extends StatelessWidget {
-  const _LiveTriggerErrorCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: colors.border, width: 1),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Icon(Icons.error_outline, size: 20, color: colors.statusDanger),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Semantics(
-              liveRegion: true,
-              child: Text(
-                'Could not start live streaming. The looping companion Shortcut '
-                'may not be installed, or the run was cancelled. Install it, '
-                'then press Start again.',
-                style: text.bodyMedium?.copyWith(color: colors.textSecondary),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -2403,47 +2405,6 @@ class _GradeChip extends StatelessWidget {
   }
 }
 
-/// Honest note about the recursive companion Shortcut for Live mode. While the
-/// looping Shortcut link is still a placeholder (pre-publish), the affordance to
-/// get it is a plain disabled note rather than a tappable link the app could not
-/// open, mirroring how the cellular tool gated its Install action.
-class _LoopShortcutNote extends StatelessWidget {
-  const _LoopShortcutNote();
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    final bool placeholder =
-        WifiLiveShortcutsConfig.isLiveShortcutUrlPlaceholder;
-    final String message = placeholder
-        ? 'Live streaming needs the combined "WLAN Pros Live" companion '
-              'Shortcut, which is published during device testing.'
-        : 'Live streaming uses the combined "WLAN Pros Live" companion '
-              'Shortcut. Install it, then tap Start.';
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: colors.border, width: 1),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Icon(Icons.info_outline, size: 20, color: colors.textTertiary),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(
-              message,
-              style: text.bodyMedium?.copyWith(color: colors.textSecondary),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 /// iOS Start/Stop control + live indicator + last-updated timestamp.
 class _MonitorControlBar extends StatelessWidget {

@@ -1,40 +1,74 @@
-// Install-the-companion-Shortcut onboarding sheet (TICKET-03 A1).
+// One-time "set up live Wi-Fi" onboarding sheet.
 //
-// Explains the one-time install, opens the iCloud Shortcut link via the bridge,
-// and offers an honest "I've installed it, run it" affordance. iOS cannot report
-// whether a Shortcut is installed, so the app never claims a fake "installed".
-// Install copy states plainly that NO Location permission is required
-// (confirmed TICKET-01).
+// This is the single, discoverable place a new iOS user installs the combined
+// "WLAN Pros Live" companion Shortcut that drives every live tool (Wi-Fi
+// Information, Test My Connection, Cellular Information). iOS cannot auto-install
+// a Shortcut and cannot report whether one is installed, so the app never claims
+// a fake "installed"; it explains the one-time step in three short moves and
+// opens the iCloud link.
 //
-// Styling is GL-003: surface2 sheet, card radius, lime primary for the install
-// button, textSecondary on the no-permission reassurance note (§8.13: status
-// verdict tokens are never decorative), IBM Plex Sans body.
+// The link and name come from [WifiLiveShortcutsConfig] — the SAME Shortcut the
+// live tools actually trigger by name — so what the sheet installs and what the
+// tools run can never drift. (The earlier draft installed the legacy single-tap
+// "WLAN Pros Wi-Fi" Shortcut, which is NOT what Live mode runs; that was the
+// root cause testers saw "live tools don't work" after installing.)
+//
+// Styling is GL-003 App Mode: surface2 sheet, card radius, lime primary for the
+// install button, textSecondary on the no-permission reassurance note (§8.13:
+// status verdict tokens are never decorative), IBM Plex Sans body. iOS-only —
+// macOS reads CoreWLAN natively and never presents this sheet.
 
 import 'package:flutter/material.dart';
 
-import '../../../services/network/shortcuts_config.dart';
-import '../../../services/network/wifi_details_bridge.dart';
+import '../../../services/network/wifi_live_shortcuts_config.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
+
+/// Opens an external URL (the iCloud Shortcut link). Both [WiFiDetailsBridge]
+/// and [CellularInfoBridge] expose a method with this signature, so the sheet
+/// depends on the capability, not on a specific bridge class — that keeps the
+/// one onboarding sheet reusable across every live tool regardless of which
+/// bridge the host screen owns.
+typedef ShortcutLinkOpener = Future<bool> Function(String url);
+
+/// Opens the one-time live-setup sheet as a modal bottom sheet, styled per the
+/// GL-003 App Mode sheet convention (surface2 fill, scroll-controlled).
+/// [openUrl] opens the iCloud link (pass the host bridge's `openUrl`);
+/// [onInstalled] runs after the user taps "I've added it" so the host can
+/// re-resolve install-state / kick off a reading.
+Future<void> showInstallShortcutSheet({
+  required BuildContext context,
+  required ShortcutLinkOpener openUrl,
+  required Future<void> Function() onInstalled,
+}) {
+  return showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: context.colors.surface2,
+    isScrollControlled: true,
+    builder: (_) => InstallShortcutSheet(
+      openUrl: openUrl,
+      onInstalled: onInstalled,
+    ),
+  );
+}
 
 class InstallShortcutSheet extends StatelessWidget {
   const InstallShortcutSheet({
     super.key,
-    required this.bridge,
+    required this.openUrl,
     required this.onInstalled,
   });
 
-  /// Bridge used to open the iCloud link (and shared with the host screen).
-  final WiFiDetailsBridge bridge;
+  /// Opens the iCloud link. Pass the host bridge's `openUrl` method.
+  final ShortcutLinkOpener openUrl;
 
-  /// Called after the user taps "I've installed it, run it" so the host can
-  /// re-resolve install-state from the App Group.
+  /// Called after the user taps "I've added it" so the host can re-resolve
+  /// install-state and begin a live reading.
   final Future<void> Function() onInstalled;
 
   Future<void> _install(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
-    final bool ok =
-        await bridge.openUrl(ShortcutsConfig.kCompanionShortcutUrl);
+    final bool ok = await openUrl(WifiLiveShortcutsConfig.kLiveShortcutUrl);
     if (!ok) {
       messenger.showSnackBar(
         const SnackBar(content: Text('Could not open the Shortcut link.')),
@@ -46,7 +80,8 @@ class InstallShortcutSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
-    final bool isPlaceholder = ShortcutsConfig.isShortcutUrlPlaceholder;
+    final bool isPlaceholder =
+        WifiLiveShortcutsConfig.isLiveShortcutUrlPlaceholder;
 
     return SafeArea(
       child: ConstrainedBox(
@@ -63,43 +98,43 @@ class InstallShortcutSheet extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Install the companion Shortcut',
+                'Set up live Wi-Fi',
                 style: text.headlineSmall,
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'Live mode reads your network from the "WLAN Pros Live" '
-                'Shortcut you install once. After installing, tap Start to '
-                'begin live readings on this screen.',
-                style:
-                    text.bodyLarge?.copyWith(color: colors.textSecondary),
+                'iOS reads live Wi-Fi and cellular details through a small '
+                'companion Shortcut, "WLAN Pros Live". You add it once, and '
+                'every live tool works from then on. It takes about a minute.',
+                style: text.bodyLarge?.copyWith(color: colors.textSecondary),
               ),
               const SizedBox(height: AppSpacing.md),
               const _Step(
                 number: 1,
-                text: 'Tap Install Shortcut to open it in the Shortcuts app, '
-                    'then add it.',
+                text: 'Tap Add the Shortcut below.',
               ),
               const _Step(
                 number: 2,
-                text: 'Back here, tap Start to begin live readings. Your '
-                    'network details stream onto this screen.',
+                text: 'In the Shortcuts app, tap Add Shortcut.',
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const _Step(
+                number: 3,
+                text: 'Come back here and tap Start — live Wi-Fi now works.',
+              ),
+              const SizedBox(height: AppSpacing.xs),
               const _NoPermissionNote(),
               const SizedBox(height: AppSpacing.md),
               FilledButton.icon(
                 onPressed: isPlaceholder ? null : () => _install(context),
                 icon: const Icon(Icons.download_outlined),
-                label: const Text('Install Shortcut'),
+                label: const Text('Add the Shortcut'),
               ),
               if (isPlaceholder) ...[
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   'Install link coming soon.',
                   // Muted disabled-affordance caption (F-04).
-                  style:
-                      text.bodySmall?.copyWith(color: colors.textTertiary),
+                  style: text.bodySmall?.copyWith(color: colors.textTertiary),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -109,7 +144,7 @@ class InstallShortcutSheet extends StatelessWidget {
                   Navigator.of(context).pop();
                   await onInstalled();
                 },
-                child: const Text("I've installed it, run it"),
+                child: const Text("I've added it"),
               ),
             ],
           ),

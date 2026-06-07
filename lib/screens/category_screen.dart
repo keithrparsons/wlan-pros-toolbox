@@ -18,11 +18,15 @@ import '../data/tool_catalog.dart';
 import '../data/tool_ordering.dart';
 import '../data/tool_search.dart';
 import '../data/tool_subgroups.dart';
+import '../services/network/wifi_details_bridge.dart';
+import '../services/network/wifi_info_adapter.dart';
 import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 import '../widgets/centered_content.dart';
 import '../widgets/section_header.dart';
 import '../widgets/tool_row.dart';
+import 'tools/network/install_shortcut_sheet.dart';
+import 'tools/network/live_setup_card.dart';
 
 // Ordering moved to lib/data/tool_ordering.dart (to break a screen↔data import
 // cycle with tool_subgroups). Re-exported here so existing importers
@@ -32,9 +36,22 @@ export '../data/tool_ordering.dart'
     show orderedCategoryTools, kTestNetworkPinnedToolIds, kPinnedCategoryId;
 
 class CategoryScreen extends StatefulWidget {
-  const CategoryScreen({super.key, required this.category});
+  const CategoryScreen({
+    super.key,
+    required this.category,
+    this.sourceOverride,
+    this.iosBridge,
+  });
 
   final ToolCategory category;
+
+  /// Forces the Wi-Fi data source (tests). Defaults to the host platform. Only
+  /// used to decide whether the iOS one-time live-setup banner is eligible.
+  final WifiInfoSource? sourceOverride;
+
+  /// Injectable iOS bridge (tests). Defaults to the real Shortcuts bridge. Only
+  /// used by the one-time live-setup banner on the Test Network category.
+  final WiFiDetailsBridge? iosBridge;
 
   @override
   State<CategoryScreen> createState() => _CategoryScreenState();
@@ -104,6 +121,18 @@ class _CategoryScreenState extends State<CategoryScreen> {
     }
 
     final List<Widget> children = <Widget>[
+      // iOS-only, one-time live-setup banner. On the Test Network category (the
+      // home of the live diagnostics) a new iOS user learns they need the
+      // companion Shortcut BEFORE they tap into a live tool and hit an empty
+      // wall. It resolves install-state from the App Group flag and removes
+      // itself the moment any live payload has ever arrived, so an already-set-up
+      // user (e.g. Keith) never sees it and is never nagged. Non-iOS never builds
+      // it (macOS reads CoreWLAN natively; web/Android have no Shortcut path).
+      if (widget.category.id == kPinnedCategoryId)
+        _LiveSetupBanner(
+          sourceOverride: widget.sourceOverride,
+          iosBridge: widget.iosBridge,
+        ),
       // In-category search field (mockup 02). Filters the rendered rows live.
       _InCategorySearchField(
         controller: _searchController,
@@ -208,6 +237,83 @@ class _CategoryScreenState extends State<CategoryScreen> {
       contentType: _grouped
           ? contentTypeFor(tool, widget.category.id)
           : null,
+    );
+  }
+}
+
+/// iOS-only, one-time live-setup banner shown at the top of the Test Network
+/// category. Surfaces the companion-Shortcut setup BEFORE a new user taps into a
+/// live tool and finds it empty. Self-hides on three honest conditions, so it
+/// never nags a user who is already set up:
+///   * not the iOS Shortcuts source (macOS / Android / web) — renders nothing;
+///   * still resolving install-state — renders nothing (no flicker / no guess);
+///   * the app has ever received a live payload (hasEverReceivedPayload) — the
+///     Shortcut demonstrably works, so renders nothing permanently.
+class _LiveSetupBanner extends StatefulWidget {
+  const _LiveSetupBanner({this.sourceOverride, this.iosBridge});
+
+  final WifiInfoSource? sourceOverride;
+  final WiFiDetailsBridge? iosBridge;
+
+  @override
+  State<_LiveSetupBanner> createState() => _LiveSetupBannerState();
+}
+
+class _LiveSetupBannerState extends State<_LiveSetupBanner> {
+  late final WifiInfoSource _source;
+  WiFiDetailsBridge? _bridge;
+
+  /// Tri-state: null while resolving, true/false once the App Group flag is
+  /// read. The banner only renders when this is explicitly false (not set up).
+  bool? _everReceived;
+
+  bool get _isIos => _source == WifiInfoSource.iosShortcuts;
+
+  @override
+  void initState() {
+    super.initState();
+    _source = widget.sourceOverride ?? WifiInfoSourceResolver.resolve();
+    if (_isIos) {
+      _bridge = widget.iosBridge ?? WiFiDetailsBridge();
+      _resolve();
+    }
+  }
+
+  Future<void> _resolve() async {
+    final bool received =
+        await (_bridge?.hasEverReceivedPayload() ?? Future<bool>.value(true));
+    if (!mounted) return;
+    setState(() => _everReceived = received);
+  }
+
+  Future<void> _openInstallSheet() async {
+    final WiFiDetailsBridge? bridge = _bridge;
+    if (bridge == null) return;
+    await showInstallShortcutSheet(
+      context: context,
+      openUrl: bridge.openUrl,
+      onInstalled: () async {
+        // Re-resolve so the banner removes itself if the Shortcut has since
+        // delivered a payload. It cannot confirm an install on its own (iOS
+        // limit), so it stays until a real payload arrives.
+        await _resolve();
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Not iOS, still resolving, or already set up → render nothing (and take no
+    // vertical space, so the search field stays flush to the top).
+    if (!_isIos || _everReceived != false) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: LiveSetupCard.prompt(
+        label: 'Set up live Wi-Fi (one-time)',
+        onSetUp: _openInstallSheet,
+      ),
     );
   }
 }

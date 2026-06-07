@@ -497,6 +497,28 @@ void main() {
       // Genuine first-time setup: the companion-Shortcut install/how-to note is
       // shown so new users know to install it and tap Start.
       expect(find.textContaining('WLAN Pros Live'), findsOneWidget);
+      // The prompt is now ACTIONABLE: a prominent one-time setup button.
+      expect(find.text('Set up live Wi-Fi (one-time)'), findsOneWidget);
+    });
+
+    testWidgets(
+        'the not-set-up setup button opens the install sheet (3 steps)',
+        (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          iosBridge: _FakeBridge(everReceived: false),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Set up live Wi-Fi (one-time)'));
+      await tester.pumpAndSettle();
+
+      // The one-time onboarding sheet opens with the crystal-clear steps.
+      expect(find.text('Set up live Wi-Fi'), findsOneWidget);
+      expect(find.text('Tap Add the Shortcut below.'), findsOneWidget);
+      expect(find.text('Add the Shortcut'), findsOneWidget);
     });
 
     testWidgets(
@@ -654,10 +676,12 @@ void main() {
       await tester.tap(find.text('Start'));
       await tester.pumpAndSettle();
 
-      // The flag is cleared (no producer) and the honest Live error shows.
+      // The flag is cleared (no producer) and the honest, ACTIONABLE setup card
+      // shows: the "could not start" message plus the one-time setup button.
       expect(bridge.monitoringActive, isFalse);
-      expect(find.textContaining('Could not start live streaming'),
+      expect(find.textContaining('Live readings could not start'),
           findsOneWidget);
+      expect(find.text('Set up live Wi-Fi (one-time)'), findsOneWidget);
       expect(find.text('Start'), findsOneWidget);
     });
 
