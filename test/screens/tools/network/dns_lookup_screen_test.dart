@@ -22,7 +22,7 @@ import 'package:wlan_pros_toolbox/widgets/app_copy_action.dart';
 /// [byType] resolves empty.
 DnsLookupService _svc(Map<RRecordType, List<RRecord>> byType) {
   return DnsLookupService(
-    resolver: (name, type, {required provider}) async =>
+    resolver: (name, type, {required resolver}) async =>
         byType[type] ?? <RRecord>[],
   );
 }
@@ -36,7 +36,7 @@ DnsLookupService _svcWithFailures({
   Map<RRecordType, List<RRecord>> byType = const {},
 }) {
   return DnsLookupService(
-    resolver: (name, type, {required provider}) async {
+    resolver: (name, type, {required resolver}) async {
       if (throwFor.contains(type)) {
         throw const SocketExceptionStub('resolver timed out');
       }
@@ -230,6 +230,43 @@ void main() {
 
     expect(find.textContaining('1 TXT record'), findsOneWidget);
     expect(find.text('hello'), findsOneWidget);
+  });
+
+  testWidgets('Quad9 is a selectable resolver and a query runs against it',
+      (tester) async {
+    DohResolver? ranWith;
+    final DnsLookupService svc = DnsLookupService(
+      resolver: (name, type, {required resolver}) async {
+        ranWith = resolver;
+        return <RRecord>[
+          RRecord(name: 'example.com', rType: 1, ttl: 300, data: '93.184.216.34'),
+        ];
+      },
+    );
+    await tester.pumpWidget(_host(DnsLookupScreen(service: svc)));
+
+    // The three resolver chips are present, Quad9 included.
+    expect(find.widgetWithText(ChoiceChip, 'Cloudflare (1.1.1.1)'),
+        findsOneWidget);
+    expect(
+        find.widgetWithText(ChoiceChip, 'Google (8.8.8.8)'), findsOneWidget);
+    expect(find.widgetWithText(ChoiceChip, 'Quad9 (9.9.9.9)'), findsOneWidget);
+
+    // Select Quad9, run a single-type query, confirm it resolved against Quad9.
+    await tester.tap(find.text('Single type'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Quad9 (9.9.9.9)'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'example.com');
+    await tester.tap(find.text('Look up'));
+    await tester.pumpAndSettle();
+
+    expect(ranWith, DohResolver.quad9);
+    // The result summary line names the resolver that ran (alongside the chip,
+    // so "Quad9 (9.9.9.9)" now appears twice: the chip + the summary).
+    expect(find.textContaining('Quad9 (9.9.9.9)'), findsNWidgets(2));
+    expect(find.textContaining('1 A record · Quad9 (9.9.9.9)'), findsOneWidget);
+    expect(find.text('93.184.216.34'), findsOneWidget);
   });
 
   testWidgets('reverse-PTR button appears only for an IP input',

@@ -2,7 +2,7 @@
 // tolerance), topic grouping in `_meta.topics` order, free-text search across
 // title/summary/description/topic/tags, and the approval field surviving onto
 // the model. Most tests use a small in-memory fixture; the last group loads the
-// REAL bundled asset to prove all 31 entries parse and group into the 6 topics.
+// REAL bundled asset to prove all 37 entries parse and group into the 7 topics.
 
 import 'dart:convert';
 import 'dart:io';
@@ -199,7 +199,7 @@ void main() {
   });
 
   group('real bundled asset', () {
-    test('parses the 37 curated entries into the 6 topic groups', () {
+    test('parses the 37 curated entries into the 7 topic groups', () {
       // Load the actual bundled JSON from disk (not via rootBundle, so no
       // Flutter binding is needed) and prove the production dataset is healthy.
       // Curated 2026-06-04: independent-author/community materials only; the
@@ -210,7 +210,10 @@ void main() {
       // Batch 2026-06-05 (v1.1) appended 3 entries (Frame by Frame, Divergent
       // Dynamics, Wireshark 802.11 Wiki) and enhanced the CWNP entry in place
       // (36 -> 39). 2026-06-06 (BF6-21): removed the two Wi-Fi Design Day
-      // entries (they charge for the videos) → 39 -> 37, still 6 topics.
+      // entries (they charge for the videos) → 39 -> 37. 2026-06-07: removed the
+      // dead MackenzieWiFi link (37 -> 36), then added WiFi Training under a new
+      // "Training Providers" topic and moved the CWNP cert entry into it
+      // (36 -> 37); that 7th topic takes the group count 6 -> 7.
       final File asset = File('assets/data/educational_resources.json');
       expect(asset.existsSync(), isTrue,
           reason: 'bundled asset must exist at assets/data/');
@@ -221,7 +224,18 @@ void main() {
       expect(real.count, 37);
 
       final List<ResourceGroup> groups = real.grouped();
-      expect(groups.length, 6);
+      expect(groups.length, 7);
+
+      // The new Training Providers group holds the paid/commercial training
+      // destinations: the CWNP cert ladder (moved here) and WiFi Training.
+      final ResourceGroup providers = groups.firstWhere(
+        (ResourceGroup g) => g.topic == 'Training Providers',
+        orElse: () => throw StateError('Training Providers group missing'),
+      );
+      expect(
+        providers.resources.map((EducationalResource e) => e.id).toSet(),
+        <String>{'dest-cwnp-certification', 'train-wifitraining'},
+      );
 
       // The vendor-doc topic is intentionally gone (curation guard).
       expect(
