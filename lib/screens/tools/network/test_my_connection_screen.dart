@@ -896,16 +896,12 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   Future<void> _openShortcutSheet() async {
     final WiFiDetailsBridge? bridge = _iosBridge;
     if (bridge == null) return;
-    await showModalBottomSheet<void>(
+    await showInstallShortcutSheet(
       context: context,
-      backgroundColor: context.colors.surface2,
-      isScrollControlled: true,
-      builder: (_) => InstallShortcutSheet(
-        bridge: bridge,
-        onInstalled: () async {
-          if (mounted) _run();
-        },
-      ),
+      openUrl: bridge.openUrl,
+      onInstalled: () async {
+        if (mounted) _run();
+      },
     );
   }
 

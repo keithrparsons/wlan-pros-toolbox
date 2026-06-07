@@ -242,8 +242,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(bridge.monitoringActive, isFalse);
-      expect(find.textContaining('Could not start live streaming'),
+      // The honest, ACTIONABLE setup card shows: the "could not start" message
+      // plus the one-time setup button (replaces the old dead-end error text).
+      expect(find.textContaining('Live readings could not start'),
           findsOneWidget);
+      expect(find.text('Set up live readings (one-time)'), findsOneWidget);
       expect(find.text('Start'), findsOneWidget);
     });
 
