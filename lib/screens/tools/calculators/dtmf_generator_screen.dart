@@ -47,7 +47,7 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
   bool _looping = false;
 
   // ─── Sequence mode (BF6-1) ─────────────────────────────────────────────────
-  // The user types a string of DTMF characters (e.g. 18013185522) and plays it
+  // The user types a string of DTMF characters (e.g. 8675309) and plays it
   // as tones in order. Non-DTMF characters are ignored on play (and stripped by
   // the input formatter), so a pasted phone number with spaces/dashes still
   // works.
@@ -289,7 +289,7 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
           ),
           const SizedBox(height: AppSpacing.xxs),
           Text(
-            'Type a string of digits (e.g. 18013185522) and play it as tones in '
+            'Type a string of digits (e.g. 867-5309) and play it as tones in '
             'order.',
             style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
@@ -310,7 +310,7 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
             style: mono.robotoMono.copyWith(color: colors.textPrimary),
             onChanged: (_) => setState(() {}),
             decoration: const InputDecoration(
-              hintText: '18013185522',
+              hintText: '8675309',
             ),
           ),
           const SizedBox(height: AppSpacing.sm),

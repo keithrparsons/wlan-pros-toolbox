@@ -390,7 +390,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       // answers are not buried in a converter people don't find.
       ToolEntry(
         id: 'my-current-location',
-        title: 'My Current Location',
+        title: 'Current Location',
         description:
             'Your GPS latitude, longitude, altitude, and accuracy — read on '
             'open',

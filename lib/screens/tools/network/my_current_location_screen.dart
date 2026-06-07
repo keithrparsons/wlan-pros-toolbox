@@ -57,6 +57,14 @@ class _MyCurrentLocationScreenState extends State<MyCurrentLocationScreen> {
   bool _locating = false;
   String? _error;
 
+  // BF (beta): the Update button gave no visible sign anything happened. We now
+  // stamp the wall-clock time of every successful fix and render it as a
+  // "Last updated HH:MM:SS" line that visibly changes on each read, and — for a
+  // user-initiated Update — also surface a transient "Location updated"
+  // SnackBar. Auto-open reads do not raise the SnackBar (it would be noise on a
+  // screen the user just opened); they still stamp the timestamp.
+  DateTime? _lastUpdated;
+
   @override
   void initState() {
     super.initState();
@@ -67,7 +75,7 @@ class _MyCurrentLocationScreenState extends State<MyCurrentLocationScreen> {
 
   // ─── Read one fix ──────────────────────────────────────────────────────────
 
-  Future<void> _read() async {
+  Future<void> _read({bool userInitiated = false}) async {
     setState(() {
       _locating = true;
       _error = null;
@@ -87,7 +95,16 @@ class _MyCurrentLocationScreenState extends State<MyCurrentLocationScreen> {
           _permission = LocationPermissionState.granted;
           _serviceDisabled = false;
           _locating = false;
+          _lastUpdated = DateTime.now();
         });
+        // Beta fix: a user-initiated Update gets an explicit confirmation.
+        if (userInitiated) {
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              const SnackBar(content: Text('Location updated')),
+            );
+        }
       case LocationNeedsPermission():
         setState(() {
           _permission = LocationPermissionState.needsPermission;
@@ -177,7 +194,7 @@ class _MyCurrentLocationScreenState extends State<MyCurrentLocationScreen> {
   String? _buildCopyText() {
     final LocationFix? f = _fix;
     if (f == null) return null;
-    final StringBuffer buf = StringBuffer()..writeln('My Current Location');
+    final StringBuffer buf = StringBuffer()..writeln('Current Location');
     buf
       ..writeln('Latitude: ${f.latitude.toStringAsFixed(6)}')
       ..writeln('Longitude: ${f.longitude.toStringAsFixed(6)}');
@@ -214,7 +231,7 @@ class _MyCurrentLocationScreenState extends State<MyCurrentLocationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Current Location'),
+        title: const Text('Current Location'),
         toolbarHeight: 64,
         actions: <Widget>[
           // §8.16 — copy the readout. Disabled (null builder) until a fix exists.
@@ -280,7 +297,8 @@ class _MyCurrentLocationScreenState extends State<MyCurrentLocationScreen> {
         altitude: _formatAltitude(fix),
         accuracy: _formatAccuracy(fix),
         locating: _locating,
-        onUpdate: _read,
+        lastUpdated: _lastUpdated,
+        onUpdate: () => _read(userInitiated: true),
         onAppleMaps: _openAppleMaps,
         onGoogleMaps: _openGoogleMaps,
       );
@@ -355,6 +373,7 @@ class _ResultCard extends StatelessWidget {
     required this.altitude,
     required this.accuracy,
     required this.locating,
+    required this.lastUpdated,
     required this.onUpdate,
     required this.onAppleMaps,
     required this.onGoogleMaps,
@@ -365,9 +384,17 @@ class _ResultCard extends StatelessWidget {
   final String? altitude;
   final String? accuracy;
   final bool locating;
+  final DateTime? lastUpdated;
   final VoidCallback onUpdate;
   final VoidCallback onAppleMaps;
   final VoidCallback onGoogleMaps;
+
+  /// Local wall-clock as a zero-padded HH:MM:SS string (24-hour). No locale or
+  /// intl dependency — this is a plain confirmation stamp, not a formatted date.
+  static String _formatClock(DateTime t) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${two(t.hour)}:${two(t.minute)}:${two(t.second)}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -415,6 +442,19 @@ class _ResultCard extends StatelessWidget {
                 : const Icon(Icons.my_location),
             label: Text(locating ? 'Updating…' : 'Update'),
           ),
+          if (lastUpdated != null) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            // Beta fix: a visible, changing timestamp confirms the Update read.
+            // liveRegion so a screen reader announces the new time on refresh.
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                'Last updated ${_formatClock(lastUpdated!)}',
+                textAlign: TextAlign.center,
+                style: text.labelMedium?.copyWith(color: colors.textTertiary),
+              ),
+            ),
+          ],
           const SizedBox(height: AppSpacing.xs),
           Row(
             children: <Widget>[

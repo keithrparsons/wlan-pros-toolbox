@@ -2074,39 +2074,102 @@ class _Block extends StatelessWidget {
 
 /// One bonding row: a fixed-width gutter label ("40") + the row's blocks laid
 /// out left-to-right. Used by the 5/6 GHz maps inside the horizontal scroll.
+///
+/// `tier` drives an OPTIONAL width-tier band behind the row (BF6 6 GHz width
+/// differentiation, below). It is purely a neutral background/accent cue layered
+/// UNDER the blocks; it never touches the DFS/PSC block fills, so the §8.13
+/// status semantics are unchanged. Pass null (the 5 GHz / default case) to get
+/// the original flat row — 5 GHz already differentiates by its varied DFS/Mixed
+/// status hues across rows, so it does not need the band.
 class _BondRow extends StatelessWidget {
   const _BondRow({
     required this.widthLabel,
     required this.blocks,
     required this.mono,
+    this.tier,
   });
 
   final String widthLabel;
   final List<BondedBlock> blocks;
   final AppMonoText mono;
 
+  /// Width-tier index for the 6 GHz band: 0=20, 1=40, 2=80, 3=160, 4=320.
+  /// Null → no width band (5 GHz and any future flat use).
+  final int? tier;
+
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: _kRowGap),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: _kGutter,
-            child: Text(
-              widthLabel,
-              style: text.labelSmall?.copyWith(
-                color: colors.textTertiary,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.4,
-              ),
+
+    final Widget row = Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: _kGutter,
+          child: Text(
+            widthLabel,
+            style: text.labelSmall?.copyWith(
+              color: colors.textTertiary,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.4,
             ),
           ),
-          ...blocks.map((b) => _Block(block: b, mono: mono)),
-        ],
+        ),
+        ...blocks.map((b) => _Block(block: b, mono: mono)),
+      ],
+    );
+
+    final int? t = tier;
+    if (t == null) {
+      // 5 GHz / flat: original row, no width band.
+      return Padding(
+        padding: const EdgeInsets.only(bottom: _kRowGap),
+        child: row,
+      );
+    }
+
+    // ── 6 GHz width-tier band (BF6) ─────────────────────────────────────────
+    // Wider bonded widths read identically in 6 GHz because almost every block
+    // is the neutral "No DFS" class — the row-to-row color variety that makes
+    // the 5 GHz map readable is absent. We add a NEUTRAL, progressive width-tier
+    // cue, layered under the blocks, so each tier reads distinctly without
+    // touching the DFS/PSC block semantics. The treatment reuses the GL-003
+    // §8.13.1 idiom (differentiate same-semantic zones by a stepped neutral
+    // background + a hairline, no new tokens): a progressively stronger
+    // `--app-text-tertiary` wash per tier + a matching left accent stripe in the
+    // gutter. The stripe carries the tier even for a colour-blind reader, and
+    // the existing width label ("20"/"40"/…) keeps the cue from being colour-
+    // only (§8.13 rule 2).
+    // Tier alpha ramp (0→4): 0.00, 0.05, 0.09, 0.13, 0.17 — perceptibly stepped
+    // on surface1 (#222222) yet always subordinate to the 0.18-alpha block tint
+    // so the DFS/PSC blocks still lead. 20 MHz (tier 0) stays unwashed as the
+    // baseline, so the band reads as "wider = more emphasis."
+    const List<double> tierAlpha = <double>[0.00, 0.05, 0.09, 0.13, 0.17];
+    final double a = tierAlpha[t.clamp(0, tierAlpha.length - 1)];
+    final Color bandFill = colors.textTertiary.withValues(alpha: a);
+    // Left accent stripe: full-strength tertiary, widening with the tier so the
+    // five tiers are separable at a glance and for reduced-colour vision.
+    final double stripeW = 2.0 + t; // 2,3,4,5,6 px
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: _kRowGap),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: bandFill,
+          borderRadius: BorderRadius.circular(AppRadius.control),
+          // Hairline tier separator (§8.13.1) — the decorative border token.
+          border: Border(
+            left: BorderSide(color: colors.textTertiary, width: stripeW),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xs,
+            vertical: AppSpacing.xxs,
+          ),
+          child: row,
+        ),
       ),
     );
   }
@@ -2250,26 +2313,31 @@ class _Map6 extends StatelessWidget {
             widthLabel: '20',
             blocks: ChannelMapScreen.map6_20,
             mono: mono,
+            tier: 0,
           ),
           _BondRow(
             widthLabel: '40',
             blocks: ChannelMapScreen.map6_40,
             mono: mono,
+            tier: 1,
           ),
           _BondRow(
             widthLabel: '80',
             blocks: ChannelMapScreen.map6_80,
             mono: mono,
+            tier: 2,
           ),
           _BondRow(
             widthLabel: '160',
             blocks: ChannelMapScreen.map6_160,
             mono: mono,
+            tier: 3,
           ),
           _BondRow(
             widthLabel: '320',
             blocks: ChannelMapScreen.map6_320,
             mono: mono,
+            tier: 4,
           ),
         ],
       ),
@@ -2281,7 +2349,10 @@ class _Map6 extends StatelessWidget {
           'first. 320 MHz has a primary set (centers 31, 95, 159) and an '
           'overlapping alternative set (centers 63, 127, 191, marked "alt") — a '
           'primary and its alternate are not used at the same time. Numbers are '
-          'the primary (center) channel for each bonded width.',
+          'the primary (center) channel for each bonded width. Each width row '
+          'carries a progressively stronger neutral band and left stripe — '
+          'wider bond, heavier band — to keep the 20/40/80/160/320 MHz tiers '
+          'distinct (the block colors still carry No DFS / PSC only).',
     );
   }
 }

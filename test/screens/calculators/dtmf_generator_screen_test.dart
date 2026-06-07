@@ -32,10 +32,10 @@ void main() {
   testWidgets('typing digits shows the parsed count on the Play button',
       (tester) async {
     await _pump(tester);
-    await tester.enterText(find.byType(TextField), '18013185522');
+    await tester.enterText(find.byType(TextField), '8675309');
     await tester.pump();
-    // 11 valid DTMF characters → "Play sequence (11)".
-    expect(find.text('Play sequence (11)'), findsOneWidget);
+    // 7 valid DTMF characters → "Play sequence (7)".
+    expect(find.text('Play sequence (7)'), findsOneWidget);
   });
 
   testWidgets('non-DTMF characters in a pasted number are not counted',

@@ -96,6 +96,30 @@ void main() {
     expect(find.text('Update'), findsOneWidget);
   });
 
+  testWidgets('Update gives visible feedback: SnackBar + Last updated stamp',
+      (tester) async {
+    final _FakeLocation loc = _FakeLocation(
+      permission: LocationPermissionState.granted,
+      result: const LocationSuccess(_gpsFix),
+    );
+    await _pump(tester, loc);
+
+    // The auto-open read stamps a "Last updated" line, but does not raise the
+    // confirmation SnackBar (that is reserved for a user-initiated Update).
+    expect(find.textContaining('Last updated'), findsOneWidget);
+    expect(find.text('Location updated'), findsNothing);
+
+    final int readsBeforeUpdate = loc.reads;
+    await tester.tap(find.text('Update'));
+    await tester.pump(); // start the async read (loading state)
+    await tester.pumpAndSettle(); // settle the read + SnackBar entrance
+
+    expect(loc.reads, greaterThan(readsBeforeUpdate)); // Update re-read
+    // Visible confirmation: the SnackBar AND the timestamp line.
+    expect(find.text('Location updated'), findsOneWidget);
+    expect(find.textContaining('Last updated'), findsOneWidget);
+  });
+
   testWidgets('an IP-approximate fix is labeled honestly (not GPS)',
       (tester) async {
     final _FakeLocation loc = _FakeLocation(

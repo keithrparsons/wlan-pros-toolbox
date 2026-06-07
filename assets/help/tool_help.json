@@ -1771,7 +1771,7 @@
       "source": "ip_geo_service.dart:1-268"
     },
     "my-current-location": {
-      "name": "My Current Location",
+      "name": "Current Location",
       "category": "Networking Tools",
       "purpose": "Reads the device's GPS location on open and shows latitude, longitude, altitude, and horizontal accuracy directly — no conversion step.",
       "whyHere": "The fast \"where am I right now\" answer. The same fix is available inside the Lat / Long converter, but people expect a dedicated location tool rather than a coordinate calculator.",
