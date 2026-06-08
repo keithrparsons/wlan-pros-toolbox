@@ -2332,13 +2332,18 @@ class _LiveCharts extends StatelessWidget {
               rxAvail ? _WifiInfoScreenState._formatRate(rx) : null,
           window: series.rxRate,
           // Distinguish a permanent platform limit (macOS never exposes Rx →
-          // rxRateAvailable false) from a per-sample miss (iOS can, but this
-          // reading lacked it).
+          // rxRateAvailable false) from the Android device-link sentinel and a
+          // per-sample iOS miss (FIX 2: Android wording matches the static
+          // Rate card so the live and detail surfaces never disagree).
           unavailableNote: latest == null
               ? null
               : !rxAvail
                   ? 'Not exposed by $platformLabel'
-                  : (rx == null ? 'Not in this reading' : null),
+                  : (rx == null
+                      ? (platformLabel == 'Android'
+                          ? "Not reported by this device's Android link"
+                          : 'Not in this reading')
+                      : null),
         ),
       ],
     );

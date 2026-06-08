@@ -275,10 +275,49 @@ void main() {
       expect(info.noiseDbm, isNull);
       expect(info.snrDb, isNull);
       expect(info.txRateMbps, 866.0);
+      // FIX 2: the native getRxLinkSpeedMbps() value now survives the Dart
+      // boundary (WifiInfo.fromMap) instead of being silently dropped.
+      expect(info.rxRateMbps, 780.0);
       expect(info.channel, 36);
       expect(info.band, '5 GHz');
       expect(info.securityToken, 'wpa3Personal');
       expect(info.locationAuthorized, isTrue);
+    });
+
+    test('fetch() on Android maps the Rx sentinel (-1) to a null rate, not a '
+        'fabricated value (FIX 2 / GL-005)', () async {
+      Future<Object?> fakeInvoke(String method, [dynamic args]) async {
+        // The native side already maps getRxLinkSpeedMbps() == -1 to null before
+        // it crosses the channel; this asserts the Dart side keeps it null.
+        return <dynamic, dynamic>{
+          'interfaceName': 'wlan0',
+          'poweredOn': true,
+          'ssid': 'WLANPros',
+          'bssid': 'aa:bb:cc:dd:ee:ff',
+          'rssiDbm': -47,
+          'noiseDbm': null,
+          'snrDb': null,
+          'txRateMbps': 433,
+          'rxRateMbps': null,
+          'phyMode': '802.11ax (Wi-Fi 6)',
+          'channel': 36,
+          'channelWidthMhz': null,
+          'band': '5 GHz',
+          'countryCode': null,
+          'hardwareAddress': null,
+          'securityToken': 'wpa2Personal',
+          'locationAuthorized': true,
+        };
+      }
+
+      final service = WifiInfoService(
+        invoke: fakeInvoke,
+        platformOverride: 'android',
+      );
+      final info = await service.fetch();
+
+      expect(info.txRateMbps, 433.0);
+      expect(info.rxRateMbps, isNull);
     });
   });
 }

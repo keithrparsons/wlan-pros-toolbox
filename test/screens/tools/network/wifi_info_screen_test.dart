@@ -66,6 +66,7 @@ ConnectedAp _androidSample({
   String? ssid = 'KeithNet',
   String? bssid = 'a4:83:e7:00:11:22',
   bool poweredOn = true,
+  double? rxRateMbps,
 }) {
   return ConnectedAp.fromAndroidWifiInfo(
     WifiInfo(
@@ -76,6 +77,7 @@ ConnectedAp _androidSample({
       noiseDbm: null,
       snrDb: null,
       txRateMbps: 866,
+      rxRateMbps: rxRateMbps,
       phyMode: '802.11ax (Wi-Fi 6)',
       channel: 36,
       channelWidthMhz: null,
@@ -1070,8 +1072,49 @@ void main() {
       // Android cannot read channel width via the public API → honest note that
       // names the real platform (not "macOS").
       expect(find.textContaining('Not reported by Android'), findsWidgets);
+      // FIX 2: Android exposes no noise floor, so the Noise + SNR rows carry an
+      // explicit reason note instead of a bare "Unavailable".
+      expect(
+        find.textContaining('Not available on Android (no noise-floor API)'),
+        findsWidgets,
+      );
+      expect(
+        find.textContaining(
+          'Needs the noise floor, which Android does not expose',
+        ),
+        findsWidgets,
+      );
+      // FIX 2: with no Rx value (the -1 sentinel), the Rx row reads as an
+      // Android device-link limit, not a bare "Unavailable". The note appears on
+      // the static Rate card and may also appear on the live-charts surface.
+      expect(
+        find.textContaining("Not reported by this device's Android link"),
+        findsWidgets,
+      );
       // No macOS wording leaks onto the Android path.
       expect(find.textContaining('macOS'), findsNothing);
+    });
+
+    testWidgets('FIX 2: a real Android Rx value renders as Mbps, no limit note',
+        (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.androidWifiManager,
+          macAdapter: _FakeMacAdapter(
+            snapshot: _androidSample(rxRateMbps: 650),
+          ),
+        ),
+      ));
+      await tester.pump();
+      await tester.pumpAndSettle();
+      // The wired-through Rx value shows on the Rate card (and may also appear
+      // on the live-charts surface), so at least one render is present.
+      expect(find.text('650 Mbps'), findsWidgets);
+      // And the device-link limit note is absent because Rx WAS reported.
+      expect(
+        find.textContaining("Not reported by this device's Android link"),
+        findsNothing,
+      );
     });
 
     testWidgets(
