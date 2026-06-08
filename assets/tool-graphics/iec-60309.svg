@@ -8,8 +8,8 @@
        STANDING RULE: no label over any outline, pin, keyway, or other label. -->
 
   <!-- Header -->
-  <text x="320" y="48" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle">IEC 60309 Industrial</text>
-  <text x="320" y="80" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Pin &amp; sleeve &#183; earth-pin clock position keys the voltage</text>
+  <text x="320" y="40" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle">IEC 60309 Industrial</text>
+  <text x="320" y="70" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Pin &amp; sleeve &#183; earth-pin clock position keys the voltage</text>
 
   <!-- ============ FACE: circular pin-and-sleeve, centered (320,250), outer r=118 ============ -->
   <g>
@@ -30,9 +30,9 @@
   </g>
 
   <!-- keyway + earth callouts, clear of geometry -->
-  <text x="320" y="104" fill="#9C9C9C" font-size="14" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">keyway (12h ref)</text>
-  <text x="412" y="312" fill="#A1CC3A" font-size="15" font-weight="600" text-anchor="start" font-family="DM Mono, monospace">earth pin</text>
-  <text x="412" y="332" fill="#A1CC3A" font-size="13" font-weight="500" text-anchor="start" font-family="DM Mono, monospace">clock position</text>
+  <text x="320" y="94" fill="#9C9C9C" font-size="14" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">keyway (12h ref)</text>
+  <text x="446" y="312" fill="#A1CC3A" font-size="15" font-weight="600" text-anchor="start" font-family="DM Mono, monospace">earth pin</text>
+  <text x="446" y="332" fill="#A1CC3A" font-size="13" font-weight="500" text-anchor="start" font-family="DM Mono, monospace">clock position</text>
 
   <!-- ============ VOLTAGE-BAND LEGEND (words, color is not the sole carrier) ============ -->
   <text x="320" y="430" fill="#E5E5E5" font-size="18" font-weight="600" text-anchor="middle">Sleeve color codes the voltage band</text>

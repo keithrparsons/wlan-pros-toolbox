@@ -8,10 +8,18 @@
   <text x="320" y="48" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle">C7 / C8 Figure-8</text>
   <text x="320" y="80" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Female coupler face (cord end) &#183; IEC 60320</text>
 
-  <!-- ============ FACE: two joined discs, r=72, centers (250,260) & (390,260) ============ -->
+  <!-- ============ FACE: UNION OUTLINE of two joined discs, r=72, centers (250,260) & (390,260) ====
+       Only the OUTER figure-8 / peanut silhouette is stroked — the two outer arcs meet at the
+       pinched waist; NO arc crosses the interior. Circle intersection points (the waist):
+         top waist    = (320, 243.148)
+         bottom waist = (320, 276.852)
+       Path: from top waist, major arc (large-arc=1) around the LEFT circle's outer side down to
+       bottom waist, then major arc around the RIGHT circle's outer side back up to the top waist. -->
   <g>
-    <circle cx="250" cy="260" r="72" stroke="#E5E5E5" stroke-width="4"/>
-    <circle cx="390" cy="260" r="72" stroke="#E5E5E5" stroke-width="4"/>
+    <path d="M 320 243.148
+             A 72 72 0 1 1 320 276.852
+             A 72 72 0 1 1 320 243.148 Z"
+          stroke="#E5E5E5" stroke-width="4" stroke-linejoin="round"/>
     <!-- two recessed female contact holes — line + neutral, NO earth -->
     <circle cx="250" cy="260" r="18" fill="#9C9C9C"/>
     <circle cx="390" cy="260" r="18" fill="#9C9C9C"/>

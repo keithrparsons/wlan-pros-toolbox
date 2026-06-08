@@ -11,11 +11,28 @@
   <text x="320" y="80" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Female coupler face (cord end) &#183; IEC 60320</text>
 
   <!-- ============ FACE (centered ~ x=320, vertical band y 150..400) ============ -->
-  <!-- Three overlapping discs, r=68. Top lobe center (320,210); lower lobes (262,300) & (378,300). -->
+  <!-- UNION OUTLINE of three overlapping discs, r=68. Top lobe center (320,210);
+       lower lobes (262,300) & (378,300). Only the OUTER cloverleaf silhouette is stroked —
+       no arcs cross the interior overlaps. The three outer-junction points (computed from the
+       circle intersections, the ones farthest from the centroid 320,270):
+         T-LL junction  = (255.756, 232.287)  upper-left
+         LR-T junction  = (384.244, 232.287)  upper-right
+         LL-LR junction = (320.000, 335.496)  bottom
+       Path traces clockwise: TOP arc over the top, RIGHT-lower arc down the right,
+       LEFT-lower arc up the left. Each is a major arc (large-arc-flag=1, sweep=1).
+       The TOP-lobe segment is the lime earth-pin highlight; the two lower arcs are scaffold. -->
   <g>
-    <circle cx="320" cy="210" r="68" stroke="#A1CC3A" stroke-width="4"/>
-    <circle cx="262" cy="300" r="68" stroke="#E5E5E5" stroke-width="4"/>
-    <circle cx="378" cy="300" r="68" stroke="#E5E5E5" stroke-width="4"/>
+    <!-- lower-left + lower-right lobe arcs (scaffold) drawn first as the base silhouette;
+         we draw the FULL union outline in scaffold, then overlay ONLY the top arc in lime. -->
+    <path d="M 255.756 232.287
+             A 68 68 0 1 1 384.244 232.287
+             A 68 68 0 0 1 320 335.496
+             A 68 68 0 0 1 255.756 232.287 Z"
+          stroke="#E5E5E5" stroke-width="4" stroke-linejoin="round"/>
+    <!-- earth-pin (TOP lobe) lime highlight: the top arc only, junction to junction -->
+    <path d="M 255.756 232.287
+             A 68 68 0 1 1 384.244 232.287"
+          stroke="#A1CC3A" stroke-width="4" stroke-linecap="round"/>
     <!-- recessed female contact holes, one centered in each lobe -->
     <circle cx="320" cy="210" r="17" fill="#9C9C9C"/>
     <circle cx="262" cy="300" r="17" fill="#9C9C9C"/>
