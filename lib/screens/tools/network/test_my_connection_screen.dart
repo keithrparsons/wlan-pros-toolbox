@@ -37,6 +37,7 @@ import 'package:net_quality/net_quality.dart';
 import '../../../services/network/connected_ap.dart';
 import '../../../services/network/connection_check.dart';
 import '../../../services/network/consumer_verdict.dart';
+import '../../../services/network/live_onboarding_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/wifi_details_bridge.dart';
 import '../../../services/network/wifi_grading.dart';
@@ -78,6 +79,7 @@ class TestMyConnectionScreen extends StatefulWidget {
     this.startExpanded = false,
     this.sampler,
     this.enableLiveSampling = true,
+    this.onboardingService,
   });
 
   /// When true, the check runs automatically on first mount instead of waiting
@@ -116,6 +118,12 @@ class TestMyConnectionScreen extends StatefulWidget {
   /// the live card disable it so no poll timer ticks). Production leaves it on.
   final bool enableLiveSampling;
 
+  /// Injectable first-run onboarding gate (tests). Defaults to the real
+  /// shared_preferences-backed service. iOS-only — the front door must lead the
+  /// one-time "enable live Wi-Fi" setup so a user can never run the test first
+  /// and never be told about the companion Shortcut.
+  final LiveOnboardingService? onboardingService;
+
   @override
   State<TestMyConnectionScreen> createState() => _TestMyConnectionScreenState();
 }
@@ -125,7 +133,11 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   late final WifiInfoSource _source;
   WifiInfoAdapter? _macAdapter;
   WiFiDetailsBridge? _iosBridge;
+  LiveOnboardingService? _onboardingService;
   late final QualityClient _quality;
+
+  /// Fires the unmissable first-run onboarding at most once per mount.
+  bool _firstRunChecked = false;
 
   /// The shared live-RF sampler that feeds the "Wi-Fi signal" sparkline card.
   /// Continuous while the screen is open (macOS auto-polls; iOS streams via the

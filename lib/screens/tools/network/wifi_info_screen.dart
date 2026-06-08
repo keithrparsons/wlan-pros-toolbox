@@ -49,6 +49,7 @@ import 'package:net_quality/net_quality.dart' show QualityGrade, QualityGradeLab
 import '../../../data/tool_assets.dart';
 import '../../../services/network/connected_ap.dart';
 import '../../../services/network/connected_ap_cache.dart';
+import '../../../services/network/live_onboarding_service.dart';
 import '../../../services/network/mac_oui_service.dart';
 import '../../../services/network/mac_randomization.dart';
 import '../../../services/network/network_support.dart';
@@ -69,6 +70,7 @@ import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/sparkline.dart';
 import '../concept_graphic_band.dart';
 import 'install_shortcut_sheet.dart';
+import 'live_rf_locked_card.dart';
 import 'live_setup_card.dart';
 import 'network_unavailable_view.dart';
 
@@ -82,6 +84,7 @@ class WifiInfoScreen extends StatefulWidget {
     this.ouiService,
     this.securityService,
     this.connectedApCache,
+    this.onboardingService,
   });
 
   /// Forces a specific data source (tests). Defaults to the host platform.
@@ -107,6 +110,11 @@ class WifiInfoScreen extends StatefulWidget {
   /// Injectable iOS security service (tests). Defaults to the real
   /// NEHotspotNetwork channel. Only used on the iOS source.
   final WifiSecurityService? securityService;
+
+  /// Injectable first-run onboarding gate (tests). Defaults to the real
+  /// shared_preferences-backed service. iOS-only — drives the unmissable
+  /// one-time "enable live Wi-Fi" sheet the first time a live tool is opened.
+  final LiveOnboardingService? onboardingService;
 
   /// Poll cadence for the macOS CoreWLAN re-read. Overridable in tests so the
   /// poll can be pumped deterministically.
@@ -217,6 +225,16 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   /// the coarse security token, the BSSID, and the honest unavailable reason.
   WifiSecurityInfo? _iosSecurity;
 
+  // ---- iOS first-run onboarding state ----
+
+  /// iOS-only first-run gate. Decides whether the unmissable one-time "enable
+  /// live Wi-Fi" sheet fires on the first open of a live tool.
+  LiveOnboardingService? _onboardingService;
+
+  /// Guards the first-run sheet so it fires at most once per screen mount even
+  /// if [initState]'s async check overlaps a rebuild.
+  bool _firstRunChecked = false;
+
   @override
   void initState() {
     super.initState();
@@ -238,11 +256,17 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         _series = WifiTimeSeries();
         _liveController!.addListener(_captureSample);
         _securityService = widget.securityService ?? WifiSecurityService();
+        _onboardingService = widget.onboardingService ?? LiveOnboardingService();
         WidgetsBinding.instance.addObserver(this);
         _liveController!.load();
         // Read the native security type + BSSID once on open. Re-read on resume
         // (lifecycle) so a Location grant in Settings lands without a relaunch.
         _fetchIosSecurity();
+        // Unmissable first-run onboarding: the first time ANY live tool is
+        // opened (and the Shortcut is not demonstrably working), present the
+        // one-time "enable live Wi-Fi" sheet so a brand-new user is never left
+        // to discover the dependency by hitting a wall.
+        _maybeShowFirstRunOnboarding();
       case WifiInfoSource.unsupported:
       case WifiInfoSource.web:
         break;
@@ -410,6 +434,30 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   Future<void> _stopLive() async {
     await _liveController?.stopMonitoring();
     if (mounted) setState(() {});
+  }
+
+  /// iOS first-run: fires the unmissable one-time "enable live Wi-Fi" sheet on
+  /// the first open of a live tool, gated by the honest composite signal —
+  /// the app has NEVER received a Live payload AND the sheet has not been shown
+  /// before. Marks the sheet seen the instant it is presented so it never nags
+  /// (the persisted flag plus the App Group hasEverReceived signal make this
+  /// truly one-time). No-op off the iOS source. Never throws.
+  Future<void> _maybeShowFirstRunOnboarding() async {
+    if (_firstRunChecked) return;
+    _firstRunChecked = true;
+    final LiveOnboardingService? svc = _onboardingService;
+    final WiFiDetailsBridge? bridge = _iosBridge;
+    if (svc == null || bridge == null) return;
+    final bool everReceived = await bridge.hasEverReceivedPayload();
+    final bool show = await svc.shouldShowOnboarding(
+      hasEverReceivedPayload: everReceived,
+    );
+    if (!show || !mounted) return;
+    // Mark seen BEFORE awaiting the sheet so a rapid second open cannot queue a
+    // second sheet, and so it is one-time even if the user dismisses it.
+    await svc.markOnboardingSeen();
+    if (!mounted) return;
+    await _openInstallSheet();
   }
 
   /// iOS: opens the one-time companion-Shortcut install sheet. Surfaced by the
@@ -1009,6 +1057,18 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     return null;
   }
 
+  /// The natively-readable connected-network identity on iOS (SSID / BSSID /
+  /// security via NEHotspotNetwork), or null before the native read resolves or
+  /// when it is unavailable (no network / permission). Used by [_LiveBody] to
+  /// show the real network basics BEFORE the first Shortcut RF sample, so the
+  /// tool never opens to a dead screen. Carries no RF values (those need the
+  /// Shortcut) — only the identity the app can honestly read itself.
+  ConnectedAp? _nativeIdentityAp() {
+    final WifiSecurityInfo? sec = _iosSecurity;
+    if (sec == null || !sec.available) return null;
+    return _enrichIos(const ConnectedAp(securityAvailable: true));
+  }
+
   // ---- iOS body (Live streaming only) ----
 
   Widget _iosBody() {
@@ -1031,6 +1091,17 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           // Security / AP-vendor rows render from the same enriched model the
           // rest of the cards use.
           enrich: _enrichIos,
+          // Native-first: BEFORE any Shortcut payload, surface the connected
+          // network basics the app CAN read natively (SSID / BSSID / security
+          // via NEHotspotNetwork). Null until the native read resolves; the
+          // Live body then shows the real identity immediately rather than a
+          // dead start hint.
+          nativeIdentity: _nativeIdentityAp(),
+          nativeIdentityCardsBuilder: (ConnectedAp native) => <Widget>[
+            _networkCard(native),
+            const SizedBox(height: AppSpacing.sm),
+            _securityCard(native, 'iOS'),
+          ],
           // The grouped metric cards belong to the State (they read the shared
           // _metricCards builder), so they are passed in as a builder over the
           // SAME latest reading the charts use. Null until the first sample, so
@@ -1902,6 +1973,8 @@ class _LiveBody extends StatelessWidget {
     required this.onSetUp,
     required this.enrich,
     required this.metricCardsBuilder,
+    required this.nativeIdentity,
+    required this.nativeIdentityCardsBuilder,
   });
 
   final WifiMonitorController controller;
@@ -1924,6 +1997,17 @@ class _LiveBody extends StatelessWidget {
   /// / Status) for the latest reading. Owned by the State so iOS and macOS share
   /// the identical card presentation; rendered BELOW the live charts.
   final List<Widget> Function(ConnectedAp latest) metricCardsBuilder;
+
+  /// The natively-readable connected-network identity (SSID / BSSID / security),
+  /// or null before the native read resolves. When present and no Shortcut RF
+  /// sample has arrived yet, the body shows these real basics immediately
+  /// (native-first) instead of a dead start hint.
+  final ConnectedAp? nativeIdentity;
+
+  /// Builds the native-first identity cards (Network + Security) for the
+  /// pre-payload state. Owned by the State so the card presentation matches the
+  /// post-payload cards exactly.
+  final List<Widget> Function(ConnectedAp native) nativeIdentityCardsBuilder;
 
   @override
   Widget build(BuildContext context) {
@@ -1963,9 +2047,26 @@ class _LiveBody extends StatelessWidget {
                     ),
                   ],
                   const SizedBox(height: AppSpacing.sm),
-                  if (!controller.isStreaming && series.isEmpty)
-                    const _LiveStartHint()
-                  else if (series.isEmpty)
+                  if (!controller.isStreaming && series.isEmpty) ...<Widget>[
+                    // NATIVE-FIRST pre-payload state (Pax anti-pattern #1 fix):
+                    // never open to dead/zeroed RF fields. Show the real
+                    // connected-network basics the app reads natively
+                    // (SSID / BSSID / security) the instant they resolve, then
+                    // the rich RF fields listed by NAME as "available once you
+                    // enable live Wi-Fi" — never fabricated zeros.
+                    if (nativeIdentity != null) ...<Widget>[
+                      ...nativeIdentityCardsBuilder(nativeIdentity!),
+                      const SizedBox(height: AppSpacing.sm),
+                    ],
+                    LiveRfLockedCard(
+                      onEnable: nativeIdentity != null ? onStart : onSetUp,
+                      enableLabel: nativeIdentity != null
+                          ? 'Start live readings'
+                          : 'Enable live Wi-Fi',
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    const _LiveStartHint(),
+                  ] else if (series.isEmpty)
                     _WaitingForFirstPayload(streaming: controller.isStreaming)
                   else ...<Widget>[
                     _LiveCharts(
@@ -1988,8 +2089,13 @@ class _LiveBody extends StatelessWidget {
                   // noise and is hidden permanently — it never nags. While a
                   // Start error is showing, the error card above already carries
                   // the setup button, so this neutral prompt is suppressed to
-                  // avoid two setup cards at once.
-                  if (!controller.hasEverReceived && !triggerError) ...[
+                  // avoid two setup cards at once. The pre-payload native-first
+                  // state already carries the LiveRfLockedCard's enable action,
+                  // so the neutral prompt is also suppressed once the native
+                  // identity is on screen (it would be a redundant second CTA).
+                  if (!controller.hasEverReceived &&
+                      !triggerError &&
+                      nativeIdentity == null) ...[
                     const SizedBox(height: AppSpacing.sm),
                     LiveSetupCard.prompt(
                       label: 'Set up live Wi-Fi (one-time)',
