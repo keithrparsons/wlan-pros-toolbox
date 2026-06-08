@@ -156,15 +156,16 @@ void main() {
   });
 
   group('catalog + router + help registration', () {
-    test('Power & Cooling category carries the live international-plugs tool',
-        () {
+    test(
+        'Quick Reference / Power & Cooling subgroup carries the live '
+        'international-plugs tool', () {
       final ToolCategory cat = kToolCategories
-          .firstWhere((ToolCategory c) => c.id == 'power-cooling');
-      expect(cat.title, 'Power & Cooling');
+          .firstWhere((ToolCategory c) => c.id == 'quick-reference');
       final ToolEntry tool =
           cat.tools.firstWhere((ToolEntry t) => t.id == 'international-plugs');
       expect(tool.isLive, isTrue);
       expect(tool.routeName, '/tools/international-plugs');
+      expect(tool.subgroup, 'Power & Cooling');
     });
 
     test('international-plugs route resolves to a registered builder', () {

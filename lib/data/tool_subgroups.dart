@@ -32,6 +32,12 @@ const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
     // Models & Standards (2026-06-08): 802.1X/EAP types, 802.11 feature matrix.
     'Models & Standards',
     'Cabling & Connectors',
+    // Power & Cooling (2026-06-08): demoted from a standalone top-level
+    // category to a Quick Reference subgroup. Power phasing/voltages, the
+    // Ohm's-Law power wheel, thermal conversions, and the IEC/NEMA/
+    // international connector references. Sits after Cabling & Connectors —
+    // connectors lead into the power feeds they carry.
+    'Power & Cooling',
     'Encoding',
     // Time & Formats (2026-06-08): date/time standards, data units.
     'Time & Formats',

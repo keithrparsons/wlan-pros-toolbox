@@ -174,14 +174,16 @@ void main() {
   });
 
   group('catalog + router + help registration', () {
-    test('Power & Cooling category carries the live nema-connectors tool', () {
+    test(
+        'Quick Reference / Power & Cooling subgroup carries the live '
+        'nema-connectors tool', () {
       final ToolCategory cat = kToolCategories
-          .firstWhere((ToolCategory c) => c.id == 'power-cooling');
-      expect(cat.title, 'Power & Cooling');
+          .firstWhere((ToolCategory c) => c.id == 'quick-reference');
       final ToolEntry tool =
           cat.tools.firstWhere((ToolEntry t) => t.id == 'nema-connectors');
       expect(tool.isLive, isTrue);
       expect(tool.routeName, '/tools/nema-connectors');
+      expect(tool.subgroup, 'Power & Cooling');
     });
 
     test('nema-connectors route resolves to a registered builder', () {

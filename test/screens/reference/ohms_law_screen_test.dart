@@ -151,14 +151,16 @@ void main() {
   });
 
   group('catalog + router + help registration', () {
-    test('Power & Cooling category exists with the live ohms-law tool', () {
+    test(
+        'Quick Reference / Power & Cooling subgroup carries the live '
+        'ohms-law tool', () {
       final ToolCategory cat = kToolCategories
-          .firstWhere((ToolCategory c) => c.id == 'power-cooling');
-      expect(cat.title, 'Power & Cooling');
+          .firstWhere((ToolCategory c) => c.id == 'quick-reference');
       final ToolEntry tool =
           cat.tools.firstWhere((ToolEntry t) => t.id == 'ohms-law');
       expect(tool.isLive, isTrue);
       expect(tool.routeName, '/tools/ohms-law');
+      expect(tool.subgroup, 'Power & Cooling');
     });
 
     test('ohms-law route resolves to a registered builder', () {

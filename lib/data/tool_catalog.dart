@@ -1233,6 +1233,74 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
           'ferney munoz',
         ],
       ),
+      // ── Power & Cooling (subgroup) ──
+      // Demoted from a standalone top-level category to a Quick Reference
+      // subgroup on 2026-06-08 (Keith): power phasing/voltages, the Ohm's-Law
+      // power wheel, thermal conversions, and the IEC/NEMA/international
+      // connector references all belong under References, not as a peer
+      // category. Routes, ids, assets, and help entries are unchanged from
+      // their standalone life. Subgroup ordering lives in tool_subgroups.dart;
+      // it sits after 'Cabling & Connectors' (connectors → power feeds).
+      ToolEntry(
+        id: 'power-phasing',
+        title: 'Power Phasing',
+        description:
+            'Single-phase 120V, split-phase 120/240V, and three-phase wye '
+            '208V — and the 208-vs-240 distinction installers confuse',
+        routeName: '/tools/power-phasing',
+        isLive: true,
+        subgroup: 'Power & Cooling',
+      ),
+      ToolEntry(
+        id: 'ohms-law',
+        title: "Ohm's Law & Power Wheel",
+        description:
+            'The V / I / R / P relationships, the 12-segment power wheel, and '
+            'single-phase vs three-phase power with the power-factor caveat',
+        routeName: '/tools/ohms-law',
+        isLive: true,
+        subgroup: 'Power & Cooling',
+      ),
+      ToolEntry(
+        id: 'cooling-thermal',
+        title: 'Cooling & Thermal',
+        description:
+            'BTU/hr, watts, and tons of cooling conversions, plus the airflow '
+            'and heat-load references for sizing rack and closet cooling',
+        routeName: '/tools/cooling-thermal',
+        isLive: true,
+        subgroup: 'Power & Cooling',
+      ),
+      ToolEntry(
+        id: 'iec-connectors',
+        title: 'IEC Power Connectors',
+        description:
+            'IEC 60320 appliance couplers (C13/C14, C15/C16, C19/C20) and IEC '
+            '60309 pin-and-sleeve connectors, with current ratings and keying',
+        routeName: '/tools/iec-connectors',
+        isLive: true,
+        subgroup: 'Power & Cooling',
+      ),
+      ToolEntry(
+        id: 'nema-connectors',
+        title: 'NEMA Connectors',
+        description:
+            'NEMA straight-blade and locking plug/receptacle configurations '
+            'with voltage, current, and pole/wire counts',
+        routeName: '/tools/nema-connectors',
+        isLive: true,
+        subgroup: 'Power & Cooling',
+      ),
+      ToolEntry(
+        id: 'international-plugs',
+        title: 'International Power Plugs',
+        description:
+            'Plug types A through N by region, with nominal voltage and '
+            'frequency, so you know what mains to expect on site',
+        routeName: '/tools/international-plugs',
+        isLive: true,
+        subgroup: 'Power & Cooling',
+      ),
     ],
   ),
 
@@ -1359,80 +1427,6 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'Gain, beamwidth, polarization, downtilt, and reading a radiation '
             'pattern — with diagrams',
         routeName: '/tools/antenna-fundamentals',
-        isLive: true,
-      ),
-    ],
-  ),
-
-  // ───────────────────────── 5. Power & Cooling ─────────────────────
-  // NEW category (Keith, 2026-06-08). The first of six planned power/cooling
-  // reference pages from Pax's verified research brief
-  // (Deliverables/2026-06-08-power-cooling-references/RESEARCH-BRIEF.md). This
-  // build ships PAGE 1 of 6 — the Power Phasing pilot that sets the template
-  // (208-vs-240 distinction). The other five (Ohm's/Power Wheel, NEMA, IEC
-  // couplers, international plugs, thermal conversions) follow once the pilot is
-  // approved. Reference-only pages: pure bundled data, no network, web-safe.
-  ToolCategory(
-    id: 'power-cooling',
-    title: 'Power & Cooling',
-    summary: 'Power phasing, voltages, and connector references',
-    icon: Icons.electrical_services_outlined,
-    // Example titles must name LIVE tools (GL-005). The pilot plus the five
-    // pages of the 2026-06-08 batch all ship live in this build.
-    exampleToolTitles: <String>['Power Phasing', "Ohm's Law & Power Wheel"],
-    tools: <ToolEntry>[
-      ToolEntry(
-        id: 'power-phasing',
-        title: 'Power Phasing',
-        description:
-            'Single-phase 120V, split-phase 120/240V, and three-phase wye '
-            '208V — and the 208-vs-240 distinction installers confuse',
-        routeName: '/tools/power-phasing',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'ohms-law',
-        title: "Ohm's Law & Power Wheel",
-        description:
-            'The V / I / R / P relationships, the 12-segment power wheel, and '
-            'single-phase vs three-phase power with the power-factor caveat',
-        routeName: '/tools/ohms-law',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'cooling-thermal',
-        title: 'Cooling & Thermal',
-        description:
-            'BTU/hr, watts, and tons of cooling conversions, plus the airflow '
-            'and heat-load references for sizing rack and closet cooling',
-        routeName: '/tools/cooling-thermal',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'iec-connectors',
-        title: 'IEC Power Connectors',
-        description:
-            'IEC 60320 appliance couplers (C13/C14, C15/C16, C19/C20) and IEC '
-            '60309 pin-and-sleeve connectors, with current ratings and keying',
-        routeName: '/tools/iec-connectors',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'nema-connectors',
-        title: 'NEMA Connectors',
-        description:
-            'NEMA straight-blade and locking plug/receptacle configurations '
-            'with voltage, current, and pole/wire counts',
-        routeName: '/tools/nema-connectors',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'international-plugs',
-        title: 'International Power Plugs',
-        description:
-            'Plug types A through N by region, with nominal voltage and '
-            'frequency, so you know what mains to expect on site',
-        routeName: '/tools/international-plugs',
         isLive: true,
       ),
     ],

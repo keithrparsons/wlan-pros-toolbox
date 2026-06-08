@@ -152,22 +152,16 @@ void main() {
   });
 
   group('catalog + router + help registration', () {
-    test('Power & Cooling category carries the live iec-connectors tool', () {
+    test(
+        'Quick Reference / Power & Cooling subgroup carries the live '
+        'iec-connectors tool', () {
       final ToolCategory cat = kToolCategories
-          .firstWhere((ToolCategory c) => c.id == 'power-cooling');
-      expect(cat.title, 'Power & Cooling');
+          .firstWhere((ToolCategory c) => c.id == 'quick-reference');
       final ToolEntry tool =
           cat.tools.firstWhere((ToolEntry t) => t.id == 'iec-connectors');
       expect(tool.isLive, isTrue);
       expect(tool.routeName, '/tools/iec-connectors');
-      // Example titles must name a live tool in the category (GL-005).
-      for (final String example in cat.exampleToolTitles) {
-        expect(
-          cat.tools.any((ToolEntry t) => t.title == example && t.isLive),
-          isTrue,
-          reason: 'example "$example" must be a live tool',
-        );
-      }
+      expect(tool.subgroup, 'Power & Cooling');
     });
 
     test('iec-connectors route resolves to a registered builder', () {

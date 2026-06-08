@@ -120,15 +120,16 @@ void main() {
   });
 
   group('catalog + router + help registration', () {
-    test('Power & Cooling category exists with the live cooling-thermal tool',
-        () {
+    test(
+        'Quick Reference / Power & Cooling subgroup carries the live '
+        'cooling-thermal tool', () {
       final ToolCategory cat = kToolCategories
-          .firstWhere((ToolCategory c) => c.id == 'power-cooling');
-      expect(cat.title, 'Power & Cooling');
+          .firstWhere((ToolCategory c) => c.id == 'quick-reference');
       final ToolEntry tool =
           cat.tools.firstWhere((ToolEntry t) => t.id == 'cooling-thermal');
       expect(tool.isLive, isTrue);
       expect(tool.routeName, '/tools/cooling-thermal');
+      expect(tool.subgroup, 'Power & Cooling');
     });
 
     test('cooling-thermal route resolves to a registered builder', () {
