@@ -65,6 +65,11 @@ import '../screens/tools/reference/wifi_glossary_screen.dart';
 import '../screens/tools/reference/plmn_reference_screen.dart';
 import '../screens/tools/reference/poe_reference_screen.dart';
 import '../screens/tools/reference/power_phasing_screen.dart';
+import '../screens/tools/reference/ohms_law_screen.dart';
+import '../screens/tools/reference/cooling_thermal_screen.dart';
+import '../screens/tools/reference/iec_connectors_screen.dart';
+import '../screens/tools/reference/nema_connectors_screen.dart';
+import '../screens/tools/reference/international_plugs_screen.dart';
 import '../screens/tools/reference/spectrum_screen.dart';
 import '../screens/tools/network/arp_ndp_screen.dart';
 import '../screens/tools/network/bgp_asn_screen.dart';
@@ -199,6 +204,14 @@ class AppRouter {
   /// id `power-phasing` is permanent (backs this route, the catalog entry, the
   /// help entry, the waveform asset slots, and tests).
   static const String powerPhasing = '/tools/power-phasing';
+
+  // Power & Cooling — pages 2-6 of the reference category (Keith, 2026-06-08).
+  // Each id is permanent (backs its route, catalog entry, help entry, and tests).
+  static const String ohmsLaw = '/tools/ohms-law';
+  static const String coolingThermal = '/tools/cooling-thermal';
+  static const String iecConnectors = '/tools/iec-connectors';
+  static const String nemaConnectors = '/tools/nema-connectors';
+  static const String internationalPlugs = '/tools/international-plugs';
   static const String spectrum = '/tools/spectrum';
   static const String nonWifiChannels = '/tools/non-wifi-channels';
 
@@ -424,6 +437,11 @@ class AppRouter {
     apPlacement: (_) => const ApPlacementScreen(),
     poeReference: (_) => const PoeReferenceScreen(),
     powerPhasing: (_) => const PowerPhasingScreen(),
+    ohmsLaw: (_) => const OhmsLawScreen(),
+    coolingThermal: (_) => const CoolingThermalScreen(),
+    iecConnectors: (_) => const IecConnectorsScreen(),
+    nemaConnectors: (_) => const NemaConnectorsScreen(),
+    internationalPlugs: (_) => const InternationalPlugsScreen(),
     spectrum: (_) => const SpectrumScreen(),
     nonWifiChannels: (_) => const NonWifiChannelsScreen(),
     interfaceInfo: (_) => const InterfaceInfoScreen(),

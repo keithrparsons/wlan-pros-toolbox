@@ -2453,6 +2453,111 @@
         "Data source: Pax research brief Topic 2 (Deliverables/2026-06-08-power-cooling-references/RESEARCH-BRIEF.md), sourced to NEC Article 100/210, split-phase and three-phase EE references, and the V_LL = sqrt(3) x V_LN relationship."
       ],
       "source": "lib/screens/tools/reference/power_phasing_screen.dart"
+    },
+    "ohms-law": {
+      "name": "Ohm's Law & Power Wheel",
+      "category": "Power & Cooling",
+      "purpose": "Reference for the V / I / R / P relationships every field tech reaches for: the four core identities (V = I x R, P = V x I, P = I^2 x R, P = V^2 / R), the 12-segment power wheel that expresses each of V, I, R, P in terms of any two of the others, and the single-phase vs three-phase power formulas with the power-factor term.",
+      "whyHere": "When you need to solve for a missing electrical quantity at a panel or on a nameplate, find the right form of the wheel and read off the relationship, without re-deriving it. The power-factor caveat keeps you from reading V x I as watts on an AC reactive load.",
+      "howToUse": [
+        "The core relationships table gives the four identities and what each solves for; everything else derives from V = I x R and P = V x I.",
+        "The power wheel lists each of V, I, R, and P in three forms, so you can pick the one written in terms of the two quantities you already know.",
+        "The single-phase vs three-phase table carries the apparent-power (VA) and real-power (W) formulas; real power includes the cos(phi) power-factor term."
+      ],
+      "inputs": [],
+      "algorithm": "Apparent power S = V x I (single-phase) or sqrt(3) x V_LL x I_L (three-phase balanced). Real power P = S x cos(phi). Power factor cos(phi) = 1 only for purely resistive loads and DC; for reactive loads it is less than 1, so V x I gives VA, not W.",
+      "example": "A 230V single-phase load drawing 5A has an apparent power of 230 x 5 = 1150 VA. If its power factor is 0.8, real power is 1150 x 0.8 = 920 W, which is why UPS and PDU equipment is rated in both VA and W.",
+      "fieldNotes": [
+        "What it shows: the four core identities, the 12-form power wheel (four quantities x three forms), and the single-phase vs three-phase power formulas with a power-factor note.",
+        "Power factor (cos phi) is 1 only for resistive loads and DC, where P = V x I is exact. On reactive loads (motors, compressors, switch-mode supplies) V x I gives apparent power in VA, not real power in watts; do not read P = V x I as universally giving watts in AC.",
+        "ASCII notation only: I^2 / V^2 use the caret, sqrt() is written out, and the power-factor angle is cos(phi). Written \"Access Point\" not \"router\".",
+        "Data source: Pax research brief Topic 1 (Deliverables/2026-06-08-power-cooling-references/RESEARCH-BRIEF.md), the standard EE identity set, the 12-form Ohm's-law wheel, and the AC real/apparent/reactive power relationships."
+      ],
+      "source": "lib/screens/tools/reference/ohms_law_screen.dart"
+    },
+    "cooling-thermal": {
+      "name": "Cooling & Thermal",
+      "category": "Power & Cooling",
+      "purpose": "Reference for the heat-load conversions you need when sizing cooling for IT spaces: watts to BTU/hr to tons of refrigeration, the IT-load-becomes-heat-becomes-cooling relationship, and the standard sensible-heat airflow (CFM / delta-T) formula.",
+      "whyHere": "When you have to size a closet or rack cooling plant from an IT load, convert that load to BTU/hr or tons and read the airflow a given temperature rise needs, so the cooling equipment nameplate matches the heat the gear produces.",
+      "howToUse": [
+        "The conversion table gives common loads in watts, BTU/hr, and tons, all derived from two anchors: 1 W = 3.412 BTU/hr and 1 ton = 12,000 BTU/hr.",
+        "The IT-load-to-heat-to-cooling chain shows that essentially all IT power becomes heat, so the cooling load in watts equals the IT load in watts before margin.",
+        "The airflow note rearranges the standard-air sensible-heat formula so you can find the CFM a target supply-to-return rise needs."
+      ],
+      "inputs": [],
+      "algorithm": "BTU/hr = watts x 3.412. Tons = BTU/hr / 12,000 (so 1 ton is about 3,517 W). Sensible-heat airflow: BTU/hr = 1.08 x CFM x delta-T (deg F), so CFM = BTU/hr / (1.08 x delta-T). The 1.08 constant is for standard moist air at sea level and shifts with altitude and air density.",
+      "example": "A 1,000 W (1 kW) IT load is 3,412 BTU/hr, about 0.284 tons. Removed across a 20 deg F supply-to-return rise it needs about 158 CFM of airflow.",
+      "fieldNotes": [
+        "What it shows: a watts/BTU-hr/tons conversion table, the IT-load-to-heat-to-cooling relationship, and the sensible-heat airflow (CFM / delta-T) guidance. No diagram: the relationships are numeric and read cleanly as tables.",
+        "Essentially all electrical power an IT device draws is dissipated as heat into the room, so the cooling load equals the IT load before any headroom for losses and growth.",
+        "The 1.08 airflow constant is the standard-condition approximation, not a universal: verify against site altitude and air density before sizing equipment. \"BTU/hr\" not \"BTUH\". Written \"Access Point\" not \"router\".",
+        "Data source: Pax research brief cooling note (Deliverables/2026-06-08-power-cooling-references/RESEARCH-BRIEF.md) plus the anchor conversions 1 W = 3.412 BTU/hr and 1 ton = 12,000 BTU/hr."
+      ],
+      "source": "lib/screens/tools/reference/cooling_thermal_screen.dart"
+    },
+    "iec-connectors": {
+      "name": "IEC Power Connectors",
+      "category": "Power & Cooling",
+      "purpose": "Reference for the IEC 60320 appliance couplers (C1/C2 through C19/C20, including the C13/C14 PC cord and the C15/C16 kettle cord) and the IEC 60309 industrial pin-and-sleeve connectors, with current ratings, temperature classes, and keying.",
+      "whyHere": "When you grab a cord or read an inlet on a PDU, server, or UPS, confirm the coupler pair and its rating so you match cord to inlet, and tell the 70 degC C13/C14 PC cord apart from the 120 degC C15/C16 kettle cord.",
+      "howToUse": [
+        "The IEC 60320 table lists each coupler pair with its current rating, maximum temperature, nickname, and typical use. Odd number = cord connector (female); even = appliance inlet (male), one greater than its mate.",
+        "The IEC 60309 table maps connector color to its voltage band; the earth-pin clock position (in 30-degree steps) is mechanical keying so incompatible voltages cannot mate.",
+        "Use the notes to settle the kettle-cord confusion and to confirm both color and earth-pin hour must match for two IEC 60309 devices to connect."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": "A C13 connector (female, on the cord) mates with a C14 inlet (male, on the back of a PC or PDU). A C15 cord fits a C14 inlet, but a C13 cord will not fit a C16 inlet because the C15/C16 keying notch blocks it.",
+      "fieldNotes": [
+        "What it shows: the IEC 60320 appliance-coupler table (pair, current, max temp, nickname, use) and the IEC 60309 industrial-connector table (color, voltage band, use), with keying notes. A connector-face diagram slot is reserved for a later graphics pass; the tables ship fully working without it.",
+        "The \"kettle cord\" nickname properly belongs to C15/C16 (120 degC hot-condition, keyed by a notch), NOT C13/C14 (70 degC cold-condition \"PC cord\").",
+        "IEC 60309 red spans 380-480V (not a single \"415V\"): it covers 400V European and 480V US three-phase. Both color AND earth-pin clock hour must match to mate.",
+        "Data source: Pax research brief Topic 3 (Deliverables/2026-06-08-power-cooling-references/RESEARCH-BRIEF.md), IEC 60320 and IEC 60309-2."
+      ],
+      "source": "lib/screens/tools/reference/iec_connectors_screen.dart"
+    },
+    "nema-connectors": {
+      "name": "NEMA Connectors",
+      "category": "Power & Cooling",
+      "purpose": "Reference for North American NEMA straight-blade and locking plug/receptacle configurations: the designation decoder (L prefix, configuration code, current rating, P/R) and the device groups by voltage class with phase, wiring, and amp rating.",
+      "whyHere": "When you read a NEMA designation on a plug, receptacle, or PDU, decode it correctly instead of misreading the leading number as a voltage, and confirm the phase and wiring so you do not mistake split-phase for three-phase.",
+      "howToUse": [
+        "Walk the decoder left to right across a designation like L21-30P: L (locking), 21 (a configuration code, not a voltage), 30 (the amp rating), P (plug; R is receptacle).",
+        "The device-group tables list types by voltage class (125V, 208/240/250V) with phase, pole/wire count, and amp rating.",
+        "Use the phase flags to keep the single-phase split 14-series distinct from the three-phase wye L21-series."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": "L21-30P decodes to L (twist-lock) + 21 (three-phase wye 120/208V, 4-pole 5-wire) + 30 (30A) + P (plug). L21-30R is its receptacle. The leading number is a configuration code, so do no arithmetic on it.",
+      "fieldNotes": [
+        "What it shows: the designation decoder with a worked example, plus device groups (125V straight-blade and locking, and 208/240/250V) listing type, voltage, phase, wiring, and amps. A face-diagram plate slot is reserved for a later graphics pass; the tables ship fully working without it.",
+        "The leading number is a voltage/pole/phase CLASS code, not a literal voltage: 21 = three-phase wye 120/208V, 4-pole 5-wire. Never read it as a voltage.",
+        "The 14-series is single-phase SPLIT (the 4th pin is neutral), NOT three-phase; only the L21-series is three-phase wye. P = plug (male), R = receptacle (female).",
+        "Data source: Pax research brief Topic 4 (Deliverables/2026-06-08-power-cooling-references/RESEARCH-BRIEF.md), the NEMA configuration and nomenclature references."
+      ],
+      "source": "lib/screens/tools/reference/nema_connectors_screen.dart"
+    },
+    "international-plugs": {
+      "name": "International Power Plugs",
+      "category": "Power & Cooling",
+      "purpose": "Reference for the IEC World Plugs letter system (Types A through M) by region, with the underlying national standard, nominal voltage class and frequency, and current rating, plus the CEE 7 European family breakout.",
+      "whyHere": "When you travel or spec gear for a site abroad, confirm the plug type, nominal mains voltage, and frequency you will meet, so power adapters and equipment ratings match what is at the wall.",
+      "howToUse": [
+        "The plug-type table lists each letter with its standard, voltage class, current rating, and the countries that use it.",
+        "The CEE 7 family breakout shows how the European C / E / F types and the CEE 7/7 hybrid relate.",
+        "Read the voltage class as nominal: most of the world is 230V except North America and Japan at 120V. Watch the warnings (for example, Argentine Type I has line and neutral reversed)."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": "A laptop charger rated 100-240V works on both a US Type A/B 120V outlet and a UK Type G 230V outlet with only a mechanical plug adapter; a 120V-only appliance needs a voltage converter, not just an adapter, on a 230V supply.",
+      "fieldNotes": [
+        "What it shows: the IEC World Plugs Type A through M table (type, standard, voltage class, current, countries) and the CEE 7 European family breakout. A face-diagram slot is reserved for a later graphics pass; the tables ship fully working without it.",
+        "Voltage classes are nominal: 120V in North America and Japan, 230V across most of the rest of the world. Confirm frequency (50 vs 60 Hz) for motor-driven and timing-sensitive gear.",
+        "Argentine Type I (IRAM 2073) has line and neutral reversed relative to the Australian Type I; the CEE 7/7 plug is a hybrid designed to fit both French (E) and Schuko (F) sockets.",
+        "Data source: Pax research brief Topic 5 (Deliverables/2026-06-08-power-cooling-references/RESEARCH-BRIEF.md), the IEC World Plugs letter system and national standards."
+      ],
+      "source": "lib/screens/tools/reference/international_plugs_screen.dart"
     }
   }
 }

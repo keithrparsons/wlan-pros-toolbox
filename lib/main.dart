@@ -12,6 +12,9 @@ import 'data/connector_diagrams.dart';
 import 'data/connector_photos.dart';
 import 'data/connector_sections.dart';
 import 'data/power_phasing_diagrams.dart';
+import 'data/ohms_law_diagrams.dart';
+import 'data/iec_connectors_diagrams.dart';
+import 'data/nema_connector_diagrams.dart';
 import 'data/tool_assets.dart';
 import 'router/app_router.dart';
 import 'services/help/tool_help_loader.dart';
@@ -98,6 +101,37 @@ Future<void> main() async {
     await PowerPhasingDiagrams.ensureLoaded();
   } catch (_) {
     // Manifest unavailable → has() stays false → waveform bands omitted. No crash.
+  }
+
+  // Same convention for the Ohm's Law power-wheel diagram
+  // (assets/tool-graphics/ohms-law-wheel.svg). Until Charta's wheel SVG is
+  // bundled (Vera is gating it), OhmsLawDiagrams.has() stays false and the wheel
+  // band is omitted — the formula tables ship fully working today. A failure
+  // here must never block startup.
+  try {
+    await OhmsLawDiagrams.ensureLoaded();
+  } catch (_) {
+    // Manifest unavailable → has() stays false → wheel band omitted. No crash.
+  }
+
+  // Same convention for the IEC Power Connectors face diagram
+  // (assets/tool-graphics/iec-connectors.svg). Face diagrams are a deferred
+  // pass; until the SVG is bundled, IecConnectorsDiagrams.has() stays false and
+  // the diagram band is omitted — the connector tables ship fully working today.
+  try {
+    await IecConnectorsDiagrams.ensureLoaded();
+  } catch (_) {
+    // Manifest unavailable → has() stays false → diagram band omitted. No crash.
+  }
+
+  // Same convention for the NEMA Connectors face-diagram plate
+  // (assets/tool-graphics/nema-connectors.svg). Deferred pass; until the SVG is
+  // bundled, NemaConnectorDiagrams.has() stays false and the plate band is
+  // omitted — the configuration tables ship fully working today.
+  try {
+    await NemaConnectorDiagrams.ensureLoaded();
+  } catch (_) {
+    // Manifest unavailable → has() stays false → plate band omitted. No crash.
   }
 
   // Load + cache the bundled tool-help JSON once (assets/help/tool_help.json).
