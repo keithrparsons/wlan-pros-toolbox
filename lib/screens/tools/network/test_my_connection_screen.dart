@@ -37,6 +37,7 @@ import 'package:net_quality/net_quality.dart';
 import '../../../services/network/connected_ap.dart';
 import '../../../services/network/connection_check.dart';
 import '../../../services/network/consumer_verdict.dart';
+import '../../../services/network/live_onboarding_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/wifi_details_bridge.dart';
 import '../../../services/network/wifi_grading.dart';
@@ -78,6 +79,7 @@ class TestMyConnectionScreen extends StatefulWidget {
     this.startExpanded = false,
     this.sampler,
     this.enableLiveSampling = true,
+    this.onboardingService,
   });
 
   /// When true, the check runs automatically on first mount instead of waiting
@@ -116,6 +118,12 @@ class TestMyConnectionScreen extends StatefulWidget {
   /// the live card disable it so no poll timer ticks). Production leaves it on.
   final bool enableLiveSampling;
 
+  /// Injectable first-run onboarding gate (tests). Defaults to the real
+  /// shared_preferences-backed service. iOS-only — the front door must lead the
+  /// one-time "enable live Wi-Fi" setup so a user can never run the test first
+  /// and never be told about the companion Shortcut.
+  final LiveOnboardingService? onboardingService;
+
   @override
   State<TestMyConnectionScreen> createState() => _TestMyConnectionScreenState();
 }
@@ -125,7 +133,11 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   late final WifiInfoSource _source;
   WifiInfoAdapter? _macAdapter;
   WiFiDetailsBridge? _iosBridge;
+  LiveOnboardingService? _onboardingService;
   late final QualityClient _quality;
+
+  /// Fires the unmissable first-run onboarding at most once per mount.
+  bool _firstRunChecked = false;
 
   /// The shared live-RF sampler that feeds the "Wi-Fi signal" sparkline card.
   /// Continuous while the screen is open (macOS auto-polls; iOS streams via the
@@ -174,6 +186,13 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         _macAdapter = widget.macAdapter ?? MacWifiInfoAdapter();
       case WifiInfoSource.iosShortcuts:
         _iosBridge = widget.iosBridge ?? WiFiDetailsBridge();
+        // The front door is the FIRST live surface most users hit. The mandatory
+        // one-time "enable live Wi-Fi" onboarding must lead from HERE so a user
+        // can never run the comparison check first and only afterward discover
+        // the companion Shortcut exists (the exact beta confusion — Pax
+        // 2026-06-07). iOS-only; the gate is honest and one-time.
+        _onboardingService =
+            widget.onboardingService ?? LiveOnboardingService();
       case WifiInfoSource.unsupported:
       case WifiInfoSource.web:
         break;
@@ -217,11 +236,47 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       }
     }
 
+    // Unmissable first-run onboarding (iOS only): the first time ANY live tool
+    // is opened — including this front door — and the companion Shortcut is not
+    // demonstrably working, present the one-time "enable live Wi-Fi" setup sheet
+    // before the user can run a check and hit a wall. Scheduled post-frame so the
+    // sheet has a built context to mount into.
+    if (_source == WifiInfoSource.iosShortcuts) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _maybeShowFirstRunOnboarding();
+      });
+    }
+
     if (widget.autoStart) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _run();
       });
     }
+  }
+
+  /// iOS first-run: fires the unmissable one-time "enable live Wi-Fi" sheet on
+  /// the first open of the front door, gated by the SAME honest composite signal
+  /// wifi-info uses — the app has NEVER received a Live payload AND the sheet has
+  /// not been shown before. Marks the sheet seen the instant it is presented so
+  /// it never nags again (the persisted flag plus the App Group hasEverReceived
+  /// signal make this truly one-time across every live tool). No-op off the iOS
+  /// source. Never throws.
+  Future<void> _maybeShowFirstRunOnboarding() async {
+    if (_firstRunChecked) return;
+    _firstRunChecked = true;
+    final LiveOnboardingService? svc = _onboardingService;
+    final WiFiDetailsBridge? bridge = _iosBridge;
+    if (svc == null || bridge == null) return;
+    final bool everReceived = await bridge.hasEverReceivedPayload();
+    final bool show = await svc.shouldShowOnboarding(
+      hasEverReceivedPayload: everReceived,
+    );
+    if (!show || !mounted) return;
+    // Mark seen BEFORE awaiting the sheet so a rapid second open cannot queue a
+    // second sheet, and so it stays one-time even if the user dismisses it.
+    await svc.markOnboardingSeen();
+    if (!mounted) return;
+    await _openShortcutSheet();
   }
 
   @override
