@@ -112,7 +112,10 @@ void main() {
         // both tables (standards row + class 0-3 'Standard' cells), so scope the
         // finder to the standards-card label that is unique to that row.
         expect(find.text('802.3af'), findsWidgets);
-        expect(find.text('PoE++ Hi'), findsOneWidget);
+        // 'PoE++ Hi' now appears in both the PoE standards table and the new
+        // IEEE 802.3 PoE Types table (the cable/power-budget dimension added in
+        // the 2026-06-08 improvement), so it renders more than once.
+        expect(find.text('PoE++ Hi'), findsWidgets);
         // Read-only reference: no inputs.
         expect(find.byType(TextField), findsNothing);
       });

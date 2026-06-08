@@ -90,7 +90,7 @@ class HttpMethodsScreen extends StatelessWidget {
       method: 'HEAD',
       safe: true,
       idempotent: true,
-      purpose: 'Like GET, but returns headers only — no body.',
+      purpose: 'Like GET, but returns headers only, no body.',
     ),
     HttpMethod(
       method: 'POST',
@@ -182,7 +182,7 @@ class HttpMethodsScreen extends StatelessWidget {
     HttpHeader(
       name: 'If-None-Match',
       purpose:
-          "Conditional request — act only if the resource's ETag has "
+          "Conditional request: act only if the resource's ETag has "
           'changed.',
     ),
   ];

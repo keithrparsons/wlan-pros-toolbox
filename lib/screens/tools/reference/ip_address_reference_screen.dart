@@ -302,6 +302,11 @@ class IpAddressReferenceScreen extends StatelessWidget {
       rfc: 'RFC 9637',
     ),
     SpecialUseBlock(
+      cidr: '5f00::/16',
+      purpose: 'Segment Routing (SRv6 SIDs)',
+      rfc: 'RFC 9602',
+    ),
+    SpecialUseBlock(
       cidr: 'fc00::/7',
       purpose: 'Unique-Local (ULA)',
       rfc: 'RFC 4193, RFC 8190',

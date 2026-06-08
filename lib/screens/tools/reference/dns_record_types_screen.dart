@@ -109,7 +109,7 @@ class DnsRecordTypesScreen extends StatelessWidget {
     DnsRecordType(
       type: 'SOA',
       code: 6,
-      purpose: 'Start of Authority — zone serial, primary server, timers.',
+      purpose: 'Start of Authority: zone serial, primary server, timers.',
       rfc: 'RFC 1035',
     ),
     DnsRecordType(
@@ -140,7 +140,7 @@ class DnsRecordTypesScreen extends StatelessWidget {
       type: 'DS',
       code: 43,
       purpose:
-          "Delegation Signer — links a child zone's key into the parent "
+          "Delegation Signer: links a child zone's key into the parent "
           '(chain of trust).',
       rfc: 'RFC 4034',
     ),
@@ -173,7 +173,7 @@ class DnsRecordTypesScreen extends StatelessWidget {
       type: 'NAPTR',
       code: 35,
       purpose:
-          'Naming Authority Pointer — regex-based rewrites for service '
+          'Naming Authority Pointer: regex-based rewrites for service '
           'discovery (ENUM, SIP).',
       rfc: 'RFC 3403',
     ),
