@@ -104,8 +104,11 @@ void main() {
       await tester.pump(const Duration(milliseconds: 50));
     }
 
-    // Proof the surface is the intended one before we snapshot it.
-    expect(find.text('Set up live Wi-Fi (one-time)'), findsOneWidget);
+    // Proof the surface is the intended one before we snapshot it. The redesign
+    // (2026-06-07) replaced the redundant prompt with the LiveRfLockedCard as the
+    // single enable affordance in the pre-payload state.
+    expect(find.text('Live signal details'), findsOneWidget);
+    expect(find.text('Enable live Wi-Fi'), findsOneWidget);
 
     await _capture(
       tester,
