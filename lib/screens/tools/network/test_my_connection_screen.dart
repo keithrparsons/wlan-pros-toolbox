@@ -1069,12 +1069,16 @@ class _TwoAxisChips extends StatelessWidget {
   final AxisStatus internetStatus;
 
   /// Plain status WORD — the single source the card, chip, and SR label share.
+  /// REVISION 2 (2026-06-07): the 3-tier absolute scale — Strong / Moderate /
+  /// Weak — plus the honest "Couldn't check" for an unmeasured side (GL-005).
   static String word(AxisStatus s) {
     switch (s) {
-      case AxisStatus.fine:
-        return 'Fine';
-      case AxisStatus.slow:
-        return 'Slow';
+      case AxisStatus.strong:
+        return 'Strong';
+      case AxisStatus.moderate:
+        return 'Moderate';
+      case AxisStatus.weak:
+        return 'Weak';
       case AxisStatus.unknown:
         return "Couldn't check";
     }
@@ -1139,10 +1143,16 @@ class _StatusChip extends StatelessWidget {
   /// glyph and border; in light it is the §8.20.4 solid pill fill.
   Color _color(AppColorScheme colors) {
     switch (status) {
-      case AxisStatus.fine:
+      // REVISION 2 (2026-06-07) — §8.13 verdict hues, one per tier:
+      // Strong → success (green), Moderate → warning (amber), Weak → danger
+      // (red). The WORD carries the meaning; the hue reinforces it (never
+      // color-only, §8.13 rule 2 / WCAG 2.2 SC 1.4.1).
+      case AxisStatus.strong:
         return colors.statusSuccess;
-      case AxisStatus.slow:
+      case AxisStatus.moderate:
         return colors.statusWarning;
+      case AxisStatus.weak:
+        return colors.statusDanger;
       case AxisStatus.unknown:
         // Light: neutral textSecondary #4A4A4A fill, matching the _GradeChip
         // no-hue fills across TMC / wifi_info / net_quality. Dark stays on
@@ -1156,10 +1166,17 @@ class _StatusChip extends StatelessWidget {
   /// variant so the dark render is byte-identical.
   IconData _icon(bool light) {
     switch (status) {
-      case AxisStatus.fine:
+      // REVISION 2 (2026-06-07) — the §8.13 status glyph per tier. Light uses
+      // the FILLED variant (white knockout on the solid pill, §8.20.4); dark
+      // keeps the OUTLINED variant so the dark render stays byte-stable.
+      case AxisStatus.strong:
         return light ? Icons.check_circle : Icons.check_circle_outline;
-      case AxisStatus.slow:
+      case AxisStatus.moderate:
         return light ? Icons.warning_amber : Icons.warning_amber_outlined;
+      case AxisStatus.weak:
+        // `error` is the §8.13 danger glyph (rule 2). Filled in light, outlined
+        // in dark — a failing-rate verdict, not a "fault we can't read".
+        return light ? Icons.error : Icons.error_outline;
       case AxisStatus.unknown:
         // §1.1 — the "couldn't check" glyph is `help_outline`, NOT error /
         // cancel / block / remove. Those carry "fault"; this reads "unknown /

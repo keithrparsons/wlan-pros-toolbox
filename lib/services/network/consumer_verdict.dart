@@ -58,23 +58,73 @@ enum ConsumerOutcome {
 
 /// The status of ONE axis — Wi-Fi or Internet — on the two-chip result header
 /// (R1-A). Each axis gets its OWN explicit word so a non-technical person learns
-/// that Wi-Fi and Internet are two separate things, and a missing Wi-Fi read
-/// reads as "Wi-Fi: Couldn't check" rather than a silent/ambiguous gap.
+/// that Wi-Fi and Internet are two separate things, and a missing read reads as
+/// "Couldn't check" rather than a silent/ambiguous gap.
 ///
-/// The screen renders each as icon + WORD + a §8.13 color token: [fine] →
-/// status-good, [slow] → status-warn, [unknown] → a neutral/muted token. The
-/// WORD always carries meaning so the chip never relies on color alone
-/// (WCAG 2.2 SC 1.4.1).
+/// REVISION 2 (2026-06-07, Keith family-dinner feedback): a 3-TIER absolute
+/// scale — Strong / Moderate / Weak — bucketed from the ABSOLUTE data rate in
+/// Mbps, the SAME thresholds on both axes (see [AxisStatusThresholds]). This
+/// replaces the prior 2-tier {fine, slow} verdict, which was COMPARATIVE
+/// (derived from the engine's "which side is the limiter" verdict). The chips
+/// now answer "how good is THIS side, on its own" — the comparative "is it your
+/// Wi-Fi or your internet" answer still lives in the engine verdict / hero
+/// sentence on the screen, so the two are complementary, not redundant.
+///
+/// The screen renders each as icon + WORD + a §8.13 color token: [strong] →
+/// status-success (green), [moderate] → status-warning (amber), [weak] →
+/// status-danger (red), [unknown] → a neutral/muted token. The WORD always
+/// carries meaning so the chip never relies on color alone (WCAG 2.2 SC 1.4.1).
 enum AxisStatus {
-  /// "Fine" — this side is working well (status-good token).
-  fine,
+  /// "Strong" — this side measured a high data rate (> 250 Mbps).
+  /// §8.13 `--app-status-success` (green).
+  strong,
 
-  /// "Slow" — this side is the (or a) bottleneck (status-warn token).
-  slow,
+  /// "Moderate" — this side measured a mid data rate (100–250 Mbps inclusive).
+  /// §8.13 `--app-status-warning` (amber).
+  moderate,
+
+  /// "Weak" — this side measured a low data rate (< 100 Mbps).
+  /// §8.13 `--app-status-danger` (red).
+  weak,
 
   /// "Couldn't check" — this side could not be measured/read on this device
-  /// (neutral/muted token, not a fault color).
+  /// (neutral/muted token, NOT a fault color; GL-005 — never force a tier onto
+  /// missing data).
   unknown,
+}
+
+/// The absolute data-rate thresholds (Mbps) that bucket a measured rate into an
+/// [AxisStatus] tier. The SAME thresholds apply to both axes (Keith, 2026-06-07).
+///
+/// Boundaries (inclusive at the top of the Moderate band):
+///   * rate > 250            → [AxisStatus.strong]
+///   * 100 ≤ rate ≤ 250      → [AxisStatus.moderate]
+///   * rate < 100            → [AxisStatus.weak]
+///   * rate == null          → [AxisStatus.unknown] (unmeasured; GL-005)
+///
+/// Exposed as named constants so tests assert against the same numbers the
+/// derivation uses, and so a future threshold change has one home.
+class AxisStatusThresholds {
+  const AxisStatusThresholds._();
+
+  /// Above this rate (Mbps), exclusive, the axis is [AxisStatus.strong].
+  static const double strongAboveMbps = 250;
+
+  /// At/above this rate (Mbps), inclusive, the axis is at least
+  /// [AxisStatus.moderate]; below it the axis is [AxisStatus.weak].
+  static const double moderateAtOrAboveMbps = 100;
+
+  /// Buckets an absolute data [rateMbps] into its tier. A null rate is an
+  /// honest [AxisStatus.unknown] — no tier is forced onto missing data
+  /// (GL-005). A non-positive rate (≤ 0) is also treated as unmeasured rather
+  /// than as a real "Weak" reading, mirroring the engine's "treat ≤ 0 as
+  /// absent" convention.
+  static AxisStatus tierFor(double? rateMbps) {
+    if (rateMbps == null || rateMbps <= 0) return AxisStatus.unknown;
+    if (rateMbps > strongAboveMbps) return AxisStatus.strong;
+    if (rateMbps >= moderateAtOrAboveMbps) return AxisStatus.moderate;
+    return AxisStatus.weak;
+  }
 }
 
 /// Which vetted self-help list the screen surfaces for an outcome. Drives the
@@ -113,17 +163,20 @@ class ConsumerVerdict {
   /// The consumer outcome bucket. The screen maps it to a §8.13 status color.
   final ConsumerOutcome outcome;
 
-  /// The Wi-Fi axis status for the top "Wi-Fi:" chip (R1-A). Derived per the
-  /// REVISION 1 table: wifiLimiter/bothContributing → [AxisStatus.slow],
-  /// upstream/bothHealthy → [AxisStatus.fine], wifiUnknown → [AxisStatus.unknown]
-  /// (the Wi-Fi link could not be read on this device).
+  /// The Wi-Fi axis status for the top "Wi-Fi:" chip (R1-A). REVISION 2: an
+  /// ABSOLUTE 3-tier read bucketed from the engine's usable Wi-Fi data rate
+  /// ([WifiVsInternetResult.usableWifiMbps]) via [AxisStatusThresholds.tierFor]
+  /// — > 250 Mbps → [AxisStatus.strong], 100–250 → [AxisStatus.moderate],
+  /// < 100 → [AxisStatus.weak], unmeasured → [AxisStatus.unknown]. Independent
+  /// of the comparative engine verdict; the chip reports how good the Wi-Fi side
+  /// is on its own.
   final AxisStatus wifiStatus;
 
-  /// The Internet axis status for the top "Internet:" chip (R1-A). Derived per
-  /// the REVISION 1 table: upstream/bothContributing → [AxisStatus.slow],
-  /// wifiLimiter/bothHealthy → [AxisStatus.fine]. On the wifiUnknown path it is
-  /// [AxisStatus.fine] or [AxisStatus.slow] from the measured internet health
-  /// (D1), or [AxisStatus.unknown] when internet was not measured either (D2).
+  /// The Internet axis status for the top "Internet:" chip (R1-A). REVISION 2:
+  /// an ABSOLUTE 3-tier read bucketed from the engine's measured internet rate
+  /// ([WifiVsInternetResult.internetAvgMbps]) via the SAME
+  /// [AxisStatusThresholds.tierFor] thresholds as the Wi-Fi axis. Unmeasured
+  /// internet → [AxisStatus.unknown] (GL-005 — no tier forced onto missing data).
   final AxisStatus internetStatus;
 
   /// The plain-English headline WORD/phrase (e.g. "Looks like your Wi-Fi").
@@ -150,23 +203,40 @@ class ConsumerVerdictMapper {
   /// `wifiUnknown` with a non-null [WifiVsInternetResult.internetAvgMbps] is D1
   /// (we have a real internet result to report); without one it is D2.
   ///
+  /// REVISION 2 (2026-06-07): the two axis chips are now ABSOLUTE 3-tier reads
+  /// bucketed from the engine's rate figures via [AxisStatusThresholds.tierFor]
+  /// — [WifiVsInternetResult.usableWifiMbps] drives [wifiStatus] and
+  /// [WifiVsInternetResult.internetAvgMbps] drives [internetStatus], with the
+  /// SAME > 250 / 100–250 / < 100 Mbps thresholds on both. The chips therefore
+  /// depend ONLY on the measured rates, not on which `verdict` branch fires; the
+  /// branch below still chooses the consumer OUTCOME (the comparative "is it your
+  /// Wi-Fi or your internet" answer) and the copy, but no longer hard-codes the
+  /// chip tiers.
+  ///
   /// [internetHealthy] is the grade-gate result the screen already computes
   /// (`_internetHealth(...) == InternetHealth.good`). It is read ONLY on the D1
-  /// path, to pick the Internet chip (Fine when healthy, Slow when not) per the
-  /// R1-A table; every other row derives both chips from the verdict alone, so
-  /// the parameter is ignored there. Defaults to false (the conservative "Slow"
-  /// read) so a caller that omits it never over-promises a healthy internet.
+  /// path now, to word the "which looks [fine/slow]" body line — it no longer
+  /// selects a chip tier (the chip comes from the absolute rate). Defaults to
+  /// false so a caller that omits it never over-promises a healthy internet.
   static ConsumerVerdict map(
     WifiVsInternetResult engineResult, {
     bool internetHealthy = false,
   }) {
+    // The two chips are absolute, rate-driven, and verdict-independent. Compute
+    // both tiers once from the engine's measured rates; null rates (unmeasured
+    // Wi-Fi link or unmeasured internet) honestly bucket to `unknown` (GL-005).
+    final AxisStatus wifiTier =
+        AxisStatusThresholds.tierFor(engineResult.usableWifiMbps);
+    final AxisStatus internetTier =
+        AxisStatusThresholds.tierFor(engineResult.internetAvgMbps);
+
     switch (engineResult.verdict) {
-      // A — Wi-Fi link is the limiter. Wi-Fi Slow, Internet Fine.
+      // A — Wi-Fi link is the limiter.
       case WifiVsInternetVerdict.wifiLimiter:
-        return const ConsumerVerdict(
+        return ConsumerVerdict(
           outcome: ConsumerOutcome.wifi,
-          wifiStatus: AxisStatus.slow,
-          internetStatus: AxisStatus.fine,
+          wifiStatus: wifiTier,
+          internetStatus: internetTier,
           headline: 'Looks like your Wi-Fi',
           body:
               'Your internet can go faster than your Wi-Fi is carrying right '
@@ -174,12 +244,12 @@ class ConsumerVerdictMapper {
           selfHelp: SelfHelpTopic.wifi,
         );
 
-      // A (lead) — both contributing. Both Slow; point at the easy Wi-Fi fixes.
+      // A (lead) — both contributing; point at the easy Wi-Fi fixes first.
       case WifiVsInternetVerdict.bothContributing:
-        return const ConsumerVerdict(
+        return ConsumerVerdict(
           outcome: ConsumerOutcome.wifiLead,
-          wifiStatus: AxisStatus.slow,
-          internetStatus: AxisStatus.slow,
+          wifiStatus: wifiTier,
+          internetStatus: internetTier,
           headline: 'Mostly your Wi-Fi',
           body:
               'Both your Wi-Fi and your internet are a little slow. Start with '
@@ -187,12 +257,12 @@ class ConsumerVerdictMapper {
           selfHelp: SelfHelpTopic.wifi,
         );
 
-      // B — the internet upstream is the slow part. Wi-Fi Fine, Internet Slow.
+      // B — the internet upstream is the slow part.
       case WifiVsInternetVerdict.upstream:
-        return const ConsumerVerdict(
+        return ConsumerVerdict(
           outcome: ConsumerOutcome.internet,
-          wifiStatus: AxisStatus.fine,
-          internetStatus: AxisStatus.slow,
+          wifiStatus: wifiTier,
+          internetStatus: internetTier,
           headline: 'Looks like your Internet',
           body:
               'Your Wi-Fi has room to spare, but the internet coming into your '
@@ -200,12 +270,12 @@ class ConsumerVerdictMapper {
           selfHelp: SelfHelpTopic.internet,
         );
 
-      // C — both healthy. Both Fine; it is probably the app or website.
+      // C — both healthy; it is probably the app or website.
       case WifiVsInternetVerdict.bothHealthy:
-        return const ConsumerVerdict(
+        return ConsumerVerdict(
           outcome: ConsumerOutcome.bothFine,
-          wifiStatus: AxisStatus.fine,
-          internetStatus: AxisStatus.fine,
+          wifiStatus: wifiTier,
+          internetStatus: internetTier,
           headline: 'Both look fine',
           body:
               'Your Wi-Fi and internet are both working well. If something '
@@ -215,19 +285,18 @@ class ConsumerVerdictMapper {
         );
 
       // D — the Wi-Fi link could not be read; split on whether internet ran.
+      // The Wi-Fi chip is `unknown` here BY THE RATE (usableWifiMbps is null on
+      // this path), so `wifiTier` already resolves to unknown — no override.
       case WifiVsInternetVerdict.wifiUnknown:
         final bool internetMeasured = engineResult.internetAvgMbps != null;
         if (internetMeasured) {
-          // D1 — internet measured, Wi-Fi not. Wi-Fi "Couldn't check"; Internet
-          // chip is Fine or Slow from the grade-gate health. The screen
-          // substitutes the live [X]/[fine|slow] via [bodyForCouldntCheckWifi];
-          // this is the template.
+          // D1 — internet measured, Wi-Fi not. Wi-Fi chip is `unknown` (no
+          // rate); the Internet chip is its absolute tier. The screen
+          // substitutes the live [X]/[fine|slow] via [bodyForCouldntCheckWifi].
           return ConsumerVerdict(
             outcome: ConsumerOutcome.couldntCheckWifi,
-            wifiStatus: AxisStatus.unknown,
-            internetStatus: internetHealthy
-                ? AxisStatus.fine
-                : AxisStatus.slow,
+            wifiStatus: wifiTier,
+            internetStatus: internetTier,
             headline: 'Couldn’t check everything',
             body:
                 'Your internet measured about [X] Mbps, which looks '
@@ -236,11 +305,11 @@ class ConsumerVerdictMapper {
             selfHelp: SelfHelpTopic.reconnect,
           );
         }
-        // D2 — neither side measured. Both chips "Couldn't check".
-        return const ConsumerVerdict(
+        // D2 — neither side measured. Both chips `unknown` by the rates.
+        return ConsumerVerdict(
           outcome: ConsumerOutcome.couldntComplete,
-          wifiStatus: AxisStatus.unknown,
-          internetStatus: AxisStatus.unknown,
+          wifiStatus: wifiTier,
+          internetStatus: internetTier,
           headline: 'Couldn’t complete the check',
           body: "Make sure you're connected to Wi-Fi and try again.",
           selfHelp: SelfHelpTopic.reconnect,
