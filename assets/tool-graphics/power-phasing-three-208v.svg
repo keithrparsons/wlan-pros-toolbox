@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- 208V Three-Phase (Wye): three hots 120 deg apart. Line-to-neutral = 120V;
+       line-to-line = sqrt(3) x 120 ~ 208V (the measured span, lime). Original WLAN Pros schematic.
+       Lime bracket is anchored at x=100, the instant L2 crosses zero while L1 sits at +103.9V (y=50.56)
+       and L3 at -103.9V (y=109.44). The line-to-line difference there is +103.9 - (-103.9) = 207.8V = 120 x sqrt(3),
+       the true sqrt(3) line-to-line value. (At an L1 peak the L-L difference would only be 1.5x amplitude = 180V,
+       not 208 — so the bracket is placed where physics puts the sqrt(3) instant, the exact point the page teaches.) -->
+
+
+  <!-- neutral / zero axis (wye neutral, 0 VAC) -->
+  <line x1="40" y1="80" x2="300" y2="80" stroke="#9C9C9C" stroke-width="1.25" stroke-dasharray="2 4"/>
+  <line x1="50" y1="44" x2="50" y2="116" stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round"/>
+
+  <!-- three phase waveforms 120 deg apart -->
+  <path d="M 60.0 80.0 L 62.0 76.45 L 64.0 72.93 L 66.0 69.49 L 68.0 66.17 L 70.0 63.0 L 72.0 60.02 L 74.0 57.25 L 76.0 54.73 L 78.0 52.49 L 80.0 50.56 L 82.0 48.94 L 84.0 47.66 L 86.0 46.74 L 88.0 46.19 L 90.0 46.0 L 92.0 46.19 L 94.0 46.74 L 96.0 47.66 L 98.0 48.94 L 100.0 50.56 L 102.0 52.49 L 104.0 54.73 L 106.0 57.25 L 108.0 60.02 L 110.0 63.0 L 112.0 66.17 L 114.0 69.49 L 116.0 72.93 L 118.0 76.45 L 120.0 80.0 L 122.0 83.55 L 124.0 87.07 L 126.0 90.51 L 128.0 93.83 L 130.0 97.0 L 132.0 99.98 L 134.0 102.75 L 136.0 105.27 L 138.0 107.51 L 140.0 109.44 L 142.0 111.06 L 144.0 112.34 L 146.0 113.26 L 148.0 113.81 L 150.0 114.0 L 152.0 113.81 L 154.0 113.26 L 156.0 112.34 L 158.0 111.06 L 160.0 109.44 L 162.0 107.51 L 164.0 105.27 L 166.0 102.75 L 168.0 99.98 L 170.0 97.0 L 172.0 93.83 L 174.0 90.51 L 176.0 87.07 L 178.0 83.55 L 180.0 80.0 L 182.0 76.45 L 184.0 72.93 L 186.0 69.49 L 188.0 66.17 L 190.0 63.0 L 192.0 60.02 L 194.0 57.25 L 196.0 54.73 L 198.0 52.49 L 200.0 50.56 L 202.0 48.94 L 204.0 47.66 L 206.0 46.74 L 208.0 46.19 L 210.0 46.0 L 212.0 46.19 L 214.0 46.74 L 216.0 47.66 L 218.0 48.94 L 220.0 50.56 L 222.0 52.49 L 224.0 54.73 L 226.0 57.25 L 228.0 60.02 L 230.0 63.0 L 232.0 66.17 L 234.0 69.49 L 236.0 72.93 L 238.0 76.45 L 240.0 80.0 L 242.0 83.55 L 244.0 87.07 L 246.0 90.51 L 248.0 93.83 L 250.0 97.0 L 252.0 99.98 L 254.0 102.75 L 256.0 105.27 L 258.0 107.51 L 260.0 109.44 L 262.0 111.06 L 264.0 112.34 L 266.0 113.26 L 268.0 113.81 L 270.0 114.0 L 272.0 113.81 L 274.0 113.26 L 276.0 112.34 L 278.0 111.06 L 280.0 109.44 L 282.0 107.51 L 284.0 105.27 L 286.0 102.75 L 288.0 99.98 L 290.0 97.0 L 292.0 93.83 L 294.0 90.51 L 296.0 87.07 L 298.0 83.55 L 300.0 80.0" stroke="#E5E5E5" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 60.0 109.44 L 62.0 111.06 L 64.0 112.34 L 66.0 113.26 L 68.0 113.81 L 70.0 114.0 L 72.0 113.81 L 74.0 113.26 L 76.0 112.34 L 78.0 111.06 L 80.0 109.44 L 82.0 107.51 L 84.0 105.27 L 86.0 102.75 L 88.0 99.98 L 90.0 97.0 L 92.0 93.83 L 94.0 90.51 L 96.0 87.07 L 98.0 83.55 L 100.0 80.0 L 102.0 76.45 L 104.0 72.93 L 106.0 69.49 L 108.0 66.17 L 110.0 63.0 L 112.0 60.02 L 114.0 57.25 L 116.0 54.73 L 118.0 52.49 L 120.0 50.56 L 122.0 48.94 L 124.0 47.66 L 126.0 46.74 L 128.0 46.19 L 130.0 46.0 L 132.0 46.19 L 134.0 46.74 L 136.0 47.66 L 138.0 48.94 L 140.0 50.56 L 142.0 52.49 L 144.0 54.73 L 146.0 57.25 L 148.0 60.02 L 150.0 63.0 L 152.0 66.17 L 154.0 69.49 L 156.0 72.93 L 158.0 76.45 L 160.0 80.0 L 162.0 83.55 L 164.0 87.07 L 166.0 90.51 L 168.0 93.83 L 170.0 97.0 L 172.0 99.98 L 174.0 102.75 L 176.0 105.27 L 178.0 107.51 L 180.0 109.44 L 182.0 111.06 L 184.0 112.34 L 186.0 113.26 L 188.0 113.81 L 190.0 114.0 L 192.0 113.81 L 194.0 113.26 L 196.0 112.34 L 198.0 111.06 L 200.0 109.44 L 202.0 107.51 L 204.0 105.27 L 206.0 102.75 L 208.0 99.98 L 210.0 97.0 L 212.0 93.83 L 214.0 90.51 L 216.0 87.07 L 218.0 83.55 L 220.0 80.0 L 222.0 76.45 L 224.0 72.93 L 226.0 69.49 L 228.0 66.17 L 230.0 63.0 L 232.0 60.02 L 234.0 57.25 L 236.0 54.73 L 238.0 52.49 L 240.0 50.56 L 242.0 48.94 L 244.0 47.66 L 246.0 46.74 L 248.0 46.19 L 250.0 46.0 L 252.0 46.19 L 254.0 46.74 L 256.0 47.66 L 258.0 48.94 L 260.0 50.56 L 262.0 52.49 L 264.0 54.73 L 266.0 57.25 L 268.0 60.02 L 270.0 63.0 L 272.0 66.17 L 274.0 69.49 L 276.0 72.93 L 278.0 76.45 L 280.0 80.0 L 282.0 83.55 L 284.0 87.07 L 286.0 90.51 L 288.0 93.83 L 290.0 97.0 L 292.0 99.98 L 294.0 102.75 L 296.0 105.27 L 298.0 107.51 L 300.0 109.44" stroke="#9C9C9C" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 60.0 50.56 L 62.0 52.49 L 64.0 54.73 L 66.0 57.25 L 68.0 60.02 L 70.0 63.0 L 72.0 66.17 L 74.0 69.49 L 76.0 72.93 L 78.0 76.45 L 80.0 80.0 L 82.0 83.55 L 84.0 87.07 L 86.0 90.51 L 88.0 93.83 L 90.0 97.0 L 92.0 99.98 L 94.0 102.75 L 96.0 105.27 L 98.0 107.51 L 100.0 109.44 L 102.0 111.06 L 104.0 112.34 L 106.0 113.26 L 108.0 113.81 L 110.0 114.0 L 112.0 113.81 L 114.0 113.26 L 116.0 112.34 L 118.0 111.06 L 120.0 109.44 L 122.0 107.51 L 124.0 105.27 L 126.0 102.75 L 128.0 99.98 L 130.0 97.0 L 132.0 93.83 L 134.0 90.51 L 136.0 87.07 L 138.0 83.55 L 140.0 80.0 L 142.0 76.45 L 144.0 72.93 L 146.0 69.49 L 148.0 66.17 L 150.0 63.0 L 152.0 60.02 L 154.0 57.25 L 156.0 54.73 L 158.0 52.49 L 160.0 50.56 L 162.0 48.94 L 164.0 47.66 L 166.0 46.74 L 168.0 46.19 L 170.0 46.0 L 172.0 46.19 L 174.0 46.74 L 176.0 47.66 L 178.0 48.94 L 180.0 50.56 L 182.0 52.49 L 184.0 54.73 L 186.0 57.25 L 188.0 60.02 L 190.0 63.0 L 192.0 66.17 L 194.0 69.49 L 196.0 72.93 L 198.0 76.45 L 200.0 80.0 L 202.0 83.55 L 204.0 87.07 L 206.0 90.51 L 208.0 93.83 L 210.0 97.0 L 212.0 99.98 L 214.0 102.75 L 216.0 105.27 L 218.0 107.51 L 220.0 109.44 L 222.0 111.06 L 224.0 112.34 L 226.0 113.26 L 228.0 113.81 L 230.0 114.0 L 232.0 113.81 L 234.0 113.26 L 236.0 112.34 L 238.0 111.06 L 240.0 109.44 L 242.0 107.51 L 244.0 105.27 L 246.0 102.75 L 248.0 99.98 L 250.0 97.0 L 252.0 93.83 L 254.0 90.51 L 256.0 87.07 L 258.0 83.55 L 260.0 80.0 L 262.0 76.45 L 264.0 72.93 L 266.0 69.49 L 268.0 66.17 L 270.0 63.0 L 272.0 60.02 L 274.0 57.25 L 276.0 54.73 L 278.0 52.49 L 280.0 50.56 L 282.0 48.94 L 284.0 47.66 L 286.0 46.74 L 288.0 46.19 L 290.0 46.0 L 292.0 46.19 L 294.0 46.74 L 296.0 47.66 L 298.0 48.94 L 300.0 50.56" stroke="#9C9C9C" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- axis ticks + labels -->
+  <g stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round">
+    <line x1="46" y1="46" x2="54" y2="46"/>
+    <line x1="46" y1="80" x2="54" y2="80"/>
+    <line x1="46" y1="114" x2="54" y2="114"/>
+  </g>
+  <g fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="end" font-family="DM Mono, monospace">
+    <text x="42" y="49">+120</text>
+    <text x="42" y="83">0</text>
+    <text x="42" y="117">-120</text>
+  </g>
+
+  <!-- phase labels seated just past each waveform's first peak (120 deg spacing made visible) -->
+  <text x="90"  y="40" fill="#E5E5E5" font-size="9" font-weight="500" text-anchor="middle">L1</text>
+  <text x="170" y="40" fill="#9C9C9C" font-size="9" font-weight="500" text-anchor="middle">L3</text>
+  <text x="130" y="128" fill="#9C9C9C" font-size="9" font-weight="500" text-anchor="middle">L2</text>
+
+  <!-- line-to-neutral reference, tied to the axis in guaranteed-clear space (left margin):
+       each phase peaks at 120V above neutral. Kept off the dense waveform area to avoid collisions. -->
+  <text x="64" y="135" fill="#9C9C9C" font-size="9" font-weight="500" text-anchor="start" font-family="DM Mono, monospace">120V L-N</text>
+
+  <!-- line-to-line span ~208V (measured quantity, lime): at x=100, L1 at +103.9V (y=50.56) to L3 at -103.9V
+       (y=109.44) while L2 crosses zero; endpoints sit ON the two non-zero curves, spanning 58.9px = 207.8V = sqrt(3) x 120 -->
+  <g stroke="#A1CC3A" stroke-width="1.5" stroke-linecap="round">
+    <line x1="100" y1="50.56" x2="100" y2="109.44"/>
+    <path d="M97 54.56 L100 50.56 L103 54.56"/>
+    <path d="M97 105.44 L100 109.44 L103 105.44"/>
+  </g>
+  <!-- callout moved out of the dense curve sweep into the clear lower margin (below the troughs at y=114,
+       right of the L2 and 120V L-N labels). The green double-arrow at x=100 stays put and still marks the
+       measured line-to-line span. -->
+  <text x="168" y="126" fill="#A1CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">208V</text>
+  <text x="168" y="138" fill="#A1CC3A" font-size="9" font-weight="500" text-anchor="middle">line-to-line</text>
+
+  <!-- Header -->
+  <text x="160" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">208V Three-Phase (Wye)</text>
+  <!-- Footer: the sqrt(3) relationship -->
+  <text x="160" y="150" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">three hots 120&#176; apart &#183; 120 &#215; &#8730;3 &#8776; 208</text>
+</svg>

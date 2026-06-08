@@ -142,7 +142,10 @@ void main() {
       // regulatory-domains, datetime-standards, data-units, hash-lengths,
       // regex-cheatsheet). The 5 improved existing screens edit tools that
       // already have help entries, so add no new entries. 101 + 14 = 115.
-      expect(store.count, 115);
+      // 121 = + the 6 Power & Cooling pages (power-phasing, ohms-law,
+      // cooling-thermal, iec-connectors, nema-connectors, international-plugs),
+      // merged in from feat/power-cooling-refs 2026-06-08. 115 + 6 = 121.
+      expect(store.count, 121);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help
