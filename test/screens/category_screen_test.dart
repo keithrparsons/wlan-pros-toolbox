@@ -10,6 +10,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
 import 'package:wlan_pros_toolbox/data/tool_subgroups.dart';
 import 'package:wlan_pros_toolbox/screens/category_screen.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 import 'package:wlan_pros_toolbox/widgets/section_header.dart';
 import 'package:wlan_pros_toolbox/widgets/tool_row.dart';
@@ -23,6 +25,37 @@ Widget _harness(ToolCategory cat, {Map<String, WidgetBuilder>? routes}) =>
       home: CategoryScreen(category: cat),
       routes: routes ?? <String, WidgetBuilder>{},
     );
+
+Widget _harnessWith(
+  ToolCategory cat, {
+  WifiInfoSource? source,
+  WiFiDetailsBridge? bridge,
+}) =>
+    MaterialApp(
+      theme: AppTheme.dark(),
+      home: CategoryScreen(
+        category: cat,
+        sourceOverride: source,
+        iosBridge: bridge,
+      ),
+    );
+
+/// Minimal fake bridge for the live-setup banner: only [hasEverReceivedPayload]
+/// and [openUrl] are exercised.
+class _FakeBridge implements WiFiDetailsBridge {
+  _FakeBridge({this.everReceived = false});
+
+  bool everReceived;
+
+  @override
+  Future<bool> hasEverReceivedPayload() async => everReceived;
+
+  @override
+  Future<bool> openUrl(String url) async => true;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 void main() {
   testWidgets('grouped category renders its section headers in order', (
@@ -134,5 +167,112 @@ void main() {
     final List<ToolSection> sections = groupedCategoryTools(_cat('test-network'));
     expect(sections, hasLength(1));
     expect(sections.single.tools.first.id, 'net-quality');
+  });
+
+  group('Test Network — one-time live-setup banner (iOS only)', () {
+    testWidgets(
+        'iOS + never received a payload SHOWS the actionable setup banner',
+        (tester) async {
+      tester.view.physicalSize = const Size(420, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(_harnessWith(
+        _cat('test-network'),
+        source: WifiInfoSource.iosShortcuts,
+        bridge: _FakeBridge(everReceived: false),
+      ));
+      await tester.pumpAndSettle();
+
+      // New iOS user, no payload ever → learn about the one-time Shortcut BEFORE
+      // tapping into a live tool. The banner carries the setup button.
+      expect(find.text('Set up live Wi-Fi (one-time)'), findsOneWidget);
+    });
+
+    testWidgets('iOS + already received a payload HIDES the banner (no nag)',
+        (tester) async {
+      tester.view.physicalSize = const Size(420, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(_harnessWith(
+        _cat('test-network'),
+        source: WifiInfoSource.iosShortcuts,
+        bridge: _FakeBridge(everReceived: true),
+      ));
+      await tester.pumpAndSettle();
+
+      // The Shortcut demonstrably works → the banner is gone permanently.
+      expect(find.text('Set up live Wi-Fi (one-time)'), findsNothing);
+    });
+
+    testWidgets('macOS never shows the banner (CoreWLAN, no Shortcut)',
+        (tester) async {
+      tester.view.physicalSize = const Size(420, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(_harnessWith(
+        _cat('test-network'),
+        source: WifiInfoSource.macosCoreWlan,
+        bridge: _FakeBridge(everReceived: false),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Set up live Wi-Fi (one-time)'), findsNothing);
+    });
+
+    testWidgets('the banner only appears on the Test Network category',
+        (tester) async {
+      tester.view.physicalSize = const Size(420, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(_harnessWith(
+        _cat('networking'),
+        source: WifiInfoSource.iosShortcuts,
+        bridge: _FakeBridge(everReceived: false),
+      ));
+      await tester.pumpAndSettle();
+
+      // Even on iOS + not set up, a non-Test-Network category has no banner.
+      expect(find.text('Set up live Wi-Fi (one-time)'), findsNothing);
+    });
+
+    testWidgets('tapping the banner button opens the install sheet',
+        (tester) async {
+      tester.view.physicalSize = const Size(420, 2600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(_harnessWith(
+        _cat('test-network'),
+        source: WifiInfoSource.iosShortcuts,
+        bridge: _FakeBridge(everReceived: false),
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Set up live Wi-Fi (one-time)'));
+      await tester.pumpAndSettle();
+
+      // The one-time onboarding sheet opens with the crystal-clear steps.
+      expect(find.text('Tap Add the Shortcut below.'), findsOneWidget);
+      expect(find.text('Add the Shortcut'), findsOneWidget);
+    });
   });
 }

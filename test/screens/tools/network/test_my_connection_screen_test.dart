@@ -32,8 +32,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:net_quality/net_quality.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/test_my_connection_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
+import 'package:wlan_pros_toolbox/services/network/live_onboarding_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
@@ -298,6 +300,88 @@ QualityResult _aboutSameInternet() => QualityResult(
   ],
 );
 
+/// A macOS adapter at an arbitrary Tx rate (Rx not exposed on public CoreWLAN,
+/// so usable Wi-Fi = 0.55 × Tx). Used by the same-tier hero tests to pin the
+/// Wi-Fi axis onto a chosen absolute tier: Tx 720 → usable 396 (Strong),
+/// Tx 360 → usable 198 (Moderate), Tx 120 → usable 66 (Weak).
+class _TxLinkMacAdapter implements WifiInfoAdapter {
+  _TxLinkMacAdapter(this.txRateMbps);
+  final double txRateMbps;
+
+  @override
+  String get platformLabel => 'macOS CoreWLAN';
+  @override
+  bool get gatesNameBehindPermission => true;
+  @override
+  Future<ConnectedAp> fetch() async => ConnectedAp.fromWifiInfo(
+    WifiInfo(
+      interfaceName: 'en0',
+      ssid: 'KeithNet',
+      bssid: 'a4:83:e7:00:11:22',
+      rssiDbm: -55,
+      noiseDbm: -92,
+      snrDb: 37,
+      txRateMbps: txRateMbps,
+      phyMode: '802.11ax',
+      channel: 36,
+      channelWidthMhz: 80,
+      band: '5 GHz',
+      countryCode: 'US',
+      hardwareAddress: 'a4:83:e7:aa:bb:cc',
+      poweredOn: true,
+      locationAuthorized: true,
+    ),
+  );
+  @override
+  Future<bool> requestNamePermission() async => true;
+  @override
+  Future<bool> currentNameAuthorization() async => true;
+  @override
+  Future<bool> openNamePermissionSettings() async => true;
+}
+
+/// An internet result at a chosen down/up (avg sets the absolute tier). Grade
+/// defaults to `fair` so the engine does NOT short-circuit to bothHealthy and
+/// the rate-driven chip tiers are what the hero reads.
+QualityResult _internetAt({
+  required double down,
+  required double up,
+  QualityGrade grade = QualityGrade.fair,
+}) => QualityResult(
+  source: QualitySource.mock,
+  measuredAt: DateTime.utc(2026, 1, 1),
+  metrics: <QualityMetric>[
+    const QualityMetric(
+      id: MetricIds.latency,
+      label: 'Latency',
+      value: 18,
+      unit: 'ms',
+      grade: QualityGrade.good,
+    ),
+    const QualityMetric(
+      id: MetricIds.loss,
+      label: 'Loss',
+      value: 0,
+      unit: '%',
+      grade: QualityGrade.good,
+    ),
+    QualityMetric(
+      id: MetricIds.download,
+      label: 'Download',
+      value: down,
+      unit: 'Mbps',
+      grade: grade,
+    ),
+    QualityMetric(
+      id: MetricIds.upload,
+      label: 'Upload',
+      value: up,
+      unit: 'Mbps',
+      grade: grade,
+    ),
+  ],
+);
+
 /// A macOS adapter whose link rate is LOW (Tx 30 Mbps) so usable Wi-Fi capacity
 /// (16.5 Mbps) sits well below a marginal internet (avg 40), producing the
 /// `wifiLimiter` verdict → outcome `wifi` and a "slower" % comparison.
@@ -378,6 +462,35 @@ class _StaleFlagBridge implements WiFiDetailsBridge {
   Stream<WiFiDetails> get updates => const Stream<WiFiDetails>.empty();
 }
 
+/// A brand-new iOS user's bridge: the app has NEVER received a Live payload, so
+/// the honest install-state signal is `false` and the mandatory first-run
+/// onboarding must fire. Records [openUrl] calls so a test can prove the sheet
+/// deep-links into Shortcuts.
+class _FreshBridge implements WiFiDetailsBridge {
+  int openUrlCalls = 0;
+  String? lastOpenedUrl;
+
+  @override
+  Future<bool> hasEverReceivedPayload() async => false;
+  @override
+  Future<WiFiDetails?> readLatest() async => null;
+  @override
+  Future<bool> isMonitoringActive() async => false;
+  @override
+  Future<void> setMonitoringActive(bool active) async {}
+  @override
+  Future<bool> openUrl(String url) async {
+    openUrlCalls++;
+    lastOpenedUrl = url;
+    return true;
+  }
+
+  @override
+  Future<bool> runShortcut(String name) async => true;
+  @override
+  Stream<WiFiDetails> get updates => const Stream<WiFiDetails>.empty();
+}
+
 void main() {
   Widget hostTheme(Widget child, ThemeData theme, {Size? size}) => MaterialApp(
     theme: theme,
@@ -450,13 +563,16 @@ void main() {
       expect(heroText.style?.fontSize, 36);
 
       // Both labeled axis chips remain, each carrying its own word + glyph.
-      // internet outcome → Wi-Fi: Fine, Internet: Slow.
+      // REVISION 2: absolute 3-tier per axis. iOS link rxRate 780 / txRate 866 →
+      // usable Wi-Fi 452.65 Mbps (> 250) → Wi-Fi: Strong (success/green). Internet
+      // _marginalInternet down 60 / up 20 → avg 40 Mbps (< 100) → Internet: Weak
+      // (danger/red). Each chip carries its WORD + the §8.13 glyph, never color-only.
       expect(find.text('Wi-Fi:'), findsOneWidget);
       expect(find.text('Internet:'), findsOneWidget);
-      expect(find.text('Fine'), findsOneWidget);
-      expect(find.text('Slow'), findsOneWidget);
-      expect(find.byIcon(Icons.check_circle_outline), findsOneWidget); // Fine
-      expect(find.byIcon(Icons.warning_amber_outlined), findsOneWidget); // Slow
+      expect(find.text('Strong'), findsOneWidget);
+      expect(find.text('Weak'), findsOneWidget);
+      expect(find.byIcon(Icons.check_circle_outline), findsOneWidget); // Strong
+      expect(find.byIcon(Icons.error_outline), findsOneWidget); // Weak
     },
   );
 
@@ -488,7 +604,7 @@ void main() {
 
   testWidgets(
     'the VERDICT LINE names Wi-Fi as the weak link when usable Wi-Fi is below '
-    'the internet rate',
+    'the internet rate AND the two axes are on different tiers',
     (tester) async {
       await tester.pumpWidget(
         host(
@@ -496,17 +612,129 @@ void main() {
             enableLiveSampling: false,
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: _SlowLinkMacAdapter(),
+            // usable Wi-Fi = 16.5 (< 100 → Weak); internet avg 200/100 = 150
+            // (100-250 → Moderate). DIFFERENT tiers, so the limiter wording
+            // stays — the chips do not contradict it.
             qualityClient: MockQualityClient(
-              scriptedResult: _marginalInternet(),
+              scriptedResult: _internetAt(down: 200, up: 100),
             ),
           ),
         ),
       );
       await runCheck(tester);
 
-      // usable Wi-Fi (16.5) sits below measured internet (40) → Wi-Fi limits.
+      // usable Wi-Fi (16.5, Weak) sits below measured internet (150, Moderate)
+      // → different tiers → Wi-Fi limits, the "weak link" wording is correct.
       expect(
         find.text('Your Wi-Fi is the weak link right now.'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'SAME-TIER: the VERDICT LINE and the reading line drop the "weak link" / '
+    '"boost the Wi-Fi" wording and read by margin (Wi-Fi ahead, both Moderate)',
+    (tester) async {
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: false,
+            sourceOverride: WifiInfoSource.macosCoreWlan,
+            // Tx 360 → usable 198 (Moderate). internet 200/100 → avg 150
+            // (Moderate). Same tier; usable is +32% → Wi-Fi has more headroom.
+            macAdapter: _TxLinkMacAdapter(360),
+            qualityClient: MockQualityClient(
+              scriptedResult: _internetAt(down: 200, up: 100),
+            ),
+          ),
+        ),
+      );
+      await runCheck(tester);
+
+      // The hero reframes by margin (Wi-Fi slightly ahead).
+      expect(
+        find.text('Both sides are moderate. Your Wi-Fi is slightly ahead.'),
+        findsOneWidget,
+      );
+      // The secondary verdict line NEVER names Wi-Fi the weak link in same-tier.
+      expect(find.text('Your Wi-Fi is the weak link right now.'), findsNothing);
+      expect(
+        find.text(
+          'Both your Wi-Fi and your internet are moderate; your Wi-Fi has a '
+          'little more headroom right now.',
+        ),
+        findsOneWidget,
+      );
+      // The reading line NEVER says "boost the Wi-Fi" / "internet can carry
+      // more" when both sides share a tier.
+      expect(find.textContaining('Boost the Wi-Fi signal'), findsNothing);
+      expect(
+        find.textContaining('internet can carry more than your Wi-Fi'),
+        findsNothing,
+      );
+      expect(
+        find.text(
+          'Your Wi-Fi link has a little more headroom, but both sides are in '
+          'the same range right now.',
+        ),
+        findsOneWidget,
+      );
+      // The % comparison line still reads "32% faster" — all four agree.
+      expect(
+        find.text(
+          'Your Wi-Fi link is 32% faster than your internet connection.',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'SAME-TIER about-the-same: hero, verdict line, reading line and % line all '
+    'agree (both Moderate, within +/-10%)',
+    (tester) async {
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: false,
+            sourceOverride: WifiInfoSource.macosCoreWlan,
+            // Tx 360 → usable 198 (Moderate). internet 240/160 → avg 200
+            // (Moderate). |delta| = 1% → within the +/-10% band.
+            macAdapter: _TxLinkMacAdapter(360),
+            qualityClient: MockQualityClient(
+              scriptedResult: _internetAt(down: 240, up: 160),
+            ),
+          ),
+        ),
+      );
+      await runCheck(tester);
+
+      expect(
+        find.text('Both sides are moderate. They’re about the same speed.'),
+        findsOneWidget,
+      );
+      expect(find.text('Your Wi-Fi is the weak link right now.'), findsNothing);
+      expect(
+        find.text(
+          'Both your Wi-Fi and your internet are moderate, and running at about '
+          'the same speed.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Boost the Wi-Fi signal'), findsNothing);
+      expect(
+        find.text(
+          'Your Wi-Fi link and your internet are carrying about the same. '
+          'Neither side is clearly holding you back right now.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'Your Wi-Fi link and your internet connection are running at about '
+          'the same speed.',
+        ),
         findsOneWidget,
       );
     },
@@ -1076,6 +1304,348 @@ void main() {
         expect(sampler.isStreaming, isTrue);
         expect(find.text('LIVE'), findsOneWidget);
         expect(find.text('Start'), findsNothing);
+      },
+    );
+  });
+
+  // ==========================================================================
+  // Mandatory one-time "enable live Wi-Fi" onboarding (WiFiman pattern).
+  //
+  // The front door is the FIRST live surface most users hit, so the unmissable
+  // one-time setup must lead from HERE — a user can never run the comparison
+  // check first and only afterward discover the companion Shortcut exists. The
+  // gate is the honest composite (never-received-payload AND not-seen-before)
+  // and it is iOS-only.
+  // ==========================================================================
+  group('TestMyConnectionScreen — mandatory first-run onboarding (iOS)', () {
+    /// An onboarding service backed by an in-memory SharedPreferences store, so
+    /// the gate is exercised end to end without touching a real platform
+    /// channel. [seen] seeds the persisted "already shown" flag.
+    LiveOnboardingService onboardingSvc({bool seen = false}) {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        if (seen) LiveOnboardingService.prefsKey: true,
+      });
+      return LiveOnboardingService(getStore: SharedPreferences.getInstance);
+    }
+
+    testWidgets(
+      'fires ONCE on first open of the front door and deep-links to Shortcuts '
+      '(never-received payload, not seen before)',
+      (tester) async {
+        final bridge = _FreshBridge();
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              sourceOverride: WifiInfoSource.iosShortcuts,
+              iosBridge: bridge,
+              onboardingService: onboardingSvc(),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // The one-time setup sheet auto-presented BEFORE any check — the user
+        // is led to enable live Wi-Fi, not left to hit a wall.
+        expect(find.text('Set up live Wi-Fi'), findsOneWidget);
+        expect(find.text('Tap Add the Shortcut below.'), findsOneWidget);
+        // The no-Location trust signal is led, per the brief.
+        expect(find.textContaining('No Location permission'), findsOneWidget);
+
+        // Tapping "Add the Shortcut" deep-links into Shortcuts (openUrl), the
+        // WiFiman install bounce.
+        await tester.tap(find.text('Add the Shortcut'));
+        await tester.pumpAndSettle();
+        expect(bridge.openUrlCalls, 1);
+      },
+    );
+
+    testWidgets(
+      'does NOT fire when the app has EVER received a payload (already set up)',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              sourceOverride: WifiInfoSource.iosShortcuts,
+              iosBridge: _PayloadBridge(), // hasEverReceivedPayload == true
+              onboardingService: onboardingSvc(),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // A user who demonstrably has the Shortcut working is never nagged.
+        expect(find.text('Set up live Wi-Fi'), findsNothing);
+        // The normal front-door idle state is shown instead.
+        expect(find.text('Check My Connection'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'does NOT fire when the onboarding sheet was already shown once',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              sourceOverride: WifiInfoSource.iosShortcuts,
+              iosBridge: _FreshBridge(),
+              onboardingService: onboardingSvc(seen: true),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // One-time: the persisted seen-flag suppresses the sheet on every later
+        // open, even though the Shortcut is not yet demonstrably working.
+        expect(find.text('Set up live Wi-Fi'), findsNothing);
+        expect(find.text('Check My Connection'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'does NOT fire on macOS (CoreWLAN reads natively — iOS-only flow)',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              sourceOverride: WifiInfoSource.macosCoreWlan,
+              macAdapter: _FakeMacAdapter(),
+              onboardingService: onboardingSvc(),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Set up live Wi-Fi'), findsNothing);
+        expect(find.text('Check My Connection'), findsOneWidget);
+      },
+    );
+  });
+
+  // ---- SAME-TIER HERO (2026-06-07, Vera gate / Keith) ----
+  //
+  // When BOTH absolute axis chips land on the SAME real tier, the hero is worded
+  // by MARGIN (the same +/-10% band the comparison line uses) instead of naming a
+  // "slow part / limit". The different-tier hero is unchanged.
+  group('same-tier hero', () {
+    testWidgets(
+      'strong/strong within +/-10% reads "Both sides are strong. They’re about '
+      'the same speed."',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              sourceOverride: WifiInfoSource.macosCoreWlan,
+              // Tx 720 → usable Wi-Fi 396 (Strong). Internet 440/360 → avg 400
+              // (Strong). margin = round(100*(396-400)/400) = -1% → about same.
+              macAdapter: _TxLinkMacAdapter(720),
+              qualityClient: MockQualityClient(
+                scriptedResult: _internetAt(down: 440, up: 360),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+
+        final Finder hero = find.text(
+          'Both sides are strong. They’re about the same speed.',
+        );
+        expect(hero, findsOneWidget);
+        // Still the H1 hero — headlineLarge / 36px.
+        expect(tester.widget<Text>(hero).style?.fontSize, 36);
+        // Both chips read Strong; no "slow part / limit" wording.
+        expect(find.text('Strong'), findsNWidgets(2));
+        expect(find.textContaining('slow part'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'moderate/moderate with Wi-Fi ahead reads "Both sides are moderate. Your '
+      'Wi-Fi is slightly ahead."',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              sourceOverride: WifiInfoSource.macosCoreWlan,
+              // Tx 360 → usable Wi-Fi 198 (Moderate). Internet 200/100 → avg 150
+              // (Moderate). margin = round(100*(198-150)/150) = 32% → Wi-Fi ahead.
+              macAdapter: _TxLinkMacAdapter(360),
+              qualityClient: MockQualityClient(
+                scriptedResult: _internetAt(down: 200, up: 100),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+
+        expect(
+          find.text('Both sides are moderate. Your Wi-Fi is slightly ahead.'),
+          findsOneWidget,
+        );
+        expect(find.text('Moderate'), findsNWidgets(2));
+        expect(find.textContaining('slow part'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'moderate/moderate with internet ahead names the internet side',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              sourceOverride: WifiInfoSource.macosCoreWlan,
+              // Tx 240 → usable Wi-Fi 132 (Moderate). Internet 220/160 → avg 190
+              // (Moderate). margin = round(100*(132-190)/190) = -31% → internet
+              // ahead.
+              macAdapter: _TxLinkMacAdapter(240),
+              qualityClient: MockQualityClient(
+                scriptedResult: _internetAt(down: 220, up: 160),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+
+        expect(
+          find.text(
+            'Both sides are moderate. Your internet is slightly ahead.',
+          ),
+          findsOneWidget,
+        );
+        expect(find.text('Moderate'), findsNWidgets(2));
+      },
+    );
+
+    testWidgets(
+      'moderate/moderate within +/-10% reads "about the same speed"',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              sourceOverride: WifiInfoSource.macosCoreWlan,
+              // Tx 360 → usable Wi-Fi 198 (Moderate). Internet 240/160 → avg 200
+              // (Moderate). margin = round(100*(198-200)/200) = -1% → about same.
+              macAdapter: _TxLinkMacAdapter(360),
+              qualityClient: MockQualityClient(
+                scriptedResult: _internetAt(down: 240, up: 160),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+
+        expect(
+          find.text('Both sides are moderate. They’re about the same speed.'),
+          findsOneWidget,
+        );
+        expect(find.text('Moderate'), findsNWidgets(2));
+      },
+    );
+
+    testWidgets(
+      'weak/weak within +/-10% reads "Both sides are weak. They’re about the '
+      'same speed."',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              sourceOverride: WifiInfoSource.macosCoreWlan,
+              // Tx 120 → usable Wi-Fi 66 (Weak). Internet 80/40 → avg 60 (Weak).
+              // margin = round(100*(66-60)/60) = 10% → within band → about same.
+              macAdapter: _TxLinkMacAdapter(120),
+              qualityClient: MockQualityClient(
+                scriptedResult: _internetAt(down: 80, up: 40),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+
+        expect(
+          find.text('Both sides are weak. They’re about the same speed.'),
+          findsOneWidget,
+        );
+        expect(find.text('Weak'), findsNWidgets(2));
+        // The HERO no longer names a slow part; the separate verdict LINE keeps
+        // its existing "weak link" wording (unchanged by this fix).
+        expect(find.textContaining('Your Wi-Fi is the slow part'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'weak/weak with Wi-Fi ahead names the Wi-Fi side',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              sourceOverride: WifiInfoSource.macosCoreWlan,
+              // Tx 120 → usable Wi-Fi 66 (Weak). Internet 40/20 → avg 30 (Weak).
+              // margin = round(100*(66-30)/30) = 120% → Wi-Fi ahead.
+              macAdapter: _TxLinkMacAdapter(120),
+              qualityClient: MockQualityClient(
+                scriptedResult: _internetAt(down: 40, up: 20),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+
+        expect(
+          find.text('Both sides are weak. Your Wi-Fi is slightly ahead.'),
+          findsOneWidget,
+        );
+        expect(find.text('Weak'), findsNWidgets(2));
+      },
+    );
+
+    testWidgets(
+      'DIFFERENT-tier hero is UNCHANGED: strong Wi-Fi + weak internet still '
+      'names the internet as the slow part (no "Both sides are")',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              sourceOverride: WifiInfoSource.macosCoreWlan,
+              // Tx 720 → usable Wi-Fi 396 (Strong). Internet 60/20 → avg 40
+              // (Weak). Different tiers → existing "slow part" wording stands.
+              macAdapter: _TxLinkMacAdapter(720),
+              qualityClient: MockQualityClient(
+                scriptedResult: _internetAt(down: 60, up: 20),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+
+        expect(
+          find.text('Your internet is the slow part.'),
+          findsOneWidget,
+        );
+        expect(find.textContaining('Both sides are'), findsNothing);
+        expect(find.text('Strong'), findsOneWidget);
+        expect(find.text('Weak'), findsOneWidget);
       },
     );
   });

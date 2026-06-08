@@ -1124,11 +1124,12 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
     // Material [icon] above if the asset is ever absent from the bundle.
     iconAsset: 'assets/tool-icons/educational-resources.svg',
     exampleToolTitles: <String>['Reference Cards', 'Blogs', 'Podcasts'],
-    // 48 = 11 in-app references (10 PDF cards + Antenna Fundamentals, moved here
-    // 2026-06-06 BF6-3) + 37 online resources (39 − the 2 Wi-Fi Design Day
-    // entries removed 2026-06-06 BF6-21). The count-guard test recomputes this
-    // from the catalog tool count + the bundled JSON `_meta.count`.
-    countLabelOverride: '48',
+    // 49 = 11 in-app references (10 PDF cards + Antenna Fundamentals, moved here
+    // 2026-06-06 BF6-3) + 38 online resources (WiFi Training added 2026-06-07
+    // under Training Providers; MackenzieWiFi re-added 2026-06-08, site back up
+    // over http). The count-guard test recomputes this from the catalog tool
+    // count + the bundled JSON `_meta.count`.
+    countLabelOverride: '49',
     tools: <ToolEntry>[
       // The 6 PDF reference cards.
       ToolEntry(

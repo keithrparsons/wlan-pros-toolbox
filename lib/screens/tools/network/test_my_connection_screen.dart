@@ -37,6 +37,7 @@ import 'package:net_quality/net_quality.dart';
 import '../../../services/network/connected_ap.dart';
 import '../../../services/network/connection_check.dart';
 import '../../../services/network/consumer_verdict.dart';
+import '../../../services/network/live_onboarding_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/wifi_details_bridge.dart';
 import '../../../services/network/wifi_grading.dart';
@@ -78,6 +79,7 @@ class TestMyConnectionScreen extends StatefulWidget {
     this.startExpanded = false,
     this.sampler,
     this.enableLiveSampling = true,
+    this.onboardingService,
   });
 
   /// When true, the check runs automatically on first mount instead of waiting
@@ -116,6 +118,12 @@ class TestMyConnectionScreen extends StatefulWidget {
   /// the live card disable it so no poll timer ticks). Production leaves it on.
   final bool enableLiveSampling;
 
+  /// Injectable first-run onboarding gate (tests). Defaults to the real
+  /// shared_preferences-backed service. iOS-only — the front door must lead the
+  /// one-time "enable live Wi-Fi" setup so a user can never run the test first
+  /// and never be told about the companion Shortcut.
+  final LiveOnboardingService? onboardingService;
+
   @override
   State<TestMyConnectionScreen> createState() => _TestMyConnectionScreenState();
 }
@@ -125,7 +133,11 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   late final WifiInfoSource _source;
   WifiInfoAdapter? _macAdapter;
   WiFiDetailsBridge? _iosBridge;
+  LiveOnboardingService? _onboardingService;
   late final QualityClient _quality;
+
+  /// Fires the unmissable first-run onboarding at most once per mount.
+  bool _firstRunChecked = false;
 
   /// The shared live-RF sampler that feeds the "Wi-Fi signal" sparkline card.
   /// Continuous while the screen is open (macOS auto-polls; iOS streams via the
@@ -178,6 +190,13 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         _macAdapter = widget.macAdapter ?? AndroidWifiInfoAdapter();
       case WifiInfoSource.iosShortcuts:
         _iosBridge = widget.iosBridge ?? WiFiDetailsBridge();
+        // The front door is the FIRST live surface most users hit. The mandatory
+        // one-time "enable live Wi-Fi" onboarding must lead from HERE so a user
+        // can never run the comparison check first and only afterward discover
+        // the companion Shortcut exists (the exact beta confusion — Pax
+        // 2026-06-07). iOS-only; the gate is honest and one-time.
+        _onboardingService =
+            widget.onboardingService ?? LiveOnboardingService();
       case WifiInfoSource.unsupported:
       case WifiInfoSource.web:
         break;
@@ -227,11 +246,47 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       }
     }
 
+    // Unmissable first-run onboarding (iOS only): the first time ANY live tool
+    // is opened — including this front door — and the companion Shortcut is not
+    // demonstrably working, present the one-time "enable live Wi-Fi" setup sheet
+    // before the user can run a check and hit a wall. Scheduled post-frame so the
+    // sheet has a built context to mount into.
+    if (_source == WifiInfoSource.iosShortcuts) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _maybeShowFirstRunOnboarding();
+      });
+    }
+
     if (widget.autoStart) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _run();
       });
     }
+  }
+
+  /// iOS first-run: fires the unmissable one-time "enable live Wi-Fi" sheet on
+  /// the first open of the front door, gated by the SAME honest composite signal
+  /// wifi-info uses — the app has NEVER received a Live payload AND the sheet has
+  /// not been shown before. Marks the sheet seen the instant it is presented so
+  /// it never nags again (the persisted flag plus the App Group hasEverReceived
+  /// signal make this truly one-time across every live tool). No-op off the iOS
+  /// source. Never throws.
+  Future<void> _maybeShowFirstRunOnboarding() async {
+    if (_firstRunChecked) return;
+    _firstRunChecked = true;
+    final LiveOnboardingService? svc = _onboardingService;
+    final WiFiDetailsBridge? bridge = _iosBridge;
+    if (svc == null || bridge == null) return;
+    final bool everReceived = await bridge.hasEverReceivedPayload();
+    final bool show = await svc.shouldShowOnboarding(
+      hasEverReceivedPayload: everReceived,
+    );
+    if (!show || !mounted) return;
+    // Mark seen BEFORE awaiting the sheet so a rapid second open cannot queue a
+    // second sheet, and so it stays one-time even if the user dismisses it.
+    await svc.markOnboardingSeen();
+    if (!mounted) return;
+    await _openShortcutSheet();
   }
 
   @override
@@ -689,7 +744,17 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
 
   /// (A) The plain-language VERDICT HERO sentence (§2.A), one per outcome. Short,
   /// active, second person, most-important-first — FK ≤ 8.0 each.
+  ///
+  /// SAME-TIER OVERRIDE (2026-06-07, Vera gate / Keith): the per-axis chips are
+  /// now ABSOLUTE tiers (Strong / Moderate / Weak). When BOTH chips land on the
+  /// SAME real tier (e.g. Moderate Wi-Fi + Moderate internet), naming a "slow
+  /// part" or "limit" contradicts two equal chips for the non-technical reader.
+  /// In that case word the hero by MARGIN instead — see [_sameTierHero]. The
+  /// different-tier outcomes keep their existing "slow part / limit" wording.
   String _heroSentence(ConsumerVerdict verdict) {
+    final String? sameTier = _sameTierHero(verdict);
+    if (sameTier != null) return sameTier;
+
     switch (verdict.outcome) {
       case ConsumerOutcome.wifi:
         return 'Your Wi-Fi is the slow part.';
@@ -706,11 +771,71 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     }
   }
 
+  /// The same-tier hero sentence, or null when the two axes are NOT on the same
+  /// real tier (the caller then falls through to the existing per-outcome wording).
+  ///
+  /// Fires only when [ConsumerVerdict.wifiStatus] equals
+  /// [ConsumerVerdict.internetStatus] AND both are a real tier (Strong / Moderate
+  /// / Weak — never [AxisStatus.unknown], so the couldn't-check rows are left
+  /// alone). Margin reuses the SAME +/-10% band as [_comparisonLine]: within the
+  /// band both sides read "about the same speed"; outside it, the side with the
+  /// higher measured rate is "slightly ahead".
+  ///
+  /// Returns null (deferring to the outcome wording) when either rate is missing
+  /// or the internet rate is ~0 — the same honest guard the comparison line uses,
+  /// so the hero never asserts a margin from a figure it does not have (GL-005).
+  String? _sameTierHero(ConsumerVerdict verdict) {
+    final AxisStatus tier = verdict.wifiStatus;
+    if (tier != verdict.internetStatus || tier == AxisStatus.unknown) {
+      return null;
+    }
+
+    final double? usable = _engine?.usableWifiMbps;
+    final double? internet = _engine?.internetAvgMbps;
+    if (usable == null || internet == null || internet < 0.5) return null;
+
+    final String tierWord = _lowerTierWord(tier);
+    final double deltaPct = 100 * (usable - internet) / internet;
+    if (deltaPct.abs() <= 10) {
+      return 'Both sides are $tierWord. They’re about the same speed.';
+    }
+    // Name whichever side measured the higher rate as "slightly ahead".
+    final String ahead = deltaPct > 0 ? 'Wi-Fi' : 'internet';
+    return 'Both sides are $tierWord. Your $ahead is slightly ahead.';
+  }
+
+  /// The lowercase tier word for the same-tier hero sentence ("strong" /
+  /// "moderate" / "weak"). [AxisStatus.unknown] never reaches here — the
+  /// same-tier branch excludes it — so it defers to the chip word defensively.
+  static String _lowerTierWord(AxisStatus tier) {
+    switch (tier) {
+      case AxisStatus.strong:
+        return 'strong';
+      case AxisStatus.moderate:
+        return 'moderate';
+      case AxisStatus.weak:
+        return 'weak';
+      case AxisStatus.unknown:
+        return _TwoAxisChips.word(tier);
+    }
+  }
+
   /// The plain, state-driven VERDICT LINE that names the limiter (item #4). It
   /// maps off the SAME verdict classification the engine produced — the line and
   /// the comparison bars always agree. The "could not check one side" rows keep
   /// an honest neutral line and never assert a verdict we do not have (GL-005).
+  ///
+  /// SAME-TIER OVERRIDE (2026-06-07): when BOTH absolute axis chips land on the
+  /// same real tier, naming one side "the weak link" / "the limit" contradicts
+  /// two equal chips AND the hero's margin framing (the engine's comparative
+  /// `wifiLimiter` verdict fires off the 0.70 headroom ratio, a DIFFERENT basis
+  /// than the absolute usable-vs-internet comparison the chips/hero/% line use).
+  /// In that case the line is worded by MARGIN to match — see [_sameTierVerdictLine].
+  /// Different-tier outcomes keep their existing "weak link / limit" wording.
   String _verdictLine(ConsumerVerdict verdict) {
+    final String? sameTier = _sameTierVerdictLine(verdict);
+    if (sameTier != null) return sameTier;
+
     switch (verdict.outcome) {
       case ConsumerOutcome.wifi:
       case ConsumerOutcome.wifiLead:
@@ -731,6 +856,38 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         return 'We could not read your Wi-Fi or your internet. Make sure you '
             'are on Wi-Fi, then try again.';
     }
+  }
+
+  /// The same-tier VERDICT LINE, or null when the two axes are NOT on the same
+  /// real tier (the caller then falls through to the existing limiter wording).
+  ///
+  /// Mirrors [_sameTierHero] exactly — same equal-real-tier guard, same usable
+  /// Wi-Fi vs internet basis, same +/-10% margin band — so the hero, this line,
+  /// and the % comparison line never disagree. Within the band both sides read
+  /// "about the same"; outside it the higher-rate side has "a little more
+  /// headroom" (never naming the lower side "the weak link" / "the limit", which
+  /// would contradict two equal chips and the % line). Returns null on a missing
+  /// or ~0 internet figure so the line never asserts a margin it cannot back
+  /// (GL-005).
+  String? _sameTierVerdictLine(ConsumerVerdict verdict) {
+    final AxisStatus tier = verdict.wifiStatus;
+    if (tier != verdict.internetStatus || tier == AxisStatus.unknown) {
+      return null;
+    }
+
+    final double? usable = _engine?.usableWifiMbps;
+    final double? internet = _engine?.internetAvgMbps;
+    if (usable == null || internet == null || internet < 0.5) return null;
+
+    final String tierWord = _lowerTierWord(tier);
+    final double deltaPct = 100 * (usable - internet) / internet;
+    if (deltaPct.abs() <= 10) {
+      return 'Both your Wi-Fi and your internet are $tierWord, and running at '
+          'about the same speed.';
+    }
+    final String ahead = deltaPct > 0 ? 'Wi-Fi' : 'internet';
+    return 'Both your Wi-Fi and your internet are $tierWord; your $ahead has a '
+        'little more headroom right now.';
   }
 
   /// The DIRECT COMPARISON sentence (item #5): a single headline answer comparing
@@ -907,16 +1064,12 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   Future<void> _openShortcutSheet() async {
     final WiFiDetailsBridge? bridge = _iosBridge;
     if (bridge == null) return;
-    await showModalBottomSheet<void>(
+    await showInstallShortcutSheet(
       context: context,
-      backgroundColor: context.colors.surface2,
-      isScrollControlled: true,
-      builder: (_) => InstallShortcutSheet(
-        bridge: bridge,
-        onInstalled: () async {
-          if (mounted) _run();
-        },
-      ),
+      openUrl: bridge.openUrl,
+      onInstalled: () async {
+        if (mounted) _run();
+      },
     );
   }
 
@@ -1084,12 +1237,16 @@ class _TwoAxisChips extends StatelessWidget {
   final AxisStatus internetStatus;
 
   /// Plain status WORD — the single source the card, chip, and SR label share.
+  /// REVISION 2 (2026-06-07): the 3-tier absolute scale — Strong / Moderate /
+  /// Weak — plus the honest "Couldn't check" for an unmeasured side (GL-005).
   static String word(AxisStatus s) {
     switch (s) {
-      case AxisStatus.fine:
-        return 'Fine';
-      case AxisStatus.slow:
-        return 'Slow';
+      case AxisStatus.strong:
+        return 'Strong';
+      case AxisStatus.moderate:
+        return 'Moderate';
+      case AxisStatus.weak:
+        return 'Weak';
       case AxisStatus.unknown:
         return "Couldn't check";
     }
@@ -1154,10 +1311,16 @@ class _StatusChip extends StatelessWidget {
   /// glyph and border; in light it is the §8.20.4 solid pill fill.
   Color _color(AppColorScheme colors) {
     switch (status) {
-      case AxisStatus.fine:
+      // REVISION 2 (2026-06-07) — §8.13 verdict hues, one per tier:
+      // Strong → success (green), Moderate → warning (amber), Weak → danger
+      // (red). The WORD carries the meaning; the hue reinforces it (never
+      // color-only, §8.13 rule 2 / WCAG 2.2 SC 1.4.1).
+      case AxisStatus.strong:
         return colors.statusSuccess;
-      case AxisStatus.slow:
+      case AxisStatus.moderate:
         return colors.statusWarning;
+      case AxisStatus.weak:
+        return colors.statusDanger;
       case AxisStatus.unknown:
         // Light: neutral textSecondary #4A4A4A fill, matching the _GradeChip
         // no-hue fills across TMC / wifi_info / net_quality. Dark stays on
@@ -1171,10 +1334,17 @@ class _StatusChip extends StatelessWidget {
   /// variant so the dark render is byte-identical.
   IconData _icon(bool light) {
     switch (status) {
-      case AxisStatus.fine:
+      // REVISION 2 (2026-06-07) — the §8.13 status glyph per tier. Light uses
+      // the FILLED variant (white knockout on the solid pill, §8.20.4); dark
+      // keeps the OUTLINED variant so the dark render stays byte-stable.
+      case AxisStatus.strong:
         return light ? Icons.check_circle : Icons.check_circle_outline;
-      case AxisStatus.slow:
+      case AxisStatus.moderate:
         return light ? Icons.warning_amber : Icons.warning_amber_outlined;
+      case AxisStatus.weak:
+        // `error` is the §8.13 danger glyph (rule 2). Filled in light, outlined
+        // in dark — a failing-rate verdict, not a "fault we can't read".
+        return light ? Icons.error : Icons.error_outline;
       case AxisStatus.unknown:
         // §1.1 — the "couldn't check" glyph is `help_outline`, NOT error /
         // cancel / block / remove. Those carry "fault"; this reads "unknown /
@@ -1297,7 +1467,19 @@ class _ComparisonCard extends StatelessWidget {
   /// The plain reading line beneath the bars, derived from the engine verdict so
   /// the words and the bar heights agree. No new verdict math — it reads the
   /// already-computed verdict and reuses the engine's usable-capacity figure.
+  ///
+  /// SAME-TIER OVERRIDE (2026-06-07): the bars compare ABSOLUTE usable Wi-Fi vs
+  /// internet, and the chips/hero/% line bucket those same two rates into Strong
+  /// / Moderate / Weak tiers. When both rates land on the SAME real tier, the
+  /// "Boost the Wi-Fi signal" / "internet can carry more" wording (which keys off
+  /// the engine's 0.70 headroom-ratio `wifiLimiter`/`bothContributing` verdict, a
+  /// DIFFERENT basis) contradicts two equal chips and a "Wi-Fi N% faster" line.
+  /// In that case the reading line is worded by MARGIN to match — see
+  /// [_sameTierReadingLine]. Different-tier verdicts keep their existing wording.
   String _readingLine() {
+    final String? sameTier = _sameTierReadingLine();
+    if (sameTier != null) return sameTier;
+
     switch (result.verdict) {
       case WifiVsInternetVerdict.wifiLimiter:
         return 'Your internet can carry more than your Wi-Fi link is passing. '
@@ -1318,6 +1500,36 @@ class _ComparisonCard extends StatelessWidget {
             : 'We could not read your Wi-Fi link, so only the internet side is '
                 'shown.';
     }
+  }
+
+  /// The same-tier reading line, or null when the two rates are NOT on the same
+  /// real tier (the caller then falls through to the engine-verdict wording).
+  ///
+  /// Buckets the SAME two rates the bars draw — [WifiVsInternetResult.usableWifiMbps]
+  /// and [WifiVsInternetResult.internetAvgMbps] — into Strong / Moderate / Weak via
+  /// [AxisStatusThresholds.tierFor], the EXACT source the consumer chips use, so
+  /// "same tier" here means the same thing the chips show. Fires only when both
+  /// rates are real (non-null, internet not ~0) and land on the same real tier;
+  /// then it words the line by the +/-10% margin band (matching the hero, the
+  /// secondary line, and the % comparison line) and never names either side "the
+  /// weak link" / "boost the Wi-Fi" / "the slower part". Null otherwise (GL-005).
+  String? _sameTierReadingLine() {
+    final double? usable = result.usableWifiMbps;
+    final double? internet = result.internetAvgMbps;
+    if (usable == null || internet == null || internet < 0.5) return null;
+
+    final AxisStatus wifiTier = AxisStatusThresholds.tierFor(usable);
+    final AxisStatus internetTier = AxisStatusThresholds.tierFor(internet);
+    if (wifiTier != internetTier || wifiTier == AxisStatus.unknown) return null;
+
+    final double deltaPct = 100 * (usable - internet) / internet;
+    if (deltaPct.abs() <= 10) {
+      return 'Your Wi-Fi link and your internet are carrying about the same. '
+          'Neither side is clearly holding you back right now.';
+    }
+    final String ahead = deltaPct > 0 ? 'Wi-Fi link' : 'internet';
+    return 'Your $ahead has a little more headroom, but both sides are in the '
+        'same range right now.';
   }
 
   @override
