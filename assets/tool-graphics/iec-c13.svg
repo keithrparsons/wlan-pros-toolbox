@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
+  <!-- C13 / C14 FEMALE coupler face, drawn LARGE & centered. THE hero coupler (PC/PDU cord) -> ONE lime.
+       Geometry reused from the composite (cell 3), scaled ~3x: chamfered-hex body,
+       wide flat top with two clipped top corners, flat bottom; three contacts —
+       E (earth) top-center, L + N lower. 10A / 70C. NO keying notch (that is C15).
+       Palette: §8.20.7 swap-list only — scaffold #E5E5E5, muted #9C9C9C, ONE lime #A1CC3A highlight.
+       STANDING RULE: no label over any outline, slot, or other label. -->
+
+  <!-- Header -->
+  <text x="320" y="48" fill="#A1CC3A" font-size="30" font-weight="600" text-anchor="middle">C13 / C14</text>
+  <text x="320" y="80" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">The ubiquitous PC / PDU cord &#183; IEC 60320</text>
+
+  <!-- ============ FACE: chamfered hex, centered x=320, top y=180 bottom y=370 ============ -->
+  <!-- chamfer 36px deep/in at the two top corners; flat bottom. -->
+  <path d="M 206 180
+           L 434 180
+           L 470 216
+           L 470 370
+           L 170 370
+           L 170 216 Z"
+        stroke="#A1CC3A" stroke-width="4.4" stroke-linejoin="round"/>
+  <!-- three recessed female contact slots: E top-center, L lower-left, N lower-right -->
+  <rect x="293" y="206" width="54" height="34" rx="4" fill="#9C9C9C"/>   <!-- earth, top center -->
+  <rect x="206" y="300" width="54" height="34" rx="4" fill="#9C9C9C"/>   <!-- line, lower left -->
+  <rect x="380" y="300" width="54" height="34" rx="4" fill="#9C9C9C"/>   <!-- neutral, lower right -->
+
+  <!-- pin callouts, all in clear space outside slots -->
+  <text x="320" y="166" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">E</text>
+  <text x="233" y="362" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">L</text>
+  <text x="407" y="362" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">N</text>
+
+  <!-- ============ LABELS ============ -->
+  <text x="320" y="468" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">10 A &#183; 70 &#176;C</text>
+  <text x="320" y="502" fill="#9C9C9C" font-size="18" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">10 A &#183; 70 &#176;C &#183; 3-pin (with earth)</text>
+  <text x="320" y="532" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Servers, PDUs, desktops &#183; mates a C14 inlet</text>
+</svg>

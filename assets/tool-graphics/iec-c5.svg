@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
+  <!-- C5 / C6 cloverleaf ("Mickey Mouse") FEMALE coupler face, drawn LARGE & centered.
+       Geometry reused from the Vera-passed composite (iec-connectors.svg cell 1), scaled ~2.6x.
+       Three overlapping discs: TOP lobe = earth, lower-left + lower-right = line/neutral.
+       Palette: §8.20.7 swap-list only — scaffold #E5E5E5, muted #9C9C9C, ONE lime #A1CC3A highlight.
+       Type: DM Mono numbers/ratings, IBM Plex Sans words.
+       STANDING RULE: no label sits over any outline, hole, or other label. -->
+
+  <!-- Header -->
+  <text x="320" y="48" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle">C5 / C6 Cloverleaf</text>
+  <text x="320" y="80" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Female coupler face (cord end) &#183; IEC 60320</text>
+
+  <!-- ============ FACE (centered ~ x=320, vertical band y 150..400) ============ -->
+  <!-- Three overlapping discs, r=68. Top lobe center (320,210); lower lobes (262,300) & (378,300). -->
+  <g>
+    <circle cx="320" cy="210" r="68" stroke="#A1CC3A" stroke-width="4"/>
+    <circle cx="262" cy="300" r="68" stroke="#E5E5E5" stroke-width="4"/>
+    <circle cx="378" cy="300" r="68" stroke="#E5E5E5" stroke-width="4"/>
+    <!-- recessed female contact holes, one centered in each lobe -->
+    <circle cx="320" cy="210" r="17" fill="#9C9C9C"/>
+    <circle cx="262" cy="300" r="17" fill="#9C9C9C"/>
+    <circle cx="378" cy="300" r="17" fill="#9C9C9C"/>
+  </g>
+
+  <!-- earth-lobe callout: lime, sits clear ABOVE the top disc -->
+  <text x="320" y="128" fill="#A1CC3A" font-size="16" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">earth pin (top lobe)</text>
+  <!-- line/neutral callouts on the two lower lobes, placed clear to the outer sides -->
+  <text x="150" y="305" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="end" font-family="DM Mono, monospace">L</text>
+  <text x="490" y="305" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="start" font-family="DM Mono, monospace">N</text>
+
+  <!-- ============ LABELS ============ -->
+  <text x="320" y="468" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">2.5 A</text>
+  <text x="320" y="502" fill="#9C9C9C" font-size="18" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">2.5 A &#183; 70 &#176;C &#183; 3-pin (with earth)</text>
+  <text x="320" y="532" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Low-power kit &#183; laptop bricks, consoles</text>
+</svg>

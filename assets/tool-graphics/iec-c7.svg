@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
+  <!-- C7 / C8 figure-8 ("Shotgun") FEMALE coupler face, drawn LARGE & centered.
+       Geometry reused from the composite (cell 2), scaled up: two joined circles, NO earth.
+       Palette: §8.20.7 swap-list only — scaffold #E5E5E5, muted #9C9C9C, ONE lime #A1CC3A.
+       STANDING RULE: no label over any outline, hole, or other label. -->
+
+  <!-- Header -->
+  <text x="320" y="48" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle">C7 / C8 Figure-8</text>
+  <text x="320" y="80" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Female coupler face (cord end) &#183; IEC 60320</text>
+
+  <!-- ============ FACE: two joined discs, r=72, centers (250,260) & (390,260) ============ -->
+  <g>
+    <circle cx="250" cy="260" r="72" stroke="#E5E5E5" stroke-width="4"/>
+    <circle cx="390" cy="260" r="72" stroke="#E5E5E5" stroke-width="4"/>
+    <!-- two recessed female contact holes — line + neutral, NO earth -->
+    <circle cx="250" cy="260" r="18" fill="#9C9C9C"/>
+    <circle cx="390" cy="260" r="18" fill="#9C9C9C"/>
+  </g>
+  <!-- per-pin callouts placed clear, outside each disc -->
+  <text x="250" y="172" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">L</text>
+  <text x="390" y="172" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">N</text>
+  <!-- the defining trait, lime, in clear space below the face -->
+  <text x="320" y="378" fill="#A1CC3A" font-size="17" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">no earth pin &#183; 2-pin only</text>
+
+  <!-- ============ LABELS ============ -->
+  <text x="320" y="468" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">2.5 A</text>
+  <text x="320" y="502" fill="#9C9C9C" font-size="18" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">2.5 A &#183; 70 &#176;C &#183; 2-pin</text>
+  <text x="320" y="532" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Double-insulated kit &#183; radios, small adapters</text>
+</svg>

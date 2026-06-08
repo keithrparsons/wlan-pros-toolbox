@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
+  <!-- C15 / C16 FEMALE coupler face, drawn LARGE & centered. The TRUE "kettle cord" (hot-condition).
+       Geometry reused from the composite (cell 4), scaled ~3x: the SAME C13 chamfered-hex body
+       PLUS the rectangular KEYING NOTCH cut into the bottom edge. The notch is the ONLY difference
+       from C13, so it is the single lime highlight here. 10A / 120C.
+       Palette: §8.20.7 swap-list only — scaffold #E5E5E5 body, muted #9C9C9C slots, ONE lime #A1CC3A notch.
+       STANDING RULE: no label over any outline, slot, notch, or other label. -->
+
+  <!-- Header -->
+  <text x="320" y="48" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle">C15 / C16</text>
+  <text x="320" y="80" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">True kettle cord (hot-condition) &#183; IEC 60320</text>
+
+  <!-- ============ FACE: C13 hex (scaffold) WITH keying notch in bottom edge ============ -->
+  <!-- body in scaffold; the notch segment in the bottom edge is overdrawn in lime to call it out.
+       hex: top y=180, bottom y=370, x 170..470, top chamfer 36. Bottom-center notch: x 290..350, up to y=346. -->
+  <path d="M 206 180
+           L 434 180
+           L 470 216
+           L 470 370
+           L 350 370
+           L 350 346
+           L 290 346
+           L 290 370
+           L 170 370
+           L 170 216 Z"
+        stroke="#E5E5E5" stroke-width="4.4" stroke-linejoin="round"/>
+  <!-- KEYING NOTCH highlighted: lime overlay of just the notch path so it dominates -->
+  <path d="M 290 372 L 290 346 L 350 346 L 350 372"
+        stroke="#A1CC3A" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+
+  <!-- three recessed female contact slots, same layout as C13 -->
+  <rect x="293" y="206" width="54" height="34" rx="4" fill="#9C9C9C"/>   <!-- earth, top center -->
+  <rect x="206" y="288" width="54" height="34" rx="4" fill="#9C9C9C"/>   <!-- line, lower left -->
+  <rect x="380" y="288" width="54" height="34" rx="4" fill="#9C9C9C"/>   <!-- neutral, lower right -->
+
+  <!-- pin callouts in clear space -->
+  <text x="320" y="166" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">E</text>
+  <text x="148" y="290" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="end" font-family="DM Mono, monospace">L</text>
+  <text x="492" y="290" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="start" font-family="DM Mono, monospace">N</text>
+  <!-- notch callout: lime, sits clear BELOW the body in the notch gap -->
+  <text x="320" y="402" fill="#A1CC3A" font-size="17" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">keying notch &#8212; the only C13 vs C15 tell</text>
+
+  <!-- ============ LABELS ============ -->
+  <text x="320" y="468" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">10 A &#183; 120 &#176;C</text>
+  <text x="320" y="502" fill="#9C9C9C" font-size="18" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">10 A &#183; 120 &#176;C &#183; 3-pin (with earth)</text>
+  <text x="320" y="532" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Hot-running gear &#183; keyed so a C13 cord won't fit</text>
+</svg>

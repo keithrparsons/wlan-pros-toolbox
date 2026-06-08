@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
+  <!-- C19 / C20 FEMALE coupler face, drawn LARGE & centered. High-current server / PDU coupler.
+       Geometry reused from the composite (cell 5), scaled ~3x: wider-than-tall rounded-rect body,
+       THREE vertical (taller-than-wide) rectangular contacts standing in a horizontal in-line row:
+       L - E - N. 16A.
+       Palette: §8.20.7 swap-list only — scaffold #E5E5E5, muted #9C9C9C, ONE lime #A1CC3A highlight.
+       STANDING RULE: no label over any outline, blade, or other label. -->
+
+  <!-- Header -->
+  <text x="320" y="48" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle">C19 / C20</text>
+  <text x="320" y="80" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">High-current servers / PDUs &#183; IEC 60320</text>
+
+  <!-- ============ FACE: landscape rounded-rect, centered; three vertical in-line slots ============ -->
+  <!-- body 320 wide x 200 tall, x 160..480, y 175..375, r=22 -->
+  <rect x="160" y="175" width="320" height="200" rx="22" stroke="#E5E5E5" stroke-width="4.4"/>
+  <!-- three vertical female contact slots in a horizontal row: L (left) - E (center) - N (right) -->
+  <rect x="220" y="225" width="32" height="100" rx="5" fill="#9C9C9C"/>   <!-- line, left -->
+  <rect x="304" y="225" width="32" height="100" rx="5" fill="#9C9C9C"/>   <!-- earth, center -->
+  <rect x="388" y="225" width="32" height="100" rx="5" fill="#9C9C9C"/>   <!-- neutral, right -->
+
+  <!-- pin callouts above the body, clear of the slots -->
+  <text x="236" y="162" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">L</text>
+  <text x="320" y="162" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">E</text>
+  <text x="404" y="162" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">N</text>
+  <!-- defining trait, lime, in clear space below the body -->
+  <text x="320" y="408" fill="#A1CC3A" font-size="17" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">three in-line blades &#183; 16 A rating</text>
+
+  <!-- ============ LABELS ============ -->
+  <text x="320" y="470" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">16 A</text>
+  <text x="320" y="504" fill="#9C9C9C" font-size="18" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">16 A &#183; 70 &#176;C &#183; 3-pin (with earth)</text>
+  <text x="320" y="534" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Blade servers, big PDUs &#183; mates a C20 inlet</text>
+</svg>

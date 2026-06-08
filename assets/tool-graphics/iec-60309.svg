@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
+  <!-- IEC 60309 industrial pin-and-sleeve FACE, drawn LARGE & centered.
+       Geometry reused from the composite (cell 6), scaled up: circular face, keyway notch at 12 o'clock,
+       three line/phase round pins + one LARGER EARTH pin set at a CLOCK POSITION (the earth-pin clock
+       angle is how 60309 keys voltage / prevents cross-mating). Earth pin = the keying feature -> lime.
+       Voltage-band legend named in WORDS (blue / red / yellow) — color is not the sole carrier of meaning.
+       Palette: §8.20.7 swap-list only — scaffold #E5E5E5, muted #9C9C9C, ONE lime #A1CC3A (the earth pin).
+       STANDING RULE: no label over any outline, pin, keyway, or other label. -->
+
+  <!-- Header -->
+  <text x="320" y="48" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle">IEC 60309 Industrial</text>
+  <text x="320" y="80" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Pin &amp; sleeve &#183; earth-pin clock position keys the voltage</text>
+
+  <!-- ============ FACE: circular pin-and-sleeve, centered (320,250), outer r=118 ============ -->
+  <g>
+    <!-- outer sleeve ring -->
+    <circle cx="320" cy="250" r="118" stroke="#9C9C9C" stroke-width="4"/>
+    <!-- inner contact circle -->
+    <circle cx="320" cy="250" r="88" stroke="#E5E5E5" stroke-width="3.4"/>
+    <!-- keyway / major notch at 12 o'clock reference -->
+    <path d="M 300 134 L 320 116 L 340 134" stroke="#9C9C9C" stroke-width="4" stroke-linejoin="round"/>
+
+    <!-- three line/phase round pins -->
+    <circle cx="280" cy="222" r="16" fill="#9C9C9C"/>
+    <circle cx="360" cy="222" r="16" fill="#9C9C9C"/>
+    <circle cx="280" cy="282" r="16" fill="#9C9C9C"/>
+    <!-- EARTH pin: larger diameter, at the clock position — the keying feature, lime -->
+    <circle cx="360" cy="286" r="22" stroke="#A1CC3A" stroke-width="4" fill="none"/>
+    <circle cx="360" cy="286" r="9" fill="#A1CC3A"/>
+  </g>
+
+  <!-- keyway + earth callouts, clear of geometry -->
+  <text x="320" y="104" fill="#9C9C9C" font-size="14" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">keyway (12h ref)</text>
+  <text x="412" y="312" fill="#A1CC3A" font-size="15" font-weight="600" text-anchor="start" font-family="DM Mono, monospace">earth pin</text>
+  <text x="412" y="332" fill="#A1CC3A" font-size="13" font-weight="500" text-anchor="start" font-family="DM Mono, monospace">clock position</text>
+
+  <!-- ============ VOLTAGE-BAND LEGEND (words, color is not the sole carrier) ============ -->
+  <text x="320" y="430" fill="#E5E5E5" font-size="18" font-weight="600" text-anchor="middle">Sleeve color codes the voltage band</text>
+  <g font-size="16" font-weight="500" font-family="DM Mono, monospace" fill="#9C9C9C" text-anchor="middle">
+    <text x="320" y="462">Yellow &#8212; 100&#8211;130 V</text>
+    <text x="320" y="490">Blue &#8212; 200&#8211;250 V</text>
+    <text x="320" y="518">Red &#8212; 380&#8211;480 V (3&#216;)</text>
+  </g>
+</svg>
