@@ -70,7 +70,7 @@
     <rect x="355" y="188" width="55" height="42" rx="3"/>
   </g>
   <!-- two lime cells: bit 1 = U/L, bit 0 = I/G -->
-  <g stroke="#A2CC3A" stroke-width="2">
+  <g stroke="#A1CC3A" stroke-width="2">
     <rect x="410" y="188" width="55" height="42" rx="3"/>
     <rect x="465" y="188" width="55" height="42" rx="3"/>
   </g>
@@ -83,8 +83,8 @@
     <text x="272.5" y="216" fill="#9C9C9C">0</text>
     <text x="327.5" y="216" fill="#9C9C9C">1</text>
     <text x="382.5" y="216" fill="#9C9C9C">0</text>
-    <text x="437.5" y="216" fill="#A2CC3A">1</text>
-    <text x="492.5" y="216" fill="#A2CC3A">0</text>
+    <text x="437.5" y="216" fill="#A1CC3A">1</text>
+    <text x="492.5" y="216" fill="#A1CC3A">0</text>
   </g>
 
   <!-- bit-position numbers BELOW the cells (clear space) -->
@@ -95,17 +95,17 @@
     <text x="272.5" y="248">4</text>
     <text x="327.5" y="248">3</text>
     <text x="382.5" y="248">2</text>
-    <text x="437.5" y="248" fill="#A2CC3A" font-weight="600">1</text>
-    <text x="492.5" y="248" fill="#A2CC3A" font-weight="600">0</text>
+    <text x="437.5" y="248" fill="#A1CC3A" font-weight="600">1</text>
+    <text x="492.5" y="248" fill="#A1CC3A" font-weight="600">0</text>
   </g>
 
   <!-- lime leaders + labels for the two special bits, dropped well below the position numbers -->
-  <g stroke="#A2CC3A" stroke-width="1.4" stroke-linecap="round">
+  <g stroke="#A1CC3A" stroke-width="1.4" stroke-linecap="round">
     <path d="M437.5 254 L437.5 268 L320 268"/>
     <path d="M492.5 254 L492.5 286 L320 286"/>
   </g>
-  <text x="312" y="272" fill="#A2CC3A" font-size="12.5" font-weight="600" text-anchor="end">bit 1 = U/L &#8212; Universal / Local</text>
-  <text x="312" y="290" fill="#A2CC3A" font-size="12.5" font-weight="600" text-anchor="end">bit 0 = I/G &#8212; Individual / Group</text>
+  <text x="312" y="272" fill="#A1CC3A" font-size="12.5" font-weight="600" text-anchor="end">bit 1 = U/L &#8212; Universal / Local</text>
+  <text x="312" y="290" fill="#A1CC3A" font-size="12.5" font-weight="600" text-anchor="end">bit 0 = I/G &#8212; Individual / Group</text>
 
   <!-- U/L and I/G meaning, to the RIGHT, clear of cells and of each other -->
   <g font-size="11" font-weight="500" text-anchor="start" font-family="IBM Plex Sans, sans-serif">
@@ -116,6 +116,6 @@
   </g>
 
   <!-- ============================ FOOTER RULE: locally-administered low nibble ============================ -->
-  <text x="380" y="332" fill="#E5E5E5" font-size="13" font-weight="600" text-anchor="middle">Low nibble of octet 1 = <tspan fill="#A2CC3A" font-family="DM Mono, monospace">2 / 6 / A / E</tspan>  &#8658;  locally administered unicast</text>
+  <text x="380" y="332" fill="#E5E5E5" font-size="13" font-weight="600" text-anchor="middle">Low nibble of octet 1 = <tspan fill="#A1CC3A" font-family="DM Mono, monospace">2 / 6 / A / E</tspan>  &#8658;  locally administered unicast</text>
   <text x="380" y="356" fill="#9C9C9C" font-size="11.5" font-weight="500" text-anchor="middle">(odd low nibble &#8658; group address &#183; 0 / 4 / 8 / C &#8658; universally administered unicast)</text>
 </svg>

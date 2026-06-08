@@ -40,10 +40,10 @@
   </g>
 
   <!-- ============================ ROW 1 : AC_VO (voice) - LIME hero ============================ -->
-  <text x="130" y="130" fill="#A2CC3A" font-size="14" font-weight="700" text-anchor="middle">AC_VO &#183; Voice</text>
-  <text x="275" y="130" fill="#A2CC3A" font-size="17" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">6</text>
-  <text x="405" y="130" fill="#A2CC3A" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">EF</text>
-  <text x="530" y="130" fill="#A2CC3A" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">46</text>
+  <text x="130" y="130" fill="#A1CC3A" font-size="14" font-weight="700" text-anchor="middle">AC_VO &#183; Voice</text>
+  <text x="275" y="130" fill="#A1CC3A" font-size="17" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">6</text>
+  <text x="405" y="130" fill="#A1CC3A" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">EF</text>
+  <text x="530" y="130" fill="#A1CC3A" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">46</text>
 
   <!-- ============================ ROW 2 : AC_VI (video) ============================ -->
   <text x="130" y="174" fill="#E5E5E5" font-size="13" font-weight="600" text-anchor="middle">AC_VI &#183; Video</text>
