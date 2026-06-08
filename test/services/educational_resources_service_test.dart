@@ -2,7 +2,7 @@
 // tolerance), topic grouping in `_meta.topics` order, free-text search across
 // title/summary/description/topic/tags, and the approval field surviving onto
 // the model. Most tests use a small in-memory fixture; the last group loads the
-// REAL bundled asset to prove all 37 entries parse and group into the 7 topics.
+// REAL bundled asset to prove all 38 entries parse and group into the 7 topics.
 
 import 'dart:convert';
 import 'dart:io';
@@ -199,7 +199,7 @@ void main() {
   });
 
   group('real bundled asset', () {
-    test('parses the 37 curated entries into the 7 topic groups', () {
+    test('parses the 38 curated entries into the 7 topic groups', () {
       // Load the actual bundled JSON from disk (not via rootBundle, so no
       // Flutter binding is needed) and prove the production dataset is healthy.
       // Curated 2026-06-04: independent-author/community materials only; the
@@ -221,7 +221,7 @@ void main() {
 
       final EducationalResourcesService real =
           EducationalResourcesService.fromJson(raw);
-      expect(real.count, 37);
+      expect(real.count, 38);
 
       final List<ResourceGroup> groups = real.grouped();
       expect(groups.length, 7);
@@ -245,15 +245,15 @@ void main() {
         reason: 'megavendor/product docs were removed per Keith 2026-06-04',
       );
 
-      // Every entry lands in exactly one group; counts sum to 37.
+      // Every entry lands in exactly one group; counts sum to 38.
       final int sum = groups.fold<int>(
           0, (int acc, ResourceGroup g) => acc + g.count);
-      expect(sum, 37);
+      expect(sum, 38);
 
       // _meta.count agrees with the parsed entry count (data-integrity guard).
       final Map<String, dynamic> decoded =
           jsonDecode(raw) as Map<String, dynamic>;
-      expect((decoded['_meta'] as Map<String, dynamic>)['count'], 37);
+      expect((decoded['_meta'] as Map<String, dynamic>)['count'], 38);
     });
   });
 }
