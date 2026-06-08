@@ -67,6 +67,32 @@ class OsiLayer {
   final String hardware;
 }
 
+/// One TCP/IP (RFC 1122) layer mapped to the OSI layer(s) it collapses, with
+/// example protocols. The TCP/IP model has 4 layers: its Link layer collapses
+/// OSI 1-2 and its Application layer collapses OSI 5-7. Per RFC 1122 and
+/// ISO/IEC 7498-1.
+@immutable
+class TcpIpLayer {
+  const TcpIpLayer({
+    required this.name,
+    required this.osiLayers,
+    required this.osiNames,
+    required this.protocols,
+  });
+
+  /// TCP/IP layer name, e.g. `Application`.
+  final String name;
+
+  /// OSI layer number(s) this maps to, e.g. `7, 6, 5`.
+  final String osiLayers;
+
+  /// OSI layer name(s), e.g. `Application, Presentation, Session`.
+  final String osiNames;
+
+  /// Example protocols at this TCP/IP layer.
+  final String protocols;
+}
+
 class OsiModelScreen extends StatelessWidget {
   const OsiModelScreen({super.key});
 
@@ -132,6 +158,45 @@ class OsiModelScreen extends StatelessWidget {
     ),
   ];
 
+  /// The TCP/IP (RFC 1122) 4-layer model mapped to OSI. Top to bottom.
+  static const List<TcpIpLayer> tcpIpLayers = <TcpIpLayer>[
+    TcpIpLayer(
+      name: 'Application',
+      osiLayers: '7, 6, 5',
+      osiNames: 'Application, Presentation, Session',
+      protocols: 'HTTP, DNS, DHCP',
+    ),
+    TcpIpLayer(
+      name: 'Transport',
+      osiLayers: '4',
+      osiNames: 'Transport',
+      protocols: 'TCP, UDP',
+    ),
+    TcpIpLayer(
+      name: 'Internet',
+      osiLayers: '3',
+      osiNames: 'Network',
+      protocols: 'IP, ICMP, IGMP',
+    ),
+    TcpIpLayer(
+      name: 'Link',
+      osiLayers: '2, 1',
+      osiNames: 'Data Link, Physical',
+      protocols: 'Ethernet (802.3), Wi-Fi (802.11), ARP',
+    ),
+  ];
+
+  static const String tcpIpIntro =
+      'The TCP/IP model (RFC 1122) has 4 layers to OSI\'s 7. Its Link layer '
+      'collapses OSI 1-2 and its Application layer collapses OSI 5-7.';
+
+  static const String tcpIpFootnote =
+      'TCP/IP has no separate Presentation or Session layer; encryption, '
+      'encoding, and session state live inside Application-layer protocols (e.g. '
+      'TLS, which sits between Application and Transport in practice). ICMP is an '
+      'Internet-layer protocol carried inside IP, not a Transport protocol. ARP '
+      'resolves IP to MAC and is conventionally placed at the Link layer.';
+
   static const String intro =
       'The OSI reference model, 7 layers top to bottom. Use it to localize a '
       'fault: which layer is failing tells you which tool to reach for.';
@@ -149,9 +214,7 @@ class OsiModelScreen extends StatelessWidget {
         title: const Text('OSI Model'),
         toolbarHeight: 64,
         // §8.16 — copy the 7 layers as TSV. Static data, always enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -184,6 +247,15 @@ class OsiModelScreen extends StatelessWidget {
           l.protocols,
           l.hardware,
         ].join(tab),
+      );
+    }
+    buf
+      ..writeln()
+      ..writeln('TCP/IP (RFC 1122) mapping')
+      ..writeln(<String>['TCP/IP', 'OSI', 'OSI layers', 'Protocols'].join(tab));
+    for (final TcpIpLayer l in tcpIpLayers) {
+      buf.writeln(
+        <String>[l.name, l.osiLayers, l.osiNames, l.protocols].join(tab),
       );
     }
     return buf.toString().trimRight();
@@ -222,6 +294,8 @@ class OsiModelScreen extends StatelessWidget {
                   _introCard(colors, text),
                   const SizedBox(height: AppSpacing.md),
                   _tableCard(colors, text, mono),
+                  const SizedBox(height: AppSpacing.md),
+                  _tcpIpCard(colors, text, mono),
                   ToolHelpFooter(toolId: 'osi-model'),
                 ],
               ),
@@ -298,6 +372,122 @@ class OsiModelScreen extends StatelessWidget {
       ),
     );
   }
+
+  Widget _tcpIpCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'TCP/IP (RFC 1122) mapping',
+            style: text.labelMedium?.copyWith(
+              color: colors.textSecondary,
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            tcpIpIntro,
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          HorizontalScrollTable(
+            child: IntrinsicWidth(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      _HeaderCell('TCP/IP', width: 96),
+                      _HeaderCell('OSI', width: 56),
+                      _HeaderCell('OSI layers', width: 200),
+                      _HeaderCell('Protocols', width: 224),
+                    ],
+                  ),
+                  Divider(color: colors.border, height: AppSpacing.sm),
+                  ...tcpIpLayers.map(
+                    (TcpIpLayer l) => _TcpIpRow(layer: l, mono: mono),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            tcpIpFootnote,
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One TCP/IP layer row — name (lime), OSI layer numbers, OSI names, protocols.
+/// Merges to one semantic node so AT reads the mapping as a single line.
+class _TcpIpRow extends StatelessWidget {
+  const _TcpIpRow({required this.layer, required this.mono});
+
+  final TcpIpLayer layer;
+  final AppMonoText mono;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Semantics(
+      container: true,
+      excludeSemantics: true,
+      label:
+          'TCP/IP ${layer.name} layer. Maps to OSI ${layer.osiLayers}, '
+          '${layer.osiNames}. Protocols ${layer.protocols}.',
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 96,
+              child: Text(
+                layer.name,
+                style: text.bodyMedium?.copyWith(
+                  color: colors.textAccent,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 56,
+              child: Text(
+                layer.osiLayers,
+                style: mono.inlineCode.copyWith(color: colors.textSecondary),
+              ),
+            ),
+            SizedBox(
+              width: 200,
+              child: Text(
+                layer.osiNames,
+                style: text.labelMedium?.copyWith(color: colors.textSecondary),
+              ),
+            ),
+            SizedBox(
+              width: 224,
+              child: Text(
+                layer.protocols,
+                style: text.labelMedium?.copyWith(color: colors.textTertiary),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 /// One layer row — number (lime index), name, keyword, PDU, protocols, hardware.
@@ -348,9 +538,7 @@ class _LayerRow extends StatelessWidget {
               width: 96,
               child: Text(
                 layer.keyword,
-                style: text.labelMedium?.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: text.labelMedium?.copyWith(color: colors.textSecondary),
               ),
             ),
             SizedBox(
@@ -364,18 +552,14 @@ class _LayerRow extends StatelessWidget {
               width: 248,
               child: Text(
                 layer.protocols,
-                style: text.labelMedium?.copyWith(
-                  color: colors.textTertiary,
-                ),
+                style: text.labelMedium?.copyWith(color: colors.textTertiary),
               ),
             ),
             SizedBox(
               width: 184,
               child: Text(
                 layer.hardware,
-                style: text.labelMedium?.copyWith(
-                  color: colors.textTertiary,
-                ),
+                style: text.labelMedium?.copyWith(color: colors.textTertiary),
               ),
             ),
           ],

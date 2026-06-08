@@ -2558,6 +2558,269 @@
         "Data source: Pax research brief Topic 5 (Deliverables/2026-06-08-power-cooling-references/RESEARCH-BRIEF.md), the IEC World Plugs letter system and national standards."
       ],
       "source": "lib/screens/tools/reference/international_plugs_screen.dart"
+    },
+    "ip-address-reference": {
+      "name": "IP Address Reference",
+      "category": "Quick Reference",
+      "purpose": "IANA/IETF special-use address blocks for IPv4 and IPv6 — CIDR prefix, what each block is reserved for, and the defining RFC — plus the IPv6 text-notation rules.",
+      "whyHere": "When you see an unexpected address on a link, this tells you fast whether it is private, loopback, link-local, documentation, or multicast, and which RFC governs it.",
+      "howToUse": [
+        "Scroll the IPv4 and IPv6 special-use tables. Read by CIDR prefix.",
+        "Check the IPv6 notation card for canonical-form and zero-compression rules before reading or writing an IPv6 address."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "What it shows: the IANA IPv4 and IPv6 Special-Purpose Address Registries (private-use, loopback, link-local, documentation, and more), each row carrying its defining RFC.",
+        "The multicast blocks 224.0.0.0/4 (IPv4) and ff00::/8 (IPv6) are not in the special-purpose registries — they live in the separate IANA multicast registries and are sourced to RFC 5771 / RFC 1112 and RFC 4291 section 2.7, flagged with a footnote.",
+        "Data source / standard: IANA IPv4/IPv6 Special-Purpose Address Registries (fetched 2026-06-08) cross-checked against each defining RFC; IPv6 notation per RFC 5952. Offline, read-only."
+      ],
+      "source": "lib/screens/tools/reference/ip_address_reference_screen.dart"
+    },
+    "cidr-table": {
+      "name": "Subnetting / CIDR Table",
+      "category": "Quick Reference",
+      "purpose": "A /0 through /32 lookup: prefix length, dotted subnet mask, total addresses, usable hosts, and wildcard (inverse) mask.",
+      "whyHere": "The fast way to read off a mask, host count, or wildcard for a prefix without doing the powers-of-two in your head.",
+      "howToUse": [
+        "Find the prefix length (/n) row and read the mask, total addresses, usable hosts, and wildcard across it.",
+        "For a specific network, broadcast, or host range, use the IPv4 Subnet Calculator tool."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "What it shows: every prefix from /0 to /32 with total = 2^(32-n) and usable = total minus 2, plus the dotted mask and the inverse (wildcard) mask.",
+        "Exceptions honored: /31 has 2 usable host addresses (point-to-point, RFC 3021), not 0; /32 is 1 host (single-host route, RFC 4632), not -1. Both rows carry an inline note.",
+        "Data source / standard: pure CIDR arithmetic cross-referenced to RFC 4632 section 3.1. Offline, read-only."
+      ],
+      "source": "lib/screens/tools/reference/cidr_table_screen.dart"
+    },
+    "naming-conventions": {
+      "name": "Naming & Addressing Conventions",
+      "category": "Quick Reference",
+      "purpose": "Hostname / DNS-label rules, MAC EUI-48 and EUI-64 format, the U/L (universal/local) and I/G (individual/group) bits, and the OUI/CID concept.",
+      "whyHere": "When a hostname is rejected or a MAC looks locally administered or multicast, this names the rule and the bit that decides it.",
+      "howToUse": [
+        "Read the hostname rules for label length, allowed characters, and max FQDN length.",
+        "Use the MAC-format and U/L, I/G bit tables (and the first-octet bit-field diagram) to tell a universally administered address from a locally administered one, and an individual address from a group/multicast one."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "What it shows: hostname/FQDN rules (RFC 952, RFC 1123 section 2.1, RFC 1035), MAC EUI-48/EUI-64 format, the U/L and I/G bit positions in the first octet, and OUI/CID assignment.",
+        "The first-octet bit-field diagram is decorative for screen readers — every fact it depicts (U/L and I/G positions and meanings) is also in the bit table (GL-003 section 8.6.2).",
+        "Data source / standard: IEEE Std 802-2014 with RFC 5342 section 2.1 as the freely available IETF restatement, RFC 4291 Appendix A (Modified EUI-64). The IEEE Registration Authority is the sole assigner of OUI/CID. Offline, read-only."
+      ],
+      "source": "lib/screens/tools/reference/naming_conventions_screen.dart"
+    },
+    "dns-record-types": {
+      "name": "DNS Record Types",
+      "category": "Quick Reference",
+      "purpose": "The DNS resource-record TYPE codes a network or Wi-Fi pro meets: numeric TYPE code, what the record does, and the RFC that defines it.",
+      "whyHere": "When a lookup returns an unfamiliar record type, this says what it carries and where it is defined.",
+      "howToUse": [
+        "Scroll the table. Read by record type (A, AAAA, CNAME, MX, TXT, SRV, CAA, HTTPS/SVCB, and more) or by numeric TYPE code."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "What it shows: each DNS resource-record TYPE with its numeric code, a plain-English purpose, and its defining RFC.",
+        "Current registry state reflected: CAA is now governed by RFC 8659 (obsoleting RFC 6844); HTTPS/SVCB by RFC 9460.",
+        "Data source / standard: the IANA DNS Resource Record (RR) TYPEs registry plus the defining RFC cited per row. Offline, read-only."
+      ],
+      "source": "lib/screens/tools/reference/dns_record_types_screen.dart"
+    },
+    "dhcp-options": {
+      "name": "DHCP Options",
+      "category": "Quick Reference",
+      "purpose": "The DHCPv4 option codes a network or Wi-Fi pro meets, led by Option 138 (CAPWAP-AC) — how a lightweight AP learns its WLAN controller address from DHCP — plus the Option 53 message-type table.",
+      "whyHere": "Reading a DHCP capture or a scope config: this names the option code and what value it carries, with the controller-discovery option called out first.",
+      "howToUse": [
+        "Read the option-code table (Option 138 first, then standard options in code order) for code, name, and purpose.",
+        "Use the Option 53 message-type table to decode DISCOVER / OFFER / REQUEST / ACK and the rest."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "What it shows: common DHCPv4 option codes with names and plain-English purpose, plus the Option 53 DHCP message types.",
+        "Option 138 (CAPWAP-AC, RFC 5417) leads because controller discovery is the option most relevant to a Wi-Fi deployment.",
+        "Data source / standard: the IANA BOOTP/DHCP Parameters registry; base options RFC 2132, relay agent info RFC 3046, domain search RFC 3397, message types RFC 2132 section 9.6. Offline, read-only."
+      ],
+      "source": "lib/screens/tools/reference/dhcp_options_screen.dart"
+    },
+    "http-methods": {
+      "name": "HTTP Methods & Headers",
+      "category": "Quick Reference",
+      "purpose": "The HTTP request methods with their safe / idempotent properties, plus the common request and response headers met checking a captive portal, web service, proxy, or API.",
+      "whyHere": "Diagnosing a captive portal or an API call: this says whether a method is safe to retry and what a given header means.",
+      "howToUse": [
+        "Read the methods table for each method and whether it is safe (read-only) and idempotent (repeat = same effect).",
+        "Read the request- and response-header tables to decode the headers you see in an Inspector (HTTP Header) result."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "What it shows: HTTP request methods (GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, and more) with safe/idempotent flags, plus common request and response headers.",
+        "Definitions: safe = read-only, no intended state change; idempotent = repeating the request has the same effect as making it once.",
+        "Data source / standard: the IANA HTTP Method and HTTP Field Name registries; RFC 9110 (HTTP Semantics) for method semantics; PATCH per RFC 5789. Offline, read-only."
+      ],
+      "source": "lib/screens/tools/reference/http_methods_screen.dart"
+    },
+    "dscp-qos": {
+      "name": "DSCP / QoS Markings",
+      "category": "Quick Reference",
+      "purpose": "The Wi-Fi-to-wired QoS mapping: the four WMM Access Categories, the 802.11 User Priority values they carry, and the DSCP markings RFC 8325 recommends so wired and wireless agree.",
+      "whyHere": "QoS only works end to end when the wired DSCP markings and the Wi-Fi access categories line up — this is that mapping, with the default-mapping trap flagged.",
+      "howToUse": [
+        "Read the mapping table for each WMM Access Category, its User Priority values, and the recommended DSCP marking.",
+        "Read the warning callout beneath the table: the common default mapping demotes voice (EF/DSCP 46) into the video queue."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "What it shows: the four WMM Access Categories (Voice, Video, Best Effort, Background), their 802.11 User Priority values, and the DSCP code points (name, decimal, binary) RFC 8325 recommends.",
+        "The voice-into-video trap is rendered as a warning callout, not buried in a footnote, because it is the misconfiguration this page exists to surface.",
+        "Data source / standard: RFC 8325 (Mapping Diffserv to IEEE 802.11), IEEE 802.11e / 802.11-2020, IEEE 802.1Q, Wi-Fi Alliance WMM; DSCP values per RFC 2474 / 2597 / 3246 / 5865. Offline, read-only."
+      ],
+      "source": "lib/screens/tools/reference/dscp_qos_screen.dart"
+    },
+    "eap-types": {
+      "name": "802.1X / EAP Types",
+      "category": "Quick Reference",
+      "purpose": "The EAP methods a supplicant and authentication server negotiate inside 802.1X, compared across credential type, server-cert requirement, client-cert requirement, and mutual authentication, with a typical-use note.",
+      "whyHere": "Choosing or auditing an 802.1X method: this is the side-by-side of what each EAP type needs and protects.",
+      "howToUse": [
+        "Read the matrix for each EAP method (EAP-TLS, PEAP, EAP-TTLS, EAP-FAST, EAP-PWD, EAP-SIM/AKA, and more) across its four security axes.",
+        "Read the warning banner: clients that skip server-certificate validation on a tunneled method (PEAP/TTLS/FAST) are exposed to evil-twin credential theft."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "What it shows: the EAP methods, their credential model, whether they require a server certificate, a client certificate, and mutual auth, plus a typical-use note.",
+        "Note: EAP-FAST is RFC 4851; RFC 7170 defines TEAP, its standards-track successor (not the same method).",
+        "Data source / standard: each method's defining RFC (5216 EAP-TLS, 5281 EAP-TTLS, 4851 EAP-FAST, 5931 EAP-PWD, 4186 EAP-SIM, 4187 EAP-AKA, 5448 EAP-AKA'). Offline, read-only."
+      ],
+      "source": "lib/screens/tools/reference/eap_types_screen.dart"
+    },
+    "wifi-feature-matrix": {
+      "name": "802.11 Feature Matrix",
+      "category": "Quick Reference",
+      "purpose": "A Wi-Fi 5 to Wi-Fi 7 capability comparison across the features that matter in design: bands, channel width, modulation, OFDMA, MU-MIMO, BSS Coloring, TWT, MLO, preamble puncturing, spatial streams, and the theoretical PHY-max rate.",
+      "whyHere": "Sizing what a generation can and cannot do, side by side, without hunting through four standards.",
+      "howToUse": [
+        "Read each feature row across the four generation columns (Wi-Fi 5 / 802.11ac, Wi-Fi 6 / 802.11ax, Wi-Fi 6E, Wi-Fi 7 / 802.11be)."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "What it shows: feature presence/absence and the stream/width/QAM ceilings per generation, plus a theoretical PHY-max rate row.",
+        "The Max PHY rate is a theoretical ceiling, not a real-world client rate. It carries a 'ceiling' chip and a footnote with the math (e.g. Wi-Fi 7 ~46 Gbps = 16 streams x 320 MHz x 4096-QAM, with no shipping client above 2-4 streams). Never an achievable speed.",
+        "Data source / standard: IEEE 802.11ac/ax/be; 802.11be (Wi-Fi 7) values are from the draft approaching final ratification and may shift (flagged in the footnote). Offline, read-only."
+      ],
+      "source": "lib/screens/tools/reference/wifi_feature_matrix_screen.dart"
+    },
+    "regulatory-domains": {
+      "name": "Regulatory Domains",
+      "category": "Quick Reference",
+      "purpose": "A region-level FCC / ETSI / ITU summary of the 2.4 / 5 / 6 GHz Wi-Fi rules: allowed sub-bands, DFS/TPC obligations, power classes, and EIRP notes.",
+      "whyHere": "A starting-point sanity check on which bands, channels, and power a region permits — before you confirm against the current rule text.",
+      "howToUse": [
+        "Read the FCC 2.4/5 GHz card, the FCC 6 GHz UNII-5..8 power-class card, the ETSI card, and the ITU three-region note.",
+        "Read the warning callout: this is region-level, regulations change (6 GHz is mid-rulemaking), and the dBm figures are a snapshot to verify against current FCC/ETSI rule text."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "What it shows: region-level (not per-country) FCC and ETSI rules for the Wi-Fi bands plus the ITU three-region note. Structural rules (band edges, DFS/TPC, power-class availability) are high confidence; the exact dBm figures are a snapshot.",
+        "Regulatory-volatility caveat: the 6 GHz dBm values are being amended (VLP extended band-wide, new geofenced classes). Never a settled constant — verify before deploying or certifying.",
+        "Data source / standard: cross-checked across FCC/ETSI documents and vendor regulatory white papers, as of 2026. Offline, read-only."
+      ],
+      "source": "lib/screens/tools/reference/regulatory_domains_screen.dart"
+    },
+    "datetime-standards": {
+      "name": "Date / Time Standards",
+      "category": "Quick Reference",
+      "purpose": "A reference for ISO 8601 / RFC 3339 date-time formats, UTC-offset notation, the Unix epoch and the 2038 problem, leap seconds (UTC vs TAI), and NTP stratum levels.",
+      "whyHere": "Reading a log timestamp, an API field, or an NTP status: this decodes the format and the time-scale behind it.",
+      "howToUse": [
+        "Read the format cards for ISO 8601, the strict RFC 3339 Internet profile, and the common format tokens.",
+        "Read the epoch, leap-second, and NTP-stratum cards for the time-scale context behind a raw timestamp."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "What it shows: ISO 8601 and RFC 3339 formats and the difference between them, UTC-offset notation, the Unix epoch and 2038 wraparound, the UTC-vs-TAI leap-second relationship, and NTP stratum levels (1-15 valid; stratum 0 is the kiss-o'-death / unspecified marker).",
+        "Honesty note: the UTC-TAI offset of -37 s is a static educational value current as of the 2017-01-01 leap second, shown with a 'static value' badge and a footnote pointing at the IERS Bulletin C — never presented as a live truth.",
+        "Data source / standard: ISO 8601-1:2019, RFC 3339, RFC 5905 (NTP), POSIX.1-2017, BIPM/IERS. Offline, read-only."
+      ],
+      "source": "lib/screens/tools/reference/datetime_standards_screen.dart"
+    },
+    "data-units": {
+      "name": "Data Units",
+      "category": "Quick Reference",
+      "purpose": "Bit vs byte units, the SI (decimal) vs IEC (binary) prefix ladders — kB vs KiB through EB vs EiB — and how link rates in bits relate to storage in bytes.",
+      "whyHere": "The reason a '1 TB' drive shows as ~931 GiB, and the reason a 100 Mbps link is not 100 MB/s — kept in one place.",
+      "howToUse": [
+        "Read the SI vs IEC ladder for each rank (kB/KiB through EB/EiB), its powers, byte counts, and the percent divergence.",
+        "Use the bit-vs-byte card and the divide-by-8 rule to convert a bit-rate to byte throughput."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "What it shows: the two parallel prefix ladders (SI base-1000 vs IEC base-1024), the per-step divergence (compounding ~2.4 points per rank), and the bit-vs-byte relationship.",
+        "Note: SI uses lowercase k for kilo (kB) but uppercase for M and above; IEC binary prefixes are Ki, Mi, Gi, Ti, Pi, Ei — Ki is a capital K, unlike SI's lowercase k. Network/link speeds are quoted in bits per second; storage in bytes.",
+        "Data source / standard: BIPM SI prefixes and IEC 80000-13 binary prefixes. Offline, read-only."
+      ],
+      "source": "lib/screens/tools/reference/data_units_screen.dart"
+    },
+    "hash-lengths": {
+      "name": "Hash Lengths",
+      "category": "Quick Reference",
+      "purpose": "Common hash algorithms by output size (bits / bytes / hex characters), family, and security status, with MD5 and SHA-1 flagged broken / deprecated.",
+      "whyHere": "Sizing a digest field or judging an algorithm choice: this is the length and the security verdict at a glance.",
+      "howToUse": [
+        "Read each algorithm's output length in bits, bytes, and hex characters, plus its family and security-status chip."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "What it shows: MD5, the SHA-1, SHA-2, and SHA-3 families, and more, each with output length and a security-status verdict.",
+        "MD5 and SHA-1 carry an explicit broken / deprecated status; the verdict word always accompanies the status color, so color is never the sole carrier of meaning.",
+        "Data source / standard: NIST FIPS 180-4 (SHA-1, SHA-2), FIPS 202 (SHA-3 / Keccak), RFC 1321 (MD5); deprecation per NIST SP 800-131A and the 2017 SHAttered SHA-1 collision. Offline, read-only."
+      ],
+      "source": "lib/screens/tools/reference/hash_lengths_screen.dart"
+    },
+    "regex-cheatsheet": {
+      "name": "Regex Cheatsheet",
+      "category": "Quick Reference",
+      "purpose": "Regular-expression syntax — anchors, character classes, quantifiers, groups and references, and alternation / escapes — scoped to the common PCRE2 (Perl-compatible) dialect.",
+      "whyHere": "The token you half-remember, looked up fast, with a flag where a dialect would behave differently.",
+      "howToUse": [
+        "Scroll the syntax tables by section: anchors, character classes, quantifiers, groups/references, and alternation/escapes.",
+        "Watch for the DIALECT badge: a token marked that way behaves differently outside PCRE2; check the per-row dialect note."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "What it shows: the common PCRE2 regex token set with meaning and examples, grouped by function. A 'Dialect: PCRE2 (Perl-compatible)' banner sits at the top.",
+        "Honesty note: there is no single normative regex authority — POSIX (BRE/ERE), PCRE2, ECMAScript, Python, Java, Go (RE2), and .NET differ. No token is presented as universal unless the source data marks it so; non-universal tokens carry a DIALECT badge.",
+        "Data source / standard: the common PCRE2 subset per the PCRE2 syntax reference. Offline, read-only."
+      ],
+      "source": "lib/screens/tools/reference/regex_cheatsheet_screen.dart"
     }
   }
 }

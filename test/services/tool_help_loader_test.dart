@@ -121,7 +121,7 @@ void main() {
       store = ToolHelpStore.fromJson(raw);
     });
 
-    test('parses to exactly 101 entries', () {
+    test('parses to exactly 115 entries', () {
       // 97 = 95 (origin/main: 93 + Antenna Connectors + Optical Transceivers)
       // + 2 backfilled v1.1 help entries (PLMN ID Reference and the Wi-Fi
       // Authentication Glossary).
@@ -136,12 +136,16 @@ void main() {
       // v1.1.2 net change 2026-06-06: −3 removed (wifi-channels BF6-13,
       // rf-connectors BF6-18, capacity-planner BF5-13) + 1 added
       // (my-current-location BF5-16) = 103 − 3 + 1 = 101.
-      // 102 = + the Power Phasing pilot (id power-phasing), the first page of the
-      // new Power & Cooling reference category, added 2026-06-08.
-      // 107 = + the five remaining Power & Cooling pages, added 2026-06-08:
-      // ohms-law, cooling-thermal, iec-connectors, nema-connectors, and
-      // international-plugs.
-      expect(store.count, 107);
+      // 115 = + the 2026-06-08 reference batch: 14 new Quick Reference screens
+      // (ip-address-reference, cidr-table, naming-conventions, dns-record-types,
+      // dhcp-options, http-methods, dscp-qos, eap-types, wifi-feature-matrix,
+      // regulatory-domains, datetime-standards, data-units, hash-lengths,
+      // regex-cheatsheet). The 5 improved existing screens edit tools that
+      // already have help entries, so add no new entries. 101 + 14 = 115.
+      // 121 = + the 6 Power & Cooling pages (power-phasing, ohms-law,
+      // cooling-thermal, iec-connectors, nema-connectors, international-plugs),
+      // merged in from feat/power-cooling-refs 2026-06-08. 115 + 6 = 121.
+      expect(store.count, 121);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

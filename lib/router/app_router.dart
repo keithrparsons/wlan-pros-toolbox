@@ -71,6 +71,21 @@ import '../screens/tools/reference/iec_connectors_screen.dart';
 import '../screens/tools/reference/nema_connectors_screen.dart';
 import '../screens/tools/reference/international_plugs_screen.dart';
 import '../screens/tools/reference/spectrum_screen.dart';
+// Reference batch (2026-06-08): 14 new read-only reference screens.
+import '../screens/tools/reference/ip_address_reference_screen.dart';
+import '../screens/tools/reference/cidr_table_screen.dart';
+import '../screens/tools/reference/naming_conventions_screen.dart';
+import '../screens/tools/reference/dns_record_types_screen.dart';
+import '../screens/tools/reference/dhcp_options_screen.dart';
+import '../screens/tools/reference/http_methods_screen.dart';
+import '../screens/tools/reference/dscp_qos_screen.dart';
+import '../screens/tools/reference/eap_types_screen.dart';
+import '../screens/tools/reference/wifi_feature_matrix_screen.dart';
+import '../screens/tools/reference/regulatory_domains_screen.dart';
+import '../screens/tools/reference/datetime_standards_screen.dart';
+import '../screens/tools/reference/data_units_screen.dart';
+import '../screens/tools/reference/hash_lengths_screen.dart';
+import '../screens/tools/reference/regex_cheatsheet_screen.dart';
 import '../screens/tools/network/arp_ndp_screen.dart';
 import '../screens/tools/network/bgp_asn_screen.dart';
 import '../screens/tools/network/dns_lookup_screen.dart';
@@ -214,6 +229,24 @@ class AppRouter {
   static const String internationalPlugs = '/tools/international-plugs';
   static const String spectrum = '/tools/spectrum';
   static const String nonWifiChannels = '/tools/non-wifi-channels';
+
+  // Reference batch (2026-06-08): 14 new Quick Reference screens across the new
+  // Addressing & Subnetting / Models & Standards / Time & Formats sub-categories
+  // and additions to Protocols, Wi-Fi & RF, and Encoding.
+  static const String ipAddressReference = '/tools/ip-address-reference';
+  static const String cidrTable = '/tools/cidr-table';
+  static const String namingConventions = '/tools/naming-conventions';
+  static const String dnsRecordTypes = '/tools/dns-record-types';
+  static const String dhcpOptions = '/tools/dhcp-options';
+  static const String httpMethods = '/tools/http-methods';
+  static const String dscpQos = '/tools/dscp-qos';
+  static const String eapTypes = '/tools/eap-types';
+  static const String wifiFeatureMatrix = '/tools/wifi-feature-matrix';
+  static const String regulatoryDomains = '/tools/regulatory-domains';
+  static const String datetimeStandards = '/tools/datetime-standards';
+  static const String dataUnits = '/tools/data-units';
+  static const String hashLengths = '/tools/hash-lengths';
+  static const String regexCheatsheet = '/tools/regex-cheatsheet';
 
   // Networking category — active network tools (native-only; web shows the
   // download-the-app fallback inside each screen, so the routes are always
@@ -444,6 +477,21 @@ class AppRouter {
     internationalPlugs: (_) => const InternationalPlugsScreen(),
     spectrum: (_) => const SpectrumScreen(),
     nonWifiChannels: (_) => const NonWifiChannelsScreen(),
+    // Reference batch (2026-06-08).
+    ipAddressReference: (_) => const IpAddressReferenceScreen(),
+    cidrTable: (_) => const CidrTableScreen(),
+    namingConventions: (_) => const NamingConventionsScreen(),
+    dnsRecordTypes: (_) => const DnsRecordTypesScreen(),
+    dhcpOptions: (_) => const DhcpOptionsScreen(),
+    httpMethods: (_) => const HttpMethodsScreen(),
+    dscpQos: (_) => const DscpQosScreen(),
+    eapTypes: (_) => const EapTypesScreen(),
+    wifiFeatureMatrix: (_) => const WifiFeatureMatrixScreen(),
+    regulatoryDomains: (_) => const RegulatoryDomainsScreen(),
+    datetimeStandards: (_) => const DatetimeStandardsScreen(),
+    dataUnits: (_) => const DataUnitsScreen(),
+    hashLengths: (_) => const HashLengthsScreen(),
+    regexCheatsheet: (_) => const RegexCheatsheetScreen(),
     interfaceInfo: (_) => const InterfaceInfoScreen(),
     deviceInfo: (_) => const DeviceInfoScreen(),
     dnsLookup: (_) => const DnsLookupScreen(),

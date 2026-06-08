@@ -1005,6 +1005,150 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       // "Checklists" section and did NOT move. `mcs-index-card` (a card) is
       // deliberately distinct from the existing `mcs-index` table id, which
       // stays in Quick Reference.
+      // ── Reference batch (2026-06-08): 14 new reference screens across three
+      // NEW Quick Reference sub-categories (Addressing & Subnetting, Models &
+      // Standards, Time & Formats) plus additions to Protocols, Wi-Fi & RF, and
+      // Encoding. All read-only, offline, pure-Dart const datasets. ──
+      // Addressing & Subnetting.
+      ToolEntry(
+        id: 'ip-address-reference',
+        title: 'IP Address Reference',
+        description:
+            'IANA/IETF special-use IPv4 and IPv6 address blocks, plus IPv6 '
+            'notation rules',
+        routeName: '/tools/ip-address-reference',
+        isLive: true,
+        subgroup: 'Addressing & Subnetting',
+      ),
+      ToolEntry(
+        id: 'cidr-table',
+        title: 'Subnetting / CIDR Table',
+        description:
+            '/0 to /32: prefix, subnet mask, total addresses, usable hosts, '
+            'wildcard mask',
+        routeName: '/tools/cidr-table',
+        isLive: true,
+        subgroup: 'Addressing & Subnetting',
+      ),
+      ToolEntry(
+        id: 'naming-conventions',
+        title: 'Naming & Addressing Conventions',
+        description:
+            'Hostname/DNS-label rules, MAC EUI-48/EUI-64, the U/L and I/G bits, '
+            'and OUI/CID',
+        routeName: '/tools/naming-conventions',
+        isLive: true,
+        subgroup: 'Addressing & Subnetting',
+      ),
+      // Protocols additions.
+      ToolEntry(
+        id: 'dns-record-types',
+        title: 'DNS Record Types',
+        description:
+            'A, AAAA, CNAME, MX, TXT, SRV, and more — purpose and format',
+        routeName: '/tools/dns-record-types',
+        isLive: true,
+        subgroup: 'Protocols',
+      ),
+      ToolEntry(
+        id: 'dhcp-options',
+        title: 'DHCP Options',
+        description: 'Common DHCPv4 option codes, names, and typical use',
+        routeName: '/tools/dhcp-options',
+        isLive: true,
+        subgroup: 'Protocols',
+      ),
+      ToolEntry(
+        id: 'http-methods',
+        title: 'HTTP Methods & Headers',
+        description: 'HTTP request methods plus common request/response headers',
+        routeName: '/tools/http-methods',
+        isLive: true,
+        subgroup: 'Protocols',
+      ),
+      ToolEntry(
+        id: 'dscp-qos',
+        title: 'DSCP / QoS Markings',
+        description:
+            'DSCP code points, names, decimal/binary values, and the WMM '
+            'access-category mapping',
+        routeName: '/tools/dscp-qos',
+        isLive: true,
+        subgroup: 'Protocols',
+      ),
+      // Models & Standards.
+      ToolEntry(
+        id: 'eap-types',
+        title: '802.1X / EAP Types',
+        description:
+            'EAP methods for 802.1X: credentials, tunneling, and where each '
+            'fits',
+        routeName: '/tools/eap-types',
+        isLive: true,
+        subgroup: 'Models & Standards',
+      ),
+      ToolEntry(
+        id: 'wifi-feature-matrix',
+        title: '802.11 Feature Matrix',
+        description:
+            '802.11 amendments by band, modulation, channel width, and key '
+            'features',
+        routeName: '/tools/wifi-feature-matrix',
+        isLive: true,
+        subgroup: 'Models & Standards',
+      ),
+      // Wi-Fi & RF addition.
+      ToolEntry(
+        id: 'regulatory-domains',
+        title: 'Regulatory Domains',
+        description:
+            'Per-region Wi-Fi band availability, power limits, and DFS rules',
+        routeName: '/tools/regulatory-domains',
+        isLive: true,
+        subgroup: 'Wi-Fi & RF',
+      ),
+      // Time & Formats.
+      ToolEntry(
+        id: 'datetime-standards',
+        title: 'Date / Time Standards',
+        description:
+            'ISO 8601, RFC 3339, Unix time, time zones, and common format '
+            'tokens',
+        routeName: '/tools/datetime-standards',
+        isLive: true,
+        subgroup: 'Time & Formats',
+      ),
+      ToolEntry(
+        id: 'data-units',
+        title: 'Data Units',
+        description:
+            'Bit/byte units, SI vs binary (kB vs KiB) prefixes, and the data-'
+            'rate ladder',
+        routeName: '/tools/data-units',
+        isLive: true,
+        subgroup: 'Time & Formats',
+      ),
+      // Encoding additions.
+      ToolEntry(
+        id: 'hash-lengths',
+        title: 'Hash Lengths',
+        description:
+            'Common hash and digest algorithms by output length and typical '
+            'use',
+        routeName: '/tools/hash-lengths',
+        isLive: true,
+        subgroup: 'Encoding',
+      ),
+      ToolEntry(
+        id: 'regex-cheatsheet',
+        title: 'Regex Cheatsheet',
+        description:
+            'Regular-expression syntax: anchors, classes, quantifiers, groups, '
+            'and lookarounds',
+        routeName: '/tools/regex-cheatsheet',
+        isLive: true,
+        subgroup: 'Encoding',
+      ),
       // ── moved in from the dissolved Command & Capture category
       // (2026-06-01): CLI / monitor-mode / Wireshark reference sheets ──
       ToolEntry(
