@@ -39,7 +39,7 @@
 
   <!-- line-to-line span ~208V (measured quantity, lime): at x=100, L1 at +103.9V (y=50.56) to L3 at -103.9V
        (y=109.44) while L2 crosses zero; endpoints sit ON the two non-zero curves, spanning 58.9px = 207.8V = sqrt(3) x 120 -->
-  <g stroke="#A2CC3A" stroke-width="1.5" stroke-linecap="round">
+  <g stroke="#A1CC3A" stroke-width="1.5" stroke-linecap="round">
     <line x1="100" y1="50.56" x2="100" y2="109.44"/>
     <path d="M97 54.56 L100 50.56 L103 54.56"/>
     <path d="M97 105.44 L100 109.44 L103 105.44"/>
@@ -47,8 +47,8 @@
   <!-- callout moved out of the dense curve sweep into the clear lower margin (below the troughs at y=114,
        right of the L2 and 120V L-N labels). The green double-arrow at x=100 stays put and still marks the
        measured line-to-line span. -->
-  <text x="168" y="126" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">208V</text>
-  <text x="168" y="138" fill="#A2CC3A" font-size="9" font-weight="500" text-anchor="middle">line-to-line</text>
+  <text x="168" y="126" fill="#A1CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">208V</text>
+  <text x="168" y="138" fill="#A1CC3A" font-size="9" font-weight="500" text-anchor="middle">line-to-line</text>
 
   <!-- Header -->
   <text x="160" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">208V Three-Phase (Wye)</text>

@@ -30,7 +30,7 @@
   <!-- hot-to-hot span = 240V (the measured quantity, lime) anchored at x=209, where L1 peaks (y=42, +120V)
        and L2 simultaneously troughs (y=118, -120V); endpoints sit ON both curves so the bracket spans the
        full 76px = 240V crest-to-trough of the two anti-phase legs. -->
-  <g stroke="#A2CC3A" stroke-width="1.5" stroke-linecap="round">
+  <g stroke="#A1CC3A" stroke-width="1.5" stroke-linecap="round">
     <line x1="209" y1="42" x2="209" y2="118"/>
     <path d="M206 46 L209 42 L212 46"/>
     <path d="M206 114 L209 118 L212 114"/>
@@ -38,8 +38,8 @@
   <!-- callout moved out of the curve-crossing region entirely into the clear lower-right margin: below the
        waveform troughs (y=114), right of the centered footer text (which ends near x=260), and clear of the
        dashed zero axis. This gives generous clearance on all sides. The green double-arrow at x=209 stays put. -->
-  <text x="286" y="130" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">240V</text>
-  <text x="286" y="142" fill="#A2CC3A" font-size="9" font-weight="500" text-anchor="middle">hot-to-hot</text>
+  <text x="286" y="130" fill="#A1CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">240V</text>
+  <text x="286" y="142" fill="#A1CC3A" font-size="9" font-weight="500" text-anchor="middle">hot-to-hot</text>
 
   <!-- (Line-to-neutral = 120V is read directly off the +120/-120 axis ticks; the lime 240V
        hot-to-hot is the single hero callout, per the §8.6.2 one-measured-quantity rule.) -->
