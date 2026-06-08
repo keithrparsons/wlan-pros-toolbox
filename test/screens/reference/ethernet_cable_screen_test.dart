@@ -93,8 +93,11 @@ void main() {
 
         expect(find.text('Ethernet Cable'), findsWidgets);
         expect(find.text('6 cable categories'), findsOneWidget);
-        // Cat6A anchor cells render verbatim from the PWA.
-        expect(find.text('Cat6A'), findsOneWidget);
+        // Cat6A anchor cells render verbatim from the PWA. 'Cat6A' now appears
+        // in both the cable-categories table and the multigig minimum-cabling
+        // table added in the 2026-06-08 improvement, so it renders more than
+        // once.
+        expect(find.text('Cat6A'), findsWidgets);
         expect(find.text('500'), findsOneWidget);
         expect(find.text('802.3bt (all)'), findsOneWidget);
         // Read-only reference: no inputs.

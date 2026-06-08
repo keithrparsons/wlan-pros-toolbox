@@ -25,9 +25,16 @@ import 'tool_ordering.dart';
 const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
   'quick-reference': <String>[
     'Wi-Fi & RF',
-    'Cabling & Connectors',
+    // Addressing & Subnetting (2026-06-08): IP address reference, CIDR/subnet
+    // table, naming/addressing conventions.
+    'Addressing & Subnetting',
     'Protocols',
+    // Models & Standards (2026-06-08): 802.1X/EAP types, 802.11 feature matrix.
+    'Models & Standards',
+    'Cabling & Connectors',
     'Encoding',
+    // Time & Formats (2026-06-08): date/time standards, data units.
+    'Time & Formats',
     'CLI & Capture',
     'Checklists',
     // Step-by-step how-tos that bundle a downloadable companion file

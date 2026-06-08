@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 360" width="620" height="360" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- WMM Access Category <-> 802.11e UP <-> DSCP, per RFC 8325.
+       Lime marks the VOICE row (AC_VO / UP 6 / EF 46) - the one the naive
+       DSCP>>3 default gets wrong. Dark-baked palette per §8.20.7 allow-list.
+       Cells generously sized so text never touches the grid rules. -->
+
+  <!-- ============================ HEADER ============================ -->
+  <text x="310" y="30" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle">QoS Mapping &#8212; WMM AC &#8596; 802.11e UP &#8596; DSCP</text>
+  <text x="310" y="50" fill="#9C9C9C" font-size="11.5" font-weight="500" text-anchor="middle">recommended markings per RFC 8325</text>
+
+  <!-- ============================ GRID GEOMETRY ============================ -->
+  <!-- table x=40..580 (540 wide). 4 columns: AC 180 | UP 110 | DSCP 150 | dec 100.
+       col x-edges: 40, 220, 330, 480, 580
+       header row y=70..102 ; 4 data rows of 44 -> y 102,146,190,234,278 -->
+
+  <!-- column header band -->
+  <rect x="40" y="70" width="540" height="32" rx="4" fill="#222222" stroke="#9C9C9C" stroke-width="1.4"/>
+  <g fill="#E5E5E5" font-size="12" font-weight="600" text-anchor="middle">
+    <text x="130" y="91">WMM Access Category</text>
+    <text x="275" y="91">802.11e UP</text>
+    <text x="405" y="91">DSCP</text>
+    <text x="530" y="91">Decimal</text>
+  </g>
+
+  <!-- voice row highlight fill (lime wash, the one sanctioned fill) -->
+  <rect x="40" y="102" width="540" height="44" fill="rgba(162,204,58,0.08)"/>
+
+  <!-- outer table border + row rules -->
+  <g stroke="#9C9C9C" stroke-width="1.2">
+    <rect x="40" y="102" width="540" height="176" fill="none"/>
+    <line x1="40" y1="146" x2="580" y2="146"/>
+    <line x1="40" y1="190" x2="580" y2="190"/>
+    <line x1="40" y1="234" x2="580" y2="234"/>
+  </g>
+  <!-- column rules (kept lighter; full height of the data block) -->
+  <g stroke="#9C9C9C" stroke-width="1" opacity="0.6">
+    <line x1="220" y1="70" x2="220" y2="278"/>
+    <line x1="330" y1="70" x2="330" y2="278"/>
+    <line x1="480" y1="70" x2="480" y2="278"/>
+  </g>
+
+  <!-- ============================ ROW 1 : AC_VO (voice) - LIME hero ============================ -->
+  <text x="130" y="130" fill="#A1CC3A" font-size="14" font-weight="700" text-anchor="middle">AC_VO &#183; Voice</text>
+  <text x="275" y="130" fill="#A1CC3A" font-size="17" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">6</text>
+  <text x="405" y="130" fill="#A1CC3A" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">EF</text>
+  <text x="530" y="130" fill="#A1CC3A" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">46</text>
+
+  <!-- ============================ ROW 2 : AC_VI (video) ============================ -->
+  <text x="130" y="174" fill="#E5E5E5" font-size="13" font-weight="600" text-anchor="middle">AC_VI &#183; Video</text>
+  <text x="275" y="174" fill="#E5E5E5" font-size="16" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">4</text>
+  <text x="405" y="174" fill="#E5E5E5" font-size="14" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">AF41</text>
+  <text x="530" y="174" fill="#E5E5E5" font-size="14" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">34</text>
+
+  <!-- ============================ ROW 3 : AC_BE (best effort) ============================ -->
+  <text x="130" y="218" fill="#E5E5E5" font-size="13" font-weight="600" text-anchor="middle">AC_BE &#183; Best Effort</text>
+  <text x="275" y="218" fill="#E5E5E5" font-size="16" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">0</text>
+  <text x="405" y="218" fill="#E5E5E5" font-size="14" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">DF</text>
+  <text x="530" y="218" fill="#E5E5E5" font-size="14" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">0</text>
+
+  <!-- ============================ ROW 4 : AC_BK (background) ============================ -->
+  <text x="130" y="262" fill="#E5E5E5" font-size="13" font-weight="600" text-anchor="middle">AC_BK &#183; Background</text>
+  <text x="275" y="262" fill="#E5E5E5" font-size="16" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">1</text>
+  <text x="405" y="262" fill="#E5E5E5" font-size="14" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">CS1</text>
+  <text x="530" y="262" fill="#E5E5E5" font-size="14" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">8</text>
+
+  <!-- ============================ FOOTER : the pitfall note ============================ -->
+  <text x="310" y="312" fill="#E5E5E5" font-size="12.5" font-weight="600" text-anchor="middle">Naive default <tspan font-family="DM Mono, monospace" fill="#9C9C9C">UP = DSCP &gt;&gt; 3</tspan> sends voice (EF 46) to UP 5</text>
+  <text x="310" y="332" fill="#9C9C9C" font-size="11.5" font-weight="500" text-anchor="middle">&#8212; into the <tspan fill="#E5E5E5">video</tspan> queue, not voice. RFC 8325 fixes this with an explicit table.</text>
+</svg>

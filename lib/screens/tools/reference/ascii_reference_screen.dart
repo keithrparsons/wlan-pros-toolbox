@@ -1486,6 +1486,62 @@ class AsciiReferenceScreen extends StatefulWidget {
       'encoding before decoding. When in doubt assume UTF-8 and decode '
       'multi-byte sequences.';
 
+  // ─── Base64 (RFC 4648) ───────────────────────────────────────────────────────
+
+  /// Base64 explainer (RFC 4648 §4). How the 3-byte → 4-character mapping works.
+  static const String base64Summary =
+      'Base64 (RFC 4648) encodes arbitrary bytes as ASCII text. It takes 3 bytes '
+      '(24 bits) at a time and splits them into four 6-bit groups, mapping each '
+      'group to one character. The 64-character alphabet is indexed 0–63.';
+
+  /// The 64-character standard Base64 alphabet (RFC 4648 §4), index → glyph.
+  /// 0–25 = A–Z, 26–51 = a–z, 52–61 = 0–9, 62 = '+', 63 = '/'.
+  static const String base64Alphabet =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+  /// The four contiguous ranges of the standard Base64 alphabet.
+  static const List<RangeBoundary> base64Ranges = <RangeBoundary>[
+    RangeBoundary(
+      block: 'Uppercase A–Z',
+      decRange: '0–25',
+      hexRange: 'A–Z',
+      note: 'Index 0 = A.',
+    ),
+    RangeBoundary(
+      block: 'Lowercase a–z',
+      decRange: '26–51',
+      hexRange: 'a–z',
+      note: 'Index 26 = a.',
+    ),
+    RangeBoundary(
+      block: 'Digits 0–9',
+      decRange: '52–61',
+      hexRange: '0–9',
+      note: 'Index 52 = 0.',
+    ),
+    RangeBoundary(
+      block: 'Symbols + and /',
+      decRange: '62–63',
+      hexRange: '+ /',
+      note: 'Index 62 = +, 63 = /. URL-safe variant uses - and _.',
+    ),
+  ];
+
+  /// Base64 padding rules (RFC 4648 §4): how '=' signals the input length.
+  static const String base64Padding =
+      'The "=" character is padding, not part of the alphabet. It pads the output '
+      'to a multiple of 4 characters so a decoder knows how many input bytes the '
+      'final group held.';
+  static const String base64PadThree =
+      '3 input bytes → 4 chars, no padding (e.g. "Man" → "TWFu").';
+  static const String base64PadTwo =
+      '2 input bytes → 3 chars + one "=" (e.g. "Ma" → "TWE=").';
+  static const String base64PadOne =
+      '1 input byte → 2 chars + two "==" (e.g. "M" → "TQ==").';
+  static const String base64Note =
+      'URL-safe Base64 (RFC 4648 §5) swaps + for - and / for _, and often omits '
+      'padding. Otherwise the alphabet is identical.';
+
   @override
   State<AsciiReferenceScreen> createState() => _AsciiReferenceScreenState();
 }
@@ -1537,9 +1593,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
         // table plus every supplementary section, independent of the on-screen
         // filter (the filter only narrows what is displayed; the static dataset
         // is the result worth keeping). Always enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -1650,6 +1704,23 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
     }
     buf.writeln(AsciiReferenceScreen.highRangeRule);
 
+    // 9. Base64 alphabet (RFC 4648).
+    buf
+      ..writeln()
+      ..writeln('Base64 alphabet (RFC 4648)')
+      ..writeln(AsciiReferenceScreen.base64Summary)
+      ..writeln('Alphabet (index 0-63): ${AsciiReferenceScreen.base64Alphabet}')
+      ..writeln(<String>['Block', 'Index', 'Chars', 'Note'].join(tab));
+    for (final RangeBoundary b in AsciiReferenceScreen.base64Ranges) {
+      buf.writeln(<String>[b.block, b.decRange, b.hexRange, b.note].join(tab));
+    }
+    buf
+      ..writeln(AsciiReferenceScreen.base64Padding)
+      ..writeln(AsciiReferenceScreen.base64PadThree)
+      ..writeln(AsciiReferenceScreen.base64PadTwo)
+      ..writeln(AsciiReferenceScreen.base64PadOne)
+      ..writeln(AsciiReferenceScreen.base64Note);
+
     return buf.toString().trimRight();
   }
 
@@ -1736,6 +1807,8 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
                   _hexPlaceValuesCard(text, mono),
                   const SizedBox(height: AppSpacing.sm),
                   _highRangeCard(text),
+                  const SizedBox(height: AppSpacing.sm),
+                  _base64Card(text, mono),
                   ToolHelpFooter(toolId: 'ascii-reference'),
                 ],
               ),
@@ -1859,9 +1932,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
                 Text(
                   'No ASCII character matches "${_queryCtrl.text.trim()}". The '
                   'quick-reference tables below are unaffected.',
-                  style: text.labelMedium?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),
@@ -2278,6 +2349,101 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
       ),
     );
   }
+
+  Widget _base64Card(TextTheme text, AppMonoText mono) {
+    final AppColorScheme colors = context.colors;
+    return _Card(
+      heading: 'Base64 alphabet (RFC 4648)',
+      headingText: text,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            AsciiReferenceScreen.base64Summary,
+            style: text.labelMedium?.copyWith(color: colors.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          // The 64-character alphabet as one mono run, scrollable so it never
+          // overflows a 320px phone (identifier string, Roboto Mono per §8.5).
+          HorizontalScrollTable(
+            child: Semantics(
+              label:
+                  'Standard Base64 alphabet, index 0 to 63: '
+                  'A to Z, a to z, 0 to 9, plus, slash',
+              child: ExcludeSemantics(
+                child: Text(
+                  AsciiReferenceScreen.base64Alphabet,
+                  style: mono.robotoMono.copyWith(
+                    fontSize: AppTextSize.caption,
+                    color: colors.textAccent,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          for (final RangeBoundary b in AsciiReferenceScreen.base64Ranges)
+            ReferenceRowSemantics(
+              label: rowLabel(b.block, <String?>[
+                'index ${b.decRange}',
+                'characters ${b.hexRange}',
+                b.note,
+              ]),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(
+                        b.block,
+                        style: text.labelLarge?.copyWith(
+                          color: colors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    Text(
+                      'idx ${b.decRange}',
+                      style: mono.robotoMono.copyWith(
+                        fontSize: AppTextSize.caption,
+                        color: colors.textAccent,
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Padding',
+            style: text.labelMedium?.copyWith(
+              color: colors.textSecondary,
+              letterSpacing: 0.4,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            AsciiReferenceScreen.base64Padding,
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          _opLine(AsciiReferenceScreen.base64PadThree, text, mono),
+          _opLine(AsciiReferenceScreen.base64PadTwo, text, mono),
+          _opLine(AsciiReferenceScreen.base64PadOne, text, mono),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            AsciiReferenceScreen.base64Note,
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// One control/printable table inside a bordered card. Each row is a two-line
@@ -2408,9 +2574,7 @@ class _AsciiRow extends StatelessWidget {
     final bool isControl = entry.category == AsciiCategory.control;
     // Char token: lime for a control mnemonic (it is the row's identity), high-
     // contrast primary text for a printable glyph.
-    final Color charColor = isControl
-        ? colors.textAccent
-        : colors.textPrimary;
+    final Color charColor = isControl ? colors.textAccent : colors.textPrimary;
 
     final TextStyle idStyle = mono.robotoMono.copyWith(
       fontSize: AppTextSize.caption,
@@ -2474,9 +2638,7 @@ class _AsciiRow extends StatelessWidget {
               padding: const EdgeInsets.only(top: 2),
               child: Text(
                 entry.description,
-                style: text.labelMedium?.copyWith(
-                  color: colors.textTertiary,
-                ),
+                style: text.labelMedium?.copyWith(color: colors.textTertiary),
               ),
             ),
           ],

@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" width="640" height="420" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- Two parallel ladders: SI decimal (1 kB = 1000 B) vs IEC binary (1 KiB = 1024 B).
+       Center column shows the divergence growing down the rungs. Lime hero = the GB/GiB
+       step (7.37%) - the famous "1 TB drive shows ~931 GiB" gap. Bit-vs-byte (x8) note below.
+       Dark-baked palette per §8.20.7 allow-list. -->
+
+  <!-- ============================ HEADER ============================ -->
+  <text x="320" y="30" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle">Decimal vs Binary Data Units</text>
+
+  <!-- ============================ COLUMN HEADERS ============================ -->
+  <!-- SI column centered x=150 ; gap column x=320 ; IEC column x=490 -->
+  <text x="150" y="62" fill="#E5E5E5" font-size="13" font-weight="600" text-anchor="middle">SI &#183; decimal</text>
+  <text x="150" y="80" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">1 kB = 1000 B</text>
+
+  <text x="490" y="62" fill="#E5E5E5" font-size="13" font-weight="600" text-anchor="middle">IEC &#183; binary</text>
+  <text x="490" y="80" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">1 KiB = 1024 B</text>
+
+  <text x="320" y="71" fill="#9C9C9C" font-size="11" font-weight="600" text-anchor="middle">gap</text>
+
+  <!-- ============================ RUNGS ============================ -->
+  <!-- 4 rungs at y-centers: 120, 168, 216, 264. Each side a rounded box 150 wide.
+       SI box x=75..225 ; IEC box x=415..565. Center gap figure at x=320.
+       GB/GiB rung (3rd, y=216) is the lime hero. -->
+
+  <!-- rung 1 : kB / KiB -->
+  <rect x="75"  y="102" width="150" height="36" rx="4" stroke="#E5E5E5" stroke-width="1.5"/>
+  <rect x="415" y="102" width="150" height="36" rx="4" stroke="#E5E5E5" stroke-width="1.5"/>
+  <text x="118" y="125" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">kB</text>
+  <text x="195" y="125" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">10&#179;</text>
+  <text x="458" y="125" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">KiB</text>
+  <text x="538" y="125" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">2&#185;&#8304;</text>
+  <text x="320" y="124" fill="#9C9C9C" font-size="12.5" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">2.4%</text>
+
+  <!-- rung 2 : MB / MiB -->
+  <rect x="75"  y="150" width="150" height="36" rx="4" stroke="#E5E5E5" stroke-width="1.5"/>
+  <rect x="415" y="150" width="150" height="36" rx="4" stroke="#E5E5E5" stroke-width="1.5"/>
+  <text x="118" y="173" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">MB</text>
+  <text x="195" y="173" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">10&#8310;</text>
+  <text x="458" y="173" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">MiB</text>
+  <text x="538" y="173" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">2&#178;&#8304;</text>
+  <text x="320" y="172" fill="#9C9C9C" font-size="12.5" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">4.9%</text>
+
+  <!-- rung 3 : GB / GiB - LIME HERO -->
+  <rect x="75"  y="198" width="150" height="36" rx="4" stroke="#A1CC3A" stroke-width="2"/>
+  <rect x="415" y="198" width="150" height="36" rx="4" stroke="#A1CC3A" stroke-width="2"/>
+  <text x="118" y="221" fill="#A1CC3A" font-size="15" font-weight="700" text-anchor="middle" font-family="DM Mono, monospace">GB</text>
+  <text x="195" y="221" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">10&#8313;</text>
+  <text x="458" y="221" fill="#A1CC3A" font-size="15" font-weight="700" text-anchor="middle" font-family="DM Mono, monospace">GiB</text>
+  <text x="538" y="221" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">2&#179;&#8304;</text>
+  <text x="320" y="220" fill="#A1CC3A" font-size="14" font-weight="700" text-anchor="middle" font-family="DM Mono, monospace">7.37%</text>
+
+  <!-- rung 4 : TB / TiB -->
+  <rect x="75"  y="246" width="150" height="36" rx="4" stroke="#E5E5E5" stroke-width="1.5"/>
+  <rect x="415" y="246" width="150" height="36" rx="4" stroke="#E5E5E5" stroke-width="1.5"/>
+  <text x="118" y="269" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">TB</text>
+  <text x="195" y="269" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">10&#185;&#178;</text>
+  <text x="458" y="269" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">TiB</text>
+  <text x="538" y="269" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">2&#8308;&#8304;</text>
+  <text x="320" y="268" fill="#9C9C9C" font-size="12.5" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">9.95%</text>
+
+  <!-- divergence line down the center, in SHORT SEGMENTS that live only in the
+       inter-row whitespace between the gap figures - never crossing a glyph.
+       Figure glyph extents (baseline-cap..baseline-descender): 2.4% ~113-127,
+       4.9% ~161-175, 7.37% ~208-223, 9.95% ~257-271. Segments sit in the gaps. -->
+  <g stroke="#9C9C9C" stroke-width="1" stroke-dasharray="2 4" opacity="0.45">
+    <line x1="320" y1="131" x2="320" y2="157"/>
+    <line x1="320" y1="179" x2="320" y2="205"/>
+    <line x1="320" y1="227" x2="320" y2="253"/>
+  </g>
+
+  <!-- lime hero caption, in clear space below the ladders -->
+  <text x="320" y="310" fill="#A1CC3A" font-size="12.5" font-weight="600" text-anchor="middle">A "1 TB" drive (10&#185;&#178; bytes) shows as ~931 GiB &#8212; the 7.37% GB/GiB gap.</text>
+
+  <!-- ============================ BIT vs BYTE NOTE ============================ -->
+  <!-- separating rule with generous space above and below -->
+  <line x1="75" y1="334" x2="565" y2="334" stroke="#9C9C9C" stroke-width="1" opacity="0.5"/>
+
+  <text x="118" y="368" fill="#E5E5E5" font-size="22" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">b</text>
+  <text x="118" y="390" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">bit</text>
+
+  <!-- x8 relation in the middle, clear of both glyphs -->
+  <text x="320" y="362" fill="#E5E5E5" font-size="14" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">1 B = 8 b</text>
+  <text x="320" y="384" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">link speed in bits &#183; storage in bytes &#183; &#247; 8 to convert</text>
+
+  <text x="522" y="368" fill="#E5E5E5" font-size="22" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">B</text>
+  <text x="522" y="390" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">byte</text>
+
+  <!-- arrows connecting b -> B (x8), kept off the glyphs -->
+  <g stroke="#9C9C9C" stroke-width="1.3" stroke-linecap="round" opacity="0.8">
+    <line x1="150" y1="360" x2="288" y2="360"/>
+  </g>
+</svg>

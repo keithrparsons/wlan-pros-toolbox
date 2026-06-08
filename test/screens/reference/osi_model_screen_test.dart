@@ -67,8 +67,11 @@ void main() {
         );
         expect(find.text('OSI Model'), findsWidgets);
         expect(find.text('The 7 layers'), findsOneWidget);
-        expect(find.text('Application'), findsOneWidget);
-        expect(find.text('Physical'), findsOneWidget);
+        // 'Application' and 'Physical' now each render in both the 7-layer OSI
+        // table and the TCP/IP-mapping table added in the 2026-06-08
+        // improvement, so they appear more than once.
+        expect(find.text('Application'), findsWidgets);
+        expect(find.text('Physical'), findsWidgets);
         expect(find.byType(TextField), findsNothing); // read-only
       });
     });

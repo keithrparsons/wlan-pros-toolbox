@@ -71,11 +71,15 @@ class PoeStandard {
 }
 
 /// One row of the PD power-class table. Field names + values mirror the PWA
-/// `POE_CLASSES` const exactly: [class, max_pd_w, standard, note].
+/// `POE_CLASSES` const exactly: [class, max_pd_w, standard, note], extended with
+/// the PSE OUTPUT watts per class so the class ladder shows both ends of the
+/// link (what the switch sends vs. what the device gets). PSE-output values per
+/// IEEE Std 802.3-2022 (Class 5-8 = 45/60/75/90 W).
 @immutable
 class PoeClass {
   const PoeClass({
     required this.classNum,
+    required this.pseWatts,
     required this.maxPdWatts,
     required this.standard,
     required this.note,
@@ -83,6 +87,10 @@ class PoeClass {
 
   /// Class number, 0–8.
   final int classNum;
+
+  /// PSE output power for this class, in watts (what the switch/injector
+  /// supplies). Class 5-8 = 45/60/75/90 W per IEEE 802.3bt.
+  final double pseWatts;
 
   /// Maximum power available at the PD for this class, in watts.
   final double maxPdWatts;
@@ -92,6 +100,44 @@ class PoeClass {
 
   /// Short descriptor, e.g. `Type 4 max`.
   final String note;
+}
+
+/// One IEEE 802.3 PoE Type row — the cable/power-budget dimension. Adds the
+/// Type numbering, PSE voltage range, and pair count alongside the PSE/PD watts
+/// already on the standards table. Values per IEEE Std 802.3-2022 Clause 33
+/// (Type 1/2) and Clause 145 (Type 3/4).
+@immutable
+class PoeType {
+  const PoeType({
+    required this.type,
+    required this.name,
+    required this.clause,
+    required this.voltageRange,
+    required this.pseWatts,
+    required this.pdWatts,
+    required this.pairs,
+  });
+
+  /// IEEE Type number, e.g. `Type 3`.
+  final String type;
+
+  /// Common name, e.g. `PoE++ / 4PPoE`.
+  final String name;
+
+  /// 802.3 clause origin, e.g. `bt`.
+  final String clause;
+
+  /// PSE output voltage range at the switch, e.g. `52.0-57.0 V`.
+  final String voltageRange;
+
+  /// PSE power supplied, in watts.
+  final double pseWatts;
+
+  /// PD power available (minimum), in watts.
+  final double pdWatts;
+
+  /// Powered pairs, e.g. `4-pair`.
+  final String pairs;
 }
 
 class PoeReferenceScreen extends StatelessWidget {
@@ -133,63 +179,122 @@ class PoeReferenceScreen extends StatelessWidget {
     ),
   ];
 
-  /// PD power classes. Ported verbatim from PWA app.js POE_CLASSES.
+  /// PD power classes. Ported from PWA app.js POE_CLASSES; PSE output watts
+  /// added per IEEE Std 802.3-2022 (Class 5-8 = 45/60/75/90 W).
   static const List<PoeClass> classes = [
     PoeClass(
       classNum: 0,
+      pseWatts: 15.4,
       maxPdWatts: 12.95,
       standard: '802.3af',
       note: 'Default / unclassified',
     ),
     PoeClass(
       classNum: 1,
+      pseWatts: 4.0,
       maxPdWatts: 3.84,
       standard: '802.3af',
       note: 'Low power',
     ),
     PoeClass(
       classNum: 2,
+      pseWatts: 7.0,
       maxPdWatts: 6.49,
       standard: '802.3af',
       note: 'Medium power',
     ),
     PoeClass(
       classNum: 3,
+      pseWatts: 15.4,
       maxPdWatts: 12.95,
       standard: '802.3af',
       note: 'af maximum',
     ),
     PoeClass(
       classNum: 4,
+      pseWatts: 30.0,
       maxPdWatts: 25.5,
       standard: '802.3at',
       note: 'PoE+ max',
     ),
     PoeClass(
       classNum: 5,
+      pseWatts: 45.0,
       maxPdWatts: 40.0,
       standard: '802.3bt',
       note: 'Type 3',
     ),
     PoeClass(
       classNum: 6,
+      pseWatts: 60.0,
       maxPdWatts: 51.0,
       standard: '802.3bt',
       note: 'Type 3 max',
     ),
     PoeClass(
       classNum: 7,
+      pseWatts: 75.0,
       maxPdWatts: 62.0,
       standard: '802.3bt',
       note: 'Type 4',
     ),
     PoeClass(
       classNum: 8,
+      pseWatts: 90.0,
       maxPdWatts: 71.3,
       standard: '802.3bt',
       note: 'Type 4 max',
     ),
   ];
+
+  /// IEEE 802.3 PoE Types — the cable/power-budget dimension. Voltage range,
+  /// pairs, and PSE/PD watts per IEEE Std 802.3-2022 Clause 33 (Type 1/2) and
+  /// Clause 145 (Type 3/4).
+  static const List<PoeType> types = [
+    PoeType(
+      type: 'Type 1',
+      name: 'PoE',
+      clause: 'af',
+      voltageRange: '44.0-57.0 V',
+      pseWatts: 15.4,
+      pdWatts: 12.95,
+      pairs: '2-pair',
+    ),
+    PoeType(
+      type: 'Type 2',
+      name: 'PoE+',
+      clause: 'at',
+      voltageRange: '50.0-57.0 V',
+      pseWatts: 30.0,
+      pdWatts: 25.5,
+      pairs: '2-pair',
+    ),
+    PoeType(
+      type: 'Type 3',
+      name: 'PoE++ / 4PPoE',
+      clause: 'bt',
+      voltageRange: '52.0-57.0 V',
+      pseWatts: 60.0,
+      pdWatts: 51.0,
+      pairs: '4-pair',
+    ),
+    PoeType(
+      type: 'Type 4',
+      name: 'PoE++ Hi',
+      clause: 'bt',
+      voltageRange: '52.0-57.0 V',
+      pseWatts: 90.0,
+      pdWatts: 71.3,
+      pairs: '4-pair',
+    ),
+  ];
+
+  /// Electrical-limit note for the Types card. Per-pair current per IEEE
+  /// 802.3-2022.
+  static const String typesFootnote =
+      'PSE output voltage is measured at the switch or injector. Max current is '
+      '600 mA per pair for Types 1-3 (Class up to 6); Type 4 at Class 8 draws up '
+      'to 960 mA per pair across all four pairs.';
 
   /// Footnote — PD power is what reaches the device after cable loss.
   static const String footnote =
@@ -205,9 +310,7 @@ class PoeReferenceScreen extends StatelessWidget {
         toolbarHeight: 64,
         // §8.16 — copy both sub-tables as TSV (PoE standards + PD power
         // classes), each its own section. Static data, always enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -248,14 +351,50 @@ class PoeReferenceScreen extends StatelessWidget {
     }
     buf
       ..writeln()
+      ..writeln('IEEE 802.3 Types')
+      ..writeln(
+        <String>[
+          'Type',
+          'Name',
+          'Clause',
+          'PSE voltage',
+          'PSE (W)',
+          'PD (W)',
+          'Pairs',
+        ].join(tab),
+      );
+    for (final PoeType t in types) {
+      buf.writeln(
+        <String>[
+          t.type,
+          t.name,
+          t.clause,
+          t.voltageRange,
+          _fmt(t.pseWatts),
+          _fmt(t.pdWatts),
+          t.pairs,
+        ].join(tab),
+      );
+    }
+    buf
+      ..writeln()
+      ..writeln(typesFootnote)
+      ..writeln()
       ..writeln('PD power classes')
       ..writeln(
-        <String>['Class', 'Max at PD (W)', 'Standard', 'Note'].join(tab),
+        <String>[
+          'Class',
+          'PSE out (W)',
+          'Max at PD (W)',
+          'Standard',
+          'Note',
+        ].join(tab),
       );
     for (final PoeClass c in classes) {
       buf.writeln(
         <String>[
           '${c.classNum}',
+          _fmt(c.pseWatts),
           _fmt(c.maxPdWatts),
           c.standard,
           c.note,
@@ -300,6 +439,8 @@ class PoeReferenceScreen extends StatelessWidget {
                     const SizedBox(height: AppSpacing.md),
                   _standardsCard(colors, text, mono),
                   const SizedBox(height: AppSpacing.md),
+                  _typesCard(colors, text, mono),
+                  const SizedBox(height: AppSpacing.md),
                   _classesCard(colors, text, mono),
                   ToolHelpFooter(toolId: 'poe-reference'),
                 ],
@@ -311,7 +452,11 @@ class PoeReferenceScreen extends StatelessWidget {
     );
   }
 
-  Widget _standardsCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
+  Widget _standardsCard(
+    AppColorScheme colors,
+    TextTheme text,
+    AppMonoText mono,
+  ) {
     return _TableCard(
       title: 'PoE standards',
       footnote: footnote,
@@ -381,7 +526,69 @@ class PoeReferenceScreen extends StatelessWidget {
                   width: 64,
                   child: Text(
                     s.pairs,
+                    style: mono.inlineCode.copyWith(color: colors.textTertiary),
+                  ),
+                ),
+                SizedBox(
+                  width: 56,
+                  child: Text(
+                    s.classes,
+                    style: mono.inlineCode.copyWith(color: colors.textTertiary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _typesCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
+    return _TableCard(
+      title: 'IEEE 802.3 Types',
+      footnote: typesFootnote,
+      header: const Row(
+        children: [
+          _HeaderCell('Type', width: 72),
+          _HeaderCell('Name', width: 128),
+          _HeaderCell('Clause', width: 56),
+          _HeaderCell('PSE volts', width: 96),
+          _HeaderCell('PSE', width: 64),
+          _HeaderCell('PD', width: 64),
+          _HeaderCell('Pairs', width: 64),
+        ],
+      ),
+      rows: types.map((PoeType t) {
+        return ReferenceRowSemantics(
+          label: rowLabel(t.type, <String?>[
+            t.name,
+            'clause ${t.clause}',
+            'PSE voltage ${t.voltageRange}',
+            'PSE ${_fmt(t.pseWatts)} watts',
+            'PD ${_fmt(t.pdWatts)} watts',
+            'pairs ${t.pairs}',
+          ]),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 72,
+                  child: Text(
+                    t.type,
                     style: mono.inlineCode.copyWith(
+                      color: colors.textPrimary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 128,
+                  child: Text(
+                    t.name,
+                    style: text.labelMedium?.copyWith(
                       color: colors.textTertiary,
                     ),
                   ),
@@ -389,10 +596,45 @@ class PoeReferenceScreen extends StatelessWidget {
                 SizedBox(
                   width: 56,
                   child: Text(
-                    s.classes,
+                    t.clause,
                     style: mono.inlineCode.copyWith(
-                      color: colors.textTertiary,
+                      color: colors.textSecondary,
                     ),
+                  ),
+                ),
+                SizedBox(
+                  width: 96,
+                  child: Text(
+                    t.voltageRange,
+                    style: mono.inlineCode.copyWith(
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 64,
+                  child: Text(
+                    '${_fmt(t.pseWatts)} W',
+                    style: mono.inlineCode.copyWith(
+                      color: colors.textAccent,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 64,
+                  child: Text(
+                    '${_fmt(t.pdWatts)} W',
+                    style: mono.inlineCode.copyWith(
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 64,
+                  child: Text(
+                    t.pairs,
+                    style: mono.inlineCode.copyWith(color: colors.textTertiary),
                   ),
                 ),
               ],
@@ -409,6 +651,7 @@ class PoeReferenceScreen extends StatelessWidget {
       header: const Row(
         children: [
           _HeaderCell('Class', width: 56),
+          _HeaderCell('PSE out', width: 80),
           _HeaderCell('Max at PD', width: 88),
           _HeaderCell('Standard', width: 88),
           _HeaderCell('Note', width: 160),
@@ -417,6 +660,7 @@ class PoeReferenceScreen extends StatelessWidget {
       rows: classes.map((PoeClass c) {
         return ReferenceRowSemantics(
           label: rowLabel('Class ${c.classNum}', <String?>[
+            'PSE output ${_fmt(c.pseWatts)} watts',
             'max at PD ${_fmt(c.maxPdWatts)} watts',
             'standard ${c.standard}',
             c.note,
@@ -437,12 +681,21 @@ class PoeReferenceScreen extends StatelessWidget {
                   ),
                 ),
                 SizedBox(
+                  width: 80,
+                  child: Text(
+                    '${_fmt(c.pseWatts)} W',
+                    style: mono.inlineCode.copyWith(
+                      color: colors.textAccent,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                SizedBox(
                   width: 88,
                   child: Text(
                     '${_fmt(c.maxPdWatts)} W',
                     style: mono.inlineCode.copyWith(
-                      color: colors.textAccent,
-                      fontWeight: FontWeight.w500,
+                      color: colors.textSecondary,
                     ),
                   ),
                 ),
