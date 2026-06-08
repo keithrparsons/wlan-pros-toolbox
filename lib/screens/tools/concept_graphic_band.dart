@@ -72,6 +72,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../data/tool_assets.dart';
 import '../../theme/app_color_scheme.dart';
 import '../../theme/app_tokens.dart';
+import 'zoomable_graphic.dart';
 
 /// Renders a tool's concept graphic as the §8.6.2 header band, or nothing when
 /// the asset is not bundled. Drop it in as the first child of a tool screen's
@@ -397,19 +398,38 @@ class _ConceptSvg extends StatelessWidget {
           isDesktop: isDesktop,
         );
 
-        final Widget svg = isLight
-            ? _LightConceptSvg(future: swappedFuture!, bandHeight: bandHeight)
-            : SvgPicture.asset(
-                ToolAssets.graphicPath(toolId),
-                // Fill the width; height is the aspect-driven band height. A
-                // wide graphic fills edge-to-edge; a tall one that hit the
-                // height ceiling is contained (never cropped — §8.6.2).
-                fit: BoxFit.contain,
-                width: double.infinity,
-                height: bandHeight,
-                excludeFromSemantics: true,
-                placeholderBuilder: (_) => const SizedBox.shrink(),
-              );
+        final Widget svg;
+        if (isLight) {
+          svg = _LightConceptSvg(future: swappedFuture!, bandHeight: bandHeight);
+        } else {
+          // Dark: the in-page render is the unmodified asset (dark goldens
+          // unaffected). Wrap it in ZoomableGraphic so a tap opens the §8.6.2
+          // full-screen pinch-zoom view, re-rendering the SAME asset large
+          // (crisp — vector). The decorative ExcludeSemantics lives on the
+          // SvgPicture; ZoomableGraphic adds the labeled zoom button.
+          final Widget inPage = SvgPicture.asset(
+            ToolAssets.graphicPath(toolId),
+            // Fill the width; height is the aspect-driven band height. A wide
+            // graphic fills edge-to-edge; a tall one that hit the height
+            // ceiling is contained (never cropped — §8.6.2).
+            fit: BoxFit.contain,
+            width: double.infinity,
+            height: bandHeight,
+            excludeFromSemantics: true,
+            placeholderBuilder: (_) => const SizedBox.shrink(),
+          );
+          svg = ZoomableGraphic(
+            svgBuilder: (BuildContext _, Size canvas) => SvgPicture.asset(
+              ToolAssets.graphicPath(toolId),
+              fit: BoxFit.contain,
+              width: canvas.width,
+              height: canvas.height,
+              excludeFromSemantics: true,
+              placeholderBuilder: (_) => const SizedBox.shrink(),
+            ),
+            child: inPage,
+          );
+        }
 
         return SizedBox(
           height: bandHeight,
@@ -444,13 +464,27 @@ class _LightConceptSvg extends StatelessWidget {
           // Loading or failed — render nothing (no broken box, no jump).
           return const SizedBox.shrink();
         }
-        return SvgPicture.string(
-          data,
-          fit: BoxFit.contain,
-          width: double.infinity,
-          height: bandHeight,
-          excludeFromSemantics: true,
-          placeholderBuilder: (_) => const SizedBox.shrink(),
+        // Wrap the recolored in-page render in ZoomableGraphic; the zoom view
+        // re-renders the SAME §8.20.7-swapped source large via SvgPicture.string
+        // (crisp — vector), so the zoomed light graphic matches the in-page one
+        // exactly and never reverts to a raw lime stroke on white.
+        return ZoomableGraphic(
+          svgBuilder: (BuildContext _, Size canvas) => SvgPicture.string(
+            data,
+            fit: BoxFit.contain,
+            width: canvas.width,
+            height: canvas.height,
+            excludeFromSemantics: true,
+            placeholderBuilder: (_) => const SizedBox.shrink(),
+          ),
+          child: SvgPicture.string(
+            data,
+            fit: BoxFit.contain,
+            width: double.infinity,
+            height: bandHeight,
+            excludeFromSemantics: true,
+            placeholderBuilder: (_) => const SizedBox.shrink(),
+          ),
         );
       },
     );

@@ -44,6 +44,7 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../concept_graphic_band.dart';
+import '../zoomable_graphic.dart';
 
 /// One label/value spec pair shown beside (or beneath) a large face graphic.
 /// The [accent] flag tints the value lime to draw the eye to a load-bearing
@@ -131,18 +132,42 @@ class LargeGraphic extends StatelessWidget {
     final double graphicHeight =
         (viewportHeight * heightFraction).clamp(minHeight, maxHeight);
 
+    // A readable zoom label from the asset name (e.g. "iec-c13" → "Zoom iec
+    // c13"); call sites pass connector-specific names, so this reads sensibly.
+    final String zoomLabel = 'Zoom ${assetName.replaceAll('-', ' ')}';
+
     // DARK: unmodified asset (dark render unchanged). LIGHT: load + §8.20.7 swap
-    // + render via string so no raw lime stroke ever hits a light surface.
-    final Widget svg = colors.isLight
-        ? _LightLargeSvg(future: _loadSwappedSvg(), height: graphicHeight)
-        : SvgPicture.asset(
-            path(assetName),
-            fit: BoxFit.contain,
-            width: double.infinity,
-            height: graphicHeight,
-            excludeFromSemantics: true,
-            placeholderBuilder: (_) => const SizedBox.shrink(),
-          );
+    // + render via string so no raw lime stroke ever hits a light surface. Both
+    // are wrapped in ZoomableGraphic so a tap opens the full-screen pinch-zoom
+    // view, re-rendering the SAME source large (crisp — vector).
+    final Widget svg;
+    if (colors.isLight) {
+      svg = _LightLargeSvg(
+        future: _loadSwappedSvg(),
+        height: graphicHeight,
+        zoomLabel: zoomLabel,
+      );
+    } else {
+      svg = ZoomableGraphic(
+        semanticLabel: zoomLabel,
+        svgBuilder: (BuildContext _, Size canvas) => SvgPicture.asset(
+          path(assetName),
+          fit: BoxFit.contain,
+          width: canvas.width,
+          height: canvas.height,
+          excludeFromSemantics: true,
+          placeholderBuilder: (_) => const SizedBox.shrink(),
+        ),
+        child: SvgPicture.asset(
+          path(assetName),
+          fit: BoxFit.contain,
+          width: double.infinity,
+          height: graphicHeight,
+          excludeFromSemantics: true,
+          placeholderBuilder: (_) => const SizedBox.shrink(),
+        ),
+      );
+    }
 
     return ExcludeSemantics(
       child: Container(
@@ -167,10 +192,15 @@ class LargeGraphic extends StatelessWidget {
 /// failure — same graceful-degradation contract as the dark asset path. Mirrors
 /// `_LightConceptSvg` in concept_graphic_band.dart.
 class _LightLargeSvg extends StatelessWidget {
-  const _LightLargeSvg({required this.future, required this.height});
+  const _LightLargeSvg({
+    required this.future,
+    required this.height,
+    required this.zoomLabel,
+  });
 
   final Future<String> future;
   final double height;
+  final String zoomLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -181,13 +211,27 @@ class _LightLargeSvg extends StatelessWidget {
         if (data == null || data.isEmpty) {
           return const SizedBox.shrink();
         }
-        return SvgPicture.string(
-          data,
-          fit: BoxFit.contain,
-          width: double.infinity,
-          height: height,
-          excludeFromSemantics: true,
-          placeholderBuilder: (_) => const SizedBox.shrink(),
+        // Wrap the recolored render in ZoomableGraphic; the zoom view re-renders
+        // the SAME §8.20.7-swapped source large via SvgPicture.string (crisp —
+        // vector), so the zoomed light face matches the in-page one exactly.
+        return ZoomableGraphic(
+          semanticLabel: zoomLabel,
+          svgBuilder: (BuildContext _, Size canvas) => SvgPicture.string(
+            data,
+            fit: BoxFit.contain,
+            width: canvas.width,
+            height: canvas.height,
+            excludeFromSemantics: true,
+            placeholderBuilder: (_) => const SizedBox.shrink(),
+          ),
+          child: SvgPicture.string(
+            data,
+            fit: BoxFit.contain,
+            width: double.infinity,
+            height: height,
+            excludeFromSemantics: true,
+            placeholderBuilder: (_) => const SizedBox.shrink(),
+          ),
         );
       },
     );
