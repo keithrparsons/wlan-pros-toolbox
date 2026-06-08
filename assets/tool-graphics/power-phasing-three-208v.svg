@@ -44,8 +44,11 @@
     <path d="M97 54.56 L100 50.56 L103 54.56"/>
     <path d="M97 105.44 L100 109.44 L103 105.44"/>
   </g>
-  <text x="112" y="76" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="start" font-family="DM Mono, monospace">208V</text>
-  <text x="112" y="88" fill="#A2CC3A" font-size="9" font-weight="500" text-anchor="start">line-to-line</text>
+  <!-- callout moved out of the dense curve sweep into the clear lower margin (below the troughs at y=114,
+       right of the L2 and 120V L-N labels). The green double-arrow at x=100 stays put and still marks the
+       measured line-to-line span. -->
+  <text x="168" y="126" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">208V</text>
+  <text x="168" y="138" fill="#A2CC3A" font-size="9" font-weight="500" text-anchor="middle">line-to-line</text>
 
   <!-- Header -->
   <text x="160" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">208V Three-Phase (Wye)</text>
