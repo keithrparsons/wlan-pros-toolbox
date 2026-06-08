@@ -813,7 +813,18 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// maps off the SAME verdict classification the engine produced — the line and
   /// the comparison bars always agree. The "could not check one side" rows keep
   /// an honest neutral line and never assert a verdict we do not have (GL-005).
+  ///
+  /// SAME-TIER OVERRIDE (2026-06-07): when BOTH absolute axis chips land on the
+  /// same real tier, naming one side "the weak link" / "the limit" contradicts
+  /// two equal chips AND the hero's margin framing (the engine's comparative
+  /// `wifiLimiter` verdict fires off the 0.70 headroom ratio, a DIFFERENT basis
+  /// than the absolute usable-vs-internet comparison the chips/hero/% line use).
+  /// In that case the line is worded by MARGIN to match — see [_sameTierVerdictLine].
+  /// Different-tier outcomes keep their existing "weak link / limit" wording.
   String _verdictLine(ConsumerVerdict verdict) {
+    final String? sameTier = _sameTierVerdictLine(verdict);
+    if (sameTier != null) return sameTier;
+
     switch (verdict.outcome) {
       case ConsumerOutcome.wifi:
       case ConsumerOutcome.wifiLead:
@@ -834,6 +845,38 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         return 'We could not read your Wi-Fi or your internet. Make sure you '
             'are on Wi-Fi, then try again.';
     }
+  }
+
+  /// The same-tier VERDICT LINE, or null when the two axes are NOT on the same
+  /// real tier (the caller then falls through to the existing limiter wording).
+  ///
+  /// Mirrors [_sameTierHero] exactly — same equal-real-tier guard, same usable
+  /// Wi-Fi vs internet basis, same +/-10% margin band — so the hero, this line,
+  /// and the % comparison line never disagree. Within the band both sides read
+  /// "about the same"; outside it the higher-rate side has "a little more
+  /// headroom" (never naming the lower side "the weak link" / "the limit", which
+  /// would contradict two equal chips and the % line). Returns null on a missing
+  /// or ~0 internet figure so the line never asserts a margin it cannot back
+  /// (GL-005).
+  String? _sameTierVerdictLine(ConsumerVerdict verdict) {
+    final AxisStatus tier = verdict.wifiStatus;
+    if (tier != verdict.internetStatus || tier == AxisStatus.unknown) {
+      return null;
+    }
+
+    final double? usable = _engine?.usableWifiMbps;
+    final double? internet = _engine?.internetAvgMbps;
+    if (usable == null || internet == null || internet < 0.5) return null;
+
+    final String tierWord = _lowerTierWord(tier);
+    final double deltaPct = 100 * (usable - internet) / internet;
+    if (deltaPct.abs() <= 10) {
+      return 'Both your Wi-Fi and your internet are $tierWord, and running at '
+          'about the same speed.';
+    }
+    final String ahead = deltaPct > 0 ? 'Wi-Fi' : 'internet';
+    return 'Both your Wi-Fi and your internet are $tierWord; your $ahead has a '
+        'little more headroom right now.';
   }
 
   /// The DIRECT COMPARISON sentence (item #5): a single headline answer comparing
@@ -1413,7 +1456,19 @@ class _ComparisonCard extends StatelessWidget {
   /// The plain reading line beneath the bars, derived from the engine verdict so
   /// the words and the bar heights agree. No new verdict math — it reads the
   /// already-computed verdict and reuses the engine's usable-capacity figure.
+  ///
+  /// SAME-TIER OVERRIDE (2026-06-07): the bars compare ABSOLUTE usable Wi-Fi vs
+  /// internet, and the chips/hero/% line bucket those same two rates into Strong
+  /// / Moderate / Weak tiers. When both rates land on the SAME real tier, the
+  /// "Boost the Wi-Fi signal" / "internet can carry more" wording (which keys off
+  /// the engine's 0.70 headroom-ratio `wifiLimiter`/`bothContributing` verdict, a
+  /// DIFFERENT basis) contradicts two equal chips and a "Wi-Fi N% faster" line.
+  /// In that case the reading line is worded by MARGIN to match — see
+  /// [_sameTierReadingLine]. Different-tier verdicts keep their existing wording.
   String _readingLine() {
+    final String? sameTier = _sameTierReadingLine();
+    if (sameTier != null) return sameTier;
+
     switch (result.verdict) {
       case WifiVsInternetVerdict.wifiLimiter:
         return 'Your internet can carry more than your Wi-Fi link is passing. '
@@ -1434,6 +1489,36 @@ class _ComparisonCard extends StatelessWidget {
             : 'We could not read your Wi-Fi link, so only the internet side is '
                 'shown.';
     }
+  }
+
+  /// The same-tier reading line, or null when the two rates are NOT on the same
+  /// real tier (the caller then falls through to the engine-verdict wording).
+  ///
+  /// Buckets the SAME two rates the bars draw — [WifiVsInternetResult.usableWifiMbps]
+  /// and [WifiVsInternetResult.internetAvgMbps] — into Strong / Moderate / Weak via
+  /// [AxisStatusThresholds.tierFor], the EXACT source the consumer chips use, so
+  /// "same tier" here means the same thing the chips show. Fires only when both
+  /// rates are real (non-null, internet not ~0) and land on the same real tier;
+  /// then it words the line by the +/-10% margin band (matching the hero, the
+  /// secondary line, and the % comparison line) and never names either side "the
+  /// weak link" / "boost the Wi-Fi" / "the slower part". Null otherwise (GL-005).
+  String? _sameTierReadingLine() {
+    final double? usable = result.usableWifiMbps;
+    final double? internet = result.internetAvgMbps;
+    if (usable == null || internet == null || internet < 0.5) return null;
+
+    final AxisStatus wifiTier = AxisStatusThresholds.tierFor(usable);
+    final AxisStatus internetTier = AxisStatusThresholds.tierFor(internet);
+    if (wifiTier != internetTier || wifiTier == AxisStatus.unknown) return null;
+
+    final double deltaPct = 100 * (usable - internet) / internet;
+    if (deltaPct.abs() <= 10) {
+      return 'Your Wi-Fi link and your internet are carrying about the same. '
+          'Neither side is clearly holding you back right now.';
+    }
+    final String ahead = deltaPct > 0 ? 'Wi-Fi link' : 'internet';
+    return 'Your $ahead has a little more headroom, but both sides are in the '
+        'same range right now.';
   }
 
   @override

@@ -604,7 +604,7 @@ void main() {
 
   testWidgets(
     'the VERDICT LINE names Wi-Fi as the weak link when usable Wi-Fi is below '
-    'the internet rate',
+    'the internet rate AND the two axes are on different tiers',
     (tester) async {
       await tester.pumpWidget(
         host(
@@ -612,17 +612,129 @@ void main() {
             enableLiveSampling: false,
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: _SlowLinkMacAdapter(),
+            // usable Wi-Fi = 16.5 (< 100 → Weak); internet avg 200/100 = 150
+            // (100-250 → Moderate). DIFFERENT tiers, so the limiter wording
+            // stays — the chips do not contradict it.
             qualityClient: MockQualityClient(
-              scriptedResult: _marginalInternet(),
+              scriptedResult: _internetAt(down: 200, up: 100),
             ),
           ),
         ),
       );
       await runCheck(tester);
 
-      // usable Wi-Fi (16.5) sits below measured internet (40) → Wi-Fi limits.
+      // usable Wi-Fi (16.5, Weak) sits below measured internet (150, Moderate)
+      // → different tiers → Wi-Fi limits, the "weak link" wording is correct.
       expect(
         find.text('Your Wi-Fi is the weak link right now.'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'SAME-TIER: the VERDICT LINE and the reading line drop the "weak link" / '
+    '"boost the Wi-Fi" wording and read by margin (Wi-Fi ahead, both Moderate)',
+    (tester) async {
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: false,
+            sourceOverride: WifiInfoSource.macosCoreWlan,
+            // Tx 360 → usable 198 (Moderate). internet 200/100 → avg 150
+            // (Moderate). Same tier; usable is +32% → Wi-Fi has more headroom.
+            macAdapter: _TxLinkMacAdapter(360),
+            qualityClient: MockQualityClient(
+              scriptedResult: _internetAt(down: 200, up: 100),
+            ),
+          ),
+        ),
+      );
+      await runCheck(tester);
+
+      // The hero reframes by margin (Wi-Fi slightly ahead).
+      expect(
+        find.text('Both sides are moderate. Your Wi-Fi is slightly ahead.'),
+        findsOneWidget,
+      );
+      // The secondary verdict line NEVER names Wi-Fi the weak link in same-tier.
+      expect(find.text('Your Wi-Fi is the weak link right now.'), findsNothing);
+      expect(
+        find.text(
+          'Both your Wi-Fi and your internet are moderate; your Wi-Fi has a '
+          'little more headroom right now.',
+        ),
+        findsOneWidget,
+      );
+      // The reading line NEVER says "boost the Wi-Fi" / "internet can carry
+      // more" when both sides share a tier.
+      expect(find.textContaining('Boost the Wi-Fi signal'), findsNothing);
+      expect(
+        find.textContaining('internet can carry more than your Wi-Fi'),
+        findsNothing,
+      );
+      expect(
+        find.text(
+          'Your Wi-Fi link has a little more headroom, but both sides are in '
+          'the same range right now.',
+        ),
+        findsOneWidget,
+      );
+      // The % comparison line still reads "32% faster" — all four agree.
+      expect(
+        find.text(
+          'Your Wi-Fi link is 32% faster than your internet connection.',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'SAME-TIER about-the-same: hero, verdict line, reading line and % line all '
+    'agree (both Moderate, within +/-10%)',
+    (tester) async {
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: false,
+            sourceOverride: WifiInfoSource.macosCoreWlan,
+            // Tx 360 → usable 198 (Moderate). internet 240/160 → avg 200
+            // (Moderate). |delta| = 1% → within the +/-10% band.
+            macAdapter: _TxLinkMacAdapter(360),
+            qualityClient: MockQualityClient(
+              scriptedResult: _internetAt(down: 240, up: 160),
+            ),
+          ),
+        ),
+      );
+      await runCheck(tester);
+
+      expect(
+        find.text('Both sides are moderate. They’re about the same speed.'),
+        findsOneWidget,
+      );
+      expect(find.text('Your Wi-Fi is the weak link right now.'), findsNothing);
+      expect(
+        find.text(
+          'Both your Wi-Fi and your internet are moderate, and running at about '
+          'the same speed.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Boost the Wi-Fi signal'), findsNothing);
+      expect(
+        find.text(
+          'Your Wi-Fi link and your internet are carrying about the same. '
+          'Neither side is clearly holding you back right now.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'Your Wi-Fi link and your internet connection are running at about '
+          'the same speed.',
+        ),
         findsOneWidget,
       );
     },
