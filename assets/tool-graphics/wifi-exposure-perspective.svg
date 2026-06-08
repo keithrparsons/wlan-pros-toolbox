@@ -27,13 +27,6 @@
     <line x1="460" y1="120" x2="546" y2="232"/>
   </g>
 
-  <!-- arrowheads on the outermost and center beams to show energy is LEAVING the sun -->
-  <g stroke="#E5E5E5" stroke-width="3" stroke-linecap="round">
-    <path d="M214 232 L222 218 M214 232 L228 236"/>
-    <path d="M380 254 L372 240 M380 254 L388 240"/>
-    <path d="M546 232 L532 236 M546 232 L538 218"/>
-  </g>
-
   <!-- sun label -->
   <text x="380" y="91" font-size="16" fill="#E5E5E5" text-anchor="middle" font-weight="600" dominant-baseline="middle">The sun</text>
 
