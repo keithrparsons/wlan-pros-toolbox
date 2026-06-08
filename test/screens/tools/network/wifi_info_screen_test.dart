@@ -18,16 +18,19 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/network_unavailable_view.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/wifi_info_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap_cache.dart';
+import 'package:wlan_pros_toolbox/services/network/live_onboarding_service.dart';
 import 'package:wlan_pros_toolbox/services/network/mac_oui_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_live_shortcuts_config.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_security_service.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 import 'package:wlan_pros_toolbox/widgets/sparkline.dart';
 
@@ -211,6 +214,34 @@ class _FakeBridge implements WiFiDetailsBridge {
 
   @override
   Stream<WiFiDetails> get updates => controller.stream;
+}
+
+/// Builds a [WifiSecurityService] whose native channel returns an AVAILABLE
+/// NEHotspotNetwork read (SSID / BSSID / coarse security token) — the real
+/// connected-network identity the app reads itself on iOS, no Shortcut needed.
+WifiSecurityService _availableSecurity({
+  String ssid = 'KeithNet',
+  String bssid = 'a4:83:e7:00:11:22',
+  String token = 'personal',
+}) {
+  return WifiSecurityService(
+    invoke: (String method, [dynamic args]) async {
+      switch (method) {
+        case 'getSecurityInfo':
+          return <String, dynamic>{
+            'available': true,
+            'securityToken': token,
+            'bssid': bssid,
+            'ssid': ssid,
+            'locationAuthorized': true,
+          };
+        case 'isLocationAuthorized':
+          return true;
+        default:
+          return null;
+      }
+    },
+  );
 }
 
 void main() {
@@ -533,6 +564,74 @@ void main() {
       expect(find.text('Tap Add the Shortcut below.'), findsOneWidget);
       expect(find.text('Add the Shortcut'), findsOneWidget);
     });
+
+    testWidgets(
+      'NATIVE-FIRST: shows the real connected-network identity (SSID / BSSID / '
+      'security read via NEHotspotNetwork) immediately, with the rich RF fields '
+      'as the locked card — never a dead screen, before any Shortcut payload',
+      (tester) async {
+        await tester.pumpWidget(host(
+          WifiInfoScreen(
+            sourceOverride: WifiInfoSource.iosShortcuts,
+            iosBridge: _FakeBridge(everReceived: false),
+            securityService: _availableSecurity(),
+          ),
+        ));
+        await tester.pumpAndSettle();
+
+        // The native identity cards render the REAL basics the app reads itself
+        // — no Shortcut required for SSID / BSSID / security (brief req A).
+        expect(find.text('Network'), findsOneWidget);
+        expect(find.text('KeithNet'), findsOneWidget);
+        expect(find.text('a4:83:e7:00:11:22'), findsOneWidget);
+        expect(find.text('Security'), findsOneWidget);
+        expect(find.text('Personal (WPA/WPA2/WPA3-PSK)'), findsOneWidget);
+
+        // The rich RF fields render as the locked card, by NAME, never zeroed.
+        expect(find.text('Live signal details'), findsOneWidget);
+        expect(find.text('Signal (RSSI) and SNR'), findsOneWidget);
+        // With the native identity already on screen, the locked card's CTA
+        // starts live readings rather than re-opening the install sheet.
+        expect(find.text('Start live readings'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'mandatory first-run onboarding sheet auto-fires once on first open '
+      '(never-received payload), then is one-time',
+      (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        final onboarding =
+            LiveOnboardingService(getStore: SharedPreferences.getInstance);
+        await tester.pumpWidget(host(
+          WifiInfoScreen(
+            sourceOverride: WifiInfoSource.iosShortcuts,
+            iosBridge: _FakeBridge(everReceived: false),
+            onboardingService: onboarding,
+          ),
+        ));
+        await tester.pumpAndSettle();
+
+        // The unmissable one-time setup sheet auto-presents on first open.
+        expect(find.text('Set up live Wi-Fi'), findsOneWidget);
+        expect(find.textContaining('No Location permission'), findsOneWidget);
+
+        // It marked itself seen the instant it presented — re-mounting a fresh
+        // screen against the SAME persisted store does NOT re-fire it.
+        Navigator.of(tester.element(find.text('Set up live Wi-Fi'))).pop();
+        await tester.pumpAndSettle();
+        await tester.pumpWidget(host(
+          WifiInfoScreen(
+            sourceOverride: WifiInfoSource.iosShortcuts,
+            iosBridge: _FakeBridge(everReceived: false),
+            onboardingService:
+                LiveOnboardingService(getStore: SharedPreferences.getInstance),
+          ),
+        ));
+        await tester.pumpAndSettle();
+        expect(find.text('Set up live Wi-Fi'), findsNothing);
+      },
+    );
 
     testWidgets(
         'install/setup hint HIDDEN once the app has ever received a payload',

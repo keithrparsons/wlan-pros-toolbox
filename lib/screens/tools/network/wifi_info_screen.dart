@@ -1066,7 +1066,13 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   ConnectedAp? _nativeIdentityAp() {
     final WifiSecurityInfo? sec = _iosSecurity;
     if (sec == null || !sec.available) return null;
-    return _enrichIos(const ConnectedAp(securityAvailable: true));
+    // Seed the SSID from the native NEHotspotNetwork read so the native-first
+    // identity card shows the REAL network name (not just BSSID + security)
+    // before the first Shortcut RF sample. _enrichIos then folds the coarse
+    // security token and BSSID onto it.
+    return _enrichIos(
+      ConnectedAp(ssid: sec.ssid, securityAvailable: true),
+    );
   }
 
   // ---- iOS body (Live streaming only) ----

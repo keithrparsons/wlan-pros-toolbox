@@ -32,8 +32,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:net_quality/net_quality.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/test_my_connection_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
+import 'package:wlan_pros_toolbox/services/network/live_onboarding_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
@@ -374,6 +376,35 @@ class _StaleFlagBridge implements WiFiDetailsBridge {
     return true;
   }
 
+  @override
+  Stream<WiFiDetails> get updates => const Stream<WiFiDetails>.empty();
+}
+
+/// A brand-new iOS user's bridge: the app has NEVER received a Live payload, so
+/// the honest install-state signal is `false` and the mandatory first-run
+/// onboarding must fire. Records [openUrl] calls so a test can prove the sheet
+/// deep-links into Shortcuts.
+class _FreshBridge implements WiFiDetailsBridge {
+  int openUrlCalls = 0;
+  String? lastOpenedUrl;
+
+  @override
+  Future<bool> hasEverReceivedPayload() async => false;
+  @override
+  Future<WiFiDetails?> readLatest() async => null;
+  @override
+  Future<bool> isMonitoringActive() async => false;
+  @override
+  Future<void> setMonitoringActive(bool active) async {}
+  @override
+  Future<bool> openUrl(String url) async {
+    openUrlCalls++;
+    lastOpenedUrl = url;
+    return true;
+  }
+
+  @override
+  Future<bool> runShortcut(String name) async => true;
   @override
   Stream<WiFiDetails> get updates => const Stream<WiFiDetails>.empty();
 }
@@ -1076,6 +1107,135 @@ void main() {
         expect(sampler.isStreaming, isTrue);
         expect(find.text('LIVE'), findsOneWidget);
         expect(find.text('Start'), findsNothing);
+      },
+    );
+  });
+
+  // ==========================================================================
+  // Mandatory one-time "enable live Wi-Fi" onboarding (WiFiman pattern).
+  //
+  // The front door is the FIRST live surface most users hit, so the unmissable
+  // one-time setup must lead from HERE — a user can never run the comparison
+  // check first and only afterward discover the companion Shortcut exists. The
+  // gate is the honest composite (never-received-payload AND not-seen-before)
+  // and it is iOS-only.
+  // ==========================================================================
+  group('TestMyConnectionScreen — mandatory first-run onboarding (iOS)', () {
+    /// An onboarding service backed by an in-memory SharedPreferences store, so
+    /// the gate is exercised end to end without touching a real platform
+    /// channel. [seen] seeds the persisted "already shown" flag.
+    LiveOnboardingService onboardingSvc({bool seen = false}) {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        if (seen) LiveOnboardingService.prefsKey: true,
+      });
+      return LiveOnboardingService(getStore: SharedPreferences.getInstance);
+    }
+
+    testWidgets(
+      'fires ONCE on first open of the front door and deep-links to Shortcuts '
+      '(never-received payload, not seen before)',
+      (tester) async {
+        final bridge = _FreshBridge();
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              sourceOverride: WifiInfoSource.iosShortcuts,
+              iosBridge: bridge,
+              onboardingService: onboardingSvc(),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // The one-time setup sheet auto-presented BEFORE any check — the user
+        // is led to enable live Wi-Fi, not left to hit a wall.
+        expect(find.text('Set up live Wi-Fi'), findsOneWidget);
+        expect(find.text('Tap Add the Shortcut below.'), findsOneWidget);
+        // The no-Location trust signal is led, per the brief.
+        expect(find.textContaining('No Location permission'), findsOneWidget);
+
+        // Tapping "Add the Shortcut" deep-links into Shortcuts (openUrl), the
+        // WiFiman install bounce.
+        await tester.tap(find.text('Add the Shortcut'));
+        await tester.pumpAndSettle();
+        expect(bridge.openUrlCalls, 1);
+      },
+    );
+
+    testWidgets(
+      'does NOT fire when the app has EVER received a payload (already set up)',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              sourceOverride: WifiInfoSource.iosShortcuts,
+              iosBridge: _PayloadBridge(), // hasEverReceivedPayload == true
+              onboardingService: onboardingSvc(),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // A user who demonstrably has the Shortcut working is never nagged.
+        expect(find.text('Set up live Wi-Fi'), findsNothing);
+        // The normal front-door idle state is shown instead.
+        expect(find.text('Check My Connection'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'does NOT fire when the onboarding sheet was already shown once',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              sourceOverride: WifiInfoSource.iosShortcuts,
+              iosBridge: _FreshBridge(),
+              onboardingService: onboardingSvc(seen: true),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // One-time: the persisted seen-flag suppresses the sheet on every later
+        // open, even though the Shortcut is not yet demonstrably working.
+        expect(find.text('Set up live Wi-Fi'), findsNothing);
+        expect(find.text('Check My Connection'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'does NOT fire on macOS (CoreWLAN reads natively — iOS-only flow)',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              sourceOverride: WifiInfoSource.macosCoreWlan,
+              macAdapter: _FakeMacAdapter(),
+              onboardingService: onboardingSvc(),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Set up live Wi-Fi'), findsNothing);
+        expect(find.text('Check My Connection'), findsOneWidget);
       },
     );
   });
