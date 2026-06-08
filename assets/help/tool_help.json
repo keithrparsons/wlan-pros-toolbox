@@ -2431,6 +2431,28 @@
         "Source: the Wi-Fi Design, Validation, Spectrum Analysis & Troubleshooting Tools V6 workbook (Keith Parsons, vendor-interviewed, last revised 2026-02-16), with neutral writeups from the Pax research brief, 2026-06-05."
       ],
       "source": "lib/screens/tools/reference/wifi_tools_comparison_screen.dart"
+    },
+    "power-phasing": {
+      "name": "Power Phasing",
+      "category": "Power & Cooling",
+      "purpose": "Reference for the three power topologies a field tech meets in IT spaces: US single-phase 120V (one hot + neutral), split-phase 120/240V (two hots 180 degrees apart, 240V hot-to-hot, 120V hot-to-neutral), and three-phase wye 208V (three hots 120 degrees apart, 208V line-to-line, 120V line-to-neutral). Renders the 208-vs-240 distinction installers confuse.",
+      "whyHere": "When you read a panel or nameplate, confirm which topology you're on and what hot-to-hot voltage to expect, so you don't feed 240V-rated gear from a 208V wye (about 13 percent low) or mislabel split-phase as two-phase.",
+      "howToUse": [
+        "Each topology card shows its hots, line-to-neutral (L-N), line-to-line (L-L), and phase angle, with a waveform.",
+        "Split-phase is 240V hot-to-hot because the two legs are 180 degrees apart (2 x 120 in anti-phase); three-phase wye is 208V hot-to-hot because the legs are 120 degrees apart (the square root of 3 times 120, about 208V).",
+        "Use the 208V-vs-240V table to settle the confusion: same 120V hot-to-neutral, different hot-to-hot, different source topology."
+      ],
+      "inputs": [],
+      "algorithm": "Line-to-line voltage = square root of 3 x line-to-neutral voltage for a wye system: 120 x 1.732 ≈ 208V. Split-phase line-to-line = 2 x line-to-neutral in anti-phase: 2 x 120 = 240V.",
+      "example": "A 240V single-phase heater fed from a 208V wye panel sees about 13 percent lower voltage and runs at reduced output, because two legs of a 208V wye are 120 degrees apart (208V), not 180 degrees apart (240V).",
+      "fieldNotes": [
+        "What it shows: three topology cards (single-phase 120V, split-phase 120/240V, three-phase wye 208V) with hots, L-N, L-L, phase angle, where it's seen, and a clarifying note; plus a 208V-vs-240V comparison table and a why-it-matters note.",
+        "Split-phase is single-phase, NOT two-phase: the two phasors don't define a rotating field. The center conductor is the grounded, current-carrying neutral (center tap), not the equipment ground.",
+        "208V and 240V are not interchangeable: they differ by about 32V and arise from different topologies (a single-phase center tap vs two legs of a 3-phase wye).",
+        "Written \"Access Point\" not \"router\"; \"802.1X\"-style standards conventions do not apply here. Nominal voltages per NEC Article 100/210.",
+        "Data source: Pax research brief Topic 2 (Deliverables/2026-06-08-power-cooling-references/RESEARCH-BRIEF.md), sourced to NEC Article 100/210, split-phase and three-phase EE references, and the V_LL = sqrt(3) x V_LN relationship."
+      ],
+      "source": "lib/screens/tools/reference/power_phasing_screen.dart"
     }
   }
 }

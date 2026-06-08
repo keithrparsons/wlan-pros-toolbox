@@ -1219,6 +1219,35 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       ),
     ],
   ),
+
+  // ───────────────────────── 5. Power & Cooling ─────────────────────
+  // NEW category (Keith, 2026-06-08). The first of six planned power/cooling
+  // reference pages from Pax's verified research brief
+  // (Deliverables/2026-06-08-power-cooling-references/RESEARCH-BRIEF.md). This
+  // build ships PAGE 1 of 6 — the Power Phasing pilot that sets the template
+  // (208-vs-240 distinction). The other five (Ohm's/Power Wheel, NEMA, IEC
+  // couplers, international plugs, thermal conversions) follow once the pilot is
+  // approved. Reference-only pages: pure bundled data, no network, web-safe.
+  ToolCategory(
+    id: 'power-cooling',
+    title: 'Power & Cooling',
+    summary: 'Power phasing, voltages, and connector references',
+    icon: Icons.electrical_services_outlined,
+    // Example titles must name LIVE tools (GL-005). Only Power Phasing ships in
+    // this build; the rest are listed once they land.
+    exampleToolTitles: <String>['Power Phasing'],
+    tools: <ToolEntry>[
+      ToolEntry(
+        id: 'power-phasing',
+        title: 'Power Phasing',
+        description:
+            'Single-phase 120V, split-phase 120/240V, and three-phase wye '
+            '208V — and the 208-vs-240 distinction installers confuse',
+        routeName: '/tools/power-phasing',
+        isLive: true,
+      ),
+    ],
+  ),
 ];
 
 /// Route to the Educational Resources directory screen. Declared here (not only

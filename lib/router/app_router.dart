@@ -64,6 +64,7 @@ import '../screens/tools/reference/non_wifi_channels_screen.dart';
 import '../screens/tools/reference/wifi_glossary_screen.dart';
 import '../screens/tools/reference/plmn_reference_screen.dart';
 import '../screens/tools/reference/poe_reference_screen.dart';
+import '../screens/tools/reference/power_phasing_screen.dart';
 import '../screens/tools/reference/spectrum_screen.dart';
 import '../screens/tools/network/arp_ndp_screen.dart';
 import '../screens/tools/network/bgp_asn_screen.dart';
@@ -193,6 +194,11 @@ class AppRouter {
   static const String roaming = '/tools/roaming';
   static const String apPlacement = '/tools/ap-placement';
   static const String poeReference = '/tools/poe-reference';
+
+  /// Power Phasing — the pilot reference for the Power & Cooling category. The
+  /// id `power-phasing` is permanent (backs this route, the catalog entry, the
+  /// help entry, the waveform asset slots, and tests).
+  static const String powerPhasing = '/tools/power-phasing';
   static const String spectrum = '/tools/spectrum';
   static const String nonWifiChannels = '/tools/non-wifi-channels';
 
@@ -417,6 +423,7 @@ class AppRouter {
     roaming: (_) => const RoamingScreen(),
     apPlacement: (_) => const ApPlacementScreen(),
     poeReference: (_) => const PoeReferenceScreen(),
+    powerPhasing: (_) => const PowerPhasingScreen(),
     spectrum: (_) => const SpectrumScreen(),
     nonWifiChannels: (_) => const NonWifiChannelsScreen(),
     interfaceInfo: (_) => const InterfaceInfoScreen(),

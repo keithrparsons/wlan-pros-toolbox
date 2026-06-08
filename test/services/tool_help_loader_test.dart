@@ -136,7 +136,9 @@ void main() {
       // v1.1.2 net change 2026-06-06: −3 removed (wifi-channels BF6-13,
       // rf-connectors BF6-18, capacity-planner BF5-13) + 1 added
       // (my-current-location BF5-16) = 103 − 3 + 1 = 101.
-      expect(store.count, 101);
+      // 102 = + the Power Phasing pilot (id power-phasing), the first page of the
+      // new Power & Cooling reference category, added 2026-06-08.
+      expect(store.count, 102);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

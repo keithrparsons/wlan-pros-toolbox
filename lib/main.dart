@@ -11,6 +11,7 @@ import 'data/antenna_fundamentals_diagrams.dart';
 import 'data/connector_diagrams.dart';
 import 'data/connector_photos.dart';
 import 'data/connector_sections.dart';
+import 'data/power_phasing_diagrams.dart';
 import 'data/tool_assets.dart';
 import 'router/app_router.dart';
 import 'services/help/tool_help_loader.dart';
@@ -86,6 +87,17 @@ Future<void> main() async {
     await ConnectorSections.ensureLoaded();
   } catch (_) {
     // Manifest unavailable → has() stays false → section diagrams omitted.
+  }
+
+  // Same convention for the Power Phasing reference's three waveform diagrams
+  // (assets/tool-graphics/power-phasing-<single-120v|split-240v|three-208v>.svg).
+  // Until Charta's SVGs are bundled, PowerPhasingDiagrams.has() stays false and
+  // each waveform band is omitted — the data page ships fully working today. A
+  // failure here must never block startup.
+  try {
+    await PowerPhasingDiagrams.ensureLoaded();
+  } catch (_) {
+    // Manifest unavailable → has() stays false → waveform bands omitted. No crash.
   }
 
   // Load + cache the bundled tool-help JSON once (assets/help/tool_help.json).
