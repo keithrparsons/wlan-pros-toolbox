@@ -450,13 +450,16 @@ void main() {
       expect(heroText.style?.fontSize, 36);
 
       // Both labeled axis chips remain, each carrying its own word + glyph.
-      // internet outcome → Wi-Fi: Fine, Internet: Slow.
+      // REVISION 2: absolute 3-tier per axis. iOS link rxRate 780 / txRate 866 →
+      // usable Wi-Fi 452.65 Mbps (> 250) → Wi-Fi: Strong (success/green). Internet
+      // _marginalInternet down 60 / up 20 → avg 40 Mbps (< 100) → Internet: Weak
+      // (danger/red). Each chip carries its WORD + the §8.13 glyph, never color-only.
       expect(find.text('Wi-Fi:'), findsOneWidget);
       expect(find.text('Internet:'), findsOneWidget);
-      expect(find.text('Fine'), findsOneWidget);
-      expect(find.text('Slow'), findsOneWidget);
-      expect(find.byIcon(Icons.check_circle_outline), findsOneWidget); // Fine
-      expect(find.byIcon(Icons.warning_amber_outlined), findsOneWidget); // Slow
+      expect(find.text('Strong'), findsOneWidget);
+      expect(find.text('Weak'), findsOneWidget);
+      expect(find.byIcon(Icons.check_circle_outline), findsOneWidget); // Strong
+      expect(find.byIcon(Icons.error_outline), findsOneWidget); // Weak
     },
   );
 
