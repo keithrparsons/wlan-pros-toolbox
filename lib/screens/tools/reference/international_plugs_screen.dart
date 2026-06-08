@@ -194,7 +194,7 @@ class InternationalPlugsScreen extends StatelessWidget {
       standard: 'IRAM 2073 (Argentina)',
       voltageClass: '230V',
       current: '10A',
-      countries: 'Argentina (line/neutral reversed — see warning)',
+      countries: 'Argentina (line/neutral reversed, see warning)',
     ),
     PlugType(
       type: 'J',
@@ -226,19 +226,19 @@ class InternationalPlugsScreen extends StatelessWidget {
       designation: 'CEE 7/16',
       type: 'C',
       current: '2.5A',
-      note: 'Europlug — unearthed, fits most 230V sockets across Europe',
+      note: 'Europlug: unearthed, fits most 230V sockets across Europe',
     ),
     Cee7Member(
       designation: 'CEE 7/4',
       type: 'F',
       current: '16A',
-      note: 'Schuko — earthed, Germany and most of continental Europe',
+      note: 'Schuko: earthed, Germany and most of continental Europe',
     ),
     Cee7Member(
       designation: 'CEE 7/5',
       type: 'E',
       current: '16A',
-      note: 'French — earthed, France, Belgium, Poland, Czechia',
+      note: 'French: earthed, France, Belgium, Poland, Czechia',
     ),
     Cee7Member(
       designation: 'CEE 7/7',
@@ -262,14 +262,14 @@ class InternationalPlugsScreen extends StatelessWidget {
       'contact. Argentina\'s 10A and 20A variants also differ in pin spacing '
       'and do not intermate, and the Chinese variant has dimensional '
       'differences from the Australasian one. Same family, different polarity '
-      'and spacing — do not assume cross-compatibility.';
+      'and spacing; do not assume cross-compatibility.';
 
   /// Provenance + clarifying footnotes shown beneath the main table.
   static const String tableFootnote =
       'Voltage is around 230V across virtually all of Europe, Asia, Oceania, '
       'and South America; A and B are the 120V North American types. BS 546 '
       'appears twice on purpose: Type D is the 5A plug (India), Type M is the '
-      '15A plug (South Africa) — same family, different sizes, not '
+      '15A plug (South Africa); same family, different sizes, not '
       'intermateable. Standards per the named national standards behind the IEC '
       'World Plugs letter system.';
 

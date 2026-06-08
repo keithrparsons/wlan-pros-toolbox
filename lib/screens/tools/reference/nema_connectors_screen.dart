@@ -158,7 +158,7 @@ class NemaConnectorsScreen extends StatelessWidget {
   static const String decoderExample =
       'Worked example: L21-30P = L (twist-lock) + 21 (three-phase wye '
       '120/208V, 4-pole 5-wire) + 30 (30A) + P (plug). The leading number is '
-      'a configuration code, not a voltage — do no arithmetic on it.';
+      'a configuration code, not a voltage; do no arithmetic on it.';
 
   // ---- Device groups -------------------------------------------------------
 

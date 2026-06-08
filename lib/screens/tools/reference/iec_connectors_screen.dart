@@ -87,8 +87,8 @@ class IecCoupler {
   /// hot-condition coupler; everything else here is the 70 degC cold-condition.
   final String maxTemp;
 
-  /// Common nickname, e.g. `"Cloverleaf"`. `'—'` when the family has no
-  /// well-established colloquial name.
+  /// Common nickname, e.g. `"Cloverleaf"`. `'-'` (ASCII hyphen) when the family
+  /// has no well-established colloquial name.
   final String nickname;
 
   /// Typical use.
@@ -126,7 +126,7 @@ class IecConnectorsScreen extends StatelessWidget {
       pair: 'C1 / C2',
       current: '0.2 A',
       maxTemp: '70 degC',
-      nickname: '—',
+      nickname: '-',
       use: 'Electric shavers and other low-draw appliances',
     ),
     IecCoupler(
@@ -167,7 +167,7 @@ class IecConnectorsScreen extends StatelessWidget {
       pair: 'C19 / C20',
       current: '16 A',
       maxTemp: '70 degC',
-      nickname: '—',
+      nickname: '-',
       use:
           'High-draw servers, PDUs, and large UPS units. On a PDU the C19 '
           'outlets (female) feed device C20 inlets (male).',

@@ -138,7 +138,10 @@ void main() {
       // (my-current-location BF5-16) = 103 − 3 + 1 = 101.
       // 102 = + the Power Phasing pilot (id power-phasing), the first page of the
       // new Power & Cooling reference category, added 2026-06-08.
-      expect(store.count, 102);
+      // 107 = + the five remaining Power & Cooling pages, added 2026-06-08:
+      // ohms-law, cooling-thermal, iec-connectors, nema-connectors, and
+      // international-plugs.
+      expect(store.count, 107);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help
