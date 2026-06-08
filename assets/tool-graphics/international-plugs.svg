@@ -1,0 +1,240 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 720" width="1240" height="720" font-family="IBM Plex Sans, sans-serif" fill="none">
+  <!-- 
+ INTERNATIONAL POWER PLUG FACES (IEC World Plugs, Types A/B-M)
+ WLAN Pros Toolbox reference. Front-view socket/plug FACES drawn to
+ each national standard's pin geometry so each type is identifiable
+ (GL-005). Two-value palette per GL-003 §8.6.2 / §8.20.7 allow-list:
+ #E5E5E5 scaffold, #9C9C9C muted, #A1CC3A lime (single highlight).
+ DM Mono = type letters + ratings/standards; IBM Plex Sans = words.
+ Lime highlight = Type I (looks interchangeable AU/China/Argentina,
+ but Argentina reverses line/neutral). One highlight only.
+ Data verified: RESEARCH-BRIEF.md international section.
+ Canvas dark #1A1A1A per App Mode; faces are decorative schematics.
+ -->
+
+  <rect x="0" y="0" width="1240" height="720" fill="#1A1A1A"/>
+
+  <!-- HEADER -->
+  <text x="40" y="44" fill="#E5E5E5" font-size="26" font-weight="700">International Power Plug Faces</text>
+  <text x="40" y="68" fill="#9C9C9C" font-size="14" font-weight="500">IEC World Plugs &#183; front-view pin geometry per national standard</text>
+  <line x1="40" y1="84" x2="1200" y2="84" stroke="#3A3A3A" stroke-width="1"/>
+
+  <!-- 
+ Reusable face frame: a rounded-square plug face with a recessed
+ circular socket well. Pins are drawn on top, per-type.
+ Cell origin is top-left of the 232x276 card content area.
+ -->
+  <defs>
+    <!-- socket face well: rounded square + inner circle recess -->
+    <g id="faceframe">
+      <rect x="-58" y="-58" width="116" height="116" rx="22" stroke="#E5E5E5" stroke-width="2.4"/>
+      <circle cx="0" cy="0" r="46" stroke="#9C9C9C" stroke-width="1.4" stroke-dasharray="3 5"/>
+    </g>
+    <!-- lime variant frame for the highlighted Type I -->
+    <g id="faceframe-lime">
+      <rect x="-58" y="-58" width="116" height="116" rx="22" stroke="#A1CC3A" stroke-width="2.6"/>
+      <circle cx="0" cy="0" r="46" stroke="#A1CC3A" stroke-width="1.4" stroke-dasharray="3 5" opacity="0.55"/>
+    </g>
+  </defs>
+
+  <!-- Grid geometry:
+ 5 columns. Column face-centers at x = 164, 396, 628, 860, 1092.
+ Row 1 face-center y = 200 ; Row 2 face-center y = 510.
+ Label block sits BELOW each face, centered on the column x.
+ Face well radius 46, frame half-size 58 -> nearest neighbor gap
+ is 232-116 = 116px horizontally; rows are 310px apart -> no overlap. -->
+
+  <!-- -->
+  <!-- ROW 1 -->
+  <!-- -->
+
+  <!-- Type C (Europlug, CEE 7/16) : 2 round pins -->
+  <g transform="translate(164,200)">
+    <use href="#faceframe"/>
+    <!-- two round pins, horizontal, ~19mm apart, no earth -->
+    <circle cx="-19" cy="0" r="7.5" fill="#E5E5E5"/>
+    <circle cx="19"  cy="0" r="7.5" fill="#E5E5E5"/>
+  </g>
+
+  <!-- Type E (French, CEE 7/5) : 2 round + earth PIN -->
+  <g transform="translate(396,200)">
+    <use href="#faceframe"/>
+    <!-- earth is a protruding pin from the socket, at top center -->
+    <circle cx="0"   cy="-26" r="6.5" fill="#9C9C9C"/>
+    <circle cx="-19" cy="6"   r="7.5" fill="#E5E5E5"/>
+    <circle cx="19"  cy="6"   r="7.5" fill="#E5E5E5"/>
+  </g>
+
+  <!-- Type F (Schuko, CEE 7/4) : 2 round + side earth clips -->
+  <g transform="translate(628,200)">
+    <use href="#faceframe"/>
+    <circle cx="-19" cy="0" r="7.5" fill="#E5E5E5"/>
+    <circle cx="19"  cy="0" r="7.5" fill="#E5E5E5"/>
+    <!-- earth contact strips top and bottom edge of the recess -->
+    <rect x="-16" y="-44" width="32" height="5" rx="2.5" fill="#9C9C9C"/>
+    <rect x="-16" y="39"  width="32" height="5" rx="2.5" fill="#9C9C9C"/>
+  </g>
+
+  <!-- Type G (UK, BS 1363) : 3 rectangular pins -->
+  <g transform="translate(860,200)">
+    <use href="#faceframe"/>
+    <!-- large earth (vertical rectangle) on top, two horizontal below -->
+    <rect x="-5" y="-34" width="10" height="22" rx="2" fill="#9C9C9C"/>
+    <rect x="-31" y="8" width="22" height="9" rx="2" fill="#E5E5E5"/>
+    <rect x="9"   y="8" width="22" height="9" rx="2" fill="#E5E5E5"/>
+  </g>
+
+  <!-- Type D (India, BS 546 5A) : 3 large round -->
+  <g transform="translate(1092,200)">
+    <use href="#faceframe"/>
+    <!-- triangle: big earth on top, two line/neutral below -->
+    <circle cx="0"   cy="-22" r="9"   fill="#9C9C9C"/>
+    <circle cx="-20" cy="16"  r="7.5" fill="#E5E5E5"/>
+    <circle cx="20"  cy="16"  r="7.5" fill="#E5E5E5"/>
+  </g>
+
+  <!-- -->
+  <!-- ROW 2 -->
+  <!-- -->
+
+  <!-- Type I (AU/China/Argentina) : 2 angled flat + earth -->
+  <!-- HIGHLIGHTED (lime) : same shape, but Argentina reverses L/N -->
+  <g transform="translate(164,510)">
+    <use href="#faceframe-lime"/>
+    <!-- two flat blades in an inverted-V; vertical earth blade below -->
+    <g fill="#A1CC3A">
+      <rect x="-26" y="-26" width="9" height="22" rx="1.5" transform="rotate(30 -21.5 -15)"/>
+      <rect x="17"  y="-26" width="9" height="22" rx="1.5" transform="rotate(-30 21.5 -15)"/>
+      <rect x="-4.5" y="10" width="9" height="22" rx="1.5"/>
+    </g>
+  </g>
+
+  <!-- Type J (Switzerland, SEV 1011) : 3 round offset -->
+  <g transform="translate(396,510)">
+    <use href="#faceframe"/>
+    <!-- line + neutral level; earth offset center, set down/right (hex layout) -->
+    <circle cx="-22" cy="-10" r="7" fill="#E5E5E5"/>
+    <circle cx="22"  cy="-10" r="7" fill="#E5E5E5"/>
+    <circle cx="0"   cy="20"  r="7" fill="#9C9C9C"/>
+  </g>
+
+  <!-- Type L (Italy, CEI 23-50) : 3 round INLINE -->
+  <g transform="translate(628,510)">
+    <use href="#faceframe"/>
+    <!-- three round pins in a single horizontal row; earth in the center -->
+    <circle cx="-26" cy="0" r="7.5" fill="#E5E5E5"/>
+    <circle cx="0"   cy="0" r="7.5" fill="#9C9C9C"/>
+    <circle cx="26"  cy="0" r="7.5" fill="#E5E5E5"/>
+  </g>
+
+  <!-- Type A/B (North America, NEMA 1-15 / 5-15) -->
+  <g transform="translate(860,510)">
+    <use href="#faceframe"/>
+    <!-- two parallel flat blades (A); round earth below = grounded (B) -->
+    <rect x="-22" y="-22" width="8" height="30" rx="2" fill="#E5E5E5"/>
+    <rect x="14"  y="-22" width="8" height="30" rx="2" fill="#E5E5E5"/>
+    <!-- earth (B), semicircular/round, lower center -->
+    <circle cx="0" cy="26" r="8" fill="#9C9C9C"/>
+  </g>
+
+  <!-- Type M (South Africa, BS 546 15A) : 3 LARGE round -->
+  <g transform="translate(1092,510)">
+    <use href="#faceframe"/>
+    <!-- same BS 546 triangle as D but larger pins (15A) -->
+    <circle cx="0"   cy="-24" r="11" fill="#9C9C9C"/>
+    <circle cx="-23" cy="18"  r="9"  fill="#E5E5E5"/>
+    <circle cx="23"  cy="18"  r="9"  fill="#E5E5E5"/>
+  </g>
+
+  <!-- 
+ LABEL BLOCKS. Each centered on its column x; placed below the face.
+ Row 1 faces span y 142..258 -> labels begin at y=290 (clear).
+ Row 2 faces span y 452..568 -> labels begin at y=600 (clear).
+ Type letter: DM Mono large. Standard + region + voltage: words/mono.
+ -->
+
+  <!-- ROW 1 labels (column centers 164,396,628,860,1092 ; baseline set) -->
+  <g text-anchor="middle">
+    <!-- C -->
+    <text x="164" y="296" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono, monospace">Type C</text>
+    <text x="164" y="316" fill="#E5E5E5" font-size="13" font-weight="600">Europlug</text>
+    <text x="164" y="334" fill="#9C9C9C" font-size="12" font-family="DM Mono, monospace">CEE 7/16</text>
+    <text x="164" y="350" fill="#9C9C9C" font-size="11.5">Europe &#183; unearthed</text>
+    <text x="164" y="366" fill="#9C9C9C" font-size="11.5" font-family="DM Mono, monospace">230 V &#183; 2.5 A</text>
+
+    <!-- E -->
+    <text x="396" y="296" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono, monospace">Type E</text>
+    <text x="396" y="316" fill="#E5E5E5" font-size="13" font-weight="600">French</text>
+    <text x="396" y="334" fill="#9C9C9C" font-size="12" font-family="DM Mono, monospace">CEE 7/5</text>
+    <text x="396" y="350" fill="#9C9C9C" font-size="11.5">France, Belgium, Poland</text>
+    <text x="396" y="366" fill="#9C9C9C" font-size="11.5" font-family="DM Mono, monospace">230 V &#183; 16 A</text>
+
+    <!-- F -->
+    <text x="628" y="296" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono, monospace">Type F</text>
+    <text x="628" y="316" fill="#E5E5E5" font-size="13" font-weight="600">Schuko</text>
+    <text x="628" y="334" fill="#9C9C9C" font-size="12" font-family="DM Mono, monospace">CEE 7/4</text>
+    <text x="628" y="350" fill="#9C9C9C" font-size="11.5">Germany &#183; continental EU</text>
+    <text x="628" y="366" fill="#9C9C9C" font-size="11.5" font-family="DM Mono, monospace">230 V &#183; 16 A</text>
+
+    <!-- G -->
+    <text x="860" y="296" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono, monospace">Type G</text>
+    <text x="860" y="316" fill="#E5E5E5" font-size="13" font-weight="600">UK / British</text>
+    <text x="860" y="334" fill="#9C9C9C" font-size="12" font-family="DM Mono, monospace">BS 1363</text>
+    <text x="860" y="350" fill="#9C9C9C" font-size="11.5">UK, Ireland, ~50 countries</text>
+    <text x="860" y="366" fill="#9C9C9C" font-size="11.5" font-family="DM Mono, monospace">230 V &#183; 13 A fused</text>
+
+    <!-- D -->
+    <text x="1092" y="296" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono, monospace">Type D</text>
+    <text x="1092" y="316" fill="#E5E5E5" font-size="13" font-weight="600">India</text>
+    <text x="1092" y="334" fill="#9C9C9C" font-size="12" font-family="DM Mono, monospace">BS 546 (5A)</text>
+    <text x="1092" y="350" fill="#9C9C9C" font-size="11.5">India, ~40 countries</text>
+    <text x="1092" y="366" fill="#9C9C9C" font-size="11.5" font-family="DM Mono, monospace">230 V &#183; 5 A</text>
+  </g>
+
+  <!-- ROW 2 labels -->
+  <g text-anchor="middle">
+    <!-- I (highlighted) -->
+    <text x="164" y="606" fill="#A1CC3A" font-size="22" font-weight="700" font-family="DM Mono, monospace">Type I</text>
+    <text x="164" y="626" fill="#E5E5E5" font-size="13" font-weight="600">AU / China / Argentina</text>
+    <text x="164" y="644" fill="#9C9C9C" font-size="11.5" font-family="DM Mono, monospace">AS/NZS 3112 &#183; GB 2099</text>
+    <text x="164" y="660" fill="#9C9C9C" font-size="11.5" font-family="DM Mono, monospace">IRAM 2073</text>
+    <text x="164" y="676" fill="#9C9C9C" font-size="11.5" font-family="DM Mono, monospace">230 V &#183; 10&#8211;16 A</text>
+
+    <!-- J -->
+    <text x="396" y="606" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono, monospace">Type J</text>
+    <text x="396" y="626" fill="#E5E5E5" font-size="13" font-weight="600">Switzerland</text>
+    <text x="396" y="644" fill="#9C9C9C" font-size="12" font-family="DM Mono, monospace">SEV 1011</text>
+    <text x="396" y="660" fill="#9C9C9C" font-size="11.5">Switzerland, Liechtenstein</text>
+    <text x="396" y="676" fill="#9C9C9C" font-size="11.5" font-family="DM Mono, monospace">230 V &#183; 10 / 16 A</text>
+
+    <!-- L -->
+    <text x="628" y="606" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono, monospace">Type L</text>
+    <text x="628" y="626" fill="#E5E5E5" font-size="13" font-weight="600">Italy</text>
+    <text x="628" y="644" fill="#9C9C9C" font-size="12" font-family="DM Mono, monospace">CEI 23-50</text>
+    <text x="628" y="660" fill="#9C9C9C" font-size="11.5">Italy, Chile</text>
+    <text x="628" y="676" fill="#9C9C9C" font-size="11.5" font-family="DM Mono, monospace">230 V &#183; 10 / 16 A</text>
+
+    <!-- A/B -->
+    <text x="860" y="606" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono, monospace">Type A / B</text>
+    <text x="860" y="626" fill="#E5E5E5" font-size="13" font-weight="600">North America</text>
+    <text x="860" y="644" fill="#9C9C9C" font-size="12" font-family="DM Mono, monospace">NEMA 1-15 / 5-15</text>
+    <text x="860" y="660" fill="#9C9C9C" font-size="11.5">US, Canada, Japan, Mexico</text>
+    <text x="860" y="676" fill="#9C9C9C" font-size="11.5" font-family="DM Mono, monospace">120 V &#183; 15 A</text>
+
+    <!-- M -->
+    <text x="1092" y="606" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono, monospace">Type M</text>
+    <text x="1092" y="626" fill="#E5E5E5" font-size="13" font-weight="600">South Africa</text>
+    <text x="1092" y="644" fill="#9C9C9C" font-size="12" font-family="DM Mono, monospace">BS 546 (15A)</text>
+    <text x="1092" y="660" fill="#9C9C9C" font-size="11.5">South Africa, ~India (large)</text>
+    <text x="1092" y="676" fill="#9C9C9C" font-size="11.5" font-family="DM Mono, monospace">230 V &#183; 15 A</text>
+  </g>
+
+  <!-- 
+ SAFETY CAUTION (Type I) — lime-tied note, lower-left, clear of all
+ faces and labels. Sits in the gutter between Row-2 face bottom and
+ the I-column label is to its left; placed across full width footer.
+ -->
+  <line x1="40" y1="696" x2="1200" y2="696" stroke="#3A3A3A" stroke-width="1"/>
+  <text x="40" y="714" fill="#A1CC3A" font-size="12.5" font-weight="600">Type I caution:</text>
+  <text x="158" y="714" fill="#9C9C9C" font-size="12.5">same blade shape across AU / China / Argentina, but Argentina reverses line and neutral. Do not assume cross-compatibility.</text>
+</svg>

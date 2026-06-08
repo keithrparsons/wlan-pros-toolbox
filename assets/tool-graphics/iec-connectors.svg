@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 760" width="900" height="760" font-family="IBM Plex Sans, sans-serif" fill="none">
+  <!-- IEC 60320 appliance-coupler FACES + IEC 60309 industrial inset.
+       FEMALE connector face (end-on view of the cord connector) for each pair.
+       Geometry matches the published standard so a tech can identify the coupler.
+       Palette: §8.20.7 swap-list only — scaffold #E5E5E5, muted #9C9C9C, ONE lime #A1CC3A highlight.
+       Type: DM Mono for numbers/ratings, IBM Plex Sans for words.
+       STANDING RULE: no label sits over any outline, pin, slot, or other label. -->
+
+  <!-- ============================ HEADER ============================ -->
+  <text x="450" y="44" fill="#E5E5E5" font-size="22" font-weight="600" text-anchor="middle">IEC Power Connector Faces</text>
+  <text x="450" y="68" fill="#9C9C9C" font-size="13" font-weight="500" text-anchor="middle">Female coupler faces (cord end), drawn to the IEC 60320 standard &#183; ratings are coupler-class maxima</text>
+
+  <!-- grid: 3 columns x 2 rows. Column centers x = 150, 450, 750. Row face-centers y = 175, 510.
+       Each cell: face centered above, then number label, then rating, then nickname/use. -->
+
+  <!-- ===================================================================== -->
+  <!-- CELL 1 (col1,row1): C5 / C6  "Cloverleaf / Mickey Mouse" 3-pin 2.5A   -->
+  <!-- Three overlapping circles: top = earth, lower-left + lower-right = line.-->
+  <!-- ===================================================================== -->
+  <g>
+    <!-- cloverleaf body outline: 3 overlapping discs forming the mickey-mouse silhouette -->
+    <circle cx="150" cy="150" r="26" stroke="#E5E5E5" stroke-width="2.4"/>
+    <circle cx="128" cy="190" r="26" stroke="#E5E5E5" stroke-width="2.4"/>
+    <circle cx="172" cy="190" r="26" stroke="#E5E5E5" stroke-width="2.4"/>
+    <!-- recessed female contact holes (one centered in each lobe) -->
+    <circle cx="150" cy="150" r="6.5" fill="#9C9C9C"/>
+    <circle cx="128" cy="190" r="6.5" fill="#9C9C9C"/>
+    <circle cx="172" cy="190" r="6.5" fill="#9C9C9C"/>
+    <!-- earth-contact tick on the top lobe -->
+    <text x="150" y="120" fill="#9C9C9C" font-size="9" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">E</text>
+  </g>
+  <text x="150" y="252" fill="#E5E5E5" font-size="20" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">C5 / C6</text>
+  <text x="150" y="276" fill="#9C9C9C" font-size="13" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">2.5 A &#183; 70 &#176;C &#183; 3-pin</text>
+  <text x="150" y="298" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle">Cloverleaf / Mickey Mouse</text>
+
+  <!-- ===================================================================== -->
+  <!-- CELL 2 (col2,row1): C7 / C8  "Figure-8 / Shotgun" 2-pin 2.5A           -->
+  <!-- Two joined circles, no earth.                                          -->
+  <!-- ===================================================================== -->
+  <g>
+    <circle cx="424" cy="170" r="26" stroke="#E5E5E5" stroke-width="2.4"/>
+    <circle cx="476" cy="170" r="26" stroke="#E5E5E5" stroke-width="2.4"/>
+    <!-- two recessed female contact holes (line + neutral, no earth) -->
+    <circle cx="424" cy="170" r="6.5" fill="#9C9C9C"/>
+    <circle cx="476" cy="170" r="6.5" fill="#9C9C9C"/>
+  </g>
+  <text x="450" y="252" fill="#E5E5E5" font-size="20" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">C7 / C8</text>
+  <text x="450" y="276" fill="#9C9C9C" font-size="13" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">2.5 A &#183; 70 &#176;C &#183; 2-pin</text>
+  <text x="450" y="298" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle">Figure-8 / Shotgun &#183; no earth</text>
+
+  <!-- ===================================================================== -->
+  <!-- CELL 3 (col3,row1): C13 / C14  the PC/PDU cord 3-pin 10A 70C           -->
+  <!-- Hexagonal body: wider at top with two chamfered top corners, flat     -->
+  <!-- bottom. Three vertical rectangular contacts in a row: E center-top,    -->
+  <!-- L + N lower. This is the §8.6.2 measured/hero coupler -> ONE lime.     -->
+  <!-- ===================================================================== -->
+  <g>
+    <!-- C13 hexagonal silhouette (chamfered top corners, flat bottom) -->
+    <path d="M 712 132
+             L 788 132
+             L 800 152
+             L 800 196
+             L 700 196
+             L 700 152 Z"
+          stroke="#A1CC3A" stroke-width="2.6" stroke-linejoin="round"/>
+    <!-- three female contact slots (recessed rectangles): E top-center, L/N lower -->
+    <rect x="743" y="140" width="14" height="9" rx="1.5" fill="#9C9C9C"/>      <!-- earth, top center -->
+    <rect x="716" y="170" width="14" height="9" rx="1.5" fill="#9C9C9C"/>      <!-- line, lower left -->
+    <rect x="770" y="170" width="14" height="9" rx="1.5" fill="#9C9C9C"/>      <!-- neutral, lower right -->
+    <text x="750" y="136" fill="#9C9C9C" font-size="9" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace" dominant-baseline="ideographic">E</text>
+  </g>
+  <text x="750" y="252" fill="#A1CC3A" font-size="20" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">C13 / C14</text>
+  <text x="750" y="276" fill="#9C9C9C" font-size="13" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">10 A &#183; 70 &#176;C &#183; 3-pin</text>
+  <text x="750" y="298" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle">The ubiquitous PC / PDU cord</text>
+
+  <!-- ===================================================================== -->
+  <!-- CELL 4 (col1,row2): C15 / C16  the true "kettle cord" 3-pin 10A 120C   -->
+  <!-- Same C13 silhouette PLUS the keying notch on the BOTTOM edge.          -->
+  <!-- ===================================================================== -->
+  <g>
+    <!-- C15 silhouette: C13 hex with a rectangular keying NOTCH cut into the bottom edge -->
+    <path d="M 112 467
+             L 188 467
+             L 200 487
+             L 200 531
+             L 168 531
+             L 168 521
+             L 132 521
+             L 132 531
+             L 100 531
+             L 100 487 Z"
+          stroke="#E5E5E5" stroke-width="2.6" stroke-linejoin="round"/>
+    <!-- three female contact slots, same layout as C13 -->
+    <rect x="143" y="475" width="14" height="9" rx="1.5" fill="#9C9C9C"/>      <!-- earth, top center -->
+    <rect x="116" y="500" width="14" height="9" rx="1.5" fill="#9C9C9C"/>      <!-- line -->
+    <rect x="170" y="500" width="14" height="9" rx="1.5" fill="#9C9C9C"/>      <!-- neutral -->
+    <text x="150" y="471" fill="#9C9C9C" font-size="9" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace" dominant-baseline="ideographic">E</text>
+    <!-- notch callout (muted, sits clear below the body in the notch gap) -->
+    <text x="150" y="543" fill="#9C9C9C" font-size="9" font-weight="500" text-anchor="middle">keying notch</text>
+  </g>
+  <text x="150" y="588" fill="#E5E5E5" font-size="20" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">C15 / C16</text>
+  <text x="150" y="612" fill="#9C9C9C" font-size="13" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">10 A &#183; 120 &#176;C &#183; 3-pin</text>
+  <text x="150" y="634" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle">True kettle cord &#183; hot-condition</text>
+
+  <!-- ===================================================================== -->
+  <!-- CELL 5 (col2,row2): C19 / C20  high-current 3-pin 16A server/PDU       -->
+  <!-- Landscape rounded-rect body; three rectangular contacts standing       -->
+  <!-- VERTICAL (taller than wide), set in a horizontal row: L - E - N.        -->
+  <!-- ===================================================================== -->
+  <g>
+    <!-- C19 body: wider-than-tall rounded rectangle -->
+    <rect x="398" y="462" width="104" height="74" rx="9" stroke="#E5E5E5" stroke-width="2.6"/>
+    <!-- three vertical female contact slots in a horizontal row -->
+    <rect x="415" y="481" width="11" height="36" rx="2" fill="#9C9C9C"/>      <!-- line, left -->
+    <rect x="444" y="481" width="11" height="36" rx="2" fill="#9C9C9C"/>      <!-- earth, center -->
+    <rect x="473" y="481" width="11" height="36" rx="2" fill="#9C9C9C"/>      <!-- neutral, right -->
+    <text x="449" y="476" fill="#9C9C9C" font-size="9" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace" dominant-baseline="ideographic">E</text>
+  </g>
+  <text x="450" y="588" fill="#E5E5E5" font-size="20" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">C19 / C20</text>
+  <text x="450" y="612" fill="#9C9C9C" font-size="13" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">16 A &#183; 70 &#176;C &#183; 3-pin</text>
+  <text x="450" y="634" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle">High-current servers / PDUs</text>
+
+  <!-- ===================================================================== -->
+  <!-- CELL 6 (col3,row2): IEC 60309 industrial inset                         -->
+  <!-- Circular pin-and-sleeve face: keyway + earth pin at a CLOCK position,  -->
+  <!-- with the color-band idea named in words (blue/red/yellow).            -->
+  <!-- ===================================================================== -->
+  <g>
+    <!-- outer sleeve ring -->
+    <circle cx="750" cy="500" r="46" stroke="#9C9C9C" stroke-width="2.4"/>
+    <!-- inner contact circle -->
+    <circle cx="750" cy="500" r="34" stroke="#E5E5E5" stroke-width="2"/>
+    <!-- keyway / major notch on the sleeve (top, 12 o'clock reference) -->
+    <path d="M 742 458 L 750 450 L 758 458" stroke="#9C9C9C" stroke-width="2.4" stroke-linejoin="round"/>
+    <!-- 3 line/phase pins (round) -->
+    <circle cx="734" cy="488" r="6" fill="#9C9C9C"/>
+    <circle cx="766" cy="488" r="6" fill="#9C9C9C"/>
+    <circle cx="734" cy="512" r="6" fill="#9C9C9C"/>
+    <!-- EARTH pin: larger diameter, placed at the 6 o'clock "clock position" -->
+    <circle cx="766" cy="514" r="8.5" fill="#E5E5E5"/>
+    <text x="802" y="538" fill="#9C9C9C" font-size="9" font-weight="500" text-anchor="start" font-family="DM Mono, monospace">earth = 6h</text>
+  </g>
+  <text x="750" y="576" fill="#E5E5E5" font-size="16" font-weight="600" text-anchor="middle">IEC 60309 industrial</text>
+  <text x="750" y="597" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle">Pin &amp; sleeve &#183; earth-pin clock position keys voltage</text>
+  <!-- color-band legend (words, not the sole carrier; color names spelled out) -->
+  <g font-size="11" font-weight="500" font-family="DM Mono, monospace">
+    <text x="640" y="622" fill="#9C9C9C" text-anchor="start">Blue 200&#8211;250 V</text>
+    <text x="640" y="640" fill="#9C9C9C" text-anchor="start">Red 380&#8211;480 V (3&#216;)</text>
+    <text x="640" y="658" fill="#9C9C9C" text-anchor="start">Yellow 100&#8211;130 V</text>
+  </g>
+
+  <!-- ============================ FOOTER ============================ -->
+  <text x="450" y="730" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle">Odd number = cord connector (female) &#183; even number = appliance inlet (male) &#183; e.g. C13 mates C14</text>
+</svg>
