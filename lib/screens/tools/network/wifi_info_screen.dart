@@ -298,6 +298,24 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           ? 'Android'
           : 'macOS CoreWLAN';
 
+  /// The platform that owns an unreadable-MAC reason note, so the "MAC type"
+  /// note names the RIGHT OS limit (the S24 bug was the iOS "Apple does not
+  /// expose…" reason leaking onto Android). iOS / Android each name their own
+  /// real limitation; macOS reads the burned-in MAC directly so it falls to the
+  /// generic note in the rare unreadable case.
+  MacAddressPlatform get _macPlatform {
+    switch (_source) {
+      case WifiInfoSource.iosShortcuts:
+        return MacAddressPlatform.ios;
+      case WifiInfoSource.androidWifiManager:
+        return MacAddressPlatform.android;
+      case WifiInfoSource.macosCoreWlan:
+      case WifiInfoSource.unsupported:
+      case WifiInfoSource.web:
+        return MacAddressPlatform.other;
+    }
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // iOS: stop the live sampling loop when the app genuinely leaves the
@@ -919,7 +937,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         '${isPsc ? ' (Preferred Scanning Channel)' : ''}',
       )
       ..writeln(
-        '  Width: ${info.channelWidthAvailable ? _copyVal(info.channelWidthMhz?.toString(), 'MHz') : 'Not reported by $platformLabel'}',
+        '  Width: ${info.channelWidthAvailable ? _copyVal(_formatChannelWidth(info.channelWidthMhz), _channelWidthHasUnit(info.channelWidthMhz) ? 'MHz' : null) : 'Not reported by $platformLabel'}',
       )
       ..writeln(
         '  Band: ${_copyVal(info.band, null)}'
@@ -933,7 +951,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       ..writeln('  Country: ${_copyVal(info.countryCode, null)}')
       ..writeln('  Interface: ${_copyVal(info.interfaceName, null)}')
       ..writeln('  Hardware Address: ${_copyVal(info.hardwareAddress, null)}')
-      ..writeln('  MAC type: ${MacRandomizationClassifier.label(info.hardwareAddress)}');
+      ..writeln('  MAC type: ${MacRandomizationClassifier.label(info.hardwareAddress, platform: _macPlatform)}');
 
     buf
       ..writeln()
@@ -1435,8 +1453,8 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           ),
           _MetricRow(
             label: 'Width',
-            value: info.channelWidthMhz?.toString(),
-            unit: 'MHz',
+            value: _formatChannelWidth(info.channelWidthMhz),
+            unit: _channelWidthHasUnit(info.channelWidthMhz) ? 'MHz' : null,
             mono: true,
             note: info.channelWidthAvailable
                 ? null
@@ -1457,17 +1475,35 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     child: Column(
       children: [
         _MetricRow(label: 'Wi-Fi Standard', value: info.standard),
-        _MetricRow(label: 'Country', value: info.countryCode),
+        // Country: Android's WifiManager.getCountryCode() is restricted on
+        // Android 11+ and often returns nothing to a non-privileged app. When it
+        // does, the row carries the honest Android limit note rather than a bare
+        // "Unavailable" (GL-005). When the platform DOES return it, the value
+        // shows and no note is needed. iOS never carries country (no path), and
+        // macOS reads it directly.
+        _MetricRow(
+          label: 'Country',
+          value: info.countryCode,
+          note: _countryNote(info.countryCode),
+        ),
         _MetricRow(label: 'Interface', value: info.interfaceName, mono: true),
+        // Hardware Address here is the DEVICE Wi-Fi MAC (this device's adapter),
+        // NOT the AP BSSID (that lives in the Network card, and IS available on
+        // Android with Location). The device MAC is hidden on both phones: iOS
+        // never exposes it, Android returns the 02:00:00:00:00:00 randomized
+        // placeholder (mapped to null by the native side). When absent, the row
+        // carries the platform-correct reason rather than a bare "Unavailable".
         _MetricRow(
           label: 'Hardware Address',
           value: info.hardwareAddress,
           mono: true,
+          note: _hardwareAddressNote(info.hardwareAddress),
         ),
         // Derived MAC type from the locally-administered bit. When the MAC is
-        // unreadable (iOS blocks app reads of the device Wi-Fi MAC), the value
-        // is "Unavailable" and the honest reason rides in the note rather than
-        // a meaningless computed flag (GL-005).
+        // unreadable, the value is "Unavailable" and the honest, PLATFORM-CORRECT
+        // reason rides in the note rather than a meaningless computed flag
+        // (GL-005). iOS blocks app reads of the device Wi-Fi MAC; Android returns
+        // a randomized placeholder — each names its own real limit.
         _MetricRow(
           label: 'MAC type',
           value: _macTypeValue(info.hardwareAddress),
@@ -1476,6 +1512,24 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       ],
     ),
   );
+
+  /// The honest note for an absent device Hardware Address (the DEVICE Wi-Fi
+  /// MAC). Platform-correct: iOS does not expose it; Android returns a
+  /// randomized placeholder. Null when the MAC is present (rare on phones) or on
+  /// macOS, where the burned-in MAC reads directly.
+  String? _hardwareAddressNote(String? mac) {
+    if (mac != null && mac.trim().isNotEmpty) return null;
+    switch (_source) {
+      case WifiInfoSource.androidWifiManager:
+        return 'This device MAC, not the AP. ${MacRandomizationClassifier.unreadableReason(MacAddressPlatform.android)}';
+      case WifiInfoSource.iosShortcuts:
+        return 'This device MAC, not the AP. ${MacRandomizationClassifier.unreadableReason(MacAddressPlatform.ios)}';
+      case WifiInfoSource.macosCoreWlan:
+      case WifiInfoSource.unsupported:
+      case WifiInfoSource.web:
+        return null;
+    }
+  }
 
   /// The MAC-type value for the Radio card: the Randomized/Universal label, or
   /// null (→ "Unavailable") when the MAC is unreadable, so the honest reason
@@ -1488,12 +1542,28 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     };
   }
 
-  /// The honesty note for an unreadable MAC (iOS), or null when the MAC parsed.
-  static String? _macTypeNote(String? mac) {
+  /// The honesty note for an unreadable MAC, PLATFORM-CORRECT, or null when the
+  /// MAC parsed. iOS: Apple does not expose the device MAC. Android: the OS
+  /// returns a randomized placeholder and hides the real device MAC. Never the
+  /// wrong platform's wording (GL-005 / GL-008).
+  String? _macTypeNote(String? mac) {
     return MacRandomizationClassifier.classify(mac) ==
             MacRandomization.unreadable
-        ? "Apple does not expose this device's Wi-Fi MAC to apps"
+        ? MacRandomizationClassifier.unreadableReason(_macPlatform)
         : null;
+  }
+
+  /// The honest note for an absent Country code. Android-only: the regulatory
+  /// country comes from WifiManager.getCountryCode(), which is restricted on
+  /// Android 11+ and frequently returns nothing to a normal app — so a null
+  /// country there gets a precise reason, not a bare "Unavailable". Null on
+  /// every other platform/state (a present value, or iOS/macOS which don't carry
+  /// this Android-specific caveat).
+  String? _countryNote(String? countryCode) {
+    if (countryCode != null && countryCode.trim().isNotEmpty) return null;
+    if (_source != WifiInfoSource.androidWifiManager) return null;
+    return 'Restricted on Android 11+; the OS does not expose the regulatory '
+        'country to this app';
   }
 
   Widget _statusCard(ConnectedAp info) => _Card(
@@ -1513,6 +1583,21 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     if (channel < 5 || channel > 233) return false;
     return (channel - 5) % 16 == 0;
   }
+
+  /// Formats a channel width in MHz, special-casing the 80+80 MHz sentinel
+  /// (8080) the Android native side emits for two non-contiguous 80 MHz
+  /// segments. Returns null so the row renders "Unavailable" when the width is
+  /// absent. The "80+80" case carries its own unit, so the row drops the trailing
+  /// "MHz" (see [_channelWidthHasUnit]).
+  static String? _formatChannelWidth(int? mhz) {
+    if (mhz == null) return null;
+    if (mhz == 8080) return '80+80 MHz';
+    return mhz.toString();
+  }
+
+  /// Whether the formatted channel-width value still needs a trailing "MHz"
+  /// unit. The 80+80 sentinel already embeds its unit, so it does not.
+  static bool _channelWidthHasUnit(int? mhz) => mhz != null && mhz != 8080;
 
   /// Formats a Mbps rate without a trailing ".0", or null so the row renders
   /// "Unavailable".

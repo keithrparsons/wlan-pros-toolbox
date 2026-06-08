@@ -239,9 +239,13 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
 /// Fields Android cannot supply stay honestly null (GL-005 / GL-008): the
 /// public Android API exposes no noise floor or SNR, so those rows render
 /// "Unavailable" rather than an estimate — the same contract macOS uses for
-/// the Rx rate. Android does NOT expose channel width before API 31 reliably;
-/// when the native side cannot read it, [ConnectedAp.channelWidthAvailable]
-/// rides false so the UI says so rather than guessing.
+/// the Rx rate. Channel width IS available on Android: the native side reads it
+/// from the matching ScanResult.channelWidth (the connected WifiInfo does not
+/// carry it) and maps it to MHz; when there is no scan match or no Location
+/// grant, [ConnectedAp.channelWidthAvailable] rides false so the UI says
+/// "Not reported" rather than guessing. The regulatory country comes from the
+/// restricted WifiManager.getCountryCode(), which is limited on Android 11+ and
+/// frequently returns nothing — null then drives an honest Android limit note.
 class AndroidWifiInfoAdapter implements WifiInfoAdapter {
   /// [service] is injectable so tests drive a fake invoker + platform override
   /// without a real platform channel.

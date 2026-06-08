@@ -67,6 +67,8 @@ ConnectedAp _androidSample({
   String? bssid = 'a4:83:e7:00:11:22',
   bool poweredOn = true,
   double? rxRateMbps,
+  int? channelWidthMhz,
+  String? countryCode,
 }) {
   return ConnectedAp.fromAndroidWifiInfo(
     WifiInfo(
@@ -80,9 +82,9 @@ ConnectedAp _androidSample({
       rxRateMbps: rxRateMbps,
       phyMode: '802.11ax (Wi-Fi 6)',
       channel: 36,
-      channelWidthMhz: null,
+      channelWidthMhz: channelWidthMhz,
       band: '5 GHz',
-      countryCode: null,
+      countryCode: countryCode,
       hardwareAddress: null,
       securityToken: 'wpa3Personal',
       poweredOn: poweredOn,
@@ -1179,6 +1181,105 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('No Wi-Fi reading available'), findsOneWidget);
       expect(find.text('Retry'), findsOneWidget);
+    });
+
+    testWidgets(
+        'S24 LEAK FIX: the MAC-type note names the ANDROID limit, never the iOS '
+        '"Apple does not expose" wording', (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.androidWifiManager,
+          // hardwareAddress is null on Android (the device MAC is hidden), so
+          // the MAC-type row is unreadable and carries the platform note.
+          macAdapter: _FakeMacAdapter(snapshot: _androidSample()),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      // The Android-correct reason is present...
+      expect(
+        find.textContaining('Android returns a randomized placeholder MAC'),
+        findsWidgets,
+      );
+      // ...and the iOS wording does NOT leak onto Android anywhere on screen.
+      expect(find.textContaining('Apple does not expose'), findsNothing);
+    });
+
+    testWidgets(
+        'ADD 1: channel width from the matching ScanResult renders on Android',
+        (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.androidWifiManager,
+          macAdapter:
+              _FakeMacAdapter(snapshot: _androidSample(channelWidthMhz: 160)),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      // The width shows as a real value and the "Not reported" note disappears.
+      expect(find.text('160 MHz'), findsWidgets);
+      expect(find.textContaining('Not reported by Android'), findsNothing);
+    });
+
+    testWidgets('ADD 1: 80+80 MHz sentinel renders as "80+80 MHz"',
+        (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.androidWifiManager,
+          macAdapter:
+              _FakeMacAdapter(snapshot: _androidSample(channelWidthMhz: 8080)),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.text('80+80 MHz'), findsWidgets);
+    });
+
+    testWidgets(
+        'ADD 2: country code, when the platform returns it, shows with no note',
+        (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.androidWifiManager,
+          macAdapter:
+              _FakeMacAdapter(snapshot: _androidSample(countryCode: 'US')),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.text('US'), findsWidgets);
+      expect(find.textContaining('Restricted on Android 11+'), findsNothing);
+    });
+
+    testWidgets(
+        'ADD 2: country code absent → the honest Android restriction note, not '
+        'a bare Unavailable', (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.androidWifiManager,
+          macAdapter: _FakeMacAdapter(snapshot: _androidSample()),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('Restricted on Android 11+'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
+        'ADD 4: Hardware Address (device MAC) absent → platform-correct note '
+        'that it is the device MAC, not the AP', (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.androidWifiManager,
+          macAdapter: _FakeMacAdapter(snapshot: _androidSample()),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('This device MAC, not the AP'),
+        findsWidgets,
+      );
+      // The AP BSSID, by contrast, IS available on Android and shows in Network.
+      expect(find.text('a4:83:e7:00:11:22'), findsOneWidget);
     });
   });
 

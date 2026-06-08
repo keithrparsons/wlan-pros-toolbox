@@ -94,11 +94,71 @@ void main() {
       );
     });
 
-    test('unreadable label names the Apple limitation', () {
+    test('unreadable label names the Apple limitation (iOS default)', () {
       final String label =
           MacRandomizationClassifier.label('02:00:00:00:00:00');
       expect(label, contains('Apple does not expose'));
       expect(label, contains('Wi-Fi MAC'));
+    });
+
+    test('unreadable label is PLATFORM-CORRECT — Android names the Android '
+        'limit, never Apple (S24 leak fix)', () {
+      final String label = MacRandomizationClassifier.label(
+        '02:00:00:00:00:00',
+        platform: MacAddressPlatform.android,
+      );
+      // The Android note must name the real Android reason, and must NOT leak
+      // the iOS "Apple" wording onto Android.
+      expect(label, contains('Android returns a randomized placeholder MAC'));
+      expect(label, contains('hidden from apps'));
+      expect(label, isNot(contains('Apple')));
+    });
+
+    test('explicit iOS platform names the Apple limit', () {
+      final String label = MacRandomizationClassifier.label(
+        '02:00:00:00:00:00',
+        platform: MacAddressPlatform.ios,
+      );
+      expect(label, contains('Apple does not expose'));
+    });
+
+    test('other platform gives a generic, non-Apple, non-Android note', () {
+      final String label = MacRandomizationClassifier.label(
+        '02:00:00:00:00:00',
+        platform: MacAddressPlatform.other,
+      );
+      expect(label, isNot(contains('Apple')));
+      expect(label, isNot(contains('Android')));
+      expect(label, contains('does not expose'));
+    });
+
+    test('readable verdicts are platform-independent', () {
+      for (final MacAddressPlatform p in MacAddressPlatform.values) {
+        expect(
+          MacRandomizationClassifier.label('a4:83:e7:aa:bb:cc', platform: p),
+          'Universal (burned-in)',
+        );
+        expect(
+          MacRandomizationClassifier.label('06:11:22:33:44:55', platform: p),
+          'Randomized (locally administered)',
+        );
+      }
+    });
+  });
+
+  group('unreadableReason', () {
+    test('iOS reason names Apple', () {
+      expect(
+        MacRandomizationClassifier.unreadableReason(MacAddressPlatform.ios),
+        contains('Apple does not expose'),
+      );
+    });
+
+    test('Android reason names the randomized placeholder, not Apple', () {
+      final String reason =
+          MacRandomizationClassifier.unreadableReason(MacAddressPlatform.android);
+      expect(reason, contains('randomized placeholder MAC'));
+      expect(reason, isNot(contains('Apple')));
     });
   });
 }

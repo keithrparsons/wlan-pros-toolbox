@@ -174,7 +174,7 @@ class ConnectedAp {
   /// Android exposes RSSI, the Tx (link) rate, frequency (→ channel/band), the
   /// Wi-Fi standard (API 30+ via `WifiInfo.getWifiStandard`), the security type
   /// (derived from the matching ScanResult capabilities), and channel width
-  /// (API 31+ via `WifiInfo.getCurrentSecurityType` / scan result). The public
+  /// (from the matching `ScanResult.channelWidth`, Location-gated). The public
   /// Android API does NOT expose the noise floor, so SNR cannot be computed —
   /// both stay null and [snrDerived] is false (no estimate, GL-005). The Rx
   /// rate is read on API 30+ (`getRxLinkSpeedMbps`); when the platform returns
@@ -213,8 +213,10 @@ class ConnectedAp {
       // precise "not in this reading" when the platform returns the unknown
       // sentinel — never "not on this platform".
       rxRateAvailable: true,
-      // Channel width is read on API 31+; when the native side could not read
-      // it, it passes null and the row says "Not reported".
+      // Channel width is read from the matching ScanResult.channelWidth (the
+      // connected WifiInfo does not carry it). When the native side could not
+      // read it (no scan match / no Location grant), it passes null and the row
+      // says "Not reported". The 80+80 MHz case arrives as the sentinel 8080.
       channelWidthAvailable: info.channelWidthMhz != null,
       // Android reports the band/channel from the frequency directly (native
       // side), and never the noise floor, so neither is app-derived here.

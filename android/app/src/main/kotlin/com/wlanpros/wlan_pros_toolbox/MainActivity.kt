@@ -127,6 +127,20 @@ class MainActivity : FlutterActivity() {
 
         val securityToken: String? = securityTokenForConnected(wifiManager, info, locationOk)
 
+        // Channel width: WifiInfo does not carry it, but the matching ScanResult
+        // does (ScanResult.channelWidth, available since API 23). Match the
+        // connected BSSID in getScanResults() and map the enum to MHz. Scan
+        // results are Location-gated, so this only resolves with the grant; null
+        // otherwise and the Dart side says "Not reported".
+        val channelWidthMhz: Int? = channelWidthForConnected(wifiManager, info, locationOk)
+
+        // Regulatory country code: WifiManager.getCountryCode() exists but is a
+        // restricted/system API (hidden on the public SDK, and limited on
+        // Android 11+ — often requires a privileged caller). Try it reflectively;
+        // a null/blank/refused result stays null and the Dart side shows the
+        // honest Android limit note rather than a fabricated value.
+        val countryCode: String? = readCountryCode(wifiManager)
+
         return mapOf(
             "interfaceName" to "wlan0",
             "poweredOn" to poweredOn,
@@ -140,12 +154,13 @@ class MainActivity : FlutterActivity() {
             "rxRateMbps" to rxRate,
             "phyMode" to standard,
             "channel" to channel,
-            // Channel width is not exposed by WifiInfo on the public API; the
-            // Dart side marks it "Not reported" when null.
-            "channelWidthMhz" to null,
+            // Channel width from the matching ScanResult (null when no scan
+            // match / no Location grant); the Dart side says "Not reported".
+            "channelWidthMhz" to channelWidthMhz,
             "band" to band,
-            // Android does not expose the regulatory country via WifiInfo.
-            "countryCode" to null,
+            // Regulatory country, restricted on Android 11+; null when the OS
+            // refuses it and the Dart side shows the honest limit note.
+            "countryCode" to countryCode,
             // Android returns a fixed 02:00:00:00:00:00 device MAC to apps; the
             // honest answer is null rather than that sentinel.
             "hardwareAddress" to null,
@@ -266,6 +281,67 @@ class MainActivity : FlutterActivity() {
             c.contains("WEP") -> "wep"
             else -> "open"
         }
+    }
+
+    /// Channel width in MHz for the connected link, read from the matching
+    /// ScanResult.channelWidth (the connected WifiInfo does not carry width).
+    /// Matches the connected BSSID against getScanResults() and maps the enum to
+    /// MHz. Returns null when there is no Location grant, no BSSID, no scan
+    /// match, or the width is unknown — the Dart side then shows "Not reported"
+    /// rather than guessing (GL-005 / GL-008).
+    private fun channelWidthForConnected(
+        wifiManager: WifiManager,
+        info: WifiInfo,
+        locationOk: Boolean,
+    ): Int? {
+        if (!locationOk) return null
+        val bssid = info.bssid ?: return null
+        if (bssid == "02:00:00:00:00:00" || bssid == "00:00:00:00:00:00") return null
+        val results: List<ScanResult> = try {
+            @Suppress("DEPRECATION")
+            wifiManager.scanResults ?: return null
+        } catch (e: SecurityException) {
+            return null
+        }
+        val match = results.firstOrNull { it.BSSID.equals(bssid, ignoreCase = true) }
+            ?: return null
+        return when (match.channelWidth) {
+            ScanResult.CHANNEL_WIDTH_20MHZ -> 20
+            ScanResult.CHANNEL_WIDTH_40MHZ -> 40
+            ScanResult.CHANNEL_WIDTH_80MHZ -> 80
+            ScanResult.CHANNEL_WIDTH_160MHZ -> 160
+            // 80+80 MHz (two non-contiguous 80 MHz segments). Report the total
+            // occupied width; the Dart label renders "80+80" specially when the
+            // value is 160 is ambiguous, so we surface the dedicated sentinel.
+            ScanResult.CHANNEL_WIDTH_80MHZ_PLUS_MHZ -> 8080
+            else -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                channelWidth320(match)
+            } else {
+                null
+            }
+        }
+    }
+
+    /// 320 MHz (Wi-Fi 7) width, only on API 33+ where the constant exists. Kept
+    /// in its own gated helper so older SDK builds never reference the constant.
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun channelWidth320(match: ScanResult): Int? =
+        if (match.channelWidth == ScanResult.CHANNEL_WIDTH_320MHZ) 320 else null
+
+    /// Regulatory country code via WifiManager.getCountryCode(). The method is a
+    /// restricted/system API (not on the public SDK; limited on Android 11+ and
+    /// often requires a privileged caller), so it is invoked reflectively and
+    /// any failure or empty result returns null. Honest per GL-005: a null here
+    /// drives the Dart "restricted on this Android version" note, never a guess.
+    private fun readCountryCode(wifiManager: WifiManager): String? = try {
+        val method = WifiManager::class.java.getMethod("getCountryCode")
+        val raw = method.invoke(wifiManager) as? String
+        val cc = raw?.trim()?.uppercase()
+        if (cc.isNullOrEmpty() || cc == "00") null else cc
+    } catch (e: Throwable) {
+        // NoSuchMethodException / SecurityException / hidden-API block — all
+        // resolve to the honest null.
+        null
     }
 
     /// 802.11 standard label from WifiInfo.getWifiStandard (API 30+), in the
