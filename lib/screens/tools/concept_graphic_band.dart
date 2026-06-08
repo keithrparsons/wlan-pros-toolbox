@@ -6,11 +6,26 @@
 // `SingleChildScrollView > Column(stretch)`, above the first input card, in a
 // container styled exactly like the screen's other cards.
 //
+// SIZING (reworked 2026-06-08 on Keith's feedback — the old fixed 140/160dp
+// band shrank every graphic into a short strip with large side whitespace):
+//   The band now FILLS the full content width and derives its height from the
+//   graphic's OWN viewBox aspect ratio, so horizontal whitespace collapses to
+//   nothing for the common 2:1 / wide graphics. Height is then clamped:
+//     * floor `_minBandHeight` so a very wide graphic still reads;
+//     * ceiling = `min(viewport * _heightFraction, _maxBandHeight)` so a tall
+//       (near-square connector-style) graphic can't eat the screen and the
+//       page still scrolls sensibly on a phone.
+//   When a tall graphic hits the height ceiling, BoxFit.contain re-letterboxes
+//   it (intended — the cap is doing its job); wide graphics fill edge-to-edge.
+//   The aspect ratio is parsed from the SVG viewBox once per toolId and cached;
+//   until it resolves we assume the dominant 2:1 ratio so the very first frame
+//   is already large and correct for the common case, then corrects on settle
+//   for the few non-2:1 outliers.
+//
 // Placement (GL-003 §8.6.2, binding on Felix):
 //   * card-styled container: surface1 fill, 12px card radius, 1px decorative
-//     border, 16px (--space-sm) internal padding around the SVG
-//   * band height: 140dp mobile / 160dp tablet-desktop (--app-tool-graphic-
-//     band-height), SVG vertically centered, scaled to width, never cropped
+//     border, 8px (--space-xs) internal padding around the SVG (tightened from
+//     16px so the graphic uses more of the card)
 //   * caller adds the 24px (--space-md) gap to the first content card, matching
 //     the existing card-to-card rhythm
 //
@@ -60,8 +75,9 @@ import '../../theme/app_tokens.dart';
 
 /// Renders a tool's concept graphic as the §8.6.2 header band, or nothing when
 /// the asset is not bundled. Drop it in as the first child of a tool screen's
-/// `Column(stretch)`; it sizes itself and degrades to `SizedBox.shrink()` when
-/// the tool has no built graphic. Recolors for light per §8.20.7.
+/// `Column(stretch)`; it sizes itself (full content width, height from the
+/// graphic's own aspect ratio, clamped) and degrades to `SizedBox.shrink()`
+/// when the tool has no built graphic. Recolors for light per §8.20.7.
 class ConceptGraphicBand extends StatelessWidget {
   const ConceptGraphicBand({
     super.key,
@@ -72,13 +88,30 @@ class ConceptGraphicBand extends StatelessWidget {
   /// Catalog id (kebab-case). Resolves to `assets/tool-graphics/<id>.svg`.
   final String toolId;
 
-  /// Tablet/desktop layout → 160dp band; mobile → 140dp (§8.6.2 band-height
-  /// token). The host screens already compute this from `LayoutBuilder`.
+  /// Tablet/desktop layout — retained for call-site compatibility and to nudge
+  /// the height ceiling up a touch on a large window so a graphic on desktop
+  /// reads as generously as on a phone. The dominant driver is now the graphic
+  /// aspect ratio and the viewport, not this flag.
   final bool isDesktop;
 
-  // §8.6.2 --app-tool-graphic-band-height: 140dp mobile / 160dp tablet-desktop.
-  static const double _bandHeightMobile = 140;
-  static const double _bandHeightDesktop = 160;
+  // ── New aspect-ratio sizing constants (replace the old 140/160 band) ───────
+  // Floor: a very wide graphic (e.g. a 3:1 banner) constrained to the content
+  // width is still tall enough to read. Well above the retired 140/160 strip.
+  static const double _minBandHeight = 180;
+
+  // Ceiling pieces: the band targets a share of the viewport height, capped by
+  // an absolute max so a desktop window does not blow a near-square graphic up
+  // past a usable size, and floored above [_minBandHeight] so the page stays
+  // scrollable on a phone. 0.40 of viewport keeps the page scrolling sensibly
+  // while making the graphic the dominant element above the fold.
+  static const double _heightFraction = 0.40;
+  static const double _maxBandHeightMobile = 320;
+  static const double _maxBandHeightDesktop = 420;
+
+  // Fallback aspect ratio used before the viewBox parse resolves (and if a
+  // viewBox is somehow unreadable). 2.0 == the dominant 320×160 author ratio,
+  // so the very first frame is already large and right for ~85% of graphics.
+  static const double _fallbackAspect = 2.0;
 
   // ── §8.20.7 light-mode swap map ──────────────────────────────────────────
   // Built once from the AppColorScheme.light() token fields. DARK SVG hexes
@@ -142,22 +175,135 @@ class ConceptGraphicBand extends StatelessWidget {
   @visibleForTesting
   static String debugApplyLightSwap(String raw) => applyLightSwap(raw);
 
+  /// Test-only: clears the per-toolId SVG-source, aspect, and in-flight-future
+  /// caches so one test's bundled-asset setup cannot leak into the next.
+  @visibleForTesting
+  static void debugClearCaches() {
+    _lightSvgCache.clear();
+    _aspectCache.clear();
+    _swappedFutures.clear();
+    _aspectFutures.clear();
+  }
+
+  /// Test-only: synchronously seeds the aspect and (optional) swapped-light
+  /// source caches for [toolId] with literal values, so a build paints the
+  /// SvgPicture without any real bundle I/O — keeping widget tests fully
+  /// synchronous (no runAsync, no real-async timeout risk).
+  @visibleForTesting
+  static void debugSeedCaches(
+    String toolId, {
+    required double aspect,
+    String? lightSvg,
+  }) {
+    _aspectCache[toolId] = aspect;
+    if (lightSvg != null) _lightSvgCache[toolId] = lightSvg;
+  }
+
   // Per-toolId cache of the already-swapped light SVG source, so the string
   // replace runs once per tool, not on every rebuild.
   static final Map<String, String> _lightSvgCache = <String, String>{};
 
-  /// Loads the asset SVG source and applies the §8.20.7 allow-list swap, caching
-  /// the result per toolId. Returns null until the async load completes.
-  Future<String> _loadSwappedSvg() async {
-    final String cached = _lightSvgCache[toolId] ?? '';
-    if (cached.isNotEmpty) return cached;
-    final String raw = await rootBundle.loadString(ToolAssets.graphicPath(toolId));
-    // Replace on the literal token only. The hex KEYS in the SVGs are uppercase
-    // 6-digit; the wash uses the exact authored rgba() string. §1d canonical
-    // data hexes and #1A1A1A are not in the map → pass through.
-    final String swapped = applyLightSwap(raw);
-    _lightSvgCache[toolId] = swapped;
-    return swapped;
+  // Per-toolId cache of the parsed viewBox aspect ratio (width / height). Built
+  // once from the SVG source so the height-from-width math has the real shape.
+  static final Map<String, double> _aspectCache = <String, double>{};
+
+  // Memoized in-flight futures, keyed by toolId, so a rebuild reuses the SAME
+  // Future instance instead of kicking off a fresh load (which would restart
+  // the FutureBuilders every frame and never settle).
+  static final Map<String, Future<String>> _swappedFutures =
+      <String, Future<String>>{};
+  static final Map<String, Future<double>> _aspectFutures =
+      <String, Future<double>>{};
+
+  /// Parses `width / height` from an SVG source string's `viewBox` (preferred)
+  /// or its `width`/`height` attributes. Returns the [_fallbackAspect] when the
+  /// shape can't be read, so sizing never produces a zero/NaN height.
+  @visibleForTesting
+  static double parseAspectRatio(String svg) {
+    // viewBox="minX minY width height" — the authoritative intrinsic shape.
+    final RegExpMatch? vb =
+        RegExp(r'viewBox\s*=\s*"([^"]+)"').firstMatch(svg);
+    if (vb != null) {
+      final List<String> parts = vb
+          .group(1)!
+          .trim()
+          .split(RegExp(r'[\s,]+'))
+          .where((String s) => s.isNotEmpty)
+          .toList();
+      if (parts.length == 4) {
+        final double? w = double.tryParse(parts[2]);
+        final double? h = double.tryParse(parts[3]);
+        if (w != null && h != null && w > 0 && h > 0) return w / h;
+      }
+    }
+    // Fall back to explicit width/height attributes if no usable viewBox.
+    final double? w = _attr(svg, 'width');
+    final double? h = _attr(svg, 'height');
+    if (w != null && h != null && w > 0 && h > 0) return w / h;
+    return _fallbackAspect;
+  }
+
+  static double? _attr(String svg, String name) {
+    final RegExpMatch? m =
+        RegExp('$name\\s*=\\s*"([0-9.]+)').firstMatch(svg);
+    return m == null ? null : double.tryParse(m.group(1)!);
+  }
+
+  /// Memoized future that loads the asset SVG source, applies the §8.20.7
+  /// allow-list swap, caches the result per toolId, and seeds the aspect-ratio
+  /// cache from the same source (so we never load the file twice). The Future
+  /// itself is memoized so a rebuild reuses it rather than restarting the load.
+  Future<String> _loadSwappedSvg() {
+    final String warm = _lightSvgCache[toolId] ?? '';
+    if (warm.isNotEmpty) return Future<String>.value(warm);
+    return _swappedFutures.putIfAbsent(toolId, () async {
+      final String cached = _lightSvgCache[toolId] ?? '';
+      if (cached.isNotEmpty) return cached;
+      final String raw =
+          await rootBundle.loadString(ToolAssets.graphicPath(toolId));
+      _aspectCache[toolId] ??= parseAspectRatio(raw);
+      // Replace on the literal token only. The hex KEYS in the SVGs are
+      // uppercase 6-digit; the wash uses the exact authored rgba() string. §1d
+      // canonical data hexes and #1A1A1A are not in the map → pass through.
+      final String swapped = applyLightSwap(raw);
+      _lightSvgCache[toolId] = swapped;
+      return swapped;
+    });
+  }
+
+  /// Memoized future that loads the raw SVG source only to seed the aspect-ratio
+  /// cache (dark path, which renders via SvgPicture.asset and never needs the
+  /// source otherwise). The Future is memoized so rebuilds reuse it.
+  Future<double> _loadAspect() {
+    final double? cached = _aspectCache[toolId];
+    if (cached != null) return Future<double>.value(cached);
+    return _aspectFutures.putIfAbsent(toolId, () async {
+      final String raw =
+          await rootBundle.loadString(ToolAssets.graphicPath(toolId));
+      final double aspect = parseAspectRatio(raw);
+      _aspectCache[toolId] = aspect;
+      return aspect;
+    });
+  }
+
+  /// Computes the band height for a given available width, aspect ratio, and
+  /// viewport height. Fills the width (`width / aspect`), then clamps to the
+  /// floor and the viewport-fraction/absolute ceiling so a tall graphic can't
+  /// dominate and the page still scrolls on a phone.
+  @visibleForTesting
+  static double bandHeightFor({
+    required double availableWidth,
+    required double aspectRatio,
+    required double viewportHeight,
+    required bool isDesktop,
+  }) {
+    final double maxAbsolute =
+        isDesktop ? _maxBandHeightDesktop : _maxBandHeightMobile;
+    final double ceiling =
+        (viewportHeight * _heightFraction).clamp(_minBandHeight, maxAbsolute);
+    final double natural =
+        aspectRatio > 0 ? availableWidth / aspectRatio : availableWidth;
+    return natural.clamp(_minBandHeight, ceiling);
   }
 
   @override
@@ -168,28 +314,7 @@ class ConceptGraphicBand extends StatelessWidget {
     }
 
     final AppColorScheme colors = context.colors;
-    final double bandHeight =
-        isDesktop ? _bandHeightDesktop : _bandHeightMobile;
-
-    // DARK / System-dark: render the unmodified asset, byte-for-byte as before
-    // (dark goldens unaffected). LIGHT: load + swap + render via string.
-    final Widget svg = colors.isLight
-        ? _LightConceptSvg(
-            future: _loadSwappedSvg(),
-            bandHeight: bandHeight,
-          )
-        : SvgPicture.asset(
-            ToolAssets.graphicPath(toolId),
-            // Scale to width, capped at band height, never crop (§8.6.2).
-            fit: BoxFit.contain,
-            width: double.infinity,
-            height: bandHeight,
-            // Decorative — AT skips it (§8.6.2 a11y rule 2).
-            excludeFromSemantics: true,
-            // A bundled-but-unparseable SVG should never surface a broken box
-            // either — collapse to nothing, same as a missing asset.
-            placeholderBuilder: (_) => const SizedBox.shrink(),
-          );
+    final double viewportHeight = MediaQuery.sizeOf(context).height;
 
     return ExcludeSemantics(
       child: Container(
@@ -198,13 +323,100 @@ class ConceptGraphicBand extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.card),
           border: Border.all(color: colors.border, width: 1),
         ),
-        padding: const EdgeInsets.all(AppSpacing.sm),
-        child: SizedBox(
+        // Tightened from --space-sm (16) to --space-xs (8) so the graphic uses
+        // more of the card and reads bigger (Keith's "too much whitespace").
+        padding: const EdgeInsets.all(AppSpacing.xs),
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            // Width available to the SVG inside the card padding.
+            final double availableWidth = constraints.maxWidth.isFinite
+                ? constraints.maxWidth
+                : MediaQuery.sizeOf(context).width;
+            return _ConceptSvg(
+              toolId: toolId,
+              isLight: colors.isLight,
+              availableWidth: availableWidth,
+              viewportHeight: viewportHeight,
+              isDesktop: isDesktop,
+              aspectFuture: _loadAspect(),
+              swappedFuture: colors.isLight ? _loadSwappedSvg() : null,
+              // Seeded synchronously when a prior frame already parsed it, so a
+              // revisit paints at the exact final size on the first frame.
+              seededAspect: _aspectCache[toolId],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// Resolves the band height from the graphic's aspect ratio (async-parsed,
+/// cached) and renders the SVG at full content width to that height. For light
+/// mode it additionally awaits the §8.20.7-swapped source and draws via
+/// `SvgPicture.string`; for dark it draws the unmodified asset (dark goldens
+/// unaffected). Collapses to nothing on a parse/load failure — the same
+/// graceful-degradation contract as before; no broken-image box ever appears.
+class _ConceptSvg extends StatelessWidget {
+  const _ConceptSvg({
+    required this.toolId,
+    required this.isLight,
+    required this.availableWidth,
+    required this.viewportHeight,
+    required this.isDesktop,
+    required this.aspectFuture,
+    required this.swappedFuture,
+    required this.seededAspect,
+  });
+
+  final String toolId;
+  final bool isLight;
+  final double availableWidth;
+  final double viewportHeight;
+  final bool isDesktop;
+  final Future<double> aspectFuture;
+  final Future<String>? swappedFuture;
+  final double? seededAspect;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<double>(
+      future: aspectFuture,
+      // Until the parse resolves, assume the dominant 2:1 ratio so the first
+      // frame is already large and correct for ~85% of graphics; the few
+      // non-2:1 outliers re-lay-out one frame later. A revisit is seeded
+      // synchronously from the cache so it never flashes.
+      initialData: seededAspect ?? ConceptGraphicBand._fallbackAspect,
+      builder: (BuildContext context, AsyncSnapshot<double> aspectSnap) {
+        final double aspect =
+            aspectSnap.data ?? ConceptGraphicBand._fallbackAspect;
+        final double bandHeight = ConceptGraphicBand.bandHeightFor(
+          availableWidth: availableWidth,
+          aspectRatio: aspect,
+          viewportHeight: viewportHeight,
+          isDesktop: isDesktop,
+        );
+
+        final Widget svg = isLight
+            ? _LightConceptSvg(future: swappedFuture!, bandHeight: bandHeight)
+            : SvgPicture.asset(
+                ToolAssets.graphicPath(toolId),
+                // Fill the width; height is the aspect-driven band height. A
+                // wide graphic fills edge-to-edge; a tall one that hit the
+                // height ceiling is contained (never cropped — §8.6.2).
+                fit: BoxFit.contain,
+                width: double.infinity,
+                height: bandHeight,
+                excludeFromSemantics: true,
+                placeholderBuilder: (_) => const SizedBox.shrink(),
+              );
+
+        return SizedBox(
           height: bandHeight,
           width: double.infinity,
           child: Center(child: svg),
-        ),
-      ),
+        );
+      },
     );
   }
 }

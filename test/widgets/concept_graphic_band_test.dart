@@ -9,7 +9,10 @@
 //     layout unchanged;
 //   - decorative for screen readers: the band is wrapped in ExcludeSemantics
 //     (§8.6.2 a11y rule 2);
-//   - mobile vs desktop band height (140 / 160dp, §8.6.2 token).
+//   - full-content-width, aspect-ratio-driven height (reworked 2026-06-08 off
+//     the retired fixed 140/160dp strip): the band fills the width and derives
+//     height from the graphic's viewBox aspect, clamped to a floor and a
+//     viewport-fraction ceiling.
 //
 // Uses ToolAssets.debugSetBundledAssets to simulate the build-time manifest so
 // the test never depends on a real asset bundle.
@@ -37,7 +40,14 @@ Future<void> _pump(
 }
 
 void main() {
-  tearDown(ToolAssets.debugReset);
+  setUp(() {
+    ToolAssets.debugReset();
+    ConceptGraphicBand.debugClearCaches();
+  });
+  tearDown(() {
+    ToolAssets.debugReset();
+    ConceptGraphicBand.debugClearCaches();
+  });
 
   group('ConceptGraphicBand', () {
     testWidgets('renders an SvgPicture when the graphic is bundled',
@@ -77,29 +87,104 @@ void main() {
       expect(find.byType(ExcludeSemantics), findsWidgets);
     });
 
-    testWidgets('uses the 140dp mobile / 160dp desktop band height',
-        (tester) async {
+    testWidgets('renders a full-width band sized above the retired 140/160dp '
+        'strip', (tester) async {
       ToolAssets.debugSetBundledAssets({'assets/tool-graphics/eirp.svg'});
-
-      // Assert the band's OWN full-width sizing box (width: double.infinity),
-      // not the intrinsic box flutter_svg adds for the now-bundled eirp.svg.
+      // Seed the eirp aspect (320×160 → 2.0) synchronously so the dark path
+      // sizes from the real ratio on the first frame without bundle I/O.
+      ConceptGraphicBand.debugSeedCaches('eirp', aspect: 2.0);
       await _pump(tester, toolId: 'eirp', isDesktop: false);
-      expect(
-        find.byWidgetPredicate(
-          (Widget w) =>
-              w is SizedBox && w.height == 140 && w.width == double.infinity,
-        ),
-        findsOneWidget,
-      );
+      await tester.pump();
 
-      await _pump(tester, toolId: 'eirp', isDesktop: true);
-      expect(
-        find.byWidgetPredicate(
-          (Widget w) =>
-              w is SizedBox && w.height == 160 && w.width == double.infinity,
-        ),
-        findsOneWidget,
+      // The band's own full-width sizing box: width fills, height is the
+      // aspect-driven band height, never the old 140/160dp strip and never
+      // below the 180dp floor.
+      final Finder bandBox = find.byWidgetPredicate(
+        (Widget w) => w is SizedBox && w.width == double.infinity,
       );
+      expect(bandBox, findsWidgets);
+      final SizedBox box = tester.widgetList<SizedBox>(bandBox).firstWhere(
+            (SizedBox s) => s.width == double.infinity && s.height != null,
+          );
+      expect(box.height, greaterThanOrEqualTo(180));
+      expect(box.height, greaterThan(160)); // strictly bigger than the old band
+    });
+  });
+
+  group('ConceptGraphicBand sizing (aspect-ratio-driven)', () {
+    test('parseAspectRatio reads width/height from a viewBox', () {
+      expect(
+        ConceptGraphicBand.parseAspectRatio(
+            '<svg viewBox="0 0 320 160"></svg>'),
+        closeTo(2.0, 1e-9),
+      );
+      expect(
+        ConceptGraphicBand.parseAspectRatio(
+            '<svg viewBox="0 0 640 560"></svg>'),
+        closeTo(640 / 560, 1e-9),
+      );
+    });
+
+    test('parseAspectRatio falls back to width/height attrs, then 2:1', () {
+      expect(
+        ConceptGraphicBand.parseAspectRatio('<svg width="900" height="300">'),
+        closeTo(3.0, 1e-9),
+      );
+      // No viewBox and no usable dims → the dominant 2:1 fallback.
+      expect(
+        ConceptGraphicBand.parseAspectRatio('<svg></svg>'),
+        closeTo(2.0, 1e-9),
+      );
+    });
+
+    test('bandHeightFor fills width for a wide graphic, capped by the ceiling',
+        () {
+      // A wide 2:1 graphic at 680dp content → 340dp natural, but the phone
+      // ceiling (max 320) clamps it down.
+      final double h = ConceptGraphicBand.bandHeightFor(
+        availableWidth: 680,
+        aspectRatio: 2.0,
+        viewportHeight: 2000, // tall viewport so the fraction isn't the binder
+        isDesktop: false,
+      );
+      expect(h, 320); // mobile absolute ceiling
+    });
+
+    test('bandHeightFor never drops below the 180dp floor', () {
+      // A very wide 4:1 graphic on a narrow phone → 343/4 ≈ 86dp natural,
+      // floored up to 180 so it still reads.
+      final double h = ConceptGraphicBand.bandHeightFor(
+        availableWidth: 343,
+        aspectRatio: 4.0,
+        viewportHeight: 812,
+        isDesktop: false,
+      );
+      expect(h, 180);
+    });
+
+    test('bandHeightFor respects the viewport fraction on a short viewport',
+        () {
+      // Short landscape viewport (height 400) → ceiling = 400 * 0.40 = 160,
+      // but the 180 floor wins, so the band stays at least 180 even there.
+      final double h = ConceptGraphicBand.bandHeightFor(
+        availableWidth: 680,
+        aspectRatio: 1.2, // near-square would want ~567dp, gets clamped
+        viewportHeight: 400,
+        isDesktop: false,
+      );
+      expect(h, 180);
+    });
+
+    test('bandHeightFor lets a tall graphic grow to the desktop ceiling', () {
+      // Near-square graphic on a tall desktop window: natural 680/1.2 ≈ 567dp,
+      // capped at min(1200*0.40=480, 420) = 420.
+      final double h = ConceptGraphicBand.bandHeightFor(
+        availableWidth: 680,
+        aspectRatio: 1.2,
+        viewportHeight: 1200,
+        isDesktop: true,
+      );
+      expect(h, 420);
     });
   });
 
@@ -154,8 +239,18 @@ void main() {
 
     testWidgets('light theme renders the recolored graphic (no broken box)',
         (tester) async {
-      // fspl IS a real bundled asset, so rootBundle.loadString resolves it.
       ToolAssets.debugSetBundledAssets({'assets/tool-graphics/fspl.svg'});
+      // Seed the aspect + swapped-light source caches synchronously so the
+      // light render path resolves without real bundle I/O (keeps the test in
+      // fake-async; no runAsync, no real-timer timeout). The swapped source is
+      // a minimal valid SVG carrying a light-target hex — proving the string
+      // path renders an SvgPicture rather than a broken box.
+      ConceptGraphicBand.debugSeedCaches(
+        'fspl',
+        aspect: 2.0,
+        lightSvg: '<svg viewBox="0 0 320 160" fill="none">'
+            '<rect width="320" height="160" stroke="#5A7A1C"/></svg>',
+      );
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.light(),
@@ -164,7 +259,9 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      // One pump delivers the (already-resolved) Future.value to the inner
+      // FutureBuilder, painting the SvgPicture.string.
+      await tester.pump();
 
       // The light path draws via SvgPicture.string once the future resolves.
       expect(find.byType(SvgPicture), findsOneWidget);
