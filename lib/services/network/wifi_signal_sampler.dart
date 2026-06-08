@@ -60,7 +60,12 @@ class WifiSignalSampler extends ChangeNotifier {
         _window = window {
     switch (source) {
       case WifiInfoSource.macosCoreWlan:
-        _macAdapter = macAdapter ?? MacWifiInfoAdapter();
+      case WifiInfoSource.androidWifiManager:
+        // Both snapshot sources poll a [WifiInfoAdapter]; pick the platform's.
+        _macAdapter = macAdapter ??
+            (source == WifiInfoSource.androidWifiManager
+                ? AndroidWifiInfoAdapter()
+                : MacWifiInfoAdapter());
         // 30s window at a 2s poll → ~15 samples (ceil so the full window fits).
         _series = WifiTimeSeries(capacity: _capacityFor(_macPollInterval));
       case WifiInfoSource.iosShortcuts:
@@ -123,10 +128,11 @@ class WifiSignalSampler extends ChangeNotifier {
   /// never shows Start/Stop.
   bool get isIos => source == WifiInfoSource.iosShortcuts;
 
-  /// Whether this platform can ever produce a live feed (macOS + iOS). web /
-  /// unsupported render the honest unavailable state instead of the card.
+  /// Whether this platform can ever produce a live feed (macOS + Android + iOS).
+  /// web / unsupported render the honest unavailable state instead of the card.
   bool get isSupported =>
       source == WifiInfoSource.macosCoreWlan ||
+      source == WifiInfoSource.androidWifiManager ||
       source == WifiInfoSource.iosShortcuts;
 
   /// The latest connected-AP reading from whichever feed is active. Null until
@@ -134,6 +140,7 @@ class WifiSignalSampler extends ChangeNotifier {
   ConnectedAp? get latest {
     switch (source) {
       case WifiInfoSource.macosCoreWlan:
+      case WifiInfoSource.androidWifiManager:
         return _macInfo;
       case WifiInfoSource.iosShortcuts:
         final WiFiDetails? d = _controller?.details;
@@ -176,6 +183,7 @@ class WifiSignalSampler extends ChangeNotifier {
     _startedThisSession = true;
     switch (source) {
       case WifiInfoSource.macosCoreWlan:
+      case WifiInfoSource.androidWifiManager:
         await _pollMac(); // seed
         _startMacPoll();
       case WifiInfoSource.iosShortcuts:
@@ -228,6 +236,7 @@ class WifiSignalSampler extends ChangeNotifier {
     _startedThisSession = false;
     switch (source) {
       case WifiInfoSource.macosCoreWlan:
+      case WifiInfoSource.androidWifiManager:
         _stopMacPoll();
       case WifiInfoSource.iosShortcuts:
         await _controller?.stopMonitoring();
@@ -238,16 +247,22 @@ class WifiSignalSampler extends ChangeNotifier {
     }
   }
 
-  /// Re-arms the macOS poll after an app-resume (no-op elsewhere).
+  /// Re-arms the snapshot poll (macOS / Android) after an app-resume (no-op on
+  /// the iOS stream / unsupported platforms).
   void resumeMac() {
-    if (source == WifiInfoSource.macosCoreWlan) {
+    if (source == WifiInfoSource.macosCoreWlan ||
+        source == WifiInfoSource.androidWifiManager) {
       _pollMac().then((_) => _startMacPoll());
     }
   }
 
-  /// Pauses the macOS poll while backgrounded (no-op elsewhere).
+  /// Pauses the snapshot poll (macOS / Android) while backgrounded (no-op
+  /// elsewhere).
   void pauseMac() {
-    if (source == WifiInfoSource.macosCoreWlan) _stopMacPoll();
+    if (source == WifiInfoSource.macosCoreWlan ||
+        source == WifiInfoSource.androidWifiManager) {
+      _stopMacPoll();
+    }
   }
 
   // ---- macOS poll ----

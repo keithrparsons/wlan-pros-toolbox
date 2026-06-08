@@ -99,6 +99,57 @@ void main() {
     });
   });
 
+  group('ConnectedAp.fromAndroidWifiInfo (Android)', () {
+    WifiInfo androidInfo({double? rxRateMbps}) => WifiInfo(
+          interfaceName: 'wlan0',
+          ssid: 'KeithNet',
+          bssid: 'a4:83:e7:00:11:22',
+          rssiDbm: -52,
+          // Android exposes no noise floor.
+          noiseDbm: null,
+          snrDb: null,
+          txRateMbps: 433,
+          rxRateMbps: rxRateMbps,
+          phyMode: '802.11ax (Wi-Fi 6)',
+          channel: 36,
+          channelWidthMhz: null,
+          band: '5 GHz',
+          countryCode: null,
+          hardwareAddress: null,
+          poweredOn: true,
+          locationAuthorized: true,
+        );
+
+    test('FIX 2: a real Rx value flows through; rxRateAvailable stays true', () {
+      final ap = ConnectedAp.fromAndroidWifiInfo(androidInfo(rxRateMbps: 650));
+      expect(ap.rxRateMbps, 650);
+      expect(ap.rxRateAvailable, isTrue);
+      expect(ap.txRateMbps, 433);
+    });
+
+    test('FIX 2: a null Rx (the -1 sentinel) stays null but the platform CAN '
+        'expose Rx — so rxRateAvailable is true and the row reads as a limit, '
+        'never a fabricated value', () {
+      final ap = ConnectedAp.fromAndroidWifiInfo(androidInfo(rxRateMbps: null));
+      expect(ap.rxRateMbps, isNull);
+      expect(ap.rxRateAvailable, isTrue);
+    });
+
+    test('noise and SNR are honestly null (no noise-floor API) and not derived',
+        () {
+      final ap = ConnectedAp.fromAndroidWifiInfo(androidInfo());
+      expect(ap.noiseDbm, isNull);
+      expect(ap.snrDb, isNull);
+      expect(ap.snrDerived, isFalse);
+    });
+
+    test('channel width absent → channelWidthAvailable false', () {
+      final ap = ConnectedAp.fromAndroidWifiInfo(androidInfo());
+      expect(ap.channelWidthMhz, isNull);
+      expect(ap.channelWidthAvailable, isFalse);
+    });
+  });
+
   group('hasAnyData', () {
     test('false for an empty payload', () {
       expect(
@@ -132,15 +183,23 @@ void main() {
       );
     });
 
-    test('other native platforms resolve to unsupported', () {
+    test('Android resolves to the WifiManager source', () {
       expect(
         WifiInfoSourceResolver.resolve(
             platformOverride: TargetPlatform.android),
+        WifiInfoSource.androidWifiManager,
+      );
+    });
+
+    test('other native platforms resolve to unsupported', () {
+      expect(
+        WifiInfoSourceResolver.resolve(
+            platformOverride: TargetPlatform.windows),
         WifiInfoSource.unsupported,
       );
       expect(
         WifiInfoSourceResolver.resolve(
-            platformOverride: TargetPlatform.windows),
+            platformOverride: TargetPlatform.linux),
         WifiInfoSource.unsupported,
       );
     });

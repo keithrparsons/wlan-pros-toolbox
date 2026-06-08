@@ -29,6 +29,7 @@ class WifiInfo {
     required this.noiseDbm,
     required this.snrDb,
     required this.txRateMbps,
+    this.rxRateMbps,
     required this.phyMode,
     required this.channel,
     required this.channelWidthMhz,
@@ -61,9 +62,17 @@ class WifiInfo {
   /// are present, otherwise null.
   final int? snrDb;
 
-  /// The transmit rate in Mbps, or null if unavailable. The receive rate is
-  /// not exposed by public CoreWLAN and is therefore never reported.
+  /// The transmit rate in Mbps, or null if unavailable.
   final double? txRateMbps;
+
+  /// The receive (Rx) link rate in Mbps, or null when the platform does not
+  /// supply it in this reading. macOS public CoreWLAN never exposes it (always
+  /// null there; the screen marks it "not exposed by macOS"). Android DOES
+  /// expose it via `WifiInfo.getRxLinkSpeedMbps()` on API 30+ — but that call
+  /// returns the unknown sentinel (-1) on many devices/links, in which case the
+  /// native side passes null and the screen labels it a platform limit rather
+  /// than fabricating a value (GL-005).
+  final double? rxRateMbps;
 
   /// The active PHY mode as an 802.11 string, such as "802.11ax", or null.
   final String? phyMode;
@@ -107,6 +116,7 @@ class WifiInfo {
       noiseDbm: (map['noiseDbm'] as num?)?.toInt(),
       snrDb: (map['snrDb'] as num?)?.toInt(),
       txRateMbps: (map['txRateMbps'] as num?)?.toDouble(),
+      rxRateMbps: (map['rxRateMbps'] as num?)?.toDouble(),
       phyMode: map['phyMode'] as String?,
       channel: (map['channel'] as num?)?.toInt(),
       channelWidthMhz: (map['channelWidthMhz'] as num?)?.toInt(),
@@ -123,7 +133,8 @@ class WifiInfo {
   String toString() =>
       'WifiInfo(interfaceName: $interfaceName, ssid: $ssid, bssid: $bssid, '
       'rssiDbm: $rssiDbm, noiseDbm: $noiseDbm, snrDb: $snrDb, '
-      'txRateMbps: $txRateMbps, phyMode: $phyMode, channel: $channel, '
+      'txRateMbps: $txRateMbps, rxRateMbps: $rxRateMbps, phyMode: $phyMode, '
+      'channel: $channel, '
       'channelWidthMhz: $channelWidthMhz, band: $band, '
       'countryCode: $countryCode, hardwareAddress: $hardwareAddress, '
       'securityToken: $securityToken, '
@@ -189,7 +200,12 @@ class WifiInfoService {
   final String _platform;
 
   /// Whether this platform has a native Wi-Fi info bridge.
-  bool get isSupportedPlatform => !kIsWeb && _platform == 'macos';
+  ///
+  /// macOS reads CoreWLAN; Android reads WifiManager + ConnectivityManager
+  /// (MainActivity.kt). Both back the same `com.wlanpros.toolbox/wifi_info`
+  /// channel and the same [WifiInfo] payload shape.
+  bool get isSupportedPlatform =>
+      !kIsWeb && (_platform == 'macos' || _platform == 'android');
 
   /// Reads a live snapshot of the connected Wi-Fi interface.
   ///

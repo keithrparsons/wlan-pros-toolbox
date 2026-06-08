@@ -14,6 +14,25 @@
 // for it (and for a null/blank input) and the UI says so plainly rather than
 // computing a verdict from a value the platform refused to give.
 
+/// The platform a MAC reading came from, so the honest "unreadable" note names
+/// the RIGHT OS limitation instead of leaking one platform's wording onto
+/// another. iOS hands back the `02:00:00:00:00:00` sentinel because Apple does
+/// not expose the device Wi-Fi MAC at all; Android returns the same sentinel
+/// because it randomizes the per-network MAC by default and hides the real
+/// device MAC; macOS reads the real burned-in MAC directly (so unreadable there
+/// is rare and stays generic).
+enum MacAddressPlatform {
+  /// iOS — Apple does not expose the device Wi-Fi MAC to apps.
+  ios,
+
+  /// Android — randomized per-network MAC by default; the real device MAC is
+  /// hidden and the OS returns the `02:00:00:00:00:00` placeholder.
+  android,
+
+  /// macOS / other — no platform-specific wording; a generic honest note.
+  other,
+}
+
 /// The classification of a Wi-Fi MAC address by its locally-administered bit.
 enum MacRandomization {
   /// Locally administered (U/L bit set) — a randomized / software-assigned MAC.
@@ -47,15 +66,40 @@ abstract final class MacRandomizationClassifier {
   }
 
   /// The human-readable label for [mac], honest about the unreadable case.
-  static String label(String? mac) {
+  ///
+  /// [platform] selects the PLATFORM-CORRECT reason for an unreadable MAC so a
+  /// note never leaks one OS's wording onto another (the S24 bug: the iOS
+  /// "Apple does not expose…" reason showing on Android). The two readable
+  /// verdicts (Randomized / Universal) are platform-independent. Defaults to
+  /// [MacAddressPlatform.ios] for backward compatibility with the iOS callers
+  /// that predate this parameter.
+  static String label(
+    String? mac, {
+    MacAddressPlatform platform = MacAddressPlatform.ios,
+  }) {
     switch (classify(mac)) {
       case MacRandomization.randomized:
         return 'Randomized (locally administered)';
       case MacRandomization.universal:
         return 'Universal (burned-in)';
       case MacRandomization.unreadable:
-        return "Not available — Apple does not expose this device's Wi-Fi MAC "
-            'to apps';
+        return 'Not available — ${unreadableReason(platform)}';
+    }
+  }
+
+  /// The platform-correct reason an unreadable MAC could not be read, WITHOUT
+  /// the leading "Not available — " (so callers that already render their own
+  /// "Unavailable" value can use just the reason as a row note). Honest per
+  /// GL-005/GL-008: each platform names its own real limitation.
+  static String unreadableReason(MacAddressPlatform platform) {
+    switch (platform) {
+      case MacAddressPlatform.ios:
+        return "Apple does not expose this device's Wi-Fi MAC to apps";
+      case MacAddressPlatform.android:
+        return 'Android returns a randomized placeholder MAC; the real device '
+            'MAC is hidden from apps';
+      case MacAddressPlatform.other:
+        return 'this platform does not expose the device Wi-Fi MAC';
     }
   }
 

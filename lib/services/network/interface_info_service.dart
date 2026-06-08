@@ -230,9 +230,17 @@ class InterfaceInfoService {
   /// [WiFiDetailsBridge.readLatest]. Other platforms: no reading.
   static Future<({ConnectedAp? ap, bool authorized})>
       _defaultConnectedApRead() async {
-    switch (WifiInfoSourceResolver.resolve()) {
+    final WifiInfoSource source = WifiInfoSourceResolver.resolve();
+    switch (source) {
       case WifiInfoSource.macosCoreWlan:
-        final WifiInfoAdapter adapter = MacWifiInfoAdapter();
+      case WifiInfoSource.androidWifiManager:
+        // Both snapshot sources use a [WifiInfoAdapter]; pick the platform's.
+        // Neither pops a prompt here — an ungranted Location simply yields null
+        // SSID/BSSID and currentNameAuthorization reports the gate state.
+        final WifiInfoAdapter adapter =
+            source == WifiInfoSource.androidWifiManager
+                ? AndroidWifiInfoAdapter()
+                : MacWifiInfoAdapter();
         try {
           final ConnectedAp ap = await adapter.fetch().timeout(
                 const Duration(seconds: 5),

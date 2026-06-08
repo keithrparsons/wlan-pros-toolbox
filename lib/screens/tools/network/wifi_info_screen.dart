@@ -244,7 +244,16 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
 
     switch (_source) {
       case WifiInfoSource.macosCoreWlan:
-        _macAdapter = widget.macAdapter ?? MacWifiInfoAdapter();
+      case WifiInfoSource.androidWifiManager:
+        // Both the macOS CoreWLAN and the Android WifiManager sources are
+        // pull-only snapshot adapters behind the SAME [WifiInfoAdapter] seam
+        // and render the SAME snapshot body; only the per-field platform label
+        // differs (see [_snapshotPlatformLabel]). Pick the right adapter for
+        // the source, then drive the shared snapshot flow.
+        _macAdapter = widget.macAdapter ??
+            (_source == WifiInfoSource.androidWifiManager
+                ? AndroidWifiInfoAdapter()
+                : MacWifiInfoAdapter());
         _macSeries = WifiTimeSeries();
         WidgetsBinding.instance.addObserver(this);
         // Seed the first reading, then begin automatic polling so the
@@ -270,6 +279,40 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       case WifiInfoSource.unsupported:
       case WifiInfoSource.web:
         break;
+    }
+  }
+
+  /// True for the pull-only snapshot sources (macOS CoreWLAN, Android
+  /// WifiManager). Both share the `_macAdapter` snapshot machinery, the poll
+  /// timer, the location-grant flow, and the `_macBody` rendering — only the
+  /// per-field platform label differs (see [_snapshotPlatformLabel]).
+  bool get _isSnapshotSource =>
+      _source == WifiInfoSource.macosCoreWlan ||
+      _source == WifiInfoSource.androidWifiManager;
+
+  /// The per-field platform label the snapshot cards use in honest
+  /// "not exposed by `<platform>`" copy. Android exposes a different field subset
+  /// than macOS (no noise/SNR), so the reason text names the real source.
+  String get _snapshotPlatformLabel =>
+      _source == WifiInfoSource.androidWifiManager
+          ? 'Android'
+          : 'macOS CoreWLAN';
+
+  /// The platform that owns an unreadable-MAC reason note, so the "MAC type"
+  /// note names the RIGHT OS limit (the S24 bug was the iOS "Apple does not
+  /// expose…" reason leaking onto Android). iOS / Android each name their own
+  /// real limitation; macOS reads the burned-in MAC directly so it falls to the
+  /// generic note in the rare unreadable case.
+  MacAddressPlatform get _macPlatform {
+    switch (_source) {
+      case WifiInfoSource.iosShortcuts:
+        return MacAddressPlatform.ios;
+      case WifiInfoSource.androidWifiManager:
+        return MacAddressPlatform.android;
+      case WifiInfoSource.macosCoreWlan:
+      case WifiInfoSource.unsupported:
+      case WifiInfoSource.web:
+        return MacAddressPlatform.other;
     }
   }
 
@@ -322,9 +365,10 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       }
     }
 
-    // macOS: pause the CoreWLAN poll while backgrounded (no point re-reading a
-    // link the user cannot see), resume + re-read on return to foreground.
-    if (_source == WifiInfoSource.macosCoreWlan) {
+    // Snapshot sources (macOS CoreWLAN / Android WifiManager): pause the poll
+    // while backgrounded (no point re-reading a link the user cannot see),
+    // resume + re-read on return to foreground.
+    if (_isSnapshotSource) {
       if (state == AppLifecycleState.resumed) {
         _fetchMac().then((_) => _startMacPoll());
       } else if (state == AppLifecycleState.paused ||
@@ -336,7 +380,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
 
   @override
   void dispose() {
-    if (_source == WifiInfoSource.macosCoreWlan) {
+    if (_isSnapshotSource) {
       WidgetsBinding.instance.removeObserver(this);
       _stopMacPoll();
     }
@@ -748,6 +792,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   List<Widget> _appBarActions() {
     switch (_source) {
       case WifiInfoSource.macosCoreWlan:
+      case WifiInfoSource.androidWifiManager:
         // §8.16 order: copy LEADS, the Refresh action trails. Copy is disabled
         // until a snapshot has resolved (textBuilder → null while loading or on
         // error with no info), enabled once link details exist.
@@ -796,6 +841,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   ConnectedAp? _currentAp() {
     switch (_source) {
       case WifiInfoSource.macosCoreWlan:
+      case WifiInfoSource.androidWifiManager:
         return _macInfo;
       case WifiInfoSource.iosShortcuts:
         final WiFiDetails? d = _liveController?.details;
@@ -831,7 +877,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
 
     final String platformLabel = _source == WifiInfoSource.iosShortcuts
         ? 'iOS'
-        : 'macOS CoreWLAN';
+        : _snapshotPlatformLabel;
     final StringBuffer buf = StringBuffer()..writeln('Wi-Fi Information');
 
     buf
@@ -849,23 +895,38 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         '${(info.securityType?.isPersonalCoarse ?? false) || (info.securityType?.isEnterpriseCoarse ?? false) ? ' (iOS coarse, WPA2/WPA3 not distinguished)' : ''}',
       );
 
+    // Android exposes no noise floor, so Noise + SNR carry an explicit reason in
+    // the copy text too (matches the on-screen notes; GL-005). macOS reports
+    // both; iOS derives SNR.
+    final bool isAndroid = _source == WifiInfoSource.androidWifiManager;
+    final String noiseCopy = isAndroid && info.noiseDbm == null
+        ? 'Not available on $platformLabel (no noise-floor API)'
+        : _copyVal(info.noiseDbm?.toString(), 'dBm');
+    final String snrCopy = isAndroid && info.snrDb == null
+        ? 'Needs the noise floor, which $platformLabel does not expose'
+        : '${_copyVal(info.snrDb?.toString(), 'dB')}'
+            '${info.snrDerived ? ' (derived)' : ''}';
     buf
       ..writeln()
       ..writeln('Signal')
       ..writeln('  RSSI: ${_copyVal(info.rssiDbm?.toString(), 'dBm')}')
-      ..writeln('  Noise: ${_copyVal(info.noiseDbm?.toString(), 'dBm')}')
-      ..writeln(
-        '  SNR: ${_copyVal(info.snrDb?.toString(), 'dB')}'
-        '${info.snrDerived ? ' (derived)' : ''}',
-      );
+      ..writeln('  Noise: $noiseCopy')
+      ..writeln('  SNR: $snrCopy');
 
+    // Rx: a permanent platform limit (rxRateAvailable false → macOS) vs the
+    // Android sentinel (-1) → an Android-specific note vs a present value.
+    final String rxCopy = !info.rxRateAvailable
+        ? 'Not exposed by $platformLabel'
+        : (info.rxRateMbps == null
+            ? (isAndroid
+                ? "Not reported by this device's $platformLabel link"
+                : 'Not in this reading')
+            : _copyVal(_formatRate(info.rxRateMbps), 'Mbps'));
     buf
       ..writeln()
       ..writeln('Rate')
       ..writeln('  Tx Rate: ${_copyVal(_formatRate(info.txRateMbps), 'Mbps')}')
-      ..writeln(
-        '  Rx Rate: ${info.rxRateAvailable ? _copyVal(_formatRate(info.rxRateMbps), 'Mbps') : 'Not exposed by $platformLabel'}',
-      );
+      ..writeln('  Rx Rate: $rxCopy');
 
     final bool isPsc = _isPscChannel(info.channel, info.band);
     buf
@@ -876,7 +937,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         '${isPsc ? ' (Preferred Scanning Channel)' : ''}',
       )
       ..writeln(
-        '  Width: ${info.channelWidthAvailable ? _copyVal(info.channelWidthMhz?.toString(), 'MHz') : 'Not reported by $platformLabel'}',
+        '  Width: ${info.channelWidthAvailable ? _copyVal(_formatChannelWidth(info.channelWidthMhz), _channelWidthHasUnit(info.channelWidthMhz) ? 'MHz' : null) : 'Not reported by $platformLabel'}',
       )
       ..writeln(
         '  Band: ${_copyVal(info.band, null)}'
@@ -890,7 +951,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       ..writeln('  Country: ${_copyVal(info.countryCode, null)}')
       ..writeln('  Interface: ${_copyVal(info.interfaceName, null)}')
       ..writeln('  Hardware Address: ${_copyVal(info.hardwareAddress, null)}')
-      ..writeln('  MAC type: ${MacRandomizationClassifier.label(info.hardwareAddress)}');
+      ..writeln('  MAC type: ${MacRandomizationClassifier.label(info.hardwareAddress, platform: _macPlatform)}');
 
     buf
       ..writeln()
@@ -917,6 +978,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       case WifiInfoSource.unsupported:
         return const _PlatformComingSoon();
       case WifiInfoSource.macosCoreWlan:
+      case WifiInfoSource.androidWifiManager:
         return _macBody();
       case WifiInfoSource.iosShortcuts:
         return _iosBody();
@@ -1014,43 +1076,62 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         ..add(_LiveCharts(
           series: series,
           latest: info,
-          platformLabel: 'macOS CoreWLAN',
+          platformLabel: _snapshotPlatformLabel,
         ))
         ..add(const SizedBox(height: AppSpacing.sm));
     }
 
-    children.addAll(_metricCards(info, platformLabel: 'macOS CoreWLAN'));
+    children.addAll(_metricCards(info, platformLabel: _snapshotPlatformLabel));
     return children;
   }
 
-  /// macOS location card (three states). Returns null when no card is needed.
+  /// Location card for the snapshot sources (macOS CoreWLAN / Android
+  /// WifiManager), three states. Returns null when no card is needed.
   ///
-  /// macOS-only, the card and its deep-link are never built on iOS (the iOS
-  /// path reads the network name through the Shortcut bridge and has no Location
-  /// gate, so it routes through [_iosBody], not here).
+  /// Both snapshot platforms gate the SSID/BSSID behind a Location permission;
+  /// the copy and post-grant behavior differ (macOS Location Services + likely
+  /// relaunch; Android ACCESS_FINE_LOCATION runtime grant that takes effect on
+  /// the next read). Never built on iOS (that path reads the name through the
+  /// Shortcut bridge and routes through [_iosBody]).
   Widget? _buildLocationCard(ConnectedAp info) {
     final bool nameMissing = info.ssid == null && info.bssid == null;
     if (info.ssid != null) return null;
 
+    final bool isAndroid = _source == WifiInfoSource.androidWifiManager;
+
     if (info.ssid == null && _locationGrantAttempted) {
-      return const _LocationCard(
-        message:
-            'Permission granted. macOS may need an app relaunch before the '
-            'network name appears. The signal and channel details below are '
-            'unaffected.',
-        onGrant: null,
-        onOpenSettings: null,
+      // Android: a granted runtime permission lands on the next poll (no
+      // relaunch). macOS: the grant may need an app relaunch before the name
+      // surfaces. A still-null name after granting on Android most often means
+      // the user denied (or permanently denied) the dialog — the card keeps the
+      // Open Settings affordance below for the permanently-denied case.
+      return _LocationCard(
+        message: isAndroid
+            ? 'If you allowed Location, the network name appears on the next '
+                'refresh. If it is still blank, the permission was denied — open '
+                'Settings to enable Location for this app. Signal, rate, and '
+                'channel details work without it.'
+            : 'Permission granted. macOS may need an app relaunch before the '
+                'network name appears. The signal and channel details below are '
+                'unaffected.',
+        onGrant: isAndroid ? (_macLoading ? null : _grantLocation) : null,
+        onOpenSettings: isAndroid ? _openLocationSettings : null,
+        platformIsAndroid: isAndroid,
       );
     }
 
     if (nameMissing) {
       return _LocationCard(
-        message:
-            'The network name (SSID and BSSID) needs Location Services for this '
-            'app. macOS requires it to read the name. Signal, rate, and channel '
-            'details already work without it.',
+        message: isAndroid
+            ? 'The network name (SSID and BSSID) needs the Location permission '
+                'on Android. Android requires it to read the connected network '
+                'name. Signal, rate, and channel details already work without it.'
+            : 'The network name (SSID and BSSID) needs Location Services for '
+                'this app. macOS requires it to read the name. Signal, rate, and '
+                'channel details already work without it.',
         onGrant: _macLoading ? null : _grantLocation,
         onOpenSettings: _openLocationSettings,
+        platformIsAndroid: isAndroid,
       );
     }
 
@@ -1130,7 +1211,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       const SizedBox(height: AppSpacing.sm),
       _securityCard(info, platformLabel),
       const SizedBox(height: AppSpacing.sm),
-      _signalCard(info),
+      _signalCard(info, platformLabel),
       const SizedBox(height: AppSpacing.sm),
       _rateCard(info, platformLabel),
       const SizedBox(height: AppSpacing.sm),
@@ -1276,32 +1357,50 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     );
   }
 
-  Widget _signalCard(ConnectedAp info) => _Card(
-    title: 'Signal',
-    child: Column(
-      children: [
-        _MetricRow(
-          label: 'RSSI',
-          value: info.rssiDbm?.toString(),
-          unit: 'dBm',
-          mono: true,
-        ),
-        _MetricRow(
-          label: 'Noise',
-          value: info.noiseDbm?.toString(),
-          unit: 'dBm',
-          mono: true,
-        ),
-        _MetricRow(
-          label: 'SNR',
-          value: info.snrDb?.toString(),
-          unit: 'dB',
-          mono: true,
-          derived: info.snrDerived,
-        ),
-      ],
-    ),
-  );
+  Widget _signalCard(ConnectedAp info, String platformLabel) {
+    // ANDROID NOISE/SNR (FIX 2, 2026-06-08): the public Android Wi-Fi API
+    // exposes NO noise-floor reading, so SNR genuinely cannot be computed — it
+    // is a true platform limit, not a transient miss (GL-005 / GL-008). macOS
+    // CoreWLAN DOES report both, so it carries no note; iOS derives SNR
+    // (snrDerived). On Android, the Noise and SNR rows therefore carry an
+    // explicit "why" note naming the missing API, rather than a bare
+    // "Unavailable" the user cannot interpret.
+    final bool isAndroid = _source == WifiInfoSource.androidWifiManager;
+    final String? noiseNote = isAndroid && info.noiseDbm == null
+        ? 'Not available on $platformLabel (no noise-floor API)'
+        : null;
+    final String? snrNote = isAndroid && info.snrDb == null
+        ? 'Needs the noise floor, which $platformLabel does not expose'
+        : null;
+    return _Card(
+      title: 'Signal',
+      child: Column(
+        children: [
+          _MetricRow(
+            label: 'RSSI',
+            value: info.rssiDbm?.toString(),
+            unit: 'dBm',
+            mono: true,
+          ),
+          _MetricRow(
+            label: 'Noise',
+            value: info.noiseDbm?.toString(),
+            unit: 'dBm',
+            mono: true,
+            note: noiseNote,
+          ),
+          _MetricRow(
+            label: 'SNR',
+            value: info.snrDb?.toString(),
+            unit: 'dB',
+            mono: true,
+            derived: info.snrDerived,
+            note: snrNote,
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _rateCard(ConnectedAp info, String platformLabel) => _Card(
     title: 'Rate',
@@ -1318,11 +1417,22 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           value: _formatRate(info.rxRateMbps),
           unit: 'Mbps',
           mono: true,
-          // Say WHY precisely: a permanent platform limit (macOS never exposes
-          // Rx) vs a per-sample miss (iOS can, but this reading lacked it).
+          // Say WHY precisely (FIX 2, 2026-06-08):
+          //   * rxRateAvailable false → the platform NEVER exposes Rx (macOS
+          //     public CoreWLAN). Permanent platform limit.
+          //   * Android, rxRateAvailable true but the value null → the device
+          //     returned getRxLinkSpeedMbps()'s unknown sentinel (-1), common on
+          //     the S24. Honest, Android-specific platform-limit wording that
+          //     matches the SNR rows above, never a bare "Unavailable".
+          //   * iOS, rxRateAvailable true but null → a per-reading miss; the
+          //     Shortcut can carry Rx, this harvest just lacked it.
           note: !info.rxRateAvailable
               ? 'Not exposed by $platformLabel'
-              : (info.rxRateMbps == null ? 'Not in this reading' : null),
+              : (info.rxRateMbps == null
+                  ? (_source == WifiInfoSource.androidWifiManager
+                      ? "Not reported by this device's $platformLabel link"
+                      : 'Not in this reading')
+                  : null),
         ),
       ],
     ),
@@ -1343,8 +1453,8 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           ),
           _MetricRow(
             label: 'Width',
-            value: info.channelWidthMhz?.toString(),
-            unit: 'MHz',
+            value: _formatChannelWidth(info.channelWidthMhz),
+            unit: _channelWidthHasUnit(info.channelWidthMhz) ? 'MHz' : null,
             mono: true,
             note: info.channelWidthAvailable
                 ? null
@@ -1365,17 +1475,35 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     child: Column(
       children: [
         _MetricRow(label: 'Wi-Fi Standard', value: info.standard),
-        _MetricRow(label: 'Country', value: info.countryCode),
+        // Country: Android's WifiManager.getCountryCode() is restricted on
+        // Android 11+ and often returns nothing to a non-privileged app. When it
+        // does, the row carries the honest Android limit note rather than a bare
+        // "Unavailable" (GL-005). When the platform DOES return it, the value
+        // shows and no note is needed. iOS never carries country (no path), and
+        // macOS reads it directly.
+        _MetricRow(
+          label: 'Country',
+          value: info.countryCode,
+          note: _countryNote(info.countryCode),
+        ),
         _MetricRow(label: 'Interface', value: info.interfaceName, mono: true),
+        // Hardware Address here is the DEVICE Wi-Fi MAC (this device's adapter),
+        // NOT the AP BSSID (that lives in the Network card, and IS available on
+        // Android with Location). The device MAC is hidden on both phones: iOS
+        // never exposes it, Android returns the 02:00:00:00:00:00 randomized
+        // placeholder (mapped to null by the native side). When absent, the row
+        // carries the platform-correct reason rather than a bare "Unavailable".
         _MetricRow(
           label: 'Hardware Address',
           value: info.hardwareAddress,
           mono: true,
+          note: _hardwareAddressNote(info.hardwareAddress),
         ),
         // Derived MAC type from the locally-administered bit. When the MAC is
-        // unreadable (iOS blocks app reads of the device Wi-Fi MAC), the value
-        // is "Unavailable" and the honest reason rides in the note rather than
-        // a meaningless computed flag (GL-005).
+        // unreadable, the value is "Unavailable" and the honest, PLATFORM-CORRECT
+        // reason rides in the note rather than a meaningless computed flag
+        // (GL-005). iOS blocks app reads of the device Wi-Fi MAC; Android returns
+        // a randomized placeholder — each names its own real limit.
         _MetricRow(
           label: 'MAC type',
           value: _macTypeValue(info.hardwareAddress),
@@ -1384,6 +1512,24 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       ],
     ),
   );
+
+  /// The honest note for an absent device Hardware Address (the DEVICE Wi-Fi
+  /// MAC). Platform-correct: iOS does not expose it; Android returns a
+  /// randomized placeholder. Null when the MAC is present (rare on phones) or on
+  /// macOS, where the burned-in MAC reads directly.
+  String? _hardwareAddressNote(String? mac) {
+    if (mac != null && mac.trim().isNotEmpty) return null;
+    switch (_source) {
+      case WifiInfoSource.androidWifiManager:
+        return 'This device MAC, not the AP. ${MacRandomizationClassifier.unreadableReason(MacAddressPlatform.android)}';
+      case WifiInfoSource.iosShortcuts:
+        return 'This device MAC, not the AP. ${MacRandomizationClassifier.unreadableReason(MacAddressPlatform.ios)}';
+      case WifiInfoSource.macosCoreWlan:
+      case WifiInfoSource.unsupported:
+      case WifiInfoSource.web:
+        return null;
+    }
+  }
 
   /// The MAC-type value for the Radio card: the Randomized/Universal label, or
   /// null (→ "Unavailable") when the MAC is unreadable, so the honest reason
@@ -1396,12 +1542,28 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     };
   }
 
-  /// The honesty note for an unreadable MAC (iOS), or null when the MAC parsed.
-  static String? _macTypeNote(String? mac) {
+  /// The honesty note for an unreadable MAC, PLATFORM-CORRECT, or null when the
+  /// MAC parsed. iOS: Apple does not expose the device MAC. Android: the OS
+  /// returns a randomized placeholder and hides the real device MAC. Never the
+  /// wrong platform's wording (GL-005 / GL-008).
+  String? _macTypeNote(String? mac) {
     return MacRandomizationClassifier.classify(mac) ==
             MacRandomization.unreadable
-        ? "Apple does not expose this device's Wi-Fi MAC to apps"
+        ? MacRandomizationClassifier.unreadableReason(_macPlatform)
         : null;
+  }
+
+  /// The honest note for an absent Country code. Android-only: the regulatory
+  /// country comes from WifiManager.getCountryCode(), which is restricted on
+  /// Android 11+ and frequently returns nothing to a normal app — so a null
+  /// country there gets a precise reason, not a bare "Unavailable". Null on
+  /// every other platform/state (a present value, or iOS/macOS which don't carry
+  /// this Android-specific caveat).
+  String? _countryNote(String? countryCode) {
+    if (countryCode != null && countryCode.trim().isNotEmpty) return null;
+    if (_source != WifiInfoSource.androidWifiManager) return null;
+    return 'Restricted on Android 11+; the OS does not expose the regulatory '
+        'country to this app';
   }
 
   Widget _statusCard(ConnectedAp info) => _Card(
@@ -1421,6 +1583,21 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     if (channel < 5 || channel > 233) return false;
     return (channel - 5) % 16 == 0;
   }
+
+  /// Formats a channel width in MHz, special-casing the 80+80 MHz sentinel
+  /// (8080) the Android native side emits for two non-contiguous 80 MHz
+  /// segments. Returns null so the row renders "Unavailable" when the width is
+  /// absent. The "80+80" case carries its own unit, so the row drops the trailing
+  /// "MHz" (see [_channelWidthHasUnit]).
+  static String? _formatChannelWidth(int? mhz) {
+    if (mhz == null) return null;
+    if (mhz == 8080) return '80+80 MHz';
+    return mhz.toString();
+  }
+
+  /// Whether the formatted channel-width value still needs a trailing "MHz"
+  /// unit. The 80+80 sentinel already embeds its unit, so it does not.
+  static bool _channelWidthHasUnit(int? mhz) => mhz != null && mhz != 8080;
 
   /// Formats a Mbps rate without a trailing ".0", or null so the row renders
   /// "Unavailable".
@@ -1527,13 +1704,15 @@ class _LoadingCard extends StatelessWidget {
 }
 
 
-// ---- macOS location card ----
+// ---- Snapshot-source location card (macOS Location Services / Android
+// ACCESS_FINE_LOCATION) ----
 
 class _LocationCard extends StatelessWidget {
   const _LocationCard({
     required this.message,
     required this.onGrant,
     required this.onOpenSettings,
+    this.platformIsAndroid = false,
   });
 
   final String message;
@@ -1542,10 +1721,14 @@ class _LocationCard extends StatelessWidget {
   /// button to avoid an endless re-tap loop.
   final VoidCallback? onGrant;
 
-  /// Deep-links to System Settings → Privacy & Security → Location Services.
-  /// When null (the post-grant informational state) the settings affordance and
-  /// the numbered steps are hidden.
+  /// Deep-links to the OS settings pane (macOS Location Services / Android app
+  /// permissions). When null the settings affordance and the numbered steps are
+  /// hidden.
   final VoidCallback? onOpenSettings;
+
+  /// Whether the card is shown for the Android source (drives the button labels
+  /// and the manual-enable steps wording).
+  final bool platformIsAndroid;
 
   @override
   Widget build(BuildContext context) {
@@ -1602,10 +1785,16 @@ class _LocationCard extends StatelessWidget {
                 if (onOpenSettings != null)
                   Semantics(
                     button: true,
-                    label: 'Open macOS Location Services settings',
+                    label: platformIsAndroid
+                        ? 'Open app Location settings'
+                        : 'Open macOS Location Services settings',
                     child: OutlinedButton(
                       onPressed: onOpenSettings,
-                      child: const Text('Open Location Settings'),
+                      child: Text(
+                        platformIsAndroid
+                            ? 'Open App Settings'
+                            : 'Open Location Settings',
+                      ),
                     ),
                   ),
               ],
@@ -1613,7 +1802,7 @@ class _LocationCard extends StatelessWidget {
           ],
           if (onOpenSettings != null) ...[
             const SizedBox(height: AppSpacing.sm),
-            const _LocationSteps(),
+            _LocationSteps(platformIsAndroid: platformIsAndroid),
           ],
         ],
       ),
@@ -1621,15 +1810,24 @@ class _LocationCard extends StatelessWidget {
   }
 }
 
-/// Short numbered steps for enabling Location Services manually on macOS. Shown
-/// under the Location card's buttons. Each step is plain text; the whole block
-/// reads as one list to a screen reader.
+/// Short numbered steps for enabling the Location permission manually (macOS
+/// Location Services / Android app permissions). Shown under the Location card's
+/// buttons. Each step is plain text; the whole block reads as one list to a
+/// screen reader.
 class _LocationSteps extends StatelessWidget {
-  const _LocationSteps();
+  const _LocationSteps({this.platformIsAndroid = false});
 
-  static const List<String> _steps = <String>[
+  final bool platformIsAndroid;
+
+  static const List<String> _macSteps = <String>[
     'Open Location Settings (button above).',
     'Turn on WLAN Pros Toolbox.',
+    'Come back and tap Refresh.',
+  ];
+
+  static const List<String> _androidSteps = <String>[
+    'Open App Settings (button above).',
+    'Tap Permissions, then Location, and allow it.',
     'Come back and tap Refresh.',
   ];
 
@@ -1640,15 +1838,17 @@ class _LocationSteps extends StatelessWidget {
     final TextStyle? style = text.bodySmall?.copyWith(
       color: colors.textTertiary,
     );
+    final List<String> steps =
+        platformIsAndroid ? _androidSteps : _macSteps;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        for (int i = 0; i < _steps.length; i++)
+        for (int i = 0; i < steps.length; i++)
           Padding(
             padding: EdgeInsets.only(
               top: i == 0 ? 0 : AppSpacing.xxs,
             ),
-            child: Text('${i + 1}. ${_steps[i]}', style: style),
+            child: Text('${i + 1}. ${steps[i]}', style: style),
           ),
       ],
     );
@@ -2217,13 +2417,18 @@ class _LiveCharts extends StatelessWidget {
               rxAvail ? _WifiInfoScreenState._formatRate(rx) : null,
           window: series.rxRate,
           // Distinguish a permanent platform limit (macOS never exposes Rx →
-          // rxRateAvailable false) from a per-sample miss (iOS can, but this
-          // reading lacked it).
+          // rxRateAvailable false) from the Android device-link sentinel and a
+          // per-sample iOS miss (FIX 2: Android wording matches the static
+          // Rate card so the live and detail surfaces never disagree).
           unavailableNote: latest == null
               ? null
               : !rxAvail
                   ? 'Not exposed by $platformLabel'
-                  : (rx == null ? 'Not in this reading' : null),
+                  : (rx == null
+                      ? (platformLabel == 'Android'
+                          ? "Not reported by this device's Android link"
+                          : 'Not in this reading')
+                      : null),
         ),
       ],
     );

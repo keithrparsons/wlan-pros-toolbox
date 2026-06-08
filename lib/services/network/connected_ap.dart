@@ -168,6 +168,65 @@ class ConnectedAp {
     );
   }
 
+  /// Maps the Android WifiManager + ConnectivityManager snapshot into the
+  /// normalized model.
+  ///
+  /// Android exposes RSSI, the Tx (link) rate, frequency (→ channel/band), the
+  /// Wi-Fi standard (API 30+ via `WifiInfo.getWifiStandard`), the security type
+  /// (derived from the matching ScanResult capabilities), and channel width
+  /// (from the matching `ScanResult.channelWidth`, Location-gated). The public
+  /// Android API does NOT expose the noise floor, so SNR cannot be computed —
+  /// both stay null and [snrDerived] is false (no estimate, GL-005). The Rx
+  /// rate is read on API 30+ (`getRxLinkSpeedMbps`); when the platform returns
+  /// the unknown sentinel it is null and [rxRateAvailable] reflects whether the
+  /// platform can ever supply it. Android does not expose the device Wi-Fi MAC
+  /// to apps (returns the fixed `02:00:00:00:00:00`), so [hardwareAddress] is
+  /// the native side's honest null rather than that sentinel.
+  factory ConnectedAp.fromAndroidWifiInfo(WifiInfo info) {
+    return ConnectedAp(
+      ssid: info.ssid,
+      bssid: info.bssid,
+      rssiDbm: info.rssiDbm,
+      // Android public API exposes no noise floor; SNR therefore cannot be
+      // computed and is never estimated.
+      noiseDbm: info.noiseDbm,
+      snrDb: info.snrDb,
+      txRateMbps: info.txRateMbps,
+      // The native side reads Rx via WifiInfo.getRxLinkSpeedMbps() on API 30+
+      // and passes it through `rxRateMbps` (null when the platform returns the
+      // unknown sentinel -1, which many devices/links do). We surface the value
+      // when present; when null the platform CAN still expose Rx in principle,
+      // so rxRateAvailable stays true and the screen labels it a platform limit
+      // for this reading rather than "not on this platform" (GL-005).
+      rxRateMbps: info.rxRateMbps,
+      channel: info.channel,
+      channelWidthMhz: info.channelWidthMhz,
+      band: info.band,
+      standard: info.phyMode,
+      countryCode: info.countryCode,
+      interfaceName: info.interfaceName,
+      hardwareAddress: info.hardwareAddress,
+      // Security comes from the native ScanResult.capabilities match.
+      securityType: WifiSecurityClassifier.classify(info.securityToken),
+      poweredOn: info.poweredOn,
+      // Android CAN expose Rx on API 30+; the row shows it when present, and a
+      // precise "not in this reading" when the platform returns the unknown
+      // sentinel — never "not on this platform".
+      rxRateAvailable: true,
+      // Channel width is read from the matching ScanResult.channelWidth (the
+      // connected WifiInfo does not carry it). When the native side could not
+      // read it (no scan match / no Location grant), it passes null and the row
+      // says "Not reported". The 80+80 MHz case arrives as the sentinel 8080.
+      channelWidthAvailable: info.channelWidthMhz != null,
+      // Android reports the band/channel from the frequency directly (native
+      // side), and never the noise floor, so neither is app-derived here.
+      bandDerived: false,
+      snrDerived: false,
+      // Android exposes the security type whenever a scan match is found.
+      securityAvailable: true,
+    );
+  }
+
   /// Maps the iOS Shortcuts [WiFiDetails] payload into the normalized model.
   ///
   /// iOS exposes the Rx rate and reports SNR/band as APP-DERIVED (snr = rssi −

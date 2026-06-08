@@ -146,6 +146,66 @@ class _HangingMacAdapter implements WifiInfoAdapter {
   Future<bool> openNamePermissionSettings() async => true;
 }
 
+/// Android adapter recording the permission calls. [authorized] flips after a
+/// granted runtime request, so a second read could see the name — but the test
+/// asserts the REQUEST behavior on the consumer-check path (FIX 1): Android, unlike
+/// macOS, MUST surface the runtime Location dialog from Test My Connection when the
+/// permission is not already held, because Android redacts the entire WifiManager
+/// snapshot without it. Fields mirror an Android link: Tx 433, no noise/SNR.
+class _AndroidPermissionAdapter implements WifiInfoAdapter {
+  _AndroidPermissionAdapter({this.alreadyAuthorized = false})
+      : _authorized = alreadyAuthorized;
+
+  final bool alreadyAuthorized;
+  bool _authorized;
+
+  int requestCount = 0;
+  int currentAuthChecks = 0;
+
+  ConnectedAp _sample() => ConnectedAp.fromAndroidWifiInfo(
+        WifiInfo(
+          interfaceName: 'wlan0',
+          ssid: _authorized ? 'KeithNet' : null,
+          bssid: _authorized ? 'a4:83:e7:00:11:22' : null,
+          rssiDbm: -52,
+          // Android exposes no noise floor → SNR null (the FIX 2 platform limit).
+          noiseDbm: null,
+          snrDb: null,
+          txRateMbps: 433,
+          phyMode: '802.11ax (Wi-Fi 6)',
+          channel: 36,
+          channelWidthMhz: null,
+          band: '5 GHz',
+          countryCode: null,
+          hardwareAddress: null,
+          poweredOn: true,
+          locationAuthorized: _authorized,
+        ),
+      );
+
+  @override
+  String get platformLabel => 'Android';
+  @override
+  bool get gatesNameBehindPermission => true;
+  @override
+  Future<ConnectedAp> fetch() async => _sample();
+  @override
+  Future<bool> requestNamePermission() async {
+    requestCount++;
+    _authorized = true;
+    return true;
+  }
+
+  @override
+  Future<bool> currentNameAuthorization() async {
+    currentAuthChecks++;
+    return _authorized;
+  }
+
+  @override
+  Future<bool> openNamePermissionSettings() async => true;
+}
+
 /// iOS bridge delivering a full payload: rssi -58, noise -90 (→ SNR 32),
 /// rxRate 780, txRate 866 — the platform that DOES expose Rx.
 class _PayloadBridge implements WiFiDetailsBridge {
@@ -1072,6 +1132,65 @@ void main() {
       await runCheck(tester);
 
       expect(adapter.promptRequested, isFalse);
+      expect(find.text('Wi-Fi:'), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 1600));
+    },
+  );
+
+  testWidgets(
+    'Android check REQUESTS Location when not authorized (FIX 1) — the runtime '
+    'prompt fires from Test My Connection so the user need not detour to Wi-Fi '
+    'Information first',
+    (tester) async {
+      final _AndroidPermissionAdapter adapter = _AndroidPermissionAdapter();
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: false,
+            sourceOverride: WifiInfoSource.androidWifiManager,
+            macAdapter: adapter,
+            qualityClient: MockQualityClient(
+              scriptedResult: _marginalInternet(),
+            ),
+          ),
+        ),
+      );
+      await runCheck(tester);
+
+      // The check checked the CURRENT authorization (no prompt) and, finding it
+      // unheld, surfaced the runtime request exactly once. The verdict still
+      // resolves either way.
+      expect(adapter.currentAuthChecks, greaterThanOrEqualTo(1));
+      expect(adapter.requestCount, 1);
+      expect(find.text('Wi-Fi:'), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 1600));
+    },
+  );
+
+  testWidgets(
+    'Android check does NOT re-prompt when Location is already authorized (FIX 1) '
+    '— it reads the snapshot directly, no redundant dialog',
+    (tester) async {
+      final _AndroidPermissionAdapter adapter =
+          _AndroidPermissionAdapter(alreadyAuthorized: true);
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: false,
+            sourceOverride: WifiInfoSource.androidWifiManager,
+            macAdapter: adapter,
+            qualityClient: MockQualityClient(
+              scriptedResult: _marginalInternet(),
+            ),
+          ),
+        ),
+      );
+      await runCheck(tester);
+
+      expect(adapter.currentAuthChecks, greaterThanOrEqualTo(1));
+      expect(adapter.requestCount, 0);
       expect(find.text('Wi-Fi:'), findsOneWidget);
 
       await tester.pump(const Duration(milliseconds: 1600));

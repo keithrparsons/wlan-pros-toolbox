@@ -88,6 +88,25 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
   /// to expect a freshly stored payload.
   bool _refreshingWifi = false;
 
+  /// The platform that owns an unreadable-MAC reason note, derived from the
+  /// resolved Wi-Fi source, so the "MAC type" row names the RIGHT OS limit (the
+  /// S24 bug was the iOS "Apple does not expose…" reason leaking onto Android).
+  /// macOS reads the real burned-in MAC, so its unreadable case (rare) falls to
+  /// the generic note.
+  MacAddressPlatform get _macPlatform {
+    switch (_wifiSource) {
+      case WifiInfoSource.iosShortcuts:
+        return MacAddressPlatform.ios;
+      case WifiInfoSource.androidWifiManager:
+        return MacAddressPlatform.android;
+      case WifiInfoSource.macosCoreWlan:
+      case WifiInfoSource.unsupported:
+      case WifiInfoSource.web:
+      case null:
+        return MacAddressPlatform.other;
+    }
+  }
+
   // The resolved snapshot, mirrored out of the FutureBuilder so the §8.16 copy
   // builder can read the current result and the affordance re-enables when the
   // read completes. Null while loading / before the first read / on error.
@@ -293,7 +312,13 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
     line('Gateway', w.gatewayIP);
     line('Interface', w.interfaceName);
     line('Hardware Address', w.hardwareAddress);
-    line('MAC type', MacRandomizationClassifier.label(w.hardwareAddress));
+    line(
+      'MAC type',
+      MacRandomizationClassifier.label(
+        w.hardwareAddress,
+        platform: _macPlatform,
+      ),
+    );
 
     // Per-interface, only those with an assigned address (matching _Success).
     final List<NetworkInterfaceInfo> active = data.interfaces
@@ -358,6 +383,7 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
               onRefreshWifi:
                   _wifiSource == WifiInfoSource.iosShortcuts ? _refreshWifi : null,
               refreshingWifi: _refreshingWifi,
+              macPlatform: _macPlatform,
             );
           },
         );
@@ -375,6 +401,7 @@ class _Success extends StatelessWidget {
     required this.publicIp,
     required this.onRefreshWifi,
     required this.refreshingWifi,
+    required this.macPlatform,
   });
 
   final InterfaceInfoSnapshot data;
@@ -389,6 +416,10 @@ class _Success extends StatelessWidget {
 
   /// True while the Wi-Fi Shortcut bounce is in flight (button pending state).
   final bool refreshingWifi;
+
+  /// The platform whose limitation the unreadable-MAC note names, so the row
+  /// never leaks one OS's wording onto another (GL-005 / GL-008).
+  final MacAddressPlatform macPlatform;
 
   @override
   Widget build(BuildContext context) {
@@ -490,7 +521,10 @@ class _Success extends StatelessWidget {
             value: w.hardwareAddress,
             identifier: true,
           ),
-          _MacTypeRow(hardwareAddress: w.hardwareAddress),
+          _MacTypeRow(
+            hardwareAddress: w.hardwareAddress,
+            platform: macPlatform,
+          ),
           // When the Wi-Fi identity was served FROM THE CACHE (a remembered
           // reading, not a fresh native/live read), say so honestly with an
           // "as of HH:MM" line so it is never mistaken for a live reading. A
@@ -813,9 +847,15 @@ class _RefreshWifiPrompt extends StatelessWidget {
 /// unreadable (null, blank, or the iOS sentinel) — shows the honest
 /// platform-limitation note instead of a meaningless flag (GL-005).
 class _MacTypeRow extends StatelessWidget {
-  const _MacTypeRow({required this.hardwareAddress});
+  const _MacTypeRow({
+    required this.hardwareAddress,
+    required this.platform,
+  });
 
   final String? hardwareAddress;
+
+  /// The platform whose limitation an unreadable-MAC note names (GL-005).
+  final MacAddressPlatform platform;
 
   @override
   Widget build(BuildContext context) {
@@ -823,7 +863,8 @@ class _MacTypeRow extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     final MacRandomization kind =
         MacRandomizationClassifier.classify(hardwareAddress);
-    final String label = MacRandomizationClassifier.label(hardwareAddress);
+    final String label =
+        MacRandomizationClassifier.label(hardwareAddress, platform: platform);
     final bool unreadable = kind == MacRandomization.unreadable;
 
     return Padding(
