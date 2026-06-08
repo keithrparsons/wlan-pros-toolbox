@@ -192,11 +192,13 @@ class ConnectedAp {
       noiseDbm: info.noiseDbm,
       snrDb: info.snrDb,
       txRateMbps: info.txRateMbps,
-      // The native side reports Rx when available (API 30+); it rides the same
-      // payload via a dedicated key the WifiInfo model does not carry, so the
-      // adapter folds it in below. Until wired, Rx is honest-null but the
-      // platform CAN expose it, so rxRateAvailable is true.
-      rxRateMbps: null,
+      // The native side reads Rx via WifiInfo.getRxLinkSpeedMbps() on API 30+
+      // and passes it through `rxRateMbps` (null when the platform returns the
+      // unknown sentinel -1, which many devices/links do). We surface the value
+      // when present; when null the platform CAN still expose Rx in principle,
+      // so rxRateAvailable stays true and the screen labels it a platform limit
+      // for this reading rather than "not on this platform" (GL-005).
+      rxRateMbps: info.rxRateMbps,
       channel: info.channel,
       channelWidthMhz: info.channelWidthMhz,
       band: info.band,

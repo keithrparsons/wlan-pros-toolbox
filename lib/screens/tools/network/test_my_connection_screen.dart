@@ -319,14 +319,42 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   Future<ConnectedAp?> _readLink() async {
     try {
       switch (_source) {
-        case WifiInfoSource.macosCoreWlan:
         case WifiInfoSource.androidWifiManager:
           final WifiInfoAdapter? adapter = _macAdapter;
           if (adapter == null) return null;
-          // A consumer check must never pop a Location prompt mid-test (the link
-          // RATE — hence the verdict — resolves WITHOUT Location; only the NAME
-          // needs it). Read the snapshot directly, bounded so a stalled channel
-          // can never hang the check.
+          // ANDROID LOCATION GATE (FIX 1, 2026-06-08): unlike macOS, Android
+          // redacts not just the SSID/BSSID but the WHOLE WifiManager snapshot
+          // (frequency, link rate, scan results) until ACCESS_FINE_LOCATION is
+          // granted at runtime — so a user who opened Test My Connection FIRST
+          // saw no Wi-Fi data at all and had to detour to Wi-Fi Information to
+          // answer the prompt (Keith, Galaxy S24). Reuse the SAME permission
+          // helper Wi-Fi Information uses: if Location is not already authorized,
+          // surface the standard Android runtime dialog HERE so the data flows
+          // without the detour. The Android runtime dialog is the platform's
+          // normal prompt — it does NOT background the app — so prompting
+          // mid-flow is correct on Android, distinct from macOS where the TCC
+          // prompt is unreliable in notarized builds and is NOT popped here (see
+          // the macOS branch). We never block on the choice: whatever the user
+          // picks, we then read the snapshot and let the rate-derived verdict
+          // proceed (only the NAME needs Location, never the verdict).
+          if (adapter.gatesNameBehindPermission &&
+              !await adapter.currentNameAuthorization()) {
+            await adapter.requestNamePermission();
+            if (!mounted) return null;
+          }
+          return await adapter.fetch().timeout(
+            const Duration(seconds: 5),
+            onTimeout: () =>
+                throw TimeoutException('Wi-Fi link read timed out'),
+          );
+        case WifiInfoSource.macosCoreWlan:
+          final WifiInfoAdapter? adapter = _macAdapter;
+          if (adapter == null) return null;
+          // A consumer check must never pop a Location prompt mid-test on macOS
+          // (the link RATE — hence the verdict — resolves WITHOUT Location; only
+          // the NAME needs it, and the macOS TCC prompt is unreliable in
+          // notarized builds). Read the snapshot directly, bounded so a stalled
+          // channel can never hang the check.
           return await adapter.fetch().timeout(
             const Duration(seconds: 5),
             onTimeout: () =>

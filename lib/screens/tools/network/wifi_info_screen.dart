@@ -877,23 +877,38 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         '${(info.securityType?.isPersonalCoarse ?? false) || (info.securityType?.isEnterpriseCoarse ?? false) ? ' (iOS coarse, WPA2/WPA3 not distinguished)' : ''}',
       );
 
+    // Android exposes no noise floor, so Noise + SNR carry an explicit reason in
+    // the copy text too (matches the on-screen notes; GL-005). macOS reports
+    // both; iOS derives SNR.
+    final bool isAndroid = _source == WifiInfoSource.androidWifiManager;
+    final String noiseCopy = isAndroid && info.noiseDbm == null
+        ? 'Not available on $platformLabel (no noise-floor API)'
+        : _copyVal(info.noiseDbm?.toString(), 'dBm');
+    final String snrCopy = isAndroid && info.snrDb == null
+        ? 'Needs the noise floor, which $platformLabel does not expose'
+        : '${_copyVal(info.snrDb?.toString(), 'dB')}'
+            '${info.snrDerived ? ' (derived)' : ''}';
     buf
       ..writeln()
       ..writeln('Signal')
       ..writeln('  RSSI: ${_copyVal(info.rssiDbm?.toString(), 'dBm')}')
-      ..writeln('  Noise: ${_copyVal(info.noiseDbm?.toString(), 'dBm')}')
-      ..writeln(
-        '  SNR: ${_copyVal(info.snrDb?.toString(), 'dB')}'
-        '${info.snrDerived ? ' (derived)' : ''}',
-      );
+      ..writeln('  Noise: $noiseCopy')
+      ..writeln('  SNR: $snrCopy');
 
+    // Rx: a permanent platform limit (rxRateAvailable false → macOS) vs the
+    // Android sentinel (-1) → an Android-specific note vs a present value.
+    final String rxCopy = !info.rxRateAvailable
+        ? 'Not exposed by $platformLabel'
+        : (info.rxRateMbps == null
+            ? (isAndroid
+                ? "Not reported by this device's $platformLabel link"
+                : 'Not in this reading')
+            : _copyVal(_formatRate(info.rxRateMbps), 'Mbps'));
     buf
       ..writeln()
       ..writeln('Rate')
       ..writeln('  Tx Rate: ${_copyVal(_formatRate(info.txRateMbps), 'Mbps')}')
-      ..writeln(
-        '  Rx Rate: ${info.rxRateAvailable ? _copyVal(_formatRate(info.rxRateMbps), 'Mbps') : 'Not exposed by $platformLabel'}',
-      );
+      ..writeln('  Rx Rate: $rxCopy');
 
     final bool isPsc = _isPscChannel(info.channel, info.band);
     buf
@@ -1178,7 +1193,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       const SizedBox(height: AppSpacing.sm),
       _securityCard(info, platformLabel),
       const SizedBox(height: AppSpacing.sm),
-      _signalCard(info),
+      _signalCard(info, platformLabel),
       const SizedBox(height: AppSpacing.sm),
       _rateCard(info, platformLabel),
       const SizedBox(height: AppSpacing.sm),
@@ -1324,32 +1339,50 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     );
   }
 
-  Widget _signalCard(ConnectedAp info) => _Card(
-    title: 'Signal',
-    child: Column(
-      children: [
-        _MetricRow(
-          label: 'RSSI',
-          value: info.rssiDbm?.toString(),
-          unit: 'dBm',
-          mono: true,
-        ),
-        _MetricRow(
-          label: 'Noise',
-          value: info.noiseDbm?.toString(),
-          unit: 'dBm',
-          mono: true,
-        ),
-        _MetricRow(
-          label: 'SNR',
-          value: info.snrDb?.toString(),
-          unit: 'dB',
-          mono: true,
-          derived: info.snrDerived,
-        ),
-      ],
-    ),
-  );
+  Widget _signalCard(ConnectedAp info, String platformLabel) {
+    // ANDROID NOISE/SNR (FIX 2, 2026-06-08): the public Android Wi-Fi API
+    // exposes NO noise-floor reading, so SNR genuinely cannot be computed — it
+    // is a true platform limit, not a transient miss (GL-005 / GL-008). macOS
+    // CoreWLAN DOES report both, so it carries no note; iOS derives SNR
+    // (snrDerived). On Android, the Noise and SNR rows therefore carry an
+    // explicit "why" note naming the missing API, rather than a bare
+    // "Unavailable" the user cannot interpret.
+    final bool isAndroid = _source == WifiInfoSource.androidWifiManager;
+    final String? noiseNote = isAndroid && info.noiseDbm == null
+        ? 'Not available on $platformLabel (no noise-floor API)'
+        : null;
+    final String? snrNote = isAndroid && info.snrDb == null
+        ? 'Needs the noise floor, which $platformLabel does not expose'
+        : null;
+    return _Card(
+      title: 'Signal',
+      child: Column(
+        children: [
+          _MetricRow(
+            label: 'RSSI',
+            value: info.rssiDbm?.toString(),
+            unit: 'dBm',
+            mono: true,
+          ),
+          _MetricRow(
+            label: 'Noise',
+            value: info.noiseDbm?.toString(),
+            unit: 'dBm',
+            mono: true,
+            note: noiseNote,
+          ),
+          _MetricRow(
+            label: 'SNR',
+            value: info.snrDb?.toString(),
+            unit: 'dB',
+            mono: true,
+            derived: info.snrDerived,
+            note: snrNote,
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _rateCard(ConnectedAp info, String platformLabel) => _Card(
     title: 'Rate',
@@ -1366,11 +1399,22 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           value: _formatRate(info.rxRateMbps),
           unit: 'Mbps',
           mono: true,
-          // Say WHY precisely: a permanent platform limit (macOS never exposes
-          // Rx) vs a per-sample miss (iOS can, but this reading lacked it).
+          // Say WHY precisely (FIX 2, 2026-06-08):
+          //   * rxRateAvailable false → the platform NEVER exposes Rx (macOS
+          //     public CoreWLAN). Permanent platform limit.
+          //   * Android, rxRateAvailable true but the value null → the device
+          //     returned getRxLinkSpeedMbps()'s unknown sentinel (-1), common on
+          //     the S24. Honest, Android-specific platform-limit wording that
+          //     matches the SNR rows above, never a bare "Unavailable".
+          //   * iOS, rxRateAvailable true but null → a per-reading miss; the
+          //     Shortcut can carry Rx, this harvest just lacked it.
           note: !info.rxRateAvailable
               ? 'Not exposed by $platformLabel'
-              : (info.rxRateMbps == null ? 'Not in this reading' : null),
+              : (info.rxRateMbps == null
+                  ? (_source == WifiInfoSource.androidWifiManager
+                      ? "Not reported by this device's $platformLabel link"
+                      : 'Not in this reading')
+                  : null),
         ),
       ],
     ),
