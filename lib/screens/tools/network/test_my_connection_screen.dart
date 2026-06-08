@@ -733,7 +733,17 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
 
   /// (A) The plain-language VERDICT HERO sentence (§2.A), one per outcome. Short,
   /// active, second person, most-important-first — FK ≤ 8.0 each.
+  ///
+  /// SAME-TIER OVERRIDE (2026-06-07, Vera gate / Keith): the per-axis chips are
+  /// now ABSOLUTE tiers (Strong / Moderate / Weak). When BOTH chips land on the
+  /// SAME real tier (e.g. Moderate Wi-Fi + Moderate internet), naming a "slow
+  /// part" or "limit" contradicts two equal chips for the non-technical reader.
+  /// In that case word the hero by MARGIN instead — see [_sameTierHero]. The
+  /// different-tier outcomes keep their existing "slow part / limit" wording.
   String _heroSentence(ConsumerVerdict verdict) {
+    final String? sameTier = _sameTierHero(verdict);
+    if (sameTier != null) return sameTier;
+
     switch (verdict.outcome) {
       case ConsumerOutcome.wifi:
         return 'Your Wi-Fi is the slow part.';
@@ -747,6 +757,55 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         return 'We checked your internet, but not your Wi-Fi.';
       case ConsumerOutcome.couldntComplete:
         return 'We could not finish the check.';
+    }
+  }
+
+  /// The same-tier hero sentence, or null when the two axes are NOT on the same
+  /// real tier (the caller then falls through to the existing per-outcome wording).
+  ///
+  /// Fires only when [ConsumerVerdict.wifiStatus] equals
+  /// [ConsumerVerdict.internetStatus] AND both are a real tier (Strong / Moderate
+  /// / Weak — never [AxisStatus.unknown], so the couldn't-check rows are left
+  /// alone). Margin reuses the SAME +/-10% band as [_comparisonLine]: within the
+  /// band both sides read "about the same speed"; outside it, the side with the
+  /// higher measured rate is "slightly ahead".
+  ///
+  /// Returns null (deferring to the outcome wording) when either rate is missing
+  /// or the internet rate is ~0 — the same honest guard the comparison line uses,
+  /// so the hero never asserts a margin from a figure it does not have (GL-005).
+  String? _sameTierHero(ConsumerVerdict verdict) {
+    final AxisStatus tier = verdict.wifiStatus;
+    if (tier != verdict.internetStatus || tier == AxisStatus.unknown) {
+      return null;
+    }
+
+    final double? usable = _engine?.usableWifiMbps;
+    final double? internet = _engine?.internetAvgMbps;
+    if (usable == null || internet == null || internet < 0.5) return null;
+
+    final String tierWord = _lowerTierWord(tier);
+    final double deltaPct = 100 * (usable - internet) / internet;
+    if (deltaPct.abs() <= 10) {
+      return 'Both sides are $tierWord. They’re about the same speed.';
+    }
+    // Name whichever side measured the higher rate as "slightly ahead".
+    final String ahead = deltaPct > 0 ? 'Wi-Fi' : 'internet';
+    return 'Both sides are $tierWord. Your $ahead is slightly ahead.';
+  }
+
+  /// The lowercase tier word for the same-tier hero sentence ("strong" /
+  /// "moderate" / "weak"). [AxisStatus.unknown] never reaches here — the
+  /// same-tier branch excludes it — so it defers to the chip word defensively.
+  static String _lowerTierWord(AxisStatus tier) {
+    switch (tier) {
+      case AxisStatus.strong:
+        return 'strong';
+      case AxisStatus.moderate:
+        return 'moderate';
+      case AxisStatus.weak:
+        return 'weak';
+      case AxisStatus.unknown:
+        return _TwoAxisChips.word(tier);
     }
   }
 
