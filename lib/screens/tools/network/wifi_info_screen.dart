@@ -2089,13 +2089,20 @@ class _LiveBody extends StatelessWidget {
                   // noise and is hidden permanently — it never nags. While a
                   // Start error is showing, the error card above already carries
                   // the setup button, so this neutral prompt is suppressed to
-                  // avoid two setup cards at once. The pre-payload native-first
-                  // state already carries the LiveRfLockedCard's enable action,
-                  // so the neutral prompt is also suppressed once the native
-                  // identity is on screen (it would be a redundant second CTA).
+                  // avoid two setup cards at once.
+                  //
+                  // The pre-payload state ALWAYS renders the LiveRfLockedCard,
+                  // whose own "Enable live Wi-Fi" button is the single enable CTA
+                  // (it routes to the install sheet via onSetUp when there is no
+                  // native identity yet, or starts live readings when the native
+                  // identity is already on screen). So this neutral prompt is
+                  // suppressed whenever that pre-payload card is showing — with OR
+                  // without a native identity — to avoid two competing setup CTAs,
+                  // one of which lands below the fold (the prior double-CTA bug).
                   if (!controller.hasEverReceived &&
                       !triggerError &&
-                      nativeIdentity == null) ...[
+                      // ignore: prefer_is_not_empty
+                      (controller.isStreaming || !series.isEmpty)) ...[
                     const SizedBox(height: AppSpacing.sm),
                     LiveSetupCard.prompt(
                       label: 'Set up live Wi-Fi (one-time)',

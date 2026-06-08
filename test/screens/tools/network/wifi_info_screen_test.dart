@@ -485,7 +485,9 @@ void main() {
     });
 
     testWidgets(
-        'install/setup hint SHOWS on first-time setup (never received a payload)',
+        'first-time setup (never received a payload) shows the LiveRfLockedCard '
+        'with the RF fields by NAME and the single Enable CTA — never zeroed RF '
+        'and never a redundant second setup prompt',
         (tester) async {
       await tester.pumpWidget(host(
         WifiInfoScreen(
@@ -494,15 +496,24 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      // Genuine first-time setup: the companion-Shortcut install/how-to note is
-      // shown so new users know to install it and tap Start.
-      expect(find.textContaining('WLAN Pros Live'), findsOneWidget);
-      // The prompt is now ACTIONABLE: a prominent one-time setup button.
-      expect(find.text('Set up live Wi-Fi (one-time)'), findsOneWidget);
+      // Pax anti-pattern #1 fix: the rich RF fields render as the locked card —
+      // listed BY NAME with the honest "available once you enable live Wi-Fi"
+      // framing, never as zeroed / blank values.
+      expect(find.text('Live signal details'), findsOneWidget);
+      expect(find.text('Signal (RSSI) and SNR'), findsOneWidget);
+      expect(find.text('Channel, width, and band'), findsOneWidget);
+      expect(find.text('Tx / Rx rate'), findsOneWidget);
+      expect(find.text('Wi-Fi standard (PHY)'), findsOneWidget);
+      // The no-Location trust signal is led, per the brief.
+      expect(find.textContaining('no Location permission'), findsOneWidget);
+      // The locked card carries the SINGLE enable CTA (no native identity yet →
+      // "Enable live Wi-Fi"); the redundant LiveSetupCard prompt is suppressed.
+      expect(find.text('Enable live Wi-Fi'), findsOneWidget);
+      expect(find.text('Set up live Wi-Fi (one-time)'), findsNothing);
     });
 
     testWidgets(
-        'the not-set-up setup button opens the install sheet (3 steps)',
+        "the locked card's Enable button opens the install sheet (3 steps)",
         (tester) async {
       await tester.pumpWidget(host(
         WifiInfoScreen(
@@ -512,11 +523,13 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Set up live Wi-Fi (one-time)'));
+      await tester.tap(find.text('Enable live Wi-Fi'));
       await tester.pumpAndSettle();
 
-      // The one-time onboarding sheet opens with the crystal-clear steps.
+      // The one-time onboarding sheet opens with the crystal-clear steps, deep-
+      // linking to install the "WLAN Pros Live" companion Shortcut.
       expect(find.text('Set up live Wi-Fi'), findsOneWidget);
+      expect(find.textContaining('WLAN Pros Live'), findsWidgets);
       expect(find.text('Tap Add the Shortcut below.'), findsOneWidget);
       expect(find.text('Add the Shortcut'), findsOneWidget);
     });
