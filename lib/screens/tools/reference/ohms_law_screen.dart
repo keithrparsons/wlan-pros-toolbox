@@ -42,8 +42,6 @@
 // notation (no superscript glyph) so the formulas copy cleanly.
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../data/ohms_law_diagrams.dart';
 import '../../../theme/app_color_scheme.dart';
@@ -52,7 +50,7 @@ import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../widgets/tool_help_footer.dart';
-import '../concept_graphic_band.dart';
+import 'large_face_card.dart';
 import 'reference_row_semantics.dart';
 
 /// One core electrical identity — the four relationships every field tech
@@ -302,12 +300,20 @@ class OhmsLawScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  // The power-wheel graphic — renders only when its SVG is
-                  // bundled; otherwise the page reads fine on the wheel table
-                  // below (graceful degradation).
-                  _WheelBand(
+                  // The power wheel as the LARGE hero of the page (Keith,
+                  // 2026-06-08): it fills the content width and a large share of
+                  // screen height so the wheel dominates, above the formula
+                  // tables — replacing the small recessed ConceptGraphicBand.
+                  // Renders only when the SVG is bundled; otherwise the page
+                  // reads fully on the wheel table below (graceful degradation).
+                  // The wheel is roughly square, so it takes a slightly taller
+                  // height fraction than a wide connector face.
+                  LargeGraphic(
                     assetName: OhmsLawDiagrams.wheel,
-                    isDesktop: isDesktop,
+                    path: OhmsLawDiagrams.path,
+                    has: OhmsLawDiagrams.has,
+                    heightFraction: 0.46,
+                    maxHeight: 520,
                   ),
                   if (OhmsLawDiagrams.has(OhmsLawDiagrams.wheel))
                     const SizedBox(height: AppSpacing.md),
@@ -508,127 +514,6 @@ class OhmsLawScreen extends StatelessWidget {
           ),
         );
       }).toList(),
-    );
-  }
-}
-
-/// The power-wheel diagram band. Renders the bundled SVG
-/// (`assets/tool-graphics/<asset-name>.svg`) inside a recessed band when it is
-/// bundled, and collapses to nothing (SizedBox.shrink) when it is not — so the
-/// page ships fully working before Charta's wheel lands. Decorative for screen
-/// readers: every fact the wheel depicts is also in the wheel table below
-/// (GL-003 §8.6.2 a11y rule).
-///
-/// LIGHT/DARK (GL-003 §8.20.7): the wheel is authored DARK-BAKED (scaffold/lime
-/// hexes that read on #1A1A1A but fail contrast on white if drawn raw). So this
-/// widget reuses the SAME §8.20.7 recolor path the §8.6.2 concept graphics and
-/// the Power Phasing waveform bands use, via the single-source swap
-/// [ConceptGraphicBand.applyLightSwap]:
-///   * DARK: render the unmodified asset (byte-for-byte; dark goldens unaffected).
-///   * LIGHT: load the SVG source, apply the §8.20.7 allow-list hex swap, then
-///     render via SvgPicture.string. Cached per asset name so the replace runs
-///     once, not on every rebuild.
-class _WheelBand extends StatelessWidget {
-  const _WheelBand({required this.assetName, required this.isDesktop});
-
-  final String assetName;
-  final bool isDesktop;
-
-  // §8.6.2 band-height token: 140dp mobile / 160dp tablet-desktop. The wheel is
-  // roughly square, so it sits centered inside the concept-graphic band and
-  // never crops (BoxFit.contain).
-  static const double _bandHeightMobile = 140;
-  static const double _bandHeightDesktop = 160;
-
-  // Per-asset cache of the already-swapped light SVG source, so the §8.20.7
-  // string replace runs once per diagram, not on every rebuild.
-  static final Map<String, String> _lightSvgCache = <String, String>{};
-
-  /// Loads the diagram SVG source and applies the §8.20.7 allow-list light
-  /// swap, caching per asset name. Returns the recolored source string.
-  Future<String> _loadSwappedSvg() async {
-    final String cached = _lightSvgCache[assetName] ?? '';
-    if (cached.isNotEmpty) return cached;
-    final String raw =
-        await rootBundle.loadString(OhmsLawDiagrams.path(assetName));
-    final String swapped = ConceptGraphicBand.applyLightSwap(raw);
-    _lightSvgCache[assetName] = swapped;
-    return swapped;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Graceful fallback: no bundled wheel → render nothing, layout unchanged.
-    if (!OhmsLawDiagrams.has(assetName)) {
-      return const SizedBox.shrink();
-    }
-    final AppColorScheme colors = context.colors;
-    final double bandHeight =
-        isDesktop ? _bandHeightDesktop : _bandHeightMobile;
-
-    // DARK: unmodified asset (dark render unchanged). LIGHT: load + §8.20.7 swap
-    // + render via string so no raw lime stroke ever hits a light surface.
-    final Widget svg = colors.isLight
-        ? _LightWheelSvg(future: _loadSwappedSvg(), bandHeight: bandHeight)
-        : SvgPicture.asset(
-            OhmsLawDiagrams.path(assetName),
-            fit: BoxFit.contain,
-            width: double.infinity,
-            height: bandHeight,
-            excludeFromSemantics: true,
-            // A bundled-but-unparseable SVG collapses to nothing rather than
-            // surfacing a broken-image box.
-            placeholderBuilder: (_) => const SizedBox.shrink(),
-          );
-
-    return ExcludeSemantics(
-      child: Container(
-        decoration: BoxDecoration(
-          color: colors.surface2,
-          borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border.all(color: colors.border, width: 1),
-        ),
-        padding: const EdgeInsets.all(AppSpacing.sm),
-        child: SizedBox(
-          height: bandHeight,
-          width: double.infinity,
-          child: Center(child: svg),
-        ),
-      ),
-    );
-  }
-}
-
-/// Light-mode wheel render: awaits the §8.20.7-swapped SVG source, then draws it
-/// with `SvgPicture.string`. Collapses to nothing while loading or on any parse
-/// failure — same graceful-degradation contract as the dark asset path, so no
-/// broken-image box or layout jump ever appears. Mirrors `_LightWaveformSvg` in
-/// power_phasing_screen.dart.
-class _LightWheelSvg extends StatelessWidget {
-  const _LightWheelSvg({required this.future, required this.bandHeight});
-
-  final Future<String> future;
-  final double bandHeight;
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<String>(
-      future: future,
-      builder: (BuildContext context, AsyncSnapshot<String> snap) {
-        final String? data = snap.data;
-        if (data == null || data.isEmpty) {
-          // Loading or failed — render nothing (no broken box, no jump).
-          return const SizedBox.shrink();
-        }
-        return SvgPicture.string(
-          data,
-          fit: BoxFit.contain,
-          width: double.infinity,
-          height: bandHeight,
-          excludeFromSemantics: true,
-          placeholderBuilder: (_) => const SizedBox.shrink(),
-        );
-      },
     );
   }
 }

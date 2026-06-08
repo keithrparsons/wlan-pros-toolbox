@@ -179,8 +179,9 @@ void main() {
       IecConnectorsDiagrams.debugReset();
     });
 
-    testWidgets('renders title and both table headings', (tester) async {
-      await _withViewport(tester, const Size(375, 1400), () async {
+    testWidgets('renders title, both section headings, and per-connector cards',
+        (tester) async {
+      await _withViewport(tester, const Size(375, 2400), () async {
         await tester.pumpWidget(
           MaterialApp(
             theme: AppTheme.dark(),
@@ -189,15 +190,19 @@ void main() {
         );
 
         expect(find.text('IEC Power Connectors'), findsWidgets);
+        // The two section headings above the stacked face-cards.
         expect(find.text('IEC 60320 appliance couplers'), findsOneWidget);
         expect(find.text('IEC 60309 industrial connectors'), findsOneWidget);
-        // Anchor rows render their load-bearing values.
+        // Per-connector face-card titles render their load-bearing pairs.
         expect(find.text('C13 / C14'), findsOneWidget);
         expect(find.text('C15 / C16'), findsOneWidget);
+        // The IEC 60309 face-card carries the color = voltage-band specs.
+        expect(find.text('IEC 60309 pin-and-sleeve'), findsOneWidget);
         expect(find.text('Blue'), findsOneWidget);
         // Read-only reference: no inputs.
         expect(find.byType(TextField), findsNothing);
-        // No bundled diagram → no SvgPicture (graceful degradation).
+        // No bundled face → no SvgPicture (graceful degradation: each card
+        // reads as title + specs + note alone).
         expect(find.byType(SvgPicture), findsNothing);
       });
     });
@@ -219,17 +224,19 @@ void main() {
       }
     });
 
-    testWidgets('renders exactly the bundled diagram count (dark)',
+    testWidgets('renders exactly the bundled per-face count (dark)',
         (tester) async {
-      // The single named diagram bundled → exactly one SvgPicture band (dark
-      // path uses SvgPicture.asset). Proves the diagram-slot wiring.
+      // All six named faces bundled → exactly six SvgPicture face-cards (dark
+      // path uses SvgPicture.asset): five IEC 60320 coupler faces (C5, C7, C13,
+      // C15, C19) plus the IEC 60309 face. The C1/C2 coupler has no face asset,
+      // so it does not add a seventh. Proves the per-face wiring.
       IecConnectorsDiagrams.debugSetBundled(<String>{
         for (final String name in IecConnectorsDiagrams.all)
           IecConnectorsDiagrams.path(name),
       });
       addTearDown(() => IecConnectorsDiagrams.debugReset());
 
-      await _withViewport(tester, const Size(375, 1600), () async {
+      await _withViewport(tester, const Size(375, 4000), () async {
         await tester.pumpWidget(
           MaterialApp(
             theme: AppTheme.dark(),
@@ -237,7 +244,7 @@ void main() {
           ),
         );
         await tester.pump();
-        expect(find.byType(SvgPicture), findsNWidgets(1));
+        expect(find.byType(SvgPicture), findsNWidgets(6));
       });
     });
   });
