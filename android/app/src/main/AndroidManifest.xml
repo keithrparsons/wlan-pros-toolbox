@@ -4,8 +4,16 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <!-- ACCESS_NETWORK_STATE: read connectivity / interface state. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <!-- ACCESS_WIFI_STATE: read Wi-Fi link details via network_info_plus. -->
+    <!-- ACCESS_WIFI_STATE: read Wi-Fi link details via network_info_plus, and
+         read the nearby-AP scan results via WifiManager.getScanResults()
+         (Nearby AP Scan, H3). -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <!-- CHANGE_WIFI_STATE: lets the Nearby AP Scan tool (H3) request a fresh
+         scan via WifiManager.startScan(). The OS rate-limits startScan() on
+         Android 9+; when throttled, getScanResults() still returns the last
+         cached scan, so the tool degrades to "showing the last scan" rather
+         than failing (see MainActivity.readScanResults). -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
     <!-- Reading the connected SSID/BSSID on Android 8.0+ requires a location
          permission at runtime; network_info_plus surfaces null without it and
          the UI shows "Not available" rather than crashing. -->
