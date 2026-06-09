@@ -2882,6 +2882,24 @@
         "Torx is sized by T-number, not star. Robertson color coding is a trade convention, not an ISO standard."
       ],
       "source": "ISO 1173, 8764, 10664; WLAN Pros research brief 2026-06-08"
+    },
+    "markdown-cheatsheet": {
+      "name": "Markdown Cheatsheet",
+      "category": "Quick Reference",
+      "purpose": "CommonMark and GitHub Flavored Markdown syntax at a glance: what you type and what it renders as.",
+      "whyHere": "When writing docs, READMEs, wikis, or notes, confirm the exact Markdown for headings, emphasis, links, lists, code, and tables.",
+      "howToUse": [
+        "Each row shows the literal Markdown you type next to what it renders as: headings, emphasis, links, images, lists, task lists, blockquotes, code, and tables.",
+        "Rows marked GFM are GitHub Flavored Markdown extensions and may not work in a plain CommonMark renderer.",
+        "Gotchas: put a blank line between blocks, escape special characters with a backslash, and end a line with two spaces for a hard line break."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "The You type column is literal text, not rendered, so you can copy the exact syntax."
+      ],
+      "source": "CommonMark spec + GitHub Flavored Markdown (GFM) spec"
     }
   }
 }

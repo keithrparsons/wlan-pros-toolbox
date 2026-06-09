@@ -2165,7 +2165,7 @@ Searchable, offline reference of 86 curated TCP/UDP ports a network or Wi-Fi pro
 _Source: lib/screens/tools/network/port_reference_screen.dart_
 
 
-## Encoding (2)
+## Encoding (3)
 
 
 ### ASCII / Hex / Binary
@@ -2205,6 +2205,24 @@ The 30 most-used emoji, ranked 1 to 30, with the official Unicode CLDR name and 
 - Data source / standard: Unicode CLDR for the names; ranking is messaging-weighted (private-messaging keyboard frequency, Keith's decision 2026-05-31, not social-listening-weighted). Embedded verbatim from Deliverables/2026-06-01-emoji-top-30/emoji-top-30.json.
 
 _Source: lib/screens/tools/reference/emoji_reference_screen.dart_
+
+
+### Markdown Cheatsheet
+
+CommonMark and GitHub Flavored Markdown syntax shown as the literal text you type next to what it renders as, covering headings, emphasis, links, images, lists, task lists, blockquotes, code, and tables.
+
+**Why it's here.** When writing docs, READMEs, wikis, or notes, confirm the exact Markdown for a structure without guessing, and know which pieces are GitHub extensions that a plain renderer may not support.
+
+**How to use**
+1. Each row pairs the literal Markdown ("You type") with what it renders as. The "You type" column is plain text, not rendered, so the exact syntax is copyable.
+2. Rows marked GFM are GitHub Flavored Markdown extensions (tables, task lists, strikethrough, autolinks) and may not work in a plain CommonMark renderer.
+3. Gotchas: put a blank line between block elements, escape special characters with a backslash, and end a line with two trailing spaces for a hard line break.
+
+**Field notes**
+- Covers the CommonMark core plus the widely-implemented GFM extensions, with GFM-only rows flagged.
+- Data source / standard: the CommonMark specification and the GitHub Flavored Markdown specification.
+
+_Source: lib/screens/tools/reference/markdown_cheatsheet_screen.dart_
 
 
 ## CLI & Capture (3)

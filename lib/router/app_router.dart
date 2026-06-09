@@ -49,6 +49,7 @@ import '../screens/tools/reference/optical_transceivers_screen.dart';
 import '../screens/tools/reference/cable_bend_radius_screen.dart';
 import '../screens/tools/reference/rack_units_screen.dart';
 import '../screens/tools/reference/screw_drives_screen.dart';
+import '../screens/tools/reference/markdown_cheatsheet_screen.dart';
 import '../screens/tools/reference/wifi_exposure_perspective_screen.dart';
 import '../screens/tools/reference/wifi_tools_comparison_screen.dart';
 import '../screens/tools/reference/reason_codes_screen.dart';
@@ -253,6 +254,7 @@ class AppRouter {
   static const String dataUnits = '/tools/data-units';
   static const String hashLengths = '/tools/hash-lengths';
   static const String regexCheatsheet = '/tools/regex-cheatsheet';
+  static const String markdownCheatsheet = '/tools/markdown-cheatsheet';
 
   // Networking category — active network tools (native-only; web shows the
   // download-the-app fallback inside each screen, so the routes are always
@@ -501,6 +503,7 @@ class AppRouter {
     dataUnits: (_) => const DataUnitsScreen(),
     hashLengths: (_) => const HashLengthsScreen(),
     regexCheatsheet: (_) => const RegexCheatsheetScreen(),
+    markdownCheatsheet: (_) => const MarkdownCheatsheetScreen(),
     interfaceInfo: (_) => const InterfaceInfoScreen(),
     deviceInfo: (_) => const DeviceInfoScreen(),
     dnsLookup: (_) => const DnsLookupScreen(),

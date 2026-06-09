@@ -1174,6 +1174,15 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Encoding',
       ),
+      ToolEntry(
+        id: 'markdown-cheatsheet',
+        title: 'Markdown Cheatsheet',
+        description:
+            'CommonMark + GitHub Flavored Markdown: what you type and what it renders as',
+        routeName: '/tools/markdown-cheatsheet',
+        isLive: true,
+        subgroup: 'Encoding',
+      ),
       // ── moved in from the dissolved Command & Capture category
       // (2026-06-01): CLI / monitor-mode / Wireshark reference sheets ──
       ToolEntry(

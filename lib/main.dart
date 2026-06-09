@@ -22,6 +22,7 @@ import 'data/rack_diagrams.dart';
 import 'data/screw_drives_diagrams.dart';
 import 'data/fiber_connectors_diagrams.dart';
 import 'data/regulatory_logos.dart';
+import 'data/markdown_diagrams.dart';
 import 'data/tool_assets.dart';
 import 'router/app_router.dart';
 import 'services/help/tool_help_loader.dart';
@@ -184,6 +185,9 @@ Future<void> main() async {
   // each Regulatory Domains row shows its abbreviation badge instead of a logo.
   try {
     await RegulatoryLogos.ensureLoaded();
+  } catch (_) {}
+  try {
+    await MarkdownDiagrams.ensureLoaded();
   } catch (_) {}
 
   // Load + cache the bundled tool-help JSON once (assets/help/tool_help.json).

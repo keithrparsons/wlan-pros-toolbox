@@ -145,9 +145,11 @@ void main() {
         expect(find.text('Regulatory Domains'), findsWidgets);
         // The ONE prominent snapshot banner.
         expect(find.text('SNAPSHOT VERIFIED 2026-06-08'), findsOneWidget);
-        // A known regulator renders.
-        expect(find.text('United States'), findsOneWidget);
-        expect(find.text('Federal Communications Commission'), findsOneWidget);
+        // A known regulator renders. The list is alphabetical by jurisdiction
+        // (2026-06-09); Argentina sorts first, so it is on-screen without
+        // scrolling (United States is now near the bottom, under U).
+        expect(find.text('Argentina'), findsOneWidget);
+        expect(find.text('Ente Nacional de Comunicaciones'), findsOneWidget);
       });
     });
 
@@ -161,8 +163,7 @@ void main() {
         );
         await tester.pump();
 
-        expect(find.text('United Kingdom'), findsOneWidget);
-
+        // The list is alphabetical (UK is far down); the filter brings it up.
         await tester.enterText(find.byType(TextField), 'ofcom');
         await tester.pumpAndSettle();
 

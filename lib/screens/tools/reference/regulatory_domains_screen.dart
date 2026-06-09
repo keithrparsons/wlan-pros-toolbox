@@ -93,10 +93,17 @@ class _RegulatoryDomainsScreenState extends State<RegulatoryDomainsScreen> {
 
   /// The records matching the active query (substring over the search haystack:
   /// jurisdiction + regulator + abbreviation + docs). Empty query → all rows.
+  /// All domains sorted alphabetically by jurisdiction (country) — the on-screen
+  /// order Keith asked for (2026-06-09).
+  List<RegulatoryDomain> get _sortedDomains =>
+      <RegulatoryDomain>[...widget.domains]..sort(
+          (RegulatoryDomain a, RegulatoryDomain b) =>
+              a.jurisdiction.toLowerCase().compareTo(b.jurisdiction.toLowerCase()));
+
   List<RegulatoryDomain> get _filtered {
     final String q = _query.trim().toLowerCase();
-    if (q.isEmpty) return widget.domains;
-    return widget.domains
+    if (q.isEmpty) return _sortedDomains;
+    return _sortedDomains
         .where((RegulatoryDomain d) => d.searchHaystack.contains(q))
         .toList(growable: false);
   }
@@ -133,7 +140,7 @@ class _RegulatoryDomainsScreenState extends State<RegulatoryDomainsScreen> {
           'Band / power notes',
         ].join(tab),
       );
-    for (final RegulatoryDomain d in widget.domains) {
+    for (final RegulatoryDomain d in _sortedDomains) {
       buf.writeln(
         <String>[
           d.jurisdiction,
@@ -484,15 +491,16 @@ class _RegulatorRowState extends State<_RegulatorRow> {
 }
 
 /// The leading logo slot: the regulator's bundled logo when one is present,
-/// otherwise a styled abbreviation badge (NEVER a broken image). 48x48 square so
-/// the row aligns whether a logo or a badge is shown.
+/// otherwise a styled abbreviation badge (NEVER a broken image). 96x96 square so
+/// the row aligns whether a logo or a badge is shown (doubled from 48, Keith
+/// 2026-06-09).
 class _RegulatorLogo extends StatelessWidget {
   const _RegulatorLogo({required this.domain, required this.displayAbbrev});
 
   final RegulatoryDomain domain;
   final String displayAbbrev;
 
-  static const double _size = 48;
+  static const double _size = 96;
 
   @override
   Widget build(BuildContext context) {
@@ -544,14 +552,14 @@ class _RegulatorLogo extends StatelessWidget {
 
 /// The fallback badge shown when a regulator logo asset is not bundled: a
 /// tinted, rounded square carrying the abbreviation in DM Mono. The raw
-/// abbreviation only (kept short so it fits the 48x48 square); the colliding
+/// abbreviation only (kept short so it fits the 96x96 square); the colliding
 /// jurisdiction disambiguation lives on the text label beside it, not the badge.
 class _AbbrevBadge extends StatelessWidget {
   const _AbbrevBadge({required this.abbreviation});
 
   final String abbreviation;
 
-  static const double _size = 48;
+  static const double _size = 96;
 
   @override
   Widget build(BuildContext context) {

@@ -148,7 +148,8 @@ void main() {
       // 124 = + the 3 new Cabling & Connectors reference pages (cable-bend-radius,
       // rack-units, screw-drives) 2026-06-08. The fiber-optic extension edits an
       // existing entry, so adds none. 121 + 3 = 124.
-      expect(store.count, 124);
+      // 125 = + the Markdown Cheatsheet (markdown-cheatsheet) 2026-06-09.
+      expect(store.count, 125);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help
