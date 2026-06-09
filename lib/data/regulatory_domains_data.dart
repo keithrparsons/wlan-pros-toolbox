@@ -348,7 +348,10 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     jurisdiction: 'Switzerland',
     ituRegion: '1',
     regulatorName: 'Federal Office of Communications (BAKOM)',
-    abbreviation: 'OFCOM',
+    // BAKOM (German), not OFCOM: Switzerland's regulator is OFCOM in French but
+    // is known internationally as BAKOM to avoid colliding with the UK's Ofcom
+    // (which also shared the logo key). Keith correction 2026-06-09.
+    abbreviation: 'BAKOM',
     websiteUrl: 'https://www.bakom.admin.ch',
     governingDocs: 'RIR (Radio Interface Regulations); follows CEPT/ETSI',
     bandNotes: '2.4 GHz ch 1-13. 5 GHz EN 301 893 (DFS as EU). 6 GHz LOWER '
