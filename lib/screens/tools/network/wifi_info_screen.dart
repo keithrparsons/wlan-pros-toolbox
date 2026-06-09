@@ -73,6 +73,7 @@ import 'install_shortcut_sheet.dart';
 import 'live_rf_locked_card.dart';
 import 'live_setup_card.dart';
 import 'network_unavailable_view.dart';
+import 'wifi_live_trend.dart';
 
 /// The one Wi-Fi Information tool screen.
 class WifiInfoScreen extends StatefulWidget {
@@ -2386,6 +2387,17 @@ class _LiveCharts extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
+        // H2 — the full charted RSSI + Tx-rate trend over the rolling window,
+        // each with a current/min/avg/max readout. The genuine competitor gap:
+        // the graded sparklines below read the DIRECTION; this section reads the
+        // SHAPE (axes + stats). Same rolling [series] the screen already fills;
+        // no new measurement. Rx degrades gracefully (see [WifiLiveTrend]).
+        WifiLiveTrend(
+          series: series,
+          latest: latest,
+          platformLabel: platformLabel,
+        ),
+        const SizedBox(height: AppSpacing.sm),
         _GradedMetricChart(
           label: 'RSSI',
           unit: 'dBm',
