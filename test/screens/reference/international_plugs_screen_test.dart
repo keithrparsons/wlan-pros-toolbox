@@ -19,7 +19,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wlan_pros_toolbox/data/power_phasing_diagrams.dart';
+import 'package:wlan_pros_toolbox/data/international_plugs_diagrams.dart';
 import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
 import 'package:wlan_pros_toolbox/router/app_router.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/international_plugs_screen.dart';
@@ -178,17 +178,17 @@ void main() {
 
   group('InternationalPlugsScreen widget', () {
     setUp(() {
-      // No concept-graphic SVG bundled by default → band renders nothing, and
+      // No face SVG bundled by default → each face card renders no graphic, and
       // the page must still ship fully working.
-      PowerPhasingDiagrams.debugSetBundled(const <String>{});
+      InternationalPlugsDiagrams.debugSetBundled(const <String>{});
     });
     tearDown(() {
-      PowerPhasingDiagrams.debugReset();
+      InternationalPlugsDiagrams.debugReset();
     });
 
-    testWidgets('renders title, both tables, and the Type I warning',
+    testWidgets('renders title, section heading, CEE 7 table, Type I warning',
         (WidgetTester tester) async {
-      await _withViewport(tester, const Size(375, 2400), () async {
+      await _withViewport(tester, const Size(375, 6000), () async {
         await tester.pumpWidget(
           MaterialApp(
             theme: AppTheme.dark(),
@@ -197,15 +197,22 @@ void main() {
         );
 
         expect(find.text('International Power Plugs'), findsWidgets);
+        // The section heading stands above the stacked face-cards.
         expect(find.text('IEC World Plugs letter system'), findsOneWidget);
+        // The CEE 7 family stays a compact table card.
         expect(find.text('CEE 7 European family'), findsOneWidget);
+        // The prominent Type I safety warning rides at the top.
         expect(
           find.text(InternationalPlugsScreen.typeIWarningTitle),
           findsOneWidget,
         );
+        // A couple of per-type face-card titles render.
+        expect(find.text('Type G'), findsOneWidget);
+        expect(find.text('Type F'), findsOneWidget);
         // Read-only reference: no inputs.
         expect(find.byType(TextField), findsNothing);
-        // No bundled graphic → no SvgPicture (graceful degradation).
+        // No bundled face → no SvgPicture (graceful degradation: each card reads
+        // as title + specs alone).
         expect(find.byType(SvgPicture), findsNothing);
       });
     });
@@ -213,7 +220,7 @@ void main() {
     testWidgets('renders without overflow at 320/375/768/1280 widths',
         (WidgetTester tester) async {
       for (final double width in <double>[320, 375, 768, 1280]) {
-        await _withViewport(tester, Size(width, 2600), () async {
+        await _withViewport(tester, Size(width, 6000), () async {
           await tester.pumpWidget(
             MaterialApp(
               theme: AppTheme.dark(),
@@ -227,16 +234,27 @@ void main() {
       }
     });
 
-    testWidgets('renders exactly the bundled graphic count (dark)',
+    testWidgets('renders exactly the bundled per-face count (dark)',
         (WidgetTester tester) async {
-      // The one concept graphic bundled → exactly one SvgPicture band (dark path
-      // uses SvgPicture.asset). Proves the graphic-slot wiring.
-      PowerPhasingDiagrams.debugSetBundled(<String>{
-        PowerPhasingDiagrams.path(InternationalPlugsScreen.graphicAsset),
+      // All ten named faces bundled. The three Type I rows share the one intl-i
+      // face but each renders its own card, so the bundled face count maps to
+      // twelve SvgPicture cards: the ten distinct-face types plus the two extra
+      // Type I rows (AS/NZS + GB + IRAM = 3 cards on the one intl-i asset). Type
+      // B carries no face (shares the NEMA 5-15 face) so it adds none. Proves the
+      // per-face wiring.
+      InternationalPlugsDiagrams.debugSetBundled(<String>{
+        for (final String name in InternationalPlugsDiagrams.all)
+          InternationalPlugsDiagrams.path(name),
       });
-      addTearDown(() => PowerPhasingDiagrams.debugReset());
+      addTearDown(() => InternationalPlugsDiagrams.debugReset());
 
-      await _withViewport(tester, const Size(375, 2600), () async {
+      final int expectedCards = InternationalPlugsScreen.plugTypes
+          .where((PlugType p) =>
+              p.assetName != null &&
+              InternationalPlugsDiagrams.has(p.assetName!))
+          .length;
+
+      await _withViewport(tester, const Size(375, 9000), () async {
         await tester.pumpWidget(
           MaterialApp(
             theme: AppTheme.dark(),
@@ -244,7 +262,7 @@ void main() {
           ),
         );
         await tester.pump();
-        expect(find.byType(SvgPicture), findsOneWidget);
+        expect(find.byType(SvgPicture), findsNWidgets(expectedCards));
       });
     });
   });

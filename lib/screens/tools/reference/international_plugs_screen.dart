@@ -1,31 +1,28 @@
 // International Power Plugs — read-only reference mapping the IEC World Plugs
-// letter system (Type A–O) to the national standards behind each plug, with
+// letter system (Type A-O) to the national standards behind each plug, with
 // country, voltage class, current rating, and type letter.
 //
-// Page 4 of 6 in the "Power & Cooling" reference category. It follows the
-// template the pilot page (power_phasing_screen.dart) established and the closest
-// table sibling (poe_reference_screen.dart): typed const datasets, a §8.16
-// AppCopyAction that emits the whole page as sectioned TSV, the LayoutBuilder /
-// ConstrainedBox / SingleChildScrollView scaffold shared by every reference
-// screen, the wifi_channels overflow-safe HorizontalScrollTable + IntrinsicWidth
-// table idiom, and a ToolHelpFooter keyed on the catalog id.
+// Page 5 of 6 in the "Power & Cooling" reference category.
 //
-// Graphic slot: ONE concept graphic (`assets/tool-graphics/international-plugs`)
-// resolved through the manifest-gated PowerPhasingDiagrams resolver — the same
-// `assets/tool-graphics/<name>.svg` multi-graphic resolver the pilot uses,
-// reused here by explicit asset name so this page adds no new resolver file. The
-// band degrades to nothing (renders no SvgPicture) until Charta's face-diagram
-// SVG lands in the bundle, so the data page ships fully working today. Face
-// diagrams are a later pass; the tables carry every fact without them.
+// BIG-graphic redesign (Keith, 2026-06-08): the page no longer carries one small
+// concept graphic borrowed from the power-phasing resolver. It now renders one
+// LARGE per-type FACE graphic per card — each = the big plug face plus that
+// type's title/specs alongside (the reusable LargeFaceCard pattern the IEC page
+// established), resolved by explicit asset name through the page's own dedicated
+// InternationalPlugsDiagrams resolver (cloned from IecConnectorsDiagrams). The
+// CEE 7 European family stays a compact table card (it is a sub-breakout of the
+// C/E/F letters, not a distinct face). Every face degrades to nothing when its
+// SVG is not yet bundled, so each card reads as title + specs alone until
+// Charta's faces land.
 //
 // SAFETY (the load-bearing distinction): the "interchangeable Type I cluster"
 // (Australia/NZ, China, Argentina) shares the two-flat-blades-in-a-V + earth
 // SHAPE but is NOT safely interchangeable — Argentina (IRAM 2073) reverses line
 // and neutral relative to Australia/China, so an Australian plug used in
 // Argentina energizes the wrong contact. That is rendered as a prominent
-// StatusTone.warning callout, using the §8.13/§8.20.4 status-warning idiom the
-// wpa/poe pages use (theme-aware statusToneColor border + tinted surface, never
-// a baked Color).
+// StatusTone.warning callout ABOVE the cards, using the §8.13/§8.20.4
+// status-warning idiom the wpa/poe pages use (theme-aware statusToneColor border
+// + tinted surface, never a baked Color).
 //
 // Data provenance (GL-005): Pax's verified research brief
 // (Deliverables/2026-06-08-power-cooling-references/RESEARCH-BRIEF.md, Topic 5),
@@ -38,27 +35,24 @@
 // Pure read-only reference — no inputs, no computation, no network. Works on
 // every platform (no NetworkUnavailableView). The only state is "success": the
 // compile-time const datasets always render. No loading/empty/error path because
-// nothing is fetched or parsed at runtime; the concept-graphic band carries its
-// own absent-asset empty state (render nothing). GL-008 network/subprocess rules
+// nothing is fetched or parsed at runtime; each face card carries its own
+// absent-asset empty state (renders no graphic). GL-008 network/subprocess rules
 // do not apply (nothing fetched, nothing shelled out to).
 //
 // Glyph / copy notes (GL-004): degrees spelled out in prose, no degree glyph in
 // the copy payload; ASCII hyphen-minus only, never an em dash; US spelling;
-// "Access Point" never "router". The '—' used in lineToLine columns is a
-// rendered placeholder, never an em dash in prose.
+// "Access Point" never "router".
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
-import 'package:flutter_svg/flutter_svg.dart';
 
-import '../../../data/power_phasing_diagrams.dart';
+import '../../../data/international_plugs_diagrams.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../widgets/tool_help_footer.dart';
-import '../concept_graphic_band.dart';
+import 'large_face_card.dart';
 import 'reference_row_semantics.dart';
 
 /// One IEC World Plugs letter-type row — type letter mapped to the national
@@ -72,6 +66,7 @@ class PlugType {
     required this.voltageClass,
     required this.current,
     required this.countries,
+    this.assetName,
   });
 
   /// IEC World Plugs type letter, e.g. `C`, `F`, `G`.
@@ -88,6 +83,12 @@ class PlugType {
 
   /// Example countries, e.g. `Germany + most of continental Europe`.
   final String countries;
+
+  /// The per-face SVG asset name for this plug type (one of the
+  /// [InternationalPlugsDiagrams] face consts), or null when no dedicated face
+  /// is produced (Type B shares the NEMA 5-15 face on the NEMA page). Resolved
+  /// through the manifest-gated resolver and degrades gracefully when absent.
+  final String? assetName;
 }
 
 /// One CEE 7 family member — the European plug system needs its own breakout
@@ -118,11 +119,6 @@ class Cee7Member {
 class InternationalPlugsScreen extends StatelessWidget {
   const InternationalPlugsScreen({super.key});
 
-  /// The single concept-graphic asset name for this page, resolved through the
-  /// `assets/tool-graphics/<name>.svg` manifest-gated resolver. Face diagrams
-  /// land later; until then the band renders nothing (graceful degradation).
-  static const String graphicAsset = 'international-plugs';
-
   /// The IEC World Plugs letter system, in letter order. Verified against the
   /// research brief (Topic 5). Public-static for testing.
   static const List<PlugType> plugTypes = <PlugType>[
@@ -132,6 +128,7 @@ class InternationalPlugsScreen extends StatelessWidget {
       voltageClass: '120V',
       current: '15A',
       countries: 'US, Canada, Japan, Mexico',
+      assetName: InternationalPlugsDiagrams.a,
     ),
     PlugType(
       type: 'B',
@@ -146,6 +143,7 @@ class InternationalPlugsScreen extends StatelessWidget {
       voltageClass: '230V',
       current: '2.5A',
       countries: 'Europe (widespread, unearthed)',
+      assetName: InternationalPlugsDiagrams.c,
     ),
     PlugType(
       type: 'D',
@@ -153,6 +151,7 @@ class InternationalPlugsScreen extends StatelessWidget {
       voltageClass: '230V',
       current: '5A',
       countries: 'India, around 40 countries',
+      assetName: InternationalPlugsDiagrams.d,
     ),
     PlugType(
       type: 'E',
@@ -160,6 +159,7 @@ class InternationalPlugsScreen extends StatelessWidget {
       voltageClass: '230V',
       current: '16A',
       countries: 'France, Belgium, Poland, Czechia',
+      assetName: InternationalPlugsDiagrams.e,
     ),
     PlugType(
       type: 'F',
@@ -167,6 +167,7 @@ class InternationalPlugsScreen extends StatelessWidget {
       voltageClass: '230V',
       current: '16A',
       countries: 'Germany + most of continental Europe',
+      assetName: InternationalPlugsDiagrams.f,
     ),
     PlugType(
       type: 'G',
@@ -174,6 +175,7 @@ class InternationalPlugsScreen extends StatelessWidget {
       voltageClass: '230V',
       current: '13A (fused)',
       countries: 'UK, Ireland, around 50 countries',
+      assetName: InternationalPlugsDiagrams.g,
     ),
     PlugType(
       type: 'I',
@@ -181,6 +183,7 @@ class InternationalPlugsScreen extends StatelessWidget {
       voltageClass: '230V',
       current: '10A',
       countries: 'Australia, New Zealand',
+      assetName: InternationalPlugsDiagrams.i,
     ),
     PlugType(
       type: 'I',
@@ -188,6 +191,7 @@ class InternationalPlugsScreen extends StatelessWidget {
       voltageClass: '230V',
       current: '10A',
       countries: 'China',
+      assetName: InternationalPlugsDiagrams.i,
     ),
     PlugType(
       type: 'I',
@@ -195,6 +199,7 @@ class InternationalPlugsScreen extends StatelessWidget {
       voltageClass: '230V',
       current: '10A',
       countries: 'Argentina (line/neutral reversed, see warning)',
+      assetName: InternationalPlugsDiagrams.i,
     ),
     PlugType(
       type: 'J',
@@ -202,6 +207,7 @@ class InternationalPlugsScreen extends StatelessWidget {
       voltageClass: '230V',
       current: '10A',
       countries: 'Switzerland, Liechtenstein',
+      assetName: InternationalPlugsDiagrams.j,
     ),
     PlugType(
       type: 'L',
@@ -209,6 +215,7 @@ class InternationalPlugsScreen extends StatelessWidget {
       voltageClass: '230V',
       current: '10 / 16A',
       countries: 'Italy, Chile',
+      assetName: InternationalPlugsDiagrams.l,
     ),
     PlugType(
       type: 'M',
@@ -216,6 +223,7 @@ class InternationalPlugsScreen extends StatelessWidget {
       voltageClass: '230V',
       current: '15A',
       countries: 'South Africa',
+      assetName: InternationalPlugsDiagrams.m,
     ),
   ];
 
@@ -264,7 +272,7 @@ class InternationalPlugsScreen extends StatelessWidget {
       'differences from the Australasian one. Same family, different polarity '
       'and spacing; do not assume cross-compatibility.';
 
-  /// Provenance + clarifying footnotes shown beneath the main table.
+  /// Provenance + clarifying footnotes shown beneath the cards.
   static const String tableFootnote =
       'Voltage is around 230V across virtually all of Europe, Asia, Oceania, '
       'and South America; A and B are the 120V North American types. BS 546 '
@@ -368,27 +376,33 @@ class InternationalPlugsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  // Single concept graphic (face diagrams), resolved by explicit
-                  // asset name through the tool-graphics resolver. Renders only
-                  // when bundled; otherwise collapses to nothing. Face diagrams
-                  // are a later pass — the tables carry every fact without them.
-                  _PlugGraphicBand(
-                    assetName: graphicAsset,
-                    isDesktop: isDesktop,
-                  ),
-                  if (PowerPhasingDiagrams.has(graphicAsset))
-                    const SizedBox(height: AppSpacing.md),
-                  // The Type I safety warning rides at the top, above the table,
-                  // so a tech sees it before scanning the Type I rows.
+                  // The Type I safety warning rides at the top, above the cards,
+                  // so a tech sees it before scanning the Type I face-cards.
                   _WarningCallout(
                     title: typeIWarningTitle,
                     body: typeIWarningBody,
                     colors: colors,
                     text: text,
                   ),
-                  const SizedBox(height: AppSpacing.md),
-                  _plugTypeCard(colors, text, mono),
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: AppSpacing.lg),
+                  // BIG-graphic redesign (Keith, 2026-06-08): one LARGE face-card
+                  // per IEC World Plugs letter type, stacked vertically — each =
+                  // the big plug face plus that type's title/specs alongside (the
+                  // reusable LargeFaceCard pattern). Every face degrades to
+                  // nothing when its SVG is not yet bundled, so each card reads as
+                  // title + specs alone until Charta's faces land.
+                  _SectionHeading(label: 'IEC World Plugs letter system'),
+                  const SizedBox(height: AppSpacing.sm),
+                  ..._faceCards(isDesktop),
+                  Text(
+                    tableFootnote,
+                    style: text.labelMedium?.copyWith(
+                      color: colors.textTertiary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  // The CEE 7 European family stays a compact table card — it is
+                  // a sub-breakout of the C/E/F letters, not a distinct face.
                   _cee7Card(colors, text, mono),
                   ToolHelpFooter(toolId: 'international-plugs'),
                 ],
@@ -400,85 +414,35 @@ class InternationalPlugsScreen extends StatelessWidget {
     );
   }
 
-  Widget _plugTypeCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
-    return _TableCard(
-      title: 'IEC World Plugs letter system',
-      footnote: tableFootnote,
-      header: const Row(
-        children: <Widget>[
-          _HeaderCell('Type', width: 48),
-          _HeaderCell('Standard', width: 188),
-          _HeaderCell('Voltage', width: 72),
-          _HeaderCell('Current', width: 88),
-          _HeaderCell('Example countries', width: 260),
-        ],
-      ),
-      rows: plugTypes.map((PlugType p) {
-        return ReferenceRowSemantics(
-          label: rowLabel('Type ${p.type}', <String?>[
-            'standard ${p.standard}',
-            'voltage ${p.voltageClass}',
-            'current ${p.current}',
-            p.countries,
-          ]),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                SizedBox(
-                  width: 48,
-                  child: Text(
-                    p.type,
-                    style: mono.inlineCode.copyWith(
-                      color: colors.textAccent,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 188,
-                  child: Text(
-                    p.standard,
-                    style: mono.inlineCode.copyWith(
-                      color: colors.textPrimary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 72,
-                  child: Text(
-                    p.voltageClass,
-                    style: mono.inlineCode.copyWith(
-                      color: colors.textSecondary,
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 88,
-                  child: Text(
-                    p.current,
-                    style: mono.inlineCode.copyWith(
-                      color: colors.textSecondary,
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 260,
-                  child: Text(
-                    p.countries,
-                    style: text.labelMedium?.copyWith(
-                      color: colors.textTertiary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+  /// Builds the stacked [LargeFaceCard] list, one big card per plug type, with an
+  /// `AppSpacing.md` gap between them. Each card carries the type letter as the
+  /// title, the national standard as a subtitle, the voltage/current/countries
+  /// as specs, and its per-face SVG (degrading gracefully). The three Type I
+  /// rows each render their own card so each national standard stays distinct;
+  /// the polarity caveat is carried by the warning callout above.
+  List<Widget> _faceCards(bool isDesktop) {
+    final List<Widget> cards = <Widget>[];
+    for (final PlugType p in plugTypes) {
+      cards
+        ..add(
+          LargeFaceCard(
+            title: 'Type ${p.type}',
+            subtitle: p.standard,
+            specs: <FaceSpec>[
+              FaceSpec(label: 'Voltage', value: p.voltageClass),
+              FaceSpec(label: 'Current', value: p.current, accent: true),
+              FaceSpec(label: 'Countries', value: p.countries),
+            ],
+            assetName: p.assetName ?? '',
+            path: InternationalPlugsDiagrams.path,
+            has: (String name) =>
+                name.isNotEmpty && InternationalPlugsDiagrams.has(name),
+            isDesktop: isDesktop,
           ),
-        );
-      }).toList(),
-    );
+        )
+        ..add(const SizedBox(height: AppSpacing.md));
+    }
+    return cards;
   }
 
   Widget _cee7Card(AppColorScheme colors, TextTheme text, AppMonoText mono) {
@@ -551,6 +515,29 @@ class InternationalPlugsScreen extends StatelessWidget {
   }
 }
 
+/// A section heading inside the International Power Plugs reference. Title-styled,
+/// secondary ink, matching the register the IEC page uses for its section labels
+/// — standing on the page background above a stack of [LargeFaceCard]s.
+class _SectionHeading extends StatelessWidget {
+  const _SectionHeading({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Text(
+      label,
+      style: text.titleSmall?.copyWith(
+        color: colors.textSecondary,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.4,
+      ),
+    );
+  }
+}
+
 /// The Type I safety warning, rendered as a prominent callout using the
 /// §8.13/§8.20.4 status-warning idiom the wpa/poe pages use: a surface1 card
 /// with a 1px [StatusTone.warning] border (resolved at render via
@@ -577,7 +564,7 @@ class _WarningCallout extends StatelessWidget {
     final Color warning = colors.statusToneColor(StatusTone.warning);
     return Semantics(
       container: true,
-      // Spoken as a single block so the warning is heard before the tables.
+      // Spoken as a single block so the warning is heard before the cards.
       label: 'Warning. $title. $body',
       child: ExcludeSemantics(
         child: Container(
@@ -621,145 +608,21 @@ class _WarningCallout extends StatelessWidget {
   }
 }
 
-/// The single concept-graphic band for this page (plug face diagrams). Renders
-/// the bundled SVG (`assets/tool-graphics/<asset-name>.svg`) inside a recessed
-/// band when it is bundled, and collapses to nothing (SizedBox.shrink) when it
-/// is not — so the page ships fully working before Charta's face diagrams land.
-/// Decorative for screen readers: every fact a diagram would depict (type,
-/// standard, voltage, current, country) is already in the table text per the
-/// GL-003 §8.6.2 a11y rule.
-///
-/// LIGHT/DARK (GL-003 §8.20.7): the diagram is authored DARK-BAKED, so this
-/// widget reuses the SAME §8.20.7 recolor path the §8.6.2 concept graphics and
-/// the power-phasing waveforms use, via the single-source swap
-/// [ConceptGraphicBand.applyLightSwap]:
-///   * DARK: render the unmodified asset (byte-for-byte; dark goldens unaffected).
-///   * LIGHT: load the SVG source, apply the §8.20.7 allow-list hex swap, then
-///     render via SvgPicture.string. Cached so the replace runs once per build.
-///
-/// Mirrors `_WaveformBand` in power_phasing_screen.dart exactly, narrowed to one
-/// asset.
-class _PlugGraphicBand extends StatelessWidget {
-  const _PlugGraphicBand({required this.assetName, required this.isDesktop});
-
-  final String assetName;
-  final bool isDesktop;
-
-  // §8.6.2 band-height token: 140dp mobile / 160dp tablet-desktop, matching the
-  // shared concept-graphic band so the diagram never crops.
-  static const double _bandHeightMobile = 140;
-  static const double _bandHeightDesktop = 160;
-
-  // Per-asset cache of the already-swapped light SVG source, so the §8.20.7
-  // string replace runs once per asset, not on every rebuild.
-  static final Map<String, String> _lightSvgCache = <String, String>{};
-
-  /// Loads the diagram SVG source and applies the §8.20.7 allow-list light swap,
-  /// caching per asset name. Returns the recolored source string.
-  Future<String> _loadSwappedSvg() async {
-    final String cached = _lightSvgCache[assetName] ?? '';
-    if (cached.isNotEmpty) return cached;
-    final String raw =
-        await rootBundle.loadString(PowerPhasingDiagrams.path(assetName));
-    final String swapped = ConceptGraphicBand.applyLightSwap(raw);
-    _lightSvgCache[assetName] = swapped;
-    return swapped;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Graceful fallback: no bundled diagram → render nothing, layout unchanged.
-    if (!PowerPhasingDiagrams.has(assetName)) {
-      return const SizedBox.shrink();
-    }
-    final AppColorScheme colors = context.colors;
-    final double bandHeight =
-        isDesktop ? _bandHeightDesktop : _bandHeightMobile;
-
-    // DARK: unmodified asset (dark render unchanged). LIGHT: load + §8.20.7 swap
-    // + render via string so no raw lime stroke ever hits a light surface.
-    final Widget svg = colors.isLight
-        ? _LightPlugSvg(future: _loadSwappedSvg(), bandHeight: bandHeight)
-        : SvgPicture.asset(
-            PowerPhasingDiagrams.path(assetName),
-            fit: BoxFit.contain,
-            width: double.infinity,
-            height: bandHeight,
-            excludeFromSemantics: true,
-            // A bundled-but-unparseable SVG collapses to nothing rather than
-            // surfacing a broken-image box.
-            placeholderBuilder: (_) => const SizedBox.shrink(),
-          );
-
-    return ExcludeSemantics(
-      child: Container(
-        decoration: BoxDecoration(
-          color: colors.surface2,
-          borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border.all(color: colors.border, width: 1),
-        ),
-        padding: const EdgeInsets.all(AppSpacing.sm),
-        child: SizedBox(
-          height: bandHeight,
-          width: double.infinity,
-          child: Center(child: svg),
-        ),
-      ),
-    );
-  }
-}
-
-/// Light-mode diagram render: awaits the §8.20.7-swapped SVG source, then draws
-/// it with `SvgPicture.string`. Collapses to nothing while loading or on any
-/// parse failure — same graceful-degradation contract as the dark asset path.
-/// Mirrors `_LightWaveformSvg` in power_phasing_screen.dart.
-class _LightPlugSvg extends StatelessWidget {
-  const _LightPlugSvg({required this.future, required this.bandHeight});
-
-  final Future<String> future;
-  final double bandHeight;
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<String>(
-      future: future,
-      builder: (BuildContext context, AsyncSnapshot<String> snap) {
-        final String? data = snap.data;
-        if (data == null || data.isEmpty) {
-          // Loading or failed — render nothing (no broken box, no jump).
-          return const SizedBox.shrink();
-        }
-        return SvgPicture.string(
-          data,
-          fit: BoxFit.contain,
-          width: double.infinity,
-          height: bandHeight,
-          excludeFromSemantics: true,
-          placeholderBuilder: (_) => const SizedBox.shrink(),
-        );
-      },
-    );
-  }
-}
-
-/// Card surface wrapping a wide table: title over the grid, a
-/// horizontally-scrolling IntrinsicWidth grid (header + rows share one width so
-/// columns align), with an optional full-width footnote beneath. Matches the
+/// Card surface wrapping a wide table: title over a horizontally-scrolling
+/// IntrinsicWidth grid (header + rows share one width so columns align). Used
+/// only for the CEE 7 family card now. Matches the
 /// poe_reference_screen / power_phasing_screen / wifi_channels_screen
-/// overflow-safe idiom. This page's cards carry footnotes only (no in-card
-/// note), so the note slot the pilot uses is dropped here.
+/// overflow-safe idiom.
 class _TableCard extends StatelessWidget {
   const _TableCard({
     required this.title,
     required this.header,
     required this.rows,
-    this.footnote,
   });
 
   final String title;
   final Widget header;
   final List<Widget> rows;
-  final String? footnote;
 
   @override
   Widget build(BuildContext context) {
@@ -795,13 +658,6 @@ class _TableCard extends StatelessWidget {
               ),
             ),
           ),
-          if (footnote != null) ...<Widget>[
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              footnote!,
-              style: text.labelMedium?.copyWith(color: colors.textTertiary),
-            ),
-          ],
         ],
       ),
     );
