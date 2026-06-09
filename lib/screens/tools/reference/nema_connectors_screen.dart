@@ -250,6 +250,7 @@ class NemaConnectorsScreen extends StatelessWidget {
       phase: '1-phase',
       wiring: '2P / 3W (grounded)',
       amps: 30,
+      assetName: NemaConnectorDiagrams.n630,
     ),
     NemaDevice(
       type: '6-50',
@@ -341,6 +342,7 @@ class NemaConnectorsScreen extends StatelessWidget {
       phase: '3-phase',
       wiring: '4W (3 hot + G), connector (female)',
       amps: 50,
+      assetName: NemaConnectorDiagrams.cs8364,
     ),
     NemaDevice(
       type: 'CS8365',
@@ -348,6 +350,7 @@ class NemaConnectorsScreen extends StatelessWidget {
       phase: '3-phase',
       wiring: '4W (3 hot + G), plug (male)',
       amps: 50,
+      assetName: NemaConnectorDiagrams.cs8365,
     ),
   ];
 
@@ -500,7 +503,7 @@ class NemaConnectorsScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  _SectionHeading(label: 'California Standard 3-phase'),
+                  _SectionHeading(label: 'California Standard 3-phase (Non-NEMA)'),
                   const SizedBox(height: AppSpacing.sm),
                   ..._faceCards(groupCalifornia, isDesktop),
                   Text(

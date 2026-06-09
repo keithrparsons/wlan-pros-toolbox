@@ -95,6 +95,18 @@ class NemaConnectorDiagrams {
   /// NEMA L21-20 face — 120/208V 3-phase wye 20A twist-lock (4P/5W).
   static const String l2120 = 'nema-l21-20';
 
+  /// NEMA 6-30 face — 250V 1-phase 30A grounded (straight horizontal blades +
+  /// D-ground, per Pax WD-6 verification — NOT angled).
+  static const String n630 = 'nema-6-30';
+
+  /// California Standard CS8364 face — Non-NEMA 250V 50A 3-phase connector
+  /// (female); 3 power (X/Y/Z) + offset ground, no neutral.
+  static const String cs8364 = 'nema-cs8364';
+
+  /// California Standard CS8365 face — Non-NEMA 250V 50A 3-phase plug (male);
+  /// mating mirror of CS8364.
+  static const String cs8365 = 'nema-cs8365';
+
   /// Legacy single combined face-plate slot. Deprecated by the per-face redesign
   /// (2026-06-08); retained only so any straggler reference keeps compiling. Not
   /// in [all]; the redesigned screen does not render it.
@@ -113,6 +125,7 @@ class NemaConnectorDiagrams {
     l530,
     n615,
     n620,
+    n630,
     n650,
     l620,
     l630,
@@ -122,6 +135,8 @@ class NemaConnectorDiagrams {
     l1430,
     l2120,
     l2130,
+    cs8364,
+    cs8365,
   ];
 
   /// Built diagram paths, populated once from the AssetManifest. `null` until

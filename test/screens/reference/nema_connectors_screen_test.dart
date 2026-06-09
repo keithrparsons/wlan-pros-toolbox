@@ -217,7 +217,8 @@ void main() {
         // The three section headings stand above the stacked face-cards.
         expect(find.text('125V single-phase'), findsOneWidget);
         expect(find.text('208 / 240 / 250V'), findsOneWidget);
-        expect(find.text('California Standard 3-phase'), findsOneWidget);
+        expect(
+            find.text('California Standard 3-phase (Non-NEMA)'), findsOneWidget);
         // Per-device face-card titles render their load-bearing types.
         expect(find.text('L21-30'), findsOneWidget);
         expect(find.text('14-50'), findsOneWidget);

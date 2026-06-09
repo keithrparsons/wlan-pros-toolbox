@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
+  <!-- CS8364 CONNECTOR (female) FACE, drawn LARGE & centered. Style matched to the
+       Vera-passed twist-lock tile (L21-30): viewBox 640x560, round bezel at (320,250)
+       r=110, curved arc-segment twist-lock blades, DM Mono identifiers, IBM Plex Sans words.
+       CALIFORNIA STANDARD, NON-NEMA (Pax 2026-06-08): every manufacturer marks the CS
+       series "Non-NEMA." It is UL498-listed, not a NEMA WD-6 configuration. Labeled as such.
+       Circuit: 250V / 50A / 3-phase Delta / 3-pole 4-wire grounding = 3 hots (X, Y, Z) + G.
+       NO neutral, NO "W". Female face = hollow (outline) curved slots.
+       Confirmed pattern (High): 3 symmetric power blades + 1 OFFSET ground (the odd one
+       out), distinguished in lime. Exact angular spacing is REPRESENTATIVE — CS is not in
+       WD-6 and the precise clock-angles live in Eaton C-92 / Hubbell cut sheets (Medium
+       confidence per Pax). Do not treat the degrees below as authoritative.
+       Palette: §8.20.7 swap-list only — scaffold #E5E5E5, muted #9C9C9C, ONE lime #A1CC3A.
+       STANDING RULE: no label over any slot, ground, ring, or other label. -->
+
+  <defs>
+    <!-- female (connector) twist-lock slot: hollow curved arc segment, drawn at top (12 o'clock),
+         rotate into position. Outline style => receptacle slot. -->
+    <path id="cs-slot" d="M -19 -64 A 67 67 0 0 1 19 -64 L 13 -44 A 47 47 0 0 0 -13 -44 Z"
+          stroke="#E5E5E5" stroke-width="4.5" stroke-linejoin="round"/>
+  </defs>
+
+  <!-- Header -->
+  <text x="320" y="42" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">CS8364</text>
+  <text x="320" y="70" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">California Standard &#183; Non-NEMA &#183; connector (female)</text>
+  <text x="320" y="92" fill="#9C9C9C" font-size="13" font-weight="400" text-anchor="middle">3 power + offset ground &#183; angular spacing representative</text>
+
+  <!-- ============ FACE: round bezel, centered (320,250), r=110 ============ -->
+  <circle cx="320" cy="250" r="110" stroke="#E5E5E5" stroke-width="5"/>
+  <g transform="translate(320,250)">
+    <!-- 3 POWER blades, symmetric, 120 deg apart (X top, Y lower-right, Z lower-left) -->
+    <use href="#cs-slot"/>
+    <use href="#cs-slot" transform="rotate(120)"/>
+    <use href="#cs-slot" transform="rotate(240)"/>
+    <!-- OFFSET GROUND blade: the odd one out, set in toward center on the vertical
+         centerline (below), at a smaller radius so it breaks the 3-fold symmetry. LIME. -->
+    <path d="M -13 28 A 38 38 0 0 0 13 28 L 9 50 A 24 24 0 0 1 -9 50 Z"
+          stroke="#A1CC3A" stroke-width="4.5" stroke-linejoin="round"/>
+  </g>
+
+  <!-- pin callouts, outside the face / clear of slots / ground / ring -->
+  <text x="320" y="120" fill="#9C9C9C" font-size="16" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">X</text>
+  <text x="476" y="318" fill="#9C9C9C" font-size="16" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">Y</text>
+  <text x="164" y="318" fill="#9C9C9C" font-size="16" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">Z</text>
+  <text x="320" y="392" fill="#A1CC3A" font-size="16" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">G</text>
+
+  <!-- ============ LABELS ============ -->
+  <text x="320" y="450" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">250 V &#183; 50 A</text>
+  <text x="320" y="484" fill="#9C9C9C" font-size="18" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">3-phase &#183; 3-pole, 4-wire (no neutral)</text>
+  <text x="320" y="516" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">X / Y / Z hots + G ground &#183; twist-lock &#183; no neutral, no W</text>
+</svg>
