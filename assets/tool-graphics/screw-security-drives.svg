@@ -11,7 +11,6 @@
       .pinl  { fill:none; stroke:#A1CC3A; stroke-width:5; stroke-linecap:round; stroke-linejoin:round; }
     </style>
   </defs>
-  <rect width="860" height="300" fill="#1A1A1A"/>
 
   <!-- 1. Security Torx / pin-in Torx (center pin) -->
   <g transform="translate(95,95)">

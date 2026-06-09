@@ -15,7 +15,6 @@
       .tick   { fill:none; stroke:#A1CC3A; stroke-width:6; stroke-linecap:round; }
     </style>
   </defs>
-  <rect width="720" height="500" fill="#1A1A1A"/>
 
   <text class="title" x="360" y="44" text-anchor="middle">Phillips vs Pozidriv: tell them apart</text>
 
