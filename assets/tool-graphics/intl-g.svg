@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
+  <!-- Type G (UK, BS 1363) FACE, drawn LARGE & centered.
+       Pin geometry reused from Vera-passed composite (Type G cell), scaled ~2.5x:
+       large vertical EARTH rectangle on top, two horizontal rectangular pins below.
+       Pins separate, non-overlapping. Palette §8.20.7: #E5E5E5, #9C9C9C; NO lime.
+       STANDING RULE: no label over any outline, pin, or other label. -->
+
+  <rect x="0" y="0" width="640" height="560" fill="#1A1A1A"/>
+
+  <!-- Header -->
+  <text x="320" y="46" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle">UK / British</text>
+  <text x="320" y="76" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Type G &#183; three rectangular pins, fused</text>
+
+  <!-- FACE FRAME -->
+  <rect x="204" y="134" width="232" height="232" rx="44" stroke="#E5E5E5" stroke-width="3"/>
+
+  <!-- PINS: large vertical earth on top, two horizontal below -->
+  <rect x="307.5" y="178" width="25" height="55" rx="5" fill="#9C9C9C"/>   <!-- E, top, vertical -->
+  <rect x="242" y="270" width="55" height="23" rx="5" fill="#E5E5E5"/>      <!-- L, lower left, horizontal -->
+  <rect x="343" y="270" width="55" height="23" rx="5" fill="#E5E5E5"/>      <!-- N, lower right, horizontal -->
+
+  <!-- pin callouts -->
+  <text x="320" y="166" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">E</text>
+  <text x="269" y="318" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">L</text>
+  <text x="371" y="318" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">N</text>
+
+  <!-- LABELS -->
+  <text x="320" y="436" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">Type G</text>
+  <text x="320" y="468" fill="#9C9C9C" font-size="18" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">BS 1363 &#183; 230 V &#183; 13 A fused</text>
+  <text x="320" y="498" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">UK, Ireland, ~50 countries</text>
+  <text x="320" y="524" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle">High-voltage class (220&#8211;240 V)</text>
+</svg>
