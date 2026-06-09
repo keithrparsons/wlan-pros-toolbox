@@ -1,8 +1,10 @@
 // Cross-category tool search — pure Dart, no dependency.
 //
 // Powers both the global search (search_screen.dart, all categories) and the
-// in-category filter (category_screen.dart, scoped to one category). Reads the
-// web-gated [kToolCategories], so gated tools never appear in web search.
+// in-category filter (category_screen.dart, scoped to one category). Reads
+// [kToolCategories], which is the same full set on every platform (interface
+// parity, Keith 2026-06-09) — on web the network tools are searchable too and
+// open to their honest web-unavailable screen.
 //
 // Match rule (v1): case-insensitive SUBSTRING match against the tool's title,
 // description, and each keyword. The matched FIELD is recorded so the results
@@ -42,7 +44,8 @@ class ToolSearchHit {
   final String? matchedKeyword;
 }
 
-/// Searches every tool in [kToolCategories] (web-gated) for [query].
+/// Searches every tool in [kToolCategories] (the full set on every platform)
+/// for [query].
 ///
 /// Returns hits sorted title-first, then description, then keyword, alphabetical
 /// within each tier. An empty or whitespace-only query returns an empty list.

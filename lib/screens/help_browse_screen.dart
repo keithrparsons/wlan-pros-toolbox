@@ -11,9 +11,10 @@
 // category a tool belongs to and the order tools appear in — the same order the
 // rest of the app uses. Help content is looked up by the catalog tool id via
 // helpForId(). A tool with no help entry is simply not listed (no fabricated
-// help, GL-005). On web, kToolCategories already drops the two network
-// categories, so this screen lists only the web-safe tools there, matching
-// every other navigation surface.
+// help, GL-005). On web, kToolCategories now lists every tool (interface
+// parity, Keith 2026-06-09) — including the network tools that show a web
+// warning on their own screen — so help browse matches every other navigation
+// surface on web exactly as it does natively.
 //
 // Tokens: GL-003 §8.1 surface stack, §4 spacing, §8.5 type, §8.3 focus ring
 // (inherited on the row InkWell via the local focus-border, matching

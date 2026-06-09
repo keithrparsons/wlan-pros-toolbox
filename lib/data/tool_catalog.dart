@@ -84,13 +84,15 @@ class ToolEntry {
   /// Test Network ordering untouched.
   final String? subgroup;
 
-  /// `true` when the tool is only available on Android and MUST NOT appear on
-  /// iOS / macOS / Web. Apple platforms block third-party nearby-AP (Wi-Fi)
-  /// scanning, so a tool that depends on it (e.g. `nearby-ap-scan`) is gated to
-  /// Android. The [_buildCatalog] platform filter drops `androidOnly` tools on
-  /// every non-Android target, so a gated tool stays out of all navigation and
-  /// search surfaces — the same mechanism as the `kIsWeb` category gate, applied
-  /// per-tool. Default `false` keeps the constructor backward-compatible.
+  /// `true` when the tool only WORKS on Android. Apple platforms block
+  /// third-party nearby-AP (Wi-Fi) scanning, so a tool that depends on it (e.g.
+  /// `nearby-ap-scan`) is functional on Android only. The [_buildCatalog]
+  /// NATIVE filter drops `androidOnly` tools on non-Android native targets
+  /// (iOS / macOS), so a gated tool stays out of all navigation and search
+  /// surfaces there. On WEB the tool is KEPT and shows with a web-unavailable
+  /// warning (interface parity, Keith 2026-06-09) — see
+  /// [kWebUnavailableToolIds]. Default `false` keeps the constructor
+  /// backward-compatible.
   final bool androidOnly;
 
   /// Returns a copy of this entry with [keywords] replaced. Used only by the
@@ -161,19 +163,67 @@ class ToolCategory {
   bool get hasLiveTool => tools.any((t) => t.isLive);
 }
 
-/// Category ids gated OFF on the web build. The web flavor is a click-through
-/// demo served from a browser; the live network/Wi-Fi diagnostics need OS-level
-/// sockets, native link metrics, and platform plugins that do not exist on web,
-/// so the two network categories are hidden from navigation on web entirely.
-/// This is a `kIsWeb` filter, NOT a deletion — on iOS/macOS/Android the full
-/// catalog renders unchanged. Flip the build target back to native and all 86
-/// tools reappear with no further change. The 61 web-safe tools (Calculators &
-/// Tools = 24, Quick Reference = 37) are pure-Dart math + bundled reference
-/// assets and run identically in the browser.
-const Set<String> kWebGatedCategoryIds = <String>{
-  'test-network', // 5 live Wi-Fi/internet diagnostics
-  'networking', // 21 socket/lookup/scan utilities
+/// Tool ids that CANNOT function in a browser and therefore carry an honest
+/// "Not available on the web" warning on web (Keith, 2026-06-09 — interface
+/// parity).
+///
+/// THE CHANGE FROM THE OLD MODEL: web no longer HIDES the network/Wi-Fi tools.
+/// Every tile appears on web exactly as it does on macOS/Android, so the
+/// interface looks identical across platforms. The tools listed here open to
+/// the SAME honest unavailable surface the app already shows natively (the
+/// `NetworkUnavailableView` web state, or the `_AndroidOnly` state for the
+/// Android-only scan) and carry a small "Web" badge on their tile, mirroring
+/// exactly how the app already warns when a tool can't run on iOS.
+///
+/// THE MEMBERSHIP RULE (GL-005 honesty): a tool is in this set ONLY when it
+/// genuinely cannot run in a browser — it needs a raw/TCP/UDP socket, an ICMP
+/// echo, a native Wi-Fi/CoreWLAN or cellular bridge, a cross-origin HTTP read,
+/// a LAN scan, the Android nearby-AP scan, or a platform method channel. Tools
+/// that run identically in a browser are NOT listed here and behave normally:
+///   * mac-oui-lookup — bundled offline IEEE OUI table, no I/O.
+///   * ipv4-subnet / ipv6-subnet — pure subnet math, no I/O.
+///   * my-current-location — `geolocator` uses the browser Geolocation API and
+///     renders its own honest "Location unavailable" state when denied.
+///   * every Calculator, Quick Reference, and Educational Resources tool.
+///
+/// WEB-ONLY. This set is consulted exclusively through [toolUnavailableOnWeb],
+/// which short-circuits to `false` off web, so native iOS/macOS/Android tile
+/// behavior (incl. nearby-ap-scan staying hidden natively on Apple platforms)
+/// is byte-for-byte unchanged.
+const Set<String> kWebUnavailableToolIds = <String>{
+  // Test Network — live Wi-Fi / internet / cellular diagnostics.
+  'net-quality', // socket throughput/latency probes
+  'wifi-info', // native Wi-Fi link metrics (CoreWLAN / platform bridge)
+  'cellular-info', // native cellular radio bridge
+  // Networking Tools — socket / lookup / scan / native utilities.
+  'interface-info', // reads the device interface table
+  'device-info', // device system facts via platform bridge
+  'dns-lookup', // DNS-over-HTTPS via dart:io HttpClient (no web path)
+  'port-scan', // raw TCP connect scan
+  'ping', // TCP-handshake RTT probe (socket)
+  'icmp-ping', // raw ICMP echo
+  'ping-plotter', // sustained socket ping
+  'ping-sweep', // subnet TCP-probe sweep
+  'network-discovery', // LAN host + service scan
+  'nearby-ap-scan', // Android Wi-Fi scan API (also hidden natively off Android)
+  'traceroute', // OS traceroute path
+  'mobile-traceroute', // ICMP TTL-walk
+  'ssl-inspect', // raw outbound TLS socket
+  'http-headers', // cross-origin header read (CORS-blocked in a browser)
+  'whois', // raw TCP/43 socket
+  'wake-on-lan', // UDP broadcast magic packet
+  'arp-ndp', // neighbor table / raw sockets
+  'bgp-asn', // RIPEstat over dart:io HttpClient (CORS unverified)
+  'ip-geo', // ipinfo.io over dart:io HttpClient (CORS unverified)
+  'packet-sender', // raw TCP/UDP socket
 };
+
+/// True when [toolId] cannot function in a browser AND we are running on web,
+/// so the UI should show the honest web-unavailable warning (badge on the tile,
+/// `NetworkUnavailableView` on the screen). Off web this is ALWAYS false, which
+/// keeps native iOS/macOS/Android behavior unchanged — the set is web-only.
+bool toolUnavailableOnWeb(String toolId) =>
+    kIsWeb && kWebUnavailableToolIds.contains(toolId);
 
 /// Catalog seed — the 4-category reorganization (Keith, 2026-06-01; see file
 /// header). The list order IS the home-grid order: Test Network, Networking
@@ -181,9 +231,12 @@ const Set<String> kWebGatedCategoryIds = <String>{
 /// is presentation-sorted in category_screen.dart (alphabetical, except the
 /// pinned three in Test Network).
 ///
-/// This is the FULL, platform-agnostic catalog. UI consumers MUST read
-/// [kToolCategories] (below), which applies the web gate. Only touch this raw
-/// list when adding/removing a tool from the product itself.
+/// This is the FULL, platform-agnostic catalog. UI consumers read
+/// [kToolCategories] (below). On web, every tile in this list now appears (no
+/// category is hidden, no Android-only tool is dropped) so the interface looks
+/// identical across platforms; tools that can't run in a browser carry a web
+/// warning instead (see [kWebUnavailableToolIds] / [toolUnavailableOnWeb]).
+/// Only touch this raw list when adding/removing a tool from the product itself.
 const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
   // ───────────────────────── 1. Test Network ────────────────────────
   // NEW (2026-06-01). The live Wi-Fi/internet diagnostics moved out of
@@ -1525,32 +1578,34 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
 /// constant. Mirrors the `/tools/...` route namespace of the other tools.
 const String kEducationalResourcesRoute = '/tools/educational-resources';
 
-/// The catalog the UI renders. On native targets this is the full
-/// [_kAllToolCategories]; on web it drops the [kWebGatedCategoryIds]
-/// categories (the network diagnostics that have no browser implementation),
-/// leaving only the 61 web-safe Calculators & Tools and Quick Reference tools.
-/// Every catalog consumer (home grid, category screen) reads this list, so
-/// gating here is sufficient to keep gated tools out of all navigation and
-/// search surfaces on web. Reversible: it's a `kIsWeb` filter, not a deletion.
+/// The catalog the UI renders. This is the same on every platform: the full
+/// [_kAllToolCategories] with no category hidden. On web the network/Wi-Fi
+/// tools still appear (interface parity, Keith 2026-06-09) and carry a web
+/// warning via [toolUnavailableOnWeb]; on native the per-tool `androidOnly`
+/// gate still drops Apple-blocked tools (e.g. nearby-ap-scan) on iOS/macOS.
+/// Every catalog consumer (home grid, category screen, search) reads this list.
 final List<ToolCategory> kToolCategories = _buildCatalog();
 
 /// Builds the UI catalog: folds the external search vocabulary
 /// ([kToolKeywords], lib/data/tool_keywords.dart) into each [ToolEntry], then
-/// applies the web gate. Keeping the vocabulary in its own file lets Keith
-/// iterate the search terms without editing the catalog structure, and keeps the
-/// catalog the single source of truth for everything else.
+/// applies the per-tool `androidOnly` NATIVE gate. Keeping the vocabulary in its
+/// own file lets Keith iterate the search terms without editing the catalog
+/// structure, and keeps the catalog the single source of truth for everything
+/// else.
 List<ToolCategory> _buildCatalog() {
-  final List<ToolCategory> source = kIsWeb
-      ? _kAllToolCategories
-            .where((ToolCategory c) => !kWebGatedCategoryIds.contains(c.id))
-            .toList(growable: false)
-      : _kAllToolCategories;
+  // No category is hidden on web anymore — every tile appears so the interface
+  // matches macOS/Android (web warnings come from [toolUnavailableOnWeb], not a
+  // catalog deletion).
+  const List<ToolCategory> source = _kAllToolCategories;
 
-  // Per-tool platform gate: `androidOnly` tools (e.g. nearby-ap-scan, which
-  // depends on a scan API Apple blocks on iOS / macOS) are dropped on every
-  // non-Android target so they never reach the home grid, category screens, or
-  // search. `defaultTargetPlatform` is web-safe (no `dart:io`); on web kIsWeb is
-  // true so isAndroid is false and the tool is gated out there too.
+  // Per-tool NATIVE platform gate: `androidOnly` tools (e.g. nearby-ap-scan,
+  // which depends on a scan API Apple blocks on iOS / macOS) are dropped on
+  // non-Android NATIVE targets so they never reach the home grid, category
+  // screens, or search there. `defaultTargetPlatform` is web-safe (no
+  // `dart:io`). On WEB the tool is KEPT (kIsWeb short-circuits isAndroid to
+  // false but we no longer drop it) so the tile shows with a web warning,
+  // mirroring how iOS/macOS show it nowhere natively but web shows the limit.
+  final bool isWeb = kIsWeb;
   final bool isAndroid =
       !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
@@ -1566,7 +1621,11 @@ List<ToolCategory> _buildCatalog() {
           countLabelOverride: c.countLabelOverride,
           isNew: c.isNew,
           tools: c.tools
-              .where((ToolEntry t) => isAndroid || !t.androidOnly)
+              // Keep an `androidOnly` tool when: we're on Android (it works),
+              // or on web (it shows with a web warning — interface parity).
+              // Drop it only on non-Android NATIVE targets (iOS/macOS), exactly
+              // as before.
+              .where((ToolEntry t) => isWeb || isAndroid || !t.androidOnly)
               .map(
                 (ToolEntry t) => t._copyWithKeywords(
                   kToolKeywords[t.id] ?? const <String>[],

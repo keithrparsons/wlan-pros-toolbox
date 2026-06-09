@@ -156,6 +156,12 @@ class _ToolRowState extends State<ToolRow> {
     );
   }
 
+  /// True on web for a tool that cannot function in a browser (raw sockets,
+  /// native Wi-Fi/cellular bridge, LAN scan, etc.). Off web this is always
+  /// false, so native tiles are byte-for-byte unchanged. The tile still
+  /// navigates; the tool's screen shows the honest unavailable surface.
+  bool get _webUnavailable => toolUnavailableOnWeb(widget.tool.id);
+
   Widget _content(TextTheme text, bool live) {
     final AppColorScheme colors = context.colors;
     final List<Widget> children = <Widget>[
@@ -173,6 +179,11 @@ class _ToolRowState extends State<ToolRow> {
                   letterSpacing: 0.4,
                 ),
               ),
+            )
+          else if (_webUnavailable)
+            const Padding(
+              padding: EdgeInsets.only(left: AppSpacing.xs),
+              child: _WebUnavailableBadge(),
             ),
         ],
       ),
@@ -292,6 +303,7 @@ class _ToolRowState extends State<ToolRow> {
     final StringBuffer b = StringBuffer(t.title);
     b.write('. ');
     if (!_live) b.write('Coming soon. ');
+    if (_live && _webUnavailable) b.write('Not available on the web. ');
     if (widget.categorySourceLabel != null) {
       b.write('In ${widget.categorySourceLabel}. ');
       if (widget.matchNote != null) b.write('${widget.matchNote}. ');
@@ -364,6 +376,55 @@ class _LeadingIcon extends StatelessWidget {
               placeholderBuilder: (_) => const SizedBox.shrink(),
             )
           : Icon(Icons.bolt, color: iconTint, size: 20),
+    );
+  }
+}
+
+/// The small "Web" badge shown on a tile (web build only) for a tool that
+/// cannot function in a browser. It signals the limitation WITHOUT hiding the
+/// tile — the interface stays identical across platforms, and tapping in shows
+/// the honest `NetworkUnavailableView` web state. Treatment is the §8.13
+/// informational status hue (`statusInfo`), never danger: web-unavailability is
+/// an expected platform limit, not an error. Semantics are carried by the row's
+/// collapsed label ("Not available on the web"), so this glyph+word pair is
+/// excluded from the accessibility tree.
+class _WebUnavailableBadge extends StatelessWidget {
+  const _WebUnavailableBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return ExcludeSemantics(
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xs, // 8px
+          vertical: AppSpacing.xxs, // 4px
+        ),
+        decoration: BoxDecoration(
+          color: colors.surface2,
+          borderRadius: BorderRadius.circular(AppRadius.control),
+          border: Border.all(color: colors.statusInfo, width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(
+              Icons.public_off_outlined,
+              size: 14,
+              color: colors.statusInfo,
+            ),
+            const SizedBox(width: AppSpacing.xxs),
+            Text(
+              'Web',
+              style: text.labelSmall?.copyWith(
+                color: colors.statusInfo,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
