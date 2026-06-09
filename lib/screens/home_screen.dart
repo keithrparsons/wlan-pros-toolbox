@@ -277,8 +277,13 @@ class _HomeScreenState extends State<HomeScreen> {
   ///     same margin and keep the no-overflow gate green (144 → 156 phone,
   ///     172 → 184 multi-column). Dark is unchanged.
   double _tileHeightFor(double width, {required bool light}) {
+    // +6 over the host-test budget (144/172) to cover the device font-metric
+    // variance that made build 18 overflow ~6px on iPhone 17 Pro: the headless
+    // gate measures IBM Plex Sans shorter than iOS renders it. The Flexible
+    // examples line guarantees no overflow regardless; this keeps the 2-line
+    // examples fully visible in the common case rather than ellipsizing early.
     final double base =
-        width < AppSpacing.gridTwoColBreakpoint ? 144 : 172;
+        width < AppSpacing.gridTwoColBreakpoint ? 150 : 178;
     return light ? base + 12 : base;
   }
 }
@@ -753,13 +758,20 @@ class _CategoryTileState extends State<_CategoryTile> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    _examplesLine(),
-                    style: text.labelMedium?.copyWith(
-                      color: colors.textTertiary,
+                  // Flexible so the examples line can never push the Column past
+                  // the fixed tile height: on a device whose font metrics render
+                  // a hair taller than the headless test computes (the iOS 6px
+                  // overflow Keith caught on build 18, 2026-06-08), it ellipsizes
+                  // gracefully instead of painting a RenderFlex overflow banner.
+                  Flexible(
+                    child: Text(
+                      _examplesLine(),
+                      style: text.labelMedium?.copyWith(
+                        color: colors.textTertiary,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
