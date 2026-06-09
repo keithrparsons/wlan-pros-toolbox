@@ -2545,6 +2545,7 @@
       "purpose": "Reference for the IEC World Plugs letter system (Types A through M) by region, with the underlying national standard, nominal voltage class and frequency, and current rating, plus the CEE 7 European family breakout.",
       "whyHere": "When you travel or spec gear for a site abroad, confirm the plug type, nominal mains voltage, and frequency you will meet, so power adapters and equipment ratings match what is at the wall.",
       "howToUse": [
+        "Search by country at the top (e.g. Germany shows Type C, F at 230V/50Hz). Common names and abbreviations work too, such as USA, UK, or Holland; multi-type countries show all their letters.",
         "The plug-type table lists each letter with its standard, voltage class, current rating, and the countries that use it.",
         "The CEE 7 family breakout shows how the European C / E / F types and the CEE 7/7 hybrid relate.",
         "Read the voltage class as nominal: most of the world is 230V except North America and Japan at 120V. Watch the warnings (for example, Argentine Type I has line and neutral reversed)."

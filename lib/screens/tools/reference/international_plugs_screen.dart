@@ -44,7 +44,9 @@
 // "Access Point" never "router".
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 
+import '../../../data/country_plug_data.dart';
 import '../../../data/international_plugs_diagrams.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
@@ -52,6 +54,7 @@ import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../labeled_field.dart';
 import 'large_face_card.dart';
 import 'reference_row_semantics.dart';
 
@@ -116,7 +119,7 @@ class Cee7Member {
   final String note;
 }
 
-class InternationalPlugsScreen extends StatelessWidget {
+class InternationalPlugsScreen extends StatefulWidget {
   const InternationalPlugsScreen({super.key});
 
   /// The IEC World Plugs letter system, in letter order. Verified against the
@@ -283,21 +286,8 @@ class InternationalPlugsScreen extends StatelessWidget {
       'World Plugs letter system.';
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('International Power Plugs'),
-        toolbarHeight: 64,
-        // §8.16 — copy the whole page as sectioned TSV: the IEC type table, the
-        // CEE 7 European family, then the Type I safety warning. Static data,
-        // always enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
-      ),
-      body: SafeArea(top: false, child: _body(context)),
-    );
-  }
+  State<InternationalPlugsScreen> createState() =>
+      _InternationalPlugsScreenState();
 
   /// §8.16 copy payload — the full page as TSV sections. Section 1 is the IEC
   /// type table (type, standard, voltage, current, countries); section 2 is the
@@ -349,6 +339,53 @@ class InternationalPlugsScreen extends StatelessWidget {
       ..writeln(tableFootnote);
     return buf.toString().trimRight();
   }
+}
+
+class _InternationalPlugsScreenState extends State<InternationalPlugsScreen> {
+  final TextEditingController _queryCtrl = TextEditingController();
+  final FocusNode _queryFocus = FocusNode();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _queryCtrl.dispose();
+    _queryFocus.dispose();
+    super.dispose();
+  }
+
+  void _onQueryChanged(String value) {
+    setState(() => _query = value);
+    // WCAG 4.1.3 — announce the live result count so AT users hear the list
+    // change as they type, without focus leaving the field.
+    final int n = searchCountryPlugs(value).length;
+    final String trimmed = value.trim();
+    SemanticsService.sendAnnouncement(
+      View.of(context),
+      trimmed.isEmpty
+          ? 'Type a country to look up its plug type'
+          : n == 0
+              ? 'No country matches $trimmed'
+              : '$n matching countr${n == 1 ? 'y' : 'ies'}',
+      TextDirection.ltr,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('International Power Plugs'),
+        toolbarHeight: 64,
+        // §8.16 — copy the whole page as sectioned TSV: the IEC type table, the
+        // CEE 7 European family, then the Type I safety warning. Static data,
+        // always enabled.
+        actions: <Widget>[
+          AppCopyAction(textBuilder: InternationalPlugsScreen._buildCopyText),
+        ],
+      ),
+      body: SafeArea(top: false, child: _body(context)),
+    );
+  }
 
   Widget _body(BuildContext context) {
     final AppColorScheme colors = context.colors;
@@ -377,11 +414,19 @@ class InternationalPlugsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  // The Type I safety warning rides at the top, above the cards,
-                  // so a tech sees it before scanning the Type I face-cards.
+                  // Country search rides at the very top: a tech most often
+                  // arrives asking "what plug do I need for <country>", so the
+                  // lookup is the first thing on the page, above the per-type
+                  // reference cards.
+                  _searchCard(colors, mono),
+                  const SizedBox(height: AppSpacing.sm),
+                  _CountryResults(query: _query, mono: mono),
+                  const SizedBox(height: AppSpacing.lg),
+                  // The Type I safety warning rides above the cards, so a tech
+                  // sees it before scanning the Type I face-cards.
                   _WarningCallout(
-                    title: typeIWarningTitle,
-                    body: typeIWarningBody,
+                    title: InternationalPlugsScreen.typeIWarningTitle,
+                    body: InternationalPlugsScreen.typeIWarningBody,
                     colors: colors,
                     text: text,
                   ),
@@ -396,7 +441,7 @@ class InternationalPlugsScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.sm),
                   ..._faceCards(isDesktop),
                   Text(
-                    tableFootnote,
+                    InternationalPlugsScreen.tableFootnote,
                     style: text.labelMedium?.copyWith(
                       color: colors.textTertiary,
                     ),
@@ -421,9 +466,39 @@ class InternationalPlugsScreen extends StatelessWidget {
   /// as specs, and its per-face SVG (degrading gracefully). The three Type I
   /// rows each render their own card so each national standard stays distinct;
   /// the polarity caveat is carried by the warning callout above.
+  Widget _searchCard(AppColorScheme colors, AppMonoText mono) {
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: LabeledField(
+        label: 'Search by country',
+        hint: 'country name',
+        semanticLabel: 'Search plug type by country name',
+        field: TextField(
+          controller: _queryCtrl,
+          focusNode: _queryFocus,
+          autocorrect: false,
+          enableSuggestions: false,
+          keyboardType: TextInputType.text,
+          textInputAction: TextInputAction.search,
+          textCapitalization: TextCapitalization.words,
+          onChanged: _onQueryChanged,
+          cursorColor: colors.textAccent,
+          decoration: const InputDecoration(
+            hintText: 'e.g. Germany, USA, UK',
+          ),
+        ),
+      ),
+    );
+  }
+
   List<Widget> _faceCards(bool isDesktop) {
     final List<Widget> cards = <Widget>[];
-    for (final PlugType p in plugTypes) {
+    for (final PlugType p in InternationalPlugsScreen.plugTypes) {
       cards
         ..add(
           LargeFaceCard(
@@ -457,7 +532,7 @@ class InternationalPlugsScreen extends StatelessWidget {
           _HeaderCell('Note', width: 300),
         ],
       ),
-      rows: cee7Family.map((Cee7Member m) {
+      rows: InternationalPlugsScreen.cee7Family.map((Cee7Member m) {
         return ReferenceRowSemantics(
           label: rowLabel(m.designation, <String?>[
             'type ${m.type}',
@@ -512,6 +587,195 @@ class InternationalPlugsScreen extends StatelessWidget {
           ),
         );
       }).toList(),
+    );
+  }
+}
+
+/// The country-search results region. Three states (SOP-007 §5):
+///  - idle    → empty query; an honest prompt to type a country (no rows).
+///  - empty   → a query that matches nothing; an honest "no match" card, never a
+///    fabricated row.
+///  - success → matching countries as rows, the type letters and voltage/Hz in
+///    DM Mono.
+/// There is no loading or error state: the data is compile-time const, so the
+/// search is synchronous and cannot fail or stall.
+class _CountryResults extends StatelessWidget {
+  const _CountryResults({required this.query, required this.mono});
+
+  final String query;
+  final AppMonoText mono;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final String trimmed = query.trim();
+
+    if (trimmed.isEmpty) {
+      return _ResultMessageCard(
+        icon: Icons.public,
+        title: 'Look up a country',
+        body: 'Type a country name to see its plug type and voltage. Common '
+            'names work too, such as USA, UK, or Holland.',
+      );
+    }
+
+    final List<CountryPlug> results = searchCountryPlugs(trimmed);
+    if (results.isEmpty) {
+      return _ResultMessageCard(
+        icon: Icons.search_off,
+        title: 'No match',
+        body: 'No country matches "$trimmed". Try the full name or a common '
+            'spelling.',
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            results.length == 1
+                ? '1 match'
+                : '${results.length} matches',
+            style: text.labelMedium?.copyWith(
+              color: colors.textSecondary,
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          for (int i = 0; i < results.length; i++) ...<Widget>[
+            if (i > 0) Divider(color: colors.border, height: AppSpacing.sm),
+            _CountryRow(entry: results[i], mono: mono),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// One country result. The country name reads as the primary label; the plug
+/// type letter(s) and the voltage/Hz read in DM Mono (the identifier register),
+/// type letters tinted with the accent ink. Wraps cleanly at 320px because the
+/// mono line is allowed to wrap rather than forcing a fixed intrinsic width.
+class _CountryRow extends StatelessWidget {
+  const _CountryRow({required this.entry, required this.mono});
+
+  final CountryPlug entry;
+  final AppMonoText mono;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    // Spoken as one phrase, e.g. "Germany. Type C, F. 230V/50Hz."
+    return Semantics(
+      container: true,
+      label: '${entry.country}. ${entry.typeLabel}. ${entry.powerLabel}.',
+      child: ExcludeSemantics(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                entry.country,
+                style: text.bodyLarge?.copyWith(
+                  color: colors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: <Widget>[
+                  Text(
+                    entry.typeLabel,
+                    style: mono.inlineCode.copyWith(
+                      color: colors.textAccent,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    '  ·  ',
+                    style: mono.inlineCode.copyWith(
+                      color: colors.textTertiary,
+                    ),
+                  ),
+                  Text(
+                    entry.powerLabel,
+                    style: mono.inlineCode.copyWith(
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// An honest non-result card (idle prompt or no-match), matching the
+/// surface1 + hairline-border idiom of the port-reference message card.
+class _ResultMessageCard extends StatelessWidget {
+  const _ResultMessageCard({
+    required this.icon,
+    required this.title,
+    required this.body,
+  });
+
+  final IconData icon;
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(icon, size: 20, color: colors.textTertiary),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  title,
+                  style: text.bodyLarge?.copyWith(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  body,
+                  style: text.labelMedium?.copyWith(
+                    color: colors.textTertiary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

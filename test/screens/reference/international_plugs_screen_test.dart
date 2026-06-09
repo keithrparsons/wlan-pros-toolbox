@@ -209,8 +209,9 @@ void main() {
         // A couple of per-type face-card titles render.
         expect(find.text('Type G'), findsOneWidget);
         expect(find.text('Type F'), findsOneWidget);
-        // Read-only reference: no inputs.
-        expect(find.byType(TextField), findsNothing);
+        // The page now carries one input: the country-search field at the top
+        // (added 2026-06-08). The reference cards below it stay read-only.
+        expect(find.byType(TextField), findsOneWidget);
         // No bundled face → no SvgPicture (graceful degradation: each card reads
         // as title + specs alone).
         expect(find.byType(SvgPicture), findsNothing);
