@@ -49,7 +49,9 @@ void main() {
   testWidgets('idle: shows the concept-less scan action, no host list', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(_host(NetworkDiscoveryScreen(service: oui)));
+    await tester.pumpWidget(_host(
+      NetworkDiscoveryScreen(service: oui, glanceCard: const SizedBox.shrink()),
+    ));
     expect(find.text('Network Discovery'), findsOneWidget);
     expect(find.text('Scan local network'), findsOneWidget);
     expect(find.text('Stop'), findsNothing);
@@ -78,6 +80,7 @@ void main() {
       NetworkDiscoveryScreen(
         service: oui,
         engineFactory: () => _FakeEngine(result),
+        glanceCard: const SizedBox.shrink(),
       ),
     ));
     await tester.tap(find.text('Scan local network'));
@@ -102,6 +105,7 @@ void main() {
       NetworkDiscoveryScreen(
         service: oui,
         engineFactory: () => _FakeEngine(result),
+        glanceCard: const SizedBox.shrink(),
       ),
     ));
     await tester.tap(find.text('Scan local network'));
@@ -125,6 +129,7 @@ void main() {
       NetworkDiscoveryScreen(
         service: oui,
         engineFactory: () => _FakeEngine(result),
+        glanceCard: const SizedBox.shrink(),
       ),
     ));
     await tester.tap(find.text('Scan local network'));

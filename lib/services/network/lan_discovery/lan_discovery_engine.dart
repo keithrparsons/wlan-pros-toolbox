@@ -335,10 +335,18 @@ class LanDiscoveryEngine {
     yield const DiscoveryProgress(DiscoveryPhase.arp, 0.97);
 
     // --- Heuristic device-type on each host ---
+    //
+    // Runs LAST, after ARP/vendor enrichment, so the M1 vendor + hostname hints
+    // see the resolved OUI vendor and the reverse-DNS / mDNS name. On platforms
+    // with no ARP read (every non-macOS target) `vendor` is null and the hint
+    // contributes nothing — the heuristic degrades to the ports/mDNS result it
+    // produced before M1, never inventing a class from absent data (GL-005).
     for (final LanHost h in byIp.values) {
       h.deviceType = inferDeviceType(
         openPorts: h.openPorts,
         mdnsServices: h.mdnsServices,
+        vendor: h.vendor,
+        hostname: h.mdnsName ?? h.hostname,
       );
     }
 

@@ -22,6 +22,12 @@ enum DeviceType {
   appleDevice('Apple device'),
   iosDevice('iOS device'),
   windowsHost('Windows / SMB host'),
+  // M1 — networking-gear classes, derived from the OUI vendor (desktop only,
+  // where the ARP read supplies a MAC). On mobile there is no MAC anchor, so
+  // these never fire there and the host falls through to a port/mDNS guess or
+  // Unknown — the documented ceiling, not a bug.
+  accessPoint('Access point / Wi-Fi'),
+  networkGear('Network gear'),
   webServer('Web server / host'),
   sshHost('SSH host'),
   mdnsDevice('mDNS device'),
@@ -33,8 +39,9 @@ enum DeviceType {
   final String label;
 }
 
-/// Pure heuristic: infer a [DeviceType] from the open-port set and the mDNS
-/// service-type set. Ordered most-specific-first; first match wins.
+/// Pure heuristic: infer a [DeviceType] from the open-port set, the mDNS
+/// service-type set, and (M1) the optional OUI [vendor] + reverse-DNS
+/// [hostname]. Ordered most-specific-first; first match wins.
 ///
 /// Ordering principle (SPIKE-HSD-01, refined after on-device iOS testing): a
 /// specific mDNS service type is a much STRONGER identity signal than a lone
@@ -44,9 +51,21 @@ enum DeviceType {
 /// port fingerprints (printer IPP/LPD/9100, RTSP camera, iOS lockdownd, SMB)
 /// keep their high priority.
 ///
+/// M1 — vendor/hostname HINTS (Fing/WiFiman lesson). [vendor] is the OUI-derived
+/// manufacturer (desktop only, where the ARP read supplied a MAC); [hostname] is
+/// the reverse-DNS / mDNS name. They feed the heuristic ONLY where the match is
+/// obvious, and they sit BELOW the strong port/mDNS fingerprints so they never
+/// override hard evidence. Two honesty rules (GL-005) bind them:
+///   * a networking vendor (Ubiquiti/Cisco/Aruba/…) is shown as the GENERIC
+///     `networkGear` unless a Wi-Fi/AP keyword also appears — we never promote a
+///     wired switch to "Access point" on the vendor alone;
+///   * an UNRECOGNIZED vendor contributes NOTHING — the host stays Unknown
+///     rather than inventing a class from a name we don't map.
+///
 /// Rules (ordered):
 ///  1. 631 (IPP) or 515 (LPD) or 9100, OR an `_ipp`/`_printer`/
-///     `_pdl-datastream` mDNS service → printer
+///     `_pdl-datastream` mDNS service, OR an obvious printer vendor/hostname
+///     → printer
 ///  2. 554 (RTSP)       → camera / NVR
 ///  3. 62078 (iOS lockdownd / "usbmuxd over Wi-Fi") → iOS device
 ///  4. 445 (SMB)        → Windows / SMB host
@@ -55,24 +74,43 @@ enum DeviceType {
 ///     and would otherwise read as an Apple device.
 ///  6. `_googlecast` mDNS service → media streamer
 ///  7. an `_airplay`/`_raop`/`_companion-link` mDNS service → Apple device
-///  8. 80 or 443 or 8080 → web server / host  (weak — below mDNS identity)
-///  9. 22 (SSH)         → SSH host            (weak — below mDNS identity)
-/// 10. any mDNS service at all → generic mDNS device
-/// 11. otherwise        → unknown
+///  8. obvious AP/Wi-Fi vendor+keyword → access point  (M1, vendor hint)
+///  9. obvious networking vendor → network gear         (M1, vendor hint)
+/// 10. 80 or 443 or 8080 → web server / host  (weak — below mDNS + vendor hint)
+/// 11. 22 (SSH)         → SSH host            (weak — below mDNS + vendor hint)
+/// 12. any mDNS service at all → generic mDNS device
+/// 13. otherwise        → unknown
 DeviceType inferDeviceType({
   required Set<int> openPorts,
   required Set<String> mdnsServices,
+  String? vendor,
+  String? hostname,
 }) {
   bool hasService(String needle) =>
       mdnsServices.any((String s) => s.toLowerCase().contains(needle));
 
-  // 1. Printer — port fingerprint or printing mDNS service.
+  // M1 — lower-cased identity text from vendor + hostname, scanned for obvious
+  // keywords. A raw-OUI fallback string (e.g. "B8:27:EB") carries no English
+  // word, so it never trips a keyword — only a real resolved vendor name does.
+  final String vendorLc = (vendor ?? '').toLowerCase();
+  final String hostLc = (hostname ?? '').toLowerCase();
+  bool vendorOrHostHas(String needle) =>
+      vendorLc.contains(needle) || hostLc.contains(needle);
+
+  // 1. Printer — port fingerprint, printing mDNS service, OR an obvious printer
+  //    vendor/hostname (M1). The printing-vendor keywords are unambiguous —
+  //    a host named "brother-…" or with a "Lexmark"/"Kyocera" OUI is a printer
+  //    regardless of which ports it left open.
   if (openPorts.contains(CuratedPorts.ipp) ||
       openPorts.contains(CuratedPorts.lpd) ||
       openPorts.contains(9100) ||
       hasService('_ipp') ||
       hasService('_printer') ||
-      hasService('_pdl-datastream')) {
+      hasService('_pdl-datastream') ||
+      vendorOrHostHas('lexmark') ||
+      vendorOrHostHas('kyocera') ||
+      vendorOrHostHas('brother') ||
+      vendorOrHostHas('printer')) {
     return DeviceType.printer;
   }
 
@@ -113,34 +151,72 @@ DeviceType inferDeviceType({
     return DeviceType.appleDevice;
   }
 
-  // --- Weak single-port rules (only after mDNS identity has had its say) ---
+  // --- M1: vendor-hint rules for networking gear (DESKTOP ONLY) ---
   //
-  // Access points / infrastructure: NOTE — most access points broadcast no
-  // "I am an access point" mDNS service, and the one reliable signal is the
-  // OUI vendor from the MAC address, which a sandboxed mobile app cannot read
-  // (desktop-only per the spike brief). So we deliberately do NOT fake an
-  // access-point rule here. On mobile, an access point with only 22/80/443
-  // open correctly falls through to sshHost / webServer / unknown below. That
-  // is a documented ceiling, not a bug to paper over.
+  // Access points / infrastructure broadcast no "I am an access point" mDNS
+  // service; the one reliable signal is the OUI vendor from the MAC. The spike
+  // could not read a MAC on mobile, so it declined an AP rule. M1 now feeds the
+  // desktop OUI vendor in, so we CAN classify networking gear — but honestly:
+  //   * promote to `accessPoint` ONLY when a Wi-Fi/AP keyword is present
+  //     alongside the networking vendor (a wired switch is not an AP);
+  //   * otherwise a recognized networking vendor is the generic `networkGear`.
+  // On mobile there is no vendor, so vendorOrHostHas(...) is always false here
+  // and a host with only 22/80/443 open still falls through to the weak
+  // port rules below — the documented ceiling, unchanged.
+  final bool networkingVendor = vendorOrHostHas('ubiquiti') ||
+      vendorOrHostHas('mikrotik') ||
+      vendorOrHostHas('aruba') ||
+      vendorOrHostHas('ruckus') ||
+      vendorOrHostHas('netgear') ||
+      vendorOrHostHas('tp-link') ||
+      vendorOrHostHas('zyxel') ||
+      vendorOrHostHas('juniper') ||
+      vendorOrHostHas('cisco') ||
+      vendorOrHostHas('meraki') ||
+      vendorOrHostHas('aerohive') ||
+      vendorOrHostHas('extreme networks');
 
-  // 8. Web server / host — weak; an open web port alone says little.
+  // 8. Access point — networking vendor AND an explicit Wi-Fi/AP keyword.
+  if (networkingVendor &&
+      (vendorOrHostHas('access point') ||
+          vendorOrHostHas('accesspoint') ||
+          vendorOrHostHas('-ap') ||
+          vendorOrHostHas('wifi') ||
+          vendorOrHostHas('wi-fi') ||
+          vendorOrHostHas('wlan') ||
+          vendorOrHostHas('unifi') ||
+          vendorOrHostHas('meraki'))) {
+    return DeviceType.accessPoint;
+  }
+
+  // 9. Network gear — a recognized networking vendor with no AP keyword. A
+  //    switch, router, gateway, or controller from a networking maker. Generic
+  //    on purpose: we name the category we can prove, not a specific model.
+  if (networkingVendor) {
+    return DeviceType.networkGear;
+  }
+
+  // --- Weak single-port rules (only after mDNS identity + vendor hints) ---
+
+  // 10. Web server / host — weak; an open web port alone says little.
   if (openPorts.contains(CuratedPorts.http) ||
       openPorts.contains(CuratedPorts.https) ||
       openPorts.contains(CuratedPorts.httpAlt)) {
     return DeviceType.webServer;
   }
 
-  // 9. SSH host — weakest port signal. Infrastructure and IoT expose 22 for
+  // 11. SSH host — weakest port signal. Infrastructure and IoT expose 22 for
   //    management, so a lone open 22 only earns this low-priority outcome.
   if (openPorts.contains(CuratedPorts.ssh)) {
     return DeviceType.sshHost;
   }
 
-  // 10. Anything that answered mDNS but matched no rule above.
+  // 12. Anything that answered mDNS but matched no rule above.
   if (mdnsServices.isNotEmpty || openPorts.contains(CuratedPorts.mdns)) {
     return DeviceType.mdnsDevice;
   }
 
-  // 11. Live (it had an open port) but unclassifiable.
+  // 13. Live (it had an open port) but unclassifiable. Unknown is first-class:
+  //     an unrecognized vendor or a bare hostname never invents a class here.
   return DeviceType.unknown;
 }

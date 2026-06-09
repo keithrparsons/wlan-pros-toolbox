@@ -55,10 +55,23 @@ import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
+import 'network_glance_card.dart';
 import 'network_unavailable_view.dart';
 
 class NetworkDiscoveryScreen extends StatefulWidget {
-  const NetworkDiscoveryScreen({super.key, this.engineFactory, this.service});
+  const NetworkDiscoveryScreen({
+    super.key,
+    this.engineFactory,
+    this.service,
+    this.glanceCard,
+  });
+
+  /// M2 — the "Network at a glance" card shown at the top, before any scan.
+  /// Null in production → a real [NetworkGlanceCard] (which reads SSID/IP/
+  /// gateway/subnet/public-IP/ISP through the shared services). Tests inject a
+  /// stub (e.g. `SizedBox.shrink()`) so the scan-state widget tests stay off the
+  /// network and off any platform channel.
+  final Widget? glanceCard;
 
   /// Engine factory seam so tests can inject a fake engine. Null in production,
   /// where a real [LanDiscoveryEngine] (isolate connect-scan) is built, wired
@@ -305,6 +318,9 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
                   ),
                   if (ToolAssets.hasGraphic('network-discovery'))
                     const SizedBox(height: AppSpacing.md),
+                  // M2 — network-at-a-glance, above the scan control.
+                  widget.glanceCard ?? const NetworkGlanceCard(),
+                  const SizedBox(height: AppSpacing.sm),
                   _controlCard(context),
                   if (_scanning || _note != null) ...<Widget>[
                     const SizedBox(height: AppSpacing.sm),
@@ -633,6 +649,8 @@ IconData _deviceIcon(DeviceType type) => switch (type) {
   DeviceType.appleDevice => Icons.devices_outlined,
   DeviceType.iosDevice => Icons.smartphone_outlined,
   DeviceType.windowsHost => Icons.desktop_windows_outlined,
+  DeviceType.accessPoint => Icons.wifi_outlined,
+  DeviceType.networkGear => Icons.router_outlined,
   DeviceType.webServer => Icons.dns_outlined,
   DeviceType.sshHost => Icons.terminal_outlined,
   DeviceType.mdnsDevice => Icons.lan_outlined,
