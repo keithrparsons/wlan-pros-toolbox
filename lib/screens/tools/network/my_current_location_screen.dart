@@ -31,6 +31,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../data/open_location_code.dart';
 import '../../../services/location/device_location.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
@@ -198,6 +199,8 @@ class _MyCurrentLocationScreenState extends State<MyCurrentLocationScreen> {
     buf
       ..writeln('Latitude: ${f.latitude.toStringAsFixed(6)}')
       ..writeln('Longitude: ${f.longitude.toStringAsFixed(6)}');
+    final String? plus = _formatPlusCode(f);
+    if (plus != null) buf.writeln('Plus Code: $plus');
     final String? alt = _formatAltitude(f);
     final String? acc = _formatAccuracy(f);
     buf.writeln('Altitude: ${alt ?? 'Not reported'}');
@@ -206,6 +209,14 @@ class _MyCurrentLocationScreenState extends State<MyCurrentLocationScreen> {
       buf.writeln('Source: approximate, from your public IP (city-level, not GPS)');
     }
     return buf.toString().trimRight();
+  }
+
+  /// The full 10-digit Open Location Code (Plus Code) for this fix, e.g.
+  /// `849VCWC8+R9`, or null when the coordinate is not finite (no real point to
+  /// encode). Computed offline in pure Dart — no API key, no network (GL-008).
+  static String? _formatPlusCode(LocationFix fix) {
+    if (!fix.latitude.isFinite || !fix.longitude.isFinite) return null;
+    return OpenLocationCode.encode(fix.latitude, fix.longitude);
   }
 
   static String? _formatAltitude(LocationFix fix) {
@@ -294,6 +305,7 @@ class _MyCurrentLocationScreenState extends State<MyCurrentLocationScreen> {
       return _ResultCard(
         fix: fix,
         coarse: _isCoarse(fix),
+        plusCode: _formatPlusCode(fix),
         altitude: _formatAltitude(fix),
         accuracy: _formatAccuracy(fix),
         locating: _locating,
@@ -370,6 +382,7 @@ class _ResultCard extends StatelessWidget {
   const _ResultCard({
     required this.fix,
     required this.coarse,
+    required this.plusCode,
     required this.altitude,
     required this.accuracy,
     required this.locating,
@@ -381,6 +394,10 @@ class _ResultCard extends StatelessWidget {
 
   final LocationFix fix;
   final bool coarse;
+
+  /// The full Open Location Code (Plus Code) for the fix, or null when the
+  /// coordinate is not finite. Rendered as an identifier value (Roboto Mono).
+  final String? plusCode;
   final String? altitude;
   final String? accuracy;
   final bool locating;
@@ -417,6 +434,20 @@ class _ResultCard extends StatelessWidget {
             identifier: true,
             emphasize: true,
           ),
+          // Plus Code (Open Location Code) — an alphanumeric identifier string
+          // (like a hex/MAC code), so it takes the Roboto Mono identifier face
+          // per GL-003 §8.5. Computed offline from lat/long; null only when the
+          // coordinate is not finite (then the row shows the honest unavailable
+          // treatment rather than a fabricated code).
+          ValueRow(
+            label: 'Plus Code',
+            value: plusCode,
+            identifier: true,
+          ),
+          if (plusCode != null) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            _PlusCodeNote(),
+          ],
           // Altitude / accuracy are measured numerics → DM Mono. Null renders
           // the honest "Not available on this platform" treatment.
           ValueRow(label: 'Altitude', value: altitude, mono: true),
@@ -509,6 +540,34 @@ class _ApproxNote extends StatelessWidget {
         Expanded(
           child: Text(
             msg,
+            style: text.labelMedium?.copyWith(color: colors.textSecondary),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// One-line explainer for the Plus Code line: what it is and that it is a free,
+/// offline-computable alternative to a proprietary address code. Kept short —
+/// the value above is the answer; this is the teaching aside.
+class _PlusCodeNote extends StatelessWidget {
+  const _PlusCodeNote();
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Icon(Icons.info_outline, size: 16, color: colors.statusInfo),
+        const SizedBox(width: AppSpacing.xs),
+        Expanded(
+          child: Text(
+            'A Plus Code (Open Location Code) is a short, shareable address for '
+            'this spot, computed from the coordinates. It works offline and '
+            'needs no street address.',
             style: text.labelMedium?.copyWith(color: colors.textSecondary),
           ),
         ),

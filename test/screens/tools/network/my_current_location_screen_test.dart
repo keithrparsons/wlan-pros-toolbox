@@ -96,6 +96,20 @@ void main() {
     expect(find.text('Update'), findsOneWidget);
   });
 
+  testWidgets('renders the offline Plus Code for the fix', (tester) async {
+    final _FakeLocation loc = _FakeLocation(
+      permission: LocationPermissionState.granted,
+      result: const LocationSuccess(_gpsFix),
+    );
+    await _pump(tester, loc);
+
+    // 40.7128, -74.0060 → the canonical full Open Location Code for that point.
+    expect(find.text('Plus Code'), findsOneWidget);
+    expect(find.text('87G7PX7V+4J'), findsOneWidget);
+    // The one-line explainer is present.
+    expect(find.textContaining('Open Location Code'), findsOneWidget);
+  });
+
   testWidgets('Update gives visible feedback: SnackBar + Last updated stamp',
       (tester) async {
     final _FakeLocation loc = _FakeLocation(
