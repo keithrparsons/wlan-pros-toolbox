@@ -274,6 +274,106 @@ void main() {
     });
   });
 
+  // M1 — vendor/hostname HINTS. Vendor shows a class ONLY on an obvious match;
+  // an unrecognized vendor leaves Unknown first-class (never fabricated).
+  group('inferDeviceType — M1 vendor/hostname hints', () {
+    test('a networking vendor WITH a Wi-Fi keyword → access point', () {
+      expect(
+        inferDeviceType(
+          openPorts: <int>{443},
+          mdnsServices: <String>{},
+          vendor: 'Ubiquiti Inc.',
+          hostname: 'unifi-ap-livingroom',
+        ),
+        DeviceType.accessPoint,
+      );
+    });
+
+    test('a networking vendor with NO Wi-Fi keyword → generic network gear, '
+        'never promoted to access point on the vendor alone', () {
+      final DeviceType t = inferDeviceType(
+        openPorts: <int>{443},
+        mdnsServices: <String>{},
+        vendor: 'Cisco Systems',
+        hostname: 'sw-core-01',
+      );
+      expect(t, DeviceType.networkGear);
+      expect(t, isNot(DeviceType.accessPoint));
+    });
+
+    test('an obvious printer vendor → printer even with no printer port open',
+        () {
+      expect(
+        inferDeviceType(
+          openPorts: <int>{80},
+          mdnsServices: <String>{},
+          vendor: 'Brother Industries',
+        ),
+        DeviceType.printer,
+      );
+    });
+
+    test('an UNRECOGNIZED vendor contributes nothing — a bare-port host stays '
+        'its port guess, and a portless one stays Unknown (GL-005)', () {
+      // Unrecognized vendor + no ports/mDNS → still Unknown, not invented.
+      expect(
+        inferDeviceType(
+          openPorts: <int>{},
+          mdnsServices: <String>{},
+          vendor: 'Acme Widgets LLC',
+          hostname: 'some-host',
+        ),
+        DeviceType.unknown,
+      );
+      // Unrecognized vendor + lone SSH → the weak port guess, unchanged by M1.
+      expect(
+        inferDeviceType(
+          openPorts: <int>{22},
+          mdnsServices: <String>{},
+          vendor: 'Acme Widgets LLC',
+        ),
+        DeviceType.sshHost,
+      );
+    });
+
+    test('a raw-OUI fallback string (e.g. "B8:27:EB") trips no keyword → the '
+        'host keeps its port/mDNS class, not a vendor-invented one', () {
+      // The vendorLabelFor fallback hands the heuristic a hex OUI, not an
+      // English vendor word; it must not read as networking gear.
+      expect(
+        inferDeviceType(
+          openPorts: <int>{443},
+          mdnsServices: <String>{},
+          vendor: 'B8:27:EB',
+        ),
+        DeviceType.webServer,
+      );
+    });
+
+    test('strong port evidence still wins over a vendor hint (SMB beats a '
+        'networking vendor)', () {
+      // A host with 445 open is an SMB host even if its OUI is a networking
+      // vendor — hard evidence outranks the M1 hint.
+      expect(
+        inferDeviceType(
+          openPorts: <int>{445},
+          mdnsServices: <String>{},
+          vendor: 'Netgear',
+          hostname: 'nas-wifi',
+        ),
+        DeviceType.windowsHost,
+      );
+    });
+
+    test('backward compatible: vendor + hostname default to null', () {
+      // The pre-M1 call shape (ports + mDNS only) is unchanged.
+      expect(
+        inferDeviceType(openPorts: <int>{22}, mdnsServices: <String>{}),
+        DeviceType.sshHost,
+      );
+    });
+  });
+
   group('MdnsBrowser.browse — NWBrowser seam → IP→{name,services} mapping', () {
     test('a _sonos._tcp resolved event produces a record whose services '
         'contain _sonos._tcp, keyed by its IPv4', () async {
