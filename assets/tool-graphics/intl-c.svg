@@ -1,9 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
-  <!-- Type C (Europlug, CEE 7/16) FACE. CONTRAST REWORK 2026-06-08 (Charta gfx2-intl).
-       POP pass: identifying text (subtitle, L/N callouts, spec line) promoted #9C9C9C -> #E5E5E5;
-       frame stroke 3 -> 4; pin/blade fills stay bright #E5E5E5. #9C9C9C kept ONLY for tertiary
-       footnotes (country list, voltage-class note). Palette §8.20.7 only.
-       Pin geometry UNCHANGED (Vera-passed). STANDING RULE: no label over any outline/pin/label. -->
+  <!-- Type C (Europlug, CEE 7/16) FACE. BRIGHT REWORK 2026-06-08 (Charta gfx3-intl-bright).
+       Keith directive (overrides §8.20.7 FOR THIS SET, intended): ALL plug geometry (frame + pins)
+       -> lime #A1CC3A; ALL text -> near-white #E5E5E5. Palette = #1A1A1A + #E5E5E5 + #A1CC3A.
+       Hierarchy: pins FILLED lime, frame lime STROKE. Pin geometry/position UNCHANGED (Vera-passed). -->
 
   <rect x="0" y="0" width="640" height="560" fill="#1A1A1A"/>
 
@@ -11,12 +10,12 @@
   <text x="320" y="46" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle">Europlug</text>
   <text x="320" y="76" fill="#E5E5E5" font-size="16" font-weight="600" text-anchor="middle">Type C &#183; two round pins, unearthed</text>
 
-  <!-- FACE FRAME -->
-  <rect x="204" y="134" width="232" height="232" rx="44" stroke="#E5E5E5" stroke-width="4"/>
+  <!-- FACE FRAME (lime stroke) -->
+  <rect x="204" y="134" width="232" height="232" rx="44" stroke="#A1CC3A" stroke-width="4"/>
 
-  <!-- PINS: two round, horizontal -->
-  <circle cx="272" cy="250" r="19" fill="#E5E5E5"/>   <!-- L -->
-  <circle cx="368" cy="250" r="19" fill="#E5E5E5"/>   <!-- N -->
+  <!-- PINS: two round, horizontal (filled lime) -->
+  <circle cx="272" cy="250" r="19" fill="#A1CC3A"/>   <!-- L -->
+  <circle cx="368" cy="250" r="19" fill="#A1CC3A"/>   <!-- N -->
 
   <!-- pin callouts -->
   <text x="272" y="304" fill="#E5E5E5" font-size="16" font-weight="700" text-anchor="middle" font-family="DM Mono, monospace">L</text>
@@ -25,6 +24,6 @@
   <!-- LABELS -->
   <text x="320" y="436" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">Type C</text>
   <text x="320" y="468" fill="#E5E5E5" font-size="18" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">CEE 7/16 &#183; 230 V &#183; 2.5 A</text>
-  <text x="320" y="498" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Europe &#183; fits most CEE 7 sockets</text>
-  <text x="320" y="524" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle">High-voltage class (220&#8211;240 V)</text>
+  <text x="320" y="498" fill="#E5E5E5" font-size="16" font-weight="500" text-anchor="middle">Europe &#183; fits most CEE 7 sockets</text>
+  <text x="320" y="524" fill="#E5E5E5" font-size="15" font-weight="500" text-anchor="middle">High-voltage class (220&#8211;240 V)</text>
 </svg>

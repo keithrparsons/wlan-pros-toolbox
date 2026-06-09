@@ -210,11 +210,13 @@ class _ZoomView extends StatelessWidget {
     final EdgeInsets safe = mq.padding;
 
     return Scaffold(
-      // Opaque dark lightbox so nothing of the underlying page shows through
-      // (build 21 fix). Read from the dark scheme so the backdrop is a solid
-      // dark canvas regardless of the app's light/dark mode — a conventional
-      // lightbox, matching the always-dark close button + zoom badge.
-      backgroundColor: AppColorScheme.dark().surface0,
+      // Opaque backdrop so the underlying page doesn't show through (build 21),
+      // and THEME-MATCHED so a light-mode zoom stays light. The concept graphics
+      // are transparent stroke art, so an always-dark backdrop in light mode made
+      // the light-swapped (dark-stroke) graphic read as dark mode (Keith,
+      // build 23). surface0 = the app canvas — light in light, dark in dark,
+      // opaque in both — so the zoom matches the in-page graphic's theme.
+      backgroundColor: colors.surface0,
       body: Stack(
         children: <Widget>[
           // Tap-the-empty-scrim to dismiss. The InteractiveViewer above
