@@ -149,7 +149,8 @@ void main() {
       // rack-units, screw-drives) 2026-06-08. The fiber-optic extension edits an
       // existing entry, so adds none. 121 + 3 = 124.
       // 125 = + the Markdown Cheatsheet (markdown-cheatsheet) 2026-06-09.
-      expect(store.count, 125);
+      // 126 = + Wi-Fi Standards Bodies (wifi-standards-bodies) 2026-06-09.
+      expect(store.count, 126);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.3.0+31
+version: 1.3.0+32
 
 environment:
   sdk: ^3.12.0
@@ -412,6 +412,10 @@ flutter:
     # svg/png; the Regulatory Domains page degrades to an abbreviation badge for
     # any regulator without a bundled logo.
     - assets/regulator-logos/
+    # Wi-Fi standards/industry body wordmarks (2026-06-09) — IEEE, Wi-Fi
+    # Alliance, ITU-R, etc. Editorial wordmarks only, never a "certified" seal;
+    # the Standards Bodies page degrades to a badge when a wordmark is absent.
+    - assets/standards-body-logos/
     # Antenna Fundamentals teaching diagrams (v1.1) — Charta's seven line
     # diagrams (g1…g7) for the Antenna Fundamentals Quick Reference reading
     # screen, keyed by graphics-plan slug:

@@ -1132,6 +1132,15 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Wi-Fi & RF',
       ),
+      ToolEntry(
+        id: 'wifi-standards-bodies',
+        title: 'Wi-Fi Standards Bodies',
+        description:
+            'Who defines, certifies, and coordinates Wi-Fi: IEEE, Wi-Fi Alliance, ITU-R, and more',
+        routeName: '/tools/wifi-standards-bodies',
+        isLive: true,
+        subgroup: 'Wi-Fi & RF',
+      ),
       // Time & Formats.
       ToolEntry(
         id: 'datetime-standards',

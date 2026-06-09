@@ -2900,6 +2900,25 @@
         "The You type column is literal text, not rendered, so you can copy the exact syntax."
       ],
       "source": "CommonMark spec + GitHub Flavored Markdown (GFM) spec"
+    },
+    "wifi-standards-bodies": {
+      "name": "Wi-Fi Standards Bodies",
+      "category": "Quick Reference",
+      "purpose": "Who defines, certifies, and coordinates Wi-Fi and adjacent wireless: IEEE, the Wi-Fi Alliance, ITU-R, and more, grouped by the three layers a pro keeps straight.",
+      "whyHere": "People conflate the bodies. This separates who writes the standard from who certifies products from who sets the legal rules, so you cite the right one.",
+      "howToUse": [
+        "Three layers: a standards body (IEEE 802.11) defines how the radio works; a certification body (Wi-Fi Alliance) verifies interoperability and owns the brand; a regulator sets the legal channel and power rules per country.",
+        "Tiles are grouped by layer, plus an IoT/adjacent group (Wi-SUN, Connectivity Standards Alliance for Zigbee and Matter, LoRa Alliance).",
+        "'Wi-Fi' is a Wi-Fi Alliance trademark, not an acronym and not 'Wireless Fidelity'. The per-country rules live on the Regulatory Domains reference, cross-linked here."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "IEEE writes 802.11; the Wi-Fi Alliance certifies and brands it. They are different organizations.",
+        "ETSI appears here as a standards body and also as the EU's referenced harmonizer on the Regulatory Domains page."
+      ],
+      "source": "Each body's official site (IEEE, Wi-Fi Alliance, WBA, ITU, IETF, 3GPP, Bluetooth SIG, CWNP, ETSI, Ecma, Wi-SUN, CSA, LoRa Alliance); WLAN Pros research brief 2026-06-09"
     }
   }
 }

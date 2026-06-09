@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Wi-Fi Standards Bodies: a classical institutional building (pediment + columns
+         + base) = a standards / governing body (IEEE, Wi-Fi Alliance, FCC, ETSI), with a
+         small Wi-Fi arc rising from the roof to bind it to Wi-Fi. Gross silhouette = an
+         architectural block. Distinct from regulatory-domains / top-level-domains /
+         dns-lookup (a globe CIRCLE), from 80211-standards (horizontal bars + up-arrow),
+         and from wifi-feature-matrix / channel bars (a grid). No circle, no horizontal
+         data bars, no grid. -->
+    <!-- pediment (triangular roof) spanning the colonnade -->
+    <path d="M4 11 L12 7 L20 11" />
+    <!-- three columns -->
+    <line x1="7" y1="12" x2="7" y2="18.5" />
+    <line x1="12" y1="12" x2="12" y2="18.5" />
+    <line x1="17" y1="12" x2="17" y2="18.5" />
+    <!-- entablature (top of colonnade) and base / steps -->
+    <line x1="5" y1="12" x2="19" y2="12" />
+    <line x1="3.5" y1="20.5" x2="20.5" y2="20.5" />
+    <!-- Wi-Fi broadcast mark rising clear of the roof apex (outer + inner arc + dot) -->
+    <path d="M8 5 C10.2 2.8 13.8 2.8 16 5" />
+    <path d="M10 6.8 C11.1 5.7 12.9 5.7 14 6.8" />
+    <circle cx="12" cy="7.6" r="0.6" fill="currentColor" stroke="none" />
+  </g>
+</svg>

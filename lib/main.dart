@@ -23,6 +23,7 @@ import 'data/screw_drives_diagrams.dart';
 import 'data/fiber_connectors_diagrams.dart';
 import 'data/regulatory_logos.dart';
 import 'data/markdown_diagrams.dart';
+import 'data/wifi_bodies_logos.dart';
 import 'data/tool_assets.dart';
 import 'router/app_router.dart';
 import 'services/help/tool_help_loader.dart';
@@ -188,6 +189,9 @@ Future<void> main() async {
   } catch (_) {}
   try {
     await MarkdownDiagrams.ensureLoaded();
+  } catch (_) {}
+  try {
+    await WifiBodiesLogos.ensureLoaded();
   } catch (_) {}
 
   // Load + cache the bundled tool-help JSON once (assets/help/tool_help.json).

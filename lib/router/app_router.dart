@@ -50,6 +50,7 @@ import '../screens/tools/reference/cable_bend_radius_screen.dart';
 import '../screens/tools/reference/rack_units_screen.dart';
 import '../screens/tools/reference/screw_drives_screen.dart';
 import '../screens/tools/reference/markdown_cheatsheet_screen.dart';
+import '../screens/tools/reference/wifi_standards_bodies_screen.dart';
 import '../screens/tools/reference/wifi_exposure_perspective_screen.dart';
 import '../screens/tools/reference/wifi_tools_comparison_screen.dart';
 import '../screens/tools/reference/reason_codes_screen.dart';
@@ -250,6 +251,7 @@ class AppRouter {
   static const String eapTypes = '/tools/eap-types';
   static const String wifiFeatureMatrix = '/tools/wifi-feature-matrix';
   static const String regulatoryDomains = '/tools/regulatory-domains';
+  static const String wifiStandardsBodies = '/tools/wifi-standards-bodies';
   static const String datetimeStandards = '/tools/datetime-standards';
   static const String dataUnits = '/tools/data-units';
   static const String hashLengths = '/tools/hash-lengths';
@@ -499,6 +501,10 @@ class AppRouter {
     eapTypes: (_) => const EapTypesScreen(),
     wifiFeatureMatrix: (_) => const WifiFeatureMatrixScreen(),
     regulatoryDomains: (_) => const RegulatoryDomainsScreen(),
+    wifiStandardsBodies: (context) => WifiStandardsBodiesScreen(
+          onOpenRegulatoryDomains: () =>
+              Navigator.of(context).pushNamed(regulatoryDomains),
+        ),
     datetimeStandards: (_) => const DatetimeStandardsScreen(),
     dataUnits: (_) => const DataUnitsScreen(),
     hashLengths: (_) => const HashLengthsScreen(),
