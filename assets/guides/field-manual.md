@@ -1,13 +1,13 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-06-09 · covers 126 tools · app v1.3.0_
+_Compiled 2026-06-09 · covers 128 tools · app v1.4.0_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
 ## Contents
 
 - **Test Network** (4 tools)
-- **Networking Tools** (22 tools)
+- **Networking Tools** (23 tools)
 - **Calculators & Tools** (26 tools)
   - RF & Propagation (9)
   - Antenna & Coverage (4)
@@ -15,10 +15,10 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Coordinates & GPS (4)
   - Conversions (4)
   - Utilities & Generators (2)
-- **Quick Reference** (49 tools)
+- **Quick Reference** (50 tools)
   - Wi-Fi & RF (13)
   - Cabling & Connectors (11)
-  - Protocols (7)
+  - Protocols (8)
   - Encoding (2)
   - CLI & Capture (3)
   - Checklists (2)
@@ -123,7 +123,7 @@ _Source: cellular_info.dart:12-207 / cellular_info_adapter.dart:8-58_
 
 ---
 
-# Networking Tools (22 tools)
+# Networking Tools (23 tools)
 
 Socket, lookup, and scan utilities for working a network from the device in hand. Ping, traceroute, port and host discovery, DNS and registry lookups, and packet-level senders and inspectors.
 
@@ -389,6 +389,25 @@ Find live hosts on the local network and enrich each with name, services, inferr
 - Any single pass can fail without aborting the run (a failed mDNS browse just means no mDNS enrichment; nothing is faked) (lan_discovery_engine.dart:23-25). On mobile, expect no MAC/vendor and APs to fall through to SSH/Web/Unknown, a documented ceiling.
 
 _Source: lan_discovery_engine.dart:23-510 / device_type.dart:47-146 / mdns_browse.dart:1-51_
+
+
+### Nearby AP Scan (Android only)
+
+List the Wi-Fi access points a scan can see around you, each with SSID, BSSID, channel, band, and signal, with a per-band channel-occupancy bar.
+
+**Why it's here.** A fast read of who else is on the air. When you are picking a channel or chasing co-channel interference, seeing the nearby BSSIDs across 2.4, 5, and 6 GHz tells you which channels are busy and which are clear, without carrying a separate analyzer.
+
+**How to use**
+1. Tap Scan to run a Wi-Fi scan. Each visible AP lists its SSID, BSSID, channel, band, and RSSI. Sort by signal or channel, and read the occupancy bars per band. Re-run to refresh.
+
+**Formula or method.** ANDROID ONLY. The screen reads WifiManager.getScanResults() through the native com.wlanpros.toolbox/ap_scan method channel (MainActivity.kt); ApScanService parses each result into a clean record (SSID, BSSID, RSSI, channel and band derived from the center frequency). Off Android, including iOS, macOS, and web, the screen renders an honest "Android only" state and never touches the channel (GL-008 honest per-platform unavailable state).
+
+**Field notes**
+- Android only. Apple blocks third-party nearby-AP scanning on iOS and macOS, so this tool is gated out of the catalog on those platforms; only Android shows it.
+- Clean fields only (GL-005). The Android scan API exposes SSID, BSSID, channel, band, and RSSI for a scanned (non-connected) BSS. It does not expose a per-BSS noise floor, SNR, or MCS, so those columns do not exist here and are never shown.
+- Android throttles Wi-Fi scans. When throttled, a rapid re-scan returns the last cached results and the screen notes it rather than faking a fresh scan. Location permission and Wi-Fi must both be on for the scan to return results.
+
+_Source: ap_scan_screen.dart / ap_scan_service.dart / MainActivity.kt_
 
 
 ### Packet Sender
@@ -1413,7 +1432,7 @@ _Source: qr_generator_screen.dart_
 
 ---
 
-# Quick Reference (49 tools)
+# Quick Reference (50 tools)
 
 Offline lookup tables and the laminated field cards. Channel plans, standards, thresholds, connector and cabling pinouts, protocol references, CLI and capture cheat sheets, checklists, and guides, all available without a connection.
 
@@ -2023,7 +2042,7 @@ The drive faces a network or Access Point installer actually meets on enclosures
 _Source: Pax verification brief, 2026-06-08 (ISO 8764 / ISO 10664 / ISO 4762 / ISO 2380; patent text, ToolGuyd, Polycase corroboration)._
 
 
-## Protocols (7)
+## Protocols (8)
 
 
 ### 802.11 Frame Exchange
@@ -2083,6 +2102,27 @@ The HTTP response status codes, grouped by class, with a plain-English meaning f
 - Data source: the IANA HTTP Status Code Registry (the authoritative registry), fetched 2026-06-04. Most codes are defined by RFC 9110 (HTTP Semantics). Code numbers and reason phrases are verbatim from the registry; the plain-English meanings are written for this tool. Unassigned and obsoleted codes are omitted; nothing is invented.
 
 _Source: lib/screens/tools/reference/http_status_codes_screen.dart_
+
+
+### Speed Test Services
+
+A curated, offline reference to the popular internet speed tests, framed on the two axes that actually change the number: single-stream vs multi-stream, and a nearby CDN edge vs a distant true server.
+
+**Why it's here.** Two speed tests on the same connection can disagree by a wide margin, and the reason is almost never the connection. It is how many streams the test opens and how far away the server sits. This page lets you pick the right test for the question you are asking, and read a surprising result correctly instead of blaming the Wi-Fi.
+
+**How to use**
+1. Read each service against the two teaching axes: single vs multi-stream, and nearby-edge vs distant-server.
+2. Search by name (e.g. Ookla, Fast.com, Cloudflare); a query that matches nothing shows an honest "No match" card.
+3. Check the "Runs on" note before trusting a brand as independent: Waveform runs on Cloudflare, Fast.com on Netflix's CDN, ISP tests on Ookla or M-Lab. Tap a website chip to run that test.
+
+**Field notes**
+- Data-per-test figures are the weak column. Each carries a confidence marker ("est.", "rough est.", "measured"), and a persistent band states they are community-measured estimates, not vendor-published numbers.
+- Not all of these are independent measurement backends. Where a brand rides on another service's network, the card shows a "Runs on" note.
+- Orb is a continuous monitor, not a one-shot test; the Toolbox's own Network Quality tool is the analog and reports no single composite score.
+- Fully offline: the service list is a bundled compile-time dataset, so the page renders with no network call. Vendor wordmarks render on a neutral chip so they read in both light and dark.
+- Source: Pax's verified research brief (Deliverables/2026-06-09-speedtest-services/RESEARCH-BRIEF.md); all 12 services Keith-approved 2026-06-09.
+
+_Source: lib/screens/tools/reference/speedtest_services_screen.dart_
 
 
 ### OSI Model

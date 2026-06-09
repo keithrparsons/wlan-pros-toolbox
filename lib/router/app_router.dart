@@ -53,6 +53,7 @@ import '../screens/tools/reference/markdown_cheatsheet_screen.dart';
 import '../screens/tools/reference/wifi_standards_bodies_screen.dart';
 import '../screens/tools/reference/wifi_exposure_perspective_screen.dart';
 import '../screens/tools/reference/wifi_tools_comparison_screen.dart';
+import '../screens/tools/reference/speedtest_services_screen.dart';
 import '../screens/tools/reference/reason_codes_screen.dart';
 import '../screens/tools/reference/frame_exchange_screen.dart';
 import '../screens/tools/reference/db_reference_screen.dart';
@@ -102,6 +103,7 @@ import '../screens/tools/network/ip_geo_screen.dart';
 import '../screens/tools/network/my_current_location_screen.dart';
 import '../screens/tools/network/mac_oui_screen.dart';
 import '../screens/tools/network/network_discovery_screen.dart';
+import '../screens/tools/network/ap_scan_screen.dart';
 import '../screens/tools/network/mobile_traceroute_screen.dart';
 import '../screens/tools/network/net_quality_screen.dart';
 import '../screens/tools/network/test_my_connection_screen.dart';
@@ -318,6 +320,12 @@ class AppRouter {
   /// icon/graphic assets, and tests; never renamed).
   static const String networkDiscovery = '/tools/network-discovery';
 
+  /// Nearby AP Scan — ANDROID ONLY. Lists nearby Wi-Fi access points via the
+  /// Android scan API; gated out of the catalog on iOS / macOS / Web (Apple
+  /// blocks nearby-AP scanning). The id `nearby-ap-scan` is permanent (backs
+  /// this route, the catalog entry, the help entry, and tests).
+  static const String nearbyApScan = '/tools/nearby-ap-scan';
+
   // Quick Reference category — offline lookup tables (bundled assets, all
   // platforms incl. web).
   static const String portReference = '/tools/port-reference';
@@ -345,6 +353,12 @@ class AppRouter {
   /// estimates carried with a date-stamp + beta-review disclaimer. The id
   /// `wifi-tools-comparison` is permanent (route, catalog, asset, help, tests).
   static const String wifiToolsComparison = '/tools/wifi-tools-comparison';
+
+  /// Speed Test Services — offline curated reference of the popular internet
+  /// speed tests and what each measures. The id `speedtest-services` is
+  /// permanent (backs this route, the catalog entry, the bundled logo assets,
+  /// the help entry, and tests).
+  static const String speedtestServices = '/tools/speedtest-services';
   static const String osiModel = '/tools/osi-model';
 
   /// FreeRADIUS on WLAN Pi — a how-to / guide screen (v1.1). Bundles Ferney
@@ -564,11 +578,13 @@ class AppRouter {
     packetSender: (_) => const PacketSenderScreen(),
     ipv4Subnet: (_) => const SubnetCalcScreen(),
     networkDiscovery: (_) => const NetworkDiscoveryScreen(),
+    nearbyApScan: (_) => const ApScanScreen(),
     portReference: (_) => const PortReferenceScreen(),
     plmnReference: (_) => const PlmnReferenceScreen(),
     opticalTransceivers: (_) => const OpticalTransceiversScreen(),
     wifiExposurePerspective: (_) => const WifiExposurePerspectiveScreen(),
     wifiToolsComparison: (_) => const WifiToolsComparisonScreen(),
+    speedtestServices: (_) => const SpeedtestServicesScreen(),
     osiModel: (_) => const OsiModelScreen(),
     topLevelDomains: (_) => const TopLevelDomainsScreen(),
     rjConnectors: (_) => const RjConnectorsScreen(),

@@ -603,35 +603,63 @@ class _ServiceLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
     final SpeedtestLogo? logo = SpeedtestLogos.logoFor(service.slug);
-    final Widget content;
+
+    // No bundled wordmark → the name-initial fallback, which already paints its
+    // own bordered chip. Render it bare so the chip is not doubled.
     if (logo == null) {
-      content = _LogoFallback(name: service.name);
-    } else if (logo.format == SpeedtestLogoFormat.svg) {
-      content = SvgPicture.asset(
-        logo.path,
-        width: _box,
-        height: _box,
-        fit: BoxFit.contain,
-        // Wordmark — decorative; the name is the text carrier beside it.
-        excludeFromSemantics: true,
-        placeholderBuilder: (BuildContext _) => _LogoFallback(name: service.name),
-      );
-    } else {
-      content = Image.asset(
-        logo.path,
-        width: _box,
-        height: _box,
-        fit: BoxFit.contain,
-        excludeFromSemantics: true,
-        errorBuilder: (BuildContext _, Object _, StackTrace? _) =>
-            _LogoFallback(name: service.name),
+      return Padding(
+        padding: const EdgeInsets.only(right: AppSpacing.sm),
+        child: ExcludeSemantics(child: _LogoFallback(name: service.name)),
       );
     }
+
+    // Vendor wordmarks carry fixed brand colors; dark-fill marks (Ookla,
+    // OpenSpeedTest) would be invisible on the dark canvas, and white marks fail
+    // on light. Render every wordmark on a neutral chip in BOTH modes — the same
+    // treatment the shipped Regulatory Domains and Wi-Fi Standards Bodies screens
+    // use for official marks (colors.isLight ? surface1 : surface2, AppRadius
+    // .control, AppSpacing.xxs padding). Consistency across the three logo
+    // screens is the goal.
+    final double inner = _box - AppSpacing.xxs * 2;
+    final Widget mark = logo.format == SpeedtestLogoFormat.svg
+        ? SvgPicture.asset(
+            logo.path,
+            width: inner,
+            height: inner,
+            fit: BoxFit.contain,
+            // Wordmark — decorative; the name is the text carrier beside it.
+            excludeFromSemantics: true,
+            placeholderBuilder: (BuildContext _) =>
+                _LogoFallback(name: service.name),
+          )
+        : Image.asset(
+            logo.path,
+            width: inner,
+            height: inner,
+            fit: BoxFit.contain,
+            excludeFromSemantics: true,
+            errorBuilder: (BuildContext _, Object _, StackTrace? _) =>
+                _LogoFallback(name: service.name),
+          );
+
     return Padding(
       padding: const EdgeInsets.only(right: AppSpacing.sm),
       child: ExcludeSemantics(
-        child: SizedBox(width: _box, height: _box, child: Center(child: content)),
+        child: SizedBox(
+          width: _box,
+          height: _box,
+          child: Container(
+            decoration: BoxDecoration(
+              color: colors.isLight ? colors.surface1 : colors.surface2,
+              borderRadius: BorderRadius.circular(AppRadius.control),
+            ),
+            padding: const EdgeInsets.all(AppSpacing.xxs),
+            alignment: Alignment.center,
+            child: mark,
+          ),
+        ),
       ),
     );
   }

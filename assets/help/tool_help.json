@@ -2919,6 +2919,50 @@
         "ETSI appears here as a standards body and also as the EU's referenced harmonizer on the Regulatory Domains page."
       ],
       "source": "Each body's official site (IEEE, Wi-Fi Alliance, WBA, ITU, IETF, 3GPP, Bluetooth SIG, CWNP, ETSI, Ecma, Wi-SUN, CSA, LoRa Alliance); WLAN Pros research brief 2026-06-09"
+    },
+    "speedtest-services": {
+      "name": "Speed Test Services",
+      "category": "Quick Reference",
+      "purpose": "A curated, offline reference to the popular internet speed tests, framed for a Wi-Fi pro on the two axes that actually change the number: single-stream vs multi-stream, and a nearby CDN edge vs a distant true server. Each service card states what the test measures, what backend it runs on, a rough data-per-test figure, and a link out to run it.",
+      "whyHere": "Two speed tests on the same connection can disagree by a wide margin, and the reason is almost never the connection. It is how many streams the test opens and how far away the server sits. This page lets you pick the right test for the question you are asking and read a surprising result correctly instead of blaming the Wi-Fi.",
+      "howToUse": [
+        "Read each service against the two teaching axes at the top: single vs multi-stream, and nearby-edge vs distant-server. Those two choices explain most of the disagreement between tests.",
+        "Search by name (e.g. Ookla, Fast.com, Cloudflare) to jump to a service; a query that matches nothing shows an honest \"No match\" card, never a fabricated entry.",
+        "Check the \"Runs on\" note before you trust a brand as an independent measurement: Waveform runs on Cloudflare, Fast.com runs on Netflix's CDN, and ISP-branded tests run on Ookla or M-Lab.",
+        "Tap a service's website chip to run that test in the browser. The page itself runs no test; it is a reference to what each test does."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": "Fast.com reports lower than Ookla on the same link because Fast.com is a single-stream test against Netflix's CDN, while Ookla opens multiple streams to a nearby server. Neither is wrong; they answer different questions.",
+      "fieldNotes": [
+        "Data-per-test figures are the weak column. Each one carries a confidence marker (\"est.\", \"rough est.\", or \"measured\") and a persistent band states up front that these are community-measured estimates, not vendor-published numbers.",
+        "Not all of these are independent measurement backends. Where a brand rides on another service's network, the card shows a \"Runs on\" note and a top-level caveat repeats it.",
+        "Orb is a continuous monitor, not a one-shot test, and carries its own badge and framing note. The Toolbox's own Network Quality tool is the analog and deliberately reports no single composite score.",
+        "Fully offline: the service list is a bundled compile-time dataset (lib/data/speedtest_services_data.dart), so the page renders with no network call. Vendor wordmarks render on a neutral chip so they read in both light and dark.",
+        "Source: Pax's verified research brief (Deliverables/2026-06-09-speedtest-services/RESEARCH-BRIEF.md); all 12 services Keith-approved 2026-06-09."
+      ],
+      "source": "lib/screens/tools/reference/speedtest_services_screen.dart"
+    },
+    "nearby-ap-scan": {
+      "name": "Nearby AP Scan",
+      "category": "Networking Tools",
+      "purpose": "Lists the Wi-Fi access points a scan can see around you - SSID, BSSID, channel, band, and signal - and draws a simple channel-occupancy bar per band so you can read how crowded each channel is at a glance. Android only.",
+      "whyHere": "A fast read of who else is on the air. When you are picking a channel or chasing co-channel interference, seeing the nearby BSSIDs and where they sit across 2.4, 5, and 6 GHz tells you which channels are busy and which are clear, without carrying a separate analyzer.",
+      "howToUse": [
+        "Tap Scan to run a Wi-Fi scan. Results list each visible AP with its SSID, BSSID, channel, band, and signal (RSSI).",
+        "Use the sort control to order the list by signal or by channel, and read the per-band occupancy bars to see which channels are crowded.",
+        "Re-run the scan to refresh. Android rate-limits background scans, so a rapid re-scan may return the previous results until the throttle window clears."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": "On a busy 2.4 GHz band the occupancy bars cluster on channels 1, 6, and 11; an AP sitting on channel 3 overlaps both 1 and 6, which the bars make visible at a glance.",
+      "fieldNotes": [
+        "ANDROID ONLY. Apple blocks third-party nearby-AP scanning on iOS and macOS, so this tool does not appear on those platforms; on Android it reads WifiManager.getScanResults() through a native channel.",
+        "Clean fields only. The Android scan API exposes SSID, BSSID, channel, band, and RSSI for a scanned (non-connected) BSS. It does not expose a per-BSS noise floor, SNR, or MCS, so those columns do not exist here and are never shown (GL-005).",
+        "Android throttles Wi-Fi scans. Foreground apps get a limited number of scans per window; when throttled, a re-scan returns the last cached results and the screen notes it rather than faking a fresh scan.",
+        "Location permission and Wi-Fi must be on for the scan to return results; the screen shows an honest Wi-Fi-off or Location-gate card when either is missing."
+      ],
+      "source": "lib/screens/tools/network/ap_scan_screen.dart"
     }
   }
 }

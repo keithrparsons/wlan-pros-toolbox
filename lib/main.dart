@@ -24,6 +24,7 @@ import 'data/fiber_connectors_diagrams.dart';
 import 'data/regulatory_logos.dart';
 import 'data/markdown_diagrams.dart';
 import 'data/wifi_bodies_logos.dart';
+import 'data/speedtest_logos.dart';
 import 'data/tool_assets.dart';
 import 'router/app_router.dart';
 import 'services/help/tool_help_loader.dart';
@@ -192,6 +193,13 @@ Future<void> main() async {
   } catch (_) {}
   try {
     await WifiBodiesLogos.ensureLoaded();
+  } catch (_) {}
+  // Speed Test Services vendor wordmarks (assets/speedtest-logos/). Until a
+  // logo is bundled, hasLogo() stays false and the Speed Test Services card
+  // shows a name-initial fallback instead. A failure here must never block
+  // startup.
+  try {
+    await SpeedtestLogos.ensureLoaded();
   } catch (_) {}
 
   // Load + cache the bundled tool-help JSON once (assets/help/tool_help.json).

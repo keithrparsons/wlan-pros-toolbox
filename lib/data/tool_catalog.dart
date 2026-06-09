@@ -27,7 +27,8 @@
 // catalog `id` strings are STABLE and unchanged — they back 60 icon/graphic
 // asset files, every route, and every test. Titles change; ids never.
 
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/material.dart';
 
 import 'tool_keywords.dart';
@@ -43,6 +44,7 @@ class ToolEntry {
     this.isLive = false,
     this.keywords = const <String>[],
     this.subgroup,
+    this.androidOnly = false,
   });
 
   /// Stable identifier (kebab-case). Used as the route argument and for
@@ -82,6 +84,15 @@ class ToolEntry {
   /// Test Network ordering untouched.
   final String? subgroup;
 
+  /// `true` when the tool is only available on Android and MUST NOT appear on
+  /// iOS / macOS / Web. Apple platforms block third-party nearby-AP (Wi-Fi)
+  /// scanning, so a tool that depends on it (e.g. `nearby-ap-scan`) is gated to
+  /// Android. The [_buildCatalog] platform filter drops `androidOnly` tools on
+  /// every non-Android target, so a gated tool stays out of all navigation and
+  /// search surfaces — the same mechanism as the `kIsWeb` category gate, applied
+  /// per-tool. Default `false` keeps the constructor backward-compatible.
+  final bool androidOnly;
+
   /// Returns a copy of this entry with [keywords] replaced. Used only by the
   /// catalog builder to fold in the external vocabulary; not for general use.
   ToolEntry _copyWithKeywords(List<String> keywords) => ToolEntry(
@@ -92,6 +103,7 @@ class ToolEntry {
         isLive: isLive,
         keywords: keywords,
         subgroup: subgroup,
+        androidOnly: androidOnly,
       );
 }
 
@@ -319,6 +331,22 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'and vendor (desktop)',
         routeName: '/tools/network-discovery',
         isLive: true,
+      ),
+      // Nearby AP Scan — ANDROID ONLY. Lists nearby Wi-Fi access points (SSID,
+      // BSSID, channel, band, RSSI) via the Android Wi-Fi scan API. Apple
+      // blocks third-party nearby-AP scanning on iOS and macOS, so this tool is
+      // gated to Android via `androidOnly` and is dropped from the catalog on
+      // every other platform (see [_buildCatalog]). No asset resolver — the
+      // screen reads a native MethodChannel through ApScanService.
+      ToolEntry(
+        id: 'nearby-ap-scan',
+        title: 'Nearby AP Scan',
+        description:
+            'List nearby Wi-Fi access points — SSID, BSSID, channel, band, '
+            'and signal (Android)',
+        routeName: '/tools/nearby-ap-scan',
+        isLive: true,
+        androidOnly: true,
       ),
       ToolEntry(
         id: 'traceroute',
@@ -810,6 +838,22 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description:
             'HTTP response status codes by class — 1xx to 5xx, offline',
         routeName: '/tools/http-status-codes',
+        isLive: true,
+        subgroup: 'Protocols',
+      ),
+      // Speed Test Services — a curated, offline reference of the popular
+      // internet speed tests (Ookla, Fast.com, Cloudflare, nPerf, LibreSpeed,
+      // Speedof.me, Orb, OpenSpeedTest, and others), what each one measures, and
+      // how they differ. Read-only; vendor wordmarks render on a neutral chip so
+      // they read in both color modes. Quick Reference / Protocols, same home
+      // category as wifi-tools-comparison.
+      ToolEntry(
+        id: 'speedtest-services',
+        title: 'Speed Test Services',
+        description:
+            'How the popular internet speed tests differ, and what each one '
+            'measures.',
+        routeName: '/tools/speedtest-services',
         isLive: true,
         subgroup: 'Protocols',
       ),
@@ -1502,6 +1546,14 @@ List<ToolCategory> _buildCatalog() {
             .toList(growable: false)
       : _kAllToolCategories;
 
+  // Per-tool platform gate: `androidOnly` tools (e.g. nearby-ap-scan, which
+  // depends on a scan API Apple blocks on iOS / macOS) are dropped on every
+  // non-Android target so they never reach the home grid, category screens, or
+  // search. `defaultTargetPlatform` is web-safe (no `dart:io`); on web kIsWeb is
+  // true so isAndroid is false and the tool is gated out there too.
+  final bool isAndroid =
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
   return source
       .map(
         (ToolCategory c) => ToolCategory(
@@ -1514,6 +1566,7 @@ List<ToolCategory> _buildCatalog() {
           countLabelOverride: c.countLabelOverride,
           isNew: c.isNew,
           tools: c.tools
+              .where((ToolEntry t) => isAndroid || !t.androidOnly)
               .map(
                 (ToolEntry t) => t._copyWithKeywords(
                   kToolKeywords[t.id] ?? const <String>[],

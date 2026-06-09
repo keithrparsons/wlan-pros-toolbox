@@ -150,7 +150,12 @@ void main() {
       // existing entry, so adds none. 121 + 3 = 124.
       // 125 = + the Markdown Cheatsheet (markdown-cheatsheet) 2026-06-09.
       // 126 = + Wi-Fi Standards Bodies (wifi-standards-bodies) 2026-06-09.
-      expect(store.count, 126);
+      // 128 = + the 2 new tools in the 1.4.0 consolidation 2026-06-09:
+      // Speed Test Services (speedtest-services) + Nearby AP Scan
+      // (nearby-ap-scan, Android-only). The H1/H2/M1+M2 features augment
+      // existing tools (my-current-location, wifi-info, network-discovery) and
+      // add no new help ids. 126 + 2 = 128.
+      expect(store.count, 128);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help
