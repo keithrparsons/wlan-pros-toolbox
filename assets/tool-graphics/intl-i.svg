@@ -5,7 +5,6 @@
        Palette = #1A1A1A + #E5E5E5 (text) + #A1CC3A (geometry). Faint divider #3A3A3A is an internal mark, kept.
        Hierarchy: blades FILLED lime, frame lime STROKE. Blade geometry UNCHANGED (Vera-passed). -->
 
-  <rect x="0" y="0" width="640" height="560" fill="#1A1A1A"/>
 
   <!-- Header (now near-white per directive) -->
   <text x="320" y="46" fill="#E5E5E5" font-size="30" font-weight="700" text-anchor="middle">AU / China / Argentina</text>

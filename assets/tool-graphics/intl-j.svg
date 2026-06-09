@@ -4,7 +4,6 @@
        -> lime #A1CC3A; ALL text -> near-white #E5E5E5. Palette = #1A1A1A + #E5E5E5 + #A1CC3A.
        Hierarchy: pins FILLED lime, frame lime STROKE. Pin geometry/position UNCHANGED (Vera-passed). -->
 
-  <rect x="0" y="0" width="640" height="560" fill="#1A1A1A"/>
 
   <!-- Header -->
   <text x="320" y="46" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle">Switzerland</text>

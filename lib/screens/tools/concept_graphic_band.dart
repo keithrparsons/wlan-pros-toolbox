@@ -134,8 +134,12 @@ class ConceptGraphicBand extends StatelessWidget {
       '#E5E5E5': hex(light.textSecondary),
       // muted geometry (#9C9C9C)  → textTertiary   #646464 (5.7:1)
       '#9C9C9C': hex(light.textTertiary),
-      // lime foreground (#A2CC3A) → textAccent      #5A7A1C (§8.20.2 lime split)
+      // lime foreground (#A2CC3A legacy drift + #A1CC3A canonical) → textAccent
+      // #5A7A1C (§8.20.2 lime split). BOTH map so a canonical-lime graphic (the
+      // brightened connector faces) darkens on white instead of rendering as a
+      // raw bright-lime stroke (§8.20.7).
       '#A2CC3A': hex(light.textAccent),
+      '#A1CC3A': hex(light.textAccent),
       // faint hatch (#3A3A3A)     → border          #E2E1E2 (decorative hairline)
       '#3A3A3A': hex(light.border),
       // status danger (#F26E6E)   → statusDanger    #C62D2D (5.4:1)
