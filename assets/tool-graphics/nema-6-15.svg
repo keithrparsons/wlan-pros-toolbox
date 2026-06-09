@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
+  <!-- NEMA 6-15R receptacle FACE, drawn LARGE & centered. Geometry reused from the
+       Vera-passed composite (6-15 tile), scaled ~2.4x. 6-series = TWO HOT slots,
+       both vertical, side-by-side at the SAME level, NO neutral + U-ground.
+       250V / 15A / 1-phase. The "no neutral, two hots" mark -> ONE lime on second hot.
+       Palette: §8.20.7 swap-list only — scaffold #E5E5E5, muted #9C9C9C, ONE lime #A1CC3A.
+       STANDING RULE: no label over any slot, ground, or other label. -->
+
+  <!-- Header -->
+  <text x="320" y="44" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">6-15</text>
+  <text x="320" y="76" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">240V appliance outlet &#183; two hots, no neutral</text>
+
+  <!-- ============ FACE: round bezel, centered (320,250), r=110 ============ -->
+  <circle cx="320" cy="250" r="110" stroke="#E5E5E5" stroke-width="5"/>
+  <!-- two HOT slots, both vertical, side-by-side, SAME level, no neutral -->
+  <rect x="265" y="209" width="15" height="48" rx="5" stroke="#E5E5E5" stroke-width="5"/>
+  <rect x="358" y="209" width="15" height="48" rx="5" stroke="#A1CC3A" stroke-width="5"/>
+  <!-- U-ground below center -->
+  <path d="M 303 305 L 303 286 A 17 17 0 0 1 337 286 L 337 305"
+        stroke="#E5E5E5" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- pin callouts, outside the face / clear of slots / ground / ring -->
+  <text x="172" y="234" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">hot</text>
+  <text x="472" y="234" fill="#A1CC3A" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">hot</text>
+  <text x="320" y="392" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">ground</text>
+
+  <!-- ============ LABELS ============ -->
+  <text x="320" y="448" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">250 V &#183; 15 A</text>
+  <text x="320" y="482" fill="#9C9C9C" font-size="18" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">single-phase &#183; 2-pole, 3-wire</text>
+  <text x="320" y="514" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">240V tools, baseboard heat &#183; both slots are hot</text>
+</svg>

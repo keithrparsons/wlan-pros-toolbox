@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
+  <!-- NEMA 14-50R receptacle FACE, drawn LARGE & centered. Geometry reused from the
+       Vera-passed composite (14-50 tile, a LIME hero), scaled ~2.4x. 14-series = 4-wire
+       SPLIT-PHASE: 2 hots (angled) + neutral (L-slot) + ground (U). 125/250V / 50A.
+       Range / EV-charger outlet — the one techs most often misread as three-phase.
+       It is SINGLE-PHASE SPLIT: two hots 180 deg apart, NOT three-phase. Lime bezel
+       marks "read this one carefully" (the composite's hero treatment).
+       Palette: §8.20.7 swap-list only — scaffold #E5E5E5, muted #9C9C9C, ONE lime #A1CC3A.
+       STANDING RULE: no label over any slot, ground, or other label. -->
+
+  <!-- Header -->
+  <text x="320" y="44" fill="#A1CC3A" font-size="30" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">14-50</text>
+  <text x="320" y="76" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Range / EV charger &#183; single-phase SPLIT, not 3-phase</text>
+
+  <!-- ============ FACE: round bezel (LIME hero), centered (320,250), r=110 ============ -->
+  <circle cx="320" cy="250" r="110" stroke="#A1CC3A" stroke-width="5"/>
+  <!-- ground: inverted U at TOP center -->
+  <path d="M 303 199 L 303 218 A 17 17 0 0 0 337 218 L 337 199"
+        stroke="#E5E5E5" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- hot 1 (upper-left, angled outward) -->
+  <rect x="256" y="222" width="15" height="41" rx="5" stroke="#E5E5E5" stroke-width="5" transform="rotate(-30 263 242)"/>
+  <!-- hot 2 (upper-right, angled outward) -->
+  <rect x="369" y="222" width="15" height="41" rx="5" stroke="#E5E5E5" stroke-width="5" transform="rotate(30 377 242)"/>
+  <!-- neutral: L-shaped slot at BOTTOM -->
+  <path d="M 301 298 L 339 298 L 339 264"
+        stroke="#E5E5E5" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- pin callouts, outside the face / clear of slots / ground / ring -->
+  <text x="320" y="172" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">ground</text>
+  <text x="180" y="222" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">hot</text>
+  <text x="460" y="222" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">hot</text>
+  <text x="320" y="392" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">neutral</text>
+
+  <!-- ============ LABELS ============ -->
+  <text x="320" y="448" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">125/250 V &#183; 50 A</text>
+  <text x="320" y="482" fill="#9C9C9C" font-size="18" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">single-phase SPLIT &#183; 3-pole, 4-wire</text>
+  <text x="320" y="514" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Two hots 180&#176; apart &#183; NOT three-phase</text>
+</svg>

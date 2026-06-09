@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
+  <!-- NEMA 6-50R receptacle FACE, drawn LARGE & centered. Geometry reused from the
+       Vera-passed composite (6-50 tile), scaled ~2.4x. 6-series = two hots, NO neutral.
+       6-50 = two STRAIGHT VERTICAL PARALLEL hot blades + U-ground. NOT angled
+       (angled = 14-50/10-50). 250V / 50A / 1-phase. Heavy welder/EV outlet.
+       Highlight the "straight parallel" pair -> ONE lime on second hot.
+       Palette: §8.20.7 swap-list only — scaffold #E5E5E5, muted #9C9C9C, ONE lime #A1CC3A.
+       STANDING RULE: no label over any slot, ground, or other label. -->
+
+  <!-- Header -->
+  <text x="320" y="44" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">6-50</text>
+  <text x="320" y="76" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Welder / heavy 240V outlet &#183; straight parallel hots</text>
+
+  <!-- ============ FACE: round bezel, centered (320,250), r=110 ============ -->
+  <circle cx="320" cy="250" r="110" stroke="#E5E5E5" stroke-width="5"/>
+  <!-- two STRAIGHT vertical parallel HOT blades (NOT angled) -->
+  <rect x="263" y="207" width="17" height="53" rx="5" stroke="#E5E5E5" stroke-width="5"/>
+  <rect x="360" y="207" width="17" height="53" rx="5" stroke="#A1CC3A" stroke-width="5"/>
+  <!-- U-ground below center -->
+  <path d="M 303 311 L 303 290 A 17 17 0 0 1 337 290 L 337 311"
+        stroke="#E5E5E5" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- pin callouts, outside the face / clear of slots / ground / ring -->
+  <text x="172" y="234" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">hot</text>
+  <text x="472" y="234" fill="#A1CC3A" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">hot</text>
+  <text x="320" y="392" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">ground</text>
+
+  <!-- ============ LABELS ============ -->
+  <text x="320" y="448" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">250 V &#183; 50 A</text>
+  <text x="320" y="482" fill="#9C9C9C" font-size="18" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">single-phase &#183; 2-pole, 3-wire</text>
+  <text x="320" y="514" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Welders, EVSE &#183; blades are STRAIGHT, not angled</text>
+</svg>

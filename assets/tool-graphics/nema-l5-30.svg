@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
+  <!-- NEMA L5-30R twist-lock FACE, drawn LARGE & centered. Geometry reused from the
+       Vera-passed composite (L5-30 tile + shared twistblade def), scaled ~2.4x. Twist-lock
+       = bold curved kidney/comma locking slots around a hub; the POLE COUNT is the identifier.
+       L5-30 = 3 hooked locking blades 120 deg apart: hot + neutral + ground. 125V / 30A / 1-phase.
+       Highlight ONE blade lime to show the curved locking shape. POLE COUNT = 3.
+       Palette: §8.20.7 swap-list only — scaffold #E5E5E5, muted #9C9C9C, ONE lime #A1CC3A.
+       STANDING RULE: no label over any slot, ground, or other label. -->
+
+  <defs>
+    <!-- twist-lock blade slot, scaled 2.4x from composite, drawn at 12 o'clock, origin = face center -->
+    <path id="tb" d="M -21.6 -61.2 A 64.8 64.8 0 0 1 27.6 -58.8 L 18.5 -39.4 A 43.2 43.2 0 0 0 -14.4 -40.8 Z"
+          fill="#E5E5E5" stroke="#E5E5E5" stroke-width="3.4" stroke-linejoin="round"/>
+    <path id="tbL" d="M -21.6 -61.2 A 64.8 64.8 0 0 1 27.6 -58.8 L 18.5 -39.4 A 43.2 43.2 0 0 0 -14.4 -40.8 Z"
+          fill="#A1CC3A" stroke="#A1CC3A" stroke-width="3.4" stroke-linejoin="round"/>
+  </defs>
+
+  <!-- Header -->
+  <text x="320" y="44" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">L5-30</text>
+  <text x="320" y="76" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Twist-lock &#183; 3 poles: hot + neutral + ground</text>
+
+  <!-- ============ FACE: round bezel, centered (320,250), r=110 ============ -->
+  <circle cx="320" cy="250" r="110" stroke="#E5E5E5" stroke-width="5"/>
+  <g transform="translate(320,250)">
+    <use href="#tbL"/>
+    <use href="#tb" transform="rotate(120)"/>
+    <use href="#tb" transform="rotate(240)"/>
+  </g>
+
+  <!-- (no in-face callout: the lime blade reads as the curved locking-slot highlight;
+       pole count is carried by the subtitle + bottom labels — keeps the face clear of any
+       label-over-geometry overlap per the standing rule) -->
+
+  <!-- ============ LABELS ============ -->
+  <text x="320" y="448" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">125 V &#183; 30 A</text>
+  <text x="320" y="482" fill="#9C9C9C" font-size="18" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">single-phase &#183; 2-pole, 3-wire &#183; locking</text>
+  <text x="320" y="514" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Generators, stage rigs &#183; twist to lock in place</text>
+</svg>
