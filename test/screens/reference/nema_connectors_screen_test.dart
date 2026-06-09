@@ -201,9 +201,9 @@ void main() {
       NemaConnectorDiagrams.debugReset();
     });
 
-    testWidgets('renders title, decoder, and the device-table titles',
+    testWidgets('renders title, decoder, section headings, and face-card titles',
         (WidgetTester tester) async {
-      await _withViewport(tester, const Size(375, 1600), () async {
+      await _withViewport(tester, const Size(375, 6000), () async {
         await tester.pumpWidget(
           MaterialApp(
             theme: AppTheme.dark(),
@@ -212,16 +212,19 @@ void main() {
         );
 
         expect(find.text('NEMA Connectors'), findsWidgets);
+        // The decoder stays a compact table card.
         expect(find.text('Reading a NEMA designation'), findsOneWidget);
+        // The three section headings stand above the stacked face-cards.
         expect(find.text('125V single-phase'), findsOneWidget);
         expect(find.text('208 / 240 / 250V'), findsOneWidget);
         expect(find.text('California Standard 3-phase'), findsOneWidget);
-        // A couple of device types render.
+        // Per-device face-card titles render their load-bearing types.
         expect(find.text('L21-30'), findsOneWidget);
         expect(find.text('14-50'), findsOneWidget);
         // Read-only reference: no inputs.
         expect(find.byType(TextField), findsNothing);
-        // No bundled plate → no SvgPicture (graceful degradation).
+        // No bundled face → no SvgPicture (graceful degradation: each card
+        // reads as title + specs + note alone).
         expect(find.byType(SvgPicture), findsNothing);
       });
     });
@@ -229,7 +232,7 @@ void main() {
     testWidgets('renders without overflow at 320/375/768/1280 widths',
         (WidgetTester tester) async {
       for (final double width in <double>[320, 375, 768, 1280]) {
-        await _withViewport(tester, Size(width, 2000), () async {
+        await _withViewport(tester, Size(width, 6000), () async {
           await tester.pumpWidget(
             MaterialApp(
               theme: AppTheme.dark(),
@@ -243,17 +246,20 @@ void main() {
       }
     });
 
-    testWidgets('renders exactly the bundled face-plate count (dark)',
+    testWidgets('renders exactly the bundled per-face count (dark)',
         (WidgetTester tester) async {
-      // The plate bundled → exactly one SvgPicture band (dark path uses
-      // SvgPicture.asset). Proves the face-diagram band wiring.
+      // All eleven named faces bundled → exactly eleven SvgPicture face-cards
+      // (dark path uses SvgPicture.asset), one per device type that carries an
+      // assetName. Device types without a dedicated face (1-15, 5-30, the L6-20
+      // / L14-20 / L21-20 / L5-x variants, CS8364/65) add no SvgPicture. Proves
+      // the per-face wiring.
       NemaConnectorDiagrams.debugSetBundled(<String>{
         for (final String name in NemaConnectorDiagrams.all)
           NemaConnectorDiagrams.path(name),
       });
       addTearDown(() => NemaConnectorDiagrams.debugReset());
 
-      await _withViewport(tester, const Size(375, 1600), () async {
+      await _withViewport(tester, const Size(375, 8000), () async {
         await tester.pumpWidget(
           MaterialApp(
             theme: AppTheme.dark(),
@@ -261,7 +267,8 @@ void main() {
           ),
         );
         await tester.pump();
-        expect(find.byType(SvgPicture), findsOneWidget);
+        expect(find.byType(SvgPicture),
+            findsNWidgets(NemaConnectorDiagrams.all.length));
       });
     });
   });

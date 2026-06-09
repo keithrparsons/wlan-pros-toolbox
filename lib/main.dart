@@ -15,6 +15,7 @@ import 'data/mac_bit_field_diagram.dart';
 import 'data/power_phasing_diagrams.dart';
 import 'data/ohms_law_diagrams.dart';
 import 'data/iec_connectors_diagrams.dart';
+import 'data/international_plugs_diagrams.dart';
 import 'data/nema_connector_diagrams.dart';
 import 'data/tool_assets.dart';
 import 'router/app_router.dart';
@@ -137,14 +138,25 @@ Future<void> main() async {
     // Manifest unavailable → has() stays false → diagram band omitted. No crash.
   }
 
-  // Same convention for the NEMA Connectors face-diagram plate
-  // (assets/tool-graphics/nema-connectors.svg). Deferred pass; until the SVG is
-  // bundled, NemaConnectorDiagrams.has() stays false and the plate band is
-  // omitted — the configuration tables ship fully working today.
+  // Same convention for the NEMA Connectors per-face diagrams
+  // (assets/tool-graphics/nema-5-15.svg, nema-l21-30.svg, etc.). Deferred pass;
+  // until the SVGs are bundled, NemaConnectorDiagrams.has() stays false and each
+  // face card renders no graphic — the configuration tables ship fully working
+  // today.
   try {
     await NemaConnectorDiagrams.ensureLoaded();
   } catch (_) {
-    // Manifest unavailable → has() stays false → plate band omitted. No crash.
+    // Manifest unavailable → has() stays false → face graphics omitted. No crash.
+  }
+
+  // Same convention for the International Power Plugs per-face diagrams
+  // (assets/tool-graphics/intl-a.svg, intl-g.svg, etc.). Deferred pass; until the
+  // SVGs are bundled, InternationalPlugsDiagrams.has() stays false and each face
+  // card renders no graphic — the plug tables ship fully working today.
+  try {
+    await InternationalPlugsDiagrams.ensureLoaded();
+  } catch (_) {
+    // Manifest unavailable → has() stays false → face graphics omitted. No crash.
   }
 
   // Load + cache the bundled tool-help JSON once (assets/help/tool_help.json).

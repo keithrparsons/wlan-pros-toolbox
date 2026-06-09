@@ -1,23 +1,20 @@
 // NEMA Connectors — read-only reference for the North American plug/receptacle
 // system a field tech meets at a panel, PDU, generator, or wall outlet: how to
-// decode the NEMA nomenclature (e.g. L21-30P), and a verified table of common
+// decode the NEMA nomenclature (e.g. L21-30P), and a verified set of common
 // device types with voltage / phase / amps / wire configuration, grouped by
 // voltage class and flagged single-phase vs three-phase.
 //
-// Page 4 of 6 in the "Power & Cooling" reference category. It follows the
-// template the pilot (power_phasing_screen) established: typed const datasets,
-// a §8.16 AppCopyAction that emits the whole page as sectioned TSV, the
-// LayoutBuilder / ConstrainedBox / SingleChildScrollView scaffold shared by
-// every reference screen, a single manifest-gated face-diagram graphic slot that
-// degrades gracefully (face diagrams are a later pass — Charta authors the plate
-// and Larry wires it before merge), and a ToolHelpFooter keyed on the catalog id.
+// Page 4 of 6 in the "Power & Cooling" reference category.
 //
-// What's the same as Power Phasing: one named graphic resolved by explicit asset
-// name through NemaConnectorDiagrams (the manifest-gated resolver, mirroring
-// PowerPhasingDiagrams / ConnectorDiagrams), rendered by a band that reuses the
-// §8.20.7 light-mode recolor path (ConceptGraphicBand.applyLightSwap) and
-// collapses to nothing when the SVG is not yet bundled — so the page ships fully
-// working before the face plate lands.
+// BIG-graphic redesign (Keith, 2026-06-08): the page no longer carries one small
+// recessed face plate. It now renders one LARGE per-connector FACE graphic per
+// card — each = the big face graphic plus that connector's title/specs alongside
+// (the reusable LargeFaceCard pattern the IEC page established). The nomenclature
+// decoder stays a compact table card (it decodes a designation token-by-token; it
+// is not a connector face). Every face degrades to nothing when its SVG is not
+// yet bundled, so each card reads as title + specs + note alone until Charta's
+// faces land. The face assets are resolved by explicit asset name through
+// NemaConnectorDiagrams (the manifest-gated per-face resolver).
 //
 // Data provenance (GL-005): Pax's verified research brief
 // (Deliverables/2026-06-08-power-cooling-references/RESEARCH-BRIEF.md, Topic 4),
@@ -36,18 +33,15 @@
 // Pure read-only reference — no inputs, no computation, no network. Works on
 // every platform (no NetworkUnavailableView). The only state is "success": the
 // compile-time const datasets always render. There is no loading/empty/error
-// path because nothing is fetched or parsed at runtime; the face-diagram band
-// carries its own absent-asset empty state (renders nothing). GL-008
-// network/subprocess rules do not apply (nothing fetched, nothing shelled out).
+// path because nothing is fetched or parsed at runtime; each face card carries
+// its own absent-asset empty state (renders no graphic). GL-008 network/subprocess
+// rules do not apply (nothing fetched, nothing shelled out).
 //
 // Glyph / copy notes (GL-004): degrees spelled out in prose, "deg" symbol-free
-// in copy payload; the phase symbol is written "1-phase" / "3-phase" in copy and
-// shown as the Greek phi glyph only in on-screen labels where it reads cleanly;
-// ASCII hyphen-minus only, never an em dash; US spelling.
+// in copy payload; the phase descriptor is written "1-phase" / "3-phase" in copy
+// and on screen; ASCII hyphen-minus only, never an em dash; US spelling.
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../data/nema_connector_diagrams.dart';
 import '../../../theme/app_color_scheme.dart';
@@ -56,7 +50,7 @@ import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../widgets/tool_help_footer.dart';
-import '../concept_graphic_band.dart';
+import 'large_face_card.dart';
 import 'reference_row_semantics.dart';
 
 /// One part of the NEMA nomenclature, decoded — the rows of the decoder card.
@@ -90,6 +84,7 @@ class NemaDevice {
     required this.wiring,
     required this.amps,
     this.locking = false,
+    this.assetName,
   });
 
   /// The NEMA designation without the P/R sex suffix, e.g. `5-15`, `L21-30`.
@@ -110,15 +105,18 @@ class NemaDevice {
   /// `true` for twist-lock (`L`-prefixed) types — drives the on-screen flag.
   final bool locking;
 
+  /// The per-face SVG asset name for this device (one of the
+  /// [NemaConnectorDiagrams] face consts), or null when no dedicated face is
+  /// produced for this type (the less-common types read as text). Resolved
+  /// through the manifest-gated resolver and degrades gracefully when absent.
+  final String? assetName;
+
   /// `true` when this device is three-phase (drives the 1-phase vs 3-phase flag).
   bool get isThreePhase => phase.contains('3-phase');
 }
 
 class NemaConnectorsScreen extends StatelessWidget {
   const NemaConnectorsScreen({super.key});
-
-  /// The single face-diagram graphic slot, resolved by explicit asset name.
-  static const String diagramAsset = NemaConnectorDiagrams.facePlate;
 
   // ---- Nomenclature decoder ------------------------------------------------
 
@@ -177,6 +175,7 @@ class NemaConnectorsScreen extends StatelessWidget {
       phase: '1-phase',
       wiring: '2P / 3W (grounded)',
       amps: 15,
+      assetName: NemaConnectorDiagrams.n515,
     ),
     NemaDevice(
       type: '5-20',
@@ -184,6 +183,7 @@ class NemaConnectorsScreen extends StatelessWidget {
       phase: '1-phase',
       wiring: '2P / 3W (grounded)',
       amps: 20,
+      assetName: NemaConnectorDiagrams.n520,
     ),
     NemaDevice(
       type: '5-30',
@@ -215,6 +215,7 @@ class NemaConnectorsScreen extends StatelessWidget {
       wiring: '2P / 3W (grounded)',
       amps: 30,
       locking: true,
+      assetName: NemaConnectorDiagrams.l530,
     ),
   ];
 
@@ -229,6 +230,7 @@ class NemaConnectorsScreen extends StatelessWidget {
       phase: '1-phase',
       wiring: '2P / 3W (grounded)',
       amps: 15,
+      assetName: NemaConnectorDiagrams.n615,
     ),
     NemaDevice(
       type: '6-20',
@@ -236,6 +238,7 @@ class NemaConnectorsScreen extends StatelessWidget {
       phase: '1-phase',
       wiring: '2P / 3W (grounded)',
       amps: 20,
+      assetName: NemaConnectorDiagrams.n620,
     ),
     NemaDevice(
       type: '6-30',
@@ -250,6 +253,7 @@ class NemaConnectorsScreen extends StatelessWidget {
       phase: '1-phase',
       wiring: '2P / 3W (grounded)',
       amps: 50,
+      assetName: NemaConnectorDiagrams.n650,
     ),
     NemaDevice(
       type: 'L6-20',
@@ -266,6 +270,7 @@ class NemaConnectorsScreen extends StatelessWidget {
       wiring: '2P / 3W (grounded)',
       amps: 30,
       locking: true,
+      assetName: NemaConnectorDiagrams.l630,
     ),
     NemaDevice(
       type: '14-30',
@@ -273,6 +278,7 @@ class NemaConnectorsScreen extends StatelessWidget {
       phase: '1-phase split',
       wiring: '3P / 4W (2 hot + N + G)',
       amps: 30,
+      assetName: NemaConnectorDiagrams.n1430,
     ),
     NemaDevice(
       type: '14-50',
@@ -280,6 +286,7 @@ class NemaConnectorsScreen extends StatelessWidget {
       phase: '1-phase split',
       wiring: '3P / 4W (2 hot + N + G)',
       amps: 50,
+      assetName: NemaConnectorDiagrams.n1450,
     ),
     NemaDevice(
       type: 'L14-20',
@@ -296,6 +303,7 @@ class NemaConnectorsScreen extends StatelessWidget {
       wiring: '3P / 4W (2 hot + N + G)',
       amps: 30,
       locking: true,
+      assetName: NemaConnectorDiagrams.l1430,
     ),
     NemaDevice(
       type: 'L21-20',
@@ -312,6 +320,7 @@ class NemaConnectorsScreen extends StatelessWidget {
       wiring: '4P / 5W (3 hot + N + G)',
       amps: 30,
       locking: true,
+      assetName: NemaConnectorDiagrams.l2130,
     ),
   ];
 
@@ -456,46 +465,49 @@ class NemaConnectorsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  // Face-diagram graphic slot — renders only when its SVG is
-                  // bundled; otherwise collapses to nothing (graceful
-                  // degradation). Face diagrams are a deferred pass.
-                  _FaceDiagramBand(
-                    assetName: diagramAsset,
-                    isDesktop: isDesktop,
-                  ),
-                  if (NemaConnectorDiagrams.has(diagramAsset))
-                    const SizedBox(height: AppSpacing.md),
-                  // How to read a NEMA designation.
+                  // How to read a NEMA designation — a compact decoder table
+                  // card (this decodes a designation token-by-token; it is not a
+                  // connector face, so it stays a table, not a LargeFaceCard).
                   _decoderCard(colors, text, mono),
-                  const SizedBox(height: AppSpacing.md),
-                  // 125V single-phase devices.
-                  _deviceCard(
-                    title: '125V single-phase',
-                    devices: group125v,
-                    colors: colors,
-                    text: text,
-                    mono: mono,
+                  const SizedBox(height: AppSpacing.lg),
+                  // BIG-graphic redesign (Keith, 2026-06-08): one LARGE face-card
+                  // per common device type, stacked vertically — each = the big
+                  // face graphic plus that device's title/specs alongside (the
+                  // reusable LargeFaceCard pattern the IEC page established).
+                  // Every face degrades to nothing when its SVG is not yet
+                  // bundled, so each card reads as title + specs + note alone
+                  // until Charta's faces land.
+                  _SectionHeading(label: '125V single-phase'),
+                  const SizedBox(height: AppSpacing.sm),
+                  ..._faceCards(group125v, isDesktop),
+                  const SizedBox(height: AppSpacing.sm),
+                  _SectionHeading(label: '208 / 240 / 250V'),
+                  const SizedBox(height: AppSpacing.sm),
+                  ..._faceCards(group208v, isDesktop),
+                  // The load-bearing 14-50 split / L21 wye callout, kept
+                  // prominent beneath the 208/240V cards.
+                  Text(
+                    splitVsThreePhaseNote,
+                    style: text.bodyMedium?.copyWith(
+                      color: colors.textSecondary,
+                    ),
                   ),
-                  const SizedBox(height: AppSpacing.md),
-                  // 208 / 240 / 250V devices — with the split-vs-3-phase note.
-                  _deviceCard(
-                    title: '208 / 240 / 250V',
-                    devices: group208v,
-                    note: splitVsThreePhaseNote,
-                    colors: colors,
-                    text: text,
-                    mono: mono,
+                  const SizedBox(height: AppSpacing.lg),
+                  _SectionHeading(label: 'California Standard 3-phase'),
+                  const SizedBox(height: AppSpacing.sm),
+                  ..._faceCards(groupCalifornia, isDesktop),
+                  Text(
+                    californiaNote,
+                    style: text.bodyMedium?.copyWith(
+                      color: colors.textSecondary,
+                    ),
                   ),
-                  const SizedBox(height: AppSpacing.md),
-                  // California Standard three-phase connectors.
-                  _deviceCard(
-                    title: 'California Standard 3-phase',
-                    devices: groupCalifornia,
-                    note: californiaNote,
-                    footnote: footnote,
-                    colors: colors,
-                    text: text,
-                    mono: mono,
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    footnote,
+                    style: text.labelMedium?.copyWith(
+                      color: colors.textTertiary,
+                    ),
                   ),
                   ToolHelpFooter(toolId: 'nema-connectors'),
                 ],
@@ -505,6 +517,51 @@ class NemaConnectorsScreen extends StatelessWidget {
         );
       },
     );
+  }
+
+  /// Builds the stacked [LargeFaceCard] list for one device group, one big card
+  /// per device, with an `AppSpacing.md` gap between them. Each card carries the
+  /// device's type as the title, the nickname/phase as a subtitle, the
+  /// voltage/amps/wiring as specs, and its per-face SVG (degrading gracefully).
+  List<Widget> _faceCards(List<NemaDevice> devices, bool isDesktop) {
+    final List<Widget> cards = <Widget>[];
+    for (final NemaDevice d in devices) {
+      cards
+        ..add(
+          LargeFaceCard(
+            title: d.type,
+            subtitle: _subtitleFor(d),
+            specs: <FaceSpec>[
+              FaceSpec(label: 'Voltage', value: d.voltage),
+              FaceSpec(label: 'Amps', value: '${d.amps}A', accent: true),
+              FaceSpec(
+                label: 'Phase',
+                value: d.phase,
+                accent: d.isThreePhase,
+              ),
+              FaceSpec(label: 'Wiring', value: d.wiring),
+            ],
+            assetName: d.assetName ?? '',
+            path: NemaConnectorDiagrams.path,
+            has: (String name) =>
+                name.isNotEmpty && NemaConnectorDiagrams.has(name),
+            isDesktop: isDesktop,
+          ),
+        )
+        ..add(const SizedBox(height: AppSpacing.md));
+    }
+    return cards;
+  }
+
+  /// A one-line subtitle for a device card: the twist-lock flag and/or the
+  /// load-bearing phase distinction, kept short. Null when neither applies.
+  static String? _subtitleFor(NemaDevice d) {
+    final List<String> parts = <String>[
+      if (d.locking) 'Twist-lock',
+      if (d.phase == '1-phase split') 'Split-phase (4th pin = neutral)',
+      if (d.isThreePhase) 'Three-phase',
+    ];
+    return parts.isEmpty ? null : parts.join(' - ');
   }
 
   /// The nomenclature decoder — a labeled walk through `L21-30P`. Each row is a
@@ -563,230 +620,35 @@ class NemaConnectorsScreen extends StatelessWidget {
       }).toList(),
     );
   }
-
-  /// One device-group table: type, voltage, phase (1-phase vs 3-phase flagged),
-  /// wiring, amps. The locking flag tints the twist-lock types; the three-phase
-  /// flag tints the phase cell so the L21 / CS rows stand out from the
-  /// single-phase majority.
-  Widget _deviceCard({
-    required String title,
-    required List<NemaDevice> devices,
-    required AppColorScheme colors,
-    required TextTheme text,
-    required AppMonoText mono,
-    String? note,
-    String? footnote,
-  }) {
-    return _TableCard(
-      title: title,
-      note: note,
-      footnote: footnote,
-      header: const Row(
-        children: <Widget>[
-          _HeaderCell('Type', width: 80),
-          _HeaderCell('Voltage', width: 96),
-          _HeaderCell('Phase', width: 112),
-          _HeaderCell('Wiring', width: 196),
-          _HeaderCell('Amps', width: 56),
-        ],
-      ),
-      rows: devices.map((NemaDevice d) {
-        return ReferenceRowSemantics(
-          label: rowLabel(d.type, <String?>[
-            d.voltage,
-            d.phase,
-            d.wiring,
-            '${d.amps} amps',
-            if (d.locking) 'twist-lock',
-          ]),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                SizedBox(
-                  width: 80,
-                  child: Text(
-                    d.type,
-                    style: mono.inlineCode.copyWith(
-                      color: colors.textPrimary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 96,
-                  child: Text(
-                    d.voltage,
-                    style: mono.inlineCode.copyWith(
-                      color: colors.textSecondary,
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 112,
-                  child: Text(
-                    d.phase,
-                    style: text.labelMedium?.copyWith(
-                      // 3-phase flagged lime so it pops from the 1-phase
-                      // majority — the page's load-bearing distinction.
-                      color: d.isThreePhase
-                          ? colors.textAccent
-                          : colors.textTertiary,
-                      fontWeight:
-                          d.isThreePhase ? FontWeight.w600 : FontWeight.w400,
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 196,
-                  child: Text(
-                    d.wiring,
-                    style: text.labelMedium?.copyWith(
-                      color: colors.textTertiary,
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 56,
-                  child: Text(
-                    '${d.amps}A',
-                    style: mono.inlineCode.copyWith(
-                      color: colors.textPrimary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
 }
 
-/// The face-diagram band for the NEMA Connectors plate. Renders the bundled SVG
-/// (`assets/tool-graphics/nema-connectors.svg`) inside a recessed band when it
-/// is bundled, and collapses to nothing (SizedBox.shrink) when it is not — so
-/// the page ships fully working before the deferred face plate lands.
-/// Decorative for screen readers: every fact the diagram depicts is also in the
-/// tables' text (voltage, phase, amps, wiring) per GL-003 §8.6.2 a11y rule.
-///
-/// LIGHT/DARK (GL-003 §8.20.7): the plate is authored DARK-BAKED (scaffold/lime
-/// hexes that read on #1A1A1A but fail contrast on white if drawn raw). So this
-/// widget reuses the SAME §8.20.7 recolor path the §8.6.2 concept graphics and
-/// the Power Phasing waveforms use, via [ConceptGraphicBand.applyLightSwap]:
-///   * DARK: render the unmodified asset (byte-for-byte; dark goldens unaffected).
-///   * LIGHT: load the SVG source, apply the §8.20.7 allow-list hex swap, then
-///     render via SvgPicture.string. Cached so the replace runs once per build.
-class _FaceDiagramBand extends StatelessWidget {
-  const _FaceDiagramBand({required this.assetName, required this.isDesktop});
+/// A section heading inside the NEMA reference (e.g. "125V single-phase").
+/// Title-styled, secondary ink, matching the register the IEC page uses for its
+/// section labels — standing on the page background above a stack of
+/// [LargeFaceCard]s rather than inside one card.
+class _SectionHeading extends StatelessWidget {
+  const _SectionHeading({required this.label});
 
-  final String assetName;
-  final bool isDesktop;
-
-  // §8.6.2 band-height token: 140dp mobile / 160dp tablet-desktop, matching the
-  // Power Phasing waveform band.
-  static const double _bandHeightMobile = 140;
-  static const double _bandHeightDesktop = 160;
-
-  // Per-asset cache of the already-swapped light SVG source, so the §8.20.7
-  // string replace runs once per asset, not on every rebuild.
-  static final Map<String, String> _lightSvgCache = <String, String>{};
-
-  /// Loads the face-plate SVG source and applies the §8.20.7 allow-list light
-  /// swap, caching per asset name. Returns the recolored source string.
-  Future<String> _loadSwappedSvg() async {
-    final String cached = _lightSvgCache[assetName] ?? '';
-    if (cached.isNotEmpty) return cached;
-    final String raw =
-        await rootBundle.loadString(NemaConnectorDiagrams.path(assetName));
-    final String swapped = ConceptGraphicBand.applyLightSwap(raw);
-    _lightSvgCache[assetName] = swapped;
-    return swapped;
-  }
+  final String label;
 
   @override
   Widget build(BuildContext context) {
-    // Graceful fallback: no bundled plate → render nothing, layout unchanged.
-    if (!NemaConnectorDiagrams.has(assetName)) {
-      return const SizedBox.shrink();
-    }
     final AppColorScheme colors = context.colors;
-    final double bandHeight =
-        isDesktop ? _bandHeightDesktop : _bandHeightMobile;
-
-    // DARK: unmodified asset (dark render unchanged). LIGHT: load + §8.20.7 swap
-    // + render via string so no raw lime stroke ever hits a light surface.
-    final Widget svg = colors.isLight
-        ? _LightFaceDiagramSvg(future: _loadSwappedSvg(), bandHeight: bandHeight)
-        : SvgPicture.asset(
-            NemaConnectorDiagrams.path(assetName),
-            fit: BoxFit.contain,
-            width: double.infinity,
-            height: bandHeight,
-            excludeFromSemantics: true,
-            // A bundled-but-unparseable SVG collapses to nothing rather than
-            // surfacing a broken-image box.
-            placeholderBuilder: (_) => const SizedBox.shrink(),
-          );
-
-    return ExcludeSemantics(
-      child: Container(
-        decoration: BoxDecoration(
-          color: colors.surface2,
-          borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border.all(color: colors.border, width: 1),
-        ),
-        padding: const EdgeInsets.all(AppSpacing.sm),
-        child: SizedBox(
-          height: bandHeight,
-          width: double.infinity,
-          child: Center(child: svg),
-        ),
+    final TextTheme text = Theme.of(context).textTheme;
+    return Text(
+      label,
+      style: text.titleSmall?.copyWith(
+        color: colors.textSecondary,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.4,
       ),
-    );
-  }
-}
-
-/// Light-mode face-plate render: awaits the §8.20.7-swapped SVG source, then
-/// draws it with `SvgPicture.string`. Collapses to nothing while loading or on
-/// any parse failure — same graceful-degradation contract as the dark asset
-/// path, so no broken-image box or layout jump ever appears. Mirrors
-/// `_LightWaveformSvg` in power_phasing_screen.dart.
-class _LightFaceDiagramSvg extends StatelessWidget {
-  const _LightFaceDiagramSvg({required this.future, required this.bandHeight});
-
-  final Future<String> future;
-  final double bandHeight;
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<String>(
-      future: future,
-      builder: (BuildContext context, AsyncSnapshot<String> snap) {
-        final String? data = snap.data;
-        if (data == null || data.isEmpty) {
-          // Loading or failed — render nothing (no broken box, no jump).
-          return const SizedBox.shrink();
-        }
-        return SvgPicture.string(
-          data,
-          fit: BoxFit.contain,
-          width: double.infinity,
-          height: bandHeight,
-          excludeFromSemantics: true,
-          placeholderBuilder: (_) => const SizedBox.shrink(),
-        );
-      },
     );
   }
 }
 
 /// Card surface wrapping a wide table: title over an optional note, then a
 /// horizontally-scrolling IntrinsicWidth grid (header + rows share one width so
-/// columns align), with an optional full-width footnote beneath. Matches the
+/// columns align). Used only for the nomenclature decoder card now. Matches the
 /// power_phasing_screen / poe_reference_screen overflow-safe idiom.
 class _TableCard extends StatelessWidget {
   const _TableCard({
@@ -794,14 +656,12 @@ class _TableCard extends StatelessWidget {
     required this.header,
     required this.rows,
     this.note,
-    this.footnote,
   });
 
   final String title;
   final Widget header;
   final List<Widget> rows;
   final String? note;
-  final String? footnote;
 
   @override
   Widget build(BuildContext context) {
@@ -842,13 +702,6 @@ class _TableCard extends StatelessWidget {
             Text(
               note!,
               style: text.bodyMedium?.copyWith(color: colors.textSecondary),
-            ),
-          ],
-          if (footnote != null) ...<Widget>[
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              footnote!,
-              style: text.labelMedium?.copyWith(color: colors.textTertiary),
             ),
           ],
         ],
