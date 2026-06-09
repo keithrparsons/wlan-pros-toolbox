@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
+  <!-- NEMA 5-30R receptacle FACE, drawn LARGE & centered. Cloned from the Vera-passed
+       5-15/5-20 family. 5-series = neutral + hot + U-ground (125V / 1-phase).
+       The 30A giveaway = the neutral blade lies HORIZONTAL (perpendicular to the vertical
+       hot), distinct from 5-15's two-parallel and 5-20's T-slot. 30A body = slightly
+       larger blades. ONE lime on the horizontal neutral.
+       Palette: §8.20.7 swap-list only — scaffold #E5E5E5, muted #9C9C9C, ONE lime #A1CC3A.
+       STANDING RULE: no label over any slot, ground, or other label. -->
+
+  <!-- Header -->
+  <text x="320" y="44" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">5-30</text>
+  <text x="320" y="76" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">125V 30A outlet &#183; the neutral blade lies sideways</text>
+
+  <!-- ============ FACE: round bezel, centered (320,250), r=110 ============ -->
+  <circle cx="320" cy="250" r="110" stroke="#E5E5E5" stroke-width="5"/>
+  <!-- neutral slot: LEFT, HORIZONTAL (perpendicular) — the 30A mark, LIME -->
+  <rect x="258" y="242" width="52" height="17" rx="5" stroke="#A1CC3A" stroke-width="5"/>
+  <!-- hot slot: RIGHT, VERTICAL -->
+  <rect x="356" y="217" width="17" height="52" rx="5" stroke="#E5E5E5" stroke-width="5"/>
+  <!-- U-ground below center -->
+  <path d="M 303 311 L 303 290 A 17 17 0 0 1 337 290 L 337 311"
+        stroke="#E5E5E5" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- pin callouts, outside the face / clear of slots / ground / ring -->
+  <text x="150" y="253" fill="#A1CC3A" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">neutral</text>
+  <text x="472" y="247" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">hot</text>
+  <text x="320" y="392" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">ground</text>
+
+  <!-- ============ LABELS ============ -->
+  <text x="320" y="448" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">125 V &#183; 30 A</text>
+  <text x="320" y="482" fill="#9C9C9C" font-size="18" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">single-phase &#183; 2-pole, 3-wire</text>
+  <text x="320" y="514" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">RVs, mobile homes &#183; 30A 120V grounded loads</text>
+</svg>

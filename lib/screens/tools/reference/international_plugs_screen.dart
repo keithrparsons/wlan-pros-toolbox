@@ -136,6 +136,7 @@ class InternationalPlugsScreen extends StatelessWidget {
       voltageClass: '120V',
       current: '15A',
       countries: 'US, Canada',
+      assetName: InternationalPlugsDiagrams.b,
     ),
     PlugType(
       type: 'C',

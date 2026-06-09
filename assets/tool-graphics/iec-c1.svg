@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
+  <!-- C1 / C2 ("shaver / razor") coupler face, drawn LARGE & centered.
+       Style matched to iec-c7.svg: same viewBox, header, face-frame, pin callouts, label block.
+       Geometry: small CLASS-II 2.5A unearthed coupler — a flattened oval body with TWO ROUND
+       contacts side by side, NO earth pin.
+       Palette: §8.20.7 swap-list only — scaffold #E5E5E5, muted #9C9C9C, ONE lime #A1CC3A.
+       STANDING RULE: no label over any outline, hole, or other label. -->
+
+  <!-- Header -->
+  <text x="320" y="48" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle">C1 / C2</text>
+  <text x="320" y="80" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Class II shaver / radio coupler &#183; IEC 60320</text>
+
+  <!-- ============ FACE: flattened oval body, two round contacts, NO earth ============
+       Oval centered at (320,260): rx=140, ry=66 (pill / rounded-rectangle silhouette).
+       Two female contact holes side by side at (262,260) & (378,260), r=20. -->
+  <g>
+    <rect x="180" y="194" width="280" height="132" rx="66" ry="66"
+          stroke="#E5E5E5" stroke-width="4" stroke-linejoin="round"/>
+    <!-- two recessed female contact holes — line + neutral, NO earth -->
+    <circle cx="262" cy="260" r="20" fill="#9C9C9C"/>
+    <circle cx="378" cy="260" r="20" fill="#9C9C9C"/>
+  </g>
+  <!-- No L/N callouts: C1/C2 is an UNPOLARIZED coupler — the two contacts have
+       no fixed line/neutral assignment, so labelling them would imply a
+       polarity the connector does not have (Keith truthfulness standard). -->
+  <!-- the defining trait, lime, in clear space below the face -->
+  <text x="320" y="378" fill="#A1CC3A" font-size="17" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">no earth pin &#183; 2-pin only</text>
+
+  <!-- ============ LABELS ============ -->
+  <text x="320" y="468" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">0.2 A</text>
+  <text x="320" y="502" fill="#9C9C9C" font-size="18" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">IEC 60320 &#183; 250 V &#183; 0.2 A &#183; unearthed</text>
+  <text x="320" y="532" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Class II coupler &#183; shavers, razors, small radios</text>
+</svg>

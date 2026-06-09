@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
+  <!-- NEMA 1-15R receptacle FACE, drawn LARGE & centered. Cloned from the Vera-passed
+       5-15 face, with the U-ground REMOVED. 1-series = 2-pole, 2-wire, NO ground.
+       Two flat parallel blades: neutral (LEFT, wider/longer) + hot (RIGHT, shorter).
+       125V / 15A / 1-phase. The classic ungrounded two-prong outlet. ONE lime on the
+       wider neutral slot to mark the polarity giveaway.
+       Palette: §8.20.7 swap-list only — scaffold #E5E5E5, muted #9C9C9C, ONE lime #A1CC3A.
+       STANDING RULE: no label over any slot or other label. -->
+
+  <!-- Header -->
+  <text x="320" y="44" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">1-15</text>
+  <text x="320" y="76" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">The old ungrounded two-prong outlet &#183; NEMA WD-6</text>
+
+  <!-- ============ FACE: round bezel, centered (320,250), r=110 ============ -->
+  <circle cx="320" cy="250" r="110" stroke="#E5E5E5" stroke-width="5"/>
+  <!-- neutral slot: LEFT, WIDER + LONGER (polarized) — LIME -->
+  <rect x="263" y="221" width="19" height="58" rx="5" stroke="#A1CC3A" stroke-width="5"/>
+  <!-- hot slot: RIGHT, narrower + shorter -->
+  <rect x="360" y="231" width="15" height="48" rx="5" stroke="#E5E5E5" stroke-width="5"/>
+
+  <!-- pin callouts, in the clear dark band, clear of slots / ring -->
+  <text x="168" y="258" fill="#A1CC3A" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">neutral</text>
+  <text x="472" y="258" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">hot</text>
+
+  <!-- ============ LABELS ============ -->
+  <text x="320" y="448" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">125 V &#183; 15 A</text>
+  <text x="320" y="482" fill="#9C9C9C" font-size="18" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">single-phase &#183; 2-pole, 2-wire &#183; no ground</text>
+  <text x="320" y="514" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Pre-grounding-era outlet &#183; wider slot is neutral</text>
+</svg>

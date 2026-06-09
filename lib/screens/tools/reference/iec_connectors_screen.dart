@@ -130,6 +130,7 @@ class IecConnectorsScreen extends StatelessWidget {
       maxTemp: '70 degC',
       nickname: '-',
       use: 'Electric shavers and other low-draw appliances',
+      assetName: IecConnectorsDiagrams.c1,
     ),
     IecCoupler(
       pair: 'C5 / C6',

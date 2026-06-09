@@ -121,6 +121,27 @@ class LargeGraphic extends StatelessWidget {
     return swapped;
   }
 
+  // Per-asset cache of the parsed viewBox aspect ratio (width / height). The
+  // well is sized to this so it HUGS the graphic with no vertical letterbox —
+  // Keith (build 21) found the IEC/NEMA/Power face wells far taller than the
+  // graphic, wasting vertical space. Shared across instances (asset names are
+  // globally unique).
+  static final Map<String, double> _aspectCache = <String, double>{};
+
+  // Fallback aspect used for the first frame before the viewBox parse resolves.
+  // The face cards are ~640×560 (≈1.14); a near-square default avoids a tall
+  // first-frame box that then snaps shorter.
+  static const double _fallbackAspect = 1.15;
+
+  Future<double> _loadAspect() async {
+    final double? cached = _aspectCache[assetName];
+    if (cached != null) return cached;
+    final String raw = await rootBundle.loadString(path(assetName));
+    final double aspect = ConceptGraphicBand.parseAspectRatio(raw);
+    _aspectCache[assetName] = aspect;
+    return aspect;
+  }
+
   @override
   Widget build(BuildContext context) {
     // Graceful fallback: no bundled face → render nothing, layout unchanged.
@@ -128,61 +149,84 @@ class LargeGraphic extends StatelessWidget {
       return const SizedBox.shrink();
     }
     final AppColorScheme colors = context.colors;
-    final double viewportHeight = MediaQuery.sizeOf(context).height;
-    final double graphicHeight =
-        (viewportHeight * heightFraction).clamp(minHeight, maxHeight);
-
     // A readable zoom label from the asset name (e.g. "iec-c13" → "Zoom iec
     // c13"); call sites pass connector-specific names, so this reads sensibly.
     final String zoomLabel = 'Zoom ${assetName.replaceAll('-', ' ')}';
 
-    // DARK: unmodified asset (dark render unchanged). LIGHT: load + §8.20.7 swap
-    // + render via string so no raw lime stroke ever hits a light surface. Both
-    // are wrapped in ZoomableGraphic so a tap opens the full-screen pinch-zoom
-    // view, re-rendering the SAME source large (crisp — vector).
-    final Widget svg;
-    if (colors.isLight) {
-      svg = _LightLargeSvg(
-        future: _loadSwappedSvg(),
-        height: graphicHeight,
-        zoomLabel: zoomLabel,
-      );
-    } else {
-      svg = ZoomableGraphic(
-        semanticLabel: zoomLabel,
-        svgBuilder: (BuildContext _, Size canvas) => SvgPicture.asset(
-          path(assetName),
-          fit: BoxFit.contain,
-          width: canvas.width,
-          height: canvas.height,
-          excludeFromSemantics: true,
-          placeholderBuilder: (_) => const SizedBox.shrink(),
-        ),
-        child: SvgPicture.asset(
-          path(assetName),
-          fit: BoxFit.contain,
-          width: double.infinity,
-          height: graphicHeight,
-          excludeFromSemantics: true,
-          placeholderBuilder: (_) => const SizedBox.shrink(),
-        ),
-      );
-    }
+    // The well is sized to the graphic's OWN aspect ratio at the available
+    // width, so it hugs the graphic with no vertical letterbox (build-21 fix).
+    // [heightFraction] is retained for source compatibility but no longer drives
+    // the size — aspect sizing supersedes the old viewport-fraction model.
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final double outerWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : MediaQuery.sizeOf(context).width;
+        // The width the graphic actually paints into, inside the well padding.
+        final double innerWidth =
+            (outerWidth - AppSpacing.md * 2).clamp(1.0, double.infinity);
+        return FutureBuilder<double>(
+          future: _loadAspect(),
+          builder: (BuildContext context, AsyncSnapshot<double> snap) {
+            final double aspect = snap.data ?? _fallbackAspect;
+            // height = width / aspect → the box matches the graphic's shape, so
+            // BoxFit.contain fills it edge-to-edge with no letterbox. Clamped so
+            // it never collapses (minHeight) or dominates a wide card
+            // (maxHeight); at the cap a small horizontal — never vertical —
+            // margin remains.
+            final double graphicHeight =
+                (innerWidth / aspect).clamp(minHeight, maxHeight);
 
-    return ExcludeSemantics(
-      child: Container(
-        decoration: BoxDecoration(
-          color: colors.surface2,
-          borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border.all(color: colors.border, width: 1),
-        ),
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: SizedBox(
-          height: graphicHeight,
-          width: double.infinity,
-          child: Center(child: svg),
-        ),
-      ),
+            // DARK: unmodified asset. LIGHT: load + §8.20.7 swap + render via
+            // string so no raw lime stroke hits a light surface. Both wrap in
+            // ZoomableGraphic so a tap opens the full-screen pinch-zoom view.
+            final Widget svg;
+            if (colors.isLight) {
+              svg = _LightLargeSvg(
+                future: _loadSwappedSvg(),
+                height: graphicHeight,
+                zoomLabel: zoomLabel,
+              );
+            } else {
+              svg = ZoomableGraphic(
+                semanticLabel: zoomLabel,
+                svgBuilder: (BuildContext _, Size canvas) => SvgPicture.asset(
+                  path(assetName),
+                  fit: BoxFit.contain,
+                  width: canvas.width,
+                  height: canvas.height,
+                  excludeFromSemantics: true,
+                  placeholderBuilder: (_) => const SizedBox.shrink(),
+                ),
+                child: SvgPicture.asset(
+                  path(assetName),
+                  fit: BoxFit.contain,
+                  width: double.infinity,
+                  height: graphicHeight,
+                  excludeFromSemantics: true,
+                  placeholderBuilder: (_) => const SizedBox.shrink(),
+                ),
+              );
+            }
+
+            return ExcludeSemantics(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: colors.surface2,
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                  border: Border.all(color: colors.border, width: 1),
+                ),
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: SizedBox(
+                  height: graphicHeight,
+                  width: double.infinity,
+                  child: Center(child: svg),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

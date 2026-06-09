@@ -226,10 +226,10 @@ void main() {
 
     testWidgets('renders exactly the bundled per-face count (dark)',
         (tester) async {
-      // All six named faces bundled → exactly six SvgPicture face-cards (dark
-      // path uses SvgPicture.asset): five IEC 60320 coupler faces (C5, C7, C13,
-      // C15, C19) plus the IEC 60309 face. The C1/C2 coupler has no face asset,
-      // so it does not add a seventh. Proves the per-face wiring.
+      // All seven named faces bundled → exactly seven SvgPicture face-cards
+      // (dark path uses SvgPicture.asset): the C1/C2 unearthed coupler face plus
+      // five IEC 60320 coupler faces (C5, C7, C13, C15, C19) plus the IEC 60309
+      // face. C1/C2 now has its own face (2026-06-08). Proves the per-face wiring.
       IecConnectorsDiagrams.debugSetBundled(<String>{
         for (final String name in IecConnectorsDiagrams.all)
           IecConnectorsDiagrams.path(name),
@@ -244,7 +244,7 @@ void main() {
           ),
         );
         await tester.pump();
-        expect(find.byType(SvgPicture), findsNWidgets(6));
+        expect(find.byType(SvgPicture), findsNWidgets(7));
       });
     });
   });

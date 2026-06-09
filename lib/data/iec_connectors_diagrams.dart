@@ -37,6 +37,10 @@ class IecConnectorsDiagrams {
 
   static const String _dir = 'assets/tool-graphics';
 
+  /// IEC 60320 C1/C2 "shaver/razor" Class-II 2.5A unearthed coupler face
+  /// (unpolarized — two contacts, no earth).
+  static const String c1 = 'iec-c1';
+
   /// IEC 60320 C5/C6 "cloverleaf" coupler face (laptop power bricks).
   static const String c5 = 'iec-c5';
 
@@ -65,7 +69,7 @@ class IecConnectorsDiagrams {
 
   /// All per-face asset names for this page, in render order, for tests and
   /// iteration. C5, C7, C13, C15, C19 (IEC 60320 faces) then IEC 60309.
-  static const List<String> all = <String>[c5, c7, c13, c15, c19, iec60309];
+  static const List<String> all = <String>[c1, c5, c7, c13, c15, c19, iec60309];
 
   /// Built diagram paths, populated once from the AssetManifest. `null` until
   /// the first [ensureLoaded] completes; treated as "nothing built" until then.

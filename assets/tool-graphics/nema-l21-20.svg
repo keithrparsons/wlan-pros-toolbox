@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
+  <!-- NEMA L21-20R twist-lock FACE, drawn LARGE & centered. Cloned from the Vera-passed
+       L21-30 face (shared twistblade def, lime hero bezel). L21-20 = 5 hooked locking
+       blades 72 deg apart: 3 hots + neutral + ground. 120/208V / 20A / THREE-PHASE WYE
+       (4P/5W). Same pole pattern as L21-30, lower amps. POLE COUNT = 5 is the identifier.
+       Lime hero bezel marks "read this one carefully".
+       Palette: §8.20.7 swap-list only — scaffold #E5E5E5, muted #9C9C9C, ONE lime #A1CC3A.
+       STANDING RULE: no label over any slot, ground, or other label. -->
+
+  <defs>
+    <path id="tb" d="M -21.6 -61.2 A 64.8 64.8 0 0 1 27.6 -58.8 L 18.5 -39.4 A 43.2 43.2 0 0 0 -14.4 -40.8 Z"
+          fill="#E5E5E5" stroke="#E5E5E5" stroke-width="3.4" stroke-linejoin="round"/>
+  </defs>
+
+  <!-- Header -->
+  <text x="320" y="44" fill="#A1CC3A" font-size="30" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">L21-20</text>
+  <text x="320" y="76" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Twist-lock &#183; true THREE-PHASE WYE: 5 poles</text>
+
+  <!-- ============ FACE: round bezel (LIME hero), centered (320,250), r=110 ============ -->
+  <circle cx="320" cy="250" r="110" stroke="#A1CC3A" stroke-width="5"/>
+  <g transform="translate(320,250)">
+    <use href="#tb"/>
+    <use href="#tb" transform="rotate(72)"/>
+    <use href="#tb" transform="rotate(144)"/>
+    <use href="#tb" transform="rotate(216)"/>
+    <use href="#tb" transform="rotate(288)"/>
+  </g>
+
+  <!-- ============ LABELS ============ -->
+  <text x="320" y="448" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">120/208 V &#183; 20 A</text>
+  <text x="320" y="482" fill="#9C9C9C" font-size="18" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">three-phase wye &#183; 4-pole, 5-wire &#183; locking</text>
+  <text x="320" y="514" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">3 hots 120&#176; apart + neutral + ground &#183; true 3&#216;</text>
+</svg>

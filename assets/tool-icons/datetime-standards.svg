@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- calendar -->
+    <rect x="3" y="5" width="13" height="13" rx="2"/>
+    <line x1="3" y1="9" x2="16" y2="9"/>
+    <line x1="7" y1="3" x2="7" y2="6"/>
+    <line x1="12" y1="3" x2="12" y2="6"/>
+    <!-- clock overlapping lower-right -->
+    <circle cx="17.5" cy="16.5" r="4.5"/>
+    <path d="M17.5 14.5 V16.5 L19 18"/>
+  </g>
+</svg>

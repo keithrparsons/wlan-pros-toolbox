@@ -168,6 +168,7 @@ class NemaConnectorsScreen extends StatelessWidget {
       phase: '1-phase',
       wiring: '2P / 2W (no ground)',
       amps: 15,
+      assetName: NemaConnectorDiagrams.n115,
     ),
     NemaDevice(
       type: '5-15',
@@ -191,6 +192,7 @@ class NemaConnectorsScreen extends StatelessWidget {
       phase: '1-phase',
       wiring: '2P / 3W (grounded)',
       amps: 30,
+      assetName: NemaConnectorDiagrams.n530,
     ),
     NemaDevice(
       type: 'L5-15',
@@ -199,6 +201,7 @@ class NemaConnectorsScreen extends StatelessWidget {
       wiring: '2P / 3W (grounded)',
       amps: 15,
       locking: true,
+      assetName: NemaConnectorDiagrams.l515,
     ),
     NemaDevice(
       type: 'L5-20',
@@ -207,6 +210,7 @@ class NemaConnectorsScreen extends StatelessWidget {
       wiring: '2P / 3W (grounded)',
       amps: 20,
       locking: true,
+      assetName: NemaConnectorDiagrams.l520,
     ),
     NemaDevice(
       type: 'L5-30',
@@ -262,6 +266,7 @@ class NemaConnectorsScreen extends StatelessWidget {
       wiring: '2P / 3W (grounded)',
       amps: 20,
       locking: true,
+      assetName: NemaConnectorDiagrams.l620,
     ),
     NemaDevice(
       type: 'L6-30',
@@ -295,6 +300,7 @@ class NemaConnectorsScreen extends StatelessWidget {
       wiring: '3P / 4W (2 hot + N + G)',
       amps: 20,
       locking: true,
+      assetName: NemaConnectorDiagrams.l1420,
     ),
     NemaDevice(
       type: 'L14-30',
@@ -312,6 +318,7 @@ class NemaConnectorsScreen extends StatelessWidget {
       wiring: '4P / 5W (3 hot + N + G)',
       amps: 20,
       locking: true,
+      assetName: NemaConnectorDiagrams.l2120,
     ),
     NemaDevice(
       type: 'L21-30',

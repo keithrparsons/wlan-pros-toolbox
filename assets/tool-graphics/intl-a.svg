@@ -1,34 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
-  <!-- Type A / B (North America, NEMA 1-15 / 5-15) FACE, drawn LARGE & centered.
-       Pin geometry reused from Vera-passed composite international-plugs.svg (Type A/B cell),
-       scaled ~2.5x: two parallel flat blades (A) + round earth below (B grounded).
-       Pins are separate, non-overlapping -> drawn as distinct shapes (per IEC-fix union rule).
-       Palette §8.20.7 swap-list only: scaffold #E5E5E5, muted #9C9C9C; NO lime (lime reserved for Type I).
-       DM Mono = letters/ratings/standards; IBM Plex Sans = words.
-       STANDING RULE: no label over any outline, pin, or other label. Canvas #1A1A1A App Mode. -->
+  <!-- Type A (North America ungrounded, NEMA 1-15) FACE. CONTRAST REWORK 2026-06-08 (Charta gfx2-intl).
+       POP pass: subtitle, L/N callouts, spec line promoted #9C9C9C -> #E5E5E5; frame stroke 3 -> 4;
+       blades stay bright #E5E5E5. #9C9C9C kept ONLY for tertiary footnotes (country list, voltage note).
+       Palette §8.20.7 only; NO lime. Pin geometry UNCHANGED (Vera-passed).
+       NOTE: grounded Type B now lives in its own intl-b.svg; this face is Type A (two blades, no earth). -->
 
   <rect x="0" y="0" width="640" height="560" fill="#1A1A1A"/>
 
   <!-- Header -->
   <text x="320" y="46" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle">North America</text>
-  <text x="320" y="76" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Type A / B &#183; two flat blades, round earth = grounded (B)</text>
+  <text x="320" y="76" fill="#E5E5E5" font-size="16" font-weight="600" text-anchor="middle">Type A &#183; two flat blades, ungrounded</text>
 
-  <!-- FACE FRAME: rounded square, centered (320,250). Dashed well-ring removed 2026-06-08 (Vera: ran through L/N/E callouts, no info value). -->
-  <rect x="204" y="134" width="232" height="232" rx="44" stroke="#E5E5E5" stroke-width="3"/>
+  <!-- FACE FRAME -->
+  <rect x="204" y="134" width="232" height="232" rx="44" stroke="#E5E5E5" stroke-width="4"/>
 
-  <!-- PINS (composite x,y * 2.5, +320/+250) : two flat blades + round earth -->
-  <rect x="265" y="195" width="20" height="75" rx="5" fill="#E5E5E5"/>   <!-- L blade, left -->
-  <rect x="355" y="195" width="20" height="75" rx="5" fill="#E5E5E5"/>   <!-- N blade, right -->
-  <circle cx="320" cy="315" r="20" fill="#9C9C9C"/>                       <!-- earth (B), lower center -->
+  <!-- PINS: two flat blades, no earth -->
+  <rect x="265" y="208" width="20" height="84" rx="5" fill="#E5E5E5"/>   <!-- L blade, left -->
+  <rect x="355" y="208" width="20" height="84" rx="5" fill="#E5E5E5"/>   <!-- N blade, right -->
 
-  <!-- pin callouts, below each blade / earth in clear space -->
-  <text x="275" y="296" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">L</text>
-  <text x="365" y="296" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">N</text>
-  <text x="320" y="358" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">E</text>
+  <!-- pin callouts, below each blade in clear space -->
+  <text x="275" y="324" fill="#E5E5E5" font-size="16" font-weight="700" text-anchor="middle" font-family="DM Mono, monospace">L</text>
+  <text x="365" y="324" fill="#E5E5E5" font-size="16" font-weight="700" text-anchor="middle" font-family="DM Mono, monospace">N</text>
 
   <!-- LABELS -->
-  <text x="320" y="436" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">Type A / B</text>
-  <text x="320" y="468" fill="#9C9C9C" font-size="18" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">NEMA 1-15 / 5-15 &#183; 120 V &#183; 15 A</text>
+  <text x="320" y="436" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">Type A</text>
+  <text x="320" y="468" fill="#E5E5E5" font-size="18" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">NEMA 1-15 &#183; 120 V &#183; 15 A</text>
   <text x="320" y="498" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">US, Canada, Japan, Mexico</text>
   <text x="320" y="524" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle">Low-voltage class (100&#8211;127 V)</text>
 </svg>

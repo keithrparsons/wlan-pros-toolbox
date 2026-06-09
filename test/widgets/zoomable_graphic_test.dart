@@ -66,7 +66,7 @@ void main() {
         're-renders the graphic large', (tester) async {
       await tester.pumpWidget(_host());
 
-      await tester.tap(find.byType(InkWell).first);
+      await tester.tap(find.bySemanticsLabel('Zoom graphic'));
       await tester.pumpAndSettle();
 
       final InteractiveViewer viewer =
@@ -83,7 +83,7 @@ void main() {
         (tester) async {
       await tester.pumpWidget(_host());
 
-      await tester.tap(find.byType(InkWell).first);
+      await tester.tap(find.bySemanticsLabel('Zoom graphic'));
       await tester.pumpAndSettle();
       expect(find.byType(InteractiveViewer), findsOneWidget);
 

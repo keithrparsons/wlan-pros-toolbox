@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- name record (rounded card) -->
+    <rect x="4" y="3" width="16" height="6" rx="2"/>
+    <!-- resolves-to arrow -->
+    <path d="M12 9 V14"/>
+    <path d="M9 11.5 L12 14.5 L15 11.5"/>
+    <!-- address record -->
+    <rect x="4" y="15" width="16" height="6" rx="2"/>
+    <!-- dotted-quad marks on address record -->
+    <line x1="9" y1="18" x2="9.01" y2="18"/>
+    <line x1="12" y1="18" x2="12.01" y2="18"/>
+    <line x1="15" y1="18" x2="15.01" y2="18"/>
+  </g>
+</svg>

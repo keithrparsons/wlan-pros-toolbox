@@ -73,6 +73,28 @@ class NemaConnectorDiagrams {
   /// NEMA L21-30 face — 120/208V 3-phase wye 30A twist-lock (4P/5W).
   static const String l2130 = 'nema-l21-30';
 
+  /// NEMA 1-15 face — 125V 1-phase 15A, 2P/2W ungrounded (the polarized
+  /// two-blade plug; wider blade = neutral).
+  static const String n115 = 'nema-1-15';
+
+  /// NEMA 5-30 face — 125V 1-phase 30A grounded.
+  static const String n530 = 'nema-5-30';
+
+  /// NEMA L5-15 face — 125V 1-phase 15A twist-lock.
+  static const String l515 = 'nema-l5-15';
+
+  /// NEMA L5-20 face — 125V 1-phase 20A twist-lock.
+  static const String l520 = 'nema-l5-20';
+
+  /// NEMA L6-20 face — 250V 1-phase 20A twist-lock.
+  static const String l620 = 'nema-l6-20';
+
+  /// NEMA L14-20 face — 125/250V 1-phase split 20A twist-lock.
+  static const String l1420 = 'nema-l14-20';
+
+  /// NEMA L21-20 face — 120/208V 3-phase wye 20A twist-lock (4P/5W).
+  static const String l2120 = 'nema-l21-20';
+
   /// Legacy single combined face-plate slot. Deprecated by the per-face redesign
   /// (2026-06-08); retained only so any straggler reference keeps compiling. Not
   /// in [all]; the redesigned screen does not render it.
@@ -82,16 +104,23 @@ class NemaConnectorDiagrams {
   /// All per-face asset names for this page, in render order, for tests and
   /// iteration.
   static const List<String> all = <String>[
+    n115,
     n515,
     n520,
+    n530,
+    l515,
+    l520,
+    l530,
     n615,
     n620,
     n650,
+    l620,
+    l630,
     n1430,
     n1450,
-    l530,
-    l630,
+    l1420,
     l1430,
+    l2120,
     l2130,
   ];
 

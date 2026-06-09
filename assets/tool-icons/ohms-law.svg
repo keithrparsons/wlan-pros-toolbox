@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- omega: open ring with two feet -->
+    <path d="M6 18 H9 L8 14 a5 5 0 1 1 8 0 L15 18 H18"/>
+  </g>
+</svg>

@@ -1,33 +1,32 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
-  <!-- Type J (Switzerland, SEV 1011) FACE, drawn LARGE & centered.
-       Pin geometry reused from Vera-passed composite (Type J cell), scaled ~2.5x:
-       line + neutral level, earth offset center set down (the J hex layout that
-       distinguishes it from Type C/N).
-       Pins separate, non-overlapping. Palette §8.20.7: #E5E5E5, #9C9C9C; NO lime.
-       STANDING RULE: no label over any outline, pin, or other label. -->
+  <!-- Type J (Switzerland, SEV 1011) FACE. CONTRAST REWORK 2026-06-08 (Charta gfx2-intl).
+       POP pass: subtitle, L/N/E callouts, spec line promoted #9C9C9C -> #E5E5E5; frame stroke 3 -> 4;
+       earth pin promoted to bright #E5E5E5 geometry. #9C9C9C kept ONLY for tertiary footnotes.
+       Palette §8.20.7 only; NO lime. Pin geometry UNCHANGED (Vera-passed).
+       STANDING RULE: no label over any outline/pin/label. -->
 
   <rect x="0" y="0" width="640" height="560" fill="#1A1A1A"/>
 
   <!-- Header -->
   <text x="320" y="46" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle">Switzerland</text>
-  <text x="320" y="76" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Type J &#183; three round pins, earth offset center</text>
+  <text x="320" y="76" fill="#E5E5E5" font-size="16" font-weight="600" text-anchor="middle">Type J &#183; three round pins, earth offset center</text>
 
   <!-- FACE FRAME -->
-  <rect x="204" y="134" width="232" height="232" rx="44" stroke="#E5E5E5" stroke-width="3"/>
+  <rect x="204" y="134" width="232" height="232" rx="44" stroke="#E5E5E5" stroke-width="4"/>
 
   <!-- PINS: L + N level upper, E offset down-center -->
   <circle cx="265" cy="225" r="18" fill="#E5E5E5"/>   <!-- L, upper left -->
   <circle cx="375" cy="225" r="18" fill="#E5E5E5"/>   <!-- N, upper right -->
-  <circle cx="320" cy="300" r="18" fill="#9C9C9C"/>   <!-- E, lower center, offset -->
+  <circle cx="320" cy="300" r="18" fill="#E5E5E5"/>   <!-- E, lower center, offset -->
 
   <!-- pin callouts -->
-  <text x="265" y="186" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">L</text>
-  <text x="375" y="186" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">N</text>
-  <text x="320" y="341" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">E</text>
+  <text x="265" y="186" fill="#E5E5E5" font-size="16" font-weight="700" text-anchor="middle" font-family="DM Mono, monospace">L</text>
+  <text x="375" y="186" fill="#E5E5E5" font-size="16" font-weight="700" text-anchor="middle" font-family="DM Mono, monospace">N</text>
+  <text x="320" y="341" fill="#E5E5E5" font-size="16" font-weight="700" text-anchor="middle" font-family="DM Mono, monospace">E</text>
 
   <!-- LABELS -->
   <text x="320" y="436" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">Type J</text>
-  <text x="320" y="468" fill="#9C9C9C" font-size="18" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">SEV 1011 &#183; 230 V &#183; 10 / 16 A</text>
+  <text x="320" y="468" fill="#E5E5E5" font-size="18" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">SEV 1011 &#183; 230 V &#183; 10 / 16 A</text>
   <text x="320" y="498" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Switzerland, Liechtenstein</text>
   <text x="320" y="524" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle">High-voltage class (220&#8211;240 V)</text>
 </svg>

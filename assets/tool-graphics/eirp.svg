@@ -1,10 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
-  <!-- EIRP. Redrawn to §8.6.2.1: a left-to-right signal chain with every real
-       component drawn and labeled — RADIO (Tx power) -> CABLE/CONNECTOR (loss,
-       energy flows along it) -> AERIAL ANTENNA (the §8.6.2.1 mast + splayed rays
-       glyph; gain added here) -> RADIATED PATTERN (the lobe leaving the antenna).
+  <!-- EIRP. §8.6.2.1 left-to-right signal chain: RADIO (Tx power) -> CABLE/CONNECTOR
+       (loss) -> AERIAL ANTENNA (gain) -> RADIATED PATTERN (lime lobe = EIRP).
        Each term in EIRP = Tx - loss + gain sits under the component that produces it.
-       Lime = the radiated EIRP (the quantity the tool produces). RF LEAVES the antenna. -->
+       Lime = the radiated EIRP. EIRP/radiated-power labels are bright (#E5E5E5) so they
+       read IN FRONT of the lime waves. All lime is canonical #A1CC3A. -->
 
   <!-- Formula header (top-right, clear of the antenna at left) -->
   <text x="232" y="16" fill="#E5E5E5" font-size="12" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">EIRP = Tx &#8722; loss + gain</text>
@@ -15,23 +14,19 @@
   <rect x="16" y="92" width="44" height="34" rx="3" stroke="#E5E5E5" stroke-width="1.75"/>
   <line x1="24" y1="102" x2="52" y2="102" stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round"/>
   <line x1="24" y1="108" x2="52" y2="108" stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round"/>
-  <!-- output port -->
-  <circle cx="60" cy="109" r="2.5" stroke="#9C9C9C" stroke-width="1.25" fill="none"/>
   <text x="38" y="140" fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="middle">radio</text>
   <text x="38" y="152" fill="#E5E5E5" font-size="10" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">Tx power</text>
 
   <!-- ============================================================= -->
-  <!-- CABLE + CONNECTOR run up the mast (loss along it). Energy flows -->
-  <!-- from the radio UP to the antenna feed (arrow shows direction). -->
+  <!-- CABLE + CONNECTOR run up the mast (loss along it). -->
   <!-- ============================================================= -->
   <path d="M60 109 L98 109 L98 56" stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- flow-direction arrow along the cable -->
-  <path d="M94 70 L98 62 L102 70" stroke="#9C9C9C" stroke-width="1.25" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
   <!-- connector nub where cable meets antenna -->
   <rect x="94" y="50" width="8" height="6" rx="1" stroke="#9C9C9C" stroke-width="1.25"/>
-  <text x="118" y="100" fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="middle">cable +</text>
-  <text x="118" y="112" fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="middle">connector</text>
-  <text x="118" y="126" fill="#E5E5E5" font-size="10" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">&#8722; loss</text>
+  <!-- labels in clear space LEFT of the cable run, above the radio box -->
+  <text x="90" y="68" fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="end">cable +</text>
+  <text x="90" y="80" fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="end">connector</text>
+  <text x="90" y="92" fill="#E5E5E5" font-size="10" font-weight="500" text-anchor="end" font-family="DM Mono, monospace">&#8722; loss</text>
 
   <!-- ============================================================= -->
   <!-- AERIAL ANTENNA (the canonical §8.6.2.1 mast + splayed rays).    -->
@@ -52,14 +47,15 @@
   <!-- RADIATED PATTERN (lime = EIRP) — lobe expanding OUT to the right -->
   <!-- ============================================================= -->
   <!-- lime wash fill on the lobe -->
-  <path d="M110 60 L210 24 A66 66 0 0 1 210 96 Z" fill="#A2CC3A" fill-opacity="0.08"/>
-  <g stroke="#A2CC3A" stroke-width="2" stroke-linecap="round" fill="none">
+  <path d="M110 60 L210 24 A66 66 0 0 1 210 96 Z" fill="#A1CC3A" fill-opacity="0.08"/>
+  <g stroke="#A1CC3A" stroke-width="2" stroke-linecap="round" fill="none">
     <path d="M126 38 A30 30 0 0 1 126 96" opacity="0.95"/>
     <path d="M158 30 A46 46 0 0 1 158 104" opacity="0.6"/>
     <path d="M192 24 A62 62 0 0 1 192 110" opacity="0.34"/>
   </g>
-  <!-- direction arrow: energy leaves to the right -->
-  <path d="M250 60 L266 60 M260 54 L266 60 L260 66" stroke="#A2CC3A" stroke-width="1.75" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="200" y="56" fill="#A2CC3A" font-size="14" font-weight="500" text-anchor="middle">EIRP</text>
-  <text x="200" y="72" fill="#A2CC3A" font-size="10" font-weight="500" text-anchor="middle">radiated power</text>
+  <!-- direction arrow: energy leaves to the right (lime, canonical) -->
+  <path d="M250 60 L266 60 M260 54 L266 60 L260 66" stroke="#A1CC3A" stroke-width="1.75" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- EIRP labels bright so they read IN FRONT of the green waves -->
+  <text x="200" y="56" fill="#E5E5E5" font-size="14" font-weight="500" text-anchor="middle">EIRP</text>
+  <text x="200" y="72" fill="#E5E5E5" font-size="10" font-weight="500" text-anchor="middle">radiated power</text>
 </svg>

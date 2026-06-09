@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- request arrow (right) -->
+    <path d="M4 8 H18"/>
+    <path d="M15 5 L18 8 L15 11"/>
+    <!-- response arrow (left) -->
+    <path d="M20 16 H6"/>
+    <path d="M9 13 L6 16 L9 19"/>
+  </g>
+</svg>

@@ -83,7 +83,10 @@ class ZoomableGraphic extends StatelessWidget {
     final AppColorScheme colors = context.colors;
     Navigator.of(context).push<void>(
       PageRouteBuilder<void>(
-        opaque: false,
+        // Opaque so the underlying page does NOT show through the zoom view —
+        // Keith (build 21) saw the page graphic bleeding through the old
+        // semi-transparent scrim. _ZoomView paints a solid dark lightbox.
+        opaque: true,
         barrierColor: colors.scrim,
         barrierDismissible: true,
         // Spoken label for the modal barrier; "Zoomed graphic" reads cleaner
@@ -113,23 +116,25 @@ class ZoomableGraphic extends StatelessWidget {
     return Semantics(
       button: true,
       label: semanticLabel,
+      // a11y / keyboard activation lands here (screen-reader "activate").
+      onTap: () => _openZoom(context),
       child: Stack(
         children: <Widget>[
           // The in-page graphic. Decorative; its own ExcludeSemantics at the
           // call site keeps it out of the a11y tree — the Semantics(button)
           // above is what the screen reader lands on.
           child,
-          // Tap layer covers the whole graphic so a tap anywhere zooms. InkWell
-          // gives the keyboard (Enter / Space) activation and a focus ring.
+          // Tap layer covers the whole graphic so a tap anywhere zooms. A
+          // GestureDetector (not InkWell) fires on a SINGLE click on desktop —
+          // the old InkWell grabbed focus on the first click and needed a
+          // second click to activate on macOS (Keith, build 21). Opaque hit
+          // behavior so a tap anywhere over the graphic registers.
           Positioned.fill(
-            child: Material(
-              type: MaterialType.transparency,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(AppRadius.card),
+            child: ExcludeSemantics(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onTap: () => _openZoom(context),
-                // Excluded so the InkWell does not announce a second, unlabeled
-                // button — the outer Semantics(button, label) is the one node.
-                child: const ExcludeSemantics(child: SizedBox.expand()),
+                child: const SizedBox.expand(),
               ),
             ),
           ),
@@ -205,7 +210,11 @@ class _ZoomView extends StatelessWidget {
     final EdgeInsets safe = mq.padding;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      // Opaque dark lightbox so nothing of the underlying page shows through
+      // (build 21 fix). Read from the dark scheme so the backdrop is a solid
+      // dark canvas regardless of the app's light/dark mode — a conventional
+      // lightbox, matching the always-dark close button + zoom badge.
+      backgroundColor: AppColorScheme.dark().surface0,
       body: Stack(
         children: <Widget>[
           // Tap-the-empty-scrim to dismiss. The InteractiveViewer above

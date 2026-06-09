@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- two-pin plug body -->
+    <path d="M8 14 a4 4 0 0 0 8 0 V10 H8 Z"/>
+    <!-- prongs -->
+    <line x1="10" y1="6" x2="10" y2="10"/>
+    <line x1="14" y1="6" x2="14" y2="10"/>
+    <!-- cord -->
+    <path d="M12 18 V20 a1 1 0 0 0 1 1 H17"/>
+    <!-- globe meridians flanking, signaling "international" -->
+    <path d="M5 6 a9 9 0 0 0 0 12"/>
+    <path d="M19 6 a9 9 0 0 1 0 12"/>
+  </g>
+</svg>

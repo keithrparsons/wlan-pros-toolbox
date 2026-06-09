@@ -49,6 +49,10 @@ class InternationalPlugsDiagrams {
   /// Type A face — NEMA 1-15 ungrounded, 120V (US/Canada/Japan/Mexico).
   static const String a = 'intl-a';
 
+  /// Type B face — NEMA 5-15 grounded, 120V (US/Canada). Now its own face
+  /// (split from the old combined A/B graphic).
+  static const String b = 'intl-b';
+
   /// Type C face — CEE 7/16 Europlug, 230V unearthed (continental Europe).
   static const String c = 'intl-c';
 
@@ -78,7 +82,7 @@ class InternationalPlugsDiagrams {
   static const String m = 'intl-m';
 
   /// All per-face asset names, in letter order, for tests and iteration.
-  static const List<String> all = <String>[a, c, d, e, f, g, i, j, l, m];
+  static const List<String> all = <String>[a, b, c, d, e, f, g, i, j, l, m];
 
   /// Built diagram paths, populated once from the AssetManifest. `null` until
   /// the first [ensureLoaded] completes; treated as "nothing built" until then.

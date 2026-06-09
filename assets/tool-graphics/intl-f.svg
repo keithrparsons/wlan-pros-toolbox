@@ -1,34 +1,34 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
-  <!-- Type F (Schuko, CEE 7/4) FACE, drawn LARGE & centered.
-       Pin geometry reused from Vera-passed composite (Type F cell), scaled ~2.5x:
-       two round pins + EARTH CLIP STRIPS on top and bottom edge of the recess.
-       Pins/clips separate, non-overlapping. Palette §8.20.7: #E5E5E5, #9C9C9C; NO lime.
-       STANDING RULE: no label over any outline, pin, clip, or other label. -->
+  <!-- Type F (Schuko, CEE 7/4) FACE. CONTRAST REWORK 2026-06-08 (Charta gfx2-intl).
+       POP pass: subtitle, L/N callouts, earth-clip note, spec line promoted #9C9C9C -> #E5E5E5;
+       frame stroke 3 -> 4; earth clip strips promoted to bright #E5E5E5 geometry.
+       #9C9C9C kept ONLY for tertiary footnotes (country list, voltage note). Palette §8.20.7 only; NO lime.
+       Pin/clip geometry UNCHANGED (Vera-passed). STANDING RULE: no label over any outline/pin/clip/label. -->
 
   <rect x="0" y="0" width="640" height="560" fill="#1A1A1A"/>
 
   <!-- Header -->
   <text x="320" y="46" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle">Schuko</text>
-  <text x="320" y="76" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Type F &#183; two round pins + side earth clips</text>
+  <text x="320" y="76" fill="#E5E5E5" font-size="16" font-weight="600" text-anchor="middle">Type F &#183; two round pins + side earth clips</text>
 
   <!-- FACE FRAME -->
-  <rect x="204" y="134" width="232" height="232" rx="44" stroke="#E5E5E5" stroke-width="3"/>
+  <rect x="204" y="134" width="232" height="232" rx="44" stroke="#E5E5E5" stroke-width="4"/>
 
   <!-- PINS: two round, horizontal -->
   <circle cx="272" cy="250" r="19" fill="#E5E5E5"/>   <!-- L -->
   <circle cx="368" cy="250" r="19" fill="#E5E5E5"/>   <!-- N -->
   <!-- earth contact strips at top & bottom of the recess, sized to sit inside the well -->
-  <rect x="290" y="188" width="60" height="12" rx="6" fill="#9C9C9C"/>   <!-- top earth clip -->
-  <rect x="290" y="300" width="60" height="12" rx="6" fill="#9C9C9C"/>   <!-- bottom earth clip -->
+  <rect x="290" y="188" width="60" height="12" rx="6" fill="#E5E5E5"/>   <!-- top earth clip -->
+  <rect x="290" y="300" width="60" height="12" rx="6" fill="#E5E5E5"/>   <!-- bottom earth clip -->
 
   <!-- pin callouts: L/N below their pins; earth-clip note above the frame in clear space -->
-  <text x="272" y="304" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">L</text>
-  <text x="368" y="304" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">N</text>
-  <text x="320" y="125" fill="#9C9C9C" font-size="14" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">earth clips (top &amp; bottom)</text>
+  <text x="272" y="304" fill="#E5E5E5" font-size="16" font-weight="700" text-anchor="middle" font-family="DM Mono, monospace">L</text>
+  <text x="368" y="304" fill="#E5E5E5" font-size="16" font-weight="700" text-anchor="middle" font-family="DM Mono, monospace">N</text>
+  <text x="320" y="125" fill="#E5E5E5" font-size="14" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">earth clips (top &amp; bottom)</text>
 
   <!-- LABELS -->
   <text x="320" y="436" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">Type F</text>
-  <text x="320" y="468" fill="#9C9C9C" font-size="18" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">CEE 7/4 &#183; 230 V &#183; 16 A</text>
+  <text x="320" y="468" fill="#E5E5E5" font-size="18" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">CEE 7/4 &#183; 230 V &#183; 16 A</text>
   <text x="320" y="498" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Germany &#183; continental Europe</text>
   <text x="320" y="524" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle">High-voltage class (220&#8211;240 V)</text>
 </svg>

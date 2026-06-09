@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- enclosing slashes /.../ -->
+    <path d="M6 5 L3 19"/>
+    <path d="M21 5 L18 19"/>
+    <!-- dot -->
+    <line x1="8.5" y1="14" x2="8.51" y2="14"/>
+    <!-- asterisk -->
+    <line x1="13" y1="10" x2="13" y2="15"/>
+    <line x1="10.8" y1="11.3" x2="15.2" y2="13.7"/>
+    <line x1="15.2" y1="11.3" x2="10.8" y2="13.7"/>
+  </g>
+</svg>

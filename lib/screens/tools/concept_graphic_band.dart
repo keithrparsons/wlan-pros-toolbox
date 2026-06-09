@@ -219,7 +219,9 @@ class ConceptGraphicBand extends StatelessWidget {
   /// Parses `width / height` from an SVG source string's `viewBox` (preferred)
   /// or its `width`/`height` attributes. Returns the [_fallbackAspect] when the
   /// shape can't be read, so sizing never produces a zero/NaN height.
-  @visibleForTesting
+  ///
+  /// Shared utility: also used by [LargeGraphic] (large_face_card.dart) to size
+  /// its well to the graphic's aspect ratio, so this is public (not test-only).
   static double parseAspectRatio(String svg) {
     // viewBox="minX minY width height" — the authoritative intrinsic shape.
     final RegExpMatch? vb =

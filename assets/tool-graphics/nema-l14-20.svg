@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
+  <!-- NEMA L14-20R twist-lock FACE, drawn LARGE & centered. Cloned from the Vera-passed
+       L14-30 face (shared twistblade def). L14-20 = 4 hooked locking blades 90 deg apart:
+       2 hots + neutral + ground. 125/250V / 20A / single-phase split (4-wire). Same pole
+       pattern as L14-30, lower amps. Highlight ONE blade lime. POLE COUNT = 4.
+       Palette: §8.20.7 swap-list only — scaffold #E5E5E5, muted #9C9C9C, ONE lime #A1CC3A.
+       STANDING RULE: no label over any slot, ground, or other label. -->
+
+  <defs>
+    <path id="tb" d="M -21.6 -61.2 A 64.8 64.8 0 0 1 27.6 -58.8 L 18.5 -39.4 A 43.2 43.2 0 0 0 -14.4 -40.8 Z"
+          fill="#E5E5E5" stroke="#E5E5E5" stroke-width="3.4" stroke-linejoin="round"/>
+    <path id="tbL" d="M -21.6 -61.2 A 64.8 64.8 0 0 1 27.6 -58.8 L 18.5 -39.4 A 43.2 43.2 0 0 0 -14.4 -40.8 Z"
+          fill="#A1CC3A" stroke="#A1CC3A" stroke-width="3.4" stroke-linejoin="round"/>
+  </defs>
+
+  <!-- Header -->
+  <text x="320" y="44" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">L14-20</text>
+  <text x="320" y="76" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Twist-lock &#183; 4 poles: 2 hots + neutral + ground</text>
+
+  <!-- ============ FACE: round bezel, centered (320,250), r=110 ============ -->
+  <circle cx="320" cy="250" r="110" stroke="#E5E5E5" stroke-width="5"/>
+  <g transform="translate(320,250)">
+    <use href="#tbL"/>
+    <use href="#tb" transform="rotate(90)"/>
+    <use href="#tb" transform="rotate(180)"/>
+    <use href="#tb" transform="rotate(270)"/>
+  </g>
+
+  <!-- ============ LABELS ============ -->
+  <text x="320" y="448" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">125/250 V &#183; 20 A</text>
+  <text x="320" y="482" fill="#9C9C9C" font-size="18" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">single-phase split &#183; 3-pole, 4-wire &#183; locking</text>
+  <text x="320" y="514" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Portable generators, RV park pedestals &#183; 4-wire</text>
+</svg>

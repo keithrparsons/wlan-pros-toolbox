@@ -1,33 +1,32 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
-  <!-- Type M (South Africa, BS 546 15A) FACE, drawn LARGE & centered.
-       Pin geometry reused from Vera-passed composite (Type M cell), scaled ~2.5x:
-       same BS 546 triangle as Type D but LARGE pins (15A) — the size is the
-       Type M identifier vs Type D.
-       Pins separate, non-overlapping. Palette §8.20.7: #E5E5E5, #9C9C9C; NO lime.
-       STANDING RULE: no label over any outline, pin, or other label. -->
+  <!-- Type M (South Africa, BS 546 15A) FACE. CONTRAST REWORK 2026-06-08 (Charta gfx2-intl).
+       POP pass: subtitle, E/L/N callouts, spec line promoted #9C9C9C -> #E5E5E5; frame stroke 3 -> 4;
+       large earth pin promoted to bright #E5E5E5 geometry. #9C9C9C kept ONLY for tertiary footnotes.
+       Palette §8.20.7 only; NO lime. Pin geometry UNCHANGED (Vera-passed).
+       STANDING RULE: no label over any outline/pin/label. -->
 
   <rect x="0" y="0" width="640" height="560" fill="#1A1A1A"/>
 
   <!-- Header -->
   <text x="320" y="46" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle">South Africa</text>
-  <text x="320" y="76" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Type M &#183; large BS 546 triangle (15 A)</text>
+  <text x="320" y="76" fill="#E5E5E5" font-size="16" font-weight="600" text-anchor="middle">Type M &#183; large BS 546 triangle (15 A)</text>
 
   <!-- FACE FRAME -->
-  <rect x="204" y="134" width="232" height="232" rx="44" stroke="#E5E5E5" stroke-width="3"/>
+  <rect x="204" y="134" width="232" height="232" rx="44" stroke="#E5E5E5" stroke-width="4"/>
 
   <!-- PINS: large triangle, big earth on top -->
-  <circle cx="320" cy="190" r="28" fill="#9C9C9C"/>   <!-- E, top, large -->
+  <circle cx="320" cy="190" r="28" fill="#E5E5E5"/>   <!-- E, top, large -->
   <circle cx="262" cy="295" r="23" fill="#E5E5E5"/>   <!-- L, lower left -->
   <circle cx="378" cy="295" r="23" fill="#E5E5E5"/>   <!-- N, lower right -->
 
   <!-- pin callouts (clear of large pins) -->
-  <text x="320" y="146" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">E</text>
-  <text x="226" y="301" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">L</text>
-  <text x="414" y="301" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">N</text>
+  <text x="320" y="156" fill="#E5E5E5" font-size="15" font-weight="700" text-anchor="middle" font-family="DM Mono, monospace">E</text>
+  <text x="226" y="301" fill="#E5E5E5" font-size="16" font-weight="700" text-anchor="middle" font-family="DM Mono, monospace">L</text>
+  <text x="414" y="301" fill="#E5E5E5" font-size="16" font-weight="700" text-anchor="middle" font-family="DM Mono, monospace">N</text>
 
   <!-- LABELS -->
   <text x="320" y="436" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">Type M</text>
-  <text x="320" y="468" fill="#9C9C9C" font-size="18" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">BS 546 (15A) &#183; 230 V &#183; 15 A</text>
+  <text x="320" y="468" fill="#E5E5E5" font-size="18" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">BS 546 (15A) &#183; 230 V &#183; 15 A</text>
   <text x="320" y="498" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">South Africa &#183; large appliances in India</text>
   <text x="320" y="524" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="middle">High-voltage class (220&#8211;240 V)</text>
 </svg>
