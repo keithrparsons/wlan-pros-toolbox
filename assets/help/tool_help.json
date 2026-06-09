@@ -2732,11 +2732,12 @@
     "regulatory-domains": {
       "name": "Regulatory Domains",
       "category": "Quick Reference",
-      "purpose": "A region-level FCC / ETSI / ITU summary of the 2.4 / 5 / 6 GHz Wi-Fi rules: allowed sub-bands, DFS/TPC obligations, power classes, and EIRP notes.",
-      "whyHere": "A starting-point sanity check on which bands, channels, and power a region permits \u2014 before you confirm against the current rule text.",
+      "purpose": "The radio regulator that governs Wi-Fi in each market: name, official website, governing docs, and 2.4/5/6 GHz band and power notes for 43 jurisdictions, as a dated snapshot.",
+      "whyHere": "Working a market you do not know? Find its regulator, the governing rule, and a starting band and power note, then confirm against the official site.",
       "howToUse": [
-        "Read the FCC 2.4/5 GHz card, the FCC 6 GHz UNII-5..8 power-class card, the ETSI card, and the ITU three-region note.",
-        "Read the warning callout: this is region-level, regulations change (6 GHz is mid-rulemaking), and the dBm figures are a snapshot to verify against current FCC/ETSI rule text."
+        "Search by jurisdiction or regulator abbreviation. Shared abbreviations (NCC, TRA, CRA) carry the jurisdiction so they stay unambiguous.",
+        "The page leads with a snapshot date: the band and power notes are a dated snapshot, not settled constants.",
+        "Tap a regulator's website to confirm any value against the current rule text before relying on it."
       ],
       "inputs": [],
       "algorithm": null,

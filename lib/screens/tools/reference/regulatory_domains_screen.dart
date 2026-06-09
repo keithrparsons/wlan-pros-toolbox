@@ -1,551 +1,233 @@
-// Wi-Fi Regulatory Domains — read-only region-level FCC / ETSI / ITU summary.
+// Regulatory Domains — per-jurisdiction directory of the radio regulator that
+// governs Wi-Fi in each market.
 //
-// A region-level (NOT per-country) summary of the FCC and ETSI rules for the
-// 2.4 / 5 / 6 GHz Wi-Fi bands, plus the ITU three-region note. Four data cards:
-//   1. FCC 2.4 + 5 GHz UNII sub-bands (allowed, DFS, EIRP notes)
-//   2. FCC 6 GHz UNII-5..8 (power classes + max EIRP / PSD)
-//   3. ETSI 2.4 / 5 / 6 GHz (allowed, DFS/TPC, EIRP)
-//   4. ITU note (three regions + 2.4 GHz channel-count differences)
+// SUPERSEDES the earlier region-level FCC / ETSI / ITU summary that carried this
+// same `regulatory-domains` id (a four-card region overview). This richer page
+// lists 43 jurisdictions, each with: the regulator's logo (or a styled
+// abbreviation badge when the logo asset is not bundled), the jurisdiction, the
+// regulator's full name + abbreviation, a tappable official-website link
+// (url_launcher, system browser), the governing regulation / standard, and the
+// 2.4 / 5 / 6 GHz band + power note.
 //
-// Data ported verbatim from the Pax reference dataset
-// (Deliverables/2026-06-08-reference-batch/wifi-models-data.md, Page 3).
-// Confidence: High on the STRUCTURAL rules (band edges, DFS/TPC obligations,
-// power-class availability), cross-checked across FCC/ETSI documents and vendor
-// regulatory white papers; MEDIUM on the exact dBm figures, which carry per-band
-// and per-device-type exceptions and have been amended recently for 6 GHz.
+// SNAPSHOT BANNER (binding, per the brief): ONE prominent banner at the top
+// states the data is a dated snapshot and that regulations change, so the user
+// confirms against the regulator before relying on a value. The band note in
+// every row is volatile by nature (GL-005); the banner and each row's website
+// link are the verification path.
 //
-// REGULATORY-VOLATILITY CAVEAT (binding, per the build brief): a persistent
-// §8.20.4 warning callout states up front that this is region-level, that
-// regulations change (6 GHz is mid-rulemaking), and that the dBm figures are a
-// snapshot to verify against current FCC/ETSI rule text (as of 2026). The 6 GHz
-// dBm values are Medium confidence precisely because they are being amended
-// (VLP extended band-wide, new geofenced classes added). Never presented as a
-// settled constant — always "verify before deploying or certifying."
+// SEARCH: a search-as-you-type field (mirrors the Educational Resources inline
+// search + SC 4.1.3 live-count announcement) filters rows by jurisdiction,
+// regulator name, abbreviation, and governing docs.
 //
-// Pure read-only reference — no inputs, no computation, no network. Works on
-// every platform. The only state is "success": the compile-time const datasets
-// always render. No loading/empty/error path (nothing fetched or parsed at
-// runtime; GL-008 network/subprocess rules do not apply).
+// ABBREVIATION COLLISIONS: where an abbreviation is shared across jurisdictions
+// (NCC = Taiwan / Nigeria; TRA = Oman / Bahrain; CRA = Qatar), the badge and the
+// screen-reader label append the jurisdiction so the abbreviation is
+// unambiguous (brief requirement).
 //
-// Pattern: mirrors poe_reference_screen exactly — Scaffold + AppBar
-// (toolbarHeight 64) with AppCopyAction, SafeArea(top: false), LayoutBuilder
-// isDesktop @720, ConstrainedBox to calculatorMaxWidth, SingleChildScrollView,
-// ConceptGraphicBand header, _TableCard per sub-table (HorizontalScrollTable +
-// IntrinsicWidth + fixed-width cells), ReferenceRowSemantics per row,
-// ToolHelpFooter.
+// STATES (SOP-007 §5): the dataset is a compile-time const, so there is no
+// loading / fetch / parse path — `success` (the full list or a filtered subset)
+// and `empty` (a query that matches nothing) are the only states. The
+// per-row website launch carries its own honest error state when the browser
+// hand-off fails (the URL stays readable). GL-008: HTTPS browser hand-off, no
+// in-app cleartext fetch, no subprocess.
 //
-// Glyph note: "Wi-Fi" never "WiFi"; "UNII" caps; "dBm"/"MHz"/"GHz" as written;
-// ASCII hyphen-minus; no em dash. PSD = power spectral density (dBm/MHz).
+// DESIGN: context.colors tokens only (theme-aware, light + dark); DM Mono
+// (AppMonoText.inlineCode) for the abbreviation and the website URL identifier;
+// §8.3 lime focus ring inherited from the theme on the tappable link.
+//
+// Glyph hygiene (GL-004): "Wi-Fi" never "WiFi"; "802.1X" never "802.1x"; ASCII
+// hyphen-minus, no em dash; US spelling.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-import '../../../data/tool_assets.dart';
+import '../../../data/regulatory_domains_data.dart';
+import '../../../data/regulatory_logos.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
-import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/centered_content.dart';
 import '../../../widgets/tool_help_footer.dart';
-import '../concept_graphic_band.dart';
-import 'reference_row_semantics.dart';
 
-/// One band row in the FCC 2.4 / 5 GHz card. Mirrors the Page 3 FCC table:
-/// [band, allowed, dfs, notes].
-@immutable
-class FccBandRow {
-  const FccBandRow({
-    required this.band,
-    required this.allowed,
-    required this.dfs,
-    required this.notes,
+class RegulatoryDomainsScreen extends StatefulWidget {
+  const RegulatoryDomainsScreen({
+    super.key,
+    this.domains = kRegulatoryDomains,
+    this.launcher,
   });
 
-  /// Band / UNII sub-band label, e.g. `5 GHz UNII-2A (5.250-5.350)`.
-  final String band;
+  /// The records to render. Defaults to the bundled dataset; injectable so a
+  /// widget test can pump a small fixture without depending on all 43 rows.
+  final List<RegulatoryDomain> domains;
 
-  /// Allowed channels / status, e.g. `Ch 1-11 (2.412-2.462)`.
-  final String allowed;
+  /// Injectable URL opener for tests. Defaults to [launchUrl]
+  /// (externalApplication). Returns whether the launch succeeded.
+  final Future<bool> Function(Uri url)? launcher;
 
-  /// DFS / coordination requirement, e.g. `DFS required`.
-  final String dfs;
-
-  /// Power / EIRP note.
-  final String notes;
-}
-
-/// One sub-band row in the FCC 6 GHz card. Mirrors the Page 3 6 GHz table:
-/// [subBand, range, classes, eirp].
-@immutable
-class FccSixGhzRow {
-  const FccSixGhzRow({
-    required this.subBand,
-    required this.range,
-    required this.classes,
-    required this.eirp,
-  });
-
-  /// UNII sub-band, e.g. `UNII-5`.
-  final String subBand;
-
-  /// Frequency range in GHz, e.g. `5.925-6.425`.
-  final String range;
-
-  /// Power classes allowed, e.g. `LPI, VLP, SP (AFC)`.
-  final String classes;
-
-  /// Max EIRP / PSD note (Medium confidence — verify against current rule text).
-  final String eirp;
-}
-
-/// One band row in the ETSI card. Mirrors the Page 3 ETSI table:
-/// [band, allowed, dfsTpc, eirp].
-@immutable
-class EtsiBandRow {
-  const EtsiBandRow({
-    required this.band,
-    required this.allowed,
-    required this.dfsTpc,
-    required this.eirp,
-  });
-
-  /// Band label, e.g. `6 GHz 5.945-6.425 (UNII-5)`.
-  final String band;
-
-  /// Allowed channels / status.
-  final String allowed;
-
-  /// DFS / TPC requirement.
-  final String dfsTpc;
-
-  /// Max EIRP note.
-  final String eirp;
-}
-
-class RegulatoryDomainsScreen extends StatelessWidget {
-  const RegulatoryDomainsScreen({super.key});
-
-  /// Stable catalog id — backs the route, the §8.6.2 concept graphic, and the
-  /// help entry.
+  /// Stable catalog id — backs the route and the help entry.
   static const String toolId = 'regulatory-domains';
 
-  /// FCC 2.4 + 5 GHz bands. Ported verbatim from the Page 3 FCC table.
-  static const List<FccBandRow> fccLower = [
-    FccBandRow(
-      band: '2.4 GHz',
-      allowed: 'Ch 1-11 (2.412-2.462)',
-      dfs: 'None',
-      notes: '11 channels; only 1/6/11 non-overlapping at 20 MHz.',
-    ),
-    FccBandRow(
-      band: '5 GHz UNII-1 (5.150-5.250)',
-      allowed: 'Yes',
-      dfs: 'No DFS',
-      notes: 'Max EIRP ~30 dBm (AP).',
-    ),
-    FccBandRow(
-      band: '5 GHz UNII-2A (5.250-5.350)',
-      allowed: 'Yes',
-      dfs: 'DFS required',
-      notes: 'Radar-avoidance. Max EIRP ~30 dBm.',
-    ),
-    FccBandRow(
-      band: '5 GHz UNII-2C (5.470-5.725)',
-      allowed: 'Yes',
-      dfs: 'DFS required',
-      notes: 'Largest DFS block. Max EIRP ~30 dBm.',
-    ),
-    FccBandRow(
-      band: '5 GHz UNII-3 (5.725-5.850)',
-      allowed: 'Yes',
-      dfs: 'No DFS',
-      notes: 'Higher power permitted; ~36 dBm EIRP typical for fixed '
-          'point-to-multipoint, more under point-to-point rules.',
-    ),
-  ];
+  /// The persistent snapshot caveat, surfaced in the top banner and reused in
+  /// the copy payload so the warning travels with any pasted data.
+  static String get snapshotCaveat =>
+      'Snapshot verified $kRegulatorySnapshotDate. Regulations change; confirm '
+      'against the regulator before relying on a value.';
 
-  /// FCC 6 GHz UNII-5..8. Ported verbatim from the Page 3 6 GHz table. EIRP/PSD
-  /// figures are Medium confidence (6 GHz is mid-rulemaking).
-  static const List<FccSixGhzRow> fccSixGhz = [
-    FccSixGhzRow(
-      subBand: 'UNII-5',
-      range: '5.925-6.425',
-      classes: 'LPI, VLP, SP (AFC)',
-      eirp: 'SP: 36 dBm / 23 dBm/MHz PSD (AFC). LPI: 30 / 5. VLP: 14 / -5.',
-    ),
-    FccSixGhzRow(
-      subBand: 'UNII-6',
-      range: '6.425-6.525',
-      classes: 'LPI, VLP (no SP)',
-      eirp: 'LPI: 30 dBm / 5 dBm/MHz. VLP: 14 / -5.',
-    ),
-    FccSixGhzRow(
-      subBand: 'UNII-7',
-      range: '6.525-6.875',
-      classes: 'LPI, VLP, SP (AFC)',
-      eirp: 'Same as UNII-5 (SP 36 / 23; LPI 30 / 5; VLP 14 / -5).',
-    ),
-    FccSixGhzRow(
-      subBand: 'UNII-8',
-      range: '6.875-7.125',
-      classes: 'LPI, VLP (no SP)',
-      eirp: 'Same as UNII-6 (LPI 30 / 5; VLP 14 / -5).',
-    ),
-  ];
+  @override
+  State<RegulatoryDomainsScreen> createState() =>
+      _RegulatoryDomainsScreenState();
+}
 
-  /// Power-class legend for the FCC 6 GHz card.
-  static const String fccSixGhzFootnote =
-      'LPI (Low-Power Indoor): no AFC, indoor-only, no external antenna; all '
-      'four sub-bands. SP (Standard Power): AFC-controlled, indoor or outdoor, '
-      'UNII-5 and UNII-7 only. VLP (Very Low Power): no AFC, indoor or outdoor; '
-      'recent FCC action extended VLP across the full band. A geofenced '
-      'very-high-power (GVP) class also exists under recent rulemaking '
-      '(evolving). dBm figures are Medium confidence — verify against current '
-      'rule text.';
+class _RegulatoryDomainsScreenState extends State<RegulatoryDomainsScreen> {
+  final TextEditingController _queryCtrl = TextEditingController();
+  String _query = '';
 
-  /// ETSI 2.4 / 5 / 6 GHz. Ported verbatim from the Page 3 ETSI table.
-  static const List<EtsiBandRow> etsi = [
-    EtsiBandRow(
-      band: '2.4 GHz',
-      allowed: 'Ch 1-13 (2.412-2.472)',
-      dfsTpc: 'None',
-      eirp: '20 dBm (100 mW).',
-    ),
-    EtsiBandRow(
-      band: '5 GHz 5.150-5.350',
-      allowed: 'Ch 36-64',
-      dfsTpc: 'DFS + TPC on 5.250-5.350',
-      eirp: '23 dBm. Indoor-focused.',
-    ),
-    EtsiBandRow(
-      band: '5 GHz 5.470-5.725',
-      allowed: 'Ch 100-140',
-      dfsTpc: 'DFS + TPC required',
-      eirp: '30 dBm (with TPC).',
-    ),
-    EtsiBandRow(
-      band: '6 GHz 5.945-6.425 (UNII-5 only)',
-      allowed: 'Yes',
-      dfsTpc: 'No AFC',
-      eirp: 'LPI: 23 dBm / 10 dBm/MHz. VLP: 14 / -5 (indoor + outdoor).',
-    ),
-  ];
+  @override
+  void dispose() {
+    _queryCtrl.dispose();
+    super.dispose();
+  }
 
-  /// Legend for the ETSI card.
-  static const String etsiFootnote =
-      'Europe permits only the lower 6 GHz (5.945-6.425, ~UNII-5) — a quarter '
-      'of what the FCC opened. Upper 6 GHz (6.425-7.125) is not available for '
-      'Wi-Fi across the EU at time of writing. TPC (Transmit Power Control) is '
-      'mandatory in the DFS bands under ETSI, unlike the FCC.';
+  /// The records matching the active query (substring over the search haystack:
+  /// jurisdiction + regulator + abbreviation + docs). Empty query → all rows.
+  List<RegulatoryDomain> get _filtered {
+    final String q = _query.trim().toLowerCase();
+    if (q.isEmpty) return widget.domains;
+    return widget.domains
+        .where((RegulatoryDomain d) => d.searchHaystack.contains(q))
+        .toList(growable: false);
+  }
 
-  /// ITU note paragraphs (region structure + 2.4 GHz channel differences).
-  static const List<String> ituNotes = [
-    'The ITU divides the world into three regions: Region 1 (Europe, Africa, '
-        'Middle East, former-Soviet states), Region 2 (Americas), Region 3 '
-        '(Asia-Pacific). Allocations differ per region and per national '
-        'administration.',
-    '2.4 GHz: most of the world uses channels 1-13; the US (FCC) caps at 1-11; '
-        'Japan historically allowed channel 14 for 802.11b only.',
-    '5 GHz and 6 GHz adoption varies widely by country — some Region-3 '
-        'administrations follow FCC-style full 6 GHz, others the ETSI '
-        'lower-only model, others have not opened 6 GHz at all.',
-  ];
+  void _onQueryChanged(String value) {
+    setState(() => _query = value);
+    // SC 4.1.3 — announce the live result count so AT users hear the list
+    // change as they type, without focus leaving the field.
+    final int n = _filtered.length;
+    SemanticsService.sendAnnouncement(
+      View.of(context),
+      n == 0
+          ? 'No matching jurisdictions'
+          : '$n matching jurisdiction${n == 1 ? '' : 's'}',
+      TextDirection.ltr,
+    );
+  }
+
+  /// §8.16 copy payload — the snapshot caveat then one TSV line per row.
+  String _copyText() {
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()
+      ..writeln('Regulatory Domains')
+      ..writeln(RegulatoryDomainsScreen.snapshotCaveat)
+      ..writeln()
+      ..writeln(
+        <String>[
+          'Jurisdiction',
+          'ITU Region',
+          'Regulator',
+          'Abbreviation',
+          'Website',
+          'Governing docs',
+          'Band / power notes',
+        ].join(tab),
+      );
+    for (final RegulatoryDomain d in widget.domains) {
+      buf.writeln(
+        <String>[
+          d.jurisdiction,
+          'Region ${d.ituRegion}',
+          d.regulatorName,
+          d.abbreviation,
+          d.websiteUrl,
+          d.governingDocs,
+          d.bandNotes,
+        ].join(tab),
+      );
+    }
+    return buf.toString().trimRight();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Wi-Fi Regulatory Domains'),
+        title: const Text('Regulatory Domains'),
         toolbarHeight: 64,
-        // §8.16 — copy all sub-tables + notes as TSV. Static data, always on.
+        // §8.16 — copy all rows as TSV, led by the snapshot caveat. Static data,
+        // always enabled.
         actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
+          AppCopyAction(textBuilder: _copyText),
         ],
       ),
-      body: SafeArea(top: false, child: _body(context)),
+      body: SafeArea(
+        top: false,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final double edge = constraints.maxWidth >= 720
+                ? AppSpacing.screenEdgeDesktop
+                : AppSpacing.screenEdgeMobile;
+            return CenteredContent(child: _body(edge));
+          },
+        ),
+      ),
     );
   }
 
-  /// §8.16 copy payload — the full region-level summary as a multi-section TSV
-  /// (FCC 2.4/5 GHz, FCC 6 GHz, ETSI, ITU note), led by the volatility caveat.
-  /// Always non-null (static data).
-  static String _buildCopyText() {
-    const String tab = '\t';
-    final StringBuffer buf = StringBuffer()
-      ..writeln('Wi-Fi Regulatory Domains (region-level)')
-      ..writeln()
-      ..writeln(caveatBody)
-      ..writeln()
-      ..writeln('FCC 2.4 + 5 GHz')
-      ..writeln(
-        <String>['Band', 'Allowed', 'DFS', 'Notes'].join(tab),
-      );
-    for (final FccBandRow r in fccLower) {
-      buf.writeln(<String>[r.band, r.allowed, r.dfs, r.notes].join(tab));
-    }
-    buf
-      ..writeln()
-      ..writeln('FCC 6 GHz (UNII-5 to UNII-8)')
-      ..writeln(
-        <String>['Sub-band', 'Range (GHz)', 'Power classes', 'Max EIRP / PSD']
-            .join(tab),
-      );
-    for (final FccSixGhzRow r in fccSixGhz) {
-      buf.writeln(
-        <String>[r.subBand, r.range, r.classes, r.eirp].join(tab),
-      );
-    }
-    buf
-      ..writeln(fccSixGhzFootnote)
-      ..writeln()
-      ..writeln('ETSI (Europe)')
-      ..writeln(
-        <String>['Band', 'Allowed', 'DFS / TPC', 'Max EIRP'].join(tab),
-      );
-    for (final EtsiBandRow r in etsi) {
-      buf.writeln(<String>[r.band, r.allowed, r.dfsTpc, r.eirp].join(tab));
-    }
-    buf
-      ..writeln(etsiFootnote)
-      ..writeln()
-      ..writeln('ITU / other');
-    for (final String note in ituNotes) {
-      buf.writeln('- $note');
-    }
-    return buf.toString().trimRight();
-  }
+  Widget _body(double edge) {
+    final List<RegulatoryDomain> rows = _filtered;
+    final bool filtering = _query.trim().isNotEmpty;
 
-  /// The persistent regulatory-volatility caveat body (also reused in the copy
-  /// payload so the warning travels with the pasted data).
-  static const String caveatBody =
-      'Region-level; regulations change — verify against current FCC/ETSI rule '
-      'text (as of 2026). This is a region-level summary, not a per-country '
-      'matrix. National regulators adopt rules at different times with local '
-      'exceptions. 6 GHz is mid-rulemaking (VLP extended band-wide, new '
-      'geofenced classes added), so the dBm figures are Medium confidence — '
-      'treat every 6 GHz number as a snapshot, not a constant.';
+    final List<Widget> children = <Widget>[
+      const _SnapshotBanner(),
+      const SizedBox(height: AppSpacing.sm),
+      _SearchField(controller: _queryCtrl, onChanged: _onQueryChanged),
+      const SizedBox(height: AppSpacing.sm),
+    ];
 
-  Widget _body(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    final AppMonoText mono =
-        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final bool isDesktop = constraints.maxWidth >= 720;
-        final double edge = isDesktop
-            ? AppSpacing.screenEdgeDesktop
-            : AppSpacing.screenEdgeMobile;
-        return Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: AppSpacing.calculatorMaxWidth,
-            ),
-            child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(
-                edge,
-                AppSpacing.sm,
-                edge,
-                edge + AppSpacing.sm,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  ConceptGraphicBand(
-                    toolId: toolId,
-                    isDesktop: isDesktop,
-                  ),
-                  if (ToolAssets.hasGraphic(toolId))
-                    const SizedBox(height: AppSpacing.md),
-                  const _VolatilityCaveat(),
-                  const SizedBox(height: AppSpacing.md),
-                  _fccLowerCard(colors, text, mono),
-                  const SizedBox(height: AppSpacing.md),
-                  _fccSixGhzCard(colors, text, mono),
-                  const SizedBox(height: AppSpacing.md),
-                  _etsiCard(colors, text, mono),
-                  const SizedBox(height: AppSpacing.md),
-                  _ituCard(colors, text),
-                  ToolHelpFooter(toolId: toolId),
-                ],
-              ),
-            ),
-          ),
+    if (rows.isEmpty) {
+      children.add(_NoMatch(query: _query.trim()));
+    } else {
+      for (int i = 0; i < rows.length; i++) {
+        children.add(
+          _RegulatorRow(domain: rows[i], launcher: widget.launcher),
         );
-      },
-    );
-  }
+        if (i < rows.length - 1) {
+          children.add(const SizedBox(height: AppSpacing.xs));
+        }
+      }
+    }
 
-  Widget _fccLowerCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
-    return _TableCard(
-      title: 'FCC 2.4 + 5 GHz (ITU Region 2)',
-      header: const Row(
-        children: [
-          _HeaderCell('Band', width: 220),
-          _HeaderCell('Allowed', width: 168),
-          _HeaderCell('DFS', width: 120),
-          _HeaderCell('Notes', width: 280),
-        ],
-      ),
-      rows: fccLower.map((FccBandRow r) {
-        return ReferenceRowSemantics(
-          label: rowLabel(r.band, <String?>[
-            r.allowed,
-            'DFS ${r.dfs}',
-            r.notes,
-          ]),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _KeyCell(r.band, width: 220, colors: colors, mono: mono),
-                _TextCell(r.allowed, width: 168, colors: colors, mono: mono,
-                    accent: true),
-                _TextCell(r.dfs, width: 120, colors: colors, mono: mono),
-                _NoteCell(r.notes, width: 280, colors: colors, text: text),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
+    children.add(
+      ToolHelpFooter(toolId: RegulatoryDomainsScreen.toolId),
     );
-  }
 
-  Widget _fccSixGhzCard(
-      AppColorScheme colors, TextTheme text, AppMonoText mono) {
-    return _TableCard(
-      title: 'FCC 6 GHz — UNII-5 to UNII-8',
-      footnote: fccSixGhzFootnote,
-      header: const Row(
-        children: [
-          _HeaderCell('Sub-band', width: 96),
-          _HeaderCell('Range (GHz)', width: 120),
-          _HeaderCell('Power classes', width: 160),
-          _HeaderCell('Max EIRP / PSD', width: 320),
-        ],
-      ),
-      rows: fccSixGhz.map((FccSixGhzRow r) {
-        return ReferenceRowSemantics(
-          label: rowLabel(r.subBand, <String?>[
-            '${r.range} GHz',
-            r.classes,
-            r.eirp,
-          ]),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _KeyCell(r.subBand, width: 96, colors: colors, mono: mono),
-                _TextCell(r.range, width: 120, colors: colors, mono: mono),
-                _NoteCell(r.classes, width: 160, colors: colors, text: text),
-                _NoteCell(r.eirp, width: 320, colors: colors, text: text),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
+    // A header line so AT users hear the total / filtered count.
+    final String countLabel = filtering
+        ? '${rows.length} of ${widget.domains.length} jurisdictions'
+        : '${widget.domains.length} jurisdictions';
 
-  Widget _etsiCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
-    return _TableCard(
-      title: 'ETSI (Europe, ITU Region 1)',
-      footnote: etsiFootnote,
-      header: const Row(
-        children: [
-          _HeaderCell('Band', width: 220),
-          _HeaderCell('Allowed', width: 120),
-          _HeaderCell('DFS / TPC', width: 168),
-          _HeaderCell('Max EIRP', width: 280),
-        ],
-      ),
-      rows: etsi.map((EtsiBandRow r) {
-        return ReferenceRowSemantics(
-          label: rowLabel(r.band, <String?>[
-            r.allowed,
-            'DFS/TPC ${r.dfsTpc}',
-            r.eirp,
-          ]),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _KeyCell(r.band, width: 220, colors: colors, mono: mono),
-                _TextCell(r.allowed, width: 120, colors: colors, mono: mono,
-                    accent: true),
-                _NoteCell(r.dfsTpc, width: 168, colors: colors, text: text),
-                _NoteCell(r.eirp, width: 280, colors: colors, text: text),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _ituCard(AppColorScheme colors, TextTheme text) {
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: colors.border, width: 1),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'ITU / other',
-            style: text.labelMedium?.copyWith(
-              color: colors.textSecondary,
-              letterSpacing: 0.4,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          for (int i = 0; i < ituNotes.length; i++) ...[
-            if (i > 0) const SizedBox(height: AppSpacing.xs),
-            Semantics(
-              container: true,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Text(
-                      '•',
-                      style: text.bodyMedium?.copyWith(
-                        color: colors.textTertiary,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.xs),
-                  Expanded(
-                    child: Text(
-                      ituNotes[i],
-                      style: text.bodyMedium?.copyWith(
-                        color: colors.textSecondary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
+    return ListView(
+      padding: EdgeInsets.fromLTRB(edge, AppSpacing.sm, edge, edge + AppSpacing.sm),
+      children: <Widget>[
+        Semantics(
+          header: true,
+          label: countLabel,
+          child: const SizedBox.shrink(),
+        ),
+        ...children,
+      ],
     );
   }
 }
 
-/// Persistent §8.20.4 warning callout: the regulatory-volatility caveat. Mirrors
-/// the freeradius `_LabCaution` idiom (left-accent border, warning tint fill in
-/// light / faint amber wash in dark, warning icon + title + body). One Semantics
-/// container so a screen reader reads it as a single node.
-class _VolatilityCaveat extends StatelessWidget {
-  const _VolatilityCaveat();
+/// The ONE prominent snapshot banner at the top of the page. Warning-toned
+/// callout (left-accent border, warning tint fill in light / faint wash in dark,
+/// warning icon + body), wrapped in one Semantics container so a screen reader
+/// reads it as a single node. Mirrors the freeradius / volatility-caveat idiom.
+class _SnapshotBanner extends StatelessWidget {
+  const _SnapshotBanner();
 
   @override
   Widget build(BuildContext context) {
@@ -555,6 +237,8 @@ class _VolatilityCaveat extends StatelessWidget {
 
     return Semantics(
       container: true,
+      label: 'Snapshot notice. ${RegulatoryDomainsScreen.snapshotCaveat}',
+      excludeSemantics: true,
       child: Container(
         decoration: BoxDecoration(
           color: colors.isLight
@@ -582,7 +266,7 @@ class _VolatilityCaveat extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    'REGION-LEVEL — VERIFY CURRENT RULE TEXT (AS OF 2026)',
+                    'SNAPSHOT VERIFIED $kRegulatorySnapshotDate',
                     style: (text.labelMedium ?? const TextStyle()).copyWith(
                       color: warn,
                       fontWeight: FontWeight.w700,
@@ -591,7 +275,9 @@ class _VolatilityCaveat extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    RegulatoryDomainsScreen.caveatBody,
+                    'Regulations change; confirm against the regulator before '
+                    'relying on a value. Band and power notes are a snapshot, '
+                    'not a settled constant.',
                     style: (text.bodyMedium ?? const TextStyle()).copyWith(
                       color: colors.textSecondary,
                     ),
@@ -606,110 +292,399 @@ class _VolatilityCaveat extends StatelessWidget {
   }
 }
 
-/// Mono key cell (left column — band / sub-band identifier).
-class _KeyCell extends StatelessWidget {
-  const _KeyCell(
-    this.value, {
-    required this.width,
-    required this.colors,
-    required this.mono,
-  });
+/// In-screen search field (§8.4 input spec). 16px field text dodges iOS Safari
+/// auto-zoom; mirrors the Educational Resources search field.
+class _SearchField extends StatelessWidget {
+  const _SearchField({required this.controller, required this.onChanged});
 
-  final String value;
-  final double width;
-  final AppColorScheme colors;
-  final AppMonoText mono;
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
+    final AppColorScheme colors = context.colors;
+    return Semantics(
+      textField: true,
+      label: 'Search regulatory domains by jurisdiction or regulator',
+      child: TextField(
+        controller: controller,
+        onChanged: onChanged,
+        autocorrect: false,
+        enableSuggestions: false,
+        style: Theme.of(context)
+            .textTheme
+            .bodyLarge
+            ?.copyWith(color: colors.textPrimary),
+        cursorColor: colors.textAccent,
+        textInputAction: TextInputAction.search,
+        decoration: InputDecoration(
+          prefixIcon: Icon(Icons.search, color: colors.textTertiary),
+          hintText: 'Search jurisdiction or regulator…',
+        ),
+      ),
+    );
+  }
+}
+
+/// One jurisdiction card: logo (or abbreviation badge) + jurisdiction + regulator
+/// name + abbreviation chip, the governing docs, the band / power note, and a
+/// tappable official-website link. Stateful only to carry the per-row launch
+/// error state.
+class _RegulatorRow extends StatefulWidget {
+  const _RegulatorRow({required this.domain, this.launcher});
+
+  final RegulatoryDomain domain;
+  final Future<bool> Function(Uri url)? launcher;
+
+  @override
+  State<_RegulatorRow> createState() => _RegulatorRowState();
+}
+
+class _RegulatorRowState extends State<_RegulatorRow> {
+  String? _launchError;
+
+  /// The abbreviation as shown to the user — appended with the jurisdiction when
+  /// it collides across jurisdictions (NCC, TRA, CRA) so it is unambiguous.
+  String get _displayAbbrev => widget.domain.abbreviationCollides
+      ? '${widget.domain.abbreviation} (${widget.domain.jurisdiction})'
+      : widget.domain.abbreviation;
+
+  Future<void> _openWebsite() async {
+    final Uri? uri = Uri.tryParse(widget.domain.websiteUrl);
+    if (uri == null) {
+      _showLaunchError();
+      return;
+    }
+    final Future<bool> Function(Uri) launch = widget.launcher ??
+        (Uri u) => launchUrl(u, mode: LaunchMode.externalApplication);
+    try {
+      final bool ok = await launch(uri);
+      if (!ok) {
+        _showLaunchError();
+        return;
+      }
+      if (!mounted) return;
+      setState(() => _launchError = null);
+    } on Object {
+      _showLaunchError();
+    }
+  }
+
+  void _showLaunchError() {
+    if (!mounted) return;
+    setState(
+      () => _launchError =
+          'Could not open the browser. The link is ${widget.domain.websiteUrl}',
+    );
+    SemanticsService.sendAnnouncement(
+      View.of(context),
+      'Could not open the browser',
+      TextDirection.ltr,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final RegulatoryDomain d = widget.domain;
+
+    return Semantics(
+      container: true,
+      label: '${d.jurisdiction}, ITU Region ${d.ituRegion}. '
+          '${d.regulatorName}, $_displayAbbrev. '
+          'Governing documents: ${d.governingDocs}. '
+          'Bands: ${d.bandNotes}',
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.surface1,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(color: colors.border, width: 1),
+        ),
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            // Header: logo/badge + jurisdiction + regulator + abbreviation.
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                _RegulatorLogo(domain: d, displayAbbrev: _displayAbbrev),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        d.jurisdiction,
+                        style: text.bodyLarge?.copyWith(
+                          color: colors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        d.regulatorName,
+                        style: text.labelMedium?.copyWith(
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      // Abbreviation in DM Mono (identifier), with the
+                      // jurisdiction appended when it collides.
+                      Text(
+                        _displayAbbrev,
+                        style: mono.inlineCode.copyWith(
+                          color: colors.textAccent,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: AppSpacing.xs),
+                  child: Text(
+                    'Region ${d.ituRegion}',
+                    style: text.labelSmall?.copyWith(
+                      color: colors.textTertiary,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            _LabeledBlock(
+              label: 'Governing documents',
+              value: d.governingDocs,
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            _LabeledBlock(
+              label: 'Bands and power (verify)',
+              value: d.bandNotes,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            _WebsiteLink(
+              url: d.websiteUrl,
+              regulator: d.regulatorName,
+              onTap: _openWebsite,
+            ),
+            if (_launchError != null) ...<Widget>[
+              const SizedBox(height: AppSpacing.xs),
+              _LaunchError(message: _launchError!),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The leading logo slot: the regulator's bundled logo when one is present,
+/// otherwise a styled abbreviation badge (NEVER a broken image). 48x48 square so
+/// the row aligns whether a logo or a badge is shown.
+class _RegulatorLogo extends StatelessWidget {
+  const _RegulatorLogo({required this.domain, required this.displayAbbrev});
+
+  final RegulatoryDomain domain;
+  final String displayAbbrev;
+
+  static const double _size = 48;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final String key = domain.logoKey;
+    final String? logoPath = RegulatoryLogos.path(key);
+
+    if (logoPath != null) {
+      final Widget logo = RegulatoryLogos.isSvg(key)
+          ? SvgPicture.asset(
+              logoPath,
+              width: _size,
+              height: _size,
+              fit: BoxFit.contain,
+              excludeFromSemantics: true,
+              placeholderBuilder: (_) => _AbbrevBadge(
+                abbreviation: domain.abbreviation,
+              ),
+            )
+          : Image.asset(
+              logoPath,
+              width: _size,
+              height: _size,
+              fit: BoxFit.contain,
+              excludeFromSemantics: true,
+              errorBuilder: (_, Object _, StackTrace? _) =>
+                  _AbbrevBadge(abbreviation: domain.abbreviation),
+            );
+      return SizedBox(
+        width: _size,
+        height: _size,
+        // White-ish chip behind the logo so colored official marks read on the
+        // dark surface; in light mode the card is already light.
+        child: Container(
+          decoration: BoxDecoration(
+            color: colors.isLight ? colors.surface1 : colors.surface2,
+            borderRadius: BorderRadius.circular(AppRadius.control),
+          ),
+          padding: const EdgeInsets.all(AppSpacing.xxs),
+          child: logo,
+        ),
+      );
+    }
+
+    // No bundled logo → styled abbreviation badge.
+    return _AbbrevBadge(abbreviation: domain.abbreviation);
+  }
+}
+
+/// The fallback badge shown when a regulator logo asset is not bundled: a
+/// tinted, rounded square carrying the abbreviation in DM Mono. The raw
+/// abbreviation only (kept short so it fits the 48x48 square); the colliding
+/// jurisdiction disambiguation lives on the text label beside it, not the badge.
+class _AbbrevBadge extends StatelessWidget {
+  const _AbbrevBadge({required this.abbreviation});
+
+  final String abbreviation;
+
+  static const double _size = 48;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    // Keep the badge text short: first token of the abbreviation, up to 4 chars.
+    final String badge = abbreviation.length > 4
+        ? abbreviation.substring(0, 4)
+        : abbreviation;
+    return Container(
+      width: _size,
+      height: _size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: colors.surface2,
+        borderRadius: BorderRadius.circular(AppRadius.control),
+        border: Border.all(color: colors.borderStrong, width: 1),
+      ),
       child: Text(
-        value,
+        badge,
+        textAlign: TextAlign.center,
         style: mono.inlineCode.copyWith(
-          color: colors.textPrimary,
+          color: colors.textSecondary,
           fontWeight: FontWeight.w500,
+          fontSize: badge.length > 3 ? AppTextSize.caption : AppTextSize.body,
         ),
       ),
     );
   }
 }
 
-/// Mono value cell (short codes — allowed / DFS / range). Accent-colored when
-/// [accent] is true (the "allowed" affirmative column).
-class _TextCell extends StatelessWidget {
-  const _TextCell(
-    this.value, {
-    required this.width,
-    required this.colors,
-    required this.mono,
-    this.accent = false,
-  });
+/// A labeled prose block: a caption-style label over the value text.
+class _LabeledBlock extends StatelessWidget {
+  const _LabeledBlock({required this.label, required this.value});
 
+  final String label;
   final String value;
-  final double width;
-  final AppColorScheme colors;
-  final AppMonoText mono;
-  final bool accent;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
-      child: Text(
-        value,
-        style: mono.inlineCode.copyWith(
-          color: accent ? colors.textAccent : colors.textSecondary,
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          label.toUpperCase(),
+          style: text.labelSmall?.copyWith(
+            color: colors.textTertiary,
+            letterSpacing: 0.4,
+          ),
         ),
-      ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: text.labelMedium?.copyWith(color: colors.textSecondary),
+        ),
+      ],
     );
   }
 }
 
-/// Prose note cell (wrapping sentences — notes / EIRP / power classes).
-class _NoteCell extends StatelessWidget {
-  const _NoteCell(
-    this.value, {
-    required this.width,
-    required this.colors,
-    required this.text,
+/// The tappable official-website link. An outlined, full-width control with a
+/// link glyph and the URL in DM Mono (identifier). Carries the §8.3 lime focus
+/// ring (inherited from the theme's button styling via TextButton); explicit SR
+/// label names the regulator and that it opens in the browser.
+class _WebsiteLink extends StatelessWidget {
+  const _WebsiteLink({
+    required this.url,
+    required this.regulator,
+    required this.onTap,
   });
 
-  final String value;
-  final double width;
-  final AppColorScheme colors;
-  final TextTheme text;
+  final String url;
+  final String regulator;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
-      child: Text(
-        value,
-        style: text.labelMedium?.copyWith(
-          color: colors.textTertiary,
+    final AppColorScheme colors = context.colors;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    return Semantics(
+      button: true,
+      link: true,
+      label: 'Open the $regulator website in the browser',
+      excludeSemantics: true,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(AppRadius.control),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            constraints: const BoxConstraints(
+              minHeight: AppSpacing.minTouchTarget,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.control),
+              border: Border.all(color: colors.borderStrong, width: 1),
+            ),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.xs,
+            ),
+            child: Row(
+              children: <Widget>[
+                Icon(Icons.open_in_new, size: 18, color: colors.textAccent),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: Text(
+                    url,
+                    style: mono.inlineCode.copyWith(
+                      color: colors.textAccent,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-/// Card surface wrapping a wide table: title (full-width, wraps) over a
-/// horizontally-scrolling IntrinsicWidth grid (header + rows share one width so
-/// columns align), with an optional full-width footnote beneath. Matches the
-/// poe_reference_screen / wifi_channels_screen overflow-safe idiom.
-class _TableCard extends StatelessWidget {
-  const _TableCard({
-    required this.title,
-    required this.header,
-    required this.rows,
-    this.footnote,
-  });
+/// Honest error shown when the browser hand-off fails (the link stays readable).
+class _LaunchError extends StatelessWidget {
+  const _LaunchError({required this.message});
 
-  final String title;
-  final Widget header;
-  final List<Widget> rows;
-  final String? footnote;
+  final String message;
 
   @override
   Widget build(BuildContext context) {
@@ -718,65 +693,51 @@ class _TableCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: colors.border, width: 1),
+        borderRadius: BorderRadius.circular(AppRadius.control),
+        border: Border.all(color: colors.statusDanger, width: 1),
       ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: Column(
+      padding: const EdgeInsets.all(AppSpacing.xs),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: text.labelMedium?.copyWith(
-              color: colors.textSecondary,
-              letterSpacing: 0.4,
+        children: <Widget>[
+          Icon(Icons.error_outline, size: 18, color: colors.statusDanger),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: Text(
+              message,
+              style: text.labelMedium?.copyWith(color: colors.textPrimary),
             ),
           ),
-          const SizedBox(height: AppSpacing.xs),
-          HorizontalScrollTable(
-            child: IntrinsicWidth(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  header,
-                  Divider(color: colors.border, height: AppSpacing.sm),
-                  ...rows,
-                ],
-              ),
-            ),
-          ),
-          if (footnote != null) ...[
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              footnote!,
-              style: text.labelMedium?.copyWith(color: colors.textTertiary),
-            ),
-          ],
         ],
       ),
     );
   }
 }
 
-/// One column-header label, caption-styled to align with the data cells.
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label, {required this.width});
+/// In-screen no-results state when the live filter matches nothing.
+class _NoMatch extends StatelessWidget {
+  const _NoMatch({required this.query});
 
-  final String label;
-  final double width;
+  final String query;
 
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
-    return SizedBox(
-      width: width,
-      child: Text(
-        label,
-        style: text.labelSmall?.copyWith(
-          color: colors.textTertiary,
-          letterSpacing: 0.4,
-        ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+      child: Column(
+        children: <Widget>[
+          Icon(Icons.search_off_outlined, size: 48, color: colors.textTertiary),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            query.isEmpty
+                ? 'No jurisdictions loaded.'
+                : 'No jurisdictions match "$query".',
+            style: text.bodyLarge?.copyWith(color: colors.textSecondary),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

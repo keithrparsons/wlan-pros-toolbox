@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.2.0+27
+version: 1.2.0+28
 
 environment:
   sdk: ^3.12.0
@@ -408,6 +408,10 @@ flutter:
     # the folder, so dropping a new <id>.svg in needs no pubspec change.
     - assets/tool-icons/
     - assets/tool-graphics/
+    # Regulatory authority logos (2026-06-08) — official regulator marks, mixed
+    # svg/png; the Regulatory Domains page degrades to an abbreviation badge for
+    # any regulator without a bundled logo.
+    - assets/regulator-logos/
     # Antenna Fundamentals teaching diagrams (v1.1) — Charta's seven line
     # diagrams (g1…g7) for the Antenna Fundamentals Quick Reference reading
     # screen, keyed by graphics-plan slug:

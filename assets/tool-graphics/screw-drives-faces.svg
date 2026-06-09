@@ -1,43 +1,33 @@
 <svg width="660" height="460" viewBox="0 0 660 460" xmlns="http://www.w3.org/2000/svg">
   <!-- Screw Drives & Driver Bits — common drive-head face silhouettes (top-down recess) -->
   <!-- Palette: canvas #1A1A1A, bright #E5E5E5 shapes+text, lime #A1CC3A teaching accent -->
-  <defs>
-    <style>
-      .label   { font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:18px; fill:#E5E5E5; }
-      .sub     { font-family:'DM Mono',monospace;       font-weight:400; font-size:13px; fill:#E5E5E5; }
-      .ring    { fill:none; stroke:#E5E5E5; stroke-width:2; }
-      .recess  { fill:none; stroke:#E5E5E5; stroke-width:7; stroke-linecap:round; stroke-linejoin:round; }
-      .recessf { fill:#E5E5E5; stroke:none; }
-    </style>
-  </defs>
-
   <!-- ===== Row 1 ===== -->
 
   <!-- Slotted -->
   <g transform="translate(110,90)">
-    <circle class="ring" r="56"/>
-    <line class="recess" x1="-42" y1="0" x2="42" y2="0" stroke-width="11"/>
+    <circle r="56" fill="none" stroke="#E5E5E5" stroke-width="2"/>
+    <line x1="-42" y1="0" x2="42" y2="0" stroke-width="11" fill="none" stroke="#E5E5E5" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
-  <text class="label" x="110" y="180" text-anchor="middle">Slotted</text>
-  <text class="sub"   x="110" y="201" text-anchor="middle">flat-blade</text>
+  <text x="110" y="180" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="18" fill="#E5E5E5">Slotted</text>
+  <text   x="110" y="201" text-anchor="middle" font-family="DM Mono,monospace" font-weight="400" font-size="13" fill="#E5E5E5">flat-blade</text>
 
   <!-- Phillips -->
   <g transform="translate(330,90)">
-    <circle class="ring" r="56"/>
-    <line class="recess" x1="-40" y1="0" x2="40" y2="0"/>
-    <line class="recess" x1="0" y1="-40" x2="0" y2="40"/>
+    <circle r="56" fill="none" stroke="#E5E5E5" stroke-width="2"/>
+    <line x1="-40" y1="0" x2="40" y2="0" fill="none" stroke="#E5E5E5" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="0" y1="-40" x2="0" y2="40" fill="none" stroke="#E5E5E5" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
     <!-- tapered center pocket -->
-    <rect x="-9" y="-9" width="18" height="18" rx="3" class="recessf"/>
+    <rect x="-9" y="-9" width="18" height="18" rx="3" fill="#E5E5E5" stroke="none"/>
   </g>
-  <text class="label" x="330" y="180" text-anchor="middle">Phillips</text>
-  <text class="sub"   x="330" y="201" text-anchor="middle">PH1 / PH2</text>
+  <text x="330" y="180" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="18" fill="#E5E5E5">Phillips</text>
+  <text   x="330" y="201" text-anchor="middle" font-family="DM Mono,monospace" font-weight="400" font-size="13" fill="#E5E5E5">PH1 / PH2</text>
 
   <!-- Pozidriv (teaching accent: 45 deg tick marks in lime) -->
   <g transform="translate(550,90)">
-    <circle class="ring" r="56"/>
-    <line class="recess" x1="-40" y1="0" x2="40" y2="0"/>
-    <line class="recess" x1="0" y1="-40" x2="0" y2="40"/>
-    <rect x="-9" y="-9" width="18" height="18" rx="3" class="recessf"/>
+    <circle r="56" fill="none" stroke="#E5E5E5" stroke-width="2"/>
+    <line x1="-40" y1="0" x2="40" y2="0" fill="none" stroke="#E5E5E5" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="0" y1="-40" x2="0" y2="40" fill="none" stroke="#E5E5E5" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="-9" y="-9" width="18" height="18" rx="3" fill="#E5E5E5" stroke="none"/>
     <!-- four shallow 45-degree radial tick marks (the Pozi differentiator) -->
     <g stroke="#A1CC3A" stroke-width="5" stroke-linecap="round">
       <line x1="17" y1="17" x2="33" y2="33"/>
@@ -46,36 +36,36 @@
       <line x1="-17" y1="-17" x2="-33" y2="-33"/>
     </g>
   </g>
-  <text class="label" x="550" y="180" text-anchor="middle">Pozidriv</text>
-  <text class="sub"   x="550" y="201" text-anchor="middle">PZ1 / PZ2</text>
+  <text x="550" y="180" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="18" fill="#E5E5E5">Pozidriv</text>
+  <text   x="550" y="201" text-anchor="middle" font-family="DM Mono,monospace" font-weight="400" font-size="13" fill="#E5E5E5">PZ1 / PZ2</text>
 
   <!-- ===== Row 2 ===== -->
 
   <!-- Hex / Allen -->
   <g transform="translate(110,290)">
-    <circle class="ring" r="56"/>
+    <circle r="56" fill="none" stroke="#E5E5E5" stroke-width="2"/>
     <!-- internal hexagon socket, flat-top orientation -->
     <polygon points="-38,0 -19,-33 19,-33 38,0 19,33 -19,33" fill="none" stroke="#E5E5E5" stroke-width="7" stroke-linejoin="round"/>
   </g>
-  <text class="label" x="110" y="380" text-anchor="middle">Hex / Allen</text>
-  <text class="sub"   x="110" y="401" text-anchor="middle">mm + inch</text>
+  <text x="110" y="380" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="18" fill="#E5E5E5">Hex / Allen</text>
+  <text   x="110" y="401" text-anchor="middle" font-family="DM Mono,monospace" font-weight="400" font-size="13" fill="#E5E5E5">mm + inch</text>
 
   <!-- Torx (T-sizes) — six-lobe hexalobular -->
   <g transform="translate(330,290)">
-    <circle class="ring" r="56"/>
+    <circle r="56" fill="none" stroke="#E5E5E5" stroke-width="2"/>
     <!-- 6-lobe hexalobular internal recess (Torx) -->
     <path fill="none" stroke="#E5E5E5" stroke-width="7" stroke-linejoin="round" d="M 0.0,-40.0 Q 12.0,-20.8 34.6,-20.0 Q 24.0,-0.0 34.6,20.0 Q 12.0,20.8 0.0,40.0 Q -12.0,20.8 -34.6,20.0 Q -24.0,0.0 -34.6,-20.0 Q -12.0,-20.8 -0.0,-40.0 Z"/>
   </g>
-  <text class="label" x="330" y="380" text-anchor="middle">Torx</text>
-  <text class="sub"   x="330" y="401" text-anchor="middle">T10 / T15 / T20 / T25</text>
+  <text x="330" y="380" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="18" fill="#E5E5E5">Torx</text>
+  <text   x="330" y="401" text-anchor="middle" font-family="DM Mono,monospace" font-weight="400" font-size="13" fill="#E5E5E5">T10 / T15 / T20 / T25</text>
 
   <!-- Robertson / square -->
   <g transform="translate(550,290)">
-    <circle class="ring" r="56"/>
+    <circle r="56" fill="none" stroke="#E5E5E5" stroke-width="2"/>
     <rect x="-26" y="-26" width="52" height="52" rx="5" fill="none" stroke="#E5E5E5" stroke-width="7" stroke-linejoin="round"/>
   </g>
-  <text class="label" x="550" y="380" text-anchor="middle">Robertson</text>
-  <text class="sub"   x="550" y="401" text-anchor="middle">square &#183; #1 / #2</text>
+  <text x="550" y="380" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="18" fill="#E5E5E5">Robertson</text>
+  <text   x="550" y="401" text-anchor="middle" font-family="DM Mono,monospace" font-weight="400" font-size="13" fill="#E5E5E5">square &#183; #1 / #2</text>
 
   <!-- footer caption -->
   <text x="330" y="440" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-weight="400" font-size="13px" fill="#E5E5E5">Recess faces, viewed top-down. Carry the matching bit size.</text>
