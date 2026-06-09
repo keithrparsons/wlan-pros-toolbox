@@ -17,6 +17,10 @@ import 'data/ohms_law_diagrams.dart';
 import 'data/iec_connectors_diagrams.dart';
 import 'data/international_plugs_diagrams.dart';
 import 'data/nema_connector_diagrams.dart';
+import 'data/bend_diagrams.dart';
+import 'data/rack_diagrams.dart';
+import 'data/screw_drives_diagrams.dart';
+import 'data/fiber_connectors_diagrams.dart';
 import 'data/tool_assets.dart';
 import 'router/app_router.dart';
 import 'services/help/tool_help_loader.dart';
@@ -158,6 +162,23 @@ Future<void> main() async {
   } catch (_) {
     // Manifest unavailable → has() stays false → face graphics omitted. No crash.
   }
+
+  // Bend Radius, Rack Units, Screw Drives reference diagrams + the Fiber
+  // connectors/polish diagrams (2026-06-08). Same manifest-gate convention:
+  // until the SVGs are bundled has() stays false and each graphic slot is
+  // omitted, so the reference tables ship fully working without them.
+  try {
+    await BendDiagrams.ensureLoaded();
+  } catch (_) {}
+  try {
+    await RackDiagrams.ensureLoaded();
+  } catch (_) {}
+  try {
+    await ScrewDrivesDiagrams.ensureLoaded();
+  } catch (_) {}
+  try {
+    await FiberConnectorsDiagrams.ensureLoaded();
+  } catch (_) {}
 
   // Load + cache the bundled tool-help JSON once (assets/help/tool_help.json).
   // Synchronous helpForId() reads the cache after this completes; a failure

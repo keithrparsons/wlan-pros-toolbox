@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" width="320" height="160" font-family="'IBM Plex Sans', sans-serif">
+  <!--
+    Concept graphic: cable bend radius — good arc vs kink.
+    GL-003 §8.6.2 / §8.6.2.1 governed. Two-value model: neutral scaffold #E5E5E5 + lime #A1CC3A
+    (lime marks the one measured quantity: the bend radius). Kink uses sanctioned §8.13 danger
+    verdict #F26E6E (computed fail: a kink is out-of-spec damage). All swap-list hexes.
+    No hatching, no texture. Cable = a real jacketed cable (filled rounded path). Every mark labeled.
+  -->
+
+  <!-- ============ LEFT: GOOD BEND (R >= 4x OD, OK) ============ -->
+
+  <!-- jacketed cable, gentle arc. Wide round stroke = the cable jacket. -->
+  <path d="M 18 30 L 18 78 A 42 42 0 0 0 60 120 L 108 120"
+        fill="none" stroke="#E5E5E5" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- inner highlight line to read as a cable, not a bar -->
+  <path d="M 18 30 L 18 78 A 42 42 0 0 0 60 120 L 108 120"
+        fill="none" stroke="#9C9C9C" stroke-width="2.4" stroke-linecap="round"/>
+
+  <!-- bend-radius marker: lime, the measured quantity. center of arc at (60,78) -->
+  <circle cx="60" cy="78" r="2.6" fill="#A1CC3A"/>
+  <!-- radius line from arc center out to the bend, lime -->
+  <line x1="60" y1="78" x2="27.3" y2="105.3" stroke="#A1CC3A" stroke-width="1.8" stroke-linecap="round"/>
+  <!-- radius arc sweep tick at center -->
+  <path d="M 60 60 A 18 18 0 0 0 42 78" fill="none" stroke="#A1CC3A" stroke-width="1.4"/>
+  <!-- R label, lime accent + DM Mono value -->
+  <text x="64" y="70" font-size="9" font-weight="600" fill="#A1CC3A" font-family="'DM Mono', monospace">R</text>
+
+  <!-- the rule, in DM Mono, bright -->
+  <text x="84" y="44" font-size="11" font-weight="500" fill="#E5E5E5" font-family="'DM Mono', monospace">R &#8805; 4&#215; OD</text>
+  <text x="84" y="60" font-size="8" font-weight="400" fill="#9C9C9C" font-family="'IBM Plex Sans', sans-serif">installed, 4-pair UTP</text>
+
+  <!-- OD callout on the straight run, bright -->
+  <line x1="13.5" y1="30" x2="22.5" y2="30" stroke="#9C9C9C" stroke-width="1.2"/>
+  <text x="26" y="33" font-size="7.5" fill="#9C9C9C" font-family="'IBM Plex Sans', sans-serif">OD</text>
+
+  <!-- verdict: OK, lime check + word, bottom-left -->
+  <g transform="translate(18,138)">
+    <path d="M 0 4 L 3 7.5 L 9 0.5" fill="none" stroke="#A1CC3A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="14" y="7.5" font-size="11" font-weight="600" fill="#E5E5E5">OK &#8212; gentle bend</text>
+  </g>
+
+  <!-- center divider, quiet -->
+  <line x1="160" y1="20" x2="160" y2="140" stroke="#3A3A3A" stroke-width="1"/>
+
+  <!-- ============ RIGHT: KINK (BAD) ============ -->
+
+  <!-- jacketed cable folded into a sharp kink. Same jacket stroke, tight V. -->
+  <path d="M 192 30 L 192 92 Q 192 104 204 102 Q 216 100 214 92 L 214 30"
+        fill="none" stroke="#E5E5E5" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 192 30 L 192 92 Q 192 104 204 102 Q 216 100 214 92 L 214 30"
+        fill="none" stroke="#9C9C9C" stroke-width="2.4" stroke-linecap="round"/>
+
+  <!-- kink point marker: danger verdict ring at the fold -->
+  <circle cx="203" cy="100" r="11" fill="none" stroke="#F26E6E" stroke-width="2"/>
+  <!-- leader from kink ring to label, danger -->
+  <line x1="214" y1="100" x2="236" y2="100" stroke="#F26E6E" stroke-width="1.4"/>
+  <text x="240" y="96" font-size="10.5" font-weight="600" fill="#F26E6E">kink</text>
+  <text x="240" y="108" font-size="8" font-weight="400" fill="#E5E5E5">&lt; 4&#215; OD</text>
+
+  <!-- literal labeled consequence: conductor spacing disturbed inside the jacket -->
+  <text x="240" y="48" font-size="8.5" font-weight="600" fill="#E5E5E5">conductor spacing</text>
+  <text x="240" y="60" font-size="8.5" font-weight="600" fill="#E5E5E5">disturbed</text>
+  <text x="240" y="72" font-size="7.5" font-weight="400" fill="#9C9C9C">&#8593; return loss, &#8593; NEXT</text>
+  <!-- leader from text up to the cable straight run -->
+  <line x1="236" y1="44" x2="219" y2="40" stroke="#9C9C9C" stroke-width="1.1"/>
+
+  <!-- verdict: bad, danger word, bottom -->
+  <g transform="translate(192,138)">
+    <line x1="0.5" y1="0.5" x2="8" y2="8" stroke="#F26E6E" stroke-width="2.2" stroke-linecap="round"/>
+    <line x1="8" y1="0.5" x2="0.5" y2="8" stroke="#F26E6E" stroke-width="2.2" stroke-linecap="round"/>
+    <text x="14" y="7.5" font-size="11" font-weight="600" fill="#E5E5E5">permanent damage</text>
+  </g>
+</svg>

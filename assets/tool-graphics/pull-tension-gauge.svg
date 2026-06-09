@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" width="320" height="160" font-family="'IBM Plex Sans', sans-serif">
+  <!--
+    Concept graphic: maximum pull tension for 4-pair UTP.
+    GL-003 §8.6.2 / §8.6.2.1. Two-value model: neutral scaffold #E5E5E5 + lime #A1CC3A
+    (lime marks the one measured/spec quantity: the 25 lbf limit). Over-limit zone = sanctioned
+    §8.13 danger verdict #F26E6E (out-of-spec). All swap-list hexes. No hatching. Cable + gauge
+    drawn literally; every mark labeled. 25 lbf attributed to TIA-568; failure points labeled illustrative.
+    No text overlaps any line/bar/label.
+  -->
+
+  <!-- ===== the cable being pulled, left -> right ===== -->
+  <text x="14" y="20" font-size="8" fill="#9C9C9C">4-pair UTP, 24 AWG</text>
+  <line x1="14" y1="36" x2="92" y2="36" stroke="#E5E5E5" stroke-width="9" stroke-linecap="round"/>
+  <line x1="14" y1="36" x2="92" y2="36" stroke="#9C9C9C" stroke-width="2.4" stroke-linecap="round"/>
+  <!-- pulling grip (cable grip loop) -->
+  <path d="M 92 28 q 16 0 16 8 q 0 8 -16 8" fill="none" stroke="#E5E5E5" stroke-width="3" stroke-linecap="round"/>
+  <!-- pull direction arrow, neutral force direction -->
+  <line x1="112" y1="36" x2="146" y2="36" stroke="#E5E5E5" stroke-width="2" stroke-linecap="round"/>
+  <path d="M 146 31 L 156 36 L 146 41 Z" fill="#E5E5E5"/>
+  <text x="116" y="26" font-size="8" fill="#9C9C9C">pull</text>
+
+  <!-- over-pull consequence callout, top-right -->
+  <text x="306" y="22" font-size="9" font-weight="600" fill="#F26E6E" text-anchor="end">Over-pull</text>
+  <text x="306" y="34" font-size="8" fill="#E5E5E5" text-anchor="end">stretches conductors</text>
+  <text x="306" y="45" font-size="8" fill="#E5E5E5" text-anchor="end">&#8593; attenuation, &#8593; NEXT</text>
+
+  <!-- ===== limit value, clear space above the gauge ===== -->
+  <text x="136" y="76" font-size="13" font-weight="600" fill="#A1CC3A" text-anchor="middle" font-family="'DM Mono', monospace">25 lbf</text>
+  <text x="201" y="76" font-size="11" font-weight="500" fill="#E5E5E5" text-anchor="start" font-family="'DM Mono', monospace">(110 N)</text>
+
+  <!-- ===== linear tension scale ("the gauge") at y=98 ===== -->
+  <line x1="24" y1="98" x2="296" y2="98" stroke="#9C9C9C" stroke-width="1.4"/>
+  <!-- 0 -> 25 safe span: sanctioned lime wash + lime bar (the spec range) -->
+  <rect x="24" y="92" width="112" height="12" fill="rgba(162,204,58,0.08)"/>
+  <rect x="24" y="95" width="112" height="6" rx="3" fill="#A1CC3A"/>
+  <!-- over-limit span, danger verdict -->
+  <rect x="136" y="95" width="160" height="6" rx="3" fill="#F26E6E" opacity="0.85"/>
+  <!-- THE LIMIT LINE at x=136 (25 lbf) -->
+  <line x1="136" y1="82" x2="136" y2="104" stroke="#A1CC3A" stroke-width="2.4"/>
+  <!-- scale zero end label -->
+  <text x="24" y="116" font-size="8" fill="#9C9C9C" text-anchor="middle" font-family="'DM Mono', monospace">0</text>
+
+  <!-- illustrative failure markers past the limit (muted, labeled illustrative) -->
+  <g font-family="'DM Mono', monospace" font-size="7" fill="#9C9C9C" text-anchor="middle">
+    <line x1="200" y1="104" x2="200" y2="109" stroke="#9C9C9C" stroke-width="1"/>
+    <text x="200" y="118">~70</text>
+    <line x1="264" y1="104" x2="264" y2="109" stroke="#9C9C9C" stroke-width="1"/>
+    <text x="264" y="118">~90&#8211;110</text>
+  </g>
+  <text x="232" y="130" font-size="7.5" fill="#9C9C9C" text-anchor="middle">stretch &#8594; break (illustrative)</text>
+
+  <!-- the rule + attribution, bottom-left, clear of the failure labels above -->
+  <text x="24" y="146" font-size="10.5" font-weight="600" fill="#E5E5E5">Max pull tension &#8212; do not exceed</text>
+  <text x="24" y="157" font-size="8.5" fill="#9C9C9C">TIA-568 &#167;10.6.3.2 &#183; engineered safety margin</text>
+</svg>

@@ -1,0 +1,180 @@
+<svg width="1180" height="640" viewBox="0 0 1180 640" xmlns="http://www.w3.org/2000/svg" font-family="'IBM Plex Sans', sans-serif">
+  <defs>
+    <!-- dimension arrowheads -->
+    <marker id="dimArrow" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="4" orient="auto">
+      <path d="M1,1 L9,4 L1,7" fill="none" stroke="#E5E5E5" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="dimArrowStart" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="3" refY="4" orient="auto">
+      <path d="M11,1 L3,4 L11,7" fill="none" stroke="#E5E5E5" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="limeArrow" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="4" orient="auto">
+      <path d="M1,1 L9,4 L1,7" fill="none" stroke="#A1CC3A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="limeArrowStart" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="3" refY="4" orient="auto">
+      <path d="M11,1 L3,4 L11,7" fill="none" stroke="#A1CC3A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+
+  <!-- =========================================================
+       LEFT HALF: EIA-310 vertical hole pattern (the teaching point)
+       Scale: 1 inch = 110px.  1U = 1.75in = 192.5px
+       Hole groups repeat at 0.5 / 0.625 / 0.625 in = 55 / 68.75 / 68.75 px
+       The U boundary lands in the MIDDLE of the 0.5in gap.
+       ========================================================= -->
+
+  <!-- Rail vertical extents.  Top mark y=70.  We draw 2.5 U downward.
+       We place hole centers so a U-boundary sits mid the 0.5in gap.
+       Holes (top to bottom), pattern of pitches between consecutive holes:
+       0.5, 0.625, 0.625, 0.5, 0.625, 0.625, 0.5, ...
+       First hole center at y=110.
+       h1 110
+       h2 110+55 = 165   (gap 0.5  -> U boundary mid this gap at 137.5)
+       h3 165+68.75 = 233.75
+       h4 233.75+68.75 = 302.5
+       h5 302.5+55 = 357.5   (gap 0.5 -> U boundary at 330)
+       h6 357.5+68.75 = 426.25
+       h7 426.25+68.75 = 495
+       h8 495+55 = 550   (gap 0.5 -> U boundary at 522.5)
+       So U boundaries at 137.5, 330, 522.5  (spacing 192.5 = 1U). Good.
+  -->
+
+  <!-- rail body (the mounting flange strip) -->
+  <rect x="150" y="60" width="58" height="540" fill="none" stroke="#E5E5E5" stroke-width="2" rx="3"/>
+  <line x1="179" y1="60" x2="179" y2="600" stroke="#3A3A3A" stroke-width="1"/>
+
+  <!-- U-boundary lines (lime dashed) extend across to the right for the U bracket -->
+  <g stroke="#A1CC3A" stroke-width="1.4" stroke-dasharray="5 4">
+    <line x1="150" y1="137.5" x2="470" y2="137.5"/>
+    <line x1="150" y1="330"   x2="470" y2="330"/>
+    <line x1="150" y1="522.5" x2="470" y2="522.5"/>
+  </g>
+
+  <!-- mounting holes: square holes (modern), centered on the rail strip x=179 -->
+  <g fill="none" stroke="#E5E5E5" stroke-width="1.8">
+    <rect x="171" y="102" width="16" height="16" rx="2"/>
+    <rect x="171" y="157" width="16" height="16" rx="2"/>
+    <rect x="171" y="225.75" width="16" height="16" rx="2"/>
+    <rect x="171" y="294.5" width="16" height="16" rx="2"/>
+    <rect x="171" y="349.5" width="16" height="16" rx="2"/>
+    <rect x="171" y="418.25" width="16" height="16" rx="2"/>
+    <rect x="171" y="487" width="16" height="16" rx="2"/>
+    <rect x="171" y="542" width="16" height="16" rx="2"/>
+  </g>
+
+  <!-- pitch dimension lines on the LEFT of the rail (between hole centers) -->
+  <!-- guide ticks at each hole center -->
+  <g stroke="#3A3A3A" stroke-width="1">
+    <line x1="110" y1="110" x2="150" y2="110"/>
+    <line x1="110" y1="165" x2="150" y2="165"/>
+    <line x1="110" y1="233.75" x2="150" y2="233.75"/>
+    <line x1="110" y1="302.5" x2="150" y2="302.5"/>
+    <line x1="110" y1="357.5" x2="150" y2="357.5"/>
+  </g>
+
+  <!-- 0.5in gap (the one the U-boundary bisects) : 110 -> 165.  Arrow column at x=138 -->
+  <line x1="138" y1="110" x2="138" y2="165" stroke="#A1CC3A" stroke-width="1.6"
+        marker-start="url(#limeArrowStart)" marker-end="url(#limeArrow)"/>
+  <!-- 0.625in gap : 165 -> 233.75 -->
+  <line x1="138" y1="165" x2="138" y2="233.75" stroke="#E5E5E5" stroke-width="1.4"
+        marker-start="url(#dimArrowStart)" marker-end="url(#dimArrow)"/>
+  <!-- 0.625in gap : 233.75 -> 302.5 -->
+  <line x1="138" y1="233.75" x2="138" y2="302.5" stroke="#E5E5E5" stroke-width="1.4"
+        marker-start="url(#dimArrowStart)" marker-end="url(#dimArrow)"/>
+
+  <!-- pitch labels, placed clear to the LEFT of the dimension line; the 0.5" label sits
+       ABOVE the small gap (in clear space over the rail top) with a knockout, since the gap
+       is only 55px tall and the U-boundary dash crosses its middle. -->
+  <rect x="40" y="96" width="82" height="22" fill="#1A1A1A"/>
+  <text x="118" y="113" text-anchor="end" font-family="'DM Mono', monospace" font-size="17" font-weight="500" fill="#A1CC3A">0.5"</text>
+  <text x="118" y="203" text-anchor="end" font-family="'DM Mono', monospace" font-size="17" font-weight="500" fill="#E5E5E5">0.625"</text>
+  <text x="118" y="272" text-anchor="end" font-family="'DM Mono', monospace" font-size="17" font-weight="500" fill="#E5E5E5">0.625"</text>
+
+  <!-- U-boundary label rides ABOVE the dashed line at y=330, in the open space between the
+       rail (right edge x=208) and the 1U bracket (x=430). Knockout keeps it off the dash. -->
+  <rect x="250" y="306" width="168" height="20" fill="#1A1A1A"/>
+  <text x="252" y="322" text-anchor="start" font-size="13.5" font-weight="600" fill="#A1CC3A">U boundary <tspan fill="#9C9C9C" font-weight="400">&#8212; mid-gap</tspan></text>
+
+  <!-- 1U bracket on the RIGHT of the holes, between two U boundaries (330 -> 522.5) -->
+  <g stroke="#A1CC3A" stroke-width="1.6">
+    <line x1="430" y1="330" x2="430" y2="522.5" marker-start="url(#limeArrowStart)" marker-end="url(#limeArrow)"/>
+    <line x1="424" y1="330" x2="436" y2="330"/>
+    <line x1="424" y1="522.5" x2="436" y2="522.5"/>
+  </g>
+  <!-- 1U value block placed to the right of the bracket, clear of all lines -->
+  <text x="446" y="412" font-family="'DM Mono', monospace" font-size="26" font-weight="500" fill="#A1CC3A">1U</text>
+  <text x="446" y="438" font-family="'DM Mono', monospace" font-size="16" font-weight="500" fill="#A1CC3A">1.75 in</text>
+  <text x="446" y="460" font-family="'DM Mono', monospace" font-size="16" font-weight="500" fill="#A1CC3A">44.45 mm</text>
+
+  <!-- "3 holes per U, repeating" note, clear space below the rail -->
+  <text x="183" y="630" text-anchor="middle" font-size="14" font-weight="600" fill="#E5E5E5">3 holes per U &#8212; uneven, repeating</text>
+
+  <!-- Left-half title -->
+  <text x="60" y="40" font-size="20" font-weight="700" fill="#E5E5E5">EIA-310 vertical hole pattern</text>
+
+  <!-- =========================================================
+       RIGHT HALF: 19-inch is only the front panel
+       ========================================================= -->
+  <!-- divider -->
+  <line x1="610" y1="60" x2="610" y2="600" stroke="#3A3A3A" stroke-width="1"/>
+
+  <text x="660" y="40" font-size="20" font-weight="700" fill="#E5E5E5">&#8220;19-inch&#8221; is only the front panel</text>
+
+  <!-- horizontal scale: 19in spans 460px.  1in = ~24.21px.
+       panel left edge x=680, panel width 460 -> right edge 1140.
+       Posts inside.  Hole spacing 18.312in centered = 443.4px -> from x=688.3 to x=1131.7
+       Opening 17.72in = 429px -> from x=695.5 to x=1124.5
+  -->
+
+  <!-- the two rack posts -->
+  <rect x="680" y="120" width="34" height="360" fill="none" stroke="#E5E5E5" stroke-width="2" rx="3"/>
+  <rect x="1106" y="120" width="34" height="360" fill="none" stroke="#E5E5E5" stroke-width="2" rx="3"/>
+  <!-- front flanges (the 19in panel ears) -->
+  <rect x="660" y="120" width="20" height="360" fill="#3A3A3A" stroke="#E5E5E5" stroke-width="1.6"/>
+  <rect x="1140" y="120" width="20" height="360" fill="#3A3A3A" stroke="#E5E5E5" stroke-width="1.6"/>
+
+  <!-- equipment opening hint (faint) -->
+  <rect x="714" y="120" width="392" height="360" fill="none" stroke="#3A3A3A" stroke-width="1" stroke-dasharray="4 4"/>
+
+  <!-- mounting holes on each post (a few, to anchor the hole-spacing dim) -->
+  <g fill="none" stroke="#E5E5E5" stroke-width="1.6">
+    <rect x="689" y="150" width="14" height="14" rx="2"/>
+    <rect x="689" y="293" width="14" height="14" rx="2"/>
+    <rect x="689" y="436" width="14" height="14" rx="2"/>
+    <rect x="1117" y="150" width="14" height="14" rx="2"/>
+    <rect x="1117" y="293" width="14" height="14" rx="2"/>
+    <rect x="1117" y="436" width="14" height="14" rx="2"/>
+  </g>
+
+  <!-- DIM 1: 19in front-panel width (top, lime = the headline 'panel only' number) -->
+  <line x1="660" y1="92" x2="1160" y2="92" stroke="#A1CC3A" stroke-width="1.6"
+        marker-start="url(#limeArrowStart)" marker-end="url(#limeArrow)"/>
+  <line x1="660" y1="86" x2="660" y2="116" stroke="#A1CC3A" stroke-width="1.2"/>
+  <line x1="1160" y1="86" x2="1160" y2="116" stroke="#A1CC3A" stroke-width="1.2"/>
+  <!-- label sits above the dim line in clear space -->
+  <rect x="855" y="62" width="110" height="24" fill="#1A1A1A"/>
+  <text x="910" y="80" text-anchor="middle" font-family="'DM Mono', monospace" font-size="17" font-weight="500" fill="#A1CC3A">19 in panel</text>
+
+  <!-- DIM 2: 18.312in hole spacing (center-to-center), middle band -->
+  <!-- hole center x left = 696, right = 1124 -->
+  <line x1="696" y1="525" x2="1124" y2="525" stroke="#E5E5E5" stroke-width="1.4"
+        marker-start="url(#dimArrowStart)" marker-end="url(#dimArrow)"/>
+  <line x1="696" y1="450" x2="696" y2="531" stroke="#3A3A3A" stroke-width="1"/>
+  <line x1="1124" y1="450" x2="1124" y2="531" stroke="#3A3A3A" stroke-width="1"/>
+  <rect x="838" y="513" width="144" height="24" fill="#1A1A1A"/>
+  <text x="910" y="531" text-anchor="middle" font-family="'DM Mono', monospace" font-size="16" font-weight="500" fill="#E5E5E5">18.312 in holes</text>
+
+  <!-- DIM 3: 17.72in opening, lower band -->
+  <line x1="714" y1="568" x2="1106" y2="568" stroke="#E5E5E5" stroke-width="1.4"
+        marker-start="url(#dimArrowStart)" marker-end="url(#dimArrow)"/>
+  <line x1="714" y1="484" x2="714" y2="574" stroke="#3A3A3A" stroke-width="1"/>
+  <line x1="1106" y1="484" x2="1106" y2="574" stroke="#3A3A3A" stroke-width="1"/>
+  <rect x="842" y="556" width="136" height="24" fill="#1A1A1A"/>
+  <text x="910" y="574" text-anchor="middle" font-family="'DM Mono', monospace" font-size="16" font-weight="500" fill="#E5E5E5">17.72 in opening</text>
+
+  <!-- post / flange labels, in clear space beside the geometry -->
+  <text x="670" y="500" text-anchor="middle" font-size="12.5" fill="#9C9C9C">flange</text>
+  <text x="1150" y="500" text-anchor="middle" font-size="12.5" fill="#9C9C9C">flange</text>
+
+  <!-- takeaway line -->
+  <text x="660" y="618" font-size="14" font-weight="600" fill="#E5E5E5">No internal dimension is actually 19 inches.</text>
+</svg>

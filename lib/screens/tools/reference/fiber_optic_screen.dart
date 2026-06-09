@@ -22,6 +22,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../data/fiber_connectors_diagrams.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
@@ -30,6 +31,7 @@ import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
+import 'large_face_card.dart';
 import 'reference_row_semantics.dart';
 
 /// One fiber type, ported verbatim from PWA app.js FIBER_DATA.
@@ -80,6 +82,71 @@ class FiberType {
 
   /// OM1/OM2 render faded in the PWA (legacy). Drives the dimmed row.
   final bool legacy;
+}
+
+/// One fiber connector type. Verified from the 2026-06-08 fiber-connectors
+/// research brief (IEC 61754 part numbers + mechanical specs).
+@immutable
+class FiberConnector {
+  const FiberConnector({
+    required this.name,
+    required this.iec,
+    required this.ferrule,
+    required this.coupling,
+    required this.formFactor,
+    required this.use,
+  });
+
+  /// Connector designation (e.g. "LC", "MPO / MTP").
+  final String name;
+
+  /// IEC 61754 part number (e.g. "61754-20").
+  final String iec;
+
+  /// Ferrule size or fiber-count description (e.g. "1.25 mm", "2.5 mm").
+  final String ferrule;
+
+  /// Latch / coupling mechanism (e.g. "Bayonet twist-lock").
+  final String coupling;
+
+  /// Form factor (simplex, duplex, multi-fiber ribbon).
+  final String formFactor;
+
+  /// Typical deployment use.
+  final String use;
+}
+
+/// One fiber polish / endface type. Verified from the 2026-06-08 research brief.
+/// Return-loss figures are typical industry values, not datasheet guarantees.
+@immutable
+class FiberPolish {
+  const FiberPolish({
+    required this.name,
+    required this.fullName,
+    required this.endface,
+    required this.returnLoss,
+    required this.bodyName,
+    required this.bodyHex,
+  });
+
+  /// Polish abbreviation (e.g. "APC").
+  final String name;
+
+  /// Spelled-out name (e.g. "Angled Physical Contact").
+  final String fullName;
+
+  /// Endface geometry description.
+  final String endface;
+
+  /// Typical return loss (e.g. "~ -60 dB (best)").
+  final String returnLoss;
+
+  /// Connector-body color name, or "Not color-keyed" for legacy PC.
+  final String bodyName;
+
+  /// Connector-body color as an ARGB int for the swatch, or null when the
+  /// polish is not color-keyed (legacy PC). A data value, not a brand token.
+  final int? bodyHex;
 }
 
 class FiberOpticScreen extends StatelessWidget {
@@ -135,13 +202,17 @@ class FiberOpticScreen extends StatelessWidget {
       type: 'OM4',
       core: '50/125 µm',
       bandwidth: '4,700',
-      jacketHex: 0xFF7B1FA2,
-      jacketName: 'Violet/Aqua',
+      jacketHex: 0xFF0097A7,
+      jacketName: 'Aqua',
       dist1G: '1 km',
       dist10G: '550 m',
       dist40G: '150 m',
       dist100G: '150 m',
-      notes: 'High-bandwidth. Data centers and dense campus runs.',
+      notes:
+          'High-bandwidth. Data centers and dense campus runs. TIA-598-D '
+          'assigns OM4 aqua, the same color as OM3; violet (Erika Violet) is a '
+          'manufacturer differentiation convention, not the standard, so the '
+          'printed jacket legend is the only reliable way to tell OM3 from OM4.',
       legacy: false,
     ),
     FiberType(
@@ -187,6 +258,110 @@ class FiberOpticScreen extends StatelessWidget {
       legacy: false,
     ),
   ];
+
+  /// Connector types — verified from the 2026-06-08 fiber-connectors research
+  /// brief (IEC 61754 part numbers + mechanical specs, S4/S7). Form factor,
+  /// ferrule size, latch/coupling, and typical use per row.
+  // ignore: constant_identifier_names
+  static const List<FiberConnector> CONNECTOR_DATA = [
+    FiberConnector(
+      name: 'LC',
+      iec: '61754-20',
+      ferrule: '1.25 mm',
+      coupling: 'Push-pull latch (RJ-style clip)',
+      formFactor: 'Simplex + duplex',
+      use:
+          'Data center and enterprise; SFP/SFP+ transceivers. Dominant today. '
+          'The 1.25 mm ferrule gives it the density advantage in the data '
+          'center.',
+    ),
+    FiberConnector(
+      name: 'SC',
+      iec: '61754-4',
+      ferrule: '2.5 mm',
+      coupling: 'Push-pull snap',
+      formFactor: 'Simplex + duplex',
+      use: 'FTTH, telecom, and enterprise patching. Second most common.',
+    ),
+    FiberConnector(
+      name: 'ST',
+      iec: '61754-2',
+      ferrule: '2.5 mm',
+      coupling: 'Bayonet twist-lock',
+      formFactor: 'Simplex only',
+      use: 'Legacy campus and multimode LANs.',
+    ),
+    FiberConnector(
+      name: 'FC',
+      iec: '61754-13',
+      ferrule: '2.5 mm',
+      coupling: 'Threaded screw nut',
+      formFactor: 'Simplex only',
+      use: 'Test equipment, precision, and high-vibration installs.',
+    ),
+    FiberConnector(
+      name: 'MPO / MTP',
+      iec: '61754-7',
+      ferrule: 'Multi-fiber (8 / 12 / 24)',
+      coupling: 'Push-pull, keyed (pinned or pin-less)',
+      formFactor: 'Multi-fiber ribbon',
+      use:
+          '40G/100G/400G parallel optics and data-center trunks. MTP is US '
+          'Conec\'s branded, tighter-tolerance MPO, mechanically '
+          'intermateable with MPO, not a separate standard.',
+    ),
+  ];
+
+  /// Polish / endface types — verified from the 2026-06-08 research brief
+  /// (S1/S2 color + standard, S8 angle/return-loss/mating rule). Return-loss
+  /// figures are typical industry values, not per-datasheet guarantees.
+  // ignore: constant_identifier_names
+  static const List<FiberPolish> POLISH_DATA = [
+    FiberPolish(
+      name: 'PC',
+      fullName: 'Physical Contact',
+      endface: 'Slight dome, flat-ish',
+      returnLoss: '~ -40 dB',
+      bodyName: 'Not color-keyed',
+      bodyHex: null,
+    ),
+    FiberPolish(
+      name: 'UPC',
+      fullName: 'Ultra Physical Contact',
+      endface: 'Finer dome, no angle',
+      returnLoss: '~ -50 dB',
+      bodyName: 'Blue',
+      bodyHex: 0xFF1565C0,
+    ),
+    FiberPolish(
+      name: 'APC',
+      fullName: 'Angled Physical Contact',
+      endface: '8° angled ferrule',
+      returnLoss: '~ -60 dB (best)',
+      bodyName: 'Green',
+      bodyHex: 0xFF2E7D32,
+    ),
+  ];
+
+  /// The hard field rule: APC and UPC never mate. Stated as a safety/quality
+  /// rule per the research brief (the #1 field error).
+  static const String polishRule =
+      'APC and UPC never mate. The 8° angled ferrule against a flat ferrule '
+      'causes very high insertion loss and can physically damage both '
+      'endfaces. APC (green) mates only to APC.';
+
+  /// The two-color-systems caveat: jacket color (TIA-598-D) and connector-body
+  /// color (TIA-568/598 convention) are separate systems, and green and aqua
+  /// each mean two different things depending on which you are reading.
+  static const String twoColorSystemsNote =
+      'Two separate color systems exist. Cable jacket color (TIA-598-D) marks '
+      'the fiber type: orange for OM1/OM2, aqua for OM3/OM4, lime green for '
+      'OM5, yellow for single-mode. Connector body color (TIA-568/598 '
+      'convention) marks the polish and mode: blue for single-mode UPC, green '
+      'for single-mode APC. Green collides across the two systems: lime-green '
+      'jacket means OM5 multimode, while a green connector body means an '
+      'angled single-mode APC. Aqua collides the same way (OM3/OM4 jacket and '
+      'OM3/OM4 connector body). Always note which system a color belongs to.';
 
   /// Footnote, ported verbatim from the PWA buildFiberTable() caption.
   static const String footnote =
@@ -251,6 +426,59 @@ class FiberOpticScreen extends StatelessWidget {
     for (final FiberType f in FIBER_DATA) {
       buf.writeln(<String>[f.type, f.jacketName, f.notes].join(tab));
     }
+    buf
+      ..writeln()
+      ..writeln('Connectors')
+      ..writeln(
+        <String>[
+          'Connector',
+          'IEC 61754',
+          'Ferrule',
+          'Coupling',
+          'Form factor',
+          'Typical use',
+        ].join(tab),
+      );
+    for (final FiberConnector c in CONNECTOR_DATA) {
+      buf.writeln(
+        <String>[
+          c.name,
+          c.iec,
+          c.ferrule,
+          c.coupling,
+          c.formFactor,
+          c.use,
+        ].join(tab),
+      );
+    }
+    buf
+      ..writeln()
+      ..writeln('Polish & endface')
+      ..writeln(
+        <String>[
+          'Polish',
+          'Name',
+          'Endface',
+          'Return loss (typical)',
+          'Connector body color',
+        ].join(tab),
+      );
+    for (final FiberPolish p in POLISH_DATA) {
+      buf.writeln(
+        <String>[
+          p.name,
+          p.fullName,
+          p.endface,
+          p.returnLoss,
+          p.bodyName,
+        ].join(tab),
+      );
+    }
+    buf
+      ..writeln()
+      ..writeln(polishRule)
+      ..writeln()
+      ..writeln(twoColorSystemsNote);
     return buf.toString().trimRight();
   }
 
@@ -290,6 +518,18 @@ class FiberOpticScreen extends StatelessWidget {
                   _distanceCard(text, mono),
                   const SizedBox(height: AppSpacing.md),
                   _jacketCard(text, mono),
+                  const SizedBox(height: AppSpacing.md),
+                  // CONNECTORS + POLISH half (2026-06-08 extension). The three
+                  // concept graphics resolve through FiberConnectorsDiagrams,
+                  // which is NOT in main.dart's startup ensureLoaded() chain
+                  // (central file, off-limits), so this section self-loads the
+                  // manifest and rebuilds when it resolves. Tables render
+                  // immediately; a graphic folds in only once bundled.
+                  _ConnectorsAndPolish(
+                    isDesktop: isDesktop,
+                    text: text,
+                    mono: mono,
+                  ),
                   const SizedBox(height: AppSpacing.md),
                   _footnoteCard(colors, text),
                   ToolHelpFooter(toolId: 'fiber-optic'),
@@ -607,6 +847,407 @@ class _JacketRow extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The CONNECTORS + POLISH half of the page (2026-06-08 extension).
+///
+/// Renders three sections: a Connectors card (one row per LC/SC/ST/FC/MPO with
+/// the connector-faces graphic above), a Polish & endface card (one row per
+/// PC/UPC/APC with the APC-8° graphic plus the hard never-mate rule), and a
+/// Two color systems card (the jacket-vs-body split graphic plus the green/aqua
+/// collision note).
+///
+/// SELF-LOADING: [FiberConnectorsDiagrams] is not in main.dart's startup
+/// ensureLoaded() chain (central file, off-limits for this extension), so this
+/// widget kicks off the one-shot manifest load itself and rebuilds when it
+/// resolves. The tables render on the first frame regardless; each graphic folds
+/// in only after the load completes AND the asset is bundled — identical
+/// graceful degradation to the manifest-gated bands elsewhere in the app.
+class _ConnectorsAndPolish extends StatefulWidget {
+  const _ConnectorsAndPolish({
+    required this.isDesktop,
+    required this.text,
+    required this.mono,
+  });
+
+  final bool isDesktop;
+  final TextTheme text;
+  final AppMonoText mono;
+
+  @override
+  State<_ConnectorsAndPolish> createState() => _ConnectorsAndPolishState();
+}
+
+class _ConnectorsAndPolishState extends State<_ConnectorsAndPolish> {
+  @override
+  Widget build(BuildContext context) {
+    // No self-loading FutureBuilder: FiberConnectorsDiagrams is now in main.dart's
+    // startup ensureLoaded() chain, so has() is populated before this builds. The
+    // old self-load FutureBuilder hung pumpAndSettle in widget tests. Tables
+    // always render; each graphic folds in when its asset is bundled (has()).
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        _connectorsCard(),
+        const SizedBox(height: AppSpacing.md),
+        _polishCard(),
+        const SizedBox(height: AppSpacing.md),
+        _twoColorSystemsCard(),
+      ],
+    );
+  }
+
+  Widget _connectorsCard() {
+    return _Card(
+      heading: 'Connectors',
+      headingText: widget.text,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          if (FiberConnectorsDiagrams.has(
+            FiberConnectorsDiagrams.connectorFaces,
+          )) ...<Widget>[
+            LargeGraphic(
+              assetName: FiberConnectorsDiagrams.connectorFaces,
+              path: FiberConnectorsDiagrams.path,
+              has: FiberConnectorsDiagrams.has,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
+          for (final FiberConnector c
+              in FiberOpticScreen.CONNECTOR_DATA)
+            _ConnectorRow(
+              connector: c,
+              text: widget.text,
+              mono: widget.mono,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _polishCard() {
+    final AppColorScheme colors = context.colors;
+    return _Card(
+      heading: 'Polish & endface',
+      headingText: widget.text,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          if (FiberConnectorsDiagrams.has(
+            FiberConnectorsDiagrams.apcEndface,
+          )) ...<Widget>[
+            LargeGraphic(
+              assetName: FiberConnectorsDiagrams.apcEndface,
+              path: FiberConnectorsDiagrams.path,
+              has: FiberConnectorsDiagrams.has,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
+          for (final FiberPolish p in FiberOpticScreen.POLISH_DATA)
+            _PolishRow(polish: p, text: widget.text, mono: widget.mono),
+          const SizedBox(height: AppSpacing.sm),
+          // The hard never-mate rule, set apart so it reads as a warning, not a
+          // table row. Accent border + secondary text — no color-only meaning.
+          _RuleCallout(text: FiberOpticScreen.polishRule, colors: colors),
+        ],
+      ),
+    );
+  }
+
+  Widget _twoColorSystemsCard() {
+    final AppColorScheme colors = context.colors;
+    return _Card(
+      heading: 'Two color systems',
+      headingText: widget.text,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          if (FiberConnectorsDiagrams.has(
+            FiberConnectorsDiagrams.twoColorSystems,
+          )) ...<Widget>[
+            LargeGraphic(
+              assetName: FiberConnectorsDiagrams.twoColorSystems,
+              path: FiberConnectorsDiagrams.path,
+              has: FiberConnectorsDiagrams.has,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
+          Text(
+            FiberOpticScreen.twoColorSystemsNote,
+            style: widget.text.bodyMedium?.copyWith(
+              color: colors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One connector row: name + IEC part on the top line, then ferrule / form
+/// factor / coupling as compact label-value pairs, then the typical-use line.
+/// Full-width so the use line wraps. Identifiers (name, IEC, ferrule) are DM
+/// Mono; the use prose is sans.
+class _ConnectorRow extends StatelessWidget {
+  const _ConnectorRow({
+    required this.connector,
+    required this.text,
+    required this.mono,
+  });
+
+  final FiberConnector connector;
+  final TextTheme text;
+  final AppMonoText mono;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    return ReferenceRowSemantics(
+      label: rowLabel(connector.name, <String?>[
+        'IEC ${connector.iec}',
+        'ferrule ${connector.ferrule}',
+        'form factor ${connector.formFactor}',
+        'coupling ${connector.coupling}',
+        connector.use,
+      ]),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: <Widget>[
+                Text(
+                  connector.name,
+                  style: mono.inlineCode.copyWith(
+                    color: colors.textAccent,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: Text(
+                    'IEC ${connector.iec}',
+                    style: mono.inlineCode.copyWith(
+                      color: colors.textTertiary,
+                      fontSize: AppTextSize.caption,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.xxs),
+            _MetaLine(
+              label: 'Ferrule',
+              value: connector.ferrule,
+              text: text,
+              mono: mono,
+            ),
+            _MetaLine(
+              label: 'Form factor',
+              value: connector.formFactor,
+              text: text,
+              mono: mono,
+            ),
+            _MetaLine(
+              label: 'Coupling',
+              value: connector.coupling,
+              text: text,
+              mono: mono,
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.xxs),
+              child: Text(
+                connector.use,
+                style: text.labelMedium?.copyWith(
+                  color: colors.textTertiary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One polish row: a connector-body color swatch + abbreviation + full name on
+/// the top line, then endface + return loss as label-value pairs. The swatch is
+/// omitted for legacy PC (not color-keyed); the body-color name always shows so
+/// meaning never rests on color alone.
+class _PolishRow extends StatelessWidget {
+  const _PolishRow({
+    required this.polish,
+    required this.text,
+    required this.mono,
+  });
+
+  final FiberPolish polish;
+  final TextTheme text;
+  final AppMonoText mono;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    return ReferenceRowSemantics(
+      label: rowLabel(polish.name, <String?>[
+        polish.fullName,
+        'endface ${polish.endface}',
+        'return loss ${polish.returnLoss}',
+        'connector body color ${polish.bodyName}',
+      ]),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                // Connector-body color swatch — verbatim convention data, not a
+                // brand token. Decorative; the body-color name carries meaning.
+                if (polish.bodyHex != null) ...<Widget>[
+                  Container(
+                    width: 14,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: Color(polish.bodyHex!),
+                      borderRadius: BorderRadius.circular(3),
+                      border: Border.all(color: colors.border, width: 1),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                ],
+                Text(
+                  polish.name,
+                  style: mono.inlineCode.copyWith(
+                    color: colors.textAccent,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: Text(
+                    polish.fullName,
+                    style: text.bodyMedium?.copyWith(
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.xxs),
+            _MetaLine(
+              label: 'Endface',
+              value: polish.endface,
+              text: text,
+              mono: mono,
+            ),
+            _MetaLine(
+              label: 'Return loss',
+              value: polish.returnLoss,
+              text: text,
+              mono: mono,
+            ),
+            _MetaLine(
+              label: 'Body color',
+              value: polish.bodyName,
+              text: text,
+              mono: mono,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A compact label-value line shared by the connector and polish rows: a small
+/// sans label, then a DM Mono value (identifiers/specs align in the mono
+/// register per GL-003 §8.5).
+class _MetaLine extends StatelessWidget {
+  const _MetaLine({
+    required this.label,
+    required this.value,
+    required this.text,
+    required this.mono,
+  });
+
+  final String label;
+  final String value;
+  final TextTheme text;
+  final AppMonoText mono;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: <Widget>[
+          SizedBox(
+            width: 92,
+            child: Text(
+              label,
+              style: text.labelSmall?.copyWith(
+                color: colors.textTertiary,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: mono.inlineCode.copyWith(
+                color: colors.textSecondary,
+                fontSize: AppTextSize.caption,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A bordered callout for the hard never-mate rule. Reads as a warning, not a
+/// table row — accent left border, secondary text. No color-only meaning: the
+/// text states the rule in full.
+class _RuleCallout extends StatelessWidget {
+  const _RuleCallout({required this.text, required this.colors});
+
+  final String text;
+  final AppColorScheme colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme theme = Theme.of(context).textTheme;
+    return Semantics(
+      label: text,
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.surface2,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border(
+            left: BorderSide(color: colors.textAccent, width: 3),
+          ),
+        ),
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        child: Text(
+          text,
+          style: theme.bodyMedium?.copyWith(
+            color: colors.textPrimary,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ),
     );

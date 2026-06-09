@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!--
+    Tier-2 tool icon: cable-bend-radius.
+    GL-003 §8.6.1. 24x24 master, single color via currentColor (tintable), legible at 20px.
+    Single concept: a curved cable making a bend, with the radius drawn from the bend center
+    out to the curve (dot + radius spoke) so the "bend radius" idea reads, not just a bent pipe.
+  -->
+  <!-- the cable: down the left, bends through a generous rounded corner, runs along the bottom -->
+  <path d="M 4 3 L 4 12 A 8 8 0 0 0 12 20 L 21 20"/>
+  <!-- radius center dot, sitting in open space at the corner's center of curvature -->
+  <circle cx="4" cy="12" r="1.1" fill="currentColor" stroke="none"/>
+  <!-- radius spoke from center to the curve (the bend radius) -->
+  <line x1="4" y1="12" x2="9.7" y2="17.7" stroke-width="1.6"/>
+</svg>

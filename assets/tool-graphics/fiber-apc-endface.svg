@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 500" width="880" height="500" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- APC 8-degree angled endface vs UPC flat. Why APC has lower back-reflection and why the two
+       never mate. Lime = the back-reflection ray (the quantity that matters). §8.20.7 dark, bright text. -->
+
+  <!-- HEADER -->
+  <text x="440" y="34" fill="#E5E5E5" font-size="18" font-weight="700" text-anchor="middle">UPC flat vs APC 8&#176; angled endface</text>
+  <text x="440" y="56" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">The polish angle decides where reflected light goes, and why APC and UPC must never mate.</text>
+
+  <!-- ===================== UPC (left) ===================== -->
+  <text x="220" y="100" fill="#2D6CDF" font-size="15" font-weight="700" text-anchor="middle">UPC &#183; flat (0&#176;) &#183; blue</text>
+
+  <!-- ferrule body: a horizontal cylinder ending in a flat face -->
+  <g stroke="#E5E5E5" stroke-width="2" stroke-linejoin="round">
+    <path d="M40 150 H300 V230 H40 Z"/>
+  </g>
+  <!-- fiber core down the centre -->
+  <line x1="40" y1="190" x2="300" y2="190" stroke="#9C9C9C" stroke-width="2" stroke-dasharray="6 5"/>
+  <!-- flat endface highlight -->
+  <line x1="300" y1="150" x2="300" y2="230" stroke="#2D6CDF" stroke-width="4"/>
+  <!-- incoming ray (down the core toward the face) -->
+  <line x1="60" y1="190" x2="290" y2="190" stroke="#E5E5E5" stroke-width="2"/>
+  <polygon points="290,190 280,185 280,195" fill="#E5E5E5"/>
+  <!-- reflected ray: flat face sends it STRAIGHT BACK up the core (lime, the problem) -->
+  <line x1="296" y1="183" x2="70" y2="183" stroke="#A2CC3A" stroke-width="2.4"/>
+  <polygon points="70,183 80,178 80,188" fill="#A2CC3A"/>
+  <text x="170" y="173" fill="#A2CC3A" font-size="11.5" font-weight="600" text-anchor="middle">reflection goes back up the core</text>
+
+  <text x="170" y="262" fill="#E5E5E5" font-size="12.5" font-weight="600" text-anchor="middle">Return loss &#8776; &#8722;50&#8201;dB <tspan fill="#9C9C9C" font-weight="500">(typical)</tspan></text>
+
+  <!-- ===================== APC (right) ===================== -->
+  <text x="660" y="100" fill="#3CA03C" font-size="15" font-weight="700" text-anchor="middle">APC &#183; 8&#176; angled &#183; green</text>
+
+  <!-- ferrule body with an 8deg slanted face on the right -->
+  <g stroke="#E5E5E5" stroke-width="2" stroke-linejoin="round">
+    <path d="M480 150 H720 L740 230 H480 Z"/>
+  </g>
+  <!-- core centreline -->
+  <line x1="480" y1="190" x2="730" y2="190" stroke="#9C9C9C" stroke-width="2" stroke-dasharray="6 5"/>
+  <!-- angled endface highlight -->
+  <line x1="720" y1="150" x2="740" y2="230" stroke="#3CA03C" stroke-width="4"/>
+  <!-- incoming ray -->
+  <line x1="500" y1="190" x2="725" y2="190" stroke="#E5E5E5" stroke-width="2"/>
+  <polygon points="725,190 715,185 715,195" fill="#E5E5E5"/>
+  <!-- reflected ray: angled face bounces light DOWN into the cladding (lime), away from the core -->
+  <line x1="725" y1="190" x2="640" y2="248" stroke="#A2CC3A" stroke-width="2.4"/>
+  <polygon points="640,248 651,246 645,237" fill="#A2CC3A"/>
+  <text x="660" y="278" fill="#A2CC3A" font-size="11.5" font-weight="600" text-anchor="middle">8&#176; tilt throws reflection into the cladding</text>
+
+  <text x="610" y="305" fill="#E5E5E5" font-size="12.5" font-weight="600" text-anchor="middle">Return loss &#8776; &#8722;60&#8201;dB <tspan fill="#9C9C9C" font-weight="500">(typical, best)</tspan></text>
+
+  <!-- ===================== NEVER-MATE BAND ===================== -->
+  <!-- Danger callout on the SANCTIONED §8.13 system: #F26E6E heading/marks, low-opacity #F26E6E
+       band fill, #E5E5E5 body, #9C9C9C secondary. Survives the §8.20.7 light-mode swap. -->
+  <rect x="40" y="340" width="800" height="120" rx="10" fill="#F26E6E" fill-opacity="0.08" stroke="#F26E6E" stroke-width="1.6"/>
+
+  <!-- danger heading: X mark + word, sanctioned danger color -->
+  <g transform="translate(64,360)">
+    <line x1="1" y1="1" x2="13" y2="13" stroke="#F26E6E" stroke-width="2.4" stroke-linecap="round"/>
+    <line x1="13" y1="1" x2="1" y2="13" stroke="#F26E6E" stroke-width="2.4" stroke-linecap="round"/>
+    <text x="24" y="12" fill="#F26E6E" font-size="14" font-weight="700">NEVER MATE APC &#8596; UPC</text>
+  </g>
+
+  <!-- mini diagram of mismatched faces leaving an air gap -->
+  <g transform="translate(360,388)">
+    <!-- UPC flat face (canonical data-blue) -->
+    <path d="M0 0 H50 V44 H0 Z" stroke="#2D6CDF" stroke-width="2" fill="none"/>
+    <line x1="50" y1="0" x2="50" y2="44" stroke="#2D6CDF" stroke-width="3"/>
+    <!-- APC angled face (canonical data-green) -->
+    <path d="M120 0 H70 L58 44 H120 Z" stroke="#3CA03C" stroke-width="2" fill="none"/>
+    <line x1="70" y1="0" x2="58" y2="44" stroke="#3CA03C" stroke-width="3"/>
+    <!-- air gap wedge between them, sanctioned danger wash -->
+    <path d="M50 0 L70 0 L58 44 L50 44 Z" fill="#F26E6E" fill-opacity="0.2" stroke="none"/>
+    <text x="60" y="62" fill="#F26E6E" font-size="10.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans, sans-serif">air gap</text>
+  </g>
+
+  <text x="64" y="398" fill="#E5E5E5" font-size="12" font-weight="500">Flat meets 8&#176; tilt: the cores never touch.</text>
+  <text x="64" y="418" fill="#E5E5E5" font-size="12" font-weight="500">Huge insertion loss, and the angled</text>
+  <text x="64" y="438" fill="#E5E5E5" font-size="12" font-weight="500">ferrule can crack the flat one.</text>
+
+  <text x="660" y="408" fill="#E5E5E5" font-size="12" font-weight="600" text-anchor="middle">Green only mates green.</text>
+  <text x="660" y="428" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle">APC connects only to APC.</text>
+</svg>

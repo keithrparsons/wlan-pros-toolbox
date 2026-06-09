@@ -46,6 +46,9 @@ import '../screens/tools/reference/signal_thresholds_screen.dart';
 import '../screens/tools/reference/wpa_security_screen.dart';
 import '../screens/tools/reference/http_status_codes_screen.dart';
 import '../screens/tools/reference/optical_transceivers_screen.dart';
+import '../screens/tools/reference/cable_bend_radius_screen.dart';
+import '../screens/tools/reference/rack_units_screen.dart';
+import '../screens/tools/reference/screw_drives_screen.dart';
 import '../screens/tools/reference/wifi_exposure_perspective_screen.dart';
 import '../screens/tools/reference/wifi_tools_comparison_screen.dart';
 import '../screens/tools/reference/reason_codes_screen.dart';
@@ -209,6 +212,9 @@ class AppRouter {
   static const String coaxCable = '/tools/coax-cable';
   static const String ethernetCable = '/tools/ethernet-cable';
   static const String fiberOptic = '/tools/fiber-optic';
+  static const String cableBendRadius = '/tools/cable-bend-radius';
+  static const String rackUnits = '/tools/rack-units';
+  static const String screwDrives = '/tools/screw-drives';
   // `/tools/rf-connectors` was REMOVED 2026-06-06 (BF6-18): RF Connectors merged
   // into the single Antenna Connectors tool.
   static const String roaming = '/tools/roaming';
@@ -466,6 +472,9 @@ class AppRouter {
     coaxCable: (_) => const CoaxCableScreen(),
     ethernetCable: (_) => const EthernetCableScreen(),
     fiberOptic: (_) => const FiberOpticScreen(),
+    cableBendRadius: (_) => const CableBendRadiusScreen(),
+    rackUnits: (_) => const RackUnitsScreen(),
+    screwDrives: (_) => const ScrewDrivesScreen(),
     roaming: (_) => const RoamingScreen(),
     apPlacement: (_) => const ApPlacementScreen(),
     poeReference: (_) => const PoeReferenceScreen(),

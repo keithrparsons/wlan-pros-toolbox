@@ -1,0 +1,80 @@
+<svg width="860" height="300" viewBox="0 0 860 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Security / tamper-resistant drives on outdoor AP enclosures -->
+  <!-- Palette: canvas #1A1A1A, bright #E5E5E5, lime #A1CC3A marks WHAT makes it tamper-resistant -->
+  <defs>
+    <style>
+      .label { font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:16px; fill:#E5E5E5; }
+      .sub   { font-family:'DM Mono',monospace;       font-weight:400; font-size:12px; fill:#E5E5E5; }
+      .ring  { fill:none; stroke:#E5E5E5; stroke-width:2; }
+      .rec   { fill:none; stroke:#E5E5E5; stroke-width:6; stroke-linecap:round; stroke-linejoin:round; }
+      .pin   { fill:#A1CC3A; stroke:none; }
+      .pinl  { fill:none; stroke:#A1CC3A; stroke-width:5; stroke-linecap:round; stroke-linejoin:round; }
+    </style>
+  </defs>
+  <rect width="860" height="300" fill="#1A1A1A"/>
+
+  <!-- 1. Security Torx / pin-in Torx (center pin) -->
+  <g transform="translate(95,95)">
+    <circle class="ring" r="48"/>
+    <path fill="none" stroke="#E5E5E5" stroke-width="6" stroke-linejoin="round" d="M 0.0,-33.0 Q 10.0,-17.3 28.6,-16.5 Q 20.0,-0.0 28.6,16.5 Q 10.0,17.3 0.0,33.0 Q -10.0,17.3 -28.6,16.5 Q -20.0,0.0 -28.6,-16.5 Q -10.0,-17.3 -0.0,-33.0 Z"/>
+    <circle class="pin" r="8.5"/>
+  </g>
+  <text class="label" x="95" y="180" text-anchor="middle">Security Torx</text>
+  <text class="sub"   x="95" y="200" text-anchor="middle">pin-in &#183; T10H&#8211;T40H</text>
+
+  <!-- 2. Pin-in hex -->
+  <g transform="translate(255,95)">
+    <circle class="ring" r="48"/>
+    <polygon points="-33,0 -16.5,-28.6 16.5,-28.6 33,0 16.5,28.6 -16.5,28.6" fill="none" stroke="#E5E5E5" stroke-width="6" stroke-linejoin="round"/>
+    <circle class="pin" r="8.5"/>
+  </g>
+  <text class="label" x="255" y="180" text-anchor="middle">Pin-in Hex</text>
+  <text class="sub"   x="255" y="200" text-anchor="middle">security hex</text>
+
+  <!-- 3. One-way / clutch -->
+  <g transform="translate(415,95)">
+    <circle class="ring" r="48"/>
+    <!-- two angled slot ledges: a flat blade catches the square side (drives in),
+         and slips off the ramped side (won't back out) -->
+    <path d="M -33,7 L 0,7 L 0,-7 L 33,-7" fill="none" stroke="#E5E5E5" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M -33,-7 L -8,-7" fill="none" stroke="#E5E5E5" stroke-width="6" stroke-linecap="round"/>
+    <path d="M 8,7 L 33,7" fill="none" stroke="#E5E5E5" stroke-width="6" stroke-linecap="round"/>
+    <!-- lime rotation arrow: turns ONE way (tighten only) -->
+    <path class="pinl" d="M -14,-26 A 30,30 0 0 1 22,-14"/>
+    <path class="pinl" d="M 22,-14 l 1.5,-9 l -8.5,3" stroke-linejoin="round"/>
+  </g>
+  <text class="label" x="415" y="180" text-anchor="middle">One-way / Clutch</text>
+  <text class="sub"   x="415" y="200" text-anchor="middle">drives in, won't back out</text>
+
+  <!-- 4. Tri-wing -->
+  <g transform="translate(575,95)">
+    <circle class="ring" r="48"/>
+    <g class="rec">
+      <line x1="0" y1="0" x2="0" y2="-32"/>
+      <line x1="0" y1="0" x2="27.7" y2="16"/>
+      <line x1="0" y1="0" x2="-27.7" y2="16"/>
+      <line x1="0" y1="-32" x2="11" y2="-26"/>
+      <line x1="27.7" y1="16" x2="22" y2="26.5"/>
+      <line x1="-27.7" y1="16" x2="-33" y2="-0.5"/>
+    </g>
+  </g>
+  <text class="label" x="575" y="180" text-anchor="middle">Tri-wing</text>
+  <text class="sub"   x="575" y="200" text-anchor="middle">3-blade pinwheel</text>
+
+  <!-- 5. Spanner / snake-eye (two dots) -->
+  <g transform="translate(735,95)">
+    <circle class="ring" r="48"/>
+    <!-- two round holes ("snake eyes") set across the face -->
+    <circle cx="-17" cy="0" r="9" fill="none" stroke="#E5E5E5" stroke-width="6"/>
+    <circle cx="17"  cy="0" r="9" fill="none" stroke="#E5E5E5" stroke-width="6"/>
+    <!-- lime fill marks the two drive holes the bit's pins engage -->
+    <circle cx="-17" cy="0" r="4" class="pin"/>
+    <circle cx="17"  cy="0" r="4" class="pin"/>
+  </g>
+  <text class="label" x="735" y="180" text-anchor="middle">Spanner</text>
+  <text class="sub"   x="735" y="200" text-anchor="middle">snake-eye (two dots)</text>
+
+  <!-- footer captions -->
+  <text x="430" y="248" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-weight="400" font-size="13px" fill="#E5E5E5">Lime marks the tamper feature. Each drive needs its matching security bit; a standard set won't seat.</text>
+  <text x="430" y="272" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="14px" fill="#E5E5E5">Pack the tamper-bit set before any outdoor / public-space job.</text>
+</svg>

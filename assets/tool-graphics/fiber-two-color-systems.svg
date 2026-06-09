@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 560" width="900" height="560" fill="none" font-family="IBM Plex Sans, sans-serif">
+  <!-- THE teaching graphic: cable JACKET color vs connector BODY color are two DIFFERENT systems.
+       They collide on green and aqua. Canonical data colors (§8.6.2 exception). Bright text §8.20.7. -->
+
+  <!-- HEADER -->
+  <text x="450" y="36" fill="#E5E5E5" font-size="18" font-weight="700" text-anchor="middle">Two color systems that collide</text>
+  <text x="450" y="58" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">Same color, different meaning. Always ask: am I reading the cable jacket, or the connector body?</text>
+
+  <!-- ===================== LEFT: CABLE JACKET ===================== -->
+  <g stroke="#E5E5E5" stroke-width="1.6">
+    <rect x="40" y="86" width="360" height="384" rx="10"/>
+  </g>
+  <text x="220" y="118" fill="#E5E5E5" font-size="15" font-weight="700" text-anchor="middle">SYSTEM A &#183; CABLE JACKET</text>
+  <text x="220" y="138" fill="#9C9C9C" font-size="11.5" font-weight="500" text-anchor="middle">TIA-598-D &#183; what the fiber IS</text>
+
+  <!-- jacket swatch rows: swatch 60w x 36h at x=64; label to the right -->
+  <g>
+    <rect x="64" y="158" width="60" height="36" rx="4" fill="#F58A1F"/>
+    <text x="140" y="176" fill="#E5E5E5" font-size="14" font-weight="600">Orange</text>
+    <text x="140" y="192" fill="#E5E5E5" font-size="11.5" font-weight="500">OM1 / OM2 multimode</text>
+  </g>
+  <g>
+    <rect x="64" y="214" width="60" height="36" rx="4" fill="#46C7C7"/>
+    <text x="140" y="232" fill="#E5E5E5" font-size="14" font-weight="600">Aqua</text>
+    <text x="140" y="248" fill="#E5E5E5" font-size="11.5" font-weight="500">OM3 / OM4 multimode</text>
+  </g>
+  <g>
+    <rect x="64" y="270" width="60" height="36" rx="4" fill="#A1CC3A"/>
+    <text x="140" y="288" fill="#E5E5E5" font-size="14" font-weight="600">Lime green</text>
+    <text x="140" y="304" fill="#E5E5E5" font-size="11.5" font-weight="500">OM5 multimode (wideband)</text>
+  </g>
+  <g>
+    <rect x="64" y="326" width="60" height="36" rx="4" fill="#F2D32C"/>
+    <text x="140" y="344" fill="#E5E5E5" font-size="14" font-weight="600">Yellow</text>
+    <text x="140" y="360" fill="#E5E5E5" font-size="11.5" font-weight="500">OS1 / OS2 single-mode</text>
+  </g>
+
+  <!-- ===================== RIGHT: CONNECTOR BODY ===================== -->
+  <g stroke="#E5E5E5" stroke-width="1.6">
+    <rect x="500" y="86" width="360" height="384" rx="10"/>
+  </g>
+  <text x="680" y="118" fill="#E5E5E5" font-size="15" font-weight="700" text-anchor="middle">SYSTEM B &#183; CONNECTOR BODY</text>
+  <text x="680" y="138" fill="#9C9C9C" font-size="11.5" font-weight="500" text-anchor="middle">TIA-568/598 &#183; how it&#8217;s POLISHED / sized</text>
+
+  <g>
+    <rect x="524" y="158" width="60" height="36" rx="4" fill="#D9C7A3"/>
+    <text x="600" y="176" fill="#E5E5E5" font-size="14" font-weight="600">Beige</text>
+    <text x="600" y="192" fill="#E5E5E5" font-size="11.5" font-weight="500">Multimode 62.5/125 (OM1)</text>
+  </g>
+  <g>
+    <rect x="524" y="214" width="60" height="36" rx="4" fill="#46C7C7"/>
+    <text x="600" y="232" fill="#E5E5E5" font-size="14" font-weight="600">Aqua</text>
+    <text x="600" y="248" fill="#E5E5E5" font-size="11.5" font-weight="500">Multimode OM3 / OM4</text>
+  </g>
+  <g>
+    <rect x="524" y="270" width="60" height="36" rx="4" fill="#2D6CDF"/>
+    <text x="600" y="288" fill="#E5E5E5" font-size="14" font-weight="600">Blue</text>
+    <text x="600" y="304" fill="#E5E5E5" font-size="11.5" font-weight="500">Single-mode UPC (flat)</text>
+  </g>
+  <g>
+    <rect x="524" y="326" width="60" height="36" rx="4" fill="#3CA03C"/>
+    <text x="600" y="344" fill="#E5E5E5" font-size="14" font-weight="600">Green</text>
+    <text x="600" y="360" fill="#E5E5E5" font-size="11.5" font-weight="500">Single-mode APC (8&#176; angled)</text>
+  </g>
+
+  <!-- ===================== THE COLLISION BAND ===================== -->
+  <rect x="40" y="392" width="820" height="68" rx="8" fill="rgba(162,204,58,0.08)" stroke="#A2CC3A" stroke-width="1.6"/>
+  <text x="64" y="416" fill="#A2CC3A" font-size="13" font-weight="700">THE COLLISION</text>
+  <!-- green collision -->
+  <rect x="220" y="402" width="22" height="22" rx="3" fill="#A1CC3A"/>
+  <rect x="246" y="402" width="22" height="22" rx="3" fill="#3CA03C"/>
+  <text x="278" y="412" fill="#E5E5E5" font-size="11.5" font-weight="600">Green: lime JACKET = OM5</text>
+  <text x="278" y="426" fill="#E5E5E5" font-size="11.5" font-weight="500">vs green BODY = APC single-mode</text>
+  <!-- aqua collision -->
+  <rect x="560" y="402" width="22" height="22" rx="3" fill="#46C7C7"/>
+  <text x="592" y="412" fill="#E5E5E5" font-size="11.5" font-weight="600">Aqua appears in BOTH:</text>
+  <text x="592" y="426" fill="#E5E5E5" font-size="11.5" font-weight="500">OM3/OM4 jacket AND OM3/OM4 body</text>
+  <text x="64" y="450" fill="#E5E5E5" font-size="12" font-weight="500">Label which system a swatch belongs to &#8212; the color alone never tells you.</text>
+  <!-- second line lime tag -->
+  <text x="500" y="450" fill="#A2CC3A" font-size="12" font-weight="600">Jacket &#8800; body.</text>
+
+  <!-- FOOTER -->
+  <text x="450" y="498" fill="#9C9C9C" font-size="11.5" font-weight="500" text-anchor="middle">OM1 nuance: jacket is orange, but the connector-BODY convention for 62.5/125 is beige. The cable is not beige.</text>
+</svg>

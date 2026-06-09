@@ -1,0 +1,13 @@
+<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <!-- Tool icon: Screw Drives & Driver Bits. Concept = a screw-head recess. -->
+  <!-- 24x24 keyline, 2px stroke, single color via currentColor, tintable. -->
+  <!-- HEX SOCKET recess: a circle (screw head) with an inset hexagonal socket. A hexagon-in-a-circle
+       matches NO universal UI control glyph (+ / - / x / zoom), so it reads unmistakably as a
+       mechanical drive recess at 20px. Avoids both the "add" (cross) and "remove" (bar) readings. -->
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- screw head outline -->
+    <circle cx="12" cy="12" r="9"/>
+    <!-- inset hexagonal socket (flat-top hex, r ~= 4.6 about center) -->
+    <polygon points="12,7.4 16,9.7 16,14.3 12,16.6 8,14.3 8,9.7"/>
+  </g>
+</svg>

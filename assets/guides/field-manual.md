@@ -17,7 +17,7 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Utilities & Generators (2)
 - **Quick Reference** (49 tools)
   - Wi-Fi & RF (13)
-  - Cabling & Connectors (7)
+  - Cabling & Connectors (11)
   - Protocols (7)
   - Encoding (2)
   - CLI & Capture (3)
@@ -1685,7 +1685,7 @@ A matrix of Wi-Fi security modes (WEP through WPA3-Enterprise) with encryption, 
 _Source: lib/screens/tools/reference/wpa_security_screen.dart_
 
 
-## Cabling & Connectors (7)
+## Cabling & Connectors (11)
 
 
 ### Antenna Connectors
@@ -1775,7 +1775,7 @@ Fiber types (OM1 to OM5, OS1/OS2) with core/cladding, modal bandwidth, jacket co
 
 **How to use**
 1. Scroll the distance matrix horizontally. A "—" in a rate column means that rate isn't supported (OM1/OM2 don't do 40G/100G).
-2. OM1/OM2 render dimmed (legacy). Jacket colors: OM1/OM2 = Orange, OM3 = Aqua, OM4 = Violet/Aqua, OM5 = Lime Green, OS1/OS2 = Yellow.
+2. OM1/OM2 render dimmed (legacy). Jacket colors: OM1/OM2 = Orange, OM3 = Aqua, OM4 = Aqua (violet is a manufacturer convention, not the standard), OM5 = Lime Green, OS1/OS2 = Yellow.
 3. Multimode (OM) lists modal bandwidth; singlemode (OS) shows "N/A" bandwidth but reaches 10+ to 80+ km.
 
 **Field notes**
@@ -1784,6 +1784,50 @@ Fiber types (OM1 to OM5, OS1/OS2) with core/cladding, modal bandwidth, jacket co
 - Data source / standard: TIA-568 / ISO 11801 (cited in the footnote); ported verbatim from the rf-tools-pwa fiber tool (FIBER_DATA).
 
 _Source: lib/screens/tools/reference/fiber_optic_screen.dart_
+
+
+### Fiber Connectors & Polish
+
+The fiber connector form factors (LC, SC, ST, FC, MPO/MTP) with ferrule size, coupling, and use, plus the three endface polishes (PC, UPC, APC) and the two separate color systems: cable jacket color and connector body color.
+
+**Why it's here.** When you are identifying, specifying, or mating a fiber connector and need to answer the questions that actually cost time in the field: is this LC or SC, will an APC mate a UPC, why is one connector green and another blue, and is that aqua jacket OM3 or OM4. The two single biggest field errors live here: mating APC to UPC, and reading the OM4 jacket color wrong.
+
+**How to use**
+1. Read the connector table for form-factor recognition: ferrule diameter, coupling/latch, simplex or duplex, and typical use.
+2. Read the polish rows for endface type, the 8 degree APC angle, the typical return loss, and the connector body color that goes with each polish.
+3. Use the two-color-system note to keep cable jacket color and connector body color separate; the same color word can mean two different things depending on which one you are reading.
+
+**Connector form factors**
+
+| Connector | IEC 61754 part | Ferrule | Coupling | Form factor | Typical use |
+|---|---|---|---|---|---|
+| LC | 61754-20 | 1.25 mm | Push-pull latch (RJ-style clip) | Simplex + duplex | Data center / enterprise; SFP/SFP+ transceivers; dominant today |
+| SC | 61754-4 | 2.5 mm | Push-pull snap | Simplex + duplex | FTTH, telecom, enterprise patching; second most common |
+| ST | 61754-2 | 2.5 mm | Bayonet twist-lock | Simplex only | Legacy campus / multimode LANs |
+| FC | 61754-13 | 2.5 mm | Threaded screw nut | Simplex only | Test equipment, precision / high-vibration |
+| MPO / MTP | 61754-7 | Rectangular multi-fiber (8 / 12 / 24) | Push-pull, keyed | Multi-fiber ribbon | 40G/100G/400G parallel optics; data-center trunks |
+
+LC and SC dominate new deployments; LC leads the data center because its 1.25 mm ferrule packs more ports into the same SFP density. MTP is US Conec's branded, tighter-tolerance MPO; it is mechanically intermateable with MPO, not a separate standard.
+
+**Endface polish**
+
+| Polish | Endface | Return loss (typical) | Connector body color |
+|---|---|---|---|
+| PC (Physical Contact) | Slight dome, flat-ish | about -40 dB | Legacy, not separately color-keyed |
+| UPC (Ultra PC) | Finer dome, no angle | about -50 dB | Blue (single-mode) |
+| APC (Angled PC) | 8 degree angled ferrule | about -60 dB (best) | Green |
+
+The APC ferrule is polished to an 8 degree angle that reflects back-reflection into the cladding, which is why it carries the lowest return loss. APC mates only to APC. Return-loss figures are typical industry numbers, not per-part datasheet guarantees.
+
+**Field notes**
+- HARD RULE: APC and UPC must never be mated. The 8 degree angled ferrule against a flat ferrule causes very high insertion loss and can physically damage both ferrules. Green mates only green.
+- Two separate color systems exist and the page keeps them distinct. Cable jacket color (TIA-598-D): orange = OM1/OM2, aqua = OM3/OM4, lime green = OM5, yellow = single-mode. Connector body color (TIA-568/598 convention): beige = OM1 62.5/125, black = OM2 50/125, aqua = OM3/OM4, lime = OM5, blue = single-mode UPC, green = single-mode APC.
+- The colors collide. Green appears in both systems: lime-green jacket means OM5 multimode, green connector body means APC angled single-mode. Aqua appears in both: OM3/OM4 jacket and OM3/OM4 connector body. Always check which system you are reading before you trust the color.
+- MYTH: "OM4 is violet." TIA-598-D assigns OM4 aqua, the same as OM3. Violet ("Erika Violet") is a manufacturer differentiation convention, not the standard color. Because OM3 and OM4 both default to aqua, the only reliable way to tell them apart is the printed legend on the jacket.
+- OM1 nuance: the OM1 cable jacket is orange, but the connector body convention for 62.5/125 is beige. OM1 cable is not beige.
+- Cladding is always 125 microns across every fiber type (9/125 single-mode, 50/125 OM2 to OM5, 62.5/125 OM1), a useful unifying fact when you are reading core/cladding sizes.
+
+_Source: Pax verification brief, 2026-06-08 (TIA-598-D / IEC 61754; FOA, Cisco, Fluke corroboration)._
 
 
 ### Optical Transceivers
@@ -1826,6 +1870,157 @@ A reference to the registered-jack connector form factors (RJ11, RJ14, RJ25, RJ4
 - Data source / standard: the registered-jack (USOC) interface standards and the modular-connector form-factor conventions.
 
 _Source: lib/screens/tools/reference/rj_connectors_screen.dart_
+
+
+### Cable Bend Radius & Pull Tension
+
+The install limits that keep a copper or fiber run inside spec: minimum bend radius, maximum pull tension, and the related termination and bundling limits, with each value marked as a TIA standard or as a rule of thumb.
+
+**Why it's here.** When you are pulling cable and need the two numbers that actually matter: how tight you can bend it and how hard you can pull it. Installed 4-pair UTP bends to no tighter than 4 times the cable outer diameter, and 4-pair UTP pulls at no more than 25 lbf (110 N). Get either wrong and you degrade return loss and crosstalk on a cable that still passes a quick continuity check, so the fault hides until certification.
+
+**How to use**
+1. Read the bend-radius rows for copper and fiber. Compute the bend radius from the cable's actual outer diameter, never a fixed inch value, because Cat6A is meaningfully fatter than Cat5e and the limit moves with it.
+2. Read the pull-tension rows before a long or high-friction pull. The 25 lbf UTP number is the one to internalize.
+3. Treat the TIA-marked numbers as standards and the rule-of-thumb numbers as guidance. The cable's own datasheet overrides every figure here, in either direction.
+
+**Minimum bend radius**
+
+| Condition | Limit | Standard vs practice |
+|---|---|---|
+| UTP installed (horizontal, 4-pair) | at least 4x outer diameter | TIA-568 (standard) |
+| UTP during pull / under tension | at least 8x outer diameter | ISO 11801 / common practice, NOT a TIA copper clause |
+| Multi-pair backbone copper (25+ pair) | at least 10x outer diameter | rule of thumb |
+| Fiber installed / no load (standard cable) | at least 10x outer diameter | rule of thumb |
+| Fiber during pull / under tension | at least 20x outer diameter | rule of thumb |
+
+Worked example: a common Cat6 cable at about 0.25 in outer diameter gives a minimum installed bend radius of about 1 in; a fatter Cat6A at 0.30 to 0.35 in gives about 1.2 to 1.4 in. Bend-insensitive single-mode fiber (ITU-T G.657) allows far tighter bends, with minimum design radii around 10 mm (G.657.A1) down to about 2 mm (G.657.B3), which is why it dominates FTTH and dense data-center patching. Those millimeter radii are for the bare fiber's design, not the jacketed cable assembly; defer to the assembly's datasheet.
+
+**Maximum pull tension**
+
+| Cable | Max pull tension |
+|---|---|
+| 4-pair UTP (24 AWG horizontal) | 25 lbf = 110 N (TIA-568 §10.6.3.2) |
+| Fiber and multi-fiber cable | per manufacturer; strength-member dependent, no single number |
+| Multi-cable bundle pull | lower per cable; total is not the sum, so derate |
+
+The 25 lbf figure is engineered, not arbitrary: copper tolerates about 10,000 psi without significant deformation, and the 4-pair 24 AWG copper cross-section works out to about 25 lbf (attributed to Paul Kish, former chair of the TIA TR-41.8.1 copper-cabling working group). Over-pulling stretches and thins the conductors, raises attenuation, and disturbs the twist geometry the cable depends on for NEXT and return-loss balance.
+
+**Related install limits**
+
+| Limit | Value | Standard vs practice |
+|---|---|---|
+| Max pair untwist at termination | 0.5 in (13 mm), Cat5e through Cat8 | TIA-568-B.1 §10.2.3 (standard) |
+| Cable-tie tension | hand-tight only; must slide on the bundle; no jacket deformation | TIA-568-B.1 + BICSI TDMM (standard + best practice) |
+| Pathway fill | 40% conduit/raceway; 50% cable tray | TIA-569 (commonly specified; verify current revision + local code) |
+| Horizontal support spacing | 5 ft (about 1.5 m) between J-hooks | TIA-569 + BICSI (standard + practice) |
+
+**Field notes**
+- The mental model is "don't kink, don't over-pull, don't over-tighten, the datasheet wins." A kink permanently changes conductor spacing inside the jacket and degrades return loss and crosstalk even after you straighten the cable; the damage does not spring back. The 4x number exists to keep you clear of the kink threshold, not because 3.9x fails and 4.0x passes.
+- The "8x during pull" copper figure is ISO 11801 and field practice, not a confirmed TIA-568 copper clause. The page labels it that way; do not quote it as TIA.
+- Field test for cable-tie tension: after tying, you should be able to slide or rotate the tie around the bundle. If it cannot move, it is too tight and is crushing the pair geometry. Hook-and-loop straps over zip ties for data bundles is sound practice, not a TIA mandate.
+- Illustrative failure data, not a spec: below about 50 lbf UTP shows little change, at about 70 lbf the copper visibly stretches, and at about 90 to 110 lbf the cable breaks. The 25 lbf limit is deliberately conservative; failures do not start at 26 lbf, but past 25 lbf you have left the engineered safety margin.
+- TIA standards set minimum performance floors. A specific cable's datasheet can be more permissive (bend-insensitive fiber) or more restrictive (large-OD Cat6A, shielded constructions), and the datasheet is the binding number. Standards numbers here are verified through TIA-citing references and shipping manufacturer datasheets, not by reading the paywalled TIA documents clause by clause.
+
+_Source: Pax verification brief, 2026-06-08 (TIA-568 / TIA-569 / ISO 11801 / ITU-T G.657; CommScope and Belden datasheet corroboration)._
+
+
+### Rack Units & Mounting Hardware
+
+The 19-inch rack standard in field terms: the U-to-inches-to-millimeters conversion, the EIA-310 vertical hole pattern, rack widths, depth and clearance, and the mounting-hardware thread types with the tapped-versus-cage-nut distinction.
+
+**Why it's here.** When you are mounting an Access Point controller, switch, or patch panel and need to confirm a height in U, lay out the irregular hole pattern, or carry the right screws. Two things trip installers: the vertical holes are not evenly spaced, and not every rack is tapped. The "19-inch" label describes only the front panel; nothing inside the rack is 19 inches.
+
+**How to use**
+1. Use the U conversion table to translate a device's height in U to inches or millimeters. The page computes any U live: inches = U x 1.75, mm = U x 44.45. These are exact; do not round a per-U millimeter constant.
+2. Read the EIA-310 hole-pattern note before laying out a multi-U faceplate, because the holes repeat in groups of three at uneven spacing.
+3. Check the thread-type table and confirm the rack's hole type (tapped, square-hole for cage nuts, or unthreaded) before install day, then pack the matching screws or cage nuts.
+
+**Rack-unit conversion**
+
+| U | Inches | mm | Note |
+|---|---|---|---|
+| 1U | 1.75 | 44.45 | base unit |
+| 2U | 3.50 | 88.90 | |
+| 4U | 7.00 | 177.80 | |
+| 12U | 21.00 | 533.40 | common wall / half-height |
+| 24U | 42.00 | 1066.80 | half-rack |
+| 42U | 73.50 | 1866.90 | standard full rack (about 6 ft of rail) |
+| 45U | 78.75 | 2000.25 | taller data-center cabinet |
+| 48U | 84.00 | 2133.60 | extra-tall cabinet |
+
+1U = 1.75 in = 44.45 mm by definition (EIA-310-D / IEC 60297), a fixed value, not a measured one. 42U is the de-facto full rack; 45U is a real but less universal tall variant.
+
+**EIA-310 vertical hole pattern.** The mounting holes are NOT evenly spaced. Within each 1.75 in U, three holes repeat at 0.5 in, then 0.625 in, then 0.625 in (which sums to 1.75 in), then repeat. The U boundary falls in the middle of the 0.5 in gap. A correctly designed 1U faceplate uses the outer two holes of its group of three. Count holes wrong by one and the panel binds; multi-U gear with evenly spaced holes will not line up. In millimeters, 0.5 in = 12.70 mm and 0.625 in = 15.88 mm.
+
+**Rack widths.** The 19-inch (EIA-310) rack has a front panel/flange width of 19 in (482.6 mm), but the mounting-hole horizontal spacing is 18.312 in (465.1 mm) center to center and the rack opening between posts is at least 17.72 in (450 mm). None of the internal dimensions are 19 inches. The 23-inch telecom/WECO rack is a legacy world with several incompatible conventions; gear is not cross-compatible with 19-inch.
+
+**Mounting hardware**
+
+| Thread | Major diameter | Pitch | Commonly seen on |
+|---|---|---|---|
+| 10-32 (UNF, imperial) | 0.190 in | 32 TPI | Dell gear, audio/AV racks, lighter equipment |
+| 12-24 (imperial) | 0.216 in | 24 TPI | older / general-purpose racks; historical default |
+| M6 (metric) | about 6 mm | 1.0 mm | HP/Compaq gear, most modern square-hole + cage-nut setups |
+
+These three threads are close enough in size to start in the wrong hole but will cross-thread and strip if forced; a 12-24 screw forced into a 10-32 tapped hole destroys the thread. Match the screw to the rack's tap or to the installed cage nut. Vendor mapping (Dell to 10-32, HP to M6) is a common convention, not a fixed rule; it shifts across product generations.
+
+Rails come in three types. Tapped (threaded round holes) take a screw straight in but are fixed to one thread type, and a stripped thread kills that position. Square-hole + cage nut clips a captive spring-steel nut into a square hole (about 3/8 in / 9.5 mm), converting it to a threaded hole of whatever spec you choose; it is thread-agnostic and strip-proof (replace the nut, not the rail) and is the modern default. Round unthreaded holes need the right clip nuts or nut-and-bolt hardware.
+
+**Field notes**
+- The #1 first-install mistake is assuming the rack is tapped. Many modern racks ship as bare square holes with no cage nuts included. Show up without cage nuts and you cannot mount anything; confirm the hole type before install day.
+- "19-inch" describes only the front panel width. The opening is about 17.72 in and the hole spacing is 18.312 in.
+- The 10-32 versus 12-24 mix-up is the most damaging hardware error: the two are visually near-identical and cross-thread and strip if forced. When in doubt, use a square-hole rack plus the right cage nut.
+- U is height only. A 1U switch and a 1U server can have very different depths, so depth is a separate, independent check. Most network gear is shallow, so a 600 mm cabinet usually fits, but usable rail-to-rail depth runs roughly 100 to 150 mm less than the cabinet's external depth (lost to doors, hinges, rear panel, and cable bend radius). Check usable depth against your deepest device with cables attached.
+- Dimensional claims are triangulated across multiple independent sources that agree; the defined values (1.75 in, 44.45 mm, the hole pattern) are uncontested. The paywalled EIA-310-D and IEC 60297 standard texts were not read clause by clause.
+
+_Source: Pax verification brief, 2026-06-08 (EIA-310-D / IEC 60297; NavePoint, AudioRax, RackSolutions corroboration)._
+
+
+### Screw Drives & Driver Bits
+
+The drive faces a network or Access Point installer actually meets on enclosures, brackets, racks, and outdoor gear: the common drives (slotted, Phillips, Pozidriv, hex, Torx, Robertson) and the security/tamper drives, with the bit you need for each and the Phillips-versus-Pozidriv distinction.
+
+**Why it's here.** When you are opening or mounting gear and need to recognize a drive face and carry the matching bit. Two things cost field time: Pozidriv mistaken for Phillips (the wrong bit cams out and chews the head), and security/tamper drives on outdoor and public-space enclosures that need a specific bit you will not have unless you packed it. This covers drive types, not thread pitch or head shapes.
+
+**How to use**
+1. Match the drive face to the table to find the bit and size. PH1/PH2, PZ1/PZ2, T10/T15/T20/T25, and Robertson #1/#2 cover most network gear.
+2. Before any public or outdoor job, read the security-drive section and pack a tamper-bit set. A standard bit set does not include these.
+3. Use the Phillips-versus-Pozidriv tick-mark rule to pick the right cross bit before you strip a head.
+
+**Common drives**
+
+| Drive | Typical bit / size | Where you see it on network gear |
+|---|---|---|
+| Slotted | blade matched to slot width | terminal blocks, grounding lugs, legacy brackets |
+| Phillips (PH) | PH1, PH2 | indoor AP covers, bracket screws, rack cage nuts |
+| Pozidriv (PZ) | PZ1, PZ2 | EU enclosures, DIN-rail gear, PDUs, EU mount kits |
+| Combo (slotted/Pozi) | PZ2 or flat | electrical enclosures, "electrician's screws" |
+| Hex (metric) | 2.5 to 6 mm | antenna/pole mount set screws, bracket joints |
+| Hex (imperial) | 3/32 in to 1/4 in | US-sourced mounts, rack hardware |
+| Torx | T10, T15, T20, T25 | enclosures, rack ears, outdoor AP housings |
+| Robertson (square) | #1 (green), #2 (red) | Canadian sites/hardware, ceiling work |
+
+**Security / tamper drives.** These show up on outdoor AP enclosures, public-space mounts, ceiling cages, and locked NEMA boxes. Each needs its matching security bit, which a standard set does not include.
+
+| Drive | What it looks like | Tool needed |
+|---|---|---|
+| Security Torx (Torx TR / pin-in Torx) | a normal Torx star with a small post (pin) in the center; a solid Torx bit will not seat | Torx security bit with a hole bored down the center, sized T10H to T40H |
+| Pin-in hex (security hex) | a normal hex socket with a pin in the center | hex security bit with a center hole |
+| One-way / clutch | slotted-looking head with curved ramps; turns to tighten, slips to loosen | flat blade to install; removal needs extraction (drill / specialty tool) |
+| Tri-wing | three-bladed pinwheel/triangular recess | tri-wing bit |
+| Spanner / snake-eye | two round holes ("snake eyes") on the face | spanner / pin-spanner bit with two matching pins |
+
+**Field notes**
+- Phillips versus Pozidriv, the distinction that saves heads: a Pozidriv head has four shallow radial tick marks set at 45 degrees between the cross arms (a faint starburst); a Phillips head is a clean cross with no tick marks. Extra 45 degree tick lines means Pozidriv, use a PZ bit; clean cross means Phillips, use a PH bit. They are not interchangeable, and the wrong bit cams out and strips the head. Pozidriv is the European "electrician's screw" standard, common on enclosures and EU-sourced mounting kits.
+- MYTH: "Phillips was designed to cam out to prevent over-torquing." False. The original 1933 patent explicitly sought a recess with no tendency to cam out. Cam-out is a byproduct of the angled, tapered walls, not a design goal.
+- Say T-numbers, not "star." "Star bit" is a lay term that spans 6-point Torx, 5-point pentalobe, and security variants, which are different drives. Specify the T-number (for example T20) to avoid the mismatch.
+- Torx Plus (the IP series) has squarer lobes for higher torque. A standard Torx driver fits a Torx Plus screw loosely and degraded, but a Torx Plus driver will not fit a standard Torx screw. It is rare on network gear; the note exists to prevent a forced mismatch.
+- Hex keys come in metric (mm) and imperial (inch/fractional) series, and they are not cross-compatible; a 5 mm key is loose in a 3/16 in socket. Carry both.
+- Robertson color-coding (yellow #0, green #1, red #2, black #3) is a genuine trade and manufacturer convention, not an ISO standard. The square socket's slight taper grips the bit so the screw hangs on the tip one-handed, a real advantage on overhead ceiling work.
+- Pack tamper bits before the job, not at the site. Security drives exist specifically so a standard bit will not work; if you did not pack the matching bit, you do not open the enclosure. A consolidated set (security Torx T10H to T40H plus pin-hex, tri-wing, and spanner) covers the vast majority of what an installer meets.
+- The governing standards are confirmed by number (ISO 8764 for cross-recess/Pozidriv, ISO 10664 for Torx/hexalobular, ISO 4762 for hex socket cap screws, ISO 2380 for slotted), but the clause-level tip dimensions behind the paid ISO documents were not quoted.
+
+_Source: Pax verification brief, 2026-06-08 (ISO 8764 / ISO 10664 / ISO 4762 / ISO 2380; patent text, ToolGuyd, Polycase corroboration)._
 
 
 ## Protocols (7)

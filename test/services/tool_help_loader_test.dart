@@ -145,7 +145,10 @@ void main() {
       // 121 = + the 6 Power & Cooling pages (power-phasing, ohms-law,
       // cooling-thermal, iec-connectors, nema-connectors, international-plugs),
       // merged in from feat/power-cooling-refs 2026-06-08. 115 + 6 = 121.
-      expect(store.count, 121);
+      // 124 = + the 3 new Cabling & Connectors reference pages (cable-bend-radius,
+      // rack-units, screw-drives) 2026-06-08. The fiber-optic extension edits an
+      // existing entry, so adds none. 121 + 3 = 124.
+      expect(store.count, 124);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

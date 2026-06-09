@@ -49,10 +49,10 @@ void main() {
       expect(f.legacy, isFalse);
     });
 
-    test('OM4 — 4,700 MHz·km, Violet/Aqua jacket', () {
+    test('OM4 — 4,700 MHz·km, Aqua jacket (TIA-598-D; violet is vendor only)', () {
       final FiberType f = rowFor('OM4');
       expect(f.bandwidth, '4,700');
-      expect(f.jacketName, 'Violet/Aqua');
+      expect(f.jacketName, 'Aqua');
       expect(f.dist10G, '550 m');
     });
 
@@ -135,8 +135,9 @@ void main() {
           expect(find.text('Jacket color code & notes'), findsOneWidget);
           // OM3 appears in both the distance grid and the jacket card.
           expect(find.text('OM3'), findsWidgets);
-          // A known PWA jacket color name.
-          expect(find.text('Aqua'), findsOneWidget);
+          // A known PWA jacket color name. OM3 and OM4 are both Aqua (TIA-598-D),
+          // so it appears more than once.
+          expect(find.text('Aqua'), findsWidgets);
 
           expect(
             overflow,
