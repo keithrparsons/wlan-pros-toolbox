@@ -33,6 +33,17 @@ import io.flutter.plugin.common.MethodChannel
 //      shape the macOS CoreWLAN channel emits, so the shared Dart WifiInfo model
 //      and ConnectedAp.fromAndroidWifiInfo consume it unchanged.
 //
+//   3. com.wlanpros.toolbox/ap_scan — the Android-ONLY nearby-AP scan (H3).
+//      Calls WifiManager.getScanResults() and returns every visible BSS with the
+//      CLEAN fields the public API exposes reliably: SSID, BSSID, channel, band,
+//      and RSSI. NO noise / SNR / MCS — Android does not expose those for a
+//      scanned (non-connected) BSS, so they are never reported (GL-005 / GL-008).
+//      Scan results are gated by ACCESS_FINE_LOCATION at runtime; without it the
+//      list is empty and locationAuthorized=false drives the Dart Location card.
+//      getScanResults() returns the LAST cached scan, so a fresh startScan()
+//      that the OS throttles still yields the previous results (the honest
+//      "last scan" fallback) rather than nothing.
+//
 // Honesty (GL-005 / GL-008): every field the public Android API cannot supply
 // is returned as a genuine null — never an estimate. Android exposes no noise
 // floor, so noiseDbm and snrDb are always null and SNR is never computed.
@@ -42,6 +53,7 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity : FlutterActivity() {
     private val multicastChannelName = "lan_discovery/multicast"
     private val wifiInfoChannelName = "com.wlanpros.toolbox/wifi_info"
+    private val apScanChannelName = "com.wlanpros.toolbox/ap_scan"
     private var multicastLock: WifiManager.MulticastLock? = null
 
     // The pending Flutter result for an in-flight runtime permission request, so
@@ -76,6 +88,124 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, apScanChannelName)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    // Kick a fresh scan (best-effort; the OS may throttle it) and
+                    // return whatever getScanResults() now holds — the fresh scan
+                    // if it ran, otherwise the last cached scan (the honest
+                    // throttled fallback). Either way the caller gets the most
+                    // recent results the OS will give us.
+                    "scan" -> result.success(readScanResults(triggerFresh = true))
+                    // Return the last cached scan without requesting a new one.
+                    "lastResults" -> result.success(readScanResults(triggerFresh = false))
+                    "isLocationAuthorized" -> result.success(isLocationAuthorized())
+                    "requestLocationPermission" -> requestLocationPermission(result)
+                    "openLocationSettings" -> result.success(openAppSettings())
+                    else -> result.notImplemented()
+                }
+            }
+    }
+
+    // ---- Nearby-AP scan (H3, Android-only) ------------------------------
+
+    /// Reads the visible BSSs from WifiManager.getScanResults() and maps each to
+    /// the CLEAN field set the Dart layer renders: SSID, BSSID, channel, band,
+    /// and RSSI. No noise / SNR / MCS — the scanned-BSS API does not expose them,
+    /// so they are never invented (GL-005 / GL-008).
+    ///
+    /// [triggerFresh] requests a new scan first (best-effort: startScan() is
+    /// rate-limited on Android 9+ and returns false when throttled). Whether or
+    /// not the fresh scan runs, getScanResults() returns the OS's last cached
+    /// scan, so a throttled request still yields the previous results rather than
+    /// nothing — the honest "last scan" fallback the UI labels as such.
+    ///
+    /// The returned map always carries [poweredOn] and [locationAuthorized] so the
+    /// Dart UI can show the Wi-Fi-off and Location-gate states without guessing.
+    /// [scanThrottled] tells the UI a requested fresh scan was rejected so the
+    /// list it shows is the last cached one.
+    private fun readScanResults(triggerFresh: Boolean): Map<String, Any?> {
+        val wifiManager = applicationContext
+            .getSystemService(Context.WIFI_SERVICE) as WifiManager
+        val locationOk = isLocationAuthorized()
+        val poweredOn = wifiManager.isWifiEnabled
+
+        if (!locationOk || !poweredOn) {
+            return mapOf(
+                "poweredOn" to poweredOn,
+                "locationAuthorized" to locationOk,
+                "scanThrottled" to false,
+                "accessPoints" to emptyList<Map<String, Any?>>(),
+            )
+        }
+
+        // Best-effort fresh scan. startScan() is deprecated and rate-limited
+        // (Android 9+ caps an app to a handful of scans per two minutes); a
+        // false return means the OS throttled us and getScanResults() will hand
+        // back the LAST scan instead. We surface that as scanThrottled so the UI
+        // can say "showing the last scan".
+        var throttled = false
+        if (triggerFresh) {
+            val started = try {
+                @Suppress("DEPRECATION")
+                wifiManager.startScan()
+            } catch (e: SecurityException) {
+                false
+            }
+            throttled = !started
+        }
+
+        val results: List<ScanResult> = try {
+            @Suppress("DEPRECATION")
+            wifiManager.scanResults ?: emptyList()
+        } catch (e: SecurityException) {
+            // Location revoked between the check and the read — honest empty.
+            return mapOf(
+                "poweredOn" to poweredOn,
+                "locationAuthorized" to false,
+                "scanThrottled" to false,
+                "accessPoints" to emptyList<Map<String, Any?>>(),
+            )
+        }
+
+        val aps = results.mapNotNull { mapScanResult(it) }
+
+        return mapOf(
+            "poweredOn" to poweredOn,
+            "locationAuthorized" to locationOk,
+            "scanThrottled" to throttled,
+            "accessPoints" to aps,
+        )
+    }
+
+    /// Maps one ScanResult to the CLEAN payload. Drops a BSS with no usable
+    /// frequency (channel/band cannot be derived honestly). The hidden-SSID case
+    /// is a genuine empty string and is passed as null so the Dart UI renders
+    /// "(hidden network)" rather than a blank, never a fabricated name.
+    private fun mapScanResult(r: ScanResult): Map<String, Any?>? {
+        val freq = r.frequency
+        val channel = channelForFrequency(freq) ?: return null
+        val band = bandForFrequency(freq) ?: return null
+
+        @Suppress("DEPRECATION")
+        val rawSsid: String? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            r.wifiSsid?.toString()?.removeSurrounding("\"")
+        } else {
+            r.SSID
+        }
+        val ssid = if (rawSsid.isNullOrEmpty()) null else rawSsid
+
+        val bssid: String? = r.BSSID
+
+        return mapOf(
+            "ssid" to ssid,
+            "bssid" to bssid,
+            "rssiDbm" to r.level,
+            "channel" to channel,
+            "band" to band,
+            "frequencyMhz" to freq,
+        )
     }
 
     // ---- Wi-Fi Information bridge ----------------------------------------
