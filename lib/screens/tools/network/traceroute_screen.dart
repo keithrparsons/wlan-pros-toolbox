@@ -537,6 +537,8 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
       TracerouteUnavailableReason.binaryUnavailable =>
         'The system traceroute could not be launched here. On a sandboxed '
             'build the OS may block it.${u.detail == null ? '' : '\n\n${u.detail}'}',
+      TracerouteUnavailableReason.invalidHost =>
+        u.detail ?? 'That is not a valid host or IP address.',
     };
     return Container(
       decoration: BoxDecoration(

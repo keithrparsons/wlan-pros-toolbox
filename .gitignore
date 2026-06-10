@@ -48,3 +48,17 @@ app.*.map.json
 
 # Flutter golden-test failure diffs (transient)
 test/**/failures/
+
+# Secrets / signing material — never commit (preventive control, none present).
+# No legitimately-needed .pem/.key exists in the tree at build time: SSL-inspect
+# handles PEM strings in-memory, and the iperf3 src/*.pem are upstream test
+# fixtures that are untracked. If a real build secret is ever needed, add a
+# narrow negation (e.g. !path/to/needed.pem) rather than loosening this.
+*.pem
+*.key
+*.p12
+*.mobileprovision
+*.jks
+*.keystore
+key.properties
+.env

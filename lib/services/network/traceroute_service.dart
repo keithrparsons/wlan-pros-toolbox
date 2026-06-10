@@ -36,6 +36,8 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart' show visibleForTesting;
 
+import 'network_target.dart';
+
 /// One discovered hop on the path.
 class TracerouteHop {
   const TracerouteHop({
@@ -80,6 +82,10 @@ enum TracerouteUnavailableReason {
   /// Desktop, but the OS binary could not be launched (sandbox denial, missing
   /// binary, PATH issue). The UI shows the precise reason.
   binaryUnavailable,
+
+  /// The supplied host failed validation (empty, malformed, or a `-`-leading
+  /// value that would be parsed as a flag). Never reaches the binary.
+  invalidHost,
 }
 
 /// Terminal outcome of a traceroute run.
@@ -214,6 +220,27 @@ class TracerouteService {
       return controller.stream;
     }
 
+    // Validate the host BEFORE it can reach Process.start. A `-`/`--`-leading
+    // value would otherwise be parsed by the binary as a flag (argument
+    // injection); a malformed value is a no-op spawn. Either way, never spawn.
+    final NetworkTargetResult target = NetworkTarget.validateHostOrIp(host);
+    if (target is! ValidNetworkTarget) {
+      final String detail = (target as InvalidNetworkTarget).message;
+      controller.onListen = () {
+        controller.add(
+          TracerouteEvent.done(
+            TracerouteUnavailable(
+              reason: TracerouteUnavailableReason.invalidHost,
+              detail: detail,
+            ),
+          ),
+        );
+        controller.close();
+      };
+      return controller.stream;
+    }
+    final String validatedHost = target.value;
+
     Process? process;
     bool cancelled = false;
     bool reachedTarget = false;
@@ -223,7 +250,7 @@ class TracerouteService {
       process?.kill(ProcessSignal.sigterm);
     });
 
-    final (String exe, List<String> args) = _command(host, maxHops);
+    final (String exe, List<String> args) = _command(validatedHost, maxHops);
 
     Future<void> run() async {
       try {
@@ -258,7 +285,7 @@ class TracerouteService {
         final TracerouteHop? hop =
             _isWindows ? _parseWindowsLine(line) : _parseUnixLine(line);
         if (hop != null) {
-          if (hop.ip == host) reachedTarget = true;
+          if (hop.ip == validatedHost) reachedTarget = true;
           if (!controller.isClosed) {
             controller.add(TracerouteEvent.hop(hop));
           }
@@ -290,14 +317,19 @@ class TracerouteService {
 
   (String, List<String>) _command(String host, int maxHops) {
     if (_isWindows) {
-      // tracert -d (no rDNS, faster) -h maxHops -w 2000ms.
+      // tracert -d (no rDNS, faster) -h maxHops -w 2000ms. tracert has no `--`
+      // argument terminator; the NetworkTarget allow-list (which rejects any
+      // `-`-leading host) is the guard here.
       return ('tracert', <String>['-d', '-h', '$maxHops', '-w', '2000', host]);
     }
     // Unix traceroute: -m maxHops, -q 3 probes, -w 2s wait. No -n so we get
-    // rDNS names where available.
+    // rDNS names where available. The literal `--` terminates option parsing:
+    // everything after it is positional, so even if a dash-leading value ever
+    // got this far it could not be parsed as a flag (defense in depth atop the
+    // NetworkTarget validation in trace()).
     return (
       'traceroute',
-      <String>['-m', '$maxHops', '-q', '3', '-w', '2', host],
+      <String>['-m', '$maxHops', '-q', '3', '-w', '2', '--', host],
     );
   }
 

@@ -3,6 +3,9 @@
 // are pure/static, so they test without a real subprocess or network. The
 // parse helpers are exercised through a tiny test seam.
 
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/services/network/traceroute_service.dart';
 
@@ -37,6 +40,49 @@ void main() {
         (r! as TracerouteUnavailable).reason,
         TracerouteUnavailableReason.unsupportedPlatform,
       );
+    });
+  });
+
+  group('host validation — argument-injection guard', () {
+    test('a `-`/`--`-leading host never spawns and reports invalidHost',
+        () async {
+      for (final String evil in <String>['-foo', '--help', '-O', '--mtu']) {
+        bool spawned = false;
+        final TracerouteService svc = TracerouteService(
+          platformOverride: 'macos',
+          processStarter: (String exe, List<String> args) async {
+            spawned = true;
+            throw StateError('must not spawn for "$evil"');
+          },
+        );
+        final List<TracerouteEvent> events =
+            await svc.trace(host: evil).toList();
+        expect(spawned, isFalse, reason: evil);
+        expect(events.length, 1, reason: evil);
+        final TracerouteResult? r = events.single.result;
+        expect(r, isA<TracerouteUnavailable>(), reason: evil);
+        expect((r! as TracerouteUnavailable).reason,
+            TracerouteUnavailableReason.invalidHost,
+            reason: evil);
+      }
+    });
+
+    test('a valid host DOES spawn (no false positive)', () async {
+      List<String>? captured;
+      final TracerouteService svc = TracerouteService(
+        platformOverride: 'macos',
+        processStarter: (String exe, List<String> args) async {
+          captured = args;
+          // Return a fake process that immediately completes with no output.
+          return _FakeProcess();
+        },
+      );
+      await svc.trace(host: 'example.com').toList();
+      expect(captured, isNotNull);
+      // The literal `--` terminator must precede the host in the arg vector.
+      expect(captured!.contains('--'), isTrue);
+      expect(captured!.indexOf('--') < captured!.indexOf('example.com'), isTrue);
+      expect(captured!.last, 'example.com');
     });
   });
 
@@ -131,4 +177,27 @@ void main() {
       expect(h.bestRttMs, closeTo(8.5, 0.001));
     });
   });
+}
+
+/// Minimal [Process] fake for the spawn-path test: empty stdout/stderr and an
+/// immediate clean exit, so `trace()` runs to completion without a real
+/// subprocess. Only the members the service touches are implemented.
+class _FakeProcess implements Process {
+  @override
+  Stream<List<int>> get stdout => const Stream<List<int>>.empty();
+
+  @override
+  Stream<List<int>> get stderr => const Stream<List<int>>.empty();
+
+  @override
+  Future<int> get exitCode => Future<int>.value(0);
+
+  @override
+  bool kill([ProcessSignal signal = ProcessSignal.sigterm]) => true;
+
+  @override
+  int get pid => 0;
+
+  @override
+  IOSink get stdin => throw UnimplementedError();
 }

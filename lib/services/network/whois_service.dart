@@ -35,6 +35,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'network_target.dart';
+
 /// The IANA bootstrap WHOIS server — the root of the referral chain.
 const String kIanaWhoisServer = 'whois.iana.org';
 
@@ -198,7 +200,15 @@ class WhoisService {
 
       // No referral → the IANA record is what we have (common for some IPs and
       // ccTLDs that IANA answers directly).
-      if (referral == null || referral.toLowerCase() == kIanaWhoisServer) {
+      //
+      // SSRF guard: the `refer:` value is parsed out of an UNTRUSTED response,
+      // so a faked referral could point at an internal address
+      // (169.254.169.254, 127.0.0.1, 10.0.0.1, ...). Validate it before we open
+      // a socket to it; if it is malformed or internal, do not follow it —
+      // surface the IANA record instead, which is the honest fallback.
+      if (referral == null ||
+          referral.toLowerCase() == kIanaWhoisServer ||
+          !NetworkTarget.validateReferralTarget(referral).isValid) {
         return WhoisResult.success(
           query: query,
           rawRecord: ianaRecord.trim(),
@@ -217,7 +227,10 @@ class WhoisService {
       final String? registrarServer = parseRegistrarServer(record);
       if (registrarServer != null &&
           registrarServer.toLowerCase() != referral.toLowerCase() &&
-          registrarServer.toLowerCase() != kIanaWhoisServer) {
+          registrarServer.toLowerCase() != kIanaWhoisServer &&
+          // Same SSRF guard on the registrar hop — it is also parsed from an
+          // untrusted response.
+          NetworkTarget.validateReferralTarget(registrarServer).isValid) {
         try {
           final String deep =
               await _connect(registrarServer, query, timeout: timeout);

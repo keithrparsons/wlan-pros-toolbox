@@ -183,4 +183,56 @@ nserver: ns2.example.com
       expect(r.isEmpty, isTrue);
     });
   });
+
+  group('SSRF guard — referral to an internal address is not followed', () {
+    Future<void> rejectsReferral(String maliciousReferral) async {
+      final List<String> seen = <String>[];
+      final WhoisService svc = WhoisService(
+        connector: (String server, String query, {required timeout}) async {
+          seen.add(server);
+          if (server == kIanaWhoisServer) {
+            return 'refer: $maliciousReferral\n';
+          }
+          // If this ever runs, the SSRF guard failed.
+          return 'SHOULD-NOT-CONNECT';
+        },
+      );
+      final WhoisResult r = await svc.lookup(rawQuery: 'example.com');
+      // Only IANA was contacted — the internal referral was NOT followed.
+      expect(seen, <String>[kIanaWhoisServer], reason: maliciousReferral);
+      expect(r.serversQueried, <String>[kIanaWhoisServer]);
+      // The IANA record is surfaced as the honest fallback.
+      expect(r.rawRecord.contains('SHOULD-NOT-CONNECT'), isFalse);
+      expect(r.rawRecord.contains('refer:'), isTrue);
+    }
+
+    test('refer: 169.254.169.254 (cloud metadata) is not followed', () async {
+      await rejectsReferral('169.254.169.254');
+    });
+
+    test('refer: 127.0.0.1 (loopback) is not followed', () async {
+      await rejectsReferral('127.0.0.1');
+    });
+
+    test('refer: 10.0.0.1 / 192.168.x (RFC-1918) is not followed', () async {
+      await rejectsReferral('10.0.0.1');
+      await rejectsReferral('192.168.1.1');
+    });
+
+    test('a public referral is still followed (no false positive)', () async {
+      final List<String> seen = <String>[];
+      final WhoisService svc = WhoisService(
+        connector: (String server, String query, {required timeout}) async {
+          seen.add(server);
+          if (server == kIanaWhoisServer) {
+            return 'refer: whois.verisign-grs.com\n';
+          }
+          return 'Domain Name: EXAMPLE.COM\nRegistrar: Verisign\n';
+        },
+      );
+      final WhoisResult r = await svc.lookup(rawQuery: 'example.com');
+      expect(seen, <String>[kIanaWhoisServer, 'whois.verisign-grs.com']);
+      expect(r.rawRecord.contains('Verisign'), isTrue);
+    });
+  });
 }

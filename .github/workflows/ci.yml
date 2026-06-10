@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.12.x'
+          channel: stable
+
+      # net_quality is a separate pure-Dart package with its own tests.
+      - name: net_quality — analyze + test
+        working-directory: packages/net_quality
+        run: |
+          flutter pub get
+          flutter analyze
+          flutter test
+
+      # Root app: widget/golden + unit tests run on Linux (no Xcode needed).
+      - name: app — analyze + test
+        run: |
+          flutter pub get
+          flutter analyze
+          flutter test
