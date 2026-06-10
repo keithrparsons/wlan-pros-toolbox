@@ -1,4 +1,9 @@
+@Tags(['golden'])
+library;
+
 // Sparkline — rendered-pixel golden tests (visual-regression coverage).
+// CI excludes the `golden` tag (headless sub-pixel rendering differences);
+// verified on-device via Vera. Run locally with: flutter test --tags golden
 //
 // sparkline_test.dart asserts the widget renders without throwing across the
 // edge cases and that the a11y contract holds, but no one had snapshotted the

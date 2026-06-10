@@ -23,9 +23,12 @@ jobs:
           flutter analyze
           flutter test
 
-      # Root app: widget/golden + unit tests run on Linux (no Xcode needed).
+      # Root app: widget + unit tests run on Linux (no Xcode needed).
+      # `golden`-tagged tests (pixel snapshots, figure capture) are excluded:
+      # headless renderers differ by sub-pixel font-hinting, so those are
+      # verified on-device by Vera. Run them locally with: flutter test --tags golden
       - name: app — analyze + test
         run: |
           flutter pub get
           flutter analyze
-          flutter test
+          flutter test --exclude-tags golden

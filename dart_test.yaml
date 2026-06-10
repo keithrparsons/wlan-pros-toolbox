@@ -1,0 +1,11 @@
+# Test tags. CI runs `flutter test --exclude-tags golden` (see
+# .github/workflows/ci.yml): pixel-snapshot and figure-generation tests are
+# environment-sensitive (sub-pixel font-hinting differs between the renderer
+# that produced the committed baselines and the Linux CI renderer), so they are
+# verified on-device by Vera rather than gating CI. Run them locally with:
+#   flutter test --tags golden
+tags:
+  golden:
+    description: >-
+      Rendered-pixel golden tests and figure-capture harnesses. Excluded from
+      headless CI; verified on-device.

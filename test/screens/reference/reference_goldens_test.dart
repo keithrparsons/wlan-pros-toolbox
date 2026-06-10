@@ -1,4 +1,10 @@
+@Tags(['golden'])
+library;
+
 // Rendered-pixel golden tests for the reference-table screens (Vera F-04).
+// CI excludes the `golden` tag: headless renderers differ by sub-pixel
+// font-hinting (0.04% diffs), so these are verified on-device via Vera, not in
+// the Linux CI job. Run locally with: flutter test --tags golden
 // (The Top 30 Emoji screen is intentionally excluded — its glyphs render via
 // the system color-emoji font, which the headless golden engine lacks; its
 // layout/data are covered by emoji_reference_screen_test.dart instead.)
