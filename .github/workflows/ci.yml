@@ -23,12 +23,13 @@ jobs:
           flutter analyze
           flutter test
 
-      # Root app: widget + unit tests run on Linux (no Xcode needed).
-      # `golden`-tagged tests (pixel snapshots, figure capture) are excluded:
-      # headless renderers differ by sub-pixel font-hinting, so those are
-      # verified on-device by Vera. Run them locally with: flutter test --tags golden
+      # Root app: widget + unit + golden tests run on Linux (no Xcode needed).
+      # Goldens run here too: a tolerant comparator (test/flutter_test_config.dart)
+      # absorbs sub-pixel cross-host font-hinting jitter while still failing real
+      # regressions. Only `capture`-tagged figure GENERATORS (which write image
+      # files) are excluded. Regenerate figures locally with: flutter test --tags capture
       - name: app — analyze + test
         run: |
           flutter pub get
           flutter analyze
-          flutter test --exclude-tags golden
+          flutter test --exclude-tags capture

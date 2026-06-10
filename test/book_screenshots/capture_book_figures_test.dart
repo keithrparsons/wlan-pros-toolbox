@@ -1,10 +1,11 @@
-@Tags(['golden'])
+@Tags(['capture'])
 library;
 
 // Book-figure capture harness — "Learn Wi-Fi by Doing It" (Ch 1–8).
-// Tagged `golden` so it is excluded from headless CI: this is a figure
-// GENERATOR (writes book_screenshots/raw/), not a regression guard. Run it
-// deliberately with: flutter test --tags golden
+// Tagged `capture` (not `golden`) so it is excluded from CI: this is a figure
+// GENERATOR (writes book_screenshots/raw/), not a regression guard. The real
+// golden suites now run in CI. Run this generator deliberately with:
+// flutter test --tags capture
 //
 // NOT a golden/regression suite. This renders the 16 book figures from the
 // SHOT-LIST with FIXED, prose-matching fixtures and writes 3× PNGs to

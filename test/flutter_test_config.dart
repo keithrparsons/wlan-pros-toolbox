@@ -22,6 +22,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -143,9 +144,50 @@ File? _findMaterialIconsOtf() {
   return null;
 }
 
+/// Pixel-diff ratio tolerated as cross-host anti-aliasing / font-hinting noise
+/// before a golden is treated as a real failure. Observed jitter on this suite
+/// between the baseline-author machine and another renderer (incl. Linux CI) is
+/// 0.04–0.12%; a genuine layout regression (clipped column, overflow, wrong
+/// weight) changes whole regions and lands far above 1%. 0.5% sits well clear of
+/// the noise and well below any real break.
+const double _goldenDiffTolerance = 0.005;
+
+/// Golden comparator that passes a mismatch within [_goldenDiffTolerance] and
+/// fails anything larger with the normal diff output. Without this, rendered
+/// goldens fail on every host but the one that generated the baselines (pure
+/// sub-pixel font hinting), which is why they previously had to be excluded from
+/// CI. Baselines are still authored on a known-good render; this only absorbs
+/// cross-host jitter, so genuine visual regressions are still caught.
+class _TolerantGoldenComparator extends LocalFileComparator {
+  _TolerantGoldenComparator(Uri testFile) : super(testFile);
+
+  @override
+  Future<bool> compare(Uint8List imageBytes, Uri golden) async {
+    final ComparisonResult result = await GoldenFileComparator.compareLists(
+      imageBytes,
+      await getGoldenBytes(golden),
+    );
+    if (result.passed || result.diffPercent <= _goldenDiffTolerance) {
+      return true;
+    }
+    final String error = await generateFailureOutput(result, golden, basedir);
+    throw FlutterError(error);
+  }
+}
+
 Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   TestWidgetsFlutterBinding.ensureInitialized();
   await _loadBundledFonts();
   await _loadMaterialIcons();
+  // Tolerate sub-pixel cross-host rendering jitter so goldens run in CI instead
+  // of being skipped. Preserve the default comparator's basedir so each test
+  // file's relative golden paths still resolve.
+  if (goldenFileComparator is LocalFileComparator) {
+    final LocalFileComparator previous =
+        goldenFileComparator as LocalFileComparator;
+    goldenFileComparator = _TolerantGoldenComparator(
+      previous.basedir.resolve('flutter_test_config.dart'),
+    );
+  }
   await testMain();
 }
