@@ -51,11 +51,11 @@
         },
         {
           "vendor": "Sidos",
-          "product": "Sidos Wave, Cloud & MicroApps",
+          "product": "Sidos Cloud (planner only)",
           "costModel": "subscription",
-          "upFront": 2988,
-          "tco3yr": 8964,
-          "notes": "Includes the Sidos Wave device and cloud access for up to 3 users."
+          "upFront": 468,
+          "tco3yr": 1404,
+          "notes": "Sidos Cloud for 1 named user. Network design and planning, survey project management, and AI-powered modeling. Browser-based, no hardware. The Sidos Wave device is only needed to collect on-site data and is priced separately under Validation."
         }
       ]
     },
@@ -98,11 +98,11 @@
         },
         {
           "vendor": "Sidos",
-          "product": "Sidos Wave, Cloud & MicroApps",
+          "product": "Sidos Wave + Cloud",
           "costModel": "subscription",
-          "upFront": 2988,
-          "tco3yr": 8964,
-          "notes": "3 triband radios, up to 3 users. This config does not include spectrum analysis."
+          "upFront": 2856,
+          "tco3yr": 8568,
+          "notes": "Sidos Wave ($2,388/yr, one device shared across unlimited users, all Micro-Apps including Deep Survey) plus Cloud for 1 named user ($468/yr). 3 triband radios. This config does not include spectrum analysis. Legacy 3-user bundle ($2,988/yr) still available."
         }
       ]
     },
@@ -224,11 +224,11 @@
         },
         {
           "vendor": "Sidos",
-          "product": "Sidos Wave, Cloud & MicroApps",
+          "product": "Sidos Wave + Cloud",
           "costModel": "subscription",
-          "upFront": 2988,
-          "tco3yr": 8964,
-          "notes": "3 triband radios, up to 3 users."
+          "upFront": 2856,
+          "tco3yr": 8568,
+          "notes": "Sidos Wave ($2,388/yr, one device shared across unlimited users) plus Cloud for 1 named user ($468/yr). 3 triband radios. Legacy 3-user bundle ($2,988/yr) still available."
         },
         {
           "vendor": "WLAN Pi",
@@ -282,9 +282,9 @@
     },
     {
       "vendor": "Sidos",
-      "product": "Sidos Wave, Cloud & MicroApps",
-      "tco3yr": 8964,
-      "notes": "No spectrum analysis. 3 users can share the license."
+      "product": "Sidos Wave + Cloud (1 user)",
+      "tco3yr": 8568,
+      "notes": "One Wave ($2,388/yr) shared across unlimited users; Cloud at $468 per named user. Planner-only Cloud is $1,404 over 3 years. Legacy 3-user bundle is $8,964. No spectrum analysis."
     }
   ],
   "vendors": [
@@ -326,7 +326,7 @@
     },
     {
       "name": "Sidos",
-      "summary": "A newer entrant offering an integrated Wi-Fi survey and troubleshooting system. The Sidos Wave is a touchscreen multi-band survey instrument supporting 2.4/5/6 GHz, paired with Sidos Cloud for survey data, simulation, and reporting, plus a mobile app and on-device micro-apps that run guided tasks directly on the Wave. The license model shares the hardware and cloud across users.",
+      "summary": "A newer entrant offering an integrated Wi-Fi survey and troubleshooting system. The Sidos Wave is a touchscreen multi-band survey instrument supporting 2.4/5/6 GHz, paired with Sidos Cloud for survey data, simulation, and reporting, plus a mobile app and on-device micro-apps that run guided tasks directly on the Wave. The license model splits a shared Wave hardware subscription ($2,388/yr per device, used by unlimited technicians) from per-named-user Cloud access ($468/yr), so Cloud can be bought on its own as a planner.",
       "website": "https://www.sidos.com/",
       "docs": "https://help.sidos.com/"
     },
