@@ -1,21 +1,18 @@
 # WLAN Pros Toolbox
 
-A free, cross-platform field toolkit for Wi-Fi and network professionals: 60 RF calculators, live network diagnostics, and reference tables in one app. Built for the WLAN Pros community.
+A free, cross-platform field toolkit for Wi-Fi and network professionals: 128 tools — live network tests, RF and network calculators, and reference tables — in one app. Built for the WLAN Pros community.
 
 The app is honest about platform limits. Where an operating system blocks a capability (iOS has no public RSSI or MCS API, raw ICMP needs privileges some platforms deny), the tool says so plainly instead of faking a result.
 
 ## What's inside
 
-60 tools across 8 categories:
+128 tools across 5 categories:
 
-- **RF Calculators** (11) — dBm/Watt, Free Space Path Loss, EIRP, Fresnel Zone, Cable Loss, Link Budget, Wavelength, Antenna Downtilt, Earth Curvature, ITU Rain Fade, Downtilt Coverage
-- **GPS Tools** (5) — Metric Conversion, Lat/Long Conversion, Distance and Bearing, Midpoint, Final Point
-- **Networking** (22) — Interface Information, DNS Lookup, Port Scan, Ping (TCP), ICMP Ping, Ping Sweep, Traceroute, Mobile Traceroute, SSL/TLS Inspector, HTTP Header Inspector, WHOIS, Wake-on-LAN, ARP/NDP Lookup, BGP/ASN Lookup, IP Geolocation, MAC Vendor Lookup, Packet Sender, IPv4 Subnetting, Wi-Fi Channels, 802.11 Standards, MCS Index, Signal Thresholds
-- **Infrastructure** (4) — PoE Budget, RF Attenuation, Noise Floor, PoE Reference
-- **Planning Tools** (4) — Throughput Calculator, Capacity Planner, PtP Link Check, IPv6 Subnet
-- **Cabling and Connectors** (5) — Ethernet Pinout, Coax Cable, Ethernet Cable, Fiber Optic, RF Connectors
-- **Wi-Fi Design** (3) — WPA Security, Roaming Parameters, AP Placement
-- **Quick Reference** (6) — Well-Known Ports, Reason Codes, Frame Exchange, dB Reference, Channel Map, Spectrum Reference
+- **Test Network** (3) — Network Quality, Wi-Fi Information, Cellular Information
+- **Networking Tools** (24) — Interface Information, Device Info, DNS Lookup, Port Scan, Ping (TCP), Ping (ICMP), Ping Plotter, Ping Sweep, Network Discovery, Nearby AP Scan, Traceroute (System), Traceroute (Mobile), SSL/TLS Inspector, HTTP Header Inspector, WHOIS, Wake-on-LAN, ARP/NDP Lookup, BGP/ASN Lookup, IP Geolocation, Current Location, MAC Vendor OUI Lookup, Packet Sender, IPv4 Subnetting, IPv6 Subnetting
+- **Calculators & Tools** (26) — dBm/Watt, Free Space Path Loss, EIRP, Fresnel Zone, Cable Loss, Link Budget, Wavelength, Antenna Downtilt, Earth Curvature, ITU Rain Fade, Downtilt Coverage, Noise Floor, RF Attenuation, GPS conversions (Metric, Lat/Long, Distance and Bearing, Midpoint, Final Point), Hex/ASCII, Unit Converter, QR Code Generator, DTMF Generator, PoE Budget, Throughput Calculator, Capacity Planner, PtP Link Check
+- **Quick Reference** (64) — field-reference tables and guides: 802.11 Standards, MCS Index, Signal Thresholds, WPA Security, Roaming Parameters, AP Placement, Channel and Spectrum maps, cabling and connector references (Ethernet, Coax, Fiber, RJ, NEMA/IEC power), Reason Codes, Frame Exchange, 802.1X/EAP Types, Regulatory Domains, Wi-Fi Standards Bodies, glossaries, checklists, and CLI/Wireshark cheatsheets
+- **Educational Resources** (11) — independent-author diagrams and checklists: WLAN Pros Bubble Diagram, channel-allocation charts (2.4/5/6 GHz), MCS Index, Top 20 Wi-Fi Checklist and extended variants, Antenna Fundamentals
 
 ## Platforms
 
