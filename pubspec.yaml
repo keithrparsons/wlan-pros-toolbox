@@ -310,6 +310,14 @@ flutter:
     # subnet masks, BSSIDs, hex). Declared as a font family below; also listed
     # here as an asset for the golden-test FontLoader.
     - assets/fonts/RobotoMono-Regular.ttf
+    # Test-only formula-glyph fallback (OFL STIX Two Text subset): a 7 KB face
+    # carrying λ, sub/superscript digits and signs that DM Mono / IBM Plex Sans
+    # lack. Loaded by test/flutter_test_config.dart as a per-family fallback so
+    # the headless book-figure capture renders `log₁₀`, `λ`, and `10⁻²³` as real
+    # glyphs instead of `.notdef` boxes (on-device the OS font chain supplies
+    # them). Listed here so rootBundle.load can reach it; it is deliberately NOT
+    # declared under `fonts:`, so it is not in the shipped app binary.
+    - assets/fonts/test/FormulaFallback.ttf
     # Bundled IEEE OUI / vendor table for the MAC Vendor Lookup tool
     # (TICKET-002). Trimmed MA-L/MA-M/MA-S registries; loaded + parsed once and
     # cached. Source + retrieval date documented in the asset header.
