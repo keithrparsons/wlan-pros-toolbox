@@ -437,9 +437,18 @@ void main() {
           await Future<void>.delayed(const Duration(milliseconds: 200));
         });
         await t.pumpAndSettle();
+        // Scroll far enough that the WHOLE Channel card lands inside the frame
+        // with a comfortable bottom margin — Channel (with its "* Preferred
+        // Scanning Channel (PSC)" footnote, which is what the "37 *" asterisk
+        // refers to), Width, and Band all fully visible, the way Tx/Rx sit
+        // cleanly in the Rate card. The earlier -1620 clipped the Channel row's
+        // bottom third AND scrolled the PSC footnote off-screen, leaving the
+        // asterisk dangling; this larger offset brings both the row and its
+        // explanatory footnote on-screen so the asterisk reads as a real,
+        // resolved footnote rather than an orphan.
         await t.drag(
           find.byType(SingleChildScrollView).first,
-          const Offset(0, -1620),
+          const Offset(0, -1860),
         );
         await t.pumpAndSettle();
       },
