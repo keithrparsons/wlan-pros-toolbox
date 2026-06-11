@@ -1053,9 +1053,13 @@ class _MessageCard extends StatelessWidget {
 class ThroughputWhereDiagramCard extends StatelessWidget {
   const ThroughputWhereDiagramCard({super.key});
 
-  /// The diagram's true aspect ratio (3360 × 4178 source PNG ≈ 0.804). Pinning
+  /// The diagram's true aspect ratio (3360 × 4278 source PNG ≈ 0.785). Pinning
   /// it keeps the inline render the right shape without measuring the image.
-  static const double _aspectRatio = 3360 / 4178;
+  /// (The logic-corrected diagram is 100px taller than the pre-correction
+  /// asset, so the inline card is correspondingly slightly taller; the pin is
+  /// updated in lock-step so the image fills the card with no letterbox gutters
+  /// and no distortion.)
+  static const double _aspectRatio = 3360 / 4278;
 
   static const String _caption =
       'Where you test along the path changes the number. The same connection '
