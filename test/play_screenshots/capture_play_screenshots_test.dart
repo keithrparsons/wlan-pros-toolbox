@@ -56,7 +56,6 @@ import 'package:wlan_pros_toolbox/screens/tools/network/wifi_info_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/channel_map_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/wifi_glossary_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
-import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
@@ -83,15 +82,21 @@ final GlobalKey _captureKey = GlobalKey();
 
 // ── Live-fixture fakes (constructor-injection seams) ────────────────────────
 
-/// A macOS adapter that returns one fixed [ConnectedAp]. Drives Wi-Fi
-/// Information to exact, coherent RF sample values (Android live-data screen;
-/// macOS source reuses the same normalized model + render path).
-class _FixedMacAdapter implements WifiInfoAdapter {
-  _FixedMacAdapter(this.ap);
+/// An Android adapter that returns one fixed [ConnectedAp] built through the
+/// Android mapping ([ConnectedAp.fromAndroidWifiInfo]). Reports the Android
+/// platform label and the Android capability flags (rxRateAvailable +
+/// securityAvailable true), so the Wi-Fi Information screen renders the FULL
+/// live-data set Android actually exposes — Rx rate AND Tx rate, a real
+/// security type, SSID/BSSID/RSSI/noise/SNR/channel/width/band/standard — with
+/// NO "not available on this platform" lines. Sample values are realistic and
+/// internally coherent (a real 6 GHz Wi-Fi 6E link), injected via the same
+/// constructor seam the macOS fixture uses.
+class _FixedAndroidAdapter implements WifiInfoAdapter {
+  _FixedAndroidAdapter(this.ap);
   final ConnectedAp ap;
 
   @override
-  String get platformLabel => 'macOS CoreWLAN';
+  String get platformLabel => 'Android';
   @override
   bool get gatesNameBehindPermission => true;
   @override
@@ -373,33 +378,46 @@ void main() {
     );
   });
 
-  // ── 3. Wi-Fi Information — the Android advantage (live SSID/BSSID/RSSI/…) ────
-  // A coherent 6 GHz 6E link: WLANPros-6E, ch 37 (a real PSC), 160 MHz, RSSI -52
-  // (Excellent), SNR 38, Tx 1441 / Rx 1200, 802.11ax. SAMPLE injected via the
-  // fixed adapter (the Android native bridge would supply the same fields live).
-  testWidgets('play-3 Wi-Fi Information — live link', (tester) async {
+  // ── 3. Wi-Fi Information — the Android live-data set (full RF + Rx + security) ─
+  // This is the GOOGLE PLAY (Android) listing, so the shot must show the data
+  // ANDROID actually exposes — not the macOS subset. Driven through the ANDROID
+  // source ([WifiInfoSource.androidWifiManager]) + the Android mapping
+  // ([ConnectedAp.fromAndroidWifiInfo]), so the screen renders the full live set
+  // with NO "not available on this platform" lines: Rx rate AND Tx rate, a real
+  // WPA3-Personal security type, SSID/BSSID/RSSI/noise/SNR/channel/width/band/
+  // standard. A coherent 6 GHz Wi-Fi 6E link: WLANPros-6E, ch 37 (a real PSC),
+  // 160 MHz, RSSI -52 (Excellent), noise -90 → SNR 38, Tx 1441 / Rx 1200,
+  // 802.11ax (Wi-Fi 6E), WPA3 Personal. SAMPLE injected via the fixed Android
+  // adapter (the Android WifiManager bridge supplies the same fields live).
+  testWidgets('play-3 Wi-Fi Information — Android live-data set', (tester) async {
     await _capture(
       tester,
       id: 'play-phone-3-wifi-information',
       build: () => WifiInfoScreen(
-        sourceOverride: WifiInfoSource.macosCoreWlan,
-        macAdapter: _FixedMacAdapter(
-          ConnectedAp.fromWifiInfo(
+        sourceOverride: WifiInfoSource.androidWifiManager,
+        macAdapter: _FixedAndroidAdapter(
+          ConnectedAp.fromAndroidWifiInfo(
             WifiInfo(
-              interfaceName: 'en0',
+              interfaceName: 'wlan0',
               ssid: 'WLANPros-6E',
               bssid: 'a4:83:e7:00:11:22',
               rssiDbm: -52,
-              noiseDbm: -90, // SNR 38
+              noiseDbm: -90, // SNR 38 (supplied → no Android noise-floor note)
               snrDb: 38,
               txRateMbps: 1441,
-              rxRateMbps: 1200,
-              phyMode: '802.11ax',
+              rxRateMbps: 1200, // Android exposes Rx via getRxLinkSpeedMbps()
+              // fromAndroidWifiInfo passes phyMode straight through to
+              // `standard`, so carry the full formatted label here.
+              phyMode: '802.11ax (Wi-Fi 6E)',
               channel: 37, // a real 6 GHz PSC: (37-5) % 16 == 0
               channelWidthMhz: 160,
               band: '6 GHz',
               countryCode: 'US',
-              hardwareAddress: 'a4:83:e7:aa:bb:cc',
+              // Android does not expose the device Wi-Fi MAC to apps; the native
+              // side returns null rather than the 02:00:00:00:00:00 sentinel.
+              hardwareAddress: null,
+              // Maps to WifiSecurity.wpa3Personal → "WPA3 Personal" on screen.
+              securityToken: 'wpa3Personal',
               poweredOn: true,
               locationAuthorized: true,
             ),
@@ -408,8 +426,8 @@ void main() {
       ),
       // The screen opens on the "Live trend" sparkline block; a single-snapshot
       // fixture makes that a flat line. Scroll down so the network IDENTITY
-      // cards (SSID / BSSID / Signal / Channel-Band-PHY) — the Android advantage
-      // — lead the frame.
+      // cards (SSID / BSSID / Security / Signal / Rate / Channel-Band-PHY) — the
+      // full Android live-data set — lead the frame.
       drive: (t) async {
         // Let the real async OUI table load (rootBundle.loadString) resolve so
         // the AP-vendor row shows the resolved manufacturer (Apple, Inc. for the
@@ -425,9 +443,20 @@ void main() {
         );
         await t.pumpAndSettle();
       },
+      // Honesty gate: assert each headline live-data value is the screen's OWN
+      // rendered output before writing the PNG. The Rx rate and the WPA3 security
+      // type are the Android-advantage values that the macOS fixture could not
+      // show — their presence proves no platform-unavailable line replaced them.
       verify: (t) {
         _expectText('-52'); // RSSI
-        _expectText('6 GHz'); // Band — confirms channel/band card is in frame
+        _expectText('6 GHz'); // Band — channel/band card in frame
+        _expectText('1441'); // Tx Rate (Mbps)
+        _expectText('1200'); // Rx Rate (Mbps) — Android exposes it
+        _expectText('WPA3 Personal'); // real security type — Android exposes it
+        // No "Not exposed by Android" line for Rx rate or security must exist.
+        expect(find.text('Not exposed by Android'), findsNothing,
+            reason: 'Android exposes Rx rate and security — no '
+                'platform-unavailable line should appear for shot 3');
       },
     );
   });
