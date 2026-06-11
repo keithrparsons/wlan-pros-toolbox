@@ -439,6 +439,15 @@ flutter:
     # teaching prose still reads end-to-end. Authored DARK-BAKED on the §8.20.7
     # allow-list hexes; recolored for light via ConceptGraphicBand.applyLightSwap.
     - assets/tool-diagrams/antenna-fundamentals/
+    # "Where you test throughput along the path changes the result" — a
+    # Vera-passed, DARK-BAKED raster reference diagram (white logo on the §8
+    # dark canvas) embedded on the Speed Test Services screen. Unlike the §8.6.2
+    # SVG concept graphics it is a pre-rendered PNG, so it cannot take the
+    # §8.20.7 light-mode swap; it is presented on an ALWAYS-DARK surface card in
+    # both themes (the #222222 surface it was authored against) so it never reads
+    # inverted on light. Resolved via lib/data/throughput_where_diagram.dart
+    # against the asset manifest, so a missing file degrades gracefully.
+    - assets/tool-diagrams/throughput-testing-where/
     # PDF reference cards — Keith's 10 laminated reference cards (Excel→PDF
     # exports), one bundled PDF per "PDF reference card" tool, named by catalog
     # id: assets/reference-cards/<tool-id>.pdf. Rendered offline in a
