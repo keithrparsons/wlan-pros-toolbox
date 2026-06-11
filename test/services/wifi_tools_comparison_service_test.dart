@@ -179,8 +179,8 @@ void main() {
       }
     });
 
-    test('Intuitibits spectrum config is WFE Pro 3 + 1 NXT-2000 = \$1,360 '
-        '(no double-count, Ferney F7)', () {
+    test('Intuitibits spectrum config is WFE Pro 3 + 1 NXT-2000 = \$1,325 '
+        '(vendor-confirmed Pro 3 \$129.99 + NXT-2000 \$1,195; no double-count, Ferney F7)', () {
       final WifiToolActivity spectrum = svc.activities.firstWhere(
         (WifiToolActivity a) => a.title == 'Spectrum Analysis',
       );
@@ -188,8 +188,8 @@ void main() {
         (WifiToolConfig c) => c.vendor == 'Intuitibits',
       );
       expect(intui.product, 'WiFi Explorer Pro 3 + NXT-2000');
-      expect(intui.upFront, 1360);
-      expect(intui.tco3yr, 1360);
+      expect(intui.upFront, 1325);
+      expect(intui.tco3yr, 1325);
     });
 
     test('Tamosoft is absent from every activity, toolkit, and vendor list', () {

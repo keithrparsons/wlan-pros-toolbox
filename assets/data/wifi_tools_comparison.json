@@ -76,9 +76,9 @@
           "vendor": "Hamina",
           "product": "Hamina Clip + Onsite",
           "costModel": "subscription",
-          "upFront": 1180,
-          "tco3yr": 2740,
-          "notes": "2 triband radios. This config does not include spectrum analysis."
+          "upFront": 1770,
+          "tco3yr": 3330,
+          "notes": "Hamina Clip device $990 one-time (includes 6 months of the Hamina app) plus Onsite $780/yr. 2 triband radios; no spectrum analysis."
         },
         {
           "vendor": "Hamina",
@@ -123,9 +123,9 @@
           "vendor": "Hamina",
           "product": "Onsite + Oscium Nomad + Wi-Spy Lucid",
           "costModel": "subscription",
-          "upFront": 3485,
-          "tco3yr": 5045,
-          "notes": "Triband spectrum analyzer, assembled across vendors. First year is $780 plus $1,710 plus $995."
+          "upFront": 3489,
+          "tco3yr": 5049,
+          "notes": "Triband spectrum analyzer, assembled across vendors. First year is $780 plus $1,710 plus $999."
         },
         {
           "vendor": "Hamina",
@@ -139,9 +139,9 @@
           "vendor": "Intuitibits",
           "product": "WiFi Explorer Pro 3 + NXT-2000",
           "costModel": "perpetual",
-          "upFront": 1360,
-          "tco3yr": 1360,
-          "notes": "Pairs the Mac analyzer with a NetAlly spectrum accessory: WiFi Explorer Pro 3 ($165) plus one NXT-2000 ($1,195). One-time software with the NXT-2000 hardware."
+          "upFront": 1325,
+          "tco3yr": 1325,
+          "notes": "Pairs the Mac analyzer with a NetAlly spectrum accessory: WiFi Explorer Pro 3 ($129.99) plus one NXT-2000 ($1,195). One-time software with the NXT-2000 hardware."
         },
         {
           "vendor": "NetAlly",
@@ -178,9 +178,9 @@
           "vendor": "Hamina",
           "product": "Hamina Clip + Onsite",
           "costModel": "subscription",
-          "upFront": 1180,
-          "tco3yr": 2740,
-          "notes": "2 triband radios. This config does not include spectrum analysis."
+          "upFront": 1770,
+          "tco3yr": 3330,
+          "notes": "Hamina Clip device $990 one-time (includes 6 months of the Hamina app) plus Onsite $780/yr. 2 triband radios; no spectrum analysis."
         },
         {
           "vendor": "Hamina",
@@ -216,11 +216,11 @@
         },
         {
           "vendor": "Oscium",
-          "product": "Chanalyzer + Lucid + MetaGeek + 3x WLAN Pi Go",
+          "product": "Chanalyzer + Wi-Spy Lucid + MetaGeek App + Nomad",
           "costModel": "perpetual",
-          "upFront": 4199,
-          "tco3yr": 4999,
-          "notes": "Includes a directional antenna and 1 year of MetaCare."
+          "upFront": 4399,
+          "tco3yr": 5199,
+          "notes": "Oscium Complete Bundle: spectrum and packet tools with the Nomad probe and a directional antenna, plus 1 year of MetaCare. 3-year TCO adds MetaCare renewals in years 2-3 (~$400/yr across the kit: $150 Chanalyzer + $250 MetaGeek App)."
         },
         {
           "vendor": "Sidos",
@@ -276,9 +276,9 @@
     },
     {
       "vendor": "Oscium",
-      "product": "Chanalyzer + Lucid + MetaGeek + 3x WLAN Pi Go",
-      "tco3yr": 4999,
-      "notes": "Includes a directional antenna and 1 year of MetaCare."
+      "product": "Chanalyzer + Wi-Spy Lucid + MetaGeek App + Nomad",
+      "tco3yr": 5199,
+      "notes": "Oscium Complete Bundle: spectrum and packet tools with the Nomad probe and a directional antenna, plus 1 year of MetaCare. 3-year TCO adds MetaCare renewals in years 2-3 (~$400/yr across the kit)."
     },
     {
       "vendor": "Sidos",

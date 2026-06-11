@@ -36,6 +36,24 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:net_quality/net_quality.dart';
 
 import 'package:wlan_pros_toolbox/screens/tools/dbm_watt_converter.dart';
+// Book 2 (Ch 10–13) lab-tool screens. The two downtilt screens each export an
+// enum named `HeightUnit`, so they are imported here only for the screen types;
+// no enum from either is referenced in this file (the captures drive them via
+// TextField input and band/default state only).
+import 'package:wlan_pros_toolbox/screens/tools/calculators/downtilt_screen.dart'
+    show DowntiltScreen;
+import 'package:wlan_pros_toolbox/screens/tools/calculators/downtilt_coverage_screen.dart'
+    show DowntiltCoverageScreen;
+import 'package:wlan_pros_toolbox/screens/tools/calculators/link_budget_screen.dart'
+    show LinkBudgetScreen;
+import 'package:wlan_pros_toolbox/screens/tools/calculators/ptp_link_screen.dart'
+    show PtpLinkScreen;
+import 'package:wlan_pros_toolbox/screens/tools/reference/spectrum_screen.dart'
+    show SpectrumScreen;
+import 'package:wlan_pros_toolbox/screens/tools/reference/non_wifi_channels_screen.dart'
+    show NonWifiChannelsScreen;
+import 'package:wlan_pros_toolbox/screens/tools/reference/channel_map_screen.dart'
+    show ChannelMapScreen;
 import 'package:wlan_pros_toolbox/screens/tools/calculators/fspl_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/noise_floor_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/rf_attenuation_screen.dart';
@@ -877,6 +895,193 @@ void main() {
         await t.pumpAndSettle();
       },
       verify: (t) => _expectText('Excellent'),
+    );
+  });
+
+  // ════════════════════════════════════════════════════════════════════════
+  // BOOK 2 — "The Definitive Guide" lab-tool screenshots, Chapters 10–13.
+  //
+  // Same capture mechanism as Book 1 above: _host() under AppTheme.dark(),
+  // RepaintBoundary.toImage(pixelRatio: 3.0) at 393 logical px wide, with
+  // representative (NOT empty) input driven in via TextField / default state.
+  // Filenames use the ss-<ch>-<n> scheme the book deliverable expects.
+  //
+  // All four calculators are pure (no network, no platform channel) and all
+  // three references are compile-time-const datasets, so every figure renders
+  // fully offline in the headless harness — none needs live device data.
+  // ════════════════════════════════════════════════════════════════════════
+
+  // ── Chapter 10 — Antenna geometry ──────────────────────────────────────────
+
+  // ss-10-1 Antenna Downtilt — AP at 6 m AGL covering a 30 m radius → 11.31°.
+  // Fields are [height, coverage] in DOM order; both default to meters.
+  testWidgets('ss-10-1 Antenna Downtilt — 6 m / 30 m', (tester) async {
+    await _capture(
+      tester,
+      figId: 'ss-10-1-antenna-downtilt',
+      height: 1180,
+      build: () => const DowntiltScreen(),
+      drive: (t) async {
+        final fields = find.byType(TextField);
+        await t.enterText(fields.at(0), '6'); // Antenna height (AGL), m
+        await t.pump();
+        await t.enterText(fields.at(1), '30'); // Target coverage distance, m
+        await t.pump();
+      },
+      verify: (t) => _expectText('11.31'), // downtilt angle, degrees
+    );
+  });
+
+  // ss-10-2 Downtilt Coverage — 8 m AGL, 8° downtilt, 12° vertical beamwidth
+  //   → near 32 m / far 229 m / depth 197 m (0-dp dual m/ft).
+  // Fields are [height, tilt, beamwidth] in DOM order; height defaults to m.
+  testWidgets('ss-10-2 Downtilt Coverage — 8 m / 8° / 12°', (tester) async {
+    await _capture(
+      tester,
+      figId: 'ss-10-2-downtilt-coverage',
+      height: 1480,
+      build: () => const DowntiltCoverageScreen(),
+      drive: (t) async {
+        final fields = find.byType(TextField);
+        await t.enterText(fields.at(0), '8'); // Antenna height (AGL), m
+        await t.pump();
+        await t.enterText(fields.at(1), '8'); // Downtilt angle, degrees
+        await t.pump();
+        await t.enterText(fields.at(2), '12'); // Vertical beamwidth, degrees
+        await t.pump();
+      },
+      verify: (t) {
+        _expectText('32 m / 105 ft'); // near edge
+        _expectText('229 m / 752 ft'); // far edge
+        _expectText('197 m / 646 ft'); // coverage depth
+      },
+    );
+  });
+
+  // ── Chapter 11 — Link budgets ──────────────────────────────────────────────
+
+  // ss-11-1 Link Budget — a worked indoor/outdoor budget:
+  //   Tx 23 dBm, TxGain 14 dBi, TxLoss 1.5 dB, FSPL 120 dB, other 0,
+  //   RxLoss 1.5 dB, RxGain 14 dBi, RxSens -82 dBm
+  //   → received -72.0 dBm, link margin 10.0 dB (healthy, just at threshold).
+  // Required-field DOM order: TxPower, TxGain, TxLoss, FSPL, OtherLosses,
+  // RxLoss, RxGain, RxSensitivity. TxPower defaults to the dBm unit.
+  testWidgets('ss-11-1 Link Budget — 23 dBm / margin 10 dB', (tester) async {
+    await _capture(
+      tester,
+      figId: 'ss-11-1-link-budget',
+      height: 2200,
+      build: () => const LinkBudgetScreen(),
+      drive: (t) async {
+        final fields = find.byType(TextField);
+        await t.enterText(fields.at(0), '23'); // TX Power (dBm)
+        await t.pump();
+        await t.enterText(fields.at(1), '14'); // TX Antenna Gain (dBi)
+        await t.pump();
+        await t.enterText(fields.at(2), '1.5'); // TX Cable Loss (dB)
+        await t.pump();
+        await t.enterText(fields.at(3), '120'); // Free Space Path Loss (dB)
+        await t.pump();
+        await t.enterText(fields.at(4), '0'); // Other Losses (dB)
+        await t.pump();
+        await t.enterText(fields.at(5), '1.5'); // RX Cable Loss (dB)
+        await t.pump();
+        await t.enterText(fields.at(6), '14'); // RX Antenna Gain (dBi)
+        await t.pump();
+        await t.enterText(fields.at(7), '-82'); // RX Sensitivity (dBm)
+        await t.pump();
+      },
+      verify: (t) {
+        _expectText('-72.0'); // received signal, dBm
+        _expectText('10.0'); // link margin, dB
+      },
+    );
+  });
+
+  // ss-11-2 PtP Link Check — a clear-air 5.8 GHz backhaul:
+  //   f 5.8 GHz, d 5 km, Tx 20 dBm, TxGain 23 dBi, RxGain 23 dBi,
+  //   losses 0, rain 0, sensitivity -80 dBm, required margin 10 dB
+  //   → EIRP 43.0 dBm, FSPL 121.7 dB, Rx -55.7 dBm, margin 24.3 dB → PASS.
+  // Required-field DOM order: Frequency, Distance, Tx power, Tx gain, Rx gain,
+  // TxLoss, RxLoss, RainRate, (polarization toggle), RxSensitivity, ReqMargin.
+  testWidgets('ss-11-2 PtP Link Check — 5.8 GHz / 5 km / PASS',
+      (tester) async {
+    await _capture(
+      tester,
+      figId: 'ss-11-2-ptp-link-check',
+      height: 2600,
+      build: () => const PtpLinkScreen(),
+      drive: (t) async {
+        final fields = find.byType(TextField);
+        await t.enterText(fields.at(0), '5.8'); // Frequency (GHz)
+        await t.pump();
+        await t.enterText(fields.at(1), '5'); // Distance (km)
+        await t.pump();
+        await t.enterText(fields.at(2), '20'); // Tx power (dBm)
+        await t.pump();
+        await t.enterText(fields.at(3), '23'); // Tx antenna gain (dBi)
+        await t.pump();
+        await t.enterText(fields.at(4), '23'); // Rx antenna gain (dBi)
+        await t.pump();
+        await t.enterText(fields.at(5), '0'); // Tx cable + connector loss (dB)
+        await t.pump();
+        await t.enterText(fields.at(6), '0'); // Rx cable + connector loss (dB)
+        await t.pump();
+        await t.enterText(fields.at(7), '0'); // Rain rate (mm/hr)
+        await t.pump();
+        await t.enterText(fields.at(8), '-80'); // Receiver sensitivity (dBm)
+        await t.pump();
+        await t.enterText(fields.at(9), '10'); // Required fade margin (dB)
+        await t.pump();
+      },
+      verify: (t) {
+        _expectText('PASS'); // verdict chip word
+        _expectText('24.3'); // link margin, dB
+        _expectText('43.0'); // EIRP, dBm
+      },
+    );
+  });
+
+  // ── Chapter 12 — Spectrum references ───────────────────────────────────────
+
+  // ss-12-1 Spectrum Reference — the band fact sheet. Defaults to the 2.4 GHz
+  // tab (SpectrumBand.ghz24), the congested band the chapter opens on.
+  // Read-only compile-time dataset → renders on its success state with no input.
+  testWidgets('ss-12-1 Spectrum Reference — 2.4 GHz fact sheet',
+      (tester) async {
+    await _capture(
+      tester,
+      figId: 'ss-12-1-spectrum-reference',
+      height: 1900,
+      build: () => const SpectrumScreen(),
+      verify: (t) => _expectText('2.4 GHz'),
+    );
+  });
+
+  // ss-12-2 Non-Wi-Fi Wireless Channels — the read-only reference covering the
+  // non-Wi-Fi radios (LoRaWAN / 802.15.4 / Bluetooth / BLE / Zigbee) that share
+  // the bands. Compile-time dataset → renders fully with no input.
+  testWidgets('ss-12-2 Non-Wi-Fi Wireless Channels', (tester) async {
+    await _capture(
+      tester,
+      figId: 'ss-12-2-non-wifi-channels',
+      height: 2200,
+      build: () => const NonWifiChannelsScreen(),
+    );
+  });
+
+  // ── Chapter 13 — Channel map ───────────────────────────────────────────────
+
+  // ss-13-1 Channel Map — defaults to the 2.4 GHz bonding map
+  // (ChanMapBand.ghz24), which is exactly the 1 / 6 / 11 non-overlapping view
+  // the chapter teaches. Read-only compile-time dataset, no input needed.
+  testWidgets('ss-13-1 Channel Map — 2.4 GHz (1/6/11)', (tester) async {
+    await _capture(
+      tester,
+      figId: 'ss-13-1-channel-map',
+      height: 1700,
+      build: () => const ChannelMapScreen(),
+      verify: (t) => _expectText('2.4 GHz'),
     );
   });
 }
