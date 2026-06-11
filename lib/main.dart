@@ -25,6 +25,7 @@ import 'data/regulatory_logos.dart';
 import 'data/markdown_diagrams.dart';
 import 'data/wifi_bodies_logos.dart';
 import 'data/speedtest_logos.dart';
+import 'data/throughput_where_diagram.dart';
 import 'data/tool_assets.dart';
 import 'router/app_router.dart';
 import 'services/help/tool_help_loader.dart';
@@ -79,6 +80,18 @@ Future<void> main() async {
     await AntennaFundamentalsDiagrams.ensureLoaded();
   } catch (_) {
     // Manifest unavailable → has() stays false → diagram bands omitted. No crash.
+  }
+
+  // Same convention for the single "where you test throughput changes the
+  // result" reference diagram on the Speed Test Services screen
+  // (assets/tool-diagrams/throughput-testing-where/throughput-testing-where-
+  // dark.png). If the manifest is unavailable, ThroughputWhereDiagram.isBundled
+  // stays false and the diagram card is omitted — the screen's hero, caveats,
+  // callouts, and service cards still read end-to-end. Never block startup.
+  try {
+    await ThroughputWhereDiagram.ensureLoaded();
+  } catch (_) {
+    // Manifest unavailable → isBundled stays false → card omitted. No crash.
   }
 
   // Same convention for the Antenna Connectors per-connector PHOTOS

@@ -18,6 +18,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/data/speedtest_logos.dart';
 import 'package:wlan_pros_toolbox/data/speedtest_services_data.dart';
+import 'package:wlan_pros_toolbox/data/throughput_where_diagram.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/speedtest_services_screen.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 import 'package:wlan_pros_toolbox/widgets/app_copy_action.dart';
@@ -31,7 +32,10 @@ void main() {
   // The screen reads the logo manifest synchronously; default every test to
   // "no logos built" so the fallback path is the baseline, then opt in.
   setUp(() => SpeedtestLogos.debugSetBundledAssets(<String>{}));
-  tearDown(() => SpeedtestLogos.debugReset());
+  tearDown(() {
+    SpeedtestLogos.debugReset();
+    ThroughputWhereDiagram.debugReset();
+  });
 
   group('data', () {
     test('exactly 12 Keith-approved services, all with unique slugs', () {
@@ -208,6 +212,83 @@ void main() {
 
       // Flush AppCopyAction's 1.5s confirm-window timer before teardown.
       await tester.pump(const Duration(milliseconds: 1600));
+    });
+  });
+
+  group('throughput-testing-where reference diagram', () {
+    test('resolver: not-bundled by default, bundled after debugSetBundled', () {
+      ThroughputWhereDiagram.debugReset();
+      // Unloaded → treated as not bundled (no crash, card omitted).
+      expect(ThroughputWhereDiagram.isBundled, isFalse);
+
+      ThroughputWhereDiagram.debugSetBundled(<String>{});
+      expect(ThroughputWhereDiagram.isBundled, isFalse,
+          reason: 'empty manifest → not bundled');
+
+      ThroughputWhereDiagram.debugSetBundled(<String>{
+        ThroughputWhereDiagram.assetPath,
+      });
+      expect(ThroughputWhereDiagram.isBundled, isTrue);
+    });
+
+    testWidgets('card is omitted when the asset is not bundled (graceful)',
+        (tester) async {
+      ThroughputWhereDiagram.debugSetBundled(<String>{});
+      await tester.pumpWidget(_harness());
+      await tester.pump();
+      expect(find.byType(ThroughputWhereDiagramCard), findsNothing);
+      // The screen still reads end-to-end: the hero and the services render.
+      expect(find.text('Ookla Speedtest'), findsOneWidget);
+    });
+
+    testWidgets('card renders, is keyboard-activatable, and opens a zoom view',
+        (tester) async {
+      // A tall surface so the long screen lays the card out on-screen (no
+      // scroll needed to tap it).
+      await tester.binding.setSurfaceSize(const Size(420, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      ThroughputWhereDiagram.debugSetBundled(<String>{
+        ThroughputWhereDiagram.assetPath,
+      });
+      await tester.pumpWidget(_harness());
+      await tester.pump();
+
+      // The card is present on the screen.
+      final Finder card = find.byType(ThroughputWhereDiagramCard);
+      expect(card, findsOneWidget);
+
+      // The decorative image is wired to the bundled asset path.
+      final Image img = tester.widget<Image>(
+        find.descendant(of: card, matching: find.byType(Image)),
+      );
+      final AssetImage provider = img.image as AssetImage;
+      expect(provider.assetName, ThroughputWhereDiagram.assetPath);
+
+      // The caption carries the one-line teaching point as real text.
+      expect(
+        find.textContaining('Where you test along the path changes the number'),
+        findsOneWidget,
+      );
+
+      // The tap target is a labeled, operable control for screen readers.
+      expect(
+        find.bySemanticsLabel('Zoom the throughput-testing diagram'),
+        findsOneWidget,
+      );
+
+      // Tapping the card opens the full-screen zoom view. The card carries a
+      // minimum height so its tap region has real layout even before the async
+      // image decodes, so a pointer tap lands.
+      await tester.tap(card);
+      await tester.pumpAndSettle();
+      expect(find.bySemanticsLabel('Close zoom'), findsOneWidget);
+      expect(find.byType(InteractiveViewer), findsOneWidget);
+
+      // The zoom view dismisses via its close button.
+      await tester.tap(find.bySemanticsLabel('Close zoom'));
+      await tester.pumpAndSettle();
+      expect(find.byType(InteractiveViewer), findsNothing);
     });
   });
 }

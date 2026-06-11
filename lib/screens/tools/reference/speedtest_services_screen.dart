@@ -42,6 +42,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../data/speedtest_logos.dart';
 import '../../../data/speedtest_services_data.dart';
+import '../../../data/throughput_where_diagram.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
@@ -238,6 +239,14 @@ class _SpeedtestServicesScreenState extends State<SpeedtestServicesScreen> {
                   const _CaveatBand(),
                   const SizedBox(height: AppSpacing.md),
                   const _CalloutGrid(),
+                  // The "where you test along the path changes the result"
+                  // reference diagram — the visual summary of the three callouts
+                  // above. Omitted entirely (no gap, no broken box) when the
+                  // asset is not bundled.
+                  if (ThroughputWhereDiagram.isBundled) ...<Widget>[
+                    const SizedBox(height: AppSpacing.md),
+                    const ThroughputWhereDiagramCard(),
+                  ],
                   const SizedBox(height: AppSpacing.md),
                   _searchCard(context),
                   const SizedBox(height: AppSpacing.sm),
@@ -1008,6 +1017,255 @@ class _MessageCard extends StatelessWidget {
                   style: text.bodySmall?.copyWith(color: colors.textTertiary),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The "where you test throughput along the path changes the result" reference
+/// diagram — a Vera-passed, DARK-BAKED raster (white WLAN Pros logo on the §8
+/// dark canvas). It visually summarizes the three teaching callouts above: the
+/// number a speed test reports depends on WHERE along the
+/// client → Wi-Fi → router → ISP → CDN-edge → distant-server path you measure.
+///
+/// PRESENTATION (load-bearing): the diagram is a pre-rendered PNG, so it cannot
+/// take the §8.20.7 runtime light-mode per-mark swap that the SVG concept
+/// graphics use. It is therefore mounted on an ALWAYS-DARK surface card in both
+/// themes — the #222222 surface it was authored against (§8.6.2) — so it never
+/// reads inverted on a light canvas. The always-dark backing comes from
+/// [AppColorScheme.dark], the same "render on the always-dark scrim/chip" idiom
+/// the zoom badge and the logo chips already use.
+///
+/// INTERACTION: tap (or keyboard-activate) the diagram to open a full-screen
+/// pinch-zoom + pan view (raster `InteractiveViewer`, minScale 1, maxScale 5) —
+/// the detail-dense diagram is hard to read inline on a phone. A subtle
+/// magnifier badge advertises the affordance.
+///
+/// A11Y (§8.6.2): the image itself is decorative (every fact it depicts is in
+/// the screen's hero, caveats, and callouts), so it is `ExcludeSemantics` /
+/// `excludeFromSemantics`. The TAP TARGET is a real labeled
+/// `Semantics(button: true, label: 'Zoom the throughput-testing diagram')` so
+/// screen readers announce an operable control and Enter/Space activate it. The
+/// caption below carries the one-line teaching point as real text.
+class ThroughputWhereDiagramCard extends StatelessWidget {
+  const ThroughputWhereDiagramCard({super.key});
+
+  /// The diagram's true aspect ratio (3360 × 4278 source PNG ≈ 0.785). Pinning
+  /// it keeps the inline render the right shape without measuring the image.
+  /// (The logic-corrected diagram is 100px taller than the pre-correction
+  /// asset, so the inline card is correspondingly slightly taller; the pin is
+  /// updated in lock-step so the image fills the card with no letterbox gutters
+  /// and no distortion.)
+  static const double _aspectRatio = 3360 / 4278;
+
+  static const String _caption =
+      'Where you test along the path changes the number. The same connection '
+      'reads differently at the Wi-Fi link, the router, the ISP edge, a nearby '
+      'CDN, or a distant server. Tap to zoom.';
+
+  void _openZoom(BuildContext context) {
+    final AppColorScheme zoomColors = AppColorScheme.dark();
+    Navigator.of(context).push<void>(
+      PageRouteBuilder<void>(
+        // Opaque so the underlying page does not bleed through; the dark-baked
+        // raster wants an always-dark lightbox in both themes.
+        opaque: true,
+        barrierColor: zoomColors.scrim,
+        barrierDismissible: true,
+        barrierLabel: 'Zoomed throughput-testing diagram',
+        transitionDuration: AppMotion.base,
+        reverseTransitionDuration: AppMotion.fast,
+        pageBuilder: (BuildContext context, Animation<double> a,
+                Animation<double> b) =>
+            const _ThroughputWhereZoomView(),
+        transitionsBuilder: (BuildContext context, Animation<double> anim,
+            Animation<double> secondary, Widget child) {
+          return FadeTransition(
+            opacity:
+                CurvedAnimation(parent: anim, curve: AppMotion.standardEase),
+            child: child,
+          );
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // ALWAYS-DARK surface for the dark-baked raster, regardless of app theme.
+    final AppColorScheme dark = AppColorScheme.dark();
+    final TextTheme t = Theme.of(context).textTheme;
+    // The caption sits below the dark card on the SCREEN surface, so it uses the
+    // live theme colors (context.colors) to read on both light and dark canvases.
+    final AppColorScheme live = context.colors;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Semantics(
+          button: true,
+          label: 'Zoom the throughput-testing diagram',
+          onTap: () => _openZoom(context),
+          child: Container(
+            decoration: BoxDecoration(
+              color: dark.surface1,
+              borderRadius: BorderRadius.circular(AppRadius.card),
+              border: Border.all(color: dark.border, width: 1),
+            ),
+            clipBehavior: Clip.antiAlias,
+            padding: const EdgeInsets.all(AppSpacing.xs),
+            child: Stack(
+              children: <Widget>[
+                ExcludeSemantics(
+                  // A minimum height guarantees the card (and its tap target)
+                  // always has real layout even before the async image decodes
+                  // or if a platform reports no intrinsic image size, so the
+                  // whole-graphic tap region is never zero-size.
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: AppSpacing.xxl),
+                    child: AspectRatio(
+                      aspectRatio: _aspectRatio,
+                      child: Image.asset(
+                        ThroughputWhereDiagram.assetPath,
+                        fit: BoxFit.contain,
+                        excludeFromSemantics: true,
+                        errorBuilder:
+                            (BuildContext _, Object _, StackTrace? _) =>
+                                const SizedBox.shrink(),
+                      ),
+                    ),
+                  ),
+                ),
+                // Whole-graphic tap layer (single click on desktop) → zoom.
+                Positioned.fill(
+                  child: ExcludeSemantics(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _openZoom(context),
+                      child: const SizedBox.expand(),
+                    ),
+                  ),
+                ),
+                // Subtle, discoverable magnifier badge (bottom-right).
+                Positioned(
+                  right: AppSpacing.xs,
+                  bottom: AppSpacing.xs,
+                  child: ExcludeSemantics(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: dark.scrim,
+                        borderRadius: BorderRadius.circular(AppRadius.control),
+                      ),
+                      padding: const EdgeInsets.all(AppSpacing.xxs),
+                      child: Icon(
+                        Icons.zoom_in,
+                        color: dark.textPrimary,
+                        size: AppSpacing.sm,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          _caption,
+          style: t.bodySmall?.copyWith(color: live.textTertiary),
+        ),
+      ],
+    );
+  }
+}
+
+/// Full-screen pinch-zoom + pan view for the throughput-testing reference
+/// diagram. Raster sibling of [ZoomableGraphic]'s `_ZoomView` (that one is
+/// SVG-only via an svgBuilder; this renders the bundled PNG). Always-dark
+/// backdrop in both themes — the diagram is dark-baked. Dismisses on the X
+/// button, a tap on the empty backdrop, a swipe-down, or system back / Escape.
+class _ThroughputWhereZoomView extends StatelessWidget {
+  const _ThroughputWhereZoomView();
+
+  static const double _minScale = 1;
+  static const double _maxScale = 5;
+
+  @override
+  Widget build(BuildContext context) {
+    // Always-dark lightbox for the dark-baked raster.
+    final AppColorScheme dark = AppColorScheme.dark();
+    final MediaQueryData mq = MediaQuery.of(context);
+    final EdgeInsets safe = mq.padding;
+
+    return Scaffold(
+      backgroundColor: dark.surface0,
+      body: Stack(
+        children: <Widget>[
+          // Tap / swipe-down the empty backdrop to dismiss.
+          Positioned.fill(
+            child: ExcludeSemantics(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => Navigator.of(context).maybePop(),
+                onVerticalDragEnd: (DragEndDetails d) {
+                  if ((d.primaryVelocity ?? 0) > 0) {
+                    Navigator.of(context).maybePop();
+                  }
+                },
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              safe.left + AppSpacing.md,
+              safe.top + AppSpacing.xxl,
+              safe.right + AppSpacing.md,
+              safe.bottom + AppSpacing.md,
+            ),
+            child: Center(
+              child: InteractiveViewer(
+                minScale: _minScale,
+                maxScale: _maxScale,
+                boundaryMargin: const EdgeInsets.all(AppSpacing.xxl),
+                child: ExcludeSemantics(
+                  child: Image.asset(
+                    ThroughputWhereDiagram.assetPath,
+                    fit: BoxFit.contain,
+                    excludeFromSemantics: true,
+                    errorBuilder: (BuildContext _, Object _, StackTrace? _) =>
+                        const SizedBox.shrink(),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Close affordance — a real labeled button, top-right.
+          Positioned(
+            top: safe.top + AppSpacing.xs,
+            right: safe.right + AppSpacing.xs,
+            child: Semantics(
+              button: true,
+              label: 'Close zoom',
+              child: Material(
+                color: dark.scrim,
+                shape: const CircleBorder(),
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: () => Navigator.of(context).maybePop(),
+                  child: SizedBox(
+                    height: AppSpacing.minTouchTarget,
+                    width: AppSpacing.minTouchTarget,
+                    child: Icon(
+                      Icons.close,
+                      color: dark.textPrimary,
+                      size: AppSpacing.md,
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ],
