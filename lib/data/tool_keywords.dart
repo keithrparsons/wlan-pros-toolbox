@@ -212,7 +212,8 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
   ],
   'dtmf-generator': <String>[
     'touch tone', 'dial tone', 'keypad', 'telephone', 'tone generator',
-    'phone tones',
+    'phone tones', 'blue box', 'red box', 'mf', 'multi-frequency', '2600',
+    'coin tones', 'signaling history',
   ],
   'poe-budget': <String>[
     'power over ethernet', 'watts', 'switch budget', 'pse', 'pd', '802.3bt',

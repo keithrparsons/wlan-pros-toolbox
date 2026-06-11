@@ -155,7 +155,12 @@ void main() {
       // (nearby-ap-scan, Android-only). The H1/H2/M1+M2 features augment
       // existing tools (my-current-location, wifi-info, network-discovery) and
       // add no new help ids. 126 + 2 = 128.
-      expect(store.count, 128);
+      // 130 = + the 2 Telephone Signaling History modes added to the DTMF
+      // Generator 2026-06-11: Blue Box (blue-box) + US Red Box (red-box). These
+      // are MODES of the existing dtmf-generator screen, not new catalog tiles,
+      // so they have no tile and are listed in nonCatalogHelpIds below. The DTMF
+      // entry itself was extended in place (no new id). 128 + 2 = 130.
+      expect(store.count, 130);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help
@@ -167,7 +172,17 @@ void main() {
     //   reached via the home consumer hero, NOT a catalog tile, but its screen
     //   renders ToolHelpFooter(toolId: 'test-my-connection'), so the help entry
     //   must stay and is exempt from the catalog-match requirement.
-    const Set<String> nonCatalogHelpIds = <String>{'test-my-connection'};
+    // - blue-box / red-box: the two Telephone Signaling History MODES of the
+    //   DTMF Generator (2026-06-11). They are reached by the in-screen mode
+    //   selector on the dtmf-generator screen, not by their own catalog tile, so
+    //   the dtmf_generator_screen renders ToolHelpFooter(toolId: 'blue-box' /
+    //   'red-box') depending on the active mode. Their help entries must stay and
+    //   are exempt from the catalog-match requirement.
+    const Set<String> nonCatalogHelpIds = <String>{
+      'test-my-connection',
+      'blue-box',
+      'red-box',
+    };
 
     test('every help key matches a catalog tool id', () {
       // Build the set of all catalog tool ids (not category ids).
