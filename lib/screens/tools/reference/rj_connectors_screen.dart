@@ -4,8 +4,9 @@
 //
 // This table is about the CONNECTOR FORM FACTOR — positions, conductors, and
 // what each jack is for. It deliberately does NOT duplicate the T568A/T568B
-// pin-to-pair-color wiring; that lives in the Ethernet Pinout tool, which this
-// screen cross-links to (a tappable card that routes to /tools/ethernet-pinout).
+// pin-to-pair-color wiring; that lives in the Ethernet Cable & Connector tool's
+// RJ-45 pinout section, which this screen cross-links to (a tappable card that
+// routes to /tools/ethernet-cable).
 //
 // Pure read-only reference — no inputs, no computation, no network. Works on
 // every platform (no NetworkUnavailableView). The only state is "success": the
@@ -85,7 +86,7 @@ class RjConnectorsScreen extends StatelessWidget {
   /// The RJ / modular-connector dataset. Public + static const so tests assert
   /// against the same single source the UI renders. Ordered by ascending body
   /// size / family. Form-factor data only — NO T568A/B pin colors (those live
-  /// in Ethernet Pinout).
+  /// in the Ethernet Cable & Connector pinout section).
   static const List<RjConnectorEntry> connectors = <RjConnectorEntry>[
     RjConnectorEntry(
       name: 'RJ11',
@@ -169,7 +170,7 @@ class RjConnectorsScreen extends StatelessWidget {
   static const String footnote =
       'This table covers the connector body, not the wiring. For T568A / T568B '
       'pin-to-pair-color wiring on the 8P8C (RJ45) connector, see the Ethernet '
-      'Pinout tool.';
+      'Cable & Connector tool.';
 
   /// §8.16 copy payload — the connectors as TSV (name, modular, positions,
   /// conductors, use). One header row; one tab-separated row per connector.
@@ -275,19 +276,21 @@ class RjConnectorsScreen extends StatelessWidget {
     );
   }
 
-  /// Cross-link to the Ethernet Pinout tool — the T568A/B wiring content this
-  /// table deliberately does not duplicate. A focusable, tappable card.
+  /// Cross-link to the Ethernet Cable & Connector tool's RJ-45 pinout — the
+  /// T568A/B wiring content this table deliberately does not duplicate. A
+  /// focusable, tappable card.
   Widget _pinoutLinkCard(AppColorScheme colors, BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.xs, bottom: AppSpacing.sm),
       child: Semantics(
         button: true,
-        label: 'Open Ethernet Pinout tool for T568A and T568B wiring',
+        label: 'Open Ethernet Cable and Connector tool for T568A and T568B '
+            'wiring',
         child: InkWell(
           borderRadius: BorderRadius.circular(AppRadius.card),
           onTap: () => Navigator.of(context)
-              .pushNamed(AppRouter.ethernetPinout),
+              .pushNamed(AppRouter.ethernetCable),
           child: Container(
             decoration: BoxDecoration(
               color: colors.surface1,
@@ -316,7 +319,7 @@ class RjConnectorsScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Open Ethernet Pinout for T568A / T568B '
+                        'Open Ethernet Cable & Connector for T568A / T568B '
                         'pin-to-pair-color wiring.',
                         style: text.labelMedium?.copyWith(
                           color: colors.textTertiary,

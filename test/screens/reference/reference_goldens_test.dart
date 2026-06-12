@@ -49,7 +49,6 @@ import 'package:wlan_pros_toolbox/screens/tools/reference/channel_map_screen.dar
 import 'package:wlan_pros_toolbox/screens/tools/reference/coax_cable_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/db_reference_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/ethernet_cable_screen.dart';
-import 'package:wlan_pros_toolbox/screens/tools/reference/ethernet_pinout_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/fiber_optic_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/frame_exchange_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/mcs_index_screen.dart';
@@ -69,8 +68,10 @@ import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 /// state between the two width variants).
 typedef _RefScreen = ({String slug, Widget Function() build});
 
-/// The 19 reference screens, keyed by the same slug their tool id uses so the
-/// golden filenames line up with the catalog.
+/// The reference screens, keyed by the same slug their tool id uses so the
+/// golden filenames line up with the catalog. (ethernet_pinout was removed
+/// 2026-06-12 when it merged into ethernet_cable; its baseline is dropped and
+/// the ethernet_cable baseline is regenerated for the consolidated layout.)
 final List<_RefScreen> _screens = <_RefScreen>[
   (slug: 'ap_placement', build: () => const ApPlacementScreen()),
   (slug: 'ascii_reference', build: () => const AsciiReferenceScreen()),
@@ -78,7 +79,6 @@ final List<_RefScreen> _screens = <_RefScreen>[
   (slug: 'coax_cable', build: () => const CoaxCableScreen()),
   (slug: 'db_reference', build: () => const DbReferenceScreen()),
   (slug: 'ethernet_cable', build: () => const EthernetCableScreen()),
-  (slug: 'ethernet_pinout', build: () => const EthernetPinoutScreen()),
   (slug: 'fiber_optic', build: () => const FiberOpticScreen()),
   (slug: 'frame_exchange', build: () => const FrameExchangeScreen()),
   (slug: 'mcs_index', build: () => const McsIndexScreen()),

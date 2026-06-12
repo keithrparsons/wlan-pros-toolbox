@@ -990,14 +990,10 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       // not a quick-lookup table). Its ToolEntry now lives in that category's
       // `tools` list; the route, id, asset, and help entry are unchanged.
       // ── from the dissolved Cabling & Connectors category ──
-      ToolEntry(
-        id: 'ethernet-pinout',
-        title: 'Ethernet Pinout',
-        description: 'T568A / T568B reference',
-        routeName: '/tools/ethernet-pinout',
-        isLive: true,
-        subgroup: 'Cabling & Connectors',
-      ),
+      // The former `ethernet-pinout` and `cable-connector` tiles were merged
+      // into `ethernet-cable` 2026-06-12 (Keith: "all three into one"). The
+      // survivor below is retitled "Ethernet Cable & Connector" and now carries
+      // both the Cat capability chart and the T568A/B RJ-45 pinout.
       ToolEntry(
         id: 'coax-cable',
         title: 'Coax Cable',
@@ -1006,24 +1002,19 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Cabling & Connectors',
       ),
+      // Ethernet Cable & Connector — consolidated 2026-06-12 from the former
+      // ethernet-cable + ethernet-pinout + cable-connector tiles (Keith: "all
+      // three into one"). Two sections: the Cat5e–Cat8 capability chart (speed,
+      // bandwidth, distance, PoE, the Cat 7 ISO/IEC-Class-F caveat, the PoE++
+      // heat note) and the T568A/B RJ-45 pinout. Twisted-pair side only; coax
+      // has its own coax-cable tool. Keeps id `ethernet-cable` + its route/icon.
       ToolEntry(
         id: 'ethernet-cable',
-        title: 'Ethernet Cable',
-        description: 'Cat5e to Cat8: speed, bandwidth, distance, PoE',
-        routeName: '/tools/ethernet-cable',
-        isLive: true,
-        subgroup: 'Cabling & Connectors',
-      ),
-      // Cable & Connector — Tier-1 reference (Pass 2b, 2026-06-12). Combined
-      // twisted-pair Category chart (with the Cat 7 ISO/IEC-Class-F caveat) plus
-      // the T568A/B RJ-45 pinout in one tile. Twisted-pair side only; coax has
-      // its own coax-cable tool.
-      ToolEntry(
-        id: 'cable-connector',
-        title: 'Cable & Connector',
+        title: 'Ethernet Cable & Connector',
         description:
-            'Cat5e to Cat8 capability plus the T568A / T568B RJ-45 pinout',
-        routeName: '/tools/cable-connector',
+            'Cat5e to Cat8 capability (speed, bandwidth, distance, PoE) plus '
+            'the T568A / T568B RJ-45 pinout',
+        routeName: '/tools/ethernet-cable',
         isLive: true,
         subgroup: 'Cabling & Connectors',
       ),
@@ -1096,8 +1087,9 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Cabling & Connectors',
       ),
       // RJ Connectors — registered-jack form factors (RJ11/14/25/45/48 etc.):
-      // positions, conductors, typical use. Cross-links to Ethernet Pinout for
-      // T568A/B wiring rather than duplicating it. Batch 5.
+      // positions, conductors, typical use. Cross-links to the Ethernet Cable &
+      // Connector tool's RJ-45 pinout for T568A/B wiring rather than
+      // duplicating it. Batch 5.
       ToolEntry(
         id: 'rj-connectors',
         title: 'RJ Connectors',

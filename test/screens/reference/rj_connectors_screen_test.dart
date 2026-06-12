@@ -5,14 +5,15 @@
 //     positions/conductors (RJ45 = 8P8C, RJ11 = 6P2C) and the load-bearing
 //     EPISTEMIC-HONESTY fact (RJ45 is colloquial for 8P8C).
 //  2. Widget tests in phone/tablet/desktop viewports — title + representative
-//     rows render; the Ethernet Pinout cross-link routes; no overflow.
+//     rows render; the Ethernet Cable & Connector cross-link routes; no
+//     overflow.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/data/connector_diagrams.dart';
 import 'package:wlan_pros_toolbox/router/app_router.dart';
-import 'package:wlan_pros_toolbox/screens/tools/reference/ethernet_pinout_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/reference/ethernet_cable_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/rj_connectors_screen.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
@@ -57,12 +58,14 @@ void main() {
       expect(rj45.typicalUse.toLowerCase(), contains('colloquial'));
     });
 
-    test('intro and footnote cross-reference Ethernet Pinout, not duplicate', () {
-      expect(RjConnectorsScreen.footnote, contains('Ethernet Pinout'));
+    test('intro and footnote cross-reference Ethernet Cable & Connector, '
+        'not duplicate', () {
+      expect(RjConnectorsScreen.footnote, contains('Ethernet Cable & Connector'));
       expect(RjConnectorsScreen.footnote.toLowerCase(),
           contains('not the wiring'));
       // The screen must NOT contain T568A/B pin-color content (that lives in the
-      // Ethernet Pinout tool). No connector note mentions a wire color pair.
+      // Ethernet Cable & Connector tool). No connector note mentions a wire
+      // color pair.
       for (final RjConnectorEntry c in RjConnectorsScreen.connectors) {
         expect(c.typicalUse.toLowerCase(), isNot(contains('t568')));
       }
@@ -125,9 +128,8 @@ void main() {
       });
     });
 
-    testWidgets('cross-link card routes to the Ethernet Pinout tool', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('cross-link card routes to the Ethernet Cable & Connector tool',
+        (WidgetTester tester) async {
       await _withViewport(tester, const Size(375, 1400), () async {
         await tester.pumpWidget(
           MaterialApp(
@@ -145,7 +147,7 @@ void main() {
         await tester.tap(link);
         await tester.pumpAndSettle();
 
-        expect(find.byType(EthernetPinoutScreen), findsOneWidget);
+        expect(find.byType(EthernetCableScreen), findsOneWidget);
       });
     });
 

@@ -22,7 +22,7 @@ import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
 import 'package:wlan_pros_toolbox/main.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/noise_floor_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/ap_placement_screen.dart';
-import 'package:wlan_pros_toolbox/screens/tools/reference/ethernet_pinout_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/reference/ethernet_cable_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/frame_exchange_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/mcs_index_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/roaming_screen.dart';
@@ -330,26 +330,33 @@ void main() {
     });
   });
 
-  testWidgets('Ethernet Pinout screen renders in a 375x900 phone viewport', (
-    tester,
-  ) async {
-    // Phone-viewport smoke for the pinout reference: it pumps, renders the
-    // standard toggle and the default T568B pin-1 wiring (Orange / White,
-    // TX+, verbatim from the PWA PINOUT) without a RenderFlex overflow.
-    await _withViewport(tester, const Size(375, 900), () async {
-      await tester.pumpWidget(
-        MaterialApp(theme: AppTheme.dark(), home: const EthernetPinoutScreen()),
-      );
-      await tester.pump();
+  testWidgets(
+    'Ethernet Cable & Connector pinout section renders in a 375x900 phone '
+    'viewport',
+    (tester) async {
+      // Phone-viewport smoke for the consolidated tool's RJ-45 pinout section
+      // (folded in from the former ethernet-pinout tile): it pumps, renders the
+      // standard toggle and the default T568B pin-1 wiring (Orange / White,
+      // TX+, verbatim from the PWA PINOUT) without a RenderFlex overflow.
+      await _withViewport(tester, const Size(375, 2400), () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: const EthernetCableScreen(),
+          ),
+        );
+        await tester.pump();
 
-      expect(find.text('Ethernet Pinout'), findsWidgets);
-      expect(find.text('T568B'), findsWidgets);
-      expect(find.text('T568A'), findsWidgets);
-      // Default T568B pin 1, verbatim from the PWA pinout view.
-      expect(find.text('Orange / White'), findsWidgets);
-      expect(find.text('TX+'), findsOneWidget);
-    });
-  });
+        expect(find.text('Ethernet Cable & Connector'), findsWidgets);
+        expect(find.text('RJ-45 pinout'), findsWidgets);
+        expect(find.text('T568B'), findsWidgets);
+        expect(find.text('T568A'), findsWidgets);
+        // Default T568B pin 1, verbatim from the PWA pinout view.
+        expect(find.text('Orange / White'), findsWidgets);
+        expect(find.text('TX+'), findsOneWidget);
+      });
+    },
+  );
 
   testWidgets('Roaming Parameters screen renders in a 375x900 phone viewport', (
     tester,

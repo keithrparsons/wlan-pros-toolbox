@@ -184,7 +184,7 @@ class _KeyboardShortcutsScreenState extends State<KeyboardShortcutsScreen> {
 }
 
 /// Segmented platform tab bar (4 short options). Mirrors the §8.14 toggle idiom
-/// used by ethernet_pinout's `_StandardToggle`; each segment flexes so the row
+/// used by ethernet_cable's `_StandardToggle`; each segment flexes so the row
 /// never overflows a phone.
 class _TabBar extends StatelessWidget {
   const _TabBar({
@@ -328,7 +328,7 @@ class _ShortcutRowTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             SizedBox(
-              width: 132,
+              width: 168,
               child: Text(
                 combo,
                 style: mono.inlineCode.copyWith(
@@ -448,7 +448,7 @@ class _GlyphRowTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
           SizedBox(
-            width: 132,
+            width: 168,
             child: Text(
               combo,
               style: mono.inlineCode.copyWith(color: colors.textSecondary),

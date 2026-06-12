@@ -1131,44 +1131,27 @@
       "source": "lib/screens/tools/reference/coax_cable_screen.dart"
     },
     "ethernet-cable": {
-      "name": "Ethernet Cable",
+      "name": "Ethernet Cable & Connector",
       "category": "Quick Reference",
-      "purpose": "Twisted-pair Ethernet cable categories (Cat5e through Cat8) with bandwidth, max speed, distance at 1G/10G, PoE support, shielding, and typical use.",
-      "whyHere": "When choosing cable for a run, confirm a category's bandwidth, 10G reach, and PoE++ suitability (notably the Cat6A-for-PoE++ recommendation).",
+      "purpose": "The twisted-pair side of structured cabling in one tool: the Cat5e-through-Cat8 capability chart (bandwidth, max speed, distance at 1G/10G, PoE, shielding, typical use) plus the T568A / T568B RJ-45 pinout (pin, wire color, twisted pair, 100/1000 Base-T function).",
+      "whyHere": "Picking a cable category for a run (its bandwidth, 10G reach, and PoE++ suitability), or terminating an RJ-45 jack and needing the pin colors for the chosen standard.",
       "howToUse": [
-        "Scroll the table horizontally. \"N/A\" in a distance column means that rate isn't supported (e.g. Cat5e has no 10G distance).",
-        "Key facts: Cat6 hits 10G only to 55 m; Cat6A hits 10G to the full 100 m and supports all 802.3bt; Cat8 carries 1G/10G to 100 m but its 25/40G design rate is limited to ~30 m."
+        "Cable categories section: scroll the table horizontally. \"N/A\" in a distance column means that rate isn't supported (e.g. Cat5e has no 10G distance). Cat6 hits 10G only to 55 m; Cat6A hits 10G to the full 100 m and supports all 802.3bt; Cat8 carries 1G/10G to 100 m but its 25/40G design rate is limited to ~30 m.",
+        "RJ-45 pinout section: toggle T568B / T568A to see each pin's wire color, twisted pair, and Base-T function. The swatch shows the wire color and the name names it, so color is never the only signal. View is \"plug face, clip down, pin 1 on the left.\"",
+        "Use the copy action to grab the categories, speed grades, shielding codes, notes, and the selected pinout as text."
       ],
       "inputs": [],
       "algorithm": null,
       "example": null,
       "fieldNotes": [
-        "What it shows: per category (Cat5e, Cat6, Cat6A, Cat7, Cat7A, Cat8): max bandwidth (MHz), max speed, distance at 1 Gbps, distance at 10 Gbps, PoE support, shielding, and a typical-use note.",
-        "Footnote PoE++ tip: bundled Cat6 running PoE++ generates significant heat; Cat6A dissipates it better; TIA-568 recommends Cat6A for PoE++ in bundles.",
-        "Cat7/Cat7A use non-standard plugs (\"Specialty\"). The PWA's em-dash \"not applicable\" cells are rendered as ASCII \"N/A\" (no em dash). Standard reference, not region-specific.",
-        "Data source: ported verbatim from the rf-tools-pwa ethernet tool (ETH_DATA); reflects the TIA-568 / ISO cabling categories. The footnote cites TIA-568's recommendation of Cat6A for PoE++ in cable bundles (heat dissipation)."
+        "Consolidated 2026-06-12 from the former Ethernet Cable, Ethernet Pinout, and Cable & Connector tiles into this single tool.",
+        "Cable chart: per category (Cat5e, Cat6, Cat6A, Cat7, Cat7A, Cat8): max bandwidth (MHz), max speed, distance at 1 Gbps and 10 Gbps, PoE support, shielding, and a typical-use note. Plus a BASE-T speed-grade table (1G/2.5G/5G/10G) and an ISO/IEC 11801 shielding-code key.",
+        "Cat 7 is NOT a TIA standard. TIA never ratified Category 7; it exists only as ISO/IEC Class F (Cat 7A as Class FA) and uses GG45 / TERA connectors, not native RJ-45. For 10G structured cabling, Cat 6A is the TIA-recognized choice. A warning callout flags this.",
+        "PoE++ tip: bundled Cat6 running PoE++ generates significant heat; Cat6A dissipates it better; TIA-568 recommends Cat6A for PoE++ in bundles.",
+        "Pinout: each standard's eight pin rows show the pin number, a wire-color swatch and name (e.g. \"Orange / White\"), the twisted-pair number (1 to 4), and the 100/1000 Base-T function. Only pairs 2 and 3 (orange/green) differ between T568A and T568B; a crossover cable uses A on one end and B on the other, rarely needed today since most switches/NICs auto-MDI-X.",
+        "Data source: cable categories and pinout ported verbatim from the rf-tools-pwa ethernet and pinout tools (ETH_DATA, PINOUT, pairColors); categories reflect the TIA-568 / ISO 11801 standards, with the Cat 7 ISO/IEC Class F caveat called out."
       ],
       "source": "lib/screens/tools/reference/ethernet_cable_screen.dart"
-    },
-    "ethernet-pinout": {
-      "name": "Ethernet Pinout",
-      "category": "Quick Reference",
-      "purpose": "The T568A and T568B RJ-45 wiring standards: pin number, wire color, twisted pair, and 100/1000 Base-T signal function.",
-      "whyHere": "When terminating or testing a cable, confirm which color goes on which pin for the chosen standard, and what each pin carries.",
-      "howToUse": [
-        "Pick the standard (T568B is the default and most common). View is \"plug face, clip down, pin 1 on the left.\"",
-        "Striped wires show a split swatch (color over white). The swatch colors are real copper-pair colors (data, not UI theme).",
-        "T568A and T568B differ only in swapping the green and orange pairs."
-      ],
-      "inputs": [],
-      "algorithm": null,
-      "example": null,
-      "fieldNotes": [
-        "What it shows: a T568B / T568A toggle. Each standard's eight pin rows show the pin number, a wire-color swatch and name (e.g. \"Orange / White\"), the twisted-pair number (1 to 4) with a pair-color swatch, and the 100/1000 Base-T function (TX+, RX−, BI-D A+, etc.).",
-        "Footnote: applies to Cat5/5e/6/6A/7/8; a crossover cable uses T568A on one end and T568B on the other, rarely needed today since most switches/NICs auto-MDI-X. Standard reference, not region-specific.",
-        "Data source: TIA-568 wiring standards (T568A/T568B); ported verbatim from the rf-tools-pwa pinout tool (PINOUT, pairColors)."
-      ],
-      "source": "lib/screens/tools/reference/ethernet_pinout_screen.dart"
     },
     "fiber-optic": {
       "name": "Fiber Optic",
@@ -3153,25 +3136,6 @@
         "PowerShell reverse history search (Ctrl R) depends on PSReadLine, which ships with Windows PowerShell 5.1+ and PowerShell 7; a bare console host falls back to F7 / F8."
       ],
       "source": "The published Apple and Microsoft keyboard-shortcut lists, standard readline / zsh and PSReadLine bindings, and common RF math notation for the Greek card."
-    },
-    "cable-connector": {
-      "name": "Cable & Connector",
-      "category": "Quick Reference",
-      "purpose": "The twisted-pair side of structured cabling in one tile: how the Category ratings compare (Cat5e to Cat8, with speed, bandwidth, distance, and PoE relevance) and how the two RJ-45 wiring standards (T568A and T568B) are pinned out.",
-      "whyHere": "Picking a cable category for a run, or terminating an RJ-45 jack and needing the pin colors. Coax connectors have their own tool; this is the Ethernet / twisted-pair side.",
-      "howToUse": [
-        "Read the Category chart for the headline speed, bandwidth, and max distance per category; the per-category PoE note sits beneath it.",
-        "Toggle T568B / T568A to see the pin-to-wire color mapping. The swatch shows the wire color and the name names it, so the color is never the only signal.",
-        "Use the copy action to grab the chart and the selected pinout as text."
-      ],
-      "inputs": [],
-      "algorithm": null,
-      "example": null,
-      "fieldNotes": [
-        "Cat 7 is NOT a TIA standard. TIA never ratified Category 7; it exists only as ISO/IEC Class F (Cat 7A as Class FA) and uses GG45 / TERA connectors, not native RJ-45. For 10G structured cabling, Cat 6A is the TIA-recognized choice. The chart flags this with a warning callout.",
-        "Only pairs 2 and 3 (orange and green) differ between T568A and T568B. Straight-through uses the same standard at both ends; crossover uses A on one end and B on the other (legacy, since Auto-MDIX)."
-      ],
-      "source": "Category figures per current TIA-568 (ANSI/TIA-568.2-D), with the Cat 7 ISO/IEC Class F caveat called out; pinout per the T568A / T568B standards."
     },
     "time-zone-maps": {
       "name": "Time Zones",

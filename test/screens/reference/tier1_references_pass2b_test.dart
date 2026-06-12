@@ -1,6 +1,11 @@
-// Tests for the five Tier-1 reference screens wired in Pass 2b (2026-06-12):
-//   keyboard-shortcuts, cable-connector, time-zone-maps, phonetic-alphabet,
-//   diffie-hellman.
+// Tests for the Tier-1 reference screens wired in Pass 2b (2026-06-12):
+//   keyboard-shortcuts, time-zone-maps, phonetic-alphabet, diffie-hellman.
+//
+// The former Pass-2b `cable-connector` tile was consolidated 2026-06-12 into
+// the existing `ethernet-cable` tool (retitled "Ethernet Cable & Connector").
+// Its Cat 7 ISO/IEC-Class-F caveat fidelity now asserts against
+// EthernetCableScreen.cat7Caveat; the pinout pair-swap fidelity is covered by
+// ethernet_cable_pinout_test.dart.
 //
 // Three layers, mirroring the established per-screen reference tests:
 //   1. Data fidelity (GL-005): the typed const datasets carry the load-bearing
@@ -18,7 +23,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wlan_pros_toolbox/data/cable_connector_data.dart';
 import 'package:wlan_pros_toolbox/data/diffie_hellman_data.dart';
 import 'package:wlan_pros_toolbox/data/keyboard_shortcuts_data.dart';
 import 'package:wlan_pros_toolbox/data/phonetic_alphabet_data.dart';
@@ -27,8 +31,8 @@ import 'package:wlan_pros_toolbox/data/time_zones_data.dart';
 import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
 import 'package:wlan_pros_toolbox/data/tool_keywords.dart';
 import 'package:wlan_pros_toolbox/router/app_router.dart';
-import 'package:wlan_pros_toolbox/screens/tools/reference/cable_connector_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/diffie_hellman_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/reference/ethernet_cable_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/keyboard_shortcuts_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/phonetic_alphabet_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/time_zones_screen.dart';
@@ -63,25 +67,31 @@ void main() {
     );
 
     test(
-      'Cable & Connector: Cat 7 carries the ISO/IEC-Class-F not-TIA caveat',
+      'Ethernet Cable & Connector: Cat 7 carries the ISO/IEC-Class-F not-TIA '
+      'caveat (merged from cable-connector)',
       () {
-        final CableCategory cat7 = kCableCategories.firstWhere(
-          (CableCategory c) => c.category == 'Cat 7',
+        // The Cat 7 row exists in the survivor's category chart.
+        final EthCable cat7 = EthernetCableScreen.ethData.firstWhere(
+          (EthCable c) => c.category == 'Cat7',
+        );
+        expect(cat7.poe, 'Limited');
+        // The non-TIA caveat is surfaced as a warning verdict on the screen.
+        expect(
+          EthernetCableScreen.cat7Caveat.toLowerCase().contains(
+            'never ratified category 7',
+          ),
+          isTrue,
         );
         expect(
-          cat7.caveat,
-          isTrue,
-          reason: 'Cat 7 must be flagged as the non-TIA outlier',
-        );
-        expect(
-          kCat7Caveat.toLowerCase().contains('not a tia standard'),
+          EthernetCableScreen.cat7Caveat.contains('ISO/IEC Class F'),
           isTrue,
         );
-        expect(kCat7Caveat.contains('ISO/IEC Class F'), isTrue);
         // Pinout: T568A and T568B differ only on pairs 2 & 3 (orange/green) at
-        // pins 1,2,3,6.
-        final List<CablePin> b = kCablePinout[CableWiringStandard.t568b]!;
-        final List<CablePin> a = kCablePinout[CableWiringStandard.t568a]!;
+        // pins 1,2,3,6 (the pair-swap fidelity, folded in from the pinout tile).
+        final List<PinoutPin> b =
+            EthernetCableScreen.pinout[WiringStandard.t568b]!;
+        final List<PinoutPin> a =
+            EthernetCableScreen.pinout[WiringStandard.t568a]!;
         expect(b.length, 8);
         expect(a.length, 8);
         expect(
@@ -144,12 +154,11 @@ void main() {
       expect(kDhWlanRelevance.contains('WPA3'), isTrue);
     });
 
-    test('no em dash in any rendered prose across the five datasets', () {
+    test('no em dash in any rendered prose across the datasets', () {
       final List<String> prose = <String>[
         kMacSymbolsNote,
-        kCat7Caveat,
-        kCablePoeNote,
-        kPinoutNote,
+        EthernetCableScreen.cat7Caveat,
+        EthernetCableScreen.pinoutFootnote,
         kUtcOffsetsNote,
         kTimeZonesDstNote,
         kPhoneticNote,
@@ -161,7 +170,6 @@ void main() {
           g.title,
           for (final ShortcutRow r in g.rows) r.action,
         ],
-        for (final CableCategory c in kCableCategories) c.poe,
         for (final UsTimeZone z in kUsTimeZones) z.daylight,
         for (final DhStage s in kDhStages) ...<String>[s.analogy, s.math],
       ];
@@ -174,9 +182,9 @@ void main() {
   });
 
   group('registration (catalog + router + keywords)', () {
+    // cable-connector removed 2026-06-12 (merged into ethernet-cable).
     const Map<String, String> subgroupById = <String, String>{
       'keyboard-shortcuts': 'Encoding',
-      'cable-connector': 'Cabling & Connectors',
       'time-zone-maps': 'Time & Formats',
       'phonetic-alphabet': 'Encoding',
       'diffie-hellman': 'Wi-Fi & RF',
@@ -225,7 +233,6 @@ void main() {
 
     final List<(String, Widget)> screens = <(String, Widget)>[
       ('Keyboard Shortcuts', const KeyboardShortcutsScreen()),
-      ('Cable & Connector', const CableConnectorScreen()),
       ('Time Zones', const TimeZonesScreen()),
       ('Phonetic Alphabet', const PhoneticAlphabetScreen()),
       ('Diffie-Hellman', const DiffieHellmanScreen()),
@@ -267,6 +274,41 @@ void main() {
         }
       });
     }
+
+    testWidgets(
+      'Phonetic Alphabet: per-letter blocks render with no overflow '
+      '(dark + light) when bundled',
+      (tester) async {
+        // Bundle all 26 per-letter blocks AND the full plate, so every A-Z row
+        // carries its leading thumbnail and the tall (72px) rows must lay out
+        // without a RenderFlex overflow in either theme.
+        ReferenceImages.debugSetBundled(<String>{
+          ReferenceImages.pathFor('phonetic-alphabet'),
+          for (final PhoneticLetter p in kPhoneticAlphabet)
+            ReferenceImages.phoneticBlockPathFor(p.letter),
+        });
+        addTearDown(ReferenceImages.debugReset);
+
+        for (final ThemeData theme in <ThemeData>[
+          AppTheme.dark(),
+          AppTheme.light(),
+        ]) {
+          await _withViewport(tester, const Size(375, 4200), () async {
+            await tester.pumpWidget(
+              MaterialApp(theme: theme, home: const PhoneticAlphabetScreen()),
+            );
+            await tester.pump();
+            expect(tester.takeException(), isNull);
+            // One Image.asset per letter block + one for the full plate -> the
+            // blocks are actually wired into the rows, not silently dropped.
+            expect(
+              find.byType(Image),
+              findsAtLeastNWidgets(kPhoneticAlphabet.length),
+            );
+          });
+        }
+      },
+    );
 
     testWidgets('embedded-PNG screens show one image card when bundled', (
       tester,

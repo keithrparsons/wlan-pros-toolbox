@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Time-zone maps: a globe with meridian lines + a clock tucked lower-right. The
+         globe (ring + equator + one meridian) carries "world/zones"; the small clock
+         carries "time". Sibling to datetime-standards (calendar + clock) but globe-led. -->
+    <!-- globe -->
+    <circle cx="10" cy="10" r="6.5"/>
+    <line x1="3.5" y1="10" x2="16.5" y2="10"/>
+    <path d="M10 3.5 C12.4 6 12.4 14 10 16.5"/>
+    <path d="M10 3.5 C7.6 6 7.6 14 10 16.5"/>
+    <!-- clock overlapping lower-right -->
+    <circle cx="17.5" cy="16.5" r="4.5"/>
+    <path d="M17.5 14.5 V16.5 L19 18"/>
+  </g>
+</svg>

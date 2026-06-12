@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Morse: the canonical SOS — dot dot dot / dash dash dash / dot dot dot — stacked as
+         three rows. Row 1 and row 3 are three short dots; the middle row is three long
+         dashes. The dot-row vs dash-row length contrast is gross silhouette and survives
+         20px far better than any inline accent. Unmistakably "Morse". -->
+    <!-- S : · · · -->
+    <line x1="4" y1="5" x2="4.2" y2="5"/>
+    <line x1="9" y1="5" x2="9.2" y2="5"/>
+    <line x1="14" y1="5" x2="14.2" y2="5"/>
+    <!-- O : − − − -->
+    <line x1="3" y1="12" x2="8" y2="12"/>
+    <line x1="11" y1="12" x2="16" y2="12"/>
+    <line x1="19" y1="12" x2="21" y2="12"/>
+    <!-- S : · · · -->
+    <line x1="4" y1="19" x2="4.2" y2="19"/>
+    <line x1="9" y1="19" x2="9.2" y2="19"/>
+    <line x1="14" y1="19" x2="14.2" y2="19"/>
+  </g>
+</svg>

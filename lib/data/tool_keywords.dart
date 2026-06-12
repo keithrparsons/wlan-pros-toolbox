@@ -322,15 +322,16 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'band plan', 'unii', 'ism', 'sub band', 'allocation', 'coexistence',
     'frequency plan',
   ],
-  'ethernet-pinout': <String>[
-    't568a', 't568b', 'rj45', 'wiring', 'crossover', 'pinout', 'cat cable',
-  ],
   'coax-cable': <String>[
     'rg6', 'rg58', 'lmr', 'impedance', 'velocity factor', 'feedline',
   ],
+  // ethernet-pinout + cable-connector keyword sets folded in here 2026-06-12
+  // when the three tiles consolidated into this one (pinout, T568A/B, wiring,
+  // crossover, PoE terms added so searches for the old tiles land here).
   'ethernet-cable': <String>[
-    'cat5e', 'cat6', 'cat6a', 'cat8', 'rj45', 'bandwidth', 'distance',
-    'twisted pair',
+    'cat5e', 'cat6', 'cat6a', 'cat7', 'cat8', 'rj45', 'bandwidth', 'distance',
+    'twisted pair', 'connector', 't568a', 't568b', 'pinout', 'wiring',
+    'crossover', 'poe', 'cat cable',
   ],
   'fiber-optic': <String>[
     'singlemode', 'multimode', 'om3', 'om4', 'os2', 'sfp', 'jacket color',
@@ -410,10 +411,6 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
   'keyboard-shortcuts': <String>[
     'hotkeys', 'shortcut', 'cmd', 'ctrl', 'terminal', 'powershell', 'zsh',
     'option key', 'special characters', 'greek letters', 'symbols', 'lambda',
-  ],
-  'cable-connector': <String>[
-    'cat5e', 'cat6', 'cat6a', 'cat7', 'cat8', 'rj45', 't568a', 't568b',
-    'pinout', 'wiring', 'twisted pair', 'crossover', 'poe',
   ],
   'time-zone-maps': <String>[
     'utc', 'gmt', 'offset', 'time difference', 'world clock', 'dst',

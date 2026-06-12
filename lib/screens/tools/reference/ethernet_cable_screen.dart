@@ -1,24 +1,39 @@
-// Ethernet Cable — read-only reference card.
+// Ethernet Cable & Connector — read-only twisted-pair reference, offline.
 //
-// One static table ported verbatim from the RF Tools PWA (app.js ETH_DATA,
-// view data-tool="ethernet"): the Ethernet cable categories with bandwidth,
-// max speed, max distance at 1G/10G, PoE support, shielding, and typical use.
-// Plus the PWA's PoE++ footnote tip.
+// Consolidated 2026-06-12: the former `ethernet-cable`, `ethernet-pinout`, and
+// `cable-connector` tiles are merged into this single tool (Keith: "all three
+// into one"). Two clear sections:
+//
+//   1. Cable categories — the rich Cat5e→Cat8 capability chart ported verbatim
+//      from the RF Tools PWA (app.js ETH_DATA): bandwidth, max speed, distance
+//      at 1G/10G, PoE, shielding, typical use. Plus the BASE-T speed-grade
+//      (multi-gig) table, the ISO/IEC 11801 shielding-code key, the Cat 7
+//      "ISO/IEC Class F, not TIA" caveat, and the PoE++ heat footnote.
+//   2. RJ-45 pinout — the T568A / T568B wiring reference (pin → wire color →
+//      pair → 100/1000 Base-T function), toggled between the two standards.
+//      Ported verbatim from the PWA `pinout` tool (PINOUT, pairColors). This is
+//      the cleaner of the two pre-merge pinout implementations (the old
+//      ethernet-pinout screen): it carries the pair number, the function, and
+//      both the wire and pair swatches.
 //
 // This is a pure read-only reference — no inputs, no computation, no network.
-// It works on every platform (no NetworkUnavailableView). The only state is
-// "success": the bundled dataset always renders. There is no loading, empty,
-// or error path because nothing is fetched or parsed at runtime.
+// It works on every platform (no NetworkUnavailableView). The only interactive
+// element is the T568B / T568A toggle and the §8.16 copy action. There is no
+// loading, empty, or error path because nothing is fetched or parsed at runtime
+// and neither dataset is ever empty.
 //
-// Overflow-safe: the seven-column table exceeds phone width, so it scrolls
+// Overflow-safe: the wide capability table exceeds phone width, so it scrolls
 // horizontally inside the fixed card — the same idiom as mcs_index_screen.
 //
-// Glyph note: the PWA uses an em dash (—) as the "not applicable" cell marker
-// in ETH_DATA. Per the no-em-dash rule we render N/A as the ASCII string "—"
-// is NOT used; the PWA's "—" cells are reproduced as the literal value the
-// table shows, mapped to an ASCII "N/A" marker so no em dash ships in the app.
+// Color glyph note: the pinout wire-insulation swatch and the pair-color swatch
+// are DATA glyphs (the literal copper-pair colors an installer sees), not UI
+// chrome. They are kept verbatim from the PWA hexes and are NOT design-system
+// surface/text tokens; they stay literal in both themes (a 1px border keeps a
+// near-white wire visible on the light card). Every text, surface, border,
+// radius, and spacing value below is a GL-003 token. No em dash ships.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_color_scheme.dart';
@@ -123,7 +138,40 @@ class ShieldingCode {
   final String name;
 }
 
-class EthernetCableScreen extends StatelessWidget {
+/// Which RJ-45 wiring standard's pinout is shown. Two short options → segmented
+/// toggle, not an AppSelect (GL-003 §8.14). T568B is the PWA's default tab.
+enum WiringStandard { t568b, t568a }
+
+/// One pin row in a wiring standard. Verbatim shape of the PWA's PINOUT array
+/// entry `[pin, colorHex, colorName, pair, function]`.
+class PinoutPin {
+  const PinoutPin({
+    required this.pin,
+    required this.colorHex,
+    required this.colorName,
+    required this.pair,
+    required this.function,
+  });
+
+  /// RJ-45 pin number, 1–8.
+  final int pin;
+
+  /// Wire-insulation color as the literal PWA hex — a DATA glyph (the real
+  /// copper color), not a GL-003 token. A name containing '/' is a striped
+  /// (color-on-white) wire; rendered as a 135° split swatch like the PWA.
+  final int colorHex;
+
+  /// Human-readable wire color, verbatim from the PWA (e.g. 'Orange / White').
+  final String colorName;
+
+  /// Twisted-pair number this wire belongs to, 1–4.
+  final int pair;
+
+  /// 100/1000 Base-T signal function (e.g. 'TX+', 'BI-D A+').
+  final String function;
+}
+
+class EthernetCableScreen extends StatefulWidget {
   const EthernetCableScreen({super.key});
 
   /// Ethernet cable categories. Ported verbatim from PWA app.js ETH_DATA.
@@ -275,6 +323,14 @@ class EthernetCableScreen extends StatelessWidget {
       'the cable-level (overall) screen; the character(s) after describe the '
       'pair-level screen.';
 
+  /// Cat 7 caveat — ISO/IEC Class F, NOT a TIA standard. Surfaced as a warning
+  /// verdict (glyph + word, §8.13), salvaged from the merged cable-connector
+  /// tile so the non-TIA reality stays prominent.
+  static const String cat7Caveat =
+      'TIA never ratified Category 7. It exists only as ISO/IEC Class F (Cat 7A '
+      'as Class FA) and uses GG45 / TERA connectors, not native RJ-45. For 10G '
+      'structured cabling, Cat 6A is the TIA-recognized choice.';
+
   /// PoE++ footnote, ported verbatim from the PWA ethernet view.
   static const String footnote =
       'PoE++ tip: Use Cat6A for 802.3bt deployments. Bundled Cat6 cables '
@@ -283,28 +339,197 @@ class EthernetCableScreen extends StatelessWidget {
       'cable bundles. Cat8 carries 1G/10G to the full 100 m channel; its '
       '25G/40G design rate is limited to ~30 m (data-center top-of-rack).';
 
+  // ── RJ-45 pinout dataset (public, const, unit-testable) ───────────────────
+
+  /// Pin → wire-color → pair → function, per standard. Ported VERBATIM from
+  /// the RF Tools PWA app.js `const PINOUT`. Hex values are the PWA's literal
+  /// wire-color hexes (data glyphs). Do not edit without re-checking the PWA.
+  static const Map<WiringStandard, List<PinoutPin>> pinout = {
+    WiringStandard.t568b: [
+      PinoutPin(
+        pin: 1,
+        colorHex: 0xFFE65100,
+        colorName: 'Orange / White',
+        pair: 2,
+        function: 'TX+',
+      ),
+      PinoutPin(
+        pin: 2,
+        colorHex: 0xFFE65100,
+        colorName: 'Orange',
+        pair: 2,
+        function: 'TX-',
+      ),
+      PinoutPin(
+        pin: 3,
+        colorHex: 0xFF2E7D32,
+        colorName: 'Green / White',
+        pair: 3,
+        function: 'RX+',
+      ),
+      PinoutPin(
+        pin: 4,
+        colorHex: 0xFF1565C0,
+        colorName: 'Blue',
+        pair: 1,
+        function: 'BI-D A+',
+      ),
+      PinoutPin(
+        pin: 5,
+        colorHex: 0xFF1565C0,
+        colorName: 'Blue / White',
+        pair: 1,
+        function: 'BI-D A-',
+      ),
+      PinoutPin(
+        pin: 6,
+        colorHex: 0xFF2E7D32,
+        colorName: 'Green',
+        pair: 3,
+        function: 'RX-',
+      ),
+      PinoutPin(
+        pin: 7,
+        colorHex: 0xFF6D4C41,
+        colorName: 'Brown / White',
+        pair: 4,
+        function: 'BI-D B+',
+      ),
+      PinoutPin(
+        pin: 8,
+        colorHex: 0xFF6D4C41,
+        colorName: 'Brown',
+        pair: 4,
+        function: 'BI-D B-',
+      ),
+    ],
+    WiringStandard.t568a: [
+      PinoutPin(
+        pin: 1,
+        colorHex: 0xFF2E7D32,
+        colorName: 'Green / White',
+        pair: 3,
+        function: 'TX+',
+      ),
+      PinoutPin(
+        pin: 2,
+        colorHex: 0xFF2E7D32,
+        colorName: 'Green',
+        pair: 3,
+        function: 'TX-',
+      ),
+      PinoutPin(
+        pin: 3,
+        colorHex: 0xFFE65100,
+        colorName: 'Orange / White',
+        pair: 2,
+        function: 'RX+',
+      ),
+      PinoutPin(
+        pin: 4,
+        colorHex: 0xFF1565C0,
+        colorName: 'Blue',
+        pair: 1,
+        function: 'BI-D A+',
+      ),
+      PinoutPin(
+        pin: 5,
+        colorHex: 0xFF1565C0,
+        colorName: 'Blue / White',
+        pair: 1,
+        function: 'BI-D A-',
+      ),
+      PinoutPin(
+        pin: 6,
+        colorHex: 0xFFE65100,
+        colorName: 'Orange',
+        pair: 2,
+        function: 'RX-',
+      ),
+      PinoutPin(
+        pin: 7,
+        colorHex: 0xFF6D4C41,
+        colorName: 'Brown / White',
+        pair: 4,
+        function: 'BI-D B+',
+      ),
+      PinoutPin(
+        pin: 8,
+        colorHex: 0xFF6D4C41,
+        colorName: 'Brown',
+        pair: 4,
+        function: 'BI-D B-',
+      ),
+    ],
+  };
+
+  /// Pair number → wire-color hex. Verbatim from the PWA `pairCols` in
+  /// buildPinoutTable. Data glyph, not a GL-003 token.
+  static const Map<int, int> pairColors = {
+    1: 0xFF1565C0, // Blue
+    2: 0xFFE65100, // Orange
+    3: 0xFF2E7D32, // Green
+    4: 0xFF6D4C41, // Brown
+  };
+
+  /// Plug-orientation note, verbatim from the PWA pinout view.
+  static const String orientationNote =
+      'Plug face view — clip facing down. Pin 1 is on the left.';
+
+  /// Pinout footnote, verbatim from the PWA buildPinoutTable. The PWA's em dash
+  /// is replaced with a comma per the no-em-dash hard rule.
+  static const String pinoutFootnote =
+      'Applies to Cat5, Cat5e, Cat6, Cat6A, Cat7, and Cat8. A crossover cable '
+      'uses T568A on one end and T568B on the other, rarely needed today since '
+      'most switches and NICs auto-MDI-X. T568A and T568B differ only in '
+      'swapping the green and orange pairs.';
+
+  @override
+  State<EthernetCableScreen> createState() => _EthernetCableScreenState();
+}
+
+class _EthernetCableScreenState extends State<EthernetCableScreen> {
+  WiringStandard _std = WiringStandard.t568b;
+
+  static String _label(WiringStandard s) =>
+      s == WiringStandard.t568b ? 'T568B' : 'T568A';
+
+  void _onStandardChanged(WiringStandard next) {
+    if (next == _std) return;
+    setState(() => _std = next);
+    // WCAG 4.1.3 — announce which standard's table is now shown.
+    SemanticsService.sendAnnouncement(
+      View.of(context),
+      '${_label(next)} pinout',
+      TextDirection.ltr,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ethernet Cable'),
+        title: const Text('Ethernet Cable & Connector'),
         toolbarHeight: 64,
-        // §8.16 — copy the cable table as TSV. Static data, always enabled.
+        // §8.16 — copy the full reference (categories + pinout) as TSV. Static
+        // data, always enabled.
         actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
   }
 
-  /// §8.16 copy payload — the Ethernet table as TSV. One title, the full
-  /// eight-column header (every field the screen shows, including the typical-
-  /// use column the scroll table drops to the footnote), one row per category,
-  /// then the footnote. Always non-null: the dataset is static, so copy is
-  /// never disabled.
+  /// §8.16 copy payload — the whole reference as TSV: the categories table
+  /// (eight columns, including the typical-use column the scroll table drops to
+  /// the footnote), the BASE-T speed grades, the shielding codes, the notes,
+  /// and the SELECTED pinout standard's pin → wire → pair → function rows.
+  /// Always non-null: the dataset is static, so copy is never disabled.
   String _buildCopyText() {
     const String tab = '\t';
     final StringBuffer buf = StringBuffer()
-      ..writeln('Ethernet Cable Categories')
+      ..writeln('Ethernet Cable & Connector')
+      ..writeln()
+      ..writeln('Cable categories')
       ..writeln(
         <String>[
           'Category',
@@ -317,7 +542,7 @@ class EthernetCableScreen extends StatelessWidget {
           'Typical use',
         ].join(tab),
       );
-    for (final EthCable e in ethData) {
+    for (final EthCable e in EthernetCableScreen.ethData) {
       buf.writeln(
         <String>[
           e.category,
@@ -343,7 +568,7 @@ class EthernetCableScreen extends StatelessWidget {
           'IEEE spec',
         ].join(tab),
       );
-    for (final EthSpeedGrade g in speedGrades) {
+    for (final EthSpeedGrade g in EthernetCableScreen.speedGrades) {
       buf.writeln(
         <String>[
           g.standard,
@@ -354,19 +579,35 @@ class EthernetCableScreen extends StatelessWidget {
         ].join(tab),
       );
     }
-    buf.writeln(speedGradesFootnote);
+    buf.writeln(EthernetCableScreen.speedGradesFootnote);
     buf
       ..writeln()
       ..writeln('Shielding codes (ISO/IEC 11801)')
       ..writeln(<String>['Code', 'Overall', 'Per pair', 'Name'].join(tab));
-    for (final ShieldingCode s in shieldingCodes) {
+    for (final ShieldingCode s in EthernetCableScreen.shieldingCodes) {
       buf.writeln(<String>[s.code, s.overall, s.perPair, s.name].join(tab));
     }
-    buf.writeln(shieldingFootnote);
+    buf.writeln(EthernetCableScreen.shieldingFootnote);
     buf
       ..writeln()
       ..writeln('Notes')
-      ..writeln(footnote);
+      ..writeln('Cat 7: ISO/IEC Class F, not a TIA standard.')
+      ..writeln(EthernetCableScreen.cat7Caveat)
+      ..writeln(EthernetCableScreen.footnote);
+    // The selected RJ-45 pinout standard.
+    final List<PinoutPin> pins = EthernetCableScreen.pinout[_std]!;
+    buf
+      ..writeln()
+      ..writeln('${_label(_std)} RJ-45 pinout (pin to pair)')
+      ..writeln(
+        <String>['Pin', 'Wire color', 'Pair', '100/1000 Base-T'].join(tab),
+      );
+    for (final PinoutPin p in pins) {
+      buf.writeln(
+        <String>['${p.pin}', p.colorName, '${p.pair}', p.function].join(tab),
+      );
+    }
+    buf.writeln(EthernetCableScreen.pinoutFootnote);
     return buf.toString().trimRight();
   }
 
@@ -403,13 +644,25 @@ class EthernetCableScreen extends StatelessWidget {
                   ),
                   if (ToolAssets.hasGraphic('ethernet-cable'))
                     const SizedBox(height: AppSpacing.md),
+                  // ── Section 1: Cable categories ──
+                  _SectionHeader(label: 'Cable categories'),
+                  const SizedBox(height: AppSpacing.sm),
                   _tableCard(colors, text, mono),
                   const SizedBox(height: AppSpacing.md),
                   _speedGradesCard(colors, text, mono),
                   const SizedBox(height: AppSpacing.md),
                   _shieldingCard(colors, text, mono),
                   const SizedBox(height: AppSpacing.md),
+                  _cat7CaveatCard(colors, text),
+                  const SizedBox(height: AppSpacing.md),
                   _footnoteCard(colors, text),
+                  const SizedBox(height: AppSpacing.lg),
+                  // ── Section 2: RJ-45 pinout ──
+                  _SectionHeader(label: 'RJ-45 pinout'),
+                  const SizedBox(height: AppSpacing.sm),
+                  _standardCard(colors, text),
+                  const SizedBox(height: AppSpacing.sm),
+                  _pinoutCard(colors, text, mono),
                   ToolHelpFooter(toolId: 'ethernet-cable'),
                 ],
               ),
@@ -432,7 +685,7 @@ class EthernetCableScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${ethData.length} cable categories',
+            '${EthernetCableScreen.ethData.length} cable categories',
             style: text.labelMedium?.copyWith(
               color: colors.textSecondary,
               letterSpacing: 0.4,
@@ -473,7 +726,7 @@ class EthernetCableScreen extends StatelessWidget {
         DataColumn(label: Text('PoE')),
         DataColumn(label: Text('Shielding')),
       ],
-      rows: ethData.map((EthCable e) {
+      rows: EthernetCableScreen.ethData.map((EthCable e) {
         // DataTable renders each DataCell as its own column node, so a screen
         // reader would otherwise read "Cat6A", "500", "10 Gbps"… as seven
         // disconnected nodes. We give the FIRST cell the full row summary via
@@ -595,7 +848,7 @@ class EthernetCableScreen extends StatelessWidget {
                 DataColumn(label: Text('Max dist')),
                 DataColumn(label: Text('IEEE spec')),
               ],
-              rows: speedGrades.map((EthSpeedGrade g) {
+              rows: EthernetCableScreen.speedGrades.map((EthSpeedGrade g) {
                 final String summary = rowLabel(g.standard, <String?>[
                   'speed ${g.speed}',
                   'minimum cabling ${g.minCabling}',
@@ -656,7 +909,7 @@ class EthernetCableScreen extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            speedGradesFootnote,
+            EthernetCableScreen.speedGradesFootnote,
             style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
@@ -706,7 +959,7 @@ class EthernetCableScreen extends StatelessWidget {
                 DataColumn(label: Text('Per pair')),
                 DataColumn(label: Text('Name')),
               ],
-              rows: shieldingCodes.map((ShieldingCode s) {
+              rows: EthernetCableScreen.shieldingCodes.map((ShieldingCode s) {
                 final String summary = rowLabel(s.code, <String?>[
                   'overall screen ${s.overall}',
                   'per-pair screen ${s.perPair}',
@@ -756,8 +1009,51 @@ class EthernetCableScreen extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            shieldingFootnote,
+            EthernetCableScreen.shieldingFootnote,
             style: text.labelMedium?.copyWith(color: colors.textTertiary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Cat 7 caveat as a warning verdict card (glyph + word, §8.13). Salvaged
+  /// from the merged cable-connector tile.
+  Widget _cat7CaveatCard(AppColorScheme colors, TextTheme text) {
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.statusWarningFill,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.statusWarning, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(
+            Icons.warning_amber_rounded,
+            size: 20,
+            color: colors.statusWarning,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  'Cat 7: ISO/IEC Class F, not a TIA standard',
+                  style: (text.bodyMedium ?? const TextStyle()).copyWith(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  EthernetCableScreen.cat7Caveat,
+                  style: text.bodySmall?.copyWith(color: colors.textSecondary),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -784,13 +1080,13 @@ class EthernetCableScreen extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            footnote,
+            EthernetCableScreen.footnote,
             style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.xs),
           // The "typical use" column is dropped from the scroll table to keep
           // the row legible; surface it here so no PWA data is lost.
-          ...ethData.map(
+          ...EthernetCableScreen.ethData.map(
             (EthCable e) => Padding(
               padding: const EdgeInsets.only(top: 2),
               child: RichText(
@@ -811,6 +1107,369 @@ class EthernetCableScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// The standard-selector card: T568B / T568A toggle + the plug-orientation
+  /// note. Folded in from the merged ethernet-pinout tile.
+  Widget _standardCard(AppColorScheme colors, TextTheme text) {
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Standard',
+            style: text.labelMedium?.copyWith(
+              color: colors.textSecondary,
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          // T568B / T568A — two short options, segmented toggle (§8.14).
+          _StandardToggle(value: _std, onChanged: _onStandardChanged),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            EthernetCableScreen.orientationNote,
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _pinoutCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
+    final List<PinoutPin> pins = EthernetCableScreen.pinout[_std]!;
+    return _TableCard(
+      title: '${_label(_std)} — pin to pair',
+      footnote: EthernetCableScreen.pinoutFootnote,
+      header: const Row(
+        children: [
+          _HeaderCell('Pin', width: 40),
+          _HeaderCell('Wire color', width: 152),
+          _HeaderCell('Pair', width: 64),
+          _HeaderCell('100/1000 Base-T', width: 120),
+        ],
+      ),
+      rows: pins.map((p) => _PinRow(pin: p, mono: mono)).toList(),
+    );
+  }
+}
+
+/// A section divider header — bigger than the per-card label, marks the two
+/// top-level sections (Cable categories / RJ-45 pinout) as a header for AT.
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Semantics(
+      header: true,
+      child: Text(
+        label,
+        style: (text.titleSmall ?? const TextStyle()).copyWith(
+          color: colors.textPrimary,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+/// Shared card chrome for the pinout table: title, horizontal-scroll grid
+/// (header + rows), footnote. Mirrors the wifi_channels `_TableCard` idiom.
+class _TableCard extends StatelessWidget {
+  const _TableCard({
+    required this.title,
+    required this.header,
+    required this.rows,
+    this.footnote,
+  });
+
+  final String title;
+  final Widget header;
+  final List<Widget> rows;
+  final String? footnote;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: text.labelMedium?.copyWith(
+              color: colors.textSecondary,
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          // Fixed-width cells inside a horizontal scroll: children of a
+          // horizontal SingleChildScrollView get unbounded width, so
+          // IntrinsicWidth lets every Row shrink-wrap its fixed-width cells
+          // and share one common width — columns align and nothing is pinned
+          // to a guessed (too-small) value that would overflow. Title and
+          // footnote stay full-width and wrap.
+          HorizontalScrollTable(
+            child: IntrinsicWidth(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  header,
+                  Divider(color: colors.border, height: AppSpacing.sm),
+                  ...rows,
+                ],
+              ),
+            ),
+          ),
+          if (footnote != null) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              footnote!,
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// One column-header label, mono-caption styled to align with the data cells.
+class _HeaderCell extends StatelessWidget {
+  const _HeaderCell(this.label, {required this.width});
+
+  final String label;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return SizedBox(
+      width: width,
+      child: Text(
+        label,
+        style: text.labelSmall?.copyWith(
+          color: colors.textTertiary,
+          letterSpacing: 0.4,
+        ),
+      ),
+    );
+  }
+}
+
+/// One pin row: pin number, wire-color swatch + name, pair swatch + number,
+/// Base-T function. Swatch fills are DATA glyphs (real wire colors), not UI
+/// tokens.
+class _PinRow extends StatelessWidget {
+  const _PinRow({required this.pin, required this.mono});
+
+  final PinoutPin pin;
+  final AppMonoText mono;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final bool striped = pin.colorName.contains('/');
+    // Pin function and pair carried by text, so the color swatch is never the
+    // only signal (§8.13 rule 2 / WCAG 1.4.1).
+    return Semantics(
+      label:
+          'Pin ${pin.pin}, ${pin.colorName}, pair ${pin.pair}, ${pin.function}',
+      child: ExcludeSemantics(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 40,
+                child: Text(
+                  '${pin.pin}',
+                  style: mono.inlineCode.copyWith(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 152,
+                child: Row(
+                  children: [
+                    _WireSwatch(colorHex: pin.colorHex, striped: striped),
+                    const SizedBox(width: AppSpacing.xs),
+                    Expanded(
+                      child: Text(
+                        pin.colorName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: text.labelMedium?.copyWith(
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(
+                width: 64,
+                child: Row(
+                  children: [
+                    _WireSwatch(
+                      colorHex: EthernetCableScreen.pairColors[pin.pair]!,
+                      striped: false,
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    Text(
+                      '${pin.pair}',
+                      style: mono.inlineCode.copyWith(
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(
+                width: 120,
+                child: Text(
+                  pin.function,
+                  style: mono.inlineCode.copyWith(
+                    color: colors.textSecondary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Wire-color swatch. Solid for a single-color wire; a 135° split (color over
+/// white) for a striped wire — mirrors the PWA's linear-gradient wire dot. The
+/// fill is the literal copper-pair color (a data glyph), bordered with a
+/// low-alpha hairline like the PWA so a near-white wire reads on dark.
+class _WireSwatch extends StatelessWidget {
+  const _WireSwatch({required this.colorHex, required this.striped});
+
+  final int colorHex;
+  final bool striped;
+
+  static const double _size = 14;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final Color wire = Color(colorHex);
+    return Container(
+      width: _size,
+      height: _size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        // Hairline keeps the swatch visible on the dark card (§8.1 decorative
+        // border is correct here — the swatch is non-interactive).
+        border: Border.all(color: colors.border, width: 1),
+        gradient: striped
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                stops: const [0.5, 0.5],
+                // Canonical T568 data swatch (§8.6.2 / §8.20.7 exception): the
+                // striped half is the literal "white" of a white/colour pair,
+                // the same data-glyph status as the wire hexes themselves. It
+                // stays literal white in both themes (the 1px border keeps it
+                // visible on the white light card), never a theme token.
+                colors: [wire, const Color(0xFFFFFFFF)],
+              )
+            : null,
+        color: striped ? null : wire,
+      ),
+    );
+  }
+}
+
+/// Segmented standard toggle (T568B / T568A). Mirrors the wifi_channels
+/// `_BandToggle` idiom (§8.14: a Toggle is correct for 2–3 short options).
+class _StandardToggle extends StatelessWidget {
+  const _StandardToggle({required this.value, required this.onChanged});
+
+  final WiringStandard value;
+  final ValueChanged<WiringStandard> onChanged;
+
+  static const List<(WiringStandard, String)> _options = [
+    (WiringStandard.t568b, 'T568B'),
+    (WiringStandard.t568a, 'T568A'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.inputFill,
+        borderRadius: BorderRadius.circular(AppRadius.control),
+        border: Border.all(color: colors.borderStrong, width: 1),
+      ),
+      child: Row(
+        children: _options.map((opt) {
+          final bool selected = opt.$1 == value;
+          // Each segment flexes to share the row width so the two chips never
+          // overflow a narrow phone surface.
+          return Expanded(
+            child: Semantics(
+              button: true,
+              selected: selected,
+              label: opt.$2,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(AppRadius.control),
+                onTap: () => onChanged(opt.$1),
+                child: Container(
+                  constraints: const BoxConstraints(
+                    minHeight: AppSpacing.minTouchTarget,
+                  ),
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: selected ? colors.primary : Colors.transparent,
+                    borderRadius: BorderRadius.circular(AppRadius.control),
+                  ),
+                  child: Text(
+                    opt.$2,
+                    style: text.labelLarge?.copyWith(
+                      color: selected
+                          ? colors.onPrimary
+                          : colors.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }

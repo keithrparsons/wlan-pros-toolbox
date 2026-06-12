@@ -81,9 +81,11 @@ void main() {
   });
 
   group('EthernetCableScreen widget', () {
-    testWidgets('renders title and key cells in a phone viewport',
-        (tester) async {
-      await _withViewport(tester, const Size(375, 900), () async {
+    testWidgets('renders consolidated title, both section headers, and key '
+        'cells in a phone viewport', (tester) async {
+      // Taller viewport: the consolidated tool now carries the pinout section
+      // beneath the cable chart.
+      await _withViewport(tester, const Size(375, 2400), () async {
         await tester.pumpWidget(
           MaterialApp(
             theme: AppTheme.dark(),
@@ -91,7 +93,11 @@ void main() {
           ),
         );
 
-        expect(find.text('Ethernet Cable'), findsWidgets);
+        // Consolidated 2026-06-12 — retitled "Ethernet Cable & Connector".
+        expect(find.text('Ethernet Cable & Connector'), findsWidgets);
+        // Two clear sections.
+        expect(find.text('Cable categories'), findsWidgets);
+        expect(find.text('RJ-45 pinout'), findsWidgets);
         expect(find.text('6 cable categories'), findsOneWidget);
         // Cat6A anchor cells render verbatim from the PWA. 'Cat6A' now appears
         // in both the cable-categories table and the multigig minimum-cabling
@@ -100,6 +106,9 @@ void main() {
         expect(find.text('Cat6A'), findsWidgets);
         expect(find.text('500'), findsOneWidget);
         expect(find.text('802.3bt (all)'), findsOneWidget);
+        // The folded-in pinout: T568B default pin-1 wiring renders.
+        expect(find.text('T568B'), findsWidgets);
+        expect(find.text('Orange / White'), findsWidgets);
         // Read-only reference: no inputs.
         expect(find.byType(TextField), findsNothing);
       });

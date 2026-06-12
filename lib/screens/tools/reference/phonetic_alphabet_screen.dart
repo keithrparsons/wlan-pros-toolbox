@@ -172,8 +172,11 @@ class _AlphabetCard extends StatelessWidget {
           HorizontalScrollTable(
             child: DataTable(
               headingRowHeight: 44,
-              dataRowMinHeight: 40,
-              dataRowMaxHeight: 52,
+              // Rows now carry a 60px square per-letter block thumbnail, so the
+              // row must be tall enough for it plus a little vertical breathing
+              // room (no clipping, no RenderFlex overflow).
+              dataRowMinHeight: 72,
+              dataRowMaxHeight: 76,
               columnSpacing: AppSpacing.md,
               horizontalMargin: 0,
               dividerThickness: 1,
@@ -196,12 +199,19 @@ class _AlphabetCard extends StatelessWidget {
                         label: summary,
                         container: true,
                         child: ExcludeSemantics(
-                          child: Text(
-                            p.letter,
-                            style: mono.inlineCode.copyWith(
-                              color: colors.textAccent,
-                              fontWeight: FontWeight.w700,
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              _PhoneticBlockThumb(letter: p.letter),
+                              const SizedBox(width: AppSpacing.sm),
+                              Text(
+                                p.letter,
+                                style: mono.inlineCode.copyWith(
+                                  color: colors.textAccent,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -254,6 +264,56 @@ class _AlphabetCard extends StatelessWidget {
   /// Spell out a Morse pattern for screen readers ("dot dash").
   static String _spokenMorse(String morse) =>
       morse.split('').map((String c) => c == '.' ? 'dot' : 'dash').join(' ');
+}
+
+/// A per-row leading thumbnail: the one letter's semaphore dial + maritime
+/// signal flag + Morse block, re-rendered standalone from the plate's own SVG
+/// builders onto its baked #222222 dark surface.
+///
+/// The block is a dark-baked raster (its dark canvas and the maritime-flag
+/// colors are part of the content and cannot recolor for light mode), so it is
+/// mounted on an ALWAYS-DARK chip in BOTH themes — the same treatment
+/// [DarkRasterDiagramCard] gives the full plate — so the flag colors and the
+/// dark surround read correctly on a light app canvas. Decorative: every fact
+/// it shows (letter, word, Morse) is already in the row text, so it is
+/// `ExcludeSemantics`. Gated on [ReferenceImages.isPhoneticBlockBundled] so a
+/// missing block collapses to nothing and the row still reads as text.
+class _PhoneticBlockThumb extends StatelessWidget {
+  const _PhoneticBlockThumb({required this.letter});
+
+  final String letter;
+
+  /// Side length of the (square) thumbnail chip.
+  static const double _size = 60;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!ReferenceImages.isPhoneticBlockBundled(letter)) {
+      return const SizedBox.shrink();
+    }
+    // ALWAYS-DARK chip for the dark-baked block, regardless of app theme.
+    final AppColorScheme dark = AppColorScheme.dark();
+    return ExcludeSemantics(
+      child: Container(
+        width: _size,
+        height: _size,
+        decoration: BoxDecoration(
+          color: dark.surface1,
+          borderRadius: BorderRadius.circular(AppRadius.control),
+          border: Border.all(color: dark.border, width: 1),
+        ),
+        clipBehavior: Clip.antiAlias,
+        padding: const EdgeInsets.all(AppSpacing.xxs),
+        child: Image.asset(
+          ReferenceImages.phoneticBlockPathFor(letter),
+          fit: BoxFit.contain,
+          excludeFromSemantics: true,
+          errorBuilder: (BuildContext _, Object _, StackTrace? _) =>
+              const SizedBox.shrink(),
+        ),
+      ),
+    );
+  }
 }
 
 /// The legend describing the three signal layers on the embedded plate.

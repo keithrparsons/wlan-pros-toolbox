@@ -37,6 +37,25 @@ class ReferenceImages {
   /// guarantee — gate on [isBundled] before handing this to `Image.asset`.
   static String pathFor(String id) => '$_dir/$id.png';
 
+  /// Subdirectory holding the per-letter Phonetic Alphabet blocks (the
+  /// semaphore dial + maritime flag + Morse for ONE letter, re-rendered
+  /// standalone from the plate's own SVG builders onto a baked dark surface).
+  static const String _phoneticBlocksDir = '$_dir/phonetic-blocks';
+
+  /// Conventional asset path for the per-letter Phonetic block for [letter]
+  /// (case-insensitive; e.g. `A` -> `assets/reference/phonetic-blocks/a.png`).
+  /// No existence guarantee — gate on [isPhoneticBlockBundled] before handing
+  /// this to `Image.asset`.
+  static String phoneticBlockPathFor(String letter) =>
+      '$_phoneticBlocksDir/${letter.toLowerCase()}.png';
+
+  /// `true` only when the build actually bundled this letter's block PNG. Gate
+  /// on this before handing [phoneticBlockPathFor] to `Image.asset`, so a
+  /// missing block simply omits the row thumbnail and never renders a broken
+  /// box. The A-Z table text (letter, word, Morse) reads end-to-end regardless.
+  static bool isPhoneticBlockBundled(String letter) =>
+      _bundled?.contains(phoneticBlockPathFor(letter)) ?? false;
+
   /// Built reference-image paths, populated once from the AssetManifest. `null`
   /// until the first [ensureLoaded] completes; treated as "nothing built".
   static Set<String>? _bundled;

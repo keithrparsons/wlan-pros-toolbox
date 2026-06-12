@@ -431,6 +431,14 @@ flutter:
     # screen readers. Path convention: assets/reference/<tool-id>.png. Directory
     # glob, so dropping a new <id>.png needs no pubspec change.
     - assets/reference/
+    # Per-letter Phonetic Alphabet blocks (2026-06-12) — the semaphore arm dial +
+    # maritime signal flag + Morse for ONE letter, re-rendered standalone from the
+    # phonetic plate's own SVG builders onto its baked #222222 dark surface, so
+    # each A-Z row carries its own little graphic block without looking up at the
+    # full grid. Path: assets/reference/phonetic-blocks/<lowercase-letter>.png.
+    # Flutter directory entries are NOT recursive, so this subdir is declared
+    # explicitly alongside the parent.
+    - assets/reference/phonetic-blocks/
     # Regulatory authority logos (2026-06-08) — official regulator marks, mixed
     # svg/png; the Regulatory Domains page degrades to an abbreviation badge for
     # any regulator without a bundled logo.

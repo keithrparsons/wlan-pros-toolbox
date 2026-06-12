@@ -180,7 +180,11 @@ void main() {
       // Cable & Connector (cable-connector, Cabling & Connectors), Time Zones
       // (time-zone-maps, Time & Formats), Phonetic Alphabet (phonetic-alphabet,
       // Encoding), and Diffie-Hellman (diffie-hellman, Wi-Fi & RF). 135 + 5 = 140.
-      expect(store.count, 140);
+      // 138 = − 2 from the 2026-06-12 Cabling consolidation: the ethernet-pinout
+      // and cable-connector tiles were merged into ethernet-cable (retitled
+      // "Ethernet Cable & Connector"), which keeps its single help entry. Their
+      // two help entries were removed. 140 − 2 = 138.
+      expect(store.count, 138);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

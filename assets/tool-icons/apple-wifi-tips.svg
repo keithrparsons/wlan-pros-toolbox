@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Wi-Fi tips (generic — NO Apple logo): a lightbulb whose filament is a Wi-Fi arc set
+         with a source dot. Silhouette = bulb + base + an idea radiating Wi-Fi. Distinct
+         from wifi-info (gauge + fanning arcs) by the closed bulb body. -->
+    <!-- bulb body -->
+    <path d="M7 13.5 A5.5 5.5 0 1 1 17 13.5 C15.5 15 15 16 15 18 H9 C9 16 8.5 15 7 13.5 Z"/>
+    <!-- screw base -->
+    <line x1="9.5" y1="21" x2="14.5" y2="21"/>
+    <!-- Wi-Fi arcs inside the bulb (the "tip" / idea) -->
+    <path d="M9.3 11 a3.8 3.8 0 0 1 5.4 0"/>
+    <circle cx="12" cy="12.6" r="1" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

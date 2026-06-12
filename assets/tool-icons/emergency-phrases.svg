@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- International emergency phrases: a speech bubble carrying an SOS. Silhouette =
+         rounded speech bubble with a tail + three short stacked phrase lines inside.
+         Distinct from emoji (bare circle + face) and dns-lookup (magnifier globe). -->
+    <!-- speech bubble with lower-left tail -->
+    <path d="M4 5 H20 a2 2 0 0 1 2 2 V14 a2 2 0 0 1 -2 2 H9 L5 20 V16 H4 a2 2 0 0 1 -2 -2 V7 a2 2 0 0 1 2 -2 Z"/>
+    <!-- phrase lines / SOS inside -->
+    <line x1="6" y1="9" x2="18" y2="9"/>
+    <line x1="6" y1="12.5" x2="13" y2="12.5"/>
+  </g>
+</svg>

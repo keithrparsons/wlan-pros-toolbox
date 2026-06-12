@@ -60,7 +60,6 @@ import '../screens/tools/reference/apple_wifi_tips_screen.dart';
 import '../screens/tools/reference/macos_menubar_wifi_screen.dart';
 // Tier-1 references (Pass 2b, 2026-06-12).
 import '../screens/tools/reference/keyboard_shortcuts_screen.dart';
-import '../screens/tools/reference/cable_connector_screen.dart';
 import '../screens/tools/reference/time_zones_screen.dart';
 import '../screens/tools/reference/phonetic_alphabet_screen.dart';
 import '../screens/tools/reference/diffie_hellman_screen.dart';
@@ -68,7 +67,6 @@ import '../screens/tools/reference/reason_codes_screen.dart';
 import '../screens/tools/reference/frame_exchange_screen.dart';
 import '../screens/tools/reference/db_reference_screen.dart';
 import '../screens/tools/reference/channel_map_screen.dart';
-import '../screens/tools/reference/ethernet_pinout_screen.dart';
 import '../screens/tools/reference/coax_cable_screen.dart';
 import '../screens/tools/reference/ethernet_cable_screen.dart';
 import '../screens/tools/reference/antenna_connectors_screen.dart';
@@ -224,7 +222,6 @@ class AppRouter {
   static const String frameExchange = '/tools/frame-exchange';
   static const String dbReference = '/tools/db-reference';
   static const String channelMap = '/tools/channel-map';
-  static const String ethernetPinout = '/tools/ethernet-pinout';
   static const String coaxCable = '/tools/coax-cable';
   static const String ethernetCable = '/tools/ethernet-cable';
   static const String fiberOptic = '/tools/fiber-optic';
@@ -383,7 +380,6 @@ class AppRouter {
   // route, catalog entry, help entry, keyword set, embedded-PNG asset slot where
   // applicable, and tests).
   static const String keyboardShortcuts = '/tools/keyboard-shortcuts';
-  static const String cableConnector = '/tools/cable-connector';
   static const String timeZoneMaps = '/tools/time-zone-maps';
   static const String phoneticAlphabet = '/tools/phonetic-alphabet';
   static const String diffieHellman = '/tools/diffie-hellman';
@@ -523,7 +519,6 @@ class AppRouter {
     frameExchange: (_) => const FrameExchangeScreen(),
     dbReference: (_) => const DbReferenceScreen(),
     channelMap: (_) => const ChannelMapScreen(),
-    ethernetPinout: (_) => const EthernetPinoutScreen(),
     coaxCable: (_) => const CoaxCableScreen(),
     ethernetCable: (_) => const EthernetCableScreen(),
     fiberOptic: (_) => const FiberOpticScreen(),
@@ -626,7 +621,6 @@ class AppRouter {
     macosMenubarWifi: (_) => const MacosMenubarWifiScreen(),
     // Tier-1 references (Pass 2b, 2026-06-12).
     keyboardShortcuts: (_) => const KeyboardShortcutsScreen(),
-    cableConnector: (_) => const CableConnectorScreen(),
     timeZoneMaps: (_) => const TimeZonesScreen(),
     phoneticAlphabet: (_) => const PhoneticAlphabetScreen(),
     diffieHellman: (_) => const DiffieHellmanScreen(),

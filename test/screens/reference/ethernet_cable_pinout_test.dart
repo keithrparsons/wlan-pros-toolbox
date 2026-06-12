@@ -1,19 +1,21 @@
-// Tests for the Ethernet Pinout screen.
+// Tests for the RJ-45 pinout section of the consolidated Ethernet Cable &
+// Connector screen.
 //
-// The PINOUT dataset is ported verbatim from the RF Tools PWA (app.js
-// `const PINOUT`). These tests assert the load-bearing anchor pins so a future
-// edit cannot silently drift the wiring away from the PWA, plus one phone-
-// viewport widget test (mirroring test/widget_test.dart _withViewport)
-// confirming the read-only screen renders without a RenderFlex overflow.
+// The pinout merged into EthernetCableScreen 2026-06-12 (was its own
+// ethernet-pinout tile). The PINOUT dataset is still ported verbatim from the
+// RF Tools PWA (app.js `const PINOUT`). These tests assert the load-bearing
+// anchor pins so a future edit cannot silently drift the wiring away from the
+// PWA, plus phone-viewport widget tests confirming the pinout section toggles
+// and renders without a RenderFlex overflow.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wlan_pros_toolbox/screens/tools/reference/ethernet_pinout_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/reference/ethernet_cable_screen.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
 void main() {
   group('T568B pinout — match PWA app.js PINOUT.T568B', () {
-    PinoutPin pinFor(int n) => EthernetPinoutScreen
+    PinoutPin pinFor(int n) => EthernetCableScreen
         .pinout[WiringStandard.t568b]!
         .firstWhere((PinoutPin p) => p.pin == n);
 
@@ -47,7 +49,7 @@ void main() {
   });
 
   group('T568A pinout — match PWA app.js PINOUT.T568A', () {
-    PinoutPin pinFor(int n) => EthernetPinoutScreen
+    PinoutPin pinFor(int n) => EthernetCableScreen
         .pinout[WiringStandard.t568a]!
         .firstWhere((PinoutPin p) => p.pin == n);
 
@@ -69,7 +71,7 @@ void main() {
   group('dataset integrity', () {
     test('each standard has exactly 8 pins, numbered 1–8 in order', () {
       for (final WiringStandard s in WiringStandard.values) {
-        final List<PinoutPin> pins = EthernetPinoutScreen.pinout[s]!;
+        final List<PinoutPin> pins = EthernetCableScreen.pinout[s]!;
         expect(pins.length, 8, reason: '${s.name} must have 8 pins');
         expect(
           pins.map((PinoutPin p) => p.pin).toList(),
@@ -81,8 +83,8 @@ void main() {
     test('pins 4, 5, 7, 8 are identical across both standards', () {
       // Only pairs 2 and 3 swap between A and B; the Blue (pair 1) and Brown
       // (pair 4) wires are the same on both, verbatim from the PWA.
-      final List<PinoutPin> b = EthernetPinoutScreen.pinout[WiringStandard.t568b]!;
-      final List<PinoutPin> a = EthernetPinoutScreen.pinout[WiringStandard.t568a]!;
+      final List<PinoutPin> b = EthernetCableScreen.pinout[WiringStandard.t568b]!;
+      final List<PinoutPin> a = EthernetCableScreen.pinout[WiringStandard.t568a]!;
       for (final int n in <int>[4, 5, 7, 8]) {
         final PinoutPin pb = b.firstWhere((PinoutPin p) => p.pin == n);
         final PinoutPin pa = a.firstWhere((PinoutPin p) => p.pin == n);
@@ -93,37 +95,38 @@ void main() {
     });
 
     test('four pair colors are defined (1 blue, 2 orange, 3 green, 4 brown)', () {
-      expect(EthernetPinoutScreen.pairColors.keys.toList()..sort(),
+      expect(EthernetCableScreen.pairColors.keys.toList()..sort(),
           <int>[1, 2, 3, 4]);
     });
 
     test('no em dash or Unicode minus in any wire color or function', () {
       for (final WiringStandard s in WiringStandard.values) {
-        for (final PinoutPin p in EthernetPinoutScreen.pinout[s]!) {
+        for (final PinoutPin p in EthernetCableScreen.pinout[s]!) {
           expect(p.colorName.contains('—'), isFalse, reason: 'no em dash');
           expect(p.colorName.contains('−'), isFalse, reason: 'no Unicode minus');
           expect(p.function.contains('—'), isFalse, reason: 'no em dash');
           expect(p.function.contains('−'), isFalse, reason: 'no Unicode minus');
         }
       }
-      expect(EthernetPinoutScreen.footnote.contains('—'), isFalse);
+      expect(EthernetCableScreen.pinoutFootnote.contains('—'), isFalse);
     });
   });
 
-  group('EthernetPinoutScreen widget', () {
+  group('EthernetCableScreen pinout section widget', () {
     testWidgets('renders title, toggle, and T568B pins in a phone viewport',
         (tester) async {
-      await _withViewport(tester, const Size(375, 900), () async {
+      await _withViewport(tester, const Size(375, 2400), () async {
         await tester.pumpWidget(
           MaterialApp(
             theme: AppTheme.dark(),
-            home: const EthernetPinoutScreen(),
+            home: const EthernetCableScreen(),
           ),
         );
         await tester.pump();
 
-        // App-bar title plus toggle segments.
-        expect(find.text('Ethernet Pinout'), findsWidgets);
+        // App-bar title plus the section header and toggle segments.
+        expect(find.text('Ethernet Cable & Connector'), findsWidgets);
+        expect(find.text('RJ-45 pinout'), findsWidgets);
         expect(find.text('T568B'), findsWidgets);
         expect(find.text('T568A'), findsWidgets);
 
@@ -138,11 +141,11 @@ void main() {
 
     testWidgets('tapping T568A swaps to the A wiring (pin 1 = Green / White)',
         (tester) async {
-      await _withViewport(tester, const Size(375, 900), () async {
+      await _withViewport(tester, const Size(375, 2400), () async {
         await tester.pumpWidget(
           MaterialApp(
             theme: AppTheme.dark(),
-            home: const EthernetPinoutScreen(),
+            home: const EthernetCableScreen(),
           ),
         );
         await tester.pump();
@@ -159,11 +162,11 @@ void main() {
     testWidgets('renders without overflow at 320/375/768/1280 widths',
         (tester) async {
       for (final double width in <double>[320, 375, 768, 1280]) {
-        await _withViewport(tester, Size(width, 1200), () async {
+        await _withViewport(tester, Size(width, 2600), () async {
           await tester.pumpWidget(
             MaterialApp(
               theme: AppTheme.dark(),
-              home: const EthernetPinoutScreen(),
+              home: const EthernetCableScreen(),
             ),
           );
           await tester.pump();
