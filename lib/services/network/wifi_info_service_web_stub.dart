@@ -11,4 +11,10 @@ class Platform {
 
   /// Always an empty string on web; the service treats this as unsupported.
   static String get operatingSystem => '';
+
+  /// Always false on web (there is no host OS). The consumers that read this
+  /// (the Windows Wi-Fi reader, the DTMF playback gate) guard on kIsWeb first,
+  /// so this stub value is never the deciding factor — it only keeps the
+  /// conditional import resolving on the web target.
+  static bool get isWindows => false;
 }

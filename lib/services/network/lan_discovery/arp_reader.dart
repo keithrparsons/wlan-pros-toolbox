@@ -168,8 +168,28 @@ ArpReader platformArpReader() {
       'Android sandbox cannot read the ARP table — MAC/vendor is desktop-only.',
     );
   }
-  // Windows/Linux: a different native API (GetIpNetTable / /proc/net/arp) would
-  // be needed; out of scope for this macOS-focused gate (TICKET-HSD-02).
+  // Windows: the neighbor table is read via the Win32 IP Helper API
+  // GetIpNetTable / GetIpNetTable2 (iphlpapi.dll). The `win32` package (already
+  // a dependency for the Wi-Fi bridge) binds these, so the honest path is a
+  // pure-Dart FFI reader mirroring windows_wifi_ffi.dart — open no handle, call
+  // GetIpNetTable into a MIB_IPNETTABLE buffer, map each MIB_IPNETROW
+  // (dwAddr → IP, bPhysAddr[6] → MAC) into an ArpEntry. NOT built in this
+  // prep ticket: the TCP sweep already lists live hosts on Windows; MAC/vendor
+  // enrichment is the optional follow-up.
+  //
+  // TODO(windows-verify): implement WindowsIpNetTableArpReader via
+  //   GetIpNetTable (iphlpapi.dll) and return it here instead of the
+  //   UnavailableArpReader. Verify the MIB_IPNETROW marshalling + the
+  //   two-call size-then-fill pattern against a real box. Until then the sweep
+  //   still works; only the MAC column is honestly absent.
+  if (Platform.isWindows) {
+    return const UnavailableArpReader(
+      'MAC/vendor enrichment is not wired on Windows yet — host discovery '
+      '(TCP liveness) still works. The Windows ARP read (GetIpNetTable) is a '
+      'planned follow-up.',
+    );
+  }
+  // Linux / other: out of scope.
   return const UnavailableArpReader(
     'ARP read not implemented on this platform in the spike.',
   );

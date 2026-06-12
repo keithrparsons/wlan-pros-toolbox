@@ -25,8 +25,14 @@
 // ignore_for_file: experimental_member_use
 
 import 'dart:async';
+// Guard dart:io for web exactly like the network layer does: Platform is only
+// read on a native target, never on web (kIsWeb short-circuits first).
+import 'dart:io'
+    if (dart.library.html) '../network/wifi_info_service_web_stub.dart'
+    as platform_io;
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:just_audio/just_audio.dart';
 
 import '../../data/dtmf.dart';
@@ -57,6 +63,27 @@ class _BytesAudioSource extends StreamAudioSource {
 /// stops the prior tone first.
 class DtmfPlayer {
   DtmfPlayer({AudioPlayer? player}) : _player = player ?? AudioPlayer();
+
+  /// Whether DTMF/tone PLAYBACK is supported on the current platform.
+  ///
+  /// just_audio has first-party implementations for iOS, macOS, Android, and
+  /// web, but NO first-party Windows implementation (the 2026-06-08 Windows
+  /// readiness report §1 flags this as the single plugin gap). Rather than bet
+  /// the tone tools on the flaky community `just_audio_windows`, the DTMF /
+  /// signaling-history screen HONESTLY gates playback off on Windows (GL-008
+  /// "honest unavailable" over a fabricated/fragile path) and shows a
+  /// platform-unavailable surface. The pure-Dart tone SYNTHESIS
+  /// (lib/data/dtmf.dart + signaling_tones.dart) is unaffected — only playback
+  /// is gated.
+  ///
+  /// TODO(windows-verify): if Windows tone playback is wanted later, the cleanest
+  /// swap is `audioplayers` (endorsed Windows impl) behind this same DtmfPlayer
+  /// API, or add `just_audio_windows` and accept the media-foundation risk. Flip
+  /// this getter to true once one of those is wired AND device-verified.
+  static bool get playbackSupportedOnThisPlatform {
+    if (kIsWeb) return true; // just_audio web impl.
+    return !platform_io.Platform.isWindows;
+  }
 
   final AudioPlayer _player;
 

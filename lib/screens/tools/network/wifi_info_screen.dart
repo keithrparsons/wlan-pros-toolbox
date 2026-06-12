@@ -246,15 +246,18 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     switch (_source) {
       case WifiInfoSource.macosCoreWlan:
       case WifiInfoSource.androidWifiManager:
-        // Both the macOS CoreWLAN and the Android WifiManager sources are
-        // pull-only snapshot adapters behind the SAME [WifiInfoAdapter] seam
-        // and render the SAME snapshot body; only the per-field platform label
-        // differs (see [_snapshotPlatformLabel]). Pick the right adapter for
-        // the source, then drive the shared snapshot flow.
+      case WifiInfoSource.windowsNativeWifi:
+        // The macOS CoreWLAN, Android WifiManager, and Windows Native Wifi
+        // sources are all pull-only snapshot adapters behind the SAME
+        // [WifiInfoAdapter] seam and render the SAME snapshot body; only the
+        // per-field platform label differs (see [_snapshotPlatformLabel]). Pick
+        // the right adapter for the source, then drive the shared snapshot flow.
         _macAdapter = widget.macAdapter ??
-            (_source == WifiInfoSource.androidWifiManager
-                ? AndroidWifiInfoAdapter()
-                : MacWifiInfoAdapter());
+            switch (_source) {
+              WifiInfoSource.androidWifiManager => AndroidWifiInfoAdapter(),
+              WifiInfoSource.windowsNativeWifi => WindowsWifiInfoAdapter(),
+              _ => MacWifiInfoAdapter(),
+            };
         _macSeries = WifiTimeSeries();
         WidgetsBinding.instance.addObserver(this);
         // Seed the first reading, then begin automatic polling so the
@@ -289,15 +292,18 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   /// per-field platform label differs (see [_snapshotPlatformLabel]).
   bool get _isSnapshotSource =>
       _source == WifiInfoSource.macosCoreWlan ||
-      _source == WifiInfoSource.androidWifiManager;
+      _source == WifiInfoSource.androidWifiManager ||
+      _source == WifiInfoSource.windowsNativeWifi;
 
   /// The per-field platform label the snapshot cards use in honest
-  /// "not exposed by `<platform>`" copy. Android exposes a different field subset
-  /// than macOS (no noise/SNR), so the reason text names the real source.
-  String get _snapshotPlatformLabel =>
-      _source == WifiInfoSource.androidWifiManager
-          ? 'Android'
-          : 'macOS CoreWLAN';
+  /// "not exposed by `<platform>`" copy. Each snapshot platform exposes a
+  /// different field subset (Android + Windows have no noise/SNR), so the reason
+  /// text names the real source.
+  String get _snapshotPlatformLabel => switch (_source) {
+        WifiInfoSource.androidWifiManager => 'Android',
+        WifiInfoSource.windowsNativeWifi => 'Windows',
+        _ => 'macOS CoreWLAN',
+      };
 
   /// The platform that owns an unreadable-MAC reason note, so the "MAC type"
   /// note names the RIGHT OS limit (the S24 bug was the iOS "Apple does not
@@ -311,6 +317,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       case WifiInfoSource.androidWifiManager:
         return MacAddressPlatform.android;
       case WifiInfoSource.macosCoreWlan:
+      case WifiInfoSource.windowsNativeWifi:
       case WifiInfoSource.unsupported:
       case WifiInfoSource.web:
         return MacAddressPlatform.other;
@@ -794,6 +801,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     switch (_source) {
       case WifiInfoSource.macosCoreWlan:
       case WifiInfoSource.androidWifiManager:
+      case WifiInfoSource.windowsNativeWifi:
         // §8.16 order: copy LEADS, the Refresh action trails. Copy is disabled
         // until a snapshot has resolved (textBuilder → null while loading or on
         // error with no info), enabled once link details exist.
@@ -843,6 +851,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     switch (_source) {
       case WifiInfoSource.macosCoreWlan:
       case WifiInfoSource.androidWifiManager:
+      case WifiInfoSource.windowsNativeWifi:
         return _macInfo;
       case WifiInfoSource.iosShortcuts:
         final WiFiDetails? d = _liveController?.details;
@@ -980,6 +989,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         return const _PlatformComingSoon();
       case WifiInfoSource.macosCoreWlan:
       case WifiInfoSource.androidWifiManager:
+      case WifiInfoSource.windowsNativeWifi:
         return _macBody();
       case WifiInfoSource.iosShortcuts:
         return _iosBody();
@@ -1526,6 +1536,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       case WifiInfoSource.iosShortcuts:
         return 'This device MAC, not the AP. ${MacRandomizationClassifier.unreadableReason(MacAddressPlatform.ios)}';
       case WifiInfoSource.macosCoreWlan:
+      case WifiInfoSource.windowsNativeWifi:
       case WifiInfoSource.unsupported:
       case WifiInfoSource.web:
         return null;

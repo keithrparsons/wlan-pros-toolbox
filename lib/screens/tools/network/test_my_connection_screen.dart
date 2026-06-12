@@ -170,6 +170,8 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         return 'macOS';
       case WifiInfoSource.androidWifiManager:
         return 'Android';
+      case WifiInfoSource.windowsNativeWifi:
+        return 'Windows';
       case WifiInfoSource.iosShortcuts:
         return 'iOS';
       case WifiInfoSource.unsupported:
@@ -188,6 +190,8 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         _macAdapter = widget.macAdapter ?? MacWifiInfoAdapter();
       case WifiInfoSource.androidWifiManager:
         _macAdapter = widget.macAdapter ?? AndroidWifiInfoAdapter();
+      case WifiInfoSource.windowsNativeWifi:
+        _macAdapter = widget.macAdapter ?? WindowsWifiInfoAdapter();
       case WifiInfoSource.iosShortcuts:
         _iosBridge = widget.iosBridge ?? WiFiDetailsBridge();
         // The front door is the FIRST live surface most users hit. The mandatory
@@ -211,6 +215,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     if (widget.enableLiveSampling &&
         (_source == WifiInfoSource.macosCoreWlan ||
             _source == WifiInfoSource.androidWifiManager ||
+            _source == WifiInfoSource.windowsNativeWifi ||
             _source == WifiInfoSource.iosShortcuts)) {
       _sampler = widget.sampler ??
           WifiSignalSampler(
@@ -236,12 +241,16 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       // test still auto-runs on the home-hero path; only the iOS RF stream waits
       // for the one deliberate tap (GL-008: build to the platform, no fabricated
       // auto-behavior that the bridge cannot honor).
-      // macOS and Android both source the live feed from NATIVE polling (no app
-      // switch), so they auto-start cleanly on screen entry. iOS waits for the
-      // single deliberate Start tap (firing the Shortcut would bounce the user
-      // out of the app).
+      // macOS, Android, and Windows all source the live feed from NATIVE polling
+      // (no app switch), so they auto-start cleanly on screen entry. iOS waits
+      // for the single deliberate Start tap (firing the Shortcut would bounce the
+      // user out of the app).
+      // TODO(windows-verify): confirm the wlanapi.dll poll loop ticks against a
+      // real radio on the June-26 device pass (mapping logic is unit-tested; the
+      // FFI read itself only executes on Windows).
       if (_source == WifiInfoSource.macosCoreWlan ||
-          _source == WifiInfoSource.androidWifiManager) {
+          _source == WifiInfoSource.androidWifiManager ||
+          _source == WifiInfoSource.windowsNativeWifi) {
         _sampler!.start();
       }
     }
@@ -356,6 +365,23 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
           // notarized builds). Read the snapshot directly, bounded so a stalled
           // channel can never hang the check.
           return await adapter.fetch().timeout(
+            const Duration(seconds: 5),
+            onTimeout: () =>
+                throw TimeoutException('Wi-Fi link read timed out'),
+          );
+        case WifiInfoSource.windowsNativeWifi:
+          // Windows Native Wifi (wlanapi.dll via Dart FFI) returns SSID/BSSID/
+          // rate with NO Location grant, so — unlike macOS/Android — there is no
+          // permission gate to consider mid-test. Read the snapshot directly,
+          // bounded so a stalled FFI read can never hang the check. The
+          // WindowsWifiInfoAdapter applies its own 5s fetch ceiling too; this
+          // outer bound mirrors the macOS branch for a uniform call site.
+          // TODO(windows-verify): the wlanapi.dll FFI read executes only on a
+          // real Windows host — exercise this branch against a live radio on the
+          // June-26 device pass.
+          final WifiInfoAdapter? winAdapter = _macAdapter;
+          if (winAdapter == null) return null;
+          return await winAdapter.fetch().timeout(
             const Duration(seconds: 5),
             onTimeout: () =>
                 throw TimeoutException('Wi-Fi link read timed out'),

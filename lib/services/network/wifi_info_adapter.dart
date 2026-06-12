@@ -14,8 +14,13 @@
 //             carries an install flow + live streaming the snapshot seam does
 //             not model. The adapter for iOS therefore reports
 //             [WifiInfoSource.iosShortcuts] so the screen routes to that stack.
-//   * Android / Windows → [WifiInfoSource.unsupported]: clean seam, honest
-//             "coming later" state. NOT built in this ticket.
+//   * Android → [AndroidWifiInfoAdapter] over WifiManager (WifiInfoService).
+//   * Windows → [WindowsWifiInfoAdapter] over the Win32 Native Wifi API
+//             (wlanapi.dll), read straight from Dart FFI via the `win32`
+//             package — NO C++ MethodChannel, NO Location-permission flow. A
+//             pull-only snapshot, the same shape as macOS/Android.
+//   * desktop Linux → [WifiInfoSource.unsupported]: clean seam, honest
+//             "coming later" state.
 //   * web → [WifiInfoSource.web]: download-the-app fallback.
 //
 // Keeping the iOS streaming stack as its own branch (rather than forcing it
@@ -31,6 +36,7 @@ import 'package:flutter/foundation.dart'
 
 import 'connected_ap.dart';
 import 'wifi_info_service.dart';
+import 'windows_wifi_reader.dart';
 
 /// Which data source backs the Wi-Fi Information tool on the current platform.
 enum WifiInfoSource {
@@ -47,7 +53,13 @@ enum WifiInfoSource {
   /// the macOS source.
   androidWifiManager,
 
-  /// A native platform with no Wi-Fi adapter yet (Windows, desktop Linux).
+  /// Windows Native Wifi (wlanapi.dll) snapshot via [WindowsWifiInfoAdapter].
+  /// Pull-only snapshot, read straight from Dart FFI (NO C++ MethodChannel,
+  /// NO Location-permission flow — Windows returns SSID/BSSID without a grant).
+  /// Same shape as the macOS/Android snapshot sources.
+  windowsNativeWifi,
+
+  /// A native platform with no Wi-Fi adapter yet (desktop Linux).
   /// Honest "coming in a later update" state.
   unsupported,
 
@@ -70,6 +82,7 @@ class WifiInfoSourceResolver {
       TargetPlatform.macOS => WifiInfoSource.macosCoreWlan,
       TargetPlatform.iOS => WifiInfoSource.iosShortcuts,
       TargetPlatform.android => WifiInfoSource.androidWifiManager,
+      TargetPlatform.windows => WifiInfoSource.windowsNativeWifi,
       _ => WifiInfoSource.unsupported,
     };
   }
@@ -320,4 +333,75 @@ class AndroidWifiInfoAdapter implements WifiInfoAdapter {
   Future<bool> openNamePermissionSettings() => _service
       .openLocationSettings()
       .timeout(_fetchTimeout, onTimeout: () => false);
+}
+
+/// Windows Native Wifi adapter. Reads the connected AP straight from
+/// `wlanapi.dll` via Dart FFI ([WindowsWifiReader]) — NO C++ MethodChannel and
+/// NO method-channel `WifiInfoService` at all; the win32 package binds
+/// WlanOpenHandle / WlanEnumInterfaces / WlanQueryInterface /
+/// WlanGetNetworkBssList directly, so the whole bridge is Dart. It maps the
+/// resulting snapshot into the normalized [ConnectedAp] via
+/// [ConnectedAp.fromWindowsWifiInfo].
+///
+/// Unlike macOS and Android, Windows does NOT gate the network name behind a
+/// Location permission — Native Wifi returns SSID/BSSID with no runtime grant.
+/// So [gatesNameBehindPermission] is false and every permission method is the
+/// no-op the [WifiInfoAdapter] contract specifies for ungated sources.
+///
+/// Fields Windows cannot supply stay honestly null (GL-005 / GL-008): the public
+/// Native Wifi API exposes no noise floor, so noise + SNR are null and never
+/// derived (the same two Android omits). Channel WIDTH needs IE-blob parsing
+/// deferred to device-time, so it rides null for now. Windows supplies MORE than
+/// macOS, though: a real dBm RSSI (`lRssi`) AND the Rx rate — so
+/// [ConnectedAp.fromWindowsWifiInfo] sets `rxRateAvailable: true`.
+class WindowsWifiInfoAdapter implements WifiInfoAdapter {
+  /// [reader] is injectable so tests drive a fake/Windows-override without a
+  /// real platform or a real wlanapi.dll.
+  ///
+  /// [fetchTimeout] bounds the FFI read as a hang-safety; on timeout [fetch]
+  /// throws a typed [WifiInfoUnavailable] (`channelError`), matching every other
+  /// adapter so callers degrade honestly with no per-screen change.
+  WindowsWifiInfoAdapter({
+    WindowsWifiReader? reader,
+    Duration fetchTimeout = const Duration(seconds: 5),
+  })  : _reader = reader ?? WindowsWifiReader(),
+        // ignore: prefer_initializing_formals
+        _fetchTimeout = fetchTimeout;
+
+  final WindowsWifiReader _reader;
+  final Duration _fetchTimeout;
+
+  @override
+  String get platformLabel => 'Windows';
+
+  /// Windows Native Wifi returns SSID/BSSID with NO Location grant.
+  @override
+  bool get gatesNameBehindPermission => false;
+
+  /// Reads a fresh Native Wifi snapshot with a hard upper bound. An FFI read
+  /// that never returns raises a typed [WifiInfoUnavailable] (`channelError`)
+  /// after [fetchTimeout] rather than hanging the caller.
+  @override
+  Future<ConnectedAp> fetch() async {
+    final WifiInfo info = await _reader.fetch().timeout(
+      _fetchTimeout,
+      onTimeout: () => throw const WifiInfoUnavailable(
+        WifiInfoUnavailableReason.channelError,
+        'Wi-Fi snapshot read timed out.',
+      ),
+    );
+    return ConnectedAp.fromWindowsWifiInfo(info);
+  }
+
+  /// No name-gating permission on Windows — always authorized.
+  @override
+  Future<bool> requestNamePermission() async => true;
+
+  /// No name-gating permission on Windows — always authorized.
+  @override
+  Future<bool> currentNameAuthorization() async => true;
+
+  /// No name-gating settings pane to deep-link to on Windows.
+  @override
+  Future<bool> openNamePermissionSettings() async => false;
 }

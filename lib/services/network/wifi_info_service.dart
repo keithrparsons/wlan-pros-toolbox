@@ -204,8 +204,20 @@ class WifiInfoService {
   /// macOS reads CoreWLAN; Android reads WifiManager + ConnectivityManager
   /// (MainActivity.kt). Both back the same `com.wlanpros.toolbox/wifi_info`
   /// channel and the same [WifiInfo] payload shape.
+  ///
+  /// Windows is also supported — but it does NOT go through this method channel.
+  /// The Windows Wi-Fi bridge is pure Dart FFI against wlanapi.dll
+  /// ([WindowsWifiReader] / [WindowsWifiInfoAdapter]), with NO native channel
+  /// handler, so [fetch] below would throw `channelError` on Windows. Windows is
+  /// listed here only so callers that gate a capability on
+  /// [isSupportedPlatform] (e.g. Interface Info's name-read path) treat Windows
+  /// as a platform that CAN read Wi-Fi; those callers route through the adapter
+  /// seam (FFI), never this service's [fetch].
   bool get isSupportedPlatform =>
-      !kIsWeb && (_platform == 'macos' || _platform == 'android');
+      !kIsWeb &&
+      (_platform == 'macos' ||
+          _platform == 'android' ||
+          _platform == 'windows');
 
   /// Reads a live snapshot of the connected Wi-Fi interface.
   ///
