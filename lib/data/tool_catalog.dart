@@ -784,6 +784,31 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Wi-Fi & RF',
       ),
+      // Tier-1 references (integration batch, 2026-06-12). RF Bands = a frequency
+      // map of where common wireless technologies live (the neighbors of the
+      // bands a Wi-Fi pro designs in). Wi-Fi HaLow = the 802.11ah sub-GHz Wi-Fi
+      // reference (region-locked bands, 1-16 MHz channels, 86.7 Mbps single-
+      // stream max, 8191 devices/AP). Both carry an embedded dark-baked plate.
+      ToolEntry(
+        id: 'rf-bands',
+        title: 'RF Bands',
+        description:
+            'Where common wireless tech lives in the spectrum: RFID, GPS, '
+            'cellular, Bluetooth, Zigbee, and Wi-Fi',
+        routeName: '/tools/rf-bands',
+        isLive: true,
+        subgroup: 'Wi-Fi & RF',
+      ),
+      ToolEntry(
+        id: 'wifi-halow',
+        title: 'Wi-Fi HaLow',
+        description:
+            'IEEE 802.11ah sub-GHz Wi-Fi for IoT: long range, low power, '
+            'thousands of devices per AP',
+        routeName: '/tools/wifi-halow',
+        isLive: true,
+        subgroup: 'Wi-Fi & RF',
+      ),
       // Wi-Fi Channels (the plainer channels reference table) was REMOVED
       // 2026-06-06 (BF6-13): it duplicated the visual "Channel Map". Channel Map
       // is the survivor; the one band Channel Map lacked (sub-1 GHz Wi-Fi HaLow)

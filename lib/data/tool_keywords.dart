@@ -425,6 +425,17 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'wpa3', 'discrete log', 'crypto', 'cryptography', 'modular exponentiation',
   ],
 
+  // ── Tier-1 references (integration batch, 2026-06-12) ──
+  'rf-bands': <String>[
+    'frequency', 'spectrum', 'ism', 'lora', 'zigbee', 'z-wave', 'thread',
+    'rfid', 'nfc', 'gps', 'gnss', 'cellular', '5g', 'sub-ghz', '900 mhz',
+    'band plan', 'wigig', '60 ghz',
+  ],
+  'wifi-halow': <String>[
+    '802.11ah', 'halow', 's1g', 'sub-ghz', 'sub-1 ghz', 'iot', 'long range',
+    'morse micro', '900 mhz', 'low power', 'twt', 'mcs', 'lpwan',
+  ],
+
   // ── CLI & Capture sheets ──
   'cli-commands': <String>[
     'ipconfig', 'ifconfig', 'netsh', 'terminal', 'command line', 'windows',

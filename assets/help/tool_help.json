@@ -3218,6 +3218,44 @@
         "Diffie-Hellman is the basis of SAE (Simultaneous Authentication of Equals), the Dragonfly handshake in WPA3, which replaced WPA2's pre-shared-key 4-way handshake and resists offline dictionary attacks."
       ],
       "source": "Standard Diffie-Hellman key exchange and its WPA3 SAE (Dragonfly) application; paint-mixing analogy paired with the modular-exponentiation math."
+    },
+    "rf-bands": {
+      "name": "RF Bands",
+      "category": "Quick Reference",
+      "purpose": "A frequency map of where the common wireless technologies live in the radio spectrum, low to high frequency. It shows the neighbors of the bands you design in: sub-GHz IoT (LoRa, Zigbee, Z-Wave, Wi-Fi HaLow, RFID), GPS, cellular (LTE and 5G), the crowded 2.4 GHz ISM band, and Wi-Fi across 2.4, 5, 6, and 60 GHz.",
+      "whyHere": "Understanding interference and coexistence starts with knowing who else is in the neighborhood. This is a frequency reference, not a channel plan: read it to see what sits next to your Wi-Fi bands and why a band is crowded.",
+      "howToUse": [
+        "Scan the five grouped tables, low to high frequency. Each row gives the band, the technology, its typical use, and a note. Wi-Fi rows are accented so your home turf stands out.",
+        "The embedded spectrum-bar plate at the top is a log-scale orientation of the whole map; tap it to zoom.",
+        "Check the region-variance list at the bottom for the bands where what operates where genuinely changes by regulator (6 GHz Wi-Fi, sub-GHz ISM, Z-Wave, HaLow, UHF RFID, channel counts)."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "All band edges are nominal allocations, not guaranteed-clear channels. Local power limits, DFS, and licensing further constrain real use.",
+        "6 GHz is the highest-stakes regional variance: the US opens 5.925 to 7.125 GHz while the EU opened only 5.945 to 6.425 GHz, and some regions have not opened 6 GHz at all. Sub-GHz IoT lives at 902 to 928 MHz in the US and 863 to 868 MHz in the EU."
+      ],
+      "source": "RF Bands at a Glance reference; every load-bearing figure cross-verified against two or more independent sources (ITU/ISM band edges, the WLAN channels list, GPS signal frequencies, 5G NR FR1/FR2 band tables)."
+    },
+    "wifi-halow": {
+      "name": "Wi-Fi HaLow",
+      "category": "Quick Reference",
+      "purpose": "An IEEE 802.11ah reference: Wi-Fi moved down into the sub-1-GHz license-exempt bands (S1G) for IoT. It trades raw speed for about 1 km range, multi-year battery life, and up to 8,191 devices per access point, while keeping a native IP stack and WPA3. The screen carries what it is, the bands by region, the 1 to 16 MHz channel widths, the single-stream MCS rate table, capacity and power features, use cases, a comparison against other IoT radios, and 2026 maturity.",
+      "whyHere": "HaLow is the sub-GHz member of the Wi-Fi family that a Wi-Fi pro is increasingly asked about for industrial IoT, agriculture, smart metering, and cameras. It does not use 2.4, 5, or 6 GHz, which is the whole reason it reaches farther.",
+      "howToUse": [
+        "Read the region-lock banner first: frequency and channel width are set by the local regulator, so a device certified for one region cannot legally run in another.",
+        "The headline numbers give the four facts to remember: about 1 km range, 86.7 Mbps single-stream maximum, 8,191 devices per AP, and multi-year battery life.",
+        "The single-stream MCS table shows the rate at each modulation and channel width; the peak 86.7 Mbps lives at MCS 9, 256-QAM, 16 MHz, short guard interval. The embedded plate compares the 1 to 16 MHz channels against a 20 MHz Wi-Fi channel; tap it to zoom."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "The defensible maximum is 86.7 Mbps single stream (in the Wi-Fi Alliance source). Wikipedia cites 433.3 Mbps for a 4-spatial-stream maximum, but a 4x scaling of the WFA figure gives about 347 Mbps, and first-generation HaLow silicon is single-stream. Read 86.7 Mbps as the ceiling a field tech will see.",
+        "HaLow is real, certified, and shipping (Morse Micro silicon, sub-$130 developer gateways) but is at the early-adoption stage in 2026. It has not displaced Zigbee or Z-Wave yet; that is a roadmap claim, not a 2026 fact."
+      ],
+      "source": "Wi-Fi Alliance, Wi-Fi CERTIFIED HaLow Technology Overview (Nov 2021), cross-checked against the IEEE 802.11ah Wikipedia article and Electronics-Notes; maturity cross-checked against Morse Micro releases (2025/2026)."
     }
   }
 }

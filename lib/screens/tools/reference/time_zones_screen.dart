@@ -1,11 +1,15 @@
-// Time Zones — read-only UTC reference (Tier-1, Pass 2b 2026-06-12).
+// Time Zones — read-only UTC reference (Tier-1, Pass 2b 2026-06-12; maps
+// rebuilt in the integration batch 2026-06-12).
 //
-// The world-map plate (a schematic UTC-offset orientation map) is the VISUAL the
-// staged DATA could not reproduce as text, so it is embedded at the top via the
-// established DarkRasterDiagramCard (always-dark surface in both themes, tap to
-// pinch-zoom; the plate is dark-baked, GL-003 §8). Beneath it, two NATIVE tables
-// carry every fact in text (the map is decorative for screen readers, never the
-// sole carrier of meaning):
+// Two map plates (schematic UTC-offset orientation maps) are the VISUAL the
+// staged DATA could not reproduce as text, so they are embedded at the top via
+// the established DarkRasterDiagramCard (always-dark surface in both themes, tap
+// to pinch-zoom; the plates are dark-baked, GL-003 §8):
+//   1. The brand-rebuilt WORLD time-zones map (assets/reference/time-zones-
+//      world.png), which replaces the old crude "blobs" world map.
+//   2. The new US time-zones map (assets/reference/time-zones-us.png).
+// Beneath them, two NATIVE tables carry every fact in text (the maps are
+// decorative for screen readers, never the sole carrier of meaning):
 //   A. World UTC offset rail (anchor cities per one-hour band).
 //   B. United States time zones (standard / daylight abbreviations + notes).
 //
@@ -35,16 +39,28 @@ import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'reference_row_semantics.dart';
 
-/// Stable catalog tool id — backs the route, the help entry, the bundled map
-/// PNG (assets/reference/time-zone-maps.png), and the tests.
+/// Stable catalog tool id — backs the route, the help entry, and the tests.
+/// (NEVER renamed — backs the route, catalog entry, and help id.)
 const String kTimeZonesToolId = 'time-zone-maps';
+
+/// Resolver key for the brand-rebuilt WORLD time-zones map plate
+/// (assets/reference/time-zones-world.png). Separate from [kTimeZonesToolId] so
+/// the catalog id stays stable while the map assets are addressed independently.
+const String kTimeZonesWorldMapId = 'time-zones-world';
+
+/// Resolver key for the new US time-zones map plate
+/// (assets/reference/time-zones-us.png).
+const String kTimeZonesUsMapId = 'time-zones-us';
 
 class TimeZonesScreen extends StatelessWidget {
   const TimeZonesScreen({super.key});
 
   /// The world-map plate's true aspect ratio (width / height), pinned so the
   /// inline card is the right shape with no measuring and no letterbox gutters.
-  static const double _mapAspect = 2640 / 2998;
+  static const double _worldMapAspect = 5367 / 2910;
+
+  /// The US-map plate's true aspect ratio (width / height).
+  static const double _usMapAspect = 3714 / 2868;
 
   /// §8.16 plain-text payload — the map's facts live in these tables, so copying
   /// them captures everything on-screen. Always non-null (static data).
@@ -99,7 +115,9 @@ class TimeZonesScreen extends StatelessWidget {
         final double edge = isDesktop
             ? AppSpacing.screenEdgeDesktop
             : AppSpacing.screenEdgeMobile;
-        final bool hasMap = ReferenceImages.isBundled(kTimeZonesToolId);
+        final bool hasWorldMap =
+            ReferenceImages.isBundled(kTimeZonesWorldMapId);
+        final bool hasUsMap = ReferenceImages.isBundled(kTimeZonesUsMapId);
         return Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(
@@ -115,14 +133,25 @@ class TimeZonesScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  if (hasMap) ...<Widget>[
+                  if (hasWorldMap) ...<Widget>[
                     DarkRasterDiagramCard(
-                      assetPath: ReferenceImages.pathFor(kTimeZonesToolId),
-                      aspectRatio: _mapAspect,
+                      assetPath: ReferenceImages.pathFor(kTimeZonesWorldMapId),
+                      aspectRatio: _worldMapAspect,
                       semanticLabel: 'world UTC time-zone map',
                       caption:
                           'Vertical bands are one-hour UTC offsets; the prime '
                           'meridian (UTC 0) runs through Greenwich. Tap to zoom.',
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+                  if (hasUsMap) ...<Widget>[
+                    DarkRasterDiagramCard(
+                      assetPath: ReferenceImages.pathFor(kTimeZonesUsMapId),
+                      aspectRatio: _usMapAspect,
+                      semanticLabel: 'United States time-zone map',
+                      caption:
+                          'The continental US spans four zones, plus Alaska and '
+                          'Hawaii-Aleutian. Tap to zoom.',
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],

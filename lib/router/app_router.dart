@@ -63,6 +63,8 @@ import '../screens/tools/reference/keyboard_shortcuts_screen.dart';
 import '../screens/tools/reference/time_zones_screen.dart';
 import '../screens/tools/reference/phonetic_alphabet_screen.dart';
 import '../screens/tools/reference/diffie_hellman_screen.dart';
+import '../screens/tools/reference/rf_bands_screen.dart';
+import '../screens/tools/reference/wifi_halow_screen.dart';
 import '../screens/tools/reference/reason_codes_screen.dart';
 import '../screens/tools/reference/frame_exchange_screen.dart';
 import '../screens/tools/reference/db_reference_screen.dart';
@@ -384,6 +386,11 @@ class AppRouter {
   static const String phoneticAlphabet = '/tools/phonetic-alphabet';
   static const String diffieHellman = '/tools/diffie-hellman';
 
+  // Tier-1 references (integration batch, 2026-06-12): RF Bands frequency map
+  // and Wi-Fi HaLow (802.11ah) sub-GHz reference.
+  static const String rfBands = '/tools/rf-bands';
+  static const String wifiHalow = '/tools/wifi-halow';
+
   static const String osiModel = '/tools/osi-model';
 
   /// FreeRADIUS on WLAN Pi — a how-to / guide screen (v1.1). Bundles Ferney
@@ -622,6 +629,8 @@ class AppRouter {
     // Tier-1 references (Pass 2b, 2026-06-12).
     keyboardShortcuts: (_) => const KeyboardShortcutsScreen(),
     timeZoneMaps: (_) => const TimeZonesScreen(),
+    rfBands: (_) => const RfBandsScreen(),
+    wifiHalow: (_) => const WifiHalowScreen(),
     phoneticAlphabet: (_) => const PhoneticAlphabetScreen(),
     diffieHellman: (_) => const DiffieHellmanScreen(),
     osiModel: (_) => const OsiModelScreen(),

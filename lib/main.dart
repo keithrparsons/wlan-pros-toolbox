@@ -108,8 +108,9 @@ Future<void> main() async {
   }
 
   // Same convention for the Tier-1 reference raster plates
-  // (assets/reference/<id>.png: time-zone-maps, phonetic-alphabet,
-  // diffie-hellman). If the manifest is unavailable, ReferenceImages.isBundled
+  // (assets/reference/<id>.png: time-zones-world, time-zones-us,
+  // phonetic-alphabet, diffie-hellman, rf-bands, wifi-halow). If the manifest is
+  // unavailable, ReferenceImages.isBundled
   // stays false and the image card is omitted — each screen's native text
   // tables still read end-to-end. Never block startup.
   try {

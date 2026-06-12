@@ -184,7 +184,10 @@ void main() {
       // and cable-connector tiles were merged into ethernet-cable (retitled
       // "Ethernet Cable & Connector"), which keeps its single help entry. Their
       // two help entries were removed. 140 − 2 = 138.
-      expect(store.count, 138);
+      // 140 = + the 2 NEW Tier-1 references (integration batch, 2026-06-12):
+      // RF Bands (rf-bands) and Wi-Fi HaLow (wifi-halow), both Wi-Fi & RF Quick
+      // Reference tiles with their own help entries. 138 + 2 = 140.
+      expect(store.count, 140);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

@@ -188,6 +188,9 @@ void main() {
       'time-zone-maps': 'Time & Formats',
       'phonetic-alphabet': 'Encoding',
       'diffie-hellman': 'Wi-Fi & RF',
+      // Integration batch (2026-06-12): RF Bands + Wi-Fi HaLow, both Wi-Fi & RF.
+      'rf-bands': 'Wi-Fi & RF',
+      'wifi-halow': 'Wi-Fi & RF',
     };
 
     test(
@@ -314,14 +317,12 @@ void main() {
       tester,
     ) async {
       ReferenceImages.debugSetBundled(<String>{
-        ReferenceImages.pathFor('time-zone-maps'),
         ReferenceImages.pathFor('phonetic-alphabet'),
         ReferenceImages.pathFor('diffie-hellman'),
       });
       addTearDown(ReferenceImages.debugReset);
 
       final List<Widget> withImages = <Widget>[
-        const TimeZonesScreen(),
         const PhoneticAlphabetScreen(),
         const DiffieHellmanScreen(),
       ];
@@ -335,6 +336,27 @@ void main() {
         });
       }
     });
+
+    testWidgets(
+      'Time Zones shows BOTH the world and US map cards when bundled',
+      (tester) async {
+        // Time Zones now embeds two plates: the brand-rebuilt world map and the
+        // new US map (the old crude "blobs" plate was retired).
+        ReferenceImages.debugSetBundled(<String>{
+          ReferenceImages.pathFor('time-zones-world'),
+          ReferenceImages.pathFor('time-zones-us'),
+        });
+        addTearDown(ReferenceImages.debugReset);
+
+        await _withViewport(tester, const Size(375, 3600), () async {
+          await tester.pumpWidget(
+            MaterialApp(theme: AppTheme.dark(), home: const TimeZonesScreen()),
+          );
+          await tester.pump();
+          expect(find.byType(DarkRasterDiagramCard), findsNWidgets(2));
+        });
+      },
+    );
   });
 }
 
