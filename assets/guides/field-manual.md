@@ -2045,9 +2045,9 @@ _Source: Pax verification brief, 2026-06-08 (ISO 8764 / ISO 10664 / ISO 4762 / I
 ## Protocols (8)
 
 
-### 802.11 Frame Exchange
+### Association Sequence
 
-The frame-by-frame sequences for common association and roaming scenarios, showing the order and direction of frames between the STA, AP, RADIUS server, and DHCP server.
+The frame-by-frame 802.11 association and roaming sequences, showing the order and direction of frames between the STA, AP, RADIUS server, and DHCP server.
 
 **Why it's here.** When analyzing a capture or explaining an association/roam, confirm what frame should come next and which entities exchange it.
 
