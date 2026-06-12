@@ -4,6 +4,7 @@
 // in-memory fixture; the last group loads the REAL bundled asset to prove all
 // 92 terms parse and group into the 8 curated categories in the expected order.
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -42,6 +43,18 @@ const String _fixture = '''
 ''';
 
 GlossaryService _svc() => GlossaryService.fromJson(_fixture);
+
+/// Load the actual bundled JSON from disk (not via rootBundle, so no Flutter
+/// binding is needed) and prove the production dataset is healthy.
+GlossaryService _loadReal() {
+  final File asset = File('assets/data/glossary.json');
+  expect(
+    asset.existsSync(),
+    isTrue,
+    reason: 'bundled asset must exist at assets/data/glossary.json',
+  );
+  return GlossaryService.fromJson(asset.readAsStringSync());
+}
 
 void main() {
   group('parse', () {
@@ -124,24 +137,12 @@ void main() {
   });
 
   group('real bundled asset', () {
-    // Load the actual bundled JSON from disk (not via rootBundle, so no Flutter
-    // binding is needed) and prove the production dataset is healthy.
-    GlossaryService loadReal() {
-      final File asset = File('assets/data/glossary.json');
-      expect(
-        asset.existsSync(),
-        isTrue,
-        reason: 'bundled asset must exist at assets/data/glossary.json',
-      );
-      return GlossaryService.fromJson(asset.readAsStringSync());
-    }
-
     test('parses all 92 terms', () {
-      expect(loadReal().count, 92);
+      expect(_loadReal().count, 92);
     });
 
     test('groups into the 8 curated categories in the expected order', () {
-      final GlossaryService real = loadReal();
+      final GlossaryService real = _loadReal();
       const List<String> expected = <String>[
         'Bands & Spectrum',
         'Standards & Wi-Fi Generations',
@@ -162,7 +163,7 @@ void main() {
     });
 
     test('every term lands in exactly one group; counts sum to 92', () {
-      final GlossaryService real = loadReal();
+      final GlossaryService real = _loadReal();
       final int sum = real
           .grouped()
           .fold<int>(0, (int acc, GlossaryGroup g) => acc + g.count);
@@ -170,7 +171,7 @@ void main() {
     });
 
     test('spot-check: RSSI carries its full-name expansion in abbr', () {
-      final GlossaryTerm? rssi = loadReal().byId('rssi');
+      final GlossaryTerm? rssi = _loadReal().byId('rssi');
       expect(rssi, isNotNull);
       expect(rssi!.term, 'RSSI');
       expect(rssi.abbr, 'Received Signal Strength Indicator');
@@ -179,13 +180,158 @@ void main() {
 
     test('spot-check: Free Space Path Loss is multi-sentence with an acronym',
         () {
-      final GlossaryTerm? fspl = loadReal().byId('free-space-path-loss');
+      final GlossaryTerm? fspl = _loadReal().byId('free-space-path-loss');
       expect(fspl, isNotNull);
       expect(fspl!.abbr, 'FSPL');
       // A multi-sentence definition (the curated copy explains the concept in
       // more than one sentence).
       expect(fspl.definition.contains('.'), isTrue);
       expect(fspl.definition.length, greaterThan(80));
+    });
+  });
+
+  // ── Multilingual (added 2026-06-12) ─────────────────────────────────────────
+  group('multilingual definitions', () {
+    test('GlossaryLanguage carries all five languages, English first', () {
+      expect(GlossaryLanguage.values.first, GlossaryLanguage.en);
+      expect(
+        GlossaryLanguage.values.map((GlossaryLanguage l) => l.code).toList(),
+        <String>['en', 'es', 'fr', 'it', 'de'],
+      );
+      // translated == the four non-English members.
+      expect(GlossaryLanguage.translated.length, 4);
+      expect(GlossaryLanguage.translated.contains(GlossaryLanguage.en), isFalse);
+      expect(GlossaryLanguage.fromCode('de'), GlossaryLanguage.de);
+      expect(GlossaryLanguage.fromCode('zz'), isNull);
+    });
+
+    test('definitionFor returns the localized text, falling back to English',
+        () {
+      const String fixture = '''
+{
+  "title": "Wi-Fi Glossary",
+  "terms": [
+    {
+      "id": "ofdma", "term": "OFDMA", "abbr": "Orthogonal FDMA",
+      "category": "Speed, Modulation & Capacity",
+      "definition": "Serves several devices at once.",
+      "definitions": {
+        "es": "Atiende a varios dispositivos a la vez.",
+        "fr": "Sert plusieurs appareils à la fois.",
+        "it": "Serve più dispositivi alla volta.",
+        "de": "Bedient mehrere Geräte gleichzeitig."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "no-translations", "term": "Untranslated", "abbr": null,
+      "category": "Speed, Modulation & Capacity",
+      "definition": "English only."
+    }
+  ]
+}
+''';
+      final GlossaryService svc = GlossaryService.fromJson(fixture);
+      final GlossaryTerm ofdma = svc.byId('ofdma')!;
+      expect(ofdma.definitionFor(GlossaryLanguage.en), 'Serves several devices at once.');
+      expect(ofdma.definitionFor(GlossaryLanguage.es), 'Atiende a varios dispositivos a la vez.');
+      expect(ofdma.definitionFor(GlossaryLanguage.de), 'Bedient mehrere Geräte gleichzeitig.');
+      expect(ofdma.hasTranslation(GlossaryLanguage.fr), isTrue);
+      expect(ofdma.hasTranslation(GlossaryLanguage.en), isFalse);
+
+      // The term/abbr always stay English, never translated.
+      expect(ofdma.term, 'OFDMA');
+      expect(ofdma.abbr, 'Orthogonal FDMA');
+
+      // A term with no translations falls back to English for every language
+      // (GL-005: never blank, never fabricated).
+      final GlossaryTerm none = svc.byId('no-translations')!;
+      for (final GlossaryLanguage l in GlossaryLanguage.values) {
+        expect(none.definitionFor(l), 'English only.');
+      }
+      expect(none.hasTranslation(GlossaryLanguage.es), isFalse);
+    });
+
+    test('search matches localized definition text in the active language', () {
+      const String fixture = '''
+{
+  "title": "Wi-Fi Glossary",
+  "terms": [
+    {
+      "id": "ssid", "term": "SSID", "abbr": "Service Set Identifier",
+      "category": "Access Points, Networks & Roaming",
+      "definition": "The network name devices join.",
+      "definitions": {
+        "es": "El nombre de red al que se unen los dispositivos.",
+        "fr": "Le nom de réseau auquel les appareils se connectent.",
+        "it": "Il nome di rete a cui si collegano i dispositivi.",
+        "de": "Der Netzwerkname, dem Geräte beitreten."
+      }
+    }
+  ]
+}
+''';
+      final GlossaryService svc = GlossaryService.fromJson(fixture);
+      // English term still matches regardless of language.
+      expect(svc.search('SSID', lang: GlossaryLanguage.es).single.id, 'ssid');
+      // A Spanish word only present in the ES definition matches under ES.
+      expect(svc.search('nombre', lang: GlossaryLanguage.es).single.id, 'ssid');
+      // A German word matches under DE.
+      expect(svc.search('Netzwerkname', lang: GlossaryLanguage.de).single.id, 'ssid');
+      // A Spanish word does NOT match under English (default behaviour preserved).
+      expect(svc.search('nombre'), isEmpty);
+    });
+
+    test('DATA INTEGRITY: every real term has all five languages, none empty',
+        () {
+      final GlossaryService real = _loadReal();
+      expect(real.count, 92);
+      for (final GlossaryTerm t in real.all) {
+        // English (the canonical definition) is non-empty.
+        expect(
+          t.definition.trim().isNotEmpty,
+          isTrue,
+          reason: '${t.id} has an empty English definition',
+        );
+        // All five language keys are present and non-empty in `definitions`.
+        for (final GlossaryLanguage l in GlossaryLanguage.values) {
+          final String text = t.definitionFor(l);
+          expect(
+            text.trim().isNotEmpty,
+            isTrue,
+            reason: '${t.id} has an empty ${l.code} definition',
+          );
+        }
+        // The four translated languages each carry a genuine translation (not a
+        // silent English fallback).
+        for (final GlossaryLanguage l in GlossaryLanguage.translated) {
+          expect(
+            t.hasTranslation(l),
+            isTrue,
+            reason: '${t.id} is missing a ${l.code} translation',
+          );
+        }
+      }
+    });
+
+    test('DATA INTEGRITY: the dataset declares its draft-review flag', () {
+      final File asset = File('assets/data/glossary.json');
+      final Map<String, dynamic> doc =
+          jsonDecode(asset.readAsStringSync()) as Map<String, dynamic>;
+      // Top-level provenance flags.
+      expect(doc['translation_status'], 'draft-needs-review');
+      expect(doc['languages'], <String>['en', 'es', 'fr', 'it', 'de']);
+      // Every term carries the same per-term flag.
+      final List<dynamic> terms = doc['terms'] as List<dynamic>;
+      expect(terms.length, 92);
+      for (final dynamic row in terms) {
+        final Map<String, dynamic> m = row as Map<String, dynamic>;
+        expect(
+          m['translation_status'],
+          'draft-needs-review',
+          reason: '${m['id']} is missing the draft-review flag',
+        );
+      }
     });
   });
 }
