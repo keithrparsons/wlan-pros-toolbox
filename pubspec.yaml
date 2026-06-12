@@ -338,6 +338,13 @@ flutter:
     # loaded by the same WifiGlossaryScreen + GlossaryService. Curation order
     # (categories and terms within each) is deliberate and preserved.
     - assets/data/wifi_auth_glossary.json
+    # Emergency Phrases — ~124 travel/emergency phrases in English with Spanish,
+    # French, Italian, and German across 7 situation groups, for the Emergency
+    # Phrases Travel & Field tool. Loaded by EmergencyPhrasesScreen +
+    # EmergencyPhraseService. Curation order (groups and phrases within each) is
+    # deliberate and preserved. Translations are DRAFT machine translations
+    # flagged translation_status: draft-needs-review pending native review.
+    - assets/data/emergency_phrases.json
     # In-app tool help — one entry per catalog tool id, keyed for helpForId()
     # (lib/services/help/). Generated from FIELD-MANUAL.md; loaded + parsed once
     # at startup and cached for the process lifetime. Drives the per-tool help

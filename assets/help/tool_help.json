@@ -3018,6 +3018,28 @@
       ],
       "source": "lib/screens/tools/network/ap_scan_screen.dart"
     },
+    "emergency-phrases": {
+      "name": "Emergency Phrases",
+      "category": "Quick Reference",
+      "purpose": "A searchable, offline phrase translator for a Wi-Fi pro working on-site internationally: about 124 travel and emergency phrases in English with Spanish, French, Italian, and German, grouped into seven situations (basics and courtesy, medical and help, directions, food and lodging, problems and requests, on-site and technical, numbers and time).",
+      "whyHere": "When you land on a job in a country whose language you do not speak, a few of the right phrases get you to the server room, to a doctor, or out of trouble. This keeps them one tap away with no signal needed.",
+      "howToUse": [
+        "Pick how much to show: \"One language\" (English plus one target you choose) or \"All languages\" (English plus all four). One language is the default.",
+        "In one-language mode, choose the target from the language menu (Spanish, French, Italian, or German).",
+        "Search across all five languages at once — type a phrase in English or in any target and the list filters live.",
+        "Tap the copy icon on any phrase to copy just that phrase in the languages currently shown, or use Copy all phrases in the top bar to copy the whole visible list grouped by situation."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": "Pick German, search \"toilet\", and the row shows English \"Where is the toilet?\" with German \"Wo ist die Toilette?\". Tap copy to put both on the clipboard.",
+      "fieldNotes": [
+        "TRANSLATIONS ARE DRAFT. The Spanish, French, Italian, and German wording is draft machine translation generated for the beta and has NOT yet been reviewed by a native or professional translator. A persistent banner at the top of the screen says so, and the caveat is included when you copy the list. Verify any critical phrase locally before relying on it.",
+        "Standard, simple wording was used throughout; no idioms were invented. Phrases are intentionally plain so they travel across dialects.",
+        "Fully offline — the phrase set is bundled in the app, so it works with no signal and no data plan.",
+        "Phrases are grouped by situation in a deliberate, curated order, not alphabetized."
+      ],
+      "source": "emergency_phrases_screen.dart; assets/data/emergency_phrases.json (translation_status: draft-needs-review)"
+    },
     "blue-box": {
       "name": "Blue Box (MF)",
       "category": "Calculators & Tools",

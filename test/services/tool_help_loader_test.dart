@@ -121,7 +121,7 @@ void main() {
       store = ToolHelpStore.fromJson(raw);
     });
 
-    test('parses to exactly 115 entries', () {
+    test('parses to exactly 129 entries', () {
       // 97 = 95 (origin/main: 93 + Antenna Connectors + Optical Transceivers)
       // + 2 backfilled v1.1 help entries (PLMN ID Reference and the Wi-Fi
       // Authentication Glossary).
@@ -166,7 +166,10 @@ void main() {
       // entry itself was extended in place (no new id). 129 + 2 = 131.
       // 132 = + the Morse Code encoder/decoder (morse-code), a new Utilities &
       // Generators tool 2026-06-12. 131 + 1 = 132.
-      expect(store.count, 132);
+      // 133 = + Emergency Phrases (emergency-phrases) 2026-06-12: a searchable,
+      // grouped, offline travel/emergency phrase translator (EN + es/fr/it/de)
+      // in the new Travel & Field Quick Reference subgroup. 132 + 1 = 133.
+      expect(store.count, 133);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help
