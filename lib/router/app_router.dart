@@ -42,6 +42,7 @@ import '../screens/tools/calculators/noise_floor_screen.dart';
 import '../screens/tools/calculators/poe_budget_screen.dart';
 import '../screens/tools/reference/standards_screen.dart';
 import '../screens/tools/reference/mcs_index_screen.dart';
+import '../screens/tools/reference/modulation_screen.dart';
 import '../screens/tools/reference/signal_thresholds_screen.dart';
 import '../screens/tools/reference/wpa_security_screen.dart';
 import '../screens/tools/reference/http_status_codes_screen.dart';
@@ -205,6 +206,7 @@ class AppRouter {
   // into Channel Map.
   static const String standards = '/tools/standards';
   static const String mcsIndex = '/tools/mcs-index';
+  static const String modulation = '/tools/modulation';
   static const String signalThresholds = '/tools/signal-thresholds';
   static const String wpaSecurity = '/tools/wpa-security';
   static const String reasonCodes = '/tools/reason-codes';
@@ -479,6 +481,7 @@ class AppRouter {
     poeBudget: (_) => const PoeBudgetScreen(),
     standards: (_) => const StandardsScreen(),
     mcsIndex: (_) => const McsIndexScreen(),
+    modulation: (_) => const ModulationScreen(),
     signalThresholds: (_) => const SignalThresholdsScreen(),
     wpaSecurity: (_) => const WpaSecurityScreen(),
     reasonCodes: (_) => const ReasonCodesScreen(),

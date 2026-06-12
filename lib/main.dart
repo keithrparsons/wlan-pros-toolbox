@@ -12,6 +12,7 @@ import 'data/connector_diagrams.dart';
 import 'data/connector_photos.dart';
 import 'data/connector_sections.dart';
 import 'data/mac_bit_field_diagram.dart';
+import 'data/modulation_diagrams.dart';
 import 'data/power_phasing_diagrams.dart';
 import 'data/ohms_law_diagrams.dart';
 import 'data/iec_connectors_diagrams.dart';
@@ -92,6 +93,17 @@ Future<void> main() async {
     await ThroughputWhereDiagram.ensureLoaded();
   } catch (_) {
     // Manifest unavailable → isBundled stays false → card omitted. No crash.
+  }
+
+  // Same convention for the eight Modulation reference diagrams
+  // (assets/tool-diagrams/modulation/<slug>.png). If the manifest is
+  // unavailable, ModulationDiagrams.isBundled stays false for every slug and the
+  // gallery cards are omitted — the Modulation screen's intro and help footer
+  // still read. Never block startup.
+  try {
+    await ModulationDiagrams.ensureLoaded();
+  } catch (_) {
+    // Manifest unavailable → isBundled stays false → cards omitted. No crash.
   }
 
   // Same convention for the Antenna Connectors per-connector PHOTOS

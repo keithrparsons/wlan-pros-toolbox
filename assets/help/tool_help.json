@@ -879,6 +879,28 @@
       ],
       "source": "lib/screens/tools/reference/mcs_index_screen.dart"
     },
+    "modulation": {
+      "name": "Modulation",
+      "category": "Quick Reference",
+      "purpose": "Teaches what a modulation constellation is on the I/Q plane and why each step up in order (BPSK -> QPSK -> 16/64/256/1024-QAM) carries more bits per symbol but demands a cleaner link (lower EVM, higher SNR).",
+      "whyHere": "The visual companion to the MCS Index table. Reach for it when you want to understand WHY a higher MCS needs better signal, or to explain constellations, bits per symbol, and EVM to someone, rather than to look up a spec rate.",
+      "howToUse": [
+        "Read the six constellation diagrams in order; each step doubles the points and adds one bit per symbol while the points pack closer together.",
+        "Read the Error Vector Magnitude (EVM) explainer to see what the receiver must overcome to keep each symbol on the correct side of its decision boundary.",
+        "Read the summary card for the order -> bits/symbol -> SNR/EVM relationship at a glance.",
+        "Tap any diagram to open a full-screen pinch-zoom view for the detail-dense planes."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "The SNR and EVM figures on the cards are REPRESENTATIVE order-of-magnitude demands, not exact 802.11 MCS thresholds (Keith-confirmed). The relationship, not the precise number, is the point. Use the MCS Index tool for the spec rate/modulation table.",
+        "EVM (Error Vector Magnitude) is the distance from the ideal symbol point to where the symbol actually landed, expressed as a percentage (or dB) of the reference amplitude. As order rises, decision boundaries shrink, so higher-order QAM demands a lower EVM and a higher SNR.",
+        "The eight diagrams are dark-baked reference rasters; they are shown on an always-dark card in both light and dark app themes so they never read inverted, and they are decorative for screen readers (every fact is also in the screen's prose and copy text).",
+        "The Copy action exports the order -> bits -> SNR/EVM summary as a tab-separated table plus the representative-numbers caveat."
+      ],
+      "source": "modulation_screen.dart"
+    },
     "signal-thresholds": {
       "name": "Signal Thresholds",
       "category": "Quick Reference",

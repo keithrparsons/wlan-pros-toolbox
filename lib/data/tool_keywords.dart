@@ -246,6 +246,11 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'modulation', 'coding', 'data rate', 'qam', 'spatial streams', 'phy rate',
     'rate table',
   ],
+  'modulation': <String>[
+    'constellation', 'bpsk', 'qpsk', 'qam', '16-qam', '64-qam', '256-qam',
+    '1024-qam', 'evm', 'error vector magnitude', 'iq plane', 'bits per symbol',
+    'symbol', 'snr demand',
+  ],
   'signal-thresholds': <String>[
     'rssi', 'snr', 'how strong', 'good signal', 'dbm targets', 'minimum signal',
     'coverage',
