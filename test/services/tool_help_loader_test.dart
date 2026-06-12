@@ -155,7 +155,9 @@ void main() {
       // (nearby-ap-scan, Android-only). The H1/H2/M1+M2 features augment
       // existing tools (my-current-location, wifi-info, network-discovery) and
       // add no new help ids. 126 + 2 = 128.
-      expect(store.count, 128);
+      // 129 = + the Morse Code encoder/decoder (morse-code), a new Utilities &
+      // Generators tool 2026-06-12. 128 + 1 = 129.
+      expect(store.count, 129);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help
