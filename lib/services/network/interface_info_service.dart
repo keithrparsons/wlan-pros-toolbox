@@ -234,13 +234,17 @@ class InterfaceInfoService {
     switch (source) {
       case WifiInfoSource.macosCoreWlan:
       case WifiInfoSource.androidWifiManager:
-        // Both snapshot sources use a [WifiInfoAdapter]; pick the platform's.
-        // Neither pops a prompt here — an ungranted Location simply yields null
-        // SSID/BSSID and currentNameAuthorization reports the gate state.
-        final WifiInfoAdapter adapter =
-            source == WifiInfoSource.androidWifiManager
-                ? AndroidWifiInfoAdapter()
-                : MacWifiInfoAdapter();
+      case WifiInfoSource.windowsNativeWifi:
+        // All three snapshot sources use a [WifiInfoAdapter]; pick the
+        // platform's. None pops a prompt here — Windows needs no Location grant
+        // at all, and an ungranted macOS/Android Location simply yields null
+        // SSID/BSSID while currentNameAuthorization reports the gate state
+        // (always authorized on Windows).
+        final WifiInfoAdapter adapter = switch (source) {
+          WifiInfoSource.androidWifiManager => AndroidWifiInfoAdapter(),
+          WifiInfoSource.windowsNativeWifi => WindowsWifiInfoAdapter(),
+          _ => MacWifiInfoAdapter(),
+        };
         try {
           final ConnectedAp ap = await adapter.fetch().timeout(
                 const Duration(seconds: 5),

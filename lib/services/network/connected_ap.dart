@@ -8,9 +8,12 @@
 //   * macOS → CoreWLAN  (WifiInfoService / WifiInfoChannel.swift) → [fromWifiInfo]
 //   * iOS   → Shortcuts  (WiFiDetailsBridge / ToolboxAppIntents.swift) →
 //             [fromWifiDetails]
+//   * Android → WifiManager (MainActivity.kt channel) → [fromAndroidWifiInfo]
+//   * Windows → Native Wifi (wlanapi.dll, pure Dart FFI via win32 — NO C++
+//             channel) → [fromWindowsWifiInfo]
 //
-// Android / Windows are a clean seam only (the adapter reports them
-// unsupported); they slot a future native source into this same model.
+// desktop Linux is a clean seam only (the adapter reports it unsupported); it
+// slots a future native source into this same model.
 //
 // Every field is nullable: each platform exposes a different subset, and a
 // reading can legitimately omit any field. The screen renders a missing field
@@ -223,6 +226,64 @@ class ConnectedAp {
       bandDerived: false,
       snrDerived: false,
       // Android exposes the security type whenever a scan match is found.
+      securityAvailable: true,
+    );
+  }
+
+  /// Maps the Windows Native Wifi (wlanapi.dll) snapshot into the normalized
+  /// model. Mirrors [fromAndroidWifiInfo].
+  ///
+  /// Windows exposes a REAL dBm RSSI (`lRssi` from the BSS entry — not just the
+  /// 0–100 signal quality), the Tx AND Rx link rates (`ulTxRate` / `ulRxRate`
+  /// from the association attributes — a field macOS cannot supply), the PHY
+  /// type (→ 802.11 standard), the channel + band (derived from the BSS center
+  /// frequency), and the security type (from the auth algorithm in
+  /// WLAN_SECURITY_ATTRIBUTES, classified by the shared [WifiSecurityClassifier]
+  /// — the SAME fine WPA2-vs-WPA3 / Personal-vs-Enterprise truth macOS gives).
+  ///
+  /// The public Native Wifi API exposes NO noise floor, so SNR cannot be
+  /// computed — both stay null and [snrDerived] is false (no estimate, GL-005),
+  /// exactly the two fields Android omits. Channel WIDTH needs IE-blob parsing
+  /// (HT/VHT/HE operation elements) deferred to device-time, so it arrives null
+  /// and [channelWidthAvailable] rides false until that lands — the same honest
+  /// "Not reported" posture Android uses when there is no scan match.
+  factory ConnectedAp.fromWindowsWifiInfo(WifiInfo info) {
+    return ConnectedAp(
+      ssid: info.ssid,
+      bssid: info.bssid,
+      // Real dBm from the matching WLAN_BSS_ENTRY.lRssi; null when no BSS match.
+      rssiDbm: info.rssiDbm,
+      // Native Wifi exposes no noise floor; SNR therefore cannot be computed and
+      // is never estimated.
+      noiseDbm: info.noiseDbm,
+      snrDb: info.snrDb,
+      txRateMbps: info.txRateMbps,
+      // Windows supplies the Rx rate (ulRxRate) — macOS does not. The reader
+      // passes null only when the platform reports the rate as 0/unknown, never
+      // a fabricated value.
+      rxRateMbps: info.rxRateMbps,
+      channel: info.channel,
+      channelWidthMhz: info.channelWidthMhz,
+      band: info.band,
+      standard: _macStandardLabel(info.phyMode, info.band),
+      countryCode: info.countryCode,
+      interfaceName: info.interfaceName,
+      hardwareAddress: info.hardwareAddress,
+      // Auth algorithm from WLAN_SECURITY_ATTRIBUTES, mapped to a shared token.
+      securityType: WifiSecurityClassifier.classify(info.securityToken),
+      poweredOn: info.poweredOn,
+      // Windows CAN expose Rx (ulRxRate) — the row shows it when present and a
+      // precise "not in this reading" when the platform reports 0/unknown.
+      rxRateAvailable: true,
+      // Channel width is IE-derived and deferred; null until that lands, so the
+      // row reads "Not reported" rather than guessing.
+      channelWidthAvailable: info.channelWidthMhz != null,
+      // The reader derives band/channel from the BSS center frequency on the
+      // native (FFI) side and never the noise floor, so neither is app-derived
+      // here — both arrive on the WifiInfo already resolved.
+      bandDerived: false,
+      snrDerived: false,
+      // Windows exposes the security type whenever a connection is present.
       securityAvailable: true,
     );
   }

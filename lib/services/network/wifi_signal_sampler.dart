@@ -62,11 +62,15 @@ class WifiSignalSampler extends ChangeNotifier {
     switch (source) {
       case WifiInfoSource.macosCoreWlan:
       case WifiInfoSource.androidWifiManager:
-        // Both snapshot sources poll a [WifiInfoAdapter]; pick the platform's.
+      case WifiInfoSource.windowsNativeWifi:
+        // All three snapshot sources poll a [WifiInfoAdapter]; pick the
+        // platform's.
         _macAdapter = macAdapter ??
-            (source == WifiInfoSource.androidWifiManager
-                ? AndroidWifiInfoAdapter()
-                : MacWifiInfoAdapter());
+            switch (source) {
+              WifiInfoSource.androidWifiManager => AndroidWifiInfoAdapter(),
+              WifiInfoSource.windowsNativeWifi => WindowsWifiInfoAdapter(),
+              _ => MacWifiInfoAdapter(),
+            };
         // 30s window at a 2s poll → ~15 samples (ceil so the full window fits).
         _series = WifiTimeSeries(capacity: _capacityFor(_macPollInterval));
       case WifiInfoSource.iosShortcuts:
@@ -150,6 +154,7 @@ class WifiSignalSampler extends ChangeNotifier {
   bool get isSupported =>
       source == WifiInfoSource.macosCoreWlan ||
       source == WifiInfoSource.androidWifiManager ||
+      source == WifiInfoSource.windowsNativeWifi ||
       source == WifiInfoSource.iosShortcuts;
 
   /// The latest connected-AP reading from whichever feed is active. Null until
@@ -158,6 +163,7 @@ class WifiSignalSampler extends ChangeNotifier {
     switch (source) {
       case WifiInfoSource.macosCoreWlan:
       case WifiInfoSource.androidWifiManager:
+      case WifiInfoSource.windowsNativeWifi:
         return _macInfo;
       case WifiInfoSource.iosShortcuts:
         final WiFiDetails? d = _controller?.details;
@@ -201,6 +207,7 @@ class WifiSignalSampler extends ChangeNotifier {
     switch (source) {
       case WifiInfoSource.macosCoreWlan:
       case WifiInfoSource.androidWifiManager:
+      case WifiInfoSource.windowsNativeWifi:
         await _pollMac(); // seed
         _startMacPoll();
       case WifiInfoSource.iosShortcuts:
@@ -254,6 +261,7 @@ class WifiSignalSampler extends ChangeNotifier {
     switch (source) {
       case WifiInfoSource.macosCoreWlan:
       case WifiInfoSource.androidWifiManager:
+      case WifiInfoSource.windowsNativeWifi:
         _stopMacPoll();
       case WifiInfoSource.iosShortcuts:
         await _controller?.stopMonitoring();
@@ -264,20 +272,22 @@ class WifiSignalSampler extends ChangeNotifier {
     }
   }
 
-  /// Re-arms the snapshot poll (macOS / Android) after an app-resume (no-op on
-  /// the iOS stream / unsupported platforms).
+  /// Re-arms the snapshot poll (macOS / Android / Windows) after an app-resume
+  /// (no-op on the iOS stream / unsupported platforms).
   void resumeMac() {
     if (source == WifiInfoSource.macosCoreWlan ||
-        source == WifiInfoSource.androidWifiManager) {
+        source == WifiInfoSource.androidWifiManager ||
+        source == WifiInfoSource.windowsNativeWifi) {
       _pollMac().then((_) => _startMacPoll());
     }
   }
 
-  /// Pauses the snapshot poll (macOS / Android) while backgrounded (no-op
-  /// elsewhere).
+  /// Pauses the snapshot poll (macOS / Android / Windows) while backgrounded
+  /// (no-op elsewhere).
   void pauseMac() {
     if (source == WifiInfoSource.macosCoreWlan ||
-        source == WifiInfoSource.androidWifiManager) {
+        source == WifiInfoSource.androidWifiManager ||
+        source == WifiInfoSource.windowsNativeWifi) {
       _stopMacPoll();
     }
   }

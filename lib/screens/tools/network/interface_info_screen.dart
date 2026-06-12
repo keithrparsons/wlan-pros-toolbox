@@ -100,6 +100,7 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
       case WifiInfoSource.androidWifiManager:
         return MacAddressPlatform.android;
       case WifiInfoSource.macosCoreWlan:
+      case WifiInfoSource.windowsNativeWifi:
       case WifiInfoSource.unsupported:
       case WifiInfoSource.web:
       case null:

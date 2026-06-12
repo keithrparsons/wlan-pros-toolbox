@@ -225,6 +225,19 @@ void main() {
       expect(service.isSupportedPlatform, isTrue);
     });
 
+    test('isSupportedPlatform is true on Windows (FFI bridge, not this channel)',
+        () {
+      // Windows is "supported" for capability-gating callers, but its Wi-Fi
+      // bridge is pure Dart FFI (WindowsWifiReader), NOT this method channel —
+      // so service.fetch() would still throw channelError on Windows. The flag
+      // only lets adapter-seam callers treat Windows as Wi-Fi-capable.
+      final service = WifiInfoService(
+        invoke: (m, [a]) async => null,
+        platformOverride: 'windows',
+      );
+      expect(service.isSupportedPlatform, isTrue);
+    });
+
     test('isSupportedPlatform is false on an unsupported native platform', () {
       final service = WifiInfoService(
         invoke: (m, [a]) async => null,

@@ -220,6 +220,28 @@ dependencies:
   # project-toolbox-platform-scope; the Dart factory returns a clean empty
   # discovery on non-iOS/macOS targets.
 
+  # Windows Wi-Fi Information bridge (feat/windows-port-prep, 2026-06-11).
+  # win32 — Dart FFI bindings for the Win32 API, including the Native Wifi API
+  #   (wlanapi.dll): WlanOpenHandle / WlanEnumInterfaces / WlanQueryInterface /
+  #   WlanGetNetworkBssList / WlanFreeMemory and the WLAN_* structs. This is the
+  #   DECIDED primary approach (2026-06-08 Windows readiness report §3) — a pure
+  #   dart:ffi read against wlanapi.dll, NO C++ MethodChannel — so the Windows
+  #   Wi-Fi Info adapter is all Dart and reuses the Android resolver seam.
+  #   Windows-only at runtime: every symbol is guarded behind a Windows platform
+  #   check, so the package is inert (never loaded) on iOS / macOS / Android /
+  #   web. Pinned; latest on pub.dev as of 2026-06-11.
+  # ffi — the Dart FFI runtime types (Pointer / calloc / Utf16) win32 builds on.
+  #   Declared explicitly because the Windows Wi-Fi reader imports `package:ffi`
+  #   directly for calloc/free and string marshalling, rather than relying on it
+  #   transitively through win32.
+  #
+  # Version: pinned to 5.x because device_info_plus 12.4.0 constrains win32 to
+  # ^5.11.0 (win32 6.x would fail version solving until device_info_plus moves
+  # to it). 5.15.0 is the highest 5.x and already binds the full Native Wifi
+  # surface this adapter needs.
+  win32: ^5.15.0
+  ffi: ^2.2.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

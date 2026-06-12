@@ -296,6 +296,8 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         return 'macOS';
       case WifiInfoSource.androidWifiManager:
         return 'Android';
+      case WifiInfoSource.windowsNativeWifi:
+        return 'Windows';
       case WifiInfoSource.iosShortcuts:
         return 'iOS';
       case WifiInfoSource.unsupported:
@@ -318,6 +320,8 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         _macAdapter = widget.macAdapter ?? MacWifiInfoAdapter();
       case WifiInfoSource.androidWifiManager:
         _macAdapter = widget.macAdapter ?? AndroidWifiInfoAdapter();
+      case WifiInfoSource.windowsNativeWifi:
+        _macAdapter = widget.macAdapter ?? WindowsWifiInfoAdapter();
       case WifiInfoSource.iosShortcuts:
         _iosBridge = widget.iosBridge ?? WiFiDetailsBridge();
         // Native NEHotspotNetwork enrichment: security type + BSSID are
@@ -347,6 +351,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     if (widget.enableLiveSampling &&
         (_source == WifiInfoSource.macosCoreWlan ||
             _source == WifiInfoSource.androidWifiManager ||
+            _source == WifiInfoSource.windowsNativeWifi ||
             _source == WifiInfoSource.iosShortcuts)) {
       _sampler = widget.sampler ??
           WifiSignalSampler(
@@ -382,8 +387,17 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       // who never starts a test is never bounced. The manual Start / "Capture
       // Wi-Fi details" affordance remains the fallback (GL-008: build to the
       // platform; the single deliberate kickoff is what the bridge can honor).
+      //
+      // macOS, Android, and Windows all source the live feed from NATIVE polling
+      // (CoreWLAN / WifiManager / wlanapi.dll snapshots on a timer, no app
+      // switch), so they auto-start cleanly on screen entry; only iOS waits for
+      // the deliberate kickoff above.
+      // TODO(windows-verify): confirm the wlanapi.dll poll loop ticks against a
+      // real radio on the June-26 device pass (mapping logic is unit-tested; the
+      // FFI read itself only executes on Windows).
       if (_source == WifiInfoSource.macosCoreWlan ||
-          _source == WifiInfoSource.androidWifiManager) {
+          _source == WifiInfoSource.androidWifiManager ||
+          _source == WifiInfoSource.windowsNativeWifi) {
         _sampler!.start();
       }
     }
@@ -538,6 +552,23 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
           _macNameAuth = auth;
           _macLocationAuthorized = auth.isAuthorized;
           return await adapter.fetch().timeout(
+            const Duration(seconds: 5),
+            onTimeout: () =>
+                throw TimeoutException('Wi-Fi link read timed out'),
+          );
+        case WifiInfoSource.windowsNativeWifi:
+          // Windows Native Wifi (wlanapi.dll via Dart FFI) returns SSID/BSSID/
+          // rate with NO Location grant, so — unlike macOS/Android — there is no
+          // permission gate to consider mid-test. Read the snapshot directly,
+          // bounded so a stalled FFI read can never hang the check. The
+          // WindowsWifiInfoAdapter applies its own 5s fetch ceiling too; this
+          // outer bound mirrors the macOS branch for a uniform call site.
+          // TODO(windows-verify): the wlanapi.dll FFI read executes only on a
+          // real Windows host — exercise this branch against a live radio on the
+          // June-26 device pass.
+          final WifiInfoAdapter? winAdapter = _macAdapter;
+          if (winAdapter == null) return null;
+          return await winAdapter.fetch().timeout(
             const Duration(seconds: 5),
             onTimeout: () =>
                 throw TimeoutException('Wi-Fi link read timed out'),

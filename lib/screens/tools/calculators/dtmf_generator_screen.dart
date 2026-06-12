@@ -43,6 +43,9 @@ import 'package:flutter/services.dart';
 import '../../../data/dtmf.dart';
 import '../../../data/signaling_tones.dart';
 import '../../../services/audio/dtmf_player.dart';
+import '../../../services/network/network_support.dart'
+    show NetworkUnavailableReason;
+import '../network/network_unavailable_view.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
@@ -69,7 +72,15 @@ class DtmfGeneratorScreen extends StatefulWidget {
 }
 
 class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
-  final DtmfPlayer _player = DtmfPlayer();
+  // Playback is gated off where just_audio has no first-party implementation
+  // (Windows — see [DtmfPlayer.playbackSupportedOnThisPlatform]). The player is
+  // lazily constructed ONLY when playback is supported, so an unsupported
+  // platform never instantiates a just_audio AudioPlayer (which would fail to
+  // load a missing native backend). On Windows the screen renders the honest
+  // platform-unavailable surface instead of the keypad.
+  final DtmfPlayer? _player = DtmfPlayer.playbackSupportedOnThisPlatform
+      ? DtmfPlayer()
+      : null;
 
   // Which of the three modes is active.
   ToneMode _mode = ToneMode.dtmf;
@@ -96,7 +107,7 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
   @override
   void dispose() {
     _seqCtrl.dispose();
-    _player.dispose();
+    _player?.dispose();
     super.dispose();
   }
 
@@ -116,42 +127,48 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
   DtmfKey get _selectedKey => Dtmf.keyFor(_selectedLabel)!;
 
   Future<void> _playSequence() async {
+    final DtmfPlayer? player = _player;
+    if (player == null) return; // Playback gated off on this platform.
     final List<DtmfKey> keys = _sequenceKeys;
     if (keys.isEmpty) return;
     if (_looping) {
       setState(() => _looping = false);
     }
     setState(() => _playingSeq = true);
-    await _player.playSequence(keys, shouldContinue: () => _playingSeq);
+    await player.playSequence(keys, shouldContinue: () => _playingSeq);
     if (!mounted) return;
     setState(() => _playingSeq = false);
   }
 
   Future<void> _stopSequence() async {
     setState(() => _playingSeq = false);
-    await _player.stop();
+    await _player?.stop();
   }
 
   Future<void> _onKeyTap(String label) async {
+    final DtmfPlayer? player = _player;
+    if (player == null) return; // Playback gated off on this platform.
     final DtmfKey? key = Dtmf.keyFor(label);
     if (key == null) return;
     setState(() {
       _selectedLabel = label;
     });
     if (_looping) {
-      await _player.startContinuous(key);
+      await player.startContinuous(key);
     } else {
-      await _player.playTone(key);
+      await player.playTone(key);
     }
   }
 
   Future<void> _toggleLoop() async {
+    final DtmfPlayer? player = _player;
+    if (player == null) return; // Playback gated off on this platform.
     if (_looping) {
       setState(() => _looping = false);
-      await _player.stop();
+      await player.stop();
     } else {
       setState(() => _looping = true);
-      await _player.startContinuous(_selectedKey);
+      await player.startContinuous(_selectedKey);
     }
   }
 
@@ -169,14 +186,14 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
       _playingSeq = false;
       _lastSignal = null;
     });
-    unawaited(_player.stop());
+    unawaited(_player?.stop() ?? Future<void>.value());
   }
 
   // ─── Signaling-history handler ──────────────────────────────────────────────
 
   Future<void> _onSignalTap(SignalingTone tone) async {
     setState(() => _lastSignal = tone);
-    await _player.playSignalingTone(tone);
+    await _player?.playSignalingTone(tone);
   }
 
   // ─── Build ────────────────────────────────────────────────────────────────
@@ -190,7 +207,30 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
         title: const Text('DTMF Generator'),
         toolbarHeight: 64,
       ),
-      body: SafeArea(
+      body: _player == null
+          // Playback is honestly gated off where just_audio has no first-party
+          // backend (Windows). Reuse the shared platform-unavailable surface
+          // rather than show a keypad whose tones cannot play (GL-008).
+          ? const SafeArea(
+              top: false,
+              child: NetworkUnavailableView(
+                toolName: 'DTMF Generator',
+                reason: NetworkUnavailableReason.platformApiMissing,
+                icon: Icons.volume_off_outlined,
+                headline: 'Tone playback is not available on Windows yet',
+                message:
+                    'The DTMF Generator plays generated audio tones, and the '
+                    'audio engine it uses has no Windows support yet. The tone '
+                    'frequencies are still correct — playback will arrive in a '
+                    'later Windows update. Every other tool works normally here.',
+              ),
+            )
+          : _buildPlayable(text),
+    );
+  }
+
+  Widget _buildPlayable(TextTheme text) {
+    return SafeArea(
         top: false,
         child: Center(
           child: ConstrainedBox(
@@ -216,7 +256,6 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
             ),
           ),
         ),
-      ),
     );
   }
 

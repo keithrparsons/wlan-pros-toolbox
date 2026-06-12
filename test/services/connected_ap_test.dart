@@ -150,6 +150,82 @@ void main() {
     });
   });
 
+  group('ConnectedAp.fromWindowsWifiInfo (Windows Native Wifi)', () {
+    // The shape the windows_wifi_ffi reader produces: real dBm RSSI from the BSS
+    // entry, BOTH Tx and Rx rates from the association attributes, no noise
+    // floor (→ null SNR), channel width deferred (IE parse) → null.
+    WifiInfo windowsInfo({int? channelWidthMhz}) => WifiInfo(
+          interfaceName: null, // Native Wifi exposes a GUID, not a BSD name.
+          ssid: 'KeithNet',
+          bssid: 'a4:83:e7:00:11:22',
+          rssiDbm: -47, // real dBm from lRssi
+          noiseDbm: null,
+          snrDb: null,
+          txRateMbps: 866,
+          rxRateMbps: 780, // Windows supplies Rx (macOS does not)
+          phyMode: '802.11ax',
+          channel: 36,
+          channelWidthMhz: channelWidthMhz,
+          band: '5 GHz',
+          countryCode: null,
+          hardwareAddress: null,
+          securityToken: 'wpa3Personal',
+          poweredOn: true,
+          locationAuthorized: true,
+        );
+
+    test('maps the core fields incl. real dBm RSSI', () {
+      final ap = ConnectedAp.fromWindowsWifiInfo(windowsInfo());
+      expect(ap.ssid, 'KeithNet');
+      expect(ap.bssid, 'a4:83:e7:00:11:22');
+      expect(ap.rssiDbm, -47);
+      expect(ap.channel, 36);
+      expect(ap.band, '5 GHz');
+    });
+
+    test('exposes BOTH Tx and Rx rate (the macOS Rx gap is closed)', () {
+      final ap = ConnectedAp.fromWindowsWifiInfo(windowsInfo());
+      expect(ap.txRateMbps, 866);
+      expect(ap.rxRateMbps, 780);
+      expect(ap.rxRateAvailable, isTrue);
+    });
+
+    test('noise and SNR are honestly null (no noise-floor API) and not derived',
+        () {
+      final ap = ConnectedAp.fromWindowsWifiInfo(windowsInfo());
+      expect(ap.noiseDbm, isNull);
+      expect(ap.snrDb, isNull);
+      expect(ap.snrDerived, isFalse);
+    });
+
+    test('channel width deferred (IE parse) → channelWidthAvailable false', () {
+      final ap = ConnectedAp.fromWindowsWifiInfo(windowsInfo());
+      expect(ap.channelWidthMhz, isNull);
+      expect(ap.channelWidthAvailable, isFalse);
+    });
+
+    test('a resolved channel width flips channelWidthAvailable true', () {
+      final ap =
+          ConnectedAp.fromWindowsWifiInfo(windowsInfo(channelWidthMhz: 80));
+      expect(ap.channelWidthMhz, 80);
+      expect(ap.channelWidthAvailable, isTrue);
+    });
+
+    test('security is the FINE token (WPA3 Personal), classified by the shared '
+        'classifier', () {
+      final ap = ConnectedAp.fromWindowsWifiInfo(windowsInfo());
+      expect(ap.securityAvailable, isTrue);
+      expect(ap.securityType?.label, 'WPA3 Personal');
+    });
+
+    test('labels the standard with its Wi-Fi generation', () {
+      expect(
+        ConnectedAp.fromWindowsWifiInfo(windowsInfo()).standard,
+        '802.11ax (Wi-Fi 6)',
+      );
+    });
+  });
+
   group('hasAnyData', () {
     test('false for an empty payload', () {
       expect(
@@ -191,15 +267,23 @@ void main() {
       );
     });
 
-    test('other native platforms resolve to unsupported', () {
+    test('Windows resolves to the Native Wifi source', () {
       expect(
         WifiInfoSourceResolver.resolve(
             platformOverride: TargetPlatform.windows),
+        WifiInfoSource.windowsNativeWifi,
+      );
+    });
+
+    test('remaining native platforms resolve to unsupported', () {
+      expect(
+        WifiInfoSourceResolver.resolve(
+            platformOverride: TargetPlatform.linux),
         WifiInfoSource.unsupported,
       );
       expect(
         WifiInfoSourceResolver.resolve(
-            platformOverride: TargetPlatform.linux),
+            platformOverride: TargetPlatform.fuchsia),
         WifiInfoSource.unsupported,
       );
     });
