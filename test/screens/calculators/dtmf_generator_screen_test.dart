@@ -47,4 +47,53 @@ void main() {
     // 7 digits remain after the formatter strips the dashes.
     expect(find.text('Play sequence (7)'), findsOneWidget);
   });
+
+  testWidgets('defaults to DTMF mode (sequence card present, no history note)',
+      (tester) async {
+    await _pump(tester);
+    expect(find.text('DTMF'), findsOneWidget);
+    expect(find.text('Play a sequence'), findsOneWidget);
+    expect(find.text('Telephone signaling history'), findsNothing);
+  });
+
+  testWidgets('Blue Box mode shows the honesty note and the MF pad',
+      (tester) async {
+    await _pump(tester);
+    await tester.tap(find.text('Blue Box'));
+    await tester.pumpAndSettle();
+    // The honest "does nothing on a modern network" note is on screen.
+    expect(find.text('Telephone signaling history'), findsOneWidget);
+    expect(
+      find.textContaining('do nothing on any modern phone network'),
+      findsOneWidget,
+    );
+    // KP / ST / 2600 signals render as pad keys.
+    expect(find.text('KP'), findsOneWidget);
+    expect(find.text('ST'), findsOneWidget);
+    expect(find.text('2600'), findsOneWidget);
+    // The DTMF-only sequence card is gone in this mode.
+    expect(find.text('Play a sequence'), findsNothing);
+  });
+
+  testWidgets('Red Box mode shows the three coin keys and the honesty note',
+      (tester) async {
+    await _pump(tester);
+    await tester.tap(find.text('Red Box'));
+    await tester.pumpAndSettle();
+    expect(find.text('Telephone signaling history'), findsOneWidget);
+    expect(find.text('Nickel'), findsOneWidget);
+    expect(find.text('Dime'), findsOneWidget);
+    expect(find.text('Quarter'), findsOneWidget);
+  });
+
+  testWidgets('no "phreaking" or "hacking" wording appears in any mode',
+      (tester) async {
+    await _pump(tester);
+    for (final String mode in <String>['Blue Box', 'Red Box', 'DTMF']) {
+      await tester.tap(find.text(mode));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('phreak', skipOffstage: false), findsNothing);
+      expect(find.textContaining('hack', skipOffstage: false), findsNothing);
+    }
+  });
 }

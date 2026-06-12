@@ -1,33 +1,65 @@
-// DTMF Generator — Batch 4c.
+// DTMF Generator + Telephone Signaling History — Batch 4c, extended 2026-06-11.
 //
-// A 4×4 DTMF keypad (1-9, *, #, A-D) plus a single primary lime Play/Stop
-// toggle. Tapping a key plays its dual-tone (low-group + high-group sine sum,
-// 200 ms); the Play/Stop toggle loops the currently-selected key's tone until
-// stopped. Synthesis is pure Dart (lib/data/dtmf.dart, unit-tested); playback is
-// just_audio behind lib/services/audio/dtmf_player.dart.
+// Three modes, selected by a §8.14.1 AppToggle segmented control:
+//   * DTMF — the original 4×4 Touch-Tone keypad (1-9, *, #, A-D) plus a Play/Stop
+//     loop and a sequence player. Unchanged behavior.
+//   * Blue Box (MF) — the R1 Multi-Frequency trunk-routing tones (canonical
+//     ITU-T digit pairs), KP / ST framing signals, and the 2600 Hz supervisory
+//     tone.
+//   * Red Box — the US ACTS coin-deposit acknowledgement bursts (nickel / dime /
+//     quarter), all 1700 + 2200 Hz, differing only in burst count and timing.
+//
+// HONESTY IS THE FEATURE (GL-005, and the App Store / brand strategy from the
+// 2026-06-11 feasibility brief): the two history modes carry an on-screen note
+// stating plainly that these tones do nothing on any modern phone network —
+// in-band signaling was retired for out-of-band SS7 in the 1980s-1990s, and ACTS
+// payphones are gone. They are telephone signaling history, reproduced for
+// education and nostalgia, NOT a working tool. The per-mode help entries
+// (dtmf-generator, blue-box, red-box) say the same. No "phreaking" / "hacking"
+// wording appears in any user-facing label (brand + App Store framing).
+//
+// Synthesis is pure Dart (lib/data/dtmf.dart + lib/data/signaling_tones.dart,
+// unit-tested); playback is just_audio behind lib/services/audio/dtmf_player.dart.
+// GL-008: local audio only — no subprocess, no network, no cleartext HTTP.
 //
 // GL-003 compliance:
-//   * §8.3 keypad keys are SECONDARY/OUTLINE buttons (borderStrong outline,
-//     transparent fill, lime text) — NOT a second hue. They render at the 44pt
-//     iOS / 48dp Android minimum touch target and never shrink below it on phone
-//     width; the grid uses a --space-xs (8px) gutter.
-//   * The digit labels are IBM Plex Sans (the theme's default sans), per §8.3.
-//   * §8.13 rule 6: the Play/Stop toggle uses LIME (--color-primary) for the
-//     ACTIVE state — lime is the active/selected accent, NOT a status-success
-//     hue. A status color would be wrong here (this is a state, not a verdict).
-//   * §8.9: each key carries an explicit Semantics label ("DTMF key 5") because
-//     the glyph alone is not a sufficient SR label.
-//   * §8.8: under prefers-reduced-motion the active-key flash collapses to 0 ms.
+//   * §8.14.1: the mode selector is the canonical AppToggle<ToneMode> segmented
+//     control (radio-group semantics, lime selected segment, mandatory focus ring).
+//   * §8.3: keypad / signal keys are SECONDARY/OUTLINE buttons (borderStrong
+//     outline, transparent fill, lime label), 44pt/48dp touch targets.
+//   * §8.13 rule 6 (HARD): the honesty note is NEUTRAL informational context, not
+//     a computed verdict, so it uses neutral text tokens on surface1 — NOT a
+//     status hue (an info-colored banner here would be exactly the banned
+//     decorative-status drift). Lime stays the only active/selected accent.
+//   * §8.5: frequency / timing identifiers render in Roboto Mono.
+//   * §8.9: each key carries an explicit Semantics label.
+//   * §8.8: the active-key flash collapses to 0 ms under reduced motion.
+
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/dtmf.dart';
+import '../../../data/signaling_tones.dart';
 import '../../../services/audio/dtmf_player.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_toggle.dart';
 import '../../../widgets/tool_help_footer.dart';
+
+/// The three tone modes the screen offers.
+enum ToneMode {
+  /// Standard DTMF Touch-Tone keypad (the original tool).
+  dtmf,
+
+  /// Blue Box — R1 Multi-Frequency trunk signaling + 2600 Hz supervisory tone.
+  blueBox,
+
+  /// US Red Box — ACTS coin-deposit acknowledgement bursts.
+  redBox,
+}
 
 class DtmfGeneratorScreen extends StatefulWidget {
   const DtmfGeneratorScreen({super.key});
@@ -39,6 +71,10 @@ class DtmfGeneratorScreen extends StatefulWidget {
 class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
   final DtmfPlayer _player = DtmfPlayer();
 
+  // Which of the three modes is active.
+  ToneMode _mode = ToneMode.dtmf;
+
+  // ─── DTMF mode state ────────────────────────────────────────────────────────
   // The currently-selected key (the one the Play/Stop toggle will loop, and the
   // last one tapped). Defaults to "5", the center key.
   String _selectedLabel = '5';
@@ -46,16 +82,16 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
   // Whether the continuous Play/Stop loop is on.
   bool _looping = false;
 
-  // ─── Sequence mode (BF6-1) ─────────────────────────────────────────────────
-  // The user types a string of DTMF characters (e.g. 8675309) and plays it
-  // as tones in order. Non-DTMF characters are ignored on play (and stripped by
-  // the input formatter), so a pasted phone number with spaces/dashes still
-  // works.
+  // The user types a string of DTMF characters (e.g. 8675309) and plays it as
+  // tones in order. Non-DTMF characters are ignored on play.
   final TextEditingController _seqCtrl = TextEditingController();
 
-  // True while a sequence is playing; gates the Stop affordance and cancels the
-  // in-flight playSequence via the shouldContinue callback.
+  // True while a sequence is playing; gates the Stop affordance.
   bool _playingSeq = false;
+
+  // ─── Signaling-history mode state ───────────────────────────────────────────
+  // The last signaling signal played, for the readout. Null until one is tapped.
+  SignalingTone? _lastSignal;
 
   @override
   void dispose() {
@@ -63,6 +99,8 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
     _player.dispose();
     super.dispose();
   }
+
+  // ─── DTMF helpers ───────────────────────────────────────────────────────────
 
   /// The DTMF keys parsed from the sequence field, in order. Non-DTMF
   /// characters are dropped; letters are upper-cased (A-D are valid keys).
@@ -75,10 +113,11 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
     return out;
   }
 
+  DtmfKey get _selectedKey => Dtmf.keyFor(_selectedLabel)!;
+
   Future<void> _playSequence() async {
     final List<DtmfKey> keys = _sequenceKeys;
     if (keys.isEmpty) return;
-    // A running loop and a sequence are mutually exclusive — stop the loop first.
     if (_looping) {
       setState(() => _looping = false);
     }
@@ -93,16 +132,11 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
     await _player.stop();
   }
 
-  DtmfKey get _selectedKey => Dtmf.keyFor(_selectedLabel)!;
-
-  // ─── Handlers ───────────────────────────────────────────────────────────────
-
   Future<void> _onKeyTap(String label) async {
     final DtmfKey? key = Dtmf.keyFor(label);
     if (key == null) return;
     setState(() {
       _selectedLabel = label;
-      // Tapping a key during a continuous loop retargets the loop to the new key.
     });
     if (_looping) {
       await _player.startContinuous(key);
@@ -119,6 +153,30 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
       setState(() => _looping = true);
       await _player.startContinuous(_selectedKey);
     }
+  }
+
+  // ─── Mode switching ─────────────────────────────────────────────────────────
+
+  void _onModeChanged(ToneMode mode) {
+    if (mode == _mode) return;
+    // Switch the UI immediately, then stop anything in flight (a DTMF loop or
+    // sequence) so the audio session never lingers across a mode change. The
+    // stop is fire-and-forget: the mode swap must not wait on the audio plugin
+    // (which has no headless backend and would otherwise stall the swap).
+    setState(() {
+      _mode = mode;
+      _looping = false;
+      _playingSeq = false;
+      _lastSignal = null;
+    });
+    unawaited(_player.stop());
+  }
+
+  // ─── Signaling-history handler ──────────────────────────────────────────────
+
+  Future<void> _onSignalTap(SignalingTone tone) async {
+    setState(() => _lastSignal = tone);
+    await _player.playSignalingTone(tone);
   }
 
   // ─── Build ────────────────────────────────────────────────────────────────
@@ -149,14 +207,10 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  _selectionCard(text),
+                  _modeSelector(),
                   const SizedBox(height: AppSpacing.md),
-                  _keypad(text),
-                  const SizedBox(height: AppSpacing.md),
-                  _playStopToggle(text),
-                  const SizedBox(height: AppSpacing.md),
-                  _sequenceCard(text),
-                  ToolHelpFooter(toolId: 'dtmf-generator'),
+                  ..._modeBody(text),
+                  ToolHelpFooter(toolId: _helpIdForMode),
                 ],
               ),
             ),
@@ -166,11 +220,84 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
     );
   }
 
+  /// The help entry the footer opens depends on the active mode, so each mode's
+  /// honest history is one tap away.
+  String get _helpIdForMode {
+    switch (_mode) {
+      case ToneMode.dtmf:
+        return 'dtmf-generator';
+      case ToneMode.blueBox:
+        return 'blue-box';
+      case ToneMode.redBox:
+        return 'red-box';
+    }
+  }
+
+  /// §8.14.1 segmented selector across the three modes.
+  Widget _modeSelector() {
+    return AppToggle<ToneMode>(
+      value: _mode,
+      semanticLabel: 'Tone mode',
+      expand: true,
+      items: const <AppToggleItem<ToneMode>>[
+        (ToneMode.dtmf, 'DTMF'),
+        (ToneMode.blueBox, 'Blue Box'),
+        (ToneMode.redBox, 'Red Box'),
+      ],
+      onChanged: (ToneMode m) => _onModeChanged(m),
+    );
+  }
+
+  /// The body for the active mode.
+  List<Widget> _modeBody(TextTheme text) {
+    switch (_mode) {
+      case ToneMode.dtmf:
+        return _dtmfBody(text);
+      case ToneMode.blueBox:
+        return _signalingBody(
+          text,
+          tones: SignalingTones.blueBox,
+          title: 'Blue Box — Multi-Frequency signaling',
+          intro:
+              'The R1 MF tones a long-distance switch once used to route a call, '
+              'plus the 2600 Hz tone that meant the trunk was idle. Tap a signal '
+              'to hear it.',
+          columns: 4,
+        );
+      case ToneMode.redBox:
+        return _signalingBody(
+          text,
+          tones: SignalingTones.redBox,
+          title: 'Red Box — US coin tones',
+          intro:
+              'The dual-tone bursts an ACTS payphone sent up the line to report a '
+              'coin drop. All three are 1700 + 2200 Hz; only the burst count and '
+              'timing differ. Tap a coin to hear it.',
+          columns: 3,
+        );
+    }
+  }
+
+  // ─── DTMF body ──────────────────────────────────────────────────────────────
+
+  List<Widget> _dtmfBody(TextTheme text) {
+    return <Widget>[
+      _dtmfSelectionCard(text),
+      const SizedBox(height: AppSpacing.md),
+      _keypad(text),
+      const SizedBox(height: AppSpacing.md),
+      _playStopToggle(text),
+      const SizedBox(height: AppSpacing.md),
+      _sequenceCard(text),
+    ];
+  }
+
   /// Shows the selected key and its two component frequencies — the "what am I
-  /// hearing" readout. Frequencies are neutral data (no verdict), so no status
-  /// hue; the key label is lime as the active/selected cue (§8.3).
-  Widget _selectionCard(TextTheme text) {
+  /// hearing" readout.
+  Widget _dtmfSelectionCard(TextTheme text) {
     final AppColorScheme colors = context.colors;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final DtmfKey key = _selectedKey;
     return Container(
       decoration: BoxDecoration(
@@ -209,9 +336,7 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
                 Text(
                   '${key.lowHz.toStringAsFixed(0)} Hz '
                   '+ ${key.highHz.toStringAsFixed(0)} Hz',
-                  style: text.bodyMedium?.copyWith(
-                    color: colors.textPrimary,
-                  ),
+                  style: mono.robotoMono.copyWith(color: colors.textPrimary),
                 ),
               ],
             ),
@@ -221,10 +346,7 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
     );
   }
 
-  /// The 4×4 keypad. Each row is a Row of square keys; a --space-xs (8px) gutter
-  /// separates them (§8.3). Keys are flexible-width so they fill the column but
-  /// never shrink below the 44pt/48dp floor (enforced by the min-height in
-  /// _DtmfKeyButton and by capping the keypad to a sane max width).
+  /// The 4×4 DTMF keypad.
   Widget _keypad(TextTheme text) {
     return Column(
       children: <Widget>[
@@ -235,8 +357,9 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
               for (int c = 0; c < Dtmf.grid[r].length; c++) ...<Widget>[
                 if (c > 0) const SizedBox(width: AppSpacing.xs),
                 Expanded(
-                  child: _DtmfKeyButton(
+                  child: _ToneKeyButton(
                     label: Dtmf.grid[r][c],
+                    semanticLabel: 'DTMF key ${Dtmf.grid[r][c]}',
                     selected: Dtmf.grid[r][c] == _selectedLabel,
                     onTap: () => _onKeyTap(Dtmf.grid[r][c]),
                   ),
@@ -249,21 +372,20 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
     );
   }
 
-  /// The single primary lime Play/Stop toggle (§8.3 primary button; §8.13 rule
-  /// 6: lime = active state, not a status hue). Loops the selected key's tone.
+  /// The single primary lime Play/Stop toggle. Loops the selected key's tone.
   Widget _playStopToggle(TextTheme text) {
     return FilledButton.icon(
       onPressed: _toggleLoop,
       icon: Icon(_looping ? Icons.stop : Icons.play_arrow),
       label: Text(
-        _looping ? 'Stop (${_selectedKey.label})' : 'Play (${_selectedKey.label})',
+        _looping
+            ? 'Stop (${_selectedKey.label})'
+            : 'Play (${_selectedKey.label})',
       ),
     );
   }
 
-  /// BF6-1 — pre-load a string of digits, then play the whole sequence in order.
-  /// The field is an identifier input (digits/*/#/A-D) rendered in Roboto Mono
-  /// (GL-003 §8.5 identifier rule). The Play button becomes Stop while playing.
+  /// Pre-load a string of digits, then play the whole sequence in order.
   Widget _sequenceCard(TextTheme text) {
     final AppColorScheme colors = context.colors;
     final AppMonoText mono =
@@ -296,9 +418,6 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
           const SizedBox(height: AppSpacing.xs),
           TextField(
             controller: _seqCtrl,
-            // Only DTMF characters are meaningful; allow the user to type the
-            // common ones (and paste a number) — non-DTMF chars are dropped on
-            // play, and the formatter keeps the field to the valid set.
             inputFormatters: <TextInputFormatter>[
               FilteringTextInputFormatter.allow(RegExp(r'[0-9A-Da-d*#]')),
             ],
@@ -306,7 +425,6 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
             autocorrect: false,
             enableSuggestions: false,
             cursorColor: colors.textAccent,
-            // Identifier string → Roboto Mono (§8.5).
             style: mono.robotoMono.copyWith(color: colors.textPrimary),
             onChanged: (_) => setState(() {}),
             decoration: const InputDecoration(
@@ -315,7 +433,6 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
           ),
           const SizedBox(height: AppSpacing.sm),
           FilledButton.icon(
-            // Disabled until there is at least one valid DTMF character.
             onPressed: !hasDigits && !_playingSeq
                 ? null
                 : (_playingSeq ? _stopSequence : _playSequence),
@@ -332,22 +449,208 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
       ),
     );
   }
+
+  // ─── Signaling-history body (Blue Box / Red Box) ────────────────────────────
+
+  List<Widget> _signalingBody(
+    TextTheme text, {
+    required List<SignalingTone> tones,
+    required String title,
+    required String intro,
+    required int columns,
+  }) {
+    return <Widget>[
+      _historyNote(text),
+      const SizedBox(height: AppSpacing.md),
+      _signalReadout(text),
+      const SizedBox(height: AppSpacing.md),
+      _signalIntro(text, title: title, intro: intro),
+      const SizedBox(height: AppSpacing.sm),
+      _signalPad(tones, columns: columns),
+    ];
+  }
+
+  /// The honest, plain-language note that these tones do nothing today. §8.13
+  /// rule 6 (HARD): this is neutral context, NOT a verdict, so it uses neutral
+  /// text on surface1 — never a status hue / info-colored banner.
+  Widget _historyNote(TextTheme text) {
+    final AppColorScheme colors = context.colors;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(
+            Icons.history_edu_outlined,
+            size: 24,
+            color: colors.textSecondary,
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  'Telephone signaling history',
+                  style: text.labelLarge?.copyWith(
+                    color: colors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xxs),
+                Text(
+                  'These tones do nothing on any modern phone network. The '
+                  'in-band signaling they reproduce was retired when carriers '
+                  'moved call control to out-of-band SS7 signaling in the '
+                  '1980s-1990s, and the coin-tone payphones are gone. They are '
+                  'here for historical and educational interest only.',
+                  style: text.bodySmall?.copyWith(color: colors.textTertiary),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// "What am I hearing" readout for the last signaling signal played. Empty
+  /// state before the first tap.
+  Widget _signalReadout(TextTheme text) {
+    final AppColorScheme colors = context.colors;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final SignalingTone? tone = _lastSignal;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: tone == null
+          ? Text(
+              'Tap a signal below to hear it.',
+              style: text.bodyMedium?.copyWith(color: colors.textTertiary),
+            )
+          : Row(
+              children: <Widget>[
+                Semantics(
+                  label: 'Selected signal',
+                  value: tone.label,
+                  excludeSemantics: true,
+                  child: Text(
+                    tone.label,
+                    style: text.headlineSmall?.copyWith(
+                      color: colors.textAccent,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        '${tone.frequencyLabel}  ·  ${tone.timingLabel}',
+                        style: mono.robotoMono
+                            .copyWith(color: colors.textPrimary),
+                      ),
+                      const SizedBox(height: AppSpacing.xxs),
+                      Text(
+                        tone.description,
+                        style: text.bodySmall
+                            ?.copyWith(color: colors.textTertiary),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _signalIntro(
+    TextTheme text, {
+    required String title,
+    required String intro,
+  }) {
+    final AppColorScheme colors = context.colors;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          title,
+          style: text.labelMedium?.copyWith(
+            color: colors.textSecondary,
+            letterSpacing: 0.4,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xxs),
+        Text(
+          intro,
+          style: text.labelMedium?.copyWith(color: colors.textTertiary),
+        ),
+      ],
+    );
+  }
+
+  /// A wrap of signal keys, [columns] per row, each a §8.3 outline key.
+  Widget _signalPad(List<SignalingTone> tones, {required int columns}) {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        // Even columns with the §8.3 8px gutter between them.
+        final double gutter = AppSpacing.xs;
+        final double keyWidth =
+            (constraints.maxWidth - gutter * (columns - 1)) / columns;
+        return Wrap(
+          spacing: gutter,
+          runSpacing: gutter,
+          children: <Widget>[
+            for (final SignalingTone tone in tones)
+              SizedBox(
+                width: keyWidth,
+                child: _ToneKeyButton(
+                  label: tone.label,
+                  semanticLabel: '${tone.label} signal',
+                  selected: identical(_lastSignal, tone) ||
+                      (_lastSignal?.label == tone.label &&
+                          _lastSignal?.family == tone.family),
+                  onTap: () => _onSignalTap(tone),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
 }
 
-/// A single keypad key: a §8.3 SECONDARY/OUTLINE button (borderStrong outline,
-/// transparent fill, lime label). When it is the selected key, the border and
-/// label go lime (the active/selected role, §8.3 — never a status hue). The
-/// digit label is IBM Plex Sans (the theme's default sans). The whole square is
+/// A single tone key: a §8.3 SECONDARY/OUTLINE button (borderStrong outline,
+/// transparent fill, lime label). When selected, the border + label go lime
+/// (the active/selected role, §8.3 — never a status hue). The whole square is
 /// the 44pt/48dp tap target. An explicit Semantics label names the key for
 /// screen readers (§8.9). Under reduced motion the press feedback is 0 ms (§8.8).
-class _DtmfKeyButton extends StatelessWidget {
-  const _DtmfKeyButton({
+///
+/// Shared by all three modes — the DTMF keypad, the Blue Box MF pad, and the
+/// Red Box coin pad — so they are visually and behaviorally identical keys.
+class _ToneKeyButton extends StatelessWidget {
+  const _ToneKeyButton({
     required this.label,
+    required this.semanticLabel,
     required this.selected,
     required this.onTap,
   });
 
   final String label;
+  final String semanticLabel;
   final bool selected;
   final VoidCallback onTap;
 
@@ -355,8 +658,8 @@ class _DtmfKeyButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
-    final bool reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ??
-        false;
+    final bool reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
 
     final Color borderColor =
         selected ? colors.textAccent : colors.borderStrong;
@@ -364,15 +667,12 @@ class _DtmfKeyButton extends StatelessWidget {
 
     return Semantics(
       button: true,
-      // §8.9 explicit label — the glyph alone is not a sufficient SR label.
-      label: 'DTMF key $label',
+      label: semanticLabel,
       selected: selected,
       excludeSemantics: true,
       child: OutlinedButton(
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
-          // §8.3 secondary/outline: transparent fill, borderStrong outline, lime
-          // text. Selected → lime border + lime fill wash.
           backgroundColor: selected
               ? colors.textAccent.withValues(alpha: 0.08)
               : Colors.transparent,
@@ -381,20 +681,23 @@ class _DtmfKeyButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.control),
           ),
-          // §8.3 touch target: at least 48dp tall; a square-ish key.
           minimumSize: const Size(
             AppSpacing.minTouchTarget,
             AppSpacing.minTouchTarget + AppSpacing.xs, // 56 — comfortable key
           ),
-          padding: EdgeInsets.zero,
-          // §8.8: collapse the press animation to 0 ms under reduced motion.
-          animationDuration:
-              reduceMotion ? Duration.zero : AppMotion.fast,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxs),
+          animationDuration: reduceMotion ? Duration.zero : AppMotion.fast,
         ),
         child: Text(
           label,
-          style: text.headlineSmall?.copyWith(
-            // IBM Plex Sans (theme default), lime label (§8.3 secondary text).
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          // Short glyphs (DTMF digits, MF digits, KP/ST) keep the large keypad
+          // type; multi-character word labels (Nickel / Quarter, "2600") step
+          // down so they fit a narrower key without truncating.
+          style: (label.length <= 2 ? text.headlineSmall : text.titleMedium)
+              ?.copyWith(
             color: colors.textAccent,
             fontWeight: FontWeight.w600,
           ),

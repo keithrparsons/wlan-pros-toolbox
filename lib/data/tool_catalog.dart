@@ -707,7 +707,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       ToolEntry(
         id: 'dtmf-generator',
         title: 'DTMF Generator',
-        description: 'Play Touch-Tone keypad tones (0-9, *, #, A-D)',
+        description: 'Touch-Tone keypad tones, plus Blue Box and Red Box history',
         routeName: '/tools/dtmf-generator',
         isLive: true,
         subgroup: 'Utilities & Generators',

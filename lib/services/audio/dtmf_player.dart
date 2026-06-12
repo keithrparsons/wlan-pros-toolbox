@@ -30,6 +30,7 @@ import 'dart:typed_data';
 import 'package:just_audio/just_audio.dart';
 
 import '../../data/dtmf.dart';
+import '../../data/signaling_tones.dart';
 
 /// An in-memory [StreamAudioSource] that serves a fixed WAV byte buffer, so
 /// just_audio can decode generated tones without a temp file or bundled asset.
@@ -118,6 +119,20 @@ class DtmfPlayer {
       await Future<void>.delayed(Duration(milliseconds: toneMs + gapMs));
     }
     if (!_disposed) await _player.stop();
+  }
+
+  /// Play a single historical signaling signal (Blue Box MF / KP / ST / 2600,
+  /// or a US Red Box coin pattern). The whole signal — including its multi-burst
+  /// timing and inter-burst gaps for a dime / quarter — is baked into one WAV by
+  /// [SignalingTones.synthesize], so this is a single fire-and-forget play, the
+  /// same plumbing as [playTone]. Stops any in-flight tone first.
+  Future<void> playSignalingTone(SignalingTone tone) async {
+    if (_disposed) return;
+    final Uint8List wav = SignalingTones.wavForTone(tone);
+    await _player.stop();
+    await _player.setLoopMode(LoopMode.off);
+    await _player.setAudioSource(_BytesAudioSource(wav));
+    await _player.play();
   }
 
   /// Stop any playback (single tone, continuous loop, or sequence).
