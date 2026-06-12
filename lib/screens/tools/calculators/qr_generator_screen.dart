@@ -1,16 +1,22 @@
-// QR Code Generator — Batch 4b.
+// QR Code Generator — Batch 4b, Wi-Fi mode added 2026-06-12.
 //
-// Text/URL input → a rendered QR code. Uses `pretty_qr_code` (MIT; depends on
-// `qr` BSD-3 — both pure-Dart, both MIT/BSD per the License gate). Chosen over
-// `qr_flutter` (4.1.0, ^2022) because pretty_qr_code is the actively maintained
-// option (3.6.0) and exposes a clean per-module / per-background color API,
-// which is exactly what GL-003 §8.19 requires us to control.
+// Two content modes, picked by a §8.14.1 AppToggle segmented control:
+//   * URL / Text — the original behavior: any string → a QR code.
+//   * Wi-Fi      — the "scan to join" headline feature: SSID + security +
+//                  password + hidden toggle → the standard WIFI: payload
+//                  (see lib/data/wifi_qr.dart), which a phone camera reads as a
+//                  "join this network" offer.
+//
+// Uses `pretty_qr_code` (MIT; depends on `qr` BSD-3 — both pure-Dart, both
+// MIT/BSD per the License gate).
 //
 // GL-003 §8.19 — QR CODE RENDERING (HARD RULE, a deliberate exception to the
 // App Mode dark default):
 //   * DARK modules on a WHITE (--color-neutral-0 / #FFFFFF) background, ALWAYS.
 //     Never the inverted/on-brand lime-on-charcoal QR — many scanners fail on
-//     inverted codes, and a QR is a machine target, not a brand surface.
+//     inverted codes, and a QR is a machine target, not a brand surface. This
+//     holds across every module SHAPE and SIZE option below — shape/size never
+//     touch the color, which is locked dark-on-white.
 //   * A mandatory ≥4-module quiet zone of the SAME white on all four sides,
 //     never cropped — a QR with no quiet zone fails to scan.
 //   * The white QR tile is a card (--app-radius-card / 12px) centered in the
@@ -29,11 +35,37 @@ import 'package:flutter/rendering.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
 
 import '../../../data/qr_share.dart';
+import '../../../data/wifi_qr.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/app_select.dart';
+import '../../../widgets/app_toggle.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../labeled_field.dart';
+
+/// Which kind of content the tool is encoding.
+enum QrContentMode { urlText, wifi }
+
+/// The rendered module shape (§8.19 — shape never alters the dark-on-white
+/// color contract; it only changes module geometry).
+enum QrModuleShape { square, rounded, dots }
+
+/// Preset export/render sizes. The value is the logical edge of the white tile;
+/// the share PNG renders at 3× this for crisp scan resolution.
+enum QrSize {
+  small(220, 'Small'),
+  medium(280, 'Medium'),
+  large(340, 'Large');
+
+  const QrSize(this.edge, this.label);
+
+  /// Logical edge (px) of the white QR tile for this preset.
+  final double edge;
+
+  /// Display label for the size selector.
+  final String label;
+}
 
 class QrGeneratorScreen extends StatefulWidget {
   const QrGeneratorScreen({super.key});
@@ -43,8 +75,21 @@ class QrGeneratorScreen extends StatefulWidget {
 }
 
 class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
+  // URL / Text mode.
   final TextEditingController _inputCtrl = TextEditingController();
   final FocusNode _inputFocus = FocusNode();
+
+  // Wi-Fi mode.
+  final TextEditingController _ssidCtrl = TextEditingController();
+  final TextEditingController _passwordCtrl = TextEditingController();
+
+  QrContentMode _mode = QrContentMode.urlText;
+  WifiAuthType _auth = WifiAuthType.wpa;
+  bool _hidden = false;
+  bool _passwordObscured = true;
+
+  QrModuleShape _shape = QrModuleShape.square;
+  QrSize _size = QrSize.medium;
 
   // RepaintBoundary key so the rendered white tile can be captured to a PNG for
   // the share path (so the shared image is the SAME dark-on-white QR the user
@@ -57,6 +102,8 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
   void initState() {
     super.initState();
     _inputCtrl.addListener(_onInputChanged);
+    _ssidCtrl.addListener(_onInputChanged);
+    _passwordCtrl.addListener(_onInputChanged);
   }
 
   @override
@@ -64,16 +111,42 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
     _inputCtrl.removeListener(_onInputChanged);
     _inputCtrl.dispose();
     _inputFocus.dispose();
+    _ssidCtrl.removeListener(_onInputChanged);
+    _ssidCtrl.dispose();
+    _passwordCtrl.removeListener(_onInputChanged);
+    _passwordCtrl.dispose();
     super.dispose();
   }
 
   void _onInputChanged() => setState(() {});
 
-  String get _data => _inputCtrl.text.trim();
+  // ─── Encoded payload ────────────────────────────────────────────────────────
+
+  /// Whether the Wi-Fi field set has enough to encode (SSID is required; an open
+  /// network needs no password).
+  bool get _wifiReady => _ssidCtrl.text.trim().isNotEmpty;
+
+  /// The string actually fed to the QR for the active mode. Empty when the
+  /// current mode has nothing to encode yet.
+  String get _data {
+    switch (_mode) {
+      case QrContentMode.urlText:
+        return _inputCtrl.text.trim();
+      case QrContentMode.wifi:
+        if (!_wifiReady) return '';
+        return buildWifiQrPayload(
+          ssid: _ssidCtrl.text,
+          auth: _auth,
+          password: _passwordCtrl.text,
+          hidden: _hidden,
+        );
+    }
+  }
+
   bool get _hasData => _data.isNotEmpty;
 
-  /// §8.16 copy payload — the encoded text itself (so a user can copy what the
-  /// QR contains). Null (→ disabled) when the field is empty.
+  /// §8.16 copy payload — the encoded string itself (the URL/text, or the WIFI:
+  /// payload). Null (→ disabled) when there is nothing encoded.
   String? _buildCopyText() => _hasData ? _data : null;
 
   // ─── Share ────────────────────────────────────────────────────────────────
@@ -153,7 +226,11 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
+                      _modeSelector(),
+                      const SizedBox(height: AppSpacing.md),
                       _inputCard(text),
+                      const SizedBox(height: AppSpacing.md),
+                      _appearanceCard(text),
                       const SizedBox(height: AppSpacing.md),
                       if (_hasData) ...<Widget>[
                         _qrTile(),
@@ -173,7 +250,35 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
     );
   }
 
+  /// Content-mode picker — URL/Text vs Wi-Fi (§8.14.1 AppToggle).
+  Widget _modeSelector() {
+    return AppToggle<QrContentMode>(
+      value: _mode,
+      label: 'Content',
+      semanticLabel: 'Content type to encode',
+      expand: true,
+      items: const <AppToggleItem<QrContentMode>>[
+        (QrContentMode.urlText, 'URL / Text'),
+        (QrContentMode.wifi, 'Wi-Fi'),
+      ],
+      onChanged: (QrContentMode m) {
+        if (m == _mode) return;
+        setState(() => _mode = m);
+      },
+    );
+  }
+
+  /// The input card for the active mode.
   Widget _inputCard(TextTheme text) {
+    switch (_mode) {
+      case QrContentMode.urlText:
+        return _urlTextInputCard(text);
+      case QrContentMode.wifi:
+        return _wifiInputCard(text);
+    }
+  }
+
+  Widget _cardShell({required Widget child}) {
     final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
@@ -182,6 +287,13 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
         border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
+      child: child,
+    );
+  }
+
+  Widget _urlTextInputCard(TextTheme text) {
+    final AppColorScheme colors = context.colors;
+    return _cardShell(
       child: LabeledField(
         label: 'Text or URL',
         semanticLabel: 'Text or URL to encode',
@@ -203,18 +315,203 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
     );
   }
 
+  /// Wi-Fi "scan to join" inputs: SSID, security, password (hidden when the
+  /// network is open), and a hidden-network toggle.
+  Widget _wifiInputCard(TextTheme text) {
+    final AppColorScheme colors = context.colors;
+    final bool open = _auth == WifiAuthType.none;
+
+    return _cardShell(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          LabeledField(
+            label: 'Network name (SSID)',
+            semanticLabel: 'Wi-Fi network name',
+            field: TextField(
+              controller: _ssidCtrl,
+              keyboardType: TextInputType.text,
+              minLines: 1,
+              maxLines: 1,
+              autocorrect: false,
+              enableSuggestions: false,
+              cursorColor: colors.textAccent,
+              style: text.bodyLarge,
+              decoration: const InputDecoration(
+                hintText: 'WLAN-Pros-Guest',
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          LabeledField(
+            label: 'Security',
+            semanticLabel: 'Wi-Fi security type',
+            field: AppSelect<WifiAuthType>(
+              value: _auth,
+              semanticLabel: 'Wi-Fi security type',
+              items: const <AppSelectItem<WifiAuthType>>[
+                (WifiAuthType.wpa, 'WPA / WPA2 / WPA3'),
+                (WifiAuthType.wep, 'WEP'),
+                (WifiAuthType.none, 'None (open)'),
+              ],
+              onChanged: (WifiAuthType a) {
+                setState(() => _auth = a);
+              },
+            ),
+          ),
+          // Password hidden entirely for an open network (no P: field).
+          if (!open) ...<Widget>[
+            const SizedBox(height: AppSpacing.md),
+            LabeledField(
+              label: 'Password',
+              semanticLabel: 'Wi-Fi password',
+              field: TextField(
+                controller: _passwordCtrl,
+                obscureText: _passwordObscured,
+                keyboardType: TextInputType.visiblePassword,
+                minLines: 1,
+                maxLines: 1,
+                autocorrect: false,
+                enableSuggestions: false,
+                cursorColor: colors.textAccent,
+                style: text.bodyLarge,
+                decoration: InputDecoration(
+                  hintText: 'Network password',
+                  suffixIcon: IconButton(
+                    onPressed: () => setState(
+                      () => _passwordObscured = !_passwordObscured,
+                    ),
+                    icon: Icon(
+                      _passwordObscured
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                    ),
+                    tooltip: _passwordObscured
+                        ? 'Show password'
+                        : 'Hide password',
+                  ),
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.md),
+          _hiddenToggleRow(text),
+        ],
+      ),
+    );
+  }
+
+  /// The "Hidden network" on/off row. A Material [Switch] inherits the lime
+  /// active track from the §8.10 ColorScheme mapping; the whole row is a single
+  /// labeled, keyboard-operable control.
+  Widget _hiddenToggleRow(TextTheme text) {
+    final AppColorScheme colors = context.colors;
+    return MergeSemantics(
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  'Hidden network',
+                  style: text.bodyLarge?.copyWith(
+                    color: colors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xxs),
+                Text(
+                  'Turn on if this network does not broadcast its name.',
+                  style: text.bodySmall?.copyWith(
+                    color: colors.textTertiary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Switch(
+            value: _hidden,
+            onChanged: (bool v) => setState(() => _hidden = v),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Module-shape and size selectors. These never touch the dark-on-white color
+  /// contract (§8.19) — shape changes module geometry, size changes render
+  /// resolution.
+  Widget _appearanceCard(TextTheme text) {
+    return _cardShell(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          AppToggle<QrModuleShape>(
+            value: _shape,
+            label: 'Module shape',
+            semanticLabel: 'QR module shape',
+            expand: true,
+            items: const <AppToggleItem<QrModuleShape>>[
+              (QrModuleShape.square, 'Square'),
+              (QrModuleShape.rounded, 'Rounded'),
+              (QrModuleShape.dots, 'Dots'),
+            ],
+            onChanged: (QrModuleShape s) => setState(() => _shape = s),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          AppToggle<QrSize>(
+            value: _size,
+            label: 'Size',
+            semanticLabel: 'QR code size',
+            expand: true,
+            items: <AppToggleItem<QrSize>>[
+              for (final QrSize s in QrSize.values) (s, s.label),
+            ],
+            onChanged: (QrSize s) => setState(() => _size = s),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Resolve the active module shape to a `pretty_qr_code` symbol. Every shape
+  /// keeps the dark charcoal module color — color is NEVER theme-flipped or
+  /// shape-dependent (§8.19). `unifiedFinderPattern: true` on dots keeps the
+  /// three finder squares solid so the code stays reliably scannable.
+  PrettyQrShape _symbolFor(QrModuleShape shape) {
+    switch (shape) {
+      case QrModuleShape.square:
+        return const PrettyQrSmoothSymbol(
+          color: Color(0xFF30302F), // §8.19 QR modules: charcoal, never inverted
+          roundFactor: 0,
+        );
+      case QrModuleShape.rounded:
+        return const PrettyQrSmoothSymbol(
+          color: Color(0xFF30302F),
+          roundFactor: 1,
+        );
+      case QrModuleShape.dots:
+        return const PrettyQrDotsSymbol(
+          color: Color(0xFF30302F),
+        );
+    }
+  }
+
   /// The §8.19 white QR tile: dark modules on a WHITE tile with the QR widget's
   /// own ≥4-module quiet zone preserved (padding INSIDE the white area so the
   /// quiet zone is the same white, never cropped). The white tile is a 12px-
-  /// radius card centered in the column, with 24px of dark-card padding around
-  /// it (the RepaintBoundary wraps only the white tile so the captured PNG is
-  /// white-on-white-quiet-zone, not the dark canvas).
+  /// radius card centered in the column, sized by the active [_size] preset,
+  /// with 24px of dark-card padding around it (the RepaintBoundary wraps only
+  /// the white tile so the captured PNG is white-on-white-quiet-zone, not the
+  /// dark canvas).
   Widget _qrTile() {
     final AppColorScheme colors = context.colors;
     return Center(
       child: ConstrainedBox(
-        // Cap the tile so it reads as a deliberate inset, not full-bleed.
-        constraints: const BoxConstraints(maxWidth: 320),
+        // The size preset caps the tile; it still shrinks on a narrow phone via
+        // the parent column width, so it is never wider than the surface.
+        constraints: BoxConstraints(maxWidth: _size.edge),
         child: Container(
           // §8.19: --space-md (24px) padding between the dark enclosing card and
           // the white tile — reinforces the quiet zone so the QR's light border
@@ -244,21 +541,18 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
                   data: _data,
                   // M-level: good scan robustness without bloating the modules.
                   errorCorrectLevel: QrErrorCorrectLevel.M,
-                  decoration: const PrettyQrDecoration(
+                  decoration: PrettyQrDecoration(
                     // §8.19: DARK modules (charcoal --color-secondary) on a
                     // WHITE background. NEVER inverted (lime-on-dark) —
-                    // scannability beats brand here. roundFactor: 0 keeps the
-                    // modules crisp squares (best scan reliability).
-                    shape: PrettyQrSmoothSymbol(
-                      color: Color(0xFF30302F), // §8.19 QR modules: charcoal, never inverted
-                      roundFactor: 0,
-                    ),
+                    // scannability beats brand here. The shape varies (square /
+                    // rounded / dots) but the color is locked dark-on-white.
+                    shape: _symbolFor(_shape),
                     // Explicit white background so the modules always sit on
                     // --color-neutral-0, independent of the enclosing tile.
-                    background: Color(0xFFFFFFFF), // §8.19 QR background: white, never inverted
+                    background: const Color(0xFFFFFFFF), // §8.19 QR background: white, never inverted
                     // §8.19: mandatory ≥4-module quiet zone of the same white,
                     // never cropped to the module edge.
-                    quietZone: PrettyQrQuietZone.modules(4),
+                    quietZone: const PrettyQrQuietZone.modules(4),
                   ),
                 ),
               ),
@@ -287,6 +581,9 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
 
   Widget _emptyState(TextTheme text) {
     final AppColorScheme colors = context.colors;
+    final String message = _mode == QrContentMode.wifi
+        ? 'Enter a network name (SSID) above to generate a Wi-Fi join code.'
+        : 'Enter text or a URL above to generate a QR code.';
     return Container(
       decoration: BoxDecoration(
         color: colors.surface1,
@@ -304,7 +601,7 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
           const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: Text(
-              'Enter text or a URL above to generate a QR code.',
+              message,
               style: text.bodyMedium?.copyWith(
                 color: colors.textTertiary,
               ),
