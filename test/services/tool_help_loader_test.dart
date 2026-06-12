@@ -164,7 +164,9 @@ void main() {
       // are MODES of the existing dtmf-generator screen, not new catalog tiles,
       // so they have no tile and are listed in nonCatalogHelpIds below. The DTMF
       // entry itself was extended in place (no new id). 129 + 2 = 131.
-      expect(store.count, 131);
+      // 132 = + the Morse Code encoder/decoder (morse-code), a new Utilities &
+      // Generators tool 2026-06-12. 131 + 1 = 132.
+      expect(store.count, 132);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

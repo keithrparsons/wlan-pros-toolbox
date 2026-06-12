@@ -2316,6 +2316,35 @@
       ],
       "source": "dtmf_generator_screen.dart, signaling_tones.dart"
     },
+    "morse-code": {
+      "name": "Morse Code",
+      "category": "Calculators & Tools",
+      "purpose": "Converts plain text to International Morse code and decodes dots and dashes back to text, live in both directions, with an optional audio sidetone.",
+      "whyHere": "A field utility for the times Wi-Fi and cellular are both gone: signaling a light, a buzzer, or a key by ear, reading a beacon ID that idents in Morse, or just settling what a string of dots and dashes says. Encode once and play it as a tone the receiving ear or detector can pick up.",
+      "howToUse": [
+        "Pick a direction: Text to Morse, or Morse to Text.",
+        "Type or paste into the top field. The converted result updates live in the card below.",
+        "In Morse to Text, separate letters with a single space and words with a slash, e.g. ... --- ... for SOS.",
+        "Tap Play to hear the message as a 600 Hz sidetone; tap Stop to end it.",
+        "Open Prosigns to see the named procedural signals (SOS, AR, SK, and so on)."
+      ],
+      "inputs": [
+        {
+          "name": "Text or Morse",
+          "unit": "letters, digits, punctuation / dots and dashes",
+          "range": "any length; unmapped characters are skipped"
+        }
+      ],
+      "algorithm": "International Morse code per ITU-R M.1677-1. Each letter, digit, and common punctuation mark maps to a fixed run of dots (dits) and dashes (dahs). Encoding joins symbols within a character with no gap, characters within a word with a single space, and words with a slash. Decoding inverts the same convention, so encodable text round-trips losslessly (case folds to upper). Audio uses the standard dit-unit timing (dot = 1 unit, dash = 3 units, intra-character gap = 1, letter gap = 3, word gap = 7) at a PARIS-derived speed, keyed onto one sidetone. (morse.dart, morse_code_screen.dart, morse_player.dart)",
+      "example": "SOS encodes to ... --- ... (S = three dots, O = three dashes). HELLO WORLD encodes to .... . .-.. .-.. --- / .-- --- .-. .-.. -.. — letters spaced, the two words split by a slash.",
+      "fieldNotes": [
+        "There is no Morse code for the space character itself; word breaks are carried by the slash separator, which is why a decoded message shows spaces between words and not blanks inside them.",
+        "Prosigns like SOS are run together as one continuous string (...---...) with no internal letter gaps. They are procedural signals, not literal text, so they are listed for reference rather than produced when you encode ordinary words.",
+        "Decoding marks any code it does not recognize with a question mark rather than dropping it, so a mistyped symbol is visible instead of silently lost.",
+        "The audio is generated and played on the device speaker as a single tone; nothing is transmitted over the air or down a line by the app."
+      ],
+      "source": "morse_code_screen.dart"
+    },
     "optical-transceivers": {
       "name": "Optical Transceivers",
       "category": "Quick Reference",

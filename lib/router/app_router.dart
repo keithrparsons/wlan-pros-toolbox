@@ -28,6 +28,7 @@ import '../screens/tools/calculators/metric_conversion_screen.dart';
 import '../screens/tools/calculators/unit_converter_screen.dart';
 import '../screens/tools/calculators/qr_generator_screen.dart';
 import '../screens/tools/calculators/dtmf_generator_screen.dart';
+import '../screens/tools/calculators/morse_code_screen.dart';
 import '../screens/tools/calculators/lat_long_screen.dart';
 import '../screens/tools/calculators/dist_bearing_screen.dart';
 import '../screens/tools/calculators/midpoint_screen.dart';
@@ -430,6 +431,7 @@ class AppRouter {
   static const String unitConverter = '/tools/unit-converter';
   static const String qrGenerator = '/tools/qr-generator';
   static const String dtmfGenerator = '/tools/dtmf-generator';
+  static const String morseCode = '/tools/morse-code';
 
   // Command & Capture category — offline command / filter references (const
   // datasets, all platforms incl. web; reference text, never executed).
@@ -658,6 +660,7 @@ class AppRouter {
     unitConverter: (_) => const UnitConverterScreen(),
     qrGenerator: (_) => const QrGeneratorScreen(),
     dtmfGenerator: (_) => const DtmfGeneratorScreen(),
+    morseCode: (_) => const MorseCodeScreen(),
     cliCommands: (_) => const CliCommandsScreen(),
     linuxWlanCommands: (_) => const LinuxWlanCommandsScreen(),
     wiresharkFilters: (_) => const WiresharkFiltersScreen(),

@@ -712,6 +712,14 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Utilities & Generators',
       ),
+      ToolEntry(
+        id: 'morse-code',
+        title: 'Morse Code',
+        description: 'Encode and decode International Morse, with audio',
+        routeName: '/tools/morse-code',
+        isLive: true,
+        subgroup: 'Utilities & Generators',
+      ),
       // ── moved in from the dissolved Planning Tools category (2026-06-01) ──
       ToolEntry(
         id: 'poe-budget',
