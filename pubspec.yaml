@@ -448,6 +448,19 @@ flutter:
     # inverted on light. Resolved via lib/data/throughput_where_diagram.dart
     # against the asset manifest, so a missing file degrades gracefully.
     - assets/tool-diagrams/throughput-testing-where/
+    # Modulation reference diagrams (2026-06-11) — eight Vera-passed, DARK-BAKED
+    # raster cards (white WLAN Pros logo on the §8 #1A1A1A canvas): six
+    # constellations (BPSK, QPSK, 16/64/256/1024-QAM), an Error Vector Magnitude
+    # explainer, and an order→bits→SNR/EVM summary capstone, on the Modulation
+    # Quick Reference screen. Like the throughput-testing-where PNG (and unlike
+    # the §8.6.2 SVG concept graphics) they are pre-rendered rasters, so they
+    # cannot take the §8.20.7 light-mode swap; each is presented on an
+    # ALWAYS-DARK surface card in both themes (DarkRasterDiagramCard) so it never
+    # reads inverted on light. Resolved via lib/data/modulation_diagrams.dart
+    # against the asset manifest, so a missing file degrades gracefully. SNR/EVM
+    # figures are REPRESENTATIVE order-of-magnitude demands, not exact MCS
+    # thresholds (the diagrams and the help entry say so).
+    - assets/tool-diagrams/modulation/
     # PDF reference cards — Keith's 10 laminated reference cards (Excel→PDF
     # exports), one bundled PDF per "PDF reference card" tool, named by catalog
     # id: assets/reference-cards/<tool-id>.pdf. Rendered offline in a

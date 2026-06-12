@@ -155,7 +155,11 @@ void main() {
       // (nearby-ap-scan, Android-only). The H1/H2/M1+M2 features augment
       // existing tools (my-current-location, wifi-info, network-discovery) and
       // add no new help ids. 126 + 2 = 128.
-      expect(store.count, 128);
+      // 129 = + the Modulation Quick Reference (modulation) 2026-06-11: the
+      // visual companion to the MCS Index table (six constellations + an EVM
+      // explainer + an order→bits→SNR/EVM summary, eight dark-baked rasters).
+      // 128 + 1 = 129.
+      expect(store.count, 129);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

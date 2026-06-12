@@ -818,6 +818,18 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Wi-Fi & RF',
       ),
+      // Visual companion to the MCS Index table: what a constellation IS and why
+      // higher-order QAM needs a cleaner link. Eight dark-baked raster cards
+      // (six constellations + EVM explainer + summary). SNR/EVM figures are
+      // representative order-of-magnitude demands, not exact MCS thresholds.
+      ToolEntry(
+        id: 'modulation',
+        title: 'Modulation',
+        description: 'Constellations, bits per symbol, and EVM / SNR demand',
+        routeName: '/tools/modulation',
+        isLive: true,
+        subgroup: 'Wi-Fi & RF',
+      ),
       ToolEntry(
         id: 'signal-thresholds',
         title: 'Signal Thresholds',
