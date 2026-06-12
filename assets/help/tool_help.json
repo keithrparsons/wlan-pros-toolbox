@@ -10,7 +10,7 @@
       "howToUse": [
         "Enter the frequency and pick its unit (GHz or MHz).",
         "Enter the distance and pick its unit (km, mi, or m).",
-        "Read the path loss in dB. The result blanks to \"\u2014\" until both fields hold valid positive numbers."
+        "Read the path loss in dB. The result blanks to \"—\" until both fields hold valid positive numbers."
       ],
       "inputs": [
         {
@@ -24,8 +24,8 @@
           "range": "must be > 0"
         }
       ],
-      "algorithm": "FSPL(dB) = 20\u00b7log10(f_GHz) + 20\u00b7log10(d_km) + 92.45 (fspl_screen.dart:71-75). Unit conversions: MHz \u00f7 1000 \u2192 GHz (:48-55); mi \u00d7 1.60934 \u2192 km, m \u00f7 1000 \u2192 km (:58-67). The 92.45 constant is the km/GHz form of FSPL. Output is rounded to 1 decimal (:138-141). If frequency or distance \u2264 0, output blanks (:122-125).",
-      "example": "5 GHz, 1 km \u2192 20\u00b7log10(5) + 20\u00b7log10(1) + 92.45 = 106.4 dB.",
+      "algorithm": "FSPL(dB) = 20·log10(f_GHz) + 20·log10(d_km) + 92.45 (fspl_screen.dart:71-75). Unit conversions: MHz ÷ 1000 → GHz (:48-55); mi × 1.60934 → km, m ÷ 1000 → km (:58-67). The 92.45 constant is the km/GHz form of FSPL. Output is rounded to 1 decimal (:138-141). If frequency or distance ≤ 0, output blanks (:122-125).",
+      "example": "5 GHz, 1 km → 20·log10(5) + 20·log10(1) + 92.45 = 106.4 dB.",
       "fieldNotes": [
         "Free space only. No obstructions, no ground reflection, no atmospheric effects. Real-world links always lose more, so use this as a floor, not a prediction.",
         "The reference card lists anchor values (2.4 GHz @ 1 km = 100.1 dB, 6 GHz @ 1 km = 108.0 dB)."
@@ -48,10 +48,10 @@
           "range": "must be > 0"
         }
       ],
-      "algorithm": "\u03bb(m) = 300 / f_MHz (the 300 constant is c = 3\u00b710\u2078 m/s scaled for the MHz/meter form). \u03bb(cm) = \u03bb(m)\u00b7100, \u03bb(ft) = \u03bb(m)\u00b73.28084, \u03bb(in) = \u03bb(ft)\u00b712. GHz \u00d7 1000 \u2192 MHz (:45-52). Display decimals: m \u2192 4, cm \u2192 2, ft \u2192 4, in \u2192 3 (:209-212). (wavelength_screen.dart:54-67)",
-      "example": "2400 MHz \u2192 300/2400 = 0.1250 m, 12.50 cm, 0.4101 ft, 4.921 in.",
+      "algorithm": "λ(m) = 300 / f_MHz (the 300 constant is c = 3·10⁸ m/s scaled for the MHz/meter form). λ(cm) = λ(m)·100, λ(ft) = λ(m)·3.28084, λ(in) = λ(ft)·12. GHz × 1000 → MHz (:45-52). Display decimals: m → 4, cm → 2, ft → 4, in → 3 (:209-212). (wavelength_screen.dart:54-67)",
+      "example": "2400 MHz → 300/2400 = 0.1250 m, 12.50 cm, 0.4101 ft, 4.921 in.",
       "fieldNotes": [
-        "Uses c = 3\u00b710\u2078 m/s (the rounded 300 constant), not the exact 299792458. The tiny difference is irrelevant for antenna work.",
+        "Uses c = 3·10⁸ m/s (the rounded 300 constant), not the exact 299792458. The tiny difference is irrelevant for antenna work.",
         "This is free-space wavelength; velocity factor inside cable or dielectric is not applied."
       ],
       "source": "wavelength_screen.dart:54-67"
@@ -83,8 +83,8 @@
           "range": "signed allowed"
         }
       ],
-      "algorithm": "Power \u2192 dBm: dBm = 10\u00b7log10(W\u00b71000) for watts; mW routes through the same with W = mW/1000 (:42-58). EIRP(dBm) = TX_power_dBm \u2212 cable_loss + antenna_gain (:63-72). EIRP(W) = 10^(EIRP_dBm/10) / 1000 (:42-43, 75). EIRP output 1 decimal; the watt line shows W at 2 decimals when \u2265 1 W, else mW at 1 decimal (:149-160). (eirp_screen.dart:42-75)",
-      "example": "TX 20 dBm, cable loss 1.5 dB, gain 14 dBi \u2192 20 \u2212 1.5 + 14 = 32.5 dBm \u2192 10^(3.25)/1000 = 1.78 W.",
+      "algorithm": "Power → dBm: dBm = 10·log10(W·1000) for watts; mW routes through the same with W = mW/1000 (:42-58). EIRP(dBm) = TX_power_dBm − cable_loss + antenna_gain (:63-72). EIRP(W) = 10^(EIRP_dBm/10) / 1000 (:42-43, 75). EIRP output 1 decimal; the watt line shows W at 2 decimals when ≥ 1 W, else mW at 1 decimal (:149-160). (eirp_screen.dart:42-75)",
+      "example": "TX 20 dBm, cable loss 1.5 dB, gain 14 dBi → 20 − 1.5 + 14 = 32.5 dBm → 10^(3.25)/1000 = 1.78 W.",
       "fieldNotes": [
         "Cable loss should include all connector and jumper losses on the transmit chain.",
         "The reference card lists regulatory EIRP ceilings (e.g. 2.4 GHz FCC PtMP = +36 dBm / 4 W); those are planning anchors and vary by sub-band, channel width, and power-control rules. Verify against current local regulations."
@@ -119,8 +119,8 @@
           "range": "must be inside (0, total) to add an at-point result, otherwise ignored"
         }
       ],
-      "algorithm": "\u03bb(m) = 0.3 / f_GHz (c/f form, c = 3\u00b710\u2078). At-point radius: r = sqrt(\u03bb \u00b7 d1 \u00b7 d2 / (d1 + d2)) where d1, d2 are the two path segments in meters. Midpoint (the maximum, always shown): d1 = d2 = D/2. clearance60 = r \u00b7 0.6. Feet = r \u00b7 3.28084. (fresnel_screen.dart:73-117)",
-      "example": "5.8 GHz, 10000 m total, midpoint \u2192 \u03bb = 0.3/5.8 = 0.05172 m; r = sqrt(0.05172 \u00b7 5000 \u00b7 5000 / 10000) = 11.37 m; 60% clearance = 6.82 m.",
+      "algorithm": "λ(m) = 0.3 / f_GHz (c/f form, c = 3·10⁸). At-point radius: r = sqrt(λ · d1 · d2 / (d1 + d2)) where d1, d2 are the two path segments in meters. Midpoint (the maximum, always shown): d1 = d2 = D/2. clearance60 = r · 0.6. Feet = r · 3.28084. (fresnel_screen.dart:73-117)",
+      "example": "5.8 GHz, 10000 m total, midpoint → λ = 0.3/5.8 = 0.05172 m; r = sqrt(0.05172 · 5000 · 5000 / 10000) = 11.37 m; 60% clearance = 6.82 m.",
       "fieldNotes": [
         "The midpoint radius is the worst case along the path; clearance there is the binding constraint.",
         "Frequency unit is fixed to GHz here (unlike FSPL, which offers MHz).",
@@ -156,8 +156,8 @@
           "range": "must be > 0"
         }
       ],
-      "algorithm": "Loss per 100 ft is interpolated across manufacturer [freq_MHz, dB/100ft] knot points on a sqrt(frequency) axis: t = (sqrt(f) \u2212 sqrt(f1)) / (sqrt(f2) \u2212 sqrt(f1)), loss = l1 + t\u00b7(l2 \u2212 l1) (:200-210). Below the lowest knot it clamps to the lowest value; above the top knot it sqrt-extrapolates from the last two knots (:188-198). total_loss(dB) = per100ft \u00b7 length_ft / 100 (:217-219). GHz \u00d7 1000 \u2192 MHz; m \u00d7 3.28084 \u2192 ft (:160-178). Output rounded to 2 decimals. Per-cable knot tables are ported verbatim (:77-155); e.g. LMR-400 at 2400 MHz = 3.9 dB/100ft. (cable_loss_screen.dart:160-219)",
-      "example": "LMR-400, 2.4 GHz, 50 ft \u2192 per-100ft at 2400 MHz = 3.9 dB; total = 3.9 \u00b7 50 / 100 = 1.95 dB.",
+      "algorithm": "Loss per 100 ft is interpolated across manufacturer [freq_MHz, dB/100ft] knot points on a sqrt(frequency) axis: t = (sqrt(f) − sqrt(f1)) / (sqrt(f2) − sqrt(f1)), loss = l1 + t·(l2 − l1) (:200-210). Below the lowest knot it clamps to the lowest value; above the top knot it sqrt-extrapolates from the last two knots (:188-198). total_loss(dB) = per100ft · length_ft / 100 (:217-219). GHz × 1000 → MHz; m × 3.28084 → ft (:160-178). Output rounded to 2 decimals. Per-cable knot tables are ported verbatim (:77-155); e.g. LMR-400 at 2400 MHz = 3.9 dB/100ft. (cable_loss_screen.dart:160-219)",
+      "example": "LMR-400, 2.4 GHz, 50 ft → per-100ft at 2400 MHz = 3.9 dB; total = 3.9 · 50 / 100 = 1.95 dB.",
       "fieldNotes": [
         "Values are manufacturer-typical at room temperature; real loss rises with temperature and aging, and connectors add loss not modeled here.",
         "The sqrt(f) interpolation is a smooth fit between published spec points, not a measurement.",
@@ -218,24 +218,24 @@
           "range": "optional, default 0"
         }
       ],
-      "algorithm": "Watts \u2192 dBm: 10\u00b7log10(W\u00b71000); mW via W = mW/1000 (:56-71). received(dBm) = TX_power + TX_gain \u2212 TX_loss \u2212 path_loss \u2212 RX_loss + RX_gain \u2212 misc (:76-86). link_margin(dB) = received \u2212 RX_sensitivity (:89-91). Health bands (:94-98): margin \u2265 10 dB \u2192 healthy (green); 0 to 10 dB \u2192 marginal (amber); < 0 dB \u2192 negative (red). (link_budget_screen.dart:56-98)",
-      "example": "TX 30 dBm, TX gain 20, TX loss 2, path loss 120, RX loss 2, RX gain 20, misc 0, RX sensitivity \u221285 \u2192 received = 30 + 20 \u2212 2 \u2212 120 \u2212 2 + 20 \u2212 0 = \u221254 dBm; margin = \u221254 \u2212 (\u221285) = 31 dB (healthy).",
+      "algorithm": "Watts → dBm: 10·log10(W·1000); mW via W = mW/1000 (:56-71). received(dBm) = TX_power + TX_gain − TX_loss − path_loss − RX_loss + RX_gain − misc (:76-86). link_margin(dB) = received − RX_sensitivity (:89-91). Health bands (:94-98): margin ≥ 10 dB → healthy (green); 0 to 10 dB → marginal (amber); < 0 dB → negative (red). (link_budget_screen.dart:56-98)",
+      "example": "TX 30 dBm, TX gain 20, TX loss 2, path loss 120, RX loss 2, RX gain 20, misc 0, RX sensitivity −85 → received = 30 + 20 − 2 − 120 − 2 + 20 − 0 = −54 dBm; margin = −54 − (−85) = 31 dB (healthy).",
       "fieldNotes": [
         "Path loss is supplied by the engineer (compute it with the FSPL tool, then add real-world margins).",
         "This budget does not include rain fade; use the PtP Link Check for that.",
-        "A healthy margin (\u2265 10 dB) is the common design target to ride out fading and multipath."
+        "A healthy margin (≥ 10 dB) is the common design target to ride out fading and multipath."
       ],
       "source": "link_budget_screen.dart:56-98"
     },
     "noise-floor": {
       "name": "Noise Floor",
       "category": "Calculators & Tools",
-      "purpose": "Computes the thermal noise floor (kTB) for a channel, the receiver noise floor (kTB plus noise figure), and the quick \u2212174 dBm/Hz rule-of-thumb value.",
+      "purpose": "Computes the thermal noise floor (kTB) for a channel, the receiver noise floor (kTB plus noise figure), and the quick −174 dBm/Hz rule-of-thumb value.",
       "whyHere": "SNR is signal minus noise floor. Knowing the noise floor for a given channel width sets the minimum usable signal and frames link-margin discussions.",
       "howToUse": [
         "Pick the channel bandwidth.",
         "Enter receiver noise figure in dB.",
-        "Optionally adjust temperature (defaults to 20\u00b0C when blank).",
+        "Optionally adjust temperature (defaults to 20°C when blank).",
         "Read thermal noise floor, receiver noise floor, and the rule-of-thumb value."
       ],
       "inputs": [
@@ -247,19 +247,19 @@
         {
           "name": "Noise figure",
           "unit": "dB",
-          "range": "must be \u2265 0 (default 7; invalid/negative blanks the outputs)"
+          "range": "must be ≥ 0 (default 7; invalid/negative blanks the outputs)"
         },
         {
           "name": "Temperature",
-          "unit": "\u00b0C",
+          "unit": "°C",
           "range": "defaults to 20 when blank (:69-70)"
         }
       ],
-      "algorithm": "thermal(dBm) = 10\u00b7log10(k \u00b7 T \u00b7 bw_Hz) + 30, with k = 1.380649\u00b710\u207b\u00b2\u00b3 J/K, T = tempC + 273.15, bw_Hz = bw_MHz \u00b7 10\u2076 (:74-78). rx_floor(dBm) = thermal + noise_figure (:81-83). rule(dBm) = \u2212174 + 10\u00b7log10(bw_Hz) (the \u2212174 dBm/Hz constant is kTB at ~0\u00b0C) (:87-90). Output rounded to 1 decimal. (noise_floor_screen.dart:66-90)",
-      "example": "20 MHz, NF 7 dB, 20\u00b0C \u2192 thermal = 10\u00b7log10(1.380649e-23 \u00b7 293.15 \u00b7 20e6) + 30 = \u2212100.9 dBm; rx floor = \u221293.9 dBm; rule = \u2212174 + 10\u00b7log10(20e6) = \u2212101.0 dBm.",
+      "algorithm": "thermal(dBm) = 10·log10(k · T · bw_Hz) + 30, with k = 1.380649·10⁻²³ J/K, T = tempC + 273.15, bw_Hz = bw_MHz · 10⁶ (:74-78). rx_floor(dBm) = thermal + noise_figure (:81-83). rule(dBm) = −174 + 10·log10(bw_Hz) (the −174 dBm/Hz constant is kTB at ~0°C) (:87-90). Output rounded to 1 decimal. (noise_floor_screen.dart:66-90)",
+      "example": "20 MHz, NF 7 dB, 20°C → thermal = 10·log10(1.380649e-23 · 293.15 · 20e6) + 30 = −100.9 dBm; rx floor = −93.9 dBm; rule = −174 + 10·log10(20e6) = −101.0 dBm.",
       "fieldNotes": [
         "This is the theoretical noise floor; real receivers see a higher effective floor from co-channel interference, adjacent-channel leakage, and ambient RF.",
-        "The \u2212174 rule is a 0\u00b0C approximation and differs slightly from the temperature-aware thermal value (note the HTML input prefills 25\u00b0C but the code's blank-field fallback is 20\u00b0C, per :69-70)."
+        "The −174 rule is a 0°C approximation and differs slightly from the temperature-aware thermal value (note the HTML input prefills 25°C but the code's blank-field fallback is 20°C, per :69-70)."
       ],
       "source": "noise_floor_screen.dart:66-90"
     },
@@ -273,7 +273,7 @@
         "Enter rain rate in mm/hr.",
         "Enter path length and pick its unit (km or mi).",
         "Pick polarization (Horizontal or Vertical).",
-        "Read total rain attenuation, specific attenuation \u03b3, and effective path length."
+        "Read total rain attenuation, specific attenuation γ, and effective path length."
       ],
       "inputs": [
         {
@@ -297,8 +297,8 @@
           "range": ""
         }
       ],
-      "algorithm": "k and \u03b1 come from the ITU-R P.838-3 [freq, kH, \u03b1H, kV, \u03b1V] table (18 frequency nodes, 1\u2013100 GHz, :62-81), interpolated log-log on frequency for k and log-linear on \u03b1; clamped at the table ends (:100-131). Specific attenuation: \u03b3(dB/km) = k \u00b7 R^\u03b1 (:134-141). Effective path length: L_eff = L / (1 + L/d0) with d0 = 35 \u00b7 e^(\u22120.015\u00b7R) (:145-148). Total: attenuation(dB) = \u03b3 \u00b7 L_eff (:151-160). Output decimals: attenuation 2, \u03b3 4, L_eff 2. (rain_fade_screen.dart:62-160)",
-      "example": "23 GHz, 42 mm/hr, 5 km, Horizontal \u2192 interpolating between the 20 and 25 GHz nodes gives k \u2248 0.1027, \u03b1 \u2248 1.085; \u03b3 = 0.1027 \u00b7 42^1.085 = 5.7195 dB/km; d0 = 35\u00b7e^(\u22120.63) = 18.65, L_eff = 5/(1 + 5/18.65) = 3.94 km; attenuation = 5.7195 \u00b7 3.94 = 22.55 dB.",
+      "algorithm": "k and α come from the ITU-R P.838-3 [freq, kH, αH, kV, αV] table (18 frequency nodes, 1–100 GHz, :62-81), interpolated log-log on frequency for k and log-linear on α; clamped at the table ends (:100-131). Specific attenuation: γ(dB/km) = k · R^α (:134-141). Effective path length: L_eff = L / (1 + L/d0) with d0 = 35 · e^(−0.015·R) (:145-148). Total: attenuation(dB) = γ · L_eff (:151-160). Output decimals: attenuation 2, γ 4, L_eff 2. (rain_fade_screen.dart:62-160)",
+      "example": "23 GHz, 42 mm/hr, 5 km, Horizontal → interpolating between the 20 and 25 GHz nodes gives k ≈ 0.1027, α ≈ 1.085; γ = 0.1027 · 42^1.085 = 5.7195 dB/km; d0 = 35·e^(−0.63) = 18.65, L_eff = 5/(1 + 5/18.65) = 3.94 km; attenuation = 5.7195 · 3.94 = 22.55 dB.",
       "fieldNotes": [
         "The model assumes the rain rate is uniform across the path; real cells are smaller, which the L_eff reduction partly accounts for.",
         "Pick a rain rate matching your target availability (e.g. the 0.01%-of-time rate for your region). The tool does not supply regional rain statistics.",
@@ -373,12 +373,12 @@
           "range": ""
         }
       ],
-      "algorithm": "eirp = TX_power + TX_gain \u2212 TX_loss (:223). fspl = 20\u00b7log10(d_km) + 20\u00b7log10(f_GHz) + 92.45 (:155-157). Rain fade reuses the ITU-R P.838-3 table and the same log-log interpolation as the Rain Fade tool: \u03b3 = k\u00b7R^\u03b1, d0 = 35\u00b7e^(\u22120.015\u00b7R), L_eff = d/(1 + d/d0), rainFade = \u03b3\u00b7L_eff; returns 0 when rain rate is not > 0 (:191-205). rxLevel = eirp \u2212 fspl \u2212 rainFade + RX_gain \u2212 RX_loss (:226). margin = rxLevel \u2212 RX_sensitivity (:227). Binary pass: margin \u2265 required_margin (:234). Three-state verdict (:239-243): margin \u2265 required \u2192 PASS; 0 \u2264 margin < required \u2192 MARGINAL; margin < 0 \u2192 FAIL. Output decimals: EIRP 1, FSPL 1, rain fade 2, RX level 1, margin 1. (ptp_link_screen.dart:154-243)",
-      "example": "5.8 GHz, 10 km, TX 20 dBm, TX gain 23, RX gain 23, sensitivity \u221278, TX/RX losses 0, rain 0, required margin 10 \u2192 EIRP = 20 + 23 \u2212 0 = 43.0 dBm; FSPL = 20\u00b7log10(10) + 20\u00b7log10(5.8) + 92.45 = 127.7 dB; rxLevel = 43 \u2212 127.7 \u2212 0 + 23 \u2212 0 = \u221261.7 dBm; margin = \u221261.7 \u2212 (\u221278) = 16.3 dB \u2192 PASS. (With TX loss 1 and RX loss 1: EIRP 42.0, rxLevel \u221263.7, margin 14.3, still PASS.)",
+      "algorithm": "eirp = TX_power + TX_gain − TX_loss (:223). fspl = 20·log10(d_km) + 20·log10(f_GHz) + 92.45 (:155-157). Rain fade reuses the ITU-R P.838-3 table and the same log-log interpolation as the Rain Fade tool: γ = k·R^α, d0 = 35·e^(−0.015·R), L_eff = d/(1 + d/d0), rainFade = γ·L_eff; returns 0 when rain rate is not > 0 (:191-205). rxLevel = eirp − fspl − rainFade + RX_gain − RX_loss (:226). margin = rxLevel − RX_sensitivity (:227). Binary pass: margin ≥ required_margin (:234). Three-state verdict (:239-243): margin ≥ required → PASS; 0 ≤ margin < required → MARGINAL; margin < 0 → FAIL. Output decimals: EIRP 1, FSPL 1, rain fade 2, RX level 1, margin 1. (ptp_link_screen.dart:154-243)",
+      "example": "5.8 GHz, 10 km, TX 20 dBm, TX gain 23, RX gain 23, sensitivity −78, TX/RX losses 0, rain 0, required margin 10 → EIRP = 20 + 23 − 0 = 43.0 dBm; FSPL = 20·log10(10) + 20·log10(5.8) + 92.45 = 127.7 dB; rxLevel = 43 − 127.7 − 0 + 23 − 0 = −61.7 dBm; margin = −61.7 − (−78) = 16.3 dB → PASS. (With TX loss 1 and RX loss 1: EIRP 42.0, rxLevel −63.7, margin 14.3, still PASS.)",
       "fieldNotes": [
         "This is the most complete link tool in the suite. Prefer it over the bare Link Budget when the link is outdoors and above ~10 GHz.",
         "FSPL alone underestimates real loss; the rain fade leg only covers rain, not fog, foliage, or multipath.",
-        "The MARGINAL band (link closes but below your required margin) is the tool's own warning state; the underlying PASS/FAIL is purely margin \u2265 required."
+        "The MARGINAL band (link closes but below your required margin) is the tool's own warning state; the underlying PASS/FAIL is purely margin ≥ required."
       ],
       "source": "ptp_link_screen.dart:154-243"
     },
@@ -415,12 +415,12 @@
         },
         {
           "name": "Guard interval",
-          "unit": "\u00b5s",
+          "unit": "µs",
           "range": "HT/VHT {0.4, 0.8}; HE/EHT {0.8, 1.6, 3.2} (:132-137)"
         }
       ],
-      "algorithm": "PHY_rate(Mbps) = (Nsd \u00b7 bitsPerSymbol \u00b7 streams) / symbolTime_\u00b5s (:153-167). Nsd = data subcarriers per standard per width (e.g. HE 80 MHz = 980) (:91-96). bitsPerSymbol = MCS_BPS[mcs] (Nbpsc\u00b7Rc), e.g. MCS 11 = 8.3333 (:52-67). symbolTime = OFDM symbol duration per standard per GI (e.g. HE @ 0.8 = 13.6 \u00b5s) (:99-104). real_rate(Mbps) = PHY_rate \u00b7 efficiency, efficiency per standard: HT 0.70, VHT 0.72, HE 0.76, EHT 0.80 (:114-120, 172-189). Output rounded to 1 decimal. Invalid width/GI combo or out-of-range MCS \u2192 blank (:163-166). (throughput_calc_screen.dart:51-189)",
-      "example": "HE, 80 MHz, MCS 11, 2 streams, GI 0.8 \u2192 PHY = (980 \u00b7 8.3333 \u00b7 2) / 13.6 = 1201.0 Mbps; real = 1201.0 \u00b7 0.76 = 912.7 Mbps.",
+      "algorithm": "PHY_rate(Mbps) = (Nsd · bitsPerSymbol · streams) / symbolTime_µs (:153-167). Nsd = data subcarriers per standard per width (e.g. HE 80 MHz = 980) (:91-96). bitsPerSymbol = MCS_BPS[mcs] (Nbpsc·Rc), e.g. MCS 11 = 8.3333 (:52-67). symbolTime = OFDM symbol duration per standard per GI (e.g. HE @ 0.8 = 13.6 µs) (:99-104). real_rate(Mbps) = PHY_rate · efficiency, efficiency per standard: HT 0.70, VHT 0.72, HE 0.76, EHT 0.80 (:114-120, 172-189). Output rounded to 1 decimal. Invalid width/GI combo or out-of-range MCS → blank (:163-166). (throughput_calc_screen.dart:51-189)",
+      "example": "HE, 80 MHz, MCS 11, 2 streams, GI 0.8 → PHY = (980 · 8.3333 · 2) / 13.6 = 1201.0 Mbps; real = 1201.0 · 0.76 = 912.7 Mbps.",
       "fieldNotes": [
         "The efficiency factors (0.70 to 0.80) are flat per-standard estimates of MAC/overhead, not measured for your environment; real throughput depends on contention, retries, frame aggregation, and airtime sharing.",
         "PHY rate is the theoretical peak for a single, clean link. Treat the real-throughput number as an optimistic ceiling."
@@ -449,8 +449,8 @@
           "range": ""
         }
       ],
-      "algorithm": "downtilt(deg) = atan(height_m / coverage_m) \u00b7 180/\u03c0. Unit conversions: ft \u00d7 0.3048 \u2192 m; km \u00d7 1000 \u2192 m. (downtilt_screen.dart, math section)",
-      "example": "30 m height, 200 m coverage \u2192 atan(30/200) \u00b7 180/\u03c0 = 8.53\u00b0.",
+      "algorithm": "downtilt(deg) = atan(height_m / coverage_m) · 180/π. Unit conversions: ft × 0.3048 → m; km × 1000 → m. (downtilt_screen.dart, math section)",
+      "example": "30 m height, 200 m coverage → atan(30/200) · 180/π = 8.53°.",
       "fieldNotes": [
         "This aims the beam center at the target distance; it does not account for the antenna's vertical beamwidth (use Downtilt Coverage for the near/far edges).",
         "Pure geometry, no consideration of antenna pattern shape or ground slope."
@@ -485,10 +485,10 @@
           "range": "must be in the open range (0, 180)"
         }
       ],
-      "algorithm": "farAngle = tilt \u2212 beamwidth/2, nearAngle = tilt + beamwidth/2 (radians). nearEdge = height / tan(nearAngle). If farAngle \u2264 0 the upper beam edge is at or above the horizon \u2192 far edge is unbounded (reported as beam-above-horizon, no far edge or depth). Otherwise farEdge = height / tan(farAngle), depth = farEdge \u2212 nearEdge. Returns null (blanks) if height \u2264 0 or beamwidth outside (0, 180). (downtilt_coverage_screen.dart, math section)",
-      "example": "30 m height, 10\u00b0 tilt, 8\u00b0 beamwidth \u2192 farAngle = 6\u00b0, nearAngle = 14\u00b0; nearEdge = 30/tan(14\u00b0) = 120.3 m; farEdge = 30/tan(6\u00b0) = 285.4 m; depth = 165.1 m.",
+      "algorithm": "farAngle = tilt − beamwidth/2, nearAngle = tilt + beamwidth/2 (radians). nearEdge = height / tan(nearAngle). If farAngle ≤ 0 the upper beam edge is at or above the horizon → far edge is unbounded (reported as beam-above-horizon, no far edge or depth). Otherwise farEdge = height / tan(farAngle), depth = farEdge − nearEdge. Returns null (blanks) if height ≤ 0 or beamwidth outside (0, 180). (downtilt_coverage_screen.dart, math section)",
+      "example": "30 m height, 10° tilt, 8° beamwidth → farAngle = 6°, nearAngle = 14°; nearEdge = 30/tan(14°) = 120.3 m; farEdge = 30/tan(6°) = 285.4 m; depth = 165.1 m.",
       "fieldNotes": [
-        "When the tilt is shallow relative to beamwidth (e.g. tilt 6\u00b0, beamwidth 15\u00b0 \u2192 farAngle = \u22121.5\u00b0), the upper edge clears the horizon and the far edge is unbounded. The tool flags this rather than returning a negative distance.",
+        "When the tilt is shallow relative to beamwidth (e.g. tilt 6°, beamwidth 15° → farAngle = −1.5°), the upper edge clears the horizon and the far edge is unbounded. The tool flags this rather than returning a negative distance.",
         "Uses beam edges at the half-power (or stated) beamwidth; actual coverage tails off gradually beyond those edges."
       ],
       "source": "downtilt_coverage_screen.dart"
@@ -507,7 +507,7 @@
         {
           "name": "Path length",
           "unit": "km (default) or mi",
-          "range": "mi \u00d7 1.60934 \u2192 km"
+          "range": "mi × 1.60934 → km"
         },
         {
           "name": "K-factor",
@@ -515,8 +515,8 @@
           "range": "4/3 standard (1.333, default), 1.0 geometric, 2/3 worst-case (0.667), 2.0 superrefraction (:42-45)"
         }
       ],
-      "algorithm": "bulge(m) = d_km\u00b2 \u00b7 1000 / (8 \u00b7 6371 \u00b7 K) (mean earth radius 6371 km, scaled by K-factor) (:73-79). bulge(ft) = bulge(m) \u00b7 3.28084 (:82-83). (earth_curvature_screen.dart:73-83)",
-      "example": "20 km path, K = 1.333 \u2192 20\u00b2 \u00b7 1000 / (8 \u00b7 6371 \u00b7 1.333) = 5.89 m.",
+      "algorithm": "bulge(m) = d_km² · 1000 / (8 · 6371 · K) (mean earth radius 6371 km, scaled by K-factor) (:73-79). bulge(ft) = bulge(m) · 3.28084 (:82-83). (earth_curvature_screen.dart:73-83)",
+      "example": "20 km path, K = 1.333 → 20² · 1000 / (8 · 6371 · 1.333) = 5.89 m.",
       "fieldNotes": [
         "K = 4/3 is the standard-atmosphere assumption; K = 2/3 is the conservative worst case used for availability-critical links (smaller K means more bulge).",
         "The bulge is the maximum at midpoint; add it to required Fresnel clearance when sizing tower heights.",
@@ -546,8 +546,8 @@
           "range": "only quantities > 0 contribute"
         }
       ],
-      "algorithm": "Each material has a fixed per-layer loss per band from a ported table (e.g. Drywall 3/4/5 dB at 2.4/5/6 GHz; Concrete poured 13/16/19; Metal door 20/26/30; Foil insulation 25/30/35) (materials const, dataset section). total(dB) = \u03a3 (loss_per_layer[band] \u00b7 qty) over all materials with qty > 0. (rf_attenuation_screen.dart, dataset + math)",
-      "example": "5 GHz, 2 sheets of drywall (4 dB each) + 1 concrete block (13 dB) \u2192 2\u00b74 + 1\u00b713 = 21 dB.",
+      "algorithm": "Each material has a fixed per-layer loss per band from a ported table (e.g. Drywall 3/4/5 dB at 2.4/5/6 GHz; Concrete poured 13/16/19; Metal door 20/26/30; Foil insulation 25/30/35) (materials const, dataset section). total(dB) = Σ (loss_per_layer[band] · qty) over all materials with qty > 0. (rf_attenuation_screen.dart, dataset + math)",
+      "example": "5 GHz, 2 sheets of drywall (4 dB each) + 1 concrete block (13 dB) → 2·4 + 1·13 = 21 dB.",
       "fieldNotes": [
         "The per-material values are typical attenuation figures, not measurements of your building. Real walls vary widely with construction, moisture, and reinforcement.",
         "Metal, foil/vapor barriers, and low-E glass are near-total blockers and dominate the total.",
@@ -573,12 +573,12 @@
         },
         {
           "name": "Device rows (up to 6)",
-          "unit": "watts (decimal, blank \u2192 0) and quantity (integer, default 1, blank \u2192 0)",
+          "unit": "watts (decimal, blank → 0) and quantity (integer, default 1, blank → 0)",
           "range": "(:73)"
         }
       ],
-      "algorithm": "total_draw = \u03a3 (watts \u00b7 qty) across rows. remaining = budget \u2212 total; pct = min(100, total/budget \u00b7 100). Verdict order: remaining < 0 \u2192 OVER; else pct > 80 \u2192 CAUTION; else OK. (poe_budget_screen.dart, math section)",
-      "example": "Budget 370 W, six APs at 25.5 W each (qty 6) \u2192 total = 153 W; remaining = 217 W; pct = 41% \u2192 OK.",
+      "algorithm": "total_draw = Σ (watts · qty) across rows. remaining = budget − total; pct = min(100, total/budget · 100). Verdict order: remaining < 0 → OVER; else pct > 80 → CAUTION; else OK. (poe_budget_screen.dart, math section)",
+      "example": "Budget 370 W, six APs at 25.5 W each (qty 6) → total = 153 W; remaining = 217 W; pct = 41% → OK.",
       "fieldNotes": [
         "Use each device's worst-case (max) draw, not idle, and account for the PoE class.",
         "The pct is capped at 100 for display, but the OVER verdict triggers on actual negative remaining, so an over-budget case is never masked.",
@@ -602,8 +602,8 @@
           "range": ""
         }
       ],
-      "algorithm": "Meters per unit: m = 1, km = 1000, mi = 1609.344, ft = 0.3048, cm = 0.01, in = 0.0254, nmi = 1852. convert(value, from, to) = (value \u00b7 metersPerUnit[from]) / metersPerUnit[to]. Display decimals: m 4, km 6, mi 6, ft 4, cm 2, in 4, nmi 6. (metric_conversion_screen.dart, math section)",
-      "example": "1 mi \u2192 1609.344 m \u2192 1.609344 km, 5280.0 ft, 0.868976 nmi.",
+      "algorithm": "Meters per unit: m = 1, km = 1000, mi = 1609.344, ft = 0.3048, cm = 0.01, in = 0.0254, nmi = 1852. convert(value, from, to) = (value · metersPerUnit[from]) / metersPerUnit[to]. Display decimals: m 4, km 6, mi 6, ft 4, cm 2, in 4, nmi 6. (metric_conversion_screen.dart, math section)",
+      "example": "1 mi → 1609.344 m → 1.609344 km, 5280.0 ft, 0.868976 nmi.",
       "fieldNotes": [
         "Uses the international mile (1609.344 m) and international foot (0.3048 m), not the US survey foot.",
         "Conversions are exact within floating point; the per-unit decimal rounding is for display only."
@@ -626,12 +626,12 @@
           "range": ""
         }
       ],
-      "algorithm": "Earth radius = 6371 km. Haversine distance: a = sin\u00b2(\u0394lat/2) + cos(lat1)\u00b7cos(lat2)\u00b7sin\u00b2(\u0394lon/2); d = 6371 \u00b7 2 \u00b7 atan2(\u221aa, \u221a(1\u2212a)). Forward bearing: y = sin(\u0394lon)\u00b7cos(lat2); x = cos(lat1)\u00b7sin(lat2) \u2212 sin(lat1)\u00b7cos(lat2)\u00b7cos(\u0394lon); bearing = (atan2(y, x)\u00b7180/\u03c0 + 360) mod 360. Reverse bearing: (forward + 180) mod 360. (dist_bearing_screen.dart, math section)",
-      "example": "San Francisco (37.7749, \u2212122.4194) to Los Angeles (34.0522, \u2212118.2437) \u2192 distance = 559.12 km; forward bearing = 136.5\u00b0; reverse bearing = 316.5\u00b0.",
+      "algorithm": "Earth radius = 6371 km. Haversine distance: a = sin²(Δlat/2) + cos(lat1)·cos(lat2)·sin²(Δlon/2); d = 6371 · 2 · atan2(√a, √(1−a)). Forward bearing: y = sin(Δlon)·cos(lat2); x = cos(lat1)·sin(lat2) − sin(lat1)·cos(lat2)·cos(Δlon); bearing = (atan2(y, x)·180/π + 360) mod 360. Reverse bearing: (forward + 180) mod 360. (dist_bearing_screen.dart, math section)",
+      "example": "San Francisco (37.7749, −122.4194) to Los Angeles (34.0522, −118.2437) → distance = 559.12 km; forward bearing = 136.5°; reverse bearing = 316.5°.",
       "fieldNotes": [
         "Spherical earth model (6371 km mean radius), accurate to a fraction of a percent for terrestrial links, not for survey-grade geodesy.",
         "The forward bearing is the initial bearing of the great-circle path; it changes along the route on long paths.",
-        "The reverse bearing is the simple +180\u00b0, which is exact only on a sphere."
+        "The reverse bearing is the simple +180°, which is exact only on a sphere."
       ],
       "source": "dist_bearing_screen.dart"
     },
@@ -651,7 +651,7 @@
           "range": ""
         }
       ],
-      "algorithm": "Bx = cos(lat2)\u00b7cos(\u0394lon), By = cos(lat2)\u00b7sin(\u0394lon). lat_mid = atan2(sin(lat1)+sin(lat2), \u221a((cos(lat1)+Bx)\u00b2 + By\u00b2)). lon_mid = lon1 + atan2(By, cos(lat1)+Bx), then wrapped to (\u2212180, 180] via ((deg + 540) mod 360) \u2212 180. (midpoint_screen.dart, math section)",
+      "algorithm": "Bx = cos(lat2)·cos(Δlon), By = cos(lat2)·sin(Δlon). lat_mid = atan2(sin(lat1)+sin(lat2), √((cos(lat1)+Bx)² + By²)). lon_mid = lon1 + atan2(By, cos(lat1)+Bx), then wrapped to (−180, 180] via ((deg + 540) mod 360) − 180. (midpoint_screen.dart, math section)",
       "example": "Between (40, 0) and (40, 90) the great-circle midpoint lies well north of the latitude average, at (49.88, 45.00), reflecting that the shortest path bows poleward.",
       "fieldNotes": [
         "This is the great-circle (spherical) midpoint, not the average of the coordinates. On east-west paths the midpoint is noticeably closer to the pole than the simple lat/lon average.",
@@ -684,11 +684,11 @@
         {
           "name": "Distance",
           "unit": "km, mi, or m",
-          "range": "mi \u00d7 1.60934 \u2192 km; m \u00f7 1000 \u2192 km"
+          "range": "mi × 1.60934 → km; m ÷ 1000 → km"
         }
       ],
-      "algorithm": "Earth radius = 6371 km; \u03b4 = dist_km / 6371 (angular distance), \u03b8 = bearing (radians). lat2 = asin(sin(lat1)\u00b7cos(\u03b4) + cos(lat1)\u00b7sin(\u03b4)\u00b7cos(\u03b8)). lon2 = lon1 + atan2(sin(\u03b8)\u00b7sin(\u03b4)\u00b7cos(lat1), cos(\u03b4) \u2212 sin(lat1)\u00b7sin(lat2)), longitude wrapped to (\u2212180, 180]. (final_point_screen.dart, math section)",
-      "example": "From (40, \u2212105), bearing 90\u00b0 (due east), distance 100 km \u2192 destination (39.99, \u2212103.83), about 1.17\u00b0 of longitude east at that latitude (latitude dips marginally because a constant-90\u00b0 initial bearing follows a great circle, not a parallel).",
+      "algorithm": "Earth radius = 6371 km; δ = dist_km / 6371 (angular distance), θ = bearing (radians). lat2 = asin(sin(lat1)·cos(δ) + cos(lat1)·sin(δ)·cos(θ)). lon2 = lon1 + atan2(sin(θ)·sin(δ)·cos(lat1), cos(δ) − sin(lat1)·sin(lat2)), longitude wrapped to (−180, 180]. (final_point_screen.dart, math section)",
+      "example": "From (40, −105), bearing 90° (due east), distance 100 km → destination (39.99, −103.83), about 1.17° of longitude east at that latitude (latitude dips marginally because a constant-90° initial bearing follows a great circle, not a parallel).",
       "fieldNotes": [
         "Direct great-circle solution on a sphere; the bearing is the initial heading and the path curves on long distances.",
         "Same spherical-model accuracy caveats as the other geographic tools."
@@ -708,18 +708,18 @@
         {
           "name": "Latitude",
           "unit": "decimal degrees",
-          "range": "valid range \u00b190"
+          "range": "valid range ±90"
         },
         {
           "name": "Longitude",
           "unit": "decimal degrees",
-          "range": "valid range \u00b1180"
+          "range": "valid range ±180"
         }
       ],
-      "algorithm": "Hemisphere: lat \u2265 0 \u2192 N else S; lon \u2265 0 \u2192 E else W (:66-74). Degrees = floor(|dd|); minutes = floor((|dd| \u2212 floor) \u00b7 60); seconds = remaining fraction \u00b7 60 (:77-92). Decimal minutes (DDM) = minutes + seconds/60 (:95-97). Format strings: DD to 6 decimals; DDM deg\u00b0 min.mmmm' dir; DMS deg\u00b0 min' sec.ss\" dir (:101-118). Out-of-range or non-finite values blank the output. (lat_long_screen.dart:66-118)",
-      "example": "40.7128\u00b0 latitude \u2192 DD 40.712800; DMS 40\u00b0 42' 46.08\" N; DDM 40\u00b0 42.7680' N.",
+      "algorithm": "Hemisphere: lat ≥ 0 → N else S; lon ≥ 0 → E else W (:66-74). Degrees = floor(|dd|); minutes = floor((|dd| − floor) · 60); seconds = remaining fraction · 60 (:77-92). Decimal minutes (DDM) = minutes + seconds/60 (:95-97). Format strings: DD to 6 decimals; DDM deg° min.mmmm' dir; DMS deg° min' sec.ss\" dir (:101-118). Out-of-range or non-finite values blank the output. (lat_long_screen.dart:66-118)",
+      "example": "40.7128° latitude → DD 40.712800; DMS 40° 42' 46.08\" N; DDM 40° 42.7680' N.",
       "fieldNotes": [
-        "Validates ranges (\u00b190 lat, \u00b1180 lon) and blanks on out-of-range input.",
+        "Validates ranges (±90 lat, ±180 lon) and blanks on out-of-range input.",
         "The sign drives the hemisphere letter, so enter west longitudes and south latitudes as negative.",
         "No datum/projection handling; these are plain WGS84-style decimal degrees in, formatted out."
       ],
@@ -751,8 +751,8 @@
           "range": "Unsigned-integer domain, BigInt-backed, so arbitrarily long strings never overflow; a blank/invalid field blanks the mirrors"
         }
       ],
-      "algorithm": "Parsing/formatting via BigInt radix conversion (toRadixString(16), toRadixString(2), base-10). ASCII table: each row's char is derived at build time via String.fromCharCode(dec) \u2014 never hand-transcribed; hex is 2-digit uppercase, binary is 8-bit zero-padded. (hex_ascii_screen.dart, converter + AsciiRow)",
-      "example": "Enter decimal 65 \u2192 hex 41, binary 1000001. In the table, decimal 65 = char A = hex 41 = binary 01000001.",
+      "algorithm": "Parsing/formatting via BigInt radix conversion (toRadixString(16), toRadixString(2), base-10). ASCII table: each row's char is derived at build time via String.fromCharCode(dec) — never hand-transcribed; hex is 2-digit uppercase, binary is 8-bit zero-padded. (hex_ascii_screen.dart, converter + AsciiRow)",
+      "example": "Enter decimal 65 → hex 41, binary 1000001. In the table, decimal 65 = char A = hex 41 = binary 01000001.",
       "fieldNotes": [
         "Unsigned integers only: no negative numbers, no fractions, no two's-complement.",
         "The table covers printable ASCII (32 to 126) only; control characters and extended/Unicode code points are out of scope.",
@@ -774,18 +774,18 @@
         {
           "name": "IPv6 address",
           "unit": "any valid IPv6 literal",
-          "range": "exactly one :: run allowed; invalid format \u2192 inline error"
+          "range": "exactly one :: run allowed; invalid format → inline error"
         },
         {
           "name": "Prefix",
           "unit": "integer",
-          "range": "0 to 128 (out of range \u2192 error)"
+          "range": "0 to 128 (out of range → error)"
         }
       ],
-      "algorithm": "Expand :: to full 8-group / 4-hex-digit form, rejecting more than one :: (:99-133). Pack to a 128-bit BigInt (toBigInt). mask = ((1 << prefix) \u2212 1) << (128 \u2212 prefix) (0 when prefix 0); network = addr & mask; last = network | (~mask & 128-bit-mask) (:275-280). Compress to canonical :: by collapsing the longest run of all-zero groups (compressIPv6). Host count (:229-234): host bits = 128 \u2212 prefix; > 63 \u2192 \"More than 2\u2076\u00b3\"; 0 \u2192 \"1 address\"; else 2^hostBits with grouping. Address type by prefix match (detectIPv6Type): :: unspecified, ::1 loopback, fe80 link-local, fc/fd unique-local, ff multicast, 2002 6to4, ::ffff: IPv4-mapped, 2001:db8 documentation, else global unicast. (ipv6_subnet_screen.dart:94-295)",
-      "example": "2001:db8::1 / 64 \u2192 expanded 2001:0db8:0000:0000:0000:0000:0000:0001; compressed 2001:db8::1; network 2001:db8::/64; host bits = 64 (> 63) \u2192 host count shows \"More than 2\u2076\u00b3\"; type = Documentation (2001:db8::/32).",
+      "algorithm": "Expand :: to full 8-group / 4-hex-digit form, rejecting more than one :: (:99-133). Pack to a 128-bit BigInt (toBigInt). mask = ((1 << prefix) − 1) << (128 − prefix) (0 when prefix 0); network = addr & mask; last = network | (~mask & 128-bit-mask) (:275-280). Compress to canonical :: by collapsing the longest run of all-zero groups (compressIPv6). Host count (:229-234): host bits = 128 − prefix; > 63 → \"More than 2⁶³\"; 0 → \"1 address\"; else 2^hostBits with grouping. Address type by prefix match (detectIPv6Type): :: unspecified, ::1 loopback, fe80 link-local, fc/fd unique-local, ff multicast, 2002 6to4, ::ffff: IPv4-mapped, 2001:db8 documentation, else global unicast. (ipv6_subnet_screen.dart:94-295)",
+      "example": "2001:db8::1 / 64 → expanded 2001:0db8:0000:0000:0000:0000:0000:0001; compressed 2001:db8::1; network 2001:db8::/64; host bits = 64 (> 63) → host count shows \"More than 2⁶³\"; type = Documentation (2001:db8::/32).",
       "fieldNotes": [
-        "Host counts above 2\u2076\u00b3 are reported qualitatively (\"More than 2\u2076\u00b3\") rather than as a full number.",
+        "Host counts above 2⁶³ are reported qualitatively (\"More than 2⁶³\") rather than as a full number.",
         "The \"first address\" is the network address itself (IPv6 has no broadcast and does not reserve the all-zeros host as IPv4 does).",
         "Address-type detection is prefix-pattern based and covers the common RFC ranges, not every reserved block.",
         "MANUAL-VS-CATALOG NOTE: the manual labels this tool's category as \"Networking (calculator screen; grouped under Networking in the catalog, tool_catalog.dart:324)\". In the current 4-category catalog this id sits under the \"Networking Tools\" category (id networking)."
@@ -809,10 +809,10 @@
       "fieldNotes": [
         "What it shows: one card per technology. LoRaWAN: regional plan (EU868, US915, AU915, AS923, IN865, KR920, CN470, CN779, RU864), frequency range in MHz, and a channel-plan description. IEEE 802.15.4: band (868 MHz / 915 MHz / 2.4 GHz), channel-number range, spacing, center summary, region. Bluetooth Classic (BR/EDR): 79 channels, 1 MHz spacing, f = 2402 + k MHz, 2402 to 2480 MHz, ~1600 hops/sec, global. Bluetooth LE: all 40 channels in physical-frequency order with index, frequency in MHz, kind (Advertising / Data). Zigbee: 2.4 GHz 802.15.4 ch 11 to 26, sub-GHz bands, common 2.4 GHz channel picks.",
         "Bluetooth, BLE, and 802.15.4 use globally-fixed channel grids. LoRaWAN frequency plans are entirely region-defined; there is no global LoRaWAN channel map.",
-        "Plans marked \"verify\" (CN470 version-dependent; CN779 deprecated/limited; RU864 sparsely sourced) must be confirmed against RP002 \u00a72 and the local regulator.",
-        "The BLE table uses an explicit piecewise frequency lookup, NOT a naive linear formula (the code notes the linear \"2402 + 2\u00b7index\" approach is a common BLE chart bug).",
+        "Plans marked \"verify\" (CN470 version-dependent; CN779 deprecated/limited; RU864 sparsely sourced) must be confirmed against RP002 §2 and the local regulator.",
+        "The BLE table uses an explicit piecewise frequency lookup, NOT a naive linear formula (the code notes the linear \"2402 + 2·index\" approach is a common BLE chart bug).",
         "802.15.4's 868/915 MHz bands are region-restricted; 2.4 GHz ch 11 to 26 are global.",
-        "Data source: Pax's verified research brief (Deliverables/2026-06-02-wireless-channels-reference/data-brief.md), cross-checked against LoRa Alliance RP002, IEEE 802.15.4, Bluetooth SIG Core Spec, and CSA/Zigbee spec. 802.15.4 centers verified against the standard formula (ch 0 = 868.3 MHz; ch 1 to 10 = 906 + 2\u00b7(k\u22121); ch 11 to 26 = 2405 + 5\u00b7(k\u221211))."
+        "Data source: Pax's verified research brief (Deliverables/2026-06-02-wireless-channels-reference/data-brief.md), cross-checked against LoRa Alliance RP002, IEEE 802.15.4, Bluetooth SIG Core Spec, and CSA/Zigbee spec. 802.15.4 centers verified against the standard formula (ch 0 = 868.3 MHz; ch 1 to 10 = 906 + 2·(k−1); ch 11 to 26 = 2405 + 5·(k−11))."
       ],
       "source": "lib/screens/tools/reference/non_wifi_channels_screen.dart"
     },
@@ -832,7 +832,7 @@
       "fieldNotes": [
         "What it shows: a three-option band toggle. 2.4 GHz: the 11 US channels as 20 MHz blocks, with 1/6/11 emphasized (non-overlapping) and the rest faint. 5 GHz: rows for 20/40/80/160 MHz bonded widths, each block labelled with its primary/center channel and tinted by DFS class. 6 GHz: rows for 20/40/80/160/320 MHz across the full US band (ch 1 to 233, UNII-5 through UNII-8), with PSC channels marked.",
         "US-default. The map covers the full US 6 GHz band, ch 1 to 233 (UNII-5 through UNII-8). 6 GHz needs no DFS, and no AFC for low-power indoor (LPI) use.",
-        "Data source: US (FCC). Ported verbatim from the rf-tools-pwa chanmap tool. 5 GHz DFS: No DFS = UNII-1 (36 to 48), UNII-3 (149 to 165), and UNII-4 (169 to 177); DFS = UNII-2A/2C. UNII-4 (169/173/177) is included per Keith\u2019s RF Channel Allocations chart. The original PWA's literal hex colors were re-expressed in the design-system status palette; the meaning (DFS/PSC/mixed) is preserved."
+        "Data source: US (FCC). Ported verbatim from the rf-tools-pwa chanmap tool. 5 GHz DFS: No DFS = UNII-1 (36 to 48), UNII-3 (149 to 165), and UNII-4 (169 to 177); DFS = UNII-2A/2C. UNII-4 (169/173/177) is included per Keith’s RF Channel Allocations chart. The original PWA's literal hex colors were re-expressed in the design-system status palette; the meaning (DFS/PSC/mixed) is preserved."
       ],
       "source": "lib/screens/tools/reference/channel_map_screen.dart"
     },
@@ -863,7 +863,7 @@
       "purpose": "Look up the modulation, coding rate, and PHY data rate for any 802.11 MCS index across channel widths, for 802.11n (HT), 802.11ac (VHT), and 802.11ax (HE), scaled by spatial-stream count.",
       "whyHere": "When you see an MCS index in a capture or client stats and want to know the modulation/coding behind it and the rate it should deliver at a given width and stream count.",
       "howToUse": [
-        "Choose the standard (n / ac / ax) and stream count (1 to 8); rates update (rate = per-stream value \u00d7 streams).",
+        "Choose the standard (n / ac / ax) and stream count (1 to 8); rates update (rate = per-stream value × streams).",
         "MCS 0 (BPSK 1/2) is the most robust/slowest; higher MCS indices use denser modulation (up to 1024-QAM for ax) for higher rates needing better signal.",
         "Cells shown as \"N/A\" are genuinely invalid combinations, not zero or fabricated."
       ],
@@ -883,19 +883,19 @@
       "name": "Signal Thresholds",
       "category": "Quick Reference",
       "purpose": "RSSI and SNR targets: a quality scale for RSSI, minimum RSSI/SNR by application, and the SNR needed to reach each typical MCS index.",
-      "whyHere": "When validating a survey or troubleshooting a complaint: \"is \u221268 dBm good enough for VoIP?\" or \"what SNR do I need to hold MCS 7?\"",
+      "whyHere": "When validating a survey or troubleshooting a complaint: \"is −68 dBm good enough for VoIP?\" or \"what SNR do I need to hold MCS 7?\"",
       "howToUse": [
         "RSSI bands carry a colored verdict dot plus the quality word (green = good, amber = marginal/Fair, red = bad/Weak/Poor); the word always carries the meaning, never color alone.",
         "For the application table, read across to the min RSSI and min SNR your target use case needs.",
-        "The SNR\u2192MCS table tells you the SNR floor to sustain a given rate."
+        "The SNR→MCS table tells you the SNR floor to sustain a given rate."
       ],
       "inputs": [],
       "algorithm": null,
       "example": null,
       "fieldNotes": [
-        "What it shows: three blocks. RSSI quality scale: Excellent (> \u221250 dBm) / Good (\u221250 to \u221267) / Fair (\u221267 to \u221270) / Weak (\u221270 to \u221280) / Poor (< \u221280). Minimum signal by application: VoIP/real-time, HD video, general browsing, email/basic data, IoT/low-rate, and location/RTLS, each with min RSSI, min SNR, and a note. SNR to MCS (80 MHz, 1 SS): the SNR floor for each MCS index (MCS 0 at 5 dB up to MCS 11 at 35 dB) with an indicative rate.",
+        "What it shows: three blocks. RSSI quality scale: Excellent (> −50 dBm) / Good (−50 to −67) / Fair (−67 to −70) / Weak (−70 to −80) / Poor (< −80). Minimum signal by application: VoIP/real-time, HD video, general browsing, email/basic data, IoT/low-rate, and location/RTLS, each with min RSSI, min SNR, and a note. SNR to MCS (80 MHz, 1 SS): the SNR floor for each MCS index (MCS 0 at 5 dB up to MCS 11 at 35 dB) with an indicative rate.",
         "The intro explicitly states: values vary by client hardware, environment, and AP vendor; treat as field-planning guidelines, not guarantees.",
-        "The SNR\u2192MCS rates are indicative (80 MHz, single stream); MCS 10/11 rates are noted as 802.11ax.",
+        "The SNR→MCS rates are indicative (80 MHz, single stream); MCS 10/11 rates are noted as 802.11ax.",
         "Data source: ported verbatim from the rf-tools-pwa rssi tool. These are field-planning reference thresholds, not derived from a single named standard."
       ],
       "source": "lib/screens/tools/reference/signal_thresholds_screen.dart"
@@ -908,7 +908,7 @@
       "howToUse": [
         "Scan by generation badge (Wi-Fi 4 through Wi-Fi 7).",
         "The band filter answers \"which generations reach 6 GHz\" (Wi-Fi 6E and Wi-Fi 7).",
-        "Pre-Wi-Fi-4 amendments (802.11, 802.11b, 802.11a, 802.11g) show \"\u2014\" for generation, since official Wi-Fi Alliance naming begins at Wi-Fi 4."
+        "Pre-Wi-Fi-4 amendments (802.11, 802.11b, 802.11a, 802.11g) show \"—\" for generation, since official Wi-Fi Alliance naming begins at Wi-Fi 4."
       ],
       "inputs": [],
       "algorithm": null,
@@ -930,7 +930,7 @@
       "howToUse": [
         "The protocol heading shows the designation (lime) and full name.",
         "In the thresholds table, the scenario word is status-tinted with a dot: green = good (the two design targets), amber = marginal (the overlap zone), red = bad (sticky-client trigger and unusable).",
-        "Design rules carry the actionable target (e.g. \"\u2265 2 APs at \u221267 dBm everywhere,\" \"15 to 20% cell overlap minimum\")."
+        "Design rules carry the actionable target (e.g. \"≥ 2 APs at −67 dBm everywhere,\" \"15 to 20% cell overlap minimum\")."
       ],
       "inputs": [],
       "algorithm": null,
@@ -983,7 +983,7 @@
         "What it shows: reason codes grouped by theme: Common (1 to 9), Capability/Channel mismatch (10 to 11), Security frame/element errors (13 to 14, 17 to 22, 24), Security handshake failures (15, 16, 23), QoS/load management (34 to 39), Fast Roaming/802.11r (45 to 48). Plus a separate Association Status Codes group (the most-common subset, 0 to 104), where code 0 (\"Successful\") is highlighted in green.",
         "The status-code list is the \"most common\" subset, not the full table.",
         "Codes and meanings are reproduced verbatim from the standard via the PWA source; nothing invented.",
-        "Data source / standard: IEEE 802.11-2020 \u00a79.4.1.7 (reason codes) and \u00a79.4.1.9 (status codes), cited in the footnote. Codes and groupings ported verbatim from the rf-tools-pwa reason tool."
+        "Data source / standard: IEEE 802.11-2020 §9.4.1.7 (reason codes) and §9.4.1.9 (status codes), cited in the footnote. Codes and groupings ported verbatim from the rf-tools-pwa reason tool."
       ],
       "source": "lib/screens/tools/reference/reason_codes_screen.dart"
     },
@@ -1031,18 +1031,18 @@
     "db-reference": {
       "name": "dB Reference",
       "category": "Quick Reference",
-      "purpose": "A decibel reference card: dB change \u2192 power/voltage ratio with rules of thumb, and common dBm anchor values with their power and real-world context.",
+      "purpose": "A decibel reference card: dB change → power/voltage ratio with rules of thumb, and common dBm anchor values with their power and real-world context.",
       "whyHere": "Quick mental math in the field: \"+3 dB is double power,\" \"what power is +30 dBm,\" \"what's the FCC 2.4 GHz limit in dBm.\"",
       "howToUse": [
         "In the ratio table, positive gains render in lime, losses in red.",
-        "Key anchors: +3 dB = 2\u00d7 power; +10 dB = 10\u00d7; +30 dBm = 1 W; 0 dBm = 1 mW; \u221267 dBm = enterprise VoIP minimum; \u221270 dBm = enterprise data minimum; \u221280 dBm = typical Wi-Fi receiver sensitivity."
+        "Key anchors: +3 dB = 2× power; +10 dB = 10×; +30 dBm = 1 W; 0 dBm = 1 mW; −67 dBm = enterprise VoIP minimum; −70 dBm = enterprise data minimum; −80 dBm = typical Wi-Fi receiver sensitivity."
       ],
       "inputs": [],
       "algorithm": null,
       "example": null,
       "fieldNotes": [
-        "What it shows: dB Power Ratios: dB change (+3 to +30, \u22123 to \u221220) \u2192 power ratio, voltage ratio, and a rule-of-thumb note. Common dBm Reference Points: dBm anchors (+36 down to \u2212100 dBm) \u2192 power (watts/mW/nW/pW) and context (regulatory limits, typical Tx powers, sensitivity floors).",
-        "Footnote: \"0 dBd is about 2.15 dBi (dipole reference). dBW = dBm \u2212 30. Regulatory limits shown are US FCC; verify before compliance decisions.\"",
+        "What it shows: dB Power Ratios: dB change (+3 to +30, −3 to −20) → power ratio, voltage ratio, and a rule-of-thumb note. Common dBm Reference Points: dBm anchors (+36 down to −100 dBm) → power (watts/mW/nW/pW) and context (regulatory limits, typical Tx powers, sensitivity floors).",
+        "Footnote: \"0 dBd is about 2.15 dBi (dipole reference). dBW = dBm − 30. Regulatory limits shown are US FCC; verify before compliance decisions.\"",
         "Mixed US (FCC) and one ETSI anchor; read the context cell for the jurisdiction of each limit.",
         "Data source: ported verbatim from the rf-tools-pwa dbref tool (DB_RATIOS, DBM_REFS). The dBm context column cites specific regulatory limits: FCC 6 GHz standard-power EIRP (+36 dBm, AFC required), FCC 2.4 GHz max conducted (Part 15.247, +30 dBm), FCC UNII-2A/2C and UNII-1 conducted maxes, and ETSI 5 GHz EIRP (EN 301 893, +23 dBm)."
       ],
@@ -1061,7 +1061,7 @@
       "algorithm": null,
       "example": null,
       "fieldNotes": [
-        "What it shows: five rule groups, each a heading over a bulleted list: Start with requirements, AP location, Cell sizing and overlap (\u2265 2 APs at \u221270 dBm everywhere, 15 to 20% overlap, typical coverage radii), Channel planning (2.4 GHz only 1/6/11, co-channel spacing, prefer 5/6 GHz, DFS), and High-density venues (reduce power add APs, directional antennas, 20 to 30 clients/radio ceiling, tri-radio caveats).",
+        "What it shows: five rule groups, each a heading over a bulleted list: Start with requirements, AP location, Cell sizing and overlap (≥ 2 APs at −70 dBm everywhere, 15 to 20% overlap, typical coverage radii), Channel planning (2.4 GHz only 1/6/11, co-channel spacing, prefer 5/6 GHz, DFS), and High-density venues (reduce power add APs, directional antennas, 20 to 30 clients/radio ceiling, tri-radio caveats).",
         "The intro says coverage radii and spacing are starting points; validate every design with a post-installation survey.",
         "The code is explicit that an AP is never called a router. Per-radio capacity is a model-dependent ceiling.",
         "Data source: field-practice guidance; ported verbatim from the rf-tools-pwa aplace tool (AP_RULES). Not a single named standard, but accumulated WLAN design best practice."
@@ -1081,7 +1081,7 @@
       "algorithm": null,
       "example": null,
       "fieldNotes": [
-        "What it shows: PoE standards: 802.3af (PoE), 802.3at (PoE+), 802.3bt Type 3 (PoE++/4PPoE), 802.3bt Type 4 (PoE++ Hi), each with PSE watts, PD watts, powered pairs (2 of 4 or 4 of 4), and supported class range. PD power classes: class 0 to 8 \u2192 max power at the PD, the 802.3 standard defining it, and a note.",
+        "What it shows: PoE standards: 802.3af (PoE), 802.3at (PoE+), 802.3bt Type 3 (PoE++/4PPoE), 802.3bt Type 4 (PoE++ Hi), each with PSE watts, PD watts, powered pairs (2 of 4 or 4 of 4), and supported class range. PD power classes: class 0 to 8 → max power at the PD, the 802.3 standard defining it, and a note.",
         "Footnote points to the PoE Budget tool for sizing a switch against connected devices.",
         "Written \"802.3\" (not \"802.3x\"). Standard reference, not region-specific.",
         "Data source: IEEE 802.3af/at/bt; ported verbatim from the rf-tools-pwa poe tool (POE_STDS, POE_CLASSES)."
@@ -1092,10 +1092,10 @@
       "name": "Coax Cable",
       "category": "Quick Reference",
       "purpose": "A coaxial cable reference: impedance, velocity factor, outer diameter, maximum usable frequency, and typical use for common RG- and LMR-series cables.",
-      "whyHere": "When specifying an antenna run, pick the right LMR size for the length and frequency, and avoid a 75 \u03a9 mismatch.",
+      "whyHere": "When specifying an antenna run, pick the right LMR size for the length and frequency, and avoid a 75 Ω mismatch.",
       "howToUse": [
         "Each cable is a block: name, then a spec line (impedance / VF% / diameter / max GHz), then the use note.",
-        "The 75 \u03a9 entry (RG-6) renders dimmed: it's impedance-mismatched for 50 \u03a9 Wi-Fi and shown for reference only (\"CATV/satellite, NOT for Wi-Fi\").",
+        "The 75 Ω entry (RG-6) renders dimmed: it's impedance-mismatched for 50 Ω Wi-Fi and shown for reference only (\"CATV/satellite, NOT for Wi-Fi\").",
         "Higher VF means slightly lower propagation delay and loss."
       ],
       "inputs": [],
@@ -1103,7 +1103,7 @@
       "example": null,
       "fieldNotes": [
         "What it shows: per cable (RG-58, RG-8/U, RG-213, RG-214, LMR-100A through LMR-1200, RG-6): impedance, velocity factor (%), diameter (mm), max frequency (GHz), and a typical-use note.",
-        "Footnote points to the Cable Loss tool for exact attenuation. Wi-Fi is a 50 \u03a9 system, so the dimmed 75 \u03a9 RG-6 is a mismatch. Max frequencies are typical maximums. Standard reference, not region-specific.",
+        "Footnote points to the Cable Loss tool for exact attenuation. Wi-Fi is a 50 Ω system, so the dimmed 75 Ω RG-6 is a mismatch. Max frequencies are typical maximums. Standard reference, not region-specific.",
         "Data source: ported verbatim from the rf-tools-pwa coax tool (COAX_DATA). Manufacturer/industry spec values for the named cable series."
       ],
       "source": "lib/screens/tools/reference/coax_cable_screen.dart"
@@ -1142,7 +1142,7 @@
       "algorithm": null,
       "example": null,
       "fieldNotes": [
-        "What it shows: a T568B / T568A toggle. Each standard's eight pin rows show the pin number, a wire-color swatch and name (e.g. \"Orange / White\"), the twisted-pair number (1 to 4) with a pair-color swatch, and the 100/1000 Base-T function (TX+, RX\u2212, BI-D A+, etc.).",
+        "What it shows: a T568B / T568A toggle. Each standard's eight pin rows show the pin number, a wire-color swatch and name (e.g. \"Orange / White\"), the twisted-pair number (1 to 4) with a pair-color swatch, and the 100/1000 Base-T function (TX+, RX−, BI-D A+, etc.).",
         "Footnote: applies to Cat5/5e/6/6A/7/8; a crossover cable uses T568A on one end and T568B on the other, rarely needed today since most switches/NICs auto-MDI-X. Standard reference, not region-specific.",
         "Data source: TIA-568 wiring standards (T568A/T568B); ported verbatim from the rf-tools-pwa pinout tool (PINOUT, pairColors)."
       ],
@@ -1163,8 +1163,8 @@
       "algorithm": null,
       "example": null,
       "fieldNotes": [
-        "What it shows: two sub-tables. Distance by data rate, per fiber type: core/cladding, modal bandwidth (MHz\u00b7km), and supported distance at 1G/10G/40G/100G. Jacket color code & notes, per fiber type: a jacket color swatch and name, and a deployment note.",
-        "Footnote: distances are per TIA-568/ISO 11801; actual limits depend on transceiver, splice count, and connector loss. OM3/OM4 are the current deployment standards; OM1/OM2 are legacy (dimmed). OM5's wideband window note (~1,850 to 2,470 MHz\u00b7km near 953 nm) is preserved verbatim. Standard reference, not region-specific.",
+        "What it shows: two sub-tables. Distance by data rate, per fiber type: core/cladding, modal bandwidth (MHz·km), and supported distance at 1G/10G/40G/100G. Jacket color code & notes, per fiber type: a jacket color swatch and name, and a deployment note.",
+        "Footnote: distances are per TIA-568/ISO 11801; actual limits depend on transceiver, splice count, and connector loss. OM3/OM4 are the current deployment standards; OM1/OM2 are legacy (dimmed). OM5's wideband window note (~1,850 to 2,470 MHz·km near 953 nm) is preserved verbatim. Standard reference, not region-specific.",
         "Data source / standard: TIA-568 / ISO 11801 (cited in the footnote); ported verbatim from the rf-tools-pwa fiber tool (FIBER_DATA)."
       ],
       "source": "lib/screens/tools/reference/fiber_optic_screen.dart"
@@ -1187,7 +1187,7 @@
         "The key field gotcha: every connector here is 50 ohm, and an RP connector will thread onto its standard counterpart but the center contacts will not connect.",
         "U.FL intermates with I-PEX MHF I (same footprint); the smaller MHF 4 does NOT mate with either.",
         "DART is Cisco's Smart Antenna Connector, a proprietary multi-port interface that breaks out to RP-TNC, N-type or RP-N via Cisco adapter cables.",
-        "Size is the connector body width (across-flats for threaded parts, outer diameter for board-level parts) \u2014 an approximate field-recognition aid, not a precision mechanical spec.",
+        "Size is the connector body width (across-flats for threaded parts, outer diameter for board-level parts) — an approximate field-recognition aid, not a precision mechanical spec.",
         "Connector photos are shown only where a freely-licensed (CC0/public-domain) photo exists. N-Type, TNC and RP-TNC currently have no such photo, so they keep a line diagram rather than a stand-in."
       ],
       "source": "Keith Parsons draft, verified and augmented by Pax (2026-06-05)."
@@ -1323,14 +1323,14 @@
       "whyHere": "When decoding a hex dump or a protocol field, look up a byte's character, its four numeric representations, or the meaning of a control code.",
       "howToUse": [
         "The numeric columns (dec/hex/oct/bin) and the glyph render in Roboto Mono so octets and look-alike characters (l/I/O/0) read unambiguously.",
-        "Control rows show a mnemonic (NUL, LF, CR, ESC\u2026); printable rows show the glyph (space is shown as \"SP\").",
+        "Control rows show a mnemonic (NUL, LF, CR, ESC…); printable rows show the glyph (space is shown as \"SP\").",
         "Filter by typing a decimal, hex (with or without 0x), octal, binary, glyph/mnemonic, or keyword."
       ],
       "inputs": [],
       "algorithm": null,
       "example": null,
       "fieldNotes": [
-        "What it shows: a \"how to read this\" card, then Control codes (0 to 31, plus 127) and Printable characters (32 to 126) as tables with Dec / Hex / Oct / Bin / Char / Description. Plus supplementary cards: Range boundaries worth memorizing, Newlines on the wire, The case bit (0x20), Nibble \u2192 hex map, Powers of two, Hex place values, and High range (128 to 255): no single \"extended ASCII\".",
+        "What it shows: a \"how to read this\" card, then Control codes (0 to 31, plus 127) and Printable characters (32 to 126) as tables with Dec / Hex / Oct / Bin / Char / Description. Plus supplementary cards: Range boundaries worth memorizing, Newlines on the wire, The case bit (0x20), Nibble → hex map, Powers of two, Hex place values, and High range (128 to 255): no single \"extended ASCII\".",
         "The high-range card is explicitly honest: ASCII stops at 127; bytes 128 to 255 mean different things depending on the encoding, so there is no single \"extended ASCII.\" It documents UTF-8 (bytes 0 to 127 identical to ASCII; 128 to 255 are part of multi-byte sequences), ISO-8859-1/Latin-1, and Windows-1252 (a common mojibake source), with the rule \"bytes 0 to 127 are portable; 128 to 255 are not, so know the encoding before decoding.\"",
         "Data source / standard: RFC 20 (US-ASCII) for the 128 values; high-range guidance per ISO-8859-1, Windows-1252, and the Unicode/UTF-8 spec. Embedded verbatim from Deliverables/2026-05-31-ascii-hex-binary-reference/. Standard reference, not region-specific."
       ],
@@ -1340,9 +1340,9 @@
       "name": "Top 30 Emoji",
       "category": "Quick Reference",
       "purpose": "The 30 most-used emoji, ranked 1 to 30, with the official Unicode CLDR name and a descriptive \"common use\" note.",
-      "whyHere": "A lightweight decode reference for what people actually mean by an emoji, useful when meanings drift (e.g. \ud83d\udc80 = \"that's hilarious,\" not death).",
+      "whyHere": "A lightweight decode reference for what people actually mean by an emoji, useful when meanings drift (e.g. 💀 = \"that's hilarious,\" not death).",
       "howToUse": [
-        "Ranked most-used first (\ud83d\ude02 face with tears of joy at #1).",
+        "Ranked most-used first (😂 face with tears of joy at #1).",
         "The official CLDR name is the row's spoken/searchable key; the glyph is excluded from the screen-reader label (readers announce the glyph's own name).",
         "The \"common use\" note describes typical reading, with generational/fandom context where it matters."
       ],
@@ -1369,11 +1369,11 @@
         "Read the two status chips (Wi-Fi / Internet) and the headline."
       ],
       "inputs": [],
-      "algorithm": "It runs two things in one pass and feeds both into the shared verdict engine: a connected-link read via WifiInfoSourceResolver \u2192 MacWifiInfoAdapter (macOS CoreWLAN) or WiFiDetailsBridge \u2192 ConnectedAp.fromWifiDetails (iOS Shortcut) (test_my_connection_screen.dart:11-13, 142-208); a full net_quality run via OwnEngineQualityClient.forHost('one.one.one.one') (test_my_connection_screen.dart:154). It translates the net_quality grades into the engine's internet-health flag: GOOD only when download AND upload AND latency AND loss all grade good or excellent; otherwise marginal (test_my_connection_screen.dart:308-324). The engine's five engineer verdicts are collapsed into four consumer outcomes plus a two-axis chip status (Wi-Fi / Internet each \"Fine\", \"Slow\", or \"Couldn't check\") (consumer_verdict.dart:33-96, 159-249). Outcomes: A \"Looks like your Wi-Fi\"; A-lead \"Mostly your Wi-Fi\"; B \"Looks like your Internet\"; C \"Both look fine\"; D1 \"Couldn't check everything\" (internet measured, Wi-Fi not); D2 \"Couldn't complete the check\" (neither measured) (consumer_verdict.dart:164-247).",
+      "algorithm": "It runs two things in one pass and feeds both into the shared verdict engine: a connected-link read via WifiInfoSourceResolver → MacWifiInfoAdapter (macOS CoreWLAN) or WiFiDetailsBridge → ConnectedAp.fromWifiDetails (iOS Shortcut) (test_my_connection_screen.dart:11-13, 142-208); a full net_quality run via OwnEngineQualityClient.forHost('one.one.one.one') (test_my_connection_screen.dart:154). It translates the net_quality grades into the engine's internet-health flag: GOOD only when download AND upload AND latency AND loss all grade good or excellent; otherwise marginal (test_my_connection_screen.dart:308-324). The engine's five engineer verdicts are collapsed into four consumer outcomes plus a two-axis chip status (Wi-Fi / Internet each \"Fine\", \"Slow\", or \"Couldn't check\") (consumer_verdict.dart:33-96, 159-249). Outcomes: A \"Looks like your Wi-Fi\"; A-lead \"Mostly your Wi-Fi\"; B \"Looks like your Internet\"; C \"Both look fine\"; D1 \"Couldn't check everything\" (internet measured, Wi-Fi not); D2 \"Couldn't complete the check\" (neither measured) (consumer_verdict.dart:164-247).",
       "example": null,
       "fieldNotes": [
         "Platform differences: macOS reads the link via CoreWLAN (Tx rate, RSSI/SNR, no Rx). iOS reads it via the Shortcut (Tx and Rx). If the link can't be read (wired, or iOS without the Shortcut), it falls to the D1/D2 honest path; it does not guess a side. (consumer_verdict.dart:217-247)",
-        "The headline is a hedge by design (\"Looks like\u2026\", not \"your Wi-Fi is broken\"). The two chips teach the model that Wi-Fi and internet are two separate things. \"Both look fine\" is the most useful real-world answer; it points the user at the specific app/site instead of the connection.",
+        "The headline is a hedge by design (\"Looks like…\", not \"your Wi-Fi is broken\"). The two chips teach the model that Wi-Fi and internet are two separate things. \"Both look fine\" is the most useful real-world answer; it points the user at the specific app/site instead of the connection.",
         "The verdict copy is deliberately non-diagnostic for a layperson. The underlying numbers and bands are the same as Wi-Fi vs Internet; if you want the numbers, use that tool.",
         "How it picks a side: it compares how much internet speed you're actually getting against how much your Wi-Fi link could realistically carry. When the internet measures fine on its own, it says both look fine; otherwise it leans toward Wi-Fi or internet depending on which one has the headroom to spare.",
         "D2 (\"Make sure you're on Wi-Fi and try again\") is the honest answer when nothing measured, never a fake zero."
@@ -1391,7 +1391,7 @@
         "Read the six graded rows and the popular-sites reachability table."
       ],
       "inputs": [],
-      "algorithm": "All this app's own engine (packages/net_quality). Latency / jitter / loss: 10 sequential TCP-connect RTTs to one.one.one.one:443 (not ICMP \u2014 the sandbox blocks raw sockets). Jitter is RFC-3550-style mean deviation between consecutive samples; loss is failed-connects \u00f7 attempts \u00d7 100. With zero successful samples, latency and jitter report \"Unavailable\" but loss is a real 100% (latency_probe.dart:58-163; own_engine_quality_client.dart:94-150). Download: parallel-summed, multi-CDN. Two concurrent streams in one shared window, each against a different endpoint (Cloudflare speed.cloudflare.com/__down, OVH proof.ovh.net, Cachefly), summing bytes over the wall-clock window (throughput_probe.dart:82-169, 245-293). ~25 MB/stream, 10s window cap. If every stream fails, it raises an honest \"couldn't measure\" \u2014 never a fake 0 Mbps (throughput_probe.dart:281-286). Upload: single stream with multi-CDN fallback (only Cloudflare __up is a verified large-POST sink \u2014 honest single-stream, not faked parallelism). A non-2xx or empty transfer is an honest failure, not 0 (throughput_probe.dart:93-96, 410-451). Responsiveness (RPM): a simplified single-flow loaded-latency estimate inspired by RFC 9097 / Apple networkQuality, NOT the full multi-flow RPM standard. It samples loaded RTT while a download flow runs, then RPM = 60000 / loadedAvgMs (responsiveness_probe.dart:39-85; own_engine_quality_client.dart:179-197). Reachability: TCP-connect (port 443) to 12 well-known hosts (popular_sites.dart:27-45; reachability_probe.dart:37-88). Grade bands (scoring.dart): Latency ms \u2014 Excellent <20, Good <50, Fair <100, Poor \u2265100 (grounded in ITU-T G.114, our cut points). Jitter ms \u2014 <5/<15/<30. Loss % \u2014 0/<1/<2.5. Responsiveness RPM \u2014 \u22651000/\u2265500/\u2265100. Download Mbps \u2014 \u2265100/\u226525/\u22655 (explicitly a heuristic). Upload Mbps \u2014 \u226520/\u22655/\u22651 (heuristic) (scoring.dart:20-88).",
+      "algorithm": "All this app's own engine (packages/net_quality). Latency / jitter / loss: 10 sequential TCP-connect RTTs to one.one.one.one:443 (not ICMP — the sandbox blocks raw sockets). Jitter is RFC-3550-style mean deviation between consecutive samples; loss is failed-connects ÷ attempts × 100. With zero successful samples, latency and jitter report \"Unavailable\" but loss is a real 100% (latency_probe.dart:58-163; own_engine_quality_client.dart:94-150). Download: parallel-summed, multi-CDN. Two concurrent streams in one shared window, each against a different endpoint (Cloudflare speed.cloudflare.com/__down, OVH proof.ovh.net, Cachefly), summing bytes over the wall-clock window (throughput_probe.dart:82-169, 245-293). ~25 MB/stream, 10s window cap. If every stream fails, it raises an honest \"couldn't measure\" — never a fake 0 Mbps (throughput_probe.dart:281-286). Upload: single stream with multi-CDN fallback (only Cloudflare __up is a verified large-POST sink — honest single-stream, not faked parallelism). A non-2xx or empty transfer is an honest failure, not 0 (throughput_probe.dart:93-96, 410-451). Responsiveness (RPM): a simplified single-flow loaded-latency estimate inspired by RFC 9097 / Apple networkQuality, NOT the full multi-flow RPM standard. It samples loaded RTT while a download flow runs, then RPM = 60000 / loadedAvgMs (responsiveness_probe.dart:39-85; own_engine_quality_client.dart:179-197). Reachability: TCP-connect (port 443) to 12 well-known hosts (popular_sites.dart:27-45; reachability_probe.dart:37-88). Grade bands (scoring.dart): Latency ms — Excellent <20, Good <50, Fair <100, Poor ≥100 (grounded in ITU-T G.114, our cut points). Jitter ms — <5/<15/<30. Loss % — 0/<1/<2.5. Responsiveness RPM — ≥1000/≥500/≥100. Download Mbps — ≥100/≥25/≥5 (explicitly a heuristic). Upload Mbps — ≥20/≥5/≥1 (heuristic) (scoring.dart:20-88).",
       "example": null,
       "fieldNotes": [
         "Platform differences: runs on macOS, Windows, Linux, Android, iOS over dart:io sockets/HTTP. On web it routes to the download-the-app fallback (no sockets). (net_quality_screen.dart:17-24, 286-292)",
@@ -1411,11 +1411,11 @@
         "iOS: this is live streaming only. Install the combined \"WLAN Pros Live\" companion Shortcut (one-time, via the iCloud link), then tap Start. The Shortcut loops, harvesting the connected AP each cycle via the stock \"Get Network Details\" action and handing JSON back to the app; Stop freezes the last values. There is no one-tap snapshot on iOS. (wifi_info_screen.dart:13-18; wifi_live_shortcuts_config.dart:18-42; wifi_details_bridge.dart:115-156)"
       ],
       "inputs": [],
-      "algorithm": "All sources normalize into one ConnectedAp model (connected_ap.dart). macOS comes from CoreWLAN via the com.wlanpros.toolbox/wifi_info native channel (wifi_info_service.dart:151-213); iOS comes from the Shortcut JSON parsed by WiFiDetails (case-insensitive keys, tolerant numeric parse) (wifi_details.dart:151-204). In iOS Live mode, RSSI and SNR get hard grades against Keith-reviewed bands; Tx/Rx rates get a trend (Rising/Falling/Steady) rather than a hard grade, because a \"good\" data rate is entirely relative to band/width/MCS (wifi_grading.dart:9-23, 38-84). RSSI bands (dBm): Excellent \u2265-59 (>-60), Good \u2265-67, Fair \u2265-72, Poor below. SNR bands (dB): Excellent \u226536 (>35), Good \u226525, Fair \u226515, Poor below (wifi_grading.dart:50-77).",
+      "algorithm": "All sources normalize into one ConnectedAp model (connected_ap.dart). macOS comes from CoreWLAN via the com.wlanpros.toolbox/wifi_info native channel (wifi_info_service.dart:151-213); iOS comes from the Shortcut JSON parsed by WiFiDetails (case-insensitive keys, tolerant numeric parse) (wifi_details.dart:151-204). In iOS Live mode, RSSI and SNR get hard grades against Keith-reviewed bands; Tx/Rx rates get a trend (Rising/Falling/Steady) rather than a hard grade, because a \"good\" data rate is entirely relative to band/width/MCS (wifi_grading.dart:9-23, 38-84). RSSI bands (dBm): Excellent ≥-59 (>-60), Good ≥-67, Fair ≥-72, Poor below. SNR bands (dB): Excellent ≥36 (>35), Good ≥25, Fair ≥15, Poor below (wifi_grading.dart:50-77).",
       "example": null,
       "fieldNotes": [
-        "macOS (CoreWLAN): exposes SSID/BSSID (Location-gated), RSSI, noise, SNR (reported directly), Tx rate, PHY mode \u2192 standard label, channel, channel width, band (reported), country code, interface name, hardware MAC. It does NOT expose the Rx rate or Tx power (public CoreWLAN limitation); those render \"Not exposed by macOS CoreWLAN\", never estimated. (wifi_info_service.dart:16-20, 64-65; connected_ap.dart:120-149)",
-        "iOS (Shortcut): exposes SSID, BSSID, channel, RSSI, noise, standard, Rx rate AND Tx rate. SNR is derived app-side (rssi \u2212 noise) and band is derived from the channel number (both labeled \"derived\"). The harvest does NOT return channel width, so width renders \"Not reported by iOS\", never fabricated. Channel\u2192band derivation: 1 to 14 \u2192 2.4 GHz, 36 to 177 \u2192 5 GHz, 181 to 233 \u2192 6 GHz; the ambiguous low 6 GHz range (1 to 93) is read as 2.4/5 GHz and never silently claimed as 6 GHz. (wifi_details.dart:19-23, 42-66, 116-132; connected_ap.dart:151-182)",
+        "macOS (CoreWLAN): exposes SSID/BSSID (Location-gated), RSSI, noise, SNR (reported directly), Tx rate, PHY mode → standard label, channel, channel width, band (reported), country code, interface name, hardware MAC. It does NOT expose the Rx rate or Tx power (public CoreWLAN limitation); those render \"Not exposed by macOS CoreWLAN\", never estimated. (wifi_info_service.dart:16-20, 64-65; connected_ap.dart:120-149)",
+        "iOS (Shortcut): exposes SSID, BSSID, channel, RSSI, noise, standard, Rx rate AND Tx rate. SNR is derived app-side (rssi − noise) and band is derived from the channel number (both labeled \"derived\"). The harvest does NOT return channel width, so width renders \"Not reported by iOS\", never fabricated. Channel→band derivation: 1 to 14 → 2.4 GHz, 36 to 177 → 5 GHz, 181 to 233 → 6 GHz; the ambiguous low 6 GHz range (1 to 93) is read as 2.4/5 GHz and never silently claimed as 6 GHz. (wifi_details.dart:19-23, 42-66, 116-132; connected_ap.dart:151-182)",
         "Android / Windows: honest \"coming in a later update\" state (clean seam, not built). Web: download-the-app fallback. (wifi_info_adapter.dart:36-68)",
         "RSSI and SNR carry hard grades; read the rate as a trend, not a pass/fail. The standard label combines the 802.11 designation and Wi-Fi generation (e.g. \"802.11be (Wi-Fi 7)\"; 802.11ax on 6 GHz shows Wi-Fi 6E). Anything marked \"derived\" was computed, not read from the radio. (connected_ap.dart:199-215)",
         "macOS Tx-only and iOS no-width are real platform ceilings, not bugs. On macOS, if the SSID is blank, it's almost always a missing Location grant, not a hidden network. The macOS read has a 5s hang-safety: a stalled CoreWLAN read surfaces an honest \"No Wi-Fi reading\" rather than freezing. (wifi_info_adapter.dart:143-184)"
@@ -1431,7 +1431,7 @@
         "iOS only. Install the same combined \"WLAN Pros Live\" companion Shortcut, then Start; the Shortcut harvests cellular details via \"Get Network Details\" and hands them over the App Group bridge. (cellular_info.dart:16-18; cellular_info_adapter.dart:8-17)"
       ],
       "inputs": [],
-      "algorithm": "Parses the Shortcut JSON into CellularInfo (case-insensitive keys, with whitespace-trim tolerance after a real on-device bug) (cellular_info.dart:99-173). Fields: carrier name, radio technology (mapped from raw CTRadioAccessTechnology* constants to friendly labels like \"5G (NSA)\", \"LTE\"; unknown values pass through, never blanked), signal bars (coarse 0\u20134 status-bar indicator), country code, roaming bool (cellular_info.dart:36-66, 175-207).",
+      "algorithm": "Parses the Shortcut JSON into CellularInfo (case-insensitive keys, with whitespace-trim tolerance after a real on-device bug) (cellular_info.dart:99-173). Fields: carrier name, radio technology (mapped from raw CTRadioAccessTechnology* constants to friendly labels like \"5G (NSA)\", \"LTE\"; unknown values pass through, never blanked), signal bars (coarse 0–4 status-bar indicator), country code, roaming bool (cellular_info.dart:36-66, 175-207).",
       "example": null,
       "fieldNotes": [
         "Platform differences: iOS is the only source. There is deliberately no native CoreTelephony path: CTCarrier is deprecated since iOS 16.4 and returns placeholder junk, and cellular signal strength (RSRP/RSRQ/dBm) is private-API-only and an App Store rejection. So data comes only via the Shortcut. macOS (no radio), Android, Windows show an honest \"not available on this platform\"; web shows the download fallback. (cellular_info.dart:12-25; cellular_info_adapter.dart:28-58)",
@@ -1449,7 +1449,7 @@
         "Open the tool; it reads a snapshot. Each field that a platform can't provide returns null and renders \"Not available on this platform\"."
       ],
       "inputs": [],
-      "algorithm": "Built on dart:io NetworkInterface.list for the address/interface table, plus network_info_plus for Wi-Fi-link details (SSID, BSSID, gateway, subnet mask, Wi-Fi IPv4/IPv6) that dart:io doesn't expose (interface_info_service.dart:23-25, 144-191). Each sub-read is independently guarded so one denied call (e.g. SSID) never blanks the whole screen (interface_info_service.dart:129-142, 193-202). Interface kind (Wi-Fi/Ethernet/Cellular/Loopback/VPN/Other) is a heuristic from the OS interface name \u2014 e.g. macOS en0 is guessed Wi-Fi, en1+ Ethernet; explicitly conservative (interface_info_service.dart:227-262). primaryIPv4 prefers the Wi-Fi link IP, else the first non-loopback IPv4 (interface_info_service.dart:96-106).",
+      "algorithm": "Built on dart:io NetworkInterface.list for the address/interface table, plus network_info_plus for Wi-Fi-link details (SSID, BSSID, gateway, subnet mask, Wi-Fi IPv4/IPv6) that dart:io doesn't expose (interface_info_service.dart:23-25, 144-191). Each sub-read is independently guarded so one denied call (e.g. SSID) never blanks the whole screen (interface_info_service.dart:129-142, 193-202). Interface kind (Wi-Fi/Ethernet/Cellular/Loopback/VPN/Other) is a heuristic from the OS interface name — e.g. macOS en0 is guessed Wi-Fi, en1+ Ethernet; explicitly conservative (interface_info_service.dart:227-262). primaryIPv4 prefers the Wi-Fi link IP, else the first non-loopback IPv4 (interface_info_service.dart:96-106).",
       "example": null,
       "fieldNotes": [
         "Platform differences: SSID/BSSID/gateway depend on network_info_plus and OS permission state. iOS needs the wifi-info entitlement + Location for SSID/BSSID; macOS/Android vary. Web is gated off. SSID is cleaned of wrapping quotes and the <unknown ssid> placeholder. (interface_info_service.dart:60-79, 204-213)",
@@ -1469,7 +1469,7 @@
         "Use Copy to put the whole snapshot on the clipboard as labeled text."
       ],
       "inputs": [],
-      "algorithm": "Model and total memory come from the device_info_plus package (BSD-3): on iOS, modelName (the package maps utsname.machine \u2014 e.g. iPhone16,2 \u2014 to a marketing name) plus physicalRamSize; on macOS, modelName/model plus memorySize. Uptime comes from a tiny native MethodChannel (com.wlanpros.toolbox/system_info \u2192 systemUptime) reading ProcessInfo.processInfo.systemUptime \u2014 no package exposes it. The cellular IP comes from dart:io NetworkInterface.list, matching the conventional iOS cellular interface name pdp_ip0 (device_info_service.dart).",
+      "algorithm": "Model and total memory come from the device_info_plus package (BSD-3): on iOS, modelName (the package maps utsname.machine — e.g. iPhone16,2 — to a marketing name) plus physicalRamSize; on macOS, modelName/model plus memorySize. Uptime comes from a tiny native MethodChannel (com.wlanpros.toolbox/system_info → systemUptime) reading ProcessInfo.processInfo.systemUptime — no package exposes it. The cellular IP comes from dart:io NetworkInterface.list, matching the conventional iOS cellular interface name pdp_ip0 (device_info_service.dart).",
       "example": null,
       "fieldNotes": [
         "Cellular IP uses a heuristic: Apple does not treat interface names as a stable API, so detection matches the conventional iOS cellular name pdp_ip0. \"No cellular interface\" is the normal, honest result on a Wi-Fi-only iPhone, in airplane mode, or on a Mac (which has no cellular interface).",
@@ -1491,11 +1491,11 @@
         "Pick the resolver (Cloudflare default, Google, or Quad9) if one provider is blocked. Quad9 (9.9.9.9) filters known-malicious domains, so a name that resolves on Cloudflare/Google but comes back empty on Quad9 is flagged as a threat."
       ],
       "inputs": [],
-      "algorithm": "Resolves over DNS-over-HTTPS (DoH) via basic_utils DnsUtils.lookupRecord, an HTTPS GET to a JSON resolver, not raw UDP/53 (dns_lookup_service.dart). DoH is chosen because raw UDP/53 sits behind iOS local-network gating and is often blocked, while DoH rides HTTPS:443 cleanly and needs no extra socket capability. All records mode fans out one DoH query per type (SOA, NS, A, AAAA, MX, TXT, SRV, CAA) concurrently with Future.wait, then groups the answers in dig order; a per-type failure becomes a per-section note, so the records that did resolve still show. Reverse PTR rewrites the input IP to its in-addr.arpa or ip6.arpa name before querying (with a minimal IPv6 literal parser). SPF is not a separate query: it reads TXT and filters for the v=spf1 policy line (RFC 7208). Three resolvers are selectable: Cloudflare and Google route through basic_utils' DnsApiProvider, while Quad9 (9.9.9.9) \u2014 which basic_utils does not ship \u2014 is queried directly against its JSON DoH endpoint (https://dns.quad9.net:5053/dns-query, HTTPS only, keyless) using the same name/type/dnssec request and ResolveResponse parse, so the record shape is identical. Quad9 is a security resolver that refuses known-malicious domains, so a blocked name returns the honest empty state on Quad9, not a failure. Three result states per query: success, empty (resolved, no records of this type), and failure, kept distinct so the UI shows the right state.",
+      "algorithm": "Resolves over DNS-over-HTTPS (DoH) via basic_utils DnsUtils.lookupRecord, an HTTPS GET to a JSON resolver, not raw UDP/53 (dns_lookup_service.dart). DoH is chosen because raw UDP/53 sits behind iOS local-network gating and is often blocked, while DoH rides HTTPS:443 cleanly and needs no extra socket capability. All records mode fans out one DoH query per type (SOA, NS, A, AAAA, MX, TXT, SRV, CAA) concurrently with Future.wait, then groups the answers in dig order; a per-type failure becomes a per-section note, so the records that did resolve still show. Reverse PTR rewrites the input IP to its in-addr.arpa or ip6.arpa name before querying (with a minimal IPv6 literal parser). SPF is not a separate query: it reads TXT and filters for the v=spf1 policy line (RFC 7208). Three resolvers are selectable: Cloudflare and Google route through basic_utils' DnsApiProvider, while Quad9 (9.9.9.9) — which basic_utils does not ship — is queried directly against its JSON DoH endpoint (https://dns.quad9.net:5053/dns-query, HTTPS only, keyless) using the same name/type/dnssec request and ResolveResponse parse, so the record shape is identical. Quad9 is a security resolver that refuses known-malicious domains, so a blocked name returns the honest empty state on Quad9, not a failure. Three result states per query: success, empty (resolved, no records of this type), and failure, kept distinct so the UI shows the right state.",
       "example": null,
       "fieldNotes": [
         "Records resolve against a public resolver (Cloudflare, Google, or Quad9), not the device configured resolver, which is usually what a pro wants (authoritative, uncached). The device configured DNS servers are shown by Interface Information instead.",
-        "Quad9 (9.9.9.9) blocks domains on its threat-intel blocklists, so an empty result on Quad9 for a name that resolves on Cloudflare/Google means the domain is flagged as malicious \u2014 a fast malware check, not a lookup failure. Use Cloudflare or Google when you want an unfiltered answer.",
+        "Quad9 (9.9.9.9) blocks domains on its threat-intel blocklists, so an empty result on Quad9 for a name that resolves on Cloudflare/Google means the domain is flagged as malicious — a fast malware check, not a lookup failure. Use Cloudflare or Google when you want an unfiltered answer.",
         "SRV and CAA are parsed into readable fields; an unparseable form is shown raw. Empty is not an error: a name with no MX simply returns the empty state.",
         "Platform differences: identical on iOS, Android, macOS, and Windows (HTTPS only). Gated off on web per the native-only product decision.",
         "dig +trace (the root to TLD to authoritative delegation walk) is not built. DoH only reaches recursive resolvers that return the final answer, so a true iterative trace would need raw UDP/53 to named authoritative servers plus a hand-rolled DNS wire codec, which is heavier and less reliable in the field than this tool is meant to be."
@@ -1511,7 +1511,7 @@
         "Enter a host, pick the common-ports preset or type a custom spec (e.g. 22, 80, 443, 8000-8100), run. Results stream in as ports settle."
       ],
       "inputs": [],
-      "algorithm": "Per port, Socket.connect(host, port) with an 800ms default timeout. Open = handshake completes; Closed = actively refused/reset (host reachable, nothing listening); Filtered = no response before timeout (a firewall dropping the SYN). Same open/closed/filtered taxonomy nmap reports for a connect scan, with no raw socket (port_scan_service.dart:1-33, 272-310). Connects run in a bounded worker pool (default 64 in flight) and stream incrementally (port_scan_service.dart:200-270). The common-ports preset is 44 curated ports a network pro actually checks (20\u201327017, with service labels like 443\u2192HTTPS, 3389\u2192RDP) (port_scan_service.dart:101-160).",
+      "algorithm": "Per port, Socket.connect(host, port) with an 800ms default timeout. Open = handshake completes; Closed = actively refused/reset (host reachable, nothing listening); Filtered = no response before timeout (a firewall dropping the SYN). Same open/closed/filtered taxonomy nmap reports for a connect scan, with no raw socket (port_scan_service.dart:1-33, 272-310). Connects run in a bounded worker pool (default 64 in flight) and stream incrementally (port_scan_service.dart:200-270). The common-ports preset is 44 curated ports a network pro actually checks (20–27017, with service labels like 443→HTTPS, 3389→RDP) (port_scan_service.dart:101-160).",
       "example": null,
       "fieldNotes": [
         "Platform differences: works identically on every native platform (no entitlement beyond network-client). Gated off on web. (port_scan_service.dart:17-18)",
@@ -1568,10 +1568,10 @@
         "Enter a host, run (mobile only). Streams replies with running stats, same UI shape as TCP Ping."
       ],
       "inputs": [],
-      "algorithm": "Real ICMP echo request/reply via the native backend (dart_ping_ios SimplePing/GBPing on iOS; dart_ping spawning system ping on Android) (icmp_service.dart:1-52, 256-265). The method label is \"ICMP echo\" \u2014 never relabeled from a TCP probe (icmp_service.dart:96-110).",
+      "algorithm": "Real ICMP echo request/reply via the native backend (dart_ping_ios SimplePing/GBPing on iOS; dart_ping spawning system ping on Android) (icmp_service.dart:1-52, 256-265). The method label is \"ICMP echo\" — never relabeled from a TCP probe (icmp_service.dart:96-110).",
       "example": null,
       "fieldNotes": [
-        "Platform matrix (honest): iOS, real ICMP echo available (icmp_service.dart:297-303). Android, real ICMP echo via system ping, available (icmp_service.dart:299-302). macOS / Windows / Linux desktop: the only ICMP path is spawning /sbin/ping, which the macOS App Sandbox blocks, so it gives an honest \"not available in the sandboxed desktop build\", and the UI points the user at TCP Ping instead (icmp_service.dart:37-41, 300-303). Web: no sockets \u2192 download fallback.",
+        "Platform matrix (honest): iOS, real ICMP echo available (icmp_service.dart:297-303). Android, real ICMP echo via system ping, available (icmp_service.dart:299-302). macOS / Windows / Linux desktop: the only ICMP path is spawning /sbin/ping, which the macOS App Sandbox blocks, so it gives an honest \"not available in the sandboxed desktop build\", and the UI points the user at TCP Ping instead (icmp_service.dart:37-41, 300-303). Web: no sockets → download fallback.",
         "Where available, this is genuine ICMP RTT/loss, the real thing, not a TCP proxy.",
         "DEVICE-PENDING: the code itself flags that the iOS real-ICMP backend \"cannot be verified without a real device\". The logic and gating are unit-tested with a fake backend; the live round-trip is the device-pending piece (icmp_service.dart:24-27, 47-52). On desktop, use TCP Ping."
       ],
@@ -1586,7 +1586,7 @@
         "Enter a CIDR (192.168.1.0/24), a range (192.168.1.10-40 or full end address), or a single IP; run. A live progress bar and a running responsive count build as hosts settle."
       ],
       "inputs": [],
-      "algorithm": "For each candidate, a TCP Socket.connect to a common port (443 default; the sweep can probe 443/80/22/53 and a host is responsive the moment ANY answers \u2014 first-answer wins). A completed handshake or a refused RST both prove the host answered; a timeout means silent on that port (ping_sweep_service.dart:158-165, 380-406). Bounded worker pool (default 32 in flight) (ping_sweep_service.dart:28-31, 309-375). Hard cap of 254 hosts (a /24); anything larger is rejected with \"that's N hosts, the cap is M\" \u2014 never silently truncated (ping_sweep_service.dart:166-171, 222-229).",
+      "algorithm": "For each candidate, a TCP Socket.connect to a common port (443 default; the sweep can probe 443/80/22/53 and a host is responsive the moment ANY answers — first-answer wins). A completed handshake or a refused RST both prove the host answered; a timeout means silent on that port (ping_sweep_service.dart:158-165, 380-406). Bounded worker pool (default 32 in flight) (ping_sweep_service.dart:28-31, 309-375). Hard cap of 254 hosts (a /24); anything larger is rejected with \"that's N hosts, the cap is M\" — never silently truncated (ping_sweep_service.dart:166-171, 222-229).",
       "example": null,
       "fieldNotes": [
         "Platform differences: identical on every native platform. Gated off on web. (ping_sweep_service.dart:33-34)",
@@ -1604,7 +1604,7 @@
         "Open and run. The engine seeds the local /24, connect-scans it, reverse-DNS resolves, mDNS-browses, then (macOS) reads the ARP cache for MAC/vendor."
       ],
       "inputs": [],
-      "algorithm": "Four passes (lan_discovery_engine.dart): 1. Subnet seed \u2014 derive the local /24 host list from network_info_plus (:181-199). 2. Connect-scan \u2014 bounded-concurrency (64) TCP connect across the /24 \u00d7 a curated port set, run in a background isolate; streams progress (:201-262). 3. Reverse DNS \u2014 InternetAddress.reverse() per discovered host (null when no PTR) (:264-275, 499-510). 4. mDNS browse \u2014 in-house native NetServiceBrowser/NetService (Apple Bonjour daemon) over a curated DNS-SD service set (:277-301; mdns_browse.dart:1-51). Then the ARP-cache read (macOS only, via Swift sysctl NET_RT_FLAGS/RTF_LLINFO \u2014 never a subprocess) runs after the scan warms the kernel cache, attaching MAC + vendor (:303-335). Finally a pure device-type heuristic runs on each host's open ports + mDNS services (device_type.dart:62-146). Device-type rules (first match wins, most specific first): IPP/LPD/9100 or printing mDNS \u2192 Printer; RTSP \u2192 Camera/NVR; iOS lockdownd (62078) \u2192 iOS device; SMB (445) \u2192 Windows/SMB; _sonos/_spotify-connect \u2192 Speaker; _googlecast \u2192 Media streamer; _airplay/_raop/_companion-link \u2192 Apple device; then weak signals 80/443/8080 \u2192 Web server, 22 \u2192 SSH host; any mDNS \u2192 mDNS device; else Unknown (device_type.dart:47-146). MAC\u2192vendor resolves through the full bundled IEEE OUI registry; the resolver owns the honesty contract \u2014 null for randomized/local MACs, raw-OUI fallback for unlisted global prefixes, named vendor otherwise (lan_discovery_engine.dart:101-113, 321-334; mac_oui_service.dart:243-266).",
+      "algorithm": "Four passes (lan_discovery_engine.dart): 1. Subnet seed — derive the local /24 host list from network_info_plus (:181-199). 2. Connect-scan — bounded-concurrency (64) TCP connect across the /24 × a curated port set, run in a background isolate; streams progress (:201-262). 3. Reverse DNS — InternetAddress.reverse() per discovered host (null when no PTR) (:264-275, 499-510). 4. mDNS browse — in-house native NetServiceBrowser/NetService (Apple Bonjour daemon) over a curated DNS-SD service set (:277-301; mdns_browse.dart:1-51). Then the ARP-cache read (macOS only, via Swift sysctl NET_RT_FLAGS/RTF_LLINFO — never a subprocess) runs after the scan warms the kernel cache, attaching MAC + vendor (:303-335). Finally a pure device-type heuristic runs on each host's open ports + mDNS services (device_type.dart:62-146). Device-type rules (first match wins, most specific first): IPP/LPD/9100 or printing mDNS → Printer; RTSP → Camera/NVR; iOS lockdownd (62078) → iOS device; SMB (445) → Windows/SMB; _sonos/_spotify-connect → Speaker; _googlecast → Media streamer; _airplay/_raop/_companion-link → Apple device; then weak signals 80/443/8080 → Web server, 22 → SSH host; any mDNS → mDNS device; else Unknown (device_type.dart:47-146). MAC→vendor resolves through the full bundled IEEE OUI registry; the resolver owns the honesty contract — null for randomized/local MACs, raw-OUI fallback for unlisted global prefixes, named vendor otherwise (lan_discovery_engine.dart:101-113, 321-334; mac_oui_service.dart:243-266).",
       "example": null,
       "fieldNotes": [
         "Platform differences (the heart of it): MAC + vendor: macOS only (the sysctl ARP read). On iOS/Android a sandboxed app cannot read the ARP table, so MAC/vendor stay null (lan_discovery_engine.dart:303-311). mDNS: iOS + macOS via the native NetServiceBrowser channel. It deliberately does NOT use pure-Dart multicast (iOS 14+ silently drops it without Apple's multicast entitlement) and does NOT use bonsoir (GPL-3.0, incompatible with the closed-source App Store app). Android/other platforms get a clean empty mDNS pass (NsdManager deferred). Service types must be declared in Info.plist NSBonjourServices (mdns_browse.dart:8-51). The connect-scan core is pure-Dart and cross-platform; only mDNS/ARP enrichment are native.",
@@ -1622,10 +1622,10 @@
         "Desktop only. Enter a host, run; hops fill in live as the OS tool emits them. Cancellable mid-flight."
       ],
       "inputs": [],
-      "algorithm": "Spawns the system traceroute (Unix: -m maxHops -q 3 -w 2) or tracert (Windows: -d -h maxHops -w 2000) and parses each hop line live from stdout/stderr \u2014 TTL, host/IP, per-probe RTTs, and * * * timeouts (traceroute_service.dart:194-302, 304-386). A real traceroute needs to read ICMP TIME_EXCEEDED replies, which require either a raw socket or the privileged system binary \u2014 so faking hops from TCP timing is explicitly refused (traceroute_service.dart:1-31).",
+      "algorithm": "Spawns the system traceroute (Unix: -m maxHops -q 3 -w 2) or tracert (Windows: -d -h maxHops -w 2000) and parses each hop line live from stdout/stderr — TTL, host/IP, per-probe RTTs, and * * * timeouts (traceroute_service.dart:194-302, 304-386). A real traceroute needs to read ICMP TIME_EXCEEDED replies, which require either a raw socket or the privileged system binary — so faking hops from TCP timing is explicitly refused (traceroute_service.dart:1-31).",
       "example": null,
       "fieldNotes": [
-        "Platform matrix (honest): macOS / Windows / Linux desktop spawns the OS binary. But under the macOS App Sandbox (the App Store build) spawning is blocked, so the screen runs a live isLaunchable() probe (a side-effect-free no-arg launch) and adapts: a non-sandboxed Developer-ID macOS build and Windows/Linux launch it fine; the sandboxed build shows an explicit \"binary unavailable\" verdict rather than hanging or pretending (traceroute_service.dart:151-187, 228-246). iOS / Android: subprocess execution is sandboxed out entirely \u2192 \"Traceroute runs on desktop, use Ping here.\" (traceroute_service.dart:202-215). Web: never reached (gated).",
+        "Platform matrix (honest): macOS / Windows / Linux desktop spawns the OS binary. But under the macOS App Sandbox (the App Store build) spawning is blocked, so the screen runs a live isLaunchable() probe (a side-effect-free no-arg launch) and adapts: a non-sandboxed Developer-ID macOS build and Windows/Linux launch it fine; the sandboxed build shows an explicit \"binary unavailable\" verdict rather than hanging or pretending (traceroute_service.dart:151-187, 228-246). iOS / Android: subprocess execution is sandboxed out entirely → \"Traceroute runs on desktop, use Ping here.\" (traceroute_service.dart:202-215). Web: never reached (gated).",
         "Each hop shows TTL, the responding router (name + IP), and up to three probe RTTs; * * * is a hop that didn't answer (common and not necessarily a problem). Reaching the target is reported as a terminal \"complete\".",
         "On a sandboxed macOS App Store build this tool honestly reports unavailable. For a path read on mobile, see Traceroute (Mobile), but note its iOS limitation."
       ],
@@ -1658,11 +1658,11 @@
         "Enter a host (URLs are accepted and stripped to the host), optional port (443 default), inspect."
       ],
       "inputs": [],
-      "algorithm": "SecureSocket.connect with onBadCertificate: (cert) => true \u2014 it accepts any certificate at the socket layer so an expired/self-signed/mismatched cert is still captured and shown; the validity verdict is computed from the cert dates, not thrown as an error (ssl_inspect_service.dart:1-12, 251-265). A bad cert is a successful inspection, not a failure (ssl_inspect_service.dart:171-174). Field coverage is split: dart:io X509Certificate gives PEM/DER, subject/issuer DN, notBefore/notAfter, SHA-1; basic_utils X509Utils re-parses the PEM to recover structured DN, SAN list, serial, signature algorithm, public-key algorithm + bits, and SHA-256 (ssl_inspect_service.dart:13-34, 360-457). Validity is computed against \"now\": valid / expired / not-yet-valid + days-to-expiry (ssl_inspect_service.dart:46-100).",
+      "algorithm": "SecureSocket.connect with onBadCertificate: (cert) => true — it accepts any certificate at the socket layer so an expired/self-signed/mismatched cert is still captured and shown; the validity verdict is computed from the cert dates, not thrown as an error (ssl_inspect_service.dart:1-12, 251-265). A bad cert is a successful inspection, not a failure (ssl_inspect_service.dart:171-174). Field coverage is split: dart:io X509Certificate gives PEM/DER, subject/issuer DN, notBefore/notAfter, SHA-1; basic_utils X509Utils re-parses the PEM to recover structured DN, SAN list, serial, signature algorithm, public-key algorithm + bits, and SHA-256 (ssl_inspect_service.dart:13-34, 360-457). Validity is computed against \"now\": valid / expired / not-yet-valid + days-to-expiry (ssl_inspect_service.dart:46-100).",
       "example": null,
       "fieldNotes": [
         "Platform differences: same on every native platform. Gated off on web. (ssl_inspect_service.dart:35-36)",
-        "The validity state is an icon + text (not color alone). Two honest limits are stated on-screen, not faked: (1) ALPN \u2260 TLS version/cipher, since dart:io exposes only the ALPN result, not the negotiated TLS version or cipher suite, so those are reported \"not exposed by the platform\", never invented (ssl_inspect_service.dart:23-29, 211-214). (2) Leaf only, since dart:io hands over only the leaf certificate, not the intermediate/root chain it validated against (ssl_inspect_service.dart:30-34, 223-227).",
+        "The validity state is an icon + text (not color alone). Two honest limits are stated on-screen, not faked: (1) ALPN ≠ TLS version/cipher, since dart:io exposes only the ALPN result, not the negotiated TLS version or cipher suite, so those are reported \"not exposed by the platform\", never invented (ssl_inspect_service.dart:23-29, 211-214). (2) Leaf only, since dart:io hands over only the leaf certificate, not the intermediate/root chain it validated against (ssl_inspect_service.dart:30-34, 223-227).",
         "Connection problems (DNS, refused, timeout) are failures; an invalid cert is not. Don't read the ALPN line as the TLS version; the tool deliberately separates them."
       ],
       "source": "ssl_inspect_service.dart:1-457"
@@ -1671,12 +1671,12 @@
       "name": "Inspector (HTTP Header)",
       "category": "Networking Tools",
       "purpose": "Issue a HEAD or GET, follow and record the redirect chain hop-by-hop, and return the final status plus all response headers.",
-      "whyHere": "Shows the full 301\u2192302\u2192200 story, not just the destination. Reach for it to debug redirects, security headers, caching, or CDN behavior.",
+      "whyHere": "Shows the full 301→302→200 story, not just the destination. Reach for it to debug redirects, security headers, caching, or CDN behavior.",
       "howToUse": [
         "Enter a URL (bare host assumes https://), pick HEAD (default) or GET, inspect. Each hop is shown with its status, Location, and headers."
       ],
       "inputs": [],
-      "algorithm": "Sets followRedirects = false and follows the chain itself, recording one hop per response until a non-redirect status or the 10-redirect cap (http_header_service.dart:5-13, 198-273). HEAD\u2192GET fallback: if HEAD returns 405 (and the caller didn't demand GET), it transparently retries that hop with GET and notes the fallback (http_header_service.dart:15-20, 224-238). Relative Location values are resolved per RFC 7231 (http_header_service.dart:250-261, 330-343).",
+      "algorithm": "Sets followRedirects = false and follows the chain itself, recording one hop per response until a non-redirect status or the 10-redirect cap (http_header_service.dart:5-13, 198-273). HEAD→GET fallback: if HEAD returns 405 (and the caller didn't demand GET), it transparently retries that hop with GET and notes the fallback (http_header_service.dart:15-20, 224-238). Relative Location values are resolved per RFC 7231 (http_header_service.dart:250-261, 330-343).",
       "example": null,
       "fieldNotes": [
         "Platform differences: iOS App Transport Security blocks cleartext http://, and the app deliberately does not add a blanket ATS exception (that would weaken every request). So an http:// target fails at the socket layer on iOS, and the tool surfaces a specific message (\"On iOS, cleartext HTTP is blocked by ATS, try the https:// URL\") rather than a generic failure (http_header_service.dart:22-27, 352-359). Otherwise identical on native; gated off on web.",
@@ -1694,7 +1694,7 @@
         "Enter a domain or IP, look up."
       ],
       "inputs": [],
-      "algorithm": "Raw WHOIS over TCP/43 via Socket.connect \u2014 not a whois subprocess (sandbox-blocked) and not RDAP/HTTPS (uneven coverage, no CORS) (whois_service.dart:1-32). It does the hierarchical two-hop dance: query whois.iana.org for the target, parse the refer:/whois: referral to the authoritative registry, re-query that, and follow one optional further hop to a Registrar WHOIS Server: if it returns a fuller record (whois_service.dart:21-32, 178-258). Highlights (registrar, created/updated/expires, status, name servers) are parsed from the free-form record where reliably present; anything missing is omitted, never faked (whois_service.dart:300-353).",
+      "algorithm": "Raw WHOIS over TCP/43 via Socket.connect — not a whois subprocess (sandbox-blocked) and not RDAP/HTTPS (uneven coverage, no CORS) (whois_service.dart:1-32). It does the hierarchical two-hop dance: query whois.iana.org for the target, parse the refer:/whois: referral to the authoritative registry, re-query that, and follow one optional further hop to a Registrar WHOIS Server: if it returns a fuller record (whois_service.dart:21-32, 178-258). Highlights (registrar, created/updated/expires, status, name servers) are parsed from the free-form record where reliably present; anything missing is omitted, never faked (whois_service.dart:300-353).",
       "example": null,
       "fieldNotes": [
         "Platform differences: same on every native platform. Gated off on web. (whois_service.dart:31-32)",
@@ -1712,12 +1712,12 @@
         "Enter the target MAC (colons, hyphens, Cisco dots, or no separators all parse), optionally a subnet-directed broadcast (e.g. 192.168.1.255) and port (9 default, 7 alternative), send."
       ],
       "inputs": [],
-      "algorithm": "Builds the 102-byte magic packet (6\u00d7 0xFF then the 6-byte MAC repeated 16 times) and sends it as a UDP broadcast via RawDatagramSocket with broadcastEnabled = true \u2014 no subprocess, no privileged socket (wake_on_lan_service.dart:1-21, 92-108, 218-233). The MAC is normalized to canonical form; an invalid MAC, bad broadcast IP, or out-of-range port is rejected with a clear message (wake_on_lan_service.dart:118-205).",
+      "algorithm": "Builds the 102-byte magic packet (6× 0xFF then the 6-byte MAC repeated 16 times) and sends it as a UDP broadcast via RawDatagramSocket with broadcastEnabled = true — no subprocess, no privileged socket (wake_on_lan_service.dart:1-21, 92-108, 218-233). The MAC is normalized to canonical form; an invalid MAC, bad broadcast IP, or out-of-range port is rejected with a clear message (wake_on_lan_service.dart:118-205).",
       "example": null,
       "fieldNotes": [
         "Platform differences: works on every native platform (outbound UDP broadcast is covered by the existing entitlements). Gated off on web. (wake_on_lan_service.dart:20-21)",
         "Success means the packet was sent; it makes NO claim the device woke. WoL is unacknowledged, a switch may not forward the all-ones broadcast across subnets, and the target may have WoL disabled (wake_on_lan_service.dart:13-18, 26-27). The tool shows the bytes sent and the packet hex.",
-        "If the OS reports 0 bytes sent, it suggests a directed broadcast (e.g. 192.168.1.255) instead of 255.255.255.255. \"Sent\" \u2260 \"woke\"; verify the host separately."
+        "If the OS reports 0 bytes sent, it suggests a directed broadcast (e.g. 192.168.1.255) instead of 255.255.255.255. \"Sent\" ≠ \"woke\"; verify the host separately."
       ],
       "source": "wake_on_lan_service.dart:1-233"
     },
@@ -1725,12 +1725,12 @@
       "name": "Lookup (ARP/NDP)",
       "category": "Networking Tools",
       "purpose": "Discover local-network neighbors: IP, and MAC where the platform exposes it.",
-      "whyHere": "A neighbor read of the local segment. Reach for it to map IP\u2194MAC on platforms that can, or just to list responders.",
+      "whyHere": "A neighbor read of the local segment. Reach for it to map IP↔MAC on platforms that can, or just to list responders.",
       "howToUse": [
         "Open and run; it derives the local subnet and sweeps it, attaching cached MACs where available."
       ],
       "inputs": [],
-      "algorithm": "Active discovery \u2014 derive the local /24 (or real prefix), TCP-connect-probe each host (curated LAN ports 80/443/22/445/139/53/8080, refused RST counts as up), list the responders, and on Linux/Android read /proc/net/arp to attach the real cached MAC (arp_ndp_service.dart:1-34, 130-132, 289-322). No subprocess (arp -a is sandbox-blocked). Safety cap refuses anything larger than a /22 (1022 hosts) (arp_ndp_service.dart:181-198).",
+      "algorithm": "Active discovery — derive the local /24 (or real prefix), TCP-connect-probe each host (curated LAN ports 80/443/22/445/139/53/8080, refused RST counts as up), list the responders, and on Linux/Android read /proc/net/arp to attach the real cached MAC (arp_ndp_service.dart:1-34, 130-132, 289-322). No subprocess (arp -a is sandbox-blocked). Safety cap refuses anything larger than a /22 (1022 hosts) (arp_ndp_service.dart:181-198).",
       "example": null,
       "fieldNotes": [
         "Platform matrix (honest, in the source): Android / Linux, active sweep with MAC from /proc/net/arp (arp_ndp_service.dart:135-147). macOS / Windows, active sweep, no MAC (no readable ARP file; arp -a/GetIpNetTable out of scope), so MAC renders \"Not exposed on this platform\" (arp_ndp_service.dart:8-16, 144-147). iOS, unavailable; neighbor tables aren't accessible to third-party apps (arp_ndp_service.dart:140-141). Web, download fallback.",
@@ -1748,12 +1748,12 @@
         "Enter an IPv4/IPv6 or an ASN (AS15169, 15169, or as15169), look up."
       ],
       "inputs": [],
-      "algorithm": "Queries the RIPEstat Data API (free, no key, HTTPS, authoritative \u2014 operated by RIPE NCC) (bgp_asn_service.dart:1-26). IP path: network-info (prefix + ASN) then as-overview (holder, type, registry, announced). ASN path: as-overview then asn-neighbours mapped to upstream/peer/downstream counts (bgp_asn_service.dart:199-282). Input is classified IP vs ASN before any call (bgp_asn_service.dart:140-171).",
+      "algorithm": "Queries the RIPEstat Data API (free, no key, HTTPS, authoritative — operated by RIPE NCC) (bgp_asn_service.dart:1-26). IP path: network-info (prefix + ASN) then as-overview (holder, type, registry, announced). ASN path: as-overview then asn-neighbours mapped to upstream/peer/downstream counts (bgp_asn_service.dart:199-282). Input is classified IP vs ASN before any call (bgp_asn_service.dart:140-171).",
       "example": null,
       "fieldNotes": [
-        "Platform differences: built on JsonHttpClient (\u2192 dart:io), so native-only; web is gated to the download fallback (RIPEstat CORS unverified, so no maybe-broken web tool). (bgp_asn_service.dart:22-23)",
+        "Platform differences: built on JsonHttpClient (→ dart:io), so native-only; web is gated to the download fallback (RIPEstat CORS unverified, so no maybe-broken web tool). (bgp_asn_service.dart:22-23)",
         "Three states: success, empty (API answered cleanly but resolved no ASN, e.g. a private/bogon IP not in the routing table), and failure (bgp_asn_service.dart:123-129). Peer/upstream counts are best-effort enrichment; a neighbours failure leaves them null (\"Not available\"), not zero (bgp_asn_service.dart:263-266).",
-        "Every field is nullable; a datum the API omits renders \"Not available\", never fabricated. Neighbour \"type\" mapping: left\u2192upstream, right\u2192downstream, unknown\u2192peer. (bgp_asn_service.dart:250-257)"
+        "Every field is nullable; a datum the API omits renders \"Not available\", never fabricated. Neighbour \"type\" mapping: left→upstream, right→downstream, unknown→peer. (bgp_asn_service.dart:250-257)"
       ],
       "source": "bgp_asn_service.dart:1-282"
     },
@@ -1766,11 +1766,11 @@
         "Enter an IP or hostname, or leave blank to locate your own public IP, look up. A copyable \"lat,long\" and an OpenStreetMap URL are offered."
       ],
       "inputs": [],
-      "algorithm": "Queries ipwho.is (free, no key, HTTPS \u2014 chosen because it's keyless AND returns ASN + timezone in one response; ip-api.com is HTTP-only and would trip iOS ATS, so it's explicitly not used) (ip_geo_service.dart:1-27). An empty query hits https://ipwho.is/ (your IP); otherwise https://ipwho.is/{ip} (ip_geo_service.dart:157-189). A cheap client-side sanity check rejects obvious junk before spending a round-trip; ipwho.is's in-band {\"success\": false} is mapped to a precise \"check your input\" or rate-limited state, not read as OK (ip_geo_service.dart:166-218, 253-268).",
+      "algorithm": "Queries ipwho.is (free, no key, HTTPS — chosen because it's keyless AND returns ASN + timezone in one response; ip-api.com is HTTP-only and would trip iOS ATS, so it's explicitly not used) (ip_geo_service.dart:1-27). An empty query hits https://ipwho.is/ (your IP); otherwise https://ipwho.is/{ip} (ip_geo_service.dart:157-189). A cheap client-side sanity check rejects obvious junk before spending a round-trip; ipwho.is's in-band {\"success\": false} is mapped to a precise \"check your input\" or rate-limited state, not read as OK (ip_geo_service.dart:166-218, 253-268).",
       "example": null,
       "fieldNotes": [
-        "Platform differences: JsonHttpClient \u2192 dart:io, native-only; web gated to the download fallback (ipwho.is CORS unverified). (ip_geo_service.dart:23-25)",
-        "Coordinates are shown as selectable mono data plus a copyable pair and an external maps link (no embedded interactive map; that's future) (ip_geo_service.dart:18-21, 125-147). Every field is nullable \u2192 missing data renders \"Not available\".",
+        "Platform differences: JsonHttpClient → dart:io, native-only; web gated to the download fallback (ipwho.is CORS unverified). (ip_geo_service.dart:23-25)",
+        "Coordinates are shown as selectable mono data plus a copyable pair and an external maps link (no embedded interactive map; that's future) (ip_geo_service.dart:18-21, 125-147). Every field is nullable → missing data renders \"Not available\".",
         "Geolocation accuracy is the provider's, especially for mobile/CGNAT IPs. A rate-limit response is surfaced explicitly (\"wait a minute and try again\")."
       ],
       "source": "ip_geo_service.dart:1-268"
@@ -1778,7 +1778,7 @@
     "my-current-location": {
       "name": "Current Location",
       "category": "Networking Tools",
-      "purpose": "Reads the device's GPS location on open and shows latitude, longitude, altitude, and horizontal accuracy directly \u2014 no conversion step.",
+      "purpose": "Reads the device's GPS location on open and shows latitude, longitude, altitude, and horizontal accuracy directly — no conversion step.",
       "whyHere": "The fast \"where am I right now\" answer. The same fix is available inside the Lat / Long converter, but people expect a dedicated location tool rather than a coordinate calculator.",
       "howToUse": [
         "Open the tool; it requests Location permission (if needed) and reads one fix automatically.",
@@ -1804,11 +1804,11 @@
         "Enter a MAC in any common notation (colon, hyphen, Cisco dot aabb.ccdd.eeff, or no separators; any case), look up."
       ],
       "inputs": [],
-      "algorithm": "Pure-Dart resolver over a bundled IEEE registry table (assets/oui/oui_table.tsv) loaded once and cached \u2014 no HTTP, no dart:io (mac_oui_service.dart:1-27, 104-142). It honors the three IEEE block sizes and matches most-specific-first: MA-S (/36, 9 hex), then MA-M (/28, 7 hex), then MA-L (/24, 6 hex), so a /36 sub-allocation names the real sub-assignee, not the /24 parent (mac_oui_service.dart:5-8, 213-228).",
+      "algorithm": "Pure-Dart resolver over a bundled IEEE registry table (assets/oui/oui_table.tsv) loaded once and cached — no HTTP, no dart:io (mac_oui_service.dart:1-27, 104-142). It honors the three IEEE block sizes and matches most-specific-first: MA-S (/36, 9 hex), then MA-M (/28, 7 hex), then MA-L (/24, 6 hex), so a /36 sub-allocation names the real sub-assignee, not the /24 parent (mac_oui_service.dart:5-8, 213-228).",
       "example": null,
       "fieldNotes": [
         "Platform differences: identical everywhere (offline, pure Dart), including web-safe in principle, though it ships in the gated Networking category. No platform exposes more or less here.",
-        "Honesty bits: U/L bit set (0x02) = locally-administered / randomized address (the common case for modern iOS/Android Wi-Fi) \u2192 flagged, no vendor invented (a registry hit would be coincidence) (mac_oui_service.dart:10-17, 117-118, 199-211). I/G bit set (0x01) = multicast/group address, not a single NIC \u2192 flagged, no vendor (mac_oui_service.dart:120-121). A globally-administered MAC not in the bundled snapshot \u2192 the raw 24-bit OUI is shown (e.g. B8:27:EB), never invented (mac_oui_service.dart:257-266).",
+        "Honesty bits: U/L bit set (0x02) = locally-administered / randomized address (the common case for modern iOS/Android Wi-Fi) → flagged, no vendor invented (a registry hit would be coincidence) (mac_oui_service.dart:10-17, 117-118, 199-211). I/G bit set (0x01) = multicast/group address, not a single NIC → flagged, no vendor (mac_oui_service.dart:120-121). A globally-administered MAC not in the bundled snapshot → the raw 24-bit OUI is shown (e.g. B8:27:EB), never invented (mac_oui_service.dart:257-266).",
         "A randomized phone MAC correctly returns \"no vendor\"; that's the right answer, not a miss. The bundled table has a documented retrieval date in its asset header; refresh it to pick up new allocations.",
         "CATALOG NOTE: manual category is Networking Tools; catalog id is mac-oui-lookup with route /tools/mac-oui."
       ],
@@ -1823,7 +1823,7 @@
         "Enter host, port, transport (TCP/UDP), and a payload (plain text, or \\xNN hex escapes plus \\r \\n \\t \\0 \\\\), send. The reply is shown as hex and decoded text."
       ],
       "inputs": [],
-      "algorithm": "TCP via Socket, UDP via RawDatagramSocket \u2014 no raw sockets, no custom ICMP/IP framing (same sandbox wall as ICMP traceroute), so it ships clean everywhere (packet_sender_service.dart:1-22). TCP: connect \u2192 send \u2192 read until the peer closes or the read goes idle for the timeout, with a hard total cap (timeout\u00d73) so a chatty stream can't run forever (packet_sender_service.dart:11-14, 279-356). UDP: bind ephemeral \u2192 send one datagram \u2192 wait up to the timeout for a reply; no reply is a first-class non-error outcome (timedOut/isNoReply), not an exception, because UDP has no delivery guarantee (packet_sender_service.dart:16-19, 130-133, 399-472). Errors are typed: DNS failure, refused, unreachable, timeout, invalid input, other \u2014 each mapped to a precise message (packet_sender_service.dart:33-51, 358-397).",
+      "algorithm": "TCP via Socket, UDP via RawDatagramSocket — no raw sockets, no custom ICMP/IP framing (same sandbox wall as ICMP traceroute), so it ships clean everywhere (packet_sender_service.dart:1-22). TCP: connect → send → read until the peer closes or the read goes idle for the timeout, with a hard total cap (timeout×3) so a chatty stream can't run forever (packet_sender_service.dart:11-14, 279-356). UDP: bind ephemeral → send one datagram → wait up to the timeout for a reply; no reply is a first-class non-error outcome (timedOut/isNoReply), not an exception, because UDP has no delivery guarantee (packet_sender_service.dart:16-19, 130-133, 399-472). Errors are typed: DNS failure, refused, unreachable, timeout, invalid input, other — each mapped to a precise message (packet_sender_service.dart:33-51, 358-397).",
       "example": null,
       "fieldNotes": [
         "Platform differences: identical on every native platform. Gated off on web. (packet_sender_service.dart:21-22)",
@@ -1901,10 +1901,10 @@
       ],
       "inputs": [],
       "algorithm": null,
-      "example": "Before Installing Access Point: Cable meets/exceeds Cat5e specs \u00b7 Total cable distance with patch cords < 100 m \u00b7 PoE meets the AP's specific requirements \u00b7 Check 802.3 af, at, or bt \u00b7 Confirm DHCP address & VLAN \u00b7 Confirm correct VLAN assignment \u00b7 Confirm access or trunk port as required \u00b7 Confirm default gateway \u00b7 Ping default gateway \u00b7 Confirm target IP addresses reachable \u00b7 Confirm DNS reachable \u00b7 Confirm target DNS addresses reachable \u00b7 Management VLAN assigned & available. Install Access Point: Install access point (kept as its own one-item phase). After Installing Access Point: Document AP's MAC & assigned name \u00b7 Document AP's location \u00b7 Document AP's switch / port used \u00b7 Document AP's IP address \u00b7 Confirm AP installed in proper orientation \u00b7 Confirm external antennas installed correctly \u00b7 Wait for access point to receive configuration \u00b7 Wait for a 2nd reboot of the AP if needed \u00b7 Listen in air for all SSIDs being broadcast \u00b7 Connect client to each SSID \u00b7 Check each SSID for proper VLAN & IP pool.",
+      "example": "Before Installing Access Point: Cable meets/exceeds Cat5e specs · Total cable distance with patch cords < 100 m · PoE meets the AP's specific requirements · Check 802.3 af, at, or bt · Confirm DHCP address & VLAN · Confirm correct VLAN assignment · Confirm access or trunk port as required · Confirm default gateway · Ping default gateway · Confirm target IP addresses reachable · Confirm DNS reachable · Confirm target DNS addresses reachable · Management VLAN assigned & available. Install Access Point: Install access point (kept as its own one-item phase). After Installing Access Point: Document AP's MAC & assigned name · Document AP's location · Document AP's switch / port used · Document AP's IP address · Confirm AP installed in proper orientation · Confirm external antennas installed correctly · Wait for access point to receive configuration · Wait for a 2nd reboot of the AP if needed · Listen in air for all SSIDs being broadcast · Connect client to each SSID · Check each SSID for proper VLAN & IP pool.",
       "fieldNotes": [
         "Checked state is not persisted; it resets when you leave the screen. The tool wires the install card's content into the shared checklist screen via kApInstallChecklist.",
-        "Source / basis: Keith Parsons / WLAN Pros original card (\u00a9 2024 WLAN Pros), transcribed by Pax (pax-research-7-additions.md) with obvious typos fixed. Per a Keith decision (2026-05-30), the \"After Installing\" list is renumbered to a clean 1-12 (the original card was gap-numbered with no item 2); ChecklistScreen numbers by render order."
+        "Source / basis: Keith Parsons / WLAN Pros original card (© 2024 WLAN Pros), transcribed by Pax (pax-research-7-additions.md) with obvious typos fixed. Per a Keith decision (2026-05-30), the \"After Installing\" list is renumbered to a clean 1-12 (the original card was gap-numbered with no item 2); ChecklistScreen numbers by render order."
       ],
       "source": "lib/data/checklists.dart (content) / lib/screens/tools/checklists/checklist_screen.dart (screen type)"
     },
@@ -1918,10 +1918,10 @@
       ],
       "inputs": [],
       "algorithm": null,
-      "example": "Items in order: Can see all SSIDs being broadcast \u00b7 Associate to target SSID \u00b7 Complete SSID authentication \u00b7 Receive an IP address via DHCP \u00b7 Receive default gateway & DNS \u00b7 Ping default gateway \u00b7 Ping DNS \u00b7 Ping remote IP address \u00b7 Ping remote DNS address \u00b7 Check client MCS \u00b7 Check client Tx data rate \u00b7 Complete network speed test.",
+      "example": "Items in order: Can see all SSIDs being broadcast · Associate to target SSID · Complete SSID authentication · Receive an IP address via DHCP · Receive default gateway & DNS · Ping default gateway · Ping DNS · Ping remote IP address · Ping remote DNS address · Check client MCS · Check client Tx data rate · Complete network speed test.",
       "fieldNotes": [
         "Per-session only (not saved). Wired into the shared screen via kClientTestChecklist.",
-        "Source / basis: Keith Parsons / WLAN Pros original card (\u00a9 2024 WLAN Pros), transcribed by Pax (pax-research-7-additions.md)."
+        "Source / basis: Keith Parsons / WLAN Pros original card (© 2024 WLAN Pros), transcribed by Pax (pax-research-7-additions.md)."
       ],
       "source": "lib/data/checklists.dart (content) / lib/screens/tools/checklists/checklist_screen.dart (screen type)"
     },
@@ -2119,7 +2119,7 @@
         "Type a value in any of the three fields (dBm, Watts, or Milliwatts); the other two recompute instantly.",
         "dBm and Watts accept scientific notation (e.g. 1e-10) plus a sign; Milliwatts is unsigned decimal.",
         "Watts renders in scientific notation (5 sig figs) because real Wi-Fi receive levels are tiny (e.g. 1e-10 W); mW shows 4 fixed decimals.",
-        "Entering Watts or mW that are zero or negative shows \"\u2014\" in the dBm field, since log10 of a non-positive number is undefined."
+        "Entering Watts or mW that are zero or negative shows \"—\" in the dBm field, since log10 of a non-positive number is undefined."
       ],
       "inputs": [
         {
@@ -2130,16 +2130,16 @@
         {
           "name": "Watts",
           "unit": "W",
-          "range": "> 0 to convert to dBm; \u2264 0 yields \u2014; signed + scientific notation accepted"
+          "range": "> 0 to convert to dBm; ≤ 0 yields —; signed + scientific notation accepted"
         },
         {
           "name": "Milliwatts",
           "unit": "mW",
-          "range": "> 0 to convert to dBm; \u2264 0 yields \u2014; unsigned decimal"
+          "range": "> 0 to convert to dBm; ≤ 0 yields —; unsigned decimal"
         }
       ],
-      "algorithm": "Three pure functions (dbm_watt_converter.dart:72-74): dBm\u2192W = 10^(dBm/10) / 1000; dBm\u2192mW = 10^(dBm/10); W\u2192dBm = 10 \u00b7 log10(W \u00b7 1000). mW\u2192dBm reuses W\u2192dBm via mW/1000 (:120). The 1000 factor is the W\u2194mW conversion (1 W = 1000 mW); the in-app formula card states dBm = 10 \u00b7 log10(mW) and W = 10^(dBm/10) / 1000 (:287-292). Watts formatted as toStringAsExponential(4) = 5 sig figs (:136-140); mW and dBm as toStringAsFixed (mW 4 decimals, dBm 2 decimals) (:104-105, 142-145). Non-positive W or mW \u2192 \"\u2014\" in dBm because log10 is undefined (:95-99, :111-115). Matches the rf-tools-pwa app.js convertDbmToW / convertWToDbm / convertMwToDbm.",
-      "example": "0 dBm \u2192 10^(0/10) = 1 mW = 1e-3 W. +30 dBm \u2192 10^(30/10) = 1000 mW = 1 W. 20 mW \u2192 10 \u00b7 log10(20) = 13.01 dBm.",
+      "algorithm": "Three pure functions (dbm_watt_converter.dart:72-74): dBm→W = 10^(dBm/10) / 1000; dBm→mW = 10^(dBm/10); W→dBm = 10 · log10(W · 1000). mW→dBm reuses W→dBm via mW/1000 (:120). The 1000 factor is the W↔mW conversion (1 W = 1000 mW); the in-app formula card states dBm = 10 · log10(mW) and W = 10^(dBm/10) / 1000 (:287-292). Watts formatted as toStringAsExponential(4) = 5 sig figs (:136-140); mW and dBm as toStringAsFixed (mW 4 decimals, dBm 2 decimals) (:104-105, 142-145). Non-positive W or mW → \"—\" in dBm because log10 is undefined (:95-99, :111-115). Matches the rf-tools-pwa app.js convertDbmToW / convertWToDbm / convertMwToDbm.",
+      "example": "0 dBm → 10^(0/10) = 1 mW = 1e-3 W. +30 dBm → 10^(30/10) = 1000 mW = 1 W. 20 mW → 10 · log10(20) = 13.01 dBm.",
       "fieldNotes": [
         "0 dBm is exactly 1 mW by definition, the reference point of the scale.",
         "The on-screen reference card anchors common values: +30 dBm = 1000 mW (1 W, FCC 2.4 GHz max conducted), +13 dBm = 20 mW (common default AP Tx power), 0 dBm = 1 mW, -67 dBm = 0.2 nW (minimum for enterprise data), -80 dBm = 10 pW (typical ambient noise floor).",
@@ -2152,7 +2152,7 @@
       "name": "IP Subnetting (IPv4)",
       "category": "Networking Tools",
       "purpose": "Computes the full IPv4 subnet breakdown (network, broadcast, netmask, wildcard, first/last usable host, total addresses, and usable host count) from an address plus a CIDR prefix or a dotted mask.",
-      "whyHere": "CIDR math you'd otherwise do on paper or in your head at a whiteboard. Reach for it to confirm a network/broadcast boundary, a usable-host range, or a mask\u2194prefix conversion.",
+      "whyHere": "CIDR math you'd otherwise do on paper or in your head at a whiteboard. Reach for it to confirm a network/broadcast boundary, a usable-host range, or a mask↔prefix conversion.",
       "howToUse": [
         "Enter an IPv4 address (e.g. 10.20.0.0). You can append the prefix inline as 10.20.0.0/22; an inline /prefix wins and the second field is ignored.",
         "Otherwise enter the prefix or mask in the second field: a CIDR prefix (22 or /22) or a dotted mask (255.255.252.0).",
@@ -2172,8 +2172,8 @@
           "range": "prefix 0-32, or a contiguous-ones dotted mask (e.g. 255.255.252.0); ignored when the address carries an inline /prefix"
         }
       ],
-      "algorithm": "Pure-Dart 32-bit integer math on the masked network base (subnet_calc_service.dart:93-177). mask = (0xFFFFFFFF << (32 \u2212 prefix)) & 0xFFFFFFFF (:242-246); network = addr & mask (:134); broadcast = network | (~mask & 0xFFFFFFFF) (:135); wildcard = ~mask & 0xFFFFFFFF (:136); total = 2^(32 \u2212 prefix), with /0 = 2^32 (:137-139). Usable hosts by prefix: /0\u2013/30 \u2192 total \u2212 2 with first = network+1, last = broadcast\u22121 (:157-162); /31 \u2192 RFC 3021 point-to-point, usable = 2, no broadcast, both addresses are hosts (:151-156); /32 \u2192 single host route, usable = 1, first = last = the address, no broadcast (:146-150). A dotted mask is converted to a prefix only if it's a contiguous run of 1 bits (prefixFromMask, :218-237). Address parsing is strict: exactly four octets, each 0\u2013255 (:199-211).",
-      "example": "10.20.0.0/22 \u2192 netmask 255.255.252.0, wildcard 0.0.3.255, network 10.20.0.0, broadcast 10.20.3.255, first host 10.20.0.1, last host 10.20.3.254, total 1024, usable 1022. (This is the screen's seeded default.)",
+      "algorithm": "Pure-Dart 32-bit integer math on the masked network base (subnet_calc_service.dart:93-177). mask = (0xFFFFFFFF << (32 − prefix)) & 0xFFFFFFFF (:242-246); network = addr & mask (:134); broadcast = network | (~mask & 0xFFFFFFFF) (:135); wildcard = ~mask & 0xFFFFFFFF (:136); total = 2^(32 − prefix), with /0 = 2^32 (:137-139). Usable hosts by prefix: /0–/30 → total − 2 with first = network+1, last = broadcast−1 (:157-162); /31 → RFC 3021 point-to-point, usable = 2, no broadcast, both addresses are hosts (:151-156); /32 → single host route, usable = 1, first = last = the address, no broadcast (:146-150). A dotted mask is converted to a prefix only if it's a contiguous run of 1 bits (prefixFromMask, :218-237). Address parsing is strict: exactly four octets, each 0–255 (:199-211).",
+      "example": "10.20.0.0/22 → netmask 255.255.252.0, wildcard 0.0.3.255, network 10.20.0.0, broadcast 10.20.3.255, first host 10.20.0.1, last host 10.20.3.254, total 1024, usable 1022. (This is the screen's seeded default.)",
       "fieldNotes": [
         "/31 (RFC 3021) is a point-to-point link: there is no network/broadcast reservation, so both addresses are usable hosts (usable = 2). The screen annotates this.",
         "/32 is a single-host route: one address, no range, no broadcast (usable = 1).",
@@ -2228,8 +2228,8 @@
           "range": "signed and scientific input accepted (a temperature can be negative)"
         }
       ],
-      "algorithm": "Linear categories convert through a single base unit: value \u00d7 factor(from) \u00f7 factor(to). Power and temperature are not linear and route through their own helpers. Power treats dBm with the same log math as the dBm/Watt converter (W = 10^(dBm/10)/1000; dBm = 10\u00b7log10(W\u00b71000)); temperature is affine through Kelvin. (unit_conversion.dart)",
-      "example": "100 MB \u2192 800 Mbit (storage, decimal). 100 \u00b0C \u2192 212 \u00b0F (temperature). 1 W \u2192 30 dBm (power).",
+      "algorithm": "Linear categories convert through a single base unit: value × factor(from) ÷ factor(to). Power and temperature are not linear and route through their own helpers. Power treats dBm with the same log math as the dBm/Watt converter (W = 10^(dBm/10)/1000; dBm = 10·log10(W·1000)); temperature is affine through Kelvin. (unit_conversion.dart)",
+      "example": "100 MB → 800 Mbit (storage, decimal). 100 °C → 212 °F (temperature). 1 W → 30 dBm (power).",
       "fieldNotes": [
         "Decimal and binary are kept separate. A KB is 1000 bytes; a KiB is 1024 bytes. The tool never conflates the two, so a storage answer reads true to the standard you picked.",
         "Bits and bytes are different units, not a display toggle. 1 byte = 8 bits, and the converter treats them that way across both the storage and the rate categories.",
@@ -2267,7 +2267,7 @@
     "dtmf-generator": {
       "name": "DTMF Generator",
       "category": "Calculators & Tools",
-      "purpose": "Plays the Touch-Tone keypad tones (0-9, *, #, and A-D) from a standard 4\u00d74 DTMF grid, one tap at a time or as a continuous loop.",
+      "purpose": "Plays the Touch-Tone keypad tones (0-9, *, #, and A-D) from a standard 4×4 DTMF grid, one tap at a time or as a continuous loop.",
       "whyHere": "Driving a system that still listens for Touch-Tones over the air or down a line: an IVR menu, a repeater controller, a legacy PBX, or a piece of test gear. Hold the device near the microphone and play the digit.",
       "howToUse": [
         "Tap a key to play its tone for a short burst. The selected key and its two frequencies show at the top.",
@@ -2285,7 +2285,7 @@
       "example": "Key 5 is 770 Hz + 1336 Hz. Key 1 is 697 Hz + 1209 Hz. The * key is 941 Hz + 1209 Hz.",
       "fieldNotes": [
         "Every key is two tones added together, which is what \"Dual-Tone Multi-Frequency\" means. That is why the readout shows two frequencies, not one.",
-        "The A, B, C, and D keys are real DTMF tones that never appeared on consumer phones. They show up in radio, military, and control systems, which is why the full 4\u00d74 grid is here.",
+        "The A, B, C, and D keys are real DTMF tones that never appeared on consumer phones. They show up in radio, military, and control systems, which is why the full 4×4 grid is here.",
         "Tones come out of the device speaker. The app generates audio; it does not place a call or send anything down a phone line. To control remote gear, play the tone into that system's microphone or audio input.",
         "Reliable detection depends on volume, the speaker, and the receiving system. Hold the device close and keep the level up if a stubborn IVR or controller misses a digit."
       ],
@@ -2294,22 +2294,22 @@
     "optical-transceivers": {
       "name": "Optical Transceivers",
       "category": "Quick Reference",
-      "purpose": "Searchable, offline reference of 35 optical Ethernet transceiver variants (1G to 400G) grouped by speed tier, plus the 9-row SFP-to-OSFP form-factor ladder. Each variant lists its designation, data rate, reach, fiber type, wavelength, and connector \u2014 with reach as the lead, trust-first column.",
+      "purpose": "Searchable, offline reference of 35 optical Ethernet transceiver variants (1G to 400G) grouped by speed tier, plus the 9-row SFP-to-OSFP form-factor ladder. Each variant lists its designation, data rate, reach, fiber type, wavelength, and connector — with reach as the lead, trust-first column.",
       "whyHere": "Picking an optic, the field's first question is \"which module, and how far will it go on this fiber?\" This answers it without leaving the app or going online, and keeps the IEEE-vs-vendor line visible so you never quote a vendor reach as a standard guarantee.",
       "howToUse": [
         "Browse by speed tier. The commonly-ordered tiers (10G / 25G / 100G) surface first and are flagged \"Commonly ordered\"; 1G / 40G / 200G / 400G follow.",
         "Search by designation (e.g. LR4), reach, fiber (SMF / MMF / OM4), wavelength (e.g. 850 nm), connector (LC / MPO), or tier (e.g. 100G). The match is a case-insensitive substring across all of those, and it narrows the tiers in place.",
-        "Read the REACH line first \u2014 it is the IEEE maximum on the listed fiber. The fiber chip (MMF / SMF) and connector chip (LC / MPO) give the physical-layer specifics at a glance.",
+        "Read the REACH line first — it is the IEEE maximum on the listed fiber. The fiber chip (MMF / SMF) and connector chip (LC / MPO) give the physical-layer specifics at a glance.",
         "A query that matches nothing shows an honest \"No match\" card; it never fabricates a module. The form-factor table is always available below the variants."
       ],
       "inputs": [],
       "algorithm": null,
       "example": null,
       "fieldNotes": [
-        "IEEE vs VENDOR: variants ratified in IEEE 802.3 carry a neutral IEEE chip. Vendor / coherent variants (1000BASE-EX, 1000BASE-ZX, 10GBASE-ZR, and 400GBASE-ZR) carry an amber VENDOR chip and a \"loss-budget dependent\" caveat. Their reach is real and widely sold but NOT an IEEE guarantee \u2014 it depends on the link's loss budget. Never quote a vendor reach as a standard figure.",
-        "400GBASE-ZR is coherent DWDM (OIF 400ZR), beyond base IEEE 802.3 \u2014 a metro / data-center-interconnect optic, not a base Ethernet PHY. Its 80-120 km reach is loss-budget and DWDM-line-system dependent.",
+        "IEEE vs VENDOR: variants ratified in IEEE 802.3 carry a neutral IEEE chip. Vendor / coherent variants (1000BASE-EX, 1000BASE-ZX, 10GBASE-ZR, and 400GBASE-ZR) carry an amber VENDOR chip and a \"loss-budget dependent\" caveat. Their reach is real and widely sold but NOT an IEEE guarantee — it depends on the link's loss budget. Never quote a vendor reach as a standard figure.",
+        "400GBASE-ZR is coherent DWDM (OIF 400ZR), beyond base IEEE 802.3 — a metro / data-center-interconnect optic, not a base Ethernet PHY. Its 80-120 km reach is loss-budget and DWDM-line-system dependent.",
         "Reach figures are IEEE-standard maximums on the listed fiber; real vendor modules may differ. Multimode reach is grade-dependent (OM3 vs OM4 vs OM5), so those rows give per-grade numbers rather than one figure.",
-        "What it contains: 35 verified variants spanning 1G to 400G across SFP, SFP+, SFP28, QSFP+, QSFP28, QSFP56, and QSFP-DD / OSFP, plus a 9-row form-factor ladder (max rate, lane count, typical power envelope). Power figures are typical vendor ranges, not a single standard \u2014 treat as guidance.",
+        "What it contains: 35 verified variants spanning 1G to 400G across SFP, SFP+, SFP28, QSFP+, QSFP28, QSFP56, and QSFP-DD / OSFP, plus a 9-row form-factor ladder (max rate, lane count, typical power envelope). Power figures are typical vendor ranges, not a single standard — treat as guidance.",
         "Fully offline: the table is a bundled asset (assets/data/optical_transceivers.json) parsed once at screen open; malformed rows are skipped, not rendered as blanks. To add or correct an entry, edit that file.",
         "Verified against IEEE 802.3 standards tables (via Wikipedia's clause-mirroring pages) and Cisco / FS.com vendor datasheets (Pax verification brief, 2026-06-05). Out-of-scope bleeding edge (800G / 1.6T, CPO / LPO, SFP-DD) was deliberately excluded as not yet stable or field-relevant."
       ],
@@ -2318,21 +2318,21 @@
     "wifi-exposure-perspective": {
       "name": "How Strong Is Wi-Fi, Really?",
       "category": "Quick Reference",
-      "purpose": "A vendor-neutral comparison of how much energy Wi-Fi puts into your body versus the everyday sun, using verified, stated numbers. No inputs and no runtime math \u2014 it is a read-along reference.",
-      "whyHere": "Wi-Fi exposure questions come up constantly. This puts the energy in perspective against a thing everyone already lives with: sunlight, using verified numbers instead of hand-waving. Using stated assumptions (ten access points at 30 dBm / 1 watt EIRP, four meters away, free-space spread), the ring of APs delivers about 0.05 W/m\u00b2. The midday sun delivers about 1,000 W/m\u00b2, full spectrum, which makes it about 20,000 times stronger per square meter.",
+      "purpose": "A vendor-neutral comparison of how much energy Wi-Fi puts into your body versus the everyday sun, using verified, stated numbers. No inputs and no runtime math — it is a read-along reference.",
+      "whyHere": "Wi-Fi exposure questions come up constantly. This puts the energy in perspective against a thing everyone already lives with: sunlight, using verified numbers instead of hand-waving. Using stated assumptions (ten access points at 30 dBm / 1 watt EIRP, four meters away, free-space spread), the ring of APs delivers about 0.05 W/m². The midday sun delivers about 1,000 W/m², full spectrum, which makes it about 20,000 times stronger per square meter.",
       "howToUse": [
         "Read the short version first: one hour of midday sun puts about as much energy into your body as roughly 2.3 years sitting inside a ring of ten Wi-Fi access points 4 meters (13 feet) away.",
-        "The energy-parity table shows the same idea as time \u2014 10 seconds of sun \u2248 2.3 days in the ring, 1 minute \u2248 two weeks, 1 hour \u2248 2.3 years.",
-        "The assumptions card states every input behind the numbers, so nothing is hidden: 10 APs at 1 W EIRP, 4 m free-space spread, the sun at 1,000 W/m\u00b2 full spectrum.",
-        "The safety-limit card states where this sits against the FCC (47 CFR 1.1310) and ICNIRP 2020 public limit of 10 W/m\u00b2 \u2014 the ring is about 200 times below it."
+        "The energy-parity table shows the same idea as time — 10 seconds of sun ≈ 2.3 days in the ring, 1 minute ≈ two weeks, 1 hour ≈ 2.3 years.",
+        "The assumptions card states every input behind the numbers, so nothing is hidden: 10 APs at 1 W EIRP, 4 m free-space spread, the sun at 1,000 W/m² full spectrum.",
+        "The safety-limit card states where this sits against the FCC (47 CFR 1.1310) and ICNIRP 2020 public limit of 10 W/m² — the ring is about 200 times below it."
       ],
       "inputs": [],
-      "algorithm": "S = EIRP / (4\u03c0r\u00b2), free space at 4 m, stated as approximate.",
-      "example": "At 30 dBm (1 W) EIRP and 4 m, each AP is 0.00497 W/m\u00b2; ten of them \u2248 0.05 W/m\u00b2. The sun at 1,000 W/m\u00b2 is \u2248 20,000\u00d7 stronger, so 1 hour of sun \u2248 2.3 years in the ring.",
+      "algorithm": "S = EIRP / (4πr²), free space at 4 m, stated as approximate.",
+      "example": "At 30 dBm (1 W) EIRP and 4 m, each AP is 0.00497 W/m²; ten of them ≈ 0.05 W/m². The sun at 1,000 W/m² is ≈ 20,000× stronger, so 1 hour of sun ≈ 2.3 years in the ring.",
       "fieldNotes": [
-        "Honest note on mechanism: Wi-Fi radio energy is non-ionizing. It can only gently warm tissue. It cannot cause the photochemical or DNA damage that sunburn does, at any Wi-Fi power level. This is a comparison of total energy and warmth, never of sunburn \u2014 the UV in sunlight burns; Wi-Fi has no UV and no comparable mechanism.",
-        "The basis is 30 dBm (1 W) EIRP per AP (the US 2.4 GHz maximum) at 4 meters (13 feet). 4 m is realistic for how far a person sits from the access points around them; free-space density falls with r\u00b2, so the figures are conservative for the point.",
-        "Where it sits against the limit: the FCC and ICNIRP cap public RF exposure at 10 W/m\u00b2. The 10-AP ring at about 0.05 W/m\u00b2 is roughly 200\u00d7 below that limit, and measured real-world Wi-Fi runs far lower still.",
+        "Honest note on mechanism: Wi-Fi radio energy is non-ionizing. It can only gently warm tissue. It cannot cause the photochemical or DNA damage that sunburn does, at any Wi-Fi power level. This is a comparison of total energy and warmth, never of sunburn — the UV in sunlight burns; Wi-Fi has no UV and no comparable mechanism.",
+        "The basis is 30 dBm (1 W) EIRP per AP (the US 2.4 GHz maximum) at 4 meters (13 feet). 4 m is realistic for how far a person sits from the access points around them; free-space density falls with r², so the figures are conservative for the point.",
+        "Where it sits against the limit: the FCC and ICNIRP cap public RF exposure at 10 W/m². The 10-AP ring at about 0.05 W/m² is roughly 200× below that limit, and measured real-world Wi-Fi runs far lower still.",
         "Every figure is stated as approximate and traces to a verified brief: FCC 47 CFR 1.1310 and OET-65; ICNIRP 2020 RF guidelines; ASTM G173 / NREL reference solar spectrum; WHO and IARC on non-ionizing RF (Group 2B) versus solar UV (Group 1); peer-reviewed Wi-Fi exposure surveys (PMC5927334, PMC8172712)."
       ],
       "source": "lib/screens/tools/reference/wifi_exposure_perspective_screen.dart"
@@ -2444,7 +2444,7 @@
         "Use the 208V-vs-240V table to settle the confusion: same 120V hot-to-neutral, different hot-to-hot, different source topology."
       ],
       "inputs": [],
-      "algorithm": "Line-to-line voltage = square root of 3 x line-to-neutral voltage for a wye system: 120 x 1.732 \u2248 208V. Split-phase line-to-line = 2 x line-to-neutral in anti-phase: 2 x 120 = 240V.",
+      "algorithm": "Line-to-line voltage = square root of 3 x line-to-neutral voltage for a wye system: 120 x 1.732 ≈ 208V. Split-phase line-to-line = 2 x line-to-neutral in anti-phase: 2 x 120 = 240V.",
       "example": "A 240V single-phase heater fed from a 208V wye panel sees about 13 percent lower voltage and runs at reduced output, because two legs of a 208V wye are 120 degrees apart (208V), not 180 degrees apart (240V).",
       "fieldNotes": [
         "What it shows: three topology cards (single-phase 120V, split-phase 120/240V, three-phase wye 208V) with hots, L-N, L-L, phase angle, where it's seen, and a clarifying note; plus a 208V-vs-240V comparison table and a why-it-matters note.",
@@ -2564,7 +2564,7 @@
     "ip-address-reference": {
       "name": "IP Address Reference",
       "category": "Quick Reference",
-      "purpose": "IANA/IETF special-use address blocks for IPv4 and IPv6 \u2014 CIDR prefix, what each block is reserved for, and the defining RFC \u2014 plus the IPv6 text-notation rules.",
+      "purpose": "IANA/IETF special-use address blocks for IPv4 and IPv6 — CIDR prefix, what each block is reserved for, and the defining RFC — plus the IPv6 text-notation rules.",
       "whyHere": "When you see an unexpected address on a link, this tells you fast whether it is private, loopback, link-local, documentation, or multicast, and which RFC governs it.",
       "howToUse": [
         "Scroll the IPv4 and IPv6 special-use tables. Read by CIDR prefix.",
@@ -2575,7 +2575,7 @@
       "example": null,
       "fieldNotes": [
         "What it shows: the IANA IPv4 and IPv6 Special-Purpose Address Registries (private-use, loopback, link-local, documentation, and more), each row carrying its defining RFC.",
-        "The multicast blocks 224.0.0.0/4 (IPv4) and ff00::/8 (IPv6) are not in the special-purpose registries \u2014 they live in the separate IANA multicast registries and are sourced to RFC 5771 / RFC 1112 and RFC 4291 section 2.7, flagged with a footnote.",
+        "The multicast blocks 224.0.0.0/4 (IPv4) and ff00::/8 (IPv6) are not in the special-purpose registries — they live in the separate IANA multicast registries and are sourced to RFC 5771 / RFC 1112 and RFC 4291 section 2.7, flagged with a footnote.",
         "Data source / standard: IANA IPv4/IPv6 Special-Purpose Address Registries (fetched 2026-06-08) cross-checked against each defining RFC; IPv6 notation per RFC 5952. Offline, read-only."
       ],
       "source": "lib/screens/tools/reference/ip_address_reference_screen.dart"
@@ -2613,7 +2613,7 @@
       "example": null,
       "fieldNotes": [
         "What it shows: hostname/FQDN rules (RFC 952, RFC 1123 section 2.1, RFC 1035), MAC EUI-48/EUI-64 format, the U/L and I/G bit positions in the first octet, and OUI/CID assignment.",
-        "The first-octet bit-field diagram is decorative for screen readers \u2014 every fact it depicts (U/L and I/G positions and meanings) is also in the bit table (GL-003 section 8.6.2).",
+        "The first-octet bit-field diagram is decorative for screen readers — every fact it depicts (U/L and I/G positions and meanings) is also in the bit table (GL-003 section 8.6.2).",
         "Data source / standard: IEEE Std 802-2014 with RFC 5342 section 2.1 as the freely available IETF restatement, RFC 4291 Appendix A (Modified EUI-64). The IEEE Registration Authority is the sole assigner of OUI/CID. Offline, read-only."
       ],
       "source": "lib/screens/tools/reference/naming_conventions_screen.dart"
@@ -2639,7 +2639,7 @@
     "dhcp-options": {
       "name": "DHCP Options",
       "category": "Quick Reference",
-      "purpose": "The DHCPv4 option codes a network or Wi-Fi pro meets, led by Option 138 (CAPWAP-AC) \u2014 how a lightweight AP learns its WLAN controller address from DHCP \u2014 plus the Option 53 message-type table.",
+      "purpose": "The DHCPv4 option codes a network or Wi-Fi pro meets, led by Option 138 (CAPWAP-AC) — how a lightweight AP learns its WLAN controller address from DHCP — plus the Option 53 message-type table.",
       "whyHere": "Reading a DHCP capture or a scope config: this names the option code and what value it carries, with the controller-discovery option called out first.",
       "howToUse": [
         "Read the option-code table (Option 138 first, then standard options in code order) for code, name, and purpose.",
@@ -2678,7 +2678,7 @@
       "name": "DSCP / QoS Markings",
       "category": "Quick Reference",
       "purpose": "The Wi-Fi-to-wired QoS mapping: the four WMM Access Categories, the 802.11 User Priority values they carry, and the DSCP markings RFC 8325 recommends so wired and wireless agree.",
-      "whyHere": "QoS only works end to end when the wired DSCP markings and the Wi-Fi access categories line up \u2014 this is that mapping, with the default-mapping trap flagged.",
+      "whyHere": "QoS only works end to end when the wired DSCP markings and the Wi-Fi access categories line up — this is that mapping, with the default-mapping trap flagged.",
       "howToUse": [
         "Read the mapping table for each WMM Access Category, its User Priority values, and the recommended DSCP marking.",
         "Read the warning callout beneath the table: the common default mapping demotes voice (EF/DSCP 46) into the video queue."
@@ -2745,7 +2745,7 @@
       "example": null,
       "fieldNotes": [
         "What it shows: region-level (not per-country) FCC and ETSI rules for the Wi-Fi bands plus the ITU three-region note. Structural rules (band edges, DFS/TPC, power-class availability) are high confidence; the exact dBm figures are a snapshot.",
-        "Regulatory-volatility caveat: the 6 GHz dBm values are being amended (VLP extended band-wide, new geofenced classes). Never a settled constant \u2014 verify before deploying or certifying.",
+        "Regulatory-volatility caveat: the 6 GHz dBm values are being amended (VLP extended band-wide, new geofenced classes). Never a settled constant — verify before deploying or certifying.",
         "Data source / standard: cross-checked across FCC/ETSI documents and vendor regulatory white papers, as of 2026. Offline, read-only."
       ],
       "source": "lib/screens/tools/reference/regulatory_domains_screen.dart"
@@ -2764,7 +2764,7 @@
       "example": null,
       "fieldNotes": [
         "What it shows: ISO 8601 and RFC 3339 formats and the difference between them, UTC-offset notation, the Unix epoch and 2038 wraparound, the UTC-vs-TAI leap-second relationship, and NTP stratum levels (1-15 valid; stratum 0 is the kiss-o'-death / unspecified marker).",
-        "Honesty note: the UTC-TAI offset of -37 s is a static educational value current as of the 2017-01-01 leap second, shown with a 'static value' badge and a footnote pointing at the IERS Bulletin C \u2014 never presented as a live truth.",
+        "Honesty note: the UTC-TAI offset of -37 s is a static educational value current as of the 2017-01-01 leap second, shown with a 'static value' badge and a footnote pointing at the IERS Bulletin C — never presented as a live truth.",
         "Data source / standard: ISO 8601-1:2019, RFC 3339, RFC 5905 (NTP), POSIX.1-2017, BIPM/IERS. Offline, read-only."
       ],
       "source": "lib/screens/tools/reference/datetime_standards_screen.dart"
@@ -2772,8 +2772,8 @@
     "data-units": {
       "name": "Data Units",
       "category": "Quick Reference",
-      "purpose": "Bit vs byte units, the SI (decimal) vs IEC (binary) prefix ladders \u2014 kB vs KiB through EB vs EiB \u2014 and how link rates in bits relate to storage in bytes.",
-      "whyHere": "The reason a '1 TB' drive shows as ~931 GiB, and the reason a 100 Mbps link is not 100 MB/s \u2014 kept in one place.",
+      "purpose": "Bit vs byte units, the SI (decimal) vs IEC (binary) prefix ladders — kB vs KiB through EB vs EiB — and how link rates in bits relate to storage in bytes.",
+      "whyHere": "The reason a '1 TB' drive shows as ~931 GiB, and the reason a 100 Mbps link is not 100 MB/s — kept in one place.",
       "howToUse": [
         "Read the SI vs IEC ladder for each rank (kB/KiB through EB/EiB), its powers, byte counts, and the percent divergence.",
         "Use the bit-vs-byte card and the divide-by-8 rule to convert a bit-rate to byte throughput."
@@ -2783,7 +2783,7 @@
       "example": null,
       "fieldNotes": [
         "What it shows: the two parallel prefix ladders (SI base-1000 vs IEC base-1024), the per-step divergence (compounding ~2.4 points per rank), and the bit-vs-byte relationship.",
-        "Note: SI uses lowercase k for kilo (kB) but uppercase for M and above; IEC binary prefixes are Ki, Mi, Gi, Ti, Pi, Ei \u2014 Ki is a capital K, unlike SI's lowercase k. Network/link speeds are quoted in bits per second; storage in bytes.",
+        "Note: SI uses lowercase k for kilo (kB) but uppercase for M and above; IEC binary prefixes are Ki, Mi, Gi, Ti, Pi, Ei — Ki is a capital K, unlike SI's lowercase k. Network/link speeds are quoted in bits per second; storage in bytes.",
         "Data source / standard: BIPM SI prefixes and IEC 80000-13 binary prefixes. Offline, read-only."
       ],
       "source": "lib/screens/tools/reference/data_units_screen.dart"
@@ -2809,7 +2809,7 @@
     "regex-cheatsheet": {
       "name": "Regex Cheatsheet",
       "category": "Quick Reference",
-      "purpose": "Regular-expression syntax \u2014 anchors, character classes, quantifiers, groups and references, and alternation / escapes \u2014 scoped to the common PCRE2 (Perl-compatible) dialect.",
+      "purpose": "Regular-expression syntax — anchors, character classes, quantifiers, groups and references, and alternation / escapes — scoped to the common PCRE2 (Perl-compatible) dialect.",
       "whyHere": "The token you half-remember, looked up fast, with a flag where a dialect would behave differently.",
       "howToUse": [
         "Scroll the syntax tables by section: anchors, character classes, quantifiers, groups/references, and alternation/escapes.",
@@ -2820,7 +2820,7 @@
       "example": null,
       "fieldNotes": [
         "What it shows: the common PCRE2 regex token set with meaning and examples, grouped by function. A 'Dialect: PCRE2 (Perl-compatible)' banner sits at the top.",
-        "Honesty note: there is no single normative regex authority \u2014 POSIX (BRE/ERE), PCRE2, ECMAScript, Python, Java, Go (RE2), and .NET differ. No token is presented as universal unless the source data marks it so; non-universal tokens carry a DIALECT badge.",
+        "Honesty note: there is no single normative regex authority — POSIX (BRE/ERE), PCRE2, ECMAScript, Python, Java, Go (RE2), and .NET differ. No token is presented as universal unless the source data marks it so; non-universal tokens carry a DIALECT badge.",
         "Data source / standard: the common PCRE2 subset per the PCRE2 syntax reference. Offline, read-only."
       ],
       "source": "lib/screens/tools/reference/regex_cheatsheet_screen.dart"
@@ -2963,6 +2963,28 @@
         "Location permission and Wi-Fi must be on for the scan to return results; the screen shows an honest Wi-Fi-off or Location-gate card when either is missing."
       ],
       "source": "lib/screens/tools/network/ap_scan_screen.dart"
+    },
+    "emergency-phrases": {
+      "name": "Emergency Phrases",
+      "category": "Quick Reference",
+      "purpose": "A searchable, offline phrase translator for a Wi-Fi pro working on-site internationally: about 124 travel and emergency phrases in English with Spanish, French, Italian, and German, grouped into seven situations (basics and courtesy, medical and help, directions, food and lodging, problems and requests, on-site and technical, numbers and time).",
+      "whyHere": "When you land on a job in a country whose language you do not speak, a few of the right phrases get you to the server room, to a doctor, or out of trouble. This keeps them one tap away with no signal needed.",
+      "howToUse": [
+        "Pick how much to show: \"One language\" (English plus one target you choose) or \"All languages\" (English plus all four). One language is the default.",
+        "In one-language mode, choose the target from the language menu (Spanish, French, Italian, or German).",
+        "Search across all five languages at once — type a phrase in English or in any target and the list filters live.",
+        "Tap the copy icon on any phrase to copy just that phrase in the languages currently shown, or use Copy all phrases in the top bar to copy the whole visible list grouped by situation."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": "Pick German, search \"toilet\", and the row shows English \"Where is the toilet?\" with German \"Wo ist die Toilette?\". Tap copy to put both on the clipboard.",
+      "fieldNotes": [
+        "TRANSLATIONS ARE DRAFT. The Spanish, French, Italian, and German wording is draft machine translation generated for the beta and has NOT yet been reviewed by a native or professional translator. A persistent banner at the top of the screen says so, and the caveat is included when you copy the list. Verify any critical phrase locally before relying on it.",
+        "Standard, simple wording was used throughout; no idioms were invented. Phrases are intentionally plain so they travel across dialects.",
+        "Fully offline — the phrase set is bundled in the app, so it works with no signal and no data plan.",
+        "Phrases are grouped by situation in a deliberate, curated order, not alphabetized."
+      ],
+      "source": "emergency_phrases_screen.dart; assets/data/emergency_phrases.json (translation_status: draft-needs-review)"
     }
   }
 }

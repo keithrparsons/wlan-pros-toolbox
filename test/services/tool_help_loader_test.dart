@@ -121,7 +121,7 @@ void main() {
       store = ToolHelpStore.fromJson(raw);
     });
 
-    test('parses to exactly 115 entries', () {
+    test('parses to exactly 129 entries', () {
       // 97 = 95 (origin/main: 93 + Antenna Connectors + Optical Transceivers)
       // + 2 backfilled v1.1 help entries (PLMN ID Reference and the Wi-Fi
       // Authentication Glossary).
@@ -155,7 +155,10 @@ void main() {
       // (nearby-ap-scan, Android-only). The H1/H2/M1+M2 features augment
       // existing tools (my-current-location, wifi-info, network-discovery) and
       // add no new help ids. 126 + 2 = 128.
-      expect(store.count, 128);
+      // 129 = + Emergency Phrases (emergency-phrases) 2026-06-12: a searchable,
+      // grouped, offline travel/emergency phrase translator (EN + es/fr/it/de)
+      // in the new Travel & Field Quick Reference subgroup. 128 + 1 = 129.
+      expect(store.count, 129);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

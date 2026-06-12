@@ -1441,6 +1441,24 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Power & Cooling',
       ),
+      // Emergency Phrases — a searchable, grouped, offline phrase translator for
+      // a Wi-Fi pro working on-site internationally: ~124 travel/emergency
+      // phrases in English with Spanish, French, Italian, and German. Sits in a
+      // new Travel & Field subgroup (the on-site-international companion to
+      // International Power Plugs). Translations are DRAFT machine translations
+      // flagged in-data (translation_status: draft-needs-review) and surfaced to
+      // the user with a persistent banner pending native/professional review. No
+      // bespoke <id>.svg yet, so ToolRow shows the lime-bolt fallback.
+      ToolEntry(
+        id: 'emergency-phrases',
+        title: 'Emergency Phrases',
+        description:
+            'Travel and emergency phrases in English, Spanish, French, '
+            'Italian, and German — searchable and offline',
+        routeName: '/tools/emergency-phrases',
+        isLive: true,
+        subgroup: 'Travel & Field',
+      ),
     ],
   ),
 

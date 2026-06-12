@@ -38,6 +38,11 @@ const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
     // international connector references. Sits after Cabling & Connectors —
     // connectors lead into the power feeds they carry.
     'Power & Cooling',
+    // Travel & Field (2026-06-12): on-site-international field aids for a Wi-Fi
+    // pro travelling to a job. Sits right after Power & Cooling (which holds the
+    // International Power Plugs reference) since both answer "what do I need to
+    // know before I land on this site". First member: Emergency Phrases.
+    'Travel & Field',
     'Encoding',
     // Time & Formats (2026-06-08): date/time standards, data units.
     'Time & Formats',

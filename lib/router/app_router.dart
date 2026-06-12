@@ -67,6 +67,7 @@ import '../screens/tools/reference/fiber_optic_screen.dart';
 import '../screens/tools/reference/roaming_screen.dart';
 import '../screens/tools/reference/ap_placement_screen.dart';
 import '../screens/tools/reference/non_wifi_channels_screen.dart';
+import '../screens/tools/reference/emergency_phrases_screen.dart';
 import '../screens/tools/reference/wifi_glossary_screen.dart';
 import '../screens/tools/reference/plmn_reference_screen.dart';
 import '../screens/tools/reference/poe_reference_screen.dart';
@@ -373,6 +374,12 @@ class AppRouter {
   static const String asciiReference = '/tools/ascii-reference';
   static const String emojiReference = '/tools/emoji-reference';
 
+  /// Emergency Phrases — ~124 travel/emergency phrases in English with Spanish,
+  /// French, Italian, and German, grouped by situation and searchable (offline
+  /// bundled JSON). For a Wi-Fi pro working on-site internationally. The id
+  /// `emergency-phrases` is permanent (route, catalog, asset, help, tests).
+  static const String emergencyPhrases = '/tools/emergency-phrases';
+
   /// Wi-Fi Glossary — 92 plain-language Wi-Fi term definitions, grouped by
   /// category (offline bundled JSON). The id `wifi-glossary` is permanent
   /// (backs this route, the catalog entry, the asset, and tests).
@@ -591,6 +598,7 @@ class AppRouter {
     asciiReference: (_) => const AsciiReferenceScreen(),
     emojiReference: (_) => const EmojiReferenceScreen(),
     freeradiusWlanpi: (_) => const FreeradiusWlanpiScreen(),
+    emergencyPhrases: (_) => const EmergencyPhrasesScreen(),
     wifiGlossary: (_) => const WifiGlossaryScreen(),
     wifiAuthGlossary: (_) => const WifiGlossaryScreen(
           assetPath: kWifiAuthGlossaryAsset,
