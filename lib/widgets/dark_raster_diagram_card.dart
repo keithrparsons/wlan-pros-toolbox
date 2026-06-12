@@ -57,6 +57,7 @@ class DarkRasterDiagramCard extends StatelessWidget {
     required this.aspectRatio,
     required this.semanticLabel,
     this.caption,
+    this.zoomBadgeAlignment = Alignment.bottomRight,
   });
 
   /// Bundled asset path, e.g. `assets/tool-diagrams/modulation/<slug>.png`.
@@ -74,6 +75,14 @@ class DarkRasterDiagramCard extends StatelessWidget {
   /// Optional one-line teaching caption shown below the card on the live theme
   /// surface. Omitted (no gap) when null.
   final String? caption;
+
+  /// Corner the magnifier badge sits in. Defaults to bottom-right. Call sites
+  /// whose plate has baked caption text in the bottom-right corner (e.g. the
+  /// Diffie-Hellman eavesdropper note, the Phonetic-Alphabet flag legend) pass a
+  /// clear corner so the badge never sits over information-bearing baked text
+  /// (Keith's no-text-over-element rule). The plate is a fixed raster, so the
+  /// badge must dodge the baked text rather than the other way round.
+  final Alignment zoomBadgeAlignment;
 
   void _openZoom(BuildContext context) {
     final AppColorScheme zoomColors = AppColorScheme.dark();
@@ -159,21 +168,28 @@ class DarkRasterDiagramCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Subtle, discoverable magnifier badge (bottom-right).
-                Positioned(
-                  right: AppSpacing.xs,
-                  bottom: AppSpacing.xs,
+                // Subtle, discoverable magnifier badge. Placed in the corner the
+                // call site declares is clear of baked caption text (default
+                // bottom-right; plates with bottom-right baked text override).
+                Positioned.fill(
                   child: ExcludeSemantics(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: dark.scrim,
-                        borderRadius: BorderRadius.circular(AppRadius.control),
-                      ),
-                      padding: const EdgeInsets.all(AppSpacing.xxs),
-                      child: Icon(
-                        Icons.zoom_in,
-                        color: dark.textPrimary,
-                        size: AppSpacing.sm,
+                    child: Align(
+                      alignment: zoomBadgeAlignment,
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSpacing.xs),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: dark.scrim,
+                            borderRadius:
+                                BorderRadius.circular(AppRadius.control),
+                          ),
+                          padding: const EdgeInsets.all(AppSpacing.xxs),
+                          child: Icon(
+                            Icons.zoom_in,
+                            color: dark.textPrimary,
+                            size: AppSpacing.sm,
+                          ),
+                        ),
                       ),
                     ),
                   ),

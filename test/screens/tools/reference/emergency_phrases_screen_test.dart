@@ -64,7 +64,7 @@ void main() {
 
       expect(find.text('Emergency Phrases'), findsWidgets);
       // The draft-translation caveat is visibly on-screen, not just in data.
-      expect(find.text('Draft translations — review pending'), findsOneWidget);
+      expect(find.text('Draft translations. Review pending'), findsOneWidget);
       expect(find.textContaining('not yet reviewed'), findsOneWidget);
 
       // English source lines render for every phrase (default one-language mode
@@ -190,7 +190,7 @@ void main() {
       await tester.pumpWidget(_harness(theme: AppTheme.light()));
       await tester.pump();
       expect(tester.takeException(), isNull);
-      expect(find.text('Draft translations — review pending'), findsOneWidget);
+      expect(find.text('Draft translations. Review pending'), findsOneWidget);
     });
   });
 }

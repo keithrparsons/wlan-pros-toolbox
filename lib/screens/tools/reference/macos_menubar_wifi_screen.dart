@@ -6,7 +6,7 @@
 // Four sections:
 //   The four built-in paths (overview table).
 //   A. Option-click Wi-Fi menu fields (what each value means).
-//   B. sudo wdutil info — the WIFI block, with the sudo-masks-RF callout.
+//   B. sudo wdutil info — the Wi-Fi block, with the sudo-masks-RF callout.
 //   C. Wireless Diagnostics app (Window-menu tools).
 //   D. Shortcuts "Get Network Details".
 //
@@ -71,7 +71,7 @@ class MacosMenubarWifiScreen extends StatelessWidget {
     b
       ..writeln(kMenuBarOptionClickNote)
       ..writeln()
-      ..writeln('B. sudo wdutil info (the WIFI block)')
+      ..writeln('B. sudo wdutil info (the Wi-Fi block)')
       ..writeln(kMenuBarWdutilIntro)
       ..writeln(kMenuBarSudoCallout);
     for (final RfField f in kMenuBarWdutilFields) {
@@ -160,9 +160,9 @@ class MacosMenubarWifiScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  // B. wdutil WIFI block + sudo callout.
+                  // B. wdutil Wi-Fi block + sudo callout.
                   _SectionCard(
-                    label: 'B. sudo wdutil info (the WIFI block)',
+                    label: 'B. sudo wdutil info (the Wi-Fi block)',
                     intro: kMenuBarWdutilIntro,
                     children: <Widget>[
                       _SudoCallout(text: kMenuBarSudoCallout),
@@ -415,8 +415,9 @@ class _LabeledRow extends StatelessWidget {
   }
 }
 
-/// The sudo-masks-RF callout — an info-toned band, paired with a glyph and full
-/// text (never color-only, §8.13).
+/// The sudo-masks-RF callout: a "do this to get the real numbers" caveat, so it
+/// uses the §8.13 WARNING token (not statusInfo, which rule 6 reserves for
+/// computed verdicts). Paired with a glyph and full text (never color-only).
 class _SudoCallout extends StatelessWidget {
   const _SudoCallout({required this.text});
 
@@ -433,11 +434,11 @@ class _SudoCallout extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: colors.isLight
-              ? colors.statusInfoFill
-              : colors.statusInfo.withValues(alpha: 0.08),
+              ? colors.statusWarningFill
+              : colors.statusWarning.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(AppRadius.control),
           border: Border(
-            left: BorderSide(color: colors.statusInfo, width: 6),
+            left: BorderSide(color: colors.statusWarning, width: 6),
           ),
         ),
         padding: const EdgeInsets.symmetric(
@@ -447,7 +448,7 @@ class _SudoCallout extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Icon(Icons.lock_outline, size: 16, color: colors.statusInfo),
+            Icon(Icons.lock_outline, size: 16, color: colors.statusWarning),
             const SizedBox(width: AppSpacing.xs),
             Expanded(
               child: Text(

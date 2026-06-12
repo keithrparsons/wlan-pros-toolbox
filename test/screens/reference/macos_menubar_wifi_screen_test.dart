@@ -74,7 +74,7 @@ void main() {
         );
         expect(find.text('macOS Menu-Bar Wi-Fi'), findsWidgets);
         expect(find.text('A. Option-click Wi-Fi menu fields'), findsOneWidget);
-        expect(find.text('B. sudo wdutil info (the WIFI block)'),
+        expect(find.text('B. sudo wdutil info (the Wi-Fi block)'),
             findsOneWidget);
       });
     });

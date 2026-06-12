@@ -29,7 +29,7 @@ class MenuBarPath {
 }
 
 /// One RF field with its meaning and why a Wi-Fi pro cares. Used by the
-/// Option-click menu table (Section A) and the wdutil WIFI block (Section B).
+/// Option-click menu table (Section A) and the wdutil Wi-Fi block (Section B).
 class RfField {
   const RfField(this.field, this.meaning, {this.proNote});
 
@@ -63,7 +63,7 @@ const List<MenuBarPath> kMenuBarPaths = <MenuBarPath>[
       'Hold Option, click the Wi-Fi menu-bar icon',
       'Live RF of the current association, inline', 'No'),
   MenuBarPath('wdutil info', 'Apple supported Wireless Diagnostics CLI',
-      'Full WIFI block plus network / BT / power', 'Yes, for unmasked RF'),
+      'Full Wi-Fi block plus network / BT / power', 'Yes, for unmasked RF'),
   MenuBarPath('Wireless Diagnostics app',
       'Option-click menu, then Open Wireless Diagnostics',
       'Scan, Performance graphs, Sniffer, Logs', 'Admin for some panes'),
@@ -106,7 +106,7 @@ const String kMenuBarOptionClickNote =
     'noise, Tx rate, channel, and BSSID are consistently present. For the '
     'complete machine-readable set, use wdutil info below.';
 
-// ── Section B — wdutil WIFI block ──
+// ── Section B: wdutil Wi-Fi block ──
 
 const String kMenuBarWdutilIntro =
     'wdutil is Apple supported command-line Wireless Diagnostics utility and the '
@@ -143,7 +143,7 @@ const List<RfField> kMenuBarWdutilFields = <RfField>[
 
 const String kMenuBarWdutilNote =
     'wdutil info also prints NETWORK (IPv4/IPv6, DNS, reachability), BLUETOOTH, '
-    'AWDL, and POWER sections; the WIFI block above is the RF-relevant one.';
+    'AWDL, and POWER sections; the Wi-Fi block above is the RF-relevant one.';
 
 /// The airport-is-gone note (Keith standing decision; carried on-screen).
 const String kMenuBarAirportGone =

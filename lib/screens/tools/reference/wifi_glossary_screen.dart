@@ -14,8 +14,8 @@
 // stay English — professionals do not translate "beamforming" or "RSSI", so only
 // the explanatory prose localizes. The four translations are author-generated
 // DRAFTS pending professional review: whenever a non-English language is active
-// the screen shows a small "translations in beta — pending professional review"
-// note (GL-005 honest-flag). Search and the §8.16 copy payload both follow the
+// the screen shows a small "Translations in beta" warning note (GL-005
+// honest-flag, §8.13 warning treatment). Search and the §8.16 copy payload follow the
 // active language. The picker is an AppSelect (§8.14: 5 options > the 3-option
 // AppToggle ceiling).
 //
@@ -169,7 +169,7 @@ class _WifiGlossaryScreenState extends State<WifiGlossaryScreen> {
       // pasted draft translations are never mistaken for reviewed copy (GL-005).
       buf.writeln(
         'Definitions in ${_lang.label} '
-        '(draft translation — pending professional review)',
+        '(draft translation, pending professional review)',
       );
     }
     if (_query.trim().isNotEmpty) {
@@ -396,9 +396,12 @@ class _LanguagePicker extends StatelessWidget {
 }
 
 /// The honest draft-translation flag (GL-005), shown only while a non-English
-/// language is active. Informational register (§8.13 `statusInfo` /
-/// `statusInfoFill`), paired with both an icon and text — never color-only —
-/// and the §8.13 text/fill pairing clears WCAG 2.2 AA contrast in both themes.
+/// language is active. This is a "pending professional review" CAVEAT, not a
+/// computed info verdict, so it uses the §8.13 WARNING treatment (`statusWarning`
+/// / `statusWarningFill`) — matching the emergency-phrases draft banner — never
+/// the `statusInfo` blue, which §8.13 rule 6 reserves for computed verdicts.
+/// Icon + text pairing means it is never color-only, and the §8.13 text/fill
+/// pairing clears WCAG 2.2 AA contrast in both themes.
 class _BetaTranslationNote extends StatelessWidget {
   const _BetaTranslationNote({required this.language});
 
@@ -408,29 +411,48 @@ class _BetaTranslationNote extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
-    final String message =
-        '${language.label} translations are in beta — pending professional '
-        'review. Terms stay in English; only the definitions are translated.';
+    final String body =
+        '${language.label} definitions are author-generated drafts pending '
+        'professional review. Terms stay in English; only the definitions are '
+        'translated.';
     return Semantics(
       liveRegion: true,
-      label: message,
+      label: 'Translations in beta. $body',
       excludeSemantics: true,
       child: Container(
         decoration: BoxDecoration(
-          color: colors.statusInfoFill,
+          color: colors.statusWarningFill,
           borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border.all(color: colors.statusInfo, width: 1),
+          border: Border.all(color: colors.statusWarning, width: 1),
         ),
         padding: const EdgeInsets.all(AppSpacing.sm),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Icon(Icons.translate_outlined, size: 20, color: colors.statusInfo),
+            Icon(
+              Icons.warning_amber_outlined,
+              size: 20,
+              color: colors.statusWarning,
+            ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
-              child: Text(
-                message,
-                style: text.labelMedium?.copyWith(color: colors.textSecondary),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    'Translations in beta',
+                    style: text.bodyMedium?.copyWith(
+                      color: colors.statusWarning,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xxs),
+                  Text(
+                    body,
+                    style:
+                        text.labelMedium?.copyWith(color: colors.textSecondary),
+                  ),
+                ],
               ),
             ),
           ],

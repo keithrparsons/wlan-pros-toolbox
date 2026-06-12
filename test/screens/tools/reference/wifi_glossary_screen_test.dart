@@ -145,7 +145,7 @@ void main() {
     // The Spanish draft is NOT shown until the language switches.
     expect(find.text('El nombre legible de una red Wi-Fi.'), findsNothing);
     // No beta note while English is active.
-    expect(find.textContaining('translations are in beta'), findsNothing);
+    expect(find.textContaining('Translations in beta'), findsNothing);
     // The picker shows English as its current value.
     expect(find.text('English'), findsWidgets);
   });
@@ -169,9 +169,9 @@ void main() {
         findsNothing,
       );
 
-      // The honest draft-review flag is visible.
+      // The honest draft-review flag is visible (heading + body).
       expect(
-        find.textContaining('translations are in beta'),
+        find.textContaining('Translations in beta'),
         findsOneWidget,
       );
       expect(find.textContaining('pending professional review'), findsOneWidget);

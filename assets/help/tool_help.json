@@ -1901,7 +1901,7 @@
       "purpose": "The RF data a Wi-Fi pro can pull from a stock Mac with no third-party app: the four built-in paths (Option-click menu, wdutil info, Wireless Diagnostics app, Shortcuts) and what every RF field means (RSSI, noise, SNR, Tx rate, BSSID, channel, width, PHY mode, MCS, NSS).",
       "whyHere": "On a Mac you do not need an extra app to read live Wi-Fi RF. This is the field reference for what each value means and which path gives you which detail. The Apple Wi-Fi Tips screen links here for the per-field meaning.",
       "howToUse": [
-        "Use the Option-click Wi-Fi menu for a quick inline read of the current association. Use sudo wdutil info for the full, machine-readable WIFI block; without sudo the RF-sensitive fields (RSSI, noise, MCS, BSSID) are masked.",
+        "Use the Option-click Wi-Fi menu for a quick inline read of the current association. Use sudo wdutil info for the full, machine-readable Wi-Fi block; without sudo the RF-sensitive fields (RSSI, noise, MCS, BSSID) are masked.",
         "Open the Wireless Diagnostics app from the Option-click menu, then use the Window menu for Scan, Performance graphs, and a channel Sniffer that captures to a .pcap.",
         "Tap the AppBar copy action to copy the whole reference, including the wdutil field list and the sudo callout."
       ],

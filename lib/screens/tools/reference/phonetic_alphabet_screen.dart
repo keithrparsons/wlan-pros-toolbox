@@ -118,6 +118,10 @@ class PhoneticAlphabetScreen extends StatelessWidget {
                       caption:
                           'Each letter as a semaphore arm position and an '
                           'international maritime signal flag. Tap to zoom.',
+                      // The plate's bottom row carries the baked signal-flag
+                      // legend; place the zoom badge in the clear dark band at
+                      // top-center so it never sits over the legend text.
+                      zoomBadgeAlignment: Alignment.topCenter,
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],

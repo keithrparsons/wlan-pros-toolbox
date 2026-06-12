@@ -110,6 +110,10 @@ class DiffieHellmanScreen extends StatelessWidget {
                       caption:
                           'The paint-mixing analogy with the real math labeled. '
                           'Tap to zoom.',
+                      // The plate's bottom-right carries the baked EAVESDROPPER
+                      // caption; place the zoom badge in the clear dark band at
+                      // top-center so it never sits over that text.
+                      zoomBadgeAlignment: Alignment.topCenter,
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],

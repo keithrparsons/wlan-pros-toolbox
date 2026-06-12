@@ -393,7 +393,7 @@ class _DraftBanner extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    'Draft translations — review pending',
+                    'Draft translations. Review pending',
                     style: text.bodyMedium?.copyWith(
                       color: colors.statusWarning,
                       fontWeight: FontWeight.w600,
