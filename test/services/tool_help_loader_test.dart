@@ -121,7 +121,7 @@ void main() {
       store = ToolHelpStore.fromJson(raw);
     });
 
-    test('parses to exactly 133 entries', () {
+    test('parses to exactly 135 entries', () {
       // 97 = 95 (origin/main: 93 + Antenna Connectors + Optical Transceivers)
       // + 2 backfilled v1.1 help entries (PLMN ID Reference and the Wi-Fi
       // Authentication Glossary).
@@ -169,7 +169,13 @@ void main() {
       // 133 = + Emergency Phrases (emergency-phrases) 2026-06-12: a searchable,
       // grouped, offline travel/emergency phrase translator (EN + es/fr/it/de)
       // in the new Travel & Field Quick Reference subgroup. 132 + 1 = 133.
-      expect(store.count, 133);
+      // 135 = + the 2 NEW Tier-1 Apple Wi-Fi references (Pass 2a, 2026-06-12):
+      // Apple Wi-Fi Support Tips (apple-wifi-tips) + macOS Menu-Bar Wi-Fi
+      // (macos-menubar-wifi), both Wi-Fi & RF Quick Reference tiles. The two
+      // enrichments in the same pass (the CLI Commands 3-column split and the
+      // Wireshark 802.11 filter additions) edit EXISTING screens with existing
+      // help ids, so they add no new entries. 133 + 2 = 135.
+      expect(store.count, 135);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

@@ -38,6 +38,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -63,6 +64,29 @@ class FilterGroup {
   final List<WiresharkFilter> filters;
 }
 
+/// One 802.11 status or reason code: the numeric code and its meaning. These
+/// are NOT filters — they are the lookup an analyst reaches for next to the
+/// auth/deauth filter.
+@immutable
+class StatusReasonCode {
+  const StatusReasonCode(this.code, this.meaning);
+
+  /// The numeric code as it appears in the dissected frame.
+  final int code;
+
+  /// What the code means.
+  final String meaning;
+}
+
+/// A labeled table of status or reason codes.
+@immutable
+class CodeTable {
+  const CodeTable(this.label, this.codes);
+
+  final String label;
+  final List<StatusReasonCode> codes;
+}
+
 class WiresharkFiltersScreen extends StatefulWidget {
   const WiresharkFiltersScreen({super.key});
 
@@ -81,7 +105,9 @@ class WiresharkFiltersScreen extends StatefulWidget {
       'the low bits) and matches IEEE 802.11 frame type/subtype assignments. '
       'Capture filters require capturing with a RadioTap header (monitor mode). '
       'For the full RSN cipher and AKM number-to-name map, see the RSN tables '
-      'below or the WPA Security reference tool.';
+      'above or the WPA Security reference tool. The status and reason code '
+      'tables list the highest-frequency 802.11 codes: status codes appear in '
+      'Auth/Assoc responses; reason codes appear in Deauth/Disassoc frames.';
 
   /// The grouped filter set, verbatim from the Pax research deliverable, with
   /// the 5 GHz/2.4 GHz band filters using the SAFE freq-range fallback (see
@@ -97,18 +123,24 @@ class WiresharkFiltersScreen extends StatefulWidget {
       WiresharkFilter('wlan.fc.type_subtype == 3', 'Reassociation response'),
       WiresharkFilter('wlan.fc.type_subtype == 4', 'Probe request'),
       WiresharkFilter('wlan.fc.type_subtype == 5', 'Probe response'),
+      WiresharkFilter('wlan.fc.type_subtype == 6', 'Timing advertisement'),
       WiresharkFilter('wlan.fc.type_subtype == 8', 'Beacon'),
       WiresharkFilter('wlan.fc.type_subtype == 9', 'ATIM'),
       WiresharkFilter('wlan.fc.type_subtype == 10', 'Disassociation'),
       WiresharkFilter('wlan.fc.type_subtype == 11', 'Authentication'),
       WiresharkFilter('wlan.fc.type_subtype == 12', 'Deauthentication'),
       WiresharkFilter('wlan.fc.type_subtype == 13', 'Action'),
+      WiresharkFilter('wlan.fc.type_subtype == 14', 'Action no ack'),
+      WiresharkFilter('wlan.fc.type_subtype == 23', 'Control wrapper'),
       WiresharkFilter('wlan.fc.type_subtype == 24', 'Block Ack Request'),
       WiresharkFilter('wlan.fc.type_subtype == 25', 'Block Ack'),
       WiresharkFilter('wlan.fc.type_subtype == 26', 'PS-Poll'),
       WiresharkFilter('wlan.fc.type_subtype == 27', 'RTS'),
       WiresharkFilter('wlan.fc.type_subtype == 28', 'CTS'),
       WiresharkFilter('wlan.fc.type_subtype == 29', 'Ack'),
+      WiresharkFilter('wlan.fc.type_subtype == 30', 'CF-End'),
+      WiresharkFilter('wlan.fc.type_subtype == 31', 'CF-End + CF-Ack'),
+      WiresharkFilter('wlan.fc.type_subtype == 32', 'Data'),
       WiresharkFilter('wlan.fc.type_subtype == 36', 'Null data (no payload)'),
       WiresharkFilter('wlan.fc.type_subtype == 40', 'QoS data'),
       WiresharkFilter('wlan.fc.type_subtype == 44', 'QoS Null (no data)'),
@@ -136,6 +168,31 @@ class WiresharkFiltersScreen extends StatefulWidget {
       WiresharkFilter('radiotap.channel.freq >= 2400 && radiotap.channel.freq < 2500', 'Captured in the 2.4 GHz band (frequency range)'),
       WiresharkFilter('radiotap.channel.freq >= 5000 && radiotap.channel.freq < 5900', 'Captured in the 5 GHz band (frequency range)'),
       WiresharkFilter('radiotap.channel.freq >= 5925 && radiotap.channel.freq <= 7125', 'Captured in the 6 GHz band (frequency range)'),
+      WiresharkFilter('wlan_radio.signal_dbm < -75', 'Weak signal (uses the generic wlan_radio layer, not radiotap)'),
+    ]),
+    // NET-NEW (2026-06-12): retries, QoS, and weak-signal display filters.
+    FilterGroup('Retries / QoS / weak signal (display)', <WiresharkFilter>[
+      WiresharkFilter('wlan.fc.retry == 1', 'Retried frames (retransmissions)'),
+      WiresharkFilter('wlan.fc.type_subtype == 5 && wlan_radio.signal_dbm < -75', 'Weak probe responses'),
+      WiresharkFilter('wlan.fc.type_subtype == 4 && wlan_radio.signal_dbm < -75', 'Weak probe requests'),
+      WiresharkFilter('wlan.qos.priority == 6', 'QoS priority / TID = 6 (voice access category)'),
+    ]),
+    // NET-NEW (2026-06-12): 802.11k/v/r roaming filters. From Keith's ECSE-T
+    // course sheet. wlan.tag.number == 55 is the Mobility Domain element (MDE).
+    FilterGroup('802.11k / v / r roaming (display)', <WiresharkFilter>[
+      WiresharkFilter('wlan.fixed.action_code == 23', '802.11v DMS request'),
+      WiresharkFilter('wlan.fixed.action_code == 24', '802.11v DMS response'),
+      WiresharkFilter('wlan.rm.action_code == 4', '802.11k Neighbor report request'),
+      WiresharkFilter('wlan.rm.action_code == 5', '802.11k Neighbor report response'),
+      WiresharkFilter('(wlan.fc.type_subtype == 0) && (wlan.rsn.akms.type == 3)', '802.11r FT authentication request (FT over 802.1X)'),
+      WiresharkFilter('(wlan.fc.type_subtype == 1) && (wlan.tag.number == 55)', '802.11r FT authentication response (Mobility Domain element)'),
+      WiresharkFilter('(wlan.fc.type_subtype == 2) && (wlan.tag.number == 55)', '802.11r FT reassociation request'),
+      WiresharkFilter('(wlan.fc.type_subtype == 3) && (wlan.tag.number == 55)', '802.11r FT reassociation response'),
+    ]),
+    // NET-NEW (2026-06-12): EAPOL / 4-way-handshake display filters.
+    FilterGroup('Security / EAPOL (display)', <WiresharkFilter>[
+      WiresharkFilter('eapol', 'All EAPOL key frames'),
+      WiresharkFilter('wlan.addr == aa:bb:cc:dd:ee:ff && eapol', 'The 4-way handshake for one client'),
     ]),
     FilterGroup('Capture filter (BPF)', <WiresharkFilter>[
       WiresharkFilter('type mgt', 'Only management frames'),
@@ -143,10 +200,22 @@ class WiresharkFiltersScreen extends StatefulWidget {
       WiresharkFilter('type data', 'Only data frames'),
       WiresharkFilter('type mgt subtype beacon', 'Beacons only'),
       WiresharkFilter('type mgt subtype probe-req', 'Probe requests only'),
+      WiresharkFilter('type mgt subtype probe-resp', 'Probe responses only'),
+      WiresharkFilter('type mgt subtype assoc-req', 'Association requests only'),
+      WiresharkFilter('type mgt subtype assoc-resp', 'Association responses only'),
+      WiresharkFilter('type mgt subtype auth', 'Authentication frames only'),
       WiresharkFilter('type mgt subtype deauth', 'Deauthentication frames only'),
+      WiresharkFilter('type mgt subtype disassoc', 'Disassociations only'),
       WiresharkFilter('type ctl subtype rts', 'RTS frames only'),
+      WiresharkFilter('type ctl subtype rts || subtype cts', 'RTS/CTS frames only'),
       WiresharkFilter('type ctl subtype ack', 'Acknowledgement frames only'),
+      WiresharkFilter('type ctl subtype ps-poll', 'PS-Poll frames only'),
+      WiresharkFilter('type data subtype null', 'Null data frames only'),
+      WiresharkFilter('type data subtype qos-data', 'QoS data frames only'),
       WiresharkFilter('wlan host aa:bb:cc:dd:ee:ff', 'Frames to/from this L2 address'),
+      WiresharkFilter('ether host aa:bb:cc:dd:ee:ff', 'Frames to/from this L2 address (ether-host form)'),
+      WiresharkFilter('not broadcast', 'Drop broadcast frames'),
+      WiresharkFilter('not multicast', 'Drop multicast frames'),
     ]),
     // CORRECTED per Pax: cipher-suite selectors are pcs/gcs.type (Table 9-149),
     // NOT akms.type. The source card mislabeled these as AKM.
@@ -163,6 +232,59 @@ class WiresharkFiltersScreen extends StatefulWidget {
       WiresharkFilter('wlan.rsn.akms.type == 8', 'AKM = SAE / WPA3-Personal (00-0F-AC:8)'),
       WiresharkFilter('wlan.rsn.akms.type == 18', 'AKM = OWE (00-0F-AC:18)'),
     ]),
+    // NET-NEW (2026-06-12): display-filter operators reference. Both the symbol
+    // and the word form are valid; shown so a reader can build combined filters,
+    // e.g. wlan.bssid == aa:bb:cc:dd:ee:ff && wlan.fc.retry == 1.
+    FilterGroup('Operators (display, reference)', <WiresharkFilter>[
+      WiresharkFilter('==  /  eq', 'Equal'),
+      WiresharkFilter('!=  /  ne', 'Not equal'),
+      WiresharkFilter('&&  /  and', 'And'),
+      WiresharkFilter('||  /  or', 'Or'),
+      WiresharkFilter('^^  /  xor', 'Xor'),
+      WiresharkFilter('!  /  not', 'Not'),
+      WiresharkFilter('contains', 'Substring / byte-sequence match'),
+    ]),
+  ];
+
+  /// 802.11 status and reason codes (the lookup an analyst reaches for next to
+  /// the auth/deauth filter). NOT filters — a companion reference table rendered
+  /// below the filter groups. From the Garringer reference (CWNE #179); the
+  /// highest-frequency subset. Public + static for tests.
+  static const List<CodeTable> codeTables = <CodeTable>[
+    CodeTable(
+      'Status codes (Auth/Assoc responses, never connected)',
+      <StatusReasonCode>[
+        StatusReasonCode(0, 'Success'),
+        StatusReasonCode(1, 'Unspecified failure'),
+        StatusReasonCode(10, 'Mismatched / unsupported capabilities'),
+        StatusReasonCode(11, 'Inability to confirm association'),
+        StatusReasonCode(12, 'Outside the scope of the standard'),
+        StatusReasonCode(13, 'STA does not support the auth algorithm'),
+        StatusReasonCode(17, 'AP unable to support additional associations (cell full)'),
+        StatusReasonCode(18, 'Refused - basic rates mismatch'),
+        StatusReasonCode(27, 'Requesting STA has no HT support'),
+        StatusReasonCode(41, 'Invalid group cipher'),
+        StatusReasonCode(42, 'Invalid pairwise cipher'),
+        StatusReasonCode(104, 'Requesting STA does not support VHT features'),
+      ],
+    ),
+    CodeTable(
+      'Reason codes (Deauth/Disassoc, no longer connected)',
+      <StatusReasonCode>[
+        StatusReasonCode(1, 'Unspecified reason'),
+        StatusReasonCode(2, 'Previous authentication no longer valid'),
+        StatusReasonCode(3, 'Deauthenticated - sending STA is leaving/has left'),
+        StatusReasonCode(4, 'Disassociated due to inactivity'),
+        StatusReasonCode(5, 'AP unable to handle all currently associated STAs'),
+        StatusReasonCode(6, 'Class 2 frame from a non-authenticated STA'),
+        StatusReasonCode(7, 'Class 3 frame from a non-associated STA'),
+        StatusReasonCode(14, 'Message integrity code (MIC) failure'),
+        StatusReasonCode(15, '4-way handshake timeout'),
+        StatusReasonCode(16, 'Group key handshake timeout'),
+        StatusReasonCode(23, 'IEEE 802.1X authentication failed'),
+        StatusReasonCode(49, 'Invalid pairwise master key identifier (PMKID)'),
+      ],
+    ),
   ];
 
   @override
@@ -197,6 +319,20 @@ class _WiresharkFiltersScreenState extends State<WiresharkFiltersScreen> {
     return FilterGroup(g.label, kept);
   }
 
+  bool _matchesCode(StatusReasonCode c, String q) {
+    if (q.isEmpty) return true;
+    return c.code.toString().contains(q) || c.meaning.toLowerCase().contains(q);
+  }
+
+  CodeTable? _filterCodeTable(CodeTable t, String q) {
+    if (q.isEmpty) return t;
+    if (t.label.toLowerCase().contains(q)) return t;
+    final List<StatusReasonCode> kept =
+        t.codes.where((StatusReasonCode c) => _matchesCode(c, q)).toList();
+    if (kept.isEmpty) return null;
+    return CodeTable(t.label, kept);
+  }
+
   void _onQueryChanged(String value) {
     setState(() => _query = value);
     final String q = value.trim().toLowerCase();
@@ -205,11 +341,40 @@ class _WiresharkFiltersScreenState extends State<WiresharkFiltersScreen> {
       final FilterGroup? f = _filterGroup(g, q);
       if (f != null) n += f.filters.length;
     }
+    for (final CodeTable t in WiresharkFiltersScreen.codeTables) {
+      final CodeTable? f = _filterCodeTable(t, q);
+      if (f != null) n += f.codes.length;
+    }
     SemanticsService.sendAnnouncement(
       View.of(context),
-      n == 0 ? 'No matching filters' : '$n matching filter${n == 1 ? '' : 's'}',
+      n == 0 ? 'No matching rows' : '$n matching row${n == 1 ? '' : 's'}',
       TextDirection.ltr,
     );
+  }
+
+  /// §8.16 plain-text payload — every filter group with its exact syntax, then
+  /// the status/reason-code tables, so a reader can paste the whole sheet.
+  static String _copyText() {
+    const String tab = '\t';
+    final StringBuffer b = StringBuffer()
+      ..writeln('Wireshark 802.11 Filters')
+      ..writeln();
+    for (final FilterGroup g in WiresharkFiltersScreen.groups) {
+      b.writeln(g.label);
+      for (final WiresharkFilter f in g.filters) {
+        b.writeln('  ${f.filter}$tab${f.description}');
+      }
+      b.writeln();
+    }
+    for (final CodeTable t in WiresharkFiltersScreen.codeTables) {
+      b.writeln(t.label);
+      for (final StatusReasonCode c in t.codes) {
+        b.writeln('  ${c.code}$tab${c.meaning}');
+      }
+      b.writeln();
+    }
+    b.writeln(WiresharkFiltersScreen.footnote);
+    return b.toString().trimRight();
   }
 
   @override
@@ -218,7 +383,8 @@ class _WiresharkFiltersScreenState extends State<WiresharkFiltersScreen> {
       appBar: AppBar(
         title: const Text('Wireshark 802.11 Filters'),
         toolbarHeight: 64,
-        actions: const <Widget>[
+        actions: <Widget>[
+          AppCopyAction(textBuilder: _copyText),
         ],
       ),
       body: SafeArea(top: false, child: _body()),
@@ -336,13 +502,20 @@ class _WiresharkFiltersScreenState extends State<WiresharkFiltersScreen> {
         cards.add(const SizedBox(height: AppSpacing.sm));
       }
     }
+    for (final CodeTable t in WiresharkFiltersScreen.codeTables) {
+      final CodeTable? f = _filterCodeTable(t, q);
+      if (f != null) {
+        cards.add(_CodeTableCard(table: f));
+        cards.add(const SizedBox(height: AppSpacing.sm));
+      }
+    }
 
     if (cards.isEmpty) {
       return <Widget>[
         _MessageCard(
           icon: Icons.search_off,
           title: 'No match',
-          body: 'No filter matches "${_query.trim()}".',
+          body: 'No filter or code matches "${_query.trim()}".',
         ),
       ];
     }
@@ -440,6 +613,77 @@ class _FilterRow extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// One status/reason-code table: a heading over numeric-code rows. The code
+/// number sits in a fixed mono gutter so the meanings align.
+class _CodeTableCard extends StatelessWidget {
+  const _CodeTableCard({required this.table});
+
+  final CodeTable table;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            table.label,
+            style: text.labelMedium?.copyWith(
+              color: colors.textSecondary,
+              letterSpacing: 0.4,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          ...table.codes.map(
+            (StatusReasonCode c) => Semantics(
+              container: true,
+              excludeSemantics: true,
+              label: 'Code ${c.code}, ${c.meaning}',
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 40,
+                      child: Text(
+                        '${c.code}',
+                        style: mono.inlineCode.copyWith(
+                          color: colors.textAccent,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    Expanded(
+                      child: Text(
+                        c.meaning,
+                        style: text.labelMedium
+                            ?.copyWith(color: colors.textTertiary),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

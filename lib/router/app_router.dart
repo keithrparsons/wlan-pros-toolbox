@@ -56,6 +56,8 @@ import '../screens/tools/reference/wifi_standards_bodies_screen.dart';
 import '../screens/tools/reference/wifi_exposure_perspective_screen.dart';
 import '../screens/tools/reference/wifi_tools_comparison_screen.dart';
 import '../screens/tools/reference/speedtest_services_screen.dart';
+import '../screens/tools/reference/apple_wifi_tips_screen.dart';
+import '../screens/tools/reference/macos_menubar_wifi_screen.dart';
 import '../screens/tools/reference/reason_codes_screen.dart';
 import '../screens/tools/reference/frame_exchange_screen.dart';
 import '../screens/tools/reference/db_reference_screen.dart';
@@ -363,6 +365,13 @@ class AppRouter {
   /// permanent (backs this route, the catalog entry, the bundled logo assets,
   /// the help entry, and tests).
   static const String speedtestServices = '/tools/speedtest-services';
+
+  // Apple Wi-Fi references (2026-06-12, Tier-1). Apple-Wi-Fi-Tips distills
+  // Apple's support docs (settings, Wireless Diagnostics, iOS steps) and links
+  // to macOS-Menubar-Wifi for the per-field RF meanings. All platforms (const
+  // reference text + url_launcher; nothing fetched, nothing shelled out).
+  static const String appleWifiTips = '/tools/apple-wifi-tips';
+  static const String macosMenubarWifi = '/tools/macos-menubar-wifi';
   static const String osiModel = '/tools/osi-model';
 
   /// FreeRADIUS on WLAN Pi — a how-to / guide screen (v1.1). Bundles Ferney
@@ -597,6 +606,8 @@ class AppRouter {
     wifiExposurePerspective: (_) => const WifiExposurePerspectiveScreen(),
     wifiToolsComparison: (_) => const WifiToolsComparisonScreen(),
     speedtestServices: (_) => const SpeedtestServicesScreen(),
+    appleWifiTips: (_) => const AppleWifiTipsScreen(),
+    macosMenubarWifi: (_) => const MacosMenubarWifiScreen(),
     osiModel: (_) => const OsiModelScreen(),
     topLevelDomains: (_) => const TopLevelDomainsScreen(),
     rjConnectors: (_) => const RjConnectorsScreen(),

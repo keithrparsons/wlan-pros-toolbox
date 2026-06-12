@@ -1,8 +1,11 @@
 // Tests for the Network CLI Commands screen.
 //
-// Dataset assertions guard the command set against drift from the Pax research
-// deliverable + Keith's decision (macOS shows ONLY `wdutil info`; `airport`
-// removed). A widget smoke confirms render + the live filter narrows results.
+// Dataset assertions guard the command set against drift from the consolidated
+// reference + Keith's decision (macOS shows ONLY `wdutil info`; `airport`
+// removed). 3-column model (2026-06-12, Silas flag): each task carries a
+// separate winCmd / macCmd / linCmd so a diverged macOS-vs-Linux command is
+// never collapsed. A widget smoke confirms render + the live filter narrows
+// results.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,42 +17,69 @@ void main() {
     CliCommand byWin(String win) => CliCommandsScreen.commands
         .firstWhere((CliCommand c) => c.winCmd == win);
 
-    test('ping pairs ping/ping with flags', () {
+    test('ping is ping/ping/ping across all three columns with flags', () {
       final CliCommand c = byWin('ping host');
-      expect(c.nixCmd, 'ping host');
+      expect(c.macCmd, 'ping host');
+      expect(c.linCmd, 'ping host');
       expect(c.options.any((o) => o.flag == '-t'), isTrue);
       expect(c.options.any((o) => o.flag == '-c count'), isTrue);
     });
 
     test('macOS Wi-Fi shows ONLY wdutil info, never airport (Keith #3)', () {
       final CliCommand c = byWin('netsh wlan show interfaces');
-      expect(c.nixCmd, 'wdutil info');
-      // airport must not appear anywhere in the dataset.
+      expect(c.macCmd, 'wdutil info');
+      // airport must not appear anywhere in the dataset (any column or flag).
       for (final CliCommand cmd in CliCommandsScreen.commands) {
-        expect((cmd.nixCmd ?? '').contains('airport'), isFalse);
         expect((cmd.winCmd ?? '').contains('airport'), isFalse);
+        expect((cmd.macCmd ?? '').contains('airport'), isFalse);
+        expect((cmd.linCmd ?? '').contains('airport'), isFalse);
         for (final CliOption o in cmd.options) {
           expect(o.flag.contains('airport'), isFalse);
           expect(o.meaning.contains('airport'), isFalse);
         }
       }
+      for (final LinuxShellCommand cmd in CliCommandsScreen.linuxShell) {
+        expect(cmd.command.contains('airport'), isFalse);
+      }
+    });
+
+    test('macOS and Linux diverge on a real row (3-column split is load-bearing)',
+        () {
+      // netstat connections: macOS netstat -an vs Linux ss -tunap.
+      final CliCommand c = byWin('netstat -ano');
+      expect(c.macCmd, 'netstat -an');
+      expect(c.linCmd, 'ss -tunap');
+      expect(c.macCmd == c.linCmd, isFalse);
     });
 
     test('dig has no native Windows command (honest null)', () {
       final CliCommand dig = CliCommandsScreen.commands
-          .firstWhere((CliCommand c) => c.nixCmd == 'dig name');
+          .firstWhere((CliCommand c) => c.macCmd == 'dig name');
       expect(dig.winCmd, isNull);
+      expect(dig.linCmd, 'dig name');
     });
 
-    test('nbtstat has no native nix command (honest null)', () {
+    test('nbtstat is Windows-only (honest nulls on macOS and Linux)', () {
       final CliCommand nb = CliCommandsScreen.commands
           .firstWhere((CliCommand c) => c.winCmd == 'nbtstat -A addr');
-      expect(nb.nixCmd, isNull);
+      expect(nb.macCmd, isNull);
+      expect(nb.linCmd, isNull);
+    });
+
+    test('Linux shell essentials render as a Linux-only group', () {
+      expect(CliCommandsScreen.linuxShell, isNotEmpty);
+      expect(
+        CliCommandsScreen.linuxShell.any((c) => c.command == 'tail -f file'),
+        isTrue,
+      );
     });
 
     test('no em dash anywhere', () {
       for (final CliCommand c in CliCommandsScreen.commands) {
         expect(c.description.contains('—'), isFalse);
+      }
+      for (final LinuxShellCommand c in CliCommandsScreen.linuxShell) {
+        expect(c.note.contains('—'), isFalse);
       }
     });
   });

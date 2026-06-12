@@ -396,6 +396,16 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'troubleshoot',
   ],
 
+  // ── Apple Wi-Fi references ──
+  'apple-wifi-tips': <String>[
+    'apple', 'iphone', 'ipad', 'ios', 'recommended settings', 'router',
+    'wireless diagnostics', 'support', 'macbook', 'reset network settings',
+  ],
+  'macos-menubar-wifi': <String>[
+    'macos', 'mac', 'menu bar', 'option click', 'wdutil', 'airport',
+    'rssi', 'noise', 'snr', 'bssid', 'wireless diagnostics', 'sudo',
+  ],
+
   // ── CLI & Capture sheets ──
   'cli-commands': <String>[
     'ipconfig', 'ifconfig', 'netsh', 'terminal', 'command line', 'windows',

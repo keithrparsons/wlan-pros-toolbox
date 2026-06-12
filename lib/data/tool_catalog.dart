@@ -871,6 +871,27 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Wi-Fi & RF',
       ),
+      // ── Apple Wi-Fi references (2026-06-12, Tier-1) ──
+      ToolEntry(
+        id: 'apple-wifi-tips',
+        title: 'Apple Wi-Fi Support Tips',
+        description:
+            "Apple's recommended router settings, Wireless Diagnostics, and "
+            'iOS troubleshooting steps',
+        routeName: '/tools/apple-wifi-tips',
+        isLive: true,
+        subgroup: 'Wi-Fi & RF',
+      ),
+      ToolEntry(
+        id: 'macos-menubar-wifi',
+        title: 'macOS Menu-Bar Wi-Fi',
+        description:
+            'RF data from a stock Mac: Option-click menu, wdutil, and what '
+            'each field means',
+        routeName: '/tools/macos-menubar-wifi',
+        isLive: true,
+        subgroup: 'Wi-Fi & RF',
+      ),
       ToolEntry(
         id: 'port-reference',
         title: 'Well-Known Ports',

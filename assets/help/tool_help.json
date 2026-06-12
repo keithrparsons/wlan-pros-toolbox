@@ -1857,21 +1857,64 @@
     "cli-commands": {
       "name": "Network CLI Commands",
       "category": "Quick Reference",
-      "purpose": "A side-by-side Windows vs macOS/Linux command reference for the everyday network-troubleshooting tasks (reachability, path tracing, DNS, interface config, sockets, ARP, routing, Wi-Fi link state), each with the field-common flags.",
-      "whyHere": "You're at a client site on whatever laptop is in front of you and need the right command for this OS without looking it up: \"what's the macOS equivalent of ipconfig /all,\" \"how do I see the connected SSID/BSSID/RSSI from the CLI on Windows.\"",
+      "purpose": "A side-by-side Windows / macOS / Linux command reference for everyday network-troubleshooting tasks (Wi-Fi link state, reachability, path tracing, DNS, interface config, DHCP, sockets, ARP, routing), each with its field-common flags, plus a Linux-only shell-essentials group for capture-rig / WLAN Pi work.",
+      "whyHere": "You're at a client site on whatever laptop is in front of you and need the right command for this OS without looking it up: \"what's the macOS equivalent of ipconfig /all,\" \"how do I renew DHCP on Linux,\" \"how do I see the connected SSID/BSSID/RSSI from the CLI.\"",
       "howToUse": [
-        "One card per task. Each card shows the Windows command (lime), the macOS/Linux equivalent, a one-line description, and a flag subset.",
-        "Filter by command name or task (e.g. \"ping\" or \"DNS\"). Where a platform has no native command, the card says so honestly rather than blanking."
+        "One card per task. Each card shows the Windows command (lime), the macOS command, and the Linux command on separate lines, a one-line description, and a flag subset.",
+        "macOS and Linux are shown as SEPARATE columns because they have diverged on several tasks (ifconfig vs ip, netstat vs ss, DHCP renew, flush DNS); where they are identical the same command appears on both lines.",
+        "Filter by command name or task (e.g. \"ping\" or \"DNS\"). The Linux-only shell essentials (ls, grep, tail, screen, chmod) render in their own group at the end. Where a platform has no native command, the card says so honestly rather than blanking. Tap the AppBar copy action to copy the whole sheet."
       ],
       "inputs": [],
       "algorithm": null,
-      "example": "Commands as shipped (Task | Windows | macOS/Linux | key flags): Reachability/RTT via ICMP echo | ping host | ping host | -t (Win: continuous), -n count (Win), -l size (Win), -c count (nix), -s size (nix), -i interval (nix). Trace L3 path | tracert host | traceroute host | -d (Win: no resolve), -h max (Win), -n (nix), -m max (nix), -I (nix: ICMP), -T (Linux: TCP SYN), -P proto (macOS). Ping+traceroute over time | pathping host | mtr host | -n, -q num (pathping). DNS query legacy | nslookup name | nslookup name | -type=MX, server. DNS query full detail | (no native command) | dig name | +short, -x addr, @server, type. Interface IP config | ipconfig /all | ifconfig | /all, /release, /renew, /flushdns, ip addr (Linux), ipconfig getifaddr en0 (macOS). Active connections | netstat -ano | netstat -an | -a, -n, -o (Win PID), -r, -p proto. ARP cache | arp -a | arp -a | -a, -d addr, -s addr mac. Device hostname | hostname | hostname | -f (nix FQDN). IP routing table | route print | netstat -rn | print (Win), -rn (nix), ip route (Linux). NetBIOS-over-TCP name table | nbtstat -A addr | (no native command) | -A addr, -n. Connected Wi-Fi interface state | netsh wlan show interfaces | wdutil info | show interfaces (Win), show profiles, show networks mode=bssid, show wlanreport, show drivers, wdutil info (macOS, sudo).",
+      "example": "Representative rows (Task | Windows | macOS | Linux): Connected Wi-Fi link state | netsh wlan show interfaces | wdutil info | iw dev wlan0 link. Interface IP config | ipconfig /all | ifconfig | ip addr. Renew DHCP | ipconfig /renew | sudo ipconfig set en0 DHCP | sudo dhclient -r && sudo dhclient. Flush DNS | ipconfig /flushdns | sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder | sudo resolvectl flush-caches. Active connections | netstat -ano | netstat -an | ss -tunap. Routing table | route print | netstat -rn | ip route. DNS full detail | (no native command) | dig name | dig name. Linux shell essentials: ls -lah, tail -f file, grep -i pattern file, screen, chmod 755 file.",
       "fieldNotes": [
-        "The in-app caveat warns that some commands need administrator/sudo rights and that the flags shown are the field-common subset, not exhaustive.",
-        "The in-app footnote notes that ifconfig, route, and arp are legacy on Linux (modern distros prefer the iproute2 suite: ip addr, ip route, ip neigh); on macOS use wdutil info (sudo) or the Wireless Diagnostics app for Wi-Fi link details; and netsh wlan is Windows only.",
-        "Source / basis: targets Windows and macOS/Linux. Dataset is the Pax research deliverable (pax-research-7-additions.md, \"Network CLI Commands\"), sourced from Linux man-pages, Microsoft Learn, and Apple docs. Per a Keith decision (2026-05-30) the macOS Wi-Fi entry shows only wdutil info; the deprecated airport CLI was removed entirely."
+        "3-column model (2026-06-12): macOS and Linux are separate columns so a diverged command is never collapsed into a wrong \"macOS/Linux\" value. Per Keith's standing decision the macOS Wi-Fi entry shows only wdutil info; the deprecated airport CLI is removed entirely.",
+        "Legacy Linux forms (ifconfig, route, arp, iwconfig, netstat) are noted alongside the current iproute2 (ip addr, ip route, ip neigh), iw, and ss forms so you can read older docs and write modern commands. netsh wlan is Windows only; dig, whois, and nbtstat have honest no-native-command states.",
+        "The commands are reference text. The Toolbox does not run them; it shows the correct syntax to run yourself. Some need administrator/sudo rights; flags shown are the field-common subset, not exhaustive.",
+        "Source / basis: consolidated and de-duplicated from Keith's Network CLI sheet and the WLAN Pros Linux command cheat sheets, reconciled against current Windows, macOS, and Linux documentation. Deprecated commands were replaced with their current equivalents rather than copied forward."
       ],
       "source": "lib/screens/tools/command/cli_commands_screen.dart"
+    },
+    "apple-wifi-tips": {
+      "name": "Apple Wi-Fi Support Tips",
+      "category": "Quick Reference",
+      "purpose": "Apple's official Wi-Fi support guidance in one place: the router and access-point settings Apple recommends for Apple devices, how to run Wireless Diagnostics on a Mac, how to read the Option-click Wi-Fi menu, and Apple's ordered iPhone / iPad troubleshooting steps.",
+      "whyHere": "Setting up or auditing a router for Apple clients, or a device will not connect: reach for Apple's own answer rather than a third-party blog. Each section links back to the Apple support article it came from.",
+      "howToUse": [
+        "Start at Section A when setting up or auditing a router for Apple clients. Apple's two highest-value calls are a single SSID across all bands and 20 MHz channel width on 2.4 GHz.",
+        "Use Sections B and C on a Mac to read live RF data and capture a diagnostics report. Use Section D on an iPhone or iPad when a device will not connect.",
+        "Tap \"Open Apple article\" in any section to confirm the current wording on Apple's site. For the field-by-field meaning of the Option-click menu, open the companion macOS Menu-Bar Wi-Fi reference."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "HONESTY (GL-005): Apple does not publish a transmit-power recommendation, so this reference does not invent one, and that silence is stated on-screen. Every iOS step traces to one Apple article (111786); that single-source status is flagged on-screen rather than presented as multi-source agreement.",
+        "The Keith domain note (single SSID for all bands; 20 MHz on 2.4 GHz) is attributed to Keith, not to Apple.",
+        "Sources: Apple \"Recommended settings for Wi-Fi routers and access points\" (102766), \"Use Wireless Diagnostics on your Mac\", and \"If you can't connect to Wi-Fi on your iPhone or iPad\" (111786). All verified live 2026-06-12."
+      ],
+      "source": "lib/screens/tools/reference/apple_wifi_tips_screen.dart"
+    },
+    "macos-menubar-wifi": {
+      "name": "macOS Menu-Bar Wi-Fi",
+      "category": "Quick Reference",
+      "purpose": "The RF data a Wi-Fi pro can pull from a stock Mac with no third-party app: the four built-in paths (Option-click menu, wdutil info, Wireless Diagnostics app, Shortcuts) and what every RF field means (RSSI, noise, SNR, Tx rate, BSSID, channel, width, PHY mode, MCS, NSS).",
+      "whyHere": "On a Mac you do not need an extra app to read live Wi-Fi RF. This is the field reference for what each value means and which path gives you which detail. The Apple Wi-Fi Tips screen links here for the per-field meaning.",
+      "howToUse": [
+        "Use the Option-click Wi-Fi menu for a quick inline read of the current association. Use sudo wdutil info for the full, machine-readable WIFI block; without sudo the RF-sensitive fields (RSSI, noise, MCS, BSSID) are masked.",
+        "Open the Wireless Diagnostics app from the Option-click menu, then use the Window menu for Scan, Performance graphs, and a channel Sniffer that captures to a .pcap.",
+        "Tap the AppBar copy action to copy the whole reference, including the wdutil field list and the sudo callout."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "The sudo-masks-RF callout is load-bearing and carried on-screen: run sudo wdutil info or RSSI, noise, MCS, and BSSID come back masked.",
+        "Standing Keith decision: the airport CLI is gone (deprecated in macOS Sonoma 14.4). This reference does not document airport as a working path because on current macOS it is not one; use wdutil and Wireless Diagnostics instead.",
+        "RSSI is the coverage number, noise is the floor, and RSSI minus noise is the SNR that predicts link quality. Tx rate is the negotiated PHY rate, not throughput. BSSID identifies the exact AP radio (track roaming).",
+        "Sources: Apple \"Use Wireless Diagnostics on your Mac\" plus corroborating field-availability sources (Intuitibits, NetBeez, wdutil(1) man page) and the Toolbox team's on-device Shortcuts verification. Verified live 2026-06-12."
+      ],
+      "source": "lib/screens/tools/reference/macos_menubar_wifi_screen.dart"
     },
     "linux-wlan-commands": {
       "name": "Linux / WLAN Commands",
