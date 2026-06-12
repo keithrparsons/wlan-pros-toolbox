@@ -181,7 +181,10 @@ class _OffsetRailCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     SizedBox(
-                      width: 84,
+                      // Wide enough that the longest offset label ("UTC +5:30",
+                      // "UTC +9:30") stays on one line in DM Mono; at 84 it wrapped
+                      // "UTC" / "+5:30" to two lines (no-wrap column audit, 2026-06-12).
+                      width: 100,
                       child: Text(
                         o.offset,
                         style: mono.inlineCode.copyWith(
