@@ -855,6 +855,16 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Wi-Fi & RF',
       ),
+      // Diffie-Hellman (by colors) — Tier-1 reference (Pass 2b, 2026-06-12). The
+      // paint-mixing key-exchange analogy with the real math, tied to WPA3 SAE.
+      ToolEntry(
+        id: 'diffie-hellman',
+        title: 'Diffie-Hellman',
+        description: 'Key exchange by colors: the paint analogy, the math, WPA3 SAE',
+        routeName: '/tools/diffie-hellman',
+        isLive: true,
+        subgroup: 'Wi-Fi & RF',
+      ),
       ToolEntry(
         id: 'roaming',
         title: 'Roaming Parameters',
@@ -1001,6 +1011,19 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         title: 'Ethernet Cable',
         description: 'Cat5e to Cat8: speed, bandwidth, distance, PoE',
         routeName: '/tools/ethernet-cable',
+        isLive: true,
+        subgroup: 'Cabling & Connectors',
+      ),
+      // Cable & Connector — Tier-1 reference (Pass 2b, 2026-06-12). Combined
+      // twisted-pair Category chart (with the Cat 7 ISO/IEC-Class-F caveat) plus
+      // the T568A/B RJ-45 pinout in one tile. Twisted-pair side only; coax has
+      // its own coax-cable tool.
+      ToolEntry(
+        id: 'cable-connector',
+        title: 'Cable & Connector',
+        description:
+            'Cat5e to Cat8 capability plus the T568A / T568B RJ-45 pinout',
+        routeName: '/tools/cable-connector',
         isLive: true,
         subgroup: 'Cabling & Connectors',
       ),
@@ -1300,6 +1323,17 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Time & Formats',
       ),
+      // Time Zones — Tier-1 reference (Pass 2b, 2026-06-12). A world UTC-offset
+      // map plus the offset rail and US time-zone table, for coordinating work
+      // across sites and calls.
+      ToolEntry(
+        id: 'time-zone-maps',
+        title: 'Time Zones',
+        description: 'World UTC offsets, anchor cities, and US time zones',
+        routeName: '/tools/time-zone-maps',
+        isLive: true,
+        subgroup: 'Time & Formats',
+      ),
       // Encoding additions.
       ToolEntry(
         id: 'hash-lengths',
@@ -1327,6 +1361,28 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description:
             'CommonMark + GitHub Flavored Markdown: what you type and what it renders as',
         routeName: '/tools/markdown-cheatsheet',
+        isLive: true,
+        subgroup: 'Encoding',
+      ),
+      // Keyboard Shortcuts — Tier-1 reference (Pass 2b, 2026-06-12). macOS /
+      // Windows system + terminal shortcuts, the Mac Option-key symbol layer, and
+      // the Greek letters of RF math.
+      ToolEntry(
+        id: 'keyboard-shortcuts',
+        title: 'Keyboard Shortcuts',
+        description:
+            'macOS / Windows system and terminal keys, Mac symbols, Greek letters',
+        routeName: '/tools/keyboard-shortcuts',
+        isLive: true,
+        subgroup: 'Encoding',
+      ),
+      // Phonetic Alphabet — Tier-1 reference (Pass 2b, 2026-06-12). NATO/ICAO
+      // spelling words, Morse, semaphore, and maritime signal flags.
+      ToolEntry(
+        id: 'phonetic-alphabet',
+        title: 'Phonetic Alphabet',
+        description: 'NATO spelling words, Morse, semaphore, and maritime flags',
+        routeName: '/tools/phonetic-alphabet',
         isLive: true,
         subgroup: 'Encoding',
       ),

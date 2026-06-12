@@ -13,6 +13,7 @@ import 'data/connector_photos.dart';
 import 'data/connector_sections.dart';
 import 'data/mac_bit_field_diagram.dart';
 import 'data/modulation_diagrams.dart';
+import 'data/reference_images.dart';
 import 'data/power_phasing_diagrams.dart';
 import 'data/ohms_law_diagrams.dart';
 import 'data/iec_connectors_diagrams.dart';
@@ -104,6 +105,17 @@ Future<void> main() async {
     await ModulationDiagrams.ensureLoaded();
   } catch (_) {
     // Manifest unavailable → isBundled stays false → cards omitted. No crash.
+  }
+
+  // Same convention for the Tier-1 reference raster plates
+  // (assets/reference/<id>.png: time-zone-maps, phonetic-alphabet,
+  // diffie-hellman). If the manifest is unavailable, ReferenceImages.isBundled
+  // stays false and the image card is omitted — each screen's native text
+  // tables still read end-to-end. Never block startup.
+  try {
+    await ReferenceImages.ensureLoaded();
+  } catch (_) {
+    // Manifest unavailable → isBundled stays false → card omitted. No crash.
   }
 
   // Same convention for the Antenna Connectors per-connector PHOTOS

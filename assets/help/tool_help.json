@@ -3134,6 +3134,101 @@
         "Tones come out of the device speaker. The app generates audio; it does not place a call or send anything down a line."
       ],
       "source": "signaling_tones.dart, dtmf_generator_screen.dart"
+    },
+    "keyboard-shortcuts": {
+      "name": "Keyboard Shortcuts",
+      "category": "Quick Reference",
+      "purpose": "The standard keyboard shortcuts you reach for every day: macOS and Windows system shortcuts, the line-editing keys for the macOS Terminal and Windows PowerShell, how to type special symbols on a Mac with the Option key, and the Greek letters that show up in RF and antenna math.",
+      "whyHere": "A fast lookup when you are driving someone else's machine, switching between macOS and Windows, or need a symbol or a Greek letter (lambda for wavelength, mu for micro, ohms) without hunting through a character viewer.",
+      "howToUse": [
+        "Pick the platform tab (macOS, Windows, Symbols, or Greek). Each tab is a stack of copyable cards.",
+        "Find the action you want; the key combo is shown as the keys you press together in mono.",
+        "On the Symbols and Greek tabs, the highlighted glyph is selectable, so you can grab a single symbol directly; the AppBar copy action copies the whole reference."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "The true degree sign on a Mac is Option Shift 8; Option 0 gives the similar-looking ordinal, which is flagged on the Symbols tab.",
+        "PowerShell reverse history search (Ctrl R) depends on PSReadLine, which ships with Windows PowerShell 5.1+ and PowerShell 7; a bare console host falls back to F7 / F8."
+      ],
+      "source": "The published Apple and Microsoft keyboard-shortcut lists, standard readline / zsh and PSReadLine bindings, and common RF math notation for the Greek card."
+    },
+    "cable-connector": {
+      "name": "Cable & Connector",
+      "category": "Quick Reference",
+      "purpose": "The twisted-pair side of structured cabling in one tile: how the Category ratings compare (Cat5e to Cat8, with speed, bandwidth, distance, and PoE relevance) and how the two RJ-45 wiring standards (T568A and T568B) are pinned out.",
+      "whyHere": "Picking a cable category for a run, or terminating an RJ-45 jack and needing the pin colors. Coax connectors have their own tool; this is the Ethernet / twisted-pair side.",
+      "howToUse": [
+        "Read the Category chart for the headline speed, bandwidth, and max distance per category; the per-category PoE note sits beneath it.",
+        "Toggle T568B / T568A to see the pin-to-wire color mapping. The swatch shows the wire color and the name names it, so the color is never the only signal.",
+        "Use the copy action to grab the chart and the selected pinout as text."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Cat 7 is NOT a TIA standard. TIA never ratified Category 7; it exists only as ISO/IEC Class F (Cat 7A as Class FA) and uses GG45 / TERA connectors, not native RJ-45. For 10G structured cabling, Cat 6A is the TIA-recognized choice. The chart flags this with a warning callout.",
+        "Only pairs 2 and 3 (orange and green) differ between T568A and T568B. Straight-through uses the same standard at both ends; crossover uses A on one end and B on the other (legacy, since Auto-MDIX)."
+      ],
+      "source": "Category figures per current TIA-568 (ANSI/TIA-568.2-D), with the Cat 7 ISO/IEC Class F caveat called out; pinout per the T568A / T568B standards."
+    },
+    "time-zone-maps": {
+      "name": "Time Zones",
+      "category": "Quick Reference",
+      "purpose": "A UTC offset reference for coordinating work across sites, surveys, and conference calls: a world map that shows where each one-hour offset band sits, an offset rail with anchor cities for every zone, and a United States table with the standard and daylight abbreviations.",
+      "whyHere": "Scheduling a remote survey, a cutover window, or a call across sites. Find each site's offset and the difference in hours is the time difference between you.",
+      "howToUse": [
+        "Find your site's offset on the rail, then the other site's offset; the difference in hours is the time difference.",
+        "The world map orients you: vertical bands are one-hour offsets and the prime meridian (UTC 0) runs through Greenwich. Tap it to zoom.",
+        "The United States table gives the standard and daylight abbreviations (for example EST in winter, EDT in summer) and notes who skips daylight saving."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Offsets shown are standard time. When a region is on daylight saving, its local clock runs one hour ahead of the listed offset; in the US that window runs from the second Sunday in March to the first Sunday in November.",
+        "Most of Arizona stays on Mountain Standard Time all year, and most of Hawaii does not observe daylight saving. A few zones use half-hour offsets (India UTC +5:30, central Australia UTC +9:30)."
+      ],
+      "source": "Modernized from Keith's International Time Zones laminated reference; offsets reconciled against the current IANA time-zone database."
+    },
+    "phonetic-alphabet": {
+      "name": "Phonetic Alphabet",
+      "category": "Quick Reference",
+      "purpose": "A scannable A to Z reference. Each letter shows its NATO/ICAO spelling word (Alfa, Bravo, Charlie), its international Morse code pattern, its semaphore arm positions, and its international maritime signal flag.",
+      "whyHere": "Spell things out clearly over a noisy radio or phone link, read flag and light signals, or settle whether that was M as in Mike or N as in November.",
+      "howToUse": [
+        "Scan the native table for the letter, its NATO spelling word, and its Morse pattern (dot is a short signal, dash is a long one).",
+        "The embedded plate carries the semaphore arm positions and the colored maritime signal flag for each letter; tap it to zoom.",
+        "Use the copy action to grab the A to Z table as text."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "NATO/ICAO official spelling uses Alfa (not Alpha) and Juliett (double-t) so the words are pronounced correctly across languages.",
+        "Covers A to Z; there are no digit rows. Maritime flag colors are the real international code of signals colors and are intentionally not brand colors."
+      ],
+      "source": "Outside Open phonetic-alphabet poster (v1.2), recreated cleanly; ICAO/NATO spelling, international Morse, semaphore, and the international code of signals flags."
+    },
+    "diffie-hellman": {
+      "name": "Diffie-Hellman",
+      "category": "Quick Reference",
+      "purpose": "How two parties agree on a shared secret over a public channel without ever sending the secret itself, taught through the classic paint-mixing analogy with the real modular-exponentiation math labeled alongside.",
+      "whyHere": "The foundational key exchange behind WPA3. Understanding it explains why SAE resists offline dictionary attacks and never exposes the password to a passive listener.",
+      "howToUse": [
+        "Start with the embedded diagram (tap to zoom): common public paint plus each party's secret color, mixed and exchanged, reaching the same blended secret.",
+        "Read the step-by-step explainer to pair each stage of the analogy with its math (A = g^a mod p, the shared secret B^a mod p = A^b mod p).",
+        "The eavesdropper callout and the Wi-Fi tie-in explain why a passive listener cannot recover either secret."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Mixing paint is easy; un-mixing is effectively impossible. The math equivalent: computing g^a mod p is fast, but recovering a from it (the discrete-logarithm problem) is hard.",
+        "Diffie-Hellman is the basis of SAE (Simultaneous Authentication of Equals), the Dragonfly handshake in WPA3, which replaced WPA2's pre-shared-key 4-way handshake and resists offline dictionary attacks."
+      ],
+      "source": "Standard Diffie-Hellman key exchange and its WPA3 SAE (Dragonfly) application; paint-mixing analogy paired with the modular-exponentiation math."
     }
   }
 }

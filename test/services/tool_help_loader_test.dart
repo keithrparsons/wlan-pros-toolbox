@@ -121,7 +121,7 @@ void main() {
       store = ToolHelpStore.fromJson(raw);
     });
 
-    test('parses to exactly 135 entries', () {
+    test('parses to exactly 140 entries', () {
       // 97 = 95 (origin/main: 93 + Antenna Connectors + Optical Transceivers)
       // + 2 backfilled v1.1 help entries (PLMN ID Reference and the Wi-Fi
       // Authentication Glossary).
@@ -175,7 +175,12 @@ void main() {
       // enrichments in the same pass (the CLI Commands 3-column split and the
       // Wireshark 802.11 filter additions) edit EXISTING screens with existing
       // help ids, so they add no new entries. 133 + 2 = 135.
-      expect(store.count, 135);
+      // 140 = + the 5 NEW Tier-1 references (Pass 2b, 2026-06-12), all new Quick
+      // Reference tiles: Keyboard Shortcuts (keyboard-shortcuts, Encoding),
+      // Cable & Connector (cable-connector, Cabling & Connectors), Time Zones
+      // (time-zone-maps, Time & Formats), Phonetic Alphabet (phonetic-alphabet,
+      // Encoding), and Diffie-Hellman (diffie-hellman, Wi-Fi & RF). 135 + 5 = 140.
+      expect(store.count, 140);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

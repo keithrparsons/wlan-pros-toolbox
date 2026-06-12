@@ -423,6 +423,14 @@ flutter:
     # the folder, so dropping a new <id>.svg in needs no pubspec change.
     - assets/tool-icons/
     - assets/tool-graphics/
+    # Tier-1 reference RASTER images (2026-06-12, Pass 2b) — staged 2x PNGs whose
+    # VISUAL is the content (the world time-zone map, the semaphore + maritime
+    # signal-flag plate, the Diffie-Hellman paint-mixing diagram). Embedded via
+    # Image.asset inside a zoomable card; every fact the image carries is ALSO
+    # present in the screen's native text tables, so the image is decorative for
+    # screen readers. Path convention: assets/reference/<tool-id>.png. Directory
+    # glob, so dropping a new <id>.png needs no pubspec change.
+    - assets/reference/
     # Regulatory authority logos (2026-06-08) — official regulator marks, mixed
     # svg/png; the Regulatory Domains page degrades to an abbreviation badge for
     # any regulator without a bundled logo.

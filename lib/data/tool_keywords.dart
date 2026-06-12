@@ -406,6 +406,28 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'rssi', 'noise', 'snr', 'bssid', 'wireless diagnostics', 'sudo',
   ],
 
+  // ── Tier-1 references (Pass 2b, 2026-06-12) ──
+  'keyboard-shortcuts': <String>[
+    'hotkeys', 'shortcut', 'cmd', 'ctrl', 'terminal', 'powershell', 'zsh',
+    'option key', 'special characters', 'greek letters', 'symbols', 'lambda',
+  ],
+  'cable-connector': <String>[
+    'cat5e', 'cat6', 'cat6a', 'cat7', 'cat8', 'rj45', 't568a', 't568b',
+    'pinout', 'wiring', 'twisted pair', 'crossover', 'poe',
+  ],
+  'time-zone-maps': <String>[
+    'utc', 'gmt', 'offset', 'time difference', 'world clock', 'dst',
+    'daylight saving', 'est', 'pst', 'timezone',
+  ],
+  'phonetic-alphabet': <String>[
+    'nato', 'icao', 'alfa', 'bravo', 'spelling', 'morse code', 'semaphore',
+    'signal flags', 'maritime', 'radio',
+  ],
+  'diffie-hellman': <String>[
+    'dh', 'key exchange', 'paint mixing', 'shared secret', 'sae', 'dragonfly',
+    'wpa3', 'discrete log', 'crypto', 'cryptography', 'modular exponentiation',
+  ],
+
   // ── CLI & Capture sheets ──
   'cli-commands': <String>[
     'ipconfig', 'ifconfig', 'netsh', 'terminal', 'command line', 'windows',
