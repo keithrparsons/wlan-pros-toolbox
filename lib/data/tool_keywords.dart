@@ -304,8 +304,8 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'web error',
   ],
   'frame-exchange': <String>[
-    'association', 'handshake', '4-way', 'auth', 'probe', 'beacon',
-    'frame sequence', 'management frames',
+    'association', 'association sequence', 'handshake', '4-way', 'auth',
+    'probe', 'beacon', 'frame sequence', 'frame exchange', 'management frames',
   ],
   'db-reference': <String>[
     'decibel', 'ratio', 'rule of 3', 'rule of 10', 'log', 'dbm anchors',

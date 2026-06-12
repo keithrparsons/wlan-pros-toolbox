@@ -1,9 +1,9 @@
 {
   "_meta": {
     "title": "Educational Resources",
-    "note": "Educational Resources for the WLAN Pros Toolbox: independent-author and community materials only. Per Keith (2026-06-04) the megavendor/product documentation entries (Apple, Cisco, Aruba/HPE, and the Hamina product docs) are EXCLUDED; the dataset keeps community tools/utilities, independent blogs and experts, podcasts, conference and talk archives, YouTube channels, and training/certification paths. Independent-author entries are included now with permission chased afterward (approval='pending_outreach'); any owner who declines gets removed. Descriptions are Keith's voice (GL-004, SOP-020 PASS). The full vendor-doc set is retained in the source dataset and git history if ever wanted back. Also still held: Wi-Fi For Beginners (site not confirmed live) and frames.bitbucketlabs.com (pending Keith's 1-line description). Curated 2026-06-04. Batch 2026-06-04: appended 5 independent-author entries (SubnetPro, WiFi Analyser, ShankarWiFi, PotatoFi Interactive Spectrum Chart, BadgerWiFi Tools), all approval='pending_outreach'. frames.bitbucketlabs held until ~2026-06-25. 2026-06-06 (BF6-21): removed the two Wi-Fi Design Day entries (Open Reality/Ekahau charge for the videos); they are not kept in the YouTube section.",
-    "last_updated": "2026-06-07",
-    "count": 38,
+    "note": "Educational Resources for the WLAN Pros Toolbox: independent-author and community materials only. Per Keith (2026-06-04) the megavendor/product documentation entries (Apple, Cisco, Aruba/HPE, and the Hamina product docs) are EXCLUDED; the dataset keeps community tools/utilities, independent blogs and experts, podcasts, conference and talk archives, YouTube channels, and training/certification paths. Independent-author entries are included now with permission chased afterward (approval='pending_outreach'); any owner who declines gets removed. Descriptions are Keith's voice (GL-004, SOP-020 PASS). The full vendor-doc set is retained in the source dataset and git history if ever wanted back. Also still held: Wi-Fi For Beginners (site not confirmed live). Curated 2026-06-04. Batch 2026-06-04: appended 5 independent-author entries (SubnetPro, WiFi Analyser, ShankarWiFi, PotatoFi Interactive Spectrum Chart, BadgerWiFi Tools), all approval='pending_outreach'. 2026-06-06 (BF6-21): removed the two Wi-Fi Design Day entries (Open Reality/Ekahau charge for the videos); they are not kept in the YouTube section. 2026-06-12: added Jonathan Davis's Frame Exchange Reference (frames.bitbucketlabs.com) with Keith's description; JD publicly released it 2026-06-12 at Wi-Co NC and invited the community to share it; approval='pending_outreach'.",
+    "last_updated": "2026-06-12",
+    "count": 39,
     "topics": [
       "Tools and utilities",
       "Conference and talk archives",
@@ -666,6 +666,25 @@
         "open-source"
       ],
       "approval": "not_required"
+    },
+    {
+      "id": "frame-exchange-reference",
+      "title": "Frame Exchange Reference",
+      "summary": "Every 802.11 frame from the first Probe Request through to the first encrypted data frame, by security type.",
+      "description": "Jonathan Davis's deep walk-through of the complete 802.11 frame exchange, from the first Probe Request to the first encrypted data frame, across the different security types. Deep detail that stays approachable.",
+      "url": "https://frames.bitbucketlabs.com",
+      "topic": "Independent blogs and experts",
+      "cost": "free",
+      "level": "advanced",
+      "tags": [
+        "802.11",
+        "frames",
+        "association",
+        "security",
+        "reference"
+      ],
+      "approval": "pending_outreach",
+      "notes": "Jonathan Davis publicly released this 2026-06-12 at Wi-Co NC and invited the community to share it; Keith's description, added 2026-06-12. Approval pending owner outreach per the dataset convention for independent authors."
     },
     {
       "id": "dest-mackenziewifi",

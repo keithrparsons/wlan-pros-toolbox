@@ -198,8 +198,10 @@ void main() {
       );
       await tester.pump();
 
-      // App-bar title (renamed per the LOCKED display-title pass).
-      expect(find.text('802.11 Frame Exchange'), findsOneWidget);
+      // App-bar title (renamed to 'Association Sequence' 2026-06-12; id/route
+      // stay 'frame-exchange'). JD's deep external Frame Exchange Reference now
+      // lives in Educational Resources; our in-app tool is the quick reference.
+      expect(find.text('Association Sequence'), findsOneWidget);
       // Default scenario heading + first frame label.
       expect(
         find.text('Open Network / WPA2-Personal Association'),

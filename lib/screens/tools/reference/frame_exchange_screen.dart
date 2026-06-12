@@ -144,7 +144,7 @@ class _FrameExchangeScreenState extends State<FrameExchangeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('802.11 Frame Exchange'),
+        title: const Text('Association Sequence'),
         toolbarHeight: 64,
         // §8.16 — copy the selected scenario's frame sequence as TSV, one
         // section per phase. Static data, always enabled.

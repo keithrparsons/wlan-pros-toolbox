@@ -299,7 +299,9 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text('802.11 Frame Exchange'), findsOneWidget);
+      // AppBar title renamed to 'Association Sequence' 2026-06-12 (id/route
+      // unchanged).
+      expect(find.text('Association Sequence'), findsOneWidget);
       expect(
         find.text('Open Network / WPA2-Personal Association'),
         findsOneWidget,

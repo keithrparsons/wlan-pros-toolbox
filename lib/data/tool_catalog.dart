@@ -930,8 +930,8 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       ),
       ToolEntry(
         id: 'frame-exchange',
-        title: '802.11 Frame Exchange',
-        description: '802.11 association and handshake frame sequences',
+        title: 'Association Sequence',
+        description: 'The 802.11 association sequence, step by step',
         routeName: '/tools/frame-exchange',
         isLive: true,
         subgroup: 'Protocols',
@@ -1591,12 +1591,13 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
     // Material [icon] above if the asset is ever absent from the bundle.
     iconAsset: 'assets/tool-icons/educational-resources.svg',
     exampleToolTitles: <String>['Reference Cards', 'Blogs', 'Podcasts'],
-    // 49 = 11 in-app references (10 PDF cards + Antenna Fundamentals, moved here
-    // 2026-06-06 BF6-3) + 38 online resources (WiFi Training added 2026-06-07
+    // 50 = 11 in-app references (10 PDF cards + Antenna Fundamentals, moved here
+    // 2026-06-06 BF6-3) + 39 online resources (WiFi Training added 2026-06-07
     // under Training Providers; MackenzieWiFi re-added 2026-06-08, site back up
-    // over http). The count-guard test recomputes this from the catalog tool
-    // count + the bundled JSON `_meta.count`.
-    countLabelOverride: '49',
+    // over http; Jonathan Davis's Frame Exchange Reference added 2026-06-12).
+    // The count-guard test recomputes this from the catalog tool count + the
+    // bundled JSON `_meta.count`.
+    countLabelOverride: '50',
     tools: <ToolEntry>[
       // The 6 PDF reference cards.
       ToolEntry(

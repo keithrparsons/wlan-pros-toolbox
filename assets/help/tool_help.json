@@ -966,7 +966,7 @@
       "source": "lib/screens/tools/reference/roaming_screen.dart"
     },
     "frame-exchange": {
-      "name": "802.11 Frame Exchange",
+      "name": "Association Sequence",
       "category": "Quick Reference",
       "purpose": "The frame-by-frame sequences for common association and roaming scenarios, showing the order and direction of frames between the STA, AP, RADIUS server, and DHCP server.",
       "whyHere": "When analyzing a capture or explaining an association/roam, confirm what frame should come next and which entities exchange it.",
