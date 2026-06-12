@@ -55,6 +55,7 @@ import 'package:wlan_pros_toolbox/screens/tools/network/test_my_connection_scree
 import 'package:wlan_pros_toolbox/screens/tools/network/wifi_info_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/channel_map_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/wifi_glossary_screen.dart';
+import 'package:wlan_pros_toolbox/services/glossary/glossary_service.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
@@ -583,7 +584,14 @@ void main() {
     await _capture(
       tester,
       id: 'play-phone-8-glossary',
-      build: () => const WifiGlossaryScreen(),
+      // Inject the service from the real bundled asset (read from disk) so the
+      // capture does not depend on the async rootBundle load settling. English
+      // is the default render. See the S14 note in the book3 capture harness.
+      build: () => WifiGlossaryScreen(
+        service: GlossaryService.fromJson(
+          File('assets/data/glossary.json').readAsStringSync(),
+        ),
+      ),
     );
   });
 

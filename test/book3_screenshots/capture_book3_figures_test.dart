@@ -44,6 +44,7 @@ import 'package:wlan_pros_toolbox/screens/tools/network/net_quality_screen.dart'
 import 'package:wlan_pros_toolbox/screens/tools/network/test_my_connection_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/wifi_info_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/wifi_glossary_screen.dart';
+import 'package:wlan_pros_toolbox/services/glossary/glossary_service.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
@@ -828,12 +829,16 @@ void main() {
       tester,
       figId: 'S14-glossary-channel-lookup',
       height: 1500,
-      build: () => const WifiGlossaryScreen(),
+      // Inject the service built from the REAL bundled asset (read from disk),
+      // so the capture uses the real data without depending on the async
+      // rootBundle load settling — the larger multilingual asset no longer
+      // resolves inside a bare pumpAndSettle. English is the default render.
+      build: () => WifiGlossaryScreen(
+        service: GlossaryService.fromJson(
+          File('assets/data/glossary.json').readAsStringSync(),
+        ),
+      ),
       drive: (t) async {
-        // Let the bundled glossary JSON (rootBundle.loadString) resolve.
-        await t.runAsync(() async {
-          await Future<void>.delayed(const Duration(milliseconds: 300));
-        });
         await t.pumpAndSettle();
         await t.enterText(find.byType(TextField).first, 'channel');
         await t.pumpAndSettle();
