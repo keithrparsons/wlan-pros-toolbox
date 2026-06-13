@@ -16,6 +16,8 @@
 // net_quality and wifi_info are intentionally NOT covered here: they keep their
 // own bespoke help affordance and were deliberately left untouched by the sweep.
 
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -99,6 +101,9 @@ void main() {
   });
 
   group('shared PDF viewer keys the footer to the SPECIFIC card id', () {
+    // PdfReferenceScreen depends on pdfx, which has no Linux implementation
+    // (pdfx is in the "plugins do not support Linux" set). These two tests pass
+    // on macOS/local; skip them only on the Linux CI runner.
     testWidgets('Top 20 checklist card → top-20-checklist help', (t) async {
       await pump(
         t,
@@ -109,7 +114,8 @@ void main() {
         ),
       );
       expectFooterPresentNoAppBarHelp(t);
-    });
+      // pdfx is unsupported on Linux CI; skip there, keep running on macOS/local.
+    }, skip: Platform.isLinux);
     testWidgets('MCS index CARD → mcs-index-card help (distinct id)', (t) async {
       await pump(
         t,
@@ -120,7 +126,8 @@ void main() {
         ),
       );
       expectFooterPresentNoAppBarHelp(t);
-    });
+      // pdfx is unsupported on Linux CI; skip there, keep running on macOS/local.
+    }, skip: Platform.isLinux);
   });
 
   group('checklist screen keys the footer to the SPECIFIC checklist id', () {
