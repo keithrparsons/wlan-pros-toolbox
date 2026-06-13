@@ -1204,7 +1204,9 @@ void main() {
       // The event was demultiplexed to the right type and folded in.
       expect(result['192.168.1.42']?.name, 'Living Room');
       expect(result['192.168.1.42']?.services, contains('_sonos._tcp'));
-    });
+      // Exercises the production EventChannel transport (NWBrowser native seam),
+      // which has no Linux implementation; skip on the Linux CI runner only.
+    }, skip: Platform.isLinux);
 
     test('back-to-back browses each open and cancel exactly one stream',
         () async {
@@ -1220,7 +1222,8 @@ void main() {
 
       expect(listenCount, 2); // one per browse, never one-per-type
       expect(cancelCount, 2);
-    });
+      // Same production EventChannel transport seam — skip on Linux CI only.
+    }, skip: Platform.isLinux);
 
     tearDown(() {
       messenger.setMockMethodCallHandler(MethodChannel(channel, codec), null);
