@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-06-09 · covers 128 tools · app v1.4.0_
+_Compiled 2026-06-12 · covers 138 tools · app v1.5.0_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -15,9 +15,9 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Coordinates & GPS (4)
   - Conversions (4)
   - Utilities & Generators (2)
-- **Quick Reference** (50 tools)
-  - Wi-Fi & RF (13)
-  - Cabling & Connectors (11)
+- **Quick Reference** (55 tools)
+  - Wi-Fi & RF (19)
+  - Cabling & Connectors (10)
   - Protocols (8)
   - Encoding (2)
   - CLI & Capture (3)
@@ -25,6 +25,7 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Guides (2)
   - Reference Cards (11)
   - Other (2)
+- **Field conveniences** (handy reference, not curriculum)
 
 
 ---
@@ -1407,7 +1408,7 @@ Turns any text or URL you type into a scannable QR code, then lets you share or 
 **Why it's here.** Handing off a config URL, a guest Wi-Fi link, or a site address without making someone type it. Generate the code on the spot and let them scan it with a phone camera.
 
 **How to use**
-1. Type the text or URL you want to encode.
+1. Type the text or URL you want to encode, or switch to Wi-Fi mode to build a "scan to join" network code.
 2. The QR code renders live as you type.
 3. Tap Share / Save to send the image through the system share sheet or save it.
 
@@ -1416,6 +1417,7 @@ Turns any text or URL you type into a scannable QR code, then lets you share or 
 | Input | Unit | Range |
 |---|---|---|
 | Text or URL | any string | empty input shows a prompt and renders no code |
+| Wi-Fi (scan-to-join) | SSID, password, auth (WPA/WEP/open), hidden flag | builds the standard WIFI: payload iOS Camera and Android scanners honor as a join offer |
 
 **Formula or method.** The code is generated locally with no network call. It renders as dark modules on a white background with a 4-module quiet zone, which is what scanners expect. Share / Save captures that white tile to a PNG. (qr_generator_screen.dart)
 
@@ -1426,8 +1428,9 @@ Turns any text or URL you type into a scannable QR code, then lets you share or 
 - The white border around the code is the quiet zone, and it is part of the code. Do not crop it out when you share the image, or the QR may not scan.
 - Everything happens on the device. The text you encode never leaves the app except through the share sheet you trigger.
 - Encodes plain text and URLs. It is a generator, not a scanner, so it makes codes rather than reading them.
+- Wi-Fi scan-to-join mode builds the de-facto-standard WIFI:T:<auth>;S:<ssid>;P:<password>;H:<true|false>;; payload (the ZXing format Apple and Google honor). Special characters in the SSID or password are backslash-escaped, and hex-looking or space-padded values are double-quoted, so a code that scans on your phone scans on the guest's too. Open networks use nopass and omit the password field.
 
-_Source: qr_generator_screen.dart_
+_Source: qr_generator_screen.dart / wifi_qr.dart_
 
 
 ---
@@ -1437,7 +1440,7 @@ _Source: qr_generator_screen.dart_
 Offline lookup tables and the laminated field cards. Channel plans, standards, thresholds, connector and cabling pinouts, protocol references, CLI and capture cheat sheets, checklists, and guides, all available without a connection.
 
 
-## Wi-Fi & RF (13)
+## Wi-Fi & RF (19)
 
 
 ### 802.11 Standards
@@ -1562,6 +1565,52 @@ Look up the channel/frequency plans of the common non-Wi-Fi radios that share or
 _Source: lib/screens/tools/reference/non_wifi_channels_screen.dart_
 
 
+### RF Bands
+
+A frequency map of where the common wireless technologies live in the spectrum, low to high: RFID, GPS/GNSS, cellular, the 2.4 GHz ISM crowd, and Wi-Fi across all its bands. Five spectrum neighborhoods, each with its band rows, plus a region-variance list for the bands where "what operates where" changes by regulator. A log-scale spectrum-bar plate sits at the top.
+
+**Why it's here.** You design inside three or four Wi-Fi bands, but those bands have neighbors, and the neighbors are who you fight for airtime and chase for interference. This is the one screen that shows the whole map so you can see what sits just upstairs and downstairs of your channels: C-band 5G right below 6 GHz, the sub-GHz IoT radios under 2.4, the microwave oven leaking at 2.45.
+
+**How to use**
+1. Read top to bottom, low frequency to high. Each neighborhood card carries its band rows and a one-line takeaway on why those radios cluster there.
+2. The Wi-Fi rows carry the single lime accent so your home turf stands out inside each crowded band.
+3. The warning-toned region-variance list at the bottom is the part that bites: 6 GHz, sub-GHz ISM, Z-Wave center, HaLow, UHF RFID, 2.4 GHz channel count, 60 GHz WiGig, and 5 GHz DFS all change by regulator.
+
+**Field notes**
+- This is a frequency map, not a channel plan and not a security chart. Every band edge is a nominal allocation, not a guaranteed-clear channel. Local power limits, DFS, and licensing constrain real use further.
+- The single highest-stakes variance for a Wi-Fi pro is 6 GHz: the US runs the full 5.925 to 7.125 GHz (1.2 GHz), the EU opened only 5.945 to 6.425 GHz (the lower 480 MHz), and some regions have not opened 6 GHz at all. Never assume the upper 6 GHz exists outside the US.
+- The 2.4 GHz neighborhood is the most contested on the chart: Wi-Fi, Bluetooth/BLE, Zigbee/Thread, and microwave ovens all sit on top of each other in 83.5 MHz. That is why only 1/6/11 are non-overlapping in North America.
+- 5G NR FR1 runs right up to about 7.125 GHz, so its C-band is the immediate downstairs neighbor of 6 GHz Wi-Fi, and FR2 mmWave shares the 24 GHz neighborhood with the 24 GHz ISM band.
+- The spectrum-bar plate is a dark-baked diagram (decorative for screen readers); every fact in it is also in the native tables, so the screen reads end-to-end without the image.
+- Data source: every load-bearing figure cross-verified against at least two independent sources (see the screen's DATA provenance). US/FCC default; region splits are called out explicitly.
+
+_Source: lib/screens/tools/reference/rf_bands_screen.dart / rf_bands_data.dart_
+
+
+### Wi-Fi HaLow
+
+A per-section reference for IEEE 802.11ah, Wi-Fi moved down into the sub-1-GHz ISM bands for IoT: what it is, bands by region, channel widths, the headline numbers, a single-stream MCS rate table, power features, PHY/MAC, use cases, a comparison against the other IoT radios, and 2026 maturity. A channel-width plate compares HaLow's 1 to 16 MHz channels against a 20 MHz Wi-Fi channel.
+
+**Why it's here.** HaLow is the Wi-Fi most Wi-Fi pros have never touched, and it is full of confidently-wrong numbers online. This is the honest read: it trades raw speed for about 1 km range, multi-year battery life, and thousands of devices per AP, while keeping native IP and WPA3. When a client asks "should we use HaLow for the sensor network," you want the real ceiling and the real caveats, not a vendor slide.
+
+**How to use**
+1. Read the region-lock banner first, it is the load-bearing fact. Frequency and channel width are set by each regulator, so a device certified for one region cannot legally run in another.
+2. Work down through the cards: headline numbers, bands by region (with a confidence tag on the secondary-source rows), channel widths, the MCS rate table, then power, PHY/MAC, use cases, and the comparison.
+3. The MCS table's peak cell (MCS 9, 256-QAM, 16 MHz, short guard interval) carries the lime accent: that is the 86.7 Mbps headline.
+
+**Formula or method.** The clean mental model: the 802.11ac PHY clocked at one tenth. Same OFDM machinery, ten times slower clock, so symbols are 10x longer (more robust over distance and multipath) and rates land at about a tenth of 802.11ac. Capacity comes from a 13-bit Association ID (2^13 minus 1 = 8,191 devices per AP) plus a hierarchical TIM. Power efficiency comes from Target Wake Time, Restricted Access Window, Extended Max Idle, non-TIM mode, and short MAC headers.
+
+**Field notes**
+- The defensible single-stream maximum is 86.7 Mbps (MCS 9, 256-QAM, 16 MHz, SGI), from the Wi-Fi Alliance overview. Use that number, NOT the contested 433.3 Mbps. Wikipedia's 433 figure is a 4-spatial-stream claim, but a 4x scaling of the WFA figure is about 347 Mbps, and first-generation HaLow silicon is single-stream. The far edge of the cell drops to about 150 kbps.
+- HaLow does NOT use 2.4, 5, or 6 GHz. Lower frequencies travel farther for the same power, which is the entire reason it exists. Even the widest HaLow channel (16 MHz) is narrower than the minimum 20 MHz 2.4 GHz Wi-Fi channel; narrow channels concentrate energy, which is how it reaches farther.
+- Bands by region: US 902 to 928 MHz (widest, full 1 to 16 MHz channels), EU 863 to 868 MHz (narrow, duty-cycle limited, 1/2 MHz only), AU/NZ 915 to 928 MHz. Japan, Korea, China, and Singapore carry a Medium-confidence tag because they come from secondary technical sources, not the WFA doc.
+- Where it sits: more range and device count than BLE, Zigbee, and Z-Wave, and more data rate plus native IP than LoRaWAN, Sigfox, and NB-IoT. It does not match LoRa/Sigfox/NB-IoT for multi-kilometer range, and unlike carrier NB-IoT it needs its own AP infrastructure. Its strongest case is replacing short-range mesh radios with longer reach and direct IP, and carrying video where LoRa/Zigbee cannot.
+- Maturity (2026): certified and shipping, with Morse Micro the clear silicon leader (MM6108, MM8108) and sub-$130 developer gateways (HaLowLink 1 at $99, HaLowLink 2 at $129). It is early-mainstream, NOT yet mass-deployed like Zigbee or BLE. "HaLow replaced Zigbee" is a roadmap claim, not a 2026 fact.
+- The channel-width plate is a dark-baked diagram (decorative for screen readers); every fact is also in the native tables.
+
+_Source: lib/screens/tools/reference/wifi_halow_screen.dart / wifi_halow_data.dart_
+
+
 ### PoE Reference
 
 Power-over-Ethernet reference: the 802.3 PoE standards (PSE/PD power, powered pairs, class range) and the PD power classes (0 to 8) with max power at the device.
@@ -1641,6 +1690,25 @@ A per-band fact sheet for the three Wi-Fi bands: total usable spectrum, supporte
 _Source: lib/screens/tools/reference/spectrum_screen.dart_
 
 
+### Wi-Fi Glossary
+
+Plain-language definitions of 92 Wi-Fi terms a working engineer meets, grouped by topic and searchable live across the term, abbreviation, and definition. The same data-driven, grouped, searchable screen as the authentication glossary, with the general Wi-Fi dataset.
+
+**Why it's here.** When a term in a config screen, a log, or a standards document is the thing standing between you and understanding what is happening. It answers what a term means in Wi-Fi terms, in Keith's voice, without a vendor's slant.
+
+**How to use**
+1. Browse the terms grouped by category, or type in the search box to filter live.
+2. Each entry shows the full term, its abbreviation when it has one, and a definition written for working engineers.
+3. Use the copy action to grab the current view (the filtered subset when searching, otherwise the full list).
+
+**Field notes**
+- Multilingual: the glossary screen carries the term definitions and, where the dataset provides them, translated entries, so a non-English-first engineer can read the same definition in their own language. The English definitions remain the source of truth.
+- Vendor-neutral by design. Definitions describe standards-based behavior, not one vendor's implementation.
+- Data source: the curated 92-term Wi-Fi Glossary; the bundled JSON is the source of truth. The Wi-Fi Authentication Glossary below is the security-focused sibling with its own dataset.
+
+_Source: lib/screens/tools/reference/wifi_glossary_screen.dart_
+
+
 ### Wi-Fi Authentication Glossary
 
 Plain-language definitions of the Wi-Fi authentication terms, 58 of them, that a network or security pro actually meets: the 802.1X / EAP framework, RADIUS and AAA, WPA2 / WPA3 and SAE, PSK and Enterprise modes, certificates, and the supporting acronyms. Each entry pairs the full term and its abbreviation with a definition written for working engineers, grouped by topic.
@@ -1704,7 +1772,66 @@ A matrix of Wi-Fi security modes (WEP through WPA3-Enterprise) with encryption, 
 _Source: lib/screens/tools/reference/wpa_security_screen.dart_
 
 
-## Cabling & Connectors (11)
+### Diffie-Hellman
+
+The Diffie-Hellman key exchange taught by colors: a staged paint-mixing analogy paired with the real modular-exponentiation math, then tied to WPA3 SAE. A paint-mixing diagram sits at the top.
+
+**Why it's here.** SAE is the heart of WPA3, and SAE is Diffie-Hellman wearing a Wi-Fi hat. If you understand how two parties reach a shared secret over a public channel without ever sending their private values, you understand why WPA3 resists the offline dictionary attacks that broke WPA2-PSK. This is the read-first explainer for that.
+
+**How to use**
+1. Read the paint analogy and the matching math side by side: public base g and modulus p are the common paint; each party's private exponent is their secret color; the mixtures (g^a mod p and g^b mod p) are public; both sides reach the same blend.
+2. The eavesdropper row is the point: a passive listener sees the common paint and both mixtures and still cannot un-mix them. Recovering a private exponent is the discrete-logarithm problem, which is hard.
+
+**Formula or method.** Public parameters: base g, modulus p. Alice computes A = g^a mod p and sends it; Bob computes B = g^b mod p and sends it. Alice then computes s = B^a mod p, Bob computes s = A^b mod p, and both equal (g^a)^b mod p = (g^b)^a mod p, the shared secret. Mixing is easy (one-way); un-mixing (the discrete log) is hard, which is the security.
+
+**Field notes**
+- The Wi-Fi tie-in is the whole reason this is in the kit: Diffie-Hellman is the basis of SAE (Simultaneous Authentication of Equals), the Dragonfly handshake in WPA3. It replaced the WPA2 pre-shared-key 4-way exchange and resists offline dictionary attacks, because the password is never exposed to a passive listener.
+- The diagram is a dark-baked plate (decorative for screen readers); the analogy, the math, and the WPA3 note all live in the native text too, so the screen reads without the image.
+- This is a fundamentals explainer, not a calculator. It does not do the modular arithmetic for you; it teaches the shape so SAE stops being a black box.
+
+_Source: lib/screens/tools/reference/diffie_hellman_screen.dart / diffie_hellman_data.dart_
+
+
+### Apple Wi-Fi Support Tips
+
+Apple's own Wi-Fi support guidance distilled into four sections: recommended router/Wi-Fi settings for Apple devices, how to run Wireless Diagnostics on a Mac, the Option-click Wi-Fi menu, and iOS/iPadOS Wi-Fi troubleshooting steps. Each section links to the Apple article it came from.
+
+**Why it's here.** Most of the clients you support carry Apple gear, and Apple publishes specific Wi-Fi guidance that engineers either ignore or never find. This is that guidance in one place: what Apple actually recommends for router settings, how to pull diagnostics off a Mac, and the iOS triage path, with the source articles one tap away.
+
+**How to use**
+1. Read the four sections; each carries a tappable link chip to the Apple support article it was distilled from.
+2. The Option-click menu section links straight to the macOS Menu-Bar Wi-Fi companion, which owns the per-field "what each RF value means" detail.
+3. If a link fails to open, the screen shows the full URL so you can copy it.
+
+**Field notes**
+- Honesty bits carried on-screen, not hidden: Apple is silent on transmit power (so the tool does not invent a figure), and the iOS troubleshooting steps come from a single Apple source, which is flagged. Keith's own domain note is attributed to Keith, not to Apple.
+- This is reference guidance, not a live read of the device. For the live association detail on a Mac, use Wi-Fi Information or macOS Menu-Bar Wi-Fi.
+- Data source: Apple's Wi-Fi support documentation, compile-time const and footnoted to Apple support URLs.
+
+_Source: lib/screens/tools/reference/apple_wifi_tips_screen.dart / apple_wifi_tips_data.dart_
+
+
+### macOS Menu-Bar Wi-Fi
+
+The RF data a Wi-Fi pro can pull from a stock Mac without a third-party app, across four built-in paths: the Option-click Wi-Fi menu, sudo wdutil info, the Wireless Diagnostics app, and the Shortcuts "Get Network Details" action. This screen owns the per-field "what each RF value means" reference.
+
+**Why it's here.** Before you reach for any third-party Wi-Fi app on a Mac, the OS already exposes most of what you need: live RSSI, noise, channel, width, PHY, Tx rate. Knowing the four built-in paths and what each field means turns any borrowed Mac into a usable Wi-Fi read. This is the reference that names them and decodes the fields.
+
+**How to use**
+1. Start with the four-path overview: what each path gives you and whether it needs sudo.
+2. Section A decodes the Option-click Wi-Fi menu fields (what each live value means and why a pro cares). Section B walks the wdutil info Wi-Fi block. Section C lists the Wireless Diagnostics Window-menu tools. Section D covers the Shortcuts "Get Network Details" action.
+3. Hold Option and click the Wi-Fi menu-bar icon to see the live association detail inline, no app required.
+
+**Field notes**
+- The load-bearing honesty note: sudo wdutil info masks the RF values unless you run it with sudo. Without sudo you get a redacted block; with sudo you get the unmasked RSSI/noise/MCS. The callout states this plainly.
+- Standing Keith decision, carried on-screen: the airport CLI is removed on current macOS and is NOT documented as usable. Do not reach for it.
+- The Shortcuts "Get Network Details" action is the one path that exposes RF fields an app cannot otherwise read, and it works on iOS too. It is the same bridge the Wi-Fi Information tool uses.
+- Data source: distilled from Apple docs plus corroborating sources, verified live 2026-06-12. Reference text only, never executed.
+
+_Source: lib/screens/tools/reference/macos_menubar_wifi_screen.dart / macos_menubar_wifi_data.dart_
+
+
+## Cabling & Connectors (10)
 
 
 ### Antenna Connectors
@@ -1748,42 +1875,23 @@ A coaxial cable reference: impedance, velocity factor, outer diameter, maximum u
 _Source: lib/screens/tools/reference/coax_cable_screen.dart_
 
 
-### Ethernet Cable
+### Ethernet Cable & Connector
 
-Twisted-pair Ethernet cable categories (Cat5e through Cat8) with bandwidth, max speed, distance at 1G/10G, PoE support, shielding, and typical use.
+The consolidated twisted-pair reference in one tool: the Cat5e-through-Cat8 capability chart (bandwidth, max speed, distance at 1G/10G, PoE support, shielding, typical use) plus the T568A/T568B RJ-45 pinout. Merged 2026-06-12 from the former separate Ethernet Cable, Ethernet Pinout, and cable-connector tiles (Keith: "all three into one"). Twisted-pair side only; coax has its own Coax Cable tool.
 
-**Why it's here.** When choosing cable for a run, confirm a category's bandwidth, 10G reach, and PoE++ suitability (notably the Cat6A-for-PoE++ recommendation).
+**Why it's here.** When you are choosing cable for a run and then terminating it, you want the category capability and the pin colors in one place, not two. Confirm a category's bandwidth and 10G reach, the PoE++ suitability (notably the Cat6A-for-PoE++ recommendation), and which color goes on which pin, without flipping tools.
 
 **How to use**
-1. Scroll the table horizontally. "N/A" in a distance column means that rate isn't supported (e.g. Cat5e has no 10G distance).
-2. Key facts: Cat6 hits 10G only to 55 m; Cat6A hits 10G to the full 100 m and supports all 802.3bt; Cat8 carries 1G/10G to 100 m but its 25/40G design rate is limited to ~30 m.
+1. Cat capability chart: scroll horizontally. "N/A" in a distance column means that rate isn't supported (e.g. Cat5e has no 10G distance). Key facts: Cat6 hits 10G only to 55 m; Cat6A hits 10G to the full 100 m and supports all 802.3bt; Cat8 carries 1G/10G to 100 m but its 25/40G design rate is limited to about 30 m.
+2. T568 pinout: pick the standard (T568B is the default and most common). View is "plug face, clip down, pin 1 on the left." Striped wires show a split swatch (color over white), and the swatch colors are real copper-pair colors, not UI theme. T568A and T568B differ only in swapping the green and orange pairs.
 
 **Field notes**
-- What it shows: per category (Cat5e, Cat6, Cat6A, Cat7, Cat7A, Cat8): max bandwidth (MHz), max speed, distance at 1 Gbps, distance at 10 Gbps, PoE support, shielding, and a typical-use note.
-- Footnote PoE++ tip: bundled Cat6 running PoE++ generates significant heat; Cat6A dissipates it better; TIA-568 recommends Cat6A for PoE++ in bundles.
-- Cat7/Cat7A use non-standard plugs ("Specialty"). The PWA's em-dash "not applicable" cells are rendered as ASCII "N/A" (no em dash). Standard reference, not region-specific.
-- Data source: ported verbatim from the rf-tools-pwa ethernet tool (ETH_DATA); reflects the TIA-568 / ISO cabling categories. The footnote cites TIA-568's recommendation of Cat6A for PoE++ in cable bundles (heat dissipation).
+- Cat chart: per category (Cat5e, Cat6, Cat6A, Cat7, Cat7A, Cat8) it shows max bandwidth (MHz), max speed, distance at 1 Gbps, distance at 10 Gbps, PoE support, shielding, and a typical-use note. Cat7/Cat7A use non-standard plugs (the ISO/IEC Class-F caveat), so they are flagged "Specialty." Em-dash "not applicable" cells from the original source are rendered as ASCII "N/A".
+- PoE++ tip: bundled Cat6 running PoE++ generates significant heat; Cat6A dissipates it better, so TIA-568 recommends Cat6A for PoE++ in bundles.
+- Pinout: each standard's eight pin rows show the pin number, a wire-color swatch and name (e.g. "Orange / White"), the twisted-pair number (1 to 4), and the 100/1000 Base-T function (TX+, RX-, BI-D A+, etc.). A crossover cable uses T568A on one end and T568B on the other, rarely needed today since most switches/NICs auto-MDI-X.
+- Standard reference (TIA-568 / ISO 11801), not region-specific. The tool keeps the id ethernet-cable and its route/icon after the merge.
 
 _Source: lib/screens/tools/reference/ethernet_cable_screen.dart_
-
-
-### Ethernet Pinout
-
-The T568A and T568B RJ-45 wiring standards: pin number, wire color, twisted pair, and 100/1000 Base-T signal function.
-
-**Why it's here.** When terminating or testing a cable, confirm which color goes on which pin for the chosen standard, and what each pin carries.
-
-**How to use**
-1. Pick the standard (T568B is the default and most common). View is "plug face, clip down, pin 1 on the left."
-2. Striped wires show a split swatch (color over white). The swatch colors are real copper-pair colors (data, not UI theme).
-3. T568A and T568B differ only in swapping the green and orange pairs.
-
-**Field notes**
-- What it shows: a T568B / T568A toggle. Each standard's eight pin rows show the pin number, a wire-color swatch and name (e.g. "Orange / White"), the twisted-pair number (1 to 4) with a pair-color swatch, and the 100/1000 Base-T function (TX+, RX−, BI-D A+, etc.).
-- Footnote: applies to Cat5/5e/6/6A/7/8; a crossover cable uses T568A on one end and T568B on the other, rarely needed today since most switches/NICs auto-MDI-X. Standard reference, not region-specific.
-- Data source: TIA-568 wiring standards (T568A/T568B); ported verbatim from the rf-tools-pwa pinout tool (PINOUT, pairColors).
-
-_Source: lib/screens/tools/reference/ethernet_pinout_screen.dart_
 
 
 ### Fiber Optic
@@ -2290,39 +2398,41 @@ _Source: lib/screens/tools/command/linux_wlan_commands_screen.dart_
 
 ### Network CLI Commands
 
-A side-by-side Windows vs macOS/Linux command reference for the everyday network-troubleshooting tasks (reachability, path tracing, DNS, interface config, sockets, ARP, routing, Wi-Fi link state), each with the field-common flags.
+A three-column Windows, macOS, and Linux command reference for the everyday network-troubleshooting tasks (reachability, path tracing, DNS, interface config, sockets, ARP, routing, Wi-Fi link state), each with the field-common flags. A trailing Linux-only "shell essentials" group covers the capture-rig / WLAN Pi context.
 
-**Why it's here.** You're at a client site on whatever laptop is in front of you and need the right command for this OS without looking it up: "what's the macOS equivalent of ipconfig /all," "how do I see the connected SSID/BSSID/RSSI from the CLI on Windows."
+**Why it's here.** You're at a client site on whatever laptop is in front of you and need the right command for this OS without looking it up: "what's the macOS equivalent of ipconfig /all," "how do I see the connected SSID/BSSID/RSSI from the CLI on Windows," "what's the Linux version on the WLAN Pi."
 
 **How to use**
-1. One card per task. Each card shows the Windows command (lime), the macOS/Linux equivalent, a one-line description, and a flag subset.
-2. Filter by command name or task (e.g. "ping" or "DNS"). Where a platform has no native command, the card says so honestly rather than blanking.
+1. One card per task. Each card shows the Windows command, the macOS command, and the Linux command in three separate columns, plus a one-line description and a flag subset. Where macOS and Linux genuinely match, they read identically; where they diverged, each column carries its own command.
+2. Filter by command name or task (e.g. "ping" or "DNS"). Where a platform has no native command, the card says so honestly rather than blanking. WLAN-relevant tasks lead.
 
-**Example.** Commands as shipped (Task | Windows | macOS/Linux | key flags): Reachability/RTT via ICMP echo | ping host | ping host | -t (Win: continuous), -n count (Win), -l size (Win), -c count (nix), -s size (nix), -i interval (nix). Trace L3 path | tracert host | traceroute host | -d (Win: no resolve), -h max (Win), -n (nix), -m max (nix), -I (nix: ICMP), -T (Linux: TCP SYN), -P proto (macOS). Ping+traceroute over time | pathping host | mtr host | -n, -q num (pathping). DNS query legacy | nslookup name | nslookup name | -type=MX, server. DNS query full detail | (no native command) | dig name | +short, -x addr, @server, type. Interface IP config | ipconfig /all | ifconfig | /all, /release, /renew, /flushdns, ip addr (Linux), ipconfig getifaddr en0 (macOS). Active connections | netstat -ano | netstat -an | -a, -n, -o (Win PID), -r, -p proto. ARP cache | arp -a | arp -a | -a, -d addr, -s addr mac. Device hostname | hostname | hostname | -f (nix FQDN). IP routing table | route print | netstat -rn | print (Win), -rn (nix), ip route (Linux). NetBIOS-over-TCP name table | nbtstat -A addr | (no native command) | -A addr, -n. Connected Wi-Fi interface state | netsh wlan show interfaces | wdutil info | show interfaces (Win), show profiles, show networks mode=bssid, show wlanreport, show drivers, wdutil info (macOS, sudo).
+**Example.** Commands as shipped (Task | Windows | macOS | Linux | key flags): Connected Wi-Fi interface state | netsh wlan show interfaces | wdutil info (sudo for full RF) | iw dev wlan0 link | show interfaces (Win), sudo wdutil info (macOS, unmasked RF), iw dev wlan0 link (Linux). List visible Wi-Fi networks | netsh wlan show networks mode=bssid | wdutil info | iw dev wlan0 scan (sudo) | (macOS removed the airport CLI). Reachability/RTT via ICMP echo | ping host | ping host | ping host | -t (Win continuous), -n count (Win), -c count (nix), -i interval. Trace L3 path | tracert host | traceroute host | traceroute host | -d (Win), -m max (nix), -I (nix ICMP), -T (Linux TCP SYN). DNS query full detail | (no native command) | dig name | dig name | +short, -x addr, @server. Interface IP config | ipconfig /all | ifconfig | ip addr | /all, /release, /renew, /flushdns. Active connections | netstat -ano | netstat -an | ss -tunap | -a, -n, -o (Win PID). ARP cache | arp -a | arp -a | ip neigh | -a, -d addr. IP routing table | route print | netstat -rn | ip route | print (Win), -rn (macOS).
 
 **Field notes**
+- The 3-column split (2026-06-12) is deliberate: macOS and Linux have diverged enough (ifconfig vs ip, netstat vs ss, DHCP renew, flush DNS) that folding them into one "macOS/Linux" column would ship a wrong command on one of the two platforms. Where they are identical, the two columns simply read the same.
 - The in-app caveat warns that some commands need administrator/sudo rights and that the flags shown are the field-common subset, not exhaustive.
-- The in-app footnote notes that ifconfig, route, and arp are legacy on Linux (modern distros prefer the iproute2 suite: ip addr, ip route, ip neigh); on macOS use wdutil info (sudo) or the Wireless Diagnostics app for Wi-Fi link details; and netsh wlan is Windows only.
-- Source / basis: targets Windows and macOS/Linux. Dataset is the Pax research deliverable (pax-research-7-additions.md, "Network CLI Commands"), sourced from Linux man-pages, Microsoft Learn, and Apple docs. Per a Keith decision (2026-05-30) the macOS Wi-Fi entry shows only wdutil info; the deprecated airport CLI was removed entirely.
+- The in-app footnote notes that ifconfig, route, arp, iwconfig, and netstat are legacy on Linux (modern distros prefer the iproute2 suite: ip addr, ip route, ip neigh, iw, ss); on macOS use wdutil info (sudo) or the Wireless Diagnostics app for Wi-Fi link details; and netsh wlan is Windows only.
+- Source / basis: data consolidated from Keith's Network CLI sheet plus the WLAN Pros Linux cheat sheets, reconciled against current Windows/macOS/Linux docs. Per a Keith decision (2026-05-30) the macOS Wi-Fi entry shows only wdutil info; the deprecated airport CLI was removed entirely.
 
 _Source: lib/screens/tools/command/cli_commands_screen.dart_
 
 
 ### Wireshark 802.11 Filters
 
-Copy-ready Wireshark display filters (typed into the filter bar after capture) and capture filters (BPF syntax, applied during capture) for 802.11 analysis: frame type/subtype, addressing, BSSID/SSID, RadioTap metadata, and RSN cipher/AKM selectors.
+Copy-ready Wireshark display filters (typed into the filter bar after capture) and capture filters (BPF syntax, applied during capture) for 802.11 analysis: frame type/subtype, addressing, BSSID/SSID, RadioTap metadata, and RSN cipher/AKM selectors. Now also carries the 802.11 status-code and reason-code lookup tables next to the filters, so the moment a filter surfaces a deauth or a failed assoc, the code's meaning is right there.
 
-**Why it's here.** You have a capture open and need the exact display-filter field to isolate deauths, beacons, a specific BSSID, or a security cipher, without guessing field names from memory.
+**Why it's here.** You have a capture open and need the exact display-filter field to isolate deauths, beacons, a specific BSSID, or a security cipher, without guessing field names from memory. Then, once the deauth is on screen, you need to know what reason code 15 actually means without leaving the tool.
 
 **How to use**
 1. Filters are grouped; filter the list by syntax or task, and a group-label match surfaces the whole group.
 2. The syntax is selectable for copy.
+3. Below the filters, the status-code and reason-code tables list the highest-frequency 802.11 codes: status codes appear in Auth/Assoc responses; reason codes appear in Deauth/Disassoc frames.
 
 **Example.** Filters as shipped. Frame type/subtype (display): wlan.fc.type == 0 (all management), == 1 (all control), == 2 (all data); wlan.fc.type_subtype == 0 (Assoc req), 1 (Assoc resp), 2 (Reassoc req), 3 (Reassoc resp), 4 (Probe req), 5 (Probe resp), 8 (Beacon), 9 (ATIM), 10 (Disassoc), 11 (Auth), 12 (Deauth), 13 (Action), 24 (Block Ack Req), 25 (Block Ack), 26 (PS-Poll), 27 (RTS), 28 (CTS), 29 (Ack), 36 (Null data), 40 (QoS data), 44 (QoS Null). Address (display): wlan.addr == aa:bb:cc:dd:ee:ff (any field), wlan.ta, wlan.ra, wlan.sa, wlan.da. BSSID/SSID: wlan.bssid == ..., wlan.ssid == "MyNetwork", wlan.ssid contains "Guest". RadioTap: radiotap.channel.freq == 2412, radiotap.datarate >= 6, radiotap.dbm_antsignal > -70, radiotap.dbm_antnoise < -90, radiotap.channel.freq >= 2400 && < 2500 (2.4 GHz), >= 5000 && < 5900 (5 GHz), >= 5925 && <= 7125 (6 GHz). Capture filter (BPF): type mgt, type ctl, type data, type mgt subtype beacon, type mgt subtype probe-req, type mgt subtype deauth, type ctl subtype rts, type ctl subtype ack, wlan host aa:bb:cc:dd:ee:ff. RSN cipher (display): wlan.rsn.pcs.type == 4 (CCMP-128, 00-0F-AC:4), == 8 (GCMP-128, 00-0F-AC:8), == 9 (GCMP-256, 00-0F-AC:9), wlan.rsn.gcs.type == 2 (group cipher TKIP, 00-0F-AC:2). RSN AKM (display): wlan.rsn.akms.type == 1 (802.1X, 00-0F-AC:1), == 2 (PSK, 00-0F-AC:2), == 8 (SAE / WPA3-Personal, 00-0F-AC:8), == 18 (OWE, 00-0F-AC:18).
 
 **Field notes**
 - In-app caveat: display-filter field names match Wireshark's dfref; capture filters use libpcap/BPF "type/subtype" syntax and only work when capturing with a RadioTap/PPI header.
-- In-app footnote: type_subtype is the combined value (type in the high bits, subtype in the low bits) matching IEEE 802.11 frame type/subtype assignments; capture filters require capturing with a RadioTap header (monitor mode); for the full RSN cipher/AKM number-to-name map, see the RSN groups or the WPA Security reference tool.
+- In-app footnote: type_subtype is the combined value (type in the high bits, subtype in the low bits) matching IEEE 802.11 frame type/subtype assignments; capture filters require capturing with a RadioTap header (monitor mode); for the full RSN cipher/AKM number-to-name map, see the RSN groups or the WPA Security reference tool. The bundled status-code and reason-code tables list the highest-frequency 802.11 codes only (the full tables live in the 802.11 Reason Codes reference tool).
 - FLAGGED (intentional, not a defect): two deliberate corrections are baked in from the source code header. (1) The RSN cipher-suite vs AKM tables were rebuilt from IEEE 802.11-2020 Tables 9-149 (cipher = wlan.rsn.pcs.type / wlan.rsn.gcs.type) and 9-151 (AKM = wlan.rsn.akms.type) because the original source card mislabeled cipher values as AKM. (2) The 5 GHz/2.4 GHz/6 GHz band filters ship a deliberate SAFE FALLBACK using documented radiotap.channel.freq ranges instead of the unverified radiotap.channel.flags.5ghz child-token. Band-edge detail: the 5 GHz range stops at < 5900 and the 6 GHz range starts at >= 5925, so center frequencies in the 5900 to 5924 MHz gap fall into neither band filter. This matches the shipped code exactly and is intentional.
 - Source / basis: targets Wireshark display-filter (dfref) and libpcap/BPF capture-filter conventions. Dataset is the Pax research deliverable (pax-research-7-additions.md, "Wireshark 802.11 Filters"), sourced from the Wireshark dfref, the RadioTap dfref, pcap-filter(7), and IEEE 802.11-2020.
 
@@ -2661,3 +2771,14 @@ Look up Wi-Fi channel numbers, center frequencies, channel widths, and DFS statu
 - Data source / standard: US (FCC) regulatory by default. 6 GHz centers and HaLow centers derive from IEEE 802.11ax / 802.11ah formulas; ported from the rf-tools-pwa channels tool. 2.4 GHz channel 14 uses the special 2484 MHz (JP) step.
 
 _Source: lib/screens/tools/reference/wifi_channels_screen.dart_
+
+
+## Field conveniences
+
+A handful of tools in the kit are not Wi-Fi curriculum. They are the things that turn out to be handy when you are on a roof, in a data closet, or on a call across time zones, so they ship in the box without a training-grade writeup. Reach for them when you need them; there is nothing to study.
+
+- **Phonetic Alphabet** (Encoding): NATO/ICAO spelling words for reading a BSSID or serial number over a noisy phone line, plus the Morse, semaphore, and maritime signal-flag equivalents on the same screen.
+- **Morse Code** (Utilities & Generators): encode and decode International Morse (ITU-R M.1677-1), with audio playback.
+- **Keyboard Shortcuts** (Encoding): macOS and Windows system and terminal keys, the Mac modifier symbols, and the Greek letters that show up in RF math.
+- **Time Zones** (Time & Formats): world UTC offsets, anchor cities, and the US time-zone table, for coordinating work across sites and scheduling calls.
+- **Emergency Phrases** (Travel & Field): travel and emergency phrases in English, Spanish, French, Italian, and German, searchable and offline, for the install trip that crosses a border.

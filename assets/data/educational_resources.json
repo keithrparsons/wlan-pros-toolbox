@@ -1,9 +1,9 @@
 {
   "_meta": {
     "title": "Educational Resources",
-    "note": "Educational Resources for the WLAN Pros Toolbox: independent-author and community materials only. Per Keith (2026-06-04) the megavendor/product documentation entries (Apple, Cisco, Aruba/HPE, and the Hamina product docs) are EXCLUDED; the dataset keeps community tools/utilities, independent blogs and experts, podcasts, conference and talk archives, YouTube channels, and training/certification paths. Independent-author entries are included now with permission chased afterward (approval='pending_outreach'); any owner who declines gets removed. Descriptions are Keith's voice (GL-004, SOP-020 PASS). The full vendor-doc set is retained in the source dataset and git history if ever wanted back. Also still held: Wi-Fi For Beginners (site not confirmed live). Curated 2026-06-04. Batch 2026-06-04: appended 5 independent-author entries (SubnetPro, WiFi Analyser, ShankarWiFi, PotatoFi Interactive Spectrum Chart, BadgerWiFi Tools), all approval='pending_outreach'. 2026-06-06 (BF6-21): removed the two Wi-Fi Design Day entries (Open Reality/Ekahau charge for the videos); they are not kept in the YouTube section. 2026-06-12: added Jonathan Davis's Frame Exchange Reference (frames.bitbucketlabs.com) with Keith's description; JD publicly released it 2026-06-12 at Wi-Co NC and invited the community to share it; approval='pending_outreach'.",
+    "note": "Educational Resources for the WLAN Pros Toolbox: independent-author and community materials only. Per Keith (2026-06-04) the megavendor/product documentation entries (Apple, Cisco, Aruba/HPE, and the Hamina product docs) are EXCLUDED; the dataset keeps community tools/utilities, independent blogs and experts, podcasts, conference and talk archives, YouTube channels, and training/certification paths. Independent-author entries are included now with permission chased afterward (approval='pending_outreach'); any owner who declines gets removed. Descriptions are Keith's voice (GL-004, SOP-020 PASS). The full vendor-doc set is retained in the source dataset and git history if ever wanted back. Also still held: Wi-Fi For Beginners (site not confirmed live). Curated 2026-06-04. Batch 2026-06-04: appended 5 independent-author entries (SubnetPro, WiFi Analyser, ShankarWiFi, PotatoFi Interactive Spectrum Chart, BadgerWiFi Tools), all approval='pending_outreach'. 2026-06-06 (BF6-21): removed the two Wi-Fi Design Day entries (Open Reality/Ekahau charge for the videos); they are not kept in the YouTube section. 2026-06-12: added Jonathan Davis's Frame Exchange Reference (frames.bitbucketlabs.com) with Keith's description; JD publicly released it 2026-06-12 at Wi-Co NC and invited the community to share it; approval='pending_outreach'. 2026-06-12: added Devin Akin's Wi-Fi Design Flowchart (divdyn.com) under 'Independent blogs and experts'; Devin Akin (Divergent Dynamics) explicitly approved the addition 2026-06-12, so approval='not_required' (the schema's cleared/no-pending-outreach value; the enum carries no separate 'granted' token).",
     "last_updated": "2026-06-12",
-    "count": 39,
+    "count": 40,
     "topics": [
       "Tools and utilities",
       "Conference and talk archives",
@@ -648,6 +648,24 @@
         "vendor-neutral"
       ],
       "approval": "pending_outreach"
+    },
+    {
+      "id": "divdyn-wifi-design-flowchart",
+      "title": "Wi-Fi Design Flowchart",
+      "summary": "Devin Akin's step-by-step Wi-Fi design decision flowchart, the design process laid out as a path you can follow.",
+      "description": "The Wi-Fi Design Flowchart, by Devin Akin of Divergent Dynamics, lays out the Wi-Fi design process as a step-by-step decision flowchart. Instead of staring at a pile of requirements and survey data, you follow the path: what the design has to deliver, the choices that follow from it, and the order to make them in. Akin is a 25-year WLAN veteran and a co-founder of CWNP, and this turns his structured Define, Design, Deploy, Diagnose thinking into a reference you can keep beside you while you work a real design. Free to use. Useful across levels, and especially good when you want a repeatable process rather than designing from instinct each time.",
+      "url": "https://divdyn.com",
+      "topic": "Independent blogs and experts",
+      "cost": "free",
+      "level": "all",
+      "tags": [
+        "wi-fi design",
+        "flowchart",
+        "reference",
+        "divergent dynamics"
+      ],
+      "approval": "not_required",
+      "notes": "Devin Akin (Divergent Dynamics) approved adding his Wi-Fi Design Flowchart 2026-06-12, pointing to divdyn.com. Approval explicitly GRANTED by the owner — the dataset's schema carries no separate 'granted' token, so approval='not_required' records that this entry is cleared for publish (no pending outreach), per the EducationalResourcesService approval enum (not_required | pending_outreach)."
     },
     {
       "id": "dest-wireshark-wifi-wiki",
