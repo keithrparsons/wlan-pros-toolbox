@@ -58,6 +58,16 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/tool_help_footer.dart';
 
+/// Bundled asset for Keith's consumer book "Fix Your Own Wi-Fi" (Book 3) — shown
+/// FREE in this same offline [PdfReferenceScreen] viewer and reached from the
+/// home callout near "Check My Connection". Public so the home entry point and
+/// the widget tests share one source of truth rather than re-typing the string.
+///
+/// NOTE: the bundled file is a near-final PLACEHOLDER export (Keith is finalizing
+/// the Vellum export — a stray "Untitled" page). Swap the file at this path to
+/// update; this constant stays stable so nothing downstream needs editing.
+const String kFixYourOwnWifiBookAsset = 'assets/books/fix-your-own-wifi.pdf';
+
 /// The share/download seam this screen calls. Defaults to the real [sharePdf]
 /// (native share sheet / web anchor download); widget tests inject a fake so the
 /// test never touches a platform channel. Matches the [sharePdf] signature.

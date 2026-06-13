@@ -516,6 +516,16 @@ flutter:
     #     WLAN-Pros-Toolbox-Field-Manual.md  (canonical v1.1.2 regen)
     - assets/guides/user-guide.md
     - assets/guides/field-manual.md
+    # Keith's consumer book "Fix Your Own Wi-Fi" (Book 3), bundled FREE and shown
+    # in the existing offline pdfx viewer (PdfReferenceScreen) — the consumer
+    # companion to the app, surfaced as a home callout near "Check My Connection".
+    # A flat print PDF (cover + interior, ~2.2 MB); shared/saved out via the
+    # app-wide share seam (pdf_download.dart). NOTE: this is a near-final
+    # PLACEHOLDER export — Keith is finalizing the Vellum export (a stray
+    # "Untitled" page). Swap the file in place to update; the asset path and the
+    # kFixYourOwnWifiBookAsset constant stay stable.
+    #   SOURCE: Deliverables/2026-06-10-book-3-consumer/Fix-Your-Own-Wi-Fi-COMPLETE.pdf
+    - assets/books/fix-your-own-wifi.pdf
 
   # Original commented-out scaffold examples removed for clarity.
 

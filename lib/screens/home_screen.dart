@@ -33,6 +33,7 @@ import '../widgets/centered_content.dart';
 import 'category_screen.dart';
 import 'guides/guide_reader_screen.dart';
 import 'tools/educational/educational_resources_screen.dart';
+import 'tools/reference/pdf_reference_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -143,6 +144,36 @@ class _HomeScreenState extends State<HomeScreen> {
                               builder: (_) => const GuideReaderScreen(
                                 assetPath: kUserGuideAsset,
                                 title: 'A Guide for Everyone',
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // 1c. "Fix Your Own Wi-Fi" book entry (Book 3, 2026-06-12).
+                  //     Keith's consumer book, bundled FREE — the book that goes
+                  //     with this app. Sits beside the consumer guide entry in the
+                  //     front-door area so a non-technical user meets it right
+                  //     after "Check My Connection". A compact callout (NOT a
+                  //     catalog tile → no count-guard change). Opens the book in
+                  //     the app's existing offline pdfx viewer (PdfReferenceScreen),
+                  //     which carries the share/save affordance in its AppBar.
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(edge, 0, edge, AppSpacing.md),
+                    sliver: SliverToBoxAdapter(
+                      child: CenteredContent(
+                        child: _BookEntry(
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const PdfReferenceScreen(
+                                title: 'Fix Your Own Wi-Fi',
+                                assetPath: kFixYourOwnWifiBookAsset,
+                                // No authored help entry for this callout, so the
+                                // ToolHelpFooter self-hides (GL-005). The book is
+                                // not a catalog tool — it is a consumer companion
+                                // reachable only from this home callout.
+                                toolId: 'fix-your-own-wifi-book',
                               ),
                             ),
                           ),
@@ -453,6 +484,128 @@ class _UserGuideEntryState extends State<_UserGuideEntry> {
                         const SizedBox(height: 2),
                         Text(
                           'A plain-language tour of the app',
+                          style: text.labelMedium?.copyWith(
+                            color: colors.textTertiary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: AppSpacing.xs),
+                    child: Icon(
+                      Icons.chevron_right,
+                      color: colors.textTertiary,
+                      size: 20,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The "Fix Your Own Wi-Fi" book entry (Book 3, 2026-06-12). A compact single-row
+/// callout — leading filled book glyph, title + one-line subtitle, trailing
+/// chevron — that opens Keith's bundled consumer book in the app's existing
+/// offline pdfx viewer ([PdfReferenceScreen]). Visually a sibling of
+/// [_UserGuideEntry] (same surface1 / card radius / borderStrong hairline /
+/// §8.3 lime focus ring / §8.20.2 light shadow); distinguished by the FILLED
+/// `Icons.menu_book` glyph (vs the guide's outlined `menu_book_outlined`) so the
+/// two front-door entries read as a related-but-distinct pair. A callout, not a
+/// catalog tile — it never enters the tool count.
+class _BookEntry extends StatefulWidget {
+  const _BookEntry({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  State<_BookEntry> createState() => _BookEntryState();
+}
+
+class _BookEntryState extends State<_BookEntry> {
+  bool _focused = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
+
+    final Border border = _focused
+        ? Border.all(
+            color: colors.isLight ? colors.textAccent : colors.primary,
+            width: colors.isLight ? 3 : 2,
+          )
+        : Border.all(
+            color: colors.borderStrong,
+            width: colors.isLight ? 1.5 : 1,
+          );
+
+    final List<BoxShadow>? shadow = (colors.isLight && !_focused)
+        ? const <BoxShadow>[
+            BoxShadow(
+              color: Color(0x14000000), // rgba(0,0,0,0.08)
+              offset: Offset(0, 2),
+              blurRadius: 8,
+            ),
+          ]
+        : null;
+
+    return Semantics(
+      container: true,
+      button: true,
+      excludeSemantics: true,
+      label: 'Fix Your Own Wi-Fi. The free book that goes with this app. '
+          'Opens the book.',
+      child: Material(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        clipBehavior: Clip.antiAlias,
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            boxShadow: shadow,
+          ),
+          child: InkWell(
+            onTap: widget.onTap,
+            onFocusChange: (bool f) {
+              if (f != _focused) setState(() => _focused = f);
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                border: border,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.rowPadding,
+              ),
+              child: Row(
+                children: <Widget>[
+                  Icon(
+                    Icons.menu_book,
+                    color: colors.textAccent,
+                    size: 24,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          'Fix Your Own Wi-Fi',
+                          style: text.bodyLarge?.copyWith(
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'The free book that goes with this app',
                           style: text.labelMedium?.copyWith(
                             color: colors.textTertiary,
                           ),
