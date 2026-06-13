@@ -172,9 +172,10 @@ class _AlphabetCard extends StatelessWidget {
           HorizontalScrollTable(
             child: DataTable(
               headingRowHeight: 44,
-              // Rows now carry a 60px square per-letter block thumbnail, so the
-              // row must be tall enough for it plus a little vertical breathing
-              // room (no clipping, no RenderFlex overflow).
+              // Rows carry a 60px-tall wide per-letter block thumbnail (~149px
+              // wide, the transparent flag + semaphore block), so the row must
+              // be tall enough for the 60px block plus a little vertical
+              // breathing room (no clipping, no RenderFlex overflow).
               dataRowMinHeight: 72,
               dataRowMaxHeight: 76,
               columnSpacing: AppSpacing.md,
@@ -266,44 +267,48 @@ class _AlphabetCard extends StatelessWidget {
       morse.split('').map((String c) => c == '.' ? 'dot' : 'dash').join(' ');
 }
 
-/// A per-row leading thumbnail: the one letter's semaphore dial + maritime
-/// signal flag + Morse block, re-rendered standalone from the plate's own SVG
-/// builders onto its baked #222222 dark surface.
+/// A per-row leading thumbnail: the one letter's maritime signal flag + the
+/// semaphore arm dial, side by side, as a TRANSPARENT self-contained block.
 ///
-/// The block is a dark-baked raster (its dark canvas and the maritime-flag
-/// colors are part of the content and cannot recolor for light mode), so it is
-/// mounted on an ALWAYS-DARK chip in BOTH themes — the same treatment
-/// [DarkRasterDiagramCard] gives the full plate — so the flag colors and the
-/// dark surround read correctly on a light app canvas. Decorative: every fact
-/// it shows (letter, word, Morse) is already in the row text, so it is
-/// `ExcludeSemantics`. Gated on [ReferenceImages.isPhoneticBlockBundled] so a
-/// missing block collapses to nothing and the row still reads as text.
+/// The v2 block masters (477x192, a 159x64 logical 2.48:1 wide cell) are
+/// transparent-background: a flag-filled cell with a 1px edge (so white flag
+/// fields stay bounded) plus the semaphore dial beside it, with NO dark chip.
+/// It therefore sits DIRECTLY on the row surface in BOTH themes — the flag
+/// colors and the 1px flag edge carry the contrast, no surround needed (that is
+/// the whole point of the redesign: the old always-dark chip is gone). The flag
+/// colors are real international-code-of-signals colors and do not recolor for
+/// light mode; the transparent block reads on both light and dark canvases.
+///
+/// Decorative: every fact it shows (letter, word, Morse) is already in the row
+/// text, so it is `ExcludeSemantics`. Gated on
+/// [ReferenceImages.isPhoneticBlockBundled] so a missing block collapses to
+/// nothing and the row still reads as text.
 class _PhoneticBlockThumb extends StatelessWidget {
   const _PhoneticBlockThumb({required this.letter});
 
   final String letter;
 
-  /// Side length of the (square) thumbnail chip.
-  static const double _size = 60;
+  /// Rendered height of the wide block thumbnail.
+  static const double _height = 60;
+
+  /// The block master's true aspect (width / height) = 477 / 192. The width
+  /// follows the height to preserve aspect (60h -> ~149w), no distortion.
+  static const double _aspect = 477 / 192;
+
+  /// Rendered width, derived from [_height] x [_aspect] (~149px).
+  static const double _width = _height * _aspect;
 
   @override
   Widget build(BuildContext context) {
     if (!ReferenceImages.isPhoneticBlockBundled(letter)) {
       return const SizedBox.shrink();
     }
-    // ALWAYS-DARK chip for the dark-baked block, regardless of app theme.
-    final AppColorScheme dark = AppColorScheme.dark();
+    // No chip: the transparent block sits straight on the row surface in both
+    // themes. fit: contain inside the aspect-matched box keeps it undistorted.
     return ExcludeSemantics(
-      child: Container(
-        width: _size,
-        height: _size,
-        decoration: BoxDecoration(
-          color: dark.surface1,
-          borderRadius: BorderRadius.circular(AppRadius.control),
-          border: Border.all(color: dark.border, width: 1),
-        ),
-        clipBehavior: Clip.antiAlias,
-        padding: const EdgeInsets.all(AppSpacing.xxs),
+      child: SizedBox(
+        width: _width,
+        height: _height,
         child: Image.asset(
           ReferenceImages.phoneticBlockPathFor(letter),
           fit: BoxFit.contain,

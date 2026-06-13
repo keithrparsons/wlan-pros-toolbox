@@ -308,6 +308,39 @@ void main() {
               find.byType(Image),
               findsAtLeastNWidgets(kPhoneticAlphabet.length),
             );
+
+            // v2 redesign (2026-06-12): the per-row block is now the WIDE
+            // transparent flag+semaphore block (477x192 master, 2.48:1),
+            // sized to 60px tall -> ~149px wide, NOT the old ~60px square chip.
+            // Find a block-image's sized box and assert the new aspect: the
+            // SizedBox immediately wrapping the per-letter block Image.asset.
+            const double kBlockHeight = 60;
+            const double kBlockWidth = kBlockHeight * (477 / 192); // ~149.06
+            final Finder blockBox = find
+                .ancestor(
+                  of: find.byWidgetPredicate(
+                    (Widget w) =>
+                        w is Image &&
+                        w.image is AssetImage &&
+                        (w.image as AssetImage).assetName.contains(
+                          'phonetic-blocks/',
+                        ),
+                  ),
+                  matching: find.byType(SizedBox),
+                )
+                .first;
+            final SizedBox box = tester.widget<SizedBox>(blockBox);
+            expect(
+              box.height,
+              kBlockHeight,
+              reason: 'block thumbnail is 60px tall',
+            );
+            expect(
+              box.width,
+              closeTo(kBlockWidth, 0.01),
+              reason: 'block thumbnail is ~149px wide (aspect-preserved, '
+                  'not a 60px square)',
+            );
           });
         }
       },
