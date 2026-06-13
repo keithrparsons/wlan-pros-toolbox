@@ -31,7 +31,6 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:net_quality/net_quality.dart';
 
@@ -64,8 +63,6 @@ import 'package:wlan_pros_toolbox/screens/tools/network/test_my_connection_scree
 import 'package:wlan_pros_toolbox/screens/tools/network/wifi_info_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/db_reference_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/signal_thresholds_screen.dart';
-import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
-import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
@@ -104,30 +101,6 @@ class _FixedMacAdapter implements WifiInfoAdapter {
   Future<bool> currentNameAuthorization() async => true;
   @override
   Future<bool> openNamePermissionSettings() async => true;
-}
-
-/// An iOS bridge that has a payload and streams nothing further. The screen
-/// reads [readLatest] for the native identity and renders the live cards from
-/// the seeded latest value.
-class _PayloadBridge implements WiFiDetailsBridge {
-  _PayloadBridge(this.details);
-  final WiFiDetails details;
-  bool monitoring = false;
-
-  @override
-  Future<bool> hasEverReceivedPayload() async => true;
-  @override
-  Future<WiFiDetails?> readLatest() async => details;
-  @override
-  Future<bool> isMonitoringActive() async => monitoring;
-  @override
-  Future<void> setMonitoringActive(bool active) async => monitoring = active;
-  @override
-  Future<bool> openUrl(String url) async => true;
-  @override
-  Future<bool> runShortcut(String name) async => true;
-  @override
-  Stream<WiFiDetails> get updates => const Stream<WiFiDetails>.empty();
 }
 
 /// A macOS adapter at a fixed Tx rate, so usable Wi-Fi = 0.55 × Tx lands on a

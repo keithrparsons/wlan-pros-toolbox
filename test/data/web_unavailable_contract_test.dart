@@ -24,12 +24,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
 
-/// Every tool entry across all categories, flattened (full catalog as the test
-/// host sees it — native, so androidOnly tools are dropped here; on web they
-/// are kept and carry the web warning).
-List<ToolEntry> _allTools() =>
-    kToolCategories.expand((ToolCategory c) => c.tools).toList();
-
 void main() {
   group('web-unavailable contract', () {
     test('the set is non-empty (the network tools DO carry a web warning)', () {

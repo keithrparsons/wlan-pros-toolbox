@@ -159,7 +159,7 @@ const double _goldenDiffTolerance = 0.005;
 /// CI. Baselines are still authored on a known-good render; this only absorbs
 /// cross-host jitter, so genuine visual regressions are still caught.
 class _TolerantGoldenComparator extends LocalFileComparator {
-  _TolerantGoldenComparator(Uri testFile) : super(testFile);
+  _TolerantGoldenComparator(super.testFile);
 
   @override
   Future<bool> compare(Uint8List imageBytes, Uri golden) async {

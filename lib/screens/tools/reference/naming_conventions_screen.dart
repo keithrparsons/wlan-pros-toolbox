@@ -725,20 +725,18 @@ class _LightBitFieldSvg extends StatelessWidget {
 
 /// Card surface wrapping a wide table: title (full-width, wraps) over a
 /// horizontally-scrolling IntrinsicWidth grid (header + rows share one width so
-/// columns align), with an optional full-width footnote beneath. Matches the
-/// poe_reference_screen / power_phasing_screen overflow-safe idiom.
+/// columns align). Matches the poe_reference_screen / power_phasing_screen
+/// overflow-safe idiom.
 class _TableCard extends StatelessWidget {
   const _TableCard({
     required this.title,
     required this.header,
     required this.rows,
-    this.footnote,
   });
 
   final String title;
   final Widget header;
   final List<Widget> rows;
-  final String? footnote;
 
   @override
   Widget build(BuildContext context) {
@@ -774,13 +772,6 @@ class _TableCard extends StatelessWidget {
               ),
             ),
           ),
-          if (footnote != null) ...<Widget>[
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              footnote!,
-              style: text.labelMedium?.copyWith(color: colors.textTertiary),
-            ),
-          ],
         ],
       ),
     );
