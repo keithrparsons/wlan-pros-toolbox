@@ -195,6 +195,7 @@ const Set<String> kWebUnavailableToolIds = <String>{
   'net-quality', // socket throughput/latency probes
   'wifi-info', // native Wi-Fi link metrics (CoreWLAN / platform bridge)
   'cellular-info', // native cellular radio bridge
+  'roaming-log', // live Wi-Fi BSSID monitoring (CoreWLAN poll / iOS bridge)
   // Networking Tools — socket / lookup / scan / native utilities.
   'interface-info', // reads the device interface table
   'device-info', // device system facts via platform bridge
@@ -287,6 +288,18 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'Carrier, radio technology, signal bars, country code, and '
             'roaming (iPhone)',
         routeName: '/tools/cellular-info',
+        isLive: true,
+      ),
+      // Feature 2 (Felix 2026-06-13): the foreground Roaming Log — records each
+      // BSSID transition within the same SSID while the screen is open. Built on
+      // the shared live sampler (macOS CoreWLAN poll / iOS companion Shortcut).
+      ToolEntry(
+        id: 'roaming-log',
+        title: 'Roaming Log',
+        description:
+            'Records each time your device roams between access points on the '
+            'same network (foreground session)',
+        routeName: '/tools/roaming-log',
         isLive: true,
       ),
     ],

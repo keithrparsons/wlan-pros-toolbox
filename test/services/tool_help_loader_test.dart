@@ -187,7 +187,12 @@ void main() {
       // 140 = + the 2 NEW Tier-1 references (integration batch, 2026-06-12):
       // RF Bands (rf-bands) and Wi-Fi HaLow (wifi-halow), both Wi-Fi & RF Quick
       // Reference tiles with their own help entries. 138 + 2 = 140.
-      expect(store.count, 140);
+      // 141 = + the Roaming Log (roaming-log) 2026-06-13: the foreground roam
+      // recorder in Test Network, built on the shared WifiSignalSampler +
+      // RoamDetector (Feature 2). The Cloud Apps reachability panel added the
+      // same day lives on the existing test-my-connection screen (its help entry
+      // was extended in place), so it adds no new help id. 140 + 1 = 141.
+      expect(store.count, 141);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

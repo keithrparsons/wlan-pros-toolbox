@@ -1369,6 +1369,10 @@ void main() {
               sourceOverride: WifiInfoSource.iosShortcuts,
               iosBridge: bridge,
               sampler: sampler,
+              // This test exercises the live Wi-Fi card, not the bottom Cloud
+              // Apps panel; disable the panel so its real reachability socket
+              // does not leave a pending timer under FakeAsync.
+              enableCloudApps: false,
               qualityClient: MockQualityClient(
                 scriptedResult: _marginalInternet(),
               ),
@@ -1400,6 +1404,10 @@ void main() {
               sourceOverride: WifiInfoSource.iosShortcuts,
               iosBridge: bridge,
               sampler: sampler,
+              // This test exercises the live Wi-Fi card, not the bottom Cloud
+              // Apps panel; disable the panel so its real reachability socket
+              // does not leave a pending timer under FakeAsync.
+              enableCloudApps: false,
               qualityClient: MockQualityClient(
                 scriptedResult: _marginalInternet(),
               ),

@@ -1371,7 +1371,8 @@
         "Open the tool and tap Run.",
         "On iOS, install the companion Shortcut first if prompted; the Wi-Fi link read comes from it (see Wi-Fi Information). Without it, the tool still measures the internet and degrades honestly.",
         "On macOS, granting Location is optional; it only affects whether the SSID name shows. The verdict never needs Location (it is rate-based). (test_my_connection_screen.dart:188)",
-        "Read the two status chips (Wi-Fi / Internet) and the headline."
+        "Read the two status chips (Wi-Fi / Internet) and the headline.",
+        "Scroll to the bottom for the \"Cloud apps reachable?\" panel: it checks whether your device can reach recognizable services (Google, iCloud, Microsoft 365, Zoom, Slack, YouTube, Netflix, and more) and times each connect. (cloud_apps_panel.dart)"
       ],
       "inputs": [],
       "algorithm": "It runs two things in one pass and feeds both into the shared verdict engine: a connected-link read via WifiInfoSourceResolver → MacWifiInfoAdapter (macOS CoreWLAN) or WiFiDetailsBridge → ConnectedAp.fromWifiDetails (iOS Shortcut) (test_my_connection_screen.dart:11-13, 142-208); a full net_quality run via OwnEngineQualityClient.forHost('one.one.one.one') (test_my_connection_screen.dart:154). It translates the net_quality grades into the engine's internet-health flag: GOOD only when download AND upload AND latency AND loss all grade good or excellent; otherwise marginal (test_my_connection_screen.dart:308-324). The engine's five engineer verdicts are collapsed into four consumer outcomes plus a two-axis chip status (Wi-Fi / Internet each \"Fine\", \"Slow\", or \"Couldn't check\") (consumer_verdict.dart:33-96, 159-249). Outcomes: A \"Looks like your Wi-Fi\"; A-lead \"Mostly your Wi-Fi\"; B \"Looks like your Internet\"; C \"Both look fine\"; D1 \"Couldn't check everything\" (internet measured, Wi-Fi not); D2 \"Couldn't complete the check\" (neither measured) (consumer_verdict.dart:164-247).",
@@ -1381,14 +1382,15 @@
         "The headline is a hedge by design (\"Looks like…\", not \"your Wi-Fi is broken\"). The two chips teach the model that Wi-Fi and internet are two separate things. \"Both look fine\" is the most useful real-world answer; it points the user at the specific app/site instead of the connection.",
         "The verdict copy is deliberately non-diagnostic for a layperson. The underlying numbers and bands are the same as Wi-Fi vs Internet; if you want the numbers, use that tool.",
         "How it picks a side: it compares how much internet speed you're actually getting against how much your Wi-Fi link could realistically carry. When the internet measures fine on its own, it says both look fine; otherwise it leans toward Wi-Fi or internet depending on which one has the headroom to spare.",
-        "D2 (\"Make sure you're on Wi-Fi and try again\") is the honest answer when nothing measured, never a fake zero."
+        "D2 (\"Make sure you're on Wi-Fi and try again\") is the honest answer when nothing measured, never a fake zero.",
+        "The Cloud apps panel times a TCP connect to each service edge on :443 (sandboxed iOS/macOS apps cannot open raw ICMP sockets — GL-008). A green check means the service edge answered and times that hop; it is NOT a measure of in-app call or stream quality. An unreachable host shows the word \"unreachable\" with a distinct glyph, never color alone."
       ],
       "source": "test_my_connection_screen.dart:11-208 / consumer_verdict.dart:33-249"
     },
     "net-quality": {
       "name": "Network Quality",
       "category": "Test Network",
-      "purpose": "A one-shot transport-quality measurement covering latency, jitter, loss, download, upload, and responsiveness, plus a reachability check against popular sites. Each dimension is graded on its own; there is deliberately no single composite \"score\".",
+      "purpose": "A one-shot transport-quality measurement covering latency, jitter, loss, download, upload, and responsiveness, plus a reachability check against a set of popular cloud apps. Each dimension is graded on its own; there is deliberately no single composite \"score\".",
       "whyHere": "When you want to characterize a connection's transport behavior the way Apple's networkQuality or an Orb does, measured by the app's own engine. Reach for it to see whether the internet path is healthy across multiple axes, not just \"how many Mbps\".",
       "howToUse": [
         "Open the tool. A live latency trend starts sampling immediately (every 30s) while the screen is open. (net_quality_screen.dart:109-112, 559)",
@@ -1444,6 +1446,27 @@
         "This is the one tool where iOS exposes more than a native app could (the Shortcut runs in Apple's privacy context). A missing field renders \"Unavailable\", never a fabricated value."
       ],
       "source": "cellular_info.dart:12-207 / cellular_info_adapter.dart:8-58"
+    },
+    "roaming-log": {
+      "name": "Roaming Log",
+      "category": "Test Network",
+      "purpose": "Record each time your device roams from one access point (BSSID) to another on the same network (SSID) during an open monitoring session, with the timestamp, the from→to BSSID pair, and the signal at the roam.",
+      "whyHere": "A roam is a BSSID change while the SSID stays the same. Watching the live Wi-Fi signal shows a roam happen, but nothing recorded it. Reach for this when you want a timestamped list of roams from a walk-around — e.g. to see where the device clings to a far AP or hops too often.",
+      "howToUse": [
+        "macOS: opens recording automatically — it polls the Wi-Fi link continuously while the screen is open. Walk your space; each roam is logged as it happens. (roaming_log_screen.dart)",
+        "iOS: install the \"WLAN Pros Live\" companion Shortcut (same one Wi-Fi Information uses), tap Start, then walk with the screen open. Firing the Shortcut switches to the Shortcuts app, so it waits for your deliberate Start tap rather than auto-firing. (roaming_log_screen.dart; wifi_signal_sampler.dart)",
+        "Read the list newest-first: time · network, the from→to BSSID pair, and the signal (RSSI/SNR) read at the roam."
+      ],
+      "inputs": [],
+      "algorithm": "The shared WifiSignalSampler feeds every fresh connected-AP sample to a pure RoamDetector. The detector records a roam only when the current BSSID differs from the prior non-null BSSID AND the SSID is unchanged (roam_detector.dart). A null/blank BSSID breaks the chain without fabricating a roam; the first known BSSID seeds the anchor (no roam); a same-BSSID sample is ignored; a changed SSID is a network switch, not a roam, and is excluded. On macOS the detector is fed on every poll (before the sparkline's unchanged-RF guard) so a roam at identical signal still registers; on iOS it is fed from each new streamed payload and reset on a fresh Stop→Start. (wifi_signal_sampler.dart; roam_detector.dart)",
+      "example": null,
+      "fieldNotes": [
+        "Foreground session only on iOS. There is no public iOS API for background Wi-Fi or BSSID-change callbacks, so no app can log roams with the app closed or the phone in a pocket — the same ceiling Wi-Fi Check shares. macOS records continuously while the screen is open.",
+        "BSSID is the AP radio's MAC address. A roam between two radios in the SAME physical AP (e.g. 2.4 GHz → 5 GHz) is still a BSSID change and is logged; that is correct — it is a real roam.",
+        "The signal shown is the reading at the moment the new BSSID first appeared, not an average. \"Signal unavailable\" prints honestly when the platform omitted RSSI for that sample (GL-005), never a fake value.",
+        "Stopping and starting (iOS) clears the session log so a new walk does not inherit the prior walk's roams."
+      ],
+      "source": "roaming_log_screen.dart / roam_detector.dart / wifi_signal_sampler.dart"
     },
     "interface-info": {
       "name": "Interface Information",

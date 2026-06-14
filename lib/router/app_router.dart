@@ -131,6 +131,7 @@ import '../screens/tools/network/wake_on_lan_screen.dart';
 import '../screens/tools/network/whois_screen.dart';
 import '../screens/tools/network/wifi_info_screen.dart';
 import '../screens/tools/network/cellular_info_screen.dart';
+import '../screens/tools/network/roaming_log_screen.dart';
 import '../screens/tools/calculators/hex_ascii_screen.dart';
 import '../screens/tools/command/cli_commands_screen.dart';
 import '../screens/tools/command/linux_wlan_commands_screen.dart';
@@ -308,6 +309,7 @@ class AppRouter {
   static const String testMyConnection = '/tools/test-my-connection';
   static const String wifiInfo = '/tools/wifi-info';
   static const String cellularInfo = '/tools/cellular-info';
+  static const String roamingLog = '/tools/roaming-log';
   static const String traceroute = '/tools/traceroute';
   static const String mobileTraceroute = '/tools/mobile-traceroute';
   static const String sslInspect = '/tools/ssl-inspect';
@@ -603,6 +605,11 @@ class AppRouter {
     // assets/tool-graphics/cellular-info.svg is absent. macOS / web / Android /
     // Windows render the honest unavailable state.
     cellularInfo: (_) => const CellularInfoScreen(),
+    // Feature 2 (Felix 2026-06-13): the foreground Roaming Log — records BSSID
+    // transitions within the same SSID during an open session, built on the
+    // shared WifiSignalSampler. macOS auto-polls; iOS records while foregrounded
+    // behind a Start tap (no background Wi-Fi monitoring exists on iOS).
+    roamingLog: (_) => const RoamingLogScreen(),
     traceroute: (_) => const TracerouteScreen(),
     mobileTraceroute: (_) => const MobileTracerouteScreen(),
     sslInspect: (_) => const SslInspectScreen(),

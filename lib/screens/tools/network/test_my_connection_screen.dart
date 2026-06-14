@@ -49,8 +49,10 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/packet_flow_progress.dart';
 import '../../../widgets/sparkline.dart';
 import '../../../widgets/tool_help_footer.dart';
+import 'cloud_apps_panel.dart';
 import 'install_shortcut_sheet.dart';
 import 'network_unavailable_view.dart';
 
@@ -80,6 +82,8 @@ class TestMyConnectionScreen extends StatefulWidget {
     this.sampler,
     this.enableLiveSampling = true,
     this.onboardingService,
+    this.cloudAppsProbe,
+    this.enableCloudApps,
   });
 
   /// When true, the check runs automatically on first mount instead of waiting
@@ -123,6 +127,17 @@ class TestMyConnectionScreen extends StatefulWidget {
   /// one-time "enable live Wi-Fi" setup so a user can never run the test first
   /// and never be told about the companion Shortcut.
   final LiveOnboardingService? onboardingService;
+
+  /// Injectable reachability probe for the bottom Cloud Apps panel (tests pass a
+  /// fake so no real socket is opened). Defaults to the real probe in production.
+  final ReachabilityProbe? cloudAppsProbe;
+
+  /// Whether to mount the bottom Cloud Apps panel. Null (production default)
+  /// follows [enableLiveSampling], so the same flag the render/screenshot tests
+  /// already set to silence the live-poll timer ALSO skips the cloud panel's
+  /// real reachability socket — no per-test churn. A test exercising the panel
+  /// passes an explicit true plus a fake [cloudAppsProbe].
+  final bool? enableCloudApps;
 
   @override
   State<TestMyConnectionScreen> createState() => _TestMyConnectionScreenState();
@@ -596,6 +611,17 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                       const SizedBox(height: AppSpacing.sm),
                       _ShortcutOfferCard(onOpen: _openShortcutSheet),
                     ],
+                    // CLOUD APPS reachability panel (Feature 1, Felix 2026-06-13).
+                    // Keith asked for the named-cloud-apps panel at the BOTTOM of
+                    // this screen. It reuses the shared ReachabilityProbe over the
+                    // recurated kCloudApps list and runs its own probe once the
+                    // result content is shown — independent of the Wi-Fi/internet
+                    // verdict above it.
+                    if (widget.enableCloudApps ??
+                        widget.enableLiveSampling) ...<Widget>[
+                      const SizedBox(height: AppSpacing.sm),
+                      CloudAppsPanel(probe: widget.cloudAppsProbe),
+                    ],
                     const SizedBox(height: AppSpacing.md),
                     _poweredBy(context),
                   ],
@@ -670,10 +696,13 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     final AppColorScheme colors = context.colors;
     final int pct = (_fraction * 100).round();
     final String caption = _friendlyPhase(_phase);
-    // The progress fill is a FILL (a bar), so brand lime is sanctioned in both
-    // themes (§8.20.2 lime-may-be-a-fill). The track sits below it; on light,
-    // surface2 is white and would be invisible against the white card, so the
-    // track uses the gray canvas tone instead.
+    // PACKET-FLOW LOADING (2026-06-13, Keith-picked concept): the percentage bar
+    // is replaced by an animated [You] → [AP] → [Internet] path whose nodes light
+    // lime as each phase of the SAME live test completes (Wi-Fi link → gateway →
+    // internet). It is a pure presentation layer over [_phase] / [_fraction] —
+    // the data-gathering logic is untouched. Accessibility (the textual
+    // phase + percentage, the live-region announcement, and the reduced-motion
+    // fallback) lives inside [PacketFlowProgress].
     return Container(
       decoration: BoxDecoration(
         color: colors.surface1,
@@ -687,51 +716,11 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Semantics(
-                liveRegion: true,
-                child: Text(
-                  caption,
-                  style: text.labelMedium?.copyWith(
-                    color: colors.textSecondary,
-                    letterSpacing: 0.4,
-                    fontWeight:
-                        colors.isLight ? FontWeight.w600 : FontWeight.w500,
-                  ),
-                ),
-              ),
-              Text(
-                '$pct%',
-                style: text.labelMedium?.copyWith(
-                  color: colors.textTertiary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Semantics(
-            label: '$caption, $pct percent complete',
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.control),
-              child: TweenAnimationBuilder<double>(
-                tween: Tween<double>(begin: 0, end: _fraction),
-                duration: AppMotion.base,
-                curve: AppMotion.standardEase,
-                builder: (context, value, _) {
-                  return LinearProgressIndicator(
-                    value: _fraction == 0 ? null : value,
-                    minHeight: 6,
-                    backgroundColor:
-                        colors.isLight ? colors.surface0 : colors.surface2,
-                    // Progress fill: a 6px bar is a vivid AREA, so it carries
-                    // full brand lime in both themes (§8.20.3-B/C).
-                    valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
-                  );
-                },
-              ),
-            ),
+          PacketFlowProgress(
+            caption: caption,
+            fraction: _fraction,
+            stage: _packetFlowStage(_phase),
+            semanticsLabelBuilder: () => '$caption, $pct percent complete',
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
@@ -741,6 +730,34 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         ],
       ),
     );
+  }
+
+  /// Maps the live [QualityPhase] to how many hops of the packet-flow path have
+  /// completed. The device ([PacketFlowNode.you]) lights the instant the test is
+  /// underway; the AP/gateway hop lights once the latency round-trip is in
+  /// (download/upload/responsiveness are running over a confirmed link); the
+  /// internet node lights when the run completes. This is presentation-only — it
+  /// reads the phase the engine already streams and adds no measurement.
+  static PacketFlowStage _packetFlowStage(QualityPhase phase) {
+    switch (phase) {
+      case QualityPhase.idle:
+        return PacketFlowStage.none;
+      case QualityPhase.latency:
+        // The first round-trip is in flight — [You] is lit, the dot travels to
+        // the AP.
+        return PacketFlowStage.you;
+      case QualityPhase.download:
+      case QualityPhase.upload:
+      case QualityPhase.responsiveness:
+        // Throughput is flowing over a confirmed link — [You] + [AP] lit, the
+        // dot travels to the internet.
+        return PacketFlowStage.ap;
+      case QualityPhase.complete:
+        return PacketFlowStage.all;
+      case QualityPhase.failed:
+        // Freeze the path where it was; the host surfaces the honest error card.
+        return PacketFlowStage.ap;
+    }
   }
 
   /// Friendly, jargon-free phase captions. The user never sees

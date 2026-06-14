@@ -35,6 +35,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import 'connected_ap.dart';
+import 'roam_detector.dart';
 import 'wifi_details.dart';
 import 'wifi_details_bridge.dart';
 import 'wifi_info_adapter.dart';
@@ -103,6 +104,13 @@ class WifiSignalSampler extends ChangeNotifier {
   bool _triggerError = false;
 
   late final WifiTimeSeries _series;
+
+  /// Roam log for THIS session — records BSSID transitions within the same SSID
+  /// as samples arrive (Feature 2, Felix 2026-06-13). Fed from the same per-
+  /// platform sample path that feeds the sparkline series, so it rides the
+  /// existing Shortcut bridge / CoreWLAN poll with no new permission or plugin.
+  final RoamDetector _roamDetector = RoamDetector();
+
   bool _disposed = false;
 
   /// True only after [start] was deliberately invoked in THIS screen session.
@@ -123,6 +131,15 @@ class WifiSignalSampler extends ChangeNotifier {
 
   /// The rolling 30s window of RF samples that feeds the sparklines.
   WifiTimeSeries get series => _series;
+
+  /// The roam log for this session — BSSID transitions within the same SSID,
+  /// oldest→newest. Feature 2 (Felix 2026-06-13). Foreground-session scope on
+  /// iOS (no background Wi-Fi callbacks exist); macOS polls continuously while
+  /// the screen is open.
+  List<RoamEvent> get roamEvents => _roamDetector.events;
+
+  /// Number of roams recorded this session.
+  int get roamCount => _roamDetector.count;
 
   /// True only on iOS (the companion-Shortcut source). macOS auto-polls and
   /// never shows Start/Stop.
@@ -288,6 +305,10 @@ class WifiSignalSampler extends ChangeNotifier {
       final ConnectedAp info = await adapter.fetch();
       if (_disposed) return;
       _macInfo = info;
+      // Feed the roam detector EVERY fresh read — before the sparkline's
+      // unchanged-RF guard — because a roam can land with identical RSSI/SNR/
+      // rate (a new AP at the same signal), which the guard would otherwise drop.
+      _roamDetector.observe(info);
       _appendMacSample(info);
       _safeNotify();
     } catch (_) {
@@ -320,6 +341,9 @@ class WifiSignalSampler extends ChangeNotifier {
     if (streaming && !_wasStreaming) {
       _series.clear();
       _lastCharted = null;
+      // A fresh Stop→Start is a new walk: drop the prior session's roam log so
+      // it does not inherit stale BSSID transitions.
+      _roamDetector.reset();
     }
     _wasStreaming = streaming;
 
@@ -327,7 +351,9 @@ class WifiSignalSampler extends ChangeNotifier {
       final WiFiDetails? d = c.details;
       if (d != null && d != _lastCharted) {
         _lastCharted = d;
-        _series.add(ConnectedAp.fromWifiDetails(d));
+        final ConnectedAp sample = ConnectedAp.fromWifiDetails(d);
+        _roamDetector.observe(sample);
+        _series.add(sample);
       }
     }
     _safeNotify();

@@ -499,6 +499,10 @@ void main() {
       // sampler is treated as the test's and is never disposed, leaking the timer.
       build: () => TestMyConnectionScreen(
         enableLiveSampling: true,
+        // This figure captures the live walk-around card, not the bottom Cloud
+        // Apps panel; disable the panel so its real reachability socket does not
+        // leak a pending timer in this settle:false manual-pump capture.
+        enableCloudApps: false,
         sourceOverride: WifiInfoSource.macosCoreWlan,
         macAdapter: _TxLinkMacAdapter(720, rssi: -52, snr: 38),
         qualityClient: MockQualityClient(

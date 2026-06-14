@@ -249,7 +249,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
 
     buf
       ..writeln()
-      ..writeln('Popular sites');
+      ..writeln('Cloud apps reachable?');
     if (_sites.isEmpty) {
       buf.writeln('  No reachability results.');
     } else {
@@ -376,9 +376,9 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
         children: <Widget>[
           Text(
             'Measures latency, jitter, loss, download, upload, and '
-            'responsiveness over a TCP-connect probe and HTTPS transfers to '
-            'public CDN servers, then checks reachability to a list of popular '
-            'sites. Each dimension is graded on its own; there is no single '
+            'responsiveness over a TCP-connect probe and HTTPS transfers, then '
+            'checks whether your device can reach a set of popular cloud apps '
+            'right now. Each dimension is graded on its own; there is no single '
             'score.',
             style: text.bodyLarge?.copyWith(color: colors.textSecondary),
           ),
@@ -990,19 +990,30 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            'Popular sites',
-            style: text.labelMedium?.copyWith(
-              color: colors.textSecondary,
-              letterSpacing: 0.4,
+          Semantics(
+            header: true,
+            child: Text(
+              'Cloud apps reachable?',
+              style: text.labelMedium?.copyWith(
+                color: colors.textSecondary,
+                letterSpacing: 0.4,
+              ),
             ),
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          // HONESTY (GL-005): a TCP-connect proves the service EDGE answers and
+          // times that hop. It is not a measure of in-app call / stream quality.
+          Text(
+            'Reachability and latency to each service edge. Not a measure of '
+            'in-app call or stream quality.',
+            style: text.bodySmall?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.xs),
           if (_sites.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
               child: Text(
-                'No reachability results. The check did not return — your '
+                'No reachability results. The check did not return. Your '
                 'connection may be down.',
                 style: text.bodyLarge?.copyWith(color: colors.textTertiary),
               ),
