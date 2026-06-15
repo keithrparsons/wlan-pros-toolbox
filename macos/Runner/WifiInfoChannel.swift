@@ -12,10 +12,11 @@ import CoreLocation
 ///
 /// Two honest platform constraints are encoded here:
 ///   1. On macOS Sonoma/Sequoia and later, reading the SSID and BSSID requires
-///      Location Services authorization. Without it, `ssid` and `bssid` are
-///      null while all RF metrics (RSSI, noise, rate, channel, width, band,
-///      PHY) still resolve. The payload reports `locationAuthorized` so the UI
-///      can explain the missing fields, and a method is offered to request it.
+///      Location Services authorization (When-In-Use is sufficient). Without it,
+///      `ssid` and `bssid` are null while all RF metrics (RSSI, noise, rate,
+///      channel, width, band, PHY) still resolve. The payload reports
+///      `locationAuthorized` so the UI can explain the missing fields, and a
+///      method is offered to request When-In-Use authorization.
 ///   2. Public CoreWLAN exposes the Tx rate (`transmitRate`) but does not
 ///      expose the Rx rate or the Tx power. Those fields are simply absent.
 ///      They are not invented or estimated here.
@@ -315,12 +316,16 @@ final class WifiInfoChannel: NSObject, CLLocationManagerDelegate {
 
   /// Maps a CLAuthorizationStatus to a simple authorized bool.
   ///
-  /// On macOS the relevant granted state is `.authorizedAlways`. The
-  /// `.authorized` alias is handled defensively via the @unknown default so the
-  /// switch stays exhaustive without referencing a case that may be absent.
+  /// CoreWLAN's SSID/BSSID gate (macOS 14+) is satisfied by EITHER granted
+  /// state: When-In-Use (`.authorizedWhenInUse`) or Always (`.authorizedAlways`).
+  /// We request When-In-Use (the least-privilege grant that unlocks the network
+  /// name; see `NSLocationWhenInUseUsageDescription`), but a user who previously
+  /// granted Always also passes. Any other status (denied / restricted /
+  /// notDetermined) is unauthorized. The default branch keeps the switch
+  /// exhaustive across SDKs without referencing a case that may be absent.
   private func isAuthorized(_ status: CLAuthorizationStatus) -> Bool {
     switch status {
-    case .authorizedAlways:
+    case .authorizedAlways, .authorizedWhenInUse:
       return true
     default:
       return false
@@ -338,7 +343,7 @@ final class WifiInfoChannel: NSObject, CLLocationManagerDelegate {
     }
     // Status is .notDetermined: normally we'd prompt. But if Location Services
     // is turned OFF system-wide, no prompt will appear and the authorization
-    // delegate will never fire — awaiting requestAlwaysAuthorization() would
+    // delegate will never fire — awaiting requestWhenInUseAuthorization() would
     // hang forever. Detect that case up front and return the current
     // (unauthorized) bool immediately rather than awaiting a callback that can
     // never come. locationServicesEnabled() can emit a main-thread runtime
@@ -354,9 +359,11 @@ final class WifiInfoChannel: NSObject, CLLocationManagerDelegate {
           return
         }
         // Determined later by the delegate. Store the pending result strongly
-        // so it is not lost before the system responds.
+        // so it is not lost before the system responds. We request When-In-Use:
+        // the least-privilege grant that unlocks the CoreWLAN SSID/BSSID gate,
+        // matching the NSLocationWhenInUseUsageDescription purpose string.
         self.pendingPermissionResult = result
-        self.locationManager.requestAlwaysAuthorization()
+        self.locationManager.requestWhenInUseAuthorization()
       }
     }
   }

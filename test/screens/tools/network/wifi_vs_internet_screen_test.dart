@@ -181,8 +181,9 @@ void main() {
       expect(find.text('Your Wi-Fi link'), findsOneWidget);
       expect(find.text('Your internet'), findsOneWidget);
 
-      // macOS does not report Rx — the honest per-platform note shows.
-      expect(find.text('Not reported on this platform'), findsOneWidget);
+      // macOS public CoreWLAN does not expose Rx — the honest, KNOWN-platform-
+      // limit note shows ("Not exposed on macOS"), not a glitch.
+      expect(find.text('Not exposed on macOS'), findsOneWidget);
 
       // The verbatim method-disclosure footnote is present.
       expect(find.text(kWifiVsInternetFootnote), findsOneWidget);

@@ -46,6 +46,7 @@ import '../../../services/network/wifi_details_bridge.dart';
 import '../../../services/network/wifi_grading.dart';
 import '../../../services/network/wifi_info_adapter.dart';
 import '../../../services/network/wifi_security.dart';
+import '../../../services/network/wifi_security_service.dart';
 import '../../../services/network/wifi_signal_sampler.dart';
 import '../../../services/network/wifi_time_series.dart';
 import '../../../services/network/wifi_vs_internet.dart';
@@ -79,6 +80,7 @@ class TestMyConnectionScreen extends StatefulWidget {
     this.sourceOverride,
     this.macAdapter,
     this.iosBridge,
+    this.securityService,
     this.qualityClient,
     this.nowOverride,
     this.autoStart = false,
@@ -114,6 +116,15 @@ class TestMyConnectionScreen extends StatefulWidget {
 
   /// Injectable iOS Shortcuts bridge (tests + the optional install sheet).
   final WiFiDetailsBridge? iosBridge;
+
+  /// Injectable iOS NEHotspotNetwork security/BSSID reader (tests pass a fake;
+  /// production uses the real [WifiSecurityService]). iOS-only enrichment: the RF
+  /// metrics arrive through the Shortcut bridge, but the connected network's
+  /// security type and BSSID are app-readable natively via NEHotspotNetwork
+  /// (Access Wi-Fi Information entitlement + Location), so they can populate even
+  /// before — or without — a Shortcut RF capture. Off iOS the service resolves to
+  /// an honest unavailable result and is never consulted.
+  final WifiSecurityService? securityService;
 
   /// Injectable net_quality backend (tests use a [MockQualityClient]).
   final QualityClient? qualityClient;
@@ -176,6 +187,16 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   late final WifiInfoSource _source;
   WifiInfoAdapter? _macAdapter;
   WiFiDetailsBridge? _iosBridge;
+
+  /// iOS-only: reads the connected network's security type + BSSID natively via
+  /// NEHotspotNetwork. Null off the iOS source.
+  WifiSecurityService? _securityService;
+
+  /// iOS-only: the latest native NEHotspotNetwork read, folded onto the
+  /// Shortcut-derived [ConnectedAp] so security + BSSID populate even when no RF
+  /// has been captured yet. Null off iOS / before the first read.
+  WifiSecurityInfo? _iosSecurity;
+
   LiveOnboardingService? _onboardingService;
   late final QualityClient _quality;
 
@@ -196,6 +217,16 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
 
   // Results, populated when the run completes.
   ConnectedAp? _ap;
+
+  /// macOS only: whether Location Services is authorized for this app. Since
+  /// macOS 14, CoreWLAN withholds the SSID and BSSID unless the app holds
+  /// Location authorization — every other RF field still resolves. Read WITHOUT
+  /// a prompt during a run (a consumer check must never pop a TCC prompt
+  /// mid-test) so the SSID/BSSID empty state can explain itself ("grant Location
+  /// access to show the network name") instead of a bare "Unavailable". Null
+  /// before the first read / off macOS.
+  bool? _macLocationAuthorized;
+
   QualityResult? _internet;
   ConsumerVerdict? _verdict;
   WifiVsInternetResult? _engine;
@@ -269,6 +300,12 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         _macAdapter = widget.macAdapter ?? AndroidWifiInfoAdapter();
       case WifiInfoSource.iosShortcuts:
         _iosBridge = widget.iosBridge ?? WiFiDetailsBridge();
+        // Native NEHotspotNetwork enrichment: security type + BSSID are
+        // app-readable on iOS WITHOUT the Shortcut, so we read them and fold them
+        // onto the Shortcut-derived link. This is why the pro Wi-Fi Information
+        // tool shows the security/BSSID immediately; Test My Connection now does
+        // the same instead of always listing Security as "Unavailable".
+        _securityService = widget.securityService ?? WifiSecurityService();
         // The front door is the FIRST live surface most users hit. The mandatory
         // one-time "enable live Wi-Fi" onboarding must lead from HERE so a user
         // can never run the comparison check first and only afterward discover
@@ -432,8 +469,11 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
           // A consumer check must never pop a Location prompt mid-test on macOS
           // (the link RATE — hence the verdict — resolves WITHOUT Location; only
           // the NAME needs it, and the macOS TCC prompt is unreliable in
-          // notarized builds). Read the snapshot directly, bounded so a stalled
-          // channel can never hang the check.
+          // notarized builds). Read the CURRENT authorization WITHOUT a prompt so
+          // the SSID/BSSID empty state can explain itself ("grant Location
+          // access") rather than read as a bare glitch. Then read the snapshot
+          // directly, bounded so a stalled channel can never hang the check.
+          _macLocationAuthorized = await adapter.currentNameAuthorization();
           return await adapter.fetch().timeout(
             const Duration(seconds: 5),
             onTimeout: () =>
@@ -442,8 +482,25 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         case WifiInfoSource.iosShortcuts:
           final WiFiDetailsBridge? bridge = _iosBridge;
           if (bridge == null) return null;
+          // Read the native security/BSSID first (no Shortcut bounce) so the
+          // enrichment below has it. Never blocks the verdict — a failed read
+          // just leaves the enrichment empty.
+          await _fetchIosSecurity();
+          // The RF metrics (RSSI / noise / SNR / channel / width / band / PHY /
+          // rate) come ONLY from the companion Shortcut's last harvest, read here
+          // from the App Group. readLatest() returns null when the Shortcut has
+          // never delivered a payload — in that case the RF block is genuinely
+          // not captured, and the screen shows a "Tap to capture Wi-Fi details"
+          // affordance rather than a silent grid of "Unavailable" (see
+          // [_iosRfCaptured] + the capture card in build()).
           final details = await bridge.readLatest();
-          return details == null ? null : ConnectedAp.fromWifiDetails(details);
+          final ConnectedAp? rf =
+              details == null ? null : ConnectedAp.fromWifiDetails(details);
+          // Fold the native NEHotspotNetwork security + BSSID onto whatever the
+          // Shortcut gave us. When no RF was captured, this still yields a
+          // minimal link carrying just the native identity (security/BSSID), so
+          // those rows populate without a Shortcut bounce.
+          return _enrichIosSecurity(rf);
         case WifiInfoSource.unsupported:
         case WifiInfoSource.web:
           return null;
@@ -451,6 +508,102 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     } catch (_) {
       return null;
     }
+  }
+
+  /// iOS: reads the native NEHotspotNetwork security token + BSSID once at the
+  /// start of a run so the enrichment is available when the link read resolves.
+  /// No-op off the iOS source. Never throws (the service returns an honest
+  /// unavailable result on any failure / permission gap).
+  ///
+  /// Gated so the real native channel is only touched in production (live
+  /// sampling on) or when a test explicitly injects a fake [securityService].
+  /// Unlike the DNS / addressing reads, this is NOT keyed off `_runRealNetwork
+  /// Probes`: the NEHotspotNetwork channel is unrelated to DNS/addressing, so a
+  /// copy test that injects DNS/addressing fakes must not also light up the real
+  /// security channel and leak a pending async into the test clock. A test that
+  /// wants the enrichment injects a fake [securityService], which flips this on.
+  Future<void> _fetchIosSecurity() async {
+    if (!widget.enableLiveSampling && widget.securityService == null) return;
+    final WifiSecurityService? svc = _securityService;
+    if (svc == null) return;
+    final WifiSecurityInfo info = await svc.fetch();
+    if (!mounted) return;
+    _iosSecurity = info;
+  }
+
+  /// Folds the native iOS security read (security token + BSSID) onto a
+  /// Shortcut-derived [ConnectedAp]. Mirrors the pro Wi-Fi Information tool's
+  /// `_enrichIos`: the Shortcut path does not carry the security type, and the
+  /// BSSID may be absent there too, so both are enriched from NEHotspotNetwork
+  /// when available. When [rf] is null (no RF captured) but native security IS
+  /// available, returns a minimal link carrying just the native identity so the
+  /// Security/BSSID rows populate without a Shortcut bounce. Returns [rf]
+  /// unchanged off iOS or when no native read landed.
+  ConnectedAp? _enrichIosSecurity(ConnectedAp? rf) {
+    final WifiSecurityInfo? sec = _iosSecurity;
+    if (sec == null || !sec.available) return rf;
+    final WifiSecurity? security =
+        WifiSecurityClassifier.classify(sec.securityToken);
+    if (rf == null) {
+      // No RF captured yet — surface a minimal link from the native read alone
+      // so security + BSSID + SSID are not falsely "Unavailable".
+      return ConnectedAp(
+        ssid: sec.ssid,
+        bssid: sec.bssid,
+        securityType: security,
+        securityAvailable: true,
+        rxRateAvailable: true,
+        channelWidthAvailable: false,
+      );
+    }
+    final ConnectedAp withSec = rf.withSecurity(security);
+    // Prefer a BSSID the Shortcut already supplied; fall back to the native one.
+    if (withSec.bssid == null && sec.bssid != null) {
+      return ConnectedAp(
+        ssid: withSec.ssid ?? sec.ssid,
+        bssid: sec.bssid,
+        rssiDbm: withSec.rssiDbm,
+        noiseDbm: withSec.noiseDbm,
+        snrDb: withSec.snrDb,
+        txRateMbps: withSec.txRateMbps,
+        rxRateMbps: withSec.rxRateMbps,
+        channel: withSec.channel,
+        channelWidthMhz: withSec.channelWidthMhz,
+        band: withSec.band,
+        standard: withSec.standard,
+        countryCode: withSec.countryCode,
+        interfaceName: withSec.interfaceName,
+        hardwareAddress: withSec.hardwareAddress,
+        securityType: withSec.securityType,
+        poweredOn: withSec.poweredOn,
+        rxRateAvailable: withSec.rxRateAvailable,
+        channelWidthAvailable: withSec.channelWidthAvailable,
+        bandDerived: withSec.bandDerived,
+        snrDerived: withSec.snrDerived,
+        securityAvailable: withSec.securityAvailable,
+      );
+    }
+    return withSec;
+  }
+
+  /// iOS: whether the companion Shortcut has captured the RF metrics for the
+  /// current result. The native NEHotspotNetwork read supplies only SSID / BSSID
+  /// / security; the rich RF block (RSSI / noise / SNR / channel / width / band /
+  /// PHY / rate) comes ONLY from the Shortcut harvest. We treat "RF captured" as
+  /// "at least one RF metric is present", so a link that carries only the native
+  /// identity reads as NOT captured and the screen shows the capture affordance
+  /// rather than a grid of "Unavailable". Always true off iOS (those platforms
+  /// read RF natively, with no capture step).
+  bool get _iosRfCaptured {
+    if (!_isIos) return true;
+    final ConnectedAp? ap = _ap;
+    if (ap == null) return false;
+    return ap.rssiDbm != null ||
+        ap.noiseDbm != null ||
+        ap.channel != null ||
+        ap.txRateMbps != null ||
+        ap.rxRateMbps != null ||
+        ap.standard != null;
   }
 
   /// Runs the internet measurement and the link read from one tap, then computes
@@ -463,6 +616,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       _phase = QualityPhase.idle;
       _fraction = 0;
       _ap = null;
+      _macLocationAuthorized = null;
       _internet = null;
       _verdict = null;
       _engine = null;
@@ -751,6 +905,13 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                           ap: _ap,
                           internet: _internet,
                           result: _engine!,
+                          // iOS-only: when the companion Shortcut has not captured
+                          // the RF metrics, the Wi-Fi link sub-card shows a "Tap to
+                          // capture Wi-Fi details" affordance instead of a grid of
+                          // "Unavailable", so the user knows it is a capture step,
+                          // not a broken tool (GL-005 / GL-008).
+                          needsWifiCapture: _isIos && !_iosRfCaptured,
+                          onCaptureWifi: _isIos ? _openShortcutSheet : null,
                         ),
                       ],
                     ),
@@ -1169,6 +1330,22 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     return null;
   }
 
+  /// A network-identity value (SSID or BSSID) for the copy report, or the honest
+  /// empty state. On macOS, the SSID and BSSID are the ONLY two RF fields gated
+  /// behind Location Services (since macOS 14, CoreWLAN withholds them without
+  /// it). When they are absent specifically because Location is not authorized,
+  /// the empty state names the fix ("Unavailable (grant Location access to show
+  /// the network name)") instead of a bare "Unavailable" that reads like a
+  /// glitch. Every other platform / cause falls back to the plain sentinel.
+  String _nameOrLocationHint(String? value) {
+    if (value != null && value.trim().isNotEmpty) return value;
+    if (_source == WifiInfoSource.macosCoreWlan &&
+        _macLocationAuthorized == false) {
+      return 'Unavailable (grant Location access to show the network name)';
+    }
+    return 'Unavailable';
+  }
+
   /// RSSI alone, for the copy line. "Unavailable" when the NIC omits it.
   static String _rssiOnly(ConnectedAp? ap) {
     final int? rssi = ap?.rssiDbm;
@@ -1181,10 +1358,18 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     return snr != null ? '$snr dB' : 'Unavailable';
   }
 
-  /// Wi-Fi Down — the NIC's average Rx data rate. "Unavailable" when omitted.
+  /// Wi-Fi Down — the NIC's average Rx data rate. When the platform never
+  /// exposes Rx at all (macOS public CoreWLAN), the empty state is labelled as a
+  /// KNOWN platform limit ("Unavailable (not exposed on macOS)") so a help-desk
+  /// reader does not mistake it for a glitch. iOS supplies Rx via the Shortcut
+  /// bridge, so its empty state is the plain "Unavailable" (GL-005).
   static String _rxRate(ConnectedAp? ap) {
     final double? rx = ap?.rxRateMbps;
-    return rx != null ? '${rx.round()} Mbps' : 'Unavailable';
+    if (rx != null) return '${rx.round()} Mbps';
+    if (ap != null && !ap.rxRateAvailable) {
+      return 'Unavailable (not exposed on macOS)';
+    }
+    return 'Unavailable';
   }
 
   /// Wi-Fi Up — the NIC's average Tx data rate. "Unavailable" when omitted.
@@ -1275,8 +1460,8 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     // ── Wi-Fi ─────────────────────────────────────────────────────────────
     final String? wifiName = _consumerWifiName(ap);
     _copySection(buf, 'WI-FI', <_CopyRow>[
-      _CopyRow('Network (SSID)', wifiName ?? 'Unavailable'),
-      _CopyRow('BSSID', _orUnavailable(ap?.bssid)),
+      _CopyRow('Network (SSID)', _nameOrLocationHint(wifiName)),
+      _CopyRow('BSSID', _nameOrLocationHint(ap?.bssid)),
       _CopyRow('RSSI', _rssiOnly(ap)),
       _CopyRow('Noise', _noiseOnly(ap)),
       _CopyRow('SNR', _snrOnly(ap)),
@@ -1284,11 +1469,20 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       // tests rely on (Rx = Down, Tx = Up).
       _CopyRow('Wi-Fi Down (Rx rate)', _rxRate(ap)),
       _CopyRow('Wi-Fi Up (Tx rate)', _txRate(ap)),
-      _CopyRow('Channel', _orUnavailable(ap?.channel?.toString())),
+      _CopyRow('Channel', _channelCopy(ap?.channel)),
       _CopyRow('Channel width', _channelWidth(ap)),
       _CopyRow('Band', _orUnavailable(ap?.band)),
       _CopyRow('Standard (PHY)', _orUnavailable(ap?.standard)),
       _CopyRow('Security', _security(ap)),
+      // iOS, no RF captured: the empty RF rows above are a CAPTURE step, not a
+      // failure. Name that explicitly so a help-desk reader (and Keith) knows the
+      // difference (GL-005).
+      if (_isIos && !_iosRfCaptured)
+        const _CopyRow(
+          'Note',
+          'Wi-Fi signal details not captured — tap "Capture Wi-Fi details" in '
+              'the app to read them via the companion Shortcut.',
+        ),
     ]);
 
     // ── Internet ────────────────────────────────────────────────────────────
@@ -1415,6 +1609,14 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// A nullable string value or the honest "Unavailable" sentinel (GL-005).
   static String _orUnavailable(String? v) =>
       (v != null && v.trim().isNotEmpty) ? v : 'Unavailable';
+
+  /// Channel for the copy line. Channel 0 is the "no/unknown channel" sentinel
+  /// some stacks return — it is never a real Wi-Fi channel, so it prints the
+  /// honest "Unavailable" rather than a misleading "0" (GL-005).
+  static String _channelCopy(int? channel) {
+    if (channel == null || channel == 0) return 'Unavailable';
+    return channel.toString();
+  }
 
   /// Noise floor for the copy line. "Unavailable" when the NIC omits it.
   static String _noiseOnly(ConnectedAp? ap) {
@@ -2769,11 +2971,21 @@ class _TechnicalSection extends StatelessWidget {
     required this.ap,
     required this.internet,
     required this.result,
+    this.needsWifiCapture = false,
+    this.onCaptureWifi,
   });
 
   final ConnectedAp? ap;
   final QualityResult? internet;
   final WifiVsInternetResult result;
+
+  /// iOS-only: true when the companion Shortcut has not captured the RF metrics,
+  /// so the Wi-Fi link sub-card shows a capture affordance instead of an empty
+  /// "Unavailable" grid.
+  final bool needsWifiCapture;
+
+  /// Opens the one-time companion-Shortcut setup/capture sheet. Null off iOS.
+  final VoidCallback? onCaptureWifi;
 
   @override
   Widget build(BuildContext context) {
@@ -2794,7 +3006,12 @@ class _TechnicalSection extends StatelessWidget {
         const SizedBox(height: AppSpacing.sm),
         _ProVerdictCard(result: result),
         const SizedBox(height: AppSpacing.sm),
-        _WifiLinkSection(ap: ap, result: result),
+        _WifiLinkSection(
+          ap: ap,
+          result: result,
+          needsCapture: needsWifiCapture,
+          onCapture: onCaptureWifi,
+        ),
         const SizedBox(height: AppSpacing.sm),
         _InternetSection(result: internet),
         const SizedBox(height: AppSpacing.sm),
@@ -2934,14 +3151,66 @@ class _ProVerdictCard extends StatelessWidget {
 
 /// "Your Wi-Fi link" sub-card (absorbed verbatim from wifi_vs_internet_screen).
 class _WifiLinkSection extends StatelessWidget {
-  const _WifiLinkSection({required this.ap, required this.result});
+  const _WifiLinkSection({
+    required this.ap,
+    required this.result,
+    this.needsCapture = false,
+    this.onCapture,
+  });
 
   final ConnectedAp? ap;
   final WifiVsInternetResult result;
 
+  /// iOS-only: true when the companion Shortcut has not captured the RF metrics.
+  /// The card then leads with a "Tap to capture Wi-Fi details" affordance so the
+  /// empty RF block reads as a capture step, not a broken tool (GL-005 / GL-008).
+  final bool needsCapture;
+
+  /// Opens the one-time companion-Shortcut setup/capture sheet. Null off iOS.
+  final VoidCallback? onCapture;
+
   @override
   Widget build(BuildContext context) {
     final ConnectedAp? a = ap;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
+    // iOS, no RF captured: lead the section with the honest capture affordance
+    // instead of a grid of "Unavailable". The native identity rows (SSID/BSSID/
+    // Security, read via NEHotspotNetwork) still render below when available, so
+    // the user sees what IS known and exactly how to fill in the rest.
+    if (needsCapture) {
+      return _SectionCard(
+        title: 'Your Wi-Fi link',
+        children: <Widget>[
+          Text(
+            'Wi-Fi signal details (RSSI, channel, rate, and PHY) need a quick '
+            'capture on iOS. Tap below to read them through the one-time '
+            'companion Shortcut — no Location permission needed.',
+            style: text.bodyMedium?.copyWith(color: colors.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Semantics(
+            button: true,
+            label: 'Capture Wi-Fi details',
+            child: FilledButton.icon(
+              onPressed: onCapture,
+              icon: const Icon(Icons.bolt_outlined),
+              label: const Text('Capture Wi-Fi details'),
+            ),
+          ),
+          // Show the natively-known identity rows when we have them, so the card
+          // is never empty and the user sees what the app already read.
+          if (a?.ssid != null || a?.bssid != null || a?.securityType != null)
+            ...<Widget>[
+              const SizedBox(height: AppSpacing.sm),
+              if (a?.bssid != null)
+                _DataRow(label: 'BSSID', value: a?.bssid, mono: true),
+              if (a?.securityType != null)
+                _DataRow(label: 'Security', value: a?.securityType?.label),
+            ],
+        ],
+      );
+    }
     return _SectionCard(
       title: 'Your Wi-Fi link',
       children: <Widget>[
@@ -2956,8 +3225,12 @@ class _WifiLinkSection extends StatelessWidget {
           value: _rate(a?.rxRateMbps),
           unit: 'Mbps',
           mono: true,
+          // macOS public CoreWLAN never exposes the Rx rate (the Tx rate is the
+          // only negotiated rate it returns). Label the empty state as a KNOWN
+          // platform limit, not a glitch, so a reader does not chase a missing
+          // reading. iOS supplies both Rx and Tx via the Shortcut bridge.
           note: (a != null && !a.rxRateAvailable && a.rxRateMbps == null)
-              ? 'Not reported on this platform'
+              ? 'Not exposed on macOS'
               : null,
         ),
         _DataRow(
@@ -2981,10 +3254,19 @@ class _WifiLinkSection extends StatelessWidget {
           unit: 'dBm',
           mono: true,
         ),
-        _DataRow(label: 'Channel', value: a?.channel?.toString(), mono: true),
+        _DataRow(label: 'Channel', value: _channelValue(a?.channel), mono: true),
         _DataRow(label: 'Standard', value: a?.standard),
       ],
     );
+  }
+
+  /// Channel as a display string, or null when the channel is unknown. Channel
+  /// 0 is the "no/unknown channel" sentinel several stacks return; it is NEVER a
+  /// real Wi-Fi channel, so it renders as the honest "Unavailable" treatment via
+  /// the null path rather than a misleading "0" (GL-005).
+  static String? _channelValue(int? channel) {
+    if (channel == null || channel == 0) return null;
+    return channel.toString();
   }
 
   static String? _rate(double? mbps) {

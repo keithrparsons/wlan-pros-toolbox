@@ -45,6 +45,7 @@ import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_security_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_signal_sampler.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
@@ -594,6 +595,31 @@ class _FakeNetworkDetails extends NetworkDetailsService {
         subnetMask: '255.255.255.0',
         gateway: '192.168.1.1',
       );
+}
+
+/// A fake iOS NEHotspotNetwork security reader. Returns a deterministic
+/// unavailable result synchronously (no real method channel), so a live-card
+/// test that leaves `enableLiveSampling` on does not touch the real native
+/// channel and leak a pending async into the FakeAsync test clock. Pass an
+/// [available] result to exercise the security/BSSID enrichment.
+class _FakeSecurityService extends WifiSecurityService {
+  _FakeSecurityService({this.info});
+
+  final WifiSecurityInfo? info;
+
+  @override
+  Future<WifiSecurityInfo> fetch() async =>
+      info ?? const WifiSecurityInfo.unavailable('test: not available');
+}
+
+/// An onboarding service seeded "already seen", so a `_FreshBridge`-backed iOS
+/// test (hasEverReceivedPayload == false) does NOT pop the one-time first-run
+/// setup sheet mid-test. Backed by an in-memory SharedPreferences store.
+LiveOnboardingService _seenOnboarding() {
+  SharedPreferences.setMockInitialValues(<String, Object>{
+    LiveOnboardingService.prefsKey: true,
+  });
+  return LiveOnboardingService(getStore: SharedPreferences.getInstance);
 }
 
 void main() {
@@ -1155,7 +1181,12 @@ void main() {
       final String copied = clipboardWrites.last;
       expect(copied, contains('RSSI: -50 dBm'));
       expect(copied, contains('SNR: 45 dB'));
-      expect(copied, contains('Wi-Fi Down (Rx rate): Unavailable'));
+      // macOS public CoreWLAN never exposes Rx → the empty state names it as a
+      // KNOWN platform limit, not a glitch (honest-labeling, GL-005).
+      expect(
+        copied,
+        contains('Wi-Fi Down (Rx rate): Unavailable (not exposed on macOS)'),
+      );
       expect(copied, contains('Wi-Fi Up (Tx rate): 866 Mbps'));
 
       await tester.pump(const Duration(milliseconds: 1600));
@@ -1466,6 +1497,7 @@ void main() {
               sourceOverride: WifiInfoSource.iosShortcuts,
               iosBridge: bridge,
               sampler: sampler,
+              securityService: _FakeSecurityService(),
               dnsProbeService: _FakeDnsProbe(),
               networkDetailsService: _FakeNetworkDetails(),
               // This test exercises the live Wi-Fi card, not the bottom Cloud
@@ -1503,6 +1535,7 @@ void main() {
               sourceOverride: WifiInfoSource.iosShortcuts,
               iosBridge: bridge,
               sampler: sampler,
+              securityService: _FakeSecurityService(),
               dnsProbeService: _FakeDnsProbe(),
               networkDetailsService: _FakeNetworkDetails(),
               // This test exercises the live Wi-Fi card, not the bottom Cloud
@@ -2044,8 +2077,11 @@ void main() {
         expect(copied, contains('Noise: -95 dBm'));
         expect(copied, contains('Channel width: 80 MHz'));
         expect(copied, contains('Band: 5 GHz'));
-        // macOS public CoreWLAN exposes no Rx → honest Unavailable.
-        expect(copied, contains('Wi-Fi Down (Rx rate): Unavailable'));
+        // macOS public CoreWLAN exposes no Rx → honest, KNOWN-platform-limit label.
+        expect(
+          copied,
+          contains('Wi-Fi Down (Rx rate): Unavailable (not exposed on macOS)'),
+        );
         expect(copied, contains('Wi-Fi Up (Tx rate): 866 Mbps'));
 
         await tester.pump(const Duration(milliseconds: 1600));
@@ -2119,4 +2155,221 @@ void main() {
       },
     );
   });
+
+  // =========================================================================
+  // Wi-Fi RF availability + honest labeling (Felix, 2026-06-15).
+  // =========================================================================
+  group('Wi-Fi RF availability + honest labeling', () {
+    /// macOS adapter whose snapshot carries an INVALID channel 0 — the
+    /// "no/unknown channel" sentinel some stacks return. It must NEVER display
+    /// as "0"; the honest "Unavailable" treatment shows instead (GL-005).
+    ConnectedAp macSampleChannelZero() => ConnectedAp.fromWifiInfo(
+          WifiInfo(
+            interfaceName: 'en0',
+            ssid: 'KeithNet',
+            bssid: 'a4:83:e7:00:11:22',
+            rssiDbm: -50,
+            noiseDbm: -95,
+            snrDb: 45,
+            txRateMbps: 866,
+            phyMode: '802.11ax',
+            channel: 0,
+            channelWidthMhz: 80,
+            band: '5 GHz',
+            countryCode: 'US',
+            hardwareAddress: 'a4:83:e7:aa:bb:cc',
+            poweredOn: true,
+            locationAuthorized: true,
+          ),
+        );
+
+    testWidgets(
+      'channel 0 is never shown — the copy report marks Channel Unavailable',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              sourceOverride: WifiInfoSource.macosCoreWlan,
+              macAdapter: _StaticMacAdapter(macSampleChannelZero()),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+        await settleDetails(tester);
+
+        final Finder copyBtn = find.text('Copy these details');
+        await tester.ensureVisible(copyBtn);
+        await tester.pumpAndSettle();
+        await tester.tap(copyBtn);
+        await tester.pumpAndSettle();
+
+        final String copied = clipboardWrites.last;
+        expect(copied, contains('Channel: Unavailable'));
+        expect(copied, isNot(contains('Channel: 0')));
+
+        await tester.pump(const Duration(milliseconds: 1600));
+      },
+    );
+
+    testWidgets(
+      'macOS without Location authorization labels SSID/BSSID with the grant '
+      'hint in the copy report (not a bare Unavailable)',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              sourceOverride: WifiInfoSource.macosCoreWlan,
+              // _NoNameMacAdapter: snapshot has SSID/BSSID null and
+              // currentNameAuthorization() == false (Location not granted).
+              macAdapter: _NoNameMacAdapter(),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+        await settleDetails(tester);
+
+        final Finder copyBtn = find.text('Copy these details');
+        await tester.ensureVisible(copyBtn);
+        await tester.pumpAndSettle();
+        await tester.tap(copyBtn);
+        await tester.pumpAndSettle();
+
+        final String copied = clipboardWrites.last;
+        expect(
+          copied,
+          contains(
+            'Network (SSID): Unavailable (grant Location access to show the '
+            'network name)',
+          ),
+        );
+        expect(
+          copied,
+          contains(
+            'BSSID: Unavailable (grant Location access to show the network '
+            'name)',
+          ),
+        );
+
+        await tester.pump(const Duration(milliseconds: 1600));
+      },
+    );
+
+    testWidgets(
+      'iOS with NO captured RF shows the "Capture Wi-Fi details" affordance, '
+      'not a silent grid of Unavailable',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              enableCloudApps: false,
+              sourceOverride: WifiInfoSource.iosShortcuts,
+              // _FreshBridge.readLatest() == null → no RF captured.
+              iosBridge: _FreshBridge(),
+              securityService: _FakeSecurityService(),
+              onboardingService: _seenOnboarding(),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+        await settleDetails(tester);
+
+        // The Wi-Fi link sub-card leads with the capture affordance.
+        expect(find.text('Capture Wi-Fi details'), findsOneWidget);
+
+        final Finder copyBtn = find.text('Copy these details');
+        await tester.ensureVisible(copyBtn);
+        await tester.pumpAndSettle();
+        await tester.tap(copyBtn);
+        await tester.pumpAndSettle();
+
+        // The copy report names the capture step rather than silently listing
+        // every RF row as a plain Unavailable.
+        final String copied = clipboardWrites.last;
+        expect(copied, contains('Wi-Fi signal details not captured'));
+
+        await tester.pump(const Duration(milliseconds: 1600));
+      },
+    );
+
+    testWidgets(
+      'iOS enriches Security + BSSID natively (NEHotspotNetwork) even with no '
+      'captured RF',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              // enableLiveSampling on so the injected security fake is consulted.
+              enableCloudApps: false,
+              sourceOverride: WifiInfoSource.iosShortcuts,
+              iosBridge: _FreshBridge(),
+              onboardingService: _seenOnboarding(),
+              securityService: _FakeSecurityService(
+                info: const WifiSecurityInfo(
+                  available: true,
+                  securityToken: 'personal',
+                  bssid: 'b8:27:eb:11:22:33',
+                  ssid: 'KeithNet',
+                  locationAuthorized: true,
+                ),
+              ),
+              dnsProbeService: _FakeDnsProbe(),
+              networkDetailsService: _FakeNetworkDetails(),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+        await settleDetails(tester);
+        await tester.pumpAndSettle();
+
+        final Finder copyBtn = find.text('Copy these details');
+        await tester.ensureVisible(copyBtn);
+        await tester.pumpAndSettle();
+        await tester.tap(copyBtn);
+        await tester.pumpAndSettle();
+
+        final String copied = clipboardWrites.last;
+        // Security + BSSID populated from the native read despite no Shortcut RF.
+        expect(copied, contains('BSSID: b8:27:eb:11:22:33'));
+        expect(copied, isNot(contains('Security: Unavailable')));
+
+        await tester.pump(const Duration(milliseconds: 1600));
+      },
+    );
+  });
+}
+
+/// A macOS adapter that returns a caller-supplied [ConnectedAp]. Used to drive
+/// edge-case snapshots (e.g. an invalid channel 0) through the screen.
+class _StaticMacAdapter implements WifiInfoAdapter {
+  _StaticMacAdapter(this._ap);
+
+  final ConnectedAp _ap;
+
+  @override
+  String get platformLabel => 'macOS CoreWLAN';
+  @override
+  bool get gatesNameBehindPermission => true;
+  @override
+  Future<ConnectedAp> fetch() async => _ap;
+  @override
+  Future<bool> requestNamePermission() async => true;
+  @override
+  Future<bool> currentNameAuthorization() async => true;
+  @override
+  Future<bool> openNamePermissionSettings() async => true;
 }
