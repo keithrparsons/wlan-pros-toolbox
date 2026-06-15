@@ -112,4 +112,71 @@ void main() {
       expect(oui.vendorLabelFor('not-a-mac'), isNull);
     });
   });
+
+  group('ConnectedAp.mergedWith (copy-vs-live RF unification)', () {
+    test('fills RF gaps from the live reading without overwriting own values', () {
+      // The one-shot read: native security/BSSID enrichment only, NO RF.
+      const ConnectedAp oneShot = ConnectedAp(
+        ssid: 'KeithNet',
+        bssid: 'a4:83:e7:00:11:22',
+        securityType: WifiSecurity.wpa2Personal,
+        securityAvailable: true,
+      );
+      // The live sampler reading: rich RF, but a coarser/absent security.
+      const ConnectedAp live = ConnectedAp(
+        ssid: 'KeithNet',
+        rssiDbm: -58,
+        noiseDbm: -90,
+        channel: 36,
+        rxRateMbps: 780,
+        txRateMbps: 866,
+        standard: '802.11ax (Wi-Fi 6)',
+        band: '5 GHz',
+        bandDerived: true,
+      );
+
+      final ConnectedAp merged = oneShot.mergedWith(live);
+
+      // RF the one-shot lacked is now present (so the copy can serialize it).
+      expect(merged.rssiDbm, -58);
+      expect(merged.channel, 36);
+      expect(merged.rxRateMbps, 780);
+      expect(merged.txRateMbps, 866);
+      expect(merged.standard, '802.11ax (Wi-Fi 6)');
+      // SNR synthesized from merged rssi/noise (-58 − -90 = 32), flagged derived.
+      expect(merged.snrDb, 32);
+      expect(merged.snrDerived, isTrue);
+      // The one-shot's native security/BSSID are NOT lost.
+      expect(merged.securityType, WifiSecurity.wpa2Personal);
+      expect(merged.bssid, 'a4:83:e7:00:11:22');
+    });
+
+    test('own non-null values win over the live reading', () {
+      const ConnectedAp oneShot = ConnectedAp(
+        rssiDbm: -50,
+        channel: 6,
+        securityType: WifiSecurity.wpa3Personal,
+      );
+      const ConnectedAp live = ConnectedAp(
+        rssiDbm: -70,
+        channel: 36,
+        securityType: WifiSecurity.open,
+      );
+      final ConnectedAp merged = oneShot.mergedWith(live);
+      expect(merged.rssiDbm, -50);
+      expect(merged.channel, 6);
+      expect(merged.securityType, WifiSecurity.wpa3Personal);
+    });
+
+    test('returns this unchanged when the live reading is null', () {
+      const ConnectedAp oneShot = ConnectedAp(rssiDbm: -50, channel: 6);
+      expect(identical(oneShot.mergedWith(null), oneShot), isTrue);
+    });
+
+    test('OR-s the platform-availability flags from both sides', () {
+      const ConnectedAp oneShot = ConnectedAp(rxRateAvailable: false);
+      const ConnectedAp live = ConnectedAp(rxRateAvailable: true);
+      expect(oneShot.mergedWith(live).rxRateAvailable, isTrue);
+    });
+  });
 }

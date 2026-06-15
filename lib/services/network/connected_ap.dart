@@ -300,6 +300,69 @@ class ConnectedAp {
     );
   }
 
+  /// Overlays the richer RF of [other] onto this reading, field by field, taking
+  /// a value from [other] only where this reading's own value is null (a
+  /// non-destructive "fill the gaps" merge). Returns `this` unchanged when
+  /// [other] is null.
+  ///
+  /// This unifies the COPY/technical source (a single one-shot link read taken at
+  /// test-completion) with the LIVE sparkline source (the continuously-streamed
+  /// sampler reading the sparklines bind to). On iOS the one-shot
+  /// `WiFiDetailsBridge.readLatest()` can resolve before — or independently of —
+  /// the live companion-Shortcut stream, so the one-shot model can lack RF the
+  /// live card is already showing on screen. Folding the live reading onto the
+  /// one-shot read makes "what's on screen is what's copied" (GL-005): the copy
+  /// can only ever GAIN a field the platform genuinely reported live, never lose
+  /// the native security/BSSID enrichment the one-shot read already carried.
+  ///
+  /// Existing (non-null) values WIN, so the native NEHotspotNetwork security/BSSID
+  /// enrichment already folded onto [this] is never overwritten by a live sample
+  /// that lacks it. The platform-availability flags (rxRateAvailable, etc.) are
+  /// OR-ed so a "platform can expose this" signal from either source is kept.
+  ConnectedAp mergedWith(ConnectedAp? other) {
+    if (other == null) return this;
+    final int? mergedRssi = rssiDbm ?? other.rssiDbm;
+    final int? mergedNoise = noiseDbm ?? other.noiseDbm;
+    return ConnectedAp(
+      ssid: ssid ?? other.ssid,
+      bssid: bssid ?? other.bssid,
+      rssiDbm: mergedRssi,
+      noiseDbm: mergedNoise,
+      // Prefer a directly-reported SNR from either side; only fall back to a
+      // derived value if both sides lack one but the inputs are now present.
+      snrDb: snrDb ??
+          other.snrDb ??
+          ((mergedRssi != null && mergedNoise != null)
+              ? mergedRssi - mergedNoise
+              : null),
+      txRateMbps: txRateMbps ?? other.txRateMbps,
+      rxRateMbps: rxRateMbps ?? other.rxRateMbps,
+      channel: channel ?? other.channel,
+      channelWidthMhz: channelWidthMhz ?? other.channelWidthMhz,
+      band: band ?? other.band,
+      standard: standard ?? other.standard,
+      countryCode: countryCode ?? other.countryCode,
+      interfaceName: interfaceName ?? other.interfaceName,
+      hardwareAddress: hardwareAddress ?? other.hardwareAddress,
+      securityType: securityType ?? other.securityType,
+      poweredOn: poweredOn,
+      rxRateAvailable: rxRateAvailable || other.rxRateAvailable,
+      channelWidthAvailable:
+          channelWidthAvailable || other.channelWidthAvailable,
+      // The "derived" captions only apply when the value itself came from the
+      // side that derived it; keep this read's flag when it supplied the value,
+      // otherwise inherit the contributing side's.
+      bandDerived: band != null ? bandDerived : other.bandDerived,
+      snrDerived: snrDb != null
+          ? snrDerived
+          : (other.snrDb != null
+              ? other.snrDerived
+              // We synthesized SNR from merged rssi/noise above → it is derived.
+              : true),
+      securityAvailable: securityAvailable || other.securityAvailable,
+    );
+  }
+
   /// True when at least one substantive field is present — i.e. a real reading
   /// arrived. An all-null model means the source delivered an empty payload and
   /// the screen should show its empty / waiting state, not a grid of

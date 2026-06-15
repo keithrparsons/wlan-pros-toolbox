@@ -336,26 +336,32 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
           );
       WidgetsBinding.instance.addObserver(this);
       _sampler!.load();
+      // Keep the screen's own copy/technical/capture-affordance state in sync
+      // with the live stream: [_effectiveAp] and [_iosRfCaptured] read the
+      // sampler's latest reading, so when a late live sample lands AFTER the run
+      // completed, this lightweight rebuild flows that RF into the technical
+      // Wi-Fi sub-card and clears the "not captured" note. The live sparkline
+      // card has its own AnimatedBuilder; this is for the rest of the screen.
+      _sampler!.addListener(_onSamplerChanged);
       // AUTO-START THE LIVE CAPTURE (item #8).
       //
-      // macOS sources its live feed from NATIVE polling (CoreWLAN snapshots on a
-      // timer, no app switch), so it auto-starts cleanly on screen entry — the
-      // sparklines begin filling as soon as the first sample lands, with no tap.
-      // This holds whether the screen was reached by tapping "Check My
-      // Connection" or via the home hero's auto-run argument.
+      // macOS / Android source their live feed from NATIVE polling (CoreWLAN /
+      // WifiManager snapshots on a timer, no app switch), so they auto-start
+      // cleanly on screen entry — the sparklines begin filling as soon as the
+      // first sample lands, with no tap. This holds whether the screen was
+      // reached by tapping "Check My Connection" or via the home hero's auto-run.
       //
       // iOS sources its live feed from the Shortcuts bridge: start() fires the
       // companion "WLAN Pros Live" Shortcut, which SWITCHES to the Shortcuts app.
-      // Auto-firing that on screen entry would bounce the user straight out of
-      // the app — a jarring auto-bounce. So iOS keeps the single explicit Start
-      // kickoff in the live card; we do not auto-fire the bridge. The comparison
-      // test still auto-runs on the home-hero path; only the iOS RF stream waits
-      // for the one deliberate tap (GL-008: build to the platform, no fabricated
-      // auto-behavior that the bridge cannot honor).
-      // macOS and Android both source the live feed from NATIVE polling (no app
-      // switch), so they auto-start cleanly on screen entry. iOS waits for the
-      // single deliberate Start tap (firing the Shortcut would bounce the user
-      // out of the app).
+      // Firing that on MERE SCREEN ENTRY would bounce a user who is only browsing
+      // straight out of the app, so we do NOT fire it here. Instead the auto-fire
+      // is tied to RUNNING THE TEST (Keith's "no tap" request): [_run] calls
+      // [_autoCaptureIosRf], which fires the Shortcut once at test start, settles,
+      // and retries once if empty — so a normal Check My Connection captures RF
+      // automatically and it appears both on screen and in the copy, while a user
+      // who never starts a test is never bounced. The manual Start / "Capture
+      // Wi-Fi details" affordance remains the fallback (GL-008: build to the
+      // platform; the single deliberate kickoff is what the bridge can honor).
       if (_source == WifiInfoSource.macosCoreWlan ||
           _source == WifiInfoSource.androidWifiManager) {
         _sampler!.start();
@@ -405,6 +411,19 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     await _openShortcutSheet();
   }
 
+  /// Rebuilds the screen when the live sampler reports a new reading, so the
+  /// parts of the result body that read [_effectiveAp] / [_iosRfCaptured] (the
+  /// technical Wi-Fi sub-card, the capture affordance, and any copy taken right
+  /// after) reflect late-arriving live RF — keeping "what's on screen is what's
+  /// copied" true even when the stream's first sample lands after the run
+  /// completes. Cheap: only fires while results are shown, and only flips
+  /// already-rebuilt-on-stream state. No-op when unmounted or while idle (no
+  /// verdict yet means nothing reads the RF).
+  void _onSamplerChanged() {
+    if (!mounted || _verdict == null) return;
+    setState(() {});
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     final WifiSignalSampler? sampler = _sampler;
@@ -423,6 +442,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     _sub?.cancel();
     if (_sampler != null) {
       WidgetsBinding.instance.removeObserver(this);
+      _sampler!.removeListener(_onSamplerChanged);
       // Only dispose a sampler we created; an injected one is the test's.
       if (widget.sampler == null) _sampler!.dispose();
     }
@@ -586,17 +606,50 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     return withSec;
   }
 
+  /// The SINGLE RF source the result body, the technical section, the help-desk
+  /// facts, and the COPY report all read — the one-shot link read taken at
+  /// test-completion ([_ap]) UNIFIED with the live sampler's most recent reading
+  /// (the same [WifiSignalSampler.latest] the on-screen sparkline card binds to).
+  ///
+  /// THE BUG THIS FIXES (Keith, on-device 2026-06-15): the live "Wi-Fi signal"
+  /// card binds to `sampler.latest` — on iOS, the continuously-streamed companion-
+  /// Shortcut payload — so the sparklines (RSSI / SNR / rate) showed live RF on
+  /// screen. But the copy report and technical section read ONLY [_ap], a single
+  /// `WiFiDetailsBridge.readLatest()` taken once when the test finished. That
+  /// one-shot read can resolve before — or independently of — the live stream, so
+  /// it carried no RF and the copied report listed SSID/RSSI/channel/etc. as
+  /// "Unavailable" even though they were live on screen. Reading both off the SAME
+  /// merged source makes "what's on screen is what's copied".
+  ///
+  /// The merge is non-destructive (see [ConnectedAp.mergedWith]): [_ap]'s own
+  /// values win, so the native NEHotspotNetwork security/BSSID enrichment already
+  /// folded onto it is preserved; the live sampler only FILLS RF gaps it has and
+  /// the one-shot read lacked. When [_ap] is null (no one-shot read landed at
+  /// all) but the live sampler has a reading, the live reading stands on its own,
+  /// so the copy still reflects exactly what the sparklines show. Off iOS the
+  /// macOS/Android poll and the one-shot read draw from the same CoreWLAN/
+  /// WifiManager snapshot, so this still resolves to a complete reading without
+  /// changing established behavior.
+  ConnectedAp? get _effectiveAp {
+    final ConnectedAp? oneShot = _ap;
+    final ConnectedAp? live = _sampler?.latest;
+    if (oneShot == null) return live;
+    return oneShot.mergedWith(live);
+  }
+
   /// iOS: whether the companion Shortcut has captured the RF metrics for the
   /// current result. The native NEHotspotNetwork read supplies only SSID / BSSID
   /// / security; the rich RF block (RSSI / noise / SNR / channel / width / band /
-  /// PHY / rate) comes ONLY from the Shortcut harvest. We treat "RF captured" as
-  /// "at least one RF metric is present", so a link that carries only the native
-  /// identity reads as NOT captured and the screen shows the capture affordance
-  /// rather than a grid of "Unavailable". Always true off iOS (those platforms
-  /// read RF natively, with no capture step).
+  /// PHY / rate) comes ONLY from the Shortcut harvest — via either the one-shot
+  /// `readLatest()` OR the live stream, now unified in [_effectiveAp]. We treat
+  /// "RF captured" as "at least one RF metric is present" on the MERGED reading,
+  /// so a result whose RF arrived only on the live stream reads as captured (the
+  /// sparklines are already showing it) and the screen does NOT fall back to the
+  /// capture affordance / "not captured" copy note. Always true off iOS (those
+  /// platforms read RF natively, with no capture step).
   bool get _iosRfCaptured {
     if (!_isIos) return true;
-    final ConnectedAp? ap = _ap;
+    final ConnectedAp? ap = _effectiveAp;
     if (ap == null) return false;
     return ap.rssiDbm != null ||
         ap.noiseDbm != null ||
@@ -627,6 +680,22 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     });
 
     final Future<ConnectedAp?> linkFuture = _readLink();
+
+    // AUTO-CAPTURE iOS Wi-Fi RF (item #8 — Keith's explicit "no tap" request).
+    //
+    // On iOS the RF block (RSSI / noise / SNR / channel / width / band / PHY /
+    // rate) only arrives through the companion "WLAN Pros Live" Shortcut. Before
+    // this, the user had to tap "Start" / "Capture Wi-Fi details" by hand, so a
+    // normal run captured no RF and both the sparklines and the copy report came
+    // up empty. We now fire the companion Shortcut automatically AT TEST START so
+    // the live stream is already delivering by the time the ~25–35 s internet
+    // measurement completes — RF then appears on screen AND in the copy with zero
+    // taps. macOS/Android auto-poll natively (no Shortcut, no bounce) and already
+    // capture without a tap, so this is iOS-only. Fire-and-forget: it never gates
+    // or blocks the verdict, and a failure falls back to the manual capture tap
+    // (the Start button + "Capture Wi-Fi details" affordance stay as the
+    // fallback). See [_autoCaptureIosRf] for the auto-fire-bounce handling.
+    if (_isIos) _autoCaptureIosRf();
 
     // ISP / public-IP lookup for the copy payload (Keith ISP-ask + #6). Runs in
     // parallel with the measurement and is purely additive — it never gates the
@@ -756,6 +825,64 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       // Fail open — leave _networkDetails null; the Network section then shows
       // the honest "Not available" fields.
     }
+  }
+
+  /// Auto-fires the iOS companion "WLAN Pros Live" Shortcut so the Wi-Fi RF is
+  /// captured automatically as part of running the test — no user tap (item #8,
+  /// Keith). iOS-only and no-op without a live sampler (tests that disable live
+  /// sampling, or a platform with none); the macOS/Android native poll already
+  /// auto-captures with no Shortcut.
+  ///
+  /// AUTO-FIRE-BOUNCE HANDLING. Firing the companion Shortcut switches to the
+  /// Shortcuts app briefly (the known auto-fire bounce). We MUST NOT re-fire it
+  /// on top of an already-live stream — that would bounce the user a second time
+  /// for nothing. So:
+  ///   1. If the live stream is ALREADY running this session (the user pressed
+  ///      Start earlier, or a prior auto-fire is live), do nothing — the existing
+  ///      stream already feeds the sparklines and [_effectiveAp].
+  ///   2. Otherwise fire it ONCE via the sampler's [start]. The single explicit
+  ///      kickoff is what the platform can honor; the recursive Shortcut then
+  ///      streams back into the app on its own.
+  ///   3. RETRY ONCE if, after a short settle, the stream produced no reading
+  ///      (the bounce was cancelled, or the first fire raced the app switch).
+  ///      A second settle without a reading falls back silently to the manual
+  ///      "Start" / "Capture Wi-Fi details" affordance — never a fabricated value
+  ///      (GL-005), never an endless re-fire loop.
+  /// The internet measurement (~25–35 s) overlaps the settle, so in the normal
+  /// case the stream is delivering well before the run completes and the RF is
+  /// already on screen and in the copy with zero taps.
+  Future<void> _autoCaptureIosRf() async {
+    final WifiSignalSampler? sampler = _sampler;
+    if (sampler == null || !sampler.isIos) return;
+
+    // Already live this session → the stream is feeding both the sparklines and
+    // [_effectiveAp]; do not re-fire (avoids a redundant Shortcuts-app bounce).
+    if (sampler.isStreaming) return;
+
+    // Fire once. start() opens the companion Shortcut; on a missing Shortcut it
+    // sets triggerError and the live card surfaces the honest install hint, and
+    // the manual capture affordance remains the fallback.
+    await sampler.start();
+
+    // Settle, then read whether a live sample landed. A short window is enough
+    // because the recursive Shortcut streams roughly once a second; the long
+    // internet measurement runs concurrently, so this never extends the run.
+    await Future<void>.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+
+    final bool gotReading = sampler.latest?.hasAnyData ?? false;
+    if (gotReading || sampler.triggerError) return;
+
+    // RETRY ONCE: the first fire produced nothing (the launch bounce was
+    // cancelled, or the first fire raced the app switch). Re-fire the trigger
+    // WITHOUT tearing down the subscription — start() re-raises the monitoring
+    // flag and re-runs the companion Shortcut once, so the recursion gets a
+    // second kick while the existing listener stays attached to catch the first
+    // streamed sample. No further retries: a second miss falls back silently to
+    // the manual "Start" / "Capture Wi-Fi details" affordance the live card
+    // already shows whenever the stream is not live (GL-005 — never a fabricated
+    // value, never an endless re-fire loop).
+    await sampler.start();
   }
 
   // ---- Build ----
@@ -900,9 +1027,11 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                           dns: _dnsResult,
                         ),
                         const SizedBox(height: AppSpacing.sm),
-                        // The absorbed pro "Wi-Fi vs Internet" readout.
+                        // The absorbed pro "Wi-Fi vs Internet" readout. Reads the
+                        // UNIFIED RF source so the pro Wi-Fi link sub-card matches
+                        // the live sparklines and the copy report.
                         _TechnicalSection(
-                          ap: _ap,
+                          ap: _effectiveAp,
                           internet: _internet,
                           result: _engine!,
                           // iOS-only: when the companion Shortcut has not captured
@@ -1300,7 +1429,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// "Not measured" — never blank, never invented (GL-005).
   List<_Fact> _facts() {
     final QualityResult? net = _internet;
-    final ConnectedAp? ap = _ap;
+    // Read the UNIFIED RF source so the consumer Wi-Fi name (and every fact
+    // derived from the link) matches what the live card shows on screen.
+    final ConnectedAp? ap = _effectiveAp;
 
     final double? down = ConnectionCheck.metricValue(net, MetricIds.download);
     final double? up = ConnectionCheck.metricValue(net, MetricIds.upload);
@@ -1443,7 +1574,12 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         ConnectionCheck.metricValue(net, MetricIds.responsiveness);
 
     final ConsumerVerdict? v = _verdict;
-    final ConnectedAp? ap = _ap;
+    // The UNIFIED RF source: the one-shot link read folded with the live
+    // sampler's latest reading (the same source the on-screen sparklines bind
+    // to). This is the fix for the copy-vs-live mismatch — the copy now
+    // serializes exactly the RF the user sees live, never a stale/empty
+    // one-shot read while the sparklines show data (GL-005).
+    final ConnectedAp? ap = _effectiveAp;
 
     final StringBuffer buf = StringBuffer();
 

@@ -1483,14 +1483,20 @@ void main() {
   // shows the actionable Start, and tapping it fires the Shortcut.
   group('iOS first-run Wi-Fi signal card', () {
     testWidgets(
-      'first run with a STALE monitoring flag shows the actionable Start '
-      'control, not a stuck LIVE state',
+      'on MERE LOAD (no run yet) with a STALE monitoring flag the card shows the '
+      'actionable Start control, not a stuck LIVE state, and never auto-fires',
       (tester) async {
+        // The first-run protection (2026-06-07) is about SCREEN ENTRY: opening
+        // the front door must NOT auto-fire the Shortcut (the bounce gotcha) and
+        // must NOT render a dead "LIVE" from a stale persisted flag. The auto-
+        // fire is tied to RUNNING a check (see the run-auto-fire test below), so
+        // before any run this card stays on the honest idle Start state.
         final bridge = _StaleFlagBridge();
         final sampler = WifiSignalSampler(
           source: WifiInfoSource.iosShortcuts,
           iosBridge: bridge,
         );
+        addTearDown(sampler.dispose);
         await tester.pumpWidget(
           host(
             TestMyConnectionScreen(
@@ -1500,35 +1506,35 @@ void main() {
               securityService: _FakeSecurityService(),
               dnsProbeService: _FakeDnsProbe(),
               networkDetailsService: _FakeNetworkDetails(),
-              // This test exercises the live Wi-Fi card, not the bottom Cloud
-              // Apps panel; disable the panel so its real reachability socket
-              // does not leave a pending timer under FakeAsync.
               enableCloudApps: false,
+              onboardingService: _seenOnboarding(),
               qualityClient: MockQualityClient(
                 scriptedResult: _marginalInternet(),
               ),
             ),
           ),
         );
-        await runCheck(tester);
+        // Settle the load WITHOUT running a check.
+        await tester.pumpAndSettle();
 
-        // The live card is in the result detail. It must present Start, never a
-        // dead LIVE header with no data behind it.
-        expect(find.text('Start'), findsOneWidget);
-        expect(find.text('LIVE'), findsNothing);
-        // No Shortcut fired yet (no auto-fire on load — the bounce gotcha).
+        // Mere screen entry never fires the Shortcut (no bounce). The live card
+        // only renders once a check has produced a verdict, so here we just
+        // assert the load did not auto-fire and did not resume a phantom stream.
         expect(bridge.runShortcutCalls, 0);
+        expect(sampler.isStreaming, isFalse);
       },
     );
 
     testWidgets(
-      'tapping Start fires the companion Shortcut and flips the card to LIVE',
+      'RUNNING a check auto-fires the companion Shortcut and the live card goes '
+      'LIVE — no manual Start tap (Keith #8)',
       (tester) async {
         final bridge = _StaleFlagBridge();
         final sampler = WifiSignalSampler(
           source: WifiInfoSource.iosShortcuts,
           iosBridge: bridge,
         );
+        addTearDown(sampler.dispose);
         await tester.pumpWidget(
           host(
             TestMyConnectionScreen(
@@ -1538,10 +1544,8 @@ void main() {
               securityService: _FakeSecurityService(),
               dnsProbeService: _FakeDnsProbe(),
               networkDetailsService: _FakeNetworkDetails(),
-              // This test exercises the live Wi-Fi card, not the bottom Cloud
-              // Apps panel; disable the panel so its real reachability socket
-              // does not leave a pending timer under FakeAsync.
               enableCloudApps: false,
+              onboardingService: _seenOnboarding(),
               qualityClient: MockQualityClient(
                 scriptedResult: _marginalInternet(),
               ),
@@ -1549,19 +1553,18 @@ void main() {
           ),
         );
         await runCheck(tester);
-
-        // The live card sits deep in the scroll view; bring Start into the
-        // viewport before tapping so the gesture lands on the button.
-        await tester.ensureVisible(find.text('Start'));
-        await tester.pumpAndSettle();
-        // Tap Start, then let the async start() chain (flag write → runShortcut →
-        // notify) flush before asserting.
-        await tester.tap(find.text('Start'));
+        // Advance past the auto-capture settle + retry window so no fake-async
+        // timer is left pending when the tree disposes. The _StaleFlagBridge's
+        // updates stream is empty, so no sample lands and the retry fires — the
+        // call count is therefore ≥1 (one auto-fire, plus the one empty-payload
+        // retry), never zero and never an endless loop.
+        await tester.pump(const Duration(seconds: 3));
         await tester.pumpAndSettle();
 
-        // The deliberate tap fired the Shortcut exactly once and the card is now
-        // genuinely live.
-        expect(bridge.runShortcutCalls, 1);
+        // The run auto-fired the Shortcut (no Start tap) and the card is now
+        // genuinely live — the sparklines' waiting state shows while the streamed
+        // samples begin to land.
+        expect(bridge.runShortcutCalls, greaterThanOrEqualTo(1));
         expect(sampler.isStreaming, isTrue);
         expect(find.text('LIVE'), findsOneWidget);
         expect(find.text('Start'), findsNothing);
@@ -2350,7 +2353,211 @@ void main() {
         await tester.pump(const Duration(milliseconds: 1600));
       },
     );
+
+    testWidgets(
+      'iOS copy serializes the LIVE-streamed RF when the one-shot read had none '
+      '(copy == what is on screen)',
+      (tester) async {
+        // The exact bug Keith hit on device: the one-shot bridge readLatest()
+        // returns null (no RF in the one-shot read), but the LIVE companion-
+        // Shortcut stream delivers a rich payload — the same source the on-screen
+        // sparklines bind to. Before the fix, the copy read only the one-shot
+        // _ap and listed every RF row as "Unavailable" while the sparklines
+        // showed live data. After the fix, [_effectiveAp] folds the live sampler
+        // onto the one-shot read, so the copy serializes the live RF.
+        final _StreamingBridge bridge = _StreamingBridge();
+        final WifiSignalSampler sampler = WifiSignalSampler(
+          source: WifiInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        );
+        addTearDown(sampler.dispose);
+
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableCloudApps: false,
+              sourceOverride: WifiInfoSource.iosShortcuts,
+              // One-shot read returns null → _ap carries NO RF on its own.
+              iosBridge: bridge,
+              // The live sampler over the SAME streaming bridge → the on-screen
+              // sparkline source. Injected so the copy/technical reads unify on it.
+              sampler: sampler,
+              // Native NEHotspotNetwork security/BSSID — so the one-shot read
+              // yields a minimal link (a real, non-D1 verdict) carrying identity
+              // but NO RF. The RF must then come from the live source.
+              securityService: _FakeSecurityService(
+                info: const WifiSecurityInfo(
+                  available: true,
+                  securityToken: 'personal',
+                  bssid: 'a4:83:e7:00:11:22',
+                  ssid: 'KeithNet',
+                  locationAuthorized: true,
+                ),
+              ),
+              onboardingService: _seenOnboarding(),
+              dnsProbeService: _FakeDnsProbe(),
+              networkDetailsService: _FakeNetworkDetails(),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        // Bring the live stream up and deliver a rich RF sample BEFORE the run
+        // completes — this is the source the on-screen sparklines bind to (the
+        // mock quality client completes synchronously, so seeding the live
+        // reading here mirrors the device case where the stream is already
+        // delivering by the time the ~30s measurement finishes).
+        await sampler.start();
+        bridge.emit(const WiFiDetails(
+          ssid: 'KeithNet',
+          bssid: 'a4:83:e7:00:11:22',
+          channel: 36,
+          rssi: -58,
+          noise: -90,
+          standard: '802.11ax - Wi-Fi 6',
+          rxRate: 780,
+          txRate: 866,
+        ));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Check My Connection'));
+        await tester.pumpAndSettle();
+        await settleDetails(tester);
+
+        // The one-shot read carried only the native security/BSSID identity, NO
+        // RF. So the copied report's RF rows (RSSI, channel, Rx/Tx, SNR) can ONLY
+        // come from the live sampler the sparklines bind to — proving copy ==
+        // what is on screen. Copied via the inline help-desk button.
+        final Finder copyBtn = find.text('Copy these details');
+        await tester.ensureVisible(copyBtn);
+        await tester.pumpAndSettle();
+        await tester.tap(copyBtn);
+        await tester.pumpAndSettle();
+
+        final String copied = clipboardWrites.last;
+        // The live RF is now in the copy — NOT "Unavailable".
+        expect(copied, contains('RSSI: -58 dBm'));
+        expect(copied, contains('Channel: 36'));
+        expect(copied, contains('Wi-Fi Down (Rx rate): 780 Mbps'));
+        expect(copied, contains('Wi-Fi Up (Tx rate): 866 Mbps'));
+        // SNR derived from the live rssi/noise (-58 − -90 = 32).
+        expect(copied, contains('SNR: 32 dB'));
+        // And the "not captured" fallback note is gone — RF WAS captured (live).
+        expect(copied, isNot(contains('Wi-Fi signal details not captured')));
+        // The capture affordance is not shown either (RF is present on screen).
+        expect(find.text('Capture Wi-Fi details'), findsNothing);
+
+        await tester.pump(const Duration(milliseconds: 1600));
+      },
+    );
+
+    testWidgets(
+      'iOS auto-fires the companion Shortcut on a run (no manual tap) — RF is '
+      'captured automatically',
+      (tester) async {
+        // Keith #8: running the test must auto-capture Wi-Fi RF with zero taps.
+        // The streaming bridge records runShortcut() calls; firing it once at
+        // test start is the auto-capture. We then stream a sample (the Shortcut
+        // recursion delivering) and confirm RF lands in the copy with no Start /
+        // Capture tap from the test.
+        final _StreamingBridge bridge = _StreamingBridge();
+        final WifiSignalSampler sampler = WifiSignalSampler(
+          source: WifiInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        );
+        addTearDown(sampler.dispose);
+
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableCloudApps: false,
+              sourceOverride: WifiInfoSource.iosShortcuts,
+              iosBridge: bridge,
+              sampler: sampler,
+              // Inject so the link read does not touch the real NEHotspotNetwork
+              // channel (which hangs the run in a widget test).
+              securityService: _FakeSecurityService(),
+              onboardingService: _seenOnboarding(),
+              dnsProbeService: _FakeDnsProbe(),
+              networkDetailsService: _FakeNetworkDetails(),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+        // Advance past the auto-capture settle + retry window so the stream is in
+        // a stable streaming state and no fake-async timer is left pending.
+        await tester.pump(const Duration(seconds: 3));
+        await tester.pumpAndSettle();
+        // The companion Shortcut was fired AUTOMATICALLY by the run — no manual
+        // Start / Capture tap from the test. This is the core of Keith #8.
+        expect(bridge.runShortcutCalls, greaterThanOrEqualTo(1));
+        // The live stream is up as a result of the run alone — the sparkline
+        // card binds to it, so a delivered sample appears on screen with zero
+        // taps. (The copy then reflecting that live RF is proven end-to-end in
+        // the "iOS copy serializes the LIVE-streamed RF" test above, which drives
+        // the same _effectiveAp unification through the clipboard.)
+        expect(sampler.isStreaming, isTrue);
+
+        // The recursion then delivers a sample (post auto-fire) — it lands on the
+        // live stream the sparklines bind to, with no manual Start / Capture tap.
+        bridge.emit(const WiFiDetails(
+          ssid: 'KeithNet',
+          bssid: 'a4:83:e7:00:11:22',
+          channel: 36,
+          rssi: -58,
+          noise: -90,
+          standard: '802.11ax - Wi-Fi 6',
+          rxRate: 780,
+          txRate: 866,
+        ));
+        await tester.pumpAndSettle();
+        expect(sampler.latest?.rssiDbm, -58);
+
+        await tester.pump(const Duration(milliseconds: 1600));
+      },
+    );
   });
+}
+
+/// An iOS bridge whose one-shot [readLatest] is EMPTY (null) but whose live
+/// [updates] stream can be driven with [emit]. Models the device condition Keith
+/// hit: the live companion-Shortcut stream feeds the on-screen sparklines while
+/// the one-shot App-Group read has not (yet) captured RF. [runShortcut] is
+/// recorded so the auto-fire test can prove the run fired it with no manual tap.
+class _StreamingBridge implements WiFiDetailsBridge {
+  final StreamController<WiFiDetails> _events =
+      StreamController<WiFiDetails>.broadcast();
+  bool _monitoring = false;
+  int runShortcutCalls = 0;
+
+  void emit(WiFiDetails d) => _events.add(d);
+
+  @override
+  Future<bool> hasEverReceivedPayload() async => false;
+  @override
+  Future<WiFiDetails?> readLatest() async => null;
+  @override
+  Future<bool> isMonitoringActive() async => _monitoring;
+  @override
+  Future<void> setMonitoringActive(bool active) async {
+    _monitoring = active;
+  }
+
+  @override
+  Future<bool> openUrl(String url) async => true;
+  @override
+  Future<bool> runShortcut(String name) async {
+    runShortcutCalls++;
+    return true;
+  }
+
+  @override
+  Stream<WiFiDetails> get updates => _events.stream;
 }
 
 /// A macOS adapter that returns a caller-supplied [ConnectedAp]. Used to drive
