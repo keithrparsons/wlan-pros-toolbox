@@ -37,7 +37,9 @@ import 'package:net_quality/net_quality.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/test_my_connection_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
+import 'package:wlan_pros_toolbox/services/network/dns_probe_service.dart';
 import 'package:wlan_pros_toolbox/services/network/ip_geo_service.dart';
+import 'package:wlan_pros_toolbox/services/network/network_details_service.dart';
 import 'package:wlan_pros_toolbox/services/network/live_onboarding_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
@@ -573,6 +575,27 @@ class _FakeIpGeoService extends IpGeoService {
   }
 }
 
+/// A fake DNS resolution-time probe (Keith #3). Returns a deterministic 12 ms
+/// success against cloudflare.com so the DNS report row is stable without a
+/// live resolver.
+class _FakeDnsProbe extends DnsProbeService {
+  @override
+  Future<DnsProbeResult> measure() async =>
+      DnsProbeResult.success(host: 'cloudflare.com', millis: 12);
+}
+
+/// A fake local-addressing reader (Keith #5). Returns a deterministic home-LAN
+/// snapshot so the Network report rows are stable without `network_info_plus`
+/// or a live interface list.
+class _FakeNetworkDetails extends NetworkDetailsService {
+  @override
+  Future<NetworkDetails> read() async => const NetworkDetails(
+        localIp: '192.168.1.42',
+        subnetMask: '255.255.255.0',
+        gateway: '192.168.1.1',
+      );
+}
+
 void main() {
   Widget hostTheme(Widget child, ThemeData theme, {Size? size}) => MaterialApp(
     theme: theme,
@@ -1087,8 +1110,10 @@ void main() {
 
       expect(clipboardWrites, isNotEmpty);
       final String copied = clipboardWrites.last;
-      expect(copied, contains('Wi-Fi: '));
-      expect(copied, contains('Internet: '));
+      // Report header + two-axis summary line (Keith #4).
+      expect(copied, contains('WLAN Pros Toolbox — Connection Report'));
+      expect(copied, contains('Summary: Wi-Fi '));
+      expect(copied, contains('Internet '));
       expect(copied, contains('Internet Down: 60 Mbps'));
       expect(copied, contains('Internet Up: 20 Mbps'));
       expect(copied, isNot(contains(' down / ')));
@@ -1441,6 +1466,8 @@ void main() {
               sourceOverride: WifiInfoSource.iosShortcuts,
               iosBridge: bridge,
               sampler: sampler,
+              dnsProbeService: _FakeDnsProbe(),
+              networkDetailsService: _FakeNetworkDetails(),
               // This test exercises the live Wi-Fi card, not the bottom Cloud
               // Apps panel; disable the panel so its real reachability socket
               // does not leave a pending timer under FakeAsync.
@@ -1476,6 +1503,8 @@ void main() {
               sourceOverride: WifiInfoSource.iosShortcuts,
               iosBridge: bridge,
               sampler: sampler,
+              dnsProbeService: _FakeDnsProbe(),
+              networkDetailsService: _FakeNetworkDetails(),
               // This test exercises the live Wi-Fi card, not the bottom Cloud
               // Apps panel; disable the panel so its real reachability socket
               // does not leave a pending timer under FakeAsync.
@@ -1879,6 +1908,8 @@ void main() {
               sourceOverride: WifiInfoSource.iosShortcuts,
               iosBridge: _PayloadBridge(),
               ipGeoService: _FakeIpGeoService(result: ispSuccess()),
+              dnsProbeService: _FakeDnsProbe(),
+              networkDetailsService: _FakeNetworkDetails(),
               qualityClient: MockQualityClient(
                 scriptedResult: _marginalInternet(),
               ),
@@ -1887,7 +1918,7 @@ void main() {
         );
         await runCheck(tester);
         await settleDetails(tester);
-        // Let the injected ISP lookup land before copying.
+        // Let the injected ISP / DNS / addressing lookups land before copying.
         await tester.pumpAndSettle();
 
         final Finder copyBtn = find.text('Copy these details');
@@ -1897,14 +1928,16 @@ void main() {
         await tester.pumpAndSettle();
 
         final String copied = clipboardWrites.last;
-        // Section headers.
-        expect(copied, contains('Wi-Fi:'));
-        expect(copied, contains('Internet:'));
-        expect(copied, contains('ISP:'));
-        expect(copied, contains('Verdict:'));
-        // Verdict words still lead.
-        expect(copied, contains('Wi-Fi: '));
-        expect(copied, contains('Internet: '));
+        // Polished report header + section headers (Keith #4).
+        expect(copied, contains('WLAN Pros Toolbox — Connection Report'));
+        expect(copied, contains('WI-FI'));
+        expect(copied, contains('INTERNET'));
+        expect(copied, contains('DNS'));
+        expect(copied, contains('NETWORK'));
+        expect(copied, contains('ISP'));
+        expect(copied, contains('VERDICT'));
+        // Verdict words still lead, in the summary line.
+        expect(copied, contains('Summary: Wi-Fi '));
         // Full Wi-Fi block (iOS payload exposes everything).
         expect(copied, contains('Network (SSID): KeithNet'));
         expect(copied, contains('BSSID: a4:83:e7:00:11:22'));
@@ -1919,12 +1952,19 @@ void main() {
         expect(copied, contains('Internet Up: 20 Mbps'));
         expect(copied, contains('Latency: 60 ms'));
         expect(copied, contains('Loss: 1%'));
+        // DNS section carries a REAL resolution-time row (Keith #3) — the
+        // injected probe resolved in a known time.
+        expect(copied, contains('Resolution time: 12 ms'));
+        // Network section carries the local addressing + the honest unavailable
+        // DHCP / DNS-server / VLAN rows (Keith #5).
+        expect(copied, contains('Local IP address: 192.168.1.42'));
+        expect(copied, contains('Subnet mask: 255.255.255.0'));
+        expect(copied, contains('Default gateway: 192.168.1.1'));
+        expect(copied, contains('VLAN tag: Not visible to endpoint devices'));
         // ISP block from the injected lookup.
         expect(copied, contains('Public IP: 203.0.113.7'));
         expect(copied, contains('ISP / org: Fusion Networks'));
         expect(copied, contains('ASN: AS396325'));
-        // GL-005: no fabricated DNS line.
-        expect(copied, isNot(contains('DNS:')));
 
         await tester.pump(const Duration(milliseconds: 1600));
       },
@@ -1960,11 +2000,11 @@ void main() {
 
         final String copied = clipboardWrites.last;
         // The check still produced a full payload…
-        expect(copied, contains('Wi-Fi:'));
-        expect(copied, contains('Internet:'));
-        expect(copied, contains('Verdict:'));
+        expect(copied, contains('WI-FI'));
+        expect(copied, contains('INTERNET'));
+        expect(copied, contains('VERDICT'));
         // …but the ISP section is cleanly omitted (no header, no fabricated IP).
-        expect(copied, isNot(contains('ISP:')));
+        expect(copied, isNot(contains('ISP')));
         expect(copied, isNot(contains('Public IP:')));
 
         await tester.pump(const Duration(milliseconds: 1600));

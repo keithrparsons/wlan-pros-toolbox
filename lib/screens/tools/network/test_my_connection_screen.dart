@@ -37,7 +37,9 @@ import 'package:net_quality/net_quality.dart';
 import '../../../services/network/connected_ap.dart';
 import '../../../services/network/connection_check.dart';
 import '../../../services/network/consumer_verdict.dart';
+import '../../../services/network/dns_probe_service.dart';
 import '../../../services/network/ip_geo_service.dart';
+import '../../../services/network/network_details_service.dart';
 import '../../../services/network/live_onboarding_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/wifi_details_bridge.dart';
@@ -87,6 +89,8 @@ class TestMyConnectionScreen extends StatefulWidget {
     this.cloudAppsProbe,
     this.enableCloudApps,
     this.ipGeoService,
+    this.dnsProbeService,
+    this.networkDetailsService,
   });
 
   /// When true, the check runs automatically on first mount instead of waiting
@@ -150,6 +154,19 @@ class TestMyConnectionScreen extends StatefulWidget {
   /// is omitted cleanly and never blocks the check (GL-005, GL-008).
   final IpGeoService? ipGeoService;
 
+  /// Injectable DNS resolution-time probe (tests pass a fake; production uses
+  /// the real [DnsProbeService], which times `InternetAddress.lookup` through
+  /// the device resolver — Keith #3). Runs once per check, in parallel with the
+  /// measurement; a failed lookup marks DNS unavailable rather than blocking.
+  final DnsProbeService? dnsProbeService;
+
+  /// Injectable local-addressing reader (tests pass a fake; production uses the
+  /// real [NetworkDetailsService] over `network_info_plus` + `NetworkInterface`
+  /// — Keith #5). Reads local IP / subnet / gateway; DHCP server, DNS servers,
+  /// and VLAN are honestly unavailable on these platforms (no sandbox-safe
+  /// source) and the service reports them as such.
+  final NetworkDetailsService? networkDetailsService;
+
   @override
   State<TestMyConnectionScreen> createState() => _TestMyConnectionScreenState();
 }
@@ -191,6 +208,17 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   late final IpGeoService _ipGeo;
   IpGeoResult? _ispInfo;
 
+  /// The DNS resolution-time probe and its latest result (Keith #3). Fetched
+  /// async during a run; null until it lands or if it failed (unavailable).
+  late final DnsProbeService _dnsProbe;
+  DnsProbeResult? _dnsResult;
+
+  /// The local-addressing reader and its latest snapshot (Keith #5). Fetched
+  /// async during a run; null until it lands (or stays null if the read failed,
+  /// in which case the Network section shows the honest unavailable fields).
+  late final NetworkDetailsService _netDetailsService;
+  NetworkDetails? _networkDetails;
+
   /// The latest cloud-apps reachability rows, lifted from the bottom panel so
   /// the copy payload can summarize them. Empty until the panel's probe lands.
   List<SiteReachability> _cloudResults = const <SiteReachability>[];
@@ -199,6 +227,16 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
 
   /// True only on iOS (the companion-Shortcut source).
   bool get _isIos => _source == WifiInfoSource.iosShortcuts;
+
+  /// Whether to run the REAL DNS-probe + local-addressing reads on a check.
+  /// Production always does (live sampling on). Tests that disable live sampling
+  /// and inject no fake skip them, so no real resolver / interface call leaks a
+  /// pending Timer into the test clock; a test that injects a fake DNS probe or
+  /// network-details reader flips this on to exercise those report sections.
+  bool get _runRealNetworkProbes =>
+      widget.enableLiveSampling ||
+      widget.dnsProbeService != null ||
+      widget.networkDetailsService != null;
 
   /// Plain platform word for the "Tested … on `<platform>`" fact (GL-005).
   String get _platformLabel {
@@ -220,6 +258,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   void initState() {
     super.initState();
     _ipGeo = widget.ipGeoService ?? IpGeoService();
+    _dnsProbe = widget.dnsProbeService ?? DnsProbeService();
+    _netDetailsService =
+        widget.networkDetailsService ?? NetworkDetailsService();
     _source = widget.sourceOverride ?? WifiInfoSourceResolver.resolve();
     switch (_source) {
       case WifiInfoSource.macosCoreWlan:
@@ -427,6 +468,8 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       _engine = null;
       _testedAt = null;
       _ispInfo = null;
+      _dnsResult = null;
+      _networkDetails = null;
     });
 
     final Future<ConnectedAp?> linkFuture = _readLink();
@@ -438,6 +481,24 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     // never throws and returns an honest failure result). HTTPS + keyless
     // (GL-008); never a fabricated address (GL-005).
     _fetchIspInfo();
+
+    // DNS resolution-time probe (Keith #3) + local-addressing read (Keith #5).
+    // Both run in parallel with the measurement, are purely additive (never gate
+    // the verdict, never block the run), and fail open — a failed DNS lookup
+    // marks DNS unavailable and a failed addressing read leaves the Network
+    // fields on their honest unavailable state. Cross-platform + sandbox-safe:
+    // InternetAddress.lookup and network_info_plus are native in-process calls,
+    // not CLI spawns (GL-008).
+    //
+    // Real network I/O is gated by [_runRealNetworkProbes]: production always
+    // runs them; render/copy tests that disable live sampling AND inject no fake
+    // skip them so no real resolver/interface call (and its timeout Timer) leaks
+    // into the test clock — the SAME seam pattern the cloud panel uses. A test
+    // exercising these sections injects a fake service, which flips the gate on.
+    if (_runRealNetworkProbes) {
+      _fetchDnsProbe();
+      _fetchNetworkDetails();
+    }
 
     _sub = _quality.measure().listen(
       (QualityProgress p) {
@@ -506,6 +567,40 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       }
     } catch (_) {
       // Fail open — offline / timeout / transport error → no ISP section.
+    }
+  }
+
+  /// Measures DNS resolution time for the report (Keith #3). Never throws
+  /// (DnsProbeService swallows lookup errors and returns an honest unavailable
+  /// result, and we catch defensively), never blocks the run. Stores whatever
+  /// the probe returns — a successful timing OR the honest unavailable state —
+  /// so the DNS row is always truthful (GL-005).
+  Future<void> _fetchDnsProbe() async {
+    try {
+      final DnsProbeResult result = await _dnsProbe.measure();
+      if (!mounted) return;
+      setState(() => _dnsResult = result);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _dnsResult = DnsProbeResult.unavailable());
+    }
+  }
+
+  /// Reads the device's local addressing for the report (Keith #5). Never
+  /// throws (NetworkDetailsService guards each sub-read and never throws, and we
+  /// catch defensively), never blocks the run. A failed read leaves
+  /// [_networkDetails] null so the Network section renders its honest
+  /// unavailable fields rather than a fabricated address (GL-005 / GL-008).
+  Future<void> _fetchNetworkDetails() async {
+    try {
+      final NetworkDetails details = await _netDetailsService
+          .read()
+          .timeout(const Duration(seconds: 8));
+      if (!mounted) return;
+      setState(() => _networkDetails = details);
+    } catch (_) {
+      // Fail open — leave _networkDetails null; the Network section then shows
+      // the honest "Not available" fields.
     }
   }
 
@@ -639,6 +734,16 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                           facts: _facts(),
                           onCopy: _copyDetails,
                           copied: _detailsCopied,
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        // NETWORK details (Keith #5): local IP / subnet / gateway
+                        // (obtainable, sandbox-safe), plus the honest unavailable
+                        // DHCP server / DNS server(s) / VLAN rows. Compact, grouped
+                        // in one card so it adds little vertical space. Carries the
+                        // measured DNS resolution time (Keith #3) as its first row.
+                        _NetworkDetailsCard(
+                          details: _networkDetails,
+                          dns: _dnsResult,
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         // The absorbed pro "Wi-Fi vs Internet" readout.
@@ -1110,21 +1215,32 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
 
   bool _detailsCopied = false;
 
-  /// The COMPREHENSIVE help-desk clipboard payload (Keith ISP-ask + #6). It is
-  /// laid out in clear sections — Wi-Fi / Internet / ISP / Cloud apps / Verdict
-  /// — so a support agent has everything in one paste.
+  /// The COMPREHENSIVE help-desk clipboard payload (Keith #3 / #4 / #5 / #6). A
+  /// polished, scannable plain-text report a help-desk tech will respect: a
+  /// titled header with the test date/time, then clearly-labelled sections in a
+  /// fixed order — Wi-Fi / Internet / DNS / Network / ISP / Cloud apps / Verdict
+  /// — each an aligned `label: value` block under a hairline separator.
   ///
-  /// HONESTY (GL-005): every field that the platform did not expose prints
+  /// Plain text only (it is clipboard text — no markdown, so no literal `*`),
+  /// but visually organized: each section header sits under a rule of dashes,
+  /// and within a section the values are left-aligned to a shared column so the
+  /// block reads like a table when pasted into any monospaced or proportional
+  /// help-desk field.
+  ///
+  /// HONESTY (GL-005): every field the platform did not expose prints
   /// "Unavailable" (Wi-Fi link facts) or "Not measured" (internet metrics) —
-  /// never blank, never invented. The ISP and Cloud-apps sections are omitted
-  /// entirely when their data did not land (offline / lookup failed / panel
-  /// hidden), rather than emitting a placeholder section. There is NO "DNS"
-  /// line: the net_quality engine does not measure DNS, so the tool does not
-  /// claim one — the Internet section carries only what the engine truly
-  /// produces (down/up/latency/jitter/loss/responsiveness).
+  /// never blank, never invented. The DNS row reports a REAL measured resolution
+  /// time or an honest "Not available"; it is labelled "DNS resolution time" so
+  /// it is never mistaken for anything the net_quality engine produces (the
+  /// engine still measures no DNS). The Network section's DHCP server, DNS
+  /// server(s), and VLAN rows carry the precise reason they are absent rather
+  /// than a guessed value. ISP and Cloud-apps sections are omitted entirely when
+  /// their data did not land (offline / failed / panel hidden).
   ///
   /// The verdict WORDS still lead (§8.16 / §8.13): the two-axis "Wi-Fi: … ·
-  /// Internet: …" line is preserved verbatim near the top.
+  /// Internet: …" line is preserved verbatim near the top, and the exact
+  /// "Internet Down / Internet Up" / "Wi-Fi Down / Wi-Fi Up" labels the
+  /// help-desk + existing tests rely on are unchanged.
   String? _buildCopyText() {
     if (_running || _verdict == null) return null;
     final List<_Fact> facts = _facts();
@@ -1144,54 +1260,85 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     final ConsumerVerdict? v = _verdict;
     final ConnectedAp? ap = _ap;
 
-    final StringBuffer buf = StringBuffer()
-      ..writeln('Test My Connection (WLAN Pros Toolbox)');
+    final StringBuffer buf = StringBuffer();
+
+    // ── Header ──────────────────────────────────────────────────────────────
+    buf.writeln('WLAN Pros Toolbox — Connection Report');
+    buf.writeln('Generated: ${fact('Tested')}');
     if (v != null) {
       buf.writeln(
-        'Wi-Fi: ${_TwoAxisChips.word(v.wifiStatus)} · '
-        'Internet: ${_TwoAxisChips.word(v.internetStatus)}',
+        'Summary: Wi-Fi ${_TwoAxisChips.word(v.wifiStatus)} · '
+        'Internet ${_TwoAxisChips.word(v.internetStatus)}',
       );
     }
 
-    // ── Wi-Fi ───────────────────────────────────────────────────────────────
+    // ── Wi-Fi ─────────────────────────────────────────────────────────────
     final String? wifiName = _consumerWifiName(ap);
-    buf.writeln('');
-    buf.writeln('Wi-Fi:');
-    buf.writeln('  Network (SSID): ${wifiName ?? 'Unavailable'}');
-    buf.writeln('  BSSID: ${_orUnavailable(ap?.bssid)}');
-    buf.writeln('  RSSI: ${_rssiOnly(ap)}');
-    buf.writeln('  Noise: ${_noiseOnly(ap)}');
-    buf.writeln('  SNR: ${_snrOnly(ap)}');
-    // Keep the exact "Wi-Fi Down / Wi-Fi Up" labels the help-desk + existing
-    // tests rely on (Rx = Down, Tx = Up).
-    buf.writeln('  Wi-Fi Down (Rx rate): ${_rxRate(ap)}');
-    buf.writeln('  Wi-Fi Up (Tx rate): ${_txRate(ap)}');
-    buf.writeln('  Channel: ${_orUnavailable(ap?.channel?.toString())}');
-    buf.writeln('  Channel width: ${_channelWidth(ap)}');
-    buf.writeln('  Band: ${_orUnavailable(ap?.band)}');
-    buf.writeln('  Standard (PHY): ${_orUnavailable(ap?.standard)}');
-    buf.writeln('  Security: ${_security(ap)}');
+    _copySection(buf, 'WI-FI', <_CopyRow>[
+      _CopyRow('Network (SSID)', wifiName ?? 'Unavailable'),
+      _CopyRow('BSSID', _orUnavailable(ap?.bssid)),
+      _CopyRow('RSSI', _rssiOnly(ap)),
+      _CopyRow('Noise', _noiseOnly(ap)),
+      _CopyRow('SNR', _snrOnly(ap)),
+      // Keep the exact "Wi-Fi Down / Wi-Fi Up" labels the help-desk + existing
+      // tests rely on (Rx = Down, Tx = Up).
+      _CopyRow('Wi-Fi Down (Rx rate)', _rxRate(ap)),
+      _CopyRow('Wi-Fi Up (Tx rate)', _txRate(ap)),
+      _CopyRow('Channel', _orUnavailable(ap?.channel?.toString())),
+      _CopyRow('Channel width', _channelWidth(ap)),
+      _CopyRow('Band', _orUnavailable(ap?.band)),
+      _CopyRow('Standard (PHY)', _orUnavailable(ap?.standard)),
+      _CopyRow('Security', _security(ap)),
+    ]);
 
-    // ── Internet ──────────────────────────────────────────────────────────────
+    // ── Internet ────────────────────────────────────────────────────────────
     // The exact "Internet Down / Internet Up" lines + the "Not measured" wording
     // are preserved (help-desk + test contract). Jitter and responsiveness are
-    // added; there is intentionally no DNS line (the engine measures none).
-    buf.writeln('');
-    buf.writeln('Internet:');
-    buf.writeln('  Internet Down: ${_mbps(down)}');
-    buf.writeln('  Internet Up: ${_mbps(up)}');
-    buf.writeln(
-      '  Latency: ${latency != null ? '${latency.round()} ms' : 'Not measured'}',
-    );
-    buf.writeln(
-      '  Jitter: ${jitter != null ? '${jitter.round()} ms' : 'Not measured'}',
-    );
-    buf.writeln(
-      '  Loss: ${loss != null ? '${loss.round()}%' : 'Not measured'}',
-    );
-    buf.writeln(
-      '  Responsiveness: ${rpm != null ? '${rpm.round()} RPM' : 'Not measured'}',
-    );
+    // included; the DNS measurement lives in its OWN section below.
+    _copySection(buf, 'INTERNET', <_CopyRow>[
+      _CopyRow('Internet Down', _mbps(down)),
+      _CopyRow('Internet Up', _mbps(up)),
+      _CopyRow(
+        'Latency',
+        latency != null ? '${latency.round()} ms' : 'Not measured',
+      ),
+      _CopyRow(
+        'Jitter',
+        jitter != null ? '${jitter.round()} ms' : 'Not measured',
+      ),
+      _CopyRow('Loss', loss != null ? '${loss.round()}%' : 'Not measured'),
+      _CopyRow(
+        'Responsiveness',
+        rpm != null ? '${rpm.round()} RPM' : 'Not measured',
+      ),
+    ]);
+
+    // ── DNS ─────────────────────────────────────────────────────────────────
+    // A REAL resolution-time measurement (Keith #3), labelled as exactly what it
+    // is, or the honest "Not available" when no probed host resolved (GL-005).
+    final DnsProbeResult? dns = _dnsResult;
+    final String dnsValue = (dns != null && dns.isAvailable)
+        ? '${dns.millis} ms'
+            '${dns.host != null ? ' (resolved ${dns.host})' : ''}'
+        : 'Not available';
+    _copySection(buf, 'DNS', <_CopyRow>[
+      _CopyRow('Resolution time', dnsValue),
+    ]);
+
+    // ── Network ───────────────────────────────────────────────────────────
+    // Local addressing (Keith #5): IP / subnet / gateway are obtainable and
+    // sandbox-safe; DHCP server, DNS server(s), and VLAN are honestly
+    // unavailable on these platforms — each carries the precise reason, never a
+    // guessed value (GL-005 / GL-008).
+    final NetworkDetails nd = _networkDetails ?? NetworkDetails.empty;
+    _copySection(buf, 'NETWORK', <_CopyRow>[
+      _CopyRow('Local IP address', nd.localIp ?? 'Not available'),
+      _CopyRow('Subnet mask', nd.subnetMask ?? 'Not available'),
+      _CopyRow('Default gateway', nd.gateway ?? 'Not available'),
+      _CopyRow('DHCP server', NetworkDetails.dhcpReason),
+      _CopyRow('DNS server(s)', NetworkDetails.dnsReason),
+      _CopyRow('VLAN tag', NetworkDetails.vlanReason),
+    ]);
 
     // ── ISP ────────────────────────────────────────────────────────────────
     // Omitted entirely when the lookup did not land (offline / failed) — never a
@@ -1202,52 +1349,67 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       final String? org = isp.isp ?? isp.org;
       final String? asn = isp.asn;
       final String? loc = isp.locationLine;
-      // Only render a field when the provider actually returned it.
-      final List<String> lines = <String>[
-        if (ip != null) '  Public IP: $ip',
-        if (org != null) '  ISP / org: $org',
-        if (asn != null) '  ASN: $asn',
-        if (loc != null) '  Approx. location: $loc',
+      final List<_CopyRow> rows = <_CopyRow>[
+        if (ip != null) _CopyRow('Public IP', ip),
+        if (org != null) _CopyRow('ISP / org', org),
+        if (asn != null) _CopyRow('ASN', asn),
+        if (loc != null) _CopyRow('Approx. location', loc),
       ];
-      if (lines.isNotEmpty) {
-        buf.writeln('');
-        buf.writeln('ISP:');
-        for (final String line in lines) {
-          buf.writeln(line);
-        }
-      }
+      if (rows.isNotEmpty) _copySection(buf, 'ISP', rows);
     }
 
     // ── Cloud apps ─────────────────────────────────────────────────────────
-    // Omitted when the panel produced no rows yet (hidden / not run). Carries a
-    // one-line summary + a per-service "reachable / unreachable (+rtt)" list.
+    // Omitted when the panel produced no rows yet (hidden / not run). A summary
+    // header line plus a per-service "reachable / unreachable (+rtt)" list.
     final List<SiteReachability> cloud = _cloudResults;
     if (cloud.isNotEmpty) {
       final int reachable =
           cloud.where((SiteReachability s) => s.reachable).length;
-      buf.writeln('');
-      buf.writeln('Cloud apps ($reachable of ${cloud.length} reachable):');
-      for (final SiteReachability s in cloud) {
-        final String rtt = s.reachable && s.latencyMs != null
-            ? ' (${s.latencyMs!.round()} ms)'
-            : '';
-        buf.writeln(
-          '  ${s.site.name}: ${s.reachable ? 'reachable' : 'unreachable'}$rtt',
-        );
-      }
+      final List<_CopyRow> rows = <_CopyRow>[
+        for (final SiteReachability s in cloud)
+          _CopyRow(
+            s.site.name,
+            s.reachable
+                ? 'reachable'
+                    '${s.latencyMs != null ? ' (${s.latencyMs!.round()} ms)' : ''}'
+                : 'unreachable',
+          ),
+      ];
+      _copySection(
+        buf,
+        'CLOUD APPS REACHABLE ($reachable of ${cloud.length})',
+        rows,
+      );
     }
 
     // ── Verdict ────────────────────────────────────────────────────────────
-    buf.writeln('');
-    buf.writeln('Verdict:');
-    buf.writeln('  ${_verdictLine(v!)}');
+    final List<_CopyRow> verdictRows = <_CopyRow>[
+      _CopyRow('Result', _verdictLine(v!)),
+    ];
     final String? cmp = _comparisonLine(v);
-    if (cmp != null) {
-      buf.writeln('  $cmp');
-    }
-    buf.writeln('  Tested: ${fact('Tested')}');
+    if (cmp != null) verdictRows.add(_CopyRow('Comparison', cmp));
+    _copySection(buf, 'VERDICT', verdictRows);
 
     return buf.toString().trimRight();
+  }
+
+  /// Writes one labelled section to the report [buf]: a blank line, a section
+  /// header (`SECTION` over a rule of dashes), then each row as `  label: value`
+  /// — a 2-space indent sets the block off from the flush-left header, and the
+  /// `label: value` form keeps each datum self-describing when the report is
+  /// pasted into any help-desk field (proportional or monospaced). Plain text
+  /// only — no markdown that would render as literal asterisks.
+  static void _copySection(
+    StringBuffer buf,
+    String title,
+    List<_CopyRow> rows,
+  ) {
+    buf.writeln('');
+    buf.writeln(title);
+    buf.writeln('-' * (title.length < 48 ? title.length : 48));
+    for (final _CopyRow r in rows) {
+      buf.writeln('  ${r.label}: ${r.value}');
+    }
   }
 
   /// A nullable string value or the honest "Unavailable" sentinel (GL-005).
@@ -1322,6 +1484,15 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
 
 class _Fact {
   const _Fact(this.label, this.value);
+  final String label;
+  final String value;
+}
+
+/// One `label: value` pair in the copied connection report. Used only by
+/// [_buildCopyText] / [_copySection] to lay each section out as an aligned,
+/// scannable block of plain text (Keith #4).
+class _CopyRow {
+  const _CopyRow(this.label, this.value);
   final String label;
   final String value;
 }
@@ -2503,6 +2674,85 @@ class _FactRow extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ===========================================================================
+// NETWORK details card (Keith #5 + #3). A compact, grouped readout of the
+// device's local addressing — DNS resolution time, local IP, subnet mask,
+// default gateway — plus the honestly-unavailable DHCP server, DNS server(s),
+// and VLAN rows. Every row is truthful (GL-005): an obtainable field that came
+// back null renders "Not available"; the three structurally-unavailable rows
+// carry the precise reason the data is absent (sandbox / platform / 802.1Q
+// stripping), never a guessed value.
+// ===========================================================================
+
+class _NetworkDetailsCard extends StatelessWidget {
+  const _NetworkDetailsCard({required this.details, required this.dns});
+
+  /// The local-addressing snapshot, or null while the read is in flight / after
+  /// it failed (the obtainable rows then show "Not available").
+  final NetworkDetails? details;
+
+  /// The DNS resolution-time probe result, or null while it is in flight (the
+  /// row then shows a neutral "Measuring…"); an unavailable result shows the
+  /// honest "Not available".
+  final DnsProbeResult? dns;
+
+  /// The DNS resolution-time row value: the measured time + the host that
+  /// resolved when available, a neutral in-flight string while still probing,
+  /// or the honest "Not available" when no host resolved. Never fabricated.
+  String _dnsValue() {
+    final DnsProbeResult? r = dns;
+    if (r == null) return 'Measuring…';
+    if (r.isAvailable) {
+      final String host = r.host != null ? ' (${r.host})' : '';
+      return '${r.millis} ms$host';
+    }
+    return 'Not available';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final NetworkDetails? d = details;
+    return _SectionCard(
+      title: 'Network',
+      children: <Widget>[
+        // DNS RESOLUTION TIME (Keith #3) — a real timed lookup through the
+        // device resolver, labelled exactly as what it is.
+        _DataRow(
+          label: 'DNS resolution time',
+          value: _dnsValue(),
+          mono: true,
+        ),
+        // Local IP / subnet / gateway — obtainable, sandbox-safe. A null shows
+        // the _DataRow "Unavailable" treatment (honest, not fabricated).
+        _DataRow(label: 'Local IP address', value: d?.localIp, mono: true),
+        _DataRow(label: 'Subnet mask', value: d?.subnetMask, mono: true),
+        _DataRow(label: 'Default gateway', value: d?.gateway, mono: true),
+        // DHCP server / DNS server(s) — structurally unavailable on these
+        // platforms (no sandbox-safe source). Rendered as the design system's
+        // muted "Unavailable" value with the precise reason beneath, so the row
+        // reads as an honest platform fact, not a missing read (GL-005).
+        const _DataRow(
+          label: 'DHCP server',
+          value: null,
+          note: NetworkDetails.dhcpReason,
+        ),
+        const _DataRow(
+          label: 'DNS server(s)',
+          value: null,
+          note: NetworkDetails.dnsReason,
+        ),
+        // VLAN tag — a true platform fact: 802.1Q tags are stripped before the
+        // endpoint OS sees the frame, so no endpoint app can observe one.
+        const _DataRow(
+          label: 'VLAN tag',
+          value: null,
+          note: NetworkDetails.vlanReason,
+        ),
+      ],
     );
   }
 }

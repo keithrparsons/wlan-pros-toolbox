@@ -46,6 +46,8 @@ import 'package:wlan_pros_toolbox/screens/tools/network/wifi_info_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/wifi_glossary_screen.dart';
 import 'package:wlan_pros_toolbox/services/glossary/glossary_service.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
+import 'package:wlan_pros_toolbox/services/network/dns_probe_service.dart';
+import 'package:wlan_pros_toolbox/services/network/network_details_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
@@ -64,6 +66,24 @@ const String kOutDir = 'book3_screenshots/raw';
 final GlobalKey _captureKey = GlobalKey();
 
 // ── Live-fixture fakes (constructor-injection seams) ────────────────────────
+
+/// A deterministic DNS resolution-time probe so the S06 capture never touches a
+/// live resolver (and never leaks a timeout Timer under FakeAsync).
+class _FakeDnsProbe extends DnsProbeService {
+  @override
+  Future<DnsProbeResult> measure() async =>
+      DnsProbeResult.success(host: 'cloudflare.com', millis: 12);
+}
+
+/// A deterministic local-addressing reader for the S06 capture.
+class _FakeNetworkDetails extends NetworkDetailsService {
+  @override
+  Future<NetworkDetails> read() async => const NetworkDetails(
+        localIp: '192.168.1.42',
+        subnetMask: '255.255.255.0',
+        gateway: '192.168.1.1',
+      );
+}
 
 /// A macOS adapter that returns one fixed [ConnectedAp] — drives the Wi-Fi
 /// Information screen to exact, prose-matching RF values (S7 / S8 / S11 / S12).
@@ -503,6 +523,12 @@ void main() {
         // Apps panel; disable the panel so its real reachability socket does not
         // leak a pending timer in this settle:false manual-pump capture.
         enableCloudApps: false,
+        // Inject deterministic DNS-probe + addressing fakes so the real
+        // resolver / interface reads (and their timeout Timers) do not leak into
+        // this settle:false manual-pump capture — the figure shows the live card,
+        // not the Network/DNS report sections.
+        dnsProbeService: _FakeDnsProbe(),
+        networkDetailsService: _FakeNetworkDetails(),
         sourceOverride: WifiInfoSource.macosCoreWlan,
         macAdapter: _TxLinkMacAdapter(720, rssi: -52, snr: 38),
         qualityClient: MockQualityClient(
