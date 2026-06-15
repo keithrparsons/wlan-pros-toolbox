@@ -44,6 +44,7 @@ class CloudAppsPanel extends StatefulWidget {
     super.key,
     this.probe,
     this.autoStart = true,
+    this.onResults,
   });
 
   /// Injectable reachability probe (tests pass a fake prober). Defaults to a
@@ -53,6 +54,14 @@ class CloudAppsPanel extends StatefulWidget {
   /// When true (production default) the probe runs on first mount. Tests that
   /// drive the probe manually can disable it.
   final bool autoStart;
+
+  /// Fired whenever a probe completes with the latest per-service reachability
+  /// rows (Keith ISP/comprehensive-copy ask). The host screen reads it so the
+  /// "Copy these details" payload can carry the cloud-apps reachability summary
+  /// alongside the Wi-Fi / internet / ISP sections. Honest by construction: it
+  /// only ever carries the rows the probe actually produced — never a fabricated
+  /// reachability claim. Optional; null in tests that do not exercise the copy.
+  final ValueChanged<List<SiteReachability>>? onResults;
 
   @override
   State<CloudAppsPanel> createState() => _CloudAppsPanelState();
@@ -99,6 +108,8 @@ class _CloudAppsPanelState extends State<CloudAppsPanel> {
         _results = results;
         _phase = _PanelPhase.ready;
       });
+      // Surface the rows to the host screen for the comprehensive copy payload.
+      widget.onResults?.call(results);
       SemanticsService.sendAnnouncement(
         View.of(context),
         'Cloud app reachability check complete',
@@ -178,7 +189,10 @@ class _CloudAppsPanelState extends State<CloudAppsPanel> {
             const SizedBox(height: AppSpacing.xs),
             for (final SiteReachability s in _results) _CloudAppRow(result: s),
             const SizedBox(height: AppSpacing.xs),
-            _RetryButton(onRetry: _run, label: 'Check again'),
+            // Keith #7: scope the label so it is unmistakable that this button
+            // ONLY re-runs the cloud-apps reachability probe — NOT the whole
+            // Wi-Fi/internet test (which is the AppBar "Run again" affordance).
+            _RetryButton(onRetry: _run, label: 'Re-check cloud apps'),
           ],
         );
     }
@@ -245,22 +259,42 @@ class _CloudAppRow extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Icon(icon, size: 16, color: iconColor),
+              // Icon nudged onto the text baseline of a possibly-wrapped row.
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Icon(icon, size: 16, color: iconColor),
+              ),
               const SizedBox(width: AppSpacing.xs),
+              // Keith #3 (320px mid-word wrap): the name column gets the larger
+              // flex AND word-boundary wrapping (softWrap: true,
+              // wordSpacing-default), so service names break at spaces — never
+              // mid-character ("Faceboo-k"). The status word is the flexible one
+              // that yields room and wraps on its own word boundary, so it can
+              // never squeeze the name box below a single word's width at 320px
+              // or under scaled dynamic type.
               Expanded(
+                flex: 3,
                 child: Text(
                   result.site.name,
+                  softWrap: true,
                   style: text.bodyLarge?.copyWith(color: colors.textPrimary),
                 ),
               ),
-              Text(
-                status,
-                style: text.labelMedium?.copyWith(color: colors.textSecondary),
+              const SizedBox(width: AppSpacing.xs),
+              Flexible(
+                flex: 2,
+                child: Text(
+                  status,
+                  softWrap: true,
+                  textAlign: TextAlign.right,
+                  style: text.labelMedium?.copyWith(color: colors.textSecondary),
+                ),
               ),
               const SizedBox(width: AppSpacing.sm),
               SizedBox(
-                width: 64,
+                width: 56,
                 child: Text(
                   rtt,
                   textAlign: TextAlign.right,
@@ -360,7 +394,10 @@ class _ErrorState extends StatelessWidget {
           style: text.bodyMedium?.copyWith(color: colors.statusDanger),
         ),
         const SizedBox(height: AppSpacing.sm),
-        _RetryButton(onRetry: onRetry, label: 'Try again'),
+        // Keith #7: match the scoped label used in the success / empty states so
+        // it is unmistakable this only re-runs the cloud-apps probe, never the
+        // whole Wi-Fi/internet test.
+        _RetryButton(onRetry: onRetry, label: 'Re-check cloud apps'),
       ],
     );
   }
@@ -384,7 +421,7 @@ class _EmptyState extends StatelessWidget {
           style: text.bodyMedium?.copyWith(color: colors.textTertiary),
         ),
         const SizedBox(height: AppSpacing.sm),
-        _RetryButton(onRetry: onRetry, label: 'Check again'),
+        _RetryButton(onRetry: onRetry, label: 'Re-check cloud apps'),
       ],
     );
   }

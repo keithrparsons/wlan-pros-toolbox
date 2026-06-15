@@ -37,11 +37,13 @@ import 'package:net_quality/net_quality.dart';
 import '../../../services/network/connected_ap.dart';
 import '../../../services/network/connection_check.dart';
 import '../../../services/network/consumer_verdict.dart';
+import '../../../services/network/ip_geo_service.dart';
 import '../../../services/network/live_onboarding_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/wifi_details_bridge.dart';
 import '../../../services/network/wifi_grading.dart';
 import '../../../services/network/wifi_info_adapter.dart';
+import '../../../services/network/wifi_security.dart';
 import '../../../services/network/wifi_signal_sampler.dart';
 import '../../../services/network/wifi_time_series.dart';
 import '../../../services/network/wifi_vs_internet.dart';
@@ -84,6 +86,7 @@ class TestMyConnectionScreen extends StatefulWidget {
     this.onboardingService,
     this.cloudAppsProbe,
     this.enableCloudApps,
+    this.ipGeoService,
   });
 
   /// When true, the check runs automatically on first mount instead of waiting
@@ -139,6 +142,14 @@ class TestMyConnectionScreen extends StatefulWidget {
   /// passes an explicit true plus a fake [cloudAppsProbe].
   final bool? enableCloudApps;
 
+  /// Injectable IP-info service (tests pass a fake; production uses the real
+  /// keyless HTTPS [IpGeoService] — ipinfo.io primary, geojs.io fallback). Used
+  /// to enrich the "Copy these details" payload with the public IP + ISP/org +
+  /// ASN so a help desk has the ISP context (Keith ISP-ask + #6). Fetched once
+  /// per run; fails open — if offline or both providers error, the ISP section
+  /// is omitted cleanly and never blocks the check (GL-005, GL-008).
+  final IpGeoService? ipGeoService;
+
   @override
   State<TestMyConnectionScreen> createState() => _TestMyConnectionScreenState();
 }
@@ -173,6 +184,17 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   WifiVsInternetResult? _engine;
   DateTime? _testedAt;
 
+  /// The ISP / public-IP lookup for the comprehensive copy payload (Keith
+  /// ISP-ask + #6). Fetched async during a run; null until it lands (or stays
+  /// null if it failed / is offline, in which case the ISP copy section is
+  /// omitted cleanly — never blocks the check or fabricates a value).
+  late final IpGeoService _ipGeo;
+  IpGeoResult? _ispInfo;
+
+  /// The latest cloud-apps reachability rows, lifted from the bottom panel so
+  /// the copy payload can summarize them. Empty until the panel's probe lands.
+  List<SiteReachability> _cloudResults = const <SiteReachability>[];
+
   StreamSubscription<QualityProgress>? _sub;
 
   /// True only on iOS (the companion-Shortcut source).
@@ -197,6 +219,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   @override
   void initState() {
     super.initState();
+    _ipGeo = widget.ipGeoService ?? IpGeoService();
     _source = widget.sourceOverride ?? WifiInfoSourceResolver.resolve();
     switch (_source) {
       case WifiInfoSource.macosCoreWlan:
@@ -403,9 +426,18 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       _verdict = null;
       _engine = null;
       _testedAt = null;
+      _ispInfo = null;
     });
 
     final Future<ConnectedAp?> linkFuture = _readLink();
+
+    // ISP / public-IP lookup for the copy payload (Keith ISP-ask + #6). Runs in
+    // parallel with the measurement and is purely additive — it never gates the
+    // verdict, never blocks the run, and fails open (a thrown lookup is caught
+    // and the ISP copy section is simply omitted; IpGeoService itself already
+    // never throws and returns an honest failure result). HTTPS + keyless
+    // (GL-008); never a fabricated address (GL-005).
+    _fetchIspInfo();
 
     _sub = _quality.measure().listen(
       (QualityProgress p) {
@@ -457,62 +489,70 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     );
   }
 
+  /// Fetches the public IP + ISP/org + ASN for the copy payload. Never throws
+  /// (IpGeoService returns an honest failure result, and we catch defensively),
+  /// never blocks the run, and stores only a real, located/successful result —
+  /// a failure or offline lookup leaves [_ispInfo] null so the ISP copy section
+  /// is omitted cleanly (Keith ISP-ask + #6; GL-005 / GL-008).
+  Future<void> _fetchIspInfo() async {
+    try {
+      final IpGeoResult result = await _ipGeo
+          .lookup(rawQuery: '')
+          .timeout(const Duration(seconds: 8));
+      if (!mounted) return;
+      // Only keep a non-error result; a failure stays null (omitted from copy).
+      if (!result.isError) {
+        setState(() => _ispInfo = result);
+      }
+    } catch (_) {
+      // Fail open — offline / timeout / transport error → no ISP section.
+    }
+  }
+
   // ---- Build ----
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Test My Connection'),
+        // §8.5 `--text-h2` (28px) screen title. At every real iPhone width
+        // (≥375pt) the full "Test My Connection" string renders at full size
+        // beside the single §8.16 copy action (verified 375/430/768 — no
+        // ellipsis). `BoxFit.scaleDown` is a no-op there; it engages ONLY below
+        // 375pt (e.g. a 320px stress width), shrinking the title just enough to
+        // keep the WHOLE name on one line rather than ellipsizing to
+        // "Test My C…". The title never truncates and never wraps.
+        title: const Align(
+          alignment: Alignment.centerLeft,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text('Test My Connection'),
+          ),
+        ),
         toolbarHeight: 64,
-        // §8.16: copy LEADS, the Refresh action trails. Help is the bottom
+        // §8.16: copy is the SINGLE trailing AppBar action. Help is the bottom
         // footer (§8.16.1), not an AppBar glyph.
+        //
+        // Vera title-truncation finding (2026-06-14): a SECOND trailing action
+        // here — the old labeled "Run again" `TextButton.icon` — widened the
+        // trailing block to ~198px and ellipsized the 28px (§8.5 `--text-h2`,
+        // ~252px) "Test My Connection" title to "Test My C…" at iPhone widths
+        // (320–430px). Even an icon-only second action still overran 320/375px
+        // (252px title + 16px lead + two ≥48dp hit regions does not fit). §8.16
+        // pins the copy action to the AppBar, so the re-run is the action that
+        // moves: the unmistakable LABELED "Run again" control now lives on an
+        // EXISTING line in the result body — the verdict-hero sentence row
+        // (Keith explicitly OK'd "on the same line as something else", no new
+        // vertical space). It carries `Icons.refresh`, the 'Run the test again'
+        // Semantics label, and the §8.3 44pt target (see [_HeroRunAgainButton]).
+        // With copy alone the full title clears at every iPhone width.
         actions: <Widget>[
           AppCopyAction(textBuilder: _buildCopyText),
-          ..._refreshAction(),
         ],
       ),
       body: SafeArea(top: false, child: _body()),
     );
-  }
-
-  /// The AppBar "Refresh" action — re-runs the SAME check via [_run()]. Returns
-  /// an empty list until a result exists.
-  List<Widget> _refreshAction() {
-    if (_verdict == null && !_running) return const <Widget>[];
-    if (_running) {
-      // The spinner is a thin foreground graphic on the canvas → darkened-lime
-      // in light (brand lime would vanish on white), brand lime in dark.
-      final Color spinner = context.colors.isLight
-          ? context.colors.textAccent
-          : context.colors.primary;
-      return <Widget>[
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-          child: Center(
-            child: SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: spinner,
-              ),
-            ),
-          ),
-        ),
-      ];
-    }
-    return <Widget>[
-      Semantics(
-        button: true,
-        label: 'Run the test again',
-        child: IconButton(
-          icon: const Icon(Icons.refresh),
-          tooltip: 'Refresh',
-          onPressed: _run,
-        ),
-      ),
-    ];
   }
 
   Widget _body() {
@@ -564,6 +604,11 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                     _HeroVerdict(
                       verdict: verdict,
                       heroSentence: _heroSentence(verdict),
+                      // The unmistakable LABELED re-run lives HERE on the
+                      // hero-sentence row (Keith: same line as something else,
+                      // no new vertical space). Disabled while a run is in
+                      // flight so a double-tap can't queue a second check.
+                      onRunAgain: _running ? null : _run,
                     ),
                     const SizedBox(height: AppSpacing.md),
                     // VERDICT LINE — a plain, state-driven sentence that names the
@@ -620,7 +665,16 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                     if (widget.enableCloudApps ??
                         widget.enableLiveSampling) ...<Widget>[
                       const SizedBox(height: AppSpacing.sm),
-                      CloudAppsPanel(probe: widget.cloudAppsProbe),
+                      CloudAppsPanel(
+                        probe: widget.cloudAppsProbe,
+                        // Lift the reachability rows so the comprehensive copy
+                        // payload can summarize them (Keith #6). Additive only —
+                        // the panel still owns its own probe + scoped re-check.
+                        onResults: (List<SiteReachability> rows) {
+                          if (!mounted) return;
+                          setState(() => _cloudResults = rows);
+                        },
+                      ),
                     ],
                     const SizedBox(height: AppSpacing.md),
                     _poweredBy(context),
@@ -725,6 +779,19 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Testing your Wi-Fi and your internet connection.',
+            style: text.bodyMedium?.copyWith(color: colors.textTertiary),
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          // Duration hint (Keith #9). HONEST figure (GL-005): the test is NOT a
+          // fixed 10–15 s window. It runs three back-to-back ~10 s measurement
+          // windows — download, then upload, then a loaded-responsiveness probe
+          // — preceded by a sub-second latency burst. A typical healthy run is
+          // ~25–35 s; a fast link finishes near the low end, a slow/stalled
+          // endpoint near the high end. "About half a minute" is the truthful,
+          // plain-language version of that range. See the timing constants in
+          // own_engine_quality_client.dart + throughput_probe.maxDuration (10 s).
+          Text(
+            'This usually takes about half a minute.',
             style: text.bodyMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
@@ -1043,8 +1110,21 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
 
   bool _detailsCopied = false;
 
-  /// The clipboard format VERBATIM from the spec. The verdict WORD always leads
-  /// (§8.16 / §8.13); unmeasured fields print "Not measured" (GL-005).
+  /// The COMPREHENSIVE help-desk clipboard payload (Keith ISP-ask + #6). It is
+  /// laid out in clear sections — Wi-Fi / Internet / ISP / Cloud apps / Verdict
+  /// — so a support agent has everything in one paste.
+  ///
+  /// HONESTY (GL-005): every field that the platform did not expose prints
+  /// "Unavailable" (Wi-Fi link facts) or "Not measured" (internet metrics) —
+  /// never blank, never invented. The ISP and Cloud-apps sections are omitted
+  /// entirely when their data did not land (offline / lookup failed / panel
+  /// hidden), rather than emitting a placeholder section. There is NO "DNS"
+  /// line: the net_quality engine does not measure DNS, so the tool does not
+  /// claim one — the Internet section carries only what the engine truly
+  /// produces (down/up/latency/jitter/loss/responsiveness).
+  ///
+  /// The verdict WORDS still lead (§8.16 / §8.13): the two-axis "Wi-Fi: … ·
+  /// Internet: …" line is preserved verbatim near the top.
   String? _buildCopyText() {
     if (_running || _verdict == null) return null;
     final List<_Fact> facts = _facts();
@@ -1056,9 +1136,14 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     final double? up = ConnectionCheck.metricValue(net, MetricIds.upload);
     final double? latency =
         ConnectionCheck.metricValue(net, MetricIds.latency);
+    final double? jitter = ConnectionCheck.metricValue(net, MetricIds.jitter);
     final double? loss = ConnectionCheck.metricValue(net, MetricIds.loss);
+    final double? rpm =
+        ConnectionCheck.metricValue(net, MetricIds.responsiveness);
 
     final ConsumerVerdict? v = _verdict;
+    final ConnectedAp? ap = _ap;
+
     final StringBuffer buf = StringBuffer()
       ..writeln('Test My Connection (WLAN Pros Toolbox)');
     if (v != null) {
@@ -1067,24 +1152,126 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         'Internet: ${_TwoAxisChips.word(v.internetStatus)}',
       );
     }
-    final String? wifiName = _consumerWifiName(_ap);
-    buf
-      ..writeln('Internet Down: ${_mbps(down)}')
-      ..writeln('Internet Up: ${_mbps(up)}')
-      ..writeln(
-        'Delay: ${latency != null ? '${latency.round()} ms' : 'Not measured'}   '
-        'Dropped data: ${loss != null ? '${loss.round()}%' : 'Not measured'}',
-      );
-    if (wifiName != null) {
-      buf.writeln('Wi-Fi network: $wifiName');
+
+    // ── Wi-Fi ───────────────────────────────────────────────────────────────
+    final String? wifiName = _consumerWifiName(ap);
+    buf.writeln('');
+    buf.writeln('Wi-Fi:');
+    buf.writeln('  Network (SSID): ${wifiName ?? 'Unavailable'}');
+    buf.writeln('  BSSID: ${_orUnavailable(ap?.bssid)}');
+    buf.writeln('  RSSI: ${_rssiOnly(ap)}');
+    buf.writeln('  Noise: ${_noiseOnly(ap)}');
+    buf.writeln('  SNR: ${_snrOnly(ap)}');
+    // Keep the exact "Wi-Fi Down / Wi-Fi Up" labels the help-desk + existing
+    // tests rely on (Rx = Down, Tx = Up).
+    buf.writeln('  Wi-Fi Down (Rx rate): ${_rxRate(ap)}');
+    buf.writeln('  Wi-Fi Up (Tx rate): ${_txRate(ap)}');
+    buf.writeln('  Channel: ${_orUnavailable(ap?.channel?.toString())}');
+    buf.writeln('  Channel width: ${_channelWidth(ap)}');
+    buf.writeln('  Band: ${_orUnavailable(ap?.band)}');
+    buf.writeln('  Standard (PHY): ${_orUnavailable(ap?.standard)}');
+    buf.writeln('  Security: ${_security(ap)}');
+
+    // ── Internet ──────────────────────────────────────────────────────────────
+    // The exact "Internet Down / Internet Up" lines + the "Not measured" wording
+    // are preserved (help-desk + test contract). Jitter and responsiveness are
+    // added; there is intentionally no DNS line (the engine measures none).
+    buf.writeln('');
+    buf.writeln('Internet:');
+    buf.writeln('  Internet Down: ${_mbps(down)}');
+    buf.writeln('  Internet Up: ${_mbps(up)}');
+    buf.writeln(
+      '  Latency: ${latency != null ? '${latency.round()} ms' : 'Not measured'}',
+    );
+    buf.writeln(
+      '  Jitter: ${jitter != null ? '${jitter.round()} ms' : 'Not measured'}',
+    );
+    buf.writeln(
+      '  Loss: ${loss != null ? '${loss.round()}%' : 'Not measured'}',
+    );
+    buf.writeln(
+      '  Responsiveness: ${rpm != null ? '${rpm.round()} RPM' : 'Not measured'}',
+    );
+
+    // ── ISP ────────────────────────────────────────────────────────────────
+    // Omitted entirely when the lookup did not land (offline / failed) — never a
+    // placeholder section, never a fabricated address (GL-005 / GL-008).
+    final IpGeoResult? isp = _ispInfo;
+    if (isp != null && !isp.isError) {
+      final String? ip = isp.ip;
+      final String? org = isp.isp ?? isp.org;
+      final String? asn = isp.asn;
+      final String? loc = isp.locationLine;
+      // Only render a field when the provider actually returned it.
+      final List<String> lines = <String>[
+        if (ip != null) '  Public IP: $ip',
+        if (org != null) '  ISP / org: $org',
+        if (asn != null) '  ASN: $asn',
+        if (loc != null) '  Approx. location: $loc',
+      ];
+      if (lines.isNotEmpty) {
+        buf.writeln('');
+        buf.writeln('ISP:');
+        for (final String line in lines) {
+          buf.writeln(line);
+        }
+      }
     }
-    buf
-      ..writeln('RSSI: ${_rssiOnly(_ap)}')
-      ..writeln('SNR: ${_snrOnly(_ap)}')
-      ..writeln('Wi-Fi Down: ${_rxRate(_ap)}')
-      ..writeln('Wi-Fi Up: ${_txRate(_ap)}')
-      ..writeln('Tested: ${fact('Tested')}');
+
+    // ── Cloud apps ─────────────────────────────────────────────────────────
+    // Omitted when the panel produced no rows yet (hidden / not run). Carries a
+    // one-line summary + a per-service "reachable / unreachable (+rtt)" list.
+    final List<SiteReachability> cloud = _cloudResults;
+    if (cloud.isNotEmpty) {
+      final int reachable =
+          cloud.where((SiteReachability s) => s.reachable).length;
+      buf.writeln('');
+      buf.writeln('Cloud apps ($reachable of ${cloud.length} reachable):');
+      for (final SiteReachability s in cloud) {
+        final String rtt = s.reachable && s.latencyMs != null
+            ? ' (${s.latencyMs!.round()} ms)'
+            : '';
+        buf.writeln(
+          '  ${s.site.name}: ${s.reachable ? 'reachable' : 'unreachable'}$rtt',
+        );
+      }
+    }
+
+    // ── Verdict ────────────────────────────────────────────────────────────
+    buf.writeln('');
+    buf.writeln('Verdict:');
+    buf.writeln('  ${_verdictLine(v!)}');
+    final String? cmp = _comparisonLine(v);
+    if (cmp != null) {
+      buf.writeln('  $cmp');
+    }
+    buf.writeln('  Tested: ${fact('Tested')}');
+
     return buf.toString().trimRight();
+  }
+
+  /// A nullable string value or the honest "Unavailable" sentinel (GL-005).
+  static String _orUnavailable(String? v) =>
+      (v != null && v.trim().isNotEmpty) ? v : 'Unavailable';
+
+  /// Noise floor for the copy line. "Unavailable" when the NIC omits it.
+  static String _noiseOnly(ConnectedAp? ap) {
+    final int? noise = ap?.noiseDbm;
+    return noise != null ? '$noise dBm' : 'Unavailable';
+  }
+
+  /// Channel width for the copy line, honoring the platform-availability flag.
+  static String _channelWidth(ConnectedAp? ap) {
+    final int? w = ap?.channelWidthMhz;
+    if (w != null) return '$w MHz';
+    return 'Unavailable';
+  }
+
+  /// Security scheme label, or "Unavailable" when the platform did not report
+  /// one. Never invents a scheme (GL-005).
+  static String _security(ConnectedAp? ap) {
+    final WifiSecurity? s = ap?.securityType;
+    return s != null ? s.label : 'Unavailable';
   }
 
   Future<void> _copyDetails() async {
@@ -1151,10 +1338,20 @@ class _Fact {
 /// teach the two-things model; each carries WORD + GLYPH + color (§1.3), never
 /// color alone. In light, the card takes the §8.20.3-C status accent treatment.
 class _HeroVerdict extends StatelessWidget {
-  const _HeroVerdict({required this.verdict, required this.heroSentence});
+  const _HeroVerdict({
+    required this.verdict,
+    required this.heroSentence,
+    this.onRunAgain,
+  });
 
   final ConsumerVerdict verdict;
   final String heroSentence;
+
+  /// Re-runs the whole check. Rendered as the unmistakable LABELED "Run again"
+  /// control on the hero-sentence row (the AppBar carries only a compact
+  /// icon-only refresh so the title never truncates — Vera 2026-06-14). Null
+  /// while a run is in flight; the control is then omitted.
+  final VoidCallback? onRunAgain;
 
   /// §8.20.3-C #2 — the status tone that colors the result card's accent bar.
   /// "Both fine" reads as success; any slow side is a warning; an unreadable
@@ -1199,33 +1396,112 @@ class _HeroVerdict extends StatelessWidget {
           // §2.A — the plain-language verdict SENTENCE at H1/36px
           // (`headlineLarge`, §8.5.2 scope extension). The largest in-app
           // headline; the comprehension climax. Wraps (never clips) under
-          // dynamic type, §8.9.
-          Text(
-            heroSentence,
-            style: text.headlineLarge?.copyWith(color: colors.textPrimary),
+          // dynamic type, §8.9. The unmistakable LABELED "Run again" control
+          // shares this row (Keith: same line as something else, no new
+          // vertical space) — the sentence flexes, the button trails,
+          // top-aligned so it sits beside the first line of a wrapped headline.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Expanded(
+                // The verdict sentence is part of the card's single merged SR
+                // summary, so its own node is excluded here (the outer Semantics
+                // below speaks it). The Run again button, by contrast, is an
+                // interactive control and MUST keep its own live semantics — so
+                // it is NOT inside this ExcludeSemantics (the blanket card-level
+                // exclusion was dropped for exactly this reason).
+                child: ExcludeSemantics(
+                  child: Text(
+                    heroSentence,
+                    style:
+                        text.headlineLarge?.copyWith(color: colors.textPrimary),
+                  ),
+                ),
+              ),
+              if (onRunAgain != null) ...<Widget>[
+                const SizedBox(width: AppSpacing.xs),
+                _HeroRunAgainButton(onRunAgain: onRunAgain!),
+              ],
+            ],
           ),
           const SizedBox(height: AppSpacing.md),
           // §2.A2 — the two axis chips, side by side, teaching the two-things
-          // model.
-          _TwoAxisChips(
-            wifiStatus: verdict.wifiStatus,
-            internetStatus: verdict.internetStatus,
+          // model. Excluded from SR (the merged summary speaks the tiers).
+          ExcludeSemantics(
+            child: _TwoAxisChips(
+              wifiStatus: verdict.wifiStatus,
+              internetStatus: verdict.internetStatus,
+            ),
           ),
         ],
       ),
     );
 
+    // The card carries a single merged SR summary (sentence + both axis tiers)
+    // via this Semantics label; the verdict text and chips above are
+    // individually ExcludeSemantics'd so they don't double-speak. The Run again
+    // button is deliberately OUTSIDE any exclusion so it stays a focusable,
+    // labelled control in the SR tree.
     return Semantics(
       container: true,
+      // explicitChildNodes keeps the Run again button as its OWN focusable,
+      // labelled child node rather than collapsing it into this container's
+      // merged summary (the verdict text + chips are ExcludeSemantics'd above,
+      // so the only surviving descendant node is the button).
+      explicitChildNodes: true,
       label: semanticsLabel,
+      // §8.20.3-C #2 — in light, the status-bearing result card carries a 6px
+      // full-saturation status-hue left-accent bar plus a 4px top strip in the
+      // same hue (a small AREA, not a thin line, so full saturation). No bars
+      // in dark.
+      child: colors.isLight
+          ? _StatusAccentFrame(tone: _tone, child: card)
+          : card,
+    );
+  }
+}
+
+/// The unmistakable LABELED "Run again" control on the verdict-hero sentence
+/// row — the primary re-run affordance (the AppBar now carries only the §8.16
+/// copy action so the full "Test My Connection" title clears at every iPhone
+/// width). Visible "Run again" text + the `Icons.refresh` glyph; re-runs the
+/// WHOLE check. Carries the 'Run the test again' Semantics label and the §8.3
+/// 44pt touch target. Lime accent (theme-aware: brand lime in dark,
+/// darkened-lime via textAccent in light so it stays legible on the white card).
+class _HeroRunAgainButton extends StatelessWidget {
+  const _HeroRunAgainButton({required this.onRunAgain});
+
+  final VoidCallback onRunAgain;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final Color accent = colors.isLight ? colors.textAccent : colors.primary;
+    // The label overrides the visible "Run again" text for AT with the explicit
+    // 'Run the test again' action phrase (matching the former AppBar action's
+    // label, so existing finders resolve). Same pattern as AppCopyAction /
+    // _RetryButton: ExcludeSemantics drops the inner button's own label so the
+    // parent Semantics owns the single labelled button node, while the
+    // TextButton remains the real focusable, activatable control.
+    return Semantics(
+      button: true,
+      label: 'Run the test again',
       child: ExcludeSemantics(
-        // §8.20.3-C #2 — in light, the status-bearing result card carries a 6px
-        // full-saturation status-hue left-accent bar plus a 4px top strip in the
-        // same hue (a small AREA, not a thin line, so full saturation). No bars
-        // in dark.
-        child: colors.isLight
-            ? _StatusAccentFrame(tone: _tone, child: card)
-            : card,
+        child: TextButton.icon(
+          onPressed: onRunAgain,
+          icon: Icon(Icons.refresh, size: 20, color: accent),
+          label: Text(
+            'Run again',
+            style: TextStyle(color: accent, fontWeight: FontWeight.w600),
+          ),
+          style: TextButton.styleFrom(
+            foregroundColor: accent,
+            // §8.3 44pt hit region; the label adds width, not height.
+            minimumSize: const Size(0, 44),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+        ),
       ),
     );
   }

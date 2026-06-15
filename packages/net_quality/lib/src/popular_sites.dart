@@ -23,18 +23,35 @@ class PopularSite {
 /// A curated list of recognizable, high-availability CLOUD-APP endpoints for
 /// reachability checks.
 ///
-/// Recurated 2026-06-13 (Felix, per Pax's gap brief) from the prior web/DNS mix
-/// toward the consumer-app framing a non-technical user recognizes — "can my
-/// device reach Google / iCloud / Microsoft 365 / Zoom / Slack / YouTube /
-/// Netflix?" Every host was verified reachable on TCP 443 at recuration time and
-/// is a long-lived, globally anycast/CDN-fronted edge, so a probe failure points
-/// at the user's connection, not a flaky destination.
+/// Recurated 2026-06-14 (Felix, per Keith feedback #2/#10) toward a mix BOTH the
+/// general public AND a WLAN pro recognizes: the consumer/social apps a layperson
+/// names first (Facebook, Instagram, TikTok, YouTube, Netflix) sit alongside the
+/// pro/infra services an engineer reaches for (Google, iCloud, Microsoft 365,
+/// Cloudflare, AWS, GitHub, Zoom, Slack). Every host was verified reachable on
+/// TCP 443 at recuration time and is a long-lived, globally anycast/CDN-fronted
+/// edge, so a probe failure points at the user's connection, not a flaky
+/// destination.
 ///
-/// HONESTY (GL-005): a TCP-connect to e.g. `slack.com:443` proves the service
-/// EDGE is reachable and times that hop. It is NOT a measure of in-app call /
-/// stream quality. The UI caption says exactly that.
+/// Recuration order: the consumer-recognizable names lead (a non-technical user
+/// scans for "is Facebook / Instagram / TikTok up?"), then the platform/infra
+/// services a pro recognizes, with the Cloudflare DNS resolver last as a stable
+/// liveness anchor. Total = 14 — a reasonable spread that fills the card without
+/// over-probing.
+///
+/// HONESTY (GL-005): a TCP-connect to e.g. `www.instagram.com:443` proves the
+/// service EDGE is reachable and times that hop. It is NOT a measure of in-app
+/// call / stream / feed quality. The UI caption says exactly that.
 const List<PopularSite> kCloudApps = <PopularSite>[
-  // Core platforms.
+  // Social / consumer apps (the names a layperson recognizes first).
+  PopularSite(name: 'Facebook', host: 'www.facebook.com'),
+  PopularSite(name: 'Instagram', host: 'www.instagram.com'),
+  PopularSite(name: 'TikTok', host: 'www.tiktok.com'),
+
+  // Streaming / content.
+  PopularSite(name: 'YouTube', host: 'www.youtube.com'),
+  PopularSite(name: 'Netflix', host: 'www.netflix.com'),
+
+  // Core platforms (the pro/infra services an engineer recognizes).
   PopularSite(name: 'Google', host: 'www.google.com'),
   PopularSite(name: 'iCloud', host: 'www.icloud.com'),
   PopularSite(name: 'Microsoft 365', host: 'www.office.com'),
@@ -44,10 +61,6 @@ const List<PopularSite> kCloudApps = <PopularSite>[
   // Communication / collaboration.
   PopularSite(name: 'Zoom', host: 'zoom.us'),
   PopularSite(name: 'Slack', host: 'slack.com'),
-
-  // Streaming / content.
-  PopularSite(name: 'YouTube', host: 'www.youtube.com'),
-  PopularSite(name: 'Netflix', host: 'www.netflix.com'),
 
   // Developer / platform health.
   PopularSite(name: 'GitHub', host: 'github.com'),

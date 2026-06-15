@@ -20,7 +20,8 @@
 //   * the copy-able details text carries the two-axis line, internet down/up on
 //     separate labeled lines, and the four Wi-Fi values (iOS payload → real
 //     values; macOS Rx not exposed → "Wi-Fi Down: Unavailable", per GL-005);
-//   * the AppBar Refresh re-runs the same check;
+//   * the verdict-hero "Run again" control re-runs the same check (moved off the
+//     AppBar 2026-06-14 so the full title clears at iPhone widths — Vera);
 //   * a hung macOS link read can never hang the check.
 //
 // The copy text is intercepted at the Clipboard platform-channel boundary so the
@@ -29,12 +30,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:net_quality/net_quality.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/test_my_connection_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
+import 'package:wlan_pros_toolbox/services/network/ip_geo_service.dart';
 import 'package:wlan_pros_toolbox/services/network/live_onboarding_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
@@ -549,6 +552,25 @@ class _FreshBridge implements WiFiDetailsBridge {
   Future<bool> runShortcut(String name) async => true;
   @override
   Stream<WiFiDetails> get updates => const Stream<WiFiDetails>.empty();
+}
+
+/// A fake IP-info service for the comprehensive-copy tests (Keith ISP-ask + #6).
+/// Extends the real [IpGeoService] (no network client is touched because
+/// [lookup] is overridden). [result] is what [lookup] returns; pass an
+/// [IpGeoResult.failure] (or set [throws]) to exercise the fail-open path where
+/// the ISP copy section is omitted.
+class _FakeIpGeoService extends IpGeoService {
+  _FakeIpGeoService({this.result, this.throws = false});
+
+  final IpGeoResult? result;
+  final bool throws;
+
+  @override
+  Future<IpGeoResult> lookup({required String rawQuery}) async {
+    if (throws) throw Exception('offline');
+    return result ??
+        IpGeoResult.failure(query: rawQuery, message: 'no result');
+  }
 }
 
 void main() {
@@ -1072,8 +1094,10 @@ void main() {
       expect(copied, isNot(contains(' down / ')));
       expect(copied, contains('RSSI: -58 dBm'));
       expect(copied, contains('SNR: 32 dB'));
-      expect(copied, contains('Wi-Fi Down: 780 Mbps'));
-      expect(copied, contains('Wi-Fi Up: 866 Mbps'));
+      // Comprehensive sectioned payload (Keith #6): Rx labeled "Wi-Fi Down",
+      // Tx labeled "Wi-Fi Up".
+      expect(copied, contains('Wi-Fi Down (Rx rate): 780 Mbps'));
+      expect(copied, contains('Wi-Fi Up (Tx rate): 866 Mbps'));
 
       await tester.pump(const Duration(milliseconds: 1600));
     },
@@ -1106,8 +1130,8 @@ void main() {
       final String copied = clipboardWrites.last;
       expect(copied, contains('RSSI: -50 dBm'));
       expect(copied, contains('SNR: 45 dB'));
-      expect(copied, contains('Wi-Fi Down: Unavailable'));
-      expect(copied, contains('Wi-Fi Up: 866 Mbps'));
+      expect(copied, contains('Wi-Fi Down (Rx rate): Unavailable'));
+      expect(copied, contains('Wi-Fi Up (Tx rate): 866 Mbps'));
 
       await tester.pump(const Duration(milliseconds: 1600));
     },
@@ -1226,7 +1250,8 @@ void main() {
   );
 
   testWidgets(
-    'AppBar Refresh re-runs the same check and is disabled while running',
+    'Re-run re-runs the same check and is hidden while running '
+    '(re-run moved to the verdict-hero row — Vera 2026-06-14 title fix)',
     (tester) async {
       final _CountingQualityClient quality =
           _CountingQualityClient(_marginalInternet());
@@ -1242,24 +1267,71 @@ void main() {
       );
 
       await tester.pumpAndSettle();
+      // No re-run affordance before a result exists.
       expect(find.byIcon(Icons.refresh), findsNothing);
 
       await tester.tap(find.text('Check My Connection'));
       await tester.pumpAndSettle();
       expect(quality.measureCount, 1);
 
+      // The labeled "Run again" control is on the verdict-hero row, carrying the
+      // refresh glyph + the 'Run the test again' semantics label + 44pt target.
       expect(find.byIcon(Icons.refresh), findsOneWidget);
+      expect(find.text('Run again'), findsOneWidget);
       expect(find.bySemanticsLabel('Run the test again'), findsOneWidget);
 
       await tester.tap(find.byIcon(Icons.refresh));
       await tester.pump();
+      // While running, the hero card (and its re-run) is replaced by the
+      // packet-flow progress card; no re-run affordance is shown.
       expect(find.byIcon(Icons.refresh), findsNothing);
-      expect(find.byType(CircularProgressIndicator), findsWidgets);
+      expect(find.text('Run again'), findsNothing);
+      expect(
+        find.text('Testing your Wi-Fi and your internet connection.'),
+        findsOneWidget,
+      );
 
       await tester.pumpAndSettle();
       expect(quality.measureCount, 2);
       expect(find.byIcon(Icons.refresh), findsOneWidget);
       expect(find.text('Wi-Fi:'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'AppBar carries ONLY the copy action so the full title clears at 375px '
+    '(Vera 2026-06-14 title-truncation fix)',
+    (tester) async {
+      await tester.pumpWidget(
+        host(
+          size: const Size(375, 812),
+          TestMyConnectionScreen(
+            enableLiveSampling: false,
+            enableCloudApps: false,
+            sourceOverride: WifiInfoSource.iosShortcuts,
+            iosBridge: _PayloadBridge(),
+            ipGeoService: _FakeIpGeoService(throws: true),
+            qualityClient: _CountingQualityClient(_marginalInternet()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Check My Connection'));
+      await tester.pumpAndSettle();
+
+      // The AppBar title renders the FULL string with no ellipsis, at 375px,
+      // alongside the single §8.16 copy action (no second AppBar action).
+      final Finder titleFinder = find.text('Test My Connection');
+      expect(titleFinder, findsOneWidget);
+      final RenderParagraph para = tester.renderObject<RenderParagraph>(
+        find.descendant(
+          of: titleFinder,
+          matching: find.byType(RichText),
+          matchRoot: true,
+        ),
+      );
+      expect(para.didExceedMaxLines, isFalse);
+      expect(para.text.toPlainText(), 'Test My Connection');
     },
   );
 
@@ -1773,6 +1845,237 @@ void main() {
         expect(find.textContaining('Both sides are'), findsNothing);
         expect(find.text('Strong'), findsOneWidget);
         expect(find.text('Weak'), findsOneWidget);
+      },
+    );
+  });
+
+  // ==========================================================================
+  // Comprehensive copy payload + ISP (Keith ISP-ask + #6) and the AppBar
+  // "Run again" affordance (Keith #8). The cloud panel is disabled in the copy
+  // tests so no real reachability socket opens; the ISP service is injected.
+  // ==========================================================================
+  group('TestMyConnectionScreen — comprehensive copy + ISP + run-again', () {
+    IpGeoResult ispSuccess() => IpGeoResult.success(
+          query: '(my IP)',
+          provider: IpGeoProvider.ipinfo,
+          ip: '203.0.113.7',
+          country: 'US',
+          region: 'Utah',
+          city: 'Lehi',
+          isp: 'Fusion Networks',
+          org: 'Fusion Networks',
+          asn: 'AS396325',
+        );
+
+    testWidgets(
+      'copy payload is sectioned (Wi-Fi / Internet / ISP / Verdict) and carries '
+      'all available Wi-Fi + internet fields plus the ISP block',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              enableCloudApps: false,
+              sourceOverride: WifiInfoSource.iosShortcuts,
+              iosBridge: _PayloadBridge(),
+              ipGeoService: _FakeIpGeoService(result: ispSuccess()),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+        await settleDetails(tester);
+        // Let the injected ISP lookup land before copying.
+        await tester.pumpAndSettle();
+
+        final Finder copyBtn = find.text('Copy these details');
+        await tester.ensureVisible(copyBtn);
+        await tester.pumpAndSettle();
+        await tester.tap(copyBtn);
+        await tester.pumpAndSettle();
+
+        final String copied = clipboardWrites.last;
+        // Section headers.
+        expect(copied, contains('Wi-Fi:'));
+        expect(copied, contains('Internet:'));
+        expect(copied, contains('ISP:'));
+        expect(copied, contains('Verdict:'));
+        // Verdict words still lead.
+        expect(copied, contains('Wi-Fi: '));
+        expect(copied, contains('Internet: '));
+        // Full Wi-Fi block (iOS payload exposes everything).
+        expect(copied, contains('Network (SSID): KeithNet'));
+        expect(copied, contains('BSSID: a4:83:e7:00:11:22'));
+        expect(copied, contains('RSSI: -58 dBm'));
+        expect(copied, contains('SNR: 32 dB'));
+        expect(copied, contains('Wi-Fi Down (Rx rate): 780 Mbps'));
+        expect(copied, contains('Wi-Fi Up (Tx rate): 866 Mbps'));
+        expect(copied, contains('Channel: 36'));
+        expect(copied, contains('Standard (PHY): 802.11ax - Wi-Fi 6'));
+        // Full internet block, including jitter/responsiveness (down/up retained).
+        expect(copied, contains('Internet Down: 60 Mbps'));
+        expect(copied, contains('Internet Up: 20 Mbps'));
+        expect(copied, contains('Latency: 60 ms'));
+        expect(copied, contains('Loss: 1%'));
+        // ISP block from the injected lookup.
+        expect(copied, contains('Public IP: 203.0.113.7'));
+        expect(copied, contains('ISP / org: Fusion Networks'));
+        expect(copied, contains('ASN: AS396325'));
+        // GL-005: no fabricated DNS line.
+        expect(copied, isNot(contains('DNS:')));
+
+        await tester.pump(const Duration(milliseconds: 1600));
+      },
+    );
+
+    testWidgets(
+      'ISP lookup fails open: an offline/failed lookup omits the ISP section but '
+      'the copy + verdict still complete (GL-005 / GL-008)',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              enableCloudApps: false,
+              sourceOverride: WifiInfoSource.iosShortcuts,
+              iosBridge: _PayloadBridge(),
+              ipGeoService: _FakeIpGeoService(throws: true),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+        await settleDetails(tester);
+        await tester.pumpAndSettle();
+
+        final Finder copyBtn = find.text('Copy these details');
+        await tester.ensureVisible(copyBtn);
+        await tester.pumpAndSettle();
+        await tester.tap(copyBtn);
+        await tester.pumpAndSettle();
+
+        final String copied = clipboardWrites.last;
+        // The check still produced a full payload…
+        expect(copied, contains('Wi-Fi:'));
+        expect(copied, contains('Internet:'));
+        expect(copied, contains('Verdict:'));
+        // …but the ISP section is cleanly omitted (no header, no fabricated IP).
+        expect(copied, isNot(contains('ISP:')));
+        expect(copied, isNot(contains('Public IP:')));
+
+        await tester.pump(const Duration(milliseconds: 1600));
+      },
+    );
+
+    testWidgets(
+      'macOS link still copies its available Wi-Fi fields and marks Rx '
+      'unavailable in the sectioned payload',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              enableCloudApps: false,
+              sourceOverride: WifiInfoSource.macosCoreWlan,
+              macAdapter: _FakeMacAdapter(),
+              ipGeoService: _FakeIpGeoService(throws: true),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+        await settleDetails(tester);
+
+        final Finder copyBtn = find.text('Copy these details');
+        await tester.ensureVisible(copyBtn);
+        await tester.pumpAndSettle();
+        await tester.tap(copyBtn);
+        await tester.pumpAndSettle();
+
+        final String copied = clipboardWrites.last;
+        expect(copied, contains('RSSI: -50 dBm'));
+        expect(copied, contains('SNR: 45 dB'));
+        expect(copied, contains('Noise: -95 dBm'));
+        expect(copied, contains('Channel width: 80 MHz'));
+        expect(copied, contains('Band: 5 GHz'));
+        // macOS public CoreWLAN exposes no Rx → honest Unavailable.
+        expect(copied, contains('Wi-Fi Down (Rx rate): Unavailable'));
+        expect(copied, contains('Wi-Fi Up (Tx rate): 866 Mbps'));
+
+        await tester.pump(const Duration(milliseconds: 1600));
+      },
+    );
+
+    testWidgets(
+      'Verdict-row "Run again" shows the label + refresh icon and re-runs the '
+      'whole test (Keith #8; re-run moved off the AppBar — Vera 2026-06-14)',
+      (tester) async {
+        final _CountingQualityClient quality =
+            _CountingQualityClient(_marginalInternet());
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              enableCloudApps: false,
+              sourceOverride: WifiInfoSource.iosShortcuts,
+              iosBridge: _PayloadBridge(),
+              ipGeoService: _FakeIpGeoService(throws: true),
+              qualityClient: quality,
+            ),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+        // No affordance before a result.
+        expect(find.text('Run again'), findsNothing);
+
+        await tester.tap(find.text('Check My Connection'));
+        await tester.pumpAndSettle();
+        expect(quality.measureCount, 1);
+
+        // The affordance is now an unmistakable labeled action, not a bare glyph.
+        expect(find.text('Run again'), findsOneWidget);
+        expect(find.byIcon(Icons.refresh), findsOneWidget);
+        expect(find.bySemanticsLabel('Run the test again'), findsOneWidget);
+
+        await tester.tap(find.text('Run again'));
+        await tester.pumpAndSettle();
+        expect(quality.measureCount, 2);
+      },
+    );
+
+    testWidgets(
+      'loader shows the duration hint (Keith #9)',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              enableCloudApps: false,
+              sourceOverride: WifiInfoSource.iosShortcuts,
+              iosBridge: _PayloadBridge(),
+              ipGeoService: _FakeIpGeoService(throws: true),
+              qualityClient: _CountingQualityClient(_marginalInternet()),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Check My Connection'));
+        // Pump a frame mid-run (the counting client delays 100ms before yielding).
+        await tester.pump(const Duration(milliseconds: 40));
+
+        expect(
+          find.text('This usually takes about half a minute.'),
+          findsOneWidget,
+        );
+
+        await tester.pumpAndSettle();
       },
     );
   });
