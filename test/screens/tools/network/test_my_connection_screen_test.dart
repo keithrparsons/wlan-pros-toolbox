@@ -20,8 +20,10 @@
 //   * the copy-able details text carries the two-axis line, internet down/up on
 //     separate labeled lines, and the four Wi-Fi values (iOS payload → real
 //     values; macOS Rx not exposed → "Wi-Fi Down: Unavailable", per GL-005);
-//   * the verdict-hero "Run again" control re-runs the same check (moved off the
-//     AppBar 2026-06-14 so the full title clears at iPhone widths — Vera);
+//   * the "Run again" control (its own row beneath the verdict sentence)
+//     re-runs the same check (moved off the AppBar 2026-06-14 so the full title
+//     clears at iPhone widths — Vera; moved off the sentence row 2026-06-15 so
+//     the verdict reads full-width at iPhone widths — Keith);
 //   * a hung macOS link read can never hang the check.
 //
 // The copy text is intercepted at the Clipboard platform-channel boundary so the
@@ -1489,7 +1491,8 @@ void main() {
 
   testWidgets(
     'Re-run re-runs the same check and is hidden while running '
-    '(re-run moved to the verdict-hero row — Vera 2026-06-14 title fix)',
+    '(re-run on its own row beneath the verdict sentence — Vera 2026-06-14 '
+    'title fix; full-width sentence fix 2026-06-15)',
     (tester) async {
       final _CountingQualityClient quality =
           _CountingQualityClient(_marginalInternet());
@@ -1512,8 +1515,9 @@ void main() {
       await tester.pumpAndSettle();
       expect(quality.measureCount, 1);
 
-      // The labeled "Run again" control is on the verdict-hero row, carrying the
-      // refresh glyph + the 'Run the test again' semantics label + 44pt target.
+      // The labeled "Run again" control is on its own row beneath the verdict
+      // sentence, carrying the refresh glyph + the 'Run the test again'
+      // semantics label + 44pt target.
       expect(find.byIcon(Icons.refresh), findsOneWidget);
       expect(find.text('Run again'), findsOneWidget);
       expect(find.bySemanticsLabel('Run the test again'), findsOneWidget);
@@ -2274,8 +2278,9 @@ void main() {
     );
 
     testWidgets(
-      'Verdict-row "Run again" shows the label + refresh icon and re-runs the '
-      'whole test (Keith #8; re-run moved off the AppBar — Vera 2026-06-14)',
+      'Verdict-card "Run again" shows the label + refresh icon and re-runs the '
+      'whole test (Keith #8; re-run moved off the AppBar — Vera 2026-06-14; '
+      'own row beneath the verdict sentence — Keith 2026-06-15)',
       (tester) async {
         final _CountingQualityClient quality =
             _CountingQualityClient(_marginalInternet());

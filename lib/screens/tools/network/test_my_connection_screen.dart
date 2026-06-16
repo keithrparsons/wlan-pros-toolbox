@@ -1039,12 +1039,15 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         // (320–430px). Even an icon-only second action still overran 320/375px
         // (252px title + 16px lead + two ≥48dp hit regions does not fit). §8.16
         // pins the copy action to the AppBar, so the re-run is the action that
-        // moves: the unmistakable LABELED "Run again" control now lives on an
-        // EXISTING line in the result body — the verdict-hero sentence row
-        // (Keith explicitly OK'd "on the same line as something else", no new
-        // vertical space). It carries `Icons.refresh`, the 'Run the test again'
-        // Semantics label, and the §8.3 44pt target (see [_HeroRunAgainButton]).
-        // With copy alone the full title clears at every iPhone width.
+        // moves: the unmistakable LABELED "Run again" control lives in the result
+        // body on its OWN row directly beneath the verdict-hero sentence
+        // (trailing-aligned). It started on the sentence row itself, but at iPhone
+        // widths the trailing button squeezed the verdict text into a narrow left
+        // column, so it was moved to a dedicated row beneath; the sentence now
+        // reads full-width (Keith, 2026-06-15). It carries `Icons.refresh`, the
+        // 'Run the test again' Semantics label, and the §8.3 44pt target (see
+        // [_HeroRunAgainButton]). With copy alone the full title clears at every
+        // iPhone width.
         actions: <Widget>[
           AppCopyAction(textBuilder: _buildCopyText),
         ],
@@ -2033,34 +2036,39 @@ class _HeroVerdict extends StatelessWidget {
           // §2.A — the plain-language verdict SENTENCE at H1/36px
           // (`headlineLarge`, §8.5.2 scope extension). The largest in-app
           // headline; the comprehension climax. Wraps (never clips) under
-          // dynamic type, §8.9. The unmistakable LABELED "Run again" control
-          // shares this row (Keith: same line as something else, no new
-          // vertical space) — the sentence flexes, the button trails,
-          // top-aligned so it sits beside the first line of a wrapped headline.
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Expanded(
-                // The verdict sentence is part of the card's single merged SR
-                // summary, so its own node is excluded here (the outer Semantics
-                // below speaks it). The Run again button, by contrast, is an
-                // interactive control and MUST keep its own live semantics — so
-                // it is NOT inside this ExcludeSemantics (the blanket card-level
-                // exclusion was dropped for exactly this reason).
-                child: ExcludeSemantics(
-                  child: Text(
-                    heroSentence,
-                    style:
-                        text.headlineLarge?.copyWith(color: colors.textPrimary),
-                  ),
-                ),
-              ),
-              if (onRunAgain != null) ...<Widget>[
-                const SizedBox(width: AppSpacing.xs),
-                _HeroRunAgainButton(onRunAgain: onRunAgain!),
-              ],
-            ],
+          // dynamic type, §8.9.
+          //
+          // FULL-WIDTH RULE (Keith, iPhone 2026-06-15): the verdict sentence
+          // owns the ENTIRE card width and wraps across the whole screen — it
+          // is NO LONGER in a Row that shares horizontal space with the re-run
+          // control. A prior round put a trailing "Run again" on this row; at
+          // iPhone widths (375–430) that button stole the right portion of the
+          // line and squeezed the sentence into a narrow left column that
+          // wrapped awkwardly. The button now lives on its OWN row directly
+          // beneath the sentence (see below), so the sentence reads full-width.
+          //
+          // The sentence is part of the card's single merged SR summary, so its
+          // own node is excluded here (the outer Semantics below speaks it).
+          ExcludeSemantics(
+            child: Text(
+              heroSentence,
+              style: text.headlineLarge?.copyWith(color: colors.textPrimary),
+            ),
           ),
+          // The unmistakable LABELED "Run again" control on its OWN row directly
+          // beneath the verdict sentence — clearly visible (Keith's hard
+          // requirement) but NOT competing with the sentence for horizontal
+          // space. Trailing-aligned so it reads as a discrete secondary action.
+          // It is an interactive control and MUST keep its own live semantics —
+          // so it is NOT wrapped in ExcludeSemantics (the blanket card-level
+          // exclusion was dropped for exactly this reason).
+          if (onRunAgain != null) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            Align(
+              alignment: Alignment.centerRight,
+              child: _HeroRunAgainButton(onRunAgain: onRunAgain!),
+            ),
+          ],
           const SizedBox(height: AppSpacing.md),
           // §2.A2 — the two axis chips, side by side, teaching the two-things
           // model. Excluded from SR (the merged summary speaks the tiers).
@@ -2098,13 +2106,16 @@ class _HeroVerdict extends StatelessWidget {
   }
 }
 
-/// The unmistakable LABELED "Run again" control on the verdict-hero sentence
-/// row — the primary re-run affordance (the AppBar now carries only the §8.16
-/// copy action so the full "Test My Connection" title clears at every iPhone
-/// width). Visible "Run again" text + the `Icons.refresh` glyph; re-runs the
-/// WHOLE check. Carries the 'Run the test again' Semantics label and the §8.3
-/// 44pt touch target. Lime accent (theme-aware: brand lime in dark,
-/// darkened-lime via textAccent in light so it stays legible on the white card).
+/// The unmistakable LABELED "Run again" control on its OWN row directly beneath
+/// the verdict-hero sentence — the primary re-run affordance (the AppBar carries
+/// only the §8.16 copy action so the full "Test My Connection" title clears at
+/// every iPhone width). It sits on a dedicated row (trailing-aligned) rather than
+/// sharing the sentence row, so the verdict sentence reads full-width on a narrow
+/// iPhone instead of being squeezed into a left column (Keith, 2026-06-15).
+/// Visible "Run again" text + the `Icons.refresh` glyph; re-runs the WHOLE check.
+/// Carries the 'Run the test again' Semantics label and the §8.3 44pt touch
+/// target. Lime accent (theme-aware: brand lime in dark, darkened-lime via
+/// textAccent in light so it stays legible on the white card).
 class _HeroRunAgainButton extends StatelessWidget {
   const _HeroRunAgainButton({required this.onRunAgain});
 
