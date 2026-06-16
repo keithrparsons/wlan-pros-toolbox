@@ -141,6 +141,55 @@ class WifiInfo {
       'poweredOn: $poweredOn, locationAuthorized: $locationAuthorized)';
 }
 
+/// The tri-state Location (name-gating) authorization status.
+///
+/// The bool [WifiInfoService.isLocationAuthorized] collapses the two
+/// unauthorized states into one `false`, but the UI must tell them apart:
+///   - [notDetermined] is PROMPTABLE — the native system permission prompt can
+///     still surface, so the app proactively requests it.
+///   - [denied] / [restricted] are NOT promptable — the user must flip the
+///     toggle in System Settings, so the app deep-links there instead of firing
+///     a dialog that will never appear.
+enum LocationAuthStatus {
+  /// Granted (When-In-Use or Always on macOS; ACCESS_FINE_LOCATION on Android).
+  /// SSID and BSSID resolve.
+  authorized,
+
+  /// Never asked yet — the native prompt can still be surfaced. Promptable.
+  notDetermined,
+
+  /// The user (or an admin/parental restriction) declined. Not promptable; the
+  /// only path forward is the System Settings deep-link.
+  denied,
+
+  /// Restricted by device policy (MDM / parental controls). Treated like
+  /// [denied] for UI purposes: not promptable, deep-link only.
+  restricted;
+
+  /// Resolves a native token string into a status. An unrecognized or null
+  /// token defaults to [notDetermined] — the safe default that offers the
+  /// (harmless) prompt path rather than a dead deep-link.
+  static LocationAuthStatus fromToken(String? token) {
+    switch (token) {
+      case 'authorized':
+        return LocationAuthStatus.authorized;
+      case 'denied':
+        return LocationAuthStatus.denied;
+      case 'restricted':
+        return LocationAuthStatus.restricted;
+      case 'notDetermined':
+      default:
+        return LocationAuthStatus.notDetermined;
+    }
+  }
+
+  /// Whether SSID / BSSID resolve in this state.
+  bool get isAuthorized => this == LocationAuthStatus.authorized;
+
+  /// Whether the native permission prompt can still be surfaced.
+  bool get isPromptable => this == LocationAuthStatus.notDetermined;
+}
+
 /// Reason a Wi-Fi snapshot could not be read.
 enum WifiInfoUnavailableReason {
   /// The current platform has no native Wi-Fi info bridge.
@@ -249,6 +298,17 @@ class WifiInfoService {
   Future<bool> isLocationAuthorized() async {
     final result = await _invoke('isLocationAuthorized');
     return (result as bool?) ?? false;
+  }
+
+  /// Returns the tri-state Location authorization status, no prompt.
+  ///
+  /// Unlike [isLocationAuthorized] (a bool), this distinguishes the promptable
+  /// `notDetermined` from the deep-link-only `denied` / `restricted`, so the UI
+  /// can fire the native prompt only when it can actually appear. Falls back to
+  /// [LocationAuthStatus.notDetermined] if the native side returns nothing.
+  Future<LocationAuthStatus> locationAuthorizationStatus() async {
+    final result = await _invoke('locationAuthorizationStatus');
+    return LocationAuthStatus.fromToken(result as String?);
   }
 
   /// Deep-links to the macOS Location Services privacy pane so the user can

@@ -32,6 +32,8 @@ import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart'
+    show LocationAuthStatus;
 import 'package:wlan_pros_toolbox/services/network/wifi_security_service.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
@@ -227,6 +229,8 @@ class _NoopMacAdapter implements WifiInfoAdapter {
   Future<bool> requestNamePermission() async => false;
   @override
   Future<bool> currentNameAuthorization() async => false;
+  @override
+  Future<LocationAuthStatus> nameAuthorizationStatus() async => LocationAuthStatus.notDetermined;
   @override
   Future<bool> openNamePermissionSettings() async => false;
 }

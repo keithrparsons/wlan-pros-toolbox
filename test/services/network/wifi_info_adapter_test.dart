@@ -126,6 +126,51 @@ void main() {
     },
   );
 
+  // The TRI-STATE no-prompt status path that drives the auto-prompt vs deep-link
+  // decision on screen. It hits the native `locationAuthorizationStatus` token
+  // channel (never the prompt) and maps the token to the enum.
+  test(
+    'nameAuthorizationStatus() maps the native token to the tri-state enum, no '
+    'prompt',
+    () async {
+      for (final ({String token, LocationAuthStatus expected}) c
+          in <({String token, LocationAuthStatus expected})>[
+        (token: 'authorized', expected: LocationAuthStatus.authorized),
+        (token: 'notDetermined', expected: LocationAuthStatus.notDetermined),
+        (token: 'denied', expected: LocationAuthStatus.denied),
+        (token: 'restricted', expected: LocationAuthStatus.restricted),
+      ]) {
+        final WifiInfoService service = WifiInfoService(
+          invoke: (String method, [dynamic args]) async {
+            // The tri-state path hits the status token, never the prompt.
+            expect(method, 'locationAuthorizationStatus');
+            return c.token;
+          },
+          platformOverride: 'macos',
+        );
+        final MacWifiInfoAdapter adapter = MacWifiInfoAdapter(service: service);
+        expect(await adapter.nameAuthorizationStatus(), c.expected);
+      }
+    },
+  );
+
+  test(
+    'nameAuthorizationStatus() defaults to notDetermined (the promptable, safe '
+    'default) when the native status channel never resolves',
+    () async {
+      final MacWifiInfoAdapter adapter = MacWifiInfoAdapter(
+        service: neverResolvingService(),
+        fetchTimeout: const Duration(milliseconds: 50),
+      );
+
+      final LocationAuthStatus status = await adapter
+          .nameAuthorizationStatus()
+          .timeout(const Duration(seconds: 2));
+
+      expect(status, LocationAuthStatus.notDetermined);
+    },
+  );
+
   // The same hang class on the SNAPSHOT read: a CoreWLAN read that never
   // returns must not hang any caller. The adapter bounds fetch() and degrades
   // to a typed channelError, which every caller already handles.

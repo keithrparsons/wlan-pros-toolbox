@@ -74,6 +74,8 @@ class _MacLinkAdapter implements WifiInfoAdapter {
   @override
   Future<bool> currentNameAuthorization() async => true;
   @override
+  Future<LocationAuthStatus> nameAuthorizationStatus() async => LocationAuthStatus.authorized;
+  @override
   Future<bool> openNamePermissionSettings() async => true;
 }
 
@@ -109,6 +111,8 @@ class _NoLinkAdapter implements WifiInfoAdapter {
   Future<bool> requestNamePermission() async => true;
   @override
   Future<bool> currentNameAuthorization() async => true;
+  @override
+  Future<LocationAuthStatus> nameAuthorizationStatus() async => LocationAuthStatus.authorized;
   @override
   Future<bool> openNamePermissionSettings() async => true;
 }

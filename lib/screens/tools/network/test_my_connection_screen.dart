@@ -45,6 +45,7 @@ import '../../../services/network/network_support.dart';
 import '../../../services/network/wifi_details_bridge.dart';
 import '../../../services/network/wifi_grading.dart';
 import '../../../services/network/wifi_info_adapter.dart';
+import '../../../services/network/wifi_info_service.dart' show LocationAuthStatus;
 import '../../../services/network/wifi_security.dart';
 import '../../../services/network/wifi_security_service.dart';
 import '../../../services/network/wifi_signal_sampler.dart';
@@ -220,12 +221,25 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
 
   /// macOS only: whether Location Services is authorized for this app. Since
   /// macOS 14, CoreWLAN withholds the SSID and BSSID unless the app holds
-  /// Location authorization — every other RF field still resolves. Read WITHOUT
-  /// a prompt during a run (a consumer check must never pop a TCC prompt
-  /// mid-test) so the SSID/BSSID empty state can explain itself ("grant Location
-  /// access to show the network name") instead of a bare "Unavailable". Null
-  /// before the first read / off macOS.
+  /// Location authorization — every other RF field still resolves. So the
+  /// SSID/BSSID empty state (in the copy report and the on-screen hint) can
+  /// explain itself ("Location access needed") instead of a bare "Unavailable".
+  /// Null before the first read / off macOS.
   bool? _macLocationAuthorized;
+
+  /// macOS only: the TRI-STATE Location authorization, read WITHOUT a prompt at
+  /// the start of a run. Drives whether the on-screen hint's button PROMPTS
+  /// (notDetermined) or DEEP-LINKS to System Settings (denied / restricted), and
+  /// whether the auto-prompt fires this run. Null before the first read / off
+  /// macOS.
+  LocationAuthStatus? _macNameAuth;
+
+  /// macOS only: set once the proactive native Location prompt has been fired
+  /// this screen-mount, so a run never spams the prompt on every check. macOS
+  /// remembers the user's first response, so re-prompting is both pointless and
+  /// jarring; after the first fire this stays true and subsequent runs read the
+  /// remembered status without re-prompting (Keith: "One request only").
+  bool _macLocationPromptFired = false;
 
   QualityResult? _internet;
   ConsumerVerdict? _verdict;
@@ -486,14 +500,37 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         case WifiInfoSource.macosCoreWlan:
           final WifiInfoAdapter? adapter = _macAdapter;
           if (adapter == null) return null;
-          // A consumer check must never pop a Location prompt mid-test on macOS
-          // (the link RATE — hence the verdict — resolves WITHOUT Location; only
-          // the NAME needs it, and the macOS TCC prompt is unreliable in
-          // notarized builds). Read the CURRENT authorization WITHOUT a prompt so
-          // the SSID/BSSID empty state can explain itself ("grant Location
-          // access") rather than read as a bare glitch. Then read the snapshot
-          // directly, bounded so a stalled channel can never hang the check.
-          _macLocationAuthorized = await adapter.currentNameAuthorization();
+          // macOS LOCATION AUTO-PROMPT (2026-06-15, Keith reversal): macOS 14+
+          // withholds the SSID/BSSID until the app holds Location authorization.
+          // The prior round deliberately never prompted (only the NAME needs
+          // Location, never the rate-derived verdict); Keith now wants the app to
+          // proactively surface the native "Allow Location" prompt so he need not
+          // dig into System Settings. RUNNING the test is the contextual moment
+          // of clear intent, so we fire the prompt HERE — but ONLY when:
+          //   1. the source gates the name behind a permission, AND
+          //   2. the status is `notDetermined` (PROMPTABLE — a denied/restricted
+          //      status cannot raise a dialog; the on-screen hint deep-links to
+          //      System Settings instead), AND
+          //   3. we have not already fired the prompt this screen-mount
+          //      (`_macLocationPromptFired`) — macOS remembers the first answer,
+          //      so re-prompting every run would be both pointless and jarring.
+          // The prompt is fired BEFORE the snapshot read (request at/just-before
+          // the run starts, not mid-results). We never BLOCK the verdict on the
+          // choice: whatever the user picks, we then read the snapshot and the
+          // rate-derived verdict proceeds; only the NAME depends on the grant.
+          LocationAuthStatus auth = await adapter.nameAuthorizationStatus();
+          if (adapter.gatesNameBehindPermission &&
+              auth.isPromptable &&
+              !_macLocationPromptFired) {
+            _macLocationPromptFired = true;
+            await adapter.requestNamePermission();
+            if (!mounted) return null;
+            // Re-read the (now-resolved) status so the on-screen hint + copy
+            // report reflect the user's choice without waiting for the next run.
+            auth = await adapter.nameAuthorizationStatus();
+          }
+          _macNameAuth = auth;
+          _macLocationAuthorized = auth.isAuthorized;
           return await adapter.fetch().timeout(
             const Duration(seconds: 5),
             onTimeout: () =>
@@ -659,6 +696,87 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         ap.standard != null;
   }
 
+  /// macOS-only: the on-screen Location hint for the Wi-Fi link card, or null
+  /// when no hint is warranted.
+  ///
+  /// A hint is shown only on the macOS source, only when the name is genuinely
+  /// gated (we have read the authorization and it is NOT authorized). The hint
+  /// carries the right CALL TO ACTION for the state: when the status is
+  /// promptable (`notDetermined`) the button re-fires the native prompt; when it
+  /// is `denied` / `restricted` (no dialog can appear) the button deep-links to
+  /// the macOS Location Services settings pane. Null off macOS, before the first
+  /// read, or once authorized (SSID/BSSID then populate — no hint needed).
+  _MacLocationHint? get _macLocationHint {
+    if (_source != WifiInfoSource.macosCoreWlan) return null;
+    final LocationAuthStatus? auth = _macNameAuth;
+    if (auth == null || auth.isAuthorized) return null;
+    return _MacLocationHint(
+      promptable: auth.isPromptable,
+      onAction: auth.isPromptable ? _promptMacLocation : _openMacLocationSettings,
+    );
+  }
+
+  /// Fires the native macOS Location prompt from the on-screen hint button, then
+  /// re-reads the authorization so the hint and the network-name rows update in
+  /// place. Used only when the status is promptable (`notDetermined`); a denied
+  /// status routes to [_openMacLocationSettings] instead (no dialog can appear).
+  /// Never throws to the caller. Sets [_macLocationPromptFired] so the run-time
+  /// auto-prompt does not also fire (one request only).
+  Future<void> _promptMacLocation() async {
+    final WifiInfoAdapter? adapter = _macAdapter;
+    if (adapter == null) return;
+    _macLocationPromptFired = true;
+    try {
+      await adapter.requestNamePermission();
+    } catch (_) {
+      // A failed/absent prompt leaves the hint as-is; never crash the screen.
+    }
+    if (!mounted) return;
+    final LocationAuthStatus auth = await adapter.nameAuthorizationStatus();
+    if (!mounted) return;
+    setState(() {
+      _macNameAuth = auth;
+      _macLocationAuthorized = auth.isAuthorized;
+    });
+    // If the grant just landed, re-read the snapshot so SSID/BSSID populate now
+    // rather than only on the next run.
+    if (auth.isAuthorized) await _refreshMacLinkAfterGrant();
+  }
+
+  /// Deep-links to the macOS Location Services settings pane (the honest path
+  /// when the status is `denied` / `restricted` and no in-app dialog can
+  /// appear). The user enables Location there, returns, and re-runs the check.
+  /// Never throws to the caller.
+  Future<void> _openMacLocationSettings() async {
+    final WifiInfoAdapter? adapter = _macAdapter;
+    if (adapter == null) return;
+    try {
+      await adapter.openNamePermissionSettings();
+    } catch (_) {
+      // Best-effort deep-link; a failure leaves the user on the hint, which
+      // still names the fix in its body copy.
+    }
+  }
+
+  /// Re-reads the macOS CoreWLAN snapshot after a just-granted Location prompt so
+  /// the SSID/BSSID rows and copy report populate immediately, without waiting
+  /// for the next full run. Merges onto the existing result so the rest of the
+  /// reading (RF, internet, verdict) is untouched. Never throws.
+  Future<void> _refreshMacLinkAfterGrant() async {
+    final WifiInfoAdapter? adapter = _macAdapter;
+    if (adapter == null) return;
+    try {
+      final ConnectedAp fresh = await adapter.fetch();
+      if (!mounted) return;
+      setState(() {
+        final ConnectedAp? prior = _ap;
+        _ap = prior == null ? fresh : fresh.mergedWith(prior);
+      });
+    } catch (_) {
+      // A failed re-read leaves the prior result intact; the user can re-run.
+    }
+  }
+
   /// Runs the internet measurement and the link read from one tap, then computes
   /// the engine verdict (shared [ConnectionCheck]) and translates it for the
   /// consumer ([ConsumerVerdictMapper]).
@@ -670,6 +788,10 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       _fraction = 0;
       _ap = null;
       _macLocationAuthorized = null;
+      // NB: _macNameAuth resets with the result but _macLocationPromptFired does
+      // NOT — the one-shot prompt guard must survive a re-run so the native
+      // prompt fires at most once per screen-mount (Keith: "One request only").
+      _macNameAuth = null;
       _internet = null;
       _verdict = null;
       _engine = null;
@@ -1041,6 +1163,12 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                           // not a broken tool (GL-005 / GL-008).
                           needsWifiCapture: _isIos && !_iosRfCaptured,
                           onCaptureWifi: _isIos ? _openShortcutSheet : null,
+                          // macOS-only: when Location is not granted, the SSID and
+                          // BSSID are withheld by the OS, so the Wi-Fi link card
+                          // shows an inline "network name hidden" hint with an
+                          // action — PROMPT when promptable, OPEN SETTINGS when
+                          // denied/restricted. Null off macOS / when authorized.
+                          locationHint: _macLocationHint,
                         ),
                       ],
                     ),
@@ -3109,6 +3237,7 @@ class _TechnicalSection extends StatelessWidget {
     required this.result,
     this.needsWifiCapture = false,
     this.onCaptureWifi,
+    this.locationHint,
   });
 
   final ConnectedAp? ap;
@@ -3122,6 +3251,10 @@ class _TechnicalSection extends StatelessWidget {
 
   /// Opens the one-time companion-Shortcut setup/capture sheet. Null off iOS.
   final VoidCallback? onCaptureWifi;
+
+  /// macOS-only: the on-screen Location hint (network name hidden + action), or
+  /// null off macOS / when Location is authorized.
+  final _MacLocationHint? locationHint;
 
   @override
   Widget build(BuildContext context) {
@@ -3147,6 +3280,7 @@ class _TechnicalSection extends StatelessWidget {
           result: result,
           needsCapture: needsWifiCapture,
           onCapture: onCaptureWifi,
+          locationHint: locationHint,
         ),
         const SizedBox(height: AppSpacing.sm),
         _InternetSection(result: internet),
@@ -3285,6 +3419,101 @@ class _ProVerdictCard extends StatelessWidget {
   }
 }
 
+/// The data the on-screen macOS Location hint needs: whether the state is
+/// PROMPTABLE (drives the button label + action) and the action callback.
+@immutable
+class _MacLocationHint {
+  const _MacLocationHint({required this.promptable, required this.onAction});
+
+  /// True when the status is `notDetermined` — the button fires the native
+  /// prompt ("Allow Location access"). False when `denied` / `restricted` — the
+  /// button deep-links to System Settings ("Open Location settings").
+  final bool promptable;
+
+  /// The hint's button action: fire the prompt (promptable) or open settings.
+  final Future<void> Function() onAction;
+}
+
+/// A compact, single inline note shown where the Wi-Fi network name would sit
+/// when macOS withholds the SSID/BSSID for lack of Location authorization.
+///
+/// Tasteful and low-profile per GL-003: a §8.13 info-toned hairline-outlined
+/// row (icon + one line of copy + a tertiary text button), NOT a full callout
+/// card — it adds one row of height, not a block. The meaning is carried by the
+/// TEXT, never color alone (§8.13 rule 2). The button is a §8.3 tertiary text
+/// button (lime label) inheriting the global focus ring; its 44pt touch target
+/// is met by the FilledButton/TextButton min-size theme.
+class _LocationNameHint extends StatelessWidget {
+  const _LocationNameHint({required this.hint});
+
+  final _MacLocationHint hint;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    // PROMPTABLE → the native prompt can appear; DENIED/RESTRICTED → only the
+    // System Settings deep-link will help. The button copy names which it is.
+    final String action =
+        hint.promptable ? 'Allow Location' : 'Open settings';
+    const String message = 'Wi-Fi network name hidden — Location access needed';
+
+    return Semantics(
+      container: true,
+      // The full hint reads as one node: the fact + the action it offers.
+      label: '$message. Button: $action.',
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xs,
+          vertical: AppSpacing.xxs,
+        ),
+        decoration: BoxDecoration(
+          color: colors.statusInfoFill,
+          borderRadius: BorderRadius.circular(AppRadius.control),
+          border: Border.all(color: colors.statusInfo, width: 1),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            Icon(Icons.location_off_outlined, size: 16, color: colors.statusInfo),
+            const SizedBox(width: AppSpacing.xs),
+            Expanded(
+              child: Text(
+                message,
+                style: text.bodySmall?.copyWith(color: colors.textPrimary),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            // §8.3 tertiary (text) button: lime label, no fill/border. Carries
+            // the global icon/text focus ring; 44pt min target from the theme.
+            TextButton(
+              onPressed: () {
+                // Fire-and-forget: the action re-reads auth + setState itself.
+                hint.onAction();
+              },
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.xs,
+                  vertical: AppSpacing.xxs,
+                ),
+                minimumSize: const Size(0, 36),
+                tapTargetSize: MaterialTapTargetSize.padded,
+              ),
+              child: Text(
+                action,
+                style: text.labelLarge?.copyWith(
+                  color: colors.textAccent,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// "Your Wi-Fi link" sub-card (absorbed verbatim from wifi_vs_internet_screen).
 class _WifiLinkSection extends StatelessWidget {
   const _WifiLinkSection({
@@ -3292,6 +3521,7 @@ class _WifiLinkSection extends StatelessWidget {
     required this.result,
     this.needsCapture = false,
     this.onCapture,
+    this.locationHint,
   });
 
   final ConnectedAp? ap;
@@ -3304,6 +3534,11 @@ class _WifiLinkSection extends StatelessWidget {
 
   /// Opens the one-time companion-Shortcut setup/capture sheet. Null off iOS.
   final VoidCallback? onCapture;
+
+  /// macOS-only: the on-screen Location hint (network name hidden + action),
+  /// shown at the TOP of the card where the network name would sit. Null off
+  /// macOS / when Location is authorized (the name then populates normally).
+  final _MacLocationHint? locationHint;
 
   @override
   Widget build(BuildContext context) {
@@ -3347,9 +3582,19 @@ class _WifiLinkSection extends StatelessWidget {
         ],
       );
     }
+    final _MacLocationHint? hint = locationHint;
     return _SectionCard(
       title: 'Your Wi-Fi link',
       children: <Widget>[
+        // macOS-only: the SSID/BSSID are the ONLY two fields macOS 14+ withholds
+        // without Location authorization. When they are gated, show a compact
+        // inline hint where the network name would sit — with a one-tap action —
+        // so the user sees the fix ON SCREEN rather than only in the copied
+        // report. Off macOS / when authorized, [hint] is null and nothing shows.
+        if (hint != null) ...<Widget>[
+          _LocationNameHint(hint: hint),
+          const SizedBox(height: AppSpacing.xs),
+        ],
         _DataRow(
           label: 'Tx rate',
           value: _rate(a?.txRateMbps),

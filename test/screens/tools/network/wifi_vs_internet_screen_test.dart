@@ -57,6 +57,8 @@ class _FakeMacAdapter implements WifiInfoAdapter {
   @override
   Future<bool> currentNameAuthorization() async => true;
   @override
+  Future<LocationAuthStatus> nameAuthorizationStatus() async => LocationAuthStatus.authorized;
+  @override
   Future<bool> openNamePermissionSettings() async => true;
 }
 

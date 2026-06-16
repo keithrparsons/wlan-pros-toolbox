@@ -56,6 +56,8 @@ final class WifiInfoChannel: NSObject, CLLocationManagerDelegate {
       result(currentWifiInfo())
     case "isLocationAuthorized":
       result(isLocationAuthorized())
+    case "locationAuthorizationStatus":
+      result(authorizationStatusToken(currentAuthorizationStatus()))
     case "requestLocationPermission":
       requestLocationPermission(result: result)
     case "openLocationSettings":
@@ -312,6 +314,30 @@ final class WifiInfoChannel: NSObject, CLLocationManagerDelegate {
   /// Returns the current authorization status as a bool, no prompt.
   private func isLocationAuthorized() -> Bool {
     return isAuthorized(currentAuthorizationStatus())
+  }
+
+  /// Maps a CLAuthorizationStatus to a stable lower-camel token the Dart side
+  /// resolves into a tri-state. The bool `isLocationAuthorized` collapses
+  /// "denied" and "notDetermined" into one false, but the UI must tell them
+  /// apart: `notDetermined` is promptable (the native system prompt can still
+  /// surface), while `denied`/`restricted` are NOT (the user must flip the
+  /// toggle in System Settings, so the UI deep-links there instead of prompting
+  /// a dialog that will never appear). Never throws across to Dart.
+  private func authorizationStatusToken(_ status: CLAuthorizationStatus) -> String {
+    switch status {
+    case .authorizedAlways, .authorizedWhenInUse:
+      return "authorized"
+    case .denied:
+      return "denied"
+    case .restricted:
+      return "restricted"
+    case .notDetermined:
+      return "notDetermined"
+    @unknown default:
+      // An unrecognized future status is treated as not-yet-determined so the
+      // UI offers the (harmless) prompt path rather than a dead deep-link.
+      return "notDetermined"
+    }
   }
 
   /// Maps a CLAuthorizationStatus to a simple authorized bool.

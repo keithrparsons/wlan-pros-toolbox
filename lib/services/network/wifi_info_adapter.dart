@@ -105,6 +105,16 @@ abstract class WifiInfoAdapter {
   /// the user with a system prompt mid-task.
   Future<bool> currentNameAuthorization();
 
+  /// Reports the CURRENT name-gating authorization as a TRI-STATE, no prompt.
+  ///
+  /// The bool [currentNameAuthorization] cannot tell the promptable
+  /// `notDetermined` from the deep-link-only `denied` / `restricted`. Callers
+  /// that proactively surface the OS prompt (this screen, on a run) need that
+  /// distinction so they fire the native prompt ONLY when it can actually
+  /// appear, and offer the System Settings deep-link otherwise. Sources without
+  /// a name gate report [LocationAuthStatus.authorized].
+  Future<LocationAuthStatus> nameAuthorizationStatus();
+
   /// Deep-links the user to the OS settings pane where they can grant the
   /// name-gating permission manually.
   ///
@@ -213,6 +223,17 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
       .isLocationAuthorized()
       .timeout(_fetchTimeout, onTimeout: () => false);
 
+  /// Reports the CURRENT macOS Location authorization as a TRI-STATE, no prompt.
+  /// Backs onto the native no-prompt status token. Lets the screen fire the
+  /// system prompt only when the status is `notDetermined` (promptable) and
+  /// deep-link to System Settings when `denied` / `restricted`. Bounded by
+  /// [fetchTimeout] as a hang-safety; on timeout it resolves to
+  /// [LocationAuthStatus.notDetermined] (the safe, promptable default).
+  @override
+  Future<LocationAuthStatus> nameAuthorizationStatus() => _service
+      .locationAuthorizationStatus()
+      .timeout(_fetchTimeout, onTimeout: () => LocationAuthStatus.notDetermined);
+
   /// Opens the macOS Location Services privacy pane so the user can enable this
   /// app's Location access manually. macOS cannot toggle its own Location
   /// permission in code (TCC), so this deep-link plus on-screen steps is the
@@ -311,6 +332,17 @@ class AndroidWifiInfoAdapter implements WifiInfoAdapter {
   Future<bool> currentNameAuthorization() => _service
       .isLocationAuthorized()
       .timeout(_fetchTimeout, onTimeout: () => false);
+
+  /// Reports the CURRENT Android Location grant as a TRI-STATE, no prompt.
+  /// Backs onto the native status token (MainActivity maps a not-yet-granted,
+  /// not-permanently-denied permission to `notDetermined` so the runtime dialog
+  /// can still fire, and a permanently-denied one to `denied` so the UI
+  /// deep-links to App Settings). Bounded by [fetchTimeout]; on timeout resolves
+  /// to [LocationAuthStatus.notDetermined].
+  @override
+  Future<LocationAuthStatus> nameAuthorizationStatus() => _service
+      .locationAuthorizationStatus()
+      .timeout(_fetchTimeout, onTimeout: () => LocationAuthStatus.notDetermined);
 
   /// Opens the app's system Settings page so the user can enable Location
   /// manually after a permanent denial ("Don't ask again"). Android cannot

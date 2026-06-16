@@ -156,6 +156,8 @@ class _FakeMacAdapter implements WifiInfoAdapter {
 
   @override
   Future<bool> currentNameAuthorization() async => _granted;
+  @override
+  Future<LocationAuthStatus> nameAuthorizationStatus() async => _granted ? LocationAuthStatus.authorized : LocationAuthStatus.notDetermined;
 
   @override
   Future<bool> openNamePermissionSettings() async {
@@ -192,6 +194,8 @@ class _SequenceMacAdapter implements WifiInfoAdapter {
 
   @override
   Future<bool> currentNameAuthorization() async => true;
+  @override
+  Future<LocationAuthStatus> nameAuthorizationStatus() async => LocationAuthStatus.authorized;
 
   @override
   Future<bool> openNamePermissionSettings() async => true;

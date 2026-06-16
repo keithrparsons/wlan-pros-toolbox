@@ -60,6 +60,13 @@ class MainActivity : FlutterActivity() {
     // the onRequestPermissionsResult callback can resolve the same Dart Future.
     private var pendingPermissionResult: MethodChannel.Result? = null
 
+    // True once the runtime Location dialog has been requested at least once this
+    // process. Used to tell "never asked" (promptable → notDetermined) from
+    // "asked and dismissed without rationale" (permanently denied → denied) in
+    // locationAuthorizationStatusToken, since shouldShowRequestPermissionRationale
+    // alone returns false in both cases.
+    private var hasRequestedLocationOnce: Boolean = false
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 
@@ -83,6 +90,8 @@ class MainActivity : FlutterActivity() {
                 when (call.method) {
                     "getWifiInfo" -> result.success(readWifiInfo())
                     "isLocationAuthorized" -> result.success(isLocationAuthorized())
+                    "locationAuthorizationStatus" ->
+                        result.success(locationAuthorizationStatusToken())
                     "requestLocationPermission" -> requestLocationPermission(result)
                     "openLocationSettings" -> result.success(openAppSettings())
                     else -> result.notImplemented()
@@ -518,6 +527,26 @@ class MainActivity : FlutterActivity() {
             Manifest.permission.ACCESS_FINE_LOCATION,
         ) == PackageManager.PERMISSION_GRANTED
 
+    /// Maps the Android ACCESS_FINE_LOCATION grant to the same tri-state token
+    /// the macOS channel returns, so the shared Dart side resolves one enum.
+    /// Android cannot tell "never asked" from "asked once and dismissed"
+    /// reliably without a prior request, so an ungranted permission that is NOT
+    /// permanently denied reports `notDetermined` (the runtime dialog can still
+    /// surface), and a permanently-denied permission reports `denied` (the UI
+    /// must deep-link to App Settings). `shouldShowRequestPermissionRationale`
+    /// is false BOTH before the first ask and after a permanent denial; we treat
+    /// the not-yet-granted case as promptable, which is the safe default — the
+    /// runtime request simply no-ops to the current grant if it cannot show.
+    private fun locationAuthorizationStatusToken(): String {
+        if (isLocationAuthorized()) return "authorized"
+        val permanentlyDenied =
+            !ActivityCompat.shouldShowRequestPermissionRationale(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION,
+            ) && hasRequestedLocationOnce
+        return if (permanentlyDenied) "denied" else "notDetermined"
+    }
+
     /// Surfaces the standard Android runtime permission dialog for
     /// ACCESS_FINE_LOCATION. The result resolves the Dart Future in
     /// onRequestPermissionsResult. If already granted, resolves true immediately.
@@ -532,6 +561,7 @@ class MainActivity : FlutterActivity() {
             return
         }
         pendingPermissionResult = result
+        hasRequestedLocationOnce = true
         ActivityCompat.requestPermissions(
             this,
             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),

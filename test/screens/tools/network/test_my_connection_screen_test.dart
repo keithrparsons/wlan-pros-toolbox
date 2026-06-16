@@ -91,8 +91,12 @@ ConnectedAp _macSampleNoName() => ConnectedAp.fromWifiInfo(
   ),
 );
 
+/// macOS adapter whose Location is DENIED (not promptable). The screen must NOT
+/// fire a system prompt for this state (no dialog can appear); it shows the
+/// on-screen hint whose button DEEP-LINKS to System Settings.
 class _NoNameMacAdapter implements WifiInfoAdapter {
   bool promptRequested = false;
+  bool settingsOpened = false;
 
   @override
   String get platformLabel => 'macOS CoreWLAN';
@@ -108,6 +112,47 @@ class _NoNameMacAdapter implements WifiInfoAdapter {
 
   @override
   Future<bool> currentNameAuthorization() async => false;
+  @override
+  Future<LocationAuthStatus> nameAuthorizationStatus() async =>
+      LocationAuthStatus.denied;
+  @override
+  Future<bool> openNamePermissionSettings() async {
+    settingsOpened = true;
+    return true;
+  }
+}
+
+/// macOS adapter whose Location is NOT DETERMINED (promptable). The screen must
+/// fire the native prompt EXACTLY ONCE at run start (Keith's auto-prompt
+/// reversal). [grantOnPrompt] flips the post-prompt status to authorized so the
+/// SSID/BSSID populate, mirroring a user who clicks Allow.
+class _NotDeterminedMacAdapter implements WifiInfoAdapter {
+  _NotDeterminedMacAdapter({this.grantOnPrompt = false});
+
+  final bool grantOnPrompt;
+  int requestCount = 0;
+  bool _granted = false;
+
+  @override
+  String get platformLabel => 'macOS CoreWLAN';
+  @override
+  bool get gatesNameBehindPermission => true;
+  @override
+  Future<ConnectedAp> fetch() async =>
+      _granted ? _macSample() : _macSampleNoName();
+  @override
+  Future<bool> requestNamePermission() async {
+    requestCount++;
+    if (grantOnPrompt) _granted = true;
+    return _granted;
+  }
+
+  @override
+  Future<bool> currentNameAuthorization() async => _granted;
+  @override
+  Future<LocationAuthStatus> nameAuthorizationStatus() async => _granted
+      ? LocationAuthStatus.authorized
+      : LocationAuthStatus.notDetermined;
   @override
   Future<bool> openNamePermissionSettings() async => true;
 }
@@ -130,12 +175,17 @@ class _FakeMacAdapter implements WifiInfoAdapter {
   @override
   Future<bool> currentNameAuthorization() async => true;
   @override
+  Future<LocationAuthStatus> nameAuthorizationStatus() async =>
+      LocationAuthStatus.authorized;
+  @override
   Future<bool> openNamePermissionSettings() async => true;
 }
 
 /// A macOS adapter whose SNAPSHOT READ never resolves — models the production
 /// hang. The check must still complete with the link unread (ap = null →
-/// "Couldn't check"), never hang, and never call the interactive prompt.
+/// "Couldn't check") and never hang. Location is already AUTHORIZED here so the
+/// hang test isolates the snapshot stall (no prompt fires; the auto-prompt only
+/// triggers on the promptable `notDetermined` state).
 class _HangingMacAdapter implements WifiInfoAdapter {
   @override
   String get platformLabel => 'macOS CoreWLAN';
@@ -144,10 +194,12 @@ class _HangingMacAdapter implements WifiInfoAdapter {
   @override
   Future<ConnectedAp> fetch() => Completer<ConnectedAp>().future;
   @override
-  Future<bool> requestNamePermission() =>
-      throw StateError('A connection check must never prompt for Location.');
+  Future<bool> requestNamePermission() async => true;
   @override
-  Future<bool> currentNameAuthorization() async => false;
+  Future<bool> currentNameAuthorization() async => true;
+  @override
+  Future<LocationAuthStatus> nameAuthorizationStatus() async =>
+      LocationAuthStatus.authorized;
   @override
   Future<bool> openNamePermissionSettings() async => true;
 }
@@ -208,6 +260,10 @@ class _AndroidPermissionAdapter implements WifiInfoAdapter {
     return _authorized;
   }
 
+  @override
+  Future<LocationAuthStatus> nameAuthorizationStatus() async => _authorized
+      ? LocationAuthStatus.authorized
+      : LocationAuthStatus.notDetermined;
   @override
   Future<bool> openNamePermissionSettings() async => true;
 }
@@ -403,6 +459,9 @@ class _TxLinkMacAdapter implements WifiInfoAdapter {
   @override
   Future<bool> currentNameAuthorization() async => true;
   @override
+  Future<LocationAuthStatus> nameAuthorizationStatus() async =>
+      LocationAuthStatus.authorized;
+  @override
   Future<bool> openNamePermissionSettings() async => true;
 }
 
@@ -482,6 +541,9 @@ class _SlowLinkMacAdapter implements WifiInfoAdapter {
   Future<bool> requestNamePermission() async => true;
   @override
   Future<bool> currentNameAuthorization() async => true;
+  @override
+  Future<LocationAuthStatus> nameAuthorizationStatus() async =>
+      LocationAuthStatus.authorized;
   @override
   Future<bool> openNamePermissionSettings() async => true;
 }
@@ -1194,7 +1256,8 @@ void main() {
   );
 
   testWidgets(
-    'macOS check NEVER prompts for Location — reads with current authorization',
+    'macOS check does NOT prompt when Location is already authorized — it reads '
+    'the snapshot directly (no redundant TCC dialog)',
     (tester) async {
       final _FakeMacAdapter adapter = _FakeMacAdapter();
       await tester.pumpWidget(
@@ -1211,8 +1274,73 @@ void main() {
       );
       await runCheck(tester);
 
+      // Already authorized → the auto-prompt does NOT fire (it only triggers on
+      // the promptable notDetermined state), and the SSID/BSSID populate.
       expect(adapter.promptRequested, isFalse);
       expect(find.text('Wi-Fi:'), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 1600));
+    },
+  );
+
+  testWidgets(
+    'macOS check AUTO-PROMPTS for Location when notDetermined (Keith reversal) — '
+    'the native prompt fires from the run so the user need not dig into Settings',
+    (tester) async {
+      final _NotDeterminedMacAdapter adapter =
+          _NotDeterminedMacAdapter(grantOnPrompt: true);
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: false,
+            sourceOverride: WifiInfoSource.macosCoreWlan,
+            macAdapter: adapter,
+            qualityClient: MockQualityClient(
+              scriptedResult: _marginalInternet(),
+            ),
+          ),
+        ),
+      );
+      await runCheck(tester);
+
+      // The promptable state surfaced the native request exactly once at run
+      // start; the verdict still resolves.
+      expect(adapter.requestCount, 1);
+      expect(find.text('Wi-Fi:'), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 1600));
+    },
+  );
+
+  testWidgets(
+    'macOS auto-prompt fires AT MOST ONCE per mount — a re-run never re-prompts '
+    '(Keith: "One request only")',
+    (tester) async {
+      // grantOnPrompt: false → the user dismisses; status stays notDetermined,
+      // so a naive implementation would re-prompt on the second run. It must not.
+      final _NotDeterminedMacAdapter adapter = _NotDeterminedMacAdapter();
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: false,
+            sourceOverride: WifiInfoSource.macosCoreWlan,
+            macAdapter: adapter,
+            qualityClient: MockQualityClient(
+              scriptedResult: _marginalInternet(),
+            ),
+          ),
+        ),
+      );
+      await runCheck(tester);
+      expect(adapter.requestCount, 1);
+
+      // Re-run from the verdict-hero row.
+      await tester.tap(find.byIcon(Icons.refresh));
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 1600));
+
+      // Still exactly one prompt across both runs.
+      expect(adapter.requestCount, 1);
 
       await tester.pump(const Duration(milliseconds: 1600));
     },
@@ -1278,7 +1406,8 @@ void main() {
   );
 
   testWidgets(
-    'macOS missing name degrades GRACEFULLY — row omitted, no Location error',
+    'macOS DENIED Location shows the on-screen hint with an Open-settings action '
+    '(no prompt — a denied state cannot raise a dialog)',
     (tester) async {
       final _NoNameMacAdapter adapter = _NoNameMacAdapter();
       await tester.pumpWidget(
@@ -1294,12 +1423,65 @@ void main() {
         ),
       );
       await runCheck(tester);
+      await settleDetails(tester);
 
+      // Denied → no system prompt fires (it could never appear), but the
+      // ON-SCREEN hint is now visible where the network name would sit.
       expect(adapter.promptRequested, isFalse);
-      expect(find.textContaining('Location Services'), findsNothing);
-      expect(find.textContaining('Location access'), findsNothing);
-      expect(find.text('Wi-Fi network'), findsNothing);
+      final Finder hint = find.text(
+        'Wi-Fi network name hidden — Location access needed',
+      );
+      await tester.ensureVisible(hint);
+      expect(hint, findsOneWidget);
+
+      // The denied state's action DEEP-LINKS to System Settings, not a prompt.
+      final Finder settingsBtn = find.text('Open settings');
+      expect(settingsBtn, findsOneWidget);
+      await tester.tap(settingsBtn);
+      await tester.pumpAndSettle();
+      expect(adapter.settingsOpened, isTrue);
+      expect(adapter.promptRequested, isFalse);
+
       expect(find.text('Wi-Fi:'), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 1600));
+    },
+  );
+
+  testWidgets(
+    'macOS notDetermined hint button re-fires the prompt (on-screen "Allow '
+    'Location" path)',
+    (tester) async {
+      // Dismiss the auto-prompt (grantOnPrompt: false) so the hint stays and its
+      // button is the promptable "Allow Location" variant.
+      final _NotDeterminedMacAdapter adapter = _NotDeterminedMacAdapter();
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: false,
+            sourceOverride: WifiInfoSource.macosCoreWlan,
+            macAdapter: adapter,
+            qualityClient: MockQualityClient(
+              scriptedResult: _marginalInternet(),
+            ),
+          ),
+        ),
+      );
+      await runCheck(tester);
+      await settleDetails(tester);
+
+      // Auto-prompt fired once at run start.
+      expect(adapter.requestCount, 1);
+
+      final Finder allowBtn = find.text('Allow Location');
+      await tester.ensureVisible(allowBtn);
+      expect(allowBtn, findsOneWidget);
+      await tester.tap(allowBtn);
+      await tester.pumpAndSettle();
+
+      // The hint button re-fired the prompt (user-initiated; the one-shot guard
+      // governs only the AUTO prompt, not an explicit tap).
+      expect(adapter.requestCount, 2);
 
       await tester.pump(const Duration(milliseconds: 1600));
     },
@@ -2577,6 +2759,9 @@ class _StaticMacAdapter implements WifiInfoAdapter {
   Future<bool> requestNamePermission() async => true;
   @override
   Future<bool> currentNameAuthorization() async => true;
+  @override
+  Future<LocationAuthStatus> nameAuthorizationStatus() async =>
+      LocationAuthStatus.authorized;
   @override
   Future<bool> openNamePermissionSettings() async => true;
 }
