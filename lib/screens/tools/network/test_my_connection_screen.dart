@@ -3478,15 +3478,24 @@ class _LocationNameHint extends StatelessWidget {
           horizontal: AppSpacing.xs,
           vertical: AppSpacing.xxs,
         ),
+        // §8.13 rule 6: a Location-permission hint is an active call-to-action,
+        // NOT a computed verdict, so it must use NEUTRAL surface + border, never
+        // a status* token. Neutral surface1 fill + neutral hairline border; the
+        // location_off icon is quiet textTertiary; the only active accent is the
+        // button's lime textAccent label (the §8.3 interactive role).
         decoration: BoxDecoration(
-          color: colors.statusInfoFill,
+          color: colors.surface1,
           borderRadius: BorderRadius.circular(AppRadius.control),
-          border: Border.all(color: colors.statusInfo, width: 1),
+          border: Border.all(color: colors.border, width: 1),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            Icon(Icons.location_off_outlined, size: 16, color: colors.statusInfo),
+            Icon(
+              Icons.location_off_outlined,
+              size: 16,
+              color: colors.textTertiary,
+            ),
             const SizedBox(width: AppSpacing.xs),
             Expanded(
               child: Text(
