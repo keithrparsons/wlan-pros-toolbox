@@ -131,6 +131,46 @@ void main() {
     );
   });
 
+  testWidgets(
+      'demoted R-06 "you are online" verdict renders a calm INFO chip, not amber',
+      (tester) async {
+    // The open-hotel-network case: the honest "you are online" verdict (R-06)
+    // co-fires with a critical open-network security finding (R-35). R-35 sorts
+    // first, so the hero slot is taken by the security finding and R-06 is
+    // DEMOTED into the §4 cards list. Its chip must read the calm INFO kind
+    // (blue glyph), not headsUp (amber): an amber accent around the word
+    // "Good" contradicts the word (GL-003 section 8.13 rule 2 / WCAG 1.4.1).
+    final report = AnalyzeEngine.analyze(
+      const AnalyzeInput(
+        verdict: WifiVsInternetVerdict.onlineUnmeasured,
+        security: WifiSecurity.open, // R-35 critical -> R-06 demoted to a card
+      ),
+    );
+    // Guard the precondition: R-06 is present, demoted (not the leading
+    // finding), and still carries the "Good" word from the engine.
+    final r06 = report.findings.firstWhere((f) => f.ruleId == 'R-06');
+    expect(report.findings.first.ruleId, 'R-35');
+    expect(r06.verdictWord, 'Good');
+
+    await _precacheCategorySvgs(tester);
+    await tester.pumpWidget(_wrap(report));
+    await tester.pumpAndSettle();
+
+    // Find every StatusChip whose verdict word is "Good" (the demoted R-06
+    // chip), and assert its kind is the calm info kind, never amber headsUp.
+    final Iterable<StatusChip> goodChips = tester
+        .widgetList<StatusChip>(find.byType(StatusChip))
+        .where((c) => c.word == 'Good');
+    expect(goodChips, isNotEmpty,
+        reason: 'the demoted R-06 chip should carry the "Good" word');
+    for (final StatusChip chip in goodChips) {
+      expect(chip.kind, StatusChipKind.info,
+          reason: 'demoted R-06 "Good" chip must be info (blue), not amber '
+              'headsUp');
+      expect(chip.kind, isNot(StatusChipKind.headsUp));
+    }
+  });
+
   testWidgets('all-clear verdict reads as a Good chip, not an advisory',
       (tester) async {
     // R-04: both healthy -> "Nothing to fix" headline, a Good verdict.

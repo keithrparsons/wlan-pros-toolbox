@@ -61,7 +61,16 @@ StatusChipKind _chipKindFor(AnalysisFinding f) {
       return StatusChipKind.issue;
     case FindingSeverity.important:
       // The all-clear verdict headline (R-04) reads as a "Good", not advisory.
-      return f.ruleId == 'R-04' ? StatusChipKind.good : StatusChipKind.headsUp;
+      // R-06 ("you're online") is a calm informational verdict, not a warning:
+      // when a critical security finding (R-35 open / R-36 WEP) co-fires it is
+      // demoted into the cards list, where an amber headsUp chip would render an
+      // amber accent around the word "Good" (hue contradicts the word). Route it
+      // to the calm info kind so it matches the hero / ProVerdictCard /
+      // ComparisonCard (all statusInfo), keeping AA-clean in both themes
+      // (GL-003 section 8.13 rule 2 / WCAG 1.4.1).
+      return f.ruleId == 'R-04'
+          ? StatusChipKind.good
+          : (f.ruleId == 'R-06' ? StatusChipKind.info : StatusChipKind.headsUp);
     case FindingSeverity.context:
       return StatusChipKind.headsUp;
   }
