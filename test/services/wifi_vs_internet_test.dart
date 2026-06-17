@@ -118,7 +118,7 @@ void main() {
     test('ratio < 0.40 → upstream', () {
       final r = eval(down: 100, up: 60); // avg 80 → ratio ≈ 0.177
       expect(r.verdict, WifiVsInternetVerdict.upstream);
-      expect(r.headline, "It's upstream — not your Wi-Fi");
+      expect(r.headline, "It's upstream, not your Wi-Fi");
       expect(r.ratio, lessThan(0.40));
     });
 
