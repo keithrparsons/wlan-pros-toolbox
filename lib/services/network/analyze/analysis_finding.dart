@@ -154,6 +154,7 @@ class AnalysisFinding {
     required this.category,
     required this.severity,
     required this.explanation,
+    this.isReassurance = false,
     this.pendingRatification = false,
   });
 
@@ -169,10 +170,54 @@ class AnalysisFinding {
   /// The conclusion-first, plain-language explanation. Rule data, swappable.
   final String explanation;
 
+  /// True for a "no problem here" reassurance (the engine's `contextOnly`
+  /// rules: R-12 excellent signal, R-18 strong-signal note, R-22 Wi-Fi 5). The
+  /// screen renders these with the §2 "Good" chip (success), not an advisory,
+  /// so a genuine all-clear never wears a warning hue. A non-reassurance P3
+  /// note (slow DNS, an overlapping channel) stays a "Worth a look".
+  final bool isReassurance;
+
   /// True when the source rule's copy is not yet ratified / voiced. Surfaced
   /// honestly so nothing reads as final before it is. All rules are ratified as
   /// of 2026-06-16, so this is false for every finding today.
   final bool pendingRatification;
+
+  /// True when this finding is the report's leading verdict (category
+  /// [FindingCategory.verdict]). The screen promotes it to the §1 verdict hero
+  /// rather than rendering it as a finding card.
+  bool get isVerdict => category == FindingCategory.verdict;
+
+  /// True when this finding is an honesty / "not measured" row
+  /// ([FindingCategory.honesty]). The screen renders these as quiet §6 info
+  /// rows at the bottom, never as amber / red findings.
+  bool get isHonesty => category == FindingCategory.honesty;
+
+  /// The plain-language verdict WORD shown in the §2 status chip AND written to
+  /// the §7 copied report, so the verdict is identical on screen and on the
+  /// clipboard and never survives as color-only (§8.13 rule 2 / SC 1.4.1).
+  ///
+  /// PURE presentation (no Flutter): both the screen's chip and the copy-text
+  /// builder read this one getter, so the on-screen word and the clipboard word
+  /// can never drift. Honesty rows read "Not measured"; a reassurance reads
+  /// "Good"; otherwise the word follows the severity (Issue / Worth a look),
+  /// with the all-clear verdict headline (R-04, "nothing to fix") reading
+  /// "Good".
+  String get verdictWord {
+    if (isHonesty) return 'Not measured';
+    if (isReassurance) return 'Good';
+    switch (severity) {
+      case FindingSeverity.critical:
+        return 'Issue';
+      case FindingSeverity.important:
+        // The all-clear verdict headline is reassurance, not an advisory.
+        return ruleId == 'R-04' ? 'Good' : 'Worth a look';
+      case FindingSeverity.context:
+        // Non-reassurance P3 notes (slow DNS, overlapping channel, WPA2 nudge)
+        // are minor advisories, not all-clears.
+        return 'Worth a look';
+    }
+  }
+
 
   @override
   String toString() =>

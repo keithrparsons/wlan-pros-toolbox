@@ -36,6 +36,7 @@ import 'package:net_quality/net_quality.dart';
 
 import '../../../services/network/analyze/analyze_engine.dart';
 import '../../../services/network/analyze/analyze_input.dart';
+import '../../../services/network/analyze/analyze_report_text.dart';
 import '../../../services/network/analyze/analysis_finding.dart';
 import '../../../services/network/connected_ap.dart';
 import '../../../services/network/connection_check.dart';
@@ -1941,22 +1942,25 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   }
 
   /// The plain-text payload for the Analyze report's own Copy action: a titled
-  /// header, then each finding as `[SEVERITY · Category]` + its explanation, in
+  /// header, then each finding as `Category: Verdict-WORD` + its explanation, in
   /// the same order shown on screen. Plain text only (no markdown). Returns null
   /// when there is nothing to analyze (empty report) so Copy renders disabled.
+  ///
+  /// §7 CONTENT CONTRACT (GL-003 §8.16, load-bearing): every on-screen verdict
+  /// the report carries with a §8.13 status hue MUST appear here as its WORD,
+  /// using the SAME [AnalysisFinding.verdictWord] the on-screen [StatusChip]
+  /// shows, so no verdict survives as color-only on the clipboard. Zero
+  /// em-dashes: the category-and-verdict line uses a colon, not a dash.
   String? _buildAnalysisCopyText(AnalysisReport report) {
     if (!report.hasFindings) return null;
     final StringBuffer buf = StringBuffer();
-    buf.writeln('WLAN Pros Toolbox — Connection Analysis');
+    buf.writeln('WLAN Pros Toolbox: Connection Analysis');
     buf.writeln('Generated: ${_formatTimestamp(_testedAt)} on $_platformLabel');
-    for (final AnalysisFinding f in report.findings) {
-      buf.writeln('');
-      buf.writeln('[${f.severity.word} · ${f.category.label}]');
-      buf.writeln(f.explanation);
-      if (f.pendingRatification) {
-        buf.writeln('(Draft guidance — wording not yet finalized.)');
-      }
-    }
+    buf.writeln('');
+    // The §7 body, every verdict carried as its WORD, lives in the pure,
+    // unit-tested [analysisReportToPlainText] so the on-screen chip word and
+    // the clipboard word can never drift.
+    buf.writeln(analysisReportToPlainText(report));
     buf.writeln('');
     buf.writeln('Analyzed on your device. Nothing is sent or stored.');
     return buf.toString().trimRight();

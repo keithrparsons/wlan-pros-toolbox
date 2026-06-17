@@ -10,6 +10,7 @@ import 'package:net_quality/net_quality.dart' show QualityScoring, QualityGrade;
 import 'package:wlan_pros_toolbox/services/network/analyze/analysis_finding.dart';
 import 'package:wlan_pros_toolbox/services/network/analyze/analyze_engine.dart';
 import 'package:wlan_pros_toolbox/services/network/analyze/analyze_input.dart';
+import 'package:wlan_pros_toolbox/services/network/analyze/analyze_report_text.dart';
 import 'package:wlan_pros_toolbox/services/network/analyze/analyze_rules.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_grading.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_security.dart';
@@ -347,6 +348,91 @@ void main() {
       for (final rule in kAnalyzeRules) {
         expect(rule.responseDraft.trim(), isNotEmpty, reason: rule.id);
       }
+    });
+  });
+
+  group('verdict words (the §2 chip word / §7 clipboard word)', () {
+    test('severity + reassurance map to the right plain word', () {
+      // Critical -> "Issue".
+      final AnalysisFinding open = AnalyzeEngine.analyze(
+        const AnalyzeInput(security: WifiSecurity.open),
+      ).findings.first;
+      expect(open.verdictWord, 'Issue');
+
+      // Important advisory -> "Worth a look" (weak RSSI, R-10).
+      final AnalysisFinding weak = AnalyzeEngine.analyze(
+        const AnalyzeInput(rssiDbm: -73),
+      ).findings.firstWhere((AnalysisFinding f) => f.ruleId == 'R-10');
+      expect(weak.verdictWord, 'Worth a look');
+
+      // The all-clear verdict headline (R-04) -> "Good".
+      final AnalysisFinding allClear = AnalyzeEngine.analyze(
+        const AnalyzeInput(verdict: WifiVsInternetVerdict.bothHealthy),
+      ).findings.first;
+      expect(allClear.ruleId, 'R-04');
+      expect(allClear.verdictWord, 'Good');
+
+      // A reassurance (contextOnly) -> "Good".
+      final AnalysisFinding reassure = AnalyzeEngine.analyze(
+        const AnalyzeInput(
+          verdict: WifiVsInternetVerdict.upstream, // a substantive finding
+          rssiDbm: -45, // excellent RSSI -> R-12 reassurance
+        ),
+      ).findings.firstWhere((AnalysisFinding f) => f.ruleId == 'R-12');
+      expect(reassure.isReassurance, isTrue);
+      expect(reassure.verdictWord, 'Good');
+
+      // An honesty row -> "Not measured".
+      final AnalysisFinding honesty = AnalyzeEngine.analyze(
+        const AnalyzeInput(platformIsIos: true, wifiSignalCaptured: false),
+      ).findings.firstWhere((AnalysisFinding f) => f.isHonesty);
+      expect(honesty.verdictWord, 'Not measured');
+    });
+  });
+
+  group('§7 copy content contract', () {
+    test('copied report text carries EVERY finding verdict WORD (never '
+        'color-only on the clipboard)', () {
+      // A report spanning every verdict register: Issue (open security),
+      // Worth a look (weak RSSI), Good (excellent-signal reassurance), and
+      // Not measured (the iOS honesty row).
+      final AnalysisReport report = AnalyzeEngine.analyze(
+        const AnalyzeInput(
+          verdict: WifiVsInternetVerdict.upstream,
+          security: WifiSecurity.open, // -> Issue
+          rssiDbm: -73, // poor -> Worth a look (R-10)
+          platformIsIos: true,
+          wifiSignalCaptured: false, // -> Not measured (R-31)
+        ),
+      );
+      final String text = analysisReportToPlainText(report);
+
+      // Every finding's verdict WORD appears in the copied text, in words.
+      for (final AnalysisFinding f in report.findings) {
+        expect(
+          text,
+          contains(f.verdictWord),
+          reason: '${f.ruleId} verdict word "${f.verdictWord}" missing from '
+              'copied report',
+        );
+        // And each finding's category label is paired with its word.
+        expect(text, contains('${f.category.label}: ${f.verdictWord}'));
+      }
+
+      // Spot-check the load-bearing words are literally present.
+      expect(text, contains('Issue'));
+      expect(text, contains('Worth a look'));
+      expect(text, contains('Not measured'));
+
+      // Zero em-dashes on the clipboard (U+2014 referenced by code unit so no
+      // literal em-dash glyph appears in source, per the standing rule).
+      expect(text.contains(String.fromCharCode(0x2014)), isFalse);
+    });
+
+    test('empty report serializes to an empty string', () {
+      final AnalysisReport empty = AnalyzeEngine.analyze(const AnalyzeInput());
+      expect(empty.hasFindings, isFalse);
+      expect(analysisReportToPlainText(empty), isEmpty);
     });
   });
 }

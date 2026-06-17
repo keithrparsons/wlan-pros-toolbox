@@ -122,6 +122,9 @@ class AnalyzeEngine {
               category: f.rule.category,
               severity: f.rule.severity,
               explanation: f.rule.responseDraft,
+              // The engine's "no problem here" reassurance rules (contextOnly)
+              // surface to the screen as the §2 "Good" chip, not an advisory.
+              isReassurance: f.rule.contextOnly,
               pendingRatification: f.rule.pendingRatification,
             ))
         .toList(growable: false);
