@@ -1,16 +1,16 @@
-// Analyze Results — the engine's typed INPUT.
+// Analyze Results, the engine's typed INPUT.
 //
 // This is the SAME data the Test My Connection result already holds, normalized
 // into one flat, pure-Dart value object the rule library evaluates against. We
 // build it DIRECTLY from the in-memory models (ConnectedAp, the net_quality
 // QualityResult, the WifiVsInternetResult verdict, the DNS probe, and the cloud
-// reachability rows) — NOT by re-parsing the copied report text. The data is
+// reachability rows), NOT by re-parsing the copied report text. The data is
 // already in memory; re-parsing our own copy format would add a brittle parser
-// for no gain. (The web "paste a report" analyzer in the Pax brief is a
+// for no gain. (The web "paste a report" analyzer in the research brief is a
 // separate, later surface; this in-app engine reads the live objects.)
 //
 // Every numeric threshold the rules compare against is imported from the
-// ratified app constants — NOT duplicated here:
+// ratified app constants, NOT duplicated here:
 //   * RSSI / SNR bands → WifiGradingBands (wifi_grading.dart, Keith 2026-06-01)
 //   * latency / jitter / loss / responsiveness / download bands → QualityScoring
 //     (net_quality scoring.dart)
@@ -18,7 +18,7 @@
 //   * security labels → WifiSecurity (wifi_security.dart)
 // See analyze_rules.dart for where each is read.
 //
-// NULL DISCIPLINE (mirrors the app + Pax's library): a field the platform did
+// NULL DISCIPLINE (mirrors the app + the response library): a field the platform did
 // not measure stays null and fires NO rule. The honesty rules (R-30/R-31)
 // explain the gap instead of guessing (GL-005).
 
@@ -30,7 +30,7 @@ import '../dns_probe_service.dart';
 import '../wifi_security.dart';
 import '../wifi_vs_internet.dart';
 
-/// The flat, immutable snapshot the rule library sees. Pure data — no behavior
+/// The flat, immutable snapshot the rule library sees. Pure data, no behavior
 /// beyond the [fromConnectionState] builder that assembles it from the live
 /// models. Any field may be null: each platform/run exposes a different subset.
 class AnalyzeInput {
@@ -70,7 +70,7 @@ class AnalyzeInput {
   /// Signal-to-noise ratio, dB. Null when not read.
   final int? snrDb;
 
-  /// The negotiated link rate fed to the verdict — avg(Tx, Rx) or the single
+  /// The negotiated link rate fed to the verdict, avg(Tx, Rx) or the single
   /// side reported, Mbps. Null when no rate was read.
   final double? linkRateMbps;
 
@@ -125,10 +125,10 @@ class AnalyzeInput {
   /// function of its arguments, so the assembly is unit-testable without any
   /// real radio or socket.
   ///
-  /// [ap] — the unified ConnectedAp (one-shot read folded with the live sample),
-  /// [internet] — the net_quality result, [engine] — the verdict result,
-  /// [dns] — the DNS probe result, [cloudReachable]/[cloudTotal] — the cloud
-  /// panel tally, [platformIsIos] / [wifiSignalCaptured] — the iOS honesty
+  /// [ap]: the unified ConnectedAp (one-shot read folded with the live sample),
+  /// [internet]: the net_quality result, [engine]: the verdict result,
+  /// [dns]: the DNS probe result, [cloudReachable]/[cloudTotal]: the cloud
+  /// panel tally, [platformIsIos] / [wifiSignalCaptured]: the iOS honesty
   /// signals.
   factory AnalyzeInput.fromConnectionState({
     required ConnectedAp? ap,
@@ -198,7 +198,7 @@ class AnalyzeInput {
   /// True when the band is the 2.4 GHz band.
   bool get isBand24 => band == '2.4 GHz';
 
-  /// True when the band is a "fast" band (5 or 6 GHz) — where a narrow width is
+  /// True when the band is a "fast" band (5 or 6 GHz), where a narrow width is
   /// the meaningful R-23 case.
   bool get isFastBand => band == '5 GHz' || band == '6 GHz';
 
@@ -206,7 +206,7 @@ class AnalyzeInput {
   /// sentinel some stacks return for "unknown").
   bool get hasRealChannel => channel != null && channel != 0;
 
-  /// Whether the PHY/standard string names Wi-Fi 4 or older (802.11 a/b/g/n) —
+  /// Whether the PHY/standard string names Wi-Fi 4 or older (802.11 a/b/g/n),
   /// the legacy-ceiling case for R-21. Case-insensitive substring match on the
   /// labels the app produces ("802.11n (Wi-Fi 4)", "802.11g", …).
   bool get isLegacyPhy {
@@ -216,11 +216,11 @@ class AnalyzeInput {
         s.contains('802.11n') ||
         s.contains('802.11g') ||
         s.contains('802.11b') ||
-        s.contains('802.11a)') || // "802.11a (…)" — avoid matching 802.11ac/ax
+        s.contains('802.11a)') || // "802.11a (…)", avoid matching 802.11ac/ax
         s == '802.11a';
   }
 
-  /// Whether the PHY/standard string names Wi-Fi 5 (802.11ac) — the R-22 case.
+  /// Whether the PHY/standard string names Wi-Fi 5 (802.11ac), the R-22 case.
   bool get isWifi5Phy {
     final String? s = standard?.toLowerCase();
     if (s == null) return false;

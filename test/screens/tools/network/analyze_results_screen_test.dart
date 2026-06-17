@@ -1,4 +1,4 @@
-// AnalyzeResultsScreen — widget tests.
+// AnalyzeResultsScreen, widget tests.
 //
 // Drives the report view with a pre-computed AnalysisReport (the screen is
 // stateless and receives the report + a copy-text builder). Covers:
@@ -40,23 +40,25 @@ void main() {
     await tester.pumpAndSettle();
 
     // The verdict explanation (R-01) is on screen.
-    expect(find.textContaining('Your Wi-Fi link is the limit'), findsOneWidget);
-    // The severity word ACTION appears (never color alone — SC 1.4.1).
+    expect(find.textContaining('Your Wi-Fi is the limit here'), findsOneWidget);
+    // The severity word ACTION appears (never color alone, SC 1.4.1).
     expect(find.text('ACTION'), findsWidgets);
     // The signal finding is also present.
     expect(find.textContaining("Your signal is weak"), findsOneWidget);
   });
 
-  testWidgets('shows the draft-guidance banner when a pending rule fired',
+  testWidgets('no draft-guidance banner now that every rule is ratified',
       (tester) async {
+    // Post 2026-06-16 ratification, no rule is pending, so the honest draft
+    // note and the per-finding "Draft guidance" line never render.
     final report = AnalyzeEngine.analyze(
       const AnalyzeInput(band: '2.4 GHz', standard: '802.11ax (Wi-Fi 6)'),
     );
-    expect(report.hasPendingDraft, isTrue);
+    expect(report.hasPendingDraft, isFalse);
     await tester.pumpWidget(_wrap(report));
     await tester.pumpAndSettle();
-    expect(find.textContaining('draft guidance under review'), findsOneWidget);
-    expect(find.textContaining('Draft guidance'), findsWidgets);
+    expect(find.textContaining('draft guidance under review'), findsNothing);
+    expect(find.textContaining('Draft guidance'), findsNothing);
   });
 
   testWidgets('empty report shows the honest empty state and disables Copy',
@@ -76,7 +78,7 @@ void main() {
       ).first,
     );
     // The copy affordance reads as disabled via its own Semantics (enabled
-    // false) — assert no enabled copy button is exposed.
+    // false), assert no enabled copy button is exposed.
     expect(copySem, isNotNull);
   });
 

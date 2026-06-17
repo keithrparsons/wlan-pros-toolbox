@@ -1,4 +1,4 @@
-// Analyze Results — the engine's OUTPUT model.
+// Analyze Results, the engine's OUTPUT model.
 //
 // A finding is one fired rule turned into a plain-language, conclusion-first
 // explanation. The engine ([AnalyzeEngine]) evaluates the rule library
@@ -8,26 +8,26 @@
 //
 // PURE DART by design: no Flutter imports, no platform channels, no I/O. The
 // whole pipeline (input → rules → findings) is exhaustively unit-testable with
-// plain values and no real network / radio. Nothing here is stored or sent —
+// plain values and no real network / radio. Nothing here is stored or sent,
 // it is a local evaluation of data the Test My Connection result already holds
 // (GL-005 / GL-008).
 
 /// How load-bearing a finding is. Drives BOTH the sort order (P1 first) and the
-/// §8.13 status hue the screen tints the finding's marker with — paired ALWAYS
+/// §8.13 status hue the screen tints the finding's marker with, paired ALWAYS
 /// with the severity WORD, never color alone (WCAG 2.2 SC 1.4.1).
 ///
-/// Ported from Pax's response-library-v1 priority key:
+/// Ported from the response-library priority key:
 ///   P1 critical/headline · P2 important · P3 context/nicety.
 enum FindingSeverity {
-  /// P1 — critical / headline. A verdict, an open network, packet loss, a dead
+  /// P1, critical / headline. A verdict, an open network, packet loss, a dead
   /// path. Renders with the §8.13 danger hue.
   critical,
 
-  /// P2 — important. A weak signal, an older standard, a high-latency path.
+  /// P2, important. A weak signal, an older standard, a high-latency path.
   /// Renders with the §8.13 warning hue.
   important,
 
-  /// P3 — context / nicety. A "no problem here" reassurance or a low-stakes
+  /// P3, context / nicety. A "no problem here" reassurance or a low-stakes
   /// note. Renders with the §8.13 info hue. Context-only findings are
   /// suppressed by the engine unless a P1/P2 also fired (see [AnalyzeRule]).
   context,
@@ -49,7 +49,7 @@ extension FindingSeverityRank on FindingSeverity {
   }
 
   /// The short, all-caps severity WORD shown beside each finding (never color
-  /// alone — SC 1.4.1). Plain English, not jargon.
+  /// alone, SC 1.4.1). Plain English, not jargon.
   String get word {
     switch (this) {
       case FindingSeverity.critical:
@@ -62,7 +62,7 @@ extension FindingSeverityRank on FindingSeverity {
   }
 }
 
-/// The broad subject a finding belongs to. Mirrors the response-library-v1
+/// The broad subject a finding belongs to. Mirrors the response-library
 /// category grouping (Verdict, Signal, Noise/SNR, Capability, Internet quality,
 /// DNS, Security, Cloud reachability, Honesty/guard). Used for grouping/labels
 /// and to let the verdict category always lead.
@@ -79,8 +79,8 @@ enum FindingCategory {
 }
 
 /// The within-severity tiebreak rank for a category (lower sorts first). Encodes
-/// Pax's proposed tiebreak: verdict → security → worst measured-quality → the
-/// rest, so that — at EQUAL severity — an open-network security finding leads a
+/// the proposed tiebreak: verdict → security → worst measured-quality → the
+/// rest, so that at EQUAL severity an open-network security finding leads a
 /// packet-loss finding, and both lead a band/capability note. The verdict is P1
 /// and rank 0, so it always leads overall.
 extension FindingCategoryRank on FindingCategory {
@@ -90,7 +90,7 @@ extension FindingCategoryRank on FindingCategory {
         return 0;
       case FindingCategory.security:
         return 1;
-      // The measured-quality families (Pax's "worst measured-quality"): the
+      // The measured-quality families ("worst measured-quality"): the
       // internet path, then the signal/noise that explain a weak link.
       case FindingCategory.internetQuality:
         return 2;
@@ -140,13 +140,13 @@ extension FindingCategoryLabel on FindingCategory {
 /// One fired rule, rendered as a finding: its id (for traceability + tests),
 /// its category, its severity, and the plain-language explanation. Immutable.
 ///
-/// The [explanation] is the rule's response text VERBATIM — currently Pax's
-/// DRAFT copy from response-library-v1, pending Keith's ratification + Penn's
-/// SOP-020 voice pass. Because the copy lives in the rule data ([AnalyzeRule]),
-/// the ratified/voiced text drops in by editing [kAnalyzeRules] alone — no
-/// engine or model change. [pendingRatification] flags the rules Pax marked as
-/// needing Keith's sign-off (notably the 2.4 GHz and narrow-width doctrine
-/// guardrails), so the UI/tests can surface them as not-yet-final.
+/// The [explanation] is the rule's response text VERBATIM, the final,
+/// Keith-ratified (2026-06-16) + Penn-voiced copy from response-library-final.
+/// Because the copy lives in the rule data ([AnalyzeRule]), any future revoice
+/// drops in by editing [kAnalyzeRules] alone, no engine or model change.
+/// [pendingRatification] would flag a rule whose copy is not yet ratified; all
+/// rules are ratified today, so it is false everywhere, but the field and its
+/// surfacing path are kept for any future not-yet-final rule.
 class AnalysisFinding {
   /// Creates a finding.
   const AnalysisFinding({
@@ -160,18 +160,18 @@ class AnalysisFinding {
   /// The originating rule id (e.g. "R-01"), for tests + report traceability.
   final String ruleId;
 
-  /// The subject category — drives grouping and the verdict-leads ordering.
+  /// The subject category, drives grouping and the verdict-leads ordering.
   final FindingCategory category;
 
-  /// How load-bearing the finding is — drives sort order + the §8.13 hue.
+  /// How load-bearing the finding is, drives sort order + the §8.13 hue.
   final FindingSeverity severity;
 
   /// The conclusion-first, plain-language explanation. Rule data, swappable.
   final String explanation;
 
-  /// True when the source rule is flagged `[NEEDS KEITH]` in
-  /// response-library-v1 — copy not yet ratified / voiced. Surfaced honestly so
-  /// nothing reads as final before it is.
+  /// True when the source rule's copy is not yet ratified / voiced. Surfaced
+  /// honestly so nothing reads as final before it is. All rules are ratified as
+  /// of 2026-06-16, so this is false for every finding today.
   final bool pendingRatification;
 
   @override

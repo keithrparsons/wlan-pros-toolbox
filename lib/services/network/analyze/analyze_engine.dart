@@ -1,4 +1,4 @@
-// Analyze Results — THE RULE ENGINE (pure, testable).
+// Analyze Results, THE RULE ENGINE (pure, testable).
 //
 // Input: an [AnalyzeInput] (the same data the Test My Connection result already
 // holds). Output: an ordered list of [AnalysisFinding]s, conclusion-first, each
@@ -6,7 +6,7 @@
 //
 // PURE DART: no Flutter, no I/O, no platform channels, NOTHING stored, NOTHING
 // sent. It evaluates [kAnalyzeRules] against the input and orders the matches.
-// All advice copy lives in the rule DATA (analyze_rules.dart) — the engine
+// All advice copy lives in the rule DATA (analyze_rules.dart), the engine
 // authors none of it, so ratified + Penn-voiced copy drops in by editing the
 // rules file alone (GL-005 / GL-008).
 //
@@ -14,13 +14,13 @@
 //   1. By severity: P1 (critical) → P2 (important) → P3 (context).
 //   2. Within a severity, by the rule library's DECLARATION ORDER, which is
 //      authored verdict → signal/noise → capability → internet quality → DNS →
-//      security → cloud → honesty. Pax's tiebreak is "verdict → security → worst
+//      security → cloud → honesty. The tiebreak is "verdict → security → worst
 //      measured-quality"; verdict rules are P1 and declared first so they lead,
 //      and the declaration order encodes the rest. The verdict finding is
 //      ALWAYS first when present (it is the headline).
 //
 // CONTEXT-ONLY SUPPRESSION (Pax open-question #4): a rule marked
-// [AnalyzeRule.contextOnly] (a "no problem here" reassurance — R-12 excellent
+// [AnalyzeRule.contextOnly] (a "no problem here" reassurance: R-12 excellent
 // signal, R-22 Wi-Fi 5, R-30 width-not-captured, R-42 slow-but-reachable) is
 // DROPPED unless at least one non-context-only finding also fired, so the report
 // never opens by narrating a non-issue. This mirrors the app's `_snrContext`
@@ -37,13 +37,13 @@ class AnalysisReport {
   const AnalysisReport(this.findings);
 
   /// The ordered findings, P1 → P3, verdict first. Empty when nothing fired
-  /// (e.g. a wholly-unmeasured run) — the UI then shows its empty state.
+  /// (e.g. a wholly-unmeasured run), the UI then shows its empty state.
   final List<AnalysisFinding> findings;
 
   /// True when at least one finding fired.
   bool get hasFindings => findings.isNotEmpty;
 
-  /// The single headline finding (the first in order — the verdict when one
+  /// The single headline finding (the first in order, the verdict when one
   /// fired), or null when nothing fired.
   AnalysisFinding? get headline =>
       findings.isEmpty ? null : findings.first;
@@ -54,8 +54,9 @@ class AnalysisReport {
       findings.isEmpty ? null : findings.first.severity;
 
   /// True when any fired finding came from a rule still pending Keith's
-  /// ratification / Penn's voice pass — the UI surfaces this honestly so the
-  /// draft advice never reads as final.
+  /// ratification / Penn's voice pass, the UI surfaces this honestly so the
+  /// draft advice never reads as final. All rules are ratified as of 2026-06-16,
+  /// so this is false today and the draft note never shows.
   bool get hasPendingDraft =>
       findings.any((AnalysisFinding f) => f.pendingRatification);
 }
@@ -70,7 +71,7 @@ class AnalyzeEngine {
   ///
   /// [maxFindings] optionally caps the returned list (Pax: "render the top 1–3"
   /// for the compact web widget). The in-app report view passes null to show the
-  /// full ordered list — the user came for the whole picture — but the cap is
+  /// full ordered list (the user came for the whole picture), but the cap is
   /// available so a compact caller can take the top N.
   static AnalysisReport analyze(AnalyzeInput input, {int? maxFindings}) {
     // 1. Fire every matching rule.
@@ -82,7 +83,7 @@ class AnalyzeEngine {
         matched = rule.condition(input);
       } catch (_) {
         // A misbehaving predicate must never crash the analysis; treat it as a
-        // non-match (defensive — the predicates are pure and total today).
+        // non-match (defensive: the predicates are pure and total today).
         matched = false;
       }
       if (matched) fired.add(_Fired(rule, index));

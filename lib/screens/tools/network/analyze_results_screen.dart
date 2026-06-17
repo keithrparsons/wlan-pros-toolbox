@@ -1,12 +1,12 @@
-// Analyze Results — the in-app report view (GL-003 App Mode).
+// Analyze Results, the in-app report view (GL-003 App Mode).
 //
 // Reached by tapping "Analyze" on the Test My Connection results screen,
 // ALONGSIDE Copy (Copy = save the raw report for support; Analyze = this local,
 // plain-language explanation). It runs the pure [AnalyzeEngine] over the SAME
-// result data already on screen, LOCALLY — no network call, nothing stored,
+// result data already on screen, LOCALLY, no network call, nothing stored,
 // nothing leaves the device. Findings are rendered conclusion-first, ordered by
 // severity (verdict leads), each carrying its severity WORD + a §8.13 status
-// hue (never color alone — SC 1.4.1). A Copy action on the report saves the
+// hue (never color alone, SC 1.4.1). A Copy action on the report saves the
 // whole thing.
 //
 // Tokens used (all semantic, GL-003): surface1 cards + §8.1 border, §8.13
@@ -14,11 +14,10 @@
 // secondary/tertiary, §3 type scale via the M3 TextTheme, §4/§8.7 spacing,
 // §8.11 radii, §8.16 AppCopyAction, §8.16.1 ToolHelpFooter.
 //
-// DRAFT-COPY HONESTY: the finding text is Pax's DRAFT pending Keith's
-// ratification + Penn's SOP-020 voice pass. When any rendered finding comes
-// from a still-pending rule, the screen shows an honest "draft advice" note so
-// the copy never reads as final (GL-005). Remove the note once the rules ship
-// ratified.
+// DRAFT-COPY HONESTY (vestigial as of 2026-06-16): all rules are now ratified
+// and Penn-voiced, so no finding is pendingRatification and the draft note
+// never triggers. The rendering path is kept so a future not-yet-ratified rule
+// can surface honestly (GL-005), but with nothing pending it does not show.
 
 import 'package:flutter/material.dart';
 
@@ -63,7 +62,7 @@ class AnalyzeResultsScreen extends StatelessWidget {
         ),
         toolbarHeight: 64,
         // §8.16: Copy is the single trailing AppBar action; help is the bottom
-        // footer. This is the report's own Copy — saves the whole analysis.
+        // footer. This is the report's own Copy, saves the whole analysis.
         actions: <Widget>[
           AppCopyAction(textBuilder: copyTextBuilder),
         ],
@@ -152,7 +151,7 @@ class _FindingCard extends StatelessWidget {
 
   final AnalysisFinding finding;
 
-  /// The first/top finding — rendered slightly more prominently (the headline).
+  /// The first/top finding, rendered slightly more prominently (the headline).
   final bool isHeadline;
 
   /// Maps a severity to its §8.13 status hue. ALWAYS paired with the severity
@@ -239,7 +238,7 @@ class _FindingCard extends StatelessWidget {
               if (finding.pendingRatification) ...<Widget>[
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  'Draft guidance — wording not yet finalized.',
+                  'Draft guidance, wording not yet finalized.',
                   style: text.labelSmall?.copyWith(color: colors.textTertiary),
                 ),
               ],
@@ -288,7 +287,7 @@ class _DraftNote extends StatelessWidget {
   }
 }
 
-/// Empty state — no findings (e.g. analyze tapped before a check completed, or
+/// Empty state, no findings (e.g. analyze tapped before a check completed, or
 /// a wholly-unmeasured run). Honest, never an invented finding.
 class _EmptyState extends StatelessWidget {
   @override

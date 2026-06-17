@@ -1,4 +1,4 @@
-// Analyze Results — rule engine unit tests.
+// Analyze Results, rule engine unit tests.
 //
 // Pure-value tests: build an [AnalyzeInput] with plain numbers, run the
 // [AnalyzeEngine], assert the fired rules, their order, severity, context-only
@@ -45,13 +45,13 @@ void main() {
       expect(ids.toSet().length, ids.length);
     });
 
-    test('the two doctrine guardrails are flagged pendingRatification', () {
-      final r20 = kAnalyzeRules.firstWhere((r) => r.id == 'R-20');
-      final r23 = kAnalyzeRules.firstWhere((r) => r.id == 'R-23');
-      expect(r20.pendingRatification, isTrue,
-          reason: 'R-20 (2.4 GHz) must be flagged pending Keith');
-      expect(r23.pendingRatification, isTrue,
-          reason: 'R-23 (narrow width) must be flagged pending Keith');
+    test('all rules are ratified, no rule is flagged pendingRatification', () {
+      // Keith ratified the rules 2026-06-16; the copy is Penn-voiced and final.
+      // No rule may still read as draft.
+      for (final rule in kAnalyzeRules) {
+        expect(rule.pendingRatification, isFalse,
+            reason: '${rule.id} must be ratified (not pending) post 2026-06-16');
+      }
     });
   });
 
@@ -160,21 +160,24 @@ void main() {
   });
 
   group('band / PHY / width doctrine guardrails', () {
-    test('2.4 GHz with a modern PHY fires R-20 and is marked pending', () {
+    test('2.4 GHz with a modern PHY fires R-20, ratified, keeps honest caveat',
+        () {
       final report = AnalyzeEngine.analyze(
         const AnalyzeInput(band: '2.4 GHz', standard: '802.11ax (Wi-Fi 6)'),
       );
       final r20 = report.findings.firstWhere((f) => f.ruleId == 'R-20');
-      expect(r20.pendingRatification, isTrue);
-      // The honest trade-off wording must carry the trade-off AND explicitly
-      // disclaim a blanket "always switch" recommendation (the doctrine
-      // guardrail — never tell users to blanket-switch bands).
-      expect(r20.explanation.toLowerCase(), contains('trade-off'));
+      expect(r20.pendingRatification, isFalse);
+      // The ratified copy must keep the honest 2.4 GHz caveat (the doctrine
+      // guardrail: never tell users to blanket-switch bands).
+      expect(r20.explanation.toLowerCase(), contains('honest caveat'));
       expect(r20.explanation.toLowerCase(),
-          contains('not a blanket "always switch"'));
+          contains('the right choice on purpose'));
+      // It must never issue a blanket "always switch" instruction.
+      expect(r20.explanation.toLowerCase(), isNot(contains('always switch')));
     });
 
-    test('narrow width on a fast band fires R-23 and never says force 160', () {
+    test('narrow width on a fast band fires R-23, ratified, never forces wide',
+        () {
       final report = AnalyzeEngine.analyze(
         const AnalyzeInput(
           band: '5 GHz',
@@ -184,11 +187,16 @@ void main() {
         ),
       );
       final r23 = report.findings.firstWhere((f) => f.ruleId == 'R-23');
-      expect(r23.pendingRatification, isTrue);
-      expect(r23.explanation.toLowerCase(), contains('not'));
-      expect(r23.explanation, contains('160 MHz'));
+      expect(r23.pendingRatification, isFalse);
+      // The ratified copy keeps the "wider is not automatically better"
+      // guardrail and tells a crowded-area user to leave the channel alone.
       expect(r23.explanation.toLowerCase(),
-          isNot(contains('force 160 mhz to')));
+          contains('wider is not automatically better'));
+      expect(r23.explanation.toLowerCase(),
+          contains('leave it where it is'));
+      // It must never tell anyone to force a wide channel.
+      expect(r23.explanation.toLowerCase(), isNot(contains('force')));
+      expect(r23.explanation, isNot(contains('160 MHz')));
     });
 
     test('legacy PHY fires R-21; Wi-Fi 5 does not match legacy', () {
@@ -272,7 +280,7 @@ void main() {
   });
 
   group('honesty / null discipline', () {
-    test('unmeasured input fires nothing — empty report, honest', () {
+    test('unmeasured input fires nothing, empty report, honest', () {
       final report = AnalyzeEngine.analyze(const AnalyzeInput());
       expect(report.hasFindings, isFalse);
       expect(report.headline, isNull);
@@ -296,11 +304,13 @@ void main() {
       );
     });
 
-    test('hasPendingDraft is true when a pending rule fired', () {
+    test('hasPendingDraft is false now that every rule is ratified', () {
+      // Post 2026-06-16 ratification, no rule is pending, so the draft note
+      // never triggers regardless of which rules fire.
       final report = AnalyzeEngine.analyze(
         const AnalyzeInput(band: '2.4 GHz', standard: '802.11ax (Wi-Fi 6)'),
       );
-      expect(report.hasPendingDraft, isTrue);
+      expect(report.hasPendingDraft, isFalse);
     });
   });
 
