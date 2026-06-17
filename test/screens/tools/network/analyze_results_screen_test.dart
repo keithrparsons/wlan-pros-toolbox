@@ -14,6 +14,7 @@
 //   * no overflow across phone / tablet / desktop widths, dark AND light.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/analyze_results_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/analyze/analyze_engine.dart';
@@ -23,6 +24,31 @@ import 'package:wlan_pros_toolbox/services/network/wifi_vs_internet.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 import 'package:wlan_pros_toolbox/widgets/app_copy_action.dart';
 import 'package:wlan_pros_toolbox/widgets/status_chip.dart';
+
+/// The §3 category-icon Tier-2 SVG assets the report can render. flutter_svg
+/// loads asset SVGs asynchronously and, in the headless test engine, the load
+/// can stall `pumpAndSettle` (same behavior already seen with `dns-lookup.svg`).
+/// Warming the flutter_svg cache for these assets on the live event loop before
+/// pumping resolves the loaders up front so the screen paints and settles.
+/// Runtime is unaffected; this only feeds the headless renderer.
+const List<String> _categorySvgAssets = <String>[
+  'assets/tool-icons/ap-placement.svg', // §3 router/access-point (capability)
+  'assets/tool-icons/dns-lookup.svg', // §3 DNS
+];
+
+/// Warms the flutter_svg asset cache for the §3 category SVGs so a later
+/// `pumpAndSettle` does not hang on the headless async asset load.
+Future<void> _precacheCategorySvgs(WidgetTester tester) async {
+  await tester.runAsync(() async {
+    for (final String asset in _categorySvgAssets) {
+      final SvgAssetLoader loader = SvgAssetLoader(asset);
+      await svg.cache.putIfAbsent(
+        loader.cacheKey(null),
+        () => loader.loadBytes(null),
+      );
+    }
+  });
+}
 
 Widget _wrap(
   AnalysisReport report, {
@@ -47,6 +73,7 @@ void main() {
         rssiDbm: -73, // poor -> R-10
       ),
     );
+    await _precacheCategorySvgs(tester);
     await tester.pumpWidget(_wrap(report));
     await tester.pumpAndSettle();
 
@@ -67,6 +94,7 @@ void main() {
         security: WifiSecurity.open, // R-35 (critical -> "Issue")
       ),
     );
+    await _precacheCategorySvgs(tester);
     await tester.pumpWidget(_wrap(report));
     await tester.pumpAndSettle();
 
@@ -89,6 +117,7 @@ void main() {
         wifiSignalCaptured: false,
       ),
     );
+    await _precacheCategorySvgs(tester);
     await tester.pumpWidget(_wrap(report));
     await tester.pumpAndSettle();
 
@@ -108,6 +137,7 @@ void main() {
     final report = AnalyzeEngine.analyze(
       const AnalyzeInput(verdict: WifiVsInternetVerdict.bothHealthy),
     );
+    await _precacheCategorySvgs(tester);
     await tester.pumpWidget(_wrap(report));
     await tester.pumpAndSettle();
     expect(find.textContaining('Nothing to fix'), findsOneWidget);
@@ -119,6 +149,7 @@ void main() {
       const AnalyzeInput(band: '2.4 GHz', standard: '802.11ax (Wi-Fi 6)'),
     );
     expect(report.hasPendingDraft, isFalse);
+    await _precacheCategorySvgs(tester);
     await tester.pumpWidget(_wrap(report));
     await tester.pumpAndSettle();
     expect(find.textContaining('draft guidance under review'), findsNothing);
@@ -149,6 +180,7 @@ void main() {
     final report = AnalyzeEngine.analyze(
       const AnalyzeInput(security: WifiSecurity.open),
     );
+    await _precacheCategorySvgs(tester);
     await tester.pumpWidget(_wrap(report));
     await tester.pumpAndSettle();
     expect(find.textContaining('Nothing is sent or stored'), findsOneWidget);
@@ -168,6 +200,7 @@ void main() {
         wifiSignalCaptured: false, // also fire the honesty info row
       ),
     );
+    await _precacheCategorySvgs(tester);
     for (final bool light in const <bool>[false, true]) {
       for (final Size size in const <Size>[
         Size(320, 720), // narrow phone stress

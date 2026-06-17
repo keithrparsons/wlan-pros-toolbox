@@ -78,20 +78,17 @@ class _CategoryIcon {
   final String? asset;
 }
 
-/// INTERIM router/access-point category icon. Charta is authoring the proper
-/// Tier-2 `ap-placement.svg` in parallel; this is the sanctioned Material
-/// fallback per the spec §3.1 / §3.2, and THIS getter is the single swap point.
-/// No finding category resolves to a "router/access-point placement" today, so
-/// it is referenced only by the router-config capability family below and is
-/// kept here as the one place to change when the asset lands.
-// TODO: swap to ap-placement.svg when it lands (replace the body with
-//       _CategoryIcon.asset('assets/tool-icons/ap-placement.svg')).
-const _CategoryIcon _routerApIcon = _CategoryIcon.material(Icons.router);
+/// The router/access-point category icon: the Tier-2 `ap-placement.svg` asset
+/// (Vera-passed), tinted neutral `textSecondary` like every other §3 category
+/// icon. It leads the band / capability findings, which are about the router/
+/// access point's own configuration. This is the single swap point for the
+/// router/access-point category icon.
+const _CategoryIcon _routerApIcon =
+    _CategoryIcon.asset('assets/tool-icons/ap-placement.svg');
 
 /// Resolves a [FindingCategory] to its §3 neutral category icon. The single
-/// mapping point: every category's icon is decided here, so swapping the
-/// interim router glyph for `ap-placement.svg` (see [_routerApIcon]) is a
-/// one-line change.
+/// mapping point: every category's icon is decided here. The router/access-point
+/// category resolves to the Tier-2 `ap-placement.svg` (see [_routerApIcon]).
 _CategoryIcon _categoryIconFor(FindingCategory category) {
   switch (category) {
     // Wi-Fi link family (the wireless hop): signal, noise.
