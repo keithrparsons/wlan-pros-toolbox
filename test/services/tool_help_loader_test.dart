@@ -192,7 +192,12 @@ void main() {
       // RoamDetector (Feature 2). The Cloud Apps reachability panel added the
       // same day lives on the existing test-my-connection screen (its help entry
       // was extended in place), so it adds no new help id. 140 + 1 = 141.
-      expect(store.count, 141);
+      // 142 = + Analyze Results (analyze-results) 2026-06-16: the in-app local
+      // rule-engine report reached by the "Analyze my results" button on the
+      // Test My Connection result screen (NOT a catalog tile), so it is exempt
+      // from the catalog-match requirement via nonCatalogHelpIds below.
+      // 141 + 1 = 142.
+      expect(store.count, 142);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help
@@ -210,10 +215,16 @@ void main() {
     //   the dtmf_generator_screen renders ToolHelpFooter(toolId: 'blue-box' /
     //   'red-box') depending on the active mode. Their help entries must stay and
     //   are exempt from the catalog-match requirement.
+    // - analyze-results: the in-app local rule-engine report (2026-06-16),
+    //   reached by the "Analyze my results" button on the test-my-connection
+    //   result screen, NOT a catalog tile. Its screen renders
+    //   ToolHelpFooter(toolId: 'analyze-results'), so the help entry must stay
+    //   and is exempt from the catalog-match requirement.
     const Set<String> nonCatalogHelpIds = <String>{
       'test-my-connection',
       'blue-box',
       'red-box',
+      'analyze-results',
     };
 
     test('every help key matches a catalog tool id', () {

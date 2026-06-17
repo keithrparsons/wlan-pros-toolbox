@@ -34,6 +34,9 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:net_quality/net_quality.dart';
 
+import '../../../services/network/analyze/analyze_engine.dart';
+import '../../../services/network/analyze/analyze_input.dart';
+import '../../../services/network/analyze/analysis_finding.dart';
 import '../../../services/network/connected_ap.dart';
 import '../../../services/network/connection_check.dart';
 import '../../../services/network/consumer_verdict.dart';
@@ -58,6 +61,7 @@ import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/packet_flow_progress.dart';
 import '../../../widgets/sparkline.dart';
 import '../../../widgets/tool_help_footer.dart';
+import 'analyze_results_screen.dart';
 import 'cloud_apps_panel.dart';
 import 'install_shortcut_sheet.dart';
 import 'network_unavailable_view.dart';
@@ -1120,6 +1124,13 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                       verdict: _verdictLine(verdict),
                       comparison: _comparisonLine(verdict),
                     ),
+                    const SizedBox(height: AppSpacing.md),
+                    // ANALYZE — opens the in-app, local, plain-language report
+                    // (the [AnalyzeEngine] over the same result data). It sits
+                    // ALONGSIDE the AppBar's Copy action: Copy saves the raw
+                    // report for support; Analyze explains it. Local-only; no
+                    // network, nothing stored (GL-005 / GL-008).
+                    _AnalyzeButton(onAnalyze: _openAnalyze),
                     const SizedBox(height: AppSpacing.lg),
                     // DETAILS — the Mbps / bars / live signal / pro readout, now
                     // ALWAYS rendered (the "See the details" disclosure was
@@ -1905,6 +1916,67 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     return s != null ? s.label : 'Unavailable';
   }
 
+  // ---- Analyze Results (local, in-app report) ----
+
+  /// Builds the [AnalyzeInput] from the SAME live result state the report and
+  /// copy text already read — directly from the in-memory models, never by
+  /// re-parsing the copy text. Pure local evaluation; no network, nothing
+  /// stored (GL-005 / GL-008).
+  AnalysisReport _buildAnalysisReport() {
+    final List<SiteReachability> cloud = _cloudResults;
+    return AnalyzeEngine.analyze(
+      AnalyzeInput.fromConnectionState(
+        ap: _effectiveAp,
+        internet: _internet,
+        engine: _engine,
+        dns: _dnsResult,
+        cloudReachable: cloud.isEmpty
+            ? null
+            : cloud.where((SiteReachability s) => s.reachable).length,
+        cloudTotal: cloud.isEmpty ? null : cloud.length,
+        platformIsIos: _isIos,
+        wifiSignalCaptured: _iosRfCaptured,
+      ),
+    );
+  }
+
+  /// The plain-text payload for the Analyze report's own Copy action: a titled
+  /// header, then each finding as `[SEVERITY · Category]` + its explanation, in
+  /// the same order shown on screen. Plain text only (no markdown). Returns null
+  /// when there is nothing to analyze (empty report) so Copy renders disabled.
+  String? _buildAnalysisCopyText(AnalysisReport report) {
+    if (!report.hasFindings) return null;
+    final StringBuffer buf = StringBuffer();
+    buf.writeln('WLAN Pros Toolbox — Connection Analysis');
+    buf.writeln('Generated: ${_formatTimestamp(_testedAt)} on $_platformLabel');
+    for (final AnalysisFinding f in report.findings) {
+      buf.writeln('');
+      buf.writeln('[${f.severity.word} · ${f.category.label}]');
+      buf.writeln(f.explanation);
+      if (f.pendingRatification) {
+        buf.writeln('(Draft guidance — wording not yet finalized.)');
+      }
+    }
+    buf.writeln('');
+    buf.writeln('Analyzed on your device. Nothing is sent or stored.');
+    return buf.toString().trimRight();
+  }
+
+  /// Opens the in-app Analyze Results report for the current result. No-op while
+  /// a run is in flight or before a verdict exists (the button is hidden then).
+  void _openAnalyze() {
+    if (_running || _verdict == null) return;
+    final AnalysisReport report = _buildAnalysisReport();
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => AnalyzeResultsScreen(
+          report: report,
+          copyTextBuilder: () => _buildAnalysisCopyText(report),
+        ),
+      ),
+    );
+  }
+
   Future<void> _copyDetails() async {
     final String? text = _buildCopyText();
     if (text == null) return;
@@ -1964,6 +2036,35 @@ class _CopyRow {
   const _CopyRow(this.label, this.value);
   final String label;
   final String value;
+}
+
+// ===========================================================================
+// ANALYZE button — opens the local, in-app plain-language report.
+// ===========================================================================
+
+/// The "Analyze my results" affordance: a full-width §8.3 secondary (outline)
+/// button beneath the verdict. It opens the [AnalyzeResultsScreen] report,
+/// computed locally from the same result data. It sits ALONGSIDE the AppBar's
+/// Copy action — Copy saves the raw report; Analyze explains it.
+class _AnalyzeButton extends StatelessWidget {
+  const _AnalyzeButton({required this.onAnalyze});
+
+  final VoidCallback onAnalyze;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Analyze my results',
+      child: ExcludeSemantics(
+        child: OutlinedButton.icon(
+          onPressed: onAnalyze,
+          icon: const Icon(Icons.insights_outlined, size: 20),
+          label: const Text('Analyze my results'),
+        ),
+      ),
+    );
+  }
 }
 
 // ===========================================================================

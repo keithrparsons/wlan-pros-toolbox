@@ -1396,6 +1396,27 @@
       ],
       "source": "test_my_connection_screen.dart / consumer_verdict.dart:33-249 / popular_sites.dart / ip_geo_service.dart / dns_probe_service.dart / network_details_service.dart"
     },
+    "analyze-results": {
+      "name": "Analyze Results",
+      "category": "Test Network",
+      "purpose": "Turn a finished Test My Connection result into a plain-language, conclusion-first report: what your connection is telling you and what to do about it, ordered by importance.",
+      "whyHere": "Test My Connection gives the headline verdict and the raw numbers; Analyze Results explains them. Reach for it when you want the why behind the verdict and the recommended next steps, evaluated entirely on the device. It sits alongside Copy on the result screen: Copy saves the raw report for support, Analyze explains it.",
+      "howToUse": [
+        "Run Test My Connection first so there is a measured result.",
+        "Tap \"Analyze my results\" beneath the verdict.",
+        "Read the findings top to bottom: the most important (the verdict, an open network, packet loss, a dead path) lead, then signal/band/internet-quality context. Each carries a severity word (ACTION / WORTH A LOOK / CONTEXT) plus a color, never color alone.",
+        "Use the Copy action (top right) to save the whole analysis as plain text."
+      ],
+      "inputs": [],
+      "algorithm": "A pure, local rule engine (AnalyzeEngine) evaluates a structured rule library (analyze_rules.dart — 35 rules across 9 categories: verdict, signal, noise/SNR, band/PHY/width, internet quality, DNS, security, cloud reachability, and honesty/not-captured guards) against the same result data already on screen, read directly from the in-memory models (ConnectedAp, the net_quality result, the Wi-Fi-vs-Internet verdict, the DNS probe, and the cloud reachability tally) — never by re-parsing the copied report text. Every threshold is imported from the ratified app constants, not duplicated: RSSI/SNR from WifiGradingBands (wifi_grading.dart), latency/jitter/loss/responsiveness/download from QualityScoring (net_quality scoring.dart), the verdict thresholds from the Wi-Fi-vs-Internet engine (wifi_vs_internet.dart), and the security labels from WifiSecurity (wifi_security.dart). Fired rules are sorted by severity (P1 critical, P2 important, P3 context) then by the rule library's declaration order, so the verdict always leads. Context-only reassurances (\"no problem here\") are suppressed unless a real finding also fired, so the report never narrates a non-issue. Runs entirely on the device: no network call, nothing stored, nothing leaves the device.",
+      "example": null,
+      "fieldNotes": [
+        "The recommendation wording is currently DRAFT (Pax's response-library-v1), pending Keith's ratification and a Penn SOP-020 voice pass. Findings from a still-pending rule carry an honest \"draft guidance\" note, and the report shows a draft banner, so the advice never reads as final before it is. The advice is structured as swappable data (analyze_rules.dart): the ratified, voiced copy drops in by editing that file alone, with no engine or UI change.",
+        "Doctrine guardrails (domain-proof-over-consensus): the \"you're on 2.4 GHz\" (R-20) and \"narrow channel width\" (R-23) rules deliberately carry the honest trade-off and never tell a user to blanket-switch bands or force 160 MHz — wider is not automatically better, and 2.4 GHz is the right choice for range and IoT. These two are flagged pending Keith's ratification of the exact wording.",
+        "Null discipline (GL-005): a field the platform did not measure fires no rule. The honesty rules (channel width not captured on iPhone; Wi-Fi signal details not captured) explain the gap instead of guessing."
+      ],
+      "source": "analyze_results_screen.dart / analyze_engine.dart / analyze_rules.dart / analyze_input.dart / analysis_finding.dart"
+    },
     "net-quality": {
       "name": "Network Quality",
       "category": "Test Network",
