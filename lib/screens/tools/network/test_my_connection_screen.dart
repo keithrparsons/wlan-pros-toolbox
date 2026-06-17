@@ -3272,6 +3272,16 @@ class _HelpDeskCard extends StatelessWidget {
               label: Text(copied ? 'Copied' : 'Copy these details'),
             ),
           ),
+          // Muted helper line directly under the copy button: tells the user
+          // what the copied report is FOR. Quiet textTertiary (GL-003 §8.2,
+          // 6.3:1 dark / 5.7:1 light, both pass SC 1.4.3 AA normal text), the
+          // §4 half-step gap above so it reads as attached to the button, not a
+          // new block. Plain language, no em-dashes, never a bare "AP".
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            'Paste this into an email or text to your IT or support team.',
+            style: text.bodySmall?.copyWith(color: colors.textTertiary),
+          ),
         ],
       ),
     );

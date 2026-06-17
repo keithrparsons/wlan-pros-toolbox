@@ -49,6 +49,7 @@ import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_security_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_signal_sampler.dart';
+import 'package:wlan_pros_toolbox/theme/app_color_scheme.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
 /// macOS sample: Tx 866 present, Rx NOT exposed by public CoreWLAN, SNR 45.
@@ -1663,6 +1664,54 @@ void main() {
         },
       );
     }
+  }
+
+  // The muted Copy-button helper line renders directly under "Copy these
+  // details" in BOTH themes, and reads in the quiet textTertiary tone.
+  for (final (String themeName, ThemeData theme) in <(String, ThemeData)>[
+    ('dark', AppTheme.dark()),
+    ('light', AppTheme.light()),
+  ]) {
+    testWidgets(
+      'the Copy-button helper hint renders under the copy button ($themeName)',
+      (tester) async {
+        await tester.pumpWidget(
+          hostTheme(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              sourceOverride: WifiInfoSource.iosShortcuts,
+              iosBridge: _PayloadBridge(),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+            theme,
+          ),
+        );
+        await runCheck(tester);
+
+        const String hint =
+            'Paste this into an email or text to your IT or support team.';
+        final Finder hintFinder = find.text(hint);
+        expect(hintFinder, findsOneWidget);
+
+        // Quiet tone: it uses the muted textTertiary token (GL-003 §8.2), never
+        // the primary text color, so it reads as a helper line, not body copy.
+        final AppColorScheme colors = theme.extension<AppColorScheme>()!;
+        final Text hintText = tester.widget<Text>(hintFinder);
+        expect(hintText.style?.color, colors.textTertiary);
+
+        // No em-dash or en-dash anywhere in the hint (hard ban), and the copy
+        // never uses a bare "AP".
+        expect(hint.contains('—'), isFalse); // em-dash
+        expect(hint.contains('–'), isFalse); // en-dash
+        expect(RegExp(r'\bAP\b').hasMatch(hint), isFalse);
+
+        // It sits directly under the copy button (both in the help-desk card).
+        expect(find.text('Copy these details'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
   }
 
   // ---- iOS first-run live-card fix (2026-06-07) -------------------------------

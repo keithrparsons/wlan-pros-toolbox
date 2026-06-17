@@ -19,6 +19,38 @@ typedef ElapsedTimer = Future<Duration> Function(
   Future<void> Function() body,
 );
 
+/// Probes whether the self-hosted Rung-2 endpoint at [baseUrl] is reachable,
+/// within [timeout]. Returns true on a 2xx liveness response, false on any DNS
+/// failure, connection refusal, non-2xx, or timeout. The injectable liveness
+/// seam, so the "endpoint not live yet" fall-through is deterministic in tests.
+typedef LivenessProbe = Future<bool> Function(Uri baseUrl, Duration timeout);
+
+/// The single named base URL for the self-hosted Rung-2 OpenSpeedTest fallback
+/// (Mack's endpoint contract, 2026-06-17). Cloudflare stays Rung 1 (primary);
+/// this is the controlled fallback consulted only after Cloudflare's own
+/// retries are exhausted, and only when it is both feature-enabled AND a cheap
+/// liveness probe confirms it answers. It is NOT live yet (gated on Matthew's
+/// deploy), so the fallback ships dormant: the feature flag defaults off and
+/// the liveness probe degrades silently to the existing honest terminal state
+/// until the box answers. Native ignores CORS; Flutter web relies on the
+/// server's `ALLOW_ONLY` allowlist. See `endpoint-contract.md`.
+const String kSpeedTestFallbackBaseUrl = 'https://speedtest.wlanpros.com';
+
+/// The Rung-2 download endpoint, derived from [kSpeedTestFallbackBaseUrl].
+/// OpenSpeedTest streams a >10 MB garbage payload here; bound the sample by
+/// time, not bytes. A cache-bust `?r=` param is appended per request so no
+/// layer serves a cached/304 response.
+Uri speedTestFallbackDownloadEndpoint() => Uri.parse(
+      '$kSpeedTestFallbackBaseUrl/downloading',
+    );
+
+/// The Rung-2 upload sink, derived from [kSpeedTestFallbackBaseUrl].
+/// OpenSpeedTest accepts and discards the POST body and returns 200; keep any
+/// single body <= 35 MB (the reverse-proxy `client_max_body_size` ceiling).
+Uri speedTestFallbackUploadEndpoint() => Uri.parse(
+      '$kSpeedTestFallbackBaseUrl/upload',
+    );
+
 /// The two sub-stages a throughput measurement passes through, in order.
 /// Emitted via [ThroughputProbe.measure]'s `onStage` callback so a caller can
 /// drive smooth elapsed-time progress that pivots its target band the moment
@@ -165,6 +197,34 @@ class ThroughputProbe {
   /// CDN response), not graded as 0 Mbps.
   final int minBytesFloor;
 
+  /// Whether the self-hosted Rung-2 fallback ([kSpeedTestFallbackBaseUrl]) is
+  /// allowed to join the endpoint chains.
+  ///
+  /// Defaults to **false**: the fallback ships dormant because the endpoint is
+  /// not deployed yet (gated on Matthew). While off, the chains are exactly the
+  /// shipped Cloudflare-primary chains and the ladder runs Rung 1 -> Rung 3 with
+  /// no change. Flip to true only once Mack confirms `speedtest.wlanpros.com`
+  /// answers 200; even then a per-run liveness probe ([livenessProbe]) re-checks
+  /// reachability before the endpoint is appended, so a flag enabled ahead of a
+  /// transient outage still degrades gracefully.
+  ///
+  /// When enabled AND the liveness probe passes, the Rung-2 endpoints are
+  /// appended to the **end** of [downloadEndpoints] / [uploadEndpoints] so
+  /// Cloudflare stays the primary and our server is consulted only after the
+  /// public CDNs fail. It never becomes a stream's starting endpoint, so normal
+  /// traffic is never routed to our box.
+  final bool selfHostedFallbackEnabled;
+
+  /// Timeout for the one-shot Rung-2 liveness probe (`HEAD /`). Short by design
+  /// (~3 s): while the endpoint does not resolve, the probe must fail fast and
+  /// fall straight through to the shipped chains, never stall a real run.
+  final Duration livenessTimeout;
+
+  /// Liveness seam for the Rung-2 fallback. Injectable so the "endpoint not live
+  /// yet" path is deterministic in tests. Defaults to a real `HEAD /` probe that
+  /// returns false on DNS failure / refused / non-2xx / timeout.
+  final LivenessProbe livenessProbe;
+
   /// Download seam.
   final Downloader downloader;
 
@@ -177,6 +237,24 @@ class ThroughputProbe {
   /// Shared-window timing seam: measures wall-clock across the whole parallel
   /// download window. Injectable so the parallel-sum math is deterministic.
   final ElapsedTimer windowTimer;
+
+  /// The download chain actually used by the current [measure] run: the shipped
+  /// [downloadEndpoints] by default, plus the Rung-2 fallback appended when it
+  /// is enabled and live. Resolved at the top of each [measure] call by
+  /// [_resolveEffectiveEndpoints]; falls back to [downloadEndpoints] before the
+  /// first resolution.
+  List<Uri>? _effectiveDownloadEndpoints;
+
+  /// The upload chain actually used by the current [measure] run. Same lifecycle
+  /// as [_effectiveDownloadEndpoints].
+  List<Uri>? _effectiveUploadEndpoints;
+
+  /// The download chain in force for the current run (effective, once resolved).
+  List<Uri> get _downloadChain =>
+      _effectiveDownloadEndpoints ?? downloadEndpoints;
+
+  /// The upload chain in force for the current run (effective, once resolved).
+  List<Uri> get _uploadChain => _effectiveUploadEndpoints ?? uploadEndpoints;
 
   /// The first download endpoint, kept for the responsiveness load generator
   /// (which drives a single download flow as its load source).
@@ -207,12 +285,16 @@ class ThroughputProbe {
     this.maxRetries = 2,
     this.throughputRetries = 1,
     this.minBytesFloor = 0,
+    this.selfHostedFallbackEnabled = false,
+    this.livenessTimeout = const Duration(seconds: 3),
+    LivenessProbe? livenessProbe,
     Downloader? downloader,
     Uploader? uploader,
     ElapsedTimer? timer,
     ElapsedTimer? windowTimer,
   })  : assert(downloadStreamCount >= 1, 'need at least one download stream'),
         assert(throughputRetries >= 0, 'retry budget cannot be negative'),
+        livenessProbe = livenessProbe ?? _defaultLivenessProbe,
         downloadEndpoints =
             (downloadEndpoints != null && downloadEndpoints.isNotEmpty)
                 ? List<Uri>.unmodifiable(downloadEndpoints)
@@ -272,6 +354,13 @@ class ThroughputProbe {
   Future<ThroughputStats> measure({
     void Function(ThroughputStage stage)? onStage,
   }) async {
+    // Resolve the effective endpoint chains for THIS run. Default: the shipped
+    // Cloudflare-primary chains, unchanged. When the self-hosted Rung-2 fallback
+    // is feature-enabled AND a cheap liveness probe confirms our box answers,
+    // append its download/upload endpoints to the END of the chains so
+    // Cloudflare stays primary and our server is a last-resort fallback only.
+    await _resolveEffectiveEndpoints();
+
     onStage?.call(ThroughputStage.download);
     final dl = await _withRetry(_measureParallelDownload);
 
@@ -302,6 +391,58 @@ class ThroughputProbe {
   /// retry cost. Only [ThroughputUnmeasurable] is retried; any other error
   /// (a programming fault) propagates at once rather than being silently
   /// re-attempted.
+  /// Resolves [_effectiveDownloadEndpoints] / [_effectiveUploadEndpoints] for
+  /// the current run.
+  ///
+  /// Default (flag off, or off-by-default until Matthew deploys): the effective
+  /// chains ARE the shipped chains, unchanged: Cloudflare-primary, then the
+  /// public CDN fallbacks. No extra probe, no extra traffic.
+  ///
+  /// When [selfHostedFallbackEnabled] is true, a single cheap liveness probe
+  /// (`HEAD /` against [kSpeedTestFallbackBaseUrl], bounded by [livenessTimeout])
+  /// decides whether to append our Rung-2 endpoints to the END of each chain.
+  /// On any DNS failure / refusal / non-2xx / timeout (which is the state TODAY,
+  /// because `speedtest.wlanpros.com` does not resolve yet) the probe returns
+  /// false and the chains stay exactly the shipped ones, so the ladder degrades
+  /// silently to the existing honest "online, could not measure speed" terminal
+  /// state (Rung 1 -> Rung 3). The probe itself never throws (the default
+  /// implementation swallows all errors as "not live").
+  Future<void> _resolveEffectiveEndpoints() async {
+    if (!selfHostedFallbackEnabled) {
+      _effectiveDownloadEndpoints = downloadEndpoints;
+      _effectiveUploadEndpoints = uploadEndpoints;
+      return;
+    }
+    bool live;
+    try {
+      live = await livenessProbe(
+        Uri.parse(kSpeedTestFallbackBaseUrl),
+        livenessTimeout,
+      );
+    } catch (_) {
+      // Defensive: a misbehaving probe is treated as "not live", never a hang
+      // or a hard failure; the fallback must always degrade gracefully.
+      live = false;
+    }
+    if (!live) {
+      _effectiveDownloadEndpoints = downloadEndpoints;
+      _effectiveUploadEndpoints = uploadEndpoints;
+      return;
+    }
+    // Live: append our Rung-2 endpoints as the LAST fallback. Cloudflare stays
+    // the primary (index 0); our box is consulted only after the public CDNs
+    // fail. Appending (never prepending) is what keeps normal traffic off our
+    // server.
+    _effectiveDownloadEndpoints = <Uri>[
+      ...downloadEndpoints,
+      speedTestFallbackDownloadEndpoint(),
+    ];
+    _effectiveUploadEndpoints = <Uri>[
+      ...uploadEndpoints,
+      speedTestFallbackUploadEndpoint(),
+    ];
+  }
+
   Future<T> _withRetry<T>(Future<T> Function() run) async {
     final int attempts = throughputRetries + 1;
     ThroughputUnmeasurable lastError =
@@ -324,9 +465,10 @@ class ThroughputProbe {
   /// streams succeeded. Throws [ThroughputUnmeasurable] when no stream produced
   /// any usable bytes.
   Future<_DownloadOutcome> _measureParallelDownload() async {
+    final chain = _downloadChain;
     // Bound the number of streams to the endpoints we actually have.
-    final streamCount = downloadStreamCount > downloadEndpoints.length
-        ? downloadEndpoints.length
+    final streamCount = downloadStreamCount > chain.length
+        ? chain.length
         : downloadStreamCount;
 
     // Partition the ordered endpoint list across streams so two streams never
@@ -355,7 +497,7 @@ class ThroughputProbe {
     if (totalBytes <= minBytesFloor) {
       throw ThroughputUnmeasurable(
         'all $streamCount download stream(s) failed across '
-        '${downloadEndpoints.length} endpoint(s)',
+        '${chain.length} endpoint(s)',
       );
     }
 
@@ -371,10 +513,11 @@ class ThroughputProbe {
   /// rotation, so concurrent streams hit DIFFERENT providers and each stream
   /// has a fallback chain.
   List<List<Uri>> _partitionEndpoints(int streamCount) {
-    final n = downloadEndpoints.length;
+    final chain = _downloadChain;
+    final n = chain.length;
     return <List<Uri>>[
       for (var i = 0; i < streamCount; i++)
-        <Uri>[for (var k = 0; k < n; k++) downloadEndpoints[(i + k) % n]],
+        <Uri>[for (var k = 0; k < n; k++) chain[(i + k) % n]],
     ];
   }
 
@@ -390,7 +533,7 @@ class ThroughputProbe {
     final attempts =
         (maxRetries + 1) < endpoints.length ? (maxRetries + 1) : endpoints.length;
     for (var attempt = 0; attempt < attempts; attempt++) {
-      final uri = endpoints[attempt];
+      final uri = _withCacheBust(endpoints[attempt]);
       try {
         final bytes = await downloader(uri, windowDuration);
         if (bytes <= minBytesFloor) {
@@ -414,10 +557,11 @@ class ThroughputProbe {
   Future<Duration> _measureUploadWithFallback(
     Future<int> Function(Duration maxDuration, Uri uri) transfer,
   ) async {
+    final chain = _uploadChain;
     Object lastError = const ThroughputUnmeasurable('no upload attempts made');
     final attempts = maxRetries + 1;
     for (var attempt = 0; attempt < attempts; attempt++) {
-      final uri = uploadEndpoints[attempt % uploadEndpoints.length];
+      final uri = chain[attempt % chain.length];
       try {
         var bytes = 0;
         final elapsed = await timer(() async {
@@ -434,6 +578,52 @@ class ThroughputProbe {
       }
     }
     throw lastError;
+  }
+
+  /// Monotonic counter feeding the cache-bust value, so two streams (or a
+  /// retry) never reuse the same `?r=` within a process.
+  static int _cacheBustSeq = 0;
+
+  /// Appends a unique cache-bust `r` query param to the self-hosted Rung-2
+  /// download endpoint so no CDN / proxy layer serves a cached or 304 response
+  /// (the OpenSpeedTest contract requires a fresh request each time). Other
+  /// endpoints (Cloudflare `?bytes=`, the fixed-file CDNs) are returned
+  /// unchanged (their behavior is unaffected, keeping the shipped path
+  /// byte-for-byte identical).
+  static Uri _withCacheBust(Uri uri) {
+    if (uri.host != _fallbackHost) return uri;
+    final r = '${DateTime.now().microsecondsSinceEpoch}-${_cacheBustSeq++}';
+    return uri.replace(queryParameters: <String, String>{
+      ...uri.queryParameters,
+      'r': r,
+    });
+  }
+
+  /// Host of [kSpeedTestFallbackBaseUrl], used to scope cache-busting to our
+  /// own endpoint only.
+  static final String _fallbackHost = Uri.parse(kSpeedTestFallbackBaseUrl).host;
+
+  /// Default liveness probe for the self-hosted Rung-2 fallback: a `HEAD /`
+  /// against [baseUrl], bounded by [timeout]. Returns true only on a 2xx; false
+  /// on DNS failure, connection refusal, non-2xx, or timeout. Never throws: an
+  /// unreachable endpoint (the state today, before deploy) is reported as "not
+  /// live" so the ladder falls straight through to the shipped chains.
+  static Future<bool> _defaultLivenessProbe(
+    Uri baseUrl,
+    Duration timeout,
+  ) async {
+    final client = HttpClient()..connectionTimeout = timeout;
+    try {
+      final request = await client.headUrl(baseUrl);
+      final response = await request.close().timeout(timeout);
+      final status = response.statusCode;
+      await response.drain<void>();
+      return status >= 200 && status < 300;
+    } catch (_) {
+      return false;
+    } finally {
+      client.close(force: true);
+    }
   }
 
   /// Default timing seam using a real [Stopwatch].
