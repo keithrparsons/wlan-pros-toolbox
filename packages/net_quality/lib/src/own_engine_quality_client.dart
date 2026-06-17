@@ -35,9 +35,15 @@ class OwnEngineQualityClient implements QualityClient {
   /// even a regressed/unbounded probe path cannot hang the tool past this. Set
   /// generously to never pre-empt a healthy real measurement — it is a safety
   /// net, not a tuning knob. Derived from the probe's per-transfer cap so it
-  /// scales when the probe is reconfigured.
+  /// scales when the probe is reconfigured, AND from its whole-window retry
+  /// budget so a single automatic retry of a stalled window is never clipped by
+  /// the backstop (the backstop only fires on a genuine unbounded hang, not on
+  /// a sanctioned retry). Two stages (download + upload), each able to run
+  /// `1 + throughputRetries` windows.
   Duration get _throughputStageBudget =>
-      throughputProbe.maxDuration * 2 + const Duration(seconds: 20);
+      throughputProbe.maxDuration *
+          (2 * (1 + throughputProbe.throughputRetries)) +
+      const Duration(seconds: 20);
 
   QualityResult? _lastResult;
 

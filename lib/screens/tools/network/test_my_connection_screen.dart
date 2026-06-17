@@ -40,6 +40,7 @@ import '../../../services/network/analyze/analyze_report_text.dart';
 import '../../../services/network/analyze/analysis_finding.dart';
 import '../../../services/network/connected_ap.dart';
 import '../../../services/network/connection_check.dart';
+import '../../../services/network/connection_comparison.dart';
 import '../../../services/network/consumer_verdict.dart';
 import '../../../services/network/dns_probe_service.dart';
 import '../../../services/network/ip_geo_service.dart';
@@ -868,6 +869,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         final WifiVsInternetResult engine = ConnectionCheck.compute(
           ap,
           internet,
+          // Fold in whatever evidence already landed; late-arriving evidence
+          // re-derives the verdict via [_recomputeVerdict] as it lands.
+          onlineEvidence: _onlineEvidence,
         );
         setState(() {
           _ap = ap;
@@ -900,6 +904,48 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     );
   }
 
+  /// The out-of-band "you're online" evidence, read from the latest fetched
+  /// state. These three signals are gathered OUTSIDE the throughput measurement
+  /// (the DNS probe, the public-IP lookup, and the cloud-app reachability
+  /// panel), so they stay valid even when the speed test stalls. When all three
+  /// are present the engine produces [WifiVsInternetVerdict.onlineUnmeasured]
+  /// instead of the bleak "could not read" verdict (Keith 2026-06-17).
+  OnlineEvidence get _onlineEvidence => OnlineEvidence(
+        dnsResolved: _dnsResult?.isAvailable ?? false,
+        publicIpObtained:
+            _ispInfo != null && !_ispInfo!.isError && _ispInfo!.ip != null,
+        cloudReachable:
+            _cloudResults.any((SiteReachability s) => s.reachable),
+      );
+
+  /// Re-derives the engine verdict and the consumer verdict from the stored
+  /// measurement plus the CURRENT online evidence, then rebuilds the UI.
+  ///
+  /// The evidence signals (DNS / public IP / cloud reachability) land async,
+  /// often AFTER the measurement completes, so the verdict is recomputed each
+  /// time one arrives. This is the seam that lets a stalled-throughput run flip
+  /// from "could not read" to the honest "you are online" the moment the
+  /// reachability evidence confirms the device is genuinely online. It is a
+  /// no-op until a measurement has produced an [_internet] result (the run is
+  /// what seeds [_internet] / [_engine]); evidence that lands before then is
+  /// folded in when the run's own `onDone` calls this.
+  void _recomputeVerdict() {
+    if (!mounted || _internet == null) return;
+    final WifiVsInternetResult engine = ConnectionCheck.compute(
+      _effectiveAp,
+      _internet,
+      onlineEvidence: _onlineEvidence,
+    );
+    setState(() {
+      _engine = engine;
+      _verdict = ConsumerVerdictMapper.map(
+        engine,
+        internetHealthy:
+            ConnectionCheck.internetHealth(_internet) == InternetHealth.good,
+      );
+    });
+  }
+
   /// Fetches the public IP + ISP/org + ASN for the copy payload. Never throws
   /// (IpGeoService returns an honest failure result, and we catch defensively),
   /// never blocks the run, and stores only a real, located/successful result —
@@ -914,6 +960,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       // Only keep a non-error result; a failure stays null (omitted from copy).
       if (!result.isError) {
         setState(() => _ispInfo = result);
+        // A public IP is one of the three "you're online" signals; re-derive
+        // the verdict in case the speed test stalled (Keith 2026-06-17).
+        _recomputeVerdict();
       }
     } catch (_) {
       // Fail open — offline / timeout / transport error → no ISP section.
@@ -930,6 +979,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       final DnsProbeResult result = await _dnsProbe.measure();
       if (!mounted) return;
       setState(() => _dnsResult = result);
+      // A resolved DNS lookup is one of the three "you're online" signals;
+      // re-derive the verdict in case the speed test stalled (Keith 2026-06-17).
+      if (result.isAvailable) _recomputeVerdict();
     } catch (_) {
       if (!mounted) return;
       setState(() => _dnsResult = DnsProbeResult.unavailable());
@@ -1211,6 +1263,10 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                         onResults: (List<SiteReachability> rows) {
                           if (!mounted) return;
                           setState(() => _cloudResults = rows);
+                          // Reachable cloud apps are one of the three "you're
+                          // online" signals; re-derive the verdict in case the
+                          // speed test stalled (Keith 2026-06-17).
+                          _recomputeVerdict();
                         },
                       ),
                     ],
@@ -1418,6 +1474,8 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         return 'We checked your internet, but not your Wi-Fi.';
       case ConsumerOutcome.couldntComplete:
         return 'We could not finish the check.';
+      case ConsumerOutcome.online:
+        return 'You are online.';
     }
   }
 
@@ -1505,6 +1563,13 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         // Neither side read — honest neutral line.
         return 'We could not read your Wi-Fi or your internet. Make sure you '
             'are on Wi-Fi, then try again.';
+      case ConsumerOutcome.online:
+        // The speed test stalled but the device is clearly online (DNS + public
+        // IP + cloud reachability) — lead with the reachable truth (Keith's
+        // ratified Copy-report VERDICT wording, 2026-06-17).
+        return 'You are online. Your internet is reachable, but the speed test '
+            'did not complete, so its speed could not be measured. Try again '
+            'in a moment.';
     }
   }
 
@@ -1542,28 +1607,18 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
 
   /// The DIRECT COMPARISON sentence (item #5): a single headline answer comparing
   /// the SAME two quantities the verdict already compares — the usable Wi-Fi data
-  /// rate vs the measured internet rate. N = round(100 * (usableWifi - internet)
-  /// / internet). Faster when usable > internet, slower when below, "about the
-  /// same" within +/-10%. Returns null (the line is suppressed) when the internet
-  /// side could not be measured or is ~0 — the honest neutral verdict line then
-  /// carries the result on its own (GL-005: the % is only ever shown from real
-  /// measured numbers, never fabricated).
+  /// rate vs the measured internet rate. Faster when usable > internet, slower
+  /// when below, "about the same" within +/-10%. Returns null (the line is
+  /// suppressed) when the internet side could not be measured or is ~0 — the
+  /// honest neutral verdict line then carries the result on its own (GL-005: the
+  /// figure is only ever shown from real measured numbers, never fabricated).
   String? _comparisonLine(ConsumerVerdict verdict) {
     final double? usable = _engine?.usableWifiMbps;
     final double? internet = _engine?.internetAvgMbps;
     // Suppress when either side is missing or the internet rate is ~0 (no truthful
     // denominator). The verdict line already states the honest couldn't-check.
     if (usable == null || internet == null || internet < 0.5) return null;
-
-    final double deltaPct = 100 * (usable - internet) / internet;
-    final int n = deltaPct.abs().round();
-    // Within +/-10% reads as "about the same speed" rather than a near-zero %.
-    if (deltaPct.abs() <= 10) {
-      return 'Your Wi-Fi link and your internet connection are running at about '
-          'the same speed.';
-    }
-    final String direction = deltaPct > 0 ? 'faster' : 'slower';
-    return 'Your Wi-Fi link is $n% $direction than your internet connection.';
+    return ConnectionComparison.phrase(usable, internet);
   }
 
   // ---- Result: the plain help-desk facts ----
@@ -2112,6 +2167,10 @@ class _HeroVerdict extends StatelessWidget {
         return StatusTone.warning;
       case ConsumerOutcome.couldntCheckWifi:
       case ConsumerOutcome.couldntComplete:
+      // "You are online" is a calm, reachable-but-unmeasured read: neutral info
+      // tone, not success (no speed was verified) and not warning (nothing is
+      // wrong with the link).
+      case ConsumerOutcome.online:
         return StatusTone.info;
     }
   }
@@ -2573,6 +2632,12 @@ class _ComparisonCard extends StatelessWidget {
                 'compare the internet against yet.'
             : 'We could not read your Wi-Fi link, so only the internet side is '
                 'shown.';
+      case WifiVsInternetVerdict.onlineUnmeasured:
+        // The speed test stalled but reachability confirms the link is up;
+        // lead with the reachable truth, never "could not read".
+        return 'Your internet is reachable, but the speed test did not '
+            'complete, so there is no speed to compare yet. Try again in a '
+            'moment.';
     }
   }
 
@@ -3426,6 +3491,7 @@ class _ProVerdictCard extends StatelessWidget {
       case WifiVsInternetVerdict.bothContributing:
         return colors.statusWarning;
       case WifiVsInternetVerdict.wifiUnknown:
+      case WifiVsInternetVerdict.onlineUnmeasured:
         return colors.statusInfo;
     }
   }
@@ -3442,6 +3508,10 @@ class _ProVerdictCard extends StatelessWidget {
         return Icons.compare_arrows;
       case WifiVsInternetVerdict.wifiUnknown:
         return Icons.help_outline;
+      case WifiVsInternetVerdict.onlineUnmeasured:
+        // Reachable-but-unmeasured: the "you're online" cloud-done glyph, not a
+        // question mark (that side is not unknown, just unmeasured for speed).
+        return Icons.cloud_done_outlined;
     }
   }
 

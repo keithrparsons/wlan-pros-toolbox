@@ -20,6 +20,7 @@ void main() {
     double? down,
     double? up,
     InternetHealth health = InternetHealth.marginal,
+    OnlineEvidence onlineEvidence = const OnlineEvidence(),
   }) {
     return WifiVsInternetEngine.evaluate(
       txRateMbps: tx,
@@ -30,8 +31,17 @@ void main() {
       internetDownMbps: down,
       internetUpMbps: up,
       internetHealth: health,
+      onlineEvidence: onlineEvidence,
     );
   }
+
+  // All three "you're online" signals present: a stalled speed test should read
+  // as reachable-but-unmeasured, not "could not read".
+  const fullOnline = OnlineEvidence(
+    dnsResolved: true,
+    publicIpObtained: true,
+    cloudReachable: true,
+  );
 
   group('link-rate math + rate basis', () {
     test('averages Tx and Rx when both present', () {
@@ -171,6 +181,125 @@ void main() {
       final r = eval(down: 80, up: null); // avg = 80 (single-side fallback)
       expect(r.internetAvgMbps, 80);
       expect(r.verdict, isNot(WifiVsInternetVerdict.wifiUnknown));
+    });
+  });
+
+  group('honest "you are online" path (throughput unmeasurable + online)', () {
+    test(
+      'throughput unmeasurable BUT online evidence strong → onlineUnmeasured, '
+      'never "could not read"',
+      () {
+        // macOS hotel case: Tx exposed (link rate known), but the speed test
+        // stalled (no internet down/up), and DNS + public IP + cloud all OK.
+        final r = eval(
+          tx: 600,
+          rx: null,
+          rxAvailable: false,
+          down: null,
+          up: null,
+          onlineEvidence: fullOnline,
+        );
+        expect(r.verdict, WifiVsInternetVerdict.onlineUnmeasured);
+        expect(r.headline, 'You are online');
+        expect(r.explanation, contains('reachable'));
+        expect(r.explanation, contains('Try again in a moment'));
+        // No fabricated number: the speed stays unmeasured (GL-005).
+        expect(r.internetAvgMbps, isNull);
+        expect(r.ratio, isNull);
+        // The known link rate is still carried through.
+        expect(r.linkRateMbps, 600);
+      },
+    );
+
+    test(
+      'macOS no-Rx + strong reachability → online verdict, does NOT collapse '
+      'to "could not read"',
+      () {
+        // Rx is never exposed on macOS, so the Wi-Fi-vs-internet comparison can
+        // never fully compute; with strong reachability the read must lead with
+        // the online truth, not the partial-read caveat.
+        final r = eval(
+          tx: 540,
+          rx: null,
+          rxAvailable: false,
+          down: null,
+          up: null,
+          onlineEvidence: fullOnline,
+        );
+        expect(r.verdict, WifiVsInternetVerdict.onlineUnmeasured);
+        expect(r.rateBasis, WifiRateBasis.txOnly);
+        // Leads with the online truth, NOT the bleak "could not read your
+        // Wi-Fi" partial-read framing. ("could not be measured" for the SPEED
+        // is the correct, honest qualifier and is expected.)
+        expect(r.headline, 'You are online');
+        expect(r.explanation, isNot(contains('could not read')));
+        expect(r.explanation, isNot(contains('partial')));
+      },
+    );
+
+    test('wired (no rate) + strong reachability → online, not wifiUnknown', () {
+      final r = eval(
+        tx: null,
+        rx: null,
+        down: null,
+        up: null,
+        onlineEvidence: fullOnline,
+      );
+      expect(r.verdict, WifiVsInternetVerdict.onlineUnmeasured);
+      expect(r.headline, 'You are online');
+    });
+
+    test('partial evidence (DNS + IP, no cloud) does NOT flip to online', () {
+      const partial = OnlineEvidence(
+        dnsResolved: true,
+        publicIpObtained: true,
+        // cloudReachable defaults false — not all three present.
+      );
+      final r = eval(
+        tx: 600,
+        rx: null,
+        rxAvailable: false,
+        down: null,
+        up: null,
+        onlineEvidence: partial,
+      );
+      // Falls back to the honest wifiUnknown internet-side caveat, NOT online.
+      expect(r.verdict, WifiVsInternetVerdict.wifiUnknown);
+    });
+
+    test(
+      'measured throughput is NOT overridden by evidence (the 7:11 run path '
+      'stays correct)',
+      () {
+        // Internet measured fine (upstream verdict); strong evidence must not
+        // hijack a real measurement into the online-unmeasured verdict.
+        final r = eval(
+          down: 100,
+          up: 60, // avg 80, ratio ≈ 0.18 → upstream
+          onlineEvidence: fullOnline,
+        );
+        expect(r.verdict, WifiVsInternetVerdict.upstream);
+        expect(r.internetAvgMbps, isNotNull);
+      },
+    );
+  });
+
+  group('OnlineEvidence', () {
+    test('isOnline requires all three signals', () {
+      expect(
+        const OnlineEvidence(
+          dnsResolved: true,
+          publicIpObtained: true,
+          cloudReachable: true,
+        ).isOnline,
+        isTrue,
+      );
+      expect(
+        const OnlineEvidence(dnsResolved: true, publicIpObtained: true)
+            .isOnline,
+        isFalse,
+      );
+      expect(const OnlineEvidence().isOnline, isFalse);
     });
   });
 

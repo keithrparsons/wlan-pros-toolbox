@@ -209,8 +209,10 @@ class AnalysisFinding {
       case FindingSeverity.critical:
         return 'Issue';
       case FindingSeverity.important:
-        // The all-clear verdict headline is reassurance, not an advisory.
-        return ruleId == 'R-04' ? 'Good' : 'Worth a look';
+        // The all-clear verdict headline is reassurance, not an advisory. R-04
+        // is "nothing to fix"; R-06 is the honest "you are online" verdict when
+        // the speed test stalled but reachability is strong, also reassuring.
+        return (ruleId == 'R-04' || ruleId == 'R-06') ? 'Good' : 'Worth a look';
       case FindingSeverity.context:
         // Non-reassurance P3 notes (slow DNS, overlapping channel, WPA2 nudge)
         // are minor advisories, not all-clears.

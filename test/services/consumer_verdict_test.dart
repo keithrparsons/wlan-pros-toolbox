@@ -295,6 +295,30 @@ void main() {
         expect(v.selfHelp, SelfHelpTopic.reconnect);
       },
     );
+
+    test(
+      'onlineUnmeasured → E: leads with "You are online", NOT "make sure you '
+      'are on Wi-Fi"',
+      () {
+        // The speed test stalled (no internet rate) but reachability is strong;
+        // macOS Tx-only keeps a usable Wi-Fi figure, internet stays unmeasured.
+        final v = ConsumerVerdictMapper.map(
+          result(
+            WifiVsInternetVerdict.onlineUnmeasured,
+            usableWifiMbps: 300,
+            internetAvgMbps: null,
+          ),
+        );
+        expect(v.outcome, ConsumerOutcome.online);
+        expect(v.headline, 'You are online');
+        expect(v.body, contains('reachable'));
+        expect(v.body, contains('Try again in a moment'));
+        // No measured internet rate → honest Unknown internet chip (GL-005).
+        expect(v.internetStatus, AxisStatus.unknown);
+        // The body must NOT scold the user to get on Wi-Fi.
+        expect(v.body, isNot(contains('Make sure')));
+      },
+    );
   });
 
   group('D1 body substitution (bodyForCouldntCheckWifi)', () {

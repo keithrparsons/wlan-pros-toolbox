@@ -202,6 +202,144 @@ void main() {
     });
   });
 
+  group('ThroughputProbe.measure — whole-window retry (stall, then success)',
+      () {
+    test(
+        'download window stalls on every endpoint the first time, then the '
+        'retry re-opens a fresh window and measures a real rate (not 0)',
+        () async {
+      // The hotel transient: the whole parallel download window stalls out
+      // (every endpoint fails), then a moment later it measures fine. With one
+      // automatic retry the stall is absorbed and a real number comes back.
+      var pass = 0;
+      final probe = ThroughputProbe(
+        downloadStreamCount: 1,
+        maxRetries: 0, // no inner endpoint fallback, so the WHOLE window fails
+        throughputRetries: 1, // one outer retry of the window
+        downloadEndpoints: <Uri>[Uri.parse('https://only.test/down')],
+        downloader: (uri, max) async {
+          pass++;
+          if (pass == 1) {
+            throw const ThroughputUnmeasurable('transient stall');
+          }
+          return 50 * 1000 * 1000;
+        },
+        uploader: (uri, bytes, max) async => bytes,
+        uploadBytes: 10 * 1000 * 1000,
+        windowTimer: _passthroughTimer(const Duration(seconds: 4)),
+        timer: _passthroughTimer(const Duration(seconds: 2)),
+      );
+      final s = await probe.measure();
+      // Two passes: the stalled window, then the successful retry window.
+      expect(pass, 2);
+      // 50 MB * 8 / 4s / 1e6 = 100 Mbps — a real measurement, not "Not measured".
+      expect(s.downloadMbps, closeTo(100.0, 0.0001));
+      expect(s.downloadBytes, 50 * 1000 * 1000);
+    });
+
+    test('healthy run does NOT retry — the retry budget is paid only on a stall',
+        () async {
+      var calls = 0;
+      final probe = ThroughputProbe(
+        downloadStreamCount: 1,
+        throughputRetries: 1,
+        downloadEndpoints: <Uri>[Uri.parse('https://only.test/down')],
+        downloader: (uri, max) async {
+          calls++;
+          return 50 * 1000 * 1000;
+        },
+        uploader: (uri, bytes, max) async => bytes,
+        uploadBytes: 10 * 1000 * 1000,
+        windowTimer: _passthroughTimer(const Duration(seconds: 4)),
+        timer: _passthroughTimer(const Duration(seconds: 2)),
+      );
+      await probe.measure();
+      // Exactly one download call: a healthy window is never re-run, so a normal
+      // run never doubles in time.
+      expect(calls, 1);
+    });
+
+    test('still unmeasurable after the retry → ThroughputUnmeasurable, never 0',
+        () async {
+      var calls = 0;
+      final probe = ThroughputProbe(
+        downloadStreamCount: 1,
+        maxRetries: 0,
+        throughputRetries: 1,
+        downloadEndpoints: <Uri>[Uri.parse('https://only.test/down')],
+        downloader: (uri, max) async {
+          calls++;
+          throw const ThroughputUnmeasurable('still stalled');
+        },
+        uploader: (uri, bytes, max) async => bytes,
+        windowTimer: _passthroughTimer(const Duration(seconds: 1)),
+        timer: _passthroughTimer(const Duration(seconds: 1)),
+      );
+      await expectLater(
+        probe.measure(),
+        throwsA(isA<ThroughputUnmeasurable>()),
+      );
+      // 1 initial window + 1 retry window = 2 download attempts.
+      expect(calls, 2);
+    });
+
+    test(
+        'the retry NEVER unbounds the run: a persistently-stalled window plus '
+        'one retry still aborts within ~2x the hard deadline, never hangs',
+        () async {
+      // Defense-in-depth: even with the default retry, a real hung endpoint
+      // must abort within roughly two hard-deadline windows, not hang forever.
+      final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+      server.listen((socket) {/* accept, send nothing */});
+      addTearDown(() async => server.close());
+
+      const maxDuration = Duration(seconds: 2);
+      // One window aborts at maxDuration + 5s slack = 7s; one retry => ~14s.
+      // Allow headroom but prove it is bounded, not hung.
+      const upperBound = Duration(seconds: 22);
+      final probe = ThroughputProbe(
+        downloadStreamCount: 1,
+        maxRetries: 0,
+        throughputRetries: 1, // the default — exercised end to end
+        maxDuration: maxDuration,
+        downloadEndpoints: <Uri>[
+          Uri.parse('http://127.0.0.1:${server.port}/down'),
+        ],
+      );
+      final sw = Stopwatch()..start();
+      await expectLater(
+        probe.measure(),
+        throwsA(isA<ThroughputUnmeasurable>()),
+      );
+      sw.stop();
+      expect(sw.elapsed, lessThan(upperBound),
+          reason: 'retry must stay bounded, never hang');
+    });
+
+    test('throughputRetries: 0 disables the retry (one window, then give up)',
+        () async {
+      var calls = 0;
+      final probe = ThroughputProbe(
+        downloadStreamCount: 1,
+        maxRetries: 0,
+        throughputRetries: 0,
+        downloadEndpoints: <Uri>[Uri.parse('https://only.test/down')],
+        downloader: (uri, max) async {
+          calls++;
+          throw const ThroughputUnmeasurable('stalled');
+        },
+        uploader: (uri, bytes, max) async => bytes,
+        windowTimer: _passthroughTimer(const Duration(seconds: 1)),
+        timer: _passthroughTimer(const Duration(seconds: 1)),
+      );
+      await expectLater(
+        probe.measure(),
+        throwsA(isA<ThroughputUnmeasurable>()),
+      );
+      expect(calls, 1); // no retry
+    });
+  });
+
   group('ThroughputProbe.measure — upload fallback (single stream)', () {
     test('upload tries the next endpoint on failure', () async {
       var calls = 0;
@@ -306,6 +444,9 @@ void main() {
       final probe = ThroughputProbe(
         downloadStreamCount: 1,
         maxRetries: 2,
+        // Isolate the INNER per-endpoint fallback count here; the OUTER
+        // whole-window retry has its own group above.
+        throughputRetries: 0,
         downloadEndpoints: <Uri>[
           Uri.parse('https://a.test/down'),
           Uri.parse('https://b.test/down'),
@@ -331,6 +472,9 @@ void main() {
       final probe = ThroughputProbe(
         downloadStreamCount: 1,
         maxRetries: 2,
+        // Isolate the INNER per-endpoint fallback count (floor-failure is
+        // retried, not accepted as 0); the OUTER window retry is tested above.
+        throughputRetries: 0,
         downloadEndpoints: <Uri>[
           Uri.parse('https://a.test/down'),
           Uri.parse('https://b.test/down'),
@@ -406,6 +550,9 @@ void _registerRealTransportRegressionTests() {
       final probe = ThroughputProbe(
         downloadStreamCount: 1,
         maxRetries: 0,
+        // Isolate the per-transfer hard deadline (one window): the outer
+        // whole-window retry is exercised in its own group above.
+        throughputRetries: 0,
         maxDuration: maxDuration,
         downloadEndpoints: <Uri>[
           Uri.parse('http://127.0.0.1:${noHeaderServer.port}/down'),
@@ -426,6 +573,9 @@ void _registerRealTransportRegressionTests() {
       final probe = ThroughputProbe(
         downloadStreamCount: 1,
         maxRetries: 0,
+        // Isolate the per-transfer hard deadline (one window); outer retry
+        // is tested above.
+        throughputRetries: 0,
         maxDuration: maxDuration,
         downloadEndpoints: <Uri>[
           Uri.parse('http://127.0.0.1:${stallServer.port}/down'),

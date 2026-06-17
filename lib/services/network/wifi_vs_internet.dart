@@ -72,6 +72,44 @@ enum WifiVsInternetVerdict {
   /// The Wi-Fi link rate could not be measured (wired, or iOS without the
   /// companion Shortcut) — an internet-only read with an explicit caveat.
   wifiUnknown,
+
+  /// Internet throughput could not be measured (the speed test stalled even
+  /// after the retry), BUT independent evidence says the device is online: DNS
+  /// resolved, a public IP was obtained, AND cloud-app reachability succeeded.
+  /// The honest read is "you are online, the speed just could not be measured",
+  /// NOT "could not read your Wi-Fi or your internet". See [OnlineEvidence].
+  onlineUnmeasured,
+}
+
+/// Independent evidence that the device is genuinely on the internet, used to
+/// distinguish a transient speed-test stall from a real "you are offline" read.
+///
+/// These three signals are gathered by the screen OUTSIDE the throughput
+/// measurement (the DNS probe, the public-IP lookup, and the cloud-app
+/// reachability panel), so they stay valid even when the speed test itself
+/// stalls. When all three are present the engine produces
+/// [WifiVsInternetVerdict.onlineUnmeasured] in place of the bleak "could not
+/// read" verdict, in Keith's calm, conclusion-first voice. A pure value object.
+class OnlineEvidence {
+  /// Creates an evidence snapshot.
+  const OnlineEvidence({
+    this.dnsResolved = false,
+    this.publicIpObtained = false,
+    this.cloudReachable = false,
+  });
+
+  /// True when a DNS lookup resolved a host this run.
+  final bool dnsResolved;
+
+  /// True when the public-IP / ISP lookup returned an address.
+  final bool publicIpObtained;
+
+  /// True when at least one cloud-app reachability probe succeeded.
+  final bool cloudReachable;
+
+  /// All three signals present: the device is clearly online, so a missing
+  /// throughput number is a stalled speed test, not an offline link.
+  bool get isOnline => dnsResolved && publicIpObtained && cloudReachable;
 }
 
 /// Which negotiated rates fed the link-rate figure. Drives the honest "averaged
@@ -183,6 +221,7 @@ class WifiVsInternetEngine {
     double? internetDownMbps,
     double? internetUpMbps,
     required InternetHealth internetHealth,
+    OnlineEvidence onlineEvidence = const OnlineEvidence(),
   }) {
     // --- Link rate: avg(Tx, Rx) with single-rate fallback. ---
     final bool hasTx = txRateMbps != null && txRateMbps > 0;
@@ -223,6 +262,30 @@ class WifiVsInternetEngine {
       snrDb: snrDb,
       basis: basis,
     );
+
+    // --- Honest "you're online" path: throughput is unmeasurable (the speed
+    //     test stalled even after the retry) but the device is clearly online
+    //     (DNS resolved + public IP obtained + cloud reachability succeeded).
+    //     Lead with the reachable truth instead of the bleak "could not read"
+    //     verdict. This covers BOTH the no-rate case (wired) and the macOS
+    //     Tx-only case (Rx never exposed, so the ratio can't fully compute) —
+    //     in either case, strong reachability evidence outranks the missing
+    //     throughput number (Keith 2026-06-17). ---
+    if (internetAvg == null && onlineEvidence.isOnline) {
+      return WifiVsInternetResult(
+        verdict: WifiVsInternetVerdict.onlineUnmeasured,
+        headline: 'You are online',
+        explanation:
+            'Your internet is reachable, but the speed test did not complete, '
+            'so its speed could not be measured. Try again in a moment.',
+        snrContext: basis == WifiRateBasis.none ? '' : snrContext,
+        rateBasis: basis,
+        usableWifiMbps: usableWifi,
+        internetAvgMbps: null,
+        linkRateMbps: linkRate,
+        ratio: null,
+      );
+    }
 
     // --- Unknown-rate path: internet-only read with a caveat. ---
     if (basis == WifiRateBasis.none) {

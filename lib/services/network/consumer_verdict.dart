@@ -54,6 +54,12 @@ enum ConsumerOutcome {
   /// D2 — neither side could be measured (engine `wifiUnknown`, no internet
   /// figure). "Make sure you're on Wi-Fi and try again."
   couldntComplete,
+
+  /// E — the speed test stalled (throughput unmeasurable even after the retry)
+  /// but the device is clearly online: DNS resolved, a public IP was obtained,
+  /// and cloud apps were reachable (engine `onlineUnmeasured`). Leads with the
+  /// reachable truth, not "make sure you're on Wi-Fi". (Keith 2026-06-17.)
+  online,
 }
 
 /// The status of ONE axis — Wi-Fi or Internet — on the two-chip result header
@@ -312,6 +318,22 @@ class ConsumerVerdictMapper {
           internetStatus: internetTier,
           headline: 'Couldn’t complete the check',
           body: "Make sure you're connected to Wi-Fi and try again.",
+          selfHelp: SelfHelpTopic.reconnect,
+        );
+
+      // E — the speed test stalled but the device is clearly online. The
+      // internet chip is `unknown` (no throughput rate), but the message leads
+      // with the reachable truth instead of "make sure you're on Wi-Fi".
+      case WifiVsInternetVerdict.onlineUnmeasured:
+        return ConsumerVerdict(
+          outcome: ConsumerOutcome.online,
+          wifiStatus: wifiTier,
+          internetStatus: internetTier,
+          headline: 'You are online',
+          body:
+              'Your internet is reachable, but the speed test did not '
+              'complete, so its speed could not be measured. Try again in a '
+              'moment.',
           selfHelp: SelfHelpTopic.reconnect,
         );
     }

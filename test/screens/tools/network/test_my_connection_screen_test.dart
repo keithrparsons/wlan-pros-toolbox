@@ -953,13 +953,17 @@ void main() {
       await runCheck(tester);
 
       // usable Wi-Fi = 0.55 * avg(866, 780) = 452.65; internet avg = 40.
-      // N = round(100 * (452.65 - 40) / 40) = 1032, faster.
+      // Ratio 452.65 / 40 = 11.3x (> 10x), so the phrase is a CLEAN multiple
+      // ("about 11x faster"), not a 1032% figure that reads as noise
+      // (Keith 2026-06-17 ratio-phrasing fix).
       expect(
         find.text(
-          'Your Wi-Fi link is 1032% faster than your internet connection.',
+          'Your Wi-Fi link is about 11x faster than your internet connection.',
         ),
         findsOneWidget,
       );
+      // The giant percentage must be gone.
+      expect(find.textContaining('1032%'), findsNothing);
     },
   );
 
@@ -1649,7 +1653,8 @@ void main() {
           );
           expect(
             find.text(
-              'Your Wi-Fi link is 1032% faster than your internet connection.',
+              'Your Wi-Fi link is about 11x faster than your internet '
+              'connection.',
             ),
             findsOneWidget,
           );

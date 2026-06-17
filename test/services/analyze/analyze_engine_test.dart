@@ -30,8 +30,10 @@ void main() {
       // tables plus R-50 (a PARSER guard for the future web "paste a report"
       // surface). This in-app engine reads live in-memory objects, not pasted
       // text, so R-50 has no analogue and is intentionally omitted (see the note
-      // in analyze_rules.dart). Every other table rule is ported → 32 rules.
-      expect(kAnalyzeRules.length, 32);
+      // in analyze_rules.dart). Every other table rule is ported → 32 rules,
+      // plus R-06 (the honest "you are online" verdict added 2026-06-17 for the
+      // stalled-speed-test-but-reachable case) → 33.
+      expect(kAnalyzeRules.length, 33);
       final Set<FindingCategory> cats =
           kAnalyzeRules.map((r) => r.category).toSet();
       expect(cats.length, FindingCategory.values.length); // all 9
@@ -56,7 +58,7 @@ void main() {
     });
   });
 
-  group('verdict rules (R-01..R-05) lead', () {
+  group('verdict rules (R-01..R-06) lead', () {
     test('wifiLimiter → R-01 leads, critical', () {
       final report = AnalyzeEngine.analyze(
         const AnalyzeInput(verdict: WifiVsInternetVerdict.wifiLimiter),
@@ -87,7 +89,35 @@ void main() {
             verdict: WifiVsInternetVerdict.wifiUnknown)),
         contains('R-05'),
       );
+      expect(
+        _firedIds(const AnalyzeInput(
+            verdict: WifiVsInternetVerdict.onlineUnmeasured)),
+        contains('R-06'),
+      );
     });
+
+    test(
+      'onlineUnmeasured → R-06 leads with the honest "you are online" verdict, '
+      'reads "Good", never "could not read"',
+      () {
+        final report = AnalyzeEngine.analyze(
+          const AnalyzeInput(
+            verdict: WifiVsInternetVerdict.onlineUnmeasured,
+          ),
+        );
+        expect(report.headline!.ruleId, 'R-06');
+        expect(report.headline!.category, FindingCategory.verdict);
+        // Calm, reassuring verdict word — not an advisory.
+        expect(report.headline!.verdictWord, 'Good');
+        expect(report.headline!.explanation, contains('You are online'));
+        expect(report.headline!.explanation, contains('reachable'));
+        expect(report.headline!.explanation, isNot(contains('could not read')));
+        // R-05 (partial read) must NOT also fire for this distinct verdict.
+        expect(_firedIds(const AnalyzeInput(
+            verdict: WifiVsInternetVerdict.onlineUnmeasured)),
+            isNot(contains('R-05')));
+      },
+    );
 
     test('the verdict finding is always first even when other rules fire', () {
       // wifiLimiter verdict + an open network (R-35, also critical) + poor loss

@@ -144,6 +144,22 @@ class ThroughputProbe {
   /// retry budget for the single upload stream.
   final int maxRetries;
 
+  /// Number of times to re-run a WHOLE throughput sub-stage (the parallel
+  /// download window, or the upload window) from scratch after it produced no
+  /// usable measurement, before giving up with [ThroughputUnmeasurable].
+  ///
+  /// This is the OUTER retry, distinct from [maxRetries] (the inner per-stream
+  /// endpoint fallback). [maxRetries] swaps endpoints WITHIN one window; this
+  /// re-opens a FRESH window when that whole window stalled out (the hotel
+  /// transient: latency/jitter/loss/RPM all succeeded, only the throughput
+  /// window stalled, then a minute later it measured fine). It extends the
+  /// existing CDN-stall handling rather than duplicating its deadlines: each
+  /// retried window is bounded by the SAME [maxDuration] + [_transferDeadlineSlack]
+  /// per transfer, so the cost is paid ONLY on a stall, never on the healthy
+  /// path. Defaults to 1: one automatic retry, so a single transient stall is
+  /// absorbed without doubling a normal run's time.
+  final int throughputRetries;
+
   /// Smallest byte count that counts as a real transfer. A successful response
   /// at or below this floor is treated as a failure (e.g. an empty/hiccuped
   /// CDN response), not graded as 0 Mbps.
@@ -189,12 +205,14 @@ class ThroughputProbe {
     this.downloadStreamCount = 2,
     this.maxDuration = const Duration(seconds: 10),
     this.maxRetries = 2,
+    this.throughputRetries = 1,
     this.minBytesFloor = 0,
     Downloader? downloader,
     Uploader? uploader,
     ElapsedTimer? timer,
     ElapsedTimer? windowTimer,
   })  : assert(downloadStreamCount >= 1, 'need at least one download stream'),
+        assert(throughputRetries >= 0, 'retry budget cannot be negative'),
         downloadEndpoints =
             (downloadEndpoints != null && downloadEndpoints.isNotEmpty)
                 ? List<Uri>.unmodifiable(downloadEndpoints)
@@ -240,19 +258,31 @@ class ThroughputProbe {
   /// [ThroughputStage.upload]). It exists purely so a caller can drive smooth
   /// elapsed-time progress that pivots its target band at the download→upload
   /// boundary; it never affects the measurement itself, and a throwing callback
-  /// must not abort the run (callers keep it trivial).
+  /// must not abort the run (callers keep it trivial). [onStage] fires once per
+  /// sub-stage even when [throughputRetries] re-opens a stalled window, so the
+  /// progress bar is not yanked backwards by a retry.
+  ///
+  /// Each sub-stage is retried up to [throughputRetries] times when the WHOLE
+  /// window stalled out (every endpoint exhausted). The retry re-opens a fresh
+  /// window against the same endpoint chain, bounded by the same per-transfer
+  /// deadlines — so the only path that pays the retry cost is the stall, never
+  /// a healthy run. A sub-stage that still cannot measure after its retries
+  /// propagates [ThroughputUnmeasurable] (download) so the caller reports an
+  /// honest "couldn't measure", never a fabricated 0 Mbps.
   Future<ThroughputStats> measure({
     void Function(ThroughputStage stage)? onStage,
   }) async {
     onStage?.call(ThroughputStage.download);
-    final dl = await _measureParallelDownload();
+    final dl = await _withRetry(_measureParallelDownload);
 
     onStage?.call(ThroughputStage.upload);
     var ulBytes = 0;
-    final ulElapsed = await _measureUploadWithFallback((max, uri) async {
-      ulBytes = await uploader(uri, uploadBytes, max);
-      return ulBytes;
-    });
+    final ulElapsed = await _withRetry(() => _measureUploadWithFallback(
+          (max, uri) async {
+            ulBytes = await uploader(uri, uploadBytes, max);
+            return ulBytes;
+          },
+        ));
 
     return ThroughputStats(
       downloadMbps: mbpsFor(dl.totalBytes, dl.elapsed),
@@ -263,6 +293,27 @@ class ThroughputProbe {
       elapsedUpload: ulElapsed,
       downloadStreams: dl.successfulStreams,
     );
+  }
+
+  /// Runs [run] and, when it raises [ThroughputUnmeasurable] (the whole window
+  /// stalled out, every endpoint exhausted), re-runs it from scratch up to
+  /// [throughputRetries] times before letting the last failure propagate. A
+  /// successful run returns immediately, so the healthy path never pays the
+  /// retry cost. Only [ThroughputUnmeasurable] is retried; any other error
+  /// (a programming fault) propagates at once rather than being silently
+  /// re-attempted.
+  Future<T> _withRetry<T>(Future<T> Function() run) async {
+    final int attempts = throughputRetries + 1;
+    ThroughputUnmeasurable lastError =
+        const ThroughputUnmeasurable('no throughput attempt made');
+    for (var attempt = 0; attempt < attempts; attempt++) {
+      try {
+        return await run();
+      } on ThroughputUnmeasurable catch (e) {
+        lastError = e;
+      }
+    }
+    throw lastError;
   }
 
   /// Runs [downloadStreamCount] concurrent download streams in a single shared

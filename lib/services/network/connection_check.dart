@@ -27,7 +27,17 @@ class ConnectionCheck {
   /// the net_quality grades into the engine's [InternetHealth] flag at the
   /// boundary (keeping the engine Flutter-free) and forwards the link rates.
   /// Lifted verbatim from both source screens' `_compute()`.
-  static WifiVsInternetResult compute(ConnectedAp? ap, QualityResult? internet) {
+  ///
+  /// [onlineEvidence] carries the out-of-band "you're online" signals (DNS
+  /// resolved + public IP + cloud reachability) so the engine can produce the
+  /// honest [WifiVsInternetVerdict.onlineUnmeasured] verdict when the speed test
+  /// stalled but the device is clearly online. It defaults to no evidence, so a
+  /// caller that has not gathered it yet gets the prior behavior unchanged.
+  static WifiVsInternetResult compute(
+    ConnectedAp? ap,
+    QualityResult? internet, {
+    OnlineEvidence onlineEvidence = const OnlineEvidence(),
+  }) {
     final double? down = metricValue(internet, MetricIds.download);
     final double? up = metricValue(internet, MetricIds.upload);
 
@@ -40,6 +50,7 @@ class ConnectionCheck {
       internetDownMbps: down,
       internetUpMbps: up,
       internetHealth: internetHealth(internet),
+      onlineEvidence: onlineEvidence,
     );
   }
 

@@ -183,6 +183,25 @@ const List<AnalyzeRule> kAnalyzeRules = <AnalyzeRule>[
         "live. On iPhone, install the companion Shortcut first so the app can "
         "read your Wi-Fi details.",
   ),
+  // Honest "you're online" verdict (Keith 2026-06-17). Fires when the speed
+  // test stalled (throughput unmeasurable even after the retry) but the device
+  // is clearly online: DNS resolved, a public IP was obtained, and cloud apps
+  // were reachable. Leads with the reachable truth, NOT "make sure you're on
+  // Wi-Fi". Conclusion-first, calm. On macOS this is the right read even though
+  // the Wi-Fi Rx rate is never exposed (so the full Wi-Fi-vs-internet
+  // comparison cannot compute): strong reachability evidence outranks the
+  // missing throughput number.
+  AnalyzeRule(
+    id: 'R-06',
+    category: FindingCategory.verdict,
+    severity: FindingSeverity.important,
+    condition: _isVerdictOnlineUnmeasured,
+    responseDraft:
+        "You are online. Your internet is reachable, but the speed test did "
+        "not complete, so its speed could not be measured. Names are "
+        "resolving, you have a public IP, and the test services answered, so "
+        "the connection itself is up. Try the check again in a moment.",
+  ),
 
   // B. Signal, RSSI (coverage / distance).
   AnalyzeRule(
@@ -567,6 +586,8 @@ bool _isVerdictBothHealthy(AnalyzeInput i) =>
     i.verdict == WifiVsInternetVerdict.bothHealthy;
 bool _isVerdictUnknown(AnalyzeInput i) =>
     i.verdict == WifiVsInternetVerdict.wifiUnknown;
+bool _isVerdictOnlineUnmeasured(AnalyzeInput i) =>
+    i.verdict == WifiVsInternetVerdict.onlineUnmeasured;
 
 // B. RSSI, graded with WifiGradingBands (the ratified app bands).
 bool _rssiPoor(AnalyzeInput i) => _rssiIs(i, QualityGrade.poor);
