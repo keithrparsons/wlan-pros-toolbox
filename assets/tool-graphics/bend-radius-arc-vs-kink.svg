@@ -60,7 +60,12 @@
   <!-- literal labeled consequence: conductor spacing disturbed inside the jacket -->
   <text x="240" y="48" font-size="8.5" font-weight="600" fill="#E5E5E5">conductor spacing</text>
   <text x="240" y="60" font-size="8.5" font-weight="600" fill="#E5E5E5">disturbed</text>
-  <text x="240" y="72" font-size="7.5" font-weight="400" fill="#9C9C9C">&#8593; return loss, &#8593; NEXT</text>
+  <!-- Up-arrows (was &#8593;) as vector <path>s; runs are start-anchored with each
+       arrow in its fixed gap (GL-003 8.6.1). -->
+  <path d="M243 72 V65 M240.5 67.5 L243 65 L245.5 67.5" fill="none" stroke="#9C9C9C" stroke-width="0.95" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="248" y="72" font-size="7.5" font-weight="400" fill="#9C9C9C">return loss, </text>
+  <path d="M291.1 72 V65 M288.6 67.5 L291.1 65 L293.6 67.5" fill="none" stroke="#9C9C9C" stroke-width="0.95" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="296.1" y="72" font-size="7.5" font-weight="400" fill="#9C9C9C">NEXT</text>
   <!-- leader from text up to the cable straight run -->
   <line x1="236" y1="44" x2="219" y2="40" stroke="#9C9C9C" stroke-width="1.1"/>
 

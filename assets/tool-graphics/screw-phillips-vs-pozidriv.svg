@@ -30,9 +30,19 @@
   <text x="530" y="320" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="22" fill="#E5E5E5">Pozidriv</text>
   <text x="530" y="346" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="15" fill="#A1CC3A">Extra 45&#176; tick marks between the arms.</text>
 
-  <!-- the memorize rule -->
-  <text x="190" y="392" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="15" fill="#E5E5E5">No tick lines &#8594; use a <tspan font-family="DM Mono,monospace" font-weight="400" font-size="14" fill="#E5E5E5">PH</tspan> bit</text>
-  <text x="530" y="392" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="15" fill="#E5E5E5"><tspan font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="15" fill="#A1CC3A">Tick lines</tspan> &#8594; use a <tspan font-family="DM Mono,monospace" font-weight="400" font-size="14" fill="#E5E5E5">PZ</tspan> bit</text>
+  <!-- the memorize rule. Each rightwards arrow (was &#8594;) is a vector <path>; the
+       runs are re-flowed start-anchored with the arrow in a fixed gap (GL-003 8.6.1). -->
+  <text x="102.2" y="392" text-anchor="start" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="15" fill="#E5E5E5">No tick lines</text>
+  <path d="M187.6 387 H198.6 M195.1 383 L198.6 387 L195.1 391" fill="none" stroke="#E5E5E5" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="200.6" y="392" text-anchor="start" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="15" fill="#E5E5E5">use a </text>
+  <text x="239.8" y="392" text-anchor="start" font-family="DM Mono,monospace" font-weight="400" font-size="14" fill="#E5E5E5">PH</text>
+  <text x="256.6" y="392" text-anchor="start" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="15" fill="#E5E5E5"> bit</text>
+
+  <text x="451.8" y="392" text-anchor="start" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="15" fill="#A1CC3A">Tick lines</text>
+  <path d="M518 387 H529 M525.5 383 L529 387 L525.5 391" fill="none" stroke="#E5E5E5" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="531" y="392" text-anchor="start" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="15" fill="#E5E5E5">use a </text>
+  <text x="570.2" y="392" text-anchor="start" font-family="DM Mono,monospace" font-weight="400" font-size="14" fill="#E5E5E5">PZ</text>
+  <text x="587" y="392" text-anchor="start" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="15" fill="#E5E5E5"> bit</text>
 
   <!-- not-interchangeable warning band -->
   <rect x="56" y="420" width="608" height="62" rx="8" fill="none" stroke="#E5E5E5" stroke-width="2"/>

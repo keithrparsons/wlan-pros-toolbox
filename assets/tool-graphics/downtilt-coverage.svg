@@ -43,5 +43,7 @@
   <text x="198" y="116" fill="#A2CC3A" font-size="13" font-weight="500" text-anchor="middle">coverage</text>
 
   <!-- Header -->
-  <text x="160" y="20" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">tilt + beamwidth &#8594; coverage</text>
+  <text fill="#E5E5E5" font-size="13" font-weight="500" x="78.7" y="20.0" text-anchor="start">tilt + beamwidth</text>
+  <path d="M177.2 15.8 H185.2 M181.7 12.3 L185.2 15.8 L181.7 19.3" fill="none" stroke="#E5E5E5" stroke-width="1.495" stroke-linecap="round" stroke-linejoin="round"/>
+  <text fill="#E5E5E5" font-size="13" font-weight="500" x="188.2" y="20.0" text-anchor="start">coverage</text>
 </svg>

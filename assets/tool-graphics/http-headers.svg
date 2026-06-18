@@ -38,5 +38,7 @@
   <!-- Header -->
   <text x="160" y="20" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">HTTP headers</text>
   <!-- Footer -->
-  <text x="160" y="150" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">request &#8594; status + response headers</text>
+  <text fill="#9C9C9C" font-size="11" font-weight="500" x="68.8" y="150.0" text-anchor="start">request</text>
+  <path d="M109.7 146.5 H117.7 M114.2 143.0 L117.7 146.5 L114.2 150.0" fill="none" stroke="#9C9C9C" stroke-width="1.2650000000000001" stroke-linecap="round" stroke-linejoin="round"/>
+  <text fill="#9C9C9C" font-size="11" font-weight="500" x="120.7" y="150.0" text-anchor="start">status + response headers</text>
 </svg>
