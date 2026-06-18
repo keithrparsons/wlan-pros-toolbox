@@ -283,6 +283,15 @@ dev_dependencies:
   #   dart run flutter_launcher_icons
   flutter_launcher_icons: ^0.14.4
 
+  # msix — packages the `flutter build windows` output into a signed MSIX for
+  # the Microsoft Store (and, with an OV cert, for direct download). Config lives
+  # in the `msix_config:` block below. Build-time only; never imported at runtime.
+  # Produce the package on a Windows box via:
+  #   Store build:        dart run msix:build  &&  dart run msix:pack --store
+  #   Self-signed (test): dart run msix:create
+  # DORMANT until the first `flutter build windows` on 2026-06-26.
+  msix: ^3.17.0
+
 # flutter_launcher_icons configuration. Master is the opaque 1024 brand mark.
 # iOS + macOS get the full opaque set (App Store requires no alpha). Android
 # gets both legacy mipmaps and an adaptive icon (charcoal background + the mark
@@ -297,6 +306,50 @@ flutter_launcher_icons:
   android: true
   adaptive_icon_background: "#1A1A1A"
   adaptive_icon_foreground: "assets/branding/app-icon-1024.png"
+
+# ─── MSIX packaging (Microsoft Store + direct download) ──────────────────────
+# Consumed by the `msix` dev dependency to package the `flutter build windows`
+# output. This is MANIFEST TEXT ONLY — it is written now and ships dormant; the
+# first real package run happens on a Windows box on 2026-06-26 (Flutter cannot
+# cross-compile Windows from a Mac). See Deliverables/2026-06-16-windows-go-live-prep/.
+#
+# Two distribution paths:
+#   * Microsoft Store — Microsoft re-signs on the Store CA. Build with
+#     `--store`; the `publisher` (Store-assigned publisher ID, "CN=...") is
+#     FILLED AT SUBMIT TIME from Partner Center, NOT committed here.
+#   * Direct download — sign the same MSIX with WLAN Pros's own OV cert
+#     (set `certificate_path` / `certificate_password`, or use `--install-certificate`
+#     for a self-signed local test). Never commit cert paths or passwords —
+#     pass them on the CLI / CI secret at sign time.
+msix_config:
+  display_name: WLAN Pros Toolbox
+  publisher_display_name: Wireless LAN Professionals
+  # identity_name MUST match the name reserved in Partner Center exactly.
+  # Reserve "WLANProsToolbox" under the "WLANPros" publisher namespace.
+  identity_name: WLANPros.WLANProsToolbox
+  # publisher: the Store-assigned publisher ID ("CN=<GUID>") for a Store build,
+  # or the OV cert subject for direct distribution. Left blank — filled at
+  # submit/sign time so no placeholder identity ships in the repo.
+  # publisher: "CN=XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+  # MSIX requires a strict 4-part version. Tracks the app version (currently
+  # 1.5.4) with a trailing .0 revision; the user-facing version stays 1.5.4+38.
+  msix_version: 1.5.4.0
+  logo_path: assets/branding/app-icon-1024.png
+  # Capabilities: internetClient for outbound HTTP/DNS/speed-test probes;
+  # internetClientServer for the inbound side of the LAN/socket tools (port
+  # scan, TCP ping, ping sweep, WoL, packet sender, host discovery).
+  # NOTE(windows-verify 2026-06-26): confirm whether wlanapi.dll Wi-Fi reads
+  # require the `wiFiControl` device capability under MSIX. If so, add it here
+  # and reflect it in the Store privacy declaration. Native Wifi *reads* often
+  # do not, but the Store may flag it — verify on the first packaged build.
+  capabilities: internetClient, internetClientServer
+  # x64 is the SHIPPING target — field Wi-Fi engineers run x64. An ARM64 build
+  # from Parallels-on-Apple-Silicon is dev-only and must NOT be what ships.
+  architecture: x64
+  # store: true emits a Store-ready package (Microsoft re-signs). For a local
+  # self-signed smoke test on the build box, run `dart run msix:create` instead,
+  # which signs with a generated test cert. Do not commit `store: false`.
+  store: true
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
