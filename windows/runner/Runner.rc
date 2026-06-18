@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.wlanpros" "\0"
-            VALUE "FileDescription", "wlan_pros_toolbox" "\0"
+            VALUE "CompanyName", "Wireless LAN Professionals" "\0"
+            VALUE "FileDescription", "WLAN Pros Toolbox — RF calculators, live network diagnostics, and reference tables for Wi-Fi professionals" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "wlan_pros_toolbox" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.wlanpros. All rights reserved." "\0"
+            VALUE "InternalName", "WLAN Pros Toolbox" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Wireless LAN Professionals. All rights reserved." "\0"
             VALUE "OriginalFilename", "wlan_pros_toolbox.exe" "\0"
-            VALUE "ProductName", "wlan_pros_toolbox" "\0"
+            VALUE "ProductName", "WLAN Pros Toolbox" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
