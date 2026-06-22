@@ -197,7 +197,10 @@ void main() {
       // Test My Connection result screen (NOT a catalog tile), so it is exempt
       // from the catalog-match requirement via nonCatalogHelpIds below.
       // 141 + 1 = 142.
-      expect(store.count, 142);
+      // 143 = + Time Server (NTP) (ntp-time) 2026-06-21: an SNTP client in
+      // Networking Tools (server time + signed clock offset + round-trip delay
+      // over UDP/123). 142 + 1 = 143.
+      expect(store.count, 143);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

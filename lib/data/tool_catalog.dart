@@ -507,6 +507,15 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
       ),
       ToolEntry(
+        id: 'ntp-time',
+        title: 'Time Server (NTP)',
+        description:
+            'Query an NTP server over SNTP — server time, your clock offset, '
+            'and round-trip delay',
+        routeName: '/tools/ntp-time',
+        isLive: true,
+      ),
+      ToolEntry(
         id: 'ipv4-subnet',
         title: 'IP Subnetting (IPv4)',
         description: 'Network, broadcast, host range, mask ⇄ prefix, CIDR math',

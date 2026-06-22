@@ -127,6 +127,10 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
   'packet-sender': <String>[
     'raw packet', 'tcp', 'udp', 'payload', 'socket', 'send bytes', 'netcat',
   ],
+  'ntp-time': <String>[
+    'ntp', 'time', 'clock', 'sntp', 'stratum', 'sync', 'time server',
+    'clock offset', 'time.apple.com', 'pool.ntp.org', 'rfc 4330',
+  ],
   'ipv4-subnet': <String>[
     'cidr', 'netmask', 'subnet mask', 'vlsm', 'wildcard', 'broadcast',
     'host range', 'subnetting',

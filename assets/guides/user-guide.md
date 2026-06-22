@@ -1,12 +1,14 @@
 # WLAN Pros Toolbox: A Guide for Everyone
 
+_A plain-language tour of the app · app v1.5.4 · updated 2026-06-19_
+
 Most slow Wi-Fi complaints come down to one question: is it the Wi-Fi inside your home or office, or the internet connection coming in from outside? This app answers that question in plain English, with one tap, and it does it without asking you to understand a single piece of Wi-Fi jargon. That is the whole promise. Everything else in here is a bonus.
 
 I built the WLAN Pros Toolbox so that the next time your video call freezes or a page won't load, you have a friendly, honest tool in your pocket that tells you what is actually going on. You do not need to be a network engineer. You do not need an account. You do not need to pay. Open it, tap, read the answer.
 
 ## What this app is, and who it's for
 
-The WLAN Pros Toolbox is a free app for your iPhone and your Mac. It is packed with more than 100 small tools that read your connection, run quick tests, and look things up. Some of those tools are for full-time Wi-Fi professionals, and they are deep. Some of them, though, are for anyone who has ever stared at a spinning loading wheel and wondered why.
+The WLAN Pros Toolbox is a free app for iPhone, Mac, Android, Windows, and the web. It is packed with more than 100 small tools that read your connection, run quick tests, and look things up. Some of those tools are for full-time Wi-Fi professionals, and they are deep. Some of them, though, are for anyone who has ever stared at a spinning loading wheel and wondered why.
 
 This guide is written for the rest of us. The teacher whose classroom Wi-Fi drops every afternoon. The office manager fielding "the internet is down again" for the third time today. The small-business owner whose card reader keeps timing out. The curious person who just wants to know what all those numbers mean. If that's you, you're in the right place.
 

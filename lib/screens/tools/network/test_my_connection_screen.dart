@@ -1813,7 +1813,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     final StringBuffer buf = StringBuffer();
 
     // ── Header ──────────────────────────────────────────────────────────────
-    buf.writeln('WLAN Pros Toolbox — Connection Report');
+    buf.writeln('WLAN Pros Toolbox: Connection Report');
     buf.writeln('Generated: ${fact('Tested')}');
     if (v != null) {
       buf.writeln(

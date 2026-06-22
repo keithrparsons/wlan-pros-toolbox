@@ -83,6 +83,15 @@ class NetworkSupport {
   /// download-the-app fallback. Same `!kIsWeb` gate as the other socket tools.
   static bool get whoisSupported => !kIsWeb;
 
+  /// Time Server (NTP) support. Sends a unicast SNTP request over an outbound
+  /// UDP datagram (`RawDatagramSocket.bind` + `send`) to a remote time server
+  /// on port 123. Browsers cannot open UDP sockets, so web is routed to the
+  /// download-the-app fallback. Same `!kIsWeb` gate as the other socket tools.
+  /// On native this needs only the outbound network-client capability already
+  /// shipped (macOS `network.client`; iOS allows outbound UDP to a remote host
+  /// without a local-network grant since the target is not on the LAN).
+  static bool get ntpSupported => !kIsWeb;
+
   /// Wake-on-LAN support. Sends a UDP magic packet via a broadcast datagram
   /// socket (`RawDatagramSocket.bind` + `broadcastEnabled`). Browsers cannot
   /// open UDP sockets or send broadcasts, so web is routed to the fallback.

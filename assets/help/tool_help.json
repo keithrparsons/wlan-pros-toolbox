@@ -1890,6 +1890,27 @@
       ],
       "source": "packet_sender_service.dart:1-472"
     },
+    "ntp-time": {
+      "name": "Time Server (NTP)",
+      "category": "Networking Tools",
+      "purpose": "Query an NTP server over SNTP and report the server's time, your device clock's signed offset, and the network round-trip delay.",
+      "whyHere": "A skewed device clock quietly breaks TLS certificate validation, Kerberos, and 802.1X/EAP, and it desynchronizes packet-capture timestamps across machines. Reach for this to confirm your laptop or phone agrees with a reference time source, and by how much, before you trust a timestamp or chase a cert error.",
+      "howToUse": [
+        "Leave the default server (time.apple.com) or enter another (e.g. pool.ntp.org), then tap Check time.",
+        "Read the Clock offset row: the signed milliseconds plus a plain-language verdict (in sync / behind / ahead). A positive offset means your device is behind the server.",
+        "Round-trip delay is the network time the request took there and back; a large delay reduces offset precision."
+      ],
+      "inputs": [],
+      "algorithm": "Sends a 48-byte SNTP client request (header byte 0x1B = LI 0 / version 3 / mode 3 client) as an outbound UDP datagram to port 123 via RawDatagramSocket — not an ntpdate/sntp subprocess (sandbox-blocked) and not an HTTPS time API (which reports server time but cannot measure the symmetric round-trip the four-timestamp formula needs) (ntp_service.dart:1-46). It records t1 at send and t4 at receive, reads the server receive (t2) and transmit (t3) timestamps from the reply, converts the 32.32 fixed-point NTP timestamps (seconds since 1900, minus 2208988800 for the Unix epoch) to UTC, and computes offset = ((t2 - t1) + (t3 - t4)) / 2 and delay = (t4 - t1) - (t3 - t2) (ntp_service.dart:22-40, parseReply). The parse is a pure function over the 48 reply bytes + t1 + t4, unit-tested on a crafted packet with no network.",
+      "example": "time.apple.com, stratum 1: server 2026-06-21 14:30:00.120 UTC, clock offset +42 ms (your clock is 42 ms behind), round-trip delay 18 ms.",
+      "fieldNotes": [
+        "Platform differences: works on every native platform (an outbound UDP datagram to a remote server needs only the network-client capability already shipped; the target is not on the LAN, so iOS needs no local-network grant). Gated off on web, where UDP sockets don't exist.",
+        "Honesty (GL-005): a timeout, a DNS failure, a reply shorter than 48 bytes, or a server returning stratum 0 (kiss-o'-death / unspecified) all surface as a clear error, never a fabricated offset or a zeroed delay. A tiny negative round-trip delay from clock jitter is clamped to 0.",
+        "Offsets within ±50 ms read as \"in sync\"; >2 s is flagged as an issue (it breaks TLS/Kerberos/EAP), smaller skews as a heads-up. The offset is only as precise as the round-trip is symmetric, so a high-jitter or high-delay path widens the uncertainty. Nothing is sent anywhere except the chosen NTP server; no data is stored.",
+        "Stratum is read from the reply header: 1 = primary (synced to a reference clock), 2 = secondary, 3-15 = each a further hop, 16 = unsynchronized. See the Date & Time Standards reference for the full RFC 5905 stratum table."
+      ],
+      "source": "ntp_service.dart:1-360"
+    },
     "cli-commands": {
       "name": "Network CLI Commands",
       "category": "Quick Reference",

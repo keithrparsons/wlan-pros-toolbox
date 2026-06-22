@@ -1205,7 +1205,7 @@ void main() {
       expect(clipboardWrites, isNotEmpty);
       final String copied = clipboardWrites.last;
       // Report header + two-axis summary line (Keith #4).
-      expect(copied, contains('WLAN Pros Toolbox — Connection Report'));
+      expect(copied, contains('WLAN Pros Toolbox: Connection Report'));
       expect(copied, contains('Summary: Wi-Fi '));
       expect(copied, contains('Internet '));
       expect(copied, contains('Internet Down: 60 Mbps'));
@@ -2156,7 +2156,7 @@ void main() {
 
         final String copied = clipboardWrites.last;
         // Polished report header + section headers (Keith #4).
-        expect(copied, contains('WLAN Pros Toolbox — Connection Report'));
+        expect(copied, contains('WLAN Pros Toolbox: Connection Report'));
         expect(copied, contains('WI-FI'));
         expect(copied, contains('INTERNET'));
         expect(copied, contains('DNS'));

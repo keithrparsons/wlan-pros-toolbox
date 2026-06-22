@@ -117,6 +117,7 @@ import '../screens/tools/network/network_discovery_screen.dart';
 import '../screens/tools/network/ap_scan_screen.dart';
 import '../screens/tools/network/mobile_traceroute_screen.dart';
 import '../screens/tools/network/net_quality_screen.dart';
+import '../screens/tools/network/ntp_screen.dart';
 import '../screens/tools/network/test_my_connection_screen.dart';
 import '../screens/tools/network/packet_sender_screen.dart';
 import '../screens/tools/network/ping_screen.dart';
@@ -326,6 +327,7 @@ class AppRouter {
   static const String myCurrentLocation = '/tools/my-current-location';
   static const String macOui = '/tools/mac-oui';
   static const String packetSender = '/tools/packet-sender';
+  static const String ntpTime = '/tools/ntp-time';
   static const String ipv4Subnet = '/tools/ipv4-subnet';
 
   /// Network Discovery — LAN host + service scan (TICKET-HSD-02). The id
@@ -622,6 +624,7 @@ class AppRouter {
     myCurrentLocation: (_) => const MyCurrentLocationScreen(),
     macOui: (_) => const MacOuiScreen(),
     packetSender: (_) => const PacketSenderScreen(),
+    ntpTime: (_) => const NtpScreen(),
     ipv4Subnet: (_) => const SubnetCalcScreen(),
     networkDiscovery: (_) => const NetworkDiscoveryScreen(),
     nearbyApScan: (_) => const ApScanScreen(),
