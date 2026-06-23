@@ -1845,7 +1845,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       if (_isIos && !_iosRfCaptured)
         const _CopyRow(
           'Note',
-          'Wi-Fi signal details not captured — tap "Capture Wi-Fi details" in '
+          'Wi-Fi signal details not captured. Tap "Capture Wi-Fi details" in '
               'the app to read them via the companion Shortcut.',
         ),
     ]);
@@ -2093,6 +2093,10 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       context: context,
       openUrl: bridge.openUrl,
       onInstalled: () async {
+        // Persist the global onboarding-seen flag the moment the user completes
+        // the install hand-off, so no OTHER live tool re-prompts in the window
+        // before the first Live payload lands (null-safe; never throws).
+        await _onboardingService?.markOnboardingSeen();
         if (mounted) _run();
       },
     );
@@ -3683,7 +3687,7 @@ class _LocationNameHint extends StatelessWidget {
     // System Settings deep-link will help. The button copy names which it is.
     final String action =
         hint.promptable ? 'Allow Location' : 'Open settings';
-    const String message = 'Wi-Fi network name hidden — Location access needed';
+    const String message = 'Wi-Fi network name hidden. Location access needed.';
 
     return Semantics(
       container: true,
@@ -3792,7 +3796,7 @@ class _WifiLinkSection extends StatelessWidget {
           Text(
             'Wi-Fi signal details (RSSI, channel, rate, and PHY) need a quick '
             'capture on iOS. Tap below to read them through the one-time '
-            'companion Shortcut — no Location permission needed.',
+            'companion Shortcut, no Location permission needed.',
             style: text.bodyMedium?.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.sm),

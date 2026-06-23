@@ -50,6 +50,7 @@ import '../../../services/network/cellular_info_adapter.dart';
 import '../../../services/network/cellular_info_bridge.dart';
 import '../../../services/network/cellular_monitor_controller.dart';
 import '../../../services/network/cellular_time_series.dart';
+import '../../../services/network/live_onboarding_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/wifi_live_shortcuts_config.dart';
 import '../../../theme/app_color_scheme.dart';
@@ -67,6 +68,7 @@ class CellularInfoScreen extends StatefulWidget {
     super.key,
     this.sourceOverride,
     this.iosBridge,
+    this.onboardingService,
   });
 
   /// Forces a specific data source (tests). Defaults to the host platform.
@@ -74,6 +76,12 @@ class CellularInfoScreen extends StatefulWidget {
 
   /// Injectable iOS bridge (tests). Defaults to the real Shortcuts bridge.
   final CellularInfoBridge? iosBridge;
+
+  /// Injectable live-onboarding service (tests). Defaults to a real instance.
+  /// Shared cross-tool via the single persisted shared_preferences flag, so
+  /// marking onboarding seen here suppresses the first-run sheet in every other
+  /// live tool too.
+  final LiveOnboardingService? onboardingService;
 
   @override
   State<CellularInfoScreen> createState() => _CellularInfoScreenState();
@@ -85,6 +93,7 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
 
   // ---- iOS (Live streaming) state ----
   CellularInfoBridge? _iosBridge;
+  LiveOnboardingService? _onboardingService;
   CellularMonitorController? _liveController;
   CellularTimeSeries? _series;
   CellularInfo? _lastCharted;
@@ -117,6 +126,8 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
 
     if (_source == CellularInfoSource.iosShortcuts) {
       _iosBridge = widget.iosBridge ?? CellularInfoBridge();
+      _onboardingService =
+          widget.onboardingService ?? LiveOnboardingService();
       _liveController = CellularMonitorController(bridge: _iosBridge!);
       _series = CellularTimeSeries();
       _liveController!.addListener(_captureSample);
@@ -200,6 +211,10 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
       context: context,
       openUrl: bridge.openUrl,
       onInstalled: () async {
+        // Persist the global onboarding-seen flag the moment the user completes
+        // the install hand-off, so no OTHER live tool re-prompts in the window
+        // before the first Live payload lands (null-safe; never throws).
+        await _onboardingService?.markOnboardingSeen();
         await _liveController?.load();
         if (!mounted) return;
         await _startLive();

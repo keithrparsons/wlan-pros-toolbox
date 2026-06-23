@@ -1436,7 +1436,7 @@ void main() {
       // ON-SCREEN hint is now visible where the network name would sit.
       expect(adapter.promptRequested, isFalse);
       final Finder hint = find.text(
-        'Wi-Fi network name hidden — Location access needed',
+        'Wi-Fi network name hidden. Location access needed.',
       );
       await tester.ensureVisible(hint);
       expect(hint, findsOneWidget);

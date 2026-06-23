@@ -602,7 +602,7 @@ class _LogoHeader extends StatelessWidget {
                 : null,
           ),
           child: Semantics(
-            label: 'WLAN Pros — Wireless LAN Professionals',
+            label: 'WLAN Pros, Wireless LAN Professionals',
             image: true,
             // The raster carries no text layer; the Semantics label above is the
             // accessible name, so the bare Image is hidden from the a11y tree.

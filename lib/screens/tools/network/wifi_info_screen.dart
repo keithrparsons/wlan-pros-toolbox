@@ -524,6 +524,10 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       context: context,
       openUrl: bridge.openUrl,
       onInstalled: () async {
+        // Persist the global onboarding-seen flag the moment the user completes
+        // the install hand-off, so no OTHER live tool re-prompts in the window
+        // before the first Live payload lands (null-safe; never throws).
+        await _onboardingService?.markOnboardingSeen();
         await _liveController?.load();
         if (!mounted) return;
         await _startLive();

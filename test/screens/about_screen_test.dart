@@ -142,7 +142,7 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.bySemanticsLabel('WLAN Pros — Wireless LAN Professionals'),
+      find.bySemanticsLabel('WLAN Pros, Wireless LAN Professionals'),
       findsOneWidget,
     );
   });

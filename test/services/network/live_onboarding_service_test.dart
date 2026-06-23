@@ -84,6 +84,41 @@ void main() {
     });
   });
 
+  group('LiveOnboardingService — cross-screen latch (the re-prompt bug)', () {
+    // Regression for the iOS bug where installing the "WLAN Pros Live" Shortcut
+    // from one live tool left OTHER live tools prompting to install it AGAIN in
+    // the window before the first Live payload arrived. The fix marks the global
+    // seen-flag the moment the user taps "I've added it" (onInstalled), so any
+    // other screen — represented here by a SECOND service instance over the same
+    // persisted store — treats onboarding as done immediately, with no payload.
+    test(
+        'after onInstalled marks seen on screen A, screen B does not auto-prompt '
+        '(hasEverReceivedPayload still false)', () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+
+      // Screen A: brand-new user opens a live tool and would be onboarded.
+      final screenA =
+          LiveOnboardingService(getStore: SharedPreferences.getInstance);
+      expect(
+        await screenA.shouldShowOnboarding(hasEverReceivedPayload: false),
+        isTrue,
+      );
+
+      // User taps "I've added it" → onInstalled persists the global flag.
+      await screenA.markOnboardingSeen();
+
+      // Screen B is a DIFFERENT instance (a different live screen) sharing the
+      // same persisted store, opened before any Live payload has arrived.
+      final screenB =
+          LiveOnboardingService(getStore: SharedPreferences.getInstance);
+      expect(
+        await screenB.shouldShowOnboarding(hasEverReceivedPayload: false),
+        isFalse,
+        reason: 'second live tool must not re-prompt before first payload',
+      );
+    });
+  });
+
   group('LiveOnboardingService — storage faults degrade safely', () {
     test('a READ failure resolves to "seen" so a broken store never nags',
         () async {

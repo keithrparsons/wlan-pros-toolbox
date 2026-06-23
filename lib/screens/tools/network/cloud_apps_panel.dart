@@ -249,7 +249,7 @@ class _CloudAppRow extends StatelessWidget {
     final String status = ok ? 'reachable' : 'unreachable';
     final String rtt = ok && result.latencyMs != null
         ? '${result.latencyMs!.round()} ms'
-        : '—';
+        : 'n/a';
 
     return Semantics(
       container: true,
