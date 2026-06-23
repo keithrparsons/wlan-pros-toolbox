@@ -23,11 +23,25 @@
     <line x1="30" y1="118" x2="222" y2="118"/>
     <path d="M38 114 L30 118 L38 122 M214 114 L222 118 L214 122"/>
   </g>
-  <text x="126" y="136" fill="#A2CC3A" font-size="14" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">&#955;</text>
+  <!-- lambda symbol as a vector <path> (was &#955; in DM Mono <text>, which lacks
+       lambda entirely so it tofu'd; GL-003 8.6.1: symbols = paths, never <text>). -->
+  <path d="M126.9 124.5 L122.0 136.0 M125.0 128.7 L130.1 136.0" fill="none"
+        stroke="#A2CC3A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
 
-  <!-- Formula header -->
-  <text x="160" y="20" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">&#955; = c / f</text>
+  <!-- Formula header: lambda is a <path>, the ASCII "= c / f" stays <text> at a
+       fixed left anchor so no monospace alignment is lost (GL-003 8.6.1). -->
+  <path d="M134.9 9.0 L130.0 20.5 M133.0 13.2 L138.1 20.5" fill="none"
+        stroke="#E5E5E5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="142" y="20" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="start" font-family="DM Mono, monospace"> = c / f</text>
 
-  <!-- Frequency label below -->
-  <text x="160" y="154" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle">higher freq f &#8594; shorter &#955;</text>
+  <!-- Frequency label: arrow and trailing lambda are <path>s; the ASCII text is
+       split into two left-anchored runs so the arrow + lambda sit in fixed gaps. -->
+  <text x="74" y="154" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="start">higher freq f</text>
+  <!-- rightwards arrow (was &#8594;) -->
+  <path d="M150 150.5 H165 M161 146.5 L165 150.5 L161 154.5" fill="none"
+        stroke="#9C9C9C" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="170" y="154" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="start">shorter</text>
+  <!-- trailing lambda (was &#955;) -->
+  <path d="M222.6 145.0 L218.5 154.0 M221.0 148.3 L225.0 154.0" fill="none"
+        stroke="#9C9C9C" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

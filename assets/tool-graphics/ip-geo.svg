@@ -3,7 +3,9 @@
        plus an ISP / location record card. Lime = the located pin + record. -->
 
   <!-- Header -->
-  <text x="160" y="20" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">IP &#8594; geographic location</text>
+  <text fill="#E5E5E5" font-size="13" font-weight="500" x="89.3" y="20.0" text-anchor="start">IP</text>
+  <path d="M105.3 15.8 H113.3 M109.8 12.3 L113.3 15.8 L109.8 19.3" fill="none" stroke="#E5E5E5" stroke-width="1.495" stroke-linecap="round" stroke-linejoin="round"/>
+  <text fill="#E5E5E5" font-size="13" font-weight="500" x="116.3" y="20.0" text-anchor="start">geographic location</text>
 
   <!-- IP tag (the query input, neutral) -->
   <rect x="22" y="44" width="92" height="20" rx="2" stroke="#E5E5E5" stroke-width="1.5"/>

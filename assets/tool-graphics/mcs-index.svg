@@ -3,7 +3,9 @@
        Lime = a representative MCS row's data rate. Archetype E (table/matrix preview). -->
 
   <!-- Header -->
-  <text x="160" y="20" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">MCS index &#8594; data rate</text>
+  <text fill="#E5E5E5" font-size="13" font-weight="500" x="96.2" y="20.0" text-anchor="start">MCS index</text>
+  <path d="M160.3 15.8 H168.3 M164.8 12.3 L168.3 15.8 L164.8 19.3" fill="none" stroke="#E5E5E5" stroke-width="1.495" stroke-linecap="round" stroke-linejoin="round"/>
+  <text fill="#E5E5E5" font-size="13" font-weight="500" x="171.3" y="20.0" text-anchor="start">data rate</text>
 
   <!-- Rate axis (vertical, neutral) -->
   <g stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round">

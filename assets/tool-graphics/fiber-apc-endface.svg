@@ -57,7 +57,10 @@
   <g transform="translate(64,360)">
     <line x1="1" y1="1" x2="13" y2="13" stroke="#F26E6E" stroke-width="2.4" stroke-linecap="round"/>
     <line x1="13" y1="1" x2="1" y2="13" stroke="#F26E6E" stroke-width="2.4" stroke-linecap="round"/>
-    <text x="24" y="12" fill="#F26E6E" font-size="14" font-weight="700">NEVER MATE APC &#8596; UPC</text>
+    <!-- left-right arrow (was &#8596;) as a vector <path>; GL-003 8.6.1. -->
+    <text x="24" y="12" fill="#F26E6E" font-size="14" font-weight="700">NEVER MATE APC</text>
+    <path d="M141 7.5 H153 M144.5 4 L141 7.5 L144.5 11 M149.5 4 L153 7.5 L149.5 11" fill="none" stroke="#F26E6E" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="155" y="12" fill="#F26E6E" font-size="14" font-weight="700">UPC</text>
   </g>
 
   <!-- mini diagram of mismatched faces leaving an air gap -->

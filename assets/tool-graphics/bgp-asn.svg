@@ -3,7 +3,9 @@
        returning a record card (AS number, holder, prefix, peers). Lime = the queried ASN + record. -->
 
   <!-- Header -->
-  <text x="160" y="20" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">IP &#8594; AS number lookup</text>
+  <text fill="#E5E5E5" font-size="13" font-weight="500" x="92.7" y="20.0" text-anchor="start">IP</text>
+  <path d="M108.8 15.8 H116.8 M113.3 12.3 L116.8 15.8 L113.3 19.3" fill="none" stroke="#E5E5E5" stroke-width="1.495" stroke-linecap="round" stroke-linejoin="round"/>
+  <text fill="#E5E5E5" font-size="13" font-weight="500" x="119.8" y="20.0" text-anchor="start">AS number lookup</text>
 
   <!-- Peer AS clouds (neutral scaffold) -->
   <g stroke="#9C9C9C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">

@@ -99,5 +99,8 @@
     <path d="M100 117 L118 125 M118 117 L100 125"/>
   </g>
   <text x="266" y="114" fill="#A2CC3A" font-size="10" font-weight="500" text-anchor="middle">pairs 2 &amp; 3</text>
-  <text x="266" y="128" fill="#A2CC3A" font-size="10" font-weight="500" text-anchor="middle">swap A&#8596;B</text>
+  <!-- left-right arrow (was &#8596;) as a vector <path>; GL-003 8.6.1. -->
+  <text x="241" y="128" fill="#A2CC3A" font-size="10" font-weight="500" text-anchor="start">swap A</text>
+  <path d="M274.5 124.8 H282.5 M277 122.3 L274.5 124.8 L277 127.3 M280 122.3 L282.5 124.8 L280 127.3" fill="none" stroke="#A2CC3A" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="284.5" y="128" fill="#A2CC3A" font-size="10" font-weight="500" text-anchor="start">B</text>
 </svg>

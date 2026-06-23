@@ -36,6 +36,11 @@
   <line x1="214" y1="78" x2="298" y2="78" stroke="#A2CC3A" stroke-width="1.5" stroke-linecap="round" opacity="0.32"/>
   <path d="M292 74 L298 78 L292 82" stroke="#A2CC3A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.32"/>
 
-  <!-- Footer formula -->
-  <text x="160" y="152" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">atten = &#931; dB per material</text>
+  <!-- Footer formula. Capital sigma as a vector <path> (was &#931; in DM Mono,
+       which carries no Greek -> tofu): top bar, diagonal to center, diagonal to
+       bottom-left, bottom bar. ASCII runs are start-anchored monospace with sigma
+       in the fixed gap (GL-003 8.6.1). -->
+  <text x="62.4" y="152" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="start" font-family="DM Mono, monospace">atten = </text>
+  <path d="M124.8 142.5 H132 M132 142.5 L127.4 147.2 L124.8 151.8 M124.8 151.8 H132.4" fill="none" stroke="#E5E5E5" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="132.8" y="152" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="start" font-family="DM Mono, monospace"> dB per material</text>
 </svg>

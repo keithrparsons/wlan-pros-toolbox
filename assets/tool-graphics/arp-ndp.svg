@@ -2,7 +2,9 @@
   <!-- ARP / NDP: discovering neighbors on the local LAN and mapping each IP to its MAC.
        Lime = the resolved MAC addresses (the answer the query produces). Archetype G (lookup/record). -->
 
-  <text x="160" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">neighbor discovery (IP &#8594; MAC)</text>
+  <text fill="#E5E5E5" font-size="13" font-weight="500" x="71.9" y="22.0" text-anchor="start">neighbor discovery (IP</text>
+  <path d="M205.8 17.8 H213.8 M210.3 14.3 L213.8 17.8 L210.3 21.3" fill="none" stroke="#E5E5E5" stroke-width="1.495" stroke-linecap="round" stroke-linejoin="round"/>
+  <text fill="#E5E5E5" font-size="13" font-weight="500" x="216.8" y="22.0" text-anchor="start">MAC)</text>
 
   <!-- This device (left) -->
   <rect x="22" y="58" width="48" height="44" rx="4" stroke="#E5E5E5" stroke-width="1.75"/>

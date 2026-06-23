@@ -26,36 +26,40 @@
   <rect x="75"  y="102" width="150" height="36" rx="4" stroke="#E5E5E5" stroke-width="1.5"/>
   <rect x="415" y="102" width="150" height="36" rx="4" stroke="#E5E5E5" stroke-width="1.5"/>
   <text x="118" y="125" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">kB</text>
-  <text x="195" y="125" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">10&#179;</text>
+  <!-- Exponents rendered as raised ASCII <tspan> (smaller size + dy), NOT Unicode
+       superscript glyphs: DM Mono lacks the superscripts U+2070/2076/2079 so the
+       0/6/9 exponents tofu'd while 2/3/4 rendered, breaking the exponents
+       unevenly. ASCII digits in every font (GL-003 8.6.1). -->
+  <text x="195" y="125" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">10<tspan font-size="7.5" dy="-4">3</tspan></text>
   <text x="458" y="125" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">KiB</text>
-  <text x="538" y="125" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">2&#185;&#8304;</text>
+  <text x="538" y="125" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">2<tspan font-size="7.5" dy="-4">10</tspan></text>
   <text x="320" y="124" fill="#9C9C9C" font-size="12.5" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">2.4%</text>
 
   <!-- rung 2 : MB / MiB -->
   <rect x="75"  y="150" width="150" height="36" rx="4" stroke="#E5E5E5" stroke-width="1.5"/>
   <rect x="415" y="150" width="150" height="36" rx="4" stroke="#E5E5E5" stroke-width="1.5"/>
   <text x="118" y="173" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">MB</text>
-  <text x="195" y="173" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">10&#8310;</text>
+  <text x="195" y="173" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">10<tspan font-size="7.5" dy="-4">6</tspan></text>
   <text x="458" y="173" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">MiB</text>
-  <text x="538" y="173" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">2&#178;&#8304;</text>
+  <text x="538" y="173" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">2<tspan font-size="7.5" dy="-4">20</tspan></text>
   <text x="320" y="172" fill="#9C9C9C" font-size="12.5" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">4.9%</text>
 
   <!-- rung 3 : GB / GiB - LIME HERO -->
   <rect x="75"  y="198" width="150" height="36" rx="4" stroke="#A1CC3A" stroke-width="2"/>
   <rect x="415" y="198" width="150" height="36" rx="4" stroke="#A1CC3A" stroke-width="2"/>
   <text x="118" y="221" fill="#A1CC3A" font-size="15" font-weight="700" text-anchor="middle" font-family="DM Mono, monospace">GB</text>
-  <text x="195" y="221" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">10&#8313;</text>
+  <text x="195" y="221" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">10<tspan font-size="7.5" dy="-4">9</tspan></text>
   <text x="458" y="221" fill="#A1CC3A" font-size="15" font-weight="700" text-anchor="middle" font-family="DM Mono, monospace">GiB</text>
-  <text x="538" y="221" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">2&#179;&#8304;</text>
+  <text x="538" y="221" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">2<tspan font-size="7.5" dy="-4">30</tspan></text>
   <text x="320" y="220" fill="#A1CC3A" font-size="14" font-weight="700" text-anchor="middle" font-family="DM Mono, monospace">7.37%</text>
 
   <!-- rung 4 : TB / TiB -->
   <rect x="75"  y="246" width="150" height="36" rx="4" stroke="#E5E5E5" stroke-width="1.5"/>
   <rect x="415" y="246" width="150" height="36" rx="4" stroke="#E5E5E5" stroke-width="1.5"/>
   <text x="118" y="269" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">TB</text>
-  <text x="195" y="269" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">10&#185;&#178;</text>
+  <text x="195" y="269" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">10<tspan font-size="7.5" dy="-4">12</tspan></text>
   <text x="458" y="269" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">TiB</text>
-  <text x="538" y="269" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">2&#8308;&#8304;</text>
+  <text x="538" y="269" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">2<tspan font-size="7.5" dy="-4">40</tspan></text>
   <text x="320" y="268" fill="#9C9C9C" font-size="12.5" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">9.95%</text>
 
   <!-- divergence line down the center, in SHORT SEGMENTS that live only in the
@@ -69,7 +73,7 @@
   </g>
 
   <!-- lime hero caption, in clear space below the ladders -->
-  <text x="320" y="310" fill="#A1CC3A" font-size="12.5" font-weight="600" text-anchor="middle">A "1 TB" drive (10&#185;&#178; bytes) shows as ~931 GiB &#8212; the 7.37% GB/GiB gap.</text>
+  <text x="320" y="310" fill="#A1CC3A" font-size="12.5" font-weight="600" text-anchor="middle">A "1 TB" drive (10<tspan font-size="8.5" dy="-4.5">12</tspan><tspan dy="4.5"> bytes) shows as ~931 GiB &#8212; the 7.37% GB/GiB gap.</tspan></text>
 
   <!-- ============================ BIT vs BYTE NOTE ============================ -->
   <!-- separating rule with generous space above and below -->

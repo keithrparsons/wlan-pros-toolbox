@@ -22,7 +22,12 @@
   <!-- over-pull consequence callout, top-right -->
   <text x="306" y="22" font-size="9" font-weight="600" fill="#F26E6E" text-anchor="end">Over-pull</text>
   <text x="306" y="34" font-size="8" fill="#E5E5E5" text-anchor="end">stretches conductors</text>
-  <text x="306" y="45" font-size="8" fill="#E5E5E5" text-anchor="end">&#8593; attenuation, &#8593; NEXT</text>
+  <!-- Up-arrows (was &#8593;) as vector <path>s; runs start-anchored with each arrow
+       in its fixed gap (GL-003 8.6.1). -->
+  <path d="M227.7 45 V38 M225.2 40.5 L227.7 38 L230.2 40.5" fill="none" stroke="#E5E5E5" stroke-width="1.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="232.7" y="45" font-size="8" fill="#E5E5E5" text-anchor="start">attenuation, </text>
+  <path d="M281.2 45 V38 M278.7 40.5 L281.2 38 L283.7 40.5" fill="none" stroke="#E5E5E5" stroke-width="1.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="286.2" y="45" font-size="8" fill="#E5E5E5" text-anchor="start">NEXT</text>
 
   <!-- ===== limit value, clear space above the gauge ===== -->
   <text x="136" y="76" font-size="13" font-weight="600" fill="#A1CC3A" text-anchor="middle" font-family="'DM Mono', monospace">25 lbf</text>
@@ -47,7 +52,10 @@
     <line x1="264" y1="104" x2="264" y2="109" stroke="#9C9C9C" stroke-width="1"/>
     <text x="264" y="118">~90&#8211;110</text>
   </g>
-  <text x="232" y="130" font-size="7.5" fill="#9C9C9C" text-anchor="middle">stretch &#8594; break (illustrative)</text>
+  <!-- rightwards arrow (was &#8594;) as a vector <path>; GL-003 8.6.1. -->
+  <text x="184.3" y="130" font-size="7.5" fill="#9C9C9C" text-anchor="start">stretch</text>
+  <path d="M210.1 127.6 H218.1 M214.6 124.6 L218.1 127.6 L214.6 130.6" fill="none" stroke="#9C9C9C" stroke-width="0.95" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="218.1" y="130" font-size="7.5" fill="#9C9C9C" text-anchor="start">break (illustrative)</text>
 
   <!-- the rule + attribution, bottom-left, clear of the failure labels above -->
   <text x="24" y="146" font-size="10.5" font-weight="600" fill="#E5E5E5">Max pull tension &#8212; do not exceed</text>
