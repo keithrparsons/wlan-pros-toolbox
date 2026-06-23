@@ -1,7 +1,7 @@
-// Wi-Fi vs Internet — the pure verdict engine.
+// Wi-Fi vs Internet - the pure verdict engine.
 //
 // Answers one field question for a Wi-Fi engineer: "Is the problem my Wi-Fi
-// LINK, or the internet UPSTREAM of it?" — and backs the answer with the actual
+// LINK, or the internet UPSTREAM of it?" - and backs the answer with the actual
 // numbers (Keith's "verdict + the numbers" style).
 //
 // CORE PRINCIPLE (Keith): the negotiated data RATE is the truth; RSSI/SNR are
@@ -11,36 +11,36 @@
 // headline verdict.
 //
 // PURE DART by design: no Flutter imports, no platform channels, no I/O. The
-// caller (wifi_vs_internet_screen) supplies the already-measured inputs — a
+// caller (wifi_vs_internet_screen) supplies the already-measured inputs - a
 // ConnectedAp's rates/SNR/RSSI plus the net_quality download/upload + dimension
-// grades — and this engine turns them into a verdict. That keeps the whole
+// grades - and this engine turns them into a verdict. That keeps the whole
 // matrix exhaustively unit-testable with plain values and no real network /
 // radio. See SPEC: Deliverables/2026-06-01-wifi-vs-internet-spec/spec.md.
 //
 // THE METRIC (all disclosed in the screen footnote, verbatim from the spec):
 //   1. Wi-Fi link rate = avg(Tx, Rx). Single-rate fallback when only one is
-//      reported (macOS public CoreWLAN exposes Tx but not Rx) — [rateBasis]
+//      reported (macOS public CoreWLAN exposes Tx but not Rx) - [rateBasis]
 //      records which path was taken.
-//   2. Usable Wi-Fi capacity = 0.55 × link rate (real throughput runs ~50–60%
+//   2. Usable Wi-Fi capacity = 0.55 × link rate (real throughput runs ~50-60%
 //      of the PHY rate).
 //   3. Internet throughput = avg(download, upload).
 //   4. Headroom ratio = internetThroughput / usableWiFiCapacity.
 //
 // VERDICT LOGIC (grade gate first, then the ratio):
-//   * Grade gate — if the internet is GOOD (throughput + latency + loss all
+//   * Grade gate - if the internet is GOOD (throughput + latency + loss all
 //     grade good/excellent) → bothHealthy, regardless of ratio. A fast link +
 //     fast internet is never mislabeled a fault.
 //   * Otherwise the ratio diagnoses the ceiling:
 //       ratio ≥ 0.70 → wifiLimiter      (the air link is the bottleneck)
 //       ratio < 0.40 → upstream         (unused link headroom; ISP/upstream)
-//       0.40–0.70    → bothContributing
+//       0.40-0.70    → bothContributing
 //   * Unknown Wi-Fi rate (wired, or iOS without the companion Shortcut) →
 //     wifiUnknown: an internet-only read with an explicit caveat.
 
 import 'dart:math' as math;
 
 /// Real-world Wi-Fi throughput as a fraction of the negotiated PHY rate
-/// (the spec's flat 0.55 — ~50–60% in practice). Exposed so a test reads the
+/// (the spec's flat 0.55 - ~50-60% in practice). Exposed so a test reads the
 /// same constant the engine uses rather than hard-coding 0.55 in two places.
 const double kUsableWifiFactor = 0.55;
 
@@ -51,26 +51,26 @@ const double kWifiLimiterRatio = 0.70;
 const double kUpstreamRatio = 0.40;
 
 /// The five mutually-exclusive verdicts. The screen maps each to a §8.13 status
-/// token AND renders the verdict WORD (never color-only — WCAG 2.2 SC 1.4.1).
+/// token AND renders the verdict WORD (never color-only - WCAG 2.2 SC 1.4.1).
 enum WifiVsInternetVerdict {
-  /// Internet is marginal/poor and within 70% of usable Wi-Fi capacity — the
+  /// Internet is marginal/poor and within 70% of usable Wi-Fi capacity - the
   /// air link is the ceiling. "It's your Wi-Fi."
   wifiLimiter,
 
-  /// Internet is marginal/poor and the link has unused headroom (ratio < 0.40)
-  /// — the bottleneck is upstream. "It's upstream — not your Wi-Fi."
+  /// Internet is marginal/poor and the link has unused headroom (ratio < 0.40),
+  /// so the bottleneck is upstream. "It's upstream, not your Wi-Fi."
   upstream,
 
-  /// Internet is marginal/poor and the ratio sits in the 0.40–0.70 middle —
+  /// Internet is marginal/poor and the ratio sits in the 0.40-0.70 middle -
   /// both the link and the upstream path are contributing.
   bothContributing,
 
-  /// The internet graded good/excellent on throughput, latency, and loss — a
+  /// The internet graded good/excellent on throughput, latency, and loss - a
   /// healthy connection, no fault to localize. "Both healthy." (Grade gate.)
   bothHealthy,
 
   /// The Wi-Fi link rate could not be measured (wired, or iOS without the
-  /// companion Shortcut) — an internet-only read with an explicit caveat.
+  /// companion Shortcut) - an internet-only read with an explicit caveat.
   wifiUnknown,
 
   /// Internet throughput could not be measured (the speed test stalled even
@@ -115,16 +115,16 @@ class OnlineEvidence {
 /// Which negotiated rates fed the link-rate figure. Drives the honest "averaged
 /// both / Tx only / Rx only" caption and the macOS Tx-only path.
 enum WifiRateBasis {
-  /// Both Tx and Rx were reported — link rate is their average.
+  /// Both Tx and Rx were reported - link rate is their average.
   averaged,
 
-  /// Only Tx was reported (the macOS public-CoreWLAN case) — link rate is Tx.
+  /// Only Tx was reported (the macOS public-CoreWLAN case) - link rate is Tx.
   txOnly,
 
-  /// Only Rx was reported — link rate is Rx.
+  /// Only Rx was reported - link rate is Rx.
   rxOnly,
 
-  /// Neither rate was reported — link rate is unknown (drives [wifiUnknown]).
+  /// Neither rate was reported - link rate is unknown (drives [wifiUnknown]).
   none,
 }
 
@@ -133,18 +133,18 @@ enum WifiRateBasis {
 /// `QualityGrade`) so this engine stays pure Dart and Flutter-free: the screen
 /// translates the three relevant grades into these flags at the boundary.
 enum InternetHealth {
-  /// Throughput + latency + loss all graded good/excellent — the grade gate
+  /// Throughput + latency + loss all graded good/excellent - the grade gate
   /// fires and the verdict is [WifiVsInternetVerdict.bothHealthy].
   good,
 
   /// At least one of those three dimensions graded fair/poor (or could not be
-  /// graded) — the ratio is allowed to diagnose where the ceiling is.
+  /// graded) - the ratio is allowed to diagnose where the ceiling is.
   marginal,
 }
 
 /// The immutable result of one Wi-Fi-vs-Internet evaluation: the verdict, the
 /// display strings, and every derived number so the screen renders them without
-/// recomputing. A value object — no behavior beyond carrying the answer.
+/// recomputing. A value object - no behavior beyond carrying the answer.
 class WifiVsInternetResult {
   /// Creates a result. All fields are set by [WifiVsInternetEngine.evaluate];
   /// the const constructor exists so tests can build expected values directly.
@@ -164,7 +164,7 @@ class WifiVsInternetResult {
   final WifiVsInternetVerdict verdict;
 
   /// The short verdict WORD/phrase shown in the verdict card (e.g. "It's your
-  /// Wi-Fi."). Always rendered alongside the status color — never color-only.
+  /// Wi-Fi."). Always rendered alongside the status color - never color-only.
   final String headline;
 
   /// One-line plain explanation of WHY this verdict, in engineer-plain English.
@@ -174,7 +174,7 @@ class WifiVsInternetResult {
   /// signal context to add (no rate, or no SNR reading). Never the headline.
   final String snrContext;
 
-  /// Which rates fed [linkRateMbps] — drives the honest "Tx only" caption.
+  /// Which rates fed [linkRateMbps] - drives the honest "Tx only" caption.
   final WifiRateBasis rateBasis;
 
   /// Usable Wi-Fi capacity = 0.55 × link rate, Mbps. Null when the rate is
@@ -201,16 +201,16 @@ class WifiVsInternetEngine {
 
   /// Evaluates the verdict from the measured inputs.
   ///
-  /// Wi-Fi link (any may be null — each platform exposes a different subset):
-  ///   * [txRateMbps] / [rxRateMbps] — negotiated rates, Mbps.
-  ///   * [rxRateAvailable] — whether THIS platform can ever expose Rx (macOS
+  /// Wi-Fi link (any may be null - each platform exposes a different subset):
+  ///   * [txRateMbps] / [rxRateMbps] - negotiated rates, Mbps.
+  ///   * [rxRateAvailable] - whether THIS platform can ever expose Rx (macOS
   ///     public CoreWLAN cannot). Carried through for the caller; the rate math
   ///     keys off whether [rxRateMbps] is non-null, not this flag.
-  ///   * [snrDb] / [rssiDbm] — supporting signal context only.
+  ///   * [snrDb] / [rssiDbm] - supporting signal context only.
   ///
   /// Internet (from net_quality, translated at the boundary):
-  ///   * [internetDownMbps] / [internetUpMbps] — measured throughput, Mbps.
-  ///   * [internetHealth] — the grade-gate input: [InternetHealth.good] when
+  ///   * [internetDownMbps] / [internetUpMbps] - measured throughput, Mbps.
+  ///   * [internetHealth] - the grade-gate input: [InternetHealth.good] when
   ///     throughput + latency + loss all grade good/excellent.
   static WifiVsInternetResult evaluate({
     double? txRateMbps,
@@ -268,7 +268,7 @@ class WifiVsInternetEngine {
     //     (DNS resolved + public IP obtained + cloud reachability succeeded).
     //     Lead with the reachable truth instead of the bleak "could not read"
     //     verdict. This covers BOTH the no-rate case (wired) and the macOS
-    //     Tx-only case (Rx never exposed, so the ratio can't fully compute) —
+    //     Tx-only case (Rx never exposed, so the ratio can't fully compute) -
     //     in either case, strong reachability evidence outranks the missing
     //     throughput number (Keith 2026-06-17). ---
     if (internetAvg == null && onlineEvidence.isOnline) {
@@ -315,7 +315,7 @@ class WifiVsInternetEngine {
       final String explanation = highRatio
           ? 'Internet and Wi-Fi are both performing well. You are using most '
                 'of your Wi-Fi link capacity, which is expected with fast '
-                'internet — not a fault.'
+                'internet, not a fault.'
           : 'Internet and Wi-Fi are both performing well, with link capacity '
                 'to spare. No bottleneck to chase here.';
       return WifiVsInternetResult(
@@ -363,7 +363,7 @@ class WifiVsInternetEngine {
         explanation:
             'The internet path can carry more than your Wi-Fi link is passing '
             '(${_mbps(internetAvg)} internet vs ${_mbps(usableWifi)} usable '
-            'Wi-Fi). The air link is the limiter — get closer to the AP, or '
+            'Wi-Fi). The air link is the limiter: get closer to the AP, or '
             'check the channel, width, and AP, then re-test.',
         snrContext: snrContext,
         rateBasis: basis,
@@ -377,10 +377,10 @@ class WifiVsInternetEngine {
     if (bandRatio < kUpstreamRatio) {
       return WifiVsInternetResult(
         verdict: WifiVsInternetVerdict.upstream,
-        headline: "It's upstream — not your Wi-Fi",
+        headline: "It's upstream, not your Wi-Fi",
         explanation:
             'Your Wi-Fi link has unused headroom (${_mbps(usableWifi)} usable '
-            'vs ${_mbps(internetAvg)} internet). The bottleneck is upstream — '
+            'vs ${_mbps(internetAvg)} internet). The bottleneck is upstream: '
             'the ISP, modem, or the path beyond your access point.',
         snrContext: snrContext,
         rateBasis: basis,
@@ -440,23 +440,23 @@ class WifiVsInternetEngine {
 
     final bool lowRate = linkRate < lowRateMbps;
     if (!lowRate) {
-      // Healthy rate — no problem flag to raise; stay quiet rather than
+      // Healthy rate - no problem flag to raise; stay quiet rather than
       // narrate a non-issue.
       return '';
     }
 
     if (snrDb < weakSnrDb) {
-      return 'Weak signal (SNR ${snrDb}dB) is holding the link rate down — '
-          'a closer or stronger signal should raise it.';
+      return 'Weak signal (SNR ${snrDb}dB) is holding the link rate down. '
+          'A closer or stronger signal should raise it.';
     }
-    return 'Strong signal (SNR ${snrDb}dB) but a low link rate — check for '
+    return 'Strong signal (SNR ${snrDb}dB) but a low link rate. Check for '
         'interference, retries, or a legacy-rate lock.';
   }
 
   /// Formats a Mbps figure for the explanation strings: integers drop the
   /// decimal, otherwise one decimal place. Rounds half-up via [num.round].
   static String _mbps(double? v) {
-    if (v == null) return '—';
+    if (v == null) return 'n/a';
     final double rounded = (v * 10).round() / 10;
     final String n = rounded == rounded.roundToDouble()
         ? rounded.toStringAsFixed(0)
@@ -480,7 +480,7 @@ class WifiVsInternetEngine {
   }
 
   /// Clamp helper kept for symmetry with the screen's ratio display; the engine
-  /// itself never clamps the stored ratio (a >1.0 ratio is meaningful — the
+  /// itself never clamps the stored ratio (a >1.0 ratio is meaningful - the
   /// internet exceeds usable capacity, which IS the wifiLimiter signal).
   static double clampRatioForDisplay(double ratio) =>
       math.min(ratio, 9.99).clamp(0.0, 9.99);

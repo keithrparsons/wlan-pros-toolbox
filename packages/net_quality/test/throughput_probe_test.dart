@@ -383,6 +383,174 @@ void main() {
     });
   });
 
+  group('ThroughputProbe — self-hosted Rung-2 fallback (degrades gracefully)',
+      () {
+    test('feature flag defaults OFF (the fallback ships dormant)', () {
+      expect(ThroughputProbe().selfHostedFallbackEnabled, isFalse);
+    });
+
+    test('base URL is the single named WLAN Pros endpoint constant', () {
+      expect(kSpeedTestFallbackBaseUrl, 'https://speedtest.wlanpros.com');
+      expect(speedTestFallbackDownloadEndpoint().host, 'speedtest.wlanpros.com');
+      expect(speedTestFallbackDownloadEndpoint().path, '/downloading');
+      expect(speedTestFallbackUploadEndpoint().path, '/upload');
+    });
+
+    test(
+        'flag OFF: liveness probe is NEVER consulted and Cloudflare stays '
+        'primary (no extra traffic to our box)', () async {
+      var livenessCalls = 0;
+      final hitHosts = <String>{};
+      final probe = ThroughputProbe(
+        downloadStreamCount: 1,
+        // selfHostedFallbackEnabled defaults to false.
+        livenessProbe: (uri, timeout) async {
+          livenessCalls++;
+          return true;
+        },
+        downloader: (uri, max) async {
+          hitHosts.add(uri.host);
+          return 50 * 1000 * 1000;
+        },
+        uploader: (uri, bytes, max) async {
+          hitHosts.add(uri.host);
+          return bytes;
+        },
+        uploadBytes: 10 * 1000 * 1000,
+        windowTimer: _passthroughTimer(const Duration(seconds: 4)),
+        timer: _passthroughTimer(const Duration(seconds: 2)),
+      );
+      await probe.measure();
+      expect(livenessCalls, 0, reason: 'no probe when the flag is off');
+      expect(hitHosts, contains('speed.cloudflare.com'));
+      expect(hitHosts, isNot(contains('speedtest.wlanpros.com')),
+          reason: 'our box must never be hit while the flag is off');
+    });
+
+    test(
+        'flag ON but endpoint NOT live (probe false, the state today): falls '
+        'straight through to the shipped chains, never hits our box, still '
+        'measures a real rate from Cloudflare', () async {
+      final hitHosts = <String>{};
+      final probe = ThroughputProbe(
+        downloadStreamCount: 1,
+        selfHostedFallbackEnabled: true,
+        // The endpoint does not resolve yet → probe reports "not live".
+        livenessProbe: (uri, timeout) async => false,
+        downloader: (uri, max) async {
+          hitHosts.add(uri.host);
+          return 50 * 1000 * 1000; // Cloudflare answers normally.
+        },
+        uploader: (uri, bytes, max) async {
+          hitHosts.add(uri.host);
+          return bytes;
+        },
+        uploadBytes: 10 * 1000 * 1000,
+        windowTimer: _passthroughTimer(const Duration(seconds: 4)),
+        timer: _passthroughTimer(const Duration(seconds: 2)),
+      );
+      final s = await probe.measure();
+      // Real measurement off the primary, no fabricated 0, no scary error.
+      expect(s.downloadMbps, closeTo(100.0, 0.0001));
+      expect(hitHosts, contains('speed.cloudflare.com'));
+      expect(hitHosts, isNot(contains('speedtest.wlanpros.com')),
+          reason: 'a not-live Rung 2 must never be appended to the chain');
+    });
+
+    test(
+        'flag ON, endpoint NOT live, AND Cloudflare/CDN all fail: honest '
+        'ThroughputUnmeasurable (the existing online-could-not-measure terminal '
+        'state), never a fake 0, never our box', () async {
+      final hitHosts = <String>{};
+      final probe = ThroughputProbe(
+        downloadStreamCount: 1,
+        maxRetries: 2,
+        throughputRetries: 0,
+        selfHostedFallbackEnabled: true,
+        livenessProbe: (uri, timeout) async => false, // not deployed yet
+        downloader: (uri, max) async {
+          hitHosts.add(uri.host);
+          throw const ThroughputUnmeasurable('all public CDNs down');
+        },
+        uploader: (uri, bytes, max) async => bytes,
+        windowTimer: _passthroughTimer(const Duration(seconds: 1)),
+        timer: _passthroughTimer(const Duration(seconds: 1)),
+      );
+      await expectLater(
+        probe.measure(),
+        throwsA(isA<ThroughputUnmeasurable>()),
+      );
+      expect(hitHosts, isNot(contains('speedtest.wlanpros.com')),
+          reason: 'not-live Rung 2 must not be tried even when Rung 1 fails');
+    });
+
+    test(
+        'a liveness probe that THROWS is treated as not-live (defensive): the '
+        'run still completes on the shipped chains, never hangs or hard-fails',
+        () async {
+      final hitHosts = <String>{};
+      final probe = ThroughputProbe(
+        downloadStreamCount: 1,
+        selfHostedFallbackEnabled: true,
+        livenessProbe: (uri, timeout) async =>
+            throw StateError('probe blew up'),
+        downloader: (uri, max) async {
+          hitHosts.add(uri.host);
+          return 50 * 1000 * 1000;
+        },
+        uploader: (uri, bytes, max) async => bytes,
+        uploadBytes: 10 * 1000 * 1000,
+        windowTimer: _passthroughTimer(const Duration(seconds: 4)),
+        timer: _passthroughTimer(const Duration(seconds: 2)),
+      );
+      final s = await probe.measure();
+      expect(s.downloadMbps, closeTo(100.0, 0.0001));
+      expect(hitHosts, isNot(contains('speedtest.wlanpros.com')));
+    });
+
+    test(
+        'flag ON and endpoint LIVE (the go-live state): Rung 2 is APPENDED as '
+        'the LAST fallback (Cloudflare still primary, our box used only after '
+        'the public CDNs fail)', () async {
+      var livenessCalls = 0;
+      final attemptedHosts = <String>[];
+      final probe = ThroughputProbe(
+        downloadStreamCount: 1,
+        // No inner endpoint cap so the stream walks the full chain.
+        maxRetries: 9,
+        throughputRetries: 0,
+        selfHostedFallbackEnabled: true,
+        livenessProbe: (uri, timeout) async {
+          livenessCalls++;
+          expect(uri.toString(), kSpeedTestFallbackBaseUrl);
+          return true; // box answers 200
+        },
+        downloader: (uri, max) async {
+          attemptedHosts.add(uri.host);
+          // Every public CDN fails this run; only our box answers, so the
+          // stream walks to the appended Rung-2 endpoint.
+          if (uri.host == 'speedtest.wlanpros.com') {
+            // Cache-bust must be present per the OpenSpeedTest contract.
+            expect(uri.queryParameters.containsKey('r'), isTrue);
+            return 40 * 1000 * 1000;
+          }
+          throw const ThroughputUnmeasurable('public CDN down');
+        },
+        uploader: (uri, bytes, max) async => bytes,
+        uploadBytes: 10 * 1000 * 1000,
+        windowTimer: _passthroughTimer(const Duration(seconds: 4)),
+        timer: _passthroughTimer(const Duration(seconds: 2)),
+      );
+      final s = await probe.measure();
+      expect(livenessCalls, 1);
+      // Cloudflare was attempted FIRST (primary), our box LAST (fallback).
+      expect(attemptedHosts.first, 'speed.cloudflare.com');
+      expect(attemptedHosts.last, 'speedtest.wlanpros.com');
+      // 40 MB * 8 / 4s / 1e6 = 80 Mbps, measured via the live fallback.
+      expect(s.downloadMbps, closeTo(80.0, 0.0001));
+    });
+  });
+
   group('ThroughputProbe.measure — honesty (preserved from prior fix)', () {
     test('zero-byte download is treated as a failure, not 0 Mbps', () async {
       final probe = ThroughputProbe(
