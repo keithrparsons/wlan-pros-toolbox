@@ -36,11 +36,14 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../data/app_version.dart';
 import '../router/app_router.dart';
+import '../services/network/wifi_details_bridge.dart';
+import '../services/network/wifi_info_adapter.dart';
 import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 import '../widgets/app_copy_action.dart';
 import '../widgets/appearance_control.dart';
 import '../widgets/centered_content.dart';
+import 'tools/network/install_shortcut_sheet.dart';
 
 /// Main site and resource library — the WLAN Pros home, the official-site link.
 const String _kWlanProsUrl = 'https://wlanprofessionals.com';
@@ -138,6 +141,14 @@ class _AboutScreenState extends State<AboutScreen> {
                   // control on the app-level About surface, the standard
                   // reachable home for it.
                   const _AppearanceSection(),
+
+                  // Set up live Wi-Fi — iOS-only, findable install entry point
+                  // for the "WLAN Pros Live" companion Shortcut. iOS users who
+                  // never open a live tool (or look here in About) would
+                  // otherwise have no way to install it; this row opens the SAME
+                  // one-time install sheet the live tools use. Renders nothing
+                  // off iOS — macOS reads CoreWLAN natively and has no Shortcut.
+                  const _LiveSetupAboutSection(),
 
                   // 1. Why this toolbox
                   const _Section(
@@ -402,6 +413,134 @@ class _AppearanceSection extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             const AppearanceControl(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Set up live Wi-Fi — the **iOS-only** discoverable entry point, on the About
+/// surface, for installing the "WLAN Pros Live" companion Shortcut.
+///
+/// Why it exists: on iOS the only paths to the install sheet were *inside* the
+/// three live tools (the one-time auto-sheet, or the [LiveSetupCard] /
+/// [LiveRfLockedCard] buttons). A beta tester who never opened a live tool, or
+/// who looked in About, found no install affordance at all. This row closes
+/// that discoverability gap by opening the SAME [showInstallShortcutSheet] —
+/// reused, not duplicated — so what About installs can never drift from what
+/// the live tools install.
+///
+/// iOS-only gate: identical to the live tools and the category-screen
+/// [LiveSetupCard] banner — it renders only when
+/// `WifiInfoSourceResolver.resolve()` is [WifiInfoSource.iosShortcuts]. On
+/// macOS (CoreWLAN, no Shortcut), web, and every other platform it returns a
+/// zero-height [SizedBox.shrink], so the row never appears there.
+///
+/// Honesty (GL-005): iOS cannot report whether a Shortcut is already installed,
+/// so this is framed strictly as a one-time *setup* action — it never claims or
+/// implies "installed". Unlike the in-tool [LiveSetupCard], it does NOT
+/// self-hide once a payload has arrived: a findable setup entry stays put in
+/// About regardless of install-state (re-running the install is harmless), and
+/// querying that state here would add a bridge round-trip for no user benefit.
+///
+/// [onInstalled] is a deliberate no-op: About owns no live controller to kick,
+/// so the sheet simply closes after "I've added it" — starting a live reading
+/// from About would be wrong.
+///
+/// The iOS-only gate reads `defaultTargetPlatform` (web-safe; no `dart:io`),
+/// the same signal the live tools use, so a widget test drives it end-to-end
+/// via `debugDefaultTargetPlatformOverride` with no test-only constructor seam.
+class _LiveSetupAboutSection extends StatefulWidget {
+  const _LiveSetupAboutSection();
+
+  @override
+  State<_LiveSetupAboutSection> createState() => _LiveSetupAboutSectionState();
+}
+
+class _LiveSetupAboutSectionState extends State<_LiveSetupAboutSection> {
+  late final bool _isIos;
+  WiFiDetailsBridge? _bridge;
+
+  @override
+  void initState() {
+    super.initState();
+    _isIos =
+        WifiInfoSourceResolver.resolve() == WifiInfoSource.iosShortcuts;
+    // Only construct the native bridge on the iOS path — its channels have no
+    // handler elsewhere, and off-iOS this widget renders nothing anyway.
+    if (_isIos) {
+      _bridge = WiFiDetailsBridge();
+    }
+  }
+
+  Future<void> _openInstallSheet() async {
+    final WiFiDetailsBridge? bridge = _bridge;
+    if (bridge == null) return;
+    await showInstallShortcutSheet(
+      context: context,
+      openUrl: bridge.openUrl,
+      // No live controller to resume from About — the sheet just closes.
+      onInstalled: () async {},
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Off iOS (macOS CoreWLAN, web, etc.) there is no Shortcut to install, so
+    // the row never renders and takes no vertical space.
+    if (!_isIos) return const SizedBox.shrink();
+
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: colors.surface1,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          // Decorative hairline — matches the sibling section cards. The
+          // interactive target inside carries its own §8.3 focus ring.
+          border: Border.all(
+            color: colors.border,
+            width: colors.isLight ? 1.5 : 1, // §8.20.3-B card border
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Semantics(
+              header: true,
+              child: Text(
+                'Set up live Wi-Fi',
+                style: text.headlineSmall?.copyWith(
+                  // §8.20.3-A section heading bumps to 700 in light.
+                  fontWeight:
+                      colors.isLight ? FontWeight.w700 : FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Add the companion Shortcut for live signal details. iOS reads '
+              'live Wi-Fi and cellular details through a small Shortcut, "WLAN '
+              'Pros Live". You add it once, and every live tool works from then '
+              'on.',
+              style: text.bodyLarge?.copyWith(color: colors.textSecondary),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: _openInstallSheet,
+                // In-app sheet, not an external link → download glyph, mirroring
+                // the install button inside the sheet itself.
+                icon: const Icon(Icons.download_outlined, size: 20),
+                label: const Text('Set up live Wi-Fi'),
+              ),
+            ),
           ],
         ),
       ),

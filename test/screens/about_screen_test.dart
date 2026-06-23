@@ -217,4 +217,36 @@ void main() {
     // value resolves; its tooltip mirrors the idle label.
     expect(find.byTooltip('Copy version and build'), findsOneWidget);
   });
+
+  // ---- "Set up live Wi-Fi" — iOS-only install entry point ----
+  //
+  // On iOS the only way to install the "WLAN Pros Live" companion Shortcut was
+  // from inside the live tools; this About row is the findable entry point. The
+  // gate reads `defaultTargetPlatform` (via WifiInfoSourceResolver), so it is
+  // driven here with `debugDefaultTargetPlatformOverride`.
+
+  testWidgets('Set up live Wi-Fi row renders on iOS', (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+
+    await _pumpAboutTall(tester);
+
+    // The section heading + the action button both carry the label.
+    expect(find.text('Set up live Wi-Fi'), findsNWidgets(2));
+
+    // Reset synchronously before the test body ends so the binding's
+    // foundation-var invariant check passes.
+    debugDefaultTargetPlatformOverride = null;
+  });
+
+  testWidgets('Set up live Wi-Fi row is ABSENT on macOS', (tester) async {
+    // macOS reads CoreWLAN natively and has no Shortcut — the row must not
+    // render (and must take no vertical space).
+    debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+
+    await _pumpAboutTall(tester);
+
+    expect(find.text('Set up live Wi-Fi'), findsNothing);
+
+    debugDefaultTargetPlatformOverride = null;
+  });
 }
