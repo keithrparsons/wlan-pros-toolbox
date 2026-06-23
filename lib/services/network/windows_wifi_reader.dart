@@ -57,7 +57,9 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'wifi_info_service.dart'
     show WifiInfo, WifiInfoUnavailable, WifiInfoUnavailableReason;
-import 'windows_wifi_ffi.dart' show readConnectedApFromNativeWifi;
+import 'windows_wifi_ffi.dart'
+    if (dart.library.html) 'windows_wifi_ffi_web_stub.dart'
+    show readConnectedApFromNativeWifi;
 
 // The win32 surface lives entirely in windows_wifi_ffi.dart. This wrapper is the
 // platform guard: readConnectedApFromNativeWifi() is only ever called once the
