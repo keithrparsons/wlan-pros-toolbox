@@ -37,6 +37,13 @@
   <!-- Formula -->
   <text x="160" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">FSPL = 20·log f + 20·log d + 92.45</text>
 
-  <!-- "loss grows with distance" cue: small lime label on faded far arc -->
-  <text x="232" y="42" fill="#A2CC3A" font-size="12" font-weight="500" text-anchor="middle">loss &#8593;</text>
+  <!-- "loss grows" cue: small lime label on faded far arc. The up-arrow (loss
+       grows) is a vector <path>, NOT a font glyph (was U+2191 ↑), because
+       flutter_svg does not reliably resolve the bundled font for <text> on the
+       web/headless render path, so a font arrow tofus to a .notdef box there
+       (GL-003 §8.6.1). A <path> arrow is font-independent and renders identically
+       on every platform. -->
+  <text x="230" y="42" fill="#A2CC3A" font-size="12" font-weight="500" text-anchor="end">loss</text>
+  <path d="M236 41 V33 M232 37 L236 33 L240 37" fill="none" stroke="#A2CC3A"
+        stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
