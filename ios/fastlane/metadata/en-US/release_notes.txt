@@ -1,0 +1,5 @@
+Easier live Wi-Fi setup: a new "Set up live Wi-Fi" option in About, and the app no longer re-asks for the companion Shortcut once you have added it.
+
+New Roaming Log tool, a richer Test My Connection report (DNS checks plus more network detail), and a Cloud Apps reachability panel.
+
+Clearer graphics, light and dark refinements, and copy polish.
