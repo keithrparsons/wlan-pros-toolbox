@@ -1766,8 +1766,8 @@ void main() {
     );
 
     testWidgets(
-      'RUNNING a check auto-fires the companion Shortcut and the live card goes '
-      'LIVE — no manual Start tap (Keith #8)',
+      'RUNNING a check auto-fires the companion Shortcut ONCE (one-shot) — no '
+      'manual tap, and NO persistent live stream / banner (Keith #8 + 2026-06-23)',
       (tester) async {
         final bridge = _StaleFlagBridge();
         final sampler = WifiSignalSampler(
@@ -1793,21 +1793,25 @@ void main() {
           ),
         );
         await runCheck(tester);
-        // Advance past the auto-capture settle + retry window so no fake-async
-        // timer is left pending when the tree disposes. The _StaleFlagBridge's
-        // updates stream is empty, so no sample lands and the retry fires — the
+        // Advance past the one-shot settle + retry window so no fake-async timer
+        // is left pending when the tree disposes. The _StaleFlagBridge's updates
+        // stream is empty, so no sample lands and the one-shot retry fires — the
         // call count is therefore ≥1 (one auto-fire, plus the one empty-payload
         // retry), never zero and never an endless loop.
         await tester.pump(const Duration(seconds: 3));
         await tester.pumpAndSettle();
 
-        // The run auto-fired the Shortcut (no Start tap) and the card is now
-        // genuinely live — the sparklines' waiting state shows while the streamed
-        // samples begin to land.
+        // 2026-06-23 (Keith, friends-at-dinner): the run auto-fires the Shortcut
+        // ONCE (one-shot) with NO manual tap, but it must NOT raise the persistent
+        // monitoring loop — so there is no continuous stream and no persistent iOS
+        // banner. The Shortcut was fired (>=1), the persistent monitoring flag was
+        // never raised, and the sampler is NOT streaming.
         expect(bridge.runShortcutCalls, greaterThanOrEqualTo(1));
-        expect(sampler.isStreaming, isTrue);
-        expect(find.text('LIVE'), findsOneWidget);
-        expect(find.text('Start'), findsNothing);
+        // The one-shot CLEARS the (stale-true) monitoring flag and never re-raises
+        // it, so the looping Shortcut stops after its single cycle (banner clears).
+        expect(bridge.monitoringFlag, isFalse);
+        expect(sampler.isStreaming, isFalse);
+        expect(find.text('LIVE'), findsNothing);
       },
     );
   });
@@ -1833,8 +1837,8 @@ void main() {
     }
 
     testWidgets(
-      'fires ONCE on first open of the front door and deep-links to Shortcuts '
-      '(never-received payload, not seen before)',
+      'NATIVE-FIRST (2026-06-23): the front door does NOT auto-present the setup '
+      'modal on first open — a casual user reaches the idle check with no modal',
       (tester) async {
         final bridge = _FreshBridge();
         await tester.pumpWidget(
@@ -1852,18 +1856,12 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // The one-time setup sheet auto-presented BEFORE any check — the user
-        // is led to enable live Wi-Fi, not left to hit a wall.
-        expect(find.text('Set up live Wi-Fi'), findsOneWidget);
-        expect(find.text('Tap Add the Shortcut below.'), findsOneWidget);
-        // The no-Location trust signal is led, per the brief.
-        expect(find.textContaining('No Location permission'), findsOneWidget);
-
-        // Tapping "Add the Shortcut" deep-links into Shortcuts (openUrl), the
-        // WiFiman install bounce.
-        await tester.tap(find.text('Add the Shortcut'));
-        await tester.pumpAndSettle();
-        expect(bridge.openUrlCalls, 1);
+        // The forced modal setup sheet must NOT auto-fire on open (the friends-
+        // at-dinner friction). No modal, no Shortcuts deep-link bounce.
+        expect(find.text('Set up live Wi-Fi'), findsNothing);
+        expect(bridge.openUrlCalls, 0);
+        // The normal front-door idle state renders instead, with zero taps.
+        expect(find.text('Check My Connection'), findsOneWidget);
       },
     );
 
@@ -2695,14 +2693,15 @@ void main() {
     );
 
     testWidgets(
-      'iOS auto-fires the companion Shortcut on a run (no manual tap) — RF is '
-      'captured automatically',
+      'iOS auto-fires the companion Shortcut ONCE on a run (no manual tap) — RF '
+      'is captured automatically with NO persistent banner (Keith #8 + 2026-06-23)',
       (tester) async {
-        // Keith #8: running the test must auto-capture Wi-Fi RF with zero taps.
-        // The streaming bridge records runShortcut() calls; firing it once at
-        // test start is the auto-capture. We then stream a sample (the Shortcut
-        // recursion delivering) and confirm RF lands in the copy with no Start /
-        // Capture tap from the test.
+        // Keith #8 + 2026-06-23: running the test must auto-capture Wi-Fi RF with
+        // zero taps, but as a ONE-SHOT — the Shortcut fires once and no persistent
+        // monitoring loop / iOS banner is left running. The bridge records
+        // runShortcut() calls; we then deliver a sample (the single Shortcut cycle
+        // delivering) and confirm RF lands with no Start / Capture tap and no
+        // persistent stream.
         final _StreamingBridge bridge = _StreamingBridge();
         final WifiSignalSampler sampler = WifiSignalSampler(
           source: WifiInfoSource.iosShortcuts,
@@ -2730,22 +2729,22 @@ void main() {
           ),
         );
         await runCheck(tester);
-        // Advance past the auto-capture settle + retry window so the stream is in
-        // a stable streaming state and no fake-async timer is left pending.
+        // Advance past the one-shot settle + retry window so no fake-async timer
+        // is left pending.
         await tester.pump(const Duration(seconds: 3));
         await tester.pumpAndSettle();
         // The companion Shortcut was fired AUTOMATICALLY by the run — no manual
         // Start / Capture tap from the test. This is the core of Keith #8.
         expect(bridge.runShortcutCalls, greaterThanOrEqualTo(1));
-        // The live stream is up as a result of the run alone — the sparkline
-        // card binds to it, so a delivered sample appears on screen with zero
-        // taps. (The copy then reflecting that live RF is proven end-to-end in
-        // the "iOS copy serializes the LIVE-streamed RF" test above, which drives
-        // the same _effectiveAp unification through the clipboard.)
-        expect(sampler.isStreaming, isTrue);
+        // 2026-06-23: the auto-capture is a ONE-SHOT, so it must NOT raise the
+        // persistent monitoring flag and must NOT leave a continuous stream up.
+        expect(bridge.monitoringActive, isFalse);
+        expect(sampler.isStreaming, isFalse);
 
-        // The recursion then delivers a sample (post auto-fire) — it lands on the
-        // live stream the sparklines bind to, with no manual Start / Capture tap.
+        // The single Shortcut cycle then delivers a sample — the one-shot's
+        // transient capture folds it into the latest reading (so it shows on
+        // screen and in the copy), with no manual Start / Capture tap and without
+        // promoting the screen into a persistent live stream.
         bridge.emit(const WiFiDetails(
           ssid: 'KeithNet',
           bssid: 'a4:83:e7:00:11:22',
@@ -2758,6 +2757,8 @@ void main() {
         ));
         await tester.pumpAndSettle();
         expect(sampler.latest?.rssiDbm, -58);
+        // Still no persistent stream after the sample lands (one-shot, not loop).
+        expect(sampler.isStreaming, isFalse);
 
         await tester.pump(const Duration(milliseconds: 1600));
       },
@@ -2775,6 +2776,10 @@ class _StreamingBridge implements WiFiDetailsBridge {
       StreamController<WiFiDetails>.broadcast();
   bool _monitoring = false;
   int runShortcutCalls = 0;
+
+  /// Exposes the persisted monitoring flag so a test can assert a one-shot read
+  /// never raises it (2026-06-23).
+  bool get monitoringActive => _monitoring;
 
   void emit(WiFiDetails d) => _events.add(d);
 

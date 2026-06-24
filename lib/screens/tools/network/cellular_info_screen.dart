@@ -192,6 +192,40 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
     }
   }
 
+  /// ONE-SHOT "Get reading" (2026-06-23, Keith) — the new DEFAULT live read.
+  ///
+  /// Fires the companion Shortcut ONCE without raising the persistent monitoring
+  /// flag, so the iOS status banner flashes for the single run and then clears on
+  /// its own (no continuous loop). The single payload lands via the controller's
+  /// transient stream subscription; a short settle then polls the App Group in
+  /// case the streamed sample raced the app's foreground return. Re-entrancy +
+  /// bounce handling mirror [_startLive]; a failed open surfaces the honest setup
+  /// card exactly as the continuous path does.
+  Future<void> _getReadingOnce() async {
+    final CellularMonitorController? c = _liveController;
+    if (c == null) return;
+    if (_startInFlight) return; // never chain a second run
+    _startInFlight = true;
+    _shortcutBounceInFlight = true;
+    setState(() => _liveTriggerError = false);
+    try {
+      final bool opened = await c.getReadingOnce(
+        triggerShortcutName: WifiLiveShortcutsConfig.kLiveShortcutName,
+      );
+      if (!mounted) return;
+      if (!opened) {
+        _shortcutBounceInFlight = false;
+        setState(() => _liveTriggerError = true);
+        return;
+      }
+      await Future<void>.delayed(const Duration(seconds: 2));
+      if (!mounted) return;
+      await c.pollLatestAfterOneShot();
+    } finally {
+      _startInFlight = false;
+    }
+  }
+
   /// Live Stop: clear the shared monitoring flag so the recursive Shortcut halts
   /// on its next check. The last values stay frozen on screen (the snapshot).
   Future<void> _stopLive() async {
@@ -380,6 +414,10 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
           series: _series!,
           edge: edge,
           triggerError: _liveTriggerError,
+          // DEFAULT live read (2026-06-23): one-shot "Get reading" — fires the
+          // Shortcut once, leaves no persistent banner. Continuous streaming is
+          // the opt-in "Start live monitoring" toggle.
+          onGetReading: _getReadingOnce,
           onStart: _startLive,
           onStop: _stopLive,
           onSetUp: _openInstallSheet,
@@ -654,6 +692,7 @@ class _LiveBody extends StatelessWidget {
     required this.series,
     required this.edge,
     required this.triggerError,
+    required this.onGetReading,
     required this.onStart,
     required this.onStop,
     required this.onSetUp,
@@ -663,6 +702,13 @@ class _LiveBody extends StatelessWidget {
   final CellularTimeSeries series;
   final double edge;
   final bool triggerError;
+
+  /// The DEFAULT one-shot read: fires the companion Shortcut once and leaves no
+  /// persistent monitoring banner (2026-06-23, Keith).
+  final VoidCallback onGetReading;
+
+  /// The opt-in continuous-streaming start (keeps the iOS banner up while
+  /// running; [onStop] ends it).
   final VoidCallback onStart;
   final VoidCallback onStop;
 
@@ -692,6 +738,7 @@ class _LiveBody extends StatelessWidget {
                   _MonitorControlBar(
                     streaming: controller.isStreaming,
                     lastUpdated: controller.lastUpdated,
+                    onGetReading: onGetReading,
                     onStart: onStart,
                     onStop: onStop,
                   ),
@@ -833,9 +880,10 @@ class _LiveStartHint extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
       child: Text(
-        'Tap Start to begin live readings. Your carrier, radio technology, '
-        'signal bars, country code, and roaming status update here as each '
-        'sample arrives. Stop freezes the last values on screen.',
+        'Tap Get reading for a single live capture. Your carrier, radio '
+        'technology, signal bars, country code, and roaming status fill in, and '
+        'no banner stays up. Start live monitoring to stream continuously '
+        'instead; that keeps a status banner up while running, and Stop ends it.',
         style: text.bodyLarge?.copyWith(color: colors.textSecondary),
         textAlign: TextAlign.center,
       ),
@@ -843,17 +891,25 @@ class _LiveStartHint extends StatelessWidget {
   }
 }
 
-/// iOS Start/Stop control + live indicator + last-updated timestamp.
+/// iOS control bar (2026-06-23): the DEFAULT one-shot "Get reading" plus the
+/// opt-in "Start live monitoring", with a live indicator + last-updated stamp.
+/// While streaming it shows the single "Stop" control.
 class _MonitorControlBar extends StatelessWidget {
   const _MonitorControlBar({
     required this.streaming,
     required this.lastUpdated,
+    required this.onGetReading,
     required this.onStart,
     required this.onStop,
   });
 
   final bool streaming;
   final DateTime? lastUpdated;
+
+  /// DEFAULT: one-shot read (no persistent banner).
+  final VoidCallback onGetReading;
+
+  /// Opt-in: continuous streaming (keeps the banner up until [onStop]).
   final VoidCallback onStart;
   final VoidCallback onStop;
 
@@ -869,6 +925,7 @@ class _MonitorControlBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
@@ -883,27 +940,51 @@ class _MonitorControlBar extends StatelessWidget {
             streaming: streaming,
             lastUpdated: lastUpdated,
           );
-          final Widget action = _ActionButton(
-            streaming: streaming,
-            onStart: onStart,
-            onStop: onStop,
-          );
+          // While streaming, the bar shows the single Stop control. Otherwise the
+          // primary action is the DEFAULT one-shot "Get reading"; continuous
+          // streaming is a secondary opt-in row below (with an honest note).
+          final Widget primaryAction = streaming
+              ? _StopButton(onStop: onStop)
+              : _GetReadingButton(onGetReading: onGetReading);
 
-          if (narrow) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                status,
-                const SizedBox(height: AppSpacing.sm),
-                Align(alignment: Alignment.centerLeft, child: action),
-              ],
-            );
-          }
-          return Row(
-            children: [
-              Expanded(child: status),
-              const SizedBox(width: AppSpacing.xs),
-              action,
+          final Widget header = narrow
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    status,
+                    const SizedBox(height: AppSpacing.sm),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: primaryAction,
+                    ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    Expanded(child: status),
+                    const SizedBox(width: AppSpacing.xs),
+                    primaryAction,
+                  ],
+                );
+
+          if (streaming) return header;
+
+          // Opt-in continuous streaming, demoted below the default one-shot
+          // action with the honest banner note (GL-004: no marketing words).
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              header,
+              const SizedBox(height: AppSpacing.sm),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: _StartMonitoringButton(onStart: onStart),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                'Keeps a status banner up while running; tap Stop to end.',
+                style: text.bodySmall?.copyWith(color: colors.textTertiary),
+              ),
             ],
           );
         },
@@ -972,38 +1053,66 @@ class _StatusBlock extends StatelessWidget {
   }
 }
 
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({
-    required this.streaming,
-    required this.onStart,
-    required this.onStop,
-  });
+/// DEFAULT one-shot read: the prominent lime-primary "Get reading" action. Fires
+/// the companion Shortcut once and leaves no persistent banner (2026-06-23).
+class _GetReadingButton extends StatelessWidget {
+  const _GetReadingButton({required this.onGetReading});
 
-  final bool streaming;
+  final VoidCallback onGetReading;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Get reading',
+      child: FilledButton.icon(
+        onPressed: onGetReading,
+        icon: const Icon(Icons.bolt_outlined),
+        label: const Text('Get reading'),
+      ),
+    );
+  }
+}
+
+/// Opt-in continuous streaming: the secondary "Start live monitoring" action.
+/// Demoted to an outline button below the default read; its honest banner note
+/// lives in [_MonitorControlBar].
+class _StartMonitoringButton extends StatelessWidget {
+  const _StartMonitoringButton({required this.onStart});
+
   final VoidCallback onStart;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Start live monitoring',
+      child: OutlinedButton.icon(
+        onPressed: onStart,
+        icon: const Icon(Icons.play_arrow),
+        label: const Text('Start live monitoring'),
+      ),
+    );
+  }
+}
+
+/// The Stop control shown while continuous streaming is running.
+class _StopButton extends StatelessWidget {
+  const _StopButton({required this.onStop});
+
   final VoidCallback onStop;
 
   @override
   Widget build(BuildContext context) {
-    return streaming
-        ? Semantics(
-            button: true,
-            label: 'Stop live monitoring',
-            child: OutlinedButton.icon(
-              onPressed: onStop,
-              icon: const Icon(Icons.stop),
-              label: const Text('Stop'),
-            ),
-          )
-        : Semantics(
-            button: true,
-            label: 'Start live monitoring',
-            child: FilledButton.icon(
-              onPressed: onStart,
-              icon: const Icon(Icons.play_arrow),
-              label: const Text('Start'),
-            ),
-          );
+    return Semantics(
+      button: true,
+      label: 'Stop live monitoring',
+      child: OutlinedButton.icon(
+        onPressed: onStop,
+        icon: const Icon(Icons.stop),
+        label: const Text('Stop'),
+      ),
+    );
   }
 }
 

@@ -231,6 +231,52 @@ class WifiSignalSampler extends ChangeNotifier {
     }
   }
 
+  /// ONE-SHOT live read (2026-06-23, Keith): fire the companion Shortcut ONCE and
+  /// capture a single payload WITHOUT raising the persistent monitoring flag, so
+  /// the iOS status banner flashes for the one run and then clears on its own (no
+  /// continuous loop). This is the DEFAULT live read; [start] (continuous) is the
+  /// opt-in. The single payload still flows into [latest] and the sparkline
+  /// series via the controller's transient capture, so a one-shot reading appears
+  /// on screen and in any copy exactly like a streamed sample — just one of them.
+  ///
+  /// iOS-only behavior. On macOS / Android / Windows the snapshot poll already
+  /// reads natively with no Shortcut, so this delegates to a single [_pollMac]
+  /// seed and returns true. Returns false on iOS only when the trigger could not
+  /// be opened (Shortcut missing) so the caller surfaces the honest setup hint.
+  Future<bool> getReadingOnce() async {
+    switch (source) {
+      case WifiInfoSource.macosCoreWlan:
+      case WifiInfoSource.androidWifiManager:
+      case WifiInfoSource.windowsNativeWifi:
+        await _pollMac();
+        return true;
+      case WifiInfoSource.iosShortcuts:
+        final WifiMonitorController? c = _controller;
+        if (c == null) return false;
+        _triggerError = false;
+        _safeNotify();
+        final bool opened = await c.getReadingOnce(
+          triggerShortcutName: WifiLiveShortcutsConfig.kLiveShortcutName,
+        );
+        if (!opened) {
+          _triggerError = true;
+          _safeNotify();
+        }
+        return opened;
+      case WifiInfoSource.unsupported:
+      case WifiInfoSource.web:
+        return false;
+    }
+  }
+
+  /// Polls the persisted iOS payload after a one-shot fire settles, in case the
+  /// single streamed sample raced the app's foreground return. No-op off iOS.
+  Future<void> pollLatestAfterOneShot() async {
+    if (source == WifiInfoSource.iosShortcuts) {
+      await _controller?.pollLatestAfterOneShot();
+    }
+  }
+
   /// Resolves the iOS install-state + any persisted monitoring flag (so a
   /// payload delivered while backgrounded lands and an active loop resumes).
   /// No-op on macOS. Call on first build and on app resume.

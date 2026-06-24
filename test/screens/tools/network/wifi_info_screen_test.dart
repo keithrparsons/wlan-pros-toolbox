@@ -534,8 +534,9 @@ void main() {
   });
 
   group('WifiInfoScreen — iOS source (Live only)', () {
-    testWidgets('idle state offers Start and the begin-live hint',
-        (tester) async {
+    testWidgets(
+        'idle state offers the default one-shot Get reading + the opt-in '
+        'Start live monitoring toggle with the honest banner note', (tester) async {
       await tester.pumpWidget(host(
         WifiInfoScreen(
           sourceOverride: WifiInfoSource.iosShortcuts,
@@ -543,13 +544,17 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      // The only iOS mode is Live: a clean idle "Tap Start" state, no Snapshot
-      // toggle and no Get Reading button.
-      expect(find.text('Start'), findsOneWidget);
-      expect(find.textContaining('Tap Start to begin live readings'),
+      // 2026-06-23: the DEFAULT live read is the one-shot "Get reading"; the
+      // continuous loop is demoted to the explicit "Start live monitoring" opt-in
+      // with the honest banner note. There is no bare "Start" control any more.
+      expect(find.text('Get reading'), findsWidgets);
+      expect(find.text('Start live monitoring'), findsOneWidget);
+      expect(
+          find.textContaining('Keeps a status banner up while running'),
           findsOneWidget);
+      expect(find.textContaining('Tap Get reading'), findsOneWidget);
+      expect(find.text('Start'), findsNothing);
       expect(find.text('Snapshot'), findsNothing);
-      expect(find.text('Get Reading'), findsNothing);
     });
 
     testWidgets(
@@ -591,6 +596,11 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
+      // The idle bar now carries two rows (default Get reading + opt-in Start
+      // live monitoring), so scroll the locked card's Enable CTA into view before
+      // tapping in the 600px test viewport.
+      await tester.ensureVisible(find.text('Enable live Wi-Fi'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Enable live Wi-Fi'));
       await tester.pumpAndSettle();
 
@@ -627,15 +637,16 @@ void main() {
         // The rich RF fields render as the locked card, by NAME, never zeroed.
         expect(find.text('Live signal details'), findsOneWidget);
         expect(find.text('Signal (RSSI) and SNR'), findsOneWidget);
-        // With the native identity already on screen, the locked card's CTA
-        // starts live readings rather than re-opening the install sheet.
-        expect(find.text('Start live readings'), findsOneWidget);
+        // With the native identity already on screen, the locked card's CTA is
+        // the DEFAULT one-shot "Get reading" (2026-06-23: one-shot is the default;
+        // continuous streaming is the opt-in toggle), not the install sheet.
+        expect(find.text('Get reading'), findsWidgets);
       },
     );
 
     testWidgets(
-      'mandatory first-run onboarding sheet auto-fires once on first open '
-      '(never-received payload), then is one-time',
+      'NATIVE-FIRST (2026-06-23): opening Wi-Fi Information does NOT auto-present '
+      'the setup modal; the inline non-modal opt-in is offered instead',
       (tester) async {
         SharedPreferences.setMockInitialValues(<String, Object>{});
         final onboarding =
@@ -649,24 +660,13 @@ void main() {
         ));
         await tester.pumpAndSettle();
 
-        // The unmissable one-time setup sheet auto-presents on first open.
-        expect(find.text('Set up live Wi-Fi'), findsOneWidget);
-        expect(find.textContaining('No Location permission'), findsOneWidget);
-
-        // It marked itself seen the instant it presented — re-mounting a fresh
-        // screen against the SAME persisted store does NOT re-fire it.
-        Navigator.of(tester.element(find.text('Set up live Wi-Fi'))).pop();
-        await tester.pumpAndSettle();
-        await tester.pumpWidget(host(
-          WifiInfoScreen(
-            sourceOverride: WifiInfoSource.iosShortcuts,
-            iosBridge: _FakeBridge(everReceived: false),
-            onboardingService:
-                LiveOnboardingService(getStore: SharedPreferences.getInstance),
-          ),
-        ));
-        await tester.pumpAndSettle();
+        // The forced modal setup sheet must NOT auto-fire on open (the friends-
+        // at-dinner friction Keith hit). No modal bottom sheet is presented.
         expect(find.text('Set up live Wi-Fi'), findsNothing);
+        // Instead the non-modal opt-in path is on screen: the inline locked card
+        // lists the RF fields by name with the single Enable CTA.
+        expect(find.text('Live signal details'), findsOneWidget);
+        expect(find.text('Enable live Wi-Fi'), findsOneWidget);
       },
     );
 
@@ -703,7 +703,11 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Start'));
+      // 2026-06-23: continuous streaming is the opt-in "Start live monitoring"
+      // toggle (one-shot "Get reading" is the default). This test exercises the
+      // continuous path, so it taps the opt-in control.
+      await tester.ensureVisible(find.text('Start live monitoring'));
+      await tester.tap(find.text('Start live monitoring'));
       await tester.pumpAndSettle();
 
       // The shared monitoring flag is raised so the Shortcut keeps recursing.
@@ -732,7 +736,8 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Start'));
+      await tester.ensureVisible(find.text('Start live monitoring'));
+      await tester.tap(find.text('Start live monitoring'));
       await tester.pumpAndSettle();
 
       // Push two streamed samples through the bridge updates stream.
@@ -783,7 +788,8 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Start'));
+      await tester.ensureVisible(find.text('Start live monitoring'));
+      await tester.tap(find.text('Start live monitoring'));
       await tester.pumpAndSettle();
       expect(bridge.monitoringActive, isTrue);
 
@@ -794,15 +800,16 @@ void main() {
       }));
       await tester.pumpAndSettle();
 
+      await tester.ensureVisible(find.text('Stop'));
       await tester.tap(find.text('Stop'));
       await tester.pumpAndSettle();
 
-      // Flag cleared; the idle Start control is back; the last reading is frozen
-      // on screen (still charted + still in the metric cards). 'RSSI' now
-      // appears as both the chart title and the Signal-card row label, so
-      // findsWidgets, not findsOneWidget.
+      // Flag cleared; the idle controls are back (the opt-in Start live
+      // monitoring toggle); the last reading is frozen on screen (still charted +
+      // still in the metric cards). 'RSSI' now appears as both the chart title
+      // and the Signal-card row label, so findsWidgets, not findsOneWidget.
       expect(bridge.monitoringActive, isFalse);
-      expect(find.text('Start'), findsOneWidget);
+      expect(find.text('Start live monitoring'), findsOneWidget);
       expect(find.text('RSSI'), findsWidgets);
       // The grouped cards are still on screen after Stop (frozen snapshot).
       expect(find.text('Network'), findsOneWidget);
@@ -822,7 +829,8 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Start'));
+      await tester.ensureVisible(find.text('Start live monitoring'));
+      await tester.tap(find.text('Start live monitoring'));
       await tester.pumpAndSettle();
 
       // The flag is cleared (no producer) and the honest, ACTIONABLE setup card
@@ -831,7 +839,7 @@ void main() {
       expect(find.textContaining('Live readings could not start'),
           findsOneWidget);
       expect(find.text('Set up live Wi-Fi (one-time)'), findsOneWidget);
-      expect(find.text('Start'), findsOneWidget);
+      expect(find.text('Start live monitoring'), findsOneWidget);
     });
 
     testWidgets('dispose clears the monitoring flag (Vera regression)',
@@ -847,7 +855,8 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Start'));
+      await tester.ensureVisible(find.text('Start live monitoring'));
+      await tester.tap(find.text('Start live monitoring'));
       await tester.pumpAndSettle();
       expect(bridge.monitoringActive, isTrue);
 
@@ -886,8 +895,9 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      // User taps Start: the Shortcut fires exactly once.
-      await tester.tap(find.text('Start'));
+      // User opts into continuous streaming: the Shortcut fires exactly once.
+      await tester.ensureVisible(find.text('Start live monitoring'));
+      await tester.tap(find.text('Start live monitoring'));
       await tester.pumpAndSettle();
       expect(bridge.runShortcutCalls, 1);
       expect(bridge.monitoringActive, isTrue);
@@ -936,7 +946,8 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Start'));
+      await tester.ensureVisible(find.text('Start live monitoring'));
+      await tester.tap(find.text('Start live monitoring'));
       await tester.pumpAndSettle();
       expect(bridge.monitoringActive, isTrue);
       expect(bridge.runShortcutCalls, 1);
@@ -976,7 +987,8 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Start'));
+      await tester.ensureVisible(find.text('Start live monitoring'));
+      await tester.tap(find.text('Start live monitoring'));
       await tester.pumpAndSettle();
 
       bridge.controller.add(WiFiDetails.fromMap(const <String, dynamic>{
@@ -1014,7 +1026,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(bridge.monitoringActive, isFalse);
       expect(bridge.runShortcutCalls, 0);
-      expect(find.text('Start'), findsOneWidget);
+      expect(find.text('Start live monitoring'), findsOneWidget);
     });
   });
 

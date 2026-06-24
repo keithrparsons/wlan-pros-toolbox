@@ -38,6 +38,11 @@ class WifiMonitorController extends ChangeNotifier {
 
   StreamSubscription<WiFiDetails>? _sub;
 
+  /// Transient subscription for a [getReadingOnce] read: captures exactly one
+  /// streamed payload and tears itself down, so a one-shot read never leaves a
+  /// persistent live stream (or the iOS banner) running.
+  StreamSubscription<WiFiDetails>? _oneShotSub;
+
   WifiMonitorPhase _phase = WifiMonitorPhase.loading;
   WiFiDetails? _details;
   bool _hasEverReceived = false;
@@ -125,6 +130,65 @@ class WifiMonitorController extends ChangeNotifier {
     return _bridge.runShortcut(triggerShortcutName);
   }
 
+  /// ONE-SHOT live read (2026-06-23, Keith): fire the companion Shortcut ONCE,
+  /// capture a single payload, and leave NO persistent monitoring loop behind —
+  /// so the iOS status banner ("WLAN Pros" logo at the top) flashes for the one
+  /// run and then clears on its own. This is the new DEFAULT live read; the
+  /// continuous loop ([startMonitoring]) is demoted to an explicit opt-in.
+  ///
+  /// How it stays one-shot: unlike [startMonitoring] it does NOT raise the App
+  /// Group monitoring-active flag. We CLEAR it first (defence against a stale
+  /// `true` left by a prior crashed loop), so when the companion Shortcut runs
+  /// its single cycle and consults `ShouldContinueMonitoringIntent`, it reads
+  /// `false` and stops — no recursion, no persistent banner. The phase never
+  /// enters [streaming]; a delivered payload lands the screen on [idleWithData].
+  ///
+  /// The single delivered payload is consumed two ways, whichever lands first:
+  ///   * the live [updates] stream (the Darwin notification while foregrounded),
+  ///     via a transient subscription that captures one payload and tears down;
+  ///   * a [WiFiDetailsBridge.readLatest] poll after a short settle, in case the
+  ///     stream sample raced the app's foreground return.
+  /// Either way [_onPayload] records it and the screen rebuilds with real data.
+  ///
+  /// Returns false when the trigger could not be OPENED (Shortcuts missing / the
+  /// Live Shortcut not installed) so the caller surfaces the honest setup card,
+  /// exactly as [startMonitoring] does. Never enters a loop, never hangs.
+  Future<bool> getReadingOnce({required String triggerShortcutName}) async {
+    // Belt-and-suspenders: make sure no persistent loop flag survives. If a prior
+    // crashed continuous session left the flag `true`, a fresh Shortcut run would
+    // keep looping; clearing it first guarantees this read stays single-cycle.
+    final Future<void> clearFlag = _bridge.setMonitoringActive(false);
+
+    // Capture exactly one streamed payload without entering the streaming phase.
+    // The transient subscription auto-cancels after the first sample so we never
+    // hold an open live stream (that is the opt-in path's job).
+    _oneShotSub?.cancel();
+    _oneShotSub = _bridge.updates.listen((WiFiDetails d) {
+      _onPayload(d);
+      _oneShotSub?.cancel();
+      _oneShotSub = null;
+    });
+
+    await clearFlag;
+    final bool opened = await _bridge.runShortcut(triggerShortcutName);
+    if (!opened) {
+      _oneShotSub?.cancel();
+      _oneShotSub = null;
+    }
+    return opened;
+  }
+
+  /// Polls the persisted App Group payload after a one-shot fire settles, in case
+  /// the single streamed sample raced the app's foreground return (the Shortcut
+  /// bounces the app, so the Darwin notification can fire while backgrounded).
+  /// Records the payload via the same [_onPayload] path. No-op if a stream sample
+  /// already landed (the read just refreshes to the same/newer value). Never
+  /// throws; off-iOS [readLatest] returns null and this is a no-op.
+  Future<void> pollLatestAfterOneShot() async {
+    final WiFiDetails? latest = await _bridge.readLatest();
+    if (latest != null && latest.hasAnyData) _onPayload(latest);
+  }
+
   /// Stops live monitoring: fires the App Group flag clear, flips the phase, and
   /// tears down the subscription synchronously (all before the first `await`),
   /// then awaits. Clearing the flag first means the looping Shortcut halts on its
@@ -164,6 +228,7 @@ class WifiMonitorController extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _sub?.cancel();
+    _oneShotSub?.cancel();
     super.dispose();
   }
 }
