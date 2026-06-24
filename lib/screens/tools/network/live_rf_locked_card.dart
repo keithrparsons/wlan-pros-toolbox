@@ -77,7 +77,7 @@ class LiveRfLockedCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Available once you enable live Wi-Fi. iOS reads these through the '
-            'one-time companion Shortcut — no Location permission needed.',
+            'one-time companion Shortcut, no Location permission needed.',
             style: text.bodyMedium?.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.sm),
