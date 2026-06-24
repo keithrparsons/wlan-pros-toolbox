@@ -1,5 +1,5 @@
-Easier live Wi-Fi setup: a new "Set up live Wi-Fi" option in About, and the app no longer re-asks for the companion Shortcut once you have added it.
+Live readings are simpler: tools open straight to your connection with no setup prompts.
 
-New Roaming Log tool, a richer Test My Connection report (DNS checks plus more network detail), and a Cloud Apps reachability panel.
+A single "Get reading" grabs live Wi-Fi or cellular detail without leaving a status banner running.
 
-Clearer graphics, light and dark refinements, and copy polish.
+Continuous live monitoring is now an opt-in toggle.
