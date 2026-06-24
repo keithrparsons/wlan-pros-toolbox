@@ -244,4 +244,19 @@ platform :ios do
       }
     )
   end
+
+  desc "Print current App Store version states from the CLI (no web UI needed)"
+  lane :appstore_status do
+    asc_api_key
+    app = Spaceship::ConnectAPI::App.find(APP_ID)
+    UI.user_error!("App record not found") unless app
+    versions = (app.get_app_store_versions rescue [])
+    if versions.empty?
+      UI.important("No App Store versions returned")
+    else
+      versions.each do |v|
+        UI.message("App Store version #{v.version_string}: #{v.app_store_state}")
+      end
+    end
+  end
 end
