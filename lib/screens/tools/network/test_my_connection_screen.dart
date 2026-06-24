@@ -207,7 +207,11 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   LiveOnboardingService? _onboardingService;
   late final QualityClient _quality;
 
-  /// Fires the unmissable first-run onboarding at most once per mount.
+  /// Guards the first-run onboarding gate so it presents at most once per mount.
+  /// Retained with [_maybeShowFirstRunOnboarding] for the inline opt-in path; the
+  /// AUTO-FIRE was removed 2026-06-23 (native-first), but the gate logic stays so
+  /// the one-time semantics are preserved if re-wired to a non-modal trigger.
+  // ignore: unused_field
   bool _firstRunChecked = false;
 
   /// The shared live-RF sampler that feeds the "Wi-Fi signal" sparkline card.
@@ -402,16 +406,17 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       }
     }
 
-    // Unmissable first-run onboarding (iOS only): the first time ANY live tool
-    // is opened — including this front door — and the companion Shortcut is not
-    // demonstrably working, present the one-time "enable live Wi-Fi" setup sheet
-    // before the user can run a check and hit a wall. Scheduled post-frame so the
-    // sheet has a built context to mount into.
-    if (_source == WifiInfoSource.iosShortcuts) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _maybeShowFirstRunOnboarding();
-      });
-    }
+    // NATIVE-FIRST (2026-06-23, Keith): opening the front door must NOT auto-pop
+    // the companion-Shortcut setup sheet. A casual user gets an immediate, useful
+    // native result (network name, BSSID, security, internet speed) with zero
+    // modal prompts; the path to live RF is the inline, non-modal affordance only
+    // (the LiveSetupCard / LiveRfLockedCard, and the About-screen "Set up live
+    // Wi-Fi" row). The former auto-fire of [_maybeShowFirstRunOnboarding] (a modal
+    // bottom sheet, scheduled post-frame) was the forced gate that bounced casual
+    // users before they saw any result. The method and the one-time gate are kept
+    // intact and stay reachable via the inline opt-in card (see
+    // [_openShortcutSheet]), so the recovery path and the 1.5.5 double-prompt fix
+    // continue to work — only the AUTO-FIRE is removed.
 
     if (widget.autoStart) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -427,6 +432,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// it never nags again (the persisted flag plus the App Group hasEverReceived
   /// signal make this truly one-time across every live tool). No-op off the iOS
   /// source. Never throws.
+  // ignore: unused_element
   Future<void> _maybeShowFirstRunOnboarding() async {
     if (_firstRunChecked) return;
     _firstRunChecked = true;
@@ -1069,14 +1075,20 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     // [_effectiveAp]; do not re-fire (avoids a redundant Shortcuts-app bounce).
     if (sampler.isStreaming) return;
 
-    // Fire once. start() opens the companion Shortcut; on a missing Shortcut it
-    // sets triggerError and the live card surfaces the honest install hint, and
-    // the manual capture affordance remains the fallback.
-    await sampler.start();
+    // ONE-SHOT (2026-06-23, Keith): fire the companion Shortcut ONCE without
+    // raising the persistent monitoring flag, so a normal Check My Connection
+    // captures the RF automatically but leaves NO persistent iOS banner — the
+    // banner flashes for the single run and clears on its own. Continuous
+    // streaming (the looping Shortcut + banner) is now an explicit opt-in the
+    // user starts from the technical Wi-Fi sub-card, not something a check
+    // silently turns on. On a missing Shortcut getReadingOnce() sets triggerError
+    // and the manual "Capture Wi-Fi details" affordance remains the fallback.
+    final bool opened = await sampler.getReadingOnce();
+    if (!opened) return;
 
-    // Settle, then read whether a live sample landed. A short window is enough
-    // because the recursive Shortcut streams roughly once a second; the long
-    // internet measurement runs concurrently, so this never extends the run.
+    // Settle, then poll the App Group payload in case the single streamed sample
+    // raced the app's foreground return. The long internet measurement runs
+    // concurrently, so this never extends the run.
     await Future<void>.delayed(const Duration(seconds: 2));
     if (!mounted) return;
 
@@ -1084,15 +1096,12 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     if (gotReading || sampler.triggerError) return;
 
     // RETRY ONCE: the first fire produced nothing (the launch bounce was
-    // cancelled, or the first fire raced the app switch). Re-fire the trigger
-    // WITHOUT tearing down the subscription — start() re-raises the monitoring
-    // flag and re-runs the companion Shortcut once, so the recursion gets a
-    // second kick while the existing listener stays attached to catch the first
-    // streamed sample. No further retries: a second miss falls back silently to
-    // the manual "Start" / "Capture Wi-Fi details" affordance the live card
-    // already shows whenever the stream is not live (GL-005 — never a fabricated
-    // value, never an endless re-fire loop).
-    await sampler.start();
+    // cancelled, or the first fire raced the app switch). Re-fire the one-shot
+    // read once more — still without raising the persistent flag, so this never
+    // becomes a loop. A second miss falls back silently to the manual capture
+    // affordance (GL-005 — never a fabricated value, never an endless re-fire).
+    await sampler.getReadingOnce();
+    await sampler.pollLatestAfterOneShot();
   }
 
   // ---- Build ----

@@ -90,8 +90,9 @@ void main() {
   Widget host(Widget child) => MaterialApp(theme: AppTheme.dark(), home: child);
 
   group('CellularInfoScreen — iOS source (Live only)', () {
-    testWidgets('idle state offers Start and the begin-live hint',
-        (tester) async {
+    testWidgets(
+        'idle state offers the default one-shot Get reading + the opt-in '
+        'Start live monitoring toggle with the honest banner note', (tester) async {
       await tester.pumpWidget(host(
         CellularInfoScreen(
           sourceOverride: CellularInfoSource.iosShortcuts,
@@ -99,13 +100,17 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      // Live is the only iOS mode: a clean idle "Tap Start" state, no Snapshot
-      // toggle and no Get Reading button.
-      expect(find.text('Start'), findsOneWidget);
-      expect(find.textContaining('Tap Start to begin live readings'),
+      // 2026-06-23: the DEFAULT live read is the one-shot "Get reading"; the
+      // continuous loop is demoted to the explicit "Start live monitoring" opt-in
+      // with the honest banner note. There is no bare "Start" control any more.
+      expect(find.text('Get reading'), findsWidgets);
+      expect(find.text('Start live monitoring'), findsOneWidget);
+      expect(
+          find.textContaining('Keeps a status banner up while running'),
           findsOneWidget);
+      expect(find.textContaining('Tap Get reading'), findsOneWidget);
+      expect(find.text('Start'), findsNothing);
       expect(find.text('Snapshot'), findsNothing);
-      expect(find.text('Get Reading'), findsNothing);
     });
 
     testWidgets(
@@ -149,7 +154,11 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Start'));
+      // 2026-06-23: continuous streaming is the opt-in "Start live monitoring"
+      // toggle (one-shot "Get reading" is the default). This test exercises the
+      // continuous path, so it taps the opt-in control.
+      await tester.ensureVisible(find.text('Start live monitoring'));
+      await tester.tap(find.text('Start live monitoring'));
       await tester.pumpAndSettle();
 
       expect(bridge.monitoringActive, isTrue);
@@ -173,7 +182,8 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Start'));
+      await tester.ensureVisible(find.text('Start live monitoring'));
+      await tester.tap(find.text('Start live monitoring'));
       await tester.pumpAndSettle();
 
       bridge.updatesController.add(const CellularInfo(
@@ -207,20 +217,22 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Start'));
+      await tester.ensureVisible(find.text('Start live monitoring'));
+      await tester.tap(find.text('Start live monitoring'));
       await tester.pumpAndSettle();
       expect(bridge.monitoringActive, isTrue);
 
       bridge.updatesController.add(const CellularInfo(carrier: 'T-Mobile'));
       await tester.pumpAndSettle();
 
+      await tester.ensureVisible(find.text('Stop'));
       await tester.tap(find.text('Stop'));
       await tester.pumpAndSettle();
 
-      // Flag cleared; the idle Start control is back; the last value stays frozen
-      // on screen (the snapshot).
+      // Flag cleared; the idle controls are back (the opt-in Start live
+      // monitoring toggle); the last value stays frozen on screen (the snapshot).
       expect(bridge.monitoringActive, isFalse);
-      expect(find.text('Start'), findsOneWidget);
+      expect(find.text('Start live monitoring'), findsOneWidget);
       expect(find.text('T-Mobile'), findsOneWidget);
     });
 
@@ -238,7 +250,8 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Start'));
+      await tester.ensureVisible(find.text('Start live monitoring'));
+      await tester.tap(find.text('Start live monitoring'));
       await tester.pumpAndSettle();
 
       expect(bridge.monitoringActive, isFalse);
@@ -247,7 +260,7 @@ void main() {
       expect(find.textContaining('Live readings could not start'),
           findsOneWidget);
       expect(find.text('Set up live readings (one-time)'), findsOneWidget);
-      expect(find.text('Start'), findsOneWidget);
+      expect(find.text('Start live monitoring'), findsOneWidget);
     });
 
     testWidgets('dispose clears the monitoring flag (Vera regression)',
@@ -260,7 +273,8 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Start'));
+      await tester.ensureVisible(find.text('Start live monitoring'));
+      await tester.tap(find.text('Start live monitoring'));
       await tester.pumpAndSettle();
       expect(bridge.monitoringActive, isTrue);
 
@@ -287,7 +301,8 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Start'));
+      await tester.ensureVisible(find.text('Start live monitoring'));
+      await tester.tap(find.text('Start live monitoring'));
       await tester.pumpAndSettle();
       expect(bridge.monitoringActive, isTrue);
       expect(bridge.runShortcutCalls, 1);
@@ -318,7 +333,8 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Start'));
+      await tester.ensureVisible(find.text('Start live monitoring'));
+      await tester.tap(find.text('Start live monitoring'));
       await tester.pumpAndSettle();
       expect(bridge.monitoringActive, isTrue);
       expect(bridge.runShortcutCalls, 1);
