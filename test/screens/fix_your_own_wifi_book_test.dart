@@ -99,7 +99,7 @@ void main() {
 
         expect(find.text('Fix Your Own Wi-Fi'), findsOneWidget);
         expect(
-          find.text('The free book that goes with this app'),
+          find.text('Learn and fix your Wi-Fi. The free book'),
           findsOneWidget,
         );
       });

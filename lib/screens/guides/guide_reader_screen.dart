@@ -2,8 +2,8 @@
 // written guides (help-embed, 2026-06-07).
 //
 // What it renders:
-//   * "A Guide for Everyone" (assets/guides/user-guide.md), reached from a small
-//     home-screen entry (the consumer on-ramp); and
+//   * the app-orientation guide "How this app works" (assets/guides/user-guide.md),
+//     reached from a small home-screen entry (the consumer app-map on-ramp); and
 //   * the professional "Field Manual" (assets/guides/field-manual.md, ~190 KB),
 //     reached from the Educational Resources directory.
 //
