@@ -23,6 +23,7 @@ import 'package:flutter/material.dart';
 import '../../../services/network/wifi_live_shortcuts_config.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
+import 'setup_live_wifi_icon.dart';
 
 /// Opens an external URL (the iCloud Shortcut link). Both [WiFiDetailsBridge]
 /// and [CellularInfoBridge] expose a method with this signature, so the sheet
@@ -126,7 +127,7 @@ class InstallShortcutSheet extends StatelessWidget {
               const SizedBox(height: AppSpacing.md),
               FilledButton.icon(
                 onPressed: isPlaceholder ? null : () => _install(context),
-                icon: const Icon(Icons.download_outlined),
+                icon: const SetupLiveWifiIcon(),
                 label: const Text('Add the Shortcut'),
               ),
               if (isPlaceholder) ...[

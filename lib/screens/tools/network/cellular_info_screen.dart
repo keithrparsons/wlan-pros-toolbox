@@ -59,6 +59,7 @@ import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/sparkline.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'get_reading_icon.dart';
+import 'setup_live_wifi_icon.dart';
 import 'install_shortcut_sheet.dart';
 import 'live_setup_card.dart';
 import 'network_unavailable_view.dart';
@@ -1169,7 +1170,7 @@ class _SetUpLiveButton extends StatelessWidget {
       label: 'Set up live readings',
       child: FilledButton.icon(
         onPressed: onSetUp,
-        icon: const Icon(Icons.download_outlined),
+        icon: const SetupLiveWifiIcon(),
         label: const Text('Set up live readings'),
       ),
     );

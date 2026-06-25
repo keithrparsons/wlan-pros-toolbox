@@ -26,6 +26,7 @@ import 'package:flutter/material.dart';
 
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
+import 'setup_live_wifi_icon.dart';
 
 /// A one-time, dismiss-on-success setup prompt for the iOS live tools.
 class LiveSetupCard extends StatelessWidget {
@@ -120,7 +121,7 @@ class LiveSetupCard extends StatelessWidget {
             label: label,
             child: FilledButton.icon(
               onPressed: onSetUp,
-              icon: const Icon(Icons.download_outlined),
+              icon: const SetupLiveWifiIcon(),
               label: Text(label),
             ),
           ),

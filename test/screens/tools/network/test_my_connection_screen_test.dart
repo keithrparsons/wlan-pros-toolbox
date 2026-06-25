@@ -1981,11 +1981,11 @@ void main() {
         await tester.pump(const Duration(seconds: 3));
         await tester.pumpAndSettle();
 
-        // The prominent lime "Set up Live Wi-Fi" CTA is on screen, with the
+        // The prominent lime "Set up live Wi-Fi" CTA is on screen, with the
         // honest "could not read your Wi-Fi signal" lead-in — the unmissable path
         // forward for a clean-install user (replaces the buried "Couldn't Check"
         // dead-end Keith hit).
-        expect(find.text('Set up Live Wi-Fi'), findsWidgets);
+        expect(find.text('Set up live Wi-Fi'), findsWidgets);
         expect(
           find.textContaining('could not read your Wi-Fi signal'),
           findsOneWidget,

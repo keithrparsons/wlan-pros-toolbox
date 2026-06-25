@@ -66,6 +66,7 @@ import '../../../widgets/tool_help_footer.dart';
 import 'analyze_results_screen.dart';
 import 'cloud_apps_panel.dart';
 import 'get_reading_icon.dart';
+import 'setup_live_wifi_icon.dart';
 import 'install_shortcut_sheet.dart';
 import 'network_unavailable_view.dart';
 import 'not_on_wifi_card.dart';
@@ -3058,7 +3059,7 @@ class _LiveSignalCard extends StatelessWidget {
                       label: 'Set up live Wi-Fi',
                       child: OutlinedButton.icon(
                         onPressed: onSetUp,
-                        icon: const Icon(Icons.download_outlined, size: 18),
+                        icon: const SetupLiveWifiIcon(size: 18),
                         label: const Text('Set up'),
                       ),
                     )
@@ -4482,7 +4483,7 @@ class _ShortcutOfferCard extends StatelessWidget {
               label: 'Set up live Wi-Fi',
               child: FilledButton.icon(
                 onPressed: onOpen,
-                icon: const Icon(Icons.download_outlined),
+                icon: const SetupLiveWifiIcon(),
                 label: const Text('Set up live Wi-Fi'),
               ),
             )

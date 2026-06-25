@@ -44,6 +44,7 @@ import '../widgets/app_copy_action.dart';
 import '../widgets/appearance_control.dart';
 import '../widgets/centered_content.dart';
 import 'tools/network/install_shortcut_sheet.dart';
+import 'tools/network/setup_live_wifi_icon.dart';
 
 /// Main site and resource library — the WLAN Pros home, the official-site link.
 const String _kWlanProsUrl = 'https://wlanprofessionals.com';
@@ -542,7 +543,7 @@ class _LiveSetupAboutSectionState extends State<_LiveSetupAboutSection> {
                 onPressed: _openInstallSheet,
                 // In-app sheet, not an external link → download glyph, mirroring
                 // the install button inside the sheet itself.
-                icon: const Icon(Icons.download_outlined, size: 20),
+                icon: const SetupLiveWifiIcon(size: 20),
                 label: const Text('Set up live Wi-Fi'),
               ),
             ),
