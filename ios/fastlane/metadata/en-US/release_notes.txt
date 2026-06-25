@@ -1,7 +1,7 @@
+On a fresh install, tapping Check My Connection no longer bounces you to the Shortcuts app, and your internet speed test now reads accurately on the first run.
+
 The Wavelength tool now shows millimeters, alongside meters, centimeters, feet, and inches.
 
-More reliable connection speed tests, with an added fallback when the primary is busy.
-
-Better recovery on iPhone and iPad: if the WLAN Pros Live Shortcut gets deleted, the app now guides you to reinstall it.
+More reliable connection speed tests, with an automatic fallback when the primary is busy.
 
 Visual polish and reliability fixes.
