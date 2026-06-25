@@ -622,6 +622,36 @@ class _FreshBridge implements WiFiDetailsBridge {
   Stream<WiFiDetails> get updates => const Stream<WiFiDetails>.empty();
 }
 
+/// A [WifiSignalSampler] that COUNTS one-shot fires so a test can prove whether
+/// the iOS companion Shortcut was triggered. Used by the clean-install gate
+/// tests: when the app has never received a Live payload, [getReadingOnce] must
+/// NEVER be called (no Shortcut fire, no Shortcuts-app bounce). It is a real iOS
+/// sampler over an injected fake bridge — the same construction the existing
+/// auto-fire tests use — and only intercepts the trigger surface to count it
+/// without touching a real method channel.
+class _CountingSampler extends WifiSignalSampler {
+  _CountingSampler({required super.iosBridge})
+      : super(source: WifiInfoSource.iosShortcuts);
+
+  int getReadingOnceCalls = 0;
+  int pollLatestCalls = 0;
+
+  @override
+  Future<bool> getReadingOnce() async {
+    getReadingOnceCalls++;
+    // Do NOT delegate to super: the real one-shot would touch the controller's
+    // method channel. The fire is what we assert on; returning false models an
+    // "opened but no payload" so the production retry path would run if the gate
+    // ever let it — which is exactly what the gate test asserts it does not.
+    return false;
+  }
+
+  @override
+  Future<void> pollLatestAfterOneShot() async {
+    pollLatestCalls++;
+  }
+}
+
 /// A fake IP-info service for the comprehensive-copy tests (Keith ISP-ask + #6).
 /// Extends the real [IpGeoService] (no network client is touched because
 /// [lookup] is overridden). [result] is what [lookup] returns; pass an
@@ -1814,6 +1844,98 @@ void main() {
         expect(find.text('LIVE'), findsNothing);
       },
     );
+
+    // ---- Clean-install auto-capture gate (2026-06-25, Keith) -----------------
+    //
+    // Reproduces the live bug: a clean-install user tapped "Check My Connection"
+    // (autoStart from the home hero), _autoCaptureIosRf fired the "WLAN Pros
+    // Live" Shortcut WITHOUT first checking it was installed, iOS bounced into
+    // Shortcuts with a "shortcut not found" error (which it does not reliably
+    // report back, so triggerError stayed false and the code RETRIED → a second
+    // bounce), and the two app-switches mid-measurement starved the internet
+    // throughput test (118/94 vs a real 712/462 Mbps). The fix gates the auto-
+    // fire on the SAME honest signal onboarding uses: hasEverReceivedPayload.
+    testWidgets(
+      'RUNNING a check on a CLEAN INSTALL (never received a Live payload) does '
+      'NOT fire the companion Shortcut — no bounce, no retry (2026-06-25)',
+      (tester) async {
+        // _FreshBridge.hasEverReceivedPayload() == false → Shortcut is not
+        // demonstrably installed, so the auto-capture must not fire it.
+        final bridge = _FreshBridge();
+        final sampler = _CountingSampler(iosBridge: bridge);
+        addTearDown(sampler.dispose);
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              sourceOverride: WifiInfoSource.iosShortcuts,
+              iosBridge: bridge,
+              sampler: sampler,
+              securityService: _FakeSecurityService(),
+              dnsProbeService: _FakeDnsProbe(),
+              networkDetailsService: _FakeNetworkDetails(),
+              enableCloudApps: false,
+              onboardingService: _seenOnboarding(),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+        // Advance past the (would-be) one-shot settle + retry window so any leaked
+        // fire would have happened by now.
+        await tester.pump(const Duration(seconds: 3));
+        await tester.pumpAndSettle();
+
+        // THE GATE: the Shortcut trigger was never invoked — not on the first
+        // fire and not on the retry — so iOS never bounced into Shortcuts and the
+        // internet measurement ran uninterrupted in the foreground.
+        expect(sampler.getReadingOnceCalls, 0);
+        expect(sampler.pollLatestCalls, 0);
+        // No persistent stream / banner was raised either.
+        expect(sampler.isStreaming, isFalse);
+        expect(find.text('LIVE'), findsNothing);
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets(
+      'RUNNING a check when the Shortcut DEMONSTRABLY works (has received a Live '
+      'payload) still auto-fires the one-shot exactly as before (2026-06-25)',
+      (tester) async {
+        // _PayloadBridge.hasEverReceivedPayload() == true → the Shortcut is
+        // demonstrably installed, so auto-capture continues unchanged.
+        final bridge = _PayloadBridge();
+        final sampler = _CountingSampler(iosBridge: bridge);
+        addTearDown(sampler.dispose);
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              sourceOverride: WifiInfoSource.iosShortcuts,
+              iosBridge: bridge,
+              sampler: sampler,
+              securityService: _FakeSecurityService(),
+              dnsProbeService: _FakeDnsProbe(),
+              networkDetailsService: _FakeNetworkDetails(),
+              enableCloudApps: false,
+              onboardingService: _seenOnboarding(),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+        await tester.pump(const Duration(seconds: 3));
+        await tester.pumpAndSettle();
+
+        // Auto-capture fired the one-shot at least once (the _CountingSampler
+        // returns false → "opened but empty" → the production retry path runs, so
+        // the count is >=1). Behavior preserved for installed users.
+        expect(sampler.getReadingOnceCalls, greaterThanOrEqualTo(1));
+        expect(tester.takeException(), isNull);
+      },
+    );
   });
 
   // ==========================================================================
@@ -2803,8 +2925,12 @@ class _StreamingBridge implements WiFiDetailsBridge {
 
   void emit(WiFiDetails d) => _events.add(d);
 
+  // A bridge that streams real payloads models an INSTALLED, working Shortcut, so
+  // the honest install-state flag is `true`. The auto-capture install gate
+  // (2026-06-25) only fires the Shortcut for users whose Shortcut demonstrably
+  // works (hasEverReceivedPayload == true); a streaming bridge is exactly that.
   @override
-  Future<bool> hasEverReceivedPayload() async => false;
+  Future<bool> hasEverReceivedPayload() async => true;
   @override
   Future<WiFiDetails?> readLatest() async => null;
   @override

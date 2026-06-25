@@ -1051,8 +1051,14 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   ///
   /// AUTO-FIRE-BOUNCE HANDLING. Firing the companion Shortcut switches to the
   /// Shortcuts app briefly (the known auto-fire bounce). We MUST NOT re-fire it
-  /// on top of an already-live stream — that would bounce the user a second time
-  /// for nothing. So:
+  /// on top of an already-live stream, and MUST NOT fire it at all when the
+  /// Shortcut is not demonstrably installed — that would bounce the user into the
+  /// Shortcuts app with a "shortcut not found" error and starve the concurrent
+  /// internet measurement. So:
+  ///   0. If the app has NEVER received a Live payload
+  ///      ([WiFiDetailsBridge.hasEverReceivedPayload] == false), the Shortcut is
+  ///      not demonstrably installed → do nothing. The inline LiveSetupCard /
+  ///      LiveRfLockedCard surfaces the non-modal install path instead.
   ///   1. If the live stream is ALREADY running this session (the user pressed
   ///      Start earlier, or a prior auto-fire is live), do nothing — the existing
   ///      stream already feeds the sparklines and [_effectiveAp].
@@ -1074,6 +1080,28 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     // Already live this session → the stream is feeding both the sparklines and
     // [_effectiveAp]; do not re-fire (avoids a redundant Shortcuts-app bounce).
     if (sampler.isStreaming) return;
+
+    // INSTALL GATE (2026-06-25, Keith — clean-install bounce bug). iOS cannot
+    // query whether the companion "WLAN Pros Live" Shortcut is installed, so we
+    // infer install-state from the SAME honest App Group signal the onboarding
+    // uses: [WiFiDetailsBridge.hasEverReceivedPayload]. If the app has NEVER
+    // received a Live payload, the Shortcut is not demonstrably installed — so
+    // firing it would bounce the user into the Shortcuts app with a "shortcut not
+    // found" error (iOS does not reliably report that failure back, so
+    // [triggerError] stays false and the retry below fires a SECOND bounce), and
+    // each app-switch starves the concurrent internet throughput measurement
+    // (the 118/94 vs real 712/462 Mbps regression). So we DO NOT fire at all when
+    // the Shortcut is not demonstrably working — the internet test then runs
+    // uninterrupted in the foreground, and the inline LiveSetupCard /
+    // LiveRfLockedCard still surfaces the non-modal "set up live Wi-Fi" path so
+    // the user gets a clear install affordance without a bounce. Users who HAVE
+    // the Shortcut working (hasEverReceivedPayload == true) auto-capture exactly
+    // as before. Off-iOS the bridge has no handler and returns false, but the
+    // [isIos] guard above already excludes those sources.
+    final WiFiDetailsBridge? bridge = _iosBridge;
+    if (bridge == null) return;
+    final bool everReceived = await bridge.hasEverReceivedPayload();
+    if (!everReceived || !mounted) return;
 
     // ONE-SHOT (2026-06-23, Keith): fire the companion Shortcut ONCE without
     // raising the persistent monitoring flag, so a normal Check My Connection
