@@ -296,6 +296,8 @@ class _PayloadBridge implements WiFiDetailsBridge {
   @override
   Future<bool> runShortcut(String name) async => true;
   @override
+  Future<bool> runShortcutOneShot(String name) async => true;
+  @override
   Stream<WiFiDetails> get updates => const Stream<WiFiDetails>.empty();
 }
 
@@ -590,6 +592,13 @@ class _StaleFlagBridge implements WiFiDetailsBridge {
   }
 
   @override
+  Future<bool> runShortcutOneShot(String name) async {
+    runShortcutCalls++;
+    lastRunShortcutName = name;
+    return true;
+  }
+
+  @override
   Stream<WiFiDetails> get updates => const Stream<WiFiDetails>.empty();
 }
 
@@ -618,6 +627,8 @@ class _FreshBridge implements WiFiDetailsBridge {
 
   @override
   Future<bool> runShortcut(String name) async => true;
+  @override
+  Future<bool> runShortcutOneShot(String name) async => true;
   @override
   Stream<WiFiDetails> get updates => const Stream<WiFiDetails>.empty();
 }
@@ -1936,6 +1947,58 @@ void main() {
         expect(tester.takeException(), isNull);
       },
     );
+
+    testWidgets(
+      'a CLEAN-INSTALL couldn\'t-check surfaces the PROMINENT "Set up Live '
+      'Wi-Fi" CTA (item #4) — not a buried offer, and the live signal card '
+      'header offers Set up (never a blind-fire Start)',
+      (tester) async {
+        // _FreshBridge: never received a payload AND readLatest is null, so the
+        // engine has no Wi-Fi link → the consumer verdict is "Couldn't check"
+        // for Wi-Fi. With the Shortcut not demonstrably installed the screen must
+        // make the fix unmissable.
+        final bridge = _FreshBridge();
+        final sampler = _CountingSampler(iosBridge: bridge);
+        addTearDown(sampler.dispose);
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              sourceOverride: WifiInfoSource.iosShortcuts,
+              iosBridge: bridge,
+              sampler: sampler,
+              securityService: _FakeSecurityService(),
+              dnsProbeService: _FakeDnsProbe(),
+              networkDetailsService: _FakeNetworkDetails(),
+              enableCloudApps: false,
+              onboardingService: _seenOnboarding(),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+        await tester.pump(const Duration(seconds: 3));
+        await tester.pumpAndSettle();
+
+        // The prominent lime "Set up Live Wi-Fi" CTA is on screen, with the
+        // honest "could not read your Wi-Fi signal" lead-in — the unmissable path
+        // forward for a clean-install user (replaces the buried "Couldn't Check"
+        // dead-end Keith hit).
+        expect(find.text('Set up Live Wi-Fi'), findsWidgets);
+        expect(
+          find.textContaining('could not read your Wi-Fi signal'),
+          findsOneWidget,
+        );
+        // The live "Wi-Fi signal" card header offers SET UP, never a blind Start
+        // that would fire the missing Shortcut and strand the user. (The card is
+        // present once the verdict shows.)
+        expect(find.text('Set up'), findsWidgets);
+        // No blind-fire of the Shortcut happened on this clean install.
+        expect(sampler.getReadingOnceCalls, 0);
+        expect(tester.takeException(), isNull);
+      },
+    );
   });
 
   // ==========================================================================
@@ -2944,6 +3007,15 @@ class _StreamingBridge implements WiFiDetailsBridge {
   Future<bool> openUrl(String url) async => true;
   @override
   Future<bool> runShortcut(String name) async {
+    runShortcutCalls++;
+    return true;
+  }
+
+  // The auto-capture one-shot now fires via the x-callback form
+  // (runShortcutOneShot). Count it under the SAME runShortcutCalls so the
+  // auto-fire test still asserts "the trigger fired" regardless of which form.
+  @override
+  Future<bool> runShortcutOneShot(String name) async {
     runShortcutCalls++;
     return true;
   }

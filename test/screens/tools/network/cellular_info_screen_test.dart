@@ -47,6 +47,10 @@ class _FakeBridge implements CellularInfoBridge {
   String? lastRunShortcutName;
   int runShortcutCalls = 0;
 
+  /// Records the ONE-SHOT (x-callback) trigger. Separate from the plain trigger.
+  String? lastOneShotName;
+  int runShortcutOneShotCalls = 0;
+
   final StreamController<CellularInfo> updatesController =
       StreamController<CellularInfo>.broadcast();
 
@@ -75,6 +79,13 @@ class _FakeBridge implements CellularInfoBridge {
   }
 
   @override
+  Future<bool> runShortcutOneShot(String name) async {
+    runShortcutOneShotCalls++;
+    lastOneShotName = name;
+    return runShortcutResult;
+  }
+
+  @override
   Stream<CellularInfo> get updates => updatesController.stream;
 }
 
@@ -89,10 +100,20 @@ CellularInfo _sample() => const CellularInfo(
 void main() {
   Widget host(Widget child) => MaterialApp(theme: AppTheme.dark(), home: child);
 
+  // The iOS auto-read on entry (item #5) schedules a settle Timer; off by default
+  // so pumpAndSettle does not trip on a pending timer. Restored in tearDown.
+  setUp(() {
+    CellularInfoScreen.autoReadOnEntryEnabled = false;
+  });
+  tearDown(() {
+    CellularInfoScreen.autoReadOnEntryEnabled = true;
+  });
+
   group('CellularInfoScreen — iOS source (Live only)', () {
     testWidgets(
-        'idle state offers the default one-shot Get reading + the opt-in '
-        'Start live monitoring toggle with the honest banner note', (tester) async {
+        'INSTALL GATE: a not-set-up idle screen offers SET UP (never a blind '
+        'Get reading / Start that would fire the missing Shortcut)',
+        (tester) async {
       await tester.pumpWidget(host(
         CellularInfoScreen(
           sourceOverride: CellularInfoSource.iosShortcuts,
@@ -100,15 +121,36 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      // 2026-06-23: the DEFAULT live read is the one-shot "Get reading"; the
-      // continuous loop is demoted to the explicit "Start live monitoring" opt-in
-      // with the honest banner note. There is no bare "Start" control any more.
+      // 2026-06-25 install gate: when the Shortcut is NOT demonstrably installed,
+      // the control bar's primary action is "Set up live readings" — it opens the
+      // install sheet, never blind-fires the run-shortcut URL (which errored and
+      // stranded the user). The opt-in continuous-streaming row is hidden too.
+      expect(find.text('Set up live readings'), findsWidgets);
+      expect(find.text('Get reading'), findsNothing);
+      expect(find.text('Start live monitoring'), findsNothing);
+      expect(find.text('Start'), findsNothing);
+      expect(find.text('Snapshot'), findsNothing);
+    });
+
+    testWidgets(
+        'idle state for a SET-UP user offers the default one-shot Get reading + '
+        'the opt-in Start live monitoring toggle with the honest banner note',
+        (tester) async {
+      await tester.pumpWidget(host(
+        CellularInfoScreen(
+          sourceOverride: CellularInfoSource.iosShortcuts,
+          iosBridge: _FakeBridge(everReceived: true, latest: _sample()),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      // The DEFAULT live read is the one-shot "Get reading"; the continuous loop
+      // is the explicit "Start live monitoring" opt-in with the honest banner
+      // note. There is no bare "Start" control.
       expect(find.text('Get reading'), findsWidgets);
       expect(find.text('Start live monitoring'), findsOneWidget);
       expect(
           find.textContaining('Keeps a status banner up while running'),
           findsOneWidget);
-      expect(find.textContaining('Tap Get reading'), findsOneWidget);
       expect(find.text('Start'), findsNothing);
       expect(find.text('Snapshot'), findsNothing);
     });
@@ -123,9 +165,13 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      // Genuine first-time setup: the companion-Shortcut install/how-to note is
-      // shown so new users know to install it and tap Start.
-      expect(find.textContaining('WLAN Pros Live'), findsOneWidget);
+      // Genuine first-time setup: the companion-Shortcut install/how-to copy is
+      // shown so new users know to install it. With the install gate the start
+      // hint AND the LiveSetupCard prompt both name "WLAN Pros Live" (reinforcing
+      // the one-time setup), so there can be more than one mention.
+      expect(find.textContaining('WLAN Pros Live'), findsWidgets);
+      // The actionable install CTA is present (never a dead-end message).
+      expect(find.text('Set up live readings'), findsWidgets);
     });
 
     testWidgets(

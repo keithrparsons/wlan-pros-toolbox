@@ -146,6 +146,35 @@ class CellularInfoBridge {
     }
   }
 
+  /// Fires the ONE-SHOT Live trigger: opens the `x-callback-url` form
+  /// `shortcuts://x-callback-url/run-shortcut?name=<enc>&x-success=<scheme>://live-done`
+  /// for the Shortcut named [name]. The name is URL-encoded natively.
+  ///
+  /// Unlike [runShortcut] (the plain STREAMING trigger), this asks iOS to return
+  /// control to the app via the registered `wlanprostoolbox://live-done` scheme
+  /// the moment the SINGLE run FINISHES, so a one-shot read auto-returns to the
+  /// app instead of stranding the user on the Shortcuts page. Only safe for a
+  /// NON-looping run: the app must NOT raise the monitoring flag first, so the
+  /// Shortcut's `ShouldContinueMonitoringIntent` reads false and the run finishes.
+  ///
+  /// Returns false when the platform could not OPEN the URL (Shortcuts app
+  /// missing, or off-iOS where the channel is absent). A true result means iOS
+  /// opened the URL, not that the Shortcut finished.
+  Future<bool> runShortcutOneShot(String name) async {
+    try {
+      return await _method.invokeMethod<bool>(
+            'runShortcutOneShot',
+            <String, String>{'name': name},
+          ) ??
+          false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException catch (e) {
+      debugPrint('CellularInfoBridge.runShortcutOneShot failed: $e');
+      return false;
+    }
+  }
+
   /// Stream of parsed [CellularInfo] pushed when a Darwin notification fires
   /// while the app is foregrounded (TICKET-05). The recursive companion
   /// Shortcut delivers one cellular sample per cycle via the background

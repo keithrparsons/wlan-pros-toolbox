@@ -283,6 +283,14 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// True only on iOS (the companion-Shortcut source).
   bool get _isIos => _source == WifiInfoSource.iosShortcuts;
 
+  /// iOS install-state: whether the companion "WLAN Pros Live" Shortcut has ever
+  /// delivered a payload (so it is demonstrably installed). Read from the live
+  /// sampler's honest App Group signal. Drives whether the couldn't-check Wi-Fi
+  /// offer is the PROMINENT "Set up Live Wi-Fi" CTA (not yet set up) or the soft
+  /// optional offer (set up, but this run could not read the link). False off
+  /// iOS / before the sampler resolves.
+  bool get _iosHasEverReceived => _sampler?.hasEverReceived ?? false;
+
   /// Whether to run the REAL DNS-probe + local-addressing reads on a check.
   /// Production always does (live sampling on). Tests that disable live sampling
   /// and inject no fake skip them, so no real resolver / interface call leaks a
@@ -1264,7 +1272,10 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                         const SizedBox(height: AppSpacing.sm),
                         // Live "Wi-Fi signal" sparkline card.
                         if (_sampler != null) ...[
-                          _LiveSignalCard(sampler: _sampler!),
+                          _LiveSignalCard(
+                            sampler: _sampler!,
+                            onSetUp: _openShortcutSheet,
+                          ),
                           const SizedBox(height: AppSpacing.sm),
                         ],
                         // "What to tell support".
@@ -1307,12 +1318,23 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                         ),
                       ],
                     ),
-                    // iOS-only soft optional Shortcut offer on the D1 path only.
+                    // iOS-only Shortcut offer. PROMINENCE depends on the install
+                    // gate (item #4): when the companion Shortcut is NOT
+                    // demonstrably installed (the clean-install case Keith hit —
+                    // the check came back "Wi-Fi: Couldn't Check" with no way to
+                    // fix it), surface the PROMINENT lime-primary "Set up Live
+                    // Wi-Fi" CTA right under the verdict so the path forward is
+                    // unmissable. When the Shortcut IS set up but this particular
+                    // run just could not read the link, keep the soft optional
+                    // offer. Off the couldn't-check path the card is not shown.
                     if (_isIos &&
                         verdict.outcome ==
                             ConsumerOutcome.couldntCheckWifi) ...[
                       const SizedBox(height: AppSpacing.sm),
-                      _ShortcutOfferCard(onOpen: _openShortcutSheet),
+                      _ShortcutOfferCard(
+                        onOpen: _openShortcutSheet,
+                        prominent: !_iosHasEverReceived,
+                      ),
                     ],
                     // CLOUD APPS reachability panel (Feature 1, Felix 2026-06-13).
                     // Keith asked for the named-cloud-apps panel at the BOTTOM of
@@ -2926,9 +2948,16 @@ class _CompareBar extends StatelessWidget {
 // ===========================================================================
 
 class _LiveSignalCard extends StatelessWidget {
-  const _LiveSignalCard({required this.sampler});
+  const _LiveSignalCard({required this.sampler, required this.onSetUp});
 
   final WifiSignalSampler sampler;
+
+  /// Opens the one-time companion-Shortcut install sheet. Wired to the install
+  /// gate: when the Shortcut is not demonstrably installed
+  /// (sampler.hasEverReceived == false) the header CTA opens setup instead of
+  /// firing the Shortcut (which would error and strand the user on the Shortcuts
+  /// page — the exact clean-install repro).
+  final VoidCallback onSetUp;
 
   @override
   Widget build(BuildContext context) {
@@ -2971,7 +3000,23 @@ class _LiveSignalCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (sampler.isIos && !sampler.isStreaming)
+                  if (sampler.isIos &&
+                      !sampler.isStreaming &&
+                      !sampler.hasEverReceived)
+                    // INSTALL GATE (2026-06-25): the Shortcut is not demonstrably
+                    // installed, so the header offers SET UP (opens the install
+                    // sheet) instead of a Start that would blind-fire the missing
+                    // Shortcut and strand the user on the Shortcuts page.
+                    Semantics(
+                      button: true,
+                      label: 'Set up live Wi-Fi',
+                      child: OutlinedButton.icon(
+                        onPressed: onSetUp,
+                        icon: const Icon(Icons.download_outlined, size: 18),
+                        label: const Text('Set up'),
+                      ),
+                    )
+                  else if (sampler.isIos && !sampler.isStreaming)
                     Semantics(
                       button: true,
                       label: 'Start live Wi-Fi signal',
@@ -3050,19 +3095,25 @@ class _LiveSignalCard extends StatelessWidget {
                 ),
               ] else if (series.isEmpty) ...<Widget>[
                 _LiveUnavailableNote(
-                  // iOS, not yet started → invite the deliberate Start tap.
-                  // iOS, started but the first sample has not landed yet →
-                  // an HONEST "waiting" indicator (the Shortcut WAS fired; we
-                  // are genuinely waiting on it, never a fake "LIVE" with
-                  // nothing behind it). macOS auto-polls, so it is simply
-                  // reading the link.
+                  // iOS, NOT set up → the honest "set it up first" message paired
+                  //   with the header "Set up" button (never a Start that would
+                  //   blind-fire the missing Shortcut).
+                  // iOS, set up but not yet started → invite the deliberate Start.
+                  // iOS, started but the first sample has not landed yet → an
+                  //   HONEST "waiting" indicator (the Shortcut WAS fired; we are
+                  //   genuinely waiting on it, never a fake "LIVE" with nothing
+                  //   behind it). macOS auto-polls, so it is simply reading.
                   message: sampler.isIos
-                      ? (sampler.isStreaming
-                          ? 'Starting the live Wi-Fi feed from the companion '
-                              'Shortcut. The first reading should arrive in a '
-                              'moment…'
-                          : 'Tap Start to begin live Wi-Fi signal readings from '
-                              'the companion Shortcut.')
+                      ? (!sampler.hasEverReceived
+                          ? 'Live Wi-Fi signal needs the one-time "WLAN Pros '
+                              'Live" companion Shortcut. Tap Set up to add it, '
+                              'then this card streams your signal.'
+                          : sampler.isStreaming
+                              ? 'Starting the live Wi-Fi feed from the companion '
+                                  'Shortcut. The first reading should arrive in a '
+                                  'moment…'
+                              : 'Tap Start to begin live Wi-Fi signal readings '
+                                  'from the companion Shortcut.')
                       : 'Reading the Wi-Fi link…',
                 ),
               ] else ...<Widget>[
@@ -4315,9 +4366,17 @@ class _DataRow extends StatelessWidget {
 // ===========================================================================
 
 class _ShortcutOfferCard extends StatelessWidget {
-  const _ShortcutOfferCard({required this.onOpen});
+  const _ShortcutOfferCard({required this.onOpen, this.prominent = false});
 
   final VoidCallback onOpen;
+
+  /// When true, the companion Shortcut is NOT yet installed, so this is the
+  /// PRIMARY path forward for a clean-install user whose check came back
+  /// "Couldn't Check" for Wi-Fi (item #4). It renders the prominent lime
+  /// FilledButton with "Set up Live Wi-Fi" copy so the fix is unmissable. When
+  /// false the Shortcut IS set up but this run could not read the link, so it
+  /// stays the soft optional outline offer.
+  final bool prominent;
 
   @override
   Widget build(BuildContext context) {
@@ -4334,26 +4393,44 @@ class _ShortcutOfferCard extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Text(
-            'Want a deeper Wi-Fi check?',
+            prominent
+                ? 'Set up live Wi-Fi to read your signal'
+                : 'Want a deeper Wi-Fi check?',
             style: text.titleSmall?.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'Add the companion Shortcut to let this app read your Wi-Fi '
-            'details next time. Optional, and it only takes a minute.',
+            prominent
+                ? 'This check could not read your Wi-Fi signal because the '
+                    'one-time "WLAN Pros Live" companion Shortcut is not added '
+                    'yet. Set it up once and every live tool works. It takes '
+                    'about a minute.'
+                : 'Add the companion Shortcut to let this app read your Wi-Fi '
+                    'details next time. Optional, and it only takes a minute.',
             style: text.bodyMedium?.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.sm),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton(
-              onPressed: onOpen,
-              child: const Text('Add the companion Shortcut'),
+          if (prominent)
+            Semantics(
+              button: true,
+              label: 'Set up live Wi-Fi',
+              child: FilledButton.icon(
+                onPressed: onOpen,
+                icon: const Icon(Icons.download_outlined),
+                label: const Text('Set up Live Wi-Fi'),
+              ),
+            )
+          else
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton(
+                onPressed: onOpen,
+                child: const Text('Add the companion Shortcut'),
+              ),
             ),
-          ),
         ],
       ),
     );

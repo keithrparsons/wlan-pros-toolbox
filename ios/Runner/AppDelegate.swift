@@ -115,6 +115,27 @@ import UIKit
             result(success)
           }
         }
+      case "runShortcutOneShot":
+        // ONE-SHOT trigger: build and open the `x-callback-url` form for the
+        // named Shortcut. Unlike `runShortcut` (the plain STREAMING trigger),
+        // this returns control to the app via the registered
+        // `wlanprostoolbox://live-done` scheme the moment the Shortcut FINISHES —
+        // so a single read auto-returns to the app instead of stranding the user
+        // on the Shortcuts page. Used only for one-shot reads (Get reading,
+        // auto-capture, the first read right after install); the looping monitor
+        // never finishes so it stays on the plain form. `result(success)` reports
+        // only whether iOS could OPEN the URL.
+        guard let args = call.arguments as? [String: Any],
+              let name = args["name"] as? String,
+              let url = ShortcutsBridge.runShortcutOneShotURL(name: name) else {
+          result(false)
+          return
+        }
+        DispatchQueue.main.async {
+          UIApplication.shared.open(url, options: [:]) { success in
+            result(success)
+          }
+        }
       default:
         result(FlutterMethodNotImplemented)
       }

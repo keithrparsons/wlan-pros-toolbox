@@ -222,6 +222,11 @@ class _FakeBridge implements WiFiDetailsBridge {
   String? lastRunShortcutName;
   int runShortcutCalls = 0;
 
+  /// Records the ONE-SHOT (x-callback) trigger. Separate from the plain trigger
+  /// so a test can assert which form fired.
+  String? lastOneShotName;
+  int runShortcutOneShotCalls = 0;
+
   final StreamController<WiFiDetails> controller =
       StreamController<WiFiDetails>.broadcast();
 
@@ -246,6 +251,13 @@ class _FakeBridge implements WiFiDetailsBridge {
   Future<bool> runShortcut(String name) async {
     runShortcutCalls++;
     lastRunShortcutName = name;
+    return runShortcutResult;
+  }
+
+  @override
+  Future<bool> runShortcutOneShot(String name) async {
+    runShortcutOneShotCalls++;
+    lastOneShotName = name;
     return runShortcutResult;
   }
 
@@ -291,10 +303,15 @@ void main() {
   setUp(() {
     WifiInfoScreen.macPollEnabled = false;
     WifiInfoScreen.macPollInterval = const Duration(seconds: 2);
+    // The iOS auto-read on entry (item #5) schedules a settle Timer; off by
+    // default so pumpAndSettle does not trip on a pending timer. The dedicated
+    // auto-read group re-enables it and pumps the settle deterministically.
+    WifiInfoScreen.autoReadOnEntryEnabled = false;
   });
   tearDown(() {
     WifiInfoScreen.macPollEnabled = true;
     WifiInfoScreen.macPollInterval = const Duration(seconds: 2);
+    WifiInfoScreen.autoReadOnEntryEnabled = true;
   });
 
   group('WifiInfoScreen — macOS source', () {
@@ -535,8 +552,9 @@ void main() {
 
   group('WifiInfoScreen — iOS source (Live only)', () {
     testWidgets(
-        'idle state offers the default one-shot Get reading + the opt-in '
-        'Start live monitoring toggle with the honest banner note', (tester) async {
+        'INSTALL GATE: a not-set-up idle screen offers SET UP (never a blind '
+        'Get reading / Start that would fire the missing Shortcut)',
+        (tester) async {
       await tester.pumpWidget(host(
         WifiInfoScreen(
           sourceOverride: WifiInfoSource.iosShortcuts,
@@ -544,15 +562,44 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      // 2026-06-23: the DEFAULT live read is the one-shot "Get reading"; the
-      // continuous loop is demoted to the explicit "Start live monitoring" opt-in
-      // with the honest banner note. There is no bare "Start" control any more.
+      // 2026-06-25 install gate: when the companion Shortcut is NOT demonstrably
+      // installed (hasEverReceived == false), the control bar's primary action is
+      // "Set up live Wi-Fi" — it opens the install sheet, it never blind-fires the
+      // run-shortcut URL (which errored "the file doesn't exist" and stranded the
+      // user). The opt-in continuous-streaming row is hidden until setup completes.
+      expect(find.text('Set up live Wi-Fi'), findsWidgets);
+      expect(find.text('Get reading'), findsNothing);
+      expect(find.text('Start live monitoring'), findsNothing);
+      expect(find.text('Start'), findsNothing);
+      expect(find.text('Snapshot'), findsNothing);
+    });
+
+    testWidgets(
+        'idle state for a SET-UP user offers the default one-shot Get reading + '
+        'the opt-in Start live monitoring toggle with the honest banner note',
+        (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          // hasEverReceived == true, but no live payload yet (latest carries the
+          // identity only) so the screen stays idle (not streaming) and shows the
+          // normal one-shot + opt-in controls rather than the setup gate.
+          iosBridge: _FakeBridge(
+            everReceived: true,
+            latest: WiFiDetails.fromMap(
+                const <String, dynamic>{'SSID': 'KeithNet'}),
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      // The DEFAULT live read is the one-shot "Get reading"; the continuous loop
+      // is the explicit "Start live monitoring" opt-in with the honest banner
+      // note. There is no bare "Start" control.
       expect(find.text('Get reading'), findsWidgets);
       expect(find.text('Start live monitoring'), findsOneWidget);
       expect(
           find.textContaining('Keeps a status banner up while running'),
           findsOneWidget);
-      expect(find.textContaining('Tap Get reading'), findsOneWidget);
       expect(find.text('Start'), findsNothing);
       expect(find.text('Snapshot'), findsNothing);
     });
@@ -579,9 +626,12 @@ void main() {
       expect(find.text('Wi-Fi standard (PHY)'), findsOneWidget);
       // The no-Location trust signal is led, per the brief.
       expect(find.textContaining('no Location permission'), findsOneWidget);
-      // The locked card carries the SINGLE enable CTA (no native identity yet →
-      // "Enable live Wi-Fi"); the redundant LiveSetupCard prompt is suppressed.
-      expect(find.text('Enable live Wi-Fi'), findsOneWidget);
+      // The locked card carries the SINGLE enable CTA. With the install gate
+      // (2026-06-25) and no demonstrably-installed Shortcut, that CTA reads
+      // "Set up live Wi-Fi" and opens the install sheet (it never blind-fires the
+      // missing Shortcut). The redundant LiveSetupCard prompt is suppressed.
+      expect(find.text('Set up live Wi-Fi'), findsWidgets);
+      expect(find.text('Enable live Wi-Fi'), findsNothing);
       expect(find.text('Set up live Wi-Fi (one-time)'), findsNothing);
     });
 
@@ -596,17 +646,19 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      // The idle bar now carries two rows (default Get reading + opt-in Start
-      // live monitoring), so scroll the locked card's Enable CTA into view before
-      // tapping in the 600px test viewport.
-      await tester.ensureVisible(find.text('Enable live Wi-Fi'));
+      // With the install gate, the locked card's CTA reads "Set up live Wi-Fi".
+      // Scroll it into view before tapping in the 600px test viewport. (The
+      // control bar also shows a "Set up live Wi-Fi" primary; both open the same
+      // sheet — tap the locked card's via its last occurrence to be specific.)
+      final Finder lockedCta = find.text('Set up live Wi-Fi').last;
+      await tester.ensureVisible(lockedCta);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Enable live Wi-Fi'));
+      await tester.tap(lockedCta);
       await tester.pumpAndSettle();
 
       // The one-time onboarding sheet opens with the crystal-clear steps, deep-
-      // linking to install the "WLAN Pros Live" companion Shortcut.
-      expect(find.text('Set up live Wi-Fi'), findsOneWidget);
+      // linking to install the "WLAN Pros Live" companion Shortcut. The sheet's
+      // own title is also "Set up live Wi-Fi".
       expect(find.textContaining('WLAN Pros Live'), findsWidgets);
       expect(find.text('Tap Add the Shortcut below.'), findsOneWidget);
       expect(find.text('Add the Shortcut'), findsOneWidget);
@@ -637,10 +689,14 @@ void main() {
         // The rich RF fields render as the locked card, by NAME, never zeroed.
         expect(find.text('Live signal details'), findsOneWidget);
         expect(find.text('Signal (RSSI) and SNR'), findsOneWidget);
-        // With the native identity already on screen, the locked card's CTA is
-        // the DEFAULT one-shot "Get reading" (2026-06-23: one-shot is the default;
-        // continuous streaming is the opt-in toggle), not the install sheet.
-        expect(find.text('Get reading'), findsWidgets);
+        // INSTALL GATE (2026-06-25): the native identity (SSID/BSSID/security via
+        // NEHotspotNetwork) resolves with NO Shortcut, so it does NOT prove the
+        // Shortcut is installed. With hasEverReceived == false the locked card's
+        // CTA must be "Set up live Wi-Fi" (opens the install sheet), NOT a
+        // "Get reading" that would blind-fire the missing Shortcut and strand the
+        // user. This is the exact clean-install bug being fixed.
+        expect(find.text('Set up live Wi-Fi'), findsWidgets);
+        expect(find.text('Get reading'), findsNothing);
       },
     );
 
@@ -661,12 +717,14 @@ void main() {
         await tester.pumpAndSettle();
 
         // The forced modal setup sheet must NOT auto-fire on open (the friends-
-        // at-dinner friction Keith hit). No modal bottom sheet is presented.
-        expect(find.text('Set up live Wi-Fi'), findsNothing);
+        // at-dinner friction Keith hit). No modal bottom sheet is presented — its
+        // unique step copy ("Tap Add the Shortcut below.") is absent.
+        expect(find.text('Tap Add the Shortcut below.'), findsNothing);
         // Instead the non-modal opt-in path is on screen: the inline locked card
-        // lists the RF fields by name with the single Enable CTA.
+        // lists the RF fields by name with the single Set-up CTA (install-gated,
+        // since hasEverReceived == false).
         expect(find.text('Live signal details'), findsOneWidget);
-        expect(find.text('Enable live Wi-Fi'), findsOneWidget);
+        expect(find.text('Set up live Wi-Fi'), findsWidgets);
       },
     );
 

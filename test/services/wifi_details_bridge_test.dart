@@ -129,4 +129,37 @@ void main() {
       expect(await WiFiDetailsBridge().runShortcut('X'), isFalse);
     });
   });
+
+  group('runShortcutOneShot (x-callback ONE-SHOT trigger, auto-return)', () {
+    test('invokes the distinct runShortcutOneShot method with the name',
+        () async {
+      MethodCall? seen;
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        seen = call;
+        return true;
+      });
+      final ok =
+          await WiFiDetailsBridge().runShortcutOneShot('WLAN Pros Live');
+
+      expect(ok, isTrue);
+      // The ONE-SHOT path uses a SEPARATE method from the plain streaming
+      // trigger; the native side builds the x-callback form
+      // (shortcuts://x-callback-url/run-shortcut?name=…&x-success=wlanprostoolbox://live-done)
+      // so the single run AUTO-RETURNS to the app instead of stranding the user.
+      expect(seen!.method, 'runShortcutOneShot');
+      final args = seen!.arguments as Map;
+      expect(args['name'], 'WLAN Pros Live');
+      expect(args.keys.length, 1);
+    });
+
+    test('returns false when the platform could not open Shortcuts', () async {
+      messenger.setMockMethodCallHandler(channel, (call) async => false);
+      expect(await WiFiDetailsBridge().runShortcutOneShot('X'), isFalse);
+    });
+
+    test('returns false when the plugin is missing (off-iOS)', () async {
+      messenger.setMockMethodCallHandler(channel, null);
+      expect(await WiFiDetailsBridge().runShortcutOneShot('X'), isFalse);
+    });
+  });
 }

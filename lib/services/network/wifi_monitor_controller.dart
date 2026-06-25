@@ -229,7 +229,13 @@ class WifiMonitorController extends ChangeNotifier {
     });
 
     await clearFlag;
-    final bool opened = await _bridge.runShortcut(triggerShortcutName);
+    // ONE-SHOT uses the x-callback form so the SINGLE run AUTO-RETURNS to the app
+    // (x-success=wlanprostoolbox://live-done) instead of stranding the user on the
+    // Shortcuts page. Safe here because the monitoring flag was just cleared, so
+    // the Shortcut's ShouldContinueMonitoringIntent reads false and the run
+    // finishes (which is what fires the return). Streaming stays on the plain
+    // fire-and-forget form (it never finishes).
+    final bool opened = await _bridge.runShortcutOneShot(triggerShortcutName);
     if (!opened) {
       _oneShotSub?.cancel();
       _oneShotSub = null;

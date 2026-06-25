@@ -42,6 +42,8 @@ class _FakeBridge extends WiFiDetailsBridge {
   bool? lastMonitoringValue;
   int runShortcutCalls = 0;
   String? lastRunShortcutName;
+  int runShortcutOneShotCalls = 0;
+  String? lastOneShotName;
 
   @override
   Future<bool> hasEverReceivedPayload() async => everReceived;
@@ -63,6 +65,13 @@ class _FakeBridge extends WiFiDetailsBridge {
   Future<bool> runShortcut(String name) async {
     runShortcutCalls++;
     lastRunShortcutName = name;
+    return runShortcutResult;
+  }
+
+  @override
+  Future<bool> runShortcutOneShot(String name) async {
+    runShortcutOneShotCalls++;
+    lastOneShotName = name;
     return runShortcutResult;
   }
 
@@ -183,5 +192,32 @@ void main() {
       sampler.dispose();
       await bridge.close();
     });
+
+    test(
+      'getReadingOnce fires the x-callback ONE-SHOT trigger (auto-return) and '
+      'never raises the persistent monitoring flag',
+      () async {
+        final bridge = _FakeBridge(everReceived: true, latest: _details());
+        final sampler = WifiSignalSampler(
+          source: WifiInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        );
+        await sampler.load();
+
+        final bool opened = await sampler.getReadingOnce();
+
+        expect(opened, isTrue);
+        // One-shot uses the x-callback form, NOT the plain streaming trigger.
+        expect(bridge.runShortcutOneShotCalls, 1);
+        expect(bridge.runShortcutCalls, 0);
+        // It must NOT enter the streaming phase (no persistent banner).
+        expect(sampler.isStreaming, isFalse);
+        // It clears (never raises) the monitoring flag so the run is single-cycle.
+        expect(bridge.lastMonitoringValue, isFalse);
+
+        sampler.dispose();
+        await bridge.close();
+      },
+    );
   });
 }

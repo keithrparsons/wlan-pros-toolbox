@@ -52,6 +52,17 @@ class _FakeBridge extends WiFiDetailsBridge {
     return runShortcutResult;
   }
 
+  // ONE-SHOT (x-callback) trigger: getReadingOnce now fires via this form so the
+  // single run auto-returns to the app. Routed through the same counter/result
+  // as the plain trigger so the existing one-shot tests (missing-verdict settle,
+  // payload-lands-not-missing) behave identically — only the URL form changed.
+  @override
+  Future<bool> runShortcutOneShot(String name) async {
+    runShortcutCalls++;
+    lastRunShortcutName = name;
+    return runShortcutResult;
+  }
+
   @override
   Stream<WiFiDetails> get updates => _controller.stream;
 

@@ -127,6 +127,14 @@ class WifiInfoScreen extends StatefulWidget {
   @visibleForTesting
   static bool macPollEnabled = true;
 
+  /// When false, the iOS auto-read on entry (item #5: a set-up user's one-shot
+  /// read kicked from initState after load) is skipped. The auto-read schedules a
+  /// settle Timer that would leave a pending timer under `pumpAndSettle`, so the
+  /// default for the test suite is OFF; the dedicated auto-read group re-enables
+  /// it and pumps the settle deterministically. Production leaves it ON.
+  @visibleForTesting
+  static bool autoReadOnEntryEnabled = true;
+
   @override
   State<WifiInfoScreen> createState() => _WifiInfoScreenState();
 }
@@ -274,7 +282,12 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         _securityService = widget.securityService ?? WifiSecurityService();
         _onboardingService = widget.onboardingService ?? LiveOnboardingService();
         WidgetsBinding.instance.addObserver(this);
-        _liveController!.load();
+        // Auto-start the live feed on entry for SET-UP users (item #5): once
+        // load() resolves install-state, if the app has ever received a payload
+        // (the Shortcut demonstrably works) kick a one-shot read so a set-up user
+        // sees fresh RF without hunting for a Start/Get-reading tap. Users who are
+        // NOT set up fall through to the inline setup CTA (no blind-fire).
+        _liveController!.load().then((_) => _autoReadIfSetUp());
         // Read the native security type + BSSID once on open. Re-read on resume
         // (lifecycle) so a Location grant in Settings lands without a relaunch.
         _fetchIosSecurity();
@@ -537,6 +550,26 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     }
   }
 
+  /// iOS auto-start on entry (item #5): for a SET-UP user (the app has ever
+  /// received a Live payload, so the companion Shortcut demonstrably works), kick
+  /// a single one-shot read on screen entry so fresh RF appears without the user
+  /// having to find and tap Get reading. Uses the x-callback one-shot so it
+  /// auto-returns AND delivers a payload. A NOT-set-up user is never auto-fired
+  /// (that would bounce them into the Shortcuts app with the missing-Shortcut
+  /// error); they get the inline setup CTA instead. No-op off the iOS source, or
+  /// if a read is already in flight / streaming.
+  Future<void> _autoReadIfSetUp() async {
+    if (!WifiInfoScreen.autoReadOnEntryEnabled) return;
+    if (!mounted || _source != WifiInfoSource.iosShortcuts) return;
+    final WifiMonitorController? c = _liveController;
+    if (c == null) return;
+    // Already streaming this session, or a read is in flight → nothing to do.
+    if (c.isStreaming || _startInFlight) return;
+    // Only auto-fire when the Shortcut demonstrably works.
+    if (!c.hasEverReceived) return;
+    await _getReadingOnce();
+  }
+
   /// iOS first-run: fires the unmissable one-time "enable live Wi-Fi" sheet on
   /// the first open of a live tool, gated by the honest composite signal —
   /// the app has NEVER received a Live payload AND the sheet has not been shown
@@ -580,7 +613,12 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         await _onboardingService?.markOnboardingSeen();
         await _liveController?.load();
         if (!mounted) return;
-        await _startLive();
+        // Item #7: kick the FIRST read automatically via the x-callback one-shot
+        // so the user does not have to find/tap Get reading again — and so the
+        // run AUTO-RETURNS to the app AND delivers a payload (flipping
+        // hasEverReceived true), which lifts the install gate everywhere. The
+        // continuous loop is NOT started here (no persistent banner on first run).
+        await _getReadingOnce();
       },
     );
   }
@@ -2325,9 +2363,19 @@ class _LiveBody extends StatelessWidget {
                   _MonitorControlBar(
                     streaming: controller.isStreaming,
                     lastUpdated: controller.lastUpdated,
-                    onGetReading: onGetReading,
-                    onStart: onStart,
+                    // INSTALL GATE (2026-06-25): never blind-fire the Shortcut
+                    // when it is not demonstrably installed. When the app has
+                    // never received a Live payload, both the one-shot read and
+                    // the continuous start route to the SETUP sheet (onSetUp)
+                    // instead of firing the run-shortcut URL — which would error
+                    // ("the file doesn't exist") and strand the user on the
+                    // Shortcuts page. Once a payload has ever arrived the Shortcut
+                    // works, so the real read/stream actions are wired through.
+                    onGetReading:
+                        controller.hasEverReceived ? onGetReading : onSetUp,
+                    onStart: controller.hasEverReceived ? onStart : onSetUp,
                     onStop: onStop,
+                    setUpMode: !controller.hasEverReceived,
                   ),
                   if (showSetupError) ...[
                     const SizedBox(height: AppSpacing.sm),
@@ -2353,13 +2401,20 @@ class _LiveBody extends StatelessWidget {
                       const SizedBox(height: AppSpacing.sm),
                     ],
                     LiveRfLockedCard(
-                      // DEFAULT is the one-shot read when the native identity is
-                      // already on screen (the Shortcut is set up); otherwise it
-                      // opens the one-time setup sheet first.
-                      onEnable: nativeIdentity != null ? onGetReading : onSetUp,
-                      enableLabel: nativeIdentity != null
+                      // INSTALL GATE (2026-06-25): the native identity (SSID /
+                      // BSSID / security via NEHotspotNetwork) resolves with NO
+                      // Shortcut, so its presence does NOT prove the Shortcut is
+                      // installed. Route to the one-shot read ONLY when the app
+                      // has DEMONSTRABLY received a Live payload
+                      // (controller.hasEverReceived); otherwise open the setup
+                      // sheet first. Before the fix this fired the missing
+                      // Shortcut on a clean install and stranded the user with
+                      // "the file doesn't exist".
+                      onEnable:
+                          controller.hasEverReceived ? onGetReading : onSetUp,
+                      enableLabel: controller.hasEverReceived
                           ? 'Get reading'
-                          : 'Enable live Wi-Fi',
+                          : 'Set up live Wi-Fi',
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     const _LiveStartHint(),
@@ -2843,17 +2898,28 @@ class _MonitorControlBar extends StatelessWidget {
     required this.onGetReading,
     required this.onStart,
     required this.onStop,
+    this.setUpMode = false,
   });
 
   final bool streaming;
   final DateTime? lastUpdated;
 
-  /// DEFAULT: one-shot read (no persistent banner).
+  /// DEFAULT: one-shot read (no persistent banner). In [setUpMode] this opens the
+  /// install sheet instead of firing the Shortcut.
   final VoidCallback onGetReading;
 
-  /// Opt-in: continuous streaming (keeps the banner up until [onStop]).
+  /// Opt-in: continuous streaming (keeps the banner up until [onStop]). In
+  /// [setUpMode] this opens the install sheet instead of firing the Shortcut.
   final VoidCallback onStart;
   final VoidCallback onStop;
+
+  /// True when the companion Shortcut is NOT demonstrably installed
+  /// (hasEverReceived == false). The primary action then reads "Set up live
+  /// Wi-Fi" and installs the Shortcut, and the secondary continuous-streaming
+  /// row is hidden — there is nothing to stream until setup completes. This is
+  /// the install gate that stops a clean install from blind-firing the missing
+  /// Shortcut and stranding the user on the Shortcuts page.
+  final bool setUpMode;
 
   static String _formatTimestamp(DateTime t) {
     String two(int n) => n.toString().padLeft(2, '0');
@@ -2887,7 +2953,9 @@ class _MonitorControlBar extends StatelessWidget {
           // streaming is a secondary opt-in row below (with an honest note).
           final Widget primaryAction = streaming
               ? _StopButton(onStop: onStop)
-              : _GetReadingButton(onGetReading: onGetReading);
+              : setUpMode
+                  ? _SetUpLiveButton(onSetUp: onGetReading)
+                  : _GetReadingButton(onGetReading: onGetReading);
 
           final Widget header = narrow
               ? Column(
@@ -2910,6 +2978,12 @@ class _MonitorControlBar extends StatelessWidget {
                 );
 
           if (streaming) return header;
+
+          // In setUpMode the Shortcut is not installed yet, so the continuous
+          // streaming row is hidden — there is nothing to stream until setup
+          // completes, and offering "Start live monitoring" here would blind-fire
+          // the missing Shortcut. The primary action is the install CTA.
+          if (setUpMode) return header;
 
           // Opt-in continuous streaming, demoted below the default one-shot
           // action with the honest banner note (GL-004: no marketing words).
@@ -3015,6 +3089,30 @@ class _GetReadingButton extends StatelessWidget {
         onPressed: onGetReading,
         icon: const Icon(Icons.bolt_outlined),
         label: const Text('Get reading'),
+      ),
+    );
+  }
+}
+
+/// Install CTA shown in the control bar when the companion Shortcut is not
+/// demonstrably installed (hasEverReceived == false). Opens the one-time setup
+/// sheet instead of firing the run-shortcut URL, so a clean install never trips
+/// the "the file doesn't exist" Shortcuts error. Same lime-primary prominence as
+/// "Get reading" so the action a new user needs is the obvious one.
+class _SetUpLiveButton extends StatelessWidget {
+  const _SetUpLiveButton({required this.onSetUp});
+
+  final VoidCallback onSetUp;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Set up live Wi-Fi',
+      child: FilledButton.icon(
+        onPressed: onSetUp,
+        icon: const Icon(Icons.download_outlined),
+        label: const Text('Set up live Wi-Fi'),
       ),
     );
   }

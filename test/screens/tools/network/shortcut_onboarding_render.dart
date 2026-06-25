@@ -56,6 +56,9 @@ class _FakeBridge implements WiFiDetailsBridge {
   Future<bool> runShortcut(String name) async => true;
 
   @override
+  Future<bool> runShortcutOneShot(String name) async => true;
+
+  @override
   Stream<WiFiDetails> get updates => const Stream<WiFiDetails>.empty();
 }
 

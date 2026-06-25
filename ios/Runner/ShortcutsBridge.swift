@@ -81,6 +81,44 @@ enum ShortcutsBridge {
     return components.url
   }
 
+  /// The custom URL scheme iOS uses to bring the Toolbox back to the foreground
+  /// after a ONE-SHOT Shortcut run completes. Registered in Info.plist
+  /// (CFBundleURLTypes). Used only by the x-callback one-shot trigger below; the
+  /// looping STREAMING trigger stays on the plain fire-and-forget form (it never
+  /// finishes, so there is nothing to return to).
+  static let callbackScheme = "wlanprostoolbox"
+
+  /// The full return URL the one-shot x-callback hands to `x-success`. iOS opens
+  /// this when the Shortcut FINISHES, which re-foregrounds the Toolbox so a
+  /// one-shot read auto-returns instead of stranding the user on the Shortcuts
+  /// page. The host (`live-done`) lets the app distinguish this callback.
+  static let callbackSuccessURLString = "\(callbackScheme)://live-done"
+
+  /// Builds the `x-callback-url` ONE-SHOT run-shortcut URL for [name]:
+  ///
+  ///   shortcuts://x-callback-url/run-shortcut?name=<enc>&x-success=<enc return>
+  ///
+  /// Unlike [runShortcutURL] (the plain, fire-and-forget STREAMING trigger), this
+  /// form makes iOS return control to the app via the `x-success` URL the MOMENT
+  /// the Shortcut finishes. A one-shot "WLAN Pros Live" run gathers ONE sample,
+  /// delivers it via `ReceiveLiveDetailsIntent`, sees `ShouldContinueMonitoring`
+  /// is false (the app clears the flag before a one-shot), and finishes — so the
+  /// x-success fires and the user lands back in the app automatically. This is
+  /// what stops the "stuck on the Shortcuts page, swipe back manually" strand.
+  /// It is NEVER used for the looping monitor (which never finishes). Returns nil
+  /// only if the name cannot be encoded (never in practice).
+  static func runShortcutOneShotURL(name: String) -> URL? {
+    var components = URLComponents()
+    components.scheme = "shortcuts"
+    components.host = "x-callback-url"
+    components.path = "/run-shortcut"
+    components.queryItems = [
+      URLQueryItem(name: "name", value: name),
+      URLQueryItem(name: "x-success", value: callbackSuccessURLString),
+    ]
+    return components.url
+  }
+
   /// Shared defaults for the App Group, or nil if the capability is missing
   /// (e.g. entitlement not provisioned yet). Callers degrade honestly.
   static var sharedDefaults: UserDefaults? {
