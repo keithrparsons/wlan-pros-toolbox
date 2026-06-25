@@ -58,6 +58,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/sparkline.dart';
 import '../../../widgets/tool_help_footer.dart';
+import 'get_reading_icon.dart';
 import 'install_shortcut_sheet.dart';
 import 'live_setup_card.dart';
 import 'network_unavailable_view.dart';
@@ -1145,7 +1146,7 @@ class _GetReadingButton extends StatelessWidget {
       label: 'Get reading',
       child: FilledButton.icon(
         onPressed: onGetReading,
-        icon: const Icon(Icons.bolt_outlined),
+        icon: const GetReadingIcon(),
         label: const Text('Get reading'),
       ),
     );

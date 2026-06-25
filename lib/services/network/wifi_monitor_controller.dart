@@ -7,7 +7,12 @@
 //
 // Phases:
 //   loading      -> resolving install-state + latest payload on first load.
-//   needsInstall -> no payload has ever arrived: show install / how-to.
+//   notOnWifi    -> the device is demonstrably NOT on Wi-Fi (e.g. cellular-only
+//                   on iOS): show the honest "connect to Wi-Fi" message instead
+//                   of silence or an endless "waiting" spinner. Checked BEFORE
+//                   needsInstall, and only ever entered on a positive
+//                   not-on-Wi-Fi signal (never from missing/ambiguous data).
+//   needsInstall -> on Wi-Fi but no payload has ever arrived: show install/how-to.
 //   idleWithData -> at least one payload exists, live monitoring not running.
 //   streaming    -> live monitoring running; cards update on each pushed payload.
 //
@@ -18,12 +23,14 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import 'wifi_connection_service.dart';
 import 'wifi_details.dart';
 import 'wifi_details_bridge.dart';
 
 /// Lifecycle phases of the Wi-Fi Details screen.
 enum WifiMonitorPhase {
   loading,
+  notOnWifi,
   needsInstall,
   idleWithData,
   streaming,
@@ -36,11 +43,20 @@ class WifiMonitorController extends ChangeNotifier {
   // ignore_for_file: prefer_initializing_formals
   WifiMonitorController({
     required WiFiDetailsBridge bridge,
+    WifiConnectionService? connectionService,
     Duration missingShortcutSettle = const Duration(seconds: 4),
   })  : _bridge = bridge,
+        _connection = connectionService ?? WifiConnectionService(),
         _missingShortcutSettle = missingShortcutSettle;
 
   final WiFiDetailsBridge _bridge;
+
+  /// Honest "is the device on Wi-Fi?" probe (2026-06-25). Drives the [notOnWifi]
+  /// phase so a cellular-only / half-joined-captive user sees a clear "connect to
+  /// Wi-Fi" message instead of silence or an endless "waiting" spinner. Returns
+  /// [WifiConnectionStatus.unknown] on any ambiguous read, which leaves the prior
+  /// behaviour untouched (never a false "not on Wi-Fi").
+  final WifiConnectionService _connection;
 
   /// How long to wait after a successful trigger OPEN before concluding the
   /// companion Shortcut is missing/deleted. iOS reports `open` success when it
@@ -68,8 +84,15 @@ class WifiMonitorController extends ChangeNotifier {
   DateTime? _lastUpdated;
   bool _disposed = false;
   bool _shortcutMissing = false;
+  bool _notOnWifi = false;
 
   WifiMonitorPhase get phase => _phase;
+
+  /// True when the most recent connection probe found the device is demonstrably
+  /// NOT on Wi-Fi (e.g. cellular-only). Honest: only ever set on a positive
+  /// not-on-Wi-Fi signal, never from missing/ambiguous data. The screen ORs this
+  /// nowhere — it is surfaced via the [WifiMonitorPhase.notOnWifi] phase.
+  bool get notOnWifi => _notOnWifi;
 
   /// Most recent parsed details, or null when none has arrived yet.
   WiFiDetails? get details => _details;
@@ -99,10 +122,16 @@ class WifiMonitorController extends ChangeNotifier {
   /// Wall-clock time of the most recent payload, for the "last updated" label.
   DateTime? get lastUpdated => _lastUpdated;
 
-  /// Resolves install-state, the persisted monitoring flag, and the latest
-  /// payload. Re-entrant: callable from the "I've installed it, run it" retry
-  /// and from app-resume (the Shortcut bounces the app to the foreground).
-  Future<void> load() async {
+  /// Resolves install-state, the persisted monitoring flag, the latest payload,
+  /// and the honest Wi-Fi connection state. Re-entrant: callable from the "I've
+  /// installed it, run it" retry and from app-resume (the Shortcut bounces the
+  /// app to the foreground, and the user may have joined/left Wi-Fi meanwhile).
+  ///
+  /// [nativeSsid] is the optional native NEHotspotNetwork/CoreWLAN SSID the
+  /// screen already reads. A non-empty value is a definitive "on Wi-Fi" signal;
+  /// its absence is NOT used to assert "not on Wi-Fi" (it can be null because
+  /// Location is ungranted). See [WifiConnectionService.status].
+  Future<void> load({String? nativeSsid}) async {
     if (_phase != WifiMonitorPhase.streaming) {
       _phase = WifiMonitorPhase.loading;
       _safeNotify();
@@ -111,12 +140,18 @@ class WifiMonitorController extends ChangeNotifier {
     final bool received = await _bridge.hasEverReceivedPayload();
     final WiFiDetails? latest = await _bridge.readLatest();
     final bool wasMonitoring = await _bridge.isMonitoringActive();
+    final WifiConnectionStatus connStatus =
+        await _connection.status(nativeSsid: nativeSsid);
 
     _hasEverReceived = received || (latest != null && latest.hasAnyData);
     if (latest != null && latest.hasAnyData) {
       _details = latest;
       _lastUpdated ??= DateTime.now();
     }
+    // Honest connection flag: true ONLY on a positive not-on-Wi-Fi signal; an
+    // `unknown` (ambiguous / wired desktop / read failed) leaves it false so the
+    // prior behaviour is untouched (GL-005 — no false "not on Wi-Fi").
+    _notOnWifi = connStatus == WifiConnectionStatus.notOnWifi;
 
     if (_phase == WifiMonitorPhase.streaming) {
       // A resume arrived mid-stream; keep streaming, data already refreshed.
@@ -124,7 +159,15 @@ class WifiMonitorController extends ChangeNotifier {
       return;
     }
 
-    if (!_hasEverReceived) {
+    // NOT-ON-WIFI takes precedence over the install gate ONLY when there is no
+    // real data to show: a user on cellular with no payload yet sees the honest
+    // "connect to Wi-Fi" message rather than the setup CTA (the Shortcut cannot
+    // read Wi-Fi RF that does not exist). If a payload has arrived this session
+    // we keep showing it (it is the last known reading), so a transient drop to
+    // cellular never blanks data the user already has.
+    if (_notOnWifi && !_hasEverReceived) {
+      _phase = WifiMonitorPhase.notOnWifi;
+    } else if (!_hasEverReceived) {
       _phase = WifiMonitorPhase.needsInstall;
     } else if (wasMonitoring) {
       // App relaunched while a loop was active -> resume listening.

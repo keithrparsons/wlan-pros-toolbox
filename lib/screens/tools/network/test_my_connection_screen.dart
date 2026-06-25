@@ -65,8 +65,10 @@ import '../../../widgets/sparkline.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'analyze_results_screen.dart';
 import 'cloud_apps_panel.dart';
+import 'get_reading_icon.dart';
 import 'install_shortcut_sheet.dart';
 import 'network_unavailable_view.dart';
+import 'not_on_wifi_card.dart';
 
 /// The footnote method-disclosure, VERBATIM from the pro screen's spec. Kept as
 /// a named constant so the test asserts the exact string and the technical
@@ -372,7 +374,13 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
             iosBridge: _iosBridge,
           );
       WidgetsBinding.instance.addObserver(this);
-      _sampler!.load();
+      // Resolve the native identity first, then load — so a known SSID is a
+      // definitive "on Wi-Fi" signal on the first connection probe (absence is
+      // never read as "not on Wi-Fi"). The fetch is async; the load passes
+      // whatever has resolved, and the resume path re-passes it later.
+      _fetchIosSecurity().then(
+        (_) => _sampler?.load(nativeSsid: _nativeSsid),
+      );
       // Keep the screen's own copy/technical/capture-affordance state in sync
       // with the live stream: [_effectiveAp] and [_iosRfCaptured] read the
       // sampler's latest reading, so when a late live sample lands AFTER the run
@@ -477,7 +485,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     final WifiSignalSampler? sampler = _sampler;
     if (sampler == null) return;
     if (state == AppLifecycleState.resumed) {
-      sampler.load();
+      // Re-read the native identity then re-run the connection probe + load, so a
+      // user who joined Wi-Fi while away advances out of the not-on-Wi-Fi state.
+      _fetchIosSecurity().then((_) => sampler.load(nativeSsid: _nativeSsid));
       sampler.resumeMac();
     } else if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden) {
@@ -637,6 +647,26 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     final WifiSecurityInfo info = await svc.fetch();
     if (!mounted) return;
     _iosSecurity = info;
+  }
+
+  /// "Check again" from the not-on-Wi-Fi state: re-read the native identity (a
+  /// freshly joined SSID is a definitive on-Wi-Fi signal) then re-run the
+  /// sampler's connection probe + install-state resolve, so the section advances
+  /// out of the not-on-Wi-Fi state once Wi-Fi is back. Never fires the Shortcut.
+  Future<void> _retryConnection() async {
+    await _fetchIosSecurity();
+    await _sampler?.load(nativeSsid: _nativeSsid);
+  }
+
+  /// The native NEHotspotNetwork SSID when a real network has resolved — a
+  /// definitive "on Wi-Fi" signal for the sampler's connection probe. Null before
+  /// the native read resolves or when Location is ungranted; absence is never
+  /// used to assert "not on Wi-Fi" (see [WifiConnectionService]).
+  String? get _nativeSsid {
+    final WifiSecurityInfo? sec = _iosSecurity;
+    if (sec == null || !sec.available) return null;
+    final String? ssid = sec.ssid?.trim();
+    return (ssid == null || ssid.isEmpty) ? null : ssid;
   }
 
   /// Folds the native iOS security read (security token + BSSID) onto a
@@ -1275,6 +1305,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                           _LiveSignalCard(
                             sampler: _sampler!,
                             onSetUp: _openShortcutSheet,
+                            onRetryConnection: _retryConnection,
                           ),
                           const SizedBox(height: AppSpacing.sm),
                         ],
@@ -2948,7 +2979,11 @@ class _CompareBar extends StatelessWidget {
 // ===========================================================================
 
 class _LiveSignalCard extends StatelessWidget {
-  const _LiveSignalCard({required this.sampler, required this.onSetUp});
+  const _LiveSignalCard({
+    required this.sampler,
+    required this.onSetUp,
+    required this.onRetryConnection,
+  });
 
   final WifiSignalSampler sampler;
 
@@ -2958,6 +2993,11 @@ class _LiveSignalCard extends StatelessWidget {
   /// firing the Shortcut (which would error and strand the user on the Shortcuts
   /// page — the exact clean-install repro).
   final VoidCallback onSetUp;
+
+  /// Re-runs the connection probe + install-state resolve. Wired to the
+  /// not-on-Wi-Fi state's "Check again" action so a user who has just joined
+  /// Wi-Fi can re-check in place.
+  final VoidCallback onRetryConnection;
 
   @override
   Widget build(BuildContext context) {
@@ -3000,7 +3040,13 @@ class _LiveSignalCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (sampler.isIos &&
+                  if (sampler.notOnWifi)
+                    // NOT-ON-WIFI (2026-06-25): the device is demonstrably off
+                    // Wi-Fi (e.g. cellular). No Start / Set up CTA — there is no
+                    // Wi-Fi link to read; the body carries the honest "connect to
+                    // Wi-Fi" state with its own "Check again" action.
+                    const SizedBox.shrink()
+                  else if (sampler.isIos &&
                       !sampler.isStreaming &&
                       !sampler.hasEverReceived)
                     // INSTALL GATE (2026-06-25): the Shortcut is not demonstrably
@@ -3072,6 +3118,22 @@ class _LiveSignalCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AppSpacing.xs),
+              if (sampler.notOnWifi) ...<Widget>[
+                // NOT-ON-WIFI (2026-06-25): the device is demonstrably off Wi-Fi
+                // (e.g. cellular-only). Replace the walk-around tip + waiting/
+                // setup states with the honest "connect to Wi-Fi" surface, scoped
+                // to this section, with its own "Check again" retry. The
+                // walk-around tip is meaningless with no Wi-Fi link, so it is
+                // suppressed here.
+                NotOnWifiCard(
+                  onRetry: onRetryConnection,
+                  title: "You're not connected to Wi-Fi",
+                  message:
+                      'Connect to a Wi-Fi network to see your live Wi-Fi signal. '
+                      'On cellular or a partly-joined network, there is no Wi-Fi '
+                      'link to read.',
+                ),
+              ] else ...<Widget>[
               // Walk-around tip (item #6) — invites the user to move while the
               // live feed runs so they see the signal change spot to spot.
               Text(
@@ -3153,6 +3215,7 @@ class _LiveSignalCard extends StatelessWidget {
                   ),
                 ),
               ],
+              ], // close the `else` (on-Wi-Fi) branch of the notOnWifi gate
             ],
           ),
         );
@@ -3908,7 +3971,7 @@ class _WifiLinkSection extends StatelessWidget {
             label: 'Capture Wi-Fi details',
             child: FilledButton.icon(
               onPressed: onCapture,
-              icon: const Icon(Icons.bolt_outlined),
+              icon: const GetReadingIcon(),
               label: const Text('Capture Wi-Fi details'),
             ),
           ),

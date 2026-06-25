@@ -25,6 +25,7 @@ import 'package:flutter/material.dart';
 
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
+import 'get_reading_icon.dart';
 
 /// A non-zeroed placeholder for the live RF fields, shown before the companion
 /// Shortcut has delivered any reading. Lists the RF metrics by name and offers
@@ -89,7 +90,7 @@ class LiveRfLockedCard extends StatelessWidget {
             label: enableLabel,
             child: FilledButton.icon(
               onPressed: onEnable,
-              icon: const Icon(Icons.bolt_outlined),
+              icon: const GetReadingIcon(),
               label: Text(enableLabel),
             ),
           ),

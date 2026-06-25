@@ -195,6 +195,14 @@ class WifiSignalSampler extends ChangeNotifier {
   /// the honest "install the Shortcut" hint exactly as wifi-info does.
   bool get hasEverReceived => _controller?.hasEverReceived ?? false;
 
+  /// True when the last connection probe found the device is demonstrably NOT on
+  /// Wi-Fi (e.g. cellular-only on iOS) and no live reading has arrived — drives
+  /// the honest "connect to Wi-Fi" surface in the Wi-Fi-signal section instead of
+  /// a dead waiting state. Honest: only ever set on a positive not-on-Wi-Fi
+  /// signal, never from missing/ambiguous data. False off iOS (the snapshot
+  /// platforms read Wi-Fi natively and surface their own state).
+  bool get notOnWifi => (_controller?.notOnWifi ?? false) && !hasEverReceived;
+
   /// Set when the last iOS [start] could not open the companion Shortcut
   /// (Shortcuts missing / not installed). Surfaced as the honest live error.
   bool get triggerError => _triggerError;
@@ -286,13 +294,19 @@ class WifiSignalSampler extends ChangeNotifier {
   }
 
   /// Resolves the iOS install-state + any persisted monitoring flag (so a
-  /// payload delivered while backgrounded lands and an active loop resumes).
-  /// No-op on macOS. Call on first build and on app resume.
-  Future<void> load() async {
+  /// payload delivered while backgrounded lands and an active loop resumes), and
+  /// the honest Wi-Fi connection state (so a cellular-only user gets the "connect
+  /// to Wi-Fi" surface instead of a dead waiting state). No-op on macOS. Call on
+  /// first build and on app resume.
+  ///
+  /// [nativeSsid] is the optional native NEHotspotNetwork SSID the screen reads;
+  /// a non-empty value is a definitive "on Wi-Fi" signal (its absence is never
+  /// used to assert "not on Wi-Fi"). See [WifiConnectionService].
+  Future<void> load({String? nativeSsid}) async {
     if (source == WifiInfoSource.iosShortcuts) {
       final WifiMonitorController? c = _controller;
       if (c == null) return;
-      await c.load();
+      await c.load(nativeSsid: nativeSsid);
       // If load() resumed the controller to `streaming` purely from a stale
       // persisted monitoring flag (no deliberate in-session start, so no live
       // producer), tear that phantom stream down and clear the flag. This is

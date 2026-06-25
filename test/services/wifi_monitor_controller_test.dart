@@ -7,10 +7,37 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:network_info_plus/network_info_plus.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_connection_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_monitor_controller.dart';
+
+/// A [NetworkInfo] fake feeding [WifiConnectionService]: a canned Wi-Fi IP drives
+/// the on/not-on-Wi-Fi verdict deterministically in the controller tests.
+class _FakeNetworkInfo implements NetworkInfo {
+  _FakeNetworkInfo({this.wifiIp});
+
+  String? wifiIp;
+
+  @override
+  Future<String?> getWifiIP() async => wifiIp;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+/// Builds a [WifiConnectionService] pinned to iOS with a canned Wi-Fi IP — a
+/// non-null IP => onWifi, a null IP => notOnWifi (the controller's not-on-Wi-Fi
+/// branch under test).
+WifiConnectionService _conn({String? wifiIp}) {
+  return WifiConnectionService(
+    networkInfo: _FakeNetworkInfo(wifiIp: wifiIp),
+    platformOverride: TargetPlatform.iOS,
+  );
+}
 
 /// In-memory fake of [WiFiDetailsBridge] for state-machine tests.
 class _FakeBridge extends WiFiDetailsBridge {
@@ -503,6 +530,136 @@ void main() {
 
       expect(c.shortcutMissing, isTrue);
       expect(bridge.runShortcutCalls, 1);
+      c.dispose();
+      await bridge.close();
+    });
+  });
+
+  // The honest "you're not connected to Wi-Fi" state (2026-06-25). The three
+  // states the live Wi-Fi surfaces must distinguish:
+  //   1. NOT on Wi-Fi (cellular-only)        -> notOnWifi phase (NEW).
+  //   2. ON Wi-Fi but Shortcut not set up     -> needsInstall (existing CTA).
+  //   3. ON Wi-Fi + has data                  -> idleWithData / streaming.
+  group('not-on-Wi-Fi state (honest connection probe)', () {
+    test('STATE 1: not on Wi-Fi + no payload ever -> notOnWifi (not needsInstall)',
+        () async {
+      // A cellular-only user with the Shortcut never run: the honest state is
+      // "connect to Wi-Fi", NOT "set up the Shortcut" — the Shortcut cannot read
+      // Wi-Fi RF that does not exist.
+      final bridge = _FakeBridge()..everReceived = false;
+      final c = WifiMonitorController(
+        bridge: bridge,
+        connectionService: _conn(wifiIp: null), // null IP on iOS => notOnWifi
+      );
+
+      await c.load();
+
+      expect(c.phase, WifiMonitorPhase.notOnWifi);
+      expect(c.notOnWifi, isTrue);
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('STATE 2: ON Wi-Fi but no payload ever -> needsInstall (the setup CTA)',
+        () async {
+      // On Wi-Fi (real Wi-Fi IP) but the Shortcut has never delivered: the setup
+      // CTA is correct, and the not-on-Wi-Fi state must NOT appear.
+      final bridge = _FakeBridge()..everReceived = false;
+      final c = WifiMonitorController(
+        bridge: bridge,
+        connectionService: _conn(wifiIp: '192.168.0.10'),
+      );
+
+      await c.load();
+
+      expect(c.phase, WifiMonitorPhase.needsInstall);
+      expect(c.notOnWifi, isFalse);
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('STATE 3: ON Wi-Fi + data -> idleWithData (live flow, not notOnWifi)',
+        () async {
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _details();
+      final c = WifiMonitorController(
+        bridge: bridge,
+        connectionService: _conn(wifiIp: '192.168.0.10'),
+      );
+
+      await c.load();
+
+      expect(c.phase, WifiMonitorPhase.idleWithData);
+      expect(c.notOnWifi, isFalse);
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('a resolved native SSID overrides a null Wi-Fi IP -> NOT notOnWifi',
+        () async {
+      // Even with a null Wi-Fi IP, a known native SSID proves an active join, so
+      // the user is on Wi-Fi and falls to the setup CTA, never the not-on-Wi-Fi
+      // state (GL-005 — no false negative).
+      final bridge = _FakeBridge()..everReceived = false;
+      final c = WifiMonitorController(
+        bridge: bridge,
+        connectionService: _conn(wifiIp: null),
+      );
+
+      await c.load(nativeSsid: 'KeithNet');
+
+      expect(c.phase, WifiMonitorPhase.needsInstall);
+      expect(c.notOnWifi, isFalse);
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('not-on-Wi-Fi NEVER blanks data the user already has', () async {
+      // A transient drop to cellular while a reading is already on screen must
+      // keep showing the last reading — the not-on-Wi-Fi phase is gated on
+      // !hasEverReceived, so existing data is preserved.
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _details(ssid: 'LastKnown');
+      final c = WifiMonitorController(
+        bridge: bridge,
+        connectionService: _conn(wifiIp: null), // dropped to cellular
+      );
+
+      await c.load();
+
+      expect(c.phase, WifiMonitorPhase.idleWithData);
+      expect(c.notOnWifi, isTrue, reason: 'the probe still reports off-Wi-Fi');
+      expect(c.details!.ssid, 'LastKnown',
+          reason: 'the last reading is retained, never blanked');
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('rejoining Wi-Fi on a reload clears the not-on-Wi-Fi state', () async {
+      // First load: cellular -> notOnWifi. Then the user joins Wi-Fi and the
+      // "Check again" retry reloads with a Wi-Fi IP -> the state clears to the
+      // setup CTA.
+      final fakeNet = _FakeNetworkInfo(wifiIp: null);
+      final bridge = _FakeBridge()..everReceived = false;
+      final c = WifiMonitorController(
+        bridge: bridge,
+        connectionService: WifiConnectionService(
+          networkInfo: fakeNet,
+          platformOverride: TargetPlatform.iOS,
+        ),
+      );
+
+      await c.load();
+      expect(c.phase, WifiMonitorPhase.notOnWifi);
+
+      // User joins Wi-Fi; "Check again" reloads.
+      fakeNet.wifiIp = '192.168.5.20';
+      await c.load();
+
+      expect(c.phase, WifiMonitorPhase.needsInstall);
+      expect(c.notOnWifi, isFalse);
       c.dispose();
       await bridge.close();
     });

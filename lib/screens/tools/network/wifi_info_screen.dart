@@ -70,8 +70,10 @@ import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/sparkline.dart';
 import '../concept_graphic_band.dart';
 import 'install_shortcut_sheet.dart';
+import 'get_reading_icon.dart';
 import 'live_rf_locked_card.dart';
 import 'live_setup_card.dart';
+import 'not_on_wifi_card.dart';
 import 'network_unavailable_view.dart';
 import 'wifi_live_trend.dart';
 
@@ -287,7 +289,9 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         // (the Shortcut demonstrably works) kick a one-shot read so a set-up user
         // sees fresh RF without hunting for a Start/Get-reading tap. Users who are
         // NOT set up fall through to the inline setup CTA (no blind-fire).
-        _liveController!.load().then((_) => _autoReadIfSetUp());
+        _liveController!.load(nativeSsid: _nativeSsid).then(
+              (_) => _autoReadIfSetUp(),
+            );
         // Read the native security type + BSSID once on open. Re-read on resume
         // (lifecycle) so a Location grant in Settings lands without a relaunch.
         _fetchIosSecurity();
@@ -372,9 +376,12 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         // the Shortcut. load() reads cache + re-subscribes only; it never opens
         // a URL, so it cannot loop.
         _shortcutBounceInFlight = false;
-        _liveController?.load();
+        _liveController?.load(nativeSsid: _nativeSsid);
         // Re-read the native security + BSSID so a Location grant made in
-        // Settings (while backgrounded) lands without an app relaunch.
+        // Settings (while backgrounded) lands without an app relaunch. This also
+        // re-resolves the native SSID, so a user who joined Wi-Fi while away
+        // re-triggers an on-Wi-Fi re-check on the next load (e.g. from the
+        // not-on-Wi-Fi "I'm on Wi-Fi now" retry).
         _fetchIosSecurity();
       } else if (state == AppLifecycleState.inactive ||
           state == AppLifecycleState.paused ||
@@ -595,6 +602,16 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     await _openInstallSheet();
   }
 
+  /// iOS: re-checks the Wi-Fi connection state from the not-on-Wi-Fi card's
+  /// "Check again" action. Re-reads the native NEHotspotNetwork identity first
+  /// (a freshly joined SSID is a definitive on-Wi-Fi signal), then re-runs the
+  /// controller's connection probe + install-state resolve so the screen advances
+  /// out of the not-on-Wi-Fi state once Wi-Fi is back. Never fires the Shortcut.
+  Future<void> _retryConnection() async {
+    await _fetchIosSecurity();
+    await _liveController?.load(nativeSsid: _nativeSsid);
+  }
+
   /// iOS: opens the one-time companion-Shortcut install sheet. Surfaced by the
   /// [LiveSetupCard] prompts when the app has never received a live payload
   /// (the honest "not set up" signal). After the user adds the Shortcut and taps
@@ -611,7 +628,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         // the install hand-off, so no OTHER live tool re-prompts in the window
         // before the first Live payload lands (null-safe; never throws).
         await _onboardingService?.markOnboardingSeen();
-        await _liveController?.load();
+        await _liveController?.load(nativeSsid: _nativeSsid);
         if (!mounted) return;
         // Item #7: kick the FIRST read automatically via the x-callback one-shot
         // so the user does not have to find/tap Get reading again — and so the
@@ -1247,6 +1264,17 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   /// show the real network basics BEFORE the first Shortcut RF sample, so the
   /// tool never opens to a dead screen. Carries no RF values (those need the
   /// Shortcut) — only the identity the app can honestly read itself.
+  /// The native NEHotspotNetwork SSID, when a real network has resolved — a
+  /// definitive "on Wi-Fi" signal for the connection probe. Null before the
+  /// native read resolves or when Location is ungranted; absence is never used to
+  /// assert "not on Wi-Fi" (see [WifiConnectionService]).
+  String? get _nativeSsid {
+    final WifiSecurityInfo? sec = _iosSecurity;
+    if (sec == null || !sec.available) return null;
+    final String? ssid = sec.ssid?.trim();
+    return (ssid == null || ssid.isEmpty) ? null : ssid;
+  }
+
   ConnectedAp? _nativeIdentityAp() {
     final WifiSecurityInfo? sec = _iosSecurity;
     if (sec == null || !sec.available) return null;
@@ -1282,6 +1310,11 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           onStart: _startLive,
           onStop: _stopLive,
           onSetUp: _openInstallSheet,
+          // "Check again" from the not-on-Wi-Fi card: re-read the native identity
+          // (a freshly joined SSID is a definitive on-Wi-Fi signal) THEN re-run
+          // the connection probe + install-state resolve so the screen advances
+          // out of the not-on-Wi-Fi state the moment Wi-Fi is back.
+          onRetryConnection: _retryConnection,
           // Fold the native security token + BSSID onto each live reading so the
           // Security / AP-vendor rows render from the same enriched model the
           // rest of the cards use.
@@ -2287,6 +2320,7 @@ class _LiveBody extends StatelessWidget {
     required this.onStart,
     required this.onStop,
     required this.onSetUp,
+    required this.onRetryConnection,
     required this.enrich,
     required this.metricCardsBuilder,
     required this.nativeIdentity,
@@ -2310,6 +2344,11 @@ class _LiveBody extends StatelessWidget {
   /// Opens the one-time companion-Shortcut install sheet. Wired to both the
   /// first-run setup prompt and the post-failure setup card.
   final VoidCallback onSetUp;
+
+  /// Re-runs the connection probe + install-state resolve. Wired to the
+  /// not-on-Wi-Fi card's "Check again" action so a user who has just joined Wi-Fi
+  /// can re-check without leaving the screen.
+  final VoidCallback onRetryConnection;
 
   /// Folds the native iOS security token + BSSID onto a Shortcut-derived reading
   /// so the Security / AP-vendor rows render from the same model as every other
@@ -2350,6 +2389,26 @@ class _LiveBody extends StatelessWidget {
             // for users who removed the Shortcut.
             final bool showSetupError =
                 triggerError || controller.shortcutMissing;
+
+            // NOT-ON-WIFI (2026-06-25): the device is demonstrably off Wi-Fi
+            // (e.g. cellular-only) and no live reading has ever arrived. Show the
+            // honest "connect to Wi-Fi" message instead of the setup CTA or an
+            // endless "waiting" spinner — the companion Shortcut cannot read
+            // Wi-Fi RF that does not exist. Once a Wi-Fi network is joined and the
+            // user taps "Check again" (or the app resumes), the probe clears this
+            // and the normal setup / live flow resumes.
+            if (controller.phase == WifiMonitorPhase.notOnWifi) {
+              return SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  edge,
+                  AppSpacing.sm,
+                  edge,
+                  edge + AppSpacing.sm,
+                ),
+                child: NotOnWifiCard(onRetry: onRetryConnection),
+              );
+            }
+
             return SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
                 edge,
@@ -3087,7 +3146,7 @@ class _GetReadingButton extends StatelessWidget {
       label: 'Get reading',
       child: FilledButton.icon(
         onPressed: onGetReading,
-        icon: const Icon(Icons.bolt_outlined),
+        icon: const GetReadingIcon(),
         label: const Text('Get reading'),
       ),
     );
