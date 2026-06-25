@@ -129,36 +129,17 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                  // 1b. Small "A Guide for Everyone" entry (help-embed,
-                  //     2026-06-07). Keith's decision: keep it SMALL — a compact
-                  //     single-row card near the Check My Connection front door,
-                  //     NOT a second hero. Opens the consumer guide in the
-                  //     in-app reader (offline, themed).
-                  SliverPadding(
-                    padding: EdgeInsets.fromLTRB(edge, 0, edge, AppSpacing.md),
-                    sliver: SliverToBoxAdapter(
-                      child: CenteredContent(
-                        child: _UserGuideEntry(
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => const GuideReaderScreen(
-                                assetPath: kUserGuideAsset,
-                                title: 'A Guide for Everyone',
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  // 1c. "Fix Your Own Wi-Fi" book entry (Book 3, 2026-06-12).
+                  // 1b. "Fix Your Own Wi-Fi" book entry (Book 3, 2026-06-12).
                   //     Keith's consumer book, bundled FREE — the book that goes
-                  //     with this app. Sits beside the consumer guide entry in the
-                  //     front-door area so a non-technical user meets it right
-                  //     after "Check My Connection". A compact callout (NOT a
-                  //     catalog tile → no count-guard change). Opens the book in
-                  //     the app's existing offline pdfx viewer (PdfReferenceScreen),
-                  //     which carries the share/save affordance in its AppBar.
+                  //     with this app. Ordered by the consumer journey (Option A
+                  //     restructure, 2026-06-24): hero (answer now) → BOOK
+                  //     (understand & fix) → guide (app map). The book sits
+                  //     directly under "Check My Connection" so a non-technical
+                  //     user meets the "learn & fix" companion before the app-map
+                  //     tour. A compact callout (NOT a catalog tile → no
+                  //     count-guard change). Opens the book in the app's existing
+                  //     offline pdfx viewer (PdfReferenceScreen), which carries the
+                  //     share/save affordance in its AppBar.
                   SliverPadding(
                     padding: EdgeInsets.fromLTRB(edge, 0, edge, AppSpacing.md),
                     sliver: SliverToBoxAdapter(
@@ -174,6 +155,33 @@ class _HomeScreenState extends State<HomeScreen> {
                                 // not a catalog tool — it is a consumer companion
                                 // reachable only from this home callout.
                                 toolId: 'fix-your-own-wifi-book',
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // 1c. App-orientation guide entry (help-embed, 2026-06-07;
+                  //     re-labeled + re-ordered Option A restructure 2026-06-24).
+                  //     Re-labeled away from the "New here? / starting point"
+                  //     framing toward pure APP ORIENTATION ("How this app works"
+                  //     / "A 5-minute tour of the app") so it no longer competes
+                  //     with the book for the "friendly starting point" slot — the
+                  //     book teaches Wi-Fi, this maps the software. Keith's
+                  //     decision: keep it SMALL — a compact single-row card near
+                  //     the front door, NOT a second hero. Opens the consumer guide
+                  //     in the in-app reader (offline, themed).
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(edge, 0, edge, AppSpacing.md),
+                    sliver: SliverToBoxAdapter(
+                      child: CenteredContent(
+                        child: _UserGuideEntry(
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const GuideReaderScreen(
+                                assetPath: kUserGuideAsset,
+                                title: 'How this app works',
                               ),
                             ),
                           ),
@@ -389,9 +397,14 @@ class _HomeSearchFieldState extends State<_HomeSearchField> {
   }
 }
 
-/// The small "A Guide for Everyone" entry (help-embed, 2026-06-07). A compact
-/// single-row card — leading book glyph, title + one-line subtitle, trailing
-/// chevron — that opens the consumer guide in the in-app [GuideReaderScreen].
+/// The app-orientation guide entry (help-embed, 2026-06-07; re-labeled in the
+/// Option A restructure, 2026-06-24). A compact single-row card — leading book
+/// glyph, title + one-line subtitle, trailing chevron — that opens the consumer
+/// app-map guide in the in-app [GuideReaderScreen]. Re-labeled from the old
+/// "New here? A Guide for Everyone / plain-language tour" framing to pure app
+/// orientation ("How this app works" / "A 5-minute tour of the app") so it
+/// signals "this maps the software" and stops competing with the
+/// "Fix Your Own Wi-Fi" book for the friendly-starting-point slot.
 /// Deliberately understated (Keith: keep it small) so it sits under the
 /// "Check My Connection" hero without competing with it. Matches the category
 /// tile / resource-row visual register: surface1, card radius, borderStrong
@@ -437,7 +450,7 @@ class _UserGuideEntryState extends State<_UserGuideEntry> {
       container: true,
       button: true,
       excludeSemantics: true,
-      label: 'New here? A Guide for Everyone. A plain-language tour of the app. '
+      label: 'How this app works. A 5-minute tour of the app. '
           'Opens the guide.',
       child: Material(
         color: colors.surface1,
@@ -475,7 +488,7 @@ class _UserGuideEntryState extends State<_UserGuideEntry> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          'New here? A Guide for Everyone',
+                          'How this app works',
                           style: text.bodyLarge?.copyWith(
                             color: colors.textPrimary,
                             fontWeight: FontWeight.w600,
@@ -483,7 +496,7 @@ class _UserGuideEntryState extends State<_UserGuideEntry> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'A plain-language tour of the app',
+                          'A 5-minute tour of the app',
                           style: text.labelMedium?.copyWith(
                             color: colors.textTertiary,
                           ),
@@ -559,7 +572,7 @@ class _BookEntryState extends State<_BookEntry> {
       container: true,
       button: true,
       excludeSemantics: true,
-      label: 'Fix Your Own Wi-Fi. The free book that goes with this app. '
+      label: 'Fix Your Own Wi-Fi. Learn and fix your Wi-Fi. The free book. '
           'Opens the book.',
       child: Material(
         color: colors.surface1,
@@ -605,7 +618,7 @@ class _BookEntryState extends State<_BookEntry> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'The free book that goes with this app',
+                          'Learn and fix your Wi-Fi. The free book',
                           style: text.labelMedium?.copyWith(
                             color: colors.textTertiary,
                           ),

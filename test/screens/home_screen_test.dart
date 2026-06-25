@@ -86,7 +86,7 @@ void main() {
     });
   });
 
-  testWidgets('the "A Guide for Everyone" entry renders and opens the reader', (
+  testWidgets('the "How this app works" entry renders and opens the reader', (
     tester,
   ) async {
     // markdown_widget's VisibilityDetector leaves a pending timer otherwise.
@@ -95,12 +95,13 @@ void main() {
       await tester.pumpWidget(_app());
       await tester.pumpAndSettle();
 
-      // The compact home entry is present (Keith: small, near the front door).
-      expect(find.text('New here? A Guide for Everyone'), findsOneWidget);
-      expect(find.text('A plain-language tour of the app'), findsOneWidget);
+      // The compact app-orientation entry is present (Option A restructure:
+      // re-labeled from "New here? A Guide for Everyone" to app orientation).
+      expect(find.text('How this app works'), findsOneWidget);
+      expect(find.text('A 5-minute tour of the app'), findsOneWidget);
 
       // Tapping it opens the in-app reader on the user guide.
-      await tester.tap(find.text('New here? A Guide for Everyone'));
+      await tester.tap(find.text('How this app works'));
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
       final Finder reader = find.byType(GuideReaderScreen);
