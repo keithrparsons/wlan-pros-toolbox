@@ -31,10 +31,24 @@ enum WifiMonitorPhase {
 
 /// State machine for the Wi-Fi Details screen, over a [WiFiDetailsBridge].
 class WifiMonitorController extends ChangeNotifier {
-  // ignore: prefer_initializing_formals
-  WifiMonitorController({required WiFiDetailsBridge bridge}) : _bridge = bridge;
+  // The named params are clean (no leading underscore); the private fields
+  // mirror them, so the initializing-formal lint does not apply.
+  // ignore_for_file: prefer_initializing_formals
+  WifiMonitorController({
+    required WiFiDetailsBridge bridge,
+    Duration missingShortcutSettle = const Duration(seconds: 4),
+  })  : _bridge = bridge,
+        _missingShortcutSettle = missingShortcutSettle;
 
   final WiFiDetailsBridge _bridge;
+
+  /// How long to wait after a successful trigger OPEN before concluding the
+  /// companion Shortcut is missing/deleted. iOS reports `open` success when it
+  /// merely launched the Shortcuts app — even for a Shortcut the user deleted —
+  /// so the open boolean alone cannot detect a missing Shortcut. A real run
+  /// delivers a payload within ~1s; this window gives the round-trip headroom
+  /// before the missing-Shortcut verdict fires. Injectable so tests run fast.
+  final Duration _missingShortcutSettle;
 
   StreamSubscription<WiFiDetails>? _sub;
 
@@ -43,11 +57,17 @@ class WifiMonitorController extends ChangeNotifier {
   /// persistent live stream (or the iOS banner) running.
   StreamSubscription<WiFiDetails>? _oneShotSub;
 
+  /// Cancellable settle timer for the missing-Shortcut verdict. Cancelled on
+  /// dispose and on a fresh attempt so a pending settle never outlives the
+  /// screen or flips [shortcutMissing] after disposal.
+  Timer? _missingTimer;
+
   WifiMonitorPhase _phase = WifiMonitorPhase.loading;
   WiFiDetails? _details;
   bool _hasEverReceived = false;
   DateTime? _lastUpdated;
   bool _disposed = false;
+  bool _shortcutMissing = false;
 
   WifiMonitorPhase get phase => _phase;
 
@@ -56,6 +76,22 @@ class WifiMonitorController extends ChangeNotifier {
 
   /// Whether any payload has ever arrived (honest install-state signal).
   bool get hasEverReceived => _hasEverReceived;
+
+  /// True once a trigger OPENED successfully but delivered NO payload within the
+  /// settle window on a first-ever run — i.e. the companion "WLAN Pros Live"
+  /// Shortcut is missing/deleted (iOS only launched the Shortcuts app).
+  ///
+  /// Why a flag and not just the [getReadingOnce] / [startMonitoring] return:
+  /// iOS reports the trigger `open` as a success even for a DELETED Shortcut, so
+  /// the only honest missing-signal is "opened but nothing ever arrived." Waiting
+  /// for that inside the call would stall the happy-path one-shot (where the
+  /// stream delivers a beat later). Instead the call returns promptly on the
+  /// open result and this flag flips asynchronously after the settle, so the
+  /// screen's in-tool reinstall card fires WITHOUT delaying a working read.
+  /// A delivered payload clears it. The screens OR this into their `triggerError`
+  /// presentation, so the same reinstall card serves both the open-failed and the
+  /// deleted-Shortcut cases.
+  bool get shortcutMissing => _shortcutMissing;
 
   /// True while the live push stream is being consumed.
   bool get isStreaming => _phase == WifiMonitorPhase.streaming;
@@ -117,17 +153,27 @@ class WifiMonitorController extends ChangeNotifier {
   /// microtask. When [triggerShortcutName] is null the trigger is skipped (the
   /// recursion is assumed already running, e.g. a relaunch-resumed loop).
   ///
-  /// Returns false when the trigger could not be OPENED (Shortcuts missing / the
-  /// Live Shortcut not installed); the caller surfaces the honest error and the
-  /// install affordance. Returns true when no trigger was requested or iOS opened
-  /// the trigger URL.
+  /// Returns false ONLY when iOS could not OPEN the trigger (Shortcuts app
+  /// absent). When the trigger opens, the call returns true promptly; the
+  /// SEPARATE deleted-Shortcut case (it opened but, on a first-ever run, no
+  /// payload arrives within [_missingShortcutSettle]) flips [shortcutMissing]
+  /// asynchronously so a working stream is never stalled. Either way the screen
+  /// surfaces the honest reinstall card (it ORs [shortcutMissing] into its
+  /// `triggerError`). Also returns true when no trigger was requested (a resume,
+  /// where the recursion is already running).
   Future<bool> startMonitoring({String? triggerShortcutName}) async {
     final Future<void> write = _bridge.setMonitoringActive(true);
     _startListening();
     _safeNotify();
     await write;
     if (triggerShortcutName == null) return true;
-    return _bridge.runShortcut(triggerShortcutName);
+    final bool opened = await _bridge.runShortcut(triggerShortcutName);
+    if (!opened) return false;
+    // Returned promptly; the missing-Shortcut verdict (deleted Shortcut that
+    // opened but never delivered) flips [shortcutMissing] asynchronously so a
+    // working stream is never stalled by the settle.
+    _verifyShortcutDelivered();
+    return true;
   }
 
   /// ONE-SHOT live read (2026-06-23, Keith): fire the companion Shortcut ONCE,
@@ -150,14 +196,27 @@ class WifiMonitorController extends ChangeNotifier {
   ///     stream sample raced the app's foreground return.
   /// Either way [_onPayload] records it and the screen rebuilds with real data.
   ///
-  /// Returns false when the trigger could not be OPENED (Shortcuts missing / the
-  /// Live Shortcut not installed) so the caller surfaces the honest setup card,
-  /// exactly as [startMonitoring] does. Never enters a loop, never hangs.
+  /// Returns false ONLY when iOS could not OPEN the trigger (Shortcuts app
+  /// absent). When the trigger opens, the call returns true promptly; the
+  /// SEPARATE missing-Shortcut case (it opened but a deleted Shortcut delivered
+  /// nothing) is surfaced asynchronously via [shortcutMissing] after the settle,
+  /// so a working one-shot read is never stalled. Either way the caller's
+  /// reinstall / setup card fires (the screen ORs [shortcutMissing] into its
+  /// `triggerError`). Never enters a loop, never hangs.
   Future<bool> getReadingOnce({required String triggerShortcutName}) async {
     // Belt-and-suspenders: make sure no persistent loop flag survives. If a prior
     // crashed continuous session left the flag `true`, a fresh Shortcut run would
     // keep looping; clearing it first guarantees this read stays single-cycle.
     final Future<void> clearFlag = _bridge.setMonitoringActive(false);
+
+    // A fresh attempt clears any prior missing verdict (and any in-flight settle)
+    // so the card does not linger from a previous run.
+    _missingTimer?.cancel();
+    _missingTimer = null;
+    if (_shortcutMissing) {
+      _shortcutMissing = false;
+      _safeNotify();
+    }
 
     // Capture exactly one streamed payload without entering the streaming phase.
     // The transient subscription auto-cancels after the first sample so we never
@@ -174,8 +233,50 @@ class WifiMonitorController extends ChangeNotifier {
     if (!opened) {
       _oneShotSub?.cancel();
       _oneShotSub = null;
+      return false;
     }
-    return opened;
+    // The trigger opened; verify a payload actually arrives WITHOUT blocking the
+    // return (a deleted Shortcut opens "successfully" but delivers nothing).
+    _verifyShortcutDelivered();
+    return true;
+  }
+
+  /// After a trigger OPENED, arm a settle timer that flips [shortcutMissing] if
+  /// no payload arrives. Returns immediately so it never stalls the caller.
+  ///
+  /// iOS reports `open` success when it merely surfaced the Shortcuts app, so a
+  /// DELETED Shortcut opens "successfully" yet never delivers a payload — the
+  /// silent failure that stranded users who removed "WLAN Pros Live" (the in-tool
+  /// reinstall card never fired). This closes that gap: if the app has ALREADY
+  /// received a payload at some point, the Shortcut demonstrably works, so a
+  /// transient miss is not surfaced as a reinstall prompt (no nagging working
+  /// users). Only on a FIRST-EVER run do we settle for [_missingShortcutSettle]
+  /// and, if still nothing arrived, conclude the Shortcut is missing.
+  void _verifyShortcutDelivered() {
+    if (_hasEverReceived) return;
+    // A cancellable timer (not a bare Future.delayed) so dispose / a fresh
+    // attempt can tear it down — a pending settle must never outlive the screen
+    // or flip the flag after disposal.
+    _missingTimer?.cancel();
+    _missingTimer = Timer(_missingShortcutSettle, () async {
+      _missingTimer = null;
+      if (_disposed) return;
+      // A streamed sample or a persisted App Group payload landing during the
+      // settle proves the Shortcut ran. Poll the App Group too, in case the
+      // single delivery raced the app's foreground return (the Darwin
+      // notification can fire while backgrounded).
+      if (!_hasEverReceived) {
+        final WiFiDetails? latest = await _bridge.readLatest();
+        if (_disposed) return;
+        if (latest != null && latest.hasAnyData) _onPayload(latest);
+      }
+      if (_hasEverReceived) return;
+      // Nothing ever arrived on a first-ever run: the named Shortcut is missing.
+      _oneShotSub?.cancel();
+      _oneShotSub = null;
+      _shortcutMissing = true;
+      _safeNotify();
+    });
   }
 
   /// Polls the persisted App Group payload after a one-shot fire settles, in case
@@ -216,6 +317,11 @@ class WifiMonitorController extends ChangeNotifier {
     _details = d;
     _hasEverReceived = true;
     _lastUpdated = DateTime.now();
+    // A real payload disproves any pending missing-Shortcut verdict and makes the
+    // settle moot — cancel it so no timer lingers.
+    _missingTimer?.cancel();
+    _missingTimer = null;
+    _shortcutMissing = false;
     _safeNotify();
   }
 
@@ -227,6 +333,7 @@ class WifiMonitorController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    _missingTimer?.cancel();
     _sub?.cancel();
     _oneShotSub?.cancel();
     super.dispose();

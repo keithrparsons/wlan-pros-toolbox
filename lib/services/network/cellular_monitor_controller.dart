@@ -36,11 +36,24 @@ enum CellularMonitorPhase {
 /// State machine for the Cellular Information Live mode, over a
 /// [CellularInfoBridge].
 class CellularMonitorController extends ChangeNotifier {
-  CellularMonitorController({required CellularInfoBridge bridge})
-      // ignore: prefer_initializing_formals
-      : _bridge = bridge;
+  // The named params are clean (no leading underscore); the private fields
+  // mirror them, so the initializing-formal lint does not apply.
+  // ignore_for_file: prefer_initializing_formals
+  CellularMonitorController({
+    required CellularInfoBridge bridge,
+    Duration missingShortcutSettle = const Duration(seconds: 4),
+  })  : _bridge = bridge,
+        _missingShortcutSettle = missingShortcutSettle;
 
   final CellularInfoBridge _bridge;
+
+  /// How long to wait after a successful trigger OPEN before concluding the
+  /// companion Shortcut is missing/deleted. iOS reports `open` success when it
+  /// merely launched the Shortcuts app — even for a Shortcut the user deleted —
+  /// so the open boolean alone cannot detect a missing Shortcut. A real run
+  /// delivers a payload within ~1s; this window gives the round-trip headroom
+  /// before the missing-Shortcut verdict fires. Injectable so tests run fast.
+  final Duration _missingShortcutSettle;
 
   StreamSubscription<CellularInfo>? _sub;
 
@@ -49,16 +62,31 @@ class CellularMonitorController extends ChangeNotifier {
   /// persistent live stream (or the iOS banner) running.
   StreamSubscription<CellularInfo>? _oneShotSub;
 
+  /// Cancellable settle timer for the missing-Shortcut verdict. Cancelled on
+  /// dispose and on a fresh attempt so a pending settle never outlives the
+  /// screen or flips [shortcutMissing] after disposal.
+  Timer? _missingTimer;
+
   CellularMonitorPhase _phase = CellularMonitorPhase.loading;
   CellularInfo? _info;
   bool _hasEverReceived = false;
   DateTime? _lastUpdated;
   bool _disposed = false;
+  bool _shortcutMissing = false;
 
   CellularMonitorPhase get phase => _phase;
 
   /// Most recent parsed cellular info, or null when none has arrived yet.
   CellularInfo? get info => _info;
+
+  /// True once a trigger OPENED successfully but delivered NO payload within the
+  /// settle window on a first-ever run — i.e. the combined "WLAN Pros Live"
+  /// Shortcut is missing/deleted (iOS only launched the Shortcuts app). Set
+  /// asynchronously after the settle so a working read is never stalled; a
+  /// delivered payload clears it. The screen ORs this into its `triggerError`
+  /// presentation so the same reinstall card serves the open-failed and the
+  /// deleted-Shortcut cases. See [WifiMonitorController.shortcutMissing].
+  bool get shortcutMissing => _shortcutMissing;
 
   /// Whether any payload has ever arrived (honest install-state signal).
   bool get hasEverReceived => _hasEverReceived;
@@ -113,16 +141,25 @@ class CellularMonitorController extends ChangeNotifier {
   /// skipped (the recursion is assumed already running, e.g. a relaunch-resumed
   /// loop).
   ///
-  /// Returns false when the trigger could not be OPENED (Shortcuts missing / the
-  /// Live Shortcut not installed). Returns true when no trigger was requested or
-  /// iOS opened the trigger URL.
+  /// Returns false ONLY when iOS could not OPEN the trigger (Shortcuts app
+  /// absent). When the trigger opens, the call returns true promptly; the
+  /// SEPARATE deleted-Shortcut case (it opened but, on a first-ever run, no
+  /// payload arrives within [_missingShortcutSettle]) flips [shortcutMissing]
+  /// asynchronously so a working stream is never stalled. Either way the screen
+  /// surfaces the honest reinstall card. Also returns true when no trigger was
+  /// requested (a resume).
   Future<bool> startMonitoring({String? triggerShortcutName}) async {
     final Future<void> write = _bridge.setMonitoringActive(true);
     _startListening();
     _safeNotify();
     await write;
     if (triggerShortcutName == null) return true;
-    return _bridge.runShortcut(triggerShortcutName);
+    final bool opened = await _bridge.runShortcut(triggerShortcutName);
+    if (!opened) return false;
+    // Returned promptly; the deleted-Shortcut case (opened but delivered nothing)
+    // flips [shortcutMissing] asynchronously so a working stream is never stalled.
+    _verifyShortcutDelivered();
+    return true;
   }
 
   /// ONE-SHOT live read (2026-06-23, Keith): fire the companion Shortcut ONCE,
@@ -138,10 +175,24 @@ class CellularMonitorController extends ChangeNotifier {
   /// [idleWithData]. The single payload is captured via a transient stream
   /// subscription and a settle-then-poll fallback ([pollLatestAfterOneShot]).
   ///
-  /// Returns false when the trigger could not be OPENED (Shortcut missing) so the
-  /// caller surfaces the honest setup card. Never loops, never hangs.
+  /// Returns false ONLY when iOS could not OPEN the trigger (Shortcuts app
+  /// absent). When the trigger opens, the call returns true promptly; the
+  /// deleted-Shortcut case (it opened but delivered nothing) is surfaced
+  /// asynchronously via [shortcutMissing] after the settle so a working read is
+  /// never stalled. Either way the caller's reinstall / setup card fires (the
+  /// screen ORs [shortcutMissing] into its `triggerError`). Never loops, never
+  /// hangs.
   Future<bool> getReadingOnce({required String triggerShortcutName}) async {
     final Future<void> clearFlag = _bridge.setMonitoringActive(false);
+
+    // A fresh attempt clears any prior missing verdict (and any in-flight settle)
+    // so the card does not linger from a previous run.
+    _missingTimer?.cancel();
+    _missingTimer = null;
+    if (_shortcutMissing) {
+      _shortcutMissing = false;
+      _safeNotify();
+    }
 
     _oneShotSub?.cancel();
     _oneShotSub = _bridge.updates.listen((CellularInfo d) {
@@ -155,8 +206,45 @@ class CellularMonitorController extends ChangeNotifier {
     if (!opened) {
       _oneShotSub?.cancel();
       _oneShotSub = null;
+      return false;
     }
-    return opened;
+    // The trigger opened; verify a payload actually arrives WITHOUT blocking the
+    // return (a deleted Shortcut opens "successfully" but delivers nothing).
+    _verifyShortcutDelivered();
+    return true;
+  }
+
+  /// After a trigger OPENED, arm a settle timer that flips [shortcutMissing] if
+  /// no payload arrives. Returns immediately so it never stalls the caller.
+  ///
+  /// iOS reports `open` success when it merely surfaced the Shortcuts app, so a
+  /// DELETED Shortcut opens "successfully" yet never delivers a payload — the
+  /// silent failure that stranded users who removed "WLAN Pros Live" (the in-tool
+  /// reinstall card never fired). This closes that gap: if the app has ALREADY
+  /// received a payload, the Shortcut demonstrably works, so a transient miss is
+  /// not surfaced as a reinstall prompt (no nagging working users). Only on a
+  /// FIRST-EVER run do we settle for [_missingShortcutSettle] and, if still
+  /// nothing arrived, conclude the Shortcut is missing.
+  void _verifyShortcutDelivered() {
+    if (_hasEverReceived) return;
+    // A cancellable timer (not a bare Future.delayed) so dispose / a fresh
+    // attempt can tear it down — a pending settle must never outlive the screen
+    // or flip the flag after disposal.
+    _missingTimer?.cancel();
+    _missingTimer = Timer(_missingShortcutSettle, () async {
+      _missingTimer = null;
+      if (_disposed) return;
+      if (!_hasEverReceived) {
+        final CellularInfo? latest = await _bridge.readLatest();
+        if (_disposed) return;
+        if (latest != null && latest.hasAnyData) _onPayload(latest);
+      }
+      if (_hasEverReceived) return;
+      _oneShotSub?.cancel();
+      _oneShotSub = null;
+      _shortcutMissing = true;
+      _safeNotify();
+    });
   }
 
   /// Polls the persisted App Group payload after a one-shot fire settles, in case
@@ -193,6 +281,11 @@ class CellularMonitorController extends ChangeNotifier {
     _info = d;
     _hasEverReceived = true;
     _lastUpdated = DateTime.now();
+    // A real payload disproves any pending missing-Shortcut verdict and makes the
+    // settle moot — cancel it so no timer lingers.
+    _missingTimer?.cancel();
+    _missingTimer = null;
+    _shortcutMissing = false;
     _safeNotify();
   }
 
@@ -204,6 +297,7 @@ class CellularMonitorController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    _missingTimer?.cancel();
     _sub?.cancel();
     _oneShotSub?.cancel();
     super.dispose();

@@ -253,4 +253,116 @@ void main() {
       await bridge.close();
     });
   });
+
+  // Missing / deleted companion Shortcut detection (onboarding recovery).
+  //
+  // The combined "WLAN Pros Live" Shortcut feeds the cellular live tool too, so
+  // a user who deleted it strands the cellular tool the same way. iOS reports
+  // `runShortcut` as a SUCCESS whenever it could surface the Shortcuts app —
+  // even for a deleted Shortcut — so the open boolean alone cannot tell working
+  // from missing. The controller now settles after a successful open and, on a
+  // FIRST-EVER run with no payload, returns false so the reinstall card fires.
+  group('missing-Shortcut detection (deleted "WLAN Pros Live")', () {
+    const Duration fastSettle = Duration(milliseconds: 10);
+
+    test(
+        'getReadingOnce: open succeeds but NO payload ever -> shortcutMissing fires',
+        () async {
+      // The call returns true on the OPEN; the missing verdict surfaces async via
+      // [shortcutMissing] after the settle so a working read is never stalled.
+      final bridge = _FakeBridge()
+        ..everReceived = false
+        ..latest = null
+        ..runShortcutResult = true;
+      final c = CellularMonitorController(
+        bridge: bridge,
+        missingShortcutSettle: fastSettle,
+      );
+      await c.load();
+
+      final bool opened =
+          await c.getReadingOnce(triggerShortcutName: 'WLAN Pros Live');
+      expect(opened, isTrue);
+      expect(c.shortcutMissing, isFalse);
+
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+
+      expect(c.shortcutMissing, isTrue,
+          reason: 'a deleted Shortcut that delivers no cellular payload must '
+              'flag missing so the reinstall card fires');
+      expect(bridge.runShortcutCalls, 1);
+      expect(c.hasEverReceived, isFalse);
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('getReadingOnce: open succeeds AND a payload lands -> not missing',
+        () async {
+      final bridge = _FakeBridge()
+        ..everReceived = false
+        ..runShortcutResult = true;
+      final c = CellularMonitorController(
+        bridge: bridge,
+        missingShortcutSettle: const Duration(milliseconds: 50),
+      );
+      await c.load();
+
+      final bool opened =
+          await c.getReadingOnce(triggerShortcutName: 'WLAN Pros Live');
+      expect(opened, isTrue);
+      bridge.push(_info(carrier: 'Delivered'));
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+
+      expect(c.shortcutMissing, isFalse);
+      expect(c.hasEverReceived, isTrue);
+      expect(c.info!.carrier, 'Delivered');
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('getReadingOnce: a previously-working Shortcut is NOT flagged missing',
+        () async {
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _info()
+        ..runShortcutResult = true;
+      final c = CellularMonitorController(
+        bridge: bridge,
+        missingShortcutSettle: const Duration(seconds: 30),
+      );
+      await c.load();
+
+      final bool opened =
+          await c.getReadingOnce(triggerShortcutName: 'WLAN Pros Live');
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+
+      expect(opened, isTrue);
+      expect(c.shortcutMissing, isFalse);
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('startMonitoring (continuous): deleted Shortcut -> shortcutMissing fires',
+        () async {
+      final bridge = _FakeBridge()
+        ..everReceived = false
+        ..latest = null
+        ..runShortcutResult = true;
+      final c = CellularMonitorController(
+        bridge: bridge,
+        missingShortcutSettle: fastSettle,
+      );
+      await c.load();
+
+      final bool opened =
+          await c.startMonitoring(triggerShortcutName: 'WLAN Pros Live');
+      expect(opened, isTrue);
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+
+      expect(c.shortcutMissing, isTrue);
+      expect(bridge.runShortcutCalls, 1);
+      c.dispose();
+      await bridge.close();
+    });
+  });
 }

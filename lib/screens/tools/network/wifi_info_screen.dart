@@ -2305,6 +2305,13 @@ class _LiveBody extends StatelessWidget {
             final ConnectedAp? ap = controller.details == null
                 ? null
                 : enrich(ConnectedAp.fromWifiDetails(controller.details!));
+            // Surface the reinstall card for BOTH error cases: the trigger could
+            // not open (open-failed, [triggerError]) OR it opened but a deleted
+            // "WLAN Pros Live" Shortcut delivered nothing ([controller.shortcutMissing],
+            // set asynchronously after the settle). This is the in-context recovery
+            // for users who removed the Shortcut.
+            final bool showSetupError =
+                triggerError || controller.shortcutMissing;
             return SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
                 edge,
@@ -2322,11 +2329,12 @@ class _LiveBody extends StatelessWidget {
                     onStart: onStart,
                     onStop: onStop,
                   ),
-                  if (triggerError) ...[
+                  if (showSetupError) ...[
                     const SizedBox(height: AppSpacing.sm),
-                    // A failed Start now leads with the actionable setup card —
-                    // the honest "could not start" message PLUS the one-time
-                    // "Set up live Wi-Fi" button — instead of a dead-end error.
+                    // A failed Start (or a deleted Shortcut) leads with the
+                    // actionable setup card — the honest "could not start" message
+                    // PLUS the one-time "Set up live Wi-Fi" button — instead of a
+                    // dead-end error or a silent no-op.
                     LiveSetupCard.error(
                       label: 'Set up live Wi-Fi (one-time)',
                       onSetUp: onSetUp,
@@ -2389,7 +2397,7 @@ class _LiveBody extends StatelessWidget {
                   // without a native identity — to avoid two competing setup CTAs,
                   // one of which lands below the fold (the prior double-CTA bug).
                   if (!controller.hasEverReceived &&
-                      !triggerError &&
+                      !showSetupError &&
                       // ignore: prefer_is_not_empty
                       (controller.isStreaming || !series.isEmpty)) ...[
                     const SizedBox(height: AppSpacing.sm),

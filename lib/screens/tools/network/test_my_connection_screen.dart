@@ -2998,7 +2998,12 @@ class _LiveSignalCard extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.sm),
               if (sampler.isIos &&
-                  sampler.triggerError) ...<Widget>[
+                  (sampler.triggerError || sampler.shortcutMissing)) ...<Widget>[
+                // BOTH error cases surface the same recovery note: the trigger
+                // could not open ([triggerError]) OR it opened but a deleted
+                // "WLAN Pros Live" Shortcut delivered nothing ([shortcutMissing],
+                // set asynchronously after the settle). In-context recovery for
+                // users who removed the Shortcut.
                 _LiveUnavailableNote(
                   message:
                       'Could not start the live Wi-Fi feed. The companion '
