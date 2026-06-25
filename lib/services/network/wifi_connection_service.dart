@@ -95,13 +95,23 @@ class WifiConnectionService {
       return WifiConnectionStatus.onWifi;
     }
 
-    final String? wifiIp = await _tryWifiIp();
+    final ({String? ip, bool threw}) read = await _readWifiIp();
+    if (read.threw) {
+      // The read FAILED (denied permission / unsupported platform). That is
+      // ambiguous, never a positive not-on-Wi-Fi signal — resolve to `unknown`
+      // so a denied read is NEVER surfaced as a false "not on Wi-Fi" (GL-005).
+      // This is distinct from a CLEAN null below (an active read that returned no
+      // address), which on iOS IS the honest cellular-only signal.
+      return WifiConnectionStatus.unknown;
+    }
+    final String? wifiIp = read.ip;
     if (wifiIp != null && wifiIp.isNotEmpty) {
       // An active Wi-Fi interface has an address: on Wi-Fi.
       return WifiConnectionStatus.onWifi;
     }
 
-    // No Wi-Fi IP. Whether that PROVES "not on Wi-Fi" depends on the platform.
+    // No Wi-Fi IP from a SUCCESSFUL read. Whether that PROVES "not on Wi-Fi"
+    // depends on the platform.
     //
     //   * iOS: a null Wi-Fi IP reliably means there is no Wi-Fi link (the device
     //     is on cellular or fully offline). iOS surfaces no wired Ethernet to
@@ -117,20 +127,27 @@ class WifiConnectionService {
     return WifiConnectionStatus.unknown;
   }
 
-  Future<String?> _tryWifiIp() async {
+  /// Reads the Wi-Fi IP, normalizing the "no address" placeholders to null.
+  ///
+  /// Returns a record so the caller can tell a CLEAN null (the read succeeded but
+  /// there is no Wi-Fi address — the honest cellular-only signal on iOS) apart
+  /// from a FAILED read ([threw] == true: denied permission / unsupported
+  /// platform). Only the clean null on iOS asserts `notOnWifi`; a failed read is
+  /// always `unknown` (GL-005: a denied/errored read is never a false negative).
+  Future<({String? ip, bool threw})> _readWifiIp() async {
     try {
       final String? v = await _networkInfo.getWifiIP();
-      if (v == null) return null;
+      if (v == null) return (ip: null, threw: false);
       final String t = v.trim();
       // Guard against the all-zeros placeholder some platforms return for "no
       // address" — treat it as null (no Wi-Fi IP), never as a real address.
-      if (t.isEmpty || t == '0.0.0.0') return null;
-      return t;
+      if (t.isEmpty || t == '0.0.0.0') return (ip: null, threw: false);
+      return (ip: t, threw: false);
     } on Object catch (e) {
-      // A denied permission / unsupported platform throws; swallow to null so the
-      // caller resolves to `unknown`, never a false `notOnWifi`.
+      // A denied permission / unsupported platform throws; report the failure so
+      // the caller resolves to `unknown`, never a false `notOnWifi`.
       debugPrint('WifiConnectionService.getWifiIP failed: $e');
-      return null;
+      return (ip: null, threw: true);
     }
   }
 }

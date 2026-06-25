@@ -53,6 +53,7 @@ import '../../../services/network/live_onboarding_service.dart';
 import '../../../services/network/mac_oui_service.dart';
 import '../../../services/network/mac_randomization.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/wifi_connection_service.dart';
 import '../../../services/network/wifi_details.dart';
 import '../../../services/network/wifi_details_bridge.dart';
 import '../../../services/network/wifi_grading.dart';
@@ -88,6 +89,7 @@ class WifiInfoScreen extends StatefulWidget {
     this.securityService,
     this.connectedApCache,
     this.onboardingService,
+    this.connectionService,
   });
 
   /// Forces a specific data source (tests). Defaults to the host platform.
@@ -118,6 +120,14 @@ class WifiInfoScreen extends StatefulWidget {
   /// shared_preferences-backed service. iOS-only — drives the unmissable
   /// one-time "enable live Wi-Fi" sheet the first time a live tool is opened.
   final LiveOnboardingService? onboardingService;
+
+  /// Injectable honest "is this device on Wi-Fi?" probe (tests). Defaults to the
+  /// real [WifiConnectionService] (a native, permission-free `getWifiIP()`
+  /// read). iOS-only — drives the [WifiMonitorController]'s notOnWifi phase so a
+  /// cellular-only device sees the honest "connect to Wi-Fi" card. Tests inject a
+  /// deterministic probe so the live flow runs against a known on-/off-Wi-Fi
+  /// state without touching a platform channel.
+  final WifiConnectionService? connectionService;
 
   /// Poll cadence for the macOS CoreWLAN re-read. Overridable in tests so the
   /// poll can be pumped deterministically.
@@ -278,7 +288,10 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         _fetchMac().then((_) => _startMacPoll());
       case WifiInfoSource.iosShortcuts:
         _iosBridge = widget.iosBridge ?? WiFiDetailsBridge();
-        _liveController = WifiMonitorController(bridge: _iosBridge!);
+        _liveController = WifiMonitorController(
+          bridge: _iosBridge!,
+          connectionService: widget.connectionService,
+        );
         _series = WifiTimeSeries();
         _liveController!.addListener(_captureSample);
         _securityService = widget.securityService ?? WifiSecurityService();

@@ -18,12 +18,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:network_info_plus/network_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/network_unavailable_view.dart';
+import 'package:wlan_pros_toolbox/screens/tools/network/not_on_wifi_card.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/wifi_info_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap_cache.dart';
 import 'package:wlan_pros_toolbox/services/network/live_onboarding_service.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_connection_service.dart';
 import 'package:wlan_pros_toolbox/services/network/mac_oui_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
@@ -264,6 +267,55 @@ class _FakeBridge implements WiFiDetailsBridge {
   @override
   Stream<WiFiDetails> get updates => controller.stream;
 }
+
+/// A fake [NetworkInfo] for the honest Wi-Fi-connection probe: returns a queued
+/// Wi-Fi IPv4 (or null) without touching a platform channel. The real
+/// [NetworkInfo] is a method-channel plugin with no handler in the test harness,
+/// so the live flow needs this seam to resolve to a deterministic on-/off-Wi-Fi
+/// verdict instead of stalling the controller's load().
+class _FakeNetworkInfo implements NetworkInfo {
+  _FakeNetworkInfo({this.wifiIp});
+
+  /// The Wi-Fi adapter IPv4 to report. Non-empty => the device is on Wi-Fi; null
+  /// => no Wi-Fi link (cellular-only on iOS).
+  final String? wifiIp;
+
+  @override
+  Future<String?> getWifiIP() async => wifiIp;
+
+  // The remaining reads are unused by [WifiConnectionService]; report null.
+  @override
+  Future<String?> getWifiName() async => null;
+  @override
+  Future<String?> getWifiBSSID() async => null;
+  @override
+  Future<String?> getWifiIPv6() async => null;
+  @override
+  Future<String?> getWifiSubmask() async => null;
+  @override
+  Future<String?> getWifiGatewayIP() async => null;
+  @override
+  Future<String?> getWifiBroadcast() async => null;
+}
+
+/// An iOS connection probe that reports the device is ON Wi-Fi (a non-empty
+/// Wi-Fi IP). This is the default state for the iOS Live tests: the live controls
+/// (Get reading / Start live monitoring / streaming) only render on Wi-Fi, so the
+/// probe must resolve to [WifiConnectionStatus.onWifi] for those assertions to
+/// hold. Without it the controller's load() would stall on the real
+/// platform-channel read and the screen would never leave its pre-load gate.
+WifiConnectionService _onWifiProbe() => WifiConnectionService(
+      networkInfo: _FakeNetworkInfo(wifiIp: '192.168.1.20'),
+      platformOverride: TargetPlatform.iOS,
+    );
+
+/// An iOS connection probe that reports the device is demonstrably NOT on Wi-Fi
+/// (a null Wi-Fi IP on iOS => cellular-only / offline). Drives the honest
+/// [NotOnWifiCard] state.
+WifiConnectionService _offWifiProbe() => WifiConnectionService(
+      networkInfo: _FakeNetworkInfo(),
+      platformOverride: TargetPlatform.iOS,
+    );
 
 /// Builds a [WifiSecurityService] whose native channel returns an AVAILABLE
 /// NEHotspotNetwork read (SSID / BSSID / coarse security token) — the real
@@ -558,6 +610,7 @@ void main() {
       await tester.pumpWidget(host(
         WifiInfoScreen(
           sourceOverride: WifiInfoSource.iosShortcuts,
+          connectionService: _onWifiProbe(),
           iosBridge: _FakeBridge(everReceived: false),
         ),
       ));
@@ -581,6 +634,7 @@ void main() {
       await tester.pumpWidget(host(
         WifiInfoScreen(
           sourceOverride: WifiInfoSource.iosShortcuts,
+          connectionService: _onWifiProbe(),
           // hasEverReceived == true, but no live payload yet (latest carries the
           // identity only) so the screen stays idle (not streaming) and shows the
           // normal one-shot + opt-in controls rather than the setup gate.
@@ -612,6 +666,7 @@ void main() {
       await tester.pumpWidget(host(
         WifiInfoScreen(
           sourceOverride: WifiInfoSource.iosShortcuts,
+          connectionService: _onWifiProbe(),
           iosBridge: _FakeBridge(everReceived: false),
         ),
       ));
@@ -641,6 +696,7 @@ void main() {
       await tester.pumpWidget(host(
         WifiInfoScreen(
           sourceOverride: WifiInfoSource.iosShortcuts,
+          connectionService: _onWifiProbe(),
           iosBridge: _FakeBridge(everReceived: false),
         ),
       ));
@@ -672,6 +728,7 @@ void main() {
         await tester.pumpWidget(host(
           WifiInfoScreen(
             sourceOverride: WifiInfoSource.iosShortcuts,
+          connectionService: _onWifiProbe(),
             iosBridge: _FakeBridge(everReceived: false),
             securityService: _availableSecurity(),
           ),
@@ -710,6 +767,7 @@ void main() {
         await tester.pumpWidget(host(
           WifiInfoScreen(
             sourceOverride: WifiInfoSource.iosShortcuts,
+          connectionService: _onWifiProbe(),
             iosBridge: _FakeBridge(everReceived: false),
             onboardingService: onboarding,
           ),
@@ -734,6 +792,7 @@ void main() {
       await tester.pumpWidget(host(
         WifiInfoScreen(
           sourceOverride: WifiInfoSource.iosShortcuts,
+          connectionService: _onWifiProbe(),
           iosBridge: _FakeBridge(
             everReceived: true,
             latest:
@@ -756,6 +815,7 @@ void main() {
       await tester.pumpWidget(host(
         WifiInfoScreen(
           sourceOverride: WifiInfoSource.iosShortcuts,
+          connectionService: _onWifiProbe(),
           iosBridge: bridge,
         ),
       ));
@@ -790,6 +850,7 @@ void main() {
       await tester.pumpWidget(host(
         WifiInfoScreen(
           sourceOverride: WifiInfoSource.iosShortcuts,
+          connectionService: _onWifiProbe(),
           iosBridge: bridge,
         ),
       ));
@@ -842,6 +903,7 @@ void main() {
       await tester.pumpWidget(host(
         WifiInfoScreen(
           sourceOverride: WifiInfoSource.iosShortcuts,
+          connectionService: _onWifiProbe(),
           iosBridge: bridge,
         ),
       ));
@@ -883,6 +945,7 @@ void main() {
       await tester.pumpWidget(host(
         WifiInfoScreen(
           sourceOverride: WifiInfoSource.iosShortcuts,
+          connectionService: _onWifiProbe(),
           iosBridge: bridge,
         ),
       ));
@@ -909,6 +972,7 @@ void main() {
       await tester.pumpWidget(host(
         WifiInfoScreen(
           sourceOverride: WifiInfoSource.iosShortcuts,
+          connectionService: _onWifiProbe(),
           iosBridge: bridge,
         ),
       ));
@@ -948,6 +1012,7 @@ void main() {
       await tester.pumpWidget(host(
         WifiInfoScreen(
           sourceOverride: WifiInfoSource.iosShortcuts,
+          connectionService: _onWifiProbe(),
           iosBridge: bridge,
         ),
       ));
@@ -1000,6 +1065,7 @@ void main() {
       await tester.pumpWidget(host(
         WifiInfoScreen(
           sourceOverride: WifiInfoSource.iosShortcuts,
+          connectionService: _onWifiProbe(),
           iosBridge: bridge,
         ),
       ));
@@ -1040,6 +1106,7 @@ void main() {
       await tester.pumpWidget(host(
         WifiInfoScreen(
           sourceOverride: WifiInfoSource.iosShortcuts,
+          connectionService: _onWifiProbe(),
           iosBridge: bridge,
           connectedApCache: cache,
         ),
@@ -1072,6 +1139,7 @@ void main() {
       await tester.pumpWidget(host(
         WifiInfoScreen(
           sourceOverride: WifiInfoSource.iosShortcuts,
+          connectionService: _onWifiProbe(),
           iosBridge: bridge,
         ),
       ));
@@ -1085,6 +1153,67 @@ void main() {
       expect(bridge.monitoringActive, isFalse);
       expect(bridge.runShortcutCalls, 0);
       expect(find.text('Start live monitoring'), findsOneWidget);
+    });
+
+    // LAUNCH-CRITICAL regression (2026-06-25): when the device is demonstrably
+    // OFF Wi-Fi (cellular-only on iOS → a null Wi-Fi IP) and no live reading has
+    // ever arrived, the screen must render the honest [NotOnWifiCard] INSTEAD of
+    // the live controls or an endless "waiting" — the exact silent dead-end a
+    // tester hit. The notOnWifi gate is only entered on a POSITIVE off-Wi-Fi
+    // signal AND no prior payload (GL-005: never from missing/ambiguous data).
+    testWidgets(
+        'OFF-WIFI: a cellular-only iOS device with no prior reading shows the '
+        'honest NotOnWifiCard, not the live controls', (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          // Demonstrably off Wi-Fi: a null Wi-Fi IP on iOS is a positive
+          // not-on-Wi-Fi signal (cellular-only / offline).
+          connectionService: _offWifiProbe(),
+          iosBridge: _FakeBridge(everReceived: false),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      // The honest off-Wi-Fi card is shown with its plain explanation and the
+      // "Check again" retry.
+      expect(find.byType(NotOnWifiCard), findsOneWidget);
+      expect(find.text("You're not connected to Wi-Fi"), findsOneWidget);
+      expect(find.text('Check again'), findsOneWidget);
+
+      // And the live controls / setup gate are NOT competing with it — the
+      // off-Wi-Fi state takes precedence over the install gate when there is no
+      // data to show (the Shortcut cannot read Wi-Fi RF that does not exist).
+      expect(find.text('Get reading'), findsNothing);
+      expect(find.text('Start live monitoring'), findsNothing);
+      expect(find.text('Set up live Wi-Fi'), findsNothing);
+    });
+
+    // The OFF-WIFI gate is honest: a device that already has a reading this
+    // session keeps showing it (the last known values) even if the probe drops
+    // to cellular — a transient drop never blanks data the user already has.
+    testWidgets(
+        'OFF-WIFI is suppressed once a reading exists: a prior payload keeps the '
+        'live data on screen even when the probe reports off-Wi-Fi',
+        (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          connectionService: _offWifiProbe(),
+          // hasEverReceived == true: the Shortcut has delivered before, so the
+          // last reading stays visible rather than the off-Wi-Fi card.
+          iosBridge: _FakeBridge(
+            everReceived: true,
+            latest:
+                WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      // No off-Wi-Fi dead-end: the user still sees their last reading + controls.
+      expect(find.byType(NotOnWifiCard), findsNothing);
+      expect(find.text('Get reading'), findsWidgets);
     });
   });
 
