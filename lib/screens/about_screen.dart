@@ -299,6 +299,11 @@ class _AboutScreenState extends State<AboutScreen> {
                   // Reads the same runtime build identity as the top badge.
                   _VersionSection(info: _version),
 
+                  // 8.5 About the founder — Keith Parsons headshot + approved
+                  // short bio. Placed below the app/version info and above the
+                  // legal/credits footer, the standard "who built this" slot.
+                  const _FounderSection(),
+
                   // 9. Credits
                   const _CreditsSection(),
                 ],
@@ -972,6 +977,120 @@ class _VersionSection extends StatelessWidget {
             _ExternalLinkButton(
               label: 'Send feedback',
               url: _kFeedbackUrl,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// About the founder — Keith Parsons headshot + the approved short bio.
+///
+/// Rendered in the same titled `surface1` card register as the sibling
+/// [_Section] cards, so it reads as one more About section, not a foreign
+/// element. Layout: a centered circular avatar over the name and a "CWNE #3"
+/// caption, then the verbatim bio paragraph in the standard secondary body
+/// register used by every other section paragraph.
+///
+/// The avatar is a [ClipOval]-masked [Image.asset] at a fixed 96px display box.
+/// The bundled raster is ~288px (a ~3x asset for the 96px box), face-centered,
+/// so the circular mask never clips the face and the image stays crisp on a 3x
+/// device. Fit is [BoxFit.cover] on a square box, so the square source fills the
+/// circle with no distortion.
+///
+/// Tokens: §8.1 surface1 card + §8.11 card radius + §8.20.3-B theme-aware border
+/// (matching the sibling cards), §4 spacing, §8.5 type (H3 name / caption
+/// CWNE line / body bio). No hardcoded color, size, or radius.
+///
+/// Accessibility: the heading carries `Semantics(header: true)` so a screen
+/// reader can navigate to it (WCAG 2.2 SC 1.3.1); the headshot is decorative
+/// alongside the adjacent visible name, so it is given a `Semantics(image:)`
+/// label and its bare [Image] is excluded from the a11y tree (no duplicate
+/// announcement of "Keith Parsons").
+class _FounderSection extends StatelessWidget {
+  const _FounderSection();
+
+  /// Display diameter of the circular avatar. The bundled asset is ~3x this so
+  /// the circle stays crisp on a 3x device (§ asset-resolution discipline).
+  static const double _avatarDiameter = 96;
+
+  /// Approved short bio (verbatim, SOP-020 register). US spelling, no em dashes.
+  static const String _bio =
+      'Keith Parsons is CWNE #3 and the founder and host of the Wireless LAN '
+      'Professionals Conference (#WLPC). For 25 years he has worked in nothing '
+      'but wireless, designing Wi-Fi in 117 countries, from a diamond mine 800 '
+      'meters underground to the top of the Empire State Building, and teaching '
+      'over 10,000 people to design and troubleshoot it. He built the WLAN Pros '
+      'Toolbox to put the tools he reaches for in the field into one place, '
+      'free, for everyone who does the work.';
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: colors.surface1,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(
+            color: colors.border,
+            width: colors.isLight ? 1.5 : 1, // §8.20.3-B card border
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            // §8.5 — section heading at H3, header for screen-reader navigation.
+            Semantics(
+              header: true,
+              child: Text('About the founder', style: text.headlineSmall),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            // Centered avatar + name + CWNE caption block.
+            Center(
+              child: Column(
+                children: <Widget>[
+                  Semantics(
+                    label: 'Photo of Keith Parsons',
+                    image: true,
+                    child: ExcludeSemantics(
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/brand/keith-parsons-headshot.png',
+                          width: _avatarDiameter,
+                          height: _avatarDiameter,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    'Keith Parsons',
+                    style: text.headlineSmall,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: AppSpacing.xxs),
+                  Text(
+                    'CWNE #3',
+                    style: text.labelMedium?.copyWith(
+                      color: colors.textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            // Verbatim bio in the standard secondary body register.
+            Text(
+              _bio,
+              style: text.bodyLarge?.copyWith(color: colors.textSecondary),
             ),
           ],
         ),

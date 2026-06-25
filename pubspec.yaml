@@ -579,6 +579,10 @@ flutter:
     # Rendered on a white containment plate (the §8.19 white-tile-on-dark
     # pattern) in the About-screen header; never placed bare on a dark surface.
     - assets/brand/wlan_pros_logo.png
+    # Keith Parsons headshot — the founder portrait shown in the About screen's
+    # "About the founder" section as a circular avatar (~96px display, ~288px 2x
+    # asset, face-centered square crop). PNG, no executable content (90035-safe).
+    - assets/brand/keith-parsons-headshot.png
     # In-app written guides (help-embed, 2026-06-07) — the two narrative guides
     # rendered natively in the in-app markdown reader (GuideReaderScreen). Plain
     # `.md` only, NO executable content (App Store 90035-safe). Bundled so they
