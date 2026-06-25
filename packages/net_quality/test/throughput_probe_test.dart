@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:net_quality/net_quality.dart';
@@ -551,6 +552,113 @@ void main() {
     });
   });
 
+  group('ThroughputProbe — Rung-2 fallback client header (X-Toolbox-Client)',
+      () {
+    test('the shared token + header name are the agreed constants', () {
+      expect(kSpeedTestFallbackClientHeader, 'X-Toolbox-Client');
+      expect(
+        kSpeedTestFallbackClientToken,
+        'a3a1b5c6faa2711e9f3cd90bf6dca0c89040d1404bd02591',
+      );
+    });
+
+    test('the host gate admits ONLY the fallback host, not the CDNs', () {
+      // Presence: every fallback endpoint variant is gated in.
+      expect(
+        ThroughputProbe.isFallbackRequest(speedTestFallbackDownloadEndpoint()),
+        isTrue,
+      );
+      expect(
+        ThroughputProbe.isFallbackRequest(speedTestFallbackUploadEndpoint()),
+        isTrue,
+      );
+      expect(
+        ThroughputProbe.isFallbackRequest(
+          Uri.parse('$kSpeedTestFallbackBaseUrl/downloading?r=42'),
+        ),
+        isTrue,
+      );
+      // Absence: the shipped CDN / public endpoints are gated OUT.
+      expect(
+        ThroughputProbe.isFallbackRequest(
+          Uri.parse('https://speed.cloudflare.com/__down?bytes=100'),
+        ),
+        isFalse,
+      );
+      expect(
+        ThroughputProbe.isFallbackRequest(
+          Uri.parse('https://speed.cloudflare.com/__up'),
+        ),
+        isFalse,
+      );
+      expect(
+        ThroughputProbe.isFallbackRequest(
+          Uri.parse('https://proof.ovh.net/files/100Mb.dat'),
+        ),
+        isFalse,
+      );
+    });
+
+    test(
+        'real download to the FALLBACK host puts X-Toolbox-Client on the wire '
+        '(end to end, via the real default transport)', () async {
+      final headers = await _captureRequestHeaders(
+        // The request URI carries the real fallback host (so the host gate
+        // matches); connectionFactory redirects the socket to loopback so no
+        // DNS / network is needed. This is the actual wire, not a stubbed seam.
+        requestUri: speedTestFallbackDownloadEndpoint(),
+        isUpload: false,
+      );
+      expect(
+        headers['x-toolbox-client'],
+        'a3a1b5c6faa2711e9f3cd90bf6dca0c89040d1404bd02591',
+        reason: 'fallback download must carry the shared client header',
+      );
+    });
+
+    test(
+        'real upload to the FALLBACK host puts X-Toolbox-Client on the wire '
+        '(end to end, via the real default transport)', () async {
+      final headers = await _captureRequestHeaders(
+        requestUri: speedTestFallbackUploadEndpoint(),
+        isUpload: true,
+      );
+      expect(
+        headers['x-toolbox-client'],
+        'a3a1b5c6faa2711e9f3cd90bf6dca0c89040d1404bd02591',
+        reason: 'fallback upload must carry the shared client header',
+      );
+    });
+
+    test(
+        'real download to a NON-fallback (CDN) host does NOT leak the header',
+        () async {
+      final headers = await _captureRequestHeaders(
+        // A non-fallback host: the gate must leave the request untouched.
+        requestUri: Uri.parse('https://speed.cloudflare.com/__down?bytes=1'),
+        isUpload: false,
+      );
+      expect(
+        headers.containsKey('x-toolbox-client'),
+        isFalse,
+        reason: 'the client token must never reach the public CDNs',
+      );
+    });
+
+    test('real upload to a NON-fallback (CDN) host does NOT leak the header',
+        () async {
+      final headers = await _captureRequestHeaders(
+        requestUri: Uri.parse('https://speed.cloudflare.com/__up'),
+        isUpload: true,
+      );
+      expect(
+        headers.containsKey('x-toolbox-client'),
+        isFalse,
+        reason: 'the client token must never reach the public CDNs',
+      );
+    });
+  });
+
   group('ThroughputProbe.measure — honesty (preserved from prior fix)', () {
     test('zero-byte download is treated as a failure, not 0 Mbps', () async {
       final probe = ThroughputProbe(
@@ -670,6 +778,89 @@ ElapsedTimer _passthroughTimer(Duration d) {
     await body();
     return d;
   };
+}
+
+/// Runs the REAL default downloader / uploader against a loopback server while
+/// the request URI keeps its public host (so the host gate sees the true host),
+/// captures the raw request headers off the wire, and returns them lower-cased.
+///
+/// The request URI carries the real host (e.g. `speedtest.wlanpros.com`), but
+/// `HttpClient.connectionFactory` redirects the actual socket to a loopback
+/// server, so no DNS or network is needed and the gate is exercised against the
+/// genuine host. The loopback server reads the request head, then sends a tiny
+/// 200 with a 1-byte body so the transport sees a usable transfer.
+Future<Map<String, String>> _captureRequestHeaders({
+  required Uri requestUri,
+  required bool isUpload,
+}) async {
+  final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+  final captured = Completer<List<String>>();
+
+  server.listen((socket) {
+    final buffer = StringBuffer();
+    socket.listen(
+      (data) {
+        buffer.write(String.fromCharCodes(data));
+        // Respond as soon as the full request head (terminated by a blank line)
+        // has arrived. For an upload the body follows, but the headers we assert
+        // on are already on the wire by then.
+        if (!captured.isCompleted && buffer.toString().contains('\r\n\r\n')) {
+          final head = buffer.toString().split('\r\n\r\n').first;
+          captured.complete(head.split('\r\n'));
+          socket.write('HTTP/1.1 200 OK\r\n'
+              'Content-Type: application/octet-stream\r\n'
+              'Content-Length: 1\r\n'
+              'Connection: close\r\n\r\n'
+              'x');
+          socket.destroy();
+        }
+      },
+      onError: (_) {},
+      cancelOnError: false,
+    );
+  });
+
+  // Route the public-host request to the loopback server. The probe's host gate
+  // sees `requestUri.host` (the real host), while bytes flow over loopback.
+  HttpClient makeClient() => HttpClient()
+    ..connectionFactory = (uri, proxyHost, proxyPort) =>
+        Socket.startConnect(InternetAddress.loopbackIPv4, server.port);
+
+  final probe = ThroughputProbe(
+    downloadStreamCount: 1,
+    maxRetries: 0,
+    throughputRetries: 0,
+    uploadBytes: 4 * 1024,
+    maxDuration: const Duration(seconds: 3),
+    downloadEndpoints: <Uri>[requestUri],
+    uploadEndpoints: <Uri>[requestUri],
+    httpClientFactory: makeClient,
+  );
+
+  try {
+    if (isUpload) {
+      await probe.uploader(requestUri, 4 * 1024, const Duration(seconds: 3));
+    } else {
+      await probe.downloader(requestUri, const Duration(seconds: 3));
+    }
+  } catch (_) {
+    // The tiny canned response may trip the byte floor or close early; we only
+    // care about the request head, which is captured before any failure.
+  }
+
+  final lines = await captured.future.timeout(const Duration(seconds: 5));
+  await server.close();
+
+  final headers = <String, String>{};
+  // Skip the request line (index 0); parse `Name: value` header lines.
+  for (final line in lines.skip(1)) {
+    final idx = line.indexOf(':');
+    if (idx <= 0) continue;
+    final name = line.substring(0, idx).trim().toLowerCase();
+    final value = line.substring(idx + 1).trim();
+    headers[name] = value;
+  }
+  return headers;
 }
 
 /// Regression guard for the shipped 40%-freeze: the REAL default downloader /
