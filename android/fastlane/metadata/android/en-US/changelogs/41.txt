@@ -1,0 +1,5 @@
+The Wavelength tool now shows millimeters, alongside meters, centimeters, feet, and inches.
+
+More reliable connection speed tests, with an automatic fallback when the primary server is busy.
+
+Visual polish and reliability fixes across the toolbox.

@@ -12,3 +12,6 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Play Developer API service-account key (credential — never commit)
+fastlane/play-service-account.json

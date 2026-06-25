@@ -1,0 +1,2 @@
+json_key_file("fastlane/play-service-account.json") # gitignored; download from Play Console > Setup > API access
+package_name("com.wlanpros.wlan_pros_toolbox")

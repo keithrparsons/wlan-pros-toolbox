@@ -1,0 +1,43 @@
+# Fastfile — Google Play release lane for WLAN Pros Toolbox (Android)
+#
+# Prereq (one-time, Keith): in Play Console > Setup > API access, create/link a
+# Google Cloud service account, grant it "Release to production" (or "Release
+# manager"), download its JSON key to android/fastlane/play-service-account.json.
+# That file is gitignored — it is a credential (GL-007 Red).
+#
+# Then, from the android/ dir:
+#   fastlane playstore            # build is supplied separately; uploads the AAB below
+#
+# The AAB is built by:  flutter build appbundle --release   (JAVA_HOME = Android Studio jbr)
+
+default_platform(:android)
+
+AAB_PATH = "../build/app/outputs/bundle/release/app-release.aab"
+
+platform :android do
+  desc "Upload the current release AAB to the Production track"
+  lane :playstore do
+    upload_to_play_store(
+      track: "production",
+      aab: AAB_PATH,
+      release_status: "draft",          # uploads as DRAFT — Keith reviews + clicks rollout in Console
+      skip_upload_apk: true,
+      skip_upload_metadata: false,      # pushes the changelogs/<versionCode>.txt "What's new"
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  end
+
+  desc "Upload to the Internal testing track (fast review, for a final on-device check)"
+  lane :internal do
+    upload_to_play_store(
+      track: "internal",
+      aab: AAB_PATH,
+      release_status: "completed",
+      skip_upload_apk: true,
+      skip_upload_metadata: false,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  end
+end
