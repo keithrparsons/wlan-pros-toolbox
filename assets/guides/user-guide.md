@@ -8,7 +8,7 @@ I built the WLAN Pros Toolbox so that the next time your video call freezes or a
 
 ## What this app is, and who it's for
 
-The WLAN Pros Toolbox is a free app for iPhone, Mac, Android, Windows, and the web. It is packed with more than 100 small tools that read your connection, run quick tests, and look things up. Some of those tools are for full-time Wi-Fi professionals, and they are deep. Some of them, though, are for anyone who has ever stared at a spinning loading wheel and wondered why.
+The WLAN Pros Toolbox is a free app for iPhone and Mac. It is packed with more than 100 small tools that read your connection, run quick tests, and look things up. Some of those tools are for full-time Wi-Fi professionals, and they are deep. Some of them, though, are for anyone who has ever stared at a spinning loading wheel and wondered why.
 
 This guide is written for the rest of us. The teacher whose classroom Wi-Fi drops every afternoon. The office manager fielding "the internet is down again" for the third time today. The small-business owner whose card reader keeps timing out. The curious person who just wants to know where to tap. If that's you, you're in the right place.
 
