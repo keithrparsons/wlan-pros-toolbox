@@ -3,7 +3,7 @@
     "title": "Educational Resources",
     "note": "Educational Resources for the WLAN Pros Toolbox: independent-author and community materials only. Per Keith (2026-06-04) the megavendor/product documentation entries (Apple, Cisco, Aruba/HPE, and the Hamina product docs) are EXCLUDED; the dataset keeps community tools/utilities, independent blogs and experts, podcasts, conference and talk archives, YouTube channels, and training/certification paths. Independent-author entries are included now with permission chased afterward (approval='pending_outreach'); any owner who declines gets removed. Descriptions are Keith's voice (GL-004, SOP-020 PASS). The full vendor-doc set is retained in the source dataset and git history if ever wanted back. Also still held: Wi-Fi For Beginners (site not confirmed live). Curated 2026-06-04. Batch 2026-06-04: appended 5 independent-author entries (SubnetPro, WiFi Analyser, ShankarWiFi, PotatoFi Interactive Spectrum Chart, BadgerWiFi Tools), all approval='pending_outreach'. 2026-06-06 (BF6-21): removed the two Wi-Fi Design Day entries (Open Reality/Ekahau charge for the videos); they are not kept in the YouTube section. 2026-06-12: added Jonathan Davis's Frame Exchange Reference (frames.bitbucketlabs.com) with Keith's description; JD publicly released it 2026-06-12 at Wi-Co NC and invited the community to share it; approval='pending_outreach'. 2026-06-12: added Devin Akin's Wi-Fi Design Flowchart (divdyn.com) under 'Independent blogs and experts'; Devin Akin (Divergent Dynamics) explicitly approved the addition 2026-06-12, so approval='not_required' (the schema's cleared/no-pending-outreach value; the enum carries no separate 'granted' token).",
     "last_updated": "2026-06-12",
-    "count": 40,
+    "count": 41,
     "topics": [
       "Tools and utilities",
       "Conference and talk archives",
@@ -682,6 +682,23 @@
         "pcap",
         "analysis",
         "open-source"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "wlanpros-connection-report-guide",
+      "title": "Reading a Connection Report",
+      "summary": "How to read the Check My Connection report, for IT and help-desk staff.",
+      "description": "A plain-language guide from WLAN Pros to every line of the Check My Connection report, written for IT and help-desk staff who receive these reports from users. It walks through what each field means, what good and bad values look like, and how to tell a Wi-Fi problem from an internet problem at a glance, so a pasted report turns into a clear next step instead of a wall of numbers.",
+      "url": "https://wlanprofessionals.com/toolbox/connection-report-guide",
+      "topic": "Tools and utilities",
+      "cost": "free",
+      "level": "all",
+      "tags": [
+        "reference",
+        "help-desk",
+        "connection-report",
+        "wlan-pros"
       ],
       "approval": "not_required"
     },

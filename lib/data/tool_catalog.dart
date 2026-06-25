@@ -1630,14 +1630,15 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
     // Material [icon] above if the asset is ever absent from the bundle.
     iconAsset: 'assets/tool-icons/educational-resources.svg',
     exampleToolTitles: <String>['Reference Cards', 'Blogs', 'Podcasts'],
-    // 51 = 11 in-app references (10 PDF cards + Antenna Fundamentals, moved here
-    // 2026-06-06 BF6-3) + 40 online resources (WiFi Training added 2026-06-07
+    // 52 = 11 in-app references (10 PDF cards + Antenna Fundamentals, moved here
+    // 2026-06-06 BF6-3) + 41 online resources (WiFi Training added 2026-06-07
     // under Training Providers; MackenzieWiFi re-added 2026-06-08, site back up
     // over http; Jonathan Davis's Frame Exchange Reference added 2026-06-12;
-    // Devin Akin's Wi-Fi Design Flowchart added 2026-06-12, Devin-approved).
-    // The count-guard test recomputes this from the catalog tool count + the
-    // bundled JSON `_meta.count`.
-    countLabelOverride: '51',
+    // Devin Akin's Wi-Fi Design Flowchart added 2026-06-12, Devin-approved;
+    // WLAN Pros "Reading a Connection Report" guide added 2026-06-25 under Tools
+    // and utilities). The count-guard test recomputes this from the catalog tool
+    // count + the bundled JSON `_meta.count`.
+    countLabelOverride: '52',
     tools: <ToolEntry>[
       // The 6 PDF reference cards.
       ToolEntry(
