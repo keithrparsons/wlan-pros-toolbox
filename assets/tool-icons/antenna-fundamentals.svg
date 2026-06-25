@@ -2,18 +2,28 @@
   <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <!-- Antenna Fundamentals: the classic electrical-schematic aerial / antenna
          generic symbol (ref: electrical-symbols.com "Antenna - Aerial Generic
-         Symbol"). A vertical mast rises from a short horizontal base; straight
-         diagonal rays fan up-and-out from the TOP of the mast (a splayed
-         aerial). No lobe, no loop, no curves — pure straight strokes so it
-         reads unambiguously as "antenna" at the 20px floor. Replaces the prior
-         teardrop-lobe versions that read as a hand-mirror / lollipop. -->
+         Symbol") -- the single antenna glyph mandated app-wide by GL-003
+         section 8.6.2.1 Rule 3. A vertical mast rises from a short horizontal
+         base foot; three straight rays splay wide up-and-out from the TOP of
+         the mast (a splayed aerial). No lobe, no loop, no curves -- pure
+         straight strokes, single currentColor, 2px stroke matching the sibling
+         Tier-2 set.
+
+         Legibility at the 20px floor (GL-003 section 8.6.1) was the prior fail:
+         the old geometry put the ray junction high (y=8) with short rays, so the
+         splay collapsed into a cramped tick and the mast dominated. This version
+         drops the junction lower (y=11) and widens the splay to the live-area
+         edges (x=4 and x=20), so the three-prong aerial fan is the dominant
+         silhouette and survives 20px. Verified in headless Chrome at 20px and
+         24px, in both lime (#A1CC3A) and tertiary (#9C9C9C) runtime tints, on
+         the #222222 dark surface. -->
     <!-- vertical mast -->
-    <path d="M12 21 V8"/>
-    <!-- short horizontal base at the foot of the mast -->
-    <path d="M9 21 H15"/>
-    <!-- three straight aerial rays fanning up-and-out from the top of the mast -->
-    <path d="M12 8 L5 3"/>
-    <path d="M12 8 V2"/>
-    <path d="M12 8 L19 3"/>
+    <path d="M12 21 V11"/>
+    <!-- short horizontal base foot at the bottom of the mast -->
+    <path d="M8.5 21 H15.5"/>
+    <!-- three straight aerial rays splaying up-and-out from the top of the mast -->
+    <path d="M12 11 L4 3"/>
+    <path d="M12 11 V2.5"/>
+    <path d="M12 11 L20 3"/>
   </g>
 </svg>
