@@ -1,6 +1,20 @@
 import 'dart:async';
 import 'dart:io';
 
+/// Compile-time web detector. `0` and `0.0` are the SAME object on dart2js /
+/// dartdevc (web has one numeric type) but DIFFERENT objects on the native VM,
+/// so this is `true` only in web compilations and `false` on iOS / macOS /
+/// Android. It is a `const`, so the compiler folds it at build time and
+/// tree-shakes whichever branch is statically dead.
+///
+/// Used to keep [kSpeedTestFallbackClientToken] out of web bundles entirely:
+/// the web build authenticates to the Rung-2 fallback via Origin/CORS and never
+/// needs the header, so the only reference to the token sits behind a
+/// `if (_kIsWeb) return;` guard. On web that branch is compile-time dead, so
+/// dart2js eliminates the token string from the public JS bundle rather than
+/// shipping an extractable identifier.
+const bool _kIsWeb = identical(0, 0.0);
+
 /// Downloads from [uri] for at most [maxDuration] and returns the number of
 /// bytes received. The injectable download seam.
 typedef Downloader = Future<int> Function(Uri uri, Duration maxDuration);
@@ -648,7 +662,17 @@ class ThroughputProbe {
   /// across Cloudflare, the public CDNs, and our box, so the header is gated on
   /// the host here rather than at the call site. Requests to any other host are
   /// left untouched, keeping the shipped CDN path byte-for-byte identical.
+  ///
+  /// On web ([_kIsWeb]) this returns immediately, BEFORE referencing
+  /// [kSpeedTestFallbackClientToken]: the web build reaches the fallback through
+  /// the server's Origin/CORS allowlist and never needs the header. Because the
+  /// token is referenced ONLY inside this compile-time-dead-on-web branch,
+  /// dart2js tree-shakes the token string out of the public JS bundle, so the
+  /// shared identifier is never compiled into a web build where it would be
+  /// trivially extractable. Native (iOS / macOS / Android) behavior is
+  /// unchanged: the header is still sent on every Rung-2 fallback request.
   static void _applyFallbackClientHeader(HttpClientRequest request) {
+    if (_kIsWeb) return;
     if (!isFallbackRequest(request.uri)) return;
     request.headers.set(
       kSpeedTestFallbackClientHeader,

@@ -657,6 +657,25 @@ void main() {
         reason: 'the client token must never reach the public CDNs',
       );
     });
+
+    test(
+        'native (non-web) still applies the header: the web guard does not '
+        'suppress it on the VM', () {
+      // The web omission is enforced by the compile-time `if (_kIsWeb) return;`
+      // guard in `_applyFallbackClientHeader`, which on dart2js makes the token
+      // string tree-shakeable out of the JS bundle. A pure unit test cannot
+      // observe that web-only elimination (these tests run on the native VM),
+      // so this asserts the COMPLEMENT: on native, `identical(0, 0.0)` is false,
+      // so the guard is dead and the header path above stays live. The two
+      // "real ... FALLBACK host puts X-Toolbox-Client on the wire" tests prove
+      // the header is still sent; this guards the sentinel that gates them.
+      expect(
+        identical(0, 0.0),
+        isFalse,
+        reason: 'on the native VM the web guard must be inert, so the '
+            'fallback client header is still applied',
+      );
+    });
   });
 
   group('ThroughputProbe.measure — honesty (preserved from prior fix)', () {
