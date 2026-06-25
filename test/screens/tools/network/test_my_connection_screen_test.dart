@@ -2589,7 +2589,10 @@ void main() {
         expect(copied, contains('BSSID: b8:27:eb:11:22:33'));
         expect(copied, isNot(contains('Security: Unavailable')));
 
-        await tester.pump(const Duration(milliseconds: 1600));
+        // Advance past the missing-Shortcut settle (the one-shot read opened the
+        // trigger but this fresh bridge delivers no payload) so its verify timer
+        // fires and completes before teardown rather than lingering as pending.
+        await tester.pump(const Duration(seconds: 5));
       },
     );
 

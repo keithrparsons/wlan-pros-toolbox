@@ -283,4 +283,217 @@ void main() {
       await bridge.close();
     });
   });
+
+  // Missing / deleted companion Shortcut detection (onboarding recovery).
+  //
+  // iOS reports `runShortcut` (UIApplication.open of `shortcuts://run-shortcut?
+  // name=…`) as a SUCCESS whenever it could surface the Shortcuts app — even
+  // when the named Shortcut was DELETED. So `opened == true` alone cannot tell a
+  // working Shortcut from a missing one; the missing case used to fail silently
+  // (no payload ever arrived) and the in-tool reinstall card never fired. The
+  // controller now settles after a successful open and, on a FIRST-EVER run with
+  // no payload delivered, returns false so the caller raises the reinstall card.
+  group('missing-Shortcut detection (deleted "WLAN Pros Live")', () {
+    // A short settle keeps these unit tests fast while still exercising the
+    // settle-then-verify path.
+    const Duration fastSettle = Duration(milliseconds: 10);
+
+    test(
+        'getReadingOnce: open succeeds but NO payload ever -> shortcutMissing fires',
+        () async {
+      // The deleted-Shortcut scenario: iOS "opened" the trigger (launched the
+      // Shortcuts app), nothing ran, no payload arrives, none ever has. The call
+      // returns true on the OPEN (so the happy path is not stalled); the missing
+      // verdict surfaces asynchronously via [shortcutMissing] after the settle.
+      final bridge = _FakeBridge()
+        ..everReceived = false
+        ..latest = null
+        ..runShortcutResult = true;
+      final c = WifiMonitorController(
+        bridge: bridge,
+        missingShortcutSettle: fastSettle,
+      );
+      await c.load();
+
+      var notified = false;
+      c.addListener(() => notified = true);
+
+      final bool opened =
+          await c.getReadingOnce(triggerShortcutName: 'WLAN Pros Live');
+
+      expect(opened, isTrue, reason: 'the trigger opened; the open is honored');
+      expect(c.shortcutMissing, isFalse,
+          reason: 'verdict is async — not yet decided immediately after open');
+
+      // Let the settle elapse and the verify run.
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+
+      expect(c.shortcutMissing, isTrue,
+          reason: 'a deleted Shortcut that delivers no payload must flag missing '
+              'so the in-tool reinstall card fires');
+      expect(notified, isTrue, reason: 'the flag flip notifies the screen');
+      expect(bridge.runShortcutCalls, 1);
+      expect(c.hasEverReceived, isFalse);
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('getReadingOnce: open succeeds AND a payload lands -> not missing',
+        () async {
+      // The working Shortcut: it opened and delivered a sample during settle.
+      final bridge = _FakeBridge()
+        ..everReceived = false
+        ..runShortcutResult = true;
+      final c = WifiMonitorController(
+        bridge: bridge,
+        missingShortcutSettle: const Duration(milliseconds: 50),
+      );
+      await c.load();
+
+      final bool opened =
+          await c.getReadingOnce(triggerShortcutName: 'WLAN Pros Live');
+      expect(opened, isTrue);
+      // The companion Shortcut delivers within the settle window.
+      bridge.push(_details(ssid: 'Delivered'));
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+
+      expect(c.shortcutMissing, isFalse,
+          reason: 'a delivered payload proves the Shortcut ran');
+      expect(c.hasEverReceived, isTrue);
+      expect(c.details!.ssid, 'Delivered');
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('getReadingOnce: settle reads a persisted App Group payload -> not missing',
+        () async {
+      // The streamed sample raced the foreground return, but the native side
+      // persisted it; the settle poll picks it up and the run reads as working.
+      final bridge = _FakeBridge()
+        ..everReceived = false
+        ..runShortcutResult = true
+        ..latest = _details(ssid: 'Persisted');
+      final c = WifiMonitorController(
+        bridge: bridge,
+        missingShortcutSettle: fastSettle,
+      );
+      await c.load();
+      // load() seeded details from `latest`; keep `latest` set so the in-settle
+      // App Group poll proves the Shortcut delivered.
+      bridge.latest = _details(ssid: 'Persisted');
+
+      final bool opened =
+          await c.getReadingOnce(triggerShortcutName: 'WLAN Pros Live');
+      expect(opened, isTrue);
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+
+      expect(c.shortcutMissing, isFalse);
+      expect(c.details!.ssid, 'Persisted');
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('getReadingOnce: a previously-working Shortcut is NOT flagged missing',
+        () async {
+      // hasEverReceived is true (the Shortcut delivered before), so a transient
+      // miss must NOT surface the reinstall card — no nagging working users. The
+      // verify returns instantly without burning the (long) settle window.
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _details()
+        ..runShortcutResult = true;
+      final c = WifiMonitorController(
+        bridge: bridge,
+        missingShortcutSettle: const Duration(seconds: 30),
+      );
+      await c.load();
+
+      final bool opened =
+          await c.getReadingOnce(triggerShortcutName: 'WLAN Pros Live');
+      // Even after well beyond a real settle, no missing verdict — the verify
+      // short-circuits on hasEverReceived.
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+
+      expect(opened, isTrue);
+      expect(c.shortcutMissing, isFalse);
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('getReadingOnce: open FAILS outright -> returns false, no settle',
+        () async {
+      // Shortcuts app itself absent: open returns false; the screen surfaces the
+      // setup card on the false return (no settle needed), preserving the
+      // original fast-fail behavior.
+      final bridge = _FakeBridge()
+        ..everReceived = false
+        ..runShortcutResult = false;
+      final c = WifiMonitorController(
+        bridge: bridge,
+        missingShortcutSettle: const Duration(seconds: 30),
+      );
+      await c.load();
+
+      final bool opened = await c
+          .getReadingOnce(triggerShortcutName: 'WLAN Pros Live')
+          .timeout(const Duration(seconds: 1));
+
+      expect(opened, isFalse);
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('getReadingOnce: a fresh attempt clears a prior missing verdict',
+        () async {
+      // After a missing verdict, re-running clears the stale card immediately so
+      // the user is not shown a reinstall prompt while the retry is in flight.
+      final bridge = _FakeBridge()
+        ..everReceived = false
+        ..latest = null
+        ..runShortcutResult = true;
+      final c = WifiMonitorController(
+        bridge: bridge,
+        missingShortcutSettle: fastSettle,
+      );
+      await c.load();
+
+      await c.getReadingOnce(triggerShortcutName: 'WLAN Pros Live');
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+      expect(c.shortcutMissing, isTrue);
+
+      // Retry: the stale verdict clears synchronously at the start of the call.
+      final Future<bool> retry =
+          c.getReadingOnce(triggerShortcutName: 'WLAN Pros Live');
+      expect(c.shortcutMissing, isFalse);
+      await retry;
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('startMonitoring (continuous): deleted Shortcut -> shortcutMissing fires',
+        () async {
+      // The continuous opt-in path mirrors the one-shot: a successful open with
+      // no first-ever payload flags missing after the settle, so the screen shows
+      // the reinstall card and stops the phantom stream.
+      final bridge = _FakeBridge()
+        ..everReceived = false
+        ..latest = null
+        ..runShortcutResult = true;
+      final c = WifiMonitorController(
+        bridge: bridge,
+        missingShortcutSettle: fastSettle,
+      );
+      await c.load();
+
+      final bool opened =
+          await c.startMonitoring(triggerShortcutName: 'WLAN Pros Live');
+      expect(opened, isTrue);
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+
+      expect(c.shortcutMissing, isTrue);
+      expect(bridge.runShortcutCalls, 1);
+      c.dispose();
+      await bridge.close();
+    });
+  });
 }

@@ -725,6 +725,12 @@ class _LiveBody extends StatelessWidget {
           animation: controller,
           builder: (context, _) {
             final CellularInfo? info = controller.info;
+            // Surface the reinstall card for BOTH error cases: the trigger could
+            // not open ([triggerError]) OR it opened but a deleted "WLAN Pros Live"
+            // Shortcut delivered nothing ([controller.shortcutMissing], set async
+            // after the settle). In-context recovery for users who removed it.
+            final bool showSetupError =
+                triggerError || controller.shortcutMissing;
             return SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
                 edge,
@@ -742,11 +748,12 @@ class _LiveBody extends StatelessWidget {
                     onStart: onStart,
                     onStop: onStop,
                   ),
-                  if (triggerError) ...[
+                  if (showSetupError) ...[
                     const SizedBox(height: AppSpacing.sm),
-                    // A failed Start now leads with the actionable setup card —
-                    // the honest "could not start" message PLUS the one-time
-                    // "Set up live readings" button — instead of a dead-end error.
+                    // A failed Start (or a deleted Shortcut) leads with the
+                    // actionable setup card — the honest "could not start" message
+                    // PLUS the one-time "Set up live readings" button — instead of
+                    // a dead-end error or a silent no-op.
                     LiveSetupCard.error(
                       label: 'Set up live readings (one-time)',
                       onSetUp: onSetUp,
@@ -766,7 +773,7 @@ class _LiveBody extends StatelessWidget {
                   // noise and is hidden permanently — it never nags. Suppressed
                   // while a Start error is showing (the error card above already
                   // carries the setup button) so there are never two at once.
-                  if (!controller.hasEverReceived && !triggerError) ...[
+                  if (!controller.hasEverReceived && !showSetupError) ...[
                     const SizedBox(height: AppSpacing.sm),
                     LiveSetupCard.prompt(
                       label: 'Set up live readings (one-time)',

@@ -199,6 +199,14 @@ class WifiSignalSampler extends ChangeNotifier {
   /// (Shortcuts missing / not installed). Surfaced as the honest live error.
   bool get triggerError => _triggerError;
 
+  /// True once a trigger OPENED but a deleted "WLAN Pros Live" Shortcut delivered
+  /// no payload within the settle window on a first-ever run (iOS reports the
+  /// open as a success even for a deleted Shortcut, so this is the only honest
+  /// missing-signal). Forwarded from [WifiMonitorController.shortcutMissing] and
+  /// flips asynchronously after the settle, so the screen ORs it with
+  /// [triggerError] to fire the in-tool reinstall card. False off iOS.
+  bool get shortcutMissing => _controller?.shortcutMissing ?? false;
+
   /// Begins the platform feed. On macOS this seeds the first reading and arms
   /// the auto-poll; on iOS it raises the monitoring flag and fires the trigger
   /// once. Idempotent on macOS (re-arming cancels any prior timer first).
