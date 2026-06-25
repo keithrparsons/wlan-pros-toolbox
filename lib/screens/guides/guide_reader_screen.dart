@@ -444,6 +444,13 @@ class _GuideReaderScreenState extends State<GuideReaderScreen> {
     );
   }
 
+  /// Diameter of the unordered-list bullet dot. A glyph dimension (not a §4
+  /// spacing gap), so GL-003 has no token for it; composed from existing tokens
+  /// (`xxs` 4 + 2) per Vera's 2026-06-07 gate LOW so no bare literal remains in
+  /// an otherwise fully tokenized file. Swap to a marker-size token if Iris adds
+  /// one.
+  static const double _bulletDotSize = AppSpacing.xxs + 2;
+
   /// Themed list bullet — a small lime-foreground dot, sized to the body line.
   Widget _bulletMarker(bool isOrdered, int depth, int index) {
     final AppColorScheme colors = context.colors;
@@ -464,8 +471,8 @@ class _GuideReaderScreenState extends State<GuideReaderScreen> {
         left: AppSpacing.xxs,
       ),
       child: Container(
-        width: 6,
-        height: 6,
+        width: _bulletDotSize,
+        height: _bulletDotSize,
         decoration: BoxDecoration(
           color: colors.textAccent,
           shape: BoxShape.circle,
