@@ -58,7 +58,7 @@ This is the heart of the app for most people. Four tools, all about your live co
 
 ### Networking Tools: looking things up and tracking things down
 
-This is the largest working section, 22 tools, and it leans more technical. Most people won't need most of them, but a handful are genuinely useful for anyone, so I'll call those out.
+This is the largest working section, and it leans more technical. Most people won't need most of them, but a handful are genuinely useful for anyone, so I'll call those out.
 
 **Interface Information** answers "what's my address on this network?" It's the first thing a tech-support person often asks for.
 
@@ -74,7 +74,7 @@ The rest of this section, the various lookups, scanners, and inspectors, are bui
 
 ### Calculators and Tools: the math, done for you
 
-26 tools here. The bulk of them are radio-engineering calculators, the kind a Wi-Fi professional uses to plan a network. If those words mean nothing to you, that's fine, they're not meant for you, and you'll lose nothing by skipping them.
+The bulk of this section is radio-engineering calculators, the kind a Wi-Fi professional uses to plan a network. If those words mean nothing to you, that's fine, they're not meant for you, and you'll lose nothing by skipping them.
 
 A few in this section, though, are useful to anyone:
 
@@ -86,7 +86,7 @@ For the professionals reading this, the rest of this section is your link-budget
 
 ### Quick Reference: the cheat sheets
 
-This is the biggest section by count, 49 reference cards, and most of it is exactly what the name says: lookup tables for working professionals. Channel charts, cable pinouts, protocol codes, connector types, command cheat sheets, and more. If you fix Wi-Fi for a living, you already know which ones you want.
+This is the biggest section by count, and most of it is exactly what the name says: lookup tables for working professionals. Channel charts, cable pinouts, protocol codes, connector types, command cheat sheets, and more. If you fix Wi-Fi for a living, you already know which ones you want.
 
 For everyone else, a few of these cards are genuinely worth a look:
 
