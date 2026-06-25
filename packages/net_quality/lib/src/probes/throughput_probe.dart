@@ -1,6 +1,20 @@
 import 'dart:async';
 import 'dart:io';
 
+/// Compile-time web detector. `0` and `0.0` are the SAME object on dart2js /
+/// dartdevc (web has one numeric type) but DIFFERENT objects on the native VM,
+/// so this is `true` only in web compilations and `false` on iOS / macOS /
+/// Android. It is a `const`, so the compiler folds it at build time and
+/// tree-shakes whichever branch is statically dead.
+///
+/// Used to keep [kSpeedTestFallbackClientToken] out of web bundles entirely:
+/// the web build authenticates to the Rung-2 fallback via Origin/CORS and never
+/// needs the header, so the only reference to the token sits behind a
+/// `if (_kIsWeb) return;` guard. On web that branch is compile-time dead, so
+/// dart2js eliminates the token string from the public JS bundle rather than
+/// shipping an extractable identifier.
+const bool _kIsWeb = identical(0, 0.0);
+
 /// Downloads from [uri] for at most [maxDuration] and returns the number of
 /// bytes received. The injectable download seam.
 typedef Downloader = Future<int> Function(Uri uri, Duration maxDuration);
@@ -35,6 +49,24 @@ typedef LivenessProbe = Future<bool> Function(Uri baseUrl, Duration timeout);
 /// until the box answers. Native ignores CORS; Flutter web relies on the
 /// server's `ALLOW_ONLY` allowlist. See `endpoint-contract.md`.
 const String kSpeedTestFallbackBaseUrl = 'https://speedtest.wlanpros.com';
+
+/// Shared client identifier sent as the `X-Toolbox-Client` header on every
+/// request to the Rung-2 fallback ([kSpeedTestFallbackBaseUrl]). The fallback
+/// server is locked down: it only answers requests that carry an allowed web
+/// Origin (browser / Flutter web) OR this shared header. Native iOS / macOS /
+/// Android apps send no Origin, so without this header the server rejects them.
+///
+/// This is NOT authentication. It ships in the binary, so treat it as a public
+/// identifier, not a secret. The real abuse protection is server-side rate
+/// limiting; this header just lets our own native clients through the Origin
+/// gate. It is rotatable: change this value and the server's allowlist together.
+/// It is sent ONLY to the fallback host, never to Cloudflare or the public CDNs.
+const String kSpeedTestFallbackClientToken =
+    'a3a1b5c6faa2711e9f3cd90bf6dca0c89040d1404bd02591';
+
+/// HTTP header name carrying [kSpeedTestFallbackClientToken] to the Rung-2
+/// fallback so its Origin gate admits our native clients.
+const String kSpeedTestFallbackClientHeader = 'X-Toolbox-Client';
 
 /// The Rung-2 download endpoint, derived from [kSpeedTestFallbackBaseUrl].
 /// OpenSpeedTest streams a >10 MB garbage payload here; bound the sample by
@@ -225,11 +257,21 @@ class ThroughputProbe {
   /// returns false on DNS failure / refused / non-2xx / timeout.
   final LivenessProbe livenessProbe;
 
-  /// Download seam.
-  final Downloader downloader;
+  /// Factory for the underlying [HttpClient] used by the DEFAULT download /
+  /// upload transports. Injectable so a test can supply a client wired to a
+  /// loopback `connectionFactory` and assert on the real request head (e.g. the
+  /// Rung-2 `X-Toolbox-Client` header) without DNS or a network. Defaults to a
+  /// plain `HttpClient()`. Ignored when [downloader] / [uploader] seams are
+  /// injected directly (those bypass the real transport entirely).
+  final HttpClient Function() httpClientFactory;
 
-  /// Upload seam.
-  final Uploader uploader;
+  /// Download seam. Defaults to the real [_defaultDownload] transport, which
+  /// builds its [HttpClient] from [httpClientFactory].
+  late final Downloader downloader;
+
+  /// Upload seam. Defaults to the real [_defaultUpload] transport, which builds
+  /// its [HttpClient] from [httpClientFactory].
+  late final Uploader uploader;
 
   /// Per-attempt timing seam (used for the single upload stream).
   final ElapsedTimer timer;
@@ -288,12 +330,14 @@ class ThroughputProbe {
     this.selfHostedFallbackEnabled = false,
     this.livenessTimeout = const Duration(seconds: 3),
     LivenessProbe? livenessProbe,
+    HttpClient Function()? httpClientFactory,
     Downloader? downloader,
     Uploader? uploader,
     ElapsedTimer? timer,
     ElapsedTimer? windowTimer,
   })  : assert(downloadStreamCount >= 1, 'need at least one download stream'),
         assert(throughputRetries >= 0, 'retry budget cannot be negative'),
+        httpClientFactory = httpClientFactory ?? HttpClient.new,
         livenessProbe = livenessProbe ?? _defaultLivenessProbe,
         downloadEndpoints =
             (downloadEndpoints != null && downloadEndpoints.isNotEmpty)
@@ -307,10 +351,14 @@ class ThroughputProbe {
                 : List<Uri>.unmodifiable(<Uri>[
                     Uri.parse('https://speed.cloudflare.com/__up'),
                   ]),
-        downloader = downloader ?? _defaultDownloader,
-        uploader = uploader ?? _defaultUploader,
         timer = timer ?? _defaultTimer,
-        windowTimer = windowTimer ?? _defaultTimer;
+        windowTimer = windowTimer ?? _defaultTimer {
+    // The default transports close over this instance's [httpClientFactory] so
+    // a test can inject a loopback-wired client and assert on the real request
+    // head; an explicitly injected seam bypasses the real transport entirely.
+    this.downloader = downloader ?? _defaultDownload;
+    this.uploader = uploader ?? _defaultUpload;
+  }
 
   /// Pure throughput math: bits over seconds, in megabits per second.
   ///
@@ -603,6 +651,35 @@ class ThroughputProbe {
   /// own endpoint only.
   static final String _fallbackHost = Uri.parse(kSpeedTestFallbackBaseUrl).host;
 
+  /// Whether [uri] targets the self-hosted Rung-2 fallback host (and therefore
+  /// must carry the [kSpeedTestFallbackClientHeader]). Scoped to the host of
+  /// [kSpeedTestFallbackBaseUrl] only, so the client token is never leaked to
+  /// Cloudflare or the public CDNs. Visible for testing the gate directly.
+  static bool isFallbackRequest(Uri uri) => uri.host == _fallbackHost;
+
+  /// Sets the shared client header on [request] ONLY when it targets the Rung-2
+  /// fallback host. The download/upload transports are one shared code path
+  /// across Cloudflare, the public CDNs, and our box, so the header is gated on
+  /// the host here rather than at the call site. Requests to any other host are
+  /// left untouched, keeping the shipped CDN path byte-for-byte identical.
+  ///
+  /// On web ([_kIsWeb]) this returns immediately, BEFORE referencing
+  /// [kSpeedTestFallbackClientToken]: the web build reaches the fallback through
+  /// the server's Origin/CORS allowlist and never needs the header. Because the
+  /// token is referenced ONLY inside this compile-time-dead-on-web branch,
+  /// dart2js tree-shakes the token string out of the public JS bundle, so the
+  /// shared identifier is never compiled into a web build where it would be
+  /// trivially extractable. Native (iOS / macOS / Android) behavior is
+  /// unchanged: the header is still sent on every Rung-2 fallback request.
+  static void _applyFallbackClientHeader(HttpClientRequest request) {
+    if (_kIsWeb) return;
+    if (!isFallbackRequest(request.uri)) return;
+    request.headers.set(
+      kSpeedTestFallbackClientHeader,
+      kSpeedTestFallbackClientToken,
+    );
+  }
+
   /// Default liveness probe for the self-hosted Rung-2 fallback: a `HEAD /`
   /// against [baseUrl], bounded by [timeout]. Returns true only on a 2xx; false
   /// on DNS failure, connection refusal, non-2xx, or timeout. Never throws: an
@@ -656,7 +733,7 @@ class ThroughputProbe {
   /// caller falls back to the next endpoint) instead of freezing the stage.
   /// Accepts both 200 and 206 (range/partial) since some CDN files are served
   /// via ranges.
-  static Future<int> _defaultDownloader(Uri uri, Duration maxDuration) async {
+  Future<int> _defaultDownload(Uri uri, Duration maxDuration) async {
     final hardDeadline = maxDuration + _transferDeadlineSlack;
     try {
       return await _downloadOnce(uri, maxDuration).timeout(
@@ -673,11 +750,12 @@ class ThroughputProbe {
     }
   }
 
-  static Future<int> _downloadOnce(Uri uri, Duration maxDuration) async {
-    final client = HttpClient()
+  Future<int> _downloadOnce(Uri uri, Duration maxDuration) async {
+    final client = httpClientFactory()
       ..connectionTimeout = const Duration(seconds: 5);
     try {
       final request = await client.getUrl(uri);
+      _applyFallbackClientHeader(request);
       final response = await request.close();
       if (response.statusCode < 200 || response.statusCode >= 300) {
         // Drain so the socket can be reused/closed cleanly, then fail.
@@ -710,7 +788,7 @@ class ThroughputProbe {
   /// POST or never returns a response would otherwise hang the stage). A
   /// timed-out upload becomes an honest, recoverable failure, never a fake
   /// 0 Mbps.
-  static Future<int> _defaultUploader(
+  Future<int> _defaultUpload(
     Uri uri,
     int bytes,
     Duration maxDuration,
@@ -729,16 +807,17 @@ class ThroughputProbe {
     }
   }
 
-  static Future<int> _uploadOnce(
+  Future<int> _uploadOnce(
     Uri uri,
     int bytes,
     Duration maxDuration,
   ) async {
-    final client = HttpClient()
+    final client = httpClientFactory()
       ..connectionTimeout = const Duration(seconds: 5);
     try {
       final request = await client.postUrl(uri);
       request.headers.contentType = ContentType.binary;
+      _applyFallbackClientHeader(request);
       const chunkSize = 64 * 1024;
       final chunk = List<int>.filled(chunkSize, 0);
       var sent = 0;
