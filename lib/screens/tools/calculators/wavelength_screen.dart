@@ -1,16 +1,19 @@
 // Wavelength calculator.
 //
-// Single-input calculator: enter a frequency, read the wavelength in four
+// Single-input calculator: enter a frequency, read the wavelength in five
 // units. Formula matches the RF Tools PWA reference (app.js calcWavelength,
 // line 431):
 //   lambda_m  = 300 / f_MHz        (c form: c=3e8 m/s, f in MHz)
 //   lambda_cm = lambda_m * 100
+//   lambda_mm = lambda_m * 1000
 //   lambda_ft = lambda_m * 3.28084
 //   lambda_in = lambda_ft * 12
 //
 // Frequency unit mirrors the PWA wl-freq-unit select exactly: MHz (default)
 // or GHz; GHz is multiplied by 1000 to MHz (toMHz). Output formatting mirrors
-// the PWA fmt() calls: m → 4 decimals, cm → 2, ft → 4, in → 3.
+// the PWA fmt() calls plus the added mm row: m → 4 decimals, cm → 2,
+// mm → 1, ft → 4, in → 3. Units are grouped metric (m, cm, mm) then
+// imperial (ft, in).
 //
 // Edge cases:
 // - Empty / partial input → blank every output (no crash).
@@ -59,6 +62,10 @@ class WavelengthScreen extends StatefulWidget {
   /// Wavelength in centimeters (meters * 100).
   static double wavelengthCm(double freqMHz) =>
       wavelengthMeters(freqMHz) * 100.0;
+
+  /// Wavelength in millimeters (meters * 1000).
+  static double wavelengthMm(double freqMHz) =>
+      wavelengthMeters(freqMHz) * 1000.0;
 
   /// Wavelength in feet (meters * 3.28084).
   static double wavelengthFeet(double freqMHz) =>
@@ -138,7 +145,7 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
         title: const Text('Wavelength'),
         toolbarHeight: 64,
         // §8.16 — shared "Copy results" affordance. Disabled while the
-        // frequency is empty/invalid/≤0 (no wavelength); copies the four-unit
+        // frequency is empty/invalid/≤0 (no wavelength); copies the five-unit
         // wavelength breakdown as a labeled text block. Copy leads; no help
         // icon here.
         actions: <Widget>[
@@ -196,11 +203,11 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
     );
   }
 
-  /// §8.16 copy payload — the four-unit wavelength as a labeled text block.
+  /// §8.16 copy payload — the five-unit wavelength as a labeled text block.
   ///
   /// Returns null (→ disabled affordance) while the frequency is empty,
   /// invalid, or ≤ 0 (no wavelength). The frequency line echoes the raw entry
-  /// with its selected unit; the four wavelength lines use the same per-unit
+  /// with its selected unit; the five wavelength lines use the same per-unit
   /// decimals as the on-screen result grid.
   String? _buildCopyText() {
     final double? f = _freqMHz;
@@ -213,6 +220,7 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
           ..writeln('Frequency: ${_freqCtrl.text.trim()} $freqUnit')
           ..writeln('λ: ${_fmt(WavelengthScreen.wavelengthMeters(f), 4)} m')
           ..writeln('λ: ${_fmt(WavelengthScreen.wavelengthCm(f), 2)} cm')
+          ..writeln('λ: ${_fmt(WavelengthScreen.wavelengthMm(f), 1)} mm')
           ..writeln('λ: ${_fmt(WavelengthScreen.wavelengthFeet(f), 4)} ft')
           ..writeln('λ: ${_fmt(WavelengthScreen.wavelengthInches(f), 3)} in'))
         .toString()
@@ -308,6 +316,14 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
         ),
         const SizedBox(height: AppSpacing.xs),
         _resultRow(
+          _freqMHz == null ? null : WavelengthScreen.wavelengthMm(_freqMHz!),
+          1,
+          'mm',
+          text,
+          mono,
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        _resultRow(
           _freqMHz == null ? null : WavelengthScreen.wavelengthFeet(_freqMHz!),
           4,
           'ft',
@@ -376,6 +392,8 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
         return 'meters';
       case 'cm':
         return 'centimeters';
+      case 'mm':
+        return 'millimeters';
       case 'ft':
         return 'feet';
       case 'in':
@@ -412,7 +430,8 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
           const SizedBox(height: AppSpacing.xs),
           Text(
             'f in MHz. The 300 constant is c (3·10⁸ m/s) scaled for the '
-            'MHz/meter form. cm = m·100, ft = m·3.28084, in = ft·12.',
+            'MHz/meter form. cm = m·100, mm = m·1000, ft = m·3.28084, '
+            'in = ft·12.',
             style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],

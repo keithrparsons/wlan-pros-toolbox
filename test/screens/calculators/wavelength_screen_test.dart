@@ -4,6 +4,7 @@
 // calcWavelength):
 //   lambda_m  = 300 / f_MHz
 //   lambda_cm = lambda_m * 100
+//   lambda_mm = lambda_m * 1000
 //   lambda_ft = lambda_m * 3.28084
 //   lambda_in = lambda_ft * 12
 // with the PWA unit conversion toMHz (GHz ×1000). Expected values below were
@@ -39,6 +40,14 @@ void main() {
       expect(WavelengthScreen.wavelengthFeet(2400), closeTo(0.410105, 1e-6));
       expect(WavelengthScreen.wavelengthInches(2400), closeTo(4.92126, 1e-5));
     });
+
+    test('mm derives from metres (meters * 1000) at Wi-Fi anchors', () {
+      // 2.4 GHz → 125.0 mm, 5 GHz → 60.0 mm, 6 GHz → 50.0 mm, 60 GHz → 5.0 mm.
+      expect(WavelengthScreen.wavelengthMm(2400), closeTo(125.0, 1e-9));
+      expect(WavelengthScreen.wavelengthMm(5000), closeTo(60.0, 1e-9));
+      expect(WavelengthScreen.wavelengthMm(6000), closeTo(50.0, 1e-9));
+      expect(WavelengthScreen.wavelengthMm(60000), closeTo(5.0, 1e-9));
+    });
   });
 
   group('Unit normalization — matches PWA toMHz', () {
@@ -71,6 +80,7 @@ void main() {
       expect(find.text('Frequency'), findsOneWidget);
       expect(find.text('m'), findsWidgets);
       expect(find.text('cm'), findsOneWidget);
+      expect(find.text('mm'), findsOneWidget);
       // One frequency input field.
       expect(find.byType(TextField), findsOneWidget);
     });
@@ -89,6 +99,8 @@ void main() {
       await tester.pump();
       expect(find.text('0.1250'), findsOneWidget);
       expect(find.text('12.50'), findsOneWidget);
+      // 2400 MHz → 125.0 mm at 1-decimal formatting.
+      expect(find.text('125.0'), findsOneWidget);
     });
 
     testWidgets('clearing the input blanks results to an em-free dash',
@@ -107,8 +119,8 @@ void main() {
       await tester.enterText(find.byType(TextField), '');
       await tester.pump();
       expect(find.text('0.1250'), findsNothing);
-      // Four outputs all blank to the dash.
-      expect(find.text('—'), findsNWidgets(4));
+      // Five outputs all blank to the dash.
+      expect(find.text('—'), findsNWidgets(5));
     });
   });
 }

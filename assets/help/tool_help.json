@@ -35,11 +35,11 @@
     "wavelength": {
       "name": "Wavelength",
       "category": "Calculators & Tools",
-      "purpose": "Converts a frequency to its wavelength in meters, centimeters, feet, and inches.",
+      "purpose": "Converts a frequency to its wavelength in meters, centimeters, millimeters, feet, and inches.",
       "whyHere": "Antenna element sizing, ground-plane and spacing rules, and quarter-wave / half-wave rules of thumb all key off wavelength. A quick reference when laying out antennas.",
       "howToUse": [
         "Enter the frequency and pick its unit (MHz or GHz).",
-        "Read the wavelength in all four units at once."
+        "Read the wavelength in all five units at once."
       ],
       "inputs": [
         {
@@ -48,8 +48,8 @@
           "range": "must be > 0"
         }
       ],
-      "algorithm": "λ(m) = 300 / f_MHz (the 300 constant is c = 3·10⁸ m/s scaled for the MHz/meter form). λ(cm) = λ(m)·100, λ(ft) = λ(m)·3.28084, λ(in) = λ(ft)·12. GHz × 1000 → MHz (:45-52). Display decimals: m → 4, cm → 2, ft → 4, in → 3 (:209-212). (wavelength_screen.dart:54-67)",
-      "example": "2400 MHz → 300/2400 = 0.1250 m, 12.50 cm, 0.4101 ft, 4.921 in.",
+      "algorithm": "λ(m) = 300 / f_MHz (the 300 constant is c = 3·10⁸ m/s scaled for the MHz/meter form). λ(cm) = λ(m)·100, λ(mm) = λ(m)·1000, λ(ft) = λ(m)·3.28084, λ(in) = λ(ft)·12. GHz × 1000 → MHz. Display decimals: m → 4, cm → 2, mm → 1, ft → 4, in → 3. (wavelength_screen.dart)",
+      "example": "2400 MHz → 300/2400 = 0.1250 m, 12.50 cm, 125.0 mm, 0.4101 ft, 4.921 in.",
       "fieldNotes": [
         "Uses c = 3·10⁸ m/s (the rounded 300 constant), not the exact 299792458. The tiny difference is irrelevant for antenna work.",
         "This is free-space wavelength; velocity factor inside cable or dielectric is not applied."
