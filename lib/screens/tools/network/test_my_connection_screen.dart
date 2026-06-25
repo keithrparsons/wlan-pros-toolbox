@@ -4483,7 +4483,7 @@ class _ShortcutOfferCard extends StatelessWidget {
               child: FilledButton.icon(
                 onPressed: onOpen,
                 icon: const Icon(Icons.download_outlined),
-                label: const Text('Set up Live Wi-Fi'),
+                label: const Text('Set up live Wi-Fi'),
               ),
             )
           else
