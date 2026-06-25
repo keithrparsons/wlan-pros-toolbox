@@ -1,5 +1,7 @@
-Live readings are simpler: tools open straight to your connection with no setup prompts.
+The Wavelength tool now shows millimeters, alongside meters, centimeters, feet, and inches.
 
-A single "Get reading" grabs live Wi-Fi or cellular detail without leaving a status banner running.
+More reliable connection speed tests, with an added fallback when the primary is busy.
 
-Continuous live monitoring is now an opt-in toggle.
+Better recovery on iPhone and iPad: if the WLAN Pros Live Shortcut gets deleted, the app now guides you to reinstall it.
+
+Visual polish and reliability fixes.

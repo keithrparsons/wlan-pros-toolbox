@@ -1958,6 +1958,16 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     if (cmp != null) verdictRows.add(_CopyRow('Comparison', cmp));
     _copySection(buf, 'VERDICT', verdictRows);
 
+    // ── How to read this report ──────────────────────────────────────────────
+    // A single plain-text pointer to the published guide, the very last line of
+    // the report so a help-desk reader knows where to learn what each datum
+    // means. The page resolves once it is published at wlanprofessionals.com.
+    buf.writeln('');
+    buf.writeln(
+      'How to read this report: '
+      'https://wlanprofessionals.com/toolbox/connection-report-guide',
+    );
+
     return buf.toString().trimRight();
   }
 

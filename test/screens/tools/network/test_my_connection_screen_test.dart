@@ -2240,6 +2240,23 @@ void main() {
         expect(copied, contains('ISP / org: Fusion Networks'));
         expect(copied, contains('ASN: AS396325'));
 
+        // The report closes with the "how to read this report" pointer to the
+        // published guide, as the very last line of the payload.
+        expect(
+          copied,
+          contains(
+            'How to read this report: '
+            'https://wlanprofessionals.com/toolbox/connection-report-guide',
+          ),
+        );
+        expect(
+          copied.trimRight().endsWith(
+                'https://wlanprofessionals.com/toolbox/connection-report-guide',
+              ),
+          isTrue,
+          reason: 'the guide pointer must be the final line of the report',
+        );
+
         await tester.pump(const Duration(milliseconds: 1600));
       },
     );
