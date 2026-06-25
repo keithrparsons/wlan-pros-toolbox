@@ -11,11 +11,11 @@ The WLAN Pros Toolbox bundles third-party components that remain governed by the
 
 ## Fonts
 
-Bundled and rendered offline:
+Bundled in `assets/fonts/` and rendered offline:
 
-- **IBM Plex Sans** and **IBM Plex Mono** — SIL Open Font License 1.1.
-- **Roboto Mono** — Apache License 2.0.
+- **IBM Plex Sans** — SIL Open Font License 1.1.
 - **DM Mono** — SIL Open Font License 1.1.
+- **Roboto Mono** — Apache License 2.0.
 
 ## Dart and Flutter packages
 
