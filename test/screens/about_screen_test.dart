@@ -10,6 +10,9 @@
 //   overflow.
 // - Runtime version: the build badge + item-8 line render the RUNTIME version +
 //   build number (package_info_plus, mocked) in the "Version X (build Y)" form.
+// - Founder section: the headshot avatar (ClipOval + bundled asset), the
+//   "About the founder" heading, the name, the "CWNE #3" caption, and the
+//   verbatim approved bio.
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -145,6 +148,45 @@ void main() {
       find.bySemanticsLabel('WLAN Pros, Wireless LAN Professionals'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('Founder section renders headshot, name, CWNE, and bio', (
+    tester,
+  ) async {
+    final SemanticsHandle handle = tester.ensureSemantics();
+    await _pumpAboutTall(tester);
+
+    // The headshot is bundled and surfaced as a circular avatar with an
+    // accessible image label (its bare Image is excluded from the a11y tree).
+    expect(
+      find.image(const AssetImage('assets/brand/keith-parsons-headshot.png')),
+      findsOneWidget,
+    );
+    expect(find.byType(ClipOval), findsOneWidget);
+    // The avatar carries an accessible image label (substring match: the node
+    // may merge with the adjacent name/caption text under the Column).
+    expect(
+      find.bySemanticsLabel(RegExp('Photo of Keith Parsons')),
+      findsOneWidget,
+    );
+
+    // Section heading + name + CWNE caption.
+    expect(find.text('About the founder'), findsOneWidget);
+    // The standalone founder name (the item-3 body copy embeds "Keith Parsons"
+    // mid-paragraph, so it is NOT a separate exact-text match).
+    expect(find.text('Keith Parsons'), findsOneWidget);
+    expect(find.text('CWNE #3'), findsOneWidget);
+
+    // The approved bio is present verbatim (matched by a distinctive fragment).
+    expect(
+      find.textContaining(
+        'a diamond mine 800 meters underground to the top of the Empire State '
+        'Building',
+      ),
+      findsOneWidget,
+    );
+
+    handle.dispose();
   });
 
   testWidgets('About screen fits a 375x900 iPhone viewport without overflow', (
