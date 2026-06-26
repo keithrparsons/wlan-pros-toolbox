@@ -220,4 +220,67 @@ void main() {
       },
     );
   });
+
+  // The post-setup one-shot "Get reading" no-display bug (Keith device round 4).
+  //
+  // Streaming worked, but a normal post-setup Get reading returned with NO reading
+  // shown. Root cause: the sampler only appended a payload to its series WHILE
+  // STREAMING, so a one-shot payload (which lands the controller in idleWithData,
+  // not streaming) was dropped — and the Test My Connection / Wi-Fi Information
+  // render gates on `series.isEmpty`, so the screen stayed on the pre-payload card.
+  group('one-shot Get reading renders into the series (round 4 fix)', () {
+    test('a one-shot payload (not streaming) populates the series + latest',
+        () async {
+      final bridge = _FakeBridge(everReceived: true, latest: _details());
+      final sampler = WifiSignalSampler(
+        source: WifiInfoSource.iosShortcuts,
+        iosBridge: bridge,
+      );
+      await sampler.load();
+      expect(sampler.isStreaming, isFalse);
+      expect(sampler.series.isEmpty, isTrue);
+
+      // Fire the one-shot, then deliver the single payload while NOT streaming.
+      final bool opened = await sampler.getReadingOnce();
+      expect(opened, isTrue);
+      bridge.push(_details(ssid: 'OneShot', rssi: -48));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(sampler.isStreaming, isFalse, reason: 'a one-shot never streams');
+      expect(sampler.latest, isNotNull);
+      expect(sampler.series.isEmpty, isFalse,
+          reason: 'the single one-shot sample MUST render into the series so the '
+              'screen leaves the pre-payload card and shows the reading');
+
+      sampler.dispose();
+      await bridge.close();
+    });
+
+    test('the same one-shot payload is not double-appended (value-equality dedup)',
+        () async {
+      final bridge = _FakeBridge(everReceived: true, latest: _details());
+      final sampler = WifiSignalSampler(
+        source: WifiInfoSource.iosShortcuts,
+        iosBridge: bridge,
+      );
+      await sampler.load();
+
+      await sampler.getReadingOnce();
+      final WiFiDetails sample = _details(ssid: 'OneShot', rssi: -48);
+      // Deliver twice (stream push + a settle poll re-reading the same payload).
+      bridge.push(sample);
+      await Future<void>.delayed(Duration.zero);
+      bridge.push(_details(ssid: 'OneShot', rssi: -48)); // value-equal copy
+      await Future<void>.delayed(Duration.zero);
+
+      // Exactly one charted point — the dedup keeps the duplicate delivery out.
+      expect(
+        sampler.series.rssi.where((double? v) => v != null).length,
+        1,
+      );
+
+      sampler.dispose();
+      await bridge.close();
+    });
+  });
 }

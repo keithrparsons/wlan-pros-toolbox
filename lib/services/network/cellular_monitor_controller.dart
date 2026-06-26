@@ -74,8 +74,15 @@ class CellularMonitorController extends ChangeNotifier {
   bool _disposed = false;
   bool _shortcutMissing = false;
   bool _setupInitiated = false;
+  int _deliveryCount = 0;
 
   CellularMonitorPhase get phase => _phase;
+
+  /// How many LIVE payloads have been delivered this session (one-shot + stream).
+  /// [load] restoring the stored reading does NOT advance this, so the screen can
+  /// chart fresh deliveries while leaving a stale stored reading off the chart on
+  /// open. Zero until the first live delivery.
+  int get deliveryCount => _deliveryCount;
 
   /// True between "the user started setup" and "the first payload completes the
   /// round-trip" — the PRIMING window (shared with the Wi-Fi tool via the one
@@ -310,6 +317,9 @@ class CellularMonitorController extends ChangeNotifier {
     _info = d;
     _hasEverReceived = true;
     _lastUpdated = DateTime.now();
+    // Count only LIVE deliveries this session (one-shot + stream); load() restores
+    // the stored reading by setting `_info` directly, so it never advances this.
+    _deliveryCount++;
     // A real payload disproves any pending missing-Shortcut verdict and makes the
     // settle moot — cancel it so no timer lingers.
     _missingTimer?.cancel();

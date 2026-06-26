@@ -415,9 +415,9 @@ class WifiSignalSampler extends ChangeNotifier {
 
   // ---- iOS stream ----
 
-  /// Controller listener: folds each NEW streamed payload into the series, and
-  /// clears the window on a fresh Stop→Start so a new session does not chart the
-  /// previous one's stale samples. Mirrors wifi-info's `_captureSample`.
+  /// Controller listener: folds each NEW payload into the series, and clears the
+  /// window on a fresh Stop→Start so a new session does not chart the previous
+  /// one's stale samples. Mirrors wifi-info's `_captureSample`.
   void _onControllerChanged() {
     final WifiMonitorController? c = _controller;
     if (c == null) return;
@@ -432,14 +432,19 @@ class WifiSignalSampler extends ChangeNotifier {
     }
     _wasStreaming = streaming;
 
-    if (streaming) {
-      final WiFiDetails? d = c.details;
-      if (d != null && d != _lastCharted) {
-        _lastCharted = d;
-        final ConnectedAp sample = ConnectedAp.fromWifiDetails(d);
-        _roamDetector.observe(sample);
-        _series.add(sample);
-      }
+    // Append any NEW LIVE payload regardless of streaming. A single one-shot
+    // "Get reading" lands the controller in idleWithData (NOT streaming); the
+    // earlier `if (streaming)` gate DROPPED that sample, so Test My Connection's
+    // live-signal sparkline never rendered a one-shot reading (Keith device round
+    // 4). Gate on [deliveryCount] so the load-restored STALE stored reading is not
+    // charted on open; the `d != _lastCharted` value dedup keeps a settle-poll
+    // re-delivery of the same payload from duplicating the last reading.
+    final WiFiDetails? d = c.details;
+    if (c.deliveryCount > 0 && d != null && d != _lastCharted) {
+      _lastCharted = d;
+      final ConnectedAp sample = ConnectedAp.fromWifiDetails(d);
+      _roamDetector.observe(sample);
+      _series.add(sample);
     }
     _safeNotify();
   }

@@ -455,10 +455,10 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     super.dispose();
   }
 
-  /// Controller listener (iOS Live): appends a sample to [_series] each time a
-  /// NEW streamed payload lands while monitoring is running. Guarded so the
-  /// many non-sample notifications (phase changes, Start/Stop) do not duplicate
-  /// the last reading into the window.
+  /// Controller listener (iOS Live): appends a NEW payload to [_series] — whether
+  /// it arrived from the continuous stream OR a single one-shot "Get reading".
+  /// Guarded so the many non-sample notifications (phase changes, Start/Stop) do
+  /// not duplicate the last reading into the window.
   void _captureSample() {
     final WifiMonitorController? c = _liveController;
     final WifiTimeSeries? series = _series;
@@ -474,9 +474,17 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
 
     if (mounted) setState(() {}); // reflect live indicator / timestamp ticks
 
-    if (!streaming) return;
+    // Append any NEW LIVE payload regardless of streaming. A one-shot "Get
+    // reading" lands the controller in idleWithData (NOT streaming); the earlier
+    // `if (!streaming) return` silently DROPPED that single sample, so a normal
+    // post-setup Get reading delivered a payload but the screen stayed on the
+    // pre-payload card with no reading shown (Keith device round 4). Gate on
+    // [deliveryCount] so the load-restored STALE stored reading is not charted on
+    // open (only fresh one-shot / stream deliveries advance it). The
+    // `d == _lastCharted` value dedup keeps a settle-poll re-delivery of the same
+    // payload from duplicating the last reading.
     final WiFiDetails? d = c.details;
-    if (d == null || d == _lastCharted) return;
+    if (c.deliveryCount == 0 || d == null || d == _lastCharted) return;
     _lastCharted = d;
     final ConnectedAp reading = ConnectedAp.fromWifiDetails(d);
     series.add(reading);

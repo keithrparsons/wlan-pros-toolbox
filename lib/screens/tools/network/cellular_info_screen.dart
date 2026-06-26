@@ -172,9 +172,9 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
     await _getReadingOnce();
   }
 
-  /// Controller listener (iOS Live): appends a bars sample each time a NEW
-  /// streamed payload lands while monitoring is running. Guarded so phase-change
-  /// notifications do not duplicate the last reading.
+  /// Controller listener (iOS Live): appends a NEW bars sample — whether it
+  /// arrived from the continuous stream OR a single one-shot "Get reading".
+  /// Guarded so phase-change notifications do not duplicate the last reading.
   void _captureSample() {
     final CellularMonitorController? c = _liveController;
     final CellularTimeSeries? series = _series;
@@ -189,9 +189,15 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
 
     if (mounted) setState(() {}); // reflect live indicator / timestamp ticks
 
-    if (!streaming) return;
+    // Append any NEW LIVE payload regardless of streaming. A one-shot "Get
+    // reading" lands the controller in idleWithData (NOT streaming); the earlier
+    // `if (!streaming) return` DROPPED that single sample, so a post-setup Get
+    // reading delivered a payload but nothing visible appeared (Keith device round
+    // 4). Gate on [deliveryCount] so the load-restored STALE stored reading is not
+    // charted on open; the `d == _lastCharted` value dedup prevents settle-poll /
+    // phase-change duplicates.
     final CellularInfo? d = c.info;
-    if (d == null || d == _lastCharted) return;
+    if (c.deliveryCount == 0 || d == null || d == _lastCharted) return;
     _lastCharted = d;
     series.add(d);
   }

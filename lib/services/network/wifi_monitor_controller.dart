@@ -86,8 +86,15 @@ class WifiMonitorController extends ChangeNotifier {
   bool _shortcutMissing = false;
   bool _notOnWifi = false;
   bool _setupInitiated = false;
+  int _deliveryCount = 0;
 
   WifiMonitorPhase get phase => _phase;
+
+  /// How many LIVE payloads have been delivered this session (one-shot + stream).
+  /// [load] restoring the stored last reading does NOT advance this, so a screen
+  /// can chart fresh deliveries while leaving a stale stored reading off the chart
+  /// on open (Keith device round 4). Zero until the first live delivery.
+  int get deliveryCount => _deliveryCount;
 
   /// True between "the user started setup (tapped Add the Shortcut)" and "the
   /// first payload completes the round-trip" — the PRIMING window. iOS cannot
@@ -410,6 +417,11 @@ class WifiMonitorController extends ChangeNotifier {
     _details = d;
     _hasEverReceived = true;
     _lastUpdated = DateTime.now();
+    // Count only LIVE deliveries this session (one-shot + stream). load() restores
+    // the last stored payload by setting `_details` DIRECTLY (not through here), so
+    // it never advances this — letting the screens chart fresh deliveries while NOT
+    // charting a stale stored reading on open.
+    _deliveryCount++;
     // A real payload disproves any pending missing-Shortcut verdict and makes the
     // settle moot — cancel it so no timer lingers.
     _missingTimer?.cancel();
