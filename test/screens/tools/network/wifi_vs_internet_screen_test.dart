@@ -66,6 +66,8 @@ class _FakeMacAdapter implements WifiInfoAdapter {
 /// link is unknown and the engine takes its wifiUnknown path.
 class _NoPayloadBridge implements WiFiDetailsBridge {
   @override
+  Future<bool> consumeShortcutMissing() async => false;
+  @override
   Future<bool> hasEverReceivedPayload() async => false;
   @override
   Future<WiFiDetails?> readLatest() async => null;

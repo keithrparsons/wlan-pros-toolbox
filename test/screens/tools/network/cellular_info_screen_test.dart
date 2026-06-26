@@ -29,6 +29,9 @@ import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 /// A fake iOS Shortcuts bridge: feeds the Live streaming flow without a platform
 /// channel, and records the PLAIN combined-Live trigger call.
 class _FakeBridge implements CellularInfoBridge {
+  @override
+  Future<bool> consumeShortcutMissing() async => false;
+
   _FakeBridge({
     this.everReceived = false,
     this.latest,

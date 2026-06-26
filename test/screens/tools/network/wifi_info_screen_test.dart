@@ -213,6 +213,9 @@ class _FakeBridge implements WiFiDetailsBridge {
     this.runShortcutResult = true,
   });
 
+  @override
+  Future<bool> consumeShortcutMissing() async => false;
+
   bool everReceived;
   WiFiDetails? latest;
   bool monitoringActive = false;

@@ -66,6 +66,12 @@ import UIKit
       case "hasEverReceivedPayload":
         // Honest install-state (TICKET-03 A1): has any payload ever arrived?
         result(ShortcutsBridge.hasEverReceivedPayload())
+      case "consumeShortcutMissing":
+        // One-shot consume of the transient missing-Shortcut marker (set when the
+        // one-shot x-error callback fired because "WLAN Pros Live" was gone).
+        // Drives the "Shortcut not found — re-run setup" recovery copy once on the
+        // next foreground load.
+        result(ShortcutsBridge.consumeShortcutMissing())
       case "readLatestCellular":
         // TICKET-02 cellular: read the App Group cellular payload (PULL).
         result(ShortcutsBridge.readLatestCellular())

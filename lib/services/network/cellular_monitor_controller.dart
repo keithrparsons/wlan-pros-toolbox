@@ -109,11 +109,24 @@ class CellularMonitorController extends ChangeNotifier {
     final bool received = await _bridge.hasEverReceivedPayload();
     final CellularInfo? latest = await _bridge.readLatest();
     final bool wasMonitoring = await _bridge.isMonitoringActive();
+    // x-error recovery (2026-06-25): the one combined "WLAN Pros Live" Shortcut
+    // feeds this tool too, so a renamed/deleted Shortcut's one-shot x-error
+    // bounces back via `wlanprostoolbox://live-error`, the native handler resets
+    // the durable install-state, and we read the consumed-once marker here to
+    // force the honest "Shortcut not found — re-run setup" recovery. Mirrors
+    // [WifiMonitorController.load].
+    final bool shortcutMissing = await _bridge.consumeShortcutMissing();
 
     _hasEverReceived = received || (latest != null && latest.hasAnyData);
     if (latest != null && latest.hasAnyData) {
       _info = latest;
       _lastUpdated ??= DateTime.now();
+    }
+    if (shortcutMissing) {
+      // Gone Shortcut → setup recovery, deterministically. The native reset
+      // already dropped the trust flag + stored reading; force false defensively.
+      _shortcutMissing = true;
+      _hasEverReceived = false;
     }
 
     if (_phase == CellularMonitorPhase.streaming) {
@@ -121,7 +134,7 @@ class CellularMonitorController extends ChangeNotifier {
       return;
     }
 
-    if (!_hasEverReceived) {
+    if (shortcutMissing || !_hasEverReceived) {
       _phase = CellularMonitorPhase.needsInstall;
     } else if (wasMonitoring) {
       _startListening();

@@ -70,6 +70,27 @@ class WiFiDetailsBridge {
     }
   }
 
+  /// Reads and CLEARS the transient "companion Shortcut not found on the last
+  /// one-shot fire" marker (one-shot consume).
+  ///
+  /// The native side sets it when iOS invokes the one-shot `x-error` callback
+  /// (`wlanprostoolbox://live-error`) — the reliable missing-Shortcut signal,
+  /// fired when "WLAN Pros Live" was renamed/deleted — and at the same time
+  /// resets the durable install-state. The controller calls this on each
+  /// foreground load: a `true` drives the honest "Shortcut not found — re-run
+  /// setup" recovery once, after which the marker is cleared and the tool returns
+  /// to the normal one-time setup prompt. False off-iOS (no handler).
+  Future<bool> consumeShortcutMissing() async {
+    try {
+      return await _method.invokeMethod<bool>('consumeShortcutMissing') ?? false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException catch (e) {
+      debugPrint('WiFiDetailsBridge.consumeShortcutMissing failed: $e');
+      return false;
+    }
+  }
+
   /// Sets the App Group monitoring-active flag (TICKET-03 A2/A3). The native
   /// [ShouldContinueMonitoringIntent] returns this value to a looping companion
   /// Shortcut: `true` keeps the loop running, `false` stops it. The app writes

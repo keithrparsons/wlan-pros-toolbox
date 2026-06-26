@@ -24,6 +24,11 @@ class _FakeBridge implements CellularInfoBridge {
   CellularInfo? latest;
   bool runShortcutResult = true;
 
+  /// Mirrors the native App Group missing-Shortcut marker (set on an x-error,
+  /// consumed-once by the controller load).
+  bool shortcutMissingFlag = false;
+  int consumeShortcutMissingCalls = 0;
+
   int setMonitoringActiveCalls = 0;
   bool? lastMonitoringValue;
   int runShortcutCalls = 0;
@@ -31,6 +36,14 @@ class _FakeBridge implements CellularInfoBridge {
 
   @override
   Future<bool> hasEverReceivedPayload() async => everReceived;
+
+  @override
+  Future<bool> consumeShortcutMissing() async {
+    consumeShortcutMissingCalls++;
+    final bool v = shortcutMissingFlag;
+    shortcutMissingFlag = false; // native consume-once semantics
+    return v;
+  }
 
   @override
   Future<CellularInfo?> readLatest() async => latest;
@@ -127,6 +140,60 @@ void main() {
 
       expect(c.phase, CellularMonitorPhase.streaming);
       expect(c.isStreaming, isTrue);
+      c.dispose();
+      await bridge.close();
+    });
+  });
+
+  // x-error recovery for a RENAMED/DELETED Shortcut (2026-06-25). The one combined
+  // "WLAN Pros Live" Shortcut feeds the cellular tool too, so a missing-Shortcut
+  // x-error resets it and surfaces the honest setup recovery. Mirrors the Wi-Fi
+  // controller.
+  group('x-error recovery (renamed/deleted "WLAN Pros Live")', () {
+    test('missing marker -> needsInstall + shortcutMissing, gate reset', () async {
+      final bridge = _FakeBridge()
+        ..everReceived = false
+        ..latest = null
+        ..shortcutMissingFlag = true;
+      final c = CellularMonitorController(bridge: bridge);
+
+      await c.load();
+
+      expect(bridge.consumeShortcutMissingCalls, 1);
+      expect(c.shortcutMissing, isTrue);
+      expect(c.hasEverReceived, isFalse);
+      expect(c.phase, CellularMonitorPhase.needsInstall);
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('marker is consumed once: a fresh controller reload clears recovery',
+        () async {
+      final bridge = _FakeBridge()..shortcutMissingFlag = true;
+      final c1 = CellularMonitorController(bridge: bridge);
+      await c1.load();
+      expect(c1.shortcutMissing, isTrue);
+
+      final c2 = CellularMonitorController(bridge: bridge);
+      await c2.load();
+      expect(c2.shortcutMissing, isFalse);
+      expect(c2.phase, CellularMonitorPhase.needsInstall);
+      c1.dispose();
+      c2.dispose();
+      await bridge.close();
+    });
+
+    test('no marker -> normal load is unaffected', () async {
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _info();
+      final c = CellularMonitorController(bridge: bridge);
+
+      await c.load();
+
+      expect(bridge.consumeShortcutMissingCalls, 1);
+      expect(c.shortcutMissing, isFalse);
+      expect(c.phase, CellularMonitorPhase.idleWithData);
       c.dispose();
       await bridge.close();
     });

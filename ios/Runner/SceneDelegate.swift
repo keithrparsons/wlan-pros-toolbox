@@ -43,15 +43,28 @@ class SceneDelegate: FlutterSceneDelegate {
     super.scene(scene, willConnectTo: session, options: connectionOptions)
   }
 
-  /// Re-posts the bridge Darwin notification when our one-shot return scheme
-  /// (`wlanprostoolbox://live-done`) is opened, so the foregrounded Live screens
-  /// re-read the App Group payload the just-finished Shortcut delivered. A no-op
-  /// for any other URL.
+  /// Handles our one-shot x-callback returns, keyed on the URL host:
+  ///   * `live-done`  (x-success) — the run FINISHED. Re-post the bridge Darwin
+  ///     notification so the foregrounded Live screens re-read the App Group
+  ///     payload the just-finished Shortcut delivered.
+  ///   * `live-error` (x-error)   — the named "WLAN Pros Live" Shortcut COULD NOT
+  ///     RUN (renamed/deleted). Reset install-state and raise the transient
+  ///     missing marker via [ShortcutsBridge.markShortcutMissing] (which also
+  ///     posts the Darwin notification). The foregrounded screen's resume→load
+  ///     then surfaces the honest "Shortcut not found — re-run setup" recovery
+  ///     instead of stranding the user on the Shortcuts page.
+  /// A no-op for any URL not on our scheme.
   private func handleCallback(_ urls: [URL]) {
-    let isOurCallback = urls.contains { url in
-      url.scheme?.lowercased() == ShortcutsBridge.callbackScheme
+    for url in urls where url.scheme?.lowercased() == ShortcutsBridge.callbackScheme {
+      switch url.host?.lowercased() {
+      case "live-error":
+        ShortcutsBridge.markShortcutMissing()
+      default:
+        // `live-done` and any other return on our scheme: nudge the foregrounded
+        // Live screens to re-read the delivered payload.
+        ShortcutsBridge.postDarwinNotification()
+      }
+      return
     }
-    guard isOurCallback else { return }
-    ShortcutsBridge.postDarwinNotification()
   }
 }

@@ -51,6 +51,11 @@ class _FakeBridge extends WiFiDetailsBridge {
   WiFiDetails? latest;
   bool runShortcutResult = true;
 
+  /// Mirrors the native App Group missing-Shortcut marker (set by
+  /// markShortcutMissing on an x-error, consumed-once by the controller load).
+  bool shortcutMissingFlag = false;
+  int consumeShortcutMissingCalls = 0;
+
   int setMonitoringActiveCalls = 0;
   bool? lastMonitoringValue;
   int runShortcutCalls = 0;
@@ -58,6 +63,14 @@ class _FakeBridge extends WiFiDetailsBridge {
 
   @override
   Future<bool> hasEverReceivedPayload() async => everReceived;
+
+  @override
+  Future<bool> consumeShortcutMissing() async {
+    consumeShortcutMissingCalls++;
+    final bool v = shortcutMissingFlag;
+    shortcutMissingFlag = false; // native consume-once semantics
+    return v;
+  }
 
   @override
   Future<WiFiDetails?> readLatest() async => latest;
@@ -530,6 +543,97 @@ void main() {
 
       expect(c.shortcutMissing, isTrue);
       expect(bridge.runShortcutCalls, 1);
+      c.dispose();
+      await bridge.close();
+    });
+  });
+
+  // x-error recovery for a RENAMED/DELETED Shortcut (2026-06-25, Keith build 41).
+  //
+  // The one-shot trigger now carries an `x-error` return URL, so a missing
+  // Shortcut bounces the app back via `wlanprostoolbox://live-error` instead of
+  // stranding the user on the Shortcuts page. The native handler resets the
+  // durable install-state and raises a consumed-once marker; the controller reads
+  // it on the resume-driven load and forces the honest setup recovery. This is
+  // the path the settle-timer could NOT cover, because it short-circuits on
+  // hasEverReceived (Keith had received payloads before deleting the Shortcut).
+  group('x-error recovery (renamed/deleted "WLAN Pros Live")', () {
+    test('a previously-working Shortcut, now missing -> needsInstall + shortcutMissing',
+        () async {
+      // Native markShortcutMissing has already cleared the trust flag + stored
+      // reading (so everReceived=false, latest=null here) and set the marker.
+      final bridge = _FakeBridge()
+        ..everReceived = false
+        ..latest = null
+        ..shortcutMissingFlag = true;
+      final c = WifiMonitorController(
+        bridge: bridge,
+        connectionService: _conn(wifiIp: '192.168.0.10'),
+      );
+
+      await c.load();
+
+      expect(bridge.consumeShortcutMissingCalls, 1);
+      expect(c.shortcutMissing, isTrue,
+          reason: 'the x-error marker drives the in-tool "not found" recovery');
+      expect(c.hasEverReceived, isFalse, reason: 'the trust gate is reset');
+      expect(c.phase, WifiMonitorPhase.needsInstall,
+          reason: 'the tool returns to "Set up live Wi-Fi" mode');
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('missing marker forces setup recovery OVER the not-on-Wi-Fi card',
+        () async {
+      // Even off Wi-Fi, the actionable fix for a deleted Shortcut is re-running
+      // setup, so the missing recovery wins over the not-on-Wi-Fi state.
+      final bridge = _FakeBridge()..shortcutMissingFlag = true;
+      final c = WifiMonitorController(
+        bridge: bridge,
+        connectionService: _conn(wifiIp: null), // would otherwise be notOnWifi
+      );
+
+      await c.load();
+
+      expect(c.shortcutMissing, isTrue);
+      expect(c.notOnWifi, isFalse);
+      expect(c.phase, WifiMonitorPhase.needsInstall);
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('the marker is consumed ONCE: a fresh controller reload clears recovery',
+        () async {
+      // The native flag is one-shot; after the first load consumes it a fresh
+      // controller (new screen mount) reads false and shows the neutral setup
+      // prompt rather than the "not found" copy.
+      final bridge = _FakeBridge()..shortcutMissingFlag = true;
+      final c1 = WifiMonitorController(bridge: bridge);
+      await c1.load();
+      expect(c1.shortcutMissing, isTrue);
+
+      final c2 = WifiMonitorController(bridge: bridge);
+      await c2.load();
+      expect(c2.shortcutMissing, isFalse,
+          reason: 'consumed-once — the second load no longer flags missing');
+      expect(c2.phase, WifiMonitorPhase.needsInstall,
+          reason: 'install-state stays reset until a real payload arrives');
+      c1.dispose();
+      c2.dispose();
+      await bridge.close();
+    });
+
+    test('no marker -> normal load is unaffected (no false recovery)', () async {
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _details();
+      final c = WifiMonitorController(bridge: bridge);
+
+      await c.load();
+
+      expect(bridge.consumeShortcutMissingCalls, 1);
+      expect(c.shortcutMissing, isFalse);
+      expect(c.phase, WifiMonitorPhase.idleWithData);
       c.dispose();
       await bridge.close();
     });

@@ -95,6 +95,30 @@ void main() {
     });
   });
 
+  group('consumeShortcutMissing (x-error recovery marker)', () {
+    test('reflects the native marker and uses the right method name', () async {
+      MethodCall? seen;
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        seen = call;
+        return call.method == 'consumeShortcutMissing' ? true : null;
+      });
+      final missing = await WiFiDetailsBridge().consumeShortcutMissing();
+
+      expect(missing, isTrue);
+      expect(seen!.method, 'consumeShortcutMissing');
+    });
+
+    test('defaults to false on null', () async {
+      messenger.setMockMethodCallHandler(channel, (call) async => null);
+      expect(await WiFiDetailsBridge().consumeShortcutMissing(), isFalse);
+    });
+
+    test('returns false when the plugin is missing (off-iOS)', () async {
+      messenger.setMockMethodCallHandler(channel, null);
+      expect(await WiFiDetailsBridge().consumeShortcutMissing(), isFalse);
+    });
+  });
+
   group('runShortcut (PLAIN fire-and-forget Live trigger)', () {
     test('invokes runShortcut with ONLY the name — no x-callback, no tool',
         () async {

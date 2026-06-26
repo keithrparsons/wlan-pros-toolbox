@@ -45,8 +45,19 @@ enum ShortcutsBridge {
   /// Honest install-state flag (TICKET-03 A1). iOS cannot query whether a
   /// Shortcut is installed, so the app infers it from "has any payload ever
   /// arrived". Set true the first time the receiver intent stores a payload;
-  /// never cleared.
+  /// cleared by [markShortcutMissing] when the one-shot x-error callback proves
+  /// the Shortcut is gone (renamed/deleted), so the app stops trusting it.
   static let hasReceivedPayloadKey = "shortcuts_bridge.has_received_payload"
+
+  /// Transient "the companion Shortcut was NOT FOUND on the last one-shot fire"
+  /// marker. Set by [markShortcutMissing] when iOS invokes the one-shot x-error
+  /// callback (`wlanprostoolbox://live-error`) — the reliable missing-Shortcut
+  /// signal — and CONSUMED-once by the Dart side ([consumeShortcutMissing]) on
+  /// the next foreground load, so the honest "Shortcut not found — re-run setup"
+  /// recovery copy shows exactly once and the tool then falls back to the normal
+  /// one-time setup prompt. Distinct from the durable install-state flags, which
+  /// [markShortcutMissing] also resets.
+  static let shortcutMissingKey = "shortcuts_bridge.shortcut_missing"
 
   /// Monitoring-active flag (TICKET-03 A2/A3). The app sets this true on Start
   /// and false on Stop. The looping companion Shortcut reads it through
@@ -94,6 +105,19 @@ enum ShortcutsBridge {
   /// page. The host (`live-done`) lets the app distinguish this callback.
   static let callbackSuccessURLString = "\(callbackScheme)://live-done"
 
+  /// The full return URL the one-shot x-callback hands to `x-error`. iOS opens
+  /// this when the named Shortcut CANNOT RUN — most importantly when "WLAN Pros
+  /// Live" is MISSING (renamed or deleted). Before this existed there was no
+  /// x-error URL, so iOS had nowhere to return: a missing Shortcut showed the
+  /// system "The File Doesn't Exist" alert and then STRANDED the user on the
+  /// Shortcuts page with no path back into the app (Keith, iPhone 17 Pro, build
+  /// 41). With it, iOS re-foregrounds the Toolbox via this host so the app can
+  /// surface the honest "Shortcut not found — re-run setup" recovery. The host
+  /// (`live-error`) lets the app distinguish this from the `live-done` success
+  /// callback. (Apple x-callback-url spec: `x-error` is invoked on action
+  /// failure, e.g. a Shortcut that cannot be found.)
+  static let callbackErrorURLString = "\(callbackScheme)://live-error"
+
   /// Builds the `x-callback-url` ONE-SHOT run-shortcut URL for [name]:
   ///
   ///   shortcuts://x-callback-url/run-shortcut?name=<enc>&x-success=<enc return>
@@ -115,6 +139,14 @@ enum ShortcutsBridge {
     components.queryItems = [
       URLQueryItem(name: "name", value: name),
       URLQueryItem(name: "x-success", value: callbackSuccessURLString),
+      // x-error gives iOS a return URL when the named Shortcut CANNOT RUN
+      // (renamed/deleted). Without it, a missing Shortcut stranded the user on
+      // the Shortcuts page after the "The File Doesn't Exist" alert, with no way
+      // back into the app (Keith, build 41). With it, iOS re-foregrounds the app
+      // via `live-error`, which the app turns into an honest "Shortcut not found
+      // — re-run setup" recovery. Safe alongside x-success: x-error fires only on
+      // launch/lookup failure, x-success only on completion — never both.
+      URLQueryItem(name: "x-error", value: callbackErrorURLString),
     ]
     return components.url
   }
@@ -131,6 +163,9 @@ enum ShortcutsBridge {
   static func store(json: String) {
     sharedDefaults?.set(json, forKey: latestPayloadKey)
     sharedDefaults?.set(true, forKey: hasReceivedPayloadKey)
+    // A real delivery disproves any pending missing-Shortcut marker so a
+    // recovered Shortcut never re-surfaces the "not found" recovery.
+    sharedDefaults?.set(false, forKey: shortcutMissingKey)
     sharedDefaults?.synchronize()
     postDarwinNotification()
   }
@@ -143,6 +178,52 @@ enum ShortcutsBridge {
   /// Honest install-state: has the app ever received a payload? (TICKET-03 A1.)
   static func hasEverReceivedPayload() -> Bool {
     sharedDefaults?.bool(forKey: hasReceivedPayloadKey) ?? false
+  }
+
+  /// Records that the companion Shortcut was NOT FOUND on the last one-shot fire
+  /// (iOS invoked the x-error callback) and performs the honest install-state
+  /// RESET, so every fire site stops trusting / blind-firing the now-missing
+  /// Shortcut and the live tools return to "Set up live Wi-Fi" mode.
+  ///
+  /// WHY RESET THE DURABLE FLAGS rather than hold a transient flag alone: the
+  /// fire sites gate "set-up-vs-fire" on [hasReceivedPayloadKey], AND the Dart
+  /// controllers re-derive install-state from the STORED payload too (a stored
+  /// reading alone implies "installed"). So a transient marker on its own would
+  /// be re-overridden by the stale [latestPayloadKey] on the very next load, and
+  /// the app would blind-fire the missing Shortcut again — re-stranding the user.
+  /// Clearing both the trust flag AND the stale stored reading makes the reset
+  /// DURABLE: install-state resolves to false until a real new payload arrives,
+  /// which is the honest state (the Shortcut that produced the old reading is
+  /// gone). The monitoring flag is cleared so no phantom loop survives. The one
+  /// combined "WLAN Pros Live" Shortcut feeds BOTH Wi-Fi and cellular, so both
+  /// sides are reset. [shortcutMissingKey] is the ONLY thing left set — a
+  /// transient, consumed-once marker that lets the next load show the precise
+  /// "not found — re-run setup" copy rather than a generic first-run nudge. Posts
+  /// the Darwin notification so any foregrounded Live screen reacts immediately.
+  static func markShortcutMissing() {
+    let defaults = sharedDefaults
+    defaults?.set(true, forKey: shortcutMissingKey)
+    defaults?.set(false, forKey: hasReceivedPayloadKey)
+    defaults?.set(false, forKey: hasReceivedCellularPayloadKey)
+    defaults?.removeObject(forKey: latestPayloadKey)
+    defaults?.removeObject(forKey: latestCellularPayloadKey)
+    defaults?.set(false, forKey: monitoringActiveKey)
+    defaults?.synchronize()
+    postDarwinNotification()
+  }
+
+  /// Reads and CLEARS the transient missing-Shortcut marker (one-shot consume).
+  /// The Dart controllers call this on each foreground load: a `true` drives the
+  /// "Shortcut not found — re-run setup" recovery copy once, then it is cleared
+  /// so the tool returns to the normal one-time setup prompt.
+  static func consumeShortcutMissing() -> Bool {
+    let defaults = sharedDefaults
+    let missing = defaults?.bool(forKey: shortcutMissingKey) ?? false
+    if missing {
+      defaults?.set(false, forKey: shortcutMissingKey)
+      defaults?.synchronize()
+    }
+    return missing
   }
 
   /// Read the most recent cellular payload, or nil if none stored.
@@ -170,6 +251,10 @@ enum ShortcutsBridge {
     if let cellular = cellularJson, !cellular.isEmpty {
       defaults?.set(cellular, forKey: latestCellularPayloadKey)
       defaults?.set(true, forKey: hasReceivedCellularPayloadKey)
+    }
+    // Any real delivery this cycle disproves a pending missing-Shortcut marker.
+    if (wifiJson?.isEmpty == false) || (cellularJson?.isEmpty == false) {
+      defaults?.set(false, forKey: shortcutMissingKey)
     }
     defaults?.synchronize()
     postDarwinNotification()

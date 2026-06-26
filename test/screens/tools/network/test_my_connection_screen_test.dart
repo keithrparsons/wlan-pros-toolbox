@@ -275,6 +275,8 @@ class _AndroidPermissionAdapter implements WifiInfoAdapter {
 /// rxRate 780, txRate 866 — the platform that DOES expose Rx.
 class _PayloadBridge implements WiFiDetailsBridge {
   @override
+  Future<bool> consumeShortcutMissing() async => false;
+  @override
   Future<bool> hasEverReceivedPayload() async => true;
   @override
   Future<WiFiDetails?> readLatest() async => const WiFiDetails(
@@ -558,6 +560,9 @@ class _SlowLinkMacAdapter implements WifiInfoAdapter {
 /// session's loop was killed without a clean Stop). No live producer exists. The
 /// live card must still present the actionable Start, never a dead "LIVE".
 class _StaleFlagBridge implements WiFiDetailsBridge {
+  @override
+  Future<bool> consumeShortcutMissing() async => false;
+
   bool monitoringFlag = true;
   int runShortcutCalls = 0;
   String? lastRunShortcutName;
@@ -607,6 +612,9 @@ class _StaleFlagBridge implements WiFiDetailsBridge {
 /// onboarding must fire. Records [openUrl] calls so a test can prove the sheet
 /// deep-links into Shortcuts.
 class _FreshBridge implements WiFiDetailsBridge {
+  @override
+  Future<bool> consumeShortcutMissing() async => false;
+
   int openUrlCalls = 0;
   String? lastOpenedUrl;
 
@@ -2977,6 +2985,9 @@ void main() {
 /// the one-shot App-Group read has not (yet) captured RF. [runShortcut] is
 /// recorded so the auto-fire test can prove the run fired it with no manual tap.
 class _StreamingBridge implements WiFiDetailsBridge {
+  @override
+  Future<bool> consumeShortcutMissing() async => false;
+
   final StreamController<WiFiDetails> _events =
       StreamController<WiFiDetails>.broadcast();
   bool _monitoring = false;

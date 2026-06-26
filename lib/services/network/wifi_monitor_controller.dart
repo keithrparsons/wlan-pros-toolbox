@@ -142,6 +142,17 @@ class WifiMonitorController extends ChangeNotifier {
     final bool wasMonitoring = await _bridge.isMonitoringActive();
     final WifiConnectionStatus connStatus =
         await _connection.status(nativeSsid: nativeSsid);
+    // x-error recovery (2026-06-25, Keith — build 41 strand). The one-shot
+    // trigger now carries an `x-error` return URL, so a renamed/deleted "WLAN
+    // Pros Live" Shortcut bounces the app back via `wlanprostoolbox://live-error`
+    // instead of stranding the user on the Shortcuts page. The native handler
+    // RESET the durable install-state (cleared the trust flag + stale reading)
+    // and raised this consumed-once marker; we read it on the resume-driven load
+    // and force the honest "Shortcut not found — re-run setup" recovery. This
+    // closes the gap the settle-timer [_verifyShortcutDelivered] leaves open for
+    // a PREVIOUSLY-WORKING Shortcut: that path short-circuits on hasEverReceived,
+    // so it never fired for Keith, who had received payloads before deleting it.
+    final bool shortcutMissing = await _bridge.consumeShortcutMissing();
 
     _hasEverReceived = received || (latest != null && latest.hasAnyData);
     if (latest != null && latest.hasAnyData) {
@@ -152,6 +163,17 @@ class WifiMonitorController extends ChangeNotifier {
     // `unknown` (ambiguous / wired desktop / read failed) leaves it false so the
     // prior behaviour is untouched (GL-005 — no false "not on Wi-Fi").
     _notOnWifi = connStatus == WifiConnectionStatus.notOnWifi;
+
+    if (shortcutMissing) {
+      // The Shortcut is gone: present the setup recovery deterministically and
+      // never the not-on-Wi-Fi card (re-running setup is the actionable fix, on
+      // or off Wi-Fi). The native reset already dropped the trust flag + stored
+      // reading, so hasEverReceived is false here; force it defensively in case a
+      // racing stale signal slipped through.
+      _shortcutMissing = true;
+      _hasEverReceived = false;
+      _notOnWifi = false;
+    }
 
     if (_phase == WifiMonitorPhase.streaming) {
       // A resume arrived mid-stream; keep streaming, data already refreshed.
@@ -165,7 +187,12 @@ class WifiMonitorController extends ChangeNotifier {
     // read Wi-Fi RF that does not exist). If a payload has arrived this session
     // we keep showing it (it is the last known reading), so a transient drop to
     // cellular never blanks data the user already has.
-    if (_notOnWifi && !_hasEverReceived) {
+    if (shortcutMissing) {
+      // Missing-Shortcut recovery takes priority: the live tools return to the
+      // setup CTA, and the screen ORs [shortcutMissing] into its `triggerError`
+      // presentation to show the honest "not found — re-run setup" note.
+      _phase = WifiMonitorPhase.needsInstall;
+    } else if (_notOnWifi && !_hasEverReceived) {
       _phase = WifiMonitorPhase.notOnWifi;
     } else if (!_hasEverReceived) {
       _phase = WifiMonitorPhase.needsInstall;

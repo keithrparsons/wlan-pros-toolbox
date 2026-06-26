@@ -45,6 +45,9 @@ Widget _harnessWith(
 class _FakeBridge implements WiFiDetailsBridge {
   _FakeBridge({this.everReceived = false});
 
+  @override
+  Future<bool> consumeShortcutMissing() async => false;
+
   bool everReceived;
 
   @override
