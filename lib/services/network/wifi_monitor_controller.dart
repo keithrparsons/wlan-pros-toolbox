@@ -88,6 +88,14 @@ class WifiMonitorController extends ChangeNotifier {
   bool _setupInitiated = false;
   int _deliveryCount = 0;
 
+  /// True once a payload has arrived since the most recent [startMonitoring].
+  /// Reset to false at each Start and set true on the first delivered payload, so
+  /// the Start-aware missing-Shortcut settle can tell a working stream (a first
+  /// sample arrived) from a missing one (a fresh Start that produced nothing) —
+  /// even for an already-set-up user (Keith device round 5: streaming is now the
+  /// only live action, so its missing case must self-recover).
+  bool _sampleSinceStart = false;
+
   WifiMonitorPhase get phase => _phase;
 
   /// How many LIVE payloads have been delivered this session (one-shot + stream).
@@ -256,6 +264,10 @@ class WifiMonitorController extends ChangeNotifier {
   /// `triggerError`). Also returns true when no trigger was requested (a resume,
   /// where the recursion is already running).
   Future<bool> startMonitoring({String? triggerShortcutName}) async {
+    // Fresh Start: a working stream delivers a first sample within the settle.
+    _sampleSinceStart = false;
+    // A fresh Start clears any lingering missing verdict from a prior attempt.
+    if (_shortcutMissing) _shortcutMissing = false;
     final Future<void> write = _bridge.setMonitoringActive(true);
     _startListening();
     _safeNotify();
@@ -263,10 +275,12 @@ class WifiMonitorController extends ChangeNotifier {
     if (triggerShortcutName == null) return true;
     final bool opened = await _bridge.runShortcut(triggerShortcutName);
     if (!opened) return false;
-    // Returned promptly; the missing-Shortcut verdict (deleted Shortcut that
-    // opened but never delivered) flips [shortcutMissing] asynchronously so a
-    // working stream is never stalled by the settle.
-    _verifyShortcutDelivered();
+    // Returned promptly; the missing-Shortcut verdict flips [shortcutMissing]
+    // asynchronously so a working stream is never stalled by the settle. On a
+    // STREAM Start we surface it whenever this Start delivers no first sample —
+    // a fresh kickoff that produces nothing means the recursion never started
+    // (Shortcut missing), even for an already-set-up user.
+    _verifyShortcutDelivered(forStart: true);
     return true;
   }
 
@@ -352,15 +366,32 @@ class WifiMonitorController extends ChangeNotifier {
   /// transient miss is not surfaced as a reinstall prompt (no nagging working
   /// users). Only on a FIRST-EVER run do we settle for [_missingShortcutSettle]
   /// and, if still nothing arrived, conclude the Shortcut is missing.
-  void _verifyShortcutDelivered() {
-    if (_hasEverReceived) return;
+  ///
+  /// For a STREAM START ([forStart]) we settle whenever this Start delivered no
+  /// first sample, even for an already-set-up user: a fresh kickoff that produces
+  /// nothing means the recursion never started (missing Shortcut). The stream
+  /// Start does NOT poll the App Group (that would return a STALE stored reading
+  /// and mask the miss); the only honest "the stream started" signal is a sample
+  /// delivered THIS Start ([_sampleSinceStart]).
+  void _verifyShortcutDelivered({bool forStart = false}) {
+    if (!forStart && _hasEverReceived) return;
     // A cancellable timer (not a bare Future.delayed) so dispose / a fresh
-    // attempt can tear it down — a pending settle must never outlive the screen
-    // or flip the flag after disposal.
+    // attempt can tear it down so a pending settle never outlives the screen or
+    // flips the flag after disposal.
     _missingTimer?.cancel();
     _missingTimer = Timer(_missingShortcutSettle, () async {
       _missingTimer = null;
       if (_disposed) return;
+      if (forStart) {
+        // Stream Start: a missing Shortcut delivers no first sample this Start.
+        if (_sampleSinceStart) return;
+        _shortcutMissing = true;
+        // Tear down the phantom stream (no producer) so the screen does not show
+        // a dead "LIVE" header alongside the recovery card.
+        await stopMonitoring();
+        _safeNotify();
+        return;
+      }
       // A streamed sample or a persisted App Group payload landing during the
       // settle proves the Shortcut ran. Poll the App Group too, in case the
       // single delivery raced the app's foreground return (the Darwin
@@ -417,6 +448,9 @@ class WifiMonitorController extends ChangeNotifier {
     _details = d;
     _hasEverReceived = true;
     _lastUpdated = DateTime.now();
+    // A payload arrived since the last Start: the stream is alive, so the
+    // Start-aware missing settle must not fire.
+    _sampleSinceStart = true;
     // Count only LIVE deliveries this session (one-shot + stream). load() restores
     // the last stored payload by setting `_details` DIRECTLY (not through here), so
     // it never advances this — letting the screens chart fresh deliveries while NOT

@@ -498,5 +498,57 @@ void main() {
       c.dispose();
       await bridge.close();
     });
+
+    test(
+        'START-AWARE recovery: a PREVIOUSLY-WORKING Shortcut, now missing, that '
+        'delivers no first sample on a Start -> shortcutMissing + stream torn down',
+        () async {
+      // Keith device round 5: streaming is the only live action, so a missing
+      // Shortcut on a Start self-surfaces recovery EVEN for a set-up user.
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _info()
+        ..runShortcutResult = true;
+      final c = CellularMonitorController(
+        bridge: bridge,
+        missingShortcutSettle: fastSettle,
+      );
+      await c.load();
+
+      final bool opened =
+          await c.startMonitoring(triggerShortcutName: 'WLAN Pros Live');
+      expect(opened, isTrue);
+      expect(c.isStreaming, isTrue);
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+
+      expect(c.shortcutMissing, isTrue);
+      expect(c.isStreaming, isFalse, reason: 'phantom stream torn down');
+      c.dispose();
+      await bridge.close();
+    });
+
+    test(
+        'START-AWARE recovery: a WORKING Shortcut that delivers a first sample is '
+        'NOT flagged missing',
+        () async {
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _info()
+        ..runShortcutResult = true;
+      final c = CellularMonitorController(
+        bridge: bridge,
+        missingShortcutSettle: fastSettle,
+      );
+      await c.load();
+
+      await c.startMonitoring(triggerShortcutName: 'WLAN Pros Live');
+      bridge.push(_info(carrier: 'Live-Carrier'));
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+
+      expect(c.shortcutMissing, isFalse);
+      expect(c.isStreaming, isTrue);
+      c.dispose();
+      await bridge.close();
+    });
   });
 }

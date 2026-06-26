@@ -72,7 +72,6 @@ import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/sparkline.dart';
 import '../concept_graphic_band.dart';
 import 'install_shortcut_sheet.dart';
-import 'get_reading_icon.dart';
 import 'setup_live_wifi_icon.dart';
 import 'live_priming_card.dart';
 import 'live_rf_locked_card.dart';
@@ -141,14 +140,6 @@ class WifiInfoScreen extends StatefulWidget {
   /// one-shot snapshot path without a ticking timer set this to disable it.
   @visibleForTesting
   static bool macPollEnabled = true;
-
-  /// When false, the iOS auto-read on entry (item #5: a set-up user's one-shot
-  /// read kicked from initState after load) is skipped. The auto-read schedules a
-  /// settle Timer that would leave a pending timer under `pumpAndSettle`, so the
-  /// default for the test suite is OFF; the dedicated auto-read group re-enables
-  /// it and pumps the settle deterministically. Production leaves it ON.
-  @visibleForTesting
-  static bool autoReadOnEntryEnabled = true;
 
   @override
   State<WifiInfoScreen> createState() => _WifiInfoScreenState();
@@ -303,14 +294,11 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         _securityService = widget.securityService ?? WifiSecurityService();
         _onboardingService = widget.onboardingService ?? LiveOnboardingService();
         WidgetsBinding.instance.addObserver(this);
-        // Auto-start the live feed on entry for SET-UP users (item #5): once
-        // load() resolves install-state, if the app has ever received a payload
-        // (the Shortcut demonstrably works) kick a one-shot read so a set-up user
-        // sees fresh RF without hunting for a Start/Get-reading tap. Users who are
-        // NOT set up fall through to the inline setup CTA (no blind-fire).
-        _liveController!.load(nativeSsid: _nativeSsid).then(
-              (_) => _autoReadIfSetUp(),
-            );
+        // Resolve install-state on entry. NO auto-fire (2026-06-26, Keith device
+        // round 5): with Get reading removed, the single live action is the
+        // explicit Start Live Monitoring tap, so the screen never bounces a
+        // browsing user into Shortcuts on open.
+        _liveController!.load(nativeSsid: _nativeSsid);
         // Read the native security type + BSSID once on open. Re-read on resume
         // (lifecycle) so a Location grant in Settings lands without a relaunch.
         _fetchIosSecurity();
@@ -542,68 +530,6 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     if (mounted) setState(() {});
   }
 
-  /// ONE-SHOT "Get reading" (2026-06-23, Keith) — the new DEFAULT live read.
-  ///
-  /// Fires the companion Shortcut ONCE without raising the persistent monitoring
-  /// flag, so the iOS status banner flashes for the single run and then clears on
-  /// its own (no continuous loop). The single payload lands via the controller's
-  /// transient stream subscription; a short settle then polls the App Group in
-  /// case the streamed sample raced the app's foreground return.
-  ///
-  /// Re-entrancy + bounce handling mirror [_startLive]: firing the Shortcut
-  /// backgrounds the app and foregrounds it on return, so [_shortcutBounceInFlight]
-  /// tells the lifecycle observer that bounce is the round-trip (not a user
-  /// app-switch). A failed open surfaces the honest setup card, exactly as the
-  /// continuous path does.
-  Future<void> _getReadingOnce() async {
-    final WifiMonitorController? c = _liveController;
-    if (c == null) return;
-    if (_startInFlight) return; // never chain a second run
-    _startInFlight = true;
-    _shortcutBounceInFlight = true;
-    setState(() => _liveTriggerError = false);
-    try {
-      final bool opened = await c.getReadingOnce(
-        triggerShortcutName: WifiLiveShortcutsConfig.kLiveShortcutName,
-      );
-      if (!mounted) return;
-      if (!opened) {
-        // Could not open the Shortcut → no bounce is coming; clear the marker and
-        // surface the honest setup card.
-        _shortcutBounceInFlight = false;
-        setState(() => _liveTriggerError = true);
-        return;
-      }
-      // Settle, then poll the App Group payload in case the streamed sample raced
-      // the foreground return. Short window: the Shortcut delivers within ~1s.
-      await Future<void>.delayed(const Duration(seconds: 2));
-      if (!mounted) return;
-      await c.pollLatestAfterOneShot();
-    } finally {
-      _startInFlight = false;
-    }
-  }
-
-  /// iOS auto-start on entry (item #5): for a SET-UP user (the app has ever
-  /// received a Live payload, so the companion Shortcut demonstrably works), kick
-  /// a single one-shot read on screen entry so fresh RF appears without the user
-  /// having to find and tap Get reading. Uses the x-callback one-shot so it
-  /// auto-returns AND delivers a payload. A NOT-set-up user is never auto-fired
-  /// (that would bounce them into the Shortcuts app with the missing-Shortcut
-  /// error); they get the inline setup CTA instead. No-op off the iOS source, or
-  /// if a read is already in flight / streaming.
-  Future<void> _autoReadIfSetUp() async {
-    if (!WifiInfoScreen.autoReadOnEntryEnabled) return;
-    if (!mounted || _source != WifiInfoSource.iosShortcuts) return;
-    final WifiMonitorController? c = _liveController;
-    if (c == null) return;
-    // Already streaming this session, or a read is in flight → nothing to do.
-    if (c.isStreaming || _startInFlight) return;
-    // Only auto-fire when the Shortcut demonstrably works.
-    if (!c.hasEverReceived) return;
-    await _getReadingOnce();
-  }
-
   /// iOS first-run: fires the unmissable one-time "enable live Wi-Fi" sheet on
   /// the first open of a live tool, gated by the honest composite signal —
   /// the app has NEVER received a Live payload AND the sheet has not been shown
@@ -654,8 +580,8 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       // the sheet leads with installing Apple's Shortcuts app first.
       isShortcutsAppInstalled: bridge.isShortcutsAppInstalled,
       // Mark the post-install priming flag when the user taps "Add the Shortcut",
-      // so on return the live tools show the priming step ("tap Get reading to
-      // finish") rather than the cold setup prompt — even before any payload.
+      // so on return the live tools show the priming step ("tap Start Live
+      // Monitoring to finish") rather than the cold setup prompt.
       onSetupInitiated: bridge.markSetupInitiated,
       // UX-2: reverse the button emphasis once setup has already been started.
       hasInitiatedSetup: bridge.hasInitiatedSetup,
@@ -664,17 +590,12 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         // the install hand-off, so no OTHER live tool re-prompts in the window
         // before the first Live payload lands (null-safe; never throws).
         await _onboardingService?.markOnboardingSeen();
+        // Re-resolve install-state. NO auto-fire (2026-06-26): the LivePrimingCard
+        // now prompts "tap Start Live Monitoring to finish"; the user's explicit
+        // Start delivers the first sample, flips hasEverReceived, and clears
+        // priming. The Start-aware settle surfaces recovery if the Shortcut is
+        // missing.
         await _liveController?.load(nativeSsid: _nativeSsid);
-        if (!mounted) return;
-        // Item #7: kick the FIRST (priming) read automatically via the x-callback
-        // one-shot so the user does not have to find/tap Get reading again — and
-        // so the run AUTO-RETURNS to the app AND delivers a payload (flipping
-        // hasEverReceived true), which lifts the install gate everywhere. iOS's
-        // first-run permission prompt may eat THIS first fire; if so no payload
-        // arrives, the priming flag keeps the tool on the priming step, and the
-        // LivePrimingCard tells the user to tap Get reading once more. The
-        // continuous loop is NOT started here (no persistent banner on first run).
-        await _getReadingOnce();
       },
     );
   }
@@ -1341,10 +1262,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           series: _series!,
           edge: edge,
           triggerError: _liveTriggerError,
-          // DEFAULT live read (2026-06-23): one-shot "Get reading" — fires the
-          // Shortcut once, leaves no persistent banner.
-          onGetReading: _getReadingOnce,
-          // Demoted to an explicit opt-in: continuous streaming (keeps the iOS
+          // The single live action: Start continuous monitoring (keeps the iOS
           // banner up while running; Stop ends it).
           onStart: _startLive,
           onStop: _stopLive,
@@ -2355,7 +2273,6 @@ class _LiveBody extends StatelessWidget {
     required this.series,
     required this.edge,
     required this.triggerError,
-    required this.onGetReading,
     required this.onStart,
     required this.onStop,
     required this.onSetUp,
@@ -2371,12 +2288,8 @@ class _LiveBody extends StatelessWidget {
   final double edge;
   final bool triggerError;
 
-  /// The DEFAULT one-shot read: fires the companion Shortcut once and leaves no
-  /// persistent monitoring banner (2026-06-23, Keith).
-  final VoidCallback onGetReading;
-
-  /// The opt-in continuous-streaming start (keeps the iOS banner up while
-  /// running; [onStop] ends it).
+  /// The single live action: Start continuous monitoring (Keith device round 5 —
+  /// Get reading removed). Keeps the iOS banner up while running; [onStop] ends it.
   final VoidCallback onStart;
   final VoidCallback onStop;
 
@@ -2467,38 +2380,31 @@ class _LiveBody extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  _MonitorControlBar(
-                    streaming: controller.isStreaming,
-                    lastUpdated: controller.lastUpdated,
-                    // INSTALL GATE (2026-06-25) + PRIMING (2026-06-26): never
-                    // blind-fire the Shortcut when it is not demonstrably
-                    // installed. When the app has never received a Live payload AND
-                    // setup has not been started, both the one-shot read and the
-                    // continuous start route to the SETUP sheet (onSetUp) instead
-                    // of firing the run-shortcut URL. Once setup HAS been started
-                    // (post-install priming) Get reading fires the one-shot prime
-                    // to complete the round-trip; STREAMING still waits for a
-                    // successful prime (hasEverReceived) so the fragile loop is
-                    // never started before the Shortcut is proven to work.
-                    onGetReading: (controller.hasEverReceived ||
-                            controller.setupInitiated)
-                        ? onGetReading
-                        : onSetUp,
-                    onStart: controller.hasEverReceived
-                        ? onStart
-                        : (controller.setupInitiated ? onGetReading : onSetUp),
-                    onStop: onStop,
-                    setUpMode: !controller.hasEverReceived,
-                  ),
+                  // SINGLE ACTION = Start Live Monitoring (2026-06-26, Keith device
+                  // round 5: Get reading removed; streaming is the one live action).
+                  // The control bar is SUPPRESSED during priming so the
+                  // LivePrimingCard below is the single Start CTA (no stacked
+                  // buttons, SOP-009 §7). When set up, Start fires the stream (the
+                  // Start-aware settle surfaces recovery if the Shortcut is missing);
+                  // when not set up, Start routes to the SETUP sheet.
+                  if (!controller.setupInitiated)
+                    _MonitorControlBar(
+                      streaming: controller.isStreaming,
+                      lastUpdated: controller.lastUpdated,
+                      onStart:
+                          controller.hasEverReceived ? onStart : onSetUp,
+                      onStop: onStop,
+                      setUpMode: !controller.hasEverReceived,
+                    ),
                   if (controller.setupInitiated && !showSetupError) ...[
                     const SizedBox(height: AppSpacing.sm),
                     // POST-INSTALL PRIMING (2026-06-26): the user started setup but
                     // no payload has completed the round-trip yet (iOS cannot report
-                    // install-state). Show the honest "tap Get reading to finish;
-                    // iOS asks permission the first time" step instead of the cold
-                    // setup prompt — and survive the first-fire-eaten-by-permission
-                    // case via clear "tap once more" guidance.
-                    LivePrimingCard(onGetReading: onGetReading),
+                    // install-state). Show the honest "tap Start Live Monitoring to
+                    // finish; iOS asks permission the first time" step instead of
+                    // the cold setup prompt. The first stream sample flips
+                    // hasEverReceived and clears priming.
+                    LivePrimingCard(onStart: onStart),
                   ],
                   if (showSetupError) ...[
                     const SizedBox(height: AppSpacing.sm),
@@ -2524,28 +2430,18 @@ class _LiveBody extends StatelessWidget {
                       const SizedBox(height: AppSpacing.sm),
                     ],
                     LiveRfLockedCard(
-                      // INSTALL GATE (2026-06-25): the native identity (SSID /
+                      // SINGLE ACTION (2026-06-26): the native identity (SSID /
                       // BSSID / security via NEHotspotNetwork) resolves with NO
                       // Shortcut, so its presence does NOT prove the Shortcut is
-                      // installed. Route to the one-shot read ONLY when the app
-                      // has DEMONSTRABLY received a Live payload
-                      // (controller.hasEverReceived); otherwise open the setup
-                      // sheet first. Before the fix this fired the missing
-                      // Shortcut on a clean install and stranded the user with
+                      // installed. Start Live Monitoring ONLY when set up
+                      // (hasEverReceived) OR priming (setupInitiated); otherwise
+                      // open the setup sheet first so a clean install never trips
                       // "the file doesn't exist".
-                      onEnable: (controller.hasEverReceived ||
-                              controller.setupInitiated)
-                          ? onGetReading
-                          : onSetUp,
-                      enableLabel: (controller.hasEverReceived ||
-                              controller.setupInitiated)
-                          ? 'Get reading'
-                          : 'Set up live Wi-Fi',
-                      // During priming the LivePrimingCard above is the single
-                      // primary "Get reading" CTA; drop this card's duplicate
-                      // button so the user never sees two stacked Get-reading
-                      // actions (SOP-009 §7). The locked-field LIST still renders.
-                      showAction: !controller.setupInitiated,
+                      // The control bar / priming card / setup card already carry
+                      // the single live CTA, so this card is a button-less field
+                      // LIST — no stacked Start/Set up actions (SOP-009 §7).
+                      onEnable: onStart,
+                      showAction: false,
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     const _LiveStartHint(),
@@ -2615,11 +2511,9 @@ class _LiveStartHint extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
       child: Text(
-        // The Get-reading vs Start-live-monitoring distinction now lives as a
-        // one-line note directly under each button (UX-3); this hint just nudges
-        // the first capture so the two are not re-explained twice.
-        'Tap Get reading above to take your first live capture. The companion '
-        'Shortcut sends one sample and the values fill in.',
+        'Tap Start Live Monitoring above to begin your live Wi-Fi signal. The '
+        'companion Shortcut streams readings and the values fill in; tap Stop '
+        'to end.',
         style: text.bodyLarge?.copyWith(color: colors.textSecondary),
         textAlign: TextAlign.center,
       ),
@@ -3028,7 +2922,6 @@ class _MonitorControlBar extends StatelessWidget {
   const _MonitorControlBar({
     required this.streaming,
     required this.lastUpdated,
-    required this.onGetReading,
     required this.onStart,
     required this.onStop,
     this.setUpMode = false,
@@ -3037,21 +2930,16 @@ class _MonitorControlBar extends StatelessWidget {
   final bool streaming;
   final DateTime? lastUpdated;
 
-  /// DEFAULT: one-shot read (no persistent banner). In [setUpMode] this opens the
-  /// install sheet instead of firing the Shortcut.
-  final VoidCallback onGetReading;
-
-  /// Opt-in: continuous streaming (keeps the banner up until [onStop]). In
-  /// [setUpMode] this opens the install sheet instead of firing the Shortcut.
+  /// The single live action: Start continuous monitoring (Keith device round 5 —
+  /// Get reading removed). In [setUpMode] the caller routes this to the install
+  /// sheet instead of firing the Shortcut.
   final VoidCallback onStart;
   final VoidCallback onStop;
 
   /// True when the companion Shortcut is NOT demonstrably installed
   /// (hasEverReceived == false). The primary action then reads "Set up live
-  /// Wi-Fi" and installs the Shortcut, and the secondary continuous-streaming
-  /// row is hidden — there is nothing to stream until setup completes. This is
-  /// the install gate that stops a clean install from blind-firing the missing
-  /// Shortcut and stranding the user on the Shortcuts page.
+  /// Wi-Fi" and installs the Shortcut (the caller routes [onStart] to setup),
+  /// stopping a clean install from blind-firing the missing Shortcut.
   final bool setUpMode;
 
   static String _formatTimestamp(DateTime t) {
@@ -3081,14 +2969,14 @@ class _MonitorControlBar extends StatelessWidget {
             streaming: streaming,
             lastUpdated: lastUpdated,
           );
-          // While streaming, the bar shows the single Stop control. Otherwise the
-          // primary action is the DEFAULT one-shot "Get reading"; continuous
-          // streaming is a secondary opt-in row below (with an honest note).
+          // SINGLE ACTION (2026-06-26): while streaming the bar shows Stop;
+          // otherwise the ONE green primary is Start Live Monitoring (or, when the
+          // Shortcut is not set up, the Set up CTA the caller routes [onStart] to).
           final Widget primaryAction = streaming
               ? _StopButton(onStop: onStop)
               : setUpMode
-                  ? _SetUpLiveButton(onSetUp: onGetReading)
-                  : _GetReadingButton(onGetReading: onGetReading);
+                  ? _SetUpLiveButton(onSetUp: onStart)
+                  : _StartMonitoringButton(onStart: onStart);
 
           final Widget header = narrow
               ? Column(
@@ -3110,35 +2998,17 @@ class _MonitorControlBar extends StatelessWidget {
                   ],
                 );
 
-          if (streaming) return header;
+          if (streaming || setUpMode) return header;
 
-          // In setUpMode the Shortcut is not installed yet, so the continuous
-          // streaming row is hidden — there is nothing to stream until setup
-          // completes, and offering "Start live monitoring" here would blind-fire
-          // the missing Shortcut. The primary action is the install CTA.
-          if (setUpMode) return header;
-
-          // Opt-in continuous streaming, demoted below the default one-shot
-          // action. Each action carries a one-line note so the two are legibly
-          // DIFFERENT (Keith device round 3: Get reading vs Start were
-          // indistinguishable). GL-004: no marketing words.
+          // Set up + idle: the one green Start, with an honest one-line note on
+          // what it does. GL-004: no marketing words.
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               header,
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'Get reading takes one snapshot now.',
-                style: text.bodySmall?.copyWith(color: colors.textTertiary),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: _StartMonitoringButton(onStart: onStart),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                'Start live monitoring streams continuously and keeps a status '
+                'Streams your live Wi-Fi signal continuously and keeps a status '
                 'banner up while running; tap Stop to end.',
                 style: text.bodySmall?.copyWith(color: colors.textTertiary),
               ),
@@ -3214,27 +3084,6 @@ class _StatusBlock extends StatelessWidget {
   }
 }
 
-/// DEFAULT one-shot read: the prominent lime-primary "Get reading" action. Fires
-/// the companion Shortcut once and leaves no persistent banner (2026-06-23).
-class _GetReadingButton extends StatelessWidget {
-  const _GetReadingButton({required this.onGetReading});
-
-  final VoidCallback onGetReading;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: 'Get reading',
-      child: FilledButton.icon(
-        onPressed: onGetReading,
-        icon: const GetReadingIcon(),
-        label: const Text('Get reading'),
-      ),
-    );
-  }
-}
-
 /// Install CTA shown in the control bar when the companion Shortcut is not
 /// demonstrably installed (hasEverReceived == false). Opens the one-time setup
 /// sheet instead of firing the run-shortcut URL, so a clean install never trips
@@ -3259,9 +3108,8 @@ class _SetUpLiveButton extends StatelessWidget {
   }
 }
 
-/// Opt-in continuous streaming: the secondary "Start live monitoring" action.
-/// Demoted to an outline button below the default read; its honest banner note
-/// lives in [_MonitorControlBar].
+/// The single prominent lime-primary live action: Start continuous monitoring
+/// (Keith device round 5 — Get reading removed, so this is now the green primary).
 class _StartMonitoringButton extends StatelessWidget {
   const _StartMonitoringButton({required this.onStart});
 
@@ -3272,7 +3120,7 @@ class _StartMonitoringButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: 'Start live monitoring',
-      child: OutlinedButton.icon(
+      child: FilledButton.icon(
         onPressed: onStart,
         icon: const Icon(Icons.play_arrow),
         label: const Text('Start live monitoring'),

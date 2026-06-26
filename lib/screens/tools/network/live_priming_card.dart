@@ -15,36 +15,36 @@
 //
 // This card is the honest priming step shown while setup has been started but no
 // payload has completed the round-trip ([controller.setupInitiated] &&
-// !hasEverReceived). It names the one action that finishes setup (a one-shot
-// "Get reading") AND sets the expectation about the first-run permission prompt,
-// so a first-fire interruption reads as "tap once more", never as a dead end.
+// !hasEverReceived). It names the one action that finishes setup (Start Live
+// Monitoring) AND sets the expectation about the first-run permission prompt, so
+// a first-fire interruption reads as "tap once more", never as a dead end.
 //
 // Styling mirrors [LiveSetupCard] (GL-003 App Mode): surface1 card, hairline
 // border, textSecondary body, a quiet textTertiary state glyph, and a single
-// lime-primary FilledButton carrying the custom [GetReadingIcon]. iOS-only — the
-// snapshot platforms read natively and never prime.
+// lime-primary FilledButton. iOS-only — the snapshot platforms read natively and
+// never prime.
 
 import 'package:flutter/material.dart';
 
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
-import 'get_reading_icon.dart';
 
-/// The post-install priming step: "tap Get reading to finish; iOS asks permission
-/// the first time." Shown only in the priming window (setup started, no payload
-/// yet). [onGetReading] fires the one-shot prime (the x-callback form that
-/// auto-returns on success and routes to the not-found recovery on x-error).
+/// The post-install priming step: "tap Start Live Monitoring to finish; iOS asks
+/// permission the first time." Shown only in the priming window (setup started,
+/// no payload yet). [onStart] fires the live stream; its first delivered sample
+/// flips hasEverReceived and clears priming, and the Start-aware settle surfaces
+/// the missing-Shortcut recovery if the Shortcut is gone.
 class LivePrimingCard extends StatelessWidget {
   const LivePrimingCard({
     super.key,
-    required this.onGetReading,
-    this.label = 'Get reading',
+    required this.onStart,
+    this.label = 'Start live monitoring',
   }) : assert(label != '');
 
-  /// Fires the one-shot priming read. Pass the host screen's `getReadingOnce`.
-  final VoidCallback onGetReading;
+  /// Fires the live stream Start. Pass the host screen's start action.
+  final VoidCallback onStart;
 
-  /// The action-button label. Defaults to "Get reading" (the finish-setup tap).
+  /// The action-button label. Defaults to "Start live monitoring".
   final String label;
 
   @override
@@ -89,10 +89,10 @@ class LivePrimingCard extends StatelessWidget {
           Semantics(
             liveRegion: true,
             child: Text(
-              'Tap Get reading to finish. The first time it runs, iOS asks to '
-              'allow the "WLAN Pros Live" Shortcut to share your network '
+              'Tap Start Live Monitoring to finish. The first time it runs, iOS '
+              'asks to allow the "WLAN Pros Live" Shortcut to share your network '
               'details, so tap Always Allow. If that first tap gets interrupted, '
-              'tap Get reading once more.',
+              'tap Start Live Monitoring once more.',
               style: text.bodyMedium?.copyWith(color: colors.textSecondary),
             ),
           ),
@@ -101,8 +101,8 @@ class LivePrimingCard extends StatelessWidget {
             button: true,
             label: label,
             child: FilledButton.icon(
-              onPressed: onGetReading,
-              icon: const GetReadingIcon(),
+              onPressed: onStart,
+              icon: const Icon(Icons.play_arrow),
               label: Text(label),
             ),
           ),

@@ -368,15 +368,10 @@ void main() {
   setUp(() {
     WifiInfoScreen.macPollEnabled = false;
     WifiInfoScreen.macPollInterval = const Duration(seconds: 2);
-    // The iOS auto-read on entry (item #5) schedules a settle Timer; off by
-    // default so pumpAndSettle does not trip on a pending timer. The dedicated
-    // auto-read group re-enables it and pumps the settle deterministically.
-    WifiInfoScreen.autoReadOnEntryEnabled = false;
   });
   tearDown(() {
     WifiInfoScreen.macPollEnabled = true;
     WifiInfoScreen.macPollInterval = const Duration(seconds: 2);
-    WifiInfoScreen.autoReadOnEntryEnabled = true;
   });
 
   group('WifiInfoScreen — macOS source', () {
@@ -641,8 +636,8 @@ void main() {
     });
 
     testWidgets(
-        'idle state for a SET-UP user offers the default one-shot Get reading + '
-        'the opt-in Start live monitoring toggle with the honest banner note',
+        'idle state for a SET-UP user offers the single green Start Live '
+        'Monitoring action with the honest banner note',
         (tester) async {
       await tester.pumpWidget(host(
         WifiInfoScreen(
@@ -650,7 +645,7 @@ void main() {
           connectionService: _onWifiProbe(),
           // hasEverReceived == true, but no live payload yet (latest carries the
           // identity only) so the screen stays idle (not streaming) and shows the
-          // normal one-shot + opt-in controls rather than the setup gate.
+          // single Start control rather than the setup gate.
           iosBridge: _FakeBridge(
             everReceived: true,
             latest: WiFiDetails.fromMap(
@@ -659,13 +654,12 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      // The DEFAULT live read is the one-shot "Get reading"; the continuous loop
-      // is the explicit "Start live monitoring" opt-in with the honest banner
-      // note. There is no bare "Start" control.
-      expect(find.text('Get reading'), findsWidgets);
+      // 2026-06-26 (Keith device round 5): Get reading is GONE; the one live
+      // action is the green Start Live Monitoring (control bar), with one honest
+      // note. The locked card is a button-less field list (no second CTA).
+      expect(find.text('Get reading'), findsNothing);
       expect(find.text('Start live monitoring'), findsOneWidget);
-      // UX-3: each action carries a one-line note so the two are legibly distinct.
-      expect(find.textContaining('takes one snapshot now'), findsOneWidget);
+      expect(find.textContaining('takes one snapshot now'), findsNothing);
       expect(
           find.textContaining('keeps a status banner up while running'),
           findsOneWidget);
@@ -1226,9 +1220,10 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      // No off-Wi-Fi dead-end: the user still sees their last reading + controls.
+      // No off-Wi-Fi dead-end: the screen shows the live controls, not the
+      // off-Wi-Fi card (hasEverReceived suppresses the not-on-Wi-Fi phase).
       expect(find.byType(NotOnWifiCard), findsNothing);
-      expect(find.text('Get reading'), findsWidgets);
+      expect(find.text('Start live monitoring'), findsOneWidget);
     });
   });
 

@@ -113,15 +113,6 @@ CellularInfo _sample() => const CellularInfo(
 void main() {
   Widget host(Widget child) => MaterialApp(theme: AppTheme.dark(), home: child);
 
-  // The iOS auto-read on entry (item #5) schedules a settle Timer; off by default
-  // so pumpAndSettle does not trip on a pending timer. Restored in tearDown.
-  setUp(() {
-    CellularInfoScreen.autoReadOnEntryEnabled = false;
-  });
-  tearDown(() {
-    CellularInfoScreen.autoReadOnEntryEnabled = true;
-  });
-
   group('CellularInfoScreen — iOS source (Live only)', () {
     testWidgets(
         'INSTALL GATE: a not-set-up idle screen offers SET UP (never a blind '
@@ -146,8 +137,8 @@ void main() {
     });
 
     testWidgets(
-        'idle state for a SET-UP user offers the default one-shot Get reading + '
-        'the opt-in Start live monitoring toggle with the honest banner note',
+        'idle state for a SET-UP user offers the single green Start Live '
+        'Monitoring action with the honest banner note',
         (tester) async {
       await tester.pumpWidget(host(
         CellularInfoScreen(
@@ -156,13 +147,11 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      // The DEFAULT live read is the one-shot "Get reading"; the continuous loop
-      // is the explicit "Start live monitoring" opt-in with the honest banner
-      // note. There is no bare "Start" control.
-      expect(find.text('Get reading'), findsWidgets);
+      // 2026-06-26 (Keith device round 5): Get reading is GONE; the one live
+      // action is the green Start Live Monitoring, with one honest note.
+      expect(find.text('Get reading'), findsNothing);
       expect(find.text('Start live monitoring'), findsOneWidget);
-      // UX-3: each action carries a one-line note so the two are legibly distinct.
-      expect(find.textContaining('takes one snapshot now'), findsOneWidget);
+      expect(find.textContaining('takes one snapshot now'), findsNothing);
       expect(
           find.textContaining('keeps a status banner up while running'),
           findsOneWidget);

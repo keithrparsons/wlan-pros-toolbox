@@ -621,6 +621,68 @@ void main() {
       c.dispose();
       await bridge.close();
     });
+
+    test(
+        'START-AWARE recovery: a PREVIOUSLY-WORKING Shortcut, now missing, that '
+        'delivers no first sample on a Start -> shortcutMissing + stream torn down',
+        () async {
+      // Keith device round 5: streaming is the only live action, so a missing
+      // Shortcut on a Start must self-surface the recovery EVEN for a set-up user
+      // (hasEverReceived true). The Start-aware settle keys on "no first sample
+      // THIS Start", not on hasEverReceived, and does NOT poll the App Group (a
+      // stale stored reading would mask the miss). It tears down the phantom
+      // stream so no dead "LIVE" shows.
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _details() // a stale stored reading is present
+        ..runShortcutResult = true;
+      final c = WifiMonitorController(
+        bridge: bridge,
+        missingShortcutSettle: fastSettle,
+      );
+      await c.load();
+      expect(c.shortcutMissing, isFalse);
+
+      final bool opened =
+          await c.startMonitoring(triggerShortcutName: 'WLAN Pros Live');
+      expect(opened, isTrue);
+      expect(c.isStreaming, isTrue, reason: 'streaming starts optimistically');
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+
+      expect(c.shortcutMissing, isTrue,
+          reason: 'no first sample this Start => the Shortcut is missing');
+      expect(c.isStreaming, isFalse,
+          reason: 'the phantom stream is torn down (no producer)');
+      c.dispose();
+      await bridge.close();
+    });
+
+    test(
+        'START-AWARE recovery: a WORKING Shortcut that delivers a first sample is '
+        'NOT flagged missing',
+        () async {
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _details()
+        ..runShortcutResult = true;
+      final c = WifiMonitorController(
+        bridge: bridge,
+        missingShortcutSettle: fastSettle,
+      );
+      await c.load();
+
+      await c.startMonitoring(triggerShortcutName: 'WLAN Pros Live');
+      // The recursive Shortcut delivers a first sample before the settle.
+      bridge.push(_details(ssid: 'Live-1', rssi: -42));
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+
+      expect(c.shortcutMissing, isFalse,
+          reason: 'a delivered first sample proves the stream started');
+      expect(c.isStreaming, isTrue);
+      expect(c.details!.ssid, 'Live-1');
+      c.dispose();
+      await bridge.close();
+    });
   });
 
   // x-error recovery for a RENAMED/DELETED Shortcut (2026-06-25, Keith build 41).

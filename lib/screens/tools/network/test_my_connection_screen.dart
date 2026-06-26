@@ -69,6 +69,7 @@ import 'cloud_apps_panel.dart';
 import 'get_reading_icon.dart';
 import 'setup_live_wifi_icon.dart';
 import 'install_shortcut_sheet.dart';
+import 'live_setup_card.dart';
 import 'network_unavailable_view.dart';
 import 'not_on_wifi_card.dart';
 
@@ -481,7 +482,15 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// already-rebuilt-on-stream state. No-op when unmounted or while idle (no
   /// verdict yet means nothing reads the RF).
   void _onSamplerChanged() {
-    if (!mounted || _verdict == null) return;
+    if (!mounted) return;
+    // Rebuild for live RF updates while results are shown (verdict != null), AND
+    // whenever the missing-Shortcut recovery state is set — so the recovery card
+    // surfaces on the "Check My Connection" hero path even before/without a verdict
+    // (Keith device round 5: the hero Check produced no verdict, so the recovery,
+    // which had only lived in the verdict-gated live-signal card, never showed).
+    final WifiSignalSampler? s = _sampler;
+    final bool recovery = (s?.shortcutMissing ?? false) || (s?.triggerError ?? false);
+    if (_verdict == null && !recovery) return;
     setState(() {});
   }
 
@@ -661,21 +670,6 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   Future<void> _retryConnection() async {
     await _fetchIosSecurity();
     await _sampler?.load(nativeSsid: _nativeSsid);
-  }
-
-  /// iOS post-install PRIMING read (2026-06-26): fires the one-shot prime to
-  /// complete the round-trip after the user installs the Shortcut — the "Get
-  /// reading" action shown in the priming state (setup started, no payload yet).
-  /// The x-callback one-shot auto-returns on success and routes to the not-found
-  /// recovery on x-error; iOS's first-run permission prompt may eat THIS first
-  /// fire, so the priming copy tells the user to tap once more. A delivered payload
-  /// flips hasEverReceived and clears the priming flag (native-side), so the live
-  /// signal then streams normally. No-op off the iOS source.
-  Future<void> _primeIosReading() async {
-    final WifiSignalSampler? sampler = _sampler;
-    if (sampler == null || !sampler.isIos) return;
-    await sampler.getReadingOnce();
-    await sampler.pollLatestAfterOneShot();
   }
 
   /// The native NEHotspotNetwork SSID when a real network has resolved — a
@@ -1179,13 +1173,17 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     if (!mounted) return;
 
     final bool gotReading = sampler.latest?.hasAnyData ?? false;
-    if (gotReading || sampler.triggerError) return;
+    // Do NOT retry when the Shortcut is confirmed missing (Keith device round 5):
+    // a missing-Shortcut x-error already fired markShortcutMissing, so re-firing
+    // would bounce the user to Shortcuts a SECOND time. The recovery card now
+    // surfaces from [shortcutMissing] instead.
+    if (gotReading || sampler.triggerError || sampler.shortcutMissing) return;
 
     // RETRY ONCE: the first fire produced nothing (the launch bounce was
     // cancelled, or the first fire raced the app switch). Re-fire the one-shot
     // read once more — still without raising the persistent flag, so this never
-    // becomes a loop. A second miss falls back silently to the manual capture
-    // affordance (GL-005 — never a fabricated value, never an endless re-fire).
+    // becomes a loop. A second miss falls back silently (GL-005 — never a
+    // fabricated value, never an endless re-fire).
     await sampler.getReadingOnce();
     await sampler.pollLatestAfterOneShot();
   }
@@ -1276,6 +1274,24 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
+                  // MISSING-SHORTCUT RECOVERY (Keith device round 5): surface the
+                  // honest "Shortcut not found — re-run setup" card at the TOP of
+                  // the body, independent of the verdict. The "Check My Connection"
+                  // hero path can x-error a missing Shortcut without producing a
+                  // verdict, and the recovery had only lived in the verdict-gated
+                  // live-signal card, so nothing showed (the silent flicker). Once
+                  // a verdict exists the live-signal card carries the recovery, so
+                  // this top card is shown only pre-verdict to avoid duplication.
+                  if (_isIos &&
+                      verdict == null &&
+                      ((_sampler?.shortcutMissing ?? false) ||
+                          (_sampler?.triggerError ?? false))) ...<Widget>[
+                    LiveSetupCard.error(
+                      label: 'Set up live Wi-Fi (one-time)',
+                      onSetUp: _openShortcutSheet,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                  ],
                   if (verdict == null && !_running) _introCard(context),
                   if (verdict == null) _actionCard(context),
                   if (_running) ...[
@@ -1325,7 +1341,6 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                           _LiveSignalCard(
                             sampler: _sampler!,
                             onSetUp: _openShortcutSheet,
-                            onGetReading: _primeIosReading,
                             onRetryConnection: _retryConnection,
                           ),
                           const SizedBox(height: AppSpacing.sm),
@@ -3010,24 +3025,16 @@ class _LiveSignalCard extends StatelessWidget {
   const _LiveSignalCard({
     required this.sampler,
     required this.onSetUp,
-    required this.onGetReading,
     required this.onRetryConnection,
   });
 
   final WifiSignalSampler sampler;
 
-  /// Opens the one-time companion-Shortcut install sheet. Wired to the install
-  /// gate: when the Shortcut is not demonstrably installed
-  /// (sampler.hasEverReceived == false) AND setup has not been started, the header
-  /// CTA opens setup instead of firing the Shortcut (which would error and strand
-  /// the user on the Shortcuts page — the exact clean-install repro).
+  /// Opens the one-time companion-Shortcut install sheet. The header CTA shows
+  /// "Set up" only when the Shortcut is not set up AND setup has not been started;
+  /// otherwise the single live action is Start (sampler.start). Set up never
+  /// blind-fires the Shortcut, so a clean install never strands the user.
   final VoidCallback onSetUp;
-
-  /// Fires the one-shot PRIMING read in the post-install priming window (setup
-  /// started, no payload yet) — the "Get reading" action that completes the
-  /// round-trip and flips install-state. Distinct from [onSetUp] so the priming
-  /// step does not re-open the install sheet.
-  final VoidCallback onGetReading;
 
   /// Re-runs the connection probe + install-state resolve. Wired to the
   /// not-on-Wi-Fi state's "Check again" action so a user who has just joined
@@ -3083,36 +3090,28 @@ class _LiveSignalCard extends StatelessWidget {
                     const SizedBox.shrink()
                   else if (sampler.isIos &&
                       !sampler.isStreaming &&
-                      !sampler.hasEverReceived)
-                    // INSTALL GATE (2026-06-25) + PRIMING (2026-06-26): before
-                    // setup the header offers SET UP (opens the install sheet).
-                    // Once setup HAS been started, it offers GET READING to
-                    // complete the post-install round-trip — never a Start that
-                    // would blind-fire a not-yet-proven Shortcut and strand the
-                    // user on the Shortcuts page.
-                    (sampler.setupInitiated
-                        ? Semantics(
-                            button: true,
-                            label: 'Get reading',
-                            child: OutlinedButton.icon(
-                              onPressed: onGetReading,
-                              icon: const GetReadingIcon(size: 18),
-                              label: const Text('Get reading'),
-                            ),
-                          )
-                        : Semantics(
-                            button: true,
-                            label: 'Set up live Wi-Fi',
-                            child: OutlinedButton.icon(
-                              onPressed: onSetUp,
-                              icon: const SetupLiveWifiIcon(size: 18),
-                              label: const Text('Set up'),
-                            ),
-                          ))
-                  else if (sampler.isIos && !sampler.isStreaming)
+                      !sampler.hasEverReceived &&
+                      !sampler.setupInitiated)
+                    // COLD (not set up, setup not started): Set up opens the
+                    // install sheet — never a Start that would blind-fire a
+                    // not-yet-installed Shortcut.
                     Semantics(
                       button: true,
-                      label: 'Start live Wi-Fi signal',
+                      label: 'Set up live Wi-Fi',
+                      child: OutlinedButton.icon(
+                        onPressed: onSetUp,
+                        icon: const SetupLiveWifiIcon(size: 18),
+                        label: const Text('Set up'),
+                      ),
+                    )
+                  else if (sampler.isIos && !sampler.isStreaming)
+                    // SET UP OR PRIMING (2026-06-26, Option A): the ONE live action
+                    // is Start Live Monitoring. In priming the first delivered
+                    // sample flips hasEverReceived and clears priming; the
+                    // Start-aware settle surfaces recovery if the Shortcut is gone.
+                    Semantics(
+                      button: true,
+                      label: 'Start live monitoring',
                       child: OutlinedButton.icon(
                         onPressed: sampler.start,
                         icon: const Icon(Icons.play_arrow, size: 18),
@@ -3203,16 +3202,15 @@ class _LiveSignalCard extends StatelessWidget {
                   message:
                       'Could not start the live Wi-Fi feed. The companion '
                       '"WLAN Pros Live" Shortcut may not be installed. Install '
-                      'it, then tap Get reading.',
+                      'it, then tap Start Live Monitoring.',
                 ),
               ] else if (series.isEmpty) ...<Widget>[
                 _LiveUnavailableNote(
                   // iOS, NOT set up → the honest "set it up first" message paired
-                  //   with the header "Set up" button (never a Start that would
-                  //   blind-fire the missing Shortcut).
+                  //   with the header "Set up" button.
                   // iOS, setup started but no payload yet (PRIMING) → the honest
-                  //   "tap Get reading to finish; iOS asks permission the first
-                  //   time" step paired with the header "Get reading" button.
+                  //   "tap Start Live Monitoring to finish; iOS asks permission the
+                  //   first time" step paired with the header "Start" button.
                   // iOS, set up but not yet started → invite the deliberate Start.
                   // iOS, started but the first sample has not landed yet → an
                   //   HONEST "waiting" indicator (the Shortcut WAS fired; we are
@@ -3221,12 +3219,12 @@ class _LiveSignalCard extends StatelessWidget {
                   message: sampler.isIos
                       ? (!sampler.hasEverReceived
                           ? (sampler.setupInitiated
-                              ? 'Almost set up. Tap Get reading to finish. The '
-                                  'first time it runs, iOS asks to allow the '
-                                  '"WLAN Pros Live" Shortcut to share your '
-                                  'network details, so tap Always Allow. If that '
-                                  'first tap is interrupted, tap Get reading once '
-                                  'more.'
+                              ? 'Almost set up. Tap Start Live Monitoring to '
+                                  'finish. The first time it runs, iOS asks to '
+                                  'allow the "WLAN Pros Live" Shortcut to share '
+                                  'your network details, so tap Always Allow. If '
+                                  'that first tap is interrupted, tap Start Live '
+                                  'Monitoring once more.'
                               : 'Live Wi-Fi signal needs the one-time "WLAN Pros '
                                   'Live" companion Shortcut. Tap Set up to add it, '
                                   'then this card streams your signal.')
