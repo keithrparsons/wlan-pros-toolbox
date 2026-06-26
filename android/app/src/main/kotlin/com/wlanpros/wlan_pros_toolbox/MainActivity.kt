@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
+import android.net.LinkProperties
 import android.net.Uri
 import android.net.wifi.ScanResult
 import android.net.wifi.WifiInfo
@@ -17,6 +18,8 @@ import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import java.net.Inet6Address
+import java.net.InetAddress
 
 // MainActivity — the Android native host for the WLAN Pros Toolbox.
 //
@@ -32,6 +35,17 @@ import io.flutter.plugin.common.MethodChannel
 //      WifiManager + ConnectivityManager and maps it into the SAME payload
 //      shape the macOS CoreWLAN channel emits, so the shared Dart WifiInfo model
 //      and ConnectedAp.fromAndroidWifiInfo consume it unchanged.
+//
+//   3a. com.wlanpros.toolbox/network_addressing — the Android arm of the
+//      Test My Connection local-addressing report. Reads the DHCP server
+//      identifier (option 54) via WifiManager.getDhcpInfo().serverAddress and
+//      the resolver list via ConnectivityManager.getLinkProperties().dnsServers
+//      (modern, non-deprecated; DhcpInfo.dns1/dns2 only as the fallback). These
+//      ARE available on Android (unlike sandboxed iOS/macOS, where the app
+//      genuinely cannot read them), so the Dart NetworkDetails populates real
+//      values here. Requires ACCESS_WIFI_STATE + ACCESS_NETWORK_STATE (both
+//      normal, already declared) — NO location permission. A 0 / 0.0.0.0 read
+//      is returned as null (never a fabricated address, GL-005).
 //
 //   3. com.wlanpros.toolbox/ap_scan — the Android-ONLY nearby-AP scan (H3).
 //      Calls WifiManager.getScanResults() and returns every visible BSS with the
@@ -54,6 +68,7 @@ class MainActivity : FlutterActivity() {
     private val multicastChannelName = "lan_discovery/multicast"
     private val wifiInfoChannelName = "com.wlanpros.toolbox/wifi_info"
     private val apScanChannelName = "com.wlanpros.toolbox/ap_scan"
+    private val networkAddressingChannelName = "com.wlanpros.toolbox/network_addressing"
     private var multicastLock: WifiManager.MulticastLock? = null
 
     // The pending Flutter result for an in-flight runtime permission request, so
@@ -115,6 +130,173 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, networkAddressingChannelName)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "getNetworkAddressing" -> result.success(readNetworkAddressing())
+                    else -> result.notImplemented()
+                }
+            }
+    }
+
+    // ---- Local network addressing (DHCP server + DNS, Android) ----------
+
+    /// Reads the local-network addressing the Test My Connection report shows
+    /// that iOS/macOS cannot: the DHCP server identifier (option 54) and the
+    /// resolver list. Both come from public, unprivileged Android APIs gated only
+    /// by ACCESS_WIFI_STATE / ACCESS_NETWORK_STATE (no Location grant).
+    ///
+    /// HONESTY (GL-005 / GL-008): a 0 / 0.0.0.0 / empty read is returned as a
+    /// genuine null (DHCP) or omitted from the list (DNS) — never a placeholder.
+    /// When nothing is readable (not connected, no active network), `dhcpServer`
+    /// is null and `dnsServers` is empty and the Dart side shows its honest
+    /// "not reported for this network" state.
+    private fun readNetworkAddressing(): Map<String, Any?> = mapOf(
+        "dhcpServer" to readDhcpServer(),
+        "dnsServers" to readDnsServers(),
+    )
+
+    /// DHCP server identifier (option 54) from WifiManager.getDhcpInfo(). That
+    /// API is deprecated but is the only public Android source for the DHCP
+    /// server address, so its use is accepted. `serverAddress` is a host-order
+    /// (little-endian) int — formatted LSB-first. A 0 / 0.0.0.0 result (no DHCP
+    /// lease, wired, or not connected) returns null, never a fabricated address.
+    private fun readDhcpServer(): String? = try {
+        val wifiManager = applicationContext
+            .getSystemService(Context.WIFI_SERVICE) as WifiManager
+        @Suppress("DEPRECATION")
+        val dhcp = wifiManager.dhcpInfo
+        if (dhcp == null) null else intToIpv4LittleEndian(dhcp.serverAddress)
+    } catch (e: Throwable) {
+        null
+    }
+
+    /// Configured DNS resolver(s) for the active network. Prefers the modern,
+    /// non-deprecated ConnectivityManager.getLinkProperties(activeNetwork)
+    /// .getDnsServers() (returns List<InetAddress>, IPv4 + IPv6). Falls back to
+    /// the deprecated DhcpInfo.dns1/dns2 only when LinkProperties yields nothing
+    /// (e.g. pre-API-23, or a transport that does not expose link properties).
+    /// De-dupes (insertion-ordered), drops empty / 0.0.0.0 / unspecified
+    /// addresses, and strips any IPv6 scope suffix. Empty list = honest "none
+    /// reported", never a guessed resolver.
+    private fun readDnsServers(): List<String> {
+        val out = LinkedHashSet<String>()
+
+        // Modern path — ConnectivityManager link properties (API 21+; the active
+        // network accessor is API 23+, so guard it and fall through below on
+        // older devices).
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                val cm = applicationContext
+                    .getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+                val network = cm.activeNetwork
+                if (network != null) {
+                    val lp: LinkProperties? = cm.getLinkProperties(network)
+                    lp?.dnsServers?.forEach { addr -> formatInetAddress(addr)?.let(out::add) }
+                }
+            }
+        } catch (e: Throwable) {
+            // Fall through to the DhcpInfo fallback below.
+        }
+
+        // Fallback — deprecated DhcpInfo dns1/dns2 (IPv4 only). Only used when
+        // the modern path produced nothing.
+        if (out.isEmpty()) {
+            try {
+                val wifiManager = applicationContext
+                    .getSystemService(Context.WIFI_SERVICE) as WifiManager
+                @Suppress("DEPRECATION")
+                val dhcp = wifiManager.dhcpInfo
+                if (dhcp != null) {
+                    intToIpv4LittleEndian(dhcp.dns1)?.let(out::add)
+                    intToIpv4LittleEndian(dhcp.dns2)?.let(out::add)
+                }
+            } catch (e: Throwable) {
+                // Honest empty.
+            }
+        }
+
+        return out.toList()
+    }
+
+    /// Formats an InetAddress to its CANONICAL textual form, dropping the
+    /// unspecified address (0.0.0.0 / ::). IPv4 passes through as dotted-quad.
+    /// IPv6 is rendered in the RFC 5952 canonical compressed form
+    /// (`compressIpv6` from the 16 raw bytes), NOT Java's expanded
+    /// `getHostAddress()` (which emits e.g. `2001:4860:4860:0:0:0:0:8888`,
+    /// overflowing the narrow value column). The scope suffix (`%wlan0`) never
+    /// appears because we build IPv6 from `Inet6Address.address` (scopeless).
+    private fun formatInetAddress(addr: InetAddress?): String? {
+        if (addr == null || addr.isAnyLocalAddress) return null
+        val host: String? = when (addr) {
+            is Inet6Address -> compressIpv6(addr.address)
+            else -> addr.hostAddress?.trim()?.substringBefore('%')
+        }
+        if (host.isNullOrEmpty() || host == "0.0.0.0" || host == "::") return null
+        return host
+    }
+
+    /// Renders 16 IPv6 address bytes to the RFC 5952 canonical string: lowercase
+    /// hextets with leading zeros stripped, and the LONGEST run of consecutive
+    /// all-zero hextets (length >= 2, leftmost on a tie) collapsed to `::`. A run
+    /// of a single zero hextet is NOT collapsed (per RFC 5952). Returns null when
+    /// the byte array is not 16 bytes long.
+    private fun compressIpv6(bytes: ByteArray?): String? {
+        if (bytes == null || bytes.size != 16) return null
+        val groups = IntArray(8)
+        for (i in 0 until 8) {
+            groups[i] = ((bytes[i * 2].toInt() and 0xff) shl 8) or
+                (bytes[i * 2 + 1].toInt() and 0xff)
+        }
+
+        // Longest zero run (>= 2), leftmost on a tie.
+        var bestStart = -1
+        var bestLen = 0
+        var curStart = -1
+        var curLen = 0
+        for (i in 0 until 8) {
+            if (groups[i] == 0) {
+                if (curStart == -1) curStart = i
+                curLen++
+                if (curLen > bestLen) {
+                    bestLen = curLen
+                    bestStart = curStart
+                }
+            } else {
+                curStart = -1
+                curLen = 0
+            }
+        }
+        if (bestLen < 2) bestStart = -1
+
+        val sb = StringBuilder()
+        var i = 0
+        while (i < 8) {
+            if (i == bestStart) {
+                sb.append("::")
+                i = bestStart + bestLen
+            } else {
+                sb.append(Integer.toHexString(groups[i]))
+                // Emit a separator unless the next index opens the "::" gap (which
+                // already carries its own colons) or this is the final hextet.
+                if (i < 7 && (i + 1) != bestStart) sb.append(':')
+                i++
+            }
+        }
+        return sb.toString()
+    }
+
+    /// Formats a host-order (little-endian) IPv4 int — the shape every DhcpInfo
+    /// field uses — to dotted-quad, LSB first. Returns null for 0 / 0.0.0.0.
+    private fun intToIpv4LittleEndian(addr: Int): String? {
+        if (addr == 0) return null
+        val a = addr and 0xff
+        val b = (addr shr 8) and 0xff
+        val c = (addr shr 16) and 0xff
+        val d = (addr shr 24) and 0xff
+        val dotted = "$a.$b.$c.$d"
+        return if (dotted == "0.0.0.0") null else dotted
     }
 
     // ---- Nearby-AP scan (H3, Android-only) ------------------------------

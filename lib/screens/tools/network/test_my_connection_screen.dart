@@ -1923,16 +1923,20 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
 
     // ── Network ───────────────────────────────────────────────────────────
     // Local addressing (Keith #5): IP / subnet / gateway are obtainable and
-    // sandbox-safe; DHCP server, DNS server(s), and VLAN are honestly
-    // unavailable on these platforms — each carries the precise reason, never a
-    // guessed value (GL-005 / GL-008).
+    // sandbox-safe. DHCP server + DNS server(s) are REAL on Android (the OS
+    // exposes them) and honestly unavailable on iOS/macOS; when a value is
+    // null/empty its precise per-platform reason is shown, never a guess. VLAN
+    // is a true platform fact on every OS (GL-005 / GL-008).
     final NetworkDetails nd = _networkDetails ?? NetworkDetails.empty;
     _copySection(buf, 'NETWORK', <_CopyRow>[
       _CopyRow('Local IP address', nd.localIp ?? 'Not available'),
       _CopyRow('Subnet mask', nd.subnetMask ?? 'Not available'),
       _CopyRow('Default gateway', nd.gateway ?? 'Not available'),
-      _CopyRow('DHCP server', NetworkDetails.dhcpReason),
-      _CopyRow('DNS server(s)', NetworkDetails.dnsReason),
+      _CopyRow('DHCP server', nd.dhcpServer ?? nd.dhcpReason),
+      _CopyRow(
+        'DNS server(s)',
+        nd.dnsServers.isNotEmpty ? nd.dnsServers.join(', ') : nd.dnsReason,
+      ),
       _CopyRow('VLAN tag', NetworkDetails.vlanReason),
     ]);
 
@@ -3475,19 +3479,35 @@ class _NetworkDetailsCard extends StatelessWidget {
         _DataRow(label: 'Local IP address', value: d?.localIp, mono: true),
         _DataRow(label: 'Subnet mask', value: d?.subnetMask, mono: true),
         _DataRow(label: 'Default gateway', value: d?.gateway, mono: true),
-        // DHCP server / DNS server(s) — structurally unavailable on these
-        // platforms (no sandbox-safe source). Rendered as the design system's
-        // muted "Unavailable" value with the precise reason beneath, so the row
-        // reads as an honest platform fact, not a missing read (GL-005).
-        const _DataRow(
+        // DHCP server / DNS server(s) — REAL on Android (WifiManager.getDhcpInfo
+        // + ConnectivityManager link properties), structurally unavailable on
+        // iOS/macOS (no sandbox-safe source). When the value is present it shows;
+        // when it is null/empty the row shows the design system's muted
+        // "Unavailable" value with the precise per-platform reason beneath, so it
+        // reads as an honest fact, not a fabricated address (GL-005).
+        _DataRow(
           label: 'DHCP server',
-          value: null,
-          note: NetworkDetails.dhcpReason,
+          value: d?.dhcpServer,
+          mono: true,
+          note: (d?.dhcpServer == null)
+              ? (d?.dhcpReason ?? NetworkDetails.defaultUnavailableReason)
+              : null,
         ),
-        const _DataRow(
+        // DNS server(s) — rendered ONE RESOLVER PER LINE (valueLines), each
+        // wrapping with no ellipsis, so a long IPv6 resolver never truncates or
+        // overflows the narrow value column (Vera 2026-06-26). Native already
+        // emits canonical compressed IPv6; the per-line wrap covers the case
+        // where even a compressed address exceeds the column on a small phone.
+        _DataRow(
           label: 'DNS server(s)',
           value: null,
-          note: NetworkDetails.dnsReason,
+          valueLines: (d != null && d.dnsServers.isNotEmpty)
+              ? d.dnsServers
+              : null,
+          mono: true,
+          note: (d == null || d.dnsServers.isEmpty)
+              ? (d?.dnsReason ?? NetworkDetails.defaultUnavailableReason)
+              : null,
         ),
         // VLAN tag — a true platform fact: 802.1Q tags are stripped before the
         // endpoint OS sees the frame, so no endpoint app can observe one.
@@ -4206,6 +4226,7 @@ class _DataRow extends StatelessWidget {
     this.note,
     this.derived = false,
     this.trailing,
+    this.valueLines,
   });
 
   final String label;
@@ -4216,6 +4237,13 @@ class _DataRow extends StatelessWidget {
   final bool derived;
   final Widget? trailing;
 
+  /// When non-null and non-empty, the value column renders each entry on its
+  /// OWN line, wrapping (softWrap, NO ellipsis) instead of the single
+  /// ellipsized [value] Text. Used for multi-value address rows (DNS resolvers)
+  /// so a long IPv6 literal wraps rather than truncating. The a11y semantic
+  /// label folds the entries comma-joined, matching the copy-report form.
+  final List<String>? valueLines;
+
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
@@ -4223,10 +4251,15 @@ class _DataRow extends StatelessWidget {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final AppColorScheme colors = context.colors;
 
-    final bool hasValue = value != null && value!.trim().isNotEmpty;
-    final String shown = hasValue
-        ? (unit == null ? value! : '${value!} $unit')
-        : 'Unavailable';
+    final List<String>? lines = valueLines;
+    final bool useLines = lines != null && lines.isNotEmpty;
+    final bool hasValue =
+        useLines || (value != null && value!.trim().isNotEmpty);
+    final String shown = useLines
+        ? lines.join(', ')
+        : (hasValue
+            ? (unit == null ? value! : '${value!} $unit')
+            : 'Unavailable');
     final Color valueColor =
         hasValue ? colors.textPrimary : colors.textSecondary;
     final TextStyle? valueStyle = (mono && hasValue)
@@ -4279,12 +4312,28 @@ class _DataRow extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: <Widget>[
                       Flexible(
-                        child: Text(
-                          shown,
-                          textAlign: TextAlign.end,
-                          overflow: TextOverflow.ellipsis,
-                          style: valueStyle,
-                        ),
+                        // Multi-value rows (DNS) render one entry per line and
+                        // WRAP (no ellipsis) so a long IPv6 literal is never
+                        // clipped; single-value rows keep the ellipsized Text.
+                        child: useLines
+                            ? Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: <Widget>[
+                                  for (final String line in lines)
+                                    Text(
+                                      line,
+                                      textAlign: TextAlign.end,
+                                      softWrap: true,
+                                      style: valueStyle,
+                                    ),
+                                ],
+                              )
+                            : Text(
+                                shown,
+                                textAlign: TextAlign.end,
+                                overflow: TextOverflow.ellipsis,
+                                style: valueStyle,
+                              ),
                       ),
                       if (trailing != null) ...[
                         const SizedBox(width: AppSpacing.xs),
