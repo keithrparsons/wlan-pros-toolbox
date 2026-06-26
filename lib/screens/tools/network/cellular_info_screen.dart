@@ -762,7 +762,15 @@ class _LiveBody extends StatelessWidget {
                   ],
                   const SizedBox(height: AppSpacing.sm),
                   if (!controller.isStreaming && series.isEmpty)
-                    _LiveStartHint(setUpMode: !controller.hasEverReceived)
+                    // Cold-aware ONLY in the true cold state; `!hasEverReceived`
+                    // covers cold AND priming, so gate also on `!setupInitiated`
+                    // to keep the priming hint on the Start copy (matches the
+                    // LivePrimingCard above), never a "Set up" button absent during
+                    // priming (Vera H2).
+                    _LiveStartHint(
+                      setUpMode: !controller.hasEverReceived &&
+                          !controller.setupInitiated,
+                    )
                   else if (info == null)
                     _WaitingForFirstPayload(streaming: controller.isStreaming)
                   else

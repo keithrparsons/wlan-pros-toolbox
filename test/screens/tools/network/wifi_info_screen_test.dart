@@ -211,14 +211,18 @@ class _FakeBridge implements WiFiDetailsBridge {
     this.everReceived = false,
     this.latest,
     this.runShortcutResult = true,
+    this.initiatedSetup = false,
   });
+
+  /// Drives the post-install priming window (setupInitiated && !hasEverReceived).
+  bool initiatedSetup;
 
   @override
   Future<bool> consumeShortcutMissing() async => false;
   @override
   Future<void> markSetupInitiated() async {}
   @override
-  Future<bool> hasInitiatedSetup() async => false;
+  Future<bool> hasInitiatedSetup() async => initiatedSetup;
   @override
   Future<bool> isShortcutsAppInstalled() async => true;
   @override
@@ -639,6 +643,30 @@ void main() {
       // "Tap Start Live Monitoring above".
       expect(find.textContaining('Tap Set up live Wi-Fi to add it'), findsOneWidget);
       expect(find.textContaining('Tap Start Live Monitoring above'), findsNothing);
+    });
+
+    testWidgets(
+        'PRIMING-state hint references Start (matches the priming card), never '
+        'Set up (Vera H2)', (tester) async {
+      // setupInitiated == true && hasEverReceived == false: the screen shows the
+      // LivePrimingCard ("Tap Start Live Monitoring to finish...") and the control
+      // bar is suppressed. The hint must agree with that card — reference Start,
+      // NOT "Set up live Wi-Fi" (a button absent during priming).
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          connectionService: _onWifiProbe(),
+          iosBridge: _FakeBridge(everReceived: false, initiatedSetup: true),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      // The priming card is the single Start CTA.
+      expect(find.textContaining('Start Live Monitoring to finish'),
+          findsOneWidget);
+      // The hint references Start, never the cold "Set up live Wi-Fi" copy.
+      expect(find.textContaining('Tap Start Live Monitoring above'),
+          findsOneWidget);
+      expect(find.textContaining('Tap Set up live Wi-Fi to add it'), findsNothing);
     });
 
     testWidgets(
