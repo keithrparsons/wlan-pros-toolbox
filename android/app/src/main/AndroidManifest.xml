@@ -2,11 +2,17 @@
     <!-- Active network services layer (Interface Info, DNS Lookup, Port Scan). -->
     <!-- INTERNET: TCP connect scan + DNS-over-HTTPS queries. -->
     <uses-permission android:name="android.permission.INTERNET"/>
-    <!-- ACCESS_NETWORK_STATE: read connectivity / interface state. -->
+    <!-- ACCESS_NETWORK_STATE: read connectivity / interface state, and read the
+         active network's resolver list via ConnectivityManager.getLinkProperties()
+         .getDnsServers() for the Test My Connection report (network_addressing
+         channel). -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <!-- ACCESS_WIFI_STATE: read Wi-Fi link details via network_info_plus, and
-         read the nearby-AP scan results via WifiManager.getScanResults()
-         (Nearby AP Scan, H3). -->
+    <!-- ACCESS_WIFI_STATE: read Wi-Fi link details via network_info_plus, read
+         the nearby-AP scan results via WifiManager.getScanResults() (Nearby AP
+         Scan, H3), and read the DHCP server identifier (option 54) +
+         dns1/dns2 fallback via WifiManager.getDhcpInfo() for the Test My
+         Connection report (network_addressing channel). Both are normal
+         permissions; neither needs a Location grant. -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <!-- CHANGE_WIFI_STATE: lets the Nearby AP Scan tool (H3) request a fresh
          scan via WifiManager.startScan(). The OS rate-limits startScan() on
