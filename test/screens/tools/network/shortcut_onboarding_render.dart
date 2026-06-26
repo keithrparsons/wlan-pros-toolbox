@@ -38,6 +38,18 @@ const String _outDir =
 /// Fake iOS bridge: never received a payload → the not-set-up prompt shows.
 class _FakeBridge implements WiFiDetailsBridge {
   @override
+  Future<bool> consumeShortcutMissing() async => false;
+  @override
+  Future<void> markSetupInitiated() async {}
+  @override
+  Future<bool> hasInitiatedSetup() async => false;
+  @override
+  Future<bool> isShortcutsAppInstalled() async => true;
+  @override
+  Future<void> setLiveOriginRoute(String route) async {}
+  @override
+  Future<String?> consumeLiveErrorNav() async => null;
+  @override
   Future<bool> hasEverReceivedPayload() async => false;
 
   @override
@@ -54,6 +66,9 @@ class _FakeBridge implements WiFiDetailsBridge {
 
   @override
   Future<bool> runShortcut(String name) async => true;
+
+  @override
+  Future<bool> runShortcutOneShot(String name) async => true;
 
   @override
   Stream<WiFiDetails> get updates => const Stream<WiFiDetails>.empty();

@@ -30,6 +30,7 @@ import 'data/speedtest_logos.dart';
 import 'data/throughput_where_diagram.dart';
 import 'data/tool_assets.dart';
 import 'router/app_router.dart';
+import 'router/live_error_nav_gate.dart';
 import 'services/help/tool_help_loader.dart';
 import 'services/network/dart_ping_icmp_backend.dart';
 import 'theme/app_theme.dart';
@@ -293,6 +294,9 @@ class ToolboxApp extends StatelessWidget {
       // can navigate to a tool route on the cold-relaunch path, where no screen
       // is listening. Reuses this Navigator; adds no second nav system.
       navigatorKey: AppRouter.navigatorKey,
+      // Tracks the current route so the x-error recovery gate can tell a cold
+      // relaunch-to-home from a warm return already on the origin tool.
+      navigatorObservers: <NavigatorObserver>[appRouteObserver],
       initialRoute: AppRouter.home,
       routes: AppRouter.routes,
       onUnknownRoute: AppRouter.onUnknownRoute,
@@ -314,14 +318,19 @@ class ToolboxApp extends StatelessWidget {
       // already dismiss via a return key (e.g. Lat/Long, signed number pad):
       // tapping outside simply dismisses, matching that field's behavior.
       builder: (BuildContext context, Widget? child) {
-        // The Live streaming trigger fires a PLAIN, fire-and-forget Shortcut URL
-        // with no x-callback return, so there is no deep-link return to route —
-        // the former ShortcutDeepLinkRouter wrap was removed with the snapshot
-        // one-tap trigger. The app passively consumes the Live stream instead.
-        return GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-          child: child,
+        // The PLAIN Live streaming trigger has no x-callback return, but the
+        // ONE-SHOT trigger does: on a missing Shortcut its x-error fires
+        // `wlanprostoolbox://live-error`, which iOS may deliver via a rebuilt scene
+        // (Flutter restarts at the home route). LiveErrorNavGate routes the user
+        // back to the originating live tool so its recovery card shows instead of
+        // the home strand (device round 3). The GestureDetector keeps the app-wide
+        // tap-to-dismiss-keyboard behaviour.
+        return LiveErrorNavGate(
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+            child: child,
+          ),
         );
       },
     );

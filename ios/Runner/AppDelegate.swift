@@ -66,6 +66,43 @@ import UIKit
       case "hasEverReceivedPayload":
         // Honest install-state (TICKET-03 A1): has any payload ever arrived?
         result(ShortcutsBridge.hasEverReceivedPayload())
+      case "consumeShortcutMissing":
+        // One-shot consume of the transient missing-Shortcut marker (set when the
+        // one-shot x-error callback fired because "WLAN Pros Live" was gone).
+        // Drives the "Shortcut not found — re-run setup" recovery copy once on the
+        // next foreground load.
+        result(ShortcutsBridge.consumeShortcutMissing())
+      case "markSetupInitiated":
+        // The user started setup (tapped "Add the Shortcut"). Drives the
+        // post-install priming step until the first payload completes the
+        // round-trip.
+        ShortcutsBridge.markSetupInitiated()
+        result(nil)
+      case "hasInitiatedSetup":
+        // True between "started setup" and "first payload arrives" — the app shows
+        // the priming step ("tap Get reading to finish") instead of cold setup.
+        result(ShortcutsBridge.hasInitiatedSetup())
+      case "setLiveOriginRoute":
+        // The live tool records its route so an x-error can route the user back to
+        // it (and its recovery card) instead of the home strand.
+        if let route = call.arguments as? String {
+          ShortcutsBridge.setLiveOriginRoute(route)
+        }
+        result(nil)
+      case "consumeLiveErrorNav":
+        // One-shot consume of the pending x-error navigation; returns the origin
+        // tool route (or "" when none), or nil when no nav is pending.
+        result(ShortcutsBridge.consumeLiveErrorNav())
+      case "isShortcutsAppInstalled":
+        // Best-effort presence check (Tom Hollingsworth): many users do not have
+        // Apple's Shortcuts app installed, so they fail before step one. `shortcuts`
+        // is whitelisted in LSApplicationQueriesSchemes, so canOpenURL is a valid
+        // signal here. Run on the main thread (UIApplication).
+        DispatchQueue.main.async {
+          let url = URL(string: "shortcuts://")
+          let installed = url.map { UIApplication.shared.canOpenURL($0) } ?? false
+          result(installed)
+        }
       case "readLatestCellular":
         // TICKET-02 cellular: read the App Group cellular payload (PULL).
         result(ShortcutsBridge.readLatestCellular())
@@ -107,6 +144,27 @@ import UIKit
         guard let args = call.arguments as? [String: Any],
               let name = args["name"] as? String,
               let url = ShortcutsBridge.runShortcutURL(name: name) else {
+          result(false)
+          return
+        }
+        DispatchQueue.main.async {
+          UIApplication.shared.open(url, options: [:]) { success in
+            result(success)
+          }
+        }
+      case "runShortcutOneShot":
+        // ONE-SHOT trigger: build and open the `x-callback-url` form for the
+        // named Shortcut. Unlike `runShortcut` (the plain STREAMING trigger),
+        // this returns control to the app via the registered
+        // `wlanprostoolbox://live-done` scheme the moment the Shortcut FINISHES —
+        // so a single read auto-returns to the app instead of stranding the user
+        // on the Shortcuts page. Used only for one-shot reads (Get reading,
+        // auto-capture, the first read right after install); the looping monitor
+        // never finishes so it stays on the plain form. `result(success)` reports
+        // only whether iOS could OPEN the URL.
+        guard let args = call.arguments as? [String: Any],
+              let name = args["name"] as? String,
+              let url = ShortcutsBridge.runShortcutOneShotURL(name: name) else {
           result(false)
           return
         }

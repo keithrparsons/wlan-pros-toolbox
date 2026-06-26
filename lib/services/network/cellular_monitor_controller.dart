@@ -73,8 +73,29 @@ class CellularMonitorController extends ChangeNotifier {
   DateTime? _lastUpdated;
   bool _disposed = false;
   bool _shortcutMissing = false;
+  bool _setupInitiated = false;
+  int _deliveryCount = 0;
+
+  /// True once a payload has arrived since the most recent [startMonitoring].
+  /// Reset at each Start; lets the Start-aware missing settle tell a working
+  /// stream (a first sample arrived) from a missing one. See
+  /// [WifiMonitorController].
+  bool _sampleSinceStart = false;
 
   CellularMonitorPhase get phase => _phase;
+
+  /// How many LIVE payloads have been delivered this session (one-shot + stream).
+  /// [load] restoring the stored reading does NOT advance this, so the screen can
+  /// chart fresh deliveries while leaving a stale stored reading off the chart on
+  /// open. Zero until the first live delivery.
+  int get deliveryCount => _deliveryCount;
+
+  /// True between "the user started setup" and "the first payload completes the
+  /// round-trip" — the PRIMING window (shared with the Wi-Fi tool via the one
+  /// combined Shortcut). While true and [hasEverReceived] is still false, the
+  /// screen shows the priming step instead of the cold setup prompt. False once a
+  /// payload arrives. See [WifiMonitorController.setupInitiated].
+  bool get setupInitiated => _setupInitiated && !_hasEverReceived;
 
   /// Most recent parsed cellular info, or null when none has arrived yet.
   CellularInfo? get info => _info;
@@ -109,11 +130,26 @@ class CellularMonitorController extends ChangeNotifier {
     final bool received = await _bridge.hasEverReceivedPayload();
     final CellularInfo? latest = await _bridge.readLatest();
     final bool wasMonitoring = await _bridge.isMonitoringActive();
+    // x-error recovery (2026-06-25): the one combined "WLAN Pros Live" Shortcut
+    // feeds this tool too, so a renamed/deleted Shortcut's one-shot x-error
+    // bounces back via `wlanprostoolbox://live-error`, the native handler resets
+    // the durable install-state, and we read the consumed-once marker here to
+    // force the honest "Shortcut not found — re-run setup" recovery. Mirrors
+    // [WifiMonitorController.load].
+    final bool shortcutMissing = await _bridge.consumeShortcutMissing();
+    // Post-install priming window (shared with the Wi-Fi tool).
+    _setupInitiated = await _bridge.hasInitiatedSetup();
 
     _hasEverReceived = received || (latest != null && latest.hasAnyData);
     if (latest != null && latest.hasAnyData) {
       _info = latest;
       _lastUpdated ??= DateTime.now();
+    }
+    if (shortcutMissing) {
+      // Gone Shortcut → setup recovery, deterministically. The native reset
+      // already dropped the trust flag + stored reading; force false defensively.
+      _shortcutMissing = true;
+      _hasEverReceived = false;
     }
 
     if (_phase == CellularMonitorPhase.streaming) {
@@ -121,7 +157,7 @@ class CellularMonitorController extends ChangeNotifier {
       return;
     }
 
-    if (!_hasEverReceived) {
+    if (shortcutMissing || !_hasEverReceived) {
       _phase = CellularMonitorPhase.needsInstall;
     } else if (wasMonitoring) {
       _startListening();
@@ -149,6 +185,9 @@ class CellularMonitorController extends ChangeNotifier {
   /// surfaces the honest reinstall card. Also returns true when no trigger was
   /// requested (a resume).
   Future<bool> startMonitoring({String? triggerShortcutName}) async {
+    // Fresh Start: a working stream delivers a first sample within the settle.
+    _sampleSinceStart = false;
+    if (_shortcutMissing) _shortcutMissing = false;
     final Future<void> write = _bridge.setMonitoringActive(true);
     _startListening();
     _safeNotify();
@@ -156,9 +195,10 @@ class CellularMonitorController extends ChangeNotifier {
     if (triggerShortcutName == null) return true;
     final bool opened = await _bridge.runShortcut(triggerShortcutName);
     if (!opened) return false;
-    // Returned promptly; the deleted-Shortcut case (opened but delivered nothing)
-    // flips [shortcutMissing] asynchronously so a working stream is never stalled.
-    _verifyShortcutDelivered();
+    // Returned promptly; on a STREAM Start we surface [shortcutMissing] whenever
+    // this Start delivered no first sample (a missing Shortcut), even for an
+    // already-set-up user, so the recovery card self-surfaces.
+    _verifyShortcutDelivered(forStart: true);
     return true;
   }
 
@@ -202,7 +242,13 @@ class CellularMonitorController extends ChangeNotifier {
     });
 
     await clearFlag;
-    final bool opened = await _bridge.runShortcut(triggerShortcutName);
+    // ONE-SHOT uses the x-callback form so the SINGLE run AUTO-RETURNS to the app
+    // (x-success=wlanprostoolbox://live-done) instead of stranding the user on the
+    // Shortcuts page. Safe here because the monitoring flag was just cleared, so
+    // the Shortcut's ShouldContinueMonitoringIntent reads false and the run
+    // finishes (which is what fires the return). Streaming stays on the plain
+    // fire-and-forget form (it never finishes).
+    final bool opened = await _bridge.runShortcutOneShot(triggerShortcutName);
     if (!opened) {
       _oneShotSub?.cancel();
       _oneShotSub = null;
@@ -225,15 +271,27 @@ class CellularMonitorController extends ChangeNotifier {
   /// not surfaced as a reinstall prompt (no nagging working users). Only on a
   /// FIRST-EVER run do we settle for [_missingShortcutSettle] and, if still
   /// nothing arrived, conclude the Shortcut is missing.
-  void _verifyShortcutDelivered() {
-    if (_hasEverReceived) return;
+  ///
+  /// For a STREAM START ([forStart]) we settle whenever this Start delivered no
+  /// first sample, even for an already-set-up user (a missing Shortcut), and do
+  /// NOT poll the App Group (a stale stored reading would mask the miss). See
+  /// [WifiMonitorController].
+  void _verifyShortcutDelivered({bool forStart = false}) {
+    if (!forStart && _hasEverReceived) return;
     // A cancellable timer (not a bare Future.delayed) so dispose / a fresh
-    // attempt can tear it down — a pending settle must never outlive the screen
-    // or flip the flag after disposal.
+    // attempt can tear it down so a pending settle never outlives the screen.
     _missingTimer?.cancel();
     _missingTimer = Timer(_missingShortcutSettle, () async {
       _missingTimer = null;
       if (_disposed) return;
+      if (forStart) {
+        if (_sampleSinceStart) return;
+        _shortcutMissing = true;
+        // Tear down the phantom stream (no producer) so no dead "LIVE" shows.
+        await stopMonitoring();
+        _safeNotify();
+        return;
+      }
       if (!_hasEverReceived) {
         final CellularInfo? latest = await _bridge.readLatest();
         if (_disposed) return;
@@ -281,6 +339,12 @@ class CellularMonitorController extends ChangeNotifier {
     _info = d;
     _hasEverReceived = true;
     _lastUpdated = DateTime.now();
+    // The stream is alive this Start, so the Start-aware missing settle must not
+    // fire.
+    _sampleSinceStart = true;
+    // Count only LIVE deliveries this session (one-shot + stream); load() restores
+    // the stored reading by setting `_info` directly, so it never advances this.
+    _deliveryCount++;
     // A real payload disproves any pending missing-Shortcut verdict and makes the
     // settle moot — cancel it so no timer lingers.
     _missingTimer?.cancel();

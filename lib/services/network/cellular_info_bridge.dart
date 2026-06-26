@@ -75,6 +75,92 @@ class CellularInfoBridge {
     }
   }
 
+  /// Reads and CLEARS the transient "companion Shortcut not found on the last
+  /// one-shot fire" marker (one-shot consume). Shared with the Wi-Fi bridge: the
+  /// one combined "WLAN Pros Live" Shortcut feeds both tools, so a missing-
+  /// Shortcut x-error resets both. The native side sets it when iOS invokes the
+  /// one-shot `x-error` callback (`wlanprostoolbox://live-error`) and resets the
+  /// durable install-state at the same time. The controller calls this on each
+  /// foreground load: a `true` drives the honest "Shortcut not found — re-run
+  /// setup" recovery once, then the marker is cleared. False off-iOS.
+  Future<bool> consumeShortcutMissing() async {
+    try {
+      return await _method.invokeMethod<bool>('consumeShortcutMissing') ?? false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException catch (e) {
+      debugPrint('CellularInfoBridge.consumeShortcutMissing failed: $e');
+      return false;
+    }
+  }
+
+  /// Records that the user has STARTED setup (tapped "Add the Shortcut"). Shared
+  /// with the Wi-Fi bridge; drives the post-install priming step until the first
+  /// payload completes the round-trip. No-op off-iOS.
+  Future<void> markSetupInitiated() async {
+    try {
+      await _method.invokeMethod<void>('markSetupInitiated');
+    } on MissingPluginException {
+      // Non-iOS: no priming step.
+    } on PlatformException catch (e) {
+      debugPrint('CellularInfoBridge.markSetupInitiated failed: $e');
+    }
+  }
+
+  /// Whether the user has started setup but no payload has completed the
+  /// round-trip yet (drives the priming step). False off-iOS / once a payload
+  /// arrives.
+  Future<bool> hasInitiatedSetup() async {
+    try {
+      return await _method.invokeMethod<bool>('hasInitiatedSetup') ?? false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException catch (e) {
+      debugPrint('CellularInfoBridge.hasInitiatedSetup failed: $e');
+      return false;
+    }
+  }
+
+  /// Best-effort check of whether Apple's Shortcuts app is installed (Tom
+  /// Hollingsworth). Uses `canOpenURL("shortcuts://")` natively. Returns true
+  /// off-iOS so non-iOS onboarding is never falsely blocked.
+  Future<bool> isShortcutsAppInstalled() async {
+    try {
+      return await _method.invokeMethod<bool>('isShortcutsAppInstalled') ?? true;
+    } on MissingPluginException {
+      return true;
+    } on PlatformException catch (e) {
+      debugPrint('CellularInfoBridge.isShortcutsAppInstalled failed: $e');
+      return true;
+    }
+  }
+
+  /// Records the route name of the live tool that fired a one-shot trigger, so an
+  /// x-error can route the user back to it (and its recovery card). No-op off-iOS.
+  Future<void> setLiveOriginRoute(String route) async {
+    try {
+      await _method.invokeMethod<void>('setLiveOriginRoute', route);
+    } on MissingPluginException {
+      // Non-iOS: no scene-rebuild strand to recover from.
+    } on PlatformException catch (e) {
+      debugPrint('CellularInfoBridge.setLiveOriginRoute failed: $e');
+    }
+  }
+
+  /// One-shot consume of the pending x-error navigation (shared with the Wi-Fi
+  /// bridge). Returns the origin tool route (empty when none) when an x-error nav
+  /// is pending, or null otherwise. Null off-iOS.
+  Future<String?> consumeLiveErrorNav() async {
+    try {
+      return await _method.invokeMethod<String?>('consumeLiveErrorNav');
+    } on MissingPluginException {
+      return null;
+    } on PlatformException catch (e) {
+      debugPrint('CellularInfoBridge.consumeLiveErrorNav failed: $e');
+      return null;
+    }
+  }
+
   /// Sets the shared App Group monitoring-active flag (TICKET-05). The native
   /// [ShouldContinueMonitoringIntent] returns this value to the recursive
   /// companion Shortcut: `true` keeps the recursion running, `false` stops it.
@@ -142,6 +228,35 @@ class CellularInfoBridge {
       return false;
     } on PlatformException catch (e) {
       debugPrint('CellularInfoBridge.runShortcut failed: $e');
+      return false;
+    }
+  }
+
+  /// Fires the ONE-SHOT Live trigger: opens the `x-callback-url` form
+  /// `shortcuts://x-callback-url/run-shortcut?name=<enc>&x-success=<scheme>://live-done`
+  /// for the Shortcut named [name]. The name is URL-encoded natively.
+  ///
+  /// Unlike [runShortcut] (the plain STREAMING trigger), this asks iOS to return
+  /// control to the app via the registered `wlanprostoolbox://live-done` scheme
+  /// the moment the SINGLE run FINISHES, so a one-shot read auto-returns to the
+  /// app instead of stranding the user on the Shortcuts page. Only safe for a
+  /// NON-looping run: the app must NOT raise the monitoring flag first, so the
+  /// Shortcut's `ShouldContinueMonitoringIntent` reads false and the run finishes.
+  ///
+  /// Returns false when the platform could not OPEN the URL (Shortcuts app
+  /// missing, or off-iOS where the channel is absent). A true result means iOS
+  /// opened the URL, not that the Shortcut finished.
+  Future<bool> runShortcutOneShot(String name) async {
+    try {
+      return await _method.invokeMethod<bool>(
+            'runShortcutOneShot',
+            <String, String>{'name': name},
+          ) ??
+          false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException catch (e) {
+      debugPrint('CellularInfoBridge.runShortcutOneShot failed: $e');
       return false;
     }
   }

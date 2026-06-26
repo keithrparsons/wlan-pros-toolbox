@@ -275,6 +275,18 @@ class _AndroidPermissionAdapter implements WifiInfoAdapter {
 /// rxRate 780, txRate 866 — the platform that DOES expose Rx.
 class _PayloadBridge implements WiFiDetailsBridge {
   @override
+  Future<bool> consumeShortcutMissing() async => false;
+  @override
+  Future<void> markSetupInitiated() async {}
+  @override
+  Future<bool> hasInitiatedSetup() async => false;
+  @override
+  Future<bool> isShortcutsAppInstalled() async => true;
+  @override
+  Future<void> setLiveOriginRoute(String route) async {}
+  @override
+  Future<String?> consumeLiveErrorNav() async => null;
+  @override
   Future<bool> hasEverReceivedPayload() async => true;
   @override
   Future<WiFiDetails?> readLatest() async => const WiFiDetails(
@@ -295,6 +307,8 @@ class _PayloadBridge implements WiFiDetailsBridge {
   Future<bool> openUrl(String url) async => true;
   @override
   Future<bool> runShortcut(String name) async => true;
+  @override
+  Future<bool> runShortcutOneShot(String name) async => true;
   @override
   Stream<WiFiDetails> get updates => const Stream<WiFiDetails>.empty();
 }
@@ -556,6 +570,19 @@ class _SlowLinkMacAdapter implements WifiInfoAdapter {
 /// session's loop was killed without a clean Stop). No live producer exists. The
 /// live card must still present the actionable Start, never a dead "LIVE".
 class _StaleFlagBridge implements WiFiDetailsBridge {
+  @override
+  Future<bool> consumeShortcutMissing() async => false;
+  @override
+  Future<void> markSetupInitiated() async {}
+  @override
+  Future<bool> hasInitiatedSetup() async => false;
+  @override
+  Future<bool> isShortcutsAppInstalled() async => true;
+  @override
+  Future<void> setLiveOriginRoute(String route) async {}
+  @override
+  Future<String?> consumeLiveErrorNav() async => null;
+
   bool monitoringFlag = true;
   int runShortcutCalls = 0;
   String? lastRunShortcutName;
@@ -590,6 +617,13 @@ class _StaleFlagBridge implements WiFiDetailsBridge {
   }
 
   @override
+  Future<bool> runShortcutOneShot(String name) async {
+    runShortcutCalls++;
+    lastRunShortcutName = name;
+    return true;
+  }
+
+  @override
   Stream<WiFiDetails> get updates => const Stream<WiFiDetails>.empty();
 }
 
@@ -598,6 +632,19 @@ class _StaleFlagBridge implements WiFiDetailsBridge {
 /// onboarding must fire. Records [openUrl] calls so a test can prove the sheet
 /// deep-links into Shortcuts.
 class _FreshBridge implements WiFiDetailsBridge {
+  @override
+  Future<bool> consumeShortcutMissing() async => false;
+  @override
+  Future<void> markSetupInitiated() async {}
+  @override
+  Future<bool> hasInitiatedSetup() async => false;
+  @override
+  Future<bool> isShortcutsAppInstalled() async => true;
+  @override
+  Future<void> setLiveOriginRoute(String route) async {}
+  @override
+  Future<String?> consumeLiveErrorNav() async => null;
+
   int openUrlCalls = 0;
   String? lastOpenedUrl;
 
@@ -618,6 +665,8 @@ class _FreshBridge implements WiFiDetailsBridge {
 
   @override
   Future<bool> runShortcut(String name) async => true;
+  @override
+  Future<bool> runShortcutOneShot(String name) async => true;
   @override
   Stream<WiFiDetails> get updates => const Stream<WiFiDetails>.empty();
 }
@@ -1936,6 +1985,58 @@ void main() {
         expect(tester.takeException(), isNull);
       },
     );
+
+    testWidgets(
+      'a CLEAN-INSTALL couldn\'t-check surfaces the PROMINENT "Set up Live '
+      'Wi-Fi" CTA (item #4) — not a buried offer, and the live signal card '
+      'header offers Set up (never a blind-fire Start)',
+      (tester) async {
+        // _FreshBridge: never received a payload AND readLatest is null, so the
+        // engine has no Wi-Fi link → the consumer verdict is "Couldn't check"
+        // for Wi-Fi. With the Shortcut not demonstrably installed the screen must
+        // make the fix unmissable.
+        final bridge = _FreshBridge();
+        final sampler = _CountingSampler(iosBridge: bridge);
+        addTearDown(sampler.dispose);
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              sourceOverride: WifiInfoSource.iosShortcuts,
+              iosBridge: bridge,
+              sampler: sampler,
+              securityService: _FakeSecurityService(),
+              dnsProbeService: _FakeDnsProbe(),
+              networkDetailsService: _FakeNetworkDetails(),
+              enableCloudApps: false,
+              onboardingService: _seenOnboarding(),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+        await tester.pump(const Duration(seconds: 3));
+        await tester.pumpAndSettle();
+
+        // The prominent lime "Set up live Wi-Fi" CTA is on screen, with the
+        // honest "could not read your Wi-Fi signal" lead-in — the unmissable path
+        // forward for a clean-install user (replaces the buried "Couldn't Check"
+        // dead-end Keith hit).
+        expect(find.text('Set up live Wi-Fi'), findsWidgets);
+        expect(
+          find.textContaining('could not read your Wi-Fi signal'),
+          findsOneWidget,
+        );
+        // The live "Wi-Fi signal" card header offers SET UP, never a blind Start
+        // that would fire the missing Shortcut and strand the user. (The card is
+        // present once the verdict shows.)
+        expect(find.text('Set up'), findsWidgets);
+        // No blind-fire of the Shortcut happened on this clean install.
+        expect(sampler.getReadingOnceCalls, 0);
+        expect(tester.takeException(), isNull);
+      },
+    );
   });
 
   // ==========================================================================
@@ -2914,6 +3015,19 @@ void main() {
 /// the one-shot App-Group read has not (yet) captured RF. [runShortcut] is
 /// recorded so the auto-fire test can prove the run fired it with no manual tap.
 class _StreamingBridge implements WiFiDetailsBridge {
+  @override
+  Future<bool> consumeShortcutMissing() async => false;
+  @override
+  Future<void> markSetupInitiated() async {}
+  @override
+  Future<bool> hasInitiatedSetup() async => false;
+  @override
+  Future<bool> isShortcutsAppInstalled() async => true;
+  @override
+  Future<void> setLiveOriginRoute(String route) async {}
+  @override
+  Future<String?> consumeLiveErrorNav() async => null;
+
   final StreamController<WiFiDetails> _events =
       StreamController<WiFiDetails>.broadcast();
   bool _monitoring = false;
@@ -2944,6 +3058,15 @@ class _StreamingBridge implements WiFiDetailsBridge {
   Future<bool> openUrl(String url) async => true;
   @override
   Future<bool> runShortcut(String name) async {
+    runShortcutCalls++;
+    return true;
+  }
+
+  // The auto-capture one-shot now fires via the x-callback form
+  // (runShortcutOneShot). Count it under the SAME runShortcutCalls so the
+  // auto-fire test still asserts "the trigger fired" regardless of which form.
+  @override
+  Future<bool> runShortcutOneShot(String name) async {
     runShortcutCalls++;
     return true;
   }

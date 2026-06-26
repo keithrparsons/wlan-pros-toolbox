@@ -24,6 +24,15 @@ class _FakeBridge implements CellularInfoBridge {
   CellularInfo? latest;
   bool runShortcutResult = true;
 
+  /// Mirrors the native App Group missing-Shortcut marker (set on an x-error,
+  /// consumed-once by the controller load).
+  bool shortcutMissingFlag = false;
+  int consumeShortcutMissingCalls = 0;
+
+  /// Mirrors the native App Group post-install priming flag.
+  bool setupInitiatedFlag = false;
+  int markSetupInitiatedCalls = 0;
+
   int setMonitoringActiveCalls = 0;
   bool? lastMonitoringValue;
   int runShortcutCalls = 0;
@@ -31,6 +40,30 @@ class _FakeBridge implements CellularInfoBridge {
 
   @override
   Future<bool> hasEverReceivedPayload() async => everReceived;
+
+  @override
+  Future<bool> consumeShortcutMissing() async {
+    consumeShortcutMissingCalls++;
+    final bool v = shortcutMissingFlag;
+    shortcutMissingFlag = false; // native consume-once semantics
+    return v;
+  }
+
+  @override
+  Future<void> markSetupInitiated() async {
+    markSetupInitiatedCalls++;
+    setupInitiatedFlag = true;
+  }
+
+  @override
+  Future<bool> hasInitiatedSetup() async => setupInitiatedFlag;
+
+  @override
+  Future<bool> isShortcutsAppInstalled() async => true;
+  @override
+  Future<void> setLiveOriginRoute(String route) async {}
+  @override
+  Future<String?> consumeLiveErrorNav() async => null;
 
   @override
   Future<CellularInfo?> readLatest() async => latest;
@@ -50,6 +83,17 @@ class _FakeBridge implements CellularInfoBridge {
 
   @override
   Future<bool> runShortcut(String name) async {
+    runShortcutCalls++;
+    lastRunShortcutName = name;
+    return runShortcutResult;
+  }
+
+  // ONE-SHOT (x-callback) trigger: getReadingOnce now fires via this form so the
+  // single run auto-returns to the app. Routed through the same counter/result
+  // as the plain trigger so the existing one-shot tests behave identically —
+  // only the URL form changed.
+  @override
+  Future<bool> runShortcutOneShot(String name) async {
     runShortcutCalls++;
     lastRunShortcutName = name;
     return runShortcutResult;
@@ -116,6 +160,96 @@ void main() {
 
       expect(c.phase, CellularMonitorPhase.streaming);
       expect(c.isStreaming, isTrue);
+      c.dispose();
+      await bridge.close();
+    });
+  });
+
+  // Post-install PRIMING window (2026-06-26). Mirrors the Wi-Fi controller: the
+  // one combined Shortcut drives both tools, so the priming flag surfaces the
+  // "tap Get reading to finish" step here too.
+  group('post-install priming window', () {
+    test('setup started, no payload yet -> setupInitiated true, needsInstall',
+        () async {
+      final bridge = _FakeBridge()
+        ..everReceived = false
+        ..setupInitiatedFlag = true;
+      final c = CellularMonitorController(bridge: bridge);
+
+      await c.load();
+
+      expect(c.setupInitiated, isTrue);
+      expect(c.hasEverReceived, isFalse);
+      expect(c.phase, CellularMonitorPhase.needsInstall);
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('a delivered payload ends priming', () async {
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _info()
+        ..setupInitiatedFlag = true;
+      final c = CellularMonitorController(bridge: bridge);
+
+      await c.load();
+
+      expect(c.setupInitiated, isFalse);
+      expect(c.phase, CellularMonitorPhase.idleWithData);
+      c.dispose();
+      await bridge.close();
+    });
+  });
+
+  // x-error recovery for a RENAMED/DELETED Shortcut (2026-06-25). The one combined
+  // "WLAN Pros Live" Shortcut feeds the cellular tool too, so a missing-Shortcut
+  // x-error resets it and surfaces the honest setup recovery. Mirrors the Wi-Fi
+  // controller.
+  group('x-error recovery (renamed/deleted "WLAN Pros Live")', () {
+    test('missing marker -> needsInstall + shortcutMissing, gate reset', () async {
+      final bridge = _FakeBridge()
+        ..everReceived = false
+        ..latest = null
+        ..shortcutMissingFlag = true;
+      final c = CellularMonitorController(bridge: bridge);
+
+      await c.load();
+
+      expect(bridge.consumeShortcutMissingCalls, 1);
+      expect(c.shortcutMissing, isTrue);
+      expect(c.hasEverReceived, isFalse);
+      expect(c.phase, CellularMonitorPhase.needsInstall);
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('marker is consumed once: a fresh controller reload clears recovery',
+        () async {
+      final bridge = _FakeBridge()..shortcutMissingFlag = true;
+      final c1 = CellularMonitorController(bridge: bridge);
+      await c1.load();
+      expect(c1.shortcutMissing, isTrue);
+
+      final c2 = CellularMonitorController(bridge: bridge);
+      await c2.load();
+      expect(c2.shortcutMissing, isFalse);
+      expect(c2.phase, CellularMonitorPhase.needsInstall);
+      c1.dispose();
+      c2.dispose();
+      await bridge.close();
+    });
+
+    test('no marker -> normal load is unaffected', () async {
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _info();
+      final c = CellularMonitorController(bridge: bridge);
+
+      await c.load();
+
+      expect(bridge.consumeShortcutMissingCalls, 1);
+      expect(c.shortcutMissing, isFalse);
+      expect(c.phase, CellularMonitorPhase.idleWithData);
       c.dispose();
       await bridge.close();
     });
@@ -361,6 +495,58 @@ void main() {
 
       expect(c.shortcutMissing, isTrue);
       expect(bridge.runShortcutCalls, 1);
+      c.dispose();
+      await bridge.close();
+    });
+
+    test(
+        'START-AWARE recovery: a PREVIOUSLY-WORKING Shortcut, now missing, that '
+        'delivers no first sample on a Start -> shortcutMissing + stream torn down',
+        () async {
+      // Keith device round 5: streaming is the only live action, so a missing
+      // Shortcut on a Start self-surfaces recovery EVEN for a set-up user.
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _info()
+        ..runShortcutResult = true;
+      final c = CellularMonitorController(
+        bridge: bridge,
+        missingShortcutSettle: fastSettle,
+      );
+      await c.load();
+
+      final bool opened =
+          await c.startMonitoring(triggerShortcutName: 'WLAN Pros Live');
+      expect(opened, isTrue);
+      expect(c.isStreaming, isTrue);
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+
+      expect(c.shortcutMissing, isTrue);
+      expect(c.isStreaming, isFalse, reason: 'phantom stream torn down');
+      c.dispose();
+      await bridge.close();
+    });
+
+    test(
+        'START-AWARE recovery: a WORKING Shortcut that delivers a first sample is '
+        'NOT flagged missing',
+        () async {
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _info()
+        ..runShortcutResult = true;
+      final c = CellularMonitorController(
+        bridge: bridge,
+        missingShortcutSettle: fastSettle,
+      );
+      await c.load();
+
+      await c.startMonitoring(triggerShortcutName: 'WLAN Pros Live');
+      bridge.push(_info(carrier: 'Live-Carrier'));
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+
+      expect(c.shortcutMissing, isFalse);
+      expect(c.isStreaming, isTrue);
       c.dispose();
       await bridge.close();
     });

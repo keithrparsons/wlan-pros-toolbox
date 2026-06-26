@@ -45,6 +45,19 @@ Widget _harnessWith(
 class _FakeBridge implements WiFiDetailsBridge {
   _FakeBridge({this.everReceived = false});
 
+  @override
+  Future<bool> consumeShortcutMissing() async => false;
+  @override
+  Future<void> markSetupInitiated() async {}
+  @override
+  Future<bool> hasInitiatedSetup() async => false;
+  @override
+  Future<bool> isShortcutsAppInstalled() async => true;
+  @override
+  Future<void> setLiveOriginRoute(String route) async {}
+  @override
+  Future<String?> consumeLiveErrorNav() async => null;
+
   bool everReceived;
 
   @override

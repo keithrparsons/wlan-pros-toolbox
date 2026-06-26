@@ -69,14 +69,35 @@
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>WLAN Pros Toolbox uses your location to read the name (SSID) of the Wi-Fi network you are connected to, and to fill in your current latitude and longitude in the Lat / Long tool. If your device cannot get a position fix, the app can estimate an approximate city-level location from your public IP instead. When you use the map, your coordinates are sent to OpenStreetMap to load the map tiles. Your location is not stored by us and is never used for tracking or advertising.</string>
 	<!-- LSApplicationQueriesSchemes lets the app open the Shortcuts app via the
-	     PLAIN, fire-and-forget `shortcuts://run-shortcut?name=…` URL on iOS 9+
-	     (UIApplication.canOpenURL / open both consult this allow-list). This is
-	     the Live streaming trigger; it is NOT the x-callback form, so there is no
-	     return URL scheme to register — the former wlanprostoolbox:// callback
-	     CFBundleURLTypes entry was removed with the snapshot one-tap trigger. -->
+	     `shortcuts://` URL on iOS 9+ (UIApplication.canOpenURL / open both consult
+	     this allow-list). Covers BOTH the PLAIN, fire-and-forget
+	     `shortcuts://run-shortcut?name=…` Live STREAMING trigger AND the
+	     `shortcuts://x-callback-url/run-shortcut?…` ONE-SHOT trigger. -->
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>shortcuts</string>
+	</array>
+	<!-- CFBundleURLTypes registers the `wlanprostoolbox://` custom scheme used as
+	     the `x-success` return target for the ONE-SHOT Shortcut trigger
+	     (`shortcuts://x-callback-url/run-shortcut?…&x-success=wlanprostoolbox://live-done`).
+	     When a single "WLAN Pros Live" run FINISHES, iOS opens this URL, which
+	     re-foregrounds the Toolbox automatically so a one-shot read returns to the
+	     app instead of stranding the user on the Shortcuts page. The SceneDelegate
+	     catches the open and re-posts the bridge notification so the Live screen
+	     re-reads the delivered payload. Streaming uses the plain form and never
+	     returns here. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.wlanpros.toolbox.shortcuts-callback</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>wlanprostoolbox</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>

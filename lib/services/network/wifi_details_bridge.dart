@@ -70,6 +70,102 @@ class WiFiDetailsBridge {
     }
   }
 
+  /// Reads and CLEARS the transient "companion Shortcut not found on the last
+  /// one-shot fire" marker (one-shot consume).
+  ///
+  /// The native side sets it when iOS invokes the one-shot `x-error` callback
+  /// (`wlanprostoolbox://live-error`) — the reliable missing-Shortcut signal,
+  /// fired when "WLAN Pros Live" was renamed/deleted — and at the same time
+  /// resets the durable install-state. The controller calls this on each
+  /// foreground load: a `true` drives the honest "Shortcut not found — re-run
+  /// setup" recovery once, after which the marker is cleared and the tool returns
+  /// to the normal one-time setup prompt. False off-iOS (no handler).
+  Future<bool> consumeShortcutMissing() async {
+    try {
+      return await _method.invokeMethod<bool>('consumeShortcutMissing') ?? false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException catch (e) {
+      debugPrint('WiFiDetailsBridge.consumeShortcutMissing failed: $e');
+      return false;
+    }
+  }
+
+  /// Records that the user has STARTED setup (tapped "Add the Shortcut"). Drives
+  /// the post-install PRIMING step: until the first payload completes the
+  /// round-trip, the live tools show "come back and tap Get reading; iOS asks
+  /// permission the first time" instead of the cold "Set up live Wi-Fi" prompt.
+  /// The native side clears it automatically when a payload arrives. No-op
+  /// off-iOS.
+  Future<void> markSetupInitiated() async {
+    try {
+      await _method.invokeMethod<void>('markSetupInitiated');
+    } on MissingPluginException {
+      // Non-iOS: no priming step.
+    } on PlatformException catch (e) {
+      debugPrint('WiFiDetailsBridge.markSetupInitiated failed: $e');
+    }
+  }
+
+  /// Whether the user has started setup but no payload has completed the
+  /// round-trip yet — drives the priming step ("tap Get reading to finish")
+  /// instead of the cold setup prompt. False off-iOS / once a payload arrives.
+  Future<bool> hasInitiatedSetup() async {
+    try {
+      return await _method.invokeMethod<bool>('hasInitiatedSetup') ?? false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException catch (e) {
+      debugPrint('WiFiDetailsBridge.hasInitiatedSetup failed: $e');
+      return false;
+    }
+  }
+
+  /// Best-effort check of whether Apple's Shortcuts app is installed (Tom
+  /// Hollingsworth: many users do not have it, so they fail before step one). Uses
+  /// `canOpenURL("shortcuts://")` natively (`shortcuts` is whitelisted in
+  /// LSApplicationQueriesSchemes). Returns true off-iOS / when the channel is
+  /// absent so non-iOS onboarding is never falsely blocked — the gate is an iOS-
+  /// only nudge, applied only where this returns an explicit false.
+  Future<bool> isShortcutsAppInstalled() async {
+    try {
+      return await _method.invokeMethod<bool>('isShortcutsAppInstalled') ?? true;
+    } on MissingPluginException {
+      return true;
+    } on PlatformException catch (e) {
+      debugPrint('WiFiDetailsBridge.isShortcutsAppInstalled failed: $e');
+      return true;
+    }
+  }
+
+  /// Records the route name of the live tool that fired a one-shot trigger, so an
+  /// x-error can route the user back to it (and its recovery card) rather than the
+  /// home page iOS may rebuild the scene at. No-op off-iOS.
+  Future<void> setLiveOriginRoute(String route) async {
+    try {
+      await _method.invokeMethod<void>('setLiveOriginRoute', route);
+    } on MissingPluginException {
+      // Non-iOS: no scene-rebuild strand to recover from.
+    } on PlatformException catch (e) {
+      debugPrint('WiFiDetailsBridge.setLiveOriginRoute failed: $e');
+    }
+  }
+
+  /// One-shot consume of the pending x-error navigation. Returns the origin tool
+  /// route to navigate to (empty string when none was recorded) when an x-error
+  /// nav is pending, or null when none is — so the navigation gate no-ops on a
+  /// normal foreground. Null off-iOS (no handler).
+  Future<String?> consumeLiveErrorNav() async {
+    try {
+      return await _method.invokeMethod<String?>('consumeLiveErrorNav');
+    } on MissingPluginException {
+      return null;
+    } on PlatformException catch (e) {
+      debugPrint('WiFiDetailsBridge.consumeLiveErrorNav failed: $e');
+      return null;
+    }
+  }
+
   /// Sets the App Group monitoring-active flag (TICKET-03 A2/A3). The native
   /// [ShouldContinueMonitoringIntent] returns this value to a looping companion
   /// Shortcut: `true` keeps the loop running, `false` stops it. The app writes
@@ -136,6 +232,36 @@ class WiFiDetailsBridge {
       return false;
     } on PlatformException catch (e) {
       debugPrint('WiFiDetailsBridge.runShortcut failed: $e');
+      return false;
+    }
+  }
+
+  /// Fires the ONE-SHOT Live trigger: opens the `x-callback-url` form
+  /// `shortcuts://x-callback-url/run-shortcut?name=<enc>&x-success=<scheme>://live-done`
+  /// for the Shortcut named [name]. The name is URL-encoded natively.
+  ///
+  /// Unlike [runShortcut] (the plain STREAMING trigger), this asks iOS to return
+  /// control to the app via the registered `wlanprostoolbox://live-done` scheme
+  /// the moment the SINGLE run FINISHES. That auto-return is what stops a one-shot
+  /// read (Get reading, auto-capture, the first read right after install) from
+  /// stranding the user on the Shortcuts page. It is only safe for a NON-looping
+  /// run: the app must NOT raise the monitoring flag before calling this, so the
+  /// Shortcut's `ShouldContinueMonitoringIntent` reads false and the run finishes.
+  ///
+  /// Returns false when the platform could not OPEN the URL (Shortcuts app
+  /// missing, or off-iOS where the channel is absent). A true result means iOS
+  /// opened the URL, not that the Shortcut finished.
+  Future<bool> runShortcutOneShot(String name) async {
+    try {
+      return await _method.invokeMethod<bool>(
+            'runShortcutOneShot',
+            <String, String>{'name': name},
+          ) ??
+          false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException catch (e) {
+      debugPrint('WiFiDetailsBridge.runShortcutOneShot failed: $e');
       return false;
     }
   }

@@ -29,11 +29,28 @@ import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 /// A fake iOS Shortcuts bridge: feeds the Live streaming flow without a platform
 /// channel, and records the PLAIN combined-Live trigger call.
 class _FakeBridge implements CellularInfoBridge {
+  @override
+  Future<bool> consumeShortcutMissing() async => false;
+  @override
+  Future<void> markSetupInitiated() async {}
+  @override
+  Future<bool> hasInitiatedSetup() async => initiatedSetup;
+  @override
+  Future<bool> isShortcutsAppInstalled() async => true;
+  @override
+  Future<void> setLiveOriginRoute(String route) async {}
+  @override
+  Future<String?> consumeLiveErrorNav() async => null;
+
   _FakeBridge({
     this.everReceived = false,
     this.latest,
     this.runShortcutResult = true,
+    this.initiatedSetup = false,
   });
+
+  /// Drives the post-install priming window (setupInitiated && !hasEverReceived).
+  bool initiatedSetup;
 
   bool everReceived;
   CellularInfo? latest;
@@ -46,6 +63,10 @@ class _FakeBridge implements CellularInfoBridge {
   /// trigger carries ONLY the name (no tool / no x-callback).
   String? lastRunShortcutName;
   int runShortcutCalls = 0;
+
+  /// Records the ONE-SHOT (x-callback) trigger. Separate from the plain trigger.
+  String? lastOneShotName;
+  int runShortcutOneShotCalls = 0;
 
   final StreamController<CellularInfo> updatesController =
       StreamController<CellularInfo>.broadcast();
@@ -75,6 +96,13 @@ class _FakeBridge implements CellularInfoBridge {
   }
 
   @override
+  Future<bool> runShortcutOneShot(String name) async {
+    runShortcutOneShotCalls++;
+    lastOneShotName = name;
+    return runShortcutResult;
+  }
+
+  @override
   Stream<CellularInfo> get updates => updatesController.stream;
 }
 
@@ -91,8 +119,9 @@ void main() {
 
   group('CellularInfoScreen — iOS source (Live only)', () {
     testWidgets(
-        'idle state offers the default one-shot Get reading + the opt-in '
-        'Start live monitoring toggle with the honest banner note', (tester) async {
+        'INSTALL GATE: a not-set-up idle screen offers SET UP (never a blind '
+        'Get reading / Start that would fire the missing Shortcut)',
+        (tester) async {
       await tester.pumpWidget(host(
         CellularInfoScreen(
           sourceOverride: CellularInfoSource.iosShortcuts,
@@ -100,15 +129,90 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      // 2026-06-23: the DEFAULT live read is the one-shot "Get reading"; the
-      // continuous loop is demoted to the explicit "Start live monitoring" opt-in
-      // with the honest banner note. There is no bare "Start" control any more.
-      expect(find.text('Get reading'), findsWidgets);
-      expect(find.text('Start live monitoring'), findsOneWidget);
-      expect(
-          find.textContaining('Keeps a status banner up while running'),
+      // 2026-06-25 install gate: when the Shortcut is NOT demonstrably installed,
+      // the control bar's primary action is "Set up live readings" — it opens the
+      // install sheet, never blind-fires the run-shortcut URL (which errored and
+      // stranded the user). The opt-in continuous-streaming row is hidden too.
+      expect(find.text('Set up live readings'), findsWidgets);
+      expect(find.text('Get reading'), findsNothing);
+      expect(find.text('Start live monitoring'), findsNothing);
+      expect(find.text('Start'), findsNothing);
+      expect(find.text('Snapshot'), findsNothing);
+      // Vera H1/H2: the cold hint names the on-screen button (Set up), never a
+      // Start control that does not exist yet (GL-005).
+      expect(find.textContaining('Tap Set up live readings to add it'),
           findsOneWidget);
-      expect(find.textContaining('Tap Get reading'), findsOneWidget);
+      expect(find.textContaining('Tap Start Live Monitoring above'), findsNothing);
+    });
+
+    testWidgets(
+        'PRIMING-state hint references Start (matches the priming card), never '
+        'Set up (Vera H2, cellular parity)', (tester) async {
+      // setupInitiated && !hasEverReceived: the LivePrimingCard ("Tap Start Live
+      // Monitoring to finish...") shows with the control bar suppressed, so the
+      // hint must agree (reference Start), NOT the cold "Set up live readings" copy.
+      await tester.pumpWidget(host(
+        CellularInfoScreen(
+          sourceOverride: CellularInfoSource.iosShortcuts,
+          iosBridge: _FakeBridge(everReceived: false, initiatedSetup: true),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Start Live Monitoring to finish'),
+          findsOneWidget);
+      expect(find.textContaining('Tap Start Live Monitoring above'),
+          findsOneWidget);
+      expect(find.textContaining('Tap Set up live readings to add it'),
+          findsNothing);
+    });
+
+    testWidgets(
+        'PRIMING + Start-open-failure: only the error card guides; no hint that '
+        'names an absent button (Vera M3, cellular parity)', (tester) async {
+      final bridge = _FakeBridge(
+        everReceived: false,
+        initiatedSetup: true,
+        runShortcutResult: false, // Shortcuts could not be opened
+      );
+      await tester.pumpWidget(host(
+        CellularInfoScreen(
+          sourceOverride: CellularInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        ),
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start live monitoring'));
+      await tester.pumpAndSettle();
+
+      // The error card is the single guidance; the contradictory hint is gone.
+      expect(find.textContaining('Live readings could not start'), findsOneWidget);
+      expect(find.text('Set up live readings (one-time)'), findsOneWidget);
+      expect(find.textContaining('Tap Start Live Monitoring above'), findsNothing);
+      expect(find.textContaining('Tap Set up live readings to add it'),
+          findsNothing);
+      expect(
+          find.textContaining('Start Live Monitoring to finish'), findsNothing);
+    });
+
+    testWidgets(
+        'idle state for a SET-UP user offers the single green Start Live '
+        'Monitoring action with the honest banner note',
+        (tester) async {
+      await tester.pumpWidget(host(
+        CellularInfoScreen(
+          sourceOverride: CellularInfoSource.iosShortcuts,
+          iosBridge: _FakeBridge(everReceived: true, latest: _sample()),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      // 2026-06-26 (Keith device round 5): Get reading is GONE; the one live
+      // action is the green Start Live Monitoring, with one honest note.
+      expect(find.text('Get reading'), findsNothing);
+      expect(find.text('Start live monitoring'), findsOneWidget);
+      expect(find.textContaining('takes one snapshot now'), findsNothing);
+      expect(
+          find.textContaining('keeps a status banner up while running'),
+          findsOneWidget);
       expect(find.text('Start'), findsNothing);
       expect(find.text('Snapshot'), findsNothing);
     });
@@ -123,9 +227,13 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      // Genuine first-time setup: the companion-Shortcut install/how-to note is
-      // shown so new users know to install it and tap Start.
-      expect(find.textContaining('WLAN Pros Live'), findsOneWidget);
+      // Genuine first-time setup: the companion-Shortcut install/how-to copy is
+      // shown so new users know to install it. With the install gate the start
+      // hint AND the LiveSetupCard prompt both name "WLAN Pros Live" (reinforcing
+      // the one-time setup), so there can be more than one mention.
+      expect(find.textContaining('WLAN Pros Live'), findsWidgets);
+      // The actionable install CTA is present (never a dead-end message).
+      expect(find.text('Set up live readings'), findsWidgets);
     });
 
     testWidgets(

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- "Set up Live Wi-Fi" / install the companion: a Wi-Fi fan whose signal is
+         pulled DOWN by an install arrow into an open tray (the download/install
+         destination). The fan ties it to Live Wi-Fi; the arrow-into-an-open-inbox is
+         the install/set-up verb. Gross silhouette = curved fan on top + a closed U-tray
+         on the bottom with a down-arrow between. Distinct from: the plain Material
+         download (which has no fan, just an arrowhead + bar), the get-reading pulse
+         (a single spike on a flat baseline), wifi-info (fan over an OPEN gauge arc +
+         up-right needle, not a closed tray), the signal/cellular bars, and the
+         portrait device-info phone slab. Single color, currentColor, runtime-tinted. -->
+    <!-- Wi-Fi fan (the Live Wi-Fi signal) -->
+    <path d="M6 7 A7.5 7.5 0 0 1 18 7"/>
+    <path d="M8.7 9.4 A4 4 0 0 1 15.3 9.4"/>
+    <circle cx="12" cy="11.4" r="1.05" fill="currentColor" stroke="none"/>
+    <!-- install arrow: pull the signal down into the tray -->
+    <path d="M12 11.4 V15.2"/>
+    <path d="M9.4 12.9 L12 15.2 L14.6 12.9"/>
+    <!-- open tray / inbox: the install destination -->
+    <path d="M4 15.3 V18.6 A1.4 1.4 0 0 0 5.4 20 H18.6 A1.4 1.4 0 0 0 20 18.6 V15.3"/>
+  </g>
+</svg>

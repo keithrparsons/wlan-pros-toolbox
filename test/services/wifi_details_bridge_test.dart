@@ -95,6 +95,101 @@ void main() {
     });
   });
 
+  group('consumeShortcutMissing (x-error recovery marker)', () {
+    test('reflects the native marker and uses the right method name', () async {
+      MethodCall? seen;
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        seen = call;
+        return call.method == 'consumeShortcutMissing' ? true : null;
+      });
+      final missing = await WiFiDetailsBridge().consumeShortcutMissing();
+
+      expect(missing, isTrue);
+      expect(seen!.method, 'consumeShortcutMissing');
+    });
+
+    test('defaults to false on null', () async {
+      messenger.setMockMethodCallHandler(channel, (call) async => null);
+      expect(await WiFiDetailsBridge().consumeShortcutMissing(), isFalse);
+    });
+
+    test('returns false when the plugin is missing (off-iOS)', () async {
+      messenger.setMockMethodCallHandler(channel, null);
+      expect(await WiFiDetailsBridge().consumeShortcutMissing(), isFalse);
+    });
+  });
+
+  group('x-error navigation wiring', () {
+    test('setLiveOriginRoute forwards the route string', () async {
+      MethodCall? seen;
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        seen = call;
+        return null;
+      });
+      await WiFiDetailsBridge().setLiveOriginRoute('/tools/wifi-info');
+      expect(seen!.method, 'setLiveOriginRoute');
+      expect(seen!.arguments, '/tools/wifi-info');
+    });
+
+    test('consumeLiveErrorNav returns the origin route when pending', () async {
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        return call.method == 'consumeLiveErrorNav' ? '/tools/test-my-connection'
+            : null;
+      });
+      expect(await WiFiDetailsBridge().consumeLiveErrorNav(),
+          '/tools/test-my-connection');
+    });
+
+    test('consumeLiveErrorNav returns null when no nav is pending', () async {
+      messenger.setMockMethodCallHandler(channel, (call) async => null);
+      expect(await WiFiDetailsBridge().consumeLiveErrorNav(), isNull);
+    });
+
+    test('consumeLiveErrorNav returns null off-iOS (no handler)', () async {
+      messenger.setMockMethodCallHandler(channel, null);
+      expect(await WiFiDetailsBridge().consumeLiveErrorNav(), isNull);
+    });
+  });
+
+  group('priming + Shortcuts-presence wiring', () {
+    test('markSetupInitiated invokes the right method', () async {
+      MethodCall? seen;
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        seen = call;
+        return null;
+      });
+      await WiFiDetailsBridge().markSetupInitiated();
+      expect(seen!.method, 'markSetupInitiated');
+    });
+
+    test('hasInitiatedSetup reflects the native flag', () async {
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        return call.method == 'hasInitiatedSetup' ? true : null;
+      });
+      expect(await WiFiDetailsBridge().hasInitiatedSetup(), isTrue);
+    });
+
+    test('hasInitiatedSetup defaults false off-iOS', () async {
+      messenger.setMockMethodCallHandler(channel, null);
+      expect(await WiFiDetailsBridge().hasInitiatedSetup(), isFalse);
+    });
+
+    test('isShortcutsAppInstalled reflects the native check', () async {
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        return call.method == 'isShortcutsAppInstalled' ? false : null;
+      });
+      expect(await WiFiDetailsBridge().isShortcutsAppInstalled(), isFalse);
+    });
+
+    test('isShortcutsAppInstalled assumes present off-iOS (never blocks)',
+        () async {
+      // Off-iOS / no handler must NOT falsely gate onboarding behind a missing
+      // Shortcuts app, so the absent-channel default is TRUE (present).
+      messenger.setMockMethodCallHandler(channel, null);
+      expect(await WiFiDetailsBridge().isShortcutsAppInstalled(), isTrue);
+    });
+  });
+
   group('runShortcut (PLAIN fire-and-forget Live trigger)', () {
     test('invokes runShortcut with ONLY the name — no x-callback, no tool',
         () async {
@@ -127,6 +222,39 @@ void main() {
     test('returns false when the plugin is missing (off-iOS)', () async {
       messenger.setMockMethodCallHandler(channel, null);
       expect(await WiFiDetailsBridge().runShortcut('X'), isFalse);
+    });
+  });
+
+  group('runShortcutOneShot (x-callback ONE-SHOT trigger, auto-return)', () {
+    test('invokes the distinct runShortcutOneShot method with the name',
+        () async {
+      MethodCall? seen;
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        seen = call;
+        return true;
+      });
+      final ok =
+          await WiFiDetailsBridge().runShortcutOneShot('WLAN Pros Live');
+
+      expect(ok, isTrue);
+      // The ONE-SHOT path uses a SEPARATE method from the plain streaming
+      // trigger; the native side builds the x-callback form
+      // (shortcuts://x-callback-url/run-shortcut?name=…&x-success=wlanprostoolbox://live-done)
+      // so the single run AUTO-RETURNS to the app instead of stranding the user.
+      expect(seen!.method, 'runShortcutOneShot');
+      final args = seen!.arguments as Map;
+      expect(args['name'], 'WLAN Pros Live');
+      expect(args.keys.length, 1);
+    });
+
+    test('returns false when the platform could not open Shortcuts', () async {
+      messenger.setMockMethodCallHandler(channel, (call) async => false);
+      expect(await WiFiDetailsBridge().runShortcutOneShot('X'), isFalse);
+    });
+
+    test('returns false when the plugin is missing (off-iOS)', () async {
+      messenger.setMockMethodCallHandler(channel, null);
+      expect(await WiFiDetailsBridge().runShortcutOneShot('X'), isFalse);
     });
   });
 }

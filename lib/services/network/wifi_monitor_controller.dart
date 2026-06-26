@@ -7,7 +7,12 @@
 //
 // Phases:
 //   loading      -> resolving install-state + latest payload on first load.
-//   needsInstall -> no payload has ever arrived: show install / how-to.
+//   notOnWifi    -> the device is demonstrably NOT on Wi-Fi (e.g. cellular-only
+//                   on iOS): show the honest "connect to Wi-Fi" message instead
+//                   of silence or an endless "waiting" spinner. Checked BEFORE
+//                   needsInstall, and only ever entered on a positive
+//                   not-on-Wi-Fi signal (never from missing/ambiguous data).
+//   needsInstall -> on Wi-Fi but no payload has ever arrived: show install/how-to.
 //   idleWithData -> at least one payload exists, live monitoring not running.
 //   streaming    -> live monitoring running; cards update on each pushed payload.
 //
@@ -18,12 +23,14 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import 'wifi_connection_service.dart';
 import 'wifi_details.dart';
 import 'wifi_details_bridge.dart';
 
 /// Lifecycle phases of the Wi-Fi Details screen.
 enum WifiMonitorPhase {
   loading,
+  notOnWifi,
   needsInstall,
   idleWithData,
   streaming,
@@ -36,11 +43,20 @@ class WifiMonitorController extends ChangeNotifier {
   // ignore_for_file: prefer_initializing_formals
   WifiMonitorController({
     required WiFiDetailsBridge bridge,
+    WifiConnectionService? connectionService,
     Duration missingShortcutSettle = const Duration(seconds: 4),
   })  : _bridge = bridge,
+        _connection = connectionService ?? WifiConnectionService(),
         _missingShortcutSettle = missingShortcutSettle;
 
   final WiFiDetailsBridge _bridge;
+
+  /// Honest "is the device on Wi-Fi?" probe (2026-06-25). Drives the [notOnWifi]
+  /// phase so a cellular-only / half-joined-captive user sees a clear "connect to
+  /// Wi-Fi" message instead of silence or an endless "waiting" spinner. Returns
+  /// [WifiConnectionStatus.unknown] on any ambiguous read, which leaves the prior
+  /// behaviour untouched (never a false "not on Wi-Fi").
+  final WifiConnectionService _connection;
 
   /// How long to wait after a successful trigger OPEN before concluding the
   /// companion Shortcut is missing/deleted. iOS reports `open` success when it
@@ -68,8 +84,43 @@ class WifiMonitorController extends ChangeNotifier {
   DateTime? _lastUpdated;
   bool _disposed = false;
   bool _shortcutMissing = false;
+  bool _notOnWifi = false;
+  bool _setupInitiated = false;
+  int _deliveryCount = 0;
+
+  /// True once a payload has arrived since the most recent [startMonitoring].
+  /// Reset to false at each Start and set true on the first delivered payload, so
+  /// the Start-aware missing-Shortcut settle can tell a working stream (a first
+  /// sample arrived) from a missing one (a fresh Start that produced nothing) —
+  /// even for an already-set-up user (Keith device round 5: streaming is now the
+  /// only live action, so its missing case must self-recover).
+  bool _sampleSinceStart = false;
 
   WifiMonitorPhase get phase => _phase;
+
+  /// How many LIVE payloads have been delivered this session (one-shot + stream).
+  /// [load] restoring the stored last reading does NOT advance this, so a screen
+  /// can chart fresh deliveries while leaving a stale stored reading off the chart
+  /// on open (Keith device round 4). Zero until the first live delivery.
+  int get deliveryCount => _deliveryCount;
+
+  /// True between "the user started setup (tapped Add the Shortcut)" and "the
+  /// first payload completes the round-trip" — the PRIMING window. iOS cannot
+  /// report whether a Shortcut is installed, so right after install the app would
+  /// otherwise keep showing the cold "Set up live Wi-Fi" prompt (the post-install
+  /// confusion Keith hit). While this is true and [hasEverReceived] is still
+  /// false, the screen shows the priming step ("come back and tap Get reading; iOS
+  /// asks permission the first time, tap Allow") and routes the enable action to a
+  /// one-shot prime instead of re-opening setup. Read from the App Group, so it
+  /// survives the install app-bounce; the native side clears it the moment a
+  /// payload arrives. False once [hasEverReceived] is true.
+  bool get setupInitiated => _setupInitiated && !_hasEverReceived;
+
+  /// True when the most recent connection probe found the device is demonstrably
+  /// NOT on Wi-Fi (e.g. cellular-only). Honest: only ever set on a positive
+  /// not-on-Wi-Fi signal, never from missing/ambiguous data. The screen ORs this
+  /// nowhere — it is surfaced via the [WifiMonitorPhase.notOnWifi] phase.
+  bool get notOnWifi => _notOnWifi;
 
   /// Most recent parsed details, or null when none has arrived yet.
   WiFiDetails? get details => _details;
@@ -99,10 +150,16 @@ class WifiMonitorController extends ChangeNotifier {
   /// Wall-clock time of the most recent payload, for the "last updated" label.
   DateTime? get lastUpdated => _lastUpdated;
 
-  /// Resolves install-state, the persisted monitoring flag, and the latest
-  /// payload. Re-entrant: callable from the "I've installed it, run it" retry
-  /// and from app-resume (the Shortcut bounces the app to the foreground).
-  Future<void> load() async {
+  /// Resolves install-state, the persisted monitoring flag, the latest payload,
+  /// and the honest Wi-Fi connection state. Re-entrant: callable from the "I've
+  /// installed it, run it" retry and from app-resume (the Shortcut bounces the
+  /// app to the foreground, and the user may have joined/left Wi-Fi meanwhile).
+  ///
+  /// [nativeSsid] is the optional native NEHotspotNetwork/CoreWLAN SSID the
+  /// screen already reads. A non-empty value is a definitive "on Wi-Fi" signal;
+  /// its absence is NOT used to assert "not on Wi-Fi" (it can be null because
+  /// Location is ungranted). See [WifiConnectionService.status].
+  Future<void> load({String? nativeSsid}) async {
     if (_phase != WifiMonitorPhase.streaming) {
       _phase = WifiMonitorPhase.loading;
       _safeNotify();
@@ -111,11 +168,43 @@ class WifiMonitorController extends ChangeNotifier {
     final bool received = await _bridge.hasEverReceivedPayload();
     final WiFiDetails? latest = await _bridge.readLatest();
     final bool wasMonitoring = await _bridge.isMonitoringActive();
+    final WifiConnectionStatus connStatus =
+        await _connection.status(nativeSsid: nativeSsid);
+    // x-error recovery (2026-06-25, Keith — build 41 strand). The one-shot
+    // trigger now carries an `x-error` return URL, so a renamed/deleted "WLAN
+    // Pros Live" Shortcut bounces the app back via `wlanprostoolbox://live-error`
+    // instead of stranding the user on the Shortcuts page. The native handler
+    // RESET the durable install-state (cleared the trust flag + stale reading)
+    // and raised this consumed-once marker; we read it on the resume-driven load
+    // and force the honest "Shortcut not found — re-run setup" recovery. This
+    // closes the gap the settle-timer [_verifyShortcutDelivered] leaves open for
+    // a PREVIOUSLY-WORKING Shortcut: that path short-circuits on hasEverReceived,
+    // so it never fired for Keith, who had received payloads before deleting it.
+    final bool shortcutMissing = await _bridge.consumeShortcutMissing();
+    // Post-install priming window: the user started setup but no payload has
+    // completed the round-trip yet. Read here so a resume-driven load right after
+    // install surfaces the priming step instead of the cold setup prompt.
+    _setupInitiated = await _bridge.hasInitiatedSetup();
 
     _hasEverReceived = received || (latest != null && latest.hasAnyData);
     if (latest != null && latest.hasAnyData) {
       _details = latest;
       _lastUpdated ??= DateTime.now();
+    }
+    // Honest connection flag: true ONLY on a positive not-on-Wi-Fi signal; an
+    // `unknown` (ambiguous / wired desktop / read failed) leaves it false so the
+    // prior behaviour is untouched (GL-005 — no false "not on Wi-Fi").
+    _notOnWifi = connStatus == WifiConnectionStatus.notOnWifi;
+
+    if (shortcutMissing) {
+      // The Shortcut is gone: present the setup recovery deterministically and
+      // never the not-on-Wi-Fi card (re-running setup is the actionable fix, on
+      // or off Wi-Fi). The native reset already dropped the trust flag + stored
+      // reading, so hasEverReceived is false here; force it defensively in case a
+      // racing stale signal slipped through.
+      _shortcutMissing = true;
+      _hasEverReceived = false;
+      _notOnWifi = false;
     }
 
     if (_phase == WifiMonitorPhase.streaming) {
@@ -124,7 +213,20 @@ class WifiMonitorController extends ChangeNotifier {
       return;
     }
 
-    if (!_hasEverReceived) {
+    // NOT-ON-WIFI takes precedence over the install gate ONLY when there is no
+    // real data to show: a user on cellular with no payload yet sees the honest
+    // "connect to Wi-Fi" message rather than the setup CTA (the Shortcut cannot
+    // read Wi-Fi RF that does not exist). If a payload has arrived this session
+    // we keep showing it (it is the last known reading), so a transient drop to
+    // cellular never blanks data the user already has.
+    if (shortcutMissing) {
+      // Missing-Shortcut recovery takes priority: the live tools return to the
+      // setup CTA, and the screen ORs [shortcutMissing] into its `triggerError`
+      // presentation to show the honest "not found — re-run setup" note.
+      _phase = WifiMonitorPhase.needsInstall;
+    } else if (_notOnWifi && !_hasEverReceived) {
+      _phase = WifiMonitorPhase.notOnWifi;
+    } else if (!_hasEverReceived) {
       _phase = WifiMonitorPhase.needsInstall;
     } else if (wasMonitoring) {
       // App relaunched while a loop was active -> resume listening.
@@ -162,6 +264,10 @@ class WifiMonitorController extends ChangeNotifier {
   /// `triggerError`). Also returns true when no trigger was requested (a resume,
   /// where the recursion is already running).
   Future<bool> startMonitoring({String? triggerShortcutName}) async {
+    // Fresh Start: a working stream delivers a first sample within the settle.
+    _sampleSinceStart = false;
+    // A fresh Start clears any lingering missing verdict from a prior attempt.
+    if (_shortcutMissing) _shortcutMissing = false;
     final Future<void> write = _bridge.setMonitoringActive(true);
     _startListening();
     _safeNotify();
@@ -169,10 +275,12 @@ class WifiMonitorController extends ChangeNotifier {
     if (triggerShortcutName == null) return true;
     final bool opened = await _bridge.runShortcut(triggerShortcutName);
     if (!opened) return false;
-    // Returned promptly; the missing-Shortcut verdict (deleted Shortcut that
-    // opened but never delivered) flips [shortcutMissing] asynchronously so a
-    // working stream is never stalled by the settle.
-    _verifyShortcutDelivered();
+    // Returned promptly; the missing-Shortcut verdict flips [shortcutMissing]
+    // asynchronously so a working stream is never stalled by the settle. On a
+    // STREAM Start we surface it whenever this Start delivers no first sample —
+    // a fresh kickoff that produces nothing means the recursion never started
+    // (Shortcut missing), even for an already-set-up user.
+    _verifyShortcutDelivered(forStart: true);
     return true;
   }
 
@@ -229,7 +337,13 @@ class WifiMonitorController extends ChangeNotifier {
     });
 
     await clearFlag;
-    final bool opened = await _bridge.runShortcut(triggerShortcutName);
+    // ONE-SHOT uses the x-callback form so the SINGLE run AUTO-RETURNS to the app
+    // (x-success=wlanprostoolbox://live-done) instead of stranding the user on the
+    // Shortcuts page. Safe here because the monitoring flag was just cleared, so
+    // the Shortcut's ShouldContinueMonitoringIntent reads false and the run
+    // finishes (which is what fires the return). Streaming stays on the plain
+    // fire-and-forget form (it never finishes).
+    final bool opened = await _bridge.runShortcutOneShot(triggerShortcutName);
     if (!opened) {
       _oneShotSub?.cancel();
       _oneShotSub = null;
@@ -252,15 +366,32 @@ class WifiMonitorController extends ChangeNotifier {
   /// transient miss is not surfaced as a reinstall prompt (no nagging working
   /// users). Only on a FIRST-EVER run do we settle for [_missingShortcutSettle]
   /// and, if still nothing arrived, conclude the Shortcut is missing.
-  void _verifyShortcutDelivered() {
-    if (_hasEverReceived) return;
+  ///
+  /// For a STREAM START ([forStart]) we settle whenever this Start delivered no
+  /// first sample, even for an already-set-up user: a fresh kickoff that produces
+  /// nothing means the recursion never started (missing Shortcut). The stream
+  /// Start does NOT poll the App Group (that would return a STALE stored reading
+  /// and mask the miss); the only honest "the stream started" signal is a sample
+  /// delivered THIS Start ([_sampleSinceStart]).
+  void _verifyShortcutDelivered({bool forStart = false}) {
+    if (!forStart && _hasEverReceived) return;
     // A cancellable timer (not a bare Future.delayed) so dispose / a fresh
-    // attempt can tear it down — a pending settle must never outlive the screen
-    // or flip the flag after disposal.
+    // attempt can tear it down so a pending settle never outlives the screen or
+    // flips the flag after disposal.
     _missingTimer?.cancel();
     _missingTimer = Timer(_missingShortcutSettle, () async {
       _missingTimer = null;
       if (_disposed) return;
+      if (forStart) {
+        // Stream Start: a missing Shortcut delivers no first sample this Start.
+        if (_sampleSinceStart) return;
+        _shortcutMissing = true;
+        // Tear down the phantom stream (no producer) so the screen does not show
+        // a dead "LIVE" header alongside the recovery card.
+        await stopMonitoring();
+        _safeNotify();
+        return;
+      }
       // A streamed sample or a persisted App Group payload landing during the
       // settle proves the Shortcut ran. Poll the App Group too, in case the
       // single delivery raced the app's foreground return (the Darwin
@@ -317,6 +448,14 @@ class WifiMonitorController extends ChangeNotifier {
     _details = d;
     _hasEverReceived = true;
     _lastUpdated = DateTime.now();
+    // A payload arrived since the last Start: the stream is alive, so the
+    // Start-aware missing settle must not fire.
+    _sampleSinceStart = true;
+    // Count only LIVE deliveries this session (one-shot + stream). load() restores
+    // the last stored payload by setting `_details` DIRECTLY (not through here), so
+    // it never advances this — letting the screens chart fresh deliveries while NOT
+    // charting a stale stored reading on open.
+    _deliveryCount++;
     // A real payload disproves any pending missing-Shortcut verdict and makes the
     // settle moot — cancel it so no timer lingers.
     _missingTimer?.cancel();

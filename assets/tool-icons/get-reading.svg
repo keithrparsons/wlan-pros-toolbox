@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- "Get reading": one-shot live signal capture. A flat signal baseline that fires a
+         single sharp pulse (the reading being taken now) with a small trailing echo, then
+         settles flat. The single dominant spike over a flat trace is the universal
+         live-measurement / signal-pulse gesture that replaces the generic lightning bolt
+         with a meaningful "take a reading" mark. Silhouette is distinct from the Wi-Fi
+         fan arcs (wifi-info / wifi-vs-internet), the baseline bars (signal-thresholds),
+         the broadcast rings, and the location reticle. Single color, currentColor. -->
+    <path d="M2.5 13 H7.5 L10 13 L12 4.5 L14 19 L15.8 13 L17.6 15 L21.5 15"/>
+  </g>
+</svg>

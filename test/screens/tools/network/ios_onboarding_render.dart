@@ -43,6 +43,18 @@ const String _outDir =
 /// iOS bridge: never received a payload → the pre-payload onboarding state.
 class _FreshBridge implements WiFiDetailsBridge {
   @override
+  Future<bool> consumeShortcutMissing() async => false;
+  @override
+  Future<void> markSetupInitiated() async {}
+  @override
+  Future<bool> hasInitiatedSetup() async => false;
+  @override
+  Future<bool> isShortcutsAppInstalled() async => true;
+  @override
+  Future<void> setLiveOriginRoute(String route) async {}
+  @override
+  Future<String?> consumeLiveErrorNav() async => null;
+  @override
   Future<bool> hasEverReceivedPayload() async => false;
   @override
   Future<WiFiDetails?> readLatest() async => null;
@@ -54,6 +66,8 @@ class _FreshBridge implements WiFiDetailsBridge {
   Future<bool> openUrl(String url) async => true;
   @override
   Future<bool> runShortcut(String name) async => true;
+  @override
+  Future<bool> runShortcutOneShot(String name) async => true;
   @override
   Stream<WiFiDetails> get updates => const Stream<WiFiDetails>.empty();
 }

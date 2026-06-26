@@ -195,6 +195,21 @@ class WifiSignalSampler extends ChangeNotifier {
   /// the honest "install the Shortcut" hint exactly as wifi-info does.
   bool get hasEverReceived => _controller?.hasEverReceived ?? false;
 
+  /// True in the post-install PRIMING window: the user started setup but no
+  /// payload has completed the round-trip yet. Drives the "tap Get reading to
+  /// finish; iOS asks permission the first time" priming step instead of the cold
+  /// "Set up live Wi-Fi" prompt. Forwarded from [WifiMonitorController]. False off
+  /// iOS / once a payload arrives.
+  bool get setupInitiated => _controller?.setupInitiated ?? false;
+
+  /// True when the last connection probe found the device is demonstrably NOT on
+  /// Wi-Fi (e.g. cellular-only on iOS) and no live reading has arrived — drives
+  /// the honest "connect to Wi-Fi" surface in the Wi-Fi-signal section instead of
+  /// a dead waiting state. Honest: only ever set on a positive not-on-Wi-Fi
+  /// signal, never from missing/ambiguous data. False off iOS (the snapshot
+  /// platforms read Wi-Fi natively and surface their own state).
+  bool get notOnWifi => (_controller?.notOnWifi ?? false) && !hasEverReceived;
+
   /// Set when the last iOS [start] could not open the companion Shortcut
   /// (Shortcuts missing / not installed). Surfaced as the honest live error.
   bool get triggerError => _triggerError;
@@ -286,13 +301,19 @@ class WifiSignalSampler extends ChangeNotifier {
   }
 
   /// Resolves the iOS install-state + any persisted monitoring flag (so a
-  /// payload delivered while backgrounded lands and an active loop resumes).
-  /// No-op on macOS. Call on first build and on app resume.
-  Future<void> load() async {
+  /// payload delivered while backgrounded lands and an active loop resumes), and
+  /// the honest Wi-Fi connection state (so a cellular-only user gets the "connect
+  /// to Wi-Fi" surface instead of a dead waiting state). No-op on macOS. Call on
+  /// first build and on app resume.
+  ///
+  /// [nativeSsid] is the optional native NEHotspotNetwork SSID the screen reads;
+  /// a non-empty value is a definitive "on Wi-Fi" signal (its absence is never
+  /// used to assert "not on Wi-Fi"). See [WifiConnectionService].
+  Future<void> load({String? nativeSsid}) async {
     if (source == WifiInfoSource.iosShortcuts) {
       final WifiMonitorController? c = _controller;
       if (c == null) return;
-      await c.load();
+      await c.load(nativeSsid: nativeSsid);
       // If load() resumed the controller to `streaming` purely from a stale
       // persisted monitoring flag (no deliberate in-session start, so no live
       // producer), tear that phantom stream down and clear the flag. This is
@@ -394,9 +415,9 @@ class WifiSignalSampler extends ChangeNotifier {
 
   // ---- iOS stream ----
 
-  /// Controller listener: folds each NEW streamed payload into the series, and
-  /// clears the window on a fresh Stop→Start so a new session does not chart the
-  /// previous one's stale samples. Mirrors wifi-info's `_captureSample`.
+  /// Controller listener: folds each NEW payload into the series, and clears the
+  /// window on a fresh Stop→Start so a new session does not chart the previous
+  /// one's stale samples. Mirrors wifi-info's `_captureSample`.
   void _onControllerChanged() {
     final WifiMonitorController? c = _controller;
     if (c == null) return;
@@ -411,14 +432,19 @@ class WifiSignalSampler extends ChangeNotifier {
     }
     _wasStreaming = streaming;
 
-    if (streaming) {
-      final WiFiDetails? d = c.details;
-      if (d != null && d != _lastCharted) {
-        _lastCharted = d;
-        final ConnectedAp sample = ConnectedAp.fromWifiDetails(d);
-        _roamDetector.observe(sample);
-        _series.add(sample);
-      }
+    // Append any NEW LIVE payload regardless of streaming. A single one-shot
+    // "Get reading" lands the controller in idleWithData (NOT streaming); the
+    // earlier `if (streaming)` gate DROPPED that sample, so Test My Connection's
+    // live-signal sparkline never rendered a one-shot reading (Keith device round
+    // 4). Gate on [deliveryCount] so the load-restored STALE stored reading is not
+    // charted on open; the `d != _lastCharted` value dedup keeps a settle-poll
+    // re-delivery of the same payload from duplicating the last reading.
+    final WiFiDetails? d = c.details;
+    if (c.deliveryCount > 0 && d != null && d != _lastCharted) {
+      _lastCharted = d;
+      final ConnectedAp sample = ConnectedAp.fromWifiDetails(d);
+      _roamDetector.observe(sample);
+      _series.add(sample);
     }
     _safeNotify();
   }
