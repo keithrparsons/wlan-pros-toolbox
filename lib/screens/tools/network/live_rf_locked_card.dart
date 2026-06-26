@@ -35,6 +35,7 @@ class LiveRfLockedCard extends StatelessWidget {
     super.key,
     required this.onEnable,
     this.enableLabel = 'Enable live Wi-Fi',
+    this.showAction = true,
   });
 
   /// Opens the one-time companion-Shortcut setup sheet.
@@ -42,6 +43,13 @@ class LiveRfLockedCard extends StatelessWidget {
 
   /// The action-button label. Caller-owned so each tool can name its own thing.
   final String enableLabel;
+
+  /// Whether to render the prominent enable/Get-reading button. Set false during
+  /// the post-install PRIMING window, where the [LivePrimingCard] is the single
+  /// primary CTA and this card contributes only its locked-field LIST — so the
+  /// user never sees two stacked "Get reading" buttons firing the same action
+  /// (SOP-009 §7: one prominent primary action).
+  final bool showAction;
 
   /// The rich RF fields that genuinely require the companion Shortcut on iOS.
   /// Listed by NAME (never as zeroed values) so the user sees exactly what
@@ -84,16 +92,18 @@ class LiveRfLockedCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           // The RF fields by name, each behind a lock glyph. NOT zeroed values.
           ..._rfFields.map((String field) => _LockedFieldRow(label: field)),
-          const SizedBox(height: AppSpacing.sm),
-          Semantics(
-            button: true,
-            label: enableLabel,
-            child: FilledButton.icon(
-              onPressed: onEnable,
-              icon: const GetReadingIcon(),
-              label: Text(enableLabel),
+          if (showAction) ...<Widget>[
+            const SizedBox(height: AppSpacing.sm),
+            Semantics(
+              button: true,
+              label: enableLabel,
+              child: FilledButton.icon(
+                onPressed: onEnable,
+                icon: const GetReadingIcon(),
+                label: Text(enableLabel),
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

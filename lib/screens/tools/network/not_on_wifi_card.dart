@@ -78,9 +78,15 @@ class NotOnWifiCard extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
-                child: Text(
-                  title,
-                  style: text.titleSmall?.copyWith(color: colors.textPrimary),
+                // liveRegion so a screen-reader user who is on-screen when the
+                // probe flips to not-on-Wi-Fi hears the state change announced
+                // (WCAG SC 4.1.3), matching LivePrimingCard's parity.
+                child: Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    title,
+                    style: text.titleSmall?.copyWith(color: colors.textPrimary),
+                  ),
                 ),
               ),
             ],

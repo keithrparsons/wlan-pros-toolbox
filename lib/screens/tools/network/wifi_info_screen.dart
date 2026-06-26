@@ -2527,6 +2527,11 @@ class _LiveBody extends StatelessWidget {
                               controller.setupInitiated)
                           ? 'Get reading'
                           : 'Set up live Wi-Fi',
+                      // During priming the LivePrimingCard above is the single
+                      // primary "Get reading" CTA; drop this card's duplicate
+                      // button so the user never sees two stacked Get-reading
+                      // actions (SOP-009 §7). The locked-field LIST still renders.
+                      showAction: !controller.setupInitiated,
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     const _LiveStartHint(),
