@@ -135,6 +135,32 @@ class CellularInfoBridge {
     }
   }
 
+  /// Records the route name of the live tool that fired a one-shot trigger, so an
+  /// x-error can route the user back to it (and its recovery card). No-op off-iOS.
+  Future<void> setLiveOriginRoute(String route) async {
+    try {
+      await _method.invokeMethod<void>('setLiveOriginRoute', route);
+    } on MissingPluginException {
+      // Non-iOS: no scene-rebuild strand to recover from.
+    } on PlatformException catch (e) {
+      debugPrint('CellularInfoBridge.setLiveOriginRoute failed: $e');
+    }
+  }
+
+  /// One-shot consume of the pending x-error navigation (shared with the Wi-Fi
+  /// bridge). Returns the origin tool route (empty when none) when an x-error nav
+  /// is pending, or null otherwise. Null off-iOS.
+  Future<String?> consumeLiveErrorNav() async {
+    try {
+      return await _method.invokeMethod<String?>('consumeLiveErrorNav');
+    } on MissingPluginException {
+      return null;
+    } on PlatformException catch (e) {
+      debugPrint('CellularInfoBridge.consumeLiveErrorNav failed: $e');
+      return null;
+    }
+  }
+
   /// Sets the shared App Group monitoring-active flag (TICKET-05). The native
   /// [ShouldContinueMonitoringIntent] returns this value to the recursive
   /// companion Shortcut: `true` keeps the recursion running, `false` stops it.

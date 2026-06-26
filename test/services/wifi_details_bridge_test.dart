@@ -119,6 +119,38 @@ void main() {
     });
   });
 
+  group('x-error navigation wiring', () {
+    test('setLiveOriginRoute forwards the route string', () async {
+      MethodCall? seen;
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        seen = call;
+        return null;
+      });
+      await WiFiDetailsBridge().setLiveOriginRoute('/tools/wifi-info');
+      expect(seen!.method, 'setLiveOriginRoute');
+      expect(seen!.arguments, '/tools/wifi-info');
+    });
+
+    test('consumeLiveErrorNav returns the origin route when pending', () async {
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        return call.method == 'consumeLiveErrorNav' ? '/tools/test-my-connection'
+            : null;
+      });
+      expect(await WiFiDetailsBridge().consumeLiveErrorNav(),
+          '/tools/test-my-connection');
+    });
+
+    test('consumeLiveErrorNav returns null when no nav is pending', () async {
+      messenger.setMockMethodCallHandler(channel, (call) async => null);
+      expect(await WiFiDetailsBridge().consumeLiveErrorNav(), isNull);
+    });
+
+    test('consumeLiveErrorNav returns null off-iOS (no handler)', () async {
+      messenger.setMockMethodCallHandler(channel, null);
+      expect(await WiFiDetailsBridge().consumeLiveErrorNav(), isNull);
+    });
+  });
+
   group('priming + Shortcuts-presence wiring', () {
     test('markSetupInitiated invokes the right method', () async {
       MethodCall? seen;

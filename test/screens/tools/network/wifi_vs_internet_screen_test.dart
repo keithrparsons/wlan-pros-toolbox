@@ -74,6 +74,10 @@ class _NoPayloadBridge implements WiFiDetailsBridge {
   @override
   Future<bool> isShortcutsAppInstalled() async => true;
   @override
+  Future<void> setLiveOriginRoute(String route) async {}
+  @override
+  Future<String?> consumeLiveErrorNav() async => null;
+  @override
   Future<bool> hasEverReceivedPayload() async => false;
   @override
   Future<WiFiDetails?> readLatest() async => null;

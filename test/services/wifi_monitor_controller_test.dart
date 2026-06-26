@@ -88,6 +88,10 @@ class _FakeBridge extends WiFiDetailsBridge {
 
   @override
   Future<bool> isShortcutsAppInstalled() async => true;
+  @override
+  Future<void> setLiveOriginRoute(String route) async {}
+  @override
+  Future<String?> consumeLiveErrorNav() async => null;
 
   @override
   Future<WiFiDetails?> readLatest() async => latest;

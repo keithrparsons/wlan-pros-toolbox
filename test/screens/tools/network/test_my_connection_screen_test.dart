@@ -283,6 +283,10 @@ class _PayloadBridge implements WiFiDetailsBridge {
   @override
   Future<bool> isShortcutsAppInstalled() async => true;
   @override
+  Future<void> setLiveOriginRoute(String route) async {}
+  @override
+  Future<String?> consumeLiveErrorNav() async => null;
+  @override
   Future<bool> hasEverReceivedPayload() async => true;
   @override
   Future<WiFiDetails?> readLatest() async => const WiFiDetails(
@@ -574,6 +578,10 @@ class _StaleFlagBridge implements WiFiDetailsBridge {
   Future<bool> hasInitiatedSetup() async => false;
   @override
   Future<bool> isShortcutsAppInstalled() async => true;
+  @override
+  Future<void> setLiveOriginRoute(String route) async {}
+  @override
+  Future<String?> consumeLiveErrorNav() async => null;
 
   bool monitoringFlag = true;
   int runShortcutCalls = 0;
@@ -632,6 +640,10 @@ class _FreshBridge implements WiFiDetailsBridge {
   Future<bool> hasInitiatedSetup() async => false;
   @override
   Future<bool> isShortcutsAppInstalled() async => true;
+  @override
+  Future<void> setLiveOriginRoute(String route) async {}
+  @override
+  Future<String?> consumeLiveErrorNav() async => null;
 
   int openUrlCalls = 0;
   String? lastOpenedUrl;
@@ -3011,6 +3023,10 @@ class _StreamingBridge implements WiFiDetailsBridge {
   Future<bool> hasInitiatedSetup() async => false;
   @override
   Future<bool> isShortcutsAppInstalled() async => true;
+  @override
+  Future<void> setLiveOriginRoute(String route) async {}
+  @override
+  Future<String?> consumeLiveErrorNav() async => null;
 
   final StreamController<WiFiDetails> _events =
       StreamController<WiFiDetails>.broadcast();

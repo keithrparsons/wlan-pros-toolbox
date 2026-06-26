@@ -26,14 +26,12 @@ void main() {
 
     expect(find.text('Set up live Wi-Fi'), findsOneWidget);
     expect(find.text('Tap Add the Shortcut below.'), findsOneWidget);
-    expect(find.text('In the Shortcuts app, tap Add Shortcut.'), findsOneWidget);
-    // Step 3 now names the post-install priming round-trip (Get reading + the
-    // first-run permission prompt), not "Start".
-    expect(
-      find.textContaining('tap Get reading'),
-      findsOneWidget,
-    );
-    expect(find.textContaining('iOS asks'), findsOneWidget);
+    // Step 2 now hand-holds the "Shortcuts leaves you on its list" friction.
+    expect(find.textContaining('return to WLAN Pros'), findsOneWidget);
+    // Step 3 names the post-install priming round-trip + the actual permission
+    // prompt button wording (Always Allow), not "Start".
+    expect(find.textContaining('Tap Get reading'), findsOneWidget);
+    expect(find.textContaining('Always Allow'), findsOneWidget);
     // No Location permission reassurance is present.
     expect(find.textContaining('No Location permission'), findsOneWidget);
   });
@@ -56,6 +54,52 @@ void main() {
     // Tapping Add the Shortcut marks the priming flag so the live tools switch
     // from the cold setup prompt to the "tap Get reading to finish" step.
     expect(setupInitiatedCalls, 1);
+  });
+
+  testWidgets('UX-2: second pass makes "I\'ve added it" the primary action',
+      (tester) async {
+    // hasInitiatedSetup true => the user has already started setup, so the next
+    // obvious tap is "I've added it" — it becomes the FilledButton (primary) and
+    // "Add the Shortcut" demotes to an OutlinedButton (secondary).
+    await tester.pumpWidget(host(
+      InstallShortcutSheet(
+        openUrl: (String _) async => true,
+        onInstalled: () async {},
+        hasInitiatedSetup: () async => true,
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    final Finder primary = find.ancestor(
+      of: find.text("I've added it"),
+      matching: find.byType(FilledButton),
+    );
+    expect(primary, findsOneWidget);
+    // "Add the Shortcut again" is now the demoted secondary (OutlinedButton).
+    expect(
+      find.widgetWithText(OutlinedButton, 'Add the Shortcut again'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('UX-2: first pass keeps "Add the Shortcut" primary', (tester) async {
+    await tester.pumpWidget(host(
+      InstallShortcutSheet(
+        openUrl: (String _) async => true,
+        onInstalled: () async {},
+        hasInitiatedSetup: () async => false,
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.widgetWithText(FilledButton, 'Add the Shortcut'),
+      findsOneWidget,
+    );
+    expect(
+      find.widgetWithText(OutlinedButton, "I've added it"),
+      findsOneWidget,
+    );
   });
 
   testWidgets('absent Shortcuts app leads with the install-Shortcuts-app step',

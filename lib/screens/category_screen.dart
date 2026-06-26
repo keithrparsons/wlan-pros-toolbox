@@ -296,6 +296,8 @@ class _LiveSetupBannerState extends State<_LiveSetupBanner> {
       // the live tools; the one combined Shortcut drives all of them).
       isShortcutsAppInstalled: bridge.isShortcutsAppInstalled,
       onSetupInitiated: bridge.markSetupInitiated,
+      // UX-2: reverse the button emphasis once setup has already been started.
+      hasInitiatedSetup: bridge.hasInitiatedSetup,
       onInstalled: () async {
         // Re-resolve so the banner removes itself if the Shortcut has since
         // delivered a payload. It cannot confirm an install on its own (iOS

@@ -90,8 +90,9 @@ class LivePrimingCard extends StatelessWidget {
             liveRegion: true,
             child: Text(
               'Tap Get reading to finish. The first time it runs, iOS asks to '
-              'allow the "WLAN Pros Live" Shortcut, so tap Allow. If that first '
-              'tap gets interrupted, tap Get reading once more.',
+              'allow the "WLAN Pros Live" Shortcut to share your network '
+              'details, so tap Always Allow. If that first tap gets interrupted, '
+              'tap Get reading once more.',
               style: text.bodyMedium?.copyWith(color: colors.textSecondary),
             ),
           ),

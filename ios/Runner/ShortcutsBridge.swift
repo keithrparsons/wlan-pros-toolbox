@@ -72,6 +72,21 @@ enum ShortcutsBridge {
   /// the App Group so it survives the install app-bounce.
   static let setupInitiatedKey = "shortcuts_bridge.setup_initiated"
 
+  /// The route name of the live tool that last fired a one-shot trigger. Stored so
+  /// the x-error path can route the user BACK to the tool they tapped. When the
+  /// missing Shortcut bounces through the Shortcuts app, iOS may have torn down and
+  /// rebuilt our UIScene, so on return Flutter restarts at its initial (home)
+  /// route — which dumped the user on the home page with no explanation instead of
+  /// the originating tool's "Shortcut not found — re-run setup" recovery (Keith,
+  /// device round 3). [setLiveOriginRoute] records it from each live screen.
+  static let liveOriginRouteKey = "shortcuts_bridge.live_origin_route"
+
+  /// Pending "route to the origin tool and show the missing-Shortcut recovery"
+  /// signal. Set by [markShortcutMissing] (the x-error path) and CONSUMED-once by
+  /// the Dart navigation gate ([consumeLiveErrorNav]) on the next foreground, so
+  /// the gate only re-routes after an actual x-error, never on a normal resume.
+  static let liveErrorNavPendingKey = "shortcuts_bridge.live_error_nav_pending"
+
   /// Monitoring-active flag (TICKET-03 A2/A3). The app sets this true on Start
   /// and false on Stop. The looping companion Shortcut reads it through
   /// `ShouldContinueMonitoringIntent` to decide whether to run itself again, so
@@ -227,8 +242,32 @@ enum ShortcutsBridge {
     // marker so the user returns to FULL setup (install), not the "tap Get reading
     // to finish" priming step.
     defaults?.set(false, forKey: setupInitiatedKey)
+    // Raise the pending-nav signal so the Dart gate routes the user BACK to the
+    // originating tool (where the recovery card shows) instead of leaving them on
+    // whatever route iOS rebuilt the scene at (the home page strand).
+    defaults?.set(true, forKey: liveErrorNavPendingKey)
     defaults?.synchronize()
     postDarwinNotification()
+  }
+
+  /// Records the route name of the live tool that fired a one-shot, so the x-error
+  /// recovery can route back to it. Called from each live screen's setup.
+  static func setLiveOriginRoute(_ route: String) {
+    sharedDefaults?.set(route, forKey: liveOriginRouteKey)
+    sharedDefaults?.synchronize()
+  }
+
+  /// If an x-error navigation is pending, CLEARS it and returns the origin tool
+  /// route to navigate to (empty string when none was recorded — the Dart gate
+  /// then falls back to the consumer front door). Returns nil when no nav is
+  /// pending, so the gate no-ops on a normal foreground.
+  static func consumeLiveErrorNav() -> String? {
+    let defaults = sharedDefaults
+    guard defaults?.bool(forKey: liveErrorNavPendingKey) == true else { return nil }
+    defaults?.set(false, forKey: liveErrorNavPendingKey)
+    let route = defaults?.string(forKey: liveOriginRouteKey) ?? ""
+    defaults?.synchronize()
+    return route
   }
 
   /// Reads and CLEARS the transient missing-Shortcut marker (one-shot consume).

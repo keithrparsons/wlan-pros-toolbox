@@ -221,6 +221,10 @@ class _FakeBridge implements WiFiDetailsBridge {
   Future<bool> hasInitiatedSetup() async => false;
   @override
   Future<bool> isShortcutsAppInstalled() async => true;
+  @override
+  Future<void> setLiveOriginRoute(String route) async {}
+  @override
+  Future<String?> consumeLiveErrorNav() async => null;
 
   bool everReceived;
   WiFiDetails? latest;
@@ -660,8 +664,10 @@ void main() {
       // note. There is no bare "Start" control.
       expect(find.text('Get reading'), findsWidgets);
       expect(find.text('Start live monitoring'), findsOneWidget);
+      // UX-3: each action carries a one-line note so the two are legibly distinct.
+      expect(find.textContaining('takes one snapshot now'), findsOneWidget);
       expect(
-          find.textContaining('Keeps a status banner up while running'),
+          find.textContaining('keeps a status banner up while running'),
           findsOneWidget);
       expect(find.text('Start'), findsNothing);
       expect(find.text('Snapshot'), findsNothing);

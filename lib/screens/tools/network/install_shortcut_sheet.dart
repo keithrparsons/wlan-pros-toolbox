@@ -52,6 +52,7 @@ Future<void> showInstallShortcutSheet({
   required Future<void> Function() onInstalled,
   Future<void> Function()? onSetupInitiated,
   Future<bool> Function()? isShortcutsAppInstalled,
+  Future<bool> Function()? hasInitiatedSetup,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -62,6 +63,7 @@ Future<void> showInstallShortcutSheet({
       onInstalled: onInstalled,
       onSetupInitiated: onSetupInitiated,
       isShortcutsAppInstalled: isShortcutsAppInstalled,
+      hasInitiatedSetup: hasInitiatedSetup,
     ),
   );
 }
@@ -73,6 +75,7 @@ class InstallShortcutSheet extends StatefulWidget {
     required this.onInstalled,
     this.onSetupInitiated,
     this.isShortcutsAppInstalled,
+    this.hasInitiatedSetup,
   });
 
   /// Opens an external link (the iCloud companion-Shortcut link, or the Shortcuts
@@ -93,6 +96,14 @@ class InstallShortcutSheet extends StatefulWidget {
   /// assume present (no gate), so existing callers and non-iOS are unaffected.
   final Future<bool> Function()? isShortcutsAppInstalled;
 
+  /// "Has the user already started setup on a prior pass?" check. When it (or an
+  /// in-session "Add the Shortcut" tap) is true, the sheet REVERSES the button
+  /// emphasis so the next obvious tap, "I've added it", is the primary (green)
+  /// action and "Add the Shortcut" demotes to secondary (Keith device round 3:
+  /// on the second pass the user could not tell which button to tap). Null =
+  /// first-pass emphasis.
+  final Future<bool> Function()? hasInitiatedSetup;
+
   @override
   State<InstallShortcutSheet> createState() => _InstallShortcutSheetState();
 }
@@ -104,6 +115,10 @@ class _InstallShortcutSheetState extends State<InstallShortcutSheet> {
   /// never block setup on an ambiguous read).
   bool? _shortcutsAppPresent;
 
+  /// True once the user has tapped "Add the Shortcut" this session OR a prior pass
+  /// already started setup. Drives the reversed button emphasis (UX-2).
+  bool _setupStarted = false;
+
   @override
   void initState() {
     super.initState();
@@ -111,6 +126,12 @@ class _InstallShortcutSheetState extends State<InstallShortcutSheet> {
     if (check != null) {
       check().then((bool present) {
         if (mounted) setState(() => _shortcutsAppPresent = present);
+      });
+    }
+    final Future<bool> Function()? initiated = widget.hasInitiatedSetup;
+    if (initiated != null) {
+      initiated().then((bool started) {
+        if (mounted && started) setState(() => _setupStarted = true);
       });
     }
   }
@@ -127,6 +148,9 @@ class _InstallShortcutSheetState extends State<InstallShortcutSheet> {
   /// live tools switch to the priming step ("tap Get reading to finish") when the
   /// user returns — even before any payload has flipped install-state.
   Future<void> _addShortcut() async {
+    // Reverse the button emphasis for the rest of this session: the next obvious
+    // tap is now "I've added it" (UX-2).
+    if (mounted) setState(() => _setupStarted = true);
     // Mark FIRST so the flag is set before the install app-bounce, which can
     // background us before the openUrl future resolves.
     await widget.onSetupInitiated?.call();
@@ -177,37 +201,60 @@ class _InstallShortcutSheetState extends State<InstallShortcutSheet> {
         ),
         const SizedBox(height: AppSpacing.md),
         const _Step(number: 1, text: 'Tap Add the Shortcut below.'),
-        const _Step(number: 2, text: 'In the Shortcuts app, tap Add Shortcut.'),
+        const _Step(
+          number: 2,
+          text: 'Tap Add Shortcut, then return to WLAN Pros. The Shortcuts app '
+              'leaves you on its list, so tap WLAN Pros to come back.',
+        ),
         const _Step(
           number: 3,
-          text: 'Come back here and tap Get reading. The first time, iOS asks '
-              'to allow the Shortcut, so tap Allow.',
+          text: 'Tap Get reading. The first time it runs, iOS asks to allow it '
+              'to share your network details, so tap Always Allow.',
         ),
         const SizedBox(height: AppSpacing.xs),
         const _NoPermissionNote(),
         const SizedBox(height: AppSpacing.md),
-        FilledButton.icon(
-          onPressed: isPlaceholder ? null : _addShortcut,
-          icon: const SetupLiveWifiIcon(),
-          label: const Text('Add the Shortcut'),
-        ),
-        if (isPlaceholder) ...[
+        // UX-2: once setup has been started, "I've added it" becomes the primary
+        // (green) action and "Add the Shortcut" demotes to secondary, so the next
+        // obvious tap is unambiguous on the second pass.
+        if (_setupStarted) ...<Widget>[
+          FilledButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await widget.onInstalled();
+            },
+            child: const Text("I've added it"),
+          ),
           const SizedBox(height: AppSpacing.xs),
-          Text(
-            'Install link coming soon.',
-            // Muted disabled-affordance caption (F-04).
-            style: text.bodySmall?.copyWith(color: colors.textTertiary),
-            textAlign: TextAlign.center,
+          OutlinedButton.icon(
+            onPressed: isPlaceholder ? null : _addShortcut,
+            icon: const SetupLiveWifiIcon(),
+            label: const Text('Add the Shortcut again'),
+          ),
+        ] else ...<Widget>[
+          FilledButton.icon(
+            onPressed: isPlaceholder ? null : _addShortcut,
+            icon: const SetupLiveWifiIcon(),
+            label: const Text('Add the Shortcut'),
+          ),
+          if (isPlaceholder) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'Install link coming soon.',
+              // Muted disabled-affordance caption (F-04).
+              style: text.bodySmall?.copyWith(color: colors.textTertiary),
+              textAlign: TextAlign.center,
+            ),
+          ],
+          const SizedBox(height: AppSpacing.xs),
+          OutlinedButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await widget.onInstalled();
+            },
+            child: const Text("I've added it"),
           ),
         ],
-        const SizedBox(height: AppSpacing.xs),
-        OutlinedButton(
-          onPressed: () async {
-            Navigator.of(context).pop();
-            await widget.onInstalled();
-          },
-          child: const Text("I've added it"),
-        ),
       ],
     );
   }

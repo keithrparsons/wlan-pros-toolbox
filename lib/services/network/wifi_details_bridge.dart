@@ -138,6 +138,34 @@ class WiFiDetailsBridge {
     }
   }
 
+  /// Records the route name of the live tool that fired a one-shot trigger, so an
+  /// x-error can route the user back to it (and its recovery card) rather than the
+  /// home page iOS may rebuild the scene at. No-op off-iOS.
+  Future<void> setLiveOriginRoute(String route) async {
+    try {
+      await _method.invokeMethod<void>('setLiveOriginRoute', route);
+    } on MissingPluginException {
+      // Non-iOS: no scene-rebuild strand to recover from.
+    } on PlatformException catch (e) {
+      debugPrint('WiFiDetailsBridge.setLiveOriginRoute failed: $e');
+    }
+  }
+
+  /// One-shot consume of the pending x-error navigation. Returns the origin tool
+  /// route to navigate to (empty string when none was recorded) when an x-error
+  /// nav is pending, or null when none is — so the navigation gate no-ops on a
+  /// normal foreground. Null off-iOS (no handler).
+  Future<String?> consumeLiveErrorNav() async {
+    try {
+      return await _method.invokeMethod<String?>('consumeLiveErrorNav');
+    } on MissingPluginException {
+      return null;
+    } on PlatformException catch (e) {
+      debugPrint('WiFiDetailsBridge.consumeLiveErrorNav failed: $e');
+      return null;
+    }
+  }
+
   /// Sets the App Group monitoring-active flag (TICKET-03 A2/A3). The native
   /// [ShouldContinueMonitoringIntent] returns this value to a looping companion
   /// Shortcut: `true` keeps the loop running, `false` stops it. The app writes

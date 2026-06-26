@@ -34,6 +34,7 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:net_quality/net_quality.dart';
 
+import '../../../router/app_router.dart';
 import '../../../services/network/analyze/analyze_engine.dart';
 import '../../../services/network/analyze/analyze_input.dart';
 import '../../../services/network/analyze/analyze_report_text.dart';
@@ -339,6 +340,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         _macAdapter = widget.macAdapter ?? WindowsWifiInfoAdapter();
       case WifiInfoSource.iosShortcuts:
         _iosBridge = widget.iosBridge ?? WiFiDetailsBridge();
+        // Record this as the origin tool so a missing-Shortcut x-error routes the
+        // user back HERE (and the recovery card) instead of the home strand.
+        _iosBridge!.setLiveOriginRoute(AppRouter.testMyConnection);
         // Native NEHotspotNetwork enrichment: security type + BSSID are
         // app-readable on iOS WITHOUT the Shortcut, so we read them and fold them
         // onto the Shortcut-derived link. This is why the pro Wi-Fi Information
@@ -2213,6 +2217,8 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       // Wi-Fi Information tool; the one combined Shortcut drives both).
       isShortcutsAppInstalled: bridge.isShortcutsAppInstalled,
       onSetupInitiated: bridge.markSetupInitiated,
+      // UX-2: reverse the button emphasis once setup has already been started.
+      hasInitiatedSetup: bridge.hasInitiatedSetup,
       onInstalled: () async {
         // Persist the global onboarding-seen flag the moment the user completes
         // the install hand-off, so no OTHER live tool re-prompts in the window
@@ -3217,9 +3223,10 @@ class _LiveSignalCard extends StatelessWidget {
                           ? (sampler.setupInitiated
                               ? 'Almost set up. Tap Get reading to finish. The '
                                   'first time it runs, iOS asks to allow the '
-                                  '"WLAN Pros Live" Shortcut, so tap Allow. If '
-                                  'that first tap is interrupted, tap Get reading '
-                                  'once more.'
+                                  '"WLAN Pros Live" Shortcut to share your '
+                                  'network details, so tap Always Allow. If that '
+                                  'first tap is interrupted, tap Get reading once '
+                                  'more.'
                               : 'Live Wi-Fi signal needs the one-time "WLAN Pros '
                                   'Live" companion Shortcut. Tap Set up to add it, '
                                   'then this card streams your signal.')

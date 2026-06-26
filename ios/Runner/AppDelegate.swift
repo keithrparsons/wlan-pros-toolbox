@@ -82,6 +82,17 @@ import UIKit
         // True between "started setup" and "first payload arrives" — the app shows
         // the priming step ("tap Get reading to finish") instead of cold setup.
         result(ShortcutsBridge.hasInitiatedSetup())
+      case "setLiveOriginRoute":
+        // The live tool records its route so an x-error can route the user back to
+        // it (and its recovery card) instead of the home strand.
+        if let route = call.arguments as? String {
+          ShortcutsBridge.setLiveOriginRoute(route)
+        }
+        result(nil)
+      case "consumeLiveErrorNav":
+        // One-shot consume of the pending x-error navigation; returns the origin
+        // tool route (or "" when none), or nil when no nav is pending.
+        result(ShortcutsBridge.consumeLiveErrorNav())
       case "isShortcutsAppInstalled":
         // Best-effort presence check (Tom Hollingsworth): many users do not have
         // Apple's Shortcuts app installed, so they fail before step one. `shortcuts`

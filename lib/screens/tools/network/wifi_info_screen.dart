@@ -47,6 +47,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:net_quality/net_quality.dart' show QualityGrade, QualityGradeLabel;
 
 import '../../../data/tool_assets.dart';
+import '../../../router/app_router.dart';
 import '../../../services/network/connected_ap.dart';
 import '../../../services/network/connected_ap_cache.dart';
 import '../../../services/network/live_onboarding_service.dart';
@@ -290,6 +291,9 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         _fetchMac().then((_) => _startMacPoll());
       case WifiInfoSource.iosShortcuts:
         _iosBridge = widget.iosBridge ?? WiFiDetailsBridge();
+        // Record this as the origin tool so a missing-Shortcut x-error routes the
+        // user back HERE (and the recovery card) instead of the home strand.
+        _iosBridge!.setLiveOriginRoute(AppRouter.wifiInfo);
         _liveController = WifiMonitorController(
           bridge: _iosBridge!,
           connectionService: widget.connectionService,
@@ -645,6 +649,8 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       // so on return the live tools show the priming step ("tap Get reading to
       // finish") rather than the cold setup prompt — even before any payload.
       onSetupInitiated: bridge.markSetupInitiated,
+      // UX-2: reverse the button emphasis once setup has already been started.
+      hasInitiatedSetup: bridge.hasInitiatedSetup,
       onInstalled: () async {
         // Persist the global onboarding-seen flag the moment the user completes
         // the install hand-off, so no OTHER live tool re-prompts in the window
@@ -2601,10 +2607,11 @@ class _LiveStartHint extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
       child: Text(
-        'Tap Get reading for a single live capture. The companion Shortcut sends '
-        'one sample, the values fill in, and no banner stays up. Start live '
-        'monitoring to stream continuously instead; that keeps a status banner up '
-        'while running, and Stop ends it.',
+        // The Get-reading vs Start-live-monitoring distinction now lives as a
+        // one-line note directly under each button (UX-3); this hint just nudges
+        // the first capture so the two are not re-explained twice.
+        'Tap Get reading above to take your first live capture. The companion '
+        'Shortcut sends one sample and the values fill in.',
         style: text.bodyLarge?.copyWith(color: colors.textSecondary),
         textAlign: TextAlign.center,
       ),
@@ -3104,11 +3111,18 @@ class _MonitorControlBar extends StatelessWidget {
           if (setUpMode) return header;
 
           // Opt-in continuous streaming, demoted below the default one-shot
-          // action with the honest banner note (GL-004: no marketing words).
+          // action. Each action carries a one-line note so the two are legibly
+          // DIFFERENT (Keith device round 3: Get reading vs Start were
+          // indistinguishable). GL-004: no marketing words.
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               header,
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                'Get reading takes one snapshot now.',
+                style: text.bodySmall?.copyWith(color: colors.textTertiary),
+              ),
               const SizedBox(height: AppSpacing.sm),
               Align(
                 alignment: Alignment.centerLeft,
@@ -3116,7 +3130,8 @@ class _MonitorControlBar extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'Keeps a status banner up while running; tap Stop to end.',
+                'Start live monitoring streams continuously and keeps a status '
+                'banner up while running; tap Stop to end.',
                 style: text.bodySmall?.copyWith(color: colors.textTertiary),
               ),
             ],

@@ -53,6 +53,10 @@ class _FakeBridge implements WiFiDetailsBridge {
   Future<bool> hasInitiatedSetup() async => false;
   @override
   Future<bool> isShortcutsAppInstalled() async => true;
+  @override
+  Future<void> setLiveOriginRoute(String route) async {}
+  @override
+  Future<String?> consumeLiveErrorNav() async => null;
 
   bool everReceived;
 
