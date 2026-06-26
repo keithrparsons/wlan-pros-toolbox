@@ -633,6 +633,12 @@ void main() {
       expect(find.text('Start live monitoring'), findsNothing);
       expect(find.text('Start'), findsNothing);
       expect(find.text('Snapshot'), findsNothing);
+      // Vera H1 (device round 5): the cold-state hint must name the button that
+      // IS on screen (Set up live Wi-Fi), NOT a Start control that does not exist
+      // yet (GL-005). The wording references Set up and never tells the user to
+      // "Tap Start Live Monitoring above".
+      expect(find.textContaining('Tap Set up live Wi-Fi to add it'), findsOneWidget);
+      expect(find.textContaining('Tap Start Live Monitoring above'), findsNothing);
     });
 
     testWidgets(

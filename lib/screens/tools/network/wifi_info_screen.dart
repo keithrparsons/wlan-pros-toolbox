@@ -2444,7 +2444,7 @@ class _LiveBody extends StatelessWidget {
                       showAction: false,
                     ),
                     const SizedBox(height: AppSpacing.sm),
-                    const _LiveStartHint(),
+                    _LiveStartHint(setUpMode: !controller.hasEverReceived),
                   ] else if (series.isEmpty)
                     _WaitingForFirstPayload(streaming: controller.isStreaming)
                   else ...<Widget>[
@@ -2500,9 +2500,14 @@ class _LiveBody extends StatelessWidget {
 }
 
 /// Live-mode prompt before any sample has been captured and monitoring is not
-/// running.
+/// running. Cold-aware (GL-005): when the Shortcut is not set up yet the only
+/// button on screen is "Set up live Wi-Fi" (the control bar is in setUpMode), so
+/// the hint must name THAT action — not a "Start Live Monitoring" control that
+/// does not exist yet (Vera H1, device round 5). Once set up, it names Start.
 class _LiveStartHint extends StatelessWidget {
-  const _LiveStartHint();
+  const _LiveStartHint({this.setUpMode = false});
+
+  final bool setUpMode;
 
   @override
   Widget build(BuildContext context) {
@@ -2511,9 +2516,13 @@ class _LiveStartHint extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
       child: Text(
-        'Tap Start Live Monitoring above to begin your live Wi-Fi signal. The '
-        'companion Shortcut streams readings and the values fill in; tap Stop '
-        'to end.',
+        setUpMode
+            ? 'Live Wi-Fi signal comes from the one-time "WLAN Pros Live" '
+                'companion Shortcut. Tap Set up live Wi-Fi to add it, then your '
+                'live signal streams here.'
+            : 'Tap Start Live Monitoring above to begin your live Wi-Fi signal. '
+                'The companion Shortcut streams readings and the values fill in; '
+                'tap Stop to end.',
         style: text.bodyLarge?.copyWith(color: colors.textSecondary),
         textAlign: TextAlign.center,
       ),
