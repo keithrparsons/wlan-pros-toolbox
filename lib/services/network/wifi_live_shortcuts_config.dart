@@ -39,4 +39,11 @@ class WifiLiveShortcutsConfig {
   /// dead link.
   static bool get isLiveShortcutUrlPlaceholder =>
       kLiveShortcutUrl.endsWith('PLACEHOLDER');
+
+  /// App Store link for Apple's free Shortcuts app (Tom Hollingsworth: many users
+  /// do not have it installed, so they fail before they can add our companion
+  /// Shortcut). Surfaced FIRST in onboarding when the best-effort presence check
+  /// reports Shortcuts is absent. One home so it never drifts.
+  static const String kShortcutsAppStoreUrl =
+      'https://apps.apple.com/app/shortcuts/id915249334';
 }

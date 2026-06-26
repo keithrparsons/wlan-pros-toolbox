@@ -31,8 +31,9 @@ class NotOnWifiCard extends StatelessWidget {
     super.key,
     required this.onRetry,
     this.title = "You're not connected to Wi-Fi",
-    this.message = 'Connect to a Wi-Fi network to see live Wi-Fi data. On '
-        'cellular or a partly-joined network, there is no Wi-Fi link to read.',
+    this.message = 'You may be on cellular, Wi-Fi may be turned off, or you '
+        'joined a network that has not finished connecting. Connect to a Wi-Fi '
+        'network to see live Wi-Fi data.',
   });
 
   /// Re-runs the connection probe (and native identity read). Wired to the

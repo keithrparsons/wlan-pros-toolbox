@@ -73,8 +73,16 @@ class CellularMonitorController extends ChangeNotifier {
   DateTime? _lastUpdated;
   bool _disposed = false;
   bool _shortcutMissing = false;
+  bool _setupInitiated = false;
 
   CellularMonitorPhase get phase => _phase;
+
+  /// True between "the user started setup" and "the first payload completes the
+  /// round-trip" — the PRIMING window (shared with the Wi-Fi tool via the one
+  /// combined Shortcut). While true and [hasEverReceived] is still false, the
+  /// screen shows the priming step instead of the cold setup prompt. False once a
+  /// payload arrives. See [WifiMonitorController.setupInitiated].
+  bool get setupInitiated => _setupInitiated && !_hasEverReceived;
 
   /// Most recent parsed cellular info, or null when none has arrived yet.
   CellularInfo? get info => _info;
@@ -116,6 +124,8 @@ class CellularMonitorController extends ChangeNotifier {
     // force the honest "Shortcut not found — re-run setup" recovery. Mirrors
     // [WifiMonitorController.load].
     final bool shortcutMissing = await _bridge.consumeShortcutMissing();
+    // Post-install priming window (shared with the Wi-Fi tool).
+    _setupInitiated = await _bridge.hasInitiatedSetup();
 
     _hasEverReceived = received || (latest != null && latest.hasAnyData);
     if (latest != null && latest.hasAnyData) {

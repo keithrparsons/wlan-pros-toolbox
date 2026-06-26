@@ -94,6 +94,47 @@ class CellularInfoBridge {
     }
   }
 
+  /// Records that the user has STARTED setup (tapped "Add the Shortcut"). Shared
+  /// with the Wi-Fi bridge; drives the post-install priming step until the first
+  /// payload completes the round-trip. No-op off-iOS.
+  Future<void> markSetupInitiated() async {
+    try {
+      await _method.invokeMethod<void>('markSetupInitiated');
+    } on MissingPluginException {
+      // Non-iOS: no priming step.
+    } on PlatformException catch (e) {
+      debugPrint('CellularInfoBridge.markSetupInitiated failed: $e');
+    }
+  }
+
+  /// Whether the user has started setup but no payload has completed the
+  /// round-trip yet (drives the priming step). False off-iOS / once a payload
+  /// arrives.
+  Future<bool> hasInitiatedSetup() async {
+    try {
+      return await _method.invokeMethod<bool>('hasInitiatedSetup') ?? false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException catch (e) {
+      debugPrint('CellularInfoBridge.hasInitiatedSetup failed: $e');
+      return false;
+    }
+  }
+
+  /// Best-effort check of whether Apple's Shortcuts app is installed (Tom
+  /// Hollingsworth). Uses `canOpenURL("shortcuts://")` natively. Returns true
+  /// off-iOS so non-iOS onboarding is never falsely blocked.
+  Future<bool> isShortcutsAppInstalled() async {
+    try {
+      return await _method.invokeMethod<bool>('isShortcutsAppInstalled') ?? true;
+    } on MissingPluginException {
+      return true;
+    } on PlatformException catch (e) {
+      debugPrint('CellularInfoBridge.isShortcutsAppInstalled failed: $e');
+      return true;
+    }
+  }
+
   /// Sets the shared App Group monitoring-active flag (TICKET-05). The native
   /// [ShouldContinueMonitoringIntent] returns this value to the recursive
   /// companion Shortcut: `true` keeps the recursion running, `false` stops it.

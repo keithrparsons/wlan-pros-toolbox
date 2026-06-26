@@ -59,6 +59,19 @@ enum ShortcutsBridge {
   /// [markShortcutMissing] also resets.
   static let shortcutMissingKey = "shortcuts_bridge.shortcut_missing"
 
+  /// "The user has STARTED setup (gone to install the companion Shortcut) but no
+  /// payload has completed the round-trip yet" marker. iOS cannot report whether a
+  /// Shortcut is installed; the ONLY proof it works is a delivered payload (which
+  /// flips [hasReceivedPayloadKey]). Between "user tapped Add the Shortcut" and
+  /// "first payload arrives" the app must NOT keep showing the cold "Set up live
+  /// Wi-Fi" prompt (the post-install confusion Keith hit on device) — it shows the
+  /// PRIMING step instead ("come back and tap Get reading; iOS asks permission the
+  /// first time, tap Allow"). Set by [markSetupInitiated]; cleared the moment a
+  /// real payload arrives ([store]/[storeLive]) or when the Shortcut is confirmed
+  /// missing ([markShortcutMissing] — back to full setup, not priming). Lives in
+  /// the App Group so it survives the install app-bounce.
+  static let setupInitiatedKey = "shortcuts_bridge.setup_initiated"
+
   /// Monitoring-active flag (TICKET-03 A2/A3). The app sets this true on Start
   /// and false on Stop. The looping companion Shortcut reads it through
   /// `ShouldContinueMonitoringIntent` to decide whether to run itself again, so
@@ -164,8 +177,10 @@ enum ShortcutsBridge {
     sharedDefaults?.set(json, forKey: latestPayloadKey)
     sharedDefaults?.set(true, forKey: hasReceivedPayloadKey)
     // A real delivery disproves any pending missing-Shortcut marker so a
-    // recovered Shortcut never re-surfaces the "not found" recovery.
+    // recovered Shortcut never re-surfaces the "not found" recovery, and it
+    // COMPLETES priming (the round-trip the post-install handshake waited for).
     sharedDefaults?.set(false, forKey: shortcutMissingKey)
+    sharedDefaults?.set(false, forKey: setupInitiatedKey)
     sharedDefaults?.synchronize()
     postDarwinNotification()
   }
@@ -208,6 +223,10 @@ enum ShortcutsBridge {
     defaults?.removeObject(forKey: latestPayloadKey)
     defaults?.removeObject(forKey: latestCellularPayloadKey)
     defaults?.set(false, forKey: monitoringActiveKey)
+    // A confirmed-missing Shortcut means setup did NOT complete: drop the priming
+    // marker so the user returns to FULL setup (install), not the "tap Get reading
+    // to finish" priming step.
+    defaults?.set(false, forKey: setupInitiatedKey)
     defaults?.synchronize()
     postDarwinNotification()
   }
@@ -224,6 +243,23 @@ enum ShortcutsBridge {
       defaults?.synchronize()
     }
     return missing
+  }
+
+  /// Records that the user has STARTED setup (tapped "Add the Shortcut" / opened
+  /// the install link). Drives the post-install PRIMING step: until the first
+  /// payload arrives, the live tools show "come back and tap Get reading; iOS asks
+  /// permission the first time" instead of the cold "Set up live Wi-Fi" prompt.
+  /// Cleared automatically by [store]/[storeLive] (payload completes priming) and
+  /// by [markShortcutMissing] (confirmed missing → back to full setup).
+  static func markSetupInitiated() {
+    sharedDefaults?.set(true, forKey: setupInitiatedKey)
+    sharedDefaults?.synchronize()
+  }
+
+  /// Whether the user has started setup but no payload has completed the
+  /// round-trip yet (drives the priming step). False once a payload arrives.
+  static func hasInitiatedSetup() -> Bool {
+    sharedDefaults?.bool(forKey: setupInitiatedKey) ?? false
   }
 
   /// Read the most recent cellular payload, or nil if none stored.
@@ -252,9 +288,11 @@ enum ShortcutsBridge {
       defaults?.set(cellular, forKey: latestCellularPayloadKey)
       defaults?.set(true, forKey: hasReceivedCellularPayloadKey)
     }
-    // Any real delivery this cycle disproves a pending missing-Shortcut marker.
+    // Any real delivery this cycle disproves a pending missing-Shortcut marker
+    // and COMPLETES priming (the round-trip the post-install handshake waited for).
     if (wifiJson?.isEmpty == false) || (cellularJson?.isEmpty == false) {
       defaults?.set(false, forKey: shortcutMissingKey)
+      defaults?.set(false, forKey: setupInitiatedKey)
     }
     defaults?.synchronize()
     postDarwinNotification()

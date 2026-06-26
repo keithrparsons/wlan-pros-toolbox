@@ -72,6 +72,26 @@ import UIKit
         // Drives the "Shortcut not found — re-run setup" recovery copy once on the
         // next foreground load.
         result(ShortcutsBridge.consumeShortcutMissing())
+      case "markSetupInitiated":
+        // The user started setup (tapped "Add the Shortcut"). Drives the
+        // post-install priming step until the first payload completes the
+        // round-trip.
+        ShortcutsBridge.markSetupInitiated()
+        result(nil)
+      case "hasInitiatedSetup":
+        // True between "started setup" and "first payload arrives" — the app shows
+        // the priming step ("tap Get reading to finish") instead of cold setup.
+        result(ShortcutsBridge.hasInitiatedSetup())
+      case "isShortcutsAppInstalled":
+        // Best-effort presence check (Tom Hollingsworth): many users do not have
+        // Apple's Shortcuts app installed, so they fail before step one. `shortcuts`
+        // is whitelisted in LSApplicationQueriesSchemes, so canOpenURL is a valid
+        // signal here. Run on the main thread (UIApplication).
+        DispatchQueue.main.async {
+          let url = URL(string: "shortcuts://")
+          let installed = url.map { UIApplication.shared.canOpenURL($0) } ?? false
+          result(installed)
+        }
       case "readLatestCellular":
         // TICKET-02 cellular: read the App Group cellular payload (PULL).
         result(ShortcutsBridge.readLatestCellular())

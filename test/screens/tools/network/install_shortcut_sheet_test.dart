@@ -27,12 +27,76 @@ void main() {
     expect(find.text('Set up live Wi-Fi'), findsOneWidget);
     expect(find.text('Tap Add the Shortcut below.'), findsOneWidget);
     expect(find.text('In the Shortcuts app, tap Add Shortcut.'), findsOneWidget);
+    // Step 3 now names the post-install priming round-trip (Get reading + the
+    // first-run permission prompt), not "Start".
     expect(
-      find.text('Come back here and tap Start — live Wi-Fi now works.'),
+      find.textContaining('tap Get reading'),
       findsOneWidget,
     );
+    expect(find.textContaining('iOS asks'), findsOneWidget);
     // No Location permission reassurance is present.
     expect(find.textContaining('No Location permission'), findsOneWidget);
+  });
+
+  testWidgets('Add the Shortcut marks setup initiated (drives priming)',
+      (tester) async {
+    int setupInitiatedCalls = 0;
+    await tester.pumpWidget(host(
+      InstallShortcutSheet(
+        openUrl: (String _) async => true,
+        onInstalled: () async {},
+        onSetupInitiated: () async => setupInitiatedCalls++,
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Add the Shortcut'));
+    await tester.pumpAndSettle();
+
+    // Tapping Add the Shortcut marks the priming flag so the live tools switch
+    // from the cold setup prompt to the "tap Get reading to finish" step.
+    expect(setupInitiatedCalls, 1);
+  });
+
+  testWidgets('absent Shortcuts app leads with the install-Shortcuts-app step',
+      (tester) async {
+    String? openedUrl;
+    await tester.pumpWidget(host(
+      InstallShortcutSheet(
+        openUrl: (String url) async {
+          openedUrl = url;
+          return true;
+        },
+        onInstalled: () async {},
+        // Best-effort presence check reports Shortcuts is NOT installed.
+        isShortcutsAppInstalled: () async => false,
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    // The companion-Shortcut flow is replaced by the install-Shortcuts-app step.
+    expect(find.text("Install Apple's Shortcuts app"), findsOneWidget);
+    expect(find.text('Add the Shortcut'), findsNothing);
+
+    await tester.tap(find.text('Get Shortcuts from the App Store'));
+    await tester.pumpAndSettle();
+    expect(openedUrl, WifiLiveShortcutsConfig.kShortcutsAppStoreUrl);
+  });
+
+  testWidgets('present Shortcuts app shows the normal companion-Shortcut flow',
+      (tester) async {
+    await tester.pumpWidget(host(
+      InstallShortcutSheet(
+        openUrl: (String _) async => true,
+        onInstalled: () async {},
+        isShortcutsAppInstalled: () async => true,
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Set up live Wi-Fi'), findsOneWidget);
+    expect(find.text('Add the Shortcut'), findsOneWidget);
+    expect(find.text("Install Apple's Shortcuts app"), findsNothing);
   });
 
   testWidgets('Add the Shortcut opens the LIVE companion-Shortcut iCloud link',

@@ -85,8 +85,21 @@ class WifiMonitorController extends ChangeNotifier {
   bool _disposed = false;
   bool _shortcutMissing = false;
   bool _notOnWifi = false;
+  bool _setupInitiated = false;
 
   WifiMonitorPhase get phase => _phase;
+
+  /// True between "the user started setup (tapped Add the Shortcut)" and "the
+  /// first payload completes the round-trip" — the PRIMING window. iOS cannot
+  /// report whether a Shortcut is installed, so right after install the app would
+  /// otherwise keep showing the cold "Set up live Wi-Fi" prompt (the post-install
+  /// confusion Keith hit). While this is true and [hasEverReceived] is still
+  /// false, the screen shows the priming step ("come back and tap Get reading; iOS
+  /// asks permission the first time, tap Allow") and routes the enable action to a
+  /// one-shot prime instead of re-opening setup. Read from the App Group, so it
+  /// survives the install app-bounce; the native side clears it the moment a
+  /// payload arrives. False once [hasEverReceived] is true.
+  bool get setupInitiated => _setupInitiated && !_hasEverReceived;
 
   /// True when the most recent connection probe found the device is demonstrably
   /// NOT on Wi-Fi (e.g. cellular-only). Honest: only ever set on a positive
@@ -153,6 +166,10 @@ class WifiMonitorController extends ChangeNotifier {
     // a PREVIOUSLY-WORKING Shortcut: that path short-circuits on hasEverReceived,
     // so it never fired for Keith, who had received payloads before deleting it.
     final bool shortcutMissing = await _bridge.consumeShortcutMissing();
+    // Post-install priming window: the user started setup but no payload has
+    // completed the round-trip yet. Read here so a resume-driven load right after
+    // install surfaces the priming step instead of the cold setup prompt.
+    _setupInitiated = await _bridge.hasInitiatedSetup();
 
     _hasEverReceived = received || (latest != null && latest.hasAnyData);
     if (latest != null && latest.hasAnyData) {

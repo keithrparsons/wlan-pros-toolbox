@@ -73,6 +73,7 @@ import '../concept_graphic_band.dart';
 import 'install_shortcut_sheet.dart';
 import 'get_reading_icon.dart';
 import 'setup_live_wifi_icon.dart';
+import 'live_priming_card.dart';
 import 'live_rf_locked_card.dart';
 import 'live_setup_card.dart';
 import 'not_on_wifi_card.dart';
@@ -637,6 +638,13 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     await showInstallShortcutSheet(
       context: context,
       openUrl: bridge.openUrl,
+      // Best-effort Shortcuts-app presence gate (Tom Hollingsworth): when absent,
+      // the sheet leads with installing Apple's Shortcuts app first.
+      isShortcutsAppInstalled: bridge.isShortcutsAppInstalled,
+      // Mark the post-install priming flag when the user taps "Add the Shortcut",
+      // so on return the live tools show the priming step ("tap Get reading to
+      // finish") rather than the cold setup prompt — even before any payload.
+      onSetupInitiated: bridge.markSetupInitiated,
       onInstalled: () async {
         // Persist the global onboarding-seen flag the moment the user completes
         // the install hand-off, so no OTHER live tool re-prompts in the window
@@ -644,10 +652,13 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         await _onboardingService?.markOnboardingSeen();
         await _liveController?.load(nativeSsid: _nativeSsid);
         if (!mounted) return;
-        // Item #7: kick the FIRST read automatically via the x-callback one-shot
-        // so the user does not have to find/tap Get reading again — and so the
-        // run AUTO-RETURNS to the app AND delivers a payload (flipping
-        // hasEverReceived true), which lifts the install gate everywhere. The
+        // Item #7: kick the FIRST (priming) read automatically via the x-callback
+        // one-shot so the user does not have to find/tap Get reading again — and
+        // so the run AUTO-RETURNS to the app AND delivers a payload (flipping
+        // hasEverReceived true), which lifts the install gate everywhere. iOS's
+        // first-run permission prompt may eat THIS first fire; if so no payload
+        // arrives, the priming flag keeps the tool on the priming step, and the
+        // LivePrimingCard tells the user to tap Get reading once more. The
         // continuous loop is NOT started here (no persistent banner on first run).
         await _getReadingOnce();
       },
@@ -2401,8 +2412,17 @@ class _LiveBody extends StatelessWidget {
             // "WLAN Pros Live" Shortcut delivered nothing ([controller.shortcutMissing],
             // set asynchronously after the settle). This is the in-context recovery
             // for users who removed the Shortcut.
+            //
+            // CONTRADICTION GUARD (2026-06-26, device round 2): never show "could
+            // not start" while the feed is genuinely LIVE with data. The earlier
+            // build could show "LIVE" + "could not start" + "set up" at once when a
+            // stale error flag lingered behind a streaming session. Suppressing the
+            // error card whenever we are actually streaming with samples keeps the
+            // live state to ONE coherent reading.
+            final bool liveWithData =
+                controller.isStreaming && !series.isEmpty;
             final bool showSetupError =
-                triggerError || controller.shortcutMissing;
+                (triggerError || controller.shortcutMissing) && !liveWithData;
 
             // NOT-ON-WIFI (2026-06-25): the device is demonstrably off Wi-Fi
             // (e.g. cellular-only) and no live reading has ever arrived. Show the
@@ -2436,20 +2456,36 @@ class _LiveBody extends StatelessWidget {
                   _MonitorControlBar(
                     streaming: controller.isStreaming,
                     lastUpdated: controller.lastUpdated,
-                    // INSTALL GATE (2026-06-25): never blind-fire the Shortcut
-                    // when it is not demonstrably installed. When the app has
-                    // never received a Live payload, both the one-shot read and
-                    // the continuous start route to the SETUP sheet (onSetUp)
-                    // instead of firing the run-shortcut URL — which would error
-                    // ("the file doesn't exist") and strand the user on the
-                    // Shortcuts page. Once a payload has ever arrived the Shortcut
-                    // works, so the real read/stream actions are wired through.
-                    onGetReading:
-                        controller.hasEverReceived ? onGetReading : onSetUp,
-                    onStart: controller.hasEverReceived ? onStart : onSetUp,
+                    // INSTALL GATE (2026-06-25) + PRIMING (2026-06-26): never
+                    // blind-fire the Shortcut when it is not demonstrably
+                    // installed. When the app has never received a Live payload AND
+                    // setup has not been started, both the one-shot read and the
+                    // continuous start route to the SETUP sheet (onSetUp) instead
+                    // of firing the run-shortcut URL. Once setup HAS been started
+                    // (post-install priming) Get reading fires the one-shot prime
+                    // to complete the round-trip; STREAMING still waits for a
+                    // successful prime (hasEverReceived) so the fragile loop is
+                    // never started before the Shortcut is proven to work.
+                    onGetReading: (controller.hasEverReceived ||
+                            controller.setupInitiated)
+                        ? onGetReading
+                        : onSetUp,
+                    onStart: controller.hasEverReceived
+                        ? onStart
+                        : (controller.setupInitiated ? onGetReading : onSetUp),
                     onStop: onStop,
                     setUpMode: !controller.hasEverReceived,
                   ),
+                  if (controller.setupInitiated && !showSetupError) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    // POST-INSTALL PRIMING (2026-06-26): the user started setup but
+                    // no payload has completed the round-trip yet (iOS cannot report
+                    // install-state). Show the honest "tap Get reading to finish;
+                    // iOS asks permission the first time" step instead of the cold
+                    // setup prompt — and survive the first-fire-eaten-by-permission
+                    // case via clear "tap once more" guidance.
+                    LivePrimingCard(onGetReading: onGetReading),
+                  ],
                   if (showSetupError) ...[
                     const SizedBox(height: AppSpacing.sm),
                     // A failed Start (or a deleted Shortcut) leads with the
@@ -2483,9 +2519,12 @@ class _LiveBody extends StatelessWidget {
                       // sheet first. Before the fix this fired the missing
                       // Shortcut on a clean install and stranded the user with
                       // "the file doesn't exist".
-                      onEnable:
-                          controller.hasEverReceived ? onGetReading : onSetUp,
-                      enableLabel: controller.hasEverReceived
+                      onEnable: (controller.hasEverReceived ||
+                              controller.setupInitiated)
+                          ? onGetReading
+                          : onSetUp,
+                      enableLabel: (controller.hasEverReceived ||
+                              controller.setupInitiated)
                           ? 'Get reading'
                           : 'Set up live Wi-Fi',
                     ),
@@ -2525,6 +2564,7 @@ class _LiveBody extends StatelessWidget {
                   // without a native identity — to avoid two competing setup CTAs,
                   // one of which lands below the fold (the prior double-CTA bug).
                   if (!controller.hasEverReceived &&
+                      !controller.setupInitiated &&
                       !showSetupError &&
                       // ignore: prefer_is_not_empty
                       (controller.isStreaming || !series.isEmpty)) ...[

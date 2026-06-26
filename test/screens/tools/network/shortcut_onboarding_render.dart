@@ -40,6 +40,12 @@ class _FakeBridge implements WiFiDetailsBridge {
   @override
   Future<bool> consumeShortcutMissing() async => false;
   @override
+  Future<void> markSetupInitiated() async {}
+  @override
+  Future<bool> hasInitiatedSetup() async => false;
+  @override
+  Future<bool> isShortcutsAppInstalled() async => true;
+  @override
   Future<bool> hasEverReceivedPayload() async => false;
 
   @override

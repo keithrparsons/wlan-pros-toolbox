@@ -119,6 +119,45 @@ void main() {
     });
   });
 
+  group('priming + Shortcuts-presence wiring', () {
+    test('markSetupInitiated invokes the right method', () async {
+      MethodCall? seen;
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        seen = call;
+        return null;
+      });
+      await WiFiDetailsBridge().markSetupInitiated();
+      expect(seen!.method, 'markSetupInitiated');
+    });
+
+    test('hasInitiatedSetup reflects the native flag', () async {
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        return call.method == 'hasInitiatedSetup' ? true : null;
+      });
+      expect(await WiFiDetailsBridge().hasInitiatedSetup(), isTrue);
+    });
+
+    test('hasInitiatedSetup defaults false off-iOS', () async {
+      messenger.setMockMethodCallHandler(channel, null);
+      expect(await WiFiDetailsBridge().hasInitiatedSetup(), isFalse);
+    });
+
+    test('isShortcutsAppInstalled reflects the native check', () async {
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        return call.method == 'isShortcutsAppInstalled' ? false : null;
+      });
+      expect(await WiFiDetailsBridge().isShortcutsAppInstalled(), isFalse);
+    });
+
+    test('isShortcutsAppInstalled assumes present off-iOS (never blocks)',
+        () async {
+      // Off-iOS / no handler must NOT falsely gate onboarding behind a missing
+      // Shortcuts app, so the absent-channel default is TRUE (present).
+      messenger.setMockMethodCallHandler(channel, null);
+      expect(await WiFiDetailsBridge().isShortcutsAppInstalled(), isTrue);
+    });
+  });
+
   group('runShortcut (PLAIN fire-and-forget Live trigger)', () {
     test('invokes runShortcut with ONLY the name — no x-callback, no tool',
         () async {

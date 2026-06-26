@@ -61,6 +61,7 @@ import '../../../widgets/tool_help_footer.dart';
 import 'get_reading_icon.dart';
 import 'setup_live_wifi_icon.dart';
 import 'install_shortcut_sheet.dart';
+import 'live_priming_card.dart';
 import 'live_setup_card.dart';
 import 'network_unavailable_view.dart';
 
@@ -275,6 +276,10 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
     await showInstallShortcutSheet(
       context: context,
       openUrl: bridge.openUrl,
+      // Shortcuts-app presence gate + post-install priming flag (mirrors the
+      // Wi-Fi tool; the one combined Shortcut drives both).
+      isShortcutsAppInstalled: bridge.isShortcutsAppInstalled,
+      onSetupInitiated: bridge.markSetupInitiated,
       onInstalled: () async {
         // Persist the global onboarding-seen flag the moment the user completes
         // the install hand-off, so no OTHER live tool re-prompts in the window
@@ -764,8 +769,13 @@ class _LiveBody extends StatelessWidget {
             // not open ([triggerError]) OR it opened but a deleted "WLAN Pros Live"
             // Shortcut delivered nothing ([controller.shortcutMissing], set async
             // after the settle). In-context recovery for users who removed it.
+            // CONTRADICTION GUARD (2026-06-26): never show "could not start"
+            // while the feed is genuinely live with data — keep ONE coherent
+            // state. Mirrors the Wi-Fi tool.
+            final bool liveWithData =
+                controller.isStreaming && !series.isEmpty;
             final bool showSetupError =
-                triggerError || controller.shortcutMissing;
+                (triggerError || controller.shortcutMissing) && !liveWithData;
             return SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
                 edge,
@@ -786,12 +796,21 @@ class _LiveBody extends StatelessWidget {
                     // firing the run-shortcut URL (which would error and strand
                     // the user on the Shortcuts page). Once a payload has arrived
                     // the Shortcut works, so the real actions are wired through.
-                    onGetReading:
-                        controller.hasEverReceived ? onGetReading : onSetUp,
-                    onStart: controller.hasEverReceived ? onStart : onSetUp,
+                    onGetReading: (controller.hasEverReceived ||
+                            controller.setupInitiated)
+                        ? onGetReading
+                        : onSetUp,
+                    onStart: controller.hasEverReceived
+                        ? onStart
+                        : (controller.setupInitiated ? onGetReading : onSetUp),
                     onStop: onStop,
                     setUpMode: !controller.hasEverReceived,
                   ),
+                  if (controller.setupInitiated && !showSetupError) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    // POST-INSTALL PRIMING (2026-06-26): mirrors the Wi-Fi tool.
+                    LivePrimingCard(onGetReading: onGetReading),
+                  ],
                   if (showSetupError) ...[
                     const SizedBox(height: AppSpacing.sm),
                     // A failed Start (or a deleted Shortcut) leads with the
@@ -817,7 +836,9 @@ class _LiveBody extends StatelessWidget {
                   // noise and is hidden permanently — it never nags. Suppressed
                   // while a Start error is showing (the error card above already
                   // carries the setup button) so there are never two at once.
-                  if (!controller.hasEverReceived && !showSetupError) ...[
+                  if (!controller.hasEverReceived &&
+                      !controller.setupInitiated &&
+                      !showSetupError) ...[
                     const SizedBox(height: AppSpacing.sm),
                     LiveSetupCard.prompt(
                       label: 'Set up live readings (one-time)',

@@ -29,6 +29,10 @@ class _FakeBridge implements CellularInfoBridge {
   bool shortcutMissingFlag = false;
   int consumeShortcutMissingCalls = 0;
 
+  /// Mirrors the native App Group post-install priming flag.
+  bool setupInitiatedFlag = false;
+  int markSetupInitiatedCalls = 0;
+
   int setMonitoringActiveCalls = 0;
   bool? lastMonitoringValue;
   int runShortcutCalls = 0;
@@ -44,6 +48,18 @@ class _FakeBridge implements CellularInfoBridge {
     shortcutMissingFlag = false; // native consume-once semantics
     return v;
   }
+
+  @override
+  Future<void> markSetupInitiated() async {
+    markSetupInitiatedCalls++;
+    setupInitiatedFlag = true;
+  }
+
+  @override
+  Future<bool> hasInitiatedSetup() async => setupInitiatedFlag;
+
+  @override
+  Future<bool> isShortcutsAppInstalled() async => true;
 
   @override
   Future<CellularInfo?> readLatest() async => latest;
@@ -140,6 +156,42 @@ void main() {
 
       expect(c.phase, CellularMonitorPhase.streaming);
       expect(c.isStreaming, isTrue);
+      c.dispose();
+      await bridge.close();
+    });
+  });
+
+  // Post-install PRIMING window (2026-06-26). Mirrors the Wi-Fi controller: the
+  // one combined Shortcut drives both tools, so the priming flag surfaces the
+  // "tap Get reading to finish" step here too.
+  group('post-install priming window', () {
+    test('setup started, no payload yet -> setupInitiated true, needsInstall',
+        () async {
+      final bridge = _FakeBridge()
+        ..everReceived = false
+        ..setupInitiatedFlag = true;
+      final c = CellularMonitorController(bridge: bridge);
+
+      await c.load();
+
+      expect(c.setupInitiated, isTrue);
+      expect(c.hasEverReceived, isFalse);
+      expect(c.phase, CellularMonitorPhase.needsInstall);
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('a delivered payload ends priming', () async {
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _info()
+        ..setupInitiatedFlag = true;
+      final c = CellularMonitorController(bridge: bridge);
+
+      await c.load();
+
+      expect(c.setupInitiated, isFalse);
+      expect(c.phase, CellularMonitorPhase.idleWithData);
       c.dispose();
       await bridge.close();
     });

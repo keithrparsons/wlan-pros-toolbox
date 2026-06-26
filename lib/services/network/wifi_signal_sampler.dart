@@ -195,6 +195,13 @@ class WifiSignalSampler extends ChangeNotifier {
   /// the honest "install the Shortcut" hint exactly as wifi-info does.
   bool get hasEverReceived => _controller?.hasEverReceived ?? false;
 
+  /// True in the post-install PRIMING window: the user started setup but no
+  /// payload has completed the round-trip yet. Drives the "tap Get reading to
+  /// finish; iOS asks permission the first time" priming step instead of the cold
+  /// "Set up live Wi-Fi" prompt. Forwarded from [WifiMonitorController]. False off
+  /// iOS / once a payload arrives.
+  bool get setupInitiated => _controller?.setupInitiated ?? false;
+
   /// True when the last connection probe found the device is demonstrably NOT on
   /// Wi-Fi (e.g. cellular-only on iOS) and no live reading has arrived — drives
   /// the honest "connect to Wi-Fi" surface in the Wi-Fi-signal section instead of

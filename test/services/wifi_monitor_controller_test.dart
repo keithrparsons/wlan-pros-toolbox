@@ -56,6 +56,11 @@ class _FakeBridge extends WiFiDetailsBridge {
   bool shortcutMissingFlag = false;
   int consumeShortcutMissingCalls = 0;
 
+  /// Mirrors the native App Group post-install priming flag (set by
+  /// markSetupInitiated, cleared when a payload arrives).
+  bool setupInitiatedFlag = false;
+  int markSetupInitiatedCalls = 0;
+
   int setMonitoringActiveCalls = 0;
   bool? lastMonitoringValue;
   int runShortcutCalls = 0;
@@ -71,6 +76,18 @@ class _FakeBridge extends WiFiDetailsBridge {
     shortcutMissingFlag = false; // native consume-once semantics
     return v;
   }
+
+  @override
+  Future<void> markSetupInitiated() async {
+    markSetupInitiatedCalls++;
+    setupInitiatedFlag = true;
+  }
+
+  @override
+  Future<bool> hasInitiatedSetup() async => setupInitiatedFlag;
+
+  @override
+  Future<bool> isShortcutsAppInstalled() async => true;
 
   @override
   Future<WiFiDetails?> readLatest() async => latest;
@@ -330,6 +347,60 @@ void main() {
       expect(c.phase, WifiMonitorPhase.idleWithData);
       expect(c.isStreaming, isFalse);
       expect(c.details!.ssid, 'OneShot');
+      c.dispose();
+      await bridge.close();
+    });
+  });
+
+  // Post-install PRIMING window (2026-06-26, Keith device round 2). iOS cannot
+  // report whether a Shortcut is installed; the only proof is a delivered payload.
+  // Right after install, no payload has arrived, so the controller reads the
+  // App Group priming flag to surface the "tap Get reading to finish" step instead
+  // of the cold "Set up live Wi-Fi" prompt.
+  group('post-install priming window', () {
+    test('setup started, no payload yet -> setupInitiated true, needsInstall',
+        () async {
+      final bridge = _FakeBridge()
+        ..everReceived = false
+        ..setupInitiatedFlag = true;
+      final c = WifiMonitorController(bridge: bridge);
+
+      await c.load();
+
+      expect(c.setupInitiated, isTrue,
+          reason: 'drives the priming step + Get-reading routing');
+      expect(c.hasEverReceived, isFalse);
+      expect(c.phase, WifiMonitorPhase.needsInstall);
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('a delivered payload ends priming (setupInitiated false once received)',
+        () async {
+      // hasEverReceived wins: even if the flag is still set, priming is over.
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _details()
+        ..setupInitiatedFlag = true;
+      final c = WifiMonitorController(bridge: bridge);
+
+      await c.load();
+
+      expect(c.setupInitiated, isFalse,
+          reason: 'a real payload completes priming');
+      expect(c.phase, WifiMonitorPhase.idleWithData);
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('no setup started -> setupInitiated false (cold setup prompt)', () async {
+      final bridge = _FakeBridge()..everReceived = false;
+      final c = WifiMonitorController(bridge: bridge);
+
+      await c.load();
+
+      expect(c.setupInitiated, isFalse);
+      expect(c.phase, WifiMonitorPhase.needsInstall);
       c.dispose();
       await bridge.close();
     });

@@ -91,6 +91,53 @@ class WiFiDetailsBridge {
     }
   }
 
+  /// Records that the user has STARTED setup (tapped "Add the Shortcut"). Drives
+  /// the post-install PRIMING step: until the first payload completes the
+  /// round-trip, the live tools show "come back and tap Get reading; iOS asks
+  /// permission the first time" instead of the cold "Set up live Wi-Fi" prompt.
+  /// The native side clears it automatically when a payload arrives. No-op
+  /// off-iOS.
+  Future<void> markSetupInitiated() async {
+    try {
+      await _method.invokeMethod<void>('markSetupInitiated');
+    } on MissingPluginException {
+      // Non-iOS: no priming step.
+    } on PlatformException catch (e) {
+      debugPrint('WiFiDetailsBridge.markSetupInitiated failed: $e');
+    }
+  }
+
+  /// Whether the user has started setup but no payload has completed the
+  /// round-trip yet — drives the priming step ("tap Get reading to finish")
+  /// instead of the cold setup prompt. False off-iOS / once a payload arrives.
+  Future<bool> hasInitiatedSetup() async {
+    try {
+      return await _method.invokeMethod<bool>('hasInitiatedSetup') ?? false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException catch (e) {
+      debugPrint('WiFiDetailsBridge.hasInitiatedSetup failed: $e');
+      return false;
+    }
+  }
+
+  /// Best-effort check of whether Apple's Shortcuts app is installed (Tom
+  /// Hollingsworth: many users do not have it, so they fail before step one). Uses
+  /// `canOpenURL("shortcuts://")` natively (`shortcuts` is whitelisted in
+  /// LSApplicationQueriesSchemes). Returns true off-iOS / when the channel is
+  /// absent so non-iOS onboarding is never falsely blocked — the gate is an iOS-
+  /// only nudge, applied only where this returns an explicit false.
+  Future<bool> isShortcutsAppInstalled() async {
+    try {
+      return await _method.invokeMethod<bool>('isShortcutsAppInstalled') ?? true;
+    } on MissingPluginException {
+      return true;
+    } on PlatformException catch (e) {
+      debugPrint('WiFiDetailsBridge.isShortcutsAppInstalled failed: $e');
+      return true;
+    }
+  }
+
   /// Sets the App Group monitoring-active flag (TICKET-03 A2/A3). The native
   /// [ShouldContinueMonitoringIntent] returns this value to a looping companion
   /// Shortcut: `true` keeps the loop running, `false` stops it. The app writes

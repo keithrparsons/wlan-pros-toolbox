@@ -277,6 +277,12 @@ class _PayloadBridge implements WiFiDetailsBridge {
   @override
   Future<bool> consumeShortcutMissing() async => false;
   @override
+  Future<void> markSetupInitiated() async {}
+  @override
+  Future<bool> hasInitiatedSetup() async => false;
+  @override
+  Future<bool> isShortcutsAppInstalled() async => true;
+  @override
   Future<bool> hasEverReceivedPayload() async => true;
   @override
   Future<WiFiDetails?> readLatest() async => const WiFiDetails(
@@ -562,6 +568,12 @@ class _SlowLinkMacAdapter implements WifiInfoAdapter {
 class _StaleFlagBridge implements WiFiDetailsBridge {
   @override
   Future<bool> consumeShortcutMissing() async => false;
+  @override
+  Future<void> markSetupInitiated() async {}
+  @override
+  Future<bool> hasInitiatedSetup() async => false;
+  @override
+  Future<bool> isShortcutsAppInstalled() async => true;
 
   bool monitoringFlag = true;
   int runShortcutCalls = 0;
@@ -614,6 +626,12 @@ class _StaleFlagBridge implements WiFiDetailsBridge {
 class _FreshBridge implements WiFiDetailsBridge {
   @override
   Future<bool> consumeShortcutMissing() async => false;
+  @override
+  Future<void> markSetupInitiated() async {}
+  @override
+  Future<bool> hasInitiatedSetup() async => false;
+  @override
+  Future<bool> isShortcutsAppInstalled() async => true;
 
   int openUrlCalls = 0;
   String? lastOpenedUrl;
@@ -2987,6 +3005,12 @@ void main() {
 class _StreamingBridge implements WiFiDetailsBridge {
   @override
   Future<bool> consumeShortcutMissing() async => false;
+  @override
+  Future<void> markSetupInitiated() async {}
+  @override
+  Future<bool> hasInitiatedSetup() async => false;
+  @override
+  Future<bool> isShortcutsAppInstalled() async => true;
 
   final StreamController<WiFiDetails> _events =
       StreamController<WiFiDetails>.broadcast();

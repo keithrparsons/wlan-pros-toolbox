@@ -31,6 +31,12 @@ import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 class _FakeBridge implements CellularInfoBridge {
   @override
   Future<bool> consumeShortcutMissing() async => false;
+  @override
+  Future<void> markSetupInitiated() async {}
+  @override
+  Future<bool> hasInitiatedSetup() async => false;
+  @override
+  Future<bool> isShortcutsAppInstalled() async => true;
 
   _FakeBridge({
     this.everReceived = false,
