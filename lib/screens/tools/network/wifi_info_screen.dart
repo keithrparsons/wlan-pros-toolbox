@@ -2418,7 +2418,15 @@ class _LiveBody extends StatelessWidget {
                     ),
                   ],
                   const SizedBox(height: AppSpacing.sm),
-                  if (!controller.isStreaming && series.isEmpty) ...<Widget>[
+                  // When the recovery/error card is showing it is the SINGLE source
+                  // of guidance, so with no data yet the pre-payload locked card +
+                  // hint AND the "waiting" state are suppressed — otherwise the hint
+                  // would name a "Start Live Monitoring" button that is not on
+                  // screen and softly contradict the error card (Vera M3, same
+                  // defect class as H1/H2). Charts still render if data exists.
+                  if (showSetupError && series.isEmpty)
+                    const SizedBox.shrink()
+                  else if (!controller.isStreaming && series.isEmpty) ...<Widget>[
                     // NATIVE-FIRST pre-payload state (Pax anti-pattern #1 fix):
                     // never open to dead/zeroed RF fields. Show the real
                     // connected-network basics the app reads natively

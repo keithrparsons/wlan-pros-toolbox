@@ -670,6 +670,42 @@ void main() {
     });
 
     testWidgets(
+        'PRIMING + Start-open-failure: only the error card guides; no hint that '
+        'names an absent button (Vera M3)', (tester) async {
+      // Compound state: priming (setupInitiated) AND the Start could not open the
+      // Shortcut (showSetupError). The control bar is suppressed and the priming
+      // card is replaced by LiveSetupCard.error, so the error card is the SINGLE
+      // source of guidance. The _LiveStartHint must NOT render (it would name a
+      // Start/Set up button that is not on screen).
+      final bridge = _FakeBridge(
+        everReceived: false,
+        initiatedSetup: true,
+        runShortcutResult: false, // Shortcuts could not be opened
+      );
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          connectionService: _onWifiProbe(),
+          iosBridge: bridge,
+        ),
+      ));
+      await tester.pumpAndSettle();
+      // Fire the priming card's Start; it fails to open the Shortcut.
+      await tester.tap(find.text('Start live monitoring'));
+      await tester.pumpAndSettle();
+
+      // The error card is showing and is the single guidance.
+      expect(find.textContaining('Live readings could not start'), findsOneWidget);
+      expect(find.text('Set up live Wi-Fi (one-time)'), findsOneWidget);
+      // No contradictory hint naming an absent button, and the priming card is
+      // suppressed in this state.
+      expect(find.textContaining('Tap Start Live Monitoring above'), findsNothing);
+      expect(find.textContaining('Tap Set up live Wi-Fi to add it'), findsNothing);
+      expect(
+          find.textContaining('Start Live Monitoring to finish'), findsNothing);
+    });
+
+    testWidgets(
         'idle state for a SET-UP user offers the single green Start Live '
         'Monitoring action with the honest banner note',
         (tester) async {

@@ -34,7 +34,7 @@ class _FakeBridge implements CellularInfoBridge {
   @override
   Future<void> markSetupInitiated() async {}
   @override
-  Future<bool> hasInitiatedSetup() async => false;
+  Future<bool> hasInitiatedSetup() async => initiatedSetup;
   @override
   Future<bool> isShortcutsAppInstalled() async => true;
   @override
@@ -46,7 +46,11 @@ class _FakeBridge implements CellularInfoBridge {
     this.everReceived = false,
     this.latest,
     this.runShortcutResult = true,
+    this.initiatedSetup = false,
   });
+
+  /// Drives the post-install priming window (setupInitiated && !hasEverReceived).
+  bool initiatedSetup;
 
   bool everReceived;
   CellularInfo? latest;
@@ -134,6 +138,60 @@ void main() {
       expect(find.text('Start live monitoring'), findsNothing);
       expect(find.text('Start'), findsNothing);
       expect(find.text('Snapshot'), findsNothing);
+      // Vera H1/H2: the cold hint names the on-screen button (Set up), never a
+      // Start control that does not exist yet (GL-005).
+      expect(find.textContaining('Tap Set up live readings to add it'),
+          findsOneWidget);
+      expect(find.textContaining('Tap Start Live Monitoring above'), findsNothing);
+    });
+
+    testWidgets(
+        'PRIMING-state hint references Start (matches the priming card), never '
+        'Set up (Vera H2, cellular parity)', (tester) async {
+      // setupInitiated && !hasEverReceived: the LivePrimingCard ("Tap Start Live
+      // Monitoring to finish...") shows with the control bar suppressed, so the
+      // hint must agree (reference Start), NOT the cold "Set up live readings" copy.
+      await tester.pumpWidget(host(
+        CellularInfoScreen(
+          sourceOverride: CellularInfoSource.iosShortcuts,
+          iosBridge: _FakeBridge(everReceived: false, initiatedSetup: true),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Start Live Monitoring to finish'),
+          findsOneWidget);
+      expect(find.textContaining('Tap Start Live Monitoring above'),
+          findsOneWidget);
+      expect(find.textContaining('Tap Set up live readings to add it'),
+          findsNothing);
+    });
+
+    testWidgets(
+        'PRIMING + Start-open-failure: only the error card guides; no hint that '
+        'names an absent button (Vera M3, cellular parity)', (tester) async {
+      final bridge = _FakeBridge(
+        everReceived: false,
+        initiatedSetup: true,
+        runShortcutResult: false, // Shortcuts could not be opened
+      );
+      await tester.pumpWidget(host(
+        CellularInfoScreen(
+          sourceOverride: CellularInfoSource.iosShortcuts,
+          iosBridge: bridge,
+        ),
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start live monitoring'));
+      await tester.pumpAndSettle();
+
+      // The error card is the single guidance; the contradictory hint is gone.
+      expect(find.textContaining('Live readings could not start'), findsOneWidget);
+      expect(find.text('Set up live readings (one-time)'), findsOneWidget);
+      expect(find.textContaining('Tap Start Live Monitoring above'), findsNothing);
+      expect(find.textContaining('Tap Set up live readings to add it'),
+          findsNothing);
+      expect(
+          find.textContaining('Start Live Monitoring to finish'), findsNothing);
     });
 
     testWidgets(

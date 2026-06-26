@@ -761,7 +761,14 @@ class _LiveBody extends StatelessWidget {
                     ),
                   ],
                   const SizedBox(height: AppSpacing.sm),
-                  if (!controller.isStreaming && series.isEmpty)
+                  // When the recovery/error card is showing it is the SINGLE source
+                  // of guidance, so with no data yet the hint AND the "waiting"
+                  // state are suppressed — otherwise the hint would name a Start
+                  // button not on screen and softly contradict the error card
+                  // (Vera M3). Live cards still render if data exists.
+                  if (showSetupError && series.isEmpty)
+                    const SizedBox.shrink()
+                  else if (!controller.isStreaming && series.isEmpty)
                     // Cold-aware ONLY in the true cold state; `!hasEverReceived`
                     // covers cold AND priming, so gate also on `!setupInitiated`
                     // to keep the priming hint on the Start copy (matches the
