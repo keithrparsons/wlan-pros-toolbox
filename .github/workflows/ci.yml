@@ -65,6 +65,13 @@ jobs:
       # bridge + win32/ffi deps build clean. The branded Runner.rc and the
       # real app_icon.ico are compiled in by the runner's resource step.
       - name: app — build windows (x64, release)
+        # The windows-latest runner ships CMake 4.x, which removed compatibility
+        # for cmake_minimum_required(VERSION < 3.5). The pdfx plugin's bundled
+        # pdfium downloader still declares an older minimum, so configuring it
+        # errors out. This env tells CMake to treat such old minimums as 3.5,
+        # the documented CMake-4 migration shim. Does not affect app code.
+        env:
+          CMAKE_POLICY_VERSION_MINIMUM: "3.5"
         run: |
           flutter pub get
           flutter build windows --release

@@ -49,6 +49,8 @@
 // primary spinner, textPrimary/textSecondary for the error copy, AppSpacing for
 // gaps. No hardcoded colors or sizes.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:pdfx/pdfx.dart';
@@ -185,8 +187,25 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
   @override
   void initState() {
     super.initState();
-    _controller = PdfController(
-      document: PdfDocument.openAsset(widget.assetPath),
+    final Future<PdfDocument> documentFuture =
+        PdfDocument.openAsset(widget.assetPath);
+    _controller = PdfController(document: documentFuture);
+
+    // Defensive open-failure handling (GL-005 honest degradation). pdfx's
+    // PdfView catches a failed document future once it mounts and attaches the
+    // controller, but until that happens the future is unobserved. If the asset
+    // cannot open — a corrupt PDF, or an unsupported platform with no native PDF
+    // engine (e.g. the headless test host, where openAsset throws
+    // PlatformNotSupportedException) — and the screen is disposed before the
+    // viewer attaches, that rejection would surface as an uncaught async error
+    // instead of a quiet, honest error state. Observing the future here
+    // guarantees it is always handled and drives the same error UI, so the
+    // screen degrades gracefully rather than crashing on any platform.
+    unawaited(
+      documentFuture.then<void>(
+        (_) {},
+        onError: _onError,
+      ),
     );
   }
 
