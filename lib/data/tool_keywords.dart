@@ -144,6 +144,12 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'milliwatt', 'mw', 'power conversion', 'eirp units', 'log scale',
     'dbm to watts',
   ],
+  'channel-frequency': <String>[
+    'channel to frequency', 'frequency to channel', 'center frequency',
+    'mhz', 'ghz', 'band edges', 'bonding', 'bonded channel', 'channel width',
+    '40 mhz', '80 mhz', '160 mhz', '320 mhz', 'psc', 'dfs', 'unii',
+    'channel number', 'wi-fi channels',
+  ],
   'fspl': <String>[
     'free space path loss', 'path loss', 'attenuation', 'distance loss',
     'propagation', 'range',

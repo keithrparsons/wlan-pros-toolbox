@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Channel / Frequency converter (bidirectional). Vertical stack:
+         TOP = a continuous sine wave (the center FREQUENCY);
+         MIDDLE = a double-headed vertical arrow (the two-way CONVERT gesture);
+         BOTTOM = discrete bars on a baseline (the CHANNEL allocation, matching the
+         channel-allocations bar language in this set).
+         Full-width elements so wave + bars both survive 20px. Single color,
+         currentColor, fill="none". Silhouette is distinct from dbm-watt-converter
+         (bare horizontal arrows), get-reading (flat line + one spike), and the
+         channel-allocations bars (which carry no wave and no arrow). -->
+    <!-- frequency: sine wave -->
+    <path d="M3 5 Q6 3 9 5 T15 5 T21 5"/>
+    <!-- convert: bidirectional vertical arrow -->
+    <path d="M12 8.5 V14.5"/>
+    <path d="M9.7 10.6 L12 8.5 L14.3 10.6"/>
+    <path d="M9.7 12.4 L12 14.5 L14.3 12.4"/>
+    <!-- channel: discrete bars on a baseline -->
+    <path d="M4 21 H20"/>
+    <path d="M6 21 V17"/>
+    <path d="M10 21 V17"/>
+    <path d="M14 21 V17"/>
+    <path d="M18 21 V17"/>
+  </g>
+</svg>

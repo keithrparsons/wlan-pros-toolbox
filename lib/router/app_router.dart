@@ -16,6 +16,7 @@ import '../screens/search_screen.dart';
 import '../data/tool_catalog.dart' show kEducationalResourcesRoute;
 import '../screens/tools/dbm_watt_converter.dart';
 import '../screens/tools/calculators/cable_loss_screen.dart';
+import '../screens/tools/calculators/channel_frequency_converter_screen.dart';
 import '../screens/tools/calculators/downtilt_screen.dart';
 import '../screens/tools/calculators/earth_curvature_screen.dart';
 import '../screens/tools/calculators/eirp_screen.dart';
@@ -182,6 +183,8 @@ class AppRouter {
   static const String search = '/search';
 
   static const String dbmWatt = '/tools/dbm-watt';
+
+  static const String channelFrequency = '/tools/channel-frequency';
 
   // RF Calculators category — pure-math tools (no network, all platforms incl.
   // web). Formulas mirror the RF Tools PWA (www/app.js) to the decimal.
@@ -498,6 +501,7 @@ class AppRouter {
     educationalResources: (_) => const EducationalResourcesScreen(),
     search: (_) => const SearchScreen(),
     dbmWatt: (_) => const DbmWattConverterScreen(),
+    channelFrequency: (_) => const ChannelFrequencyConverterScreen(),
     fspl: (_) => const FsplScreen(),
     eirp: (_) => const EirpScreen(),
     fresnel: (_) => const FresnelScreen(),

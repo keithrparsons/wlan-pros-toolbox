@@ -200,7 +200,10 @@ void main() {
       // 143 = + Time Server (NTP) (ntp-time) 2026-06-21: an SNTP client in
       // Networking Tools (server time + signed clock offset + round-trip delay
       // over UDP/123). 142 + 1 = 143.
-      expect(store.count, 143);
+      // 144 = + Channel / Frequency (channel-frequency) 2026-06-27: bidirectional
+      // Wi-Fi channel<->frequency converter in Calculators & Tools (Conversions),
+      // built from the verified channel-plan.md sec 7 vectors. 143 + 1 = 144.
+      expect(store.count, 144);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

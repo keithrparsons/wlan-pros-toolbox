@@ -557,6 +557,16 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Conversions',
       ),
       ToolEntry(
+        id: 'channel-frequency',
+        title: 'Channel / Frequency',
+        description:
+            'Convert Wi-Fi channels to center frequency and back, '
+            '2.4 / 5 / 6 GHz, with bonded widths',
+        routeName: '/tools/channel-frequency',
+        isLive: true,
+        subgroup: 'Conversions',
+      ),
+      ToolEntry(
         id: 'fspl',
         title: 'Free Space Path Loss',
         description: 'FSPL for any frequency and distance',

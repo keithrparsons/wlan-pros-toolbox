@@ -2270,6 +2270,49 @@
       ],
       "source": "dbm_watt_converter.dart:72-74,287-292"
     },
+    "channel-frequency": {
+      "name": "Channel / Frequency",
+      "category": "Calculators & Tools",
+      "purpose": "Bidirectional Wi-Fi channel and frequency converter for 2.4, 5, and 6 GHz. Channel to frequency: pick a band, a 20 MHz primary channel, and a width to get the center frequency, the component 20 MHz channels, and the low/high band edges. Frequency to channel: enter a frequency in MHz to get back the band and channel.",
+      "whyHere": "Spec sheets, surveys, and radios mix channel numbers and frequencies, and the same channel number means different frequencies in 5 and 6 GHz. This converts both ways from the verified channel plan so you are never guessing whether channel 36 is 5 or 6 GHz.",
+      "howToUse": [
+        "Pick the direction with the toggle at the top.",
+        "Channel to frequency: choose the band, then a 20 MHz primary channel, then the width. Only valid primaries are offered (bonded center designators like 5 GHz 42 or 6 GHz 7 are not selectable). The result card shows the center frequency, the component 20 MHz channels, and the band edges.",
+        "Frequency to channel: type a frequency in MHz. Values within plus or minus 1 MHz of a channel center snap to that channel; anything off the grid or outside the Wi-Fi plan is honestly rejected.",
+        "A 6 GHz 320 MHz primary that falls in two overlapping 320 MHz channels, or an interior 2.4 GHz 40 MHz primary, shows both placements."
+      ],
+      "inputs": [
+        {
+          "name": "Band",
+          "unit": "2.4 / 5 / 6 GHz",
+          "range": "required for channel to frequency (channel numbers collide across 5 and 6 GHz)"
+        },
+        {
+          "name": "Channel",
+          "unit": "20 MHz primary channel number",
+          "range": "2.4 GHz 1-14; 5 GHz UNII-1 through UNII-4 set; 6 GHz 1,5,9..233 plus special channel 2"
+        },
+        {
+          "name": "Channel width",
+          "unit": "MHz",
+          "range": "2.4 GHz 20/40; 5 GHz 20/40/80/160; 6 GHz 20/40/80/160/320"
+        },
+        {
+          "name": "Frequency",
+          "unit": "MHz",
+          "range": "any value; snaps to a channel within plus or minus 1 MHz, else rejected"
+        }
+      ],
+      "algorithm": "Center frequency = channel_starting_freq + 5 x channel_number, with two hard-coded special cases: 2.4 GHz channel 14 = 2484 MHz, and 6 GHz channel 2 = 5935 MHz (separate operating class, start 5925). Channel starting frequencies are 2407 (2.4 GHz), 5000 (5 GHz), 5950 (6 GHz). A bonded channel's center is the mean of its component 20 MHz channel centers; band edges = center plus or minus width/2. Reverse lookup snaps the input to the 5 MHz grid within plus or minus 1 MHz and returns the unique band and channel (frequency ranges are disjoint across bands). Channel numbers are validated against the verified per-band 20 MHz primary sets.",
+      "example": "5 GHz channel 36 at 80 MHz: components 36/40/44/48, center channel 42, center frequency 5210 MHz, edges 5170-5250 MHz. 6 GHz channel 2 = 5935 MHz (special). 5935 MHz reverse-maps to 6 GHz channel 2; 5180 MHz to 5 GHz channel 36; 5187 MHz is rejected (off-grid).",
+      "fieldNotes": [
+        "Channel and frequency are universal physics, identical worldwide. Channel availability (US 1-11 vs world 1-13, DFS, UNII-4, 6 GHz country adoption, channels 2 and 14) is regulatory and varies by domain; the tool shows the physics and flags the regulatory caveats.",
+        "The same channel number can mean different bands: channel 36 exists in both 5 and 6 GHz, so channel to frequency always requires the band.",
+        "Bonded center numbers (5 GHz 42/50, 6 GHz 7/15/31) are center designators, not selectable 20 MHz channels.",
+        "802.11be defines overlapping 320 MHz channels in 6 GHz, so one primary can sit in two of them; both are shown without asserting the unverified 320 MHz-1 / 320 MHz-2 scheme labels."
+      ],
+      "source": "channel_frequency_data.dart; vectors from Deliverables/2026-06-27-channel-frequency-plan/channel-plan.md sec 7"
+    },
     "ipv4-subnet": {
       "name": "IP Subnetting (IPv4)",
       "category": "Networking Tools",
