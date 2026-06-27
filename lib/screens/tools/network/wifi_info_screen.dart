@@ -1463,11 +1463,20 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     // (snrDerived). On Android, the Noise and SNR rows therefore carry an
     // explicit "why" note naming the missing API, rather than a bare
     // "Unavailable" the user cannot interpret.
-    final bool isAndroid = _source == WifiInfoSource.androidWifiManager;
-    final String? noiseNote = isAndroid && info.noiseDbm == null
+    // Android AND Windows expose NO noise-floor reading in their public Wi-Fi
+    // APIs (Android's WifiManager, Windows' Native Wifi), so SNR genuinely
+    // cannot be computed on either — a true platform limit, not a transient
+    // miss (GL-005 / GL-008). macOS CoreWLAN DOES report both (no note); iOS
+    // derives SNR (snrDerived). Both no-noise platforms therefore carry an
+    // explicit "why" note naming the missing API rather than a bare
+    // "Unavailable" the user cannot interpret.
+    final bool isWindows = _source == WifiInfoSource.windowsNativeWifi;
+    final bool noNoiseFloorApi =
+        _source == WifiInfoSource.androidWifiManager || isWindows;
+    final String? noiseNote = noNoiseFloorApi && info.noiseDbm == null
         ? 'Not available on $platformLabel (no noise-floor API)'
         : null;
-    final String? snrNote = isAndroid && info.snrDb == null
+    final String? snrNote = noNoiseFloorApi && info.snrDb == null
         ? 'Needs the noise floor, which $platformLabel does not expose'
         : null;
     return _Card(
@@ -1652,17 +1661,28 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         : null;
   }
 
-  /// The honest note for an absent Country code. Android-only: the regulatory
-  /// country comes from WifiManager.getCountryCode(), which is restricted on
-  /// Android 11+ and frequently returns nothing to a normal app — so a null
-  /// country there gets a precise reason, not a bare "Unavailable". Null on
-  /// every other platform/state (a present value, or iOS/macOS which don't carry
-  /// this Android-specific caveat).
+  /// The honest note for an absent Country code, platform-correct.
+  ///
+  /// Android: the regulatory country comes from WifiManager.getCountryCode(),
+  /// restricted on Android 11+ and frequently empty to a normal app.
+  /// Windows: the value is parsed from the AP's Country information element, so
+  /// it is simply absent when the AP does not advertise one (common). Null on
+  /// every other platform/state (a present value, or iOS/macOS which carry no
+  /// such caveat).
   String? _countryNote(String? countryCode) {
     if (countryCode != null && countryCode.trim().isNotEmpty) return null;
-    if (_source != WifiInfoSource.androidWifiManager) return null;
-    return 'Restricted on Android 11+; the OS does not expose the regulatory '
-        'country to this app';
+    switch (_source) {
+      case WifiInfoSource.androidWifiManager:
+        return 'Restricted on Android 11+; the OS does not expose the '
+            'regulatory country to this app';
+      case WifiInfoSource.windowsNativeWifi:
+        return 'Only present when the AP advertises a Country element';
+      case WifiInfoSource.macosCoreWlan:
+      case WifiInfoSource.iosShortcuts:
+      case WifiInfoSource.unsupported:
+      case WifiInfoSource.web:
+        return null;
+    }
   }
 
   Widget _statusCard(ConnectedAp info) => _Card(

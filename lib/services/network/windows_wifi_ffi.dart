@@ -16,6 +16,7 @@
 
 import 'dart:convert';
 import 'dart:ffi';
+import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
@@ -53,6 +54,51 @@ const int _kWlanClientVersion = 2;
 
 /// `ERROR_SUCCESS`.
 const int _kErrorSuccess = 0;
+
+/// `ERROR_BUFFER_OVERFLOW` — GetAdaptersAddresses returns this on the sizing
+/// call (buffer too small / null), with the required byte count written back to
+/// the size out-param. We then allocate and call again.
+const int _kErrorBufferOverflow = 111;
+
+/// `AF_UNSPEC` — return adapters for every address family. We only read the
+/// link-layer MAC, so the family is immaterial; UNSPEC is the documented value
+/// for "all".
+const int _kAfUnspec = 0;
+
+/// GetAdaptersAddresses flags — skip the unicast/anycast/multicast/DNS address
+/// sub-lists we never read, so the driver fills the smallest possible buffer.
+const int _kGaaFlagSkipUnicast = 0x0001;
+const int _kGaaFlagSkipAnycast = 0x0002;
+const int _kGaaFlagSkipMulticast = 0x0004;
+const int _kGaaFlagSkipDnsServer = 0x0008;
+const int _kGaaFlags = _kGaaFlagSkipUnicast |
+    _kGaaFlagSkipAnycast |
+    _kGaaFlagSkipMulticast |
+    _kGaaFlagSkipDnsServer;
+
+/// Byte offset of the variable-length `wlanBssEntries` array inside
+/// WLAN_BSS_LIST: `dwTotalSize` (Uint32, 4) + `dwNumberOfItems` (Uint32, 4) = 8,
+/// with no padding before the array (WLAN_BSS_ENTRY begins with a 4-byte-aligned
+/// DOT11_SSID). Used to compute a real `Pointer<WLAN_BSS_ENTRY>` per row so the
+/// IE blob can be read by pointer arithmetic (the win32 inline-array accessor
+/// returns a struct view with no exposed backing address).
+///
+/// TODO(windows-verify): confirm the +8 base and `sizeOf<WLAN_BSS_ENTRY>()`
+/// stride land each entry pointer on the same memory the (proven) array accessor
+/// reads. A wrong offset corrupts ONLY the channel-width / country IE parse
+/// (those fall back to null); the RSSI/channel/band path stays on the array
+/// accessor and is unaffected.
+const int _kBssEntriesOffset = 8;
+
+// IE element IDs (IEEE 802.11 element-ID assignments) used by the operating-
+// width + country parse. Extended elements share ID 255 and carry a 1-byte
+// extension ID as their first data byte.
+const int _kEidCountry = 7; // Country element.
+const int _kEidHtOperation = 61; // HT Operation (20 vs 40 MHz).
+const int _kEidVhtOperation = 192; // VHT Operation (80 / 160 / 80+80).
+const int _kEidExtended = 255; // Element ID Extension marker.
+const int _kExtHeOperation = 36; // HE Operation (6 GHz operation width).
+const int _kExtEhtOperation = 106; // EHT Operation (Wi-Fi 7, up to 320 MHz).
 
 // dot11_phy_type_* — the PHY generation the radio is using on this link.
 const int _kPhyTypeDsss = 2; // 802.11b (DSSS)
@@ -135,14 +181,16 @@ WifiInfo readConnectedApFromNativeWifi() {
       }
 
       // Copy the GUID of the first connected interface into a buffer we own, so
-      // it is unambiguously a Pointer<GUID> and outlives the list pointer.
-      final Pointer<GUID> guidPtr = _interfaceGuidPointer(pIfList, count);
-      if (guidPtr == nullptr) {
+      // it is unambiguously a Pointer<GUID> and outlives the list pointer, and
+      // capture its friendly adapter description in the same pass.
+      final _ConnectedInterface? iface = _connectedInterface(pIfList, count);
+      if (iface == null) {
         throw const WifiInfoUnavailable(
           WifiInfoUnavailableReason.channelError,
           'No connected wireless interface.',
         );
       }
+      final Pointer<GUID> guidPtr = iface.guidPtr;
 
       try {
         // 3. Query the current connection attributes.
@@ -150,10 +198,20 @@ WifiInfo readConnectedApFromNativeWifi() {
             _queryCurrentConnection(handle, guidPtr);
 
         // 4. Read the BSS list to get the real dBm RSSI + center frequency for
-        // the connected BSSID.
+        // the connected BSSID, plus the operating channel width + country code
+        // parsed from that BSS entry's IE blob.
         final _BssSnapshot? bss = _queryConnectedBss(handle, guidPtr, conn);
 
-        return _composeWifiInfo(conn, bss);
+        // 5. Read the device adapter MAC via GetAdaptersAddresses, matched to
+        // this interface by GUID. Null (honest) when the match fails.
+        final String? hardwareAddress = _queryHardwareAddress(guidPtr);
+
+        return _composeWifiInfo(
+          conn,
+          bss,
+          interfaceName: iface.description,
+          hardwareAddress: hardwareAddress,
+        );
       } finally {
         calloc.free(guidPtr);
       }
@@ -169,19 +227,30 @@ WifiInfo readConnectedApFromNativeWifi() {
   }
 }
 
-/// Returns a freshly-allocated pointer to a COPY of the first connected
-/// interface's GUID, or nullptr when none is connected. The caller owns the
-/// buffer and frees it with `calloc.free`.
+/// The connected interface's GUID (a caller-owned copy) plus its friendly
+/// adapter description (e.g. "Intel(R) Wi-Fi 6E AX211 160MHz"). The caller owns
+/// [guidPtr] and frees it with `calloc.free`.
+class _ConnectedInterface {
+  _ConnectedInterface(this.guidPtr, this.description);
+
+  final Pointer<GUID> guidPtr;
+  final String? description;
+}
+
+/// Returns the first connected interface's GUID (a freshly-allocated COPY) and
+/// its `strInterfaceDescription`, or null when none is connected.
 ///
-/// Copying (rather than taking the address of the inline-array element) keeps
-/// the GUID valid independent of the interface-list pointer's lifetime and makes
-/// it unambiguously a `Pointer&lt;GUID&gt;` for WlanQueryInterface.
+/// Copying the GUID (rather than taking the address of the inline-array element)
+/// keeps it valid independent of the interface-list pointer's lifetime and makes
+/// it unambiguously a `Pointer&lt;GUID&gt;` for WlanQueryInterface. The
+/// description is the real friendly adapter name Native Wifi already holds, so
+/// the Interface row shows it instead of an opaque GUID.
 ///
 /// TODO(windows-verify): confirm the inline-array element read
 /// `pIfList.ref.InterfaceInfo[i]` indexes correctly against the real
-/// variable-length WLAN_INTERFACE_INFO_LIST layout (the part most likely to need
-/// a tweak on the real struct).
-Pointer<GUID> _interfaceGuidPointer(
+/// variable-length WLAN_INTERFACE_INFO_LIST layout, and that
+/// `strInterfaceDescription` decodes to the expected adapter name.
+_ConnectedInterface? _connectedInterface(
   Pointer<WLAN_INTERFACE_INFO_LIST> pIfList,
   int count,
 ) {
@@ -198,10 +267,13 @@ Pointer<GUID> _interfaceGuidPointer(
         ..Data2 = info.InterfaceGuid.Data2
         ..Data3 = info.InterfaceGuid.Data3
         ..Data4 = info.InterfaceGuid.Data4;
-      return out;
+      // strInterfaceDescription is a fixed WCHAR[] the win32 binding decodes to
+      // a Dart string; an empty value degrades honestly to null.
+      final String desc = info.strInterfaceDescription.trim();
+      return _ConnectedInterface(out, desc.isEmpty ? null : desc);
     }
   }
-  return nullptr;
+  return null;
 }
 
 /// The fields we lift out of WLAN_CONNECTION_ATTRIBUTES (+ its security attrs).
@@ -280,12 +352,20 @@ _ConnectionSnapshot _queryCurrentConnection(
   }
 }
 
-/// The fields we lift out of the connected WLAN_BSS_ENTRY (real dBm + frequency).
+/// The fields we lift out of the connected WLAN_BSS_ENTRY (real dBm + frequency,
+/// plus the operating width + country parsed from its IE blob).
 class _BssSnapshot {
-  const _BssSnapshot({required this.rssiDbm, required this.centerFreqKhz});
+  const _BssSnapshot({
+    required this.rssiDbm,
+    required this.centerFreqKhz,
+    this.channelWidthMhz,
+    this.countryCode,
+  });
 
   final int rssiDbm; // lRssi — a true negative dBm
   final int centerFreqKhz; // ulChCenterFrequency, in kHz
+  final int? channelWidthMhz; // {20,40,80,160,320} from HT/VHT/HE/EHT op IEs
+  final String? countryCode; // 2-char AP-advertised country, or null
 }
 
 /// A decoded BSS-list entry we may select the connected link from.
@@ -300,12 +380,19 @@ class WifiBssCandidate {
     required this.ssid,
     required this.rssiDbm,
     required this.centerFreqKhz,
+    this.informationElements,
   });
 
   final String bssid; // lowercase colon-hex
   final String? ssid;
   final int rssiDbm;
   final int centerFreqKhz;
+
+  /// The raw IE blob copied out of this entry's WLAN_BSS_ENTRY (Beacon/Probe
+  /// Response elements), or null when the entry carries none. Parsed for the
+  /// operating channel width + country only on the SELECTED link, so the walk
+  /// runs once, not per candidate.
+  final Uint8List? informationElements;
 }
 
 /// First 5 octets of a colon-hex BSSID (`94:2a:6f:a0:a5`), lowercased. Groups
@@ -455,6 +542,15 @@ _BssSnapshot? _queryConnectedBss(
     pBssList = ppBssList.value;
     final int n = pBssList.ref.dwNumberOfItems;
 
+    // A real Pointer<WLAN_BSS_ENTRY> to entry 0, used ONLY to read each entry's
+    // IE blob by pointer arithmetic (the RSSI/channel/band fields keep reading
+    // through the proven win32 inline-array accessor below, so a wrong IE offset
+    // cannot regress them). See [_kBssEntriesOffset].
+    final Pointer<WLAN_BSS_ENTRY> entriesBase =
+        Pointer<WLAN_BSS_ENTRY>.fromAddress(
+      pBssList.address + _kBssEntriesOffset,
+    );
+
     final List<WifiBssCandidate> candidates = <WifiBssCandidate>[];
     for (int i = 0; i < n; i++) {
       final WLAN_BSS_ENTRY entry = pBssList.ref.wlanBssEntries[i];
@@ -465,6 +561,7 @@ _BssSnapshot? _queryConnectedBss(
         ssid: _decodeSsid(entry.dot11Ssid),
         rssiDbm: entry.lRssi,
         centerFreqKhz: entry.ulChCenterFrequency,
+        informationElements: _readIeBlob(entriesBase + i),
       ));
     }
     if (candidates.isEmpty) return null;
@@ -480,22 +577,113 @@ _BssSnapshot? _queryConnectedBss(
       operatingChannel: operatingChannel,
     );
     if (link != null) {
+      // Parse the operating channel width + AP-advertised country from the
+      // SELECTED link's IE blob (pure TLV walk; null when absent or malformed).
+      final Uint8List? ies = link.informationElements;
       return _BssSnapshot(
         rssiDbm: link.rssiDbm,
         centerFreqKhz: link.centerFreqKhz,
+        channelWidthMhz: ies == null ? null : channelWidthFromIes(ies),
+        countryCode: ies == null ? null : countryCodeFromIes(ies),
       );
     }
 
-    // TODO(windows-verify): channel WIDTH lives in the IE blob (entry.ulIeOffset
-    // / entry.ulIeSize → HT/VHT/HE operation elements). Parsing is deferred to
-    // device-time; until then channelWidthMhz is honestly null, the same posture
-    // Android takes when there is no scan match.
     return null;
   } finally {
     if (pBssList != nullptr) {
       WlanFreeMemory(pBssList.cast());
     }
     calloc.free(ppBssList);
+  }
+}
+
+/// Copies the IE blob out of one WLAN_BSS_ENTRY into a Dart-owned [Uint8List].
+///
+/// `ulIeOffset` is the byte offset of the IE data FROM THE START OF THE ENTRY,
+/// and `ulIeSize` its length, so the blob is `entryPtr + ulIeOffset` for
+/// `ulIeSize` bytes (per the Microsoft Native Wifi sample). Copying detaches the
+/// bytes from native memory so they survive WlanFreeMemory and parse purely.
+/// Returns null for an empty/absent blob.
+///
+/// TODO(windows-verify): confirm `ulIeOffset` is entry-relative (not list-
+/// relative) on the real struct and that the copied bytes begin at a valid
+/// TLV (id,len,...). A wrong base only nulls width/country, never RSSI.
+Uint8List? _readIeBlob(Pointer<WLAN_BSS_ENTRY> entryPtr) {
+  final int offset = entryPtr.ref.ulIeOffset;
+  final int size = entryPtr.ref.ulIeSize;
+  if (offset <= 0 || size <= 0) return null;
+  final Pointer<Uint8> iePtr = entryPtr.cast<Uint8>() + offset;
+  final Uint8List out = Uint8List(size);
+  for (int j = 0; j < size; j++) {
+    out[j] = iePtr[j];
+  }
+  return out;
+}
+
+/// Reads the device adapter MAC for the connected interface via
+/// GetAdaptersAddresses (iphlpapi), matched to [guidPtr] by GUID.
+///
+/// The WLAN interface GUID equals the adapter's `AdapterName` string (the GUID
+/// in `{...}` form) that GetAdaptersAddresses returns, so we match on it
+/// case-insensitively. Returns the burned-in/active device MAC as lowercase
+/// colon-hex, or null when the adapter list cannot be read or no GUID matches
+/// (honest — never the AP BSSID, never a fabricated address).
+///
+/// Frees every buffer it allocates on every exit path.
+///
+/// TODO(windows-verify): confirm `AdapterName` matches `GUID.toString()`'s
+/// `{...}` form (case aside) and that `PhysicalAddress[0..5]` is the Wi-Fi MAC.
+String? _queryHardwareAddress(Pointer<GUID> guidPtr) {
+  final String targetGuid = guidPtr.ref.toString().toLowerCase();
+
+  final Pointer<Uint32> pSize = calloc<Uint32>();
+  Pointer<IP_ADAPTER_ADDRESSES_LH> buf = nullptr;
+  try {
+    // Sizing call: a null buffer returns ERROR_BUFFER_OVERFLOW with the byte
+    // count written to pSize.
+    int result = GetAdaptersAddresses(
+      _kAfUnspec,
+      _kGaaFlags,
+      nullptr,
+      nullptr,
+      pSize,
+    );
+    if (result != _kErrorBufferOverflow && result != _kErrorSuccess) {
+      return null;
+    }
+    if (pSize.value == 0) return null;
+
+    buf = calloc<Uint8>(pSize.value).cast<IP_ADAPTER_ADDRESSES_LH>();
+    result = GetAdaptersAddresses(
+      _kAfUnspec,
+      _kGaaFlags,
+      nullptr,
+      buf,
+      pSize,
+    );
+    if (result != _kErrorSuccess) return null;
+
+    for (
+      Pointer<IP_ADAPTER_ADDRESSES_LH> cur = buf;
+      cur != nullptr;
+      cur = cur.ref.Next
+    ) {
+      final Pointer<Utf8> namePtr = cur.ref.AdapterName;
+      if (namePtr == nullptr) continue;
+      final String name = namePtr.toDartString().toLowerCase();
+      if (name != targetGuid) continue;
+
+      final int len = cur.ref.PhysicalAddressLength;
+      if (len < 6) return null; // not an Ethernet/Wi-Fi MAC
+      final List<int> bytes = <int>[
+        for (int i = 0; i < 6; i++) cur.ref.PhysicalAddress[i],
+      ];
+      return formatMacBytes(bytes);
+    }
+    return null;
+  } finally {
+    if (buf != nullptr) calloc.free(buf);
+    calloc.free(pSize);
   }
 }
 
@@ -507,8 +695,17 @@ _BssSnapshot? _queryConnectedBss(
 ///     macOS which has no Rx). Kbps → Mbps.
 ///   * channel + band — derived from the BSS center frequency.
 ///   * noise / SNR — NOT exposed by Native Wifi → null, never derived (GL-005).
-///   * channelWidthMhz — IE parsing deferred → null for now.
-WifiInfo _composeWifiInfo(_ConnectionSnapshot conn, _BssSnapshot? bss) {
+///   * channelWidthMhz — parsed from the BSS IE blob (HT/VHT/HE/EHT Operation);
+///     null when no operation element advertises a width.
+///   * interfaceName — the friendly adapter description from WLAN_INTERFACE_INFO.
+///   * hardwareAddress — the device adapter MAC from GetAdaptersAddresses.
+///   * countryCode — the AP-advertised Country element, when present.
+WifiInfo _composeWifiInfo(
+  _ConnectionSnapshot conn,
+  _BssSnapshot? bss, {
+  required String? interfaceName,
+  required String? hardwareAddress,
+}) {
   final int? channel =
       bss == null ? null : _frequencyKhzToChannel(bss.centerFreqKhz);
   final String? band =
@@ -522,7 +719,9 @@ WifiInfo _composeWifiInfo(_ConnectionSnapshot conn, _BssSnapshot? bss) {
       conn.rxRateKbps > 0 ? conn.rxRateKbps / 1000.0 : null;
 
   return WifiInfo(
-    interfaceName: null, // Native Wifi exposes a GUID, not a BSD-style name.
+    // The friendly adapter description from WLAN_INTERFACE_INFO (e.g. "Intel(R)
+    // Wi-Fi 6E AX211 160MHz"), not an opaque GUID.
+    interfaceName: interfaceName,
     ssid: conn.ssid,
     bssid: conn.bssid,
     rssiDbm: bss?.rssiDbm, // real dBm from the BSS entry, or null.
@@ -533,10 +732,15 @@ WifiInfo _composeWifiInfo(_ConnectionSnapshot conn, _BssSnapshot? bss) {
     rxRateMbps: rxMbps, // Windows DOES supply Rx (macOS does not).
     phyMode: _phyTypeToStandard(conn.phyType),
     channel: channel,
-    channelWidthMhz: null, // IE parse deferred; see TODO(windows-verify).
+    // Operating width from the BSS HT/VHT/HE/EHT Operation IEs; null when none
+    // advertises one.
+    channelWidthMhz: bss?.channelWidthMhz,
     band: band,
-    countryCode: null, // WLAN_COUNTRY_OR_REGION_STRING_LIST read deferred.
-    hardwareAddress: null, // device MAC read deferred (not the AP BSSID).
+    // AP-advertised Country element (element ID 7); null when the AP omits it.
+    countryCode: bss?.countryCode,
+    // The device adapter MAC from GetAdaptersAddresses (NOT the AP BSSID); null
+    // when the GUID match fails.
+    hardwareAddress: hardwareAddress,
     securityToken: conn.securityToken,
     poweredOn: true, // a current-connection read implies the radio is on.
     locationAuthorized: true, // Windows Native Wifi needs no Location grant.
@@ -643,4 +847,209 @@ String _utf8OrLatin1(List<int> bytes) {
   } catch (_) {
     return const Latin1Decoder().convert(bytes);
   }
+}
+
+// ── Pure helpers exercised by windows_wifi_ie_test.dart. None touches a win32
+// symbol, so they run on any host. ──────────────────────────────────────────
+
+/// Formats the first 6 octets of a device MAC as lowercase colon-hex
+/// (`a4:83:e7:00:11:22`). Returns null for a short input or the all-zero MAC
+/// (which Native Wifi/iphlpapi can hand back for a down adapter) — never a
+/// fabricated address.
+String? formatMacBytes(List<int> bytes) {
+  if (bytes.length < 6) return null;
+  final List<String> parts = <String>[
+    for (int i = 0; i < 6; i++) (bytes[i] & 0xff).toRadixString(16).padLeft(2, '0'),
+  ];
+  final String joined = parts.join(':');
+  return joined == '00:00:00:00:00:00' ? null : joined;
+}
+
+/// Walks an IE TLV blob (`[id][len][data…]` repeated) and returns the `data`
+/// bytes of the FIRST element matching [elementId]. For an extended element
+/// ([elementId] == 255) the match also requires the first data byte to equal
+/// [extId], and the returned bytes EXCLUDE that extension-id byte. Returns null
+/// when absent; stops cleanly on a truncated/malformed blob.
+@visibleForTesting
+Uint8List? findInformationElement(Uint8List ies, int elementId, {int? extId}) {
+  int i = 0;
+  while (i + 2 <= ies.length) {
+    final int id = ies[i];
+    final int len = ies[i + 1];
+    final int dataStart = i + 2;
+    final int dataEnd = dataStart + len;
+    if (dataEnd > ies.length) break; // truncated element — stop
+    if (id == elementId) {
+      if (id == _kEidExtended) {
+        if (len >= 1 && extId != null && ies[dataStart] == extId) {
+          return Uint8List.sublistView(ies, dataStart + 1, dataEnd);
+        }
+        // A 255 element with a different extension id — skip and keep walking.
+      } else {
+        return Uint8List.sublistView(ies, dataStart, dataEnd);
+      }
+    }
+    i = dataEnd;
+  }
+  return null;
+}
+
+/// Resolves the operating channel width in MHz ({20,40,80,160,320}) from the
+/// operation IEs in [ies], or null when none advertises one.
+///
+/// Priority newest → oldest, since the most advanced operation element reflects
+/// the actual operating width: EHT Operation (Wi-Fi 7, ≤320) → HE Operation
+/// (6 GHz width) → VHT Operation (80/160/80+80) → HT Operation (20/40).
+int? channelWidthFromIes(Uint8List ies) {
+  final Uint8List? eht = findInformationElement(
+    ies,
+    _kEidExtended,
+    extId: _kExtEhtOperation,
+  );
+  if (eht != null) {
+    final int? w = _ehtWidth(eht);
+    if (w != null) return w;
+  }
+
+  final Uint8List? he = findInformationElement(
+    ies,
+    _kEidExtended,
+    extId: _kExtHeOperation,
+  );
+  if (he != null) {
+    final int? w = _heWidth(he);
+    if (w != null) return w;
+  }
+
+  final Uint8List? vht = findInformationElement(ies, _kEidVhtOperation);
+  if (vht != null) {
+    final int? w = _vhtWidth(vht);
+    if (w != null) return w;
+  }
+
+  final Uint8List? ht = findInformationElement(ies, _kEidHtOperation);
+  if (ht != null) {
+    return _htWidth(ht);
+  }
+
+  return null;
+}
+
+/// HT Operation (element 61): the STA Channel Width bit (0x04) of HT Operation
+/// Information subset 1 (data byte 1) distinguishes 40 from 20 MHz.
+int? _htWidth(Uint8List d) {
+  if (d.length < 2) return null;
+  return (d[1] & 0x04) != 0 ? 40 : 20;
+}
+
+/// VHT Operation (element 192): byte 0 is the Channel Width field; bytes 1–2 are
+/// the center-frequency segment-0 / segment-1 indices used to tell 160 from
+/// 80+80 when the width field is the (legacy) value 1.
+int? _vhtWidth(Uint8List d) {
+  if (d.isEmpty) return null;
+  switch (d[0]) {
+    case 0:
+      return null; // 20/40 — defer to the HT Operation element.
+    case 1:
+      // 80, 160, or 80+80: a zero segment-1 index (data byte 2) means a single
+      // 80 MHz segment; a non-zero one means a 160 MHz span (contiguous or
+      // 80+80).
+      if (d.length >= 3) {
+        return d[2] == 0 ? 80 : 160;
+      }
+      return 80;
+    case 2:
+      return 160; // deprecated explicit 160.
+    case 3:
+      return 160; // 80+80.
+    default:
+      return null;
+  }
+}
+
+/// HE Operation (extended element 36, ext-id stripped): the operating width for
+/// a 6 GHz BSS lives in the optional 6 GHz Operation Information field, gated by
+/// presence bits in the 3-byte HE Operation Parameters. A 5 GHz HE BSS instead
+/// carries an optional VHT Operation Information field, decoded via [_vhtWidth].
+int? _heWidth(Uint8List d) {
+  if (d.length < 6) return null;
+  final int params = d[0] | (d[1] << 8) | (d[2] << 16);
+  final bool vhtPresent = (params & (1 << 14)) != 0;
+  final bool coHosted = (params & (1 << 15)) != 0;
+  final bool sixGhzPresent = (params & (1 << 17)) != 0;
+
+  // Fixed prefix: HE Operation Parameters (3) + BSS Color (1) + Basic HE-MCS
+  // And Nss Set (2) = 6 bytes.
+  int offset = 6;
+  Uint8List? vhtInfo;
+  if (vhtPresent) {
+    if (offset + 3 <= d.length) {
+      vhtInfo = Uint8List.sublistView(d, offset, offset + 3);
+    }
+    offset += 3;
+  }
+  if (coHosted) offset += 1;
+
+  if (sixGhzPresent && offset + 2 <= d.length) {
+    // 6 GHz Operation Information: [primary][control][seg0][seg1][min-rate].
+    // The Control field (byte 1) carries the Channel Width.
+    return _sixGhzWidth(d[offset + 1]);
+  }
+  if (vhtInfo != null) return _vhtWidth(vhtInfo);
+  return null;
+}
+
+/// HE/EHT 6 GHz Operation Information Control field → width. The Channel Width
+/// subfield is bits 0–1: 0=20, 1=40, 2=80, 3=160/80+80 (both a 160 MHz span).
+int? _sixGhzWidth(int control) {
+  switch (control & 0x03) {
+    case 0:
+      return 20;
+    case 1:
+      return 40;
+    case 2:
+      return 80;
+    case 3:
+      return 160;
+    default:
+      return null;
+  }
+}
+
+/// EHT Operation (extended element 106, ext-id stripped): when the EHT Operation
+/// Information field is present (Parameters bit 0), its Control field carries the
+/// Channel Width (bits 0–2): 0=20, 1=40, 2=80, 3=160, 4=320.
+int? _ehtWidth(Uint8List d) {
+  if (d.isEmpty) return null;
+  final bool infoPresent = (d[0] & 0x01) != 0;
+  if (!infoPresent) return null;
+  // EHT Operation Parameters (1) + Basic EHT-MCS And Nss Set (4) = 5.
+  const int infoStart = 5;
+  if (infoStart >= d.length) return null;
+  switch (d[infoStart] & 0x07) {
+    case 0:
+      return 20;
+    case 1:
+      return 40;
+    case 2:
+      return 80;
+    case 3:
+      return 160;
+    case 4:
+      return 320;
+    default:
+      return null;
+  }
+}
+
+/// Country element (element 7): the first two bytes are the ASCII country code
+/// (the third byte is a regulatory class indicator we ignore). Returns the
+/// uppercase 2-letter code, or null when absent/non-alphabetic.
+String? countryCodeFromIes(Uint8List ies) {
+  final Uint8List? country = findInformationElement(ies, _kEidCountry);
+  if (country == null || country.length < 2) return null;
+  bool isAlpha(int c) =>
+      (c >= 0x41 && c <= 0x5a) || (c >= 0x61 && c <= 0x7a);
+  if (!isAlpha(country[0]) || !isAlpha(country[1])) return null;
+  return String.fromCharCodes(<int>[country[0], country[1]]).toUpperCase();
 }
