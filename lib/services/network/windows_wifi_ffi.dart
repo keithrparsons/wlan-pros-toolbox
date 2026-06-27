@@ -18,6 +18,7 @@ import 'dart:convert';
 import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:win32/win32.dart';
 
 import 'wifi_info_service.dart'
@@ -31,6 +32,12 @@ import 'wifi_info_service.dart'
 /// `wlan_intf_opcode_current_connection` — the WlanQueryInterface opcode that
 /// returns WLAN_CONNECTION_ATTRIBUTES for the live connection.
 const int _kOpcodeCurrentConnection = 7;
+
+/// `wlan_intf_opcode_channel_number` — returns the operating channel (ULONG) of
+/// the connected interface. Authoritative for the primary link, and used to
+/// disambiguate which affiliated per-link BSS to read on a Wi-Fi 7 MLO / MBSSID
+/// connection where the current-connection BSSID is the AP MLD address.
+const int _kOpcodeChannelNumber = 8;
 
 /// `wlan_interface_state_connected` — the interface is associated to a network.
 const int _kInterfaceStateConnected = 1;
@@ -281,9 +288,145 @@ class _BssSnapshot {
   final int centerFreqKhz; // ulChCenterFrequency, in kHz
 }
 
-/// Reads the BSS list for the connected SSID and returns the entry whose BSSID
-/// matches the current connection. Returns null when no matching entry is found
-/// (then RSSI-dBm/channel/band stay null and the signal-quality % still shows).
+/// A decoded BSS-list entry we may select the connected link from.
+///
+/// A plain Dart value object (no win32 struct), so the link-selection logic that
+/// consumes it ([selectConnectedLink]) is unit-testable off Windows.
+/// [_queryConnectedBss] builds these from WLAN_BSS_ENTRY rows.
+@visibleForTesting
+class WifiBssCandidate {
+  const WifiBssCandidate({
+    required this.bssid,
+    required this.ssid,
+    required this.rssiDbm,
+    required this.centerFreqKhz,
+  });
+
+  final String bssid; // lowercase colon-hex
+  final String? ssid;
+  final int rssiDbm;
+  final int centerFreqKhz;
+}
+
+/// First 5 octets of a colon-hex BSSID (`94:2a:6f:a0:a5`), lowercased. Groups
+/// the transmitted + non-transmitted BSSIDs of one AP radio (MBSSID), and
+/// bridges a Wi-Fi 7 AP MLD address to its affiliated per-link APs, which share
+/// the OUI + first device octets and differ only in the last byte. Lowercasing
+/// makes the prefix match case-insensitive; the real call path already feeds it
+/// lowercase BSSIDs, so this is behavior-preserving.
+@visibleForTesting
+String bssidRadioPrefix(String bssid) {
+  final String lower = bssid.toLowerCase();
+  final List<String> parts = lower.split(':');
+  return parts.length >= 6 ? parts.sublist(0, 5).join(':') : lower;
+}
+
+/// Picks the candidate on [operatingChannel] when known, else the strongest
+/// (least-negative dBm). Returns null for an empty list.
+WifiBssCandidate? _selectLink(
+  List<WifiBssCandidate> list,
+  int? operatingChannel,
+) {
+  if (list.isEmpty) return null;
+  if (operatingChannel != null) {
+    for (final WifiBssCandidate c in list) {
+      if (_frequencyKhzToChannel(c.centerFreqKhz) == operatingChannel) return c;
+    }
+  }
+  final List<WifiBssCandidate> sorted = List<WifiBssCandidate>.of(list)
+    ..sort((WifiBssCandidate a, WifiBssCandidate b) =>
+        b.rssiDbm.compareTo(a.rssiDbm));
+  return sorted.first;
+}
+
+/// The pure connected-link selection: given the decoded BSS candidates and the
+/// current-connection identifiers, returns the candidate that represents the
+/// connected link, or null when nothing advertises the connection.
+///
+/// Precedence (exact → broad), identical to the win32 path it was extracted
+/// from, so the common single-link case is unchanged:
+///   1. Exact BSSID match (non-MLO APs).
+///   2. Same AP radio (shared first-5-octet prefix) — the Wi-Fi 7 MLO / MBSSID
+///      case where [connBssid] is the AP MLD address that never beacons;
+///      selects the affiliated link on [operatingChannel], else the strongest.
+///   3. Same SSID — last resort; same selection rule.
+///
+/// [connBssid] is matched case-insensitively against the (lowercase)
+/// candidate BSSIDs.
+@visibleForTesting
+WifiBssCandidate? selectConnectedLink(
+  List<WifiBssCandidate> candidates, {
+  required String? connBssid,
+  required String? connSsid,
+  required int? operatingChannel,
+}) {
+  if (candidates.isEmpty) return null;
+
+  final String? lowerBssid = connBssid?.toLowerCase();
+
+  // 1. Exact BSSID match — the normal single-link case.
+  if (lowerBssid != null) {
+    for (final WifiBssCandidate c in candidates) {
+      if (c.bssid == lowerBssid) return c;
+    }
+    // 2. Same AP radio (Wi-Fi 7 MLO / MBSSID): the connection BSSID is the AP
+    // MLD address; read the affiliated per-link AP on the operating channel.
+    final String prefix = bssidRadioPrefix(lowerBssid);
+    final List<WifiBssCandidate> sameRadio = candidates
+        .where((WifiBssCandidate c) => bssidRadioPrefix(c.bssid) == prefix)
+        .toList();
+    final WifiBssCandidate? link = _selectLink(sameRadio, operatingChannel);
+    if (link != null) return link;
+  }
+
+  // 3. Same SSID — last resort.
+  if (connSsid != null) {
+    final List<WifiBssCandidate> sameSsid = candidates
+        .where((WifiBssCandidate c) => c.ssid != null && c.ssid == connSsid)
+        .toList();
+    final WifiBssCandidate? link = _selectLink(sameSsid, operatingChannel);
+    if (link != null) return link;
+  }
+
+  return null;
+}
+
+/// Queries `wlan_intf_opcode_channel_number` for the connected interface's
+/// operating channel. Returns null on any error or a 0 channel.
+int? _queryOperatingChannel(int handle, Pointer<GUID> guidPtr) {
+  final Pointer<Uint32> pDataSize = calloc<Uint32>();
+  final Pointer<Pointer> ppData = calloc<Pointer>();
+  try {
+    final int r = WlanQueryInterface(
+      handle,
+      guidPtr,
+      _kOpcodeChannelNumber,
+      nullptr,
+      pDataSize,
+      ppData,
+      nullptr,
+    );
+    if (r != _kErrorSuccess || ppData.value == nullptr) return null;
+    final int ch = ppData.value.cast<Uint32>().value;
+    WlanFreeMemory(ppData.value);
+    return ch == 0 ? null : ch;
+  } finally {
+    calloc.free(pDataSize);
+    calloc.free(ppData);
+  }
+}
+
+/// Reads the BSS list and returns the connected link's RSSI + center frequency.
+///
+/// Match order, exact → broad, so the common single-link case is unchanged:
+///   1. Exact BSSID match (non-MLO APs).
+///   2. Same AP radio (shared first-5-octet prefix) — the Wi-Fi 7 MLO / MBSSID
+///      case where the current-connection BSSID is the AP MLD address that never
+///      beacons; selects the affiliated link on the operating channel.
+///   3. Same SSID — last resort; selects the link on the operating channel, else
+///      the strongest.
+/// Returns null only when nothing advertises the connection at all (then
+/// RSSI-dBm/channel/band stay null and the signal-quality % still shows).
 _BssSnapshot? _queryConnectedBss(
   int handle,
   Pointer<GUID> guidPtr,
@@ -294,7 +437,7 @@ _BssSnapshot? _queryConnectedBss(
   Pointer<WLAN_BSS_LIST> pBssList = nullptr;
   try {
     // Passing a null DOT11_SSID + infrastructure BSS type returns all BSS
-    // entries the driver currently has; we then match the connected BSSID.
+    // entries the driver currently has; we then match the connected link.
     final int bResult = WlanGetNetworkBssList(
       handle,
       guidPtr,
@@ -311,23 +454,42 @@ _BssSnapshot? _queryConnectedBss(
     }
     pBssList = ppBssList.value;
     final int n = pBssList.ref.dwNumberOfItems;
+
+    final List<WifiBssCandidate> candidates = <WifiBssCandidate>[];
     for (int i = 0; i < n; i++) {
       final WLAN_BSS_ENTRY entry = pBssList.ref.wlanBssEntries[i];
-      final String? entryBssid = _decodeBssid(entry.dot11Bssid);
-      if (entryBssid != null &&
-          conn.bssid != null &&
-          entryBssid.toLowerCase() == conn.bssid!.toLowerCase()) {
-        return _BssSnapshot(
-          rssiDbm: entry.lRssi,
-          centerFreqKhz: entry.ulChCenterFrequency,
-        );
-        // TODO(windows-verify): channel WIDTH lives in the IE blob
-        // (entry.ulIeOffset / entry.ulIeSize → HT/VHT/HE operation elements).
-        // Parsing it is deferred to device-time; until then channelWidthMhz is
-        // honestly null (channelWidthAvailable=false), the same posture Android
-        // takes when there is no scan match.
-      }
+      final String? bssid = _decodeBssid(entry.dot11Bssid);
+      if (bssid == null) continue;
+      candidates.add(WifiBssCandidate(
+        bssid: bssid.toLowerCase(),
+        ssid: _decodeSsid(entry.dot11Ssid),
+        rssiDbm: entry.lRssi,
+        centerFreqKhz: entry.ulChCenterFrequency,
+      ));
     }
+    if (candidates.isEmpty) return null;
+
+    final int? operatingChannel = _queryOperatingChannel(handle, guidPtr);
+
+    // Pure precedence (exact → same-radio → same-SSID), extracted so it is
+    // unit-testable off Windows. See [selectConnectedLink].
+    final WifiBssCandidate? link = selectConnectedLink(
+      candidates,
+      connBssid: conn.bssid,
+      connSsid: conn.ssid,
+      operatingChannel: operatingChannel,
+    );
+    if (link != null) {
+      return _BssSnapshot(
+        rssiDbm: link.rssiDbm,
+        centerFreqKhz: link.centerFreqKhz,
+      );
+    }
+
+    // TODO(windows-verify): channel WIDTH lives in the IE blob (entry.ulIeOffset
+    // / entry.ulIeSize → HT/VHT/HE operation elements). Parsing is deferred to
+    // device-time; until then channelWidthMhz is honestly null, the same posture
+    // Android takes when there is no scan match.
     return null;
   } finally {
     if (pBssList != nullptr) {
