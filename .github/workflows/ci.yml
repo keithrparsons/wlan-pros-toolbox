@@ -49,7 +49,11 @@ jobs:
   # Independent of the Linux job above (no `needs:`), so a Windows-build failure
   # never blocks the analyze/test gate, and vice versa.
   build-windows:
-    runs-on: windows-latest
+    # Pinned to windows-2022 (VS 2022 / MSVC 17.x), which matches the dev build
+    # box. GitHub's windows-latest moved to VS 18 (MSVC 14.51), whose newer STL
+    # hard-errors (STL1011) on just_audio_windows's <experimental/coroutine>.
+    # Pinning avoids that and any other bleeding-edge-toolchain breakage.
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
 
