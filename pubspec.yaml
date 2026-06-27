@@ -347,8 +347,8 @@ msix_config:
   # submit/sign time so no placeholder identity ships in the repo.
   # publisher: "CN=XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
   # MSIX requires a strict 4-part version. Tracks the app version (currently
-  # 1.5.4) with a trailing .0 revision; the user-facing version stays 1.5.4+38.
-  msix_version: 1.5.4.0
+  # 1.5.7) with a trailing .0 revision; the user-facing version stays 1.5.7+42.
+  msix_version: 1.5.7.0
   logo_path: assets/branding/app-icon-1024.png
   # Capabilities: internetClient for outbound HTTP/DNS/speed-test probes;
   # internetClientServer for the inbound side of the LAN/socket tools (port
@@ -357,7 +357,7 @@ msix_config:
   # require the `wiFiControl` device capability under MSIX. If so, add it here
   # and reflect it in the Store privacy declaration. Native Wifi *reads* often
   # do not, but the Store may flag it — verify on the first packaged build.
-  capabilities: internetClient, internetClientServer
+  capabilities: internetClient, internetClientServer, privateNetworkClientServer
   # x64 is the SHIPPING target — field Wi-Fi engineers run x64. An ARM64 build
   # from Parallels-on-Apple-Silicon is dev-only and must NOT be what ships.
   architecture: x64

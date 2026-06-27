@@ -190,6 +190,21 @@ class DeviceInfoService {
           memoryBytes: null,
         );
       }
+      if (Platform.isWindows) {
+        final WindowsDeviceInfo w = await _deviceInfo.windowsInfo;
+        return (
+          // productName is the human OS name (e.g. "Windows 11 Pro"); fall back
+          // to the machine name when the registry value is blank. computerName
+          // is the human-meaningful identifier — preferred over the opaque
+          // MachineGuid `deviceId`.
+          name: _blankToNull(w.productName) ?? _blankToNull(w.computerName),
+          id: _blankToNull(w.computerName),
+          // systemMemoryInMegabytes is MB → bytes; 0 is not a real reading.
+          memoryBytes: w.systemMemoryInMegabytes > 0
+              ? w.systemMemoryInMegabytes * 1024 * 1024
+              : null,
+        );
+      }
     } on Object {
       // Plugin missing / platform exception → all-null, honest unavailable.
     }

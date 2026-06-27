@@ -24,6 +24,8 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 
+import '../windows_arp_ffi.dart';
+
 /// One IP → MAC entry read from the ARP cache. Plain data; pure.
 class ArpEntry {
   const ArpEntry({required this.ip, required this.mac});
@@ -151,6 +153,47 @@ class MethodChannelArpReader implements ArpReader {
   }
 }
 
+/// Windows reader over iphlpapi's GetIpNetTable (pure-Dart FFI in
+/// [readArpTableViaIpHlpApi]). Reads the system ARP/neighbor cache, builds the
+/// IP → MAC map, and hands it back as an [ArpReadResult]; the engine then folds
+/// those MACs onto hosts and the shared [MacOuiService] resolver names the
+/// vendor with no new code. Any GetIpNetTable failure becomes an honest
+/// unavailable result rather than a thrown exception — never a fabricated MAC.
+///
+/// The FFI read is injectable ([_rawRead]) so the IP→MAC → [ArpReadResult]
+/// mapping (lowercasing, available/unavailable framing) is unit-testable off
+/// Windows; production leaves it null and uses [readArpTableViaIpHlpApi].
+class WindowsIpNetTableArpReader implements ArpReader {
+  const WindowsIpNetTableArpReader({
+    List<MapEntry<String, String>> Function()? rawRead,
+    // Public-named so tests can inject this seam; initializer-list assigned to
+    // the private field (an initializing formal would force the param name to
+    // start with `_`, which a test in another library cannot supply).
+  }) : _rawRead = rawRead; // ignore: prefer_initializing_formals
+
+  /// Test seam: a fake IP→MAC reader. Null in production (the real iphlpapi FFI
+  /// read is used). When set, the FFI path is bypassed entirely.
+  final List<MapEntry<String, String>> Function()? _rawRead;
+
+  @override
+  Future<ArpReadResult> read() async {
+    try {
+      final List<MapEntry<String, String>> raw =
+          (_rawRead ?? readArpTableViaIpHlpApi)();
+      final List<ArpEntry> entries = <ArpEntry>[
+        for (final MapEntry<String, String> e in raw)
+          if (e.key.isNotEmpty && e.value.isNotEmpty)
+            ArpEntry(ip: e.key, mac: e.value.toLowerCase()),
+      ];
+      return ArpReadResult(available: true, entries: entries);
+    } on WindowsArpReadException catch (e) {
+      return ArpReadResult.unavailable('Windows ARP read failed: ${e.message}');
+    } catch (e) {
+      return ArpReadResult.unavailable('Windows ARP read error: $e');
+    }
+  }
+}
+
 /// Picks the right reader for the current platform. macOS gets the real sysctl
 /// channel; every other platform gets an honest unavailable reader (web is
 /// excluded from dart:io Platform checks, so it is handled first).
@@ -168,26 +211,19 @@ ArpReader platformArpReader() {
       'Android sandbox cannot read the ARP table — MAC/vendor is desktop-only.',
     );
   }
-  // Windows: the neighbor table is read via the Win32 IP Helper API
-  // GetIpNetTable / GetIpNetTable2 (iphlpapi.dll). The `win32` package (already
-  // a dependency for the Wi-Fi bridge) binds these, so the honest path is a
-  // pure-Dart FFI reader mirroring windows_wifi_ffi.dart — open no handle, call
-  // GetIpNetTable into a MIB_IPNETTABLE buffer, map each MIB_IPNETROW
-  // (dwAddr → IP, bPhysAddr[6] → MAC) into an ArpEntry. NOT built in this
-  // prep ticket: the TCP sweep already lists live hosts on Windows; MAC/vendor
-  // enrichment is the optional follow-up.
+  // Windows: read the neighbor table via the Win32 IP Helper API GetIpNetTable
+  // (iphlpapi.dll) in pure-Dart FFI — see [readArpTableViaIpHlpApi]. The win32
+  // 5.x package does NOT bind GetIpNetTable or the MIB_IPNET* structs, so the
+  // function is bound directly from iphlpapi.dll and MIB_IPNETROW is declared as
+  // a local FFI struct (still no subprocess, no arp.exe, no WMI). The resulting
+  // IP → MAC map feeds the SAME shared MacOuiService vendor resolver every other
+  // platform uses, so vendor enrichment now runs on Windows with no new code.
   //
-  // TODO(windows-verify): implement WindowsIpNetTableArpReader via
-  //   GetIpNetTable (iphlpapi.dll) and return it here instead of the
-  //   UnavailableArpReader. Verify the MIB_IPNETROW marshalling + the
-  //   two-call size-then-fill pattern against a real box. Until then the sweep
-  //   still works; only the MAC column is honestly absent.
+  // TODO(windows-verify): the GetIpNetTable FFI path executes for the first time
+  //   on a real Windows box — confirm the two-call sizing flow, the MIB_IPNETROW
+  //   marshalling, and the free discipline (see windows_arp_ffi.dart).
   if (Platform.isWindows) {
-    return const UnavailableArpReader(
-      'MAC/vendor enrichment is not wired on Windows yet — host discovery '
-      '(TCP liveness) still works. The Windows ARP read (GetIpNetTable) is a '
-      'planned follow-up.',
-    );
+    return const WindowsIpNetTableArpReader();
   }
   // Linux / other: out of scope.
   return const UnavailableArpReader(
