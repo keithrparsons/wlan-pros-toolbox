@@ -338,14 +338,15 @@ flutter_launcher_icons:
 #     pass them on the CLI / CI secret at sign time.
 msix_config:
   display_name: WLAN Pros Toolbox
-  publisher_display_name: Wireless LAN Professionals
-  # identity_name MUST match the name reserved in Partner Center exactly.
-  # Reserve "WLANProsToolbox" under the "WLANPros" publisher namespace.
-  identity_name: WLANPros.WLANProsToolbox
-  # publisher: the Store-assigned publisher ID ("CN=<GUID>") for a Store build,
-  # or the OV cert subject for direct distribution. Left blank — filled at
-  # submit/sign time so no placeholder identity ships in the repo.
-  # publisher: "CN=XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+  # publisher_display_name MUST exactly match Partner Center > Product Identity
+  # (note the trailing ", Inc."). Mismatch = upload rejected at preprocessing.
+  publisher_display_name: Wireless LAN Professionals, Inc.
+  # identity_name = Partner Center Package/Identity/Name for the APP product
+  # (Store ID 9NCVHM6ZL4X0). NOT the earlier game product's name.
+  identity_name: WirelessLANProfessionalsI.15753D9F96753
+  # publisher = Partner Center Package/Identity/Publisher (Store-assigned CN GUID).
+  # Microsoft re-signs Store builds, so this is the manifest identity, not a cert.
+  publisher: "CN=3160F864-430A-46A3-88F1-A229CE5344BB"
   # MSIX requires a strict 4-part version. Tracks the app version (currently
   # 1.5.7) with a trailing .0 revision; the user-facing version stays 1.5.7+42.
   msix_version: 1.5.7.0
