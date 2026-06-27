@@ -9,6 +9,13 @@
 // bytes via a tiny custom StreamAudioSource (an in-memory byte source). No temp
 // file, no asset bundle — the tone is generated on the fly and streamed.
 //
+// WINDOWS: the community Windows backend (just_audio_windows, Media Foundation)
+// does NOT support StreamAudioSource — only file/asset/URL sources. So on
+// Windows ONLY, the same generated WAV bytes are written to a temp file (via
+// WavTempFile) and played with AudioSource.uri(file). iOS/macOS/Android/web keep
+// the proven in-memory StreamAudioSource path untouched. The branch is the
+// single `_useTempFilePlayback` check in `_sourceFor`.
+//
 // Two playback modes the screen uses:
 //   * tap a key  -> playTone(key): one 200 ms tone, fire-and-forget.
 //   * Play/Stop  -> startContinuous(key) / stop(): loop the tone until stopped.
@@ -37,6 +44,7 @@ import 'package:just_audio/just_audio.dart';
 
 import '../../data/dtmf.dart';
 import '../../data/signaling_tones.dart';
+import 'wav_temp_file.dart';
 
 /// An in-memory [StreamAudioSource] that serves a fixed WAV byte buffer, so
 /// just_audio can decode generated tones without a temp file or bundled asset.
@@ -68,27 +76,39 @@ class DtmfPlayer {
   /// Whether DTMF/tone PLAYBACK is supported on the current platform.
   ///
   /// just_audio has first-party implementations for iOS, macOS, Android, and
-  /// web, but NO first-party Windows implementation (the 2026-06-08 Windows
-  /// readiness report §1 flags this as the single plugin gap). Rather than bet
-  /// the tone tools on the flaky community `just_audio_windows`, the DTMF /
-  /// signaling-history screen HONESTLY gates playback off on Windows (GL-008
-  /// "honest unavailable" over a fabricated/fragile path) and shows a
-  /// platform-unavailable surface. The pure-Dart tone SYNTHESIS
-  /// (lib/data/dtmf.dart + signaling_tones.dart) is unaffected — only playback
-  /// is gated.
-  ///
-  /// TODO(windows-verify): if Windows tone playback is wanted later, the cleanest
-  /// swap is `audioplayers` (endorsed Windows impl) behind this same DtmfPlayer
-  /// API, or add `just_audio_windows` and accept the media-foundation risk. Flip
-  /// this getter to true once one of those is wired AND device-verified.
-  static bool get playbackSupportedOnThisPlatform {
-    if (kIsWeb) return true; // just_audio web impl.
-    return !platform_io.Platform.isWindows;
+  /// web, and the community `just_audio_windows` (Media Foundation) federated
+  /// implementation now covers Windows. Windows cannot use the in-memory
+  /// StreamAudioSource path — it plays from a temp WAV file instead (see
+  /// [_sourceFor] / [_useTempFilePlayback]) — but playback IS supported, so the
+  /// tone tools no longer gate off on Windows. The pure-Dart tone SYNTHESIS
+  /// (lib/data/dtmf.dart + signaling_tones.dart) is platform-independent.
+  static bool get playbackSupportedOnThisPlatform => true;
+
+  /// Whether this platform must route playback through a temp WAV file rather
+  /// than the in-memory [StreamAudioSource]. True ONLY on Windows, whose
+  /// just_audio backend has no StreamAudioSource support. kIsWeb short-circuits
+  /// first so [platform_io.Platform] is never read on web.
+  static bool get _useTempFilePlayback {
+    if (kIsWeb) return false;
+    return platform_io.Platform.isWindows;
   }
 
   final AudioPlayer _player;
 
+  /// The Windows temp-file sink (lazily used only when [_useTempFilePlayback]).
+  final WavTempFile _tempWav = WavTempFile('dtmf');
+
   bool _disposed = false;
+
+  /// Build the right [AudioSource] for [wav]: the in-memory byte source on
+  /// iOS/macOS/Android/web, or a temp file on Windows. Centralizes the single
+  /// platform branch so every play path below stays identical.
+  Future<AudioSource> _sourceFor(Uint8List wav) async {
+    if (_useTempFilePlayback) {
+      return AudioSource.uri(await _tempWav.write(wav));
+    }
+    return _BytesAudioSource(wav);
+  }
 
   /// Whether a continuous tone is currently looping.
   bool get isPlaying => _player.playing && _player.loopMode == LoopMode.one;
@@ -103,7 +123,7 @@ class DtmfPlayer {
     final Uint8List wav = Dtmf.wavForKey(key, durationMs: durationMs);
     await _player.stop();
     await _player.setLoopMode(LoopMode.off);
-    await _player.setAudioSource(_BytesAudioSource(wav));
+    await _player.setAudioSource(await _sourceFor(wav));
     await _player.play();
   }
 
@@ -113,7 +133,7 @@ class DtmfPlayer {
     if (_disposed) return;
     final Uint8List wav = Dtmf.wavForKey(key, durationMs: 500);
     await _player.stop();
-    await _player.setAudioSource(_BytesAudioSource(wav));
+    await _player.setAudioSource(await _sourceFor(wav));
     await _player.setLoopMode(LoopMode.one);
     await _player.play();
   }
@@ -140,7 +160,7 @@ class DtmfPlayer {
       if (shouldContinue != null && !shouldContinue()) return;
       final Uint8List wav = Dtmf.wavForKey(key, durationMs: toneMs);
       await _player.stop();
-      await _player.setAudioSource(_BytesAudioSource(wav));
+      await _player.setAudioSource(await _sourceFor(wav));
       await _player.play();
       // Wait out the tone, then the inter-digit gap, honoring cancellation.
       await Future<void>.delayed(Duration(milliseconds: toneMs + gapMs));
@@ -158,7 +178,7 @@ class DtmfPlayer {
     final Uint8List wav = SignalingTones.wavForTone(tone);
     await _player.stop();
     await _player.setLoopMode(LoopMode.off);
-    await _player.setAudioSource(_BytesAudioSource(wav));
+    await _player.setAudioSource(await _sourceFor(wav));
     await _player.play();
   }
 
@@ -174,5 +194,6 @@ class DtmfPlayer {
     if (_disposed) return;
     _disposed = true;
     await _player.dispose();
+    await _tempWav.cleanup();
   }
 }

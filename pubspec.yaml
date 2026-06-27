@@ -122,6 +122,21 @@ dependencies:
   # StreamAudioSource — no temp file, no bundled asset, no network (GL-008).
   just_audio: ^0.10.5
 
+  # just_audio_windows — the community federated Windows implementation of
+  # just_audio (Media Foundation). Adds DTMF + Morse tone PLAYBACK on Windows
+  # (the only shipping platform just_audio lacked a backend for). MIT.
+  #   LIMITATION: just_audio_windows does NOT support StreamAudioSource (the
+  #   in-memory byte source the other platforms use), only file/asset/URL
+  #   sources. So on Windows ONLY, the generated WAV bytes are written to a temp
+  #   file and played via AudioSource.uri(Uri.file(...)) — see
+  #   lib/services/audio/wav_temp_file.dart + the `_useTempFilePlayback` branch
+  #   in the DTMF / Morse players. iOS/macOS/Android/web are untouched.
+  #   It registers itself federatedly (`implements: just_audio`) so it pins no
+  #   just_audio_platform_interface version and never conflicts with the
+  #   just_audio pin above. Windows-only at runtime; inert on every other target.
+  #   No network, no subprocess (GL-008). Latest stable on pub.dev (2026-06-27).
+  just_audio_windows: ^0.2.3
+
   # flutter_svg — renders the per-tool Tier-2 icons (assets/tool-icons/<id>.svg)
   # and the in-tool concept graphics (assets/tool-graphics/<id>.svg) per GL-003
   # §8.6 / §8.6.1 / §8.6.2. Icons are single-color and runtime-tinted via

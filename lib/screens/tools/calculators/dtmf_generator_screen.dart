@@ -72,12 +72,12 @@ class DtmfGeneratorScreen extends StatefulWidget {
 }
 
 class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
-  // Playback is gated off where just_audio has no first-party implementation
-  // (Windows — see [DtmfPlayer.playbackSupportedOnThisPlatform]). The player is
-  // lazily constructed ONLY when playback is supported, so an unsupported
-  // platform never instantiates a just_audio AudioPlayer (which would fail to
-  // load a missing native backend). On Windows the screen renders the honest
-  // platform-unavailable surface instead of the keypad.
+  // Playback is supported on every shipping platform now (iOS/macOS/Android/web
+  // via just_audio's first-party backends; Windows via just_audio_windows — see
+  // [DtmfPlayer.playbackSupportedOnThisPlatform]). The nullable construction is
+  // kept as a defensive seam: if a future platform ever lacks an audio backend
+  // and the getter returns false, the player stays null and the screen falls
+  // back to the honest platform-unavailable surface instead of a dead keypad.
   final DtmfPlayer? _player = DtmfPlayer.playbackSupportedOnThisPlatform
       ? DtmfPlayer()
       : null;
@@ -208,21 +208,22 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
         toolbarHeight: 64,
       ),
       body: _player == null
-          // Playback is honestly gated off where just_audio has no first-party
-          // backend (Windows). Reuse the shared platform-unavailable surface
-          // rather than show a keypad whose tones cannot play (GL-008).
+          // Defensive only: every shipping platform now has an audio backend, so
+          // this branch is not reached in practice. If a future platform ever
+          // lacks one, show the honest platform-unavailable surface rather than a
+          // keypad whose tones cannot play (GL-008).
           ? const SafeArea(
               top: false,
               child: NetworkUnavailableView(
                 toolName: 'DTMF Generator',
                 reason: NetworkUnavailableReason.platformApiMissing,
                 icon: Icons.volume_off_outlined,
-                headline: 'Tone playback is not available on Windows yet',
+                headline: 'Tone playback is not available on this platform',
                 message:
                     'The DTMF Generator plays generated audio tones, and the '
-                    'audio engine it uses has no Windows support yet. The tone '
-                    'frequencies are still correct — playback will arrive in a '
-                    'later Windows update. Every other tool works normally here.',
+                    'audio engine it uses has no backend on this platform. The '
+                    'tone frequencies shown are still correct. Every other tool '
+                    'works normally here.',
               ),
             )
           : _buildPlayable(text),

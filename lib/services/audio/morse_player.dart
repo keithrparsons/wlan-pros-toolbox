@@ -9,6 +9,12 @@
 // clips. The pure timing model (Morse.segments) and the PCM synthesis below are
 // unit-testable; this service only streams the bytes.
 //
+// WINDOWS: just_audio_windows (Media Foundation) has no StreamAudioSource
+// support, so on Windows ONLY the message WAV is written to a temp file (via
+// WavTempFile) and played with AudioSource.uri(file). iOS/macOS/Android/web keep
+// the in-memory StreamAudioSource path (the single `_useTempFilePlayback`
+// branch in `_sourceFor`). Mirrors the DTMF player exactly.
+//
 // GL-008: no subprocess, no network, no cleartext HTTP — local audio only.
 
 // StreamAudioSource is just_audio's documented public API for serving audio
@@ -19,12 +25,19 @@
 // ignore_for_file: experimental_member_use
 
 import 'dart:async';
+// Guard dart:io for web exactly like the DTMF player: Platform is only read on a
+// native target, never on web (kIsWeb short-circuits first).
+import 'dart:io'
+    if (dart.library.html) '../network/wifi_info_service_web_stub.dart'
+    as platform_io;
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:just_audio/just_audio.dart';
 
 import '../../data/morse.dart';
+import 'wav_temp_file.dart';
 
 /// An in-memory [StreamAudioSource] that serves a fixed WAV byte buffer, so
 /// just_audio can decode generated Morse audio without a temp file or asset.
@@ -54,7 +67,27 @@ class MorsePlayer {
 
   final AudioPlayer _player;
 
+  /// The Windows temp-file sink (lazily used only when [_useTempFilePlayback]).
+  final WavTempFile _tempWav = WavTempFile('morse');
+
   bool _disposed = false;
+
+  /// Whether this platform must route playback through a temp WAV file rather
+  /// than the in-memory [StreamAudioSource]. True ONLY on Windows, whose
+  /// just_audio backend (just_audio_windows) has no StreamAudioSource support.
+  static bool get _useTempFilePlayback {
+    if (kIsWeb) return false;
+    return platform_io.Platform.isWindows;
+  }
+
+  /// Build the right [AudioSource] for [wav]: the in-memory byte source on
+  /// iOS/macOS/Android/web, or a temp file on Windows.
+  Future<AudioSource> _sourceFor(Uint8List wav) async {
+    if (_useTempFilePlayback) {
+      return AudioSource.uri(await _tempWav.write(wav));
+    }
+    return _BytesAudioSource(wav);
+  }
 
   /// Telephony-band sample rate (Hz) — plenty for a single sine tone.
   static const int sampleRate = 8000;
@@ -74,7 +107,7 @@ class MorsePlayer {
     if (wav == null) return;
     await _player.stop();
     await _player.setLoopMode(LoopMode.off);
-    await _player.setAudioSource(_BytesAudioSource(wav));
+    await _player.setAudioSource(await _sourceFor(wav));
     await _player.play();
   }
 
@@ -89,6 +122,7 @@ class MorsePlayer {
     if (_disposed) return;
     _disposed = true;
     await _player.dispose();
+    await _tempWav.cleanup();
   }
 
   // ── Pure synthesis (no audio engine — unit-testable) ──────────────────────
