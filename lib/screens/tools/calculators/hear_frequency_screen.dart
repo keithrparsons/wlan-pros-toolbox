@@ -83,7 +83,7 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
   final TextEditingController _intervalBCtrl =
       TextEditingController(text: '5');
 
-  ToneWave _wave = ToneWave.sine;
+  ToneWave _wave = ToneWave.triangle;
   double _volume = 0.5;
   bool _isPlaying = false;
   ToneEngineStatus _engineStatus = ToneEngineStatus.idle;

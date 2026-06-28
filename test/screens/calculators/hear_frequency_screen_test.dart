@@ -93,7 +93,7 @@ void main() {
       await tester.pump();
       expect(engine.playCount, 1);
       expect(engine.lastHz, 440);
-      expect(engine.lastWave, ToneWave.sine); // default waveform
+      expect(engine.lastWave, ToneWave.triangle); // default waveform
       expect(find.text('Stop'), findsOneWidget);
 
       await tester.tap(find.text('Stop'));
