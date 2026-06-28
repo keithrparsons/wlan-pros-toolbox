@@ -1,10 +1,10 @@
 // Maidenhead Grid Square (QTH locator) tool.
 //
 // Three modes (segmented toggle, GL-003 sec 8.14.1):
-//   1. To Grid     -> enter latitude + longitude (decimal degrees) and a
+//   1. Grid        -> enter latitude + longitude (decimal degrees) and a
 //                     precision (4 / 6 / 8 chars); get the Maidenhead locator
 //                     plus the square's center and corner bounds.
-//   2. To Lat/Lon  -> enter a 4/6/8-char locator; get the center latitude /
+//   2. Lat-Lon     -> enter a 4/6/8-char locator; get the center latitude /
 //                     longitude and the south-west / north-east corners.
 //   3. Distance    -> enter two locators; get the great-circle distance
 //                     (km / mi) and initial bearing between their centers
@@ -259,8 +259,8 @@ class _MaidenheadScreenState extends State<MaidenheadScreen> {
         expand: true,
         semanticLabel: 'Conversion mode',
         items: const <AppToggleItem<_GridMode>>[
-          (_GridMode.toGrid, 'To Grid'),
-          (_GridMode.toLatLon, 'To Lat/Lon'),
+          (_GridMode.toGrid, 'Grid'),
+          (_GridMode.toLatLon, 'Lat-Lon'),
           (_GridMode.distance, 'Distance'),
         ],
         onChanged: (_GridMode m) => setState(() => _mode = m),
