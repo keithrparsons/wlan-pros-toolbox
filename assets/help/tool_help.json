@@ -123,6 +123,44 @@
       ],
       "source": "maidenhead_data.dart"
     },
+    "hear-frequency": {
+      "name": "Hear the Frequency",
+      "category": "Calculators & Tools",
+      "purpose": "Turn a frequency into a real-time tone so you can build RF intuition by ear: pitch is frequency, an octave is a doubling, twelve equal-tempered semitones span the octave, harmonics are integer multiples, and the same logarithmic instinct underlies both octaves and dB.",
+      "whyHere": "RF frequencies are millions of times too high to hear, but the rules that govern them (ratios, octaves, harmonics, logarithmic compression) are the same ones your ear already knows. Hearing them makes the RF math intuitive instead of abstract.",
+      "howToUse": [
+        "Type a frequency in Hz (20 to 20,000) and press Play. Higher number, higher pitch.",
+        "Press x2 or div 2 to jump one octave up or down and hear the same note higher or lower; a sounding tone retunes smoothly without a click.",
+        "Tap the piano keys C4 to C5, or a preset, to hear named notes; switch Sine / Square / Triangle to hear timbre. Use the interval explorer to compare any two frequencies (including Wi-Fi bands) as an octaves/semitones ratio."
+      ],
+      "inputs": [
+        {
+          "name": "Frequency",
+          "unit": "Hz",
+          "range": "playback clamped to ~20 to 20,000 (audible range)"
+        },
+        {
+          "name": "Waveform",
+          "unit": "sine / square / triangle",
+          "range": "sine default; sine forced above 5 kHz to avoid aliasing"
+        },
+        {
+          "name": "Volume",
+          "unit": "0 to 100%",
+          "range": "defaults to 50%"
+        }
+      ],
+      "algorithm": "Note frequencies are computed from 12-tone equal temperament: f(n) = 440 x 2^((n-49)/12), where n is the piano key number and key 49 = A4 = 440 Hz (ISO 16). One octave = x2 (12 semitones); one semitone = 2^(1/12) = 1.05946. Nearest note and cents come from 69 + 12*log2(f/440); an interval ratio r maps to log2(r) octaves and 12*log2(r) semitones; harmonics are integer multiples 2f, 3f, 4f... Real-time synthesis is via flutter_soloud behind the ToneEngine seam. (music_theory.dart, tone_engine.dart, hear_frequency_screen.dart)",
+      "example": "440 Hz = A4. Press x2: 880 Hz = A5, the same note one octave up. Middle C = 261.63 Hz, its octave C5 = 523.25 Hz. The interval 2.4 vs 4.8 GHz is exactly 1 octave; 2.4 vs 6 GHz is about 1.32 octaves (a major third into the next octave).",
+      "fieldNotes": [
+        "An octave is NOT a dB. An octave is a base-2 frequency ratio; a dB is a base-10 power ratio (10*log10 of power, 20*log10 of amplitude). Both are logarithmic, which is the real bridge, but they are not the same unit.",
+        "Audio harmonics are wanted; RF harmonics are usually unwanted. The integer-multiple math (2f, 3f...) is identical, but in music the overtones make timbre while in a transmitter they are spurious emissions a filter suppresses.",
+        "Equal temperament is a compromise: the piano's 2^(k/12) ratios approximate the pure whole-number harmonic ratios, and enharmonic equality (C# = Db) is true only in equal temperament.",
+        "Band labels like 2.4 / 5 / 6 GHz name spans, not single tones, so octave math on one number is illustrative, not a claim about exact channel edges.",
+        "No sound? Check the device is not muted and the volume is up (especially on iOS, where the hardware mute switch silences playback)."
+      ],
+      "source": "hear_frequency_screen.dart"
+    },
     "ham-band-plan": {
       "name": "US Amateur Band Plan",
       "category": "Quick Reference",

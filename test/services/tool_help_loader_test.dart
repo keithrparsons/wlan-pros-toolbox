@@ -213,7 +213,12 @@ void main() {
       // Band Designations band-designations, Part 15 vs Part 97 part15-part97)
       // plus 1 Educational Resources tile (Ham Radio Study Resources
       // ham-study-resources). 146 + 5 = 151.
-      expect(store.count, 151);
+      // 152 = + Hear the Frequency (hear-frequency) 2026-06-28: the first
+      // "Learn / RF intuition" tool in Calculators & Tools - a real-time tone
+      // generator (flutter_soloud behind the ToneEngine seam) that bridges
+      // audio pitch/octaves/harmonics to RF, with the honest limits flagged
+      // (an octave is not a dB; RF harmonics are the unwanted kind). 151+1=152.
+      expect(store.count, 152);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

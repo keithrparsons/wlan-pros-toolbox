@@ -69,6 +69,12 @@ const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
     // sizing). A dedicated section so the band-dependent ham tools coming next
     // have a home. First members: Antenna Length, Maidenhead Grid Square.
     'Ham Radio',
+    // Learn / RF intuition (2026-06-28): interactive teaching tools that build
+    // RF intuition by sense, not just computation. First member: Hear the
+    // Frequency (a real-time tone generator bridging audio pitch/octaves/
+    // harmonics to RF). Sits after the pure-math sections and before the
+    // standalone generators. SUBGROUP NAME flagged for Iris/Keith confirmation.
+    'Learn / RF intuition',
     // Batch 4b/4c: standalone field utilities that aren't unit conversions or
     // RF math (QR Code Generator, DTMF Generator).
     'Utilities & Generators',
