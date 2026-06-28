@@ -123,6 +123,115 @@
       ],
       "source": "maidenhead_data.dart"
     },
+    "ham-band-plan": {
+      "name": "US Amateur Band Plan",
+      "category": "Quick Reference",
+      "purpose": "The corrected US amateur radio band plan from HF through SHF: each band's frequency range, the Technician / General / Amateur Extra privileges, the maximum power, and the key mode segments, grouped by HF / VHF / UHF / SHF and searchable.",
+      "whyHere": "A Wi-Fi pro who also holds (or is studying for) an amateur license needs the privileges-by-class and power limits in one place. The 13 cm and 5 cm bands also overlap Wi-Fi, so the band edges matter for the Part 15 vs Part 97 picture.",
+      "howToUse": [
+        "Scroll the bands grouped by region, or type a band name or frequency in the search box to filter (e.g. \"20 m\" or \"14.2\").",
+        "Each band card shows the frequency range, the Technician / General / Amateur Extra privileges (or a single line where all classes share access), the max power, and any mode notes.",
+        "The 60 m channel detail card lists the 4 channels (by center, with the USB dial annotation) plus the 9.15 W ERP segment.",
+        "Use Copy results to put the whole plan, the 60 m channels, and the power / data / 9 cm notes on the clipboard as a table."
+      ],
+      "inputs": [
+        {
+          "name": "Search",
+          "unit": "text",
+          "range": "band name or frequency; empty shows all bands"
+        }
+      ],
+      "algorithm": null,
+      "example": "Search \"60 m\" to see the corrected channel plan: 4 channels at 100 W ERP plus the 5351.5-5366.5 kHz segment at 9.15 W ERP. General class runs 1500 W PEP on 80/40/15/10 m; only 30 m (200 W PEP) and 60 m are lower.",
+      "fieldNotes": [
+        "Power column rebuilt from 47 CFR 97.313: 1500 W PEP general ceiling, with 30 m = 200 W PEP, 60 m = 100 W ERP (channels) / 9.15 W ERP (segment), 2200 m = 1 W EIRP, 630 m = 5 W EIRP, and a Technician on any HF band = 200 W PEP.",
+        "60 m is current as of 13 Feb 2026 (4 channels + the 9.15 W ERP segment); older 5-channel charts are wrong.",
+        "There is no symbol-rate (baud) column: the HF baud limit was removed (FCC 23-93) and replaced by a 2.8 kHz bandwidth limit.",
+        "9 cm (3.3-3.5 GHz) is omitted: it is in sunset and does not overlap Wi-Fi. Novice and Advanced classes are closed to new applicants and are omitted.",
+        "US (FCC) Part 97. Verify current rules before operating; the band plan is a reference, not legal advice."
+      ],
+      "source": "ham_band_plan_screen.dart"
+    },
+    "ham-band-wavelengths": {
+      "name": "Band Names & Wavelengths",
+      "category": "Quick Reference",
+      "purpose": "The translation between the two ways of naming the same spectrum: amateur band names (wavelength in meters or centimeters, like 160 m, 2 m, 13 cm) and their actual frequency ranges, with the lambda = 300/f explainer and a worked example each direction.",
+      "whyHere": "Hams name bands by wavelength; Wi-Fi pros name them by frequency. This is the lookup that lets you cross between the two vocabularies, including the Wi-Fi crossover (2.4 GHz sits in the 13 cm band, 5 GHz in the 5 cm band).",
+      "howToUse": [
+        "Read the two-column table: each amateur band name maps to its frequency range and region tag.",
+        "The formula card gives the exact lambda(m) = 299.792458 / f(MHz) and the lambda ~ 300/f working approximation.",
+        "The worked examples show name-to-frequency, frequency-to-name, and the Wi-Fi crossover."
+      ],
+      "inputs": [],
+      "algorithm": "lambda(m) = 299.792458 / f(MHz); f(MHz) = 299.792458 / lambda(m). Working approximation: lambda ~ 300 / f (within about 0.07 percent).",
+      "example": "146 MHz -> lambda = 299.792458/146 = 2.05 m -> the \"2 m\" band. 2442 MHz (Wi-Fi ch 7) -> 12.28 cm -> the \"13 cm\" amateur band.",
+      "fieldNotes": [
+        "The wavelength is the nominal band name; the listed range is the actual amateur allocation, not a literal 300/f conversion of the edges.",
+        "9 cm (3300-3500 MHz) is shown for completeness but is in sunset; it does not overlap Wi-Fi 5 GHz."
+      ],
+      "source": "ham_band_wavelengths_screen.dart"
+    },
+    "band-designations": {
+      "name": "Spectrum Band Designations",
+      "category": "Quick Reference",
+      "purpose": "The ITU decade-band designations (HF / VHF / UHF / SHF) with the propagation behavior each implies, plus the non-amateur neighbors a Wi-Fi pro should recognize: the VHF aviation airband (108-137 MHz AM) and the military UHF airband (225-400 MHz AM).",
+      "whyHere": "Wi-Fi 2.4 GHz lives in UHF and 5/6 GHz in SHF. Knowing the band names and their propagation explains why a 2.4 GHz signal behaves nothing like an HF one, and who else shares the spectrum with you.",
+      "howToUse": [
+        "Read each ITU band card: its frequency and wavelength span and what its propagation implies operationally.",
+        "The neighbors card lists the aviation and military airbands and the ISM / U-NII bands that overlap amateur allocations.",
+        "Copy results puts both tables on the clipboard."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": "HF (3-30 MHz) is sky-wave / ionospheric skip, the talk-around-the-world bands. SHF (3-30 GHz) is strict line-of-sight where Wi-Fi 5/6 GHz lives and rain fade begins.",
+      "fieldNotes": [
+        "Each ITU band is ten times the previous. Below HF: MF (300 kHz-3 MHz) and LF (30-300 kHz). Above SHF: EHF (30-300 GHz).",
+        "121.5 MHz is the civil aviation emergency Guard frequency; 243.0 MHz is the military Guard.",
+        "Airband and military allocations are confirmed against the FCC Table of Frequency Allocations."
+      ],
+      "source": "band_designations_screen.dart"
+    },
+    "part15-part97": {
+      "name": "Part 15 vs Part 97",
+      "category": "Quick Reference",
+      "purpose": "Where the amateur 13 cm and 5 cm bands overlap the 2.4 GHz and 5 GHz Wi-Fi bands, mapped to the Wi-Fi channel grid, and the rule-delta table between Part 15 (unlicensed Wi-Fi) and Part 97 (licensed amateur): license, power, station ID, encryption, and commercial use.",
+      "whyHere": "The same 802.11 silicon can run under Part 15 or Part 97. Amateur mesh networks like AREDN run commodity Wi-Fi hardware on the overlapping channels under Part 97 for the higher power ceiling, trading away encryption and commercial use. This is the signature Wi-Fi-to-ham bridge.",
+      "howToUse": [
+        "The overlap card maps each amateur band to the Wi-Fi band it covers and the Wi-Fi channels that fall inside it.",
+        "The rule-delta card compares Part 15 and Part 97 dimension by dimension; each side is always labeled in words.",
+        "The AREDN card is the real-world example."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": "Amateur 13 cm (2390-2450 MHz) covers Wi-Fi channels 1-6 fully. Under Part 15 you are capped at 4 W EIRP with encryption allowed and no ID; under Part 97 you may run far more power but must ID by callsign every 10 minutes and run no encryption.",
+      "fieldNotes": [
+        "Part 15 limits are 47 CFR 15.247 / 15.407; Part 97 conduct rules are 47 CFR 97.113 / 97.119 / 97.313.",
+        "9 cm (3.3-3.5 GHz) is being sunset and does NOT overlap Wi-Fi 5 GHz; do not confuse it with the 5 cm band.",
+        "Part 97 prohibits encryption that obscures the meaning of a message, so amateur mesh traffic must be in the clear."
+      ],
+      "source": "part15_vs_part97_screen.dart"
+    },
+    "ham-study-resources": {
+      "name": "Ham Radio Study Resources",
+      "category": "Educational Resources",
+      "purpose": "A vetted, offline list of where to study for the US amateur-radio exams: hamstudy.org, the ARRL license manuals, FCC Part 97, and AREDN, each credited, with the stable exam structure and the two currency caveats that govern how to read any older chart.",
+      "whyHere": "The exam-physics and band material is best served by pointing to the current, maintained study platforms rather than freezing a static notes sheet. This curates the strongest pointers and bakes in the two landmines: the new Technician question pool and the 60 m rule change.",
+      "howToUse": [
+        "Read the two currency caveats at the top first; they govern everything below.",
+        "Each resource card shows what it is for, the classes it covers, its currency, the credit line, and a vet note. Tap Open website to launch it in your browser.",
+        "The exam structure card lists the question count and pass threshold for each element."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": "Technician and General are each 35 questions, 26 to pass; Amateur Extra is 50 questions, 37 to pass. hamstudy.org tracks the live question pools, including the 1 Jul 2026 Technician pool.",
+      "fieldNotes": [
+        "A new Technician question pool takes effect 1 Jul 2026. The exam structure is stable at 35 questions / 26 to pass; the pool question count rotates every four years, so it is deliberately not stated here.",
+        "The 60 m rules changed 13 Feb 2026; any chart or notes predating it are wrong on 60 m.",
+        "No Morse code requirement since 23 Feb 2007; the FCC application fee is $35.",
+        "The ARRL band chart is copyrighted; this app renders its own band plan from FCC Part 97 data and cites ARRL rather than reproducing the chart graphic."
+      ],
+      "source": "ham_study_resources_screen.dart"
+    },
     "eirp": {
       "name": "EIRP Calculator",
       "category": "Calculators & Tools",

@@ -181,6 +181,34 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'amateur radio', 'lat lon', 'latitude longitude', 'grid to coordinates',
     'cm87', 'jo62', 'great circle', 'bearing',
   ],
+  // Ham Radio band references (2026-06-28).
+  'ham-band-plan': <String>[
+    'amateur', 'ham', 'band plan', 'fcc', 'part 97', 'license class',
+    'technician', 'general', 'amateur extra', 'hf', 'vhf', 'uhf', 'shf',
+    '60 meter', '60m', '2200m', '630m', 'privileges', 'power limit', 'pep',
+    'erp', 'eirp', '20 meters', '40 meters', 'phone', 'cw', 'ssb',
+  ],
+  'ham-band-wavelengths': <String>[
+    'amateur', 'ham', 'wavelength', 'band name', 'meters', 'centimeters',
+    '160m', '80m', '40m', '20m', '2m', '70cm', '13cm', 'lambda', '300/f',
+    'frequency to band', 'band to frequency',
+  ],
+  'band-designations': <String>[
+    'itu', 'hf', 'vhf', 'uhf', 'shf', 'high frequency', 'very high frequency',
+    'ultra high frequency', 'super high frequency', 'airband', 'aviation',
+    'military', 'guard frequency', '121.5', '243.0', 'propagation', 'skip',
+    'line of sight', 'frequency band',
+  ],
+  'part15-part97': <String>[
+    'part 15', 'part 97', 'amateur', 'ham', 'aredn', 'broadband hamnet',
+    'mesh', '13cm', '5cm', '2.4 ghz', '5 ghz', 'unii', 'ism', 'encryption',
+    'station id', 'callsign', 'unlicensed', 'eirp', 'power limit', 'license',
+  ],
+  'ham-study-resources': <String>[
+    'amateur', 'ham', 'study', 'exam', 'hamstudy', 'arrl', 'license manual',
+    'technician', 'general', 'amateur extra', 'question pool', 'ncvec',
+    'test', 'practice test', 'aredn', 'fcc part 97', 'get licensed',
+  ],
   'downtilt': <String>[
     'tilt angle', 'antenna aim', 'mechanical tilt', 'coverage angle',
   ],

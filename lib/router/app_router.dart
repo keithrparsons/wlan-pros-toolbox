@@ -12,6 +12,7 @@ import '../screens/about_screen.dart';
 import '../screens/help_browse_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/tools/educational/educational_resources_screen.dart';
+import '../screens/tools/educational/ham_study_resources_screen.dart';
 import '../screens/search_screen.dart';
 import '../data/tool_catalog.dart' show kEducationalResourcesRoute;
 import '../screens/tools/dbm_watt_converter.dart';
@@ -91,6 +92,12 @@ import '../screens/tools/reference/iec_connectors_screen.dart';
 import '../screens/tools/reference/nema_connectors_screen.dart';
 import '../screens/tools/reference/international_plugs_screen.dart';
 import '../screens/tools/reference/spectrum_screen.dart';
+// Ham Radio band references (2026-06-28): band plan, band/wavelength bridge,
+// ITU band designations, and Part 15 vs Part 97. Read-only, all platforms.
+import '../screens/tools/reference/ham_band_plan_screen.dart';
+import '../screens/tools/reference/ham_band_wavelengths_screen.dart';
+import '../screens/tools/reference/band_designations_screen.dart';
+import '../screens/tools/reference/part15_vs_part97_screen.dart';
 // Reference batch (2026-06-08): 14 new read-only reference screens.
 import '../screens/tools/reference/ip_address_reference_screen.dart';
 import '../screens/tools/reference/cidr_table_screen.dart';
@@ -199,6 +206,12 @@ class AppRouter {
   // Ham Radio pure-math tools (no network, all platforms incl. web).
   static const String antennaLength = '/tools/antenna-length';
   static const String maidenhead = '/tools/maidenhead-grid';
+  // Ham Radio band references (2026-06-28). Read-only, all platforms incl. web.
+  static const String hamBandPlan = '/tools/ham-band-plan';
+  static const String hamBandWavelengths = '/tools/ham-band-wavelengths';
+  static const String bandDesignations = '/tools/band-designations';
+  static const String part15Part97 = '/tools/part15-part97';
+  static const String hamStudyResources = '/tools/ham-study-resources';
   static const String downtilt = '/tools/downtilt';
   static const String earthCurvature = '/tools/earth-curvature';
   static const String rainFade = '/tools/rain-fade';
@@ -515,6 +528,11 @@ class AppRouter {
     wavelength: (_) => const WavelengthScreen(),
     antennaLength: (_) => const AntennaLengthScreen(),
     maidenhead: (_) => const MaidenheadScreen(),
+    hamBandPlan: (_) => const HamBandPlanScreen(),
+    hamBandWavelengths: (_) => const HamBandWavelengthsScreen(),
+    bandDesignations: (_) => const BandDesignationsScreen(),
+    part15Part97: (_) => const Part15VsPart97Screen(),
+    hamStudyResources: (_) => const HamStudyResourcesScreen(),
     downtilt: (_) => const DowntiltScreen(),
     earthCurvature: (_) => const EarthCurvatureScreen(),
     rainFade: (_) => const RainFadeScreen(),

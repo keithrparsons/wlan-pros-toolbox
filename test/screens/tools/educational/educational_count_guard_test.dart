@@ -23,10 +23,12 @@ void main() {
     );
 
     // In-app reference tools live in the category's `tools` list (10 PDF cards
-    // + Antenna Fundamentals, moved here 2026-06-06 BF6-3).
+    // + Antenna Fundamentals, moved here 2026-06-06 BF6-3; + Ham Radio Study
+    // Resources, added 2026-06-28).
     final int cardCount = edu.tools.length;
-    expect(cardCount, 11,
-        reason: 'expected 10 PDF reference cards + Antenna Fundamentals');
+    expect(cardCount, 12,
+        reason: 'expected 10 PDF reference cards + Antenna Fundamentals + '
+            'Ham Radio Study Resources');
 
     // Online-resource count from the bundled dataset's _meta block.
     final File asset = File('assets/data/educational_resources.json');

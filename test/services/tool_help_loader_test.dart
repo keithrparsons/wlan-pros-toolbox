@@ -207,7 +207,13 @@ void main() {
       // "Ham Radio" subgroup of Calculators & Tools: Antenna Length
       // (antenna-length) and Maidenhead Grid Square (maidenhead-grid).
       // 144 + 2 = 146.
-      expect(store.count, 146);
+      // 151 = + the 5 Ham Radio band references (2026-06-28): 4 Quick Reference
+      // tiles in the new "Ham Radio" subgroup (US Amateur Band Plan
+      // ham-band-plan, Band Names & Wavelengths ham-band-wavelengths, Spectrum
+      // Band Designations band-designations, Part 15 vs Part 97 part15-part97)
+      // plus 1 Educational Resources tile (Ham Radio Study Resources
+      // ham-study-resources). 146 + 5 = 151.
+      expect(store.count, 151);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help
