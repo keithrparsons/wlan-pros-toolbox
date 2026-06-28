@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Ham Band Plan (frequency allocation chart). A labeled SPECTRUM RULER:
+         a horizontal frequency axis with downward graduation ticks (the ruler),
+         and a row of three allocated BAND SEGMENT blocks of differing widths
+         resting above it (the bands carved out across the spectrum).
+         GL-003 §8.6.1: 24x24 master, single currentColor, fill=none, 2px stroke,
+         round cap/join, silhouette-first, legible at 20px.
+         Differentiated by GROSS silhouette from the sibling spectrum icons:
+           - rf-bands = thin ASCENDING VERTICAL bars (non-monotonic), no ruler;
+           - channel-allocations-* = vertical bars rising from a baseline;
+           - spectrum = a single bell hump.
+         Here the dominant shape is HORIZONTAL blocks lying over a ticked ruler
+         axis — a band PLAN, not a bar chart. Blocks are full 2px outlines and the
+         ruler ticks are full-stroke (no sub-pixel accents), so nothing collapses
+         at the 20px tool-list floor. -->
+    <!-- allocated band segment blocks (varying widths) -->
+    <rect x="3" y="6.5" width="5.5" height="5" rx="1.5"/>
+    <rect x="9.5" y="6.5" width="4" height="5" rx="1.5"/>
+    <rect x="15.5" y="6.5" width="5.5" height="5" rx="1.5"/>
+    <!-- spectrum ruler axis -->
+    <path d="M3 14.5 H21"/>
+    <!-- ruler graduation ticks -->
+    <path d="M6 14.5 V17"/>
+    <path d="M12 14.5 V17"/>
+    <path d="M18 14.5 V17"/>
+  </g>
+</svg>

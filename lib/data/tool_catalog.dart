@@ -828,6 +828,51 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       'MCS Index',
     ],
     tools: <ToolEntry>[
+      // ── Ham Radio band references (2026-06-28) ──
+      // The band-dependent amateur-radio references that pair with the pure-math
+      // Ham Radio tools in Calculators & Tools. Values are FCC Part 97-corrected
+      // (build-spec.md): 1500 W PEP on 80/40/15/10 m, current 60 m, 630/2200 m
+      // in, 9 cm out, no baud column. Custom Tier-2 icons flagged for Charta.
+      ToolEntry(
+        id: 'ham-band-plan',
+        title: 'US Amateur Band Plan',
+        description:
+            'HF to SHF amateur bands by license class: frequency range, '
+            'Technician / General / Extra privileges, power, and mode segments',
+        routeName: '/tools/ham-band-plan',
+        isLive: true,
+        subgroup: 'Ham Radio',
+      ),
+      ToolEntry(
+        id: 'ham-band-wavelengths',
+        title: 'Band Names & Wavelengths',
+        description:
+            'The two-worlds translation: amateur band names (160 m, 2 m, '
+            '13 cm) to their frequency ranges, with the lambda = 300/f rule',
+        routeName: '/tools/ham-band-wavelengths',
+        isLive: true,
+        subgroup: 'Ham Radio',
+      ),
+      ToolEntry(
+        id: 'band-designations',
+        title: 'Spectrum Band Designations',
+        description:
+            'ITU HF / VHF / UHF / SHF boundaries and propagation, plus the '
+            'aviation airband and military UHF neighbors',
+        routeName: '/tools/band-designations',
+        isLive: true,
+        subgroup: 'Ham Radio',
+      ),
+      ToolEntry(
+        id: 'part15-part97',
+        title: 'Part 15 vs Part 97',
+        description:
+            'Where amateur 13 cm / 5 cm overlap 2.4 / 5 GHz Wi-Fi, and how the '
+            'unlicensed and amateur rules differ (AREDN)',
+        routeName: '/tools/part15-part97',
+        isLive: true,
+        subgroup: 'Ham Radio',
+      ),
       // ── from the dissolved Infrastructure category ──
       ToolEntry(
         id: 'poe-reference',
@@ -1669,7 +1714,9 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
     // WLAN Pros "Reading a Connection Report" guide added 2026-06-25 under Tools
     // and utilities). The count-guard test recomputes this from the catalog tool
     // count + the bundled JSON `_meta.count`.
-    countLabelOverride: '52',
+    // 53 = 52 + the Ham Radio Study Resources in-app reference (2026-06-28),
+    // which lifts the in-app reference cards from 11 to 12.
+    countLabelOverride: '53',
     tools: <ToolEntry>[
       // The 6 PDF reference cards.
       ToolEntry(
@@ -1755,6 +1802,20 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'Gain, beamwidth, polarization, downtilt, and reading a radiation '
             'pattern — with diagrams',
         routeName: '/tools/antenna-fundamentals',
+        isLive: true,
+      ),
+      // Ham Radio Study Resources (2026-06-28) — an in-app reference tile (like
+      // Antenna Fundamentals): the vetted study-materials list (hamstudy.org,
+      // ARRL manuals, FCC Part 97, AREDN) with url_launcher links and the two
+      // currency caveats (1 Jul 2026 Technician pool; 13 Feb 2026 60 m change).
+      // Custom Tier-2 icon flagged for Charta.
+      ToolEntry(
+        id: 'ham-study-resources',
+        title: 'Ham Radio Study Resources',
+        description:
+            'Where to study for the amateur-radio exams: hamstudy.org, ARRL '
+            'manuals, FCC Part 97, and AREDN, with the current exam structure',
+        routeName: '/tools/ham-study-resources',
         isLive: true,
       ),
     ],

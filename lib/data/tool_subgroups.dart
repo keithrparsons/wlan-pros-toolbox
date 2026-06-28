@@ -25,6 +25,12 @@ import 'tool_ordering.dart';
 const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
   'quick-reference': <String>[
     'Wi-Fi & RF',
+    // Ham Radio (2026-06-28): the band-dependent amateur-radio references that
+    // pair with the pure-math Ham Radio tools in Calculators & Tools. Sits right
+    // after Wi-Fi & RF since these are RF-spectrum references a Wi-Fi pro
+    // crosses into. Members: US Amateur Band Plan, Band Names & Wavelengths,
+    // Spectrum Band Designations, Part 15 vs Part 97.
+    'Ham Radio',
     // Addressing & Subnetting (2026-06-08): IP address reference, CIDR/subnet
     // table, naming/addressing conventions.
     'Addressing & Subnetting',

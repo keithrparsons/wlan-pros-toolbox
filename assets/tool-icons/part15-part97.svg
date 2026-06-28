@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Part 15 vs Part 97 (regulatory comparison). Two OVERLAPPING allocation
+         blocks (a Venn-style overlap of two rounded rectangles): the unlicensed
+         Part 15 block and the amateur Part 97 block, offset upper-left / lower-right
+         so two distinct blocks read with a shared corner overlap (an even side-by-side
+         pair collapses to one rect with interior dividers at 20px). The overlap motif
+         IS "compare / where two allocations meet".
+         GL-003 §8.6.1: 24x24 master, single currentColor, fill=none, 2px stroke,
+         round cap/join, legible at 20px.
+         Unique in the set: no other icon is two overlapping rectangles. Distinct
+         from mcs-index-card (a single ruled grid) and from ham-study-resources
+         (a diagonally offset card STACK carrying a checkmark). Two equal blocks
+         crossing at the center read unmistakably as a comparison/overlay at 20px. -->
+    <rect x="3" y="4.5" width="11" height="11" rx="2"/>
+    <rect x="10" y="8.5" width="11" height="11" rx="2"/>
+  </g>
+</svg>

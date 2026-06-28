@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Ham Band Wavelengths (wavelength <-> frequency). Two STACKED waves of
+         visibly different period: a long-wavelength wave on top (one fat cycle =
+         low frequency) and a short-wavelength wave below (three tight cycles =
+         high frequency). The reciprocal lambda/f relationship IS the silhouette.
+         GL-003 §8.6.1: 24x24 master, single currentColor, fill=none, 2px stroke,
+         round cap/join, legible at 20px.
+         Kept distinct from its wave siblings:
+           - wavelength = ONE wave + a straight dimension line below it;
+           - channel-frequency = sine + a vertical convert arrow + channel bars;
+           - antenna-length = a T aerial + a horizontal length arrow.
+         No other icon stacks two waves of different period, so the long-vs-short
+         contrast is the gross differentiator (not a fragile accent) and reads at
+         the 20px floor. -->
+    <!-- long-wavelength wave (one cycle): low frequency -->
+    <path d="M3 7 C6 2 9 2 12 7 C15 12 18 12 21 7"/>
+    <!-- short-wavelength wave (three cycles): high frequency -->
+    <path d="M3 17 Q4.5 14 6 17 T9 17 T12 17 T15 17 T18 17 T21 17"/>
+  </g>
+</svg>
