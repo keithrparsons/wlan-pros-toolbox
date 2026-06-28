@@ -614,6 +614,27 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Antenna & Coverage',
       ),
+      // ── Ham Radio pure-math tools (2026-06-28) ──
+      ToolEntry(
+        id: 'antenna-length',
+        title: 'Antenna Length',
+        description:
+            'Half-wave dipole and quarter-wave vertical lengths from frequency '
+            'or wavelength, with velocity factor and the 468/234 rules of thumb',
+        routeName: '/tools/antenna-length',
+        isLive: true,
+        subgroup: 'Ham Radio',
+      ),
+      ToolEntry(
+        id: 'maidenhead-grid',
+        title: 'Maidenhead Grid Square',
+        description:
+            'Encode lat/lon to a Maidenhead (QTH) locator and back, 4/6/8 char, '
+            'plus great-circle distance and bearing between two grid squares',
+        routeName: '/tools/maidenhead-grid',
+        isLive: true,
+        subgroup: 'Ham Radio',
+      ),
       ToolEntry(
         id: 'downtilt',
         title: 'Antenna Downtilt',

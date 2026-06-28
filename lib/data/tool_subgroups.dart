@@ -58,6 +58,11 @@ const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
     'Capacity & Power',
     'Coordinates & GPS',
     'Conversions',
+    // Ham Radio (2026-06-28): amateur-radio pure-math tools that are useful to
+    // Wi-Fi work too (Maidenhead grid squares for PtP planning, antenna-element
+    // sizing). A dedicated section so the band-dependent ham tools coming next
+    // have a home. First members: Antenna Length, Maidenhead Grid Square.
+    'Ham Radio',
     // Batch 4b/4c: standalone field utilities that aren't unit conversions or
     // RF math (QR Code Generator, DTMF Generator).
     'Utilities & Generators',

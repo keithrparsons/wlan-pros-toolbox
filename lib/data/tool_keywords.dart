@@ -171,6 +171,16 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
   'wavelength': <String>[
     'lambda', 'antenna length', 'quarter wave', 'frequency to wavelength',
   ],
+  'antenna-length': <String>[
+    'dipole', 'half wave', 'quarter wave', 'vertical', 'element length',
+    'velocity factor', '468', '234', 'ham', 'amateur radio', 'cut antenna',
+    'wire antenna', 'resonant length',
+  ],
+  'maidenhead-grid': <String>[
+    'grid square', 'locator', 'qth', 'qra', 'iaru', 'gridsquare', 'ham',
+    'amateur radio', 'lat lon', 'latitude longitude', 'grid to coordinates',
+    'cm87', 'jo62', 'great circle', 'bearing',
+  ],
   'downtilt': <String>[
     'tilt angle', 'antenna aim', 'mechanical tilt', 'coverage angle',
   ],

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Antenna Length (ham antenna sizing). A T/dipole AERIAL on top (mast +
+         horizontal top element) sitting above a horizontal LENGTH dimension
+         (double-headed arrow) that measures it. The aerial says "antenna", the
+         length arrow says "length/sizing".
+         GL-003 section 8.6.1: 24x24 master, single currentColor, fill=none,
+         2px stroke, round cap/join, silhouette-first, legible at 20px.
+
+         20px-floor redesign (2026-06-28). The prior glyph (vertical dipole rod
+         + vertical dimension bracket, ~6px apart) collapsed at the 20px tool-list
+         floor into a generic VERTICAL DOUBLE-ARROW ("resize/height"). Iterations:
+         widening the two vertical elements to opposite edges produced a crop/box
+         read; a T-antenna beside a serifed vertical I-bar read as the letters
+         "T I". Both are loaded-symbol traps (section 8.6.1). The fix that holds at
+         20px is a STACKED arrangement of two gross shapes that cannot merge,
+         cannot form a letter pair, and carry no fragile sub-pixel accents:
+           - top: a T aerial (mast + top element) = unmistakably an antenna,
+             distinct from the vertical-mast siblings (eirp/downtilt) and the
+             splayed aerial (antenna-fundamentals).
+           - bottom: a HORIZONTAL length double-arrow = "length/sizing". Horizontal
+             orientation reads as width/length, NOT the vertical resize-handle that
+             was the original failure.
+         No witness/hairline strokes remain, so there is nothing under the
+         1.75px GL-003 floor to vanish at 20px. -->
+    <!-- aerial: horizontal top element (dipole bar) -->
+    <path d="M6 4 H18"/>
+    <!-- aerial: vertical mast -->
+    <path d="M12 4 V11"/>
+    <!-- length dimension line -->
+    <path d="M4 17 H20"/>
+    <!-- left dimension arrowhead -->
+    <path d="M6.1 14.9 L4 17 L6.1 19.1"/>
+    <!-- right dimension arrowhead -->
+    <path d="M17.9 14.9 L20 17 L17.9 19.1"/>
+  </g>
+</svg>
