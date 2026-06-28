@@ -218,7 +218,12 @@ void main() {
       // PdfReferenceScreen: General License Frequency Chart
       // (general-license-frequency-chart) and Ham Radio General Exam Study Notes
       // (ham-radio-general-exam-study-notes). 151 + 2 = 153.
-      expect(store.count, 153);
+      // 154 = + Hear the Frequency (hear-frequency) 2026-06-28: the first
+      // "Learn / RF intuition" tool in Calculators & Tools - a real-time tone
+      // generator (flutter_soloud behind the ToneEngine seam) that bridges
+      // audio pitch/octaves/harmonics to RF, with the honest limits flagged
+      // (an octave is not a dB; RF harmonics are the unwanted kind). 153 + 1 = 154.
+      expect(store.count, 154);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

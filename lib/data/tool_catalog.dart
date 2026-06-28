@@ -635,6 +635,25 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Ham Radio',
       ),
+      // ── Learn / RF intuition (2026-06-28) ──
+      // Interactive teaching tools that build RF intuition you can sense, not
+      // just compute. First member: Hear the Frequency, a real-time tone
+      // generator that turns frequency into sound (pitch = frequency, octave =
+      // doubling, harmonics = integer multiples) and bridges to RF with the
+      // honest limits flagged (an octave is not a dB; RF harmonics are the
+      // unwanted kind). Audio synthesis via flutter_soloud behind the
+      // ToneEngine seam. SUBGROUP NAME 'Learn / RF intuition' flagged for
+      // Iris/Keith confirmation (build-spec 3.1).
+      ToolEntry(
+        id: 'hear-frequency',
+        title: 'Hear the Frequency',
+        description:
+            'Turn frequency into sound to build RF intuition: pitch, octaves, '
+            'the 12 piano keys, harmonics, and the honest bridge to RF',
+        routeName: '/tools/hear-frequency',
+        isLive: true,
+        subgroup: 'Learn / RF intuition',
+      ),
       ToolEntry(
         id: 'downtilt',
         title: 'Antenna Downtilt',

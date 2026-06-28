@@ -181,6 +181,15 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'amateur radio', 'lat lon', 'latitude longitude', 'grid to coordinates',
     'cm87', 'jo62', 'great circle', 'bearing',
   ],
+  // Learn / RF intuition (2026-06-28). Keywords describe what the tool DOES
+  // (play tones, octaves, harmonics, intervals) - no aspirational claims (GL-005).
+  'hear-frequency': <String>[
+    'tone', 'tone generator', 'pitch', 'octave', 'audio', 'sound', 'hear',
+    'harmonic', 'harmonics', 'overtone', 'equal temperament', 'piano',
+    'keyboard', 'semitone', 'hertz', 'sine', 'square', 'triangle', 'waveform',
+    'frequency', 'interval', 'ratio', 'a440', 'middle c', 'note', 'cents',
+    'spurious emission', 'timbre', 'rf intuition', 'learn',
+  ],
   // Ham Radio band references (2026-06-28).
   'ham-band-plan': <String>[
     'amateur', 'ham', 'band plan', 'fcc', 'part 97', 'license class',

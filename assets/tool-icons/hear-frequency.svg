@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- Hear Frequency (turn a frequency into an audible pitch). A SOUND WAVE on the
+       left flowing rightward INTO a PIANO KEYBOARD segment on the right: the wave
+       (the frequency) "lands on" the keys (the pitch you hear). The keyboard is the
+       differentiator, not the wave.
+       GL-003 section 8.6.1: 24x24 master, single currentColor, 2px stroke, round
+       cap/join, 2px corner radius, silhouette-first, legible at 20px.
+       Kept distinct from its wave siblings by GROSS silhouette:
+         - ham-band-wavelengths = TWO stacked abstract waves of different period,
+           no keyboard;
+         - channel-frequency = sine + a vertical convert arrow + free-standing
+           channel bars on a baseline (bars, NOT an enclosed keyboard);
+         - any plain waveform icon = a bare wave with nothing it meets.
+       Here a recognizable piano-keyboard block (rounded body + white-key dividers +
+       two solid black-key stubs hanging from the top) is the dominant shape. The
+       black keys are full solid fills and the body/dividers are full 2px strokes,
+       so nothing sub-pixel collapses at the 20px tool-list floor. -->
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- sound wave (the frequency): 1.5 cycles flowing right, meeting the keyboard -->
+    <path d="M2.5 12 q1.5 -3.2 3 0 t3 0 t3 0"/>
+    <!-- piano keyboard body (the instrument) -->
+    <rect x="12" y="5" width="9" height="14" rx="2"/>
+    <!-- white-key dividers -->
+    <path d="M15 5 V19"/>
+    <path d="M18 5 V19"/>
+  </g>
+  <!-- black keys: solid stubs straddling the dividers, hanging from the top -->
+  <g fill="currentColor" stroke="none">
+    <rect x="13.8" y="5" width="2.4" height="7" rx="0.6"/>
+    <rect x="16.8" y="5" width="2.4" height="7" rx="0.6"/>
+  </g>
+</svg>

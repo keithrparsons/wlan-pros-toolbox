@@ -27,6 +27,7 @@ import '../screens/tools/calculators/link_budget_screen.dart';
 import '../screens/tools/calculators/rain_fade_screen.dart';
 import '../screens/tools/calculators/wavelength_screen.dart';
 import '../screens/tools/calculators/antenna_length_screen.dart';
+import '../screens/tools/calculators/hear_frequency_screen.dart';
 import '../screens/tools/calculators/maidenhead_screen.dart';
 import '../screens/tools/calculators/metric_conversion_screen.dart';
 import '../screens/tools/calculators/unit_converter_screen.dart';
@@ -206,6 +207,9 @@ class AppRouter {
   // Ham Radio pure-math tools (no network, all platforms incl. web).
   static const String antennaLength = '/tools/antenna-length';
   static const String maidenhead = '/tools/maidenhead-grid';
+  // Learn / RF intuition (2026-06-28). Real-time audio synthesis (flutter_soloud
+  // behind the ToneEngine seam); on-device DSP only, all platforms incl. web.
+  static const String hearFrequency = '/tools/hear-frequency';
   // Ham Radio band references (2026-06-28). Read-only, all platforms incl. web.
   static const String hamBandPlan = '/tools/ham-band-plan';
   static const String hamBandWavelengths = '/tools/ham-band-wavelengths';
@@ -536,6 +540,7 @@ class AppRouter {
     linkBudget: (_) => const LinkBudgetScreen(),
     wavelength: (_) => const WavelengthScreen(),
     antennaLength: (_) => const AntennaLengthScreen(),
+    hearFrequency: (_) => const HearFrequencyScreen(),
     maidenhead: (_) => const MaidenheadScreen(),
     hamBandPlan: (_) => const HamBandPlanScreen(),
     hamBandWavelengths: (_) => const HamBandWavelengthsScreen(),

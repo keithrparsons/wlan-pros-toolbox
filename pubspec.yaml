@@ -137,6 +137,22 @@ dependencies:
   #   No network, no subprocess (GL-008). Latest stable on pub.dev (2026-06-27).
   just_audio_windows: ^0.2.3
 
+  # flutter_soloud — real-time audio synthesis engine for the "Hear the
+  # Frequency" RF-by-ear teaching tool (hear-frequency). MIT (Dart wrapper);
+  # the bundled SoLoud C++ engine is zlib/libpng (both permissive, GPL-free).
+  # Chosen over just_audio for this tool because it exposes NATIVE oscillators
+  # (sine / square / triangle / saw) with LIVE frequency retune (no stop /
+  # restart, so an octave jump is heard smoothly through the envelope) and
+  # built-in volume faders for the anti-click attack/release ramp. just_audio
+  # plays pre-rendered WAV bytes and cannot retune a sounding voice without a
+  # source swap (an audible gap), which this tool's octave-doubling demo needs
+  # to avoid. Supports all five platforms incl. Windows + Web. On-device DSP
+  # only: no network, no subprocess, no special entitlement (GL-008-clean). The
+  # dependency is isolated behind the ToneEngine interface
+  # (lib/services/audio/tone_engine.dart) so it can be swapped per platform if a
+  # defect ever surfaces.
+  flutter_soloud: ^4.0.11
+
   # flutter_svg — renders the per-tool Tier-2 icons (assets/tool-icons/<id>.svg)
   # and the in-tool concept graphics (assets/tool-graphics/<id>.svg) per GL-003
   # §8.6 / §8.6.1 / §8.6.2. Icons are single-color and runtime-tinted via
