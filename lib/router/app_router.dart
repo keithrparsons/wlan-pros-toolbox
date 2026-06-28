@@ -25,6 +25,8 @@ import '../screens/tools/calculators/fspl_screen.dart';
 import '../screens/tools/calculators/link_budget_screen.dart';
 import '../screens/tools/calculators/rain_fade_screen.dart';
 import '../screens/tools/calculators/wavelength_screen.dart';
+import '../screens/tools/calculators/antenna_length_screen.dart';
+import '../screens/tools/calculators/maidenhead_screen.dart';
 import '../screens/tools/calculators/metric_conversion_screen.dart';
 import '../screens/tools/calculators/unit_converter_screen.dart';
 import '../screens/tools/calculators/qr_generator_screen.dart';
@@ -194,6 +196,9 @@ class AppRouter {
   static const String cableLoss = '/tools/cable-loss';
   static const String linkBudget = '/tools/link-budget';
   static const String wavelength = '/tools/wavelength';
+  // Ham Radio pure-math tools (no network, all platforms incl. web).
+  static const String antennaLength = '/tools/antenna-length';
+  static const String maidenhead = '/tools/maidenhead-grid';
   static const String downtilt = '/tools/downtilt';
   static const String earthCurvature = '/tools/earth-curvature';
   static const String rainFade = '/tools/rain-fade';
@@ -508,6 +513,8 @@ class AppRouter {
     cableLoss: (_) => const CableLossScreen(),
     linkBudget: (_) => const LinkBudgetScreen(),
     wavelength: (_) => const WavelengthScreen(),
+    antennaLength: (_) => const AntennaLengthScreen(),
+    maidenhead: (_) => const MaidenheadScreen(),
     downtilt: (_) => const DowntiltScreen(),
     earthCurvature: (_) => const EarthCurvatureScreen(),
     rainFade: (_) => const RainFadeScreen(),

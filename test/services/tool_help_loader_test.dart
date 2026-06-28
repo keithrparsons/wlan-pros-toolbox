@@ -203,7 +203,11 @@ void main() {
       // 144 = + Channel / Frequency (channel-frequency) 2026-06-27: bidirectional
       // Wi-Fi channel<->frequency converter in Calculators & Tools (Conversions),
       // built from the verified channel-plan.md sec 7 vectors. 143 + 1 = 144.
-      expect(store.count, 144);
+      // 146 = + the 2 Ham Radio pure-math tools (2026-06-28), both in the new
+      // "Ham Radio" subgroup of Calculators & Tools: Antenna Length
+      // (antenna-length) and Maidenhead Grid Square (maidenhead-grid).
+      // 144 + 2 = 146.
+      expect(store.count, 146);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

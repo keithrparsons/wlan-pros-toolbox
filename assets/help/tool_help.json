@@ -56,6 +56,73 @@
       ],
       "source": "wavelength_screen.dart:54-67"
     },
+    "antenna-length": {
+      "name": "Antenna Length",
+      "category": "Calculators & Tools",
+      "purpose": "Frequency, wavelength, and antenna-element calculator: enter a frequency (or a wavelength) and get the full wavelength plus the half-wave dipole and quarter-wave vertical physical lengths (velocity-factor adjusted) in meters, feet, and inches, alongside the classic 468/f and 234/f rules of thumb.",
+      "whyHere": "Cutting a dipole or a ground-plane vertical means turning a frequency into a length. This shows both the physics length (lambda × VF) and the field rules of thumb side by side, so you can see how velocity factor and end-effect change the cut.",
+      "howToUse": [
+        "Choose whether you are entering a Frequency (MHz/GHz) or a Wavelength (m) with the toggle.",
+        "Type the value, then set the velocity factor (default 0.95 for thin bare wire; lower for insulated wire or tubing).",
+        "Read the full wavelength, then the half-wave dipole and quarter-wave vertical lengths in m / ft / in, each beside its rule-of-thumb figure."
+      ],
+      "inputs": [
+        {
+          "name": "Frequency or wavelength",
+          "unit": "MHz / GHz, or m",
+          "range": "must be > 0"
+        },
+        {
+          "name": "Velocity factor",
+          "unit": "ratio",
+          "range": "0 < VF <= 1 (default 0.95)"
+        }
+      ],
+      "algorithm": "lambda(m) = 299.792458 / f(MHz); f(MHz) = 299.792458 / lambda(m). Half-wave dipole physical L = (lambda/2)×VF; quarter-wave vertical L = (lambda/4)×VF. Rules of thumb in feet: dipole = 468/f(MHz), quarter-wave = 234/f(MHz). Physical length = electrical length × velocity factor. Uses the exact c = 299.792458, not the rounded 300. (antenna_length_screen.dart)",
+      "example": "14.2 MHz → lambda 21.112 m; half-wave dipole (VF 0.95) 10.03 m / 32.9 ft, and the 468-rule gives 32.96 ft. 146 MHz → quarter-wave vertical (VF 0.95) about 19.2 in. 2400 MHz → quarter-wave about 2.97 cm.",
+      "fieldNotes": [
+        "The 468/234 rules of thumb already fold in a typical end-effect shortening, so they read a little shorter than the pure half/quarter wavelength.",
+        "Velocity factor is the physical-to-electrical length ratio; 0.95 suits thin bare wire, while insulated wire and tubing run lower.",
+        "This is element-length math only; it does not model feedpoint impedance, height above ground, or matching."
+      ],
+      "source": "antenna_length_screen.dart"
+    },
+    "maidenhead-grid": {
+      "name": "Maidenhead Grid Square",
+      "category": "Calculators & Tools",
+      "purpose": "Encode a latitude/longitude to a Maidenhead (QTH) locator at 4, 6, or 8 characters, decode a locator back to its square center and corner bounds, and measure the great-circle distance and bearing between two grid squares.",
+      "whyHere": "Grid squares are the amateur-radio shorthand for position, and the distance and bearing between two squares is exactly the aiming math for a point-to-point Wi-Fi or microwave link. One tool covers both.",
+      "howToUse": [
+        "To Grid: enter latitude and longitude in decimal degrees and pick a precision (4 / 6 / 8 char). The result shows the locator plus the square center and corners.",
+        "To Lat/Lon: enter a 4/6/8-character locator (e.g. JO62qm) to get its center latitude/longitude and bounds.",
+        "Distance: enter two locators to get the great-circle distance (km/mi) and initial bearing between their centers."
+      ],
+      "inputs": [
+        {
+          "name": "Latitude",
+          "unit": "decimal degrees",
+          "range": "-90 to 90"
+        },
+        {
+          "name": "Longitude",
+          "unit": "decimal degrees",
+          "range": "-180 to 180"
+        },
+        {
+          "name": "Locator",
+          "unit": "4 / 6 / 8 characters",
+          "range": "field A-R, subsquare A-X, the rest 0-9"
+        }
+      ],
+      "algorithm": "Normalize lon to 0..360 (lon+180) and lat to 0..180 (lat+90), then subdivide each axis level by level, longitude character first: Field /18 (20° / 10°, A-R), Square /10 (2° / 1°, 0-9), Subsquare /24 (5' / 2.5', a-x), Extended /10 (0.5' / 0.25', 0-9). Decode reverses to the SW corner; the center is SW + cell/2. Distance and bearing use the spherical haversine + forward-bearing formulas, R = 6371 km. (maidenhead_data.dart)",
+      "example": "37.75, -122.45 → CM87 (San Francisco Bay). 52.5 N, 13.4 E → JO62 (Berlin). 48.14666, 11.60833 → JN58td (Munich). CM87 to JO62 is about 9100 km.",
+      "fieldNotes": [
+        "A locator names a rectangular square, not a point; a longer locator is a smaller square. Decoding returns the square center.",
+        "Exactly +180 longitude or +90 latitude is clamped one step inside so it stays in the last cell. A coordinate on a square boundary (e.g. lon -122.0) falls in the higher square by floor convention.",
+        "Distance and bearing are computed from the square centers, so they are only as precise as the locators you give."
+      ],
+      "source": "maidenhead_data.dart"
+    },
     "eirp": {
       "name": "EIRP Calculator",
       "category": "Calculators & Tools",
