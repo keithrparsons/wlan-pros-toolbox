@@ -213,7 +213,12 @@ void main() {
       // Band Designations band-designations, Part 15 vs Part 97 part15-part97)
       // plus 1 Educational Resources tile (Ham Radio Study Resources
       // ham-study-resources). 146 + 5 = 151.
-      expect(store.count, 151);
+      // 153 = + the 2 Ham Radio PDF reference cards (2026-06-28), both Quick
+      // Reference tiles in the "Ham Radio" subgroup, rendered in the shared
+      // PdfReferenceScreen: General License Frequency Chart
+      // (general-license-frequency-chart) and Ham Radio General Exam Study Notes
+      // (ham-radio-general-exam-study-notes). 151 + 2 = 153.
+      expect(store.count, 153);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

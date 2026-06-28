@@ -480,6 +480,15 @@ class AppRouter {
       '/tools/channel-allocations-6ghz';
   static const String mcsIndexCard = '/tools/mcs-index-card';
 
+  // Ham Radio PDF reference cards (2026-06-28) — two of Keith's corrected
+  // amateur-radio references bundled as PDFs and rendered by the same shared
+  // PdfReferenceScreen. They live in the Quick Reference "Ham Radio" subgroup
+  // beside the in-app band references.
+  static const String generalLicenseFrequencyChart =
+      '/tools/general-license-frequency-chart';
+  static const String hamRadioGeneralExamStudyNotes =
+      '/tools/ham-radio-general-exam-study-notes';
+
   // Calculators — Hex / ASCII converter + printable-ASCII table (pure math +
   // const-derived table, all platforms incl. web).
   static const String hexAscii = '/tools/hex-ascii';
@@ -738,6 +747,18 @@ class AppRouter {
           title: 'Modulation and Coding Schemes (MCS Index)',
           assetPath: 'assets/reference-cards/mcs-index-card.pdf',
           toolId: 'mcs-index-card',
+        ),
+    generalLicenseFrequencyChart: (_) => const PdfReferenceScreen(
+          title: 'General License Frequency Chart',
+          assetPath:
+              'assets/reference-cards/general-license-frequency-chart.pdf',
+          toolId: 'general-license-frequency-chart',
+        ),
+    hamRadioGeneralExamStudyNotes: (_) => const PdfReferenceScreen(
+          title: 'Ham Radio General Exam Study Notes',
+          assetPath:
+              'assets/reference-cards/ham-radio-general-exam-study-notes.pdf',
+          toolId: 'ham-radio-general-exam-study-notes',
         ),
     hexAscii: (_) => const HexAsciiScreen(),
     unitConverter: (_) => const UnitConverterScreen(),

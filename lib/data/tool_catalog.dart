@@ -873,6 +873,33 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Ham Radio',
       ),
+      // Two Ham Radio PDF reference cards (2026-06-28) — Keith's corrected
+      // amateur-radio references, bundled as PDFs under assets/reference-cards/
+      // and rendered in the shared offline PdfReferenceScreen (pdfx → Apple
+      // PDFKit) exactly like the laminated Wi-Fi cards. Placed in the Ham Radio
+      // subgroup alongside the in-app band references so all the amateur
+      // material is grouped and findable. Custom Tier-2 tile icons flagged for
+      // Charta.
+      ToolEntry(
+        id: 'general-license-frequency-chart',
+        title: 'General License Frequency Chart',
+        description:
+            'US amateur HF/VHF/UHF privileges for the General class: '
+            'frequency segments, power limits, and the corrected 60 m channels',
+        routeName: '/tools/general-license-frequency-chart',
+        isLive: true,
+        subgroup: 'Ham Radio',
+      ),
+      ToolEntry(
+        id: 'ham-radio-general-exam-study-notes',
+        title: 'Ham Radio General Exam Study Notes',
+        description:
+            'Condensed study notes for the amateur-radio General exam: '
+            'rules, operating practice, and the RF concepts a Wi-Fi pro knows',
+        routeName: '/tools/ham-radio-general-exam-study-notes',
+        isLive: true,
+        subgroup: 'Ham Radio',
+      ),
       // ── from the dissolved Infrastructure category ──
       ToolEntry(
         id: 'poe-reference',
