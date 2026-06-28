@@ -1,4 +1,4 @@
-// Integration test — proves the 10 bundled reference-card PDFs decode and
+// Integration test — proves the 12 bundled reference-card PDFs decode and
 // render through pdfx → native Apple PDFKit on the REAL macOS embedder.
 //
 // WHY this is an integration test, not a widget test: pdfx renders PDFs via the
@@ -10,7 +10,7 @@
 // Run:  flutter test integration_test/pdf_render_test.dart -d macos
 //
 // Two checks:
-//   1. Open EACH of the 10 card assets through PdfDocument.openAsset (the exact
+//   1. Open EACH of the 12 card assets through PdfDocument.openAsset (the exact
 //      call PdfReferenceScreen makes) and assert pagesCount >= 1, then close.
 //      This validates every bundled PDF is a real, decodable document.
 //   2. Pump PdfReferenceScreen for one card and confirm it reaches the loaded
@@ -22,7 +22,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/pdf_reference_screen.dart';
 
-/// The 10 bundled reference cards, mirroring the router wiring
+/// The 12 bundled reference cards, mirroring the router wiring
 /// (lib/router/app_router.dart). Title is used only for the one screen-pump.
 const List<({String title, String assetPath})> _cards =
     <({String title, String assetPath})>[
@@ -65,6 +65,16 @@ const List<({String title, String assetPath})> _cards =
   (
     title: 'Modulation and Coding Schemes (MCS Index)',
     assetPath: 'assets/reference-cards/mcs-index-card.pdf',
+  ),
+  // Ham Radio PDF reference cards (2026-06-28) — Quick Reference "Ham Radio"
+  // subgroup; same shared viewer, same native decode path.
+  (
+    title: 'General License Frequency Chart',
+    assetPath: 'assets/reference-cards/general-license-frequency-chart.pdf',
+  ),
+  (
+    title: 'Ham Radio General Exam Study Notes',
+    assetPath: 'assets/reference-cards/ham-radio-general-exam-study-notes.pdf',
   ),
 ];
 

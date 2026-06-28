@@ -30,8 +30,9 @@ enum ContentType {
   final IconData glyph;
 }
 
-/// The 10 bundled PDF "card" tool ids (rendered by PdfReferenceScreen). These
-/// are the laminated cards — their content type is "Card", not "Table".
+/// The 12 bundled PDF "card" tool ids (rendered by PdfReferenceScreen). These
+/// are the laminated Wi-Fi cards plus the two Ham Radio PDF cards — their
+/// content type is "Card", not "Table".
 const Set<String> _pdfCardIds = <String>{
   'bubble-diagram',
   'troubleshooting-causes',
@@ -43,6 +44,8 @@ const Set<String> _pdfCardIds = <String>{
   'extended-checklist',
   'extended-checklist-nonadvertised',
   'connection-checklist',
+  'general-license-frequency-chart',
+  'ham-radio-general-exam-study-notes',
 };
 
 /// The interactive (tappable) checklist tool ids.

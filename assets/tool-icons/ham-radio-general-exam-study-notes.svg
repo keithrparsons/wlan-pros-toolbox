@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Ham Radio General Exam Study Notes (printable PDF reference CARD). A PORTRAIT
+         NOTES SHEET with a DOG-EARED (folded) top-right corner and three full-width
+         RULED note lines of decreasing length — the classic "printed page of notes".
+         GL-003 §8.6.1: 24x24 master, single currentColor, fill=none, 2px stroke,
+         round cap/join, silhouette-first, legible at 20px.
+         Differentiation:
+           - vs ham-study-resources.svg (a diagonally-offset FLASHCARD STACK carrying a
+             CHECKMARK = the resource/flashcard list): this is a single NOTES SHEET with
+             a folded corner and ruled text rows — a printed notes page, not a card stack.
+           - vs its PDF-card sibling general-license-frequency-chart.svg: that is a clean
+             LANDSCAPE card whose interior is blocky band segments over a ticked ruler;
+             this is a PORTRAIT page with a DOG-EARED corner and even full-width text
+             rows. Different silhouette (portrait dog-eared page vs landscape clean card)
+             AND different interior (horizontal text rows vs blocks+ticks), so the two
+             PDF cards do not collapse into each other at the 20px floor.
+         The dog-ear fold and all three note lines are full 2px strokes (no sub-pixel
+         accents), so the page silhouette and the "ruled notes" read survive 20px. -->
+    <!-- notes-sheet outline with a folded top-right corner -->
+    <path d="M5 3 H14.5 L19 7.5 V21 H5 Z"/>
+    <!-- dog-ear fold -->
+    <path d="M14.5 3 V7.5 H19"/>
+    <!-- ruled note lines (decreasing length = lines of text) -->
+    <path d="M8 12 H16"/>
+    <path d="M8 15 H16"/>
+    <path d="M8 18 H13"/>
+  </g>
+</svg>

@@ -209,6 +209,17 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'technician', 'general', 'amateur extra', 'question pool', 'ncvec',
     'test', 'practice test', 'aredn', 'fcc part 97', 'get licensed',
   ],
+  // Ham Radio PDF reference cards (2026-06-28).
+  'general-license-frequency-chart': <String>[
+    'amateur', 'ham', 'general class', 'frequency chart', 'band chart',
+    'privileges', 'hf', 'phone band', 'cw', 'data', '60 meter', '60m',
+    'power limit', 'pep', 'erp', 'eirp', 'part 97', 'fcc', 'reference card',
+  ],
+  'ham-radio-general-exam-study-notes': <String>[
+    'amateur', 'ham', 'general exam', 'study notes', 'study guide', 'license',
+    'element 3', 'question pool', 'rules', 'operating', 'rf safety', 'antennas',
+    'propagation', 'fcc part 97', 'get licensed', 'reference card',
+  ],
   'downtilt': <String>[
     'tilt angle', 'antenna aim', 'mechanical tilt', 'coverage angle',
   ],

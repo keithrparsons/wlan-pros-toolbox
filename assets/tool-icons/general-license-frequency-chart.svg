@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- General License Frequency Chart (printable PDF reference CARD). A landscape
+         REFERENCE CARD (rounded-rectangle document frame) holding a small band-plan
+         motif: two allocated BAND-SEGMENT blocks of different widths resting over a
+         short frequency RULER with downward graduation ticks. Reads as "the band /
+         frequency chart, as a card" — the printed reference, not the live tool.
+         GL-003 §8.6.1: 24x24 master, single currentColor, fill=none, 2px stroke,
+         round cap/join, silhouette-first, legible at 20px.
+         Differentiation:
+           - vs the interactive ham-band-plan.svg (blocks-on-a-ruler filling the WHOLE
+             canvas, NO frame): this one is FRAMED in a card — the card silhouette is
+             the gross differentiator, the band motif sits small inside it.
+           - vs its PDF-card sibling ham-radio-general-exam-study-notes.svg: that is a
+             PORTRAIT page with a DOG-EARED corner + full-width ruled text lines; this
+             is a clean LANDSCAPE card whose interior is blocky band segments over a
+             ticked ruler. Different silhouette (landscape clean-corner card vs portrait
+             dog-eared page) AND different interior (blocks+ticks vs even text rows), so
+             the two do not collapse into each other at the 20px floor.
+         All marks are full 2px strokes (no sub-pixel accents): card frame, two band
+         blocks, the ruler axis, and the graduation ticks all survive 20px. -->
+    <!-- reference card frame (landscape document) -->
+    <rect x="2.5" y="5" width="19" height="14" rx="2"/>
+    <!-- allocated band-segment blocks (different widths) -->
+    <rect x="5.5" y="8" width="5" height="3.5" rx="1"/>
+    <rect x="12" y="8" width="6.5" height="3.5" rx="1"/>
+    <!-- frequency ruler axis -->
+    <path d="M5.5 14.5 H18.5"/>
+    <!-- ruler graduation ticks -->
+    <path d="M9 14.5 V16.5"/>
+    <path d="M15 14.5 V16.5"/>
+  </g>
+</svg>

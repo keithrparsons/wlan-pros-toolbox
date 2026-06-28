@@ -232,6 +232,49 @@
       ],
       "source": "ham_study_resources_screen.dart"
     },
+    "general-license-frequency-chart": {
+      "name": "General License Frequency Chart",
+      "category": "Quick Reference",
+      "purpose": "A bundled, offline, pinch-zoomable PDF of Keith's corrected General-class frequency chart: the US amateur HF/VHF/UHF/SHF privileges, power limits, and the current 60 m channel plan for a General-class license.",
+      "whyHere": "A Wi-Fi pro who also holds (or is studying for) a General-class amateur license wants the band edges, segment limits, and power ceilings in one card on the phone already in hand, with no network needed. The 13 cm and 5 cm bands also overlap Wi-Fi, so the band edges matter for the Part 15 vs Part 97 picture.",
+      "howToUse": [
+        "Open the card and pinch / double-tap to zoom; the page is fit-to-screen on open.",
+        "Read the per-band frequency segments, the voice sideband, and the max-power column; the 60 m detail table lists the four channels by center plus the 9.15 W ERP segment.",
+        "This is a flat print PDF, not an in-app data table, so the content is not screen-reader readable; the interactive US Amateur Band Plan reference covers the same data in an accessible form."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Frequency segments follow 47 CFR §97.301 (General class); the power column follows §97.313: 1500 W PEP ceiling, with 30 m = 200 W PEP, 60 m channels = 100 W ERP / segment = 9.15 W ERP, 2200 m = 1 W EIRP, 630 m = 5 W EIRP. A Technician on HF is capped at 200 W PEP.",
+        "60 m is current as of 13 Feb 2026 (4 channels + the 9.15 W ERP segment); older 5-channel charts are wrong. No HF symbol-rate (baud) limit: data is governed by a 2.8 kHz bandwidth limit (FCC 23-93).",
+        "9 cm (3.3-3.5 GHz) is omitted (sunsetting, no Wi-Fi overlap). US (FCC) Part 97; this is a reference, not legal advice.",
+        "Card inner content is not accessible to screen readers (flat rasterized PDF). The card title and \"pinch to zoom\" gesture are announced.",
+        "Source / basis: Keith Parsons' corrected General License Frequency Chart, exported to PDF and bundled under assets/reference-cards/general-license-frequency-chart.pdf. Rendered offline via the pdfx PdfView viewer (Apple PDFKit on iOS + macOS)."
+      ],
+      "source": "lib/screens/tools/reference/pdf_reference_screen.dart (shared viewer) / assets/reference-cards/general-license-frequency-chart.pdf"
+    },
+    "ham-radio-general-exam-study-notes": {
+      "name": "Ham Radio General Exam Study Notes",
+      "category": "Quick Reference",
+      "purpose": "A bundled, offline, pinch-zoomable PDF of Keith's condensed study notes for the US amateur-radio General-class (Element 3) exam: the rules, operating practice, RF safety, antennas, and propagation a candidate needs, framed for someone who already knows RF from Wi-Fi.",
+      "whyHere": "A Wi-Fi pro studying for the General upgrade gets a single offline notes sheet to review anywhere, with the RF concepts they already know used as the on-ramp to the amateur-specific rules and operating practice.",
+      "howToUse": [
+        "Open the card and pinch / double-tap to zoom; the page is fit-to-screen on open.",
+        "Use it as a revision sheet alongside a live question pool; pair it with the Ham Radio Study Resources tile for hamstudy.org and the ARRL manuals.",
+        "This is a flat print PDF, not an in-app data table, so the content is not screen-reader readable."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "The General exam (Element 3) is 35 questions, 26 to pass. The question pool rotates on a four-year cycle, so the notes cover the stable concepts rather than memorized pool answers.",
+        "Verify the current rules before operating: 60 m changed 13 Feb 2026 and the Technician pool changes 1 Jul 2026. US (FCC) Part 97; this is a study aid, not legal advice.",
+        "Card inner content is not accessible to screen readers (flat rasterized PDF). The card title and \"pinch to zoom\" gesture are announced.",
+        "Source / basis: Keith Parsons' Ham Radio General Exam Study Notes, exported to PDF and bundled under assets/reference-cards/ham-radio-general-exam-study-notes.pdf. Rendered offline via the pdfx PdfView viewer (Apple PDFKit on iOS + macOS)."
+      ],
+      "source": "lib/screens/tools/reference/pdf_reference_screen.dart (shared viewer) / assets/reference-cards/ham-radio-general-exam-study-notes.pdf"
+    },
     "eirp": {
       "name": "EIRP Calculator",
       "category": "Calculators & Tools",
