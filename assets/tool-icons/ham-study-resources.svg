@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Ham Study Resources (exam prep). A FLASHCARD STACK: a back card offset up
+         and to the right, a front study card on top, and a bold CHECKMARK on the
+         front card = material learned / exam-ready. The flashcard is the canonical
+         ham-exam study object.
+         GL-003 §8.6.1: 24x24 master, single currentColor, fill=none, 2px stroke,
+         round cap/join, legible at 20px.
+         Deliberately NOT a book and NOT a mortarboard, to stay clear of the
+         learning siblings: wifi-glossary / wifi-auth-glossary are an OPEN BOOK with
+         a topper (the spine-valley curve), and educational-resources is a GRADUATION
+         CAP. The diagonal two-card stack plus an interior checkmark is a different
+         gross silhouette from part15-part97's side-by-side overlapping blocks.
+         The checkmark is a full 2px stroke spanning most of the card, so it survives
+         the 20px floor rather than reading as a generic pair of rectangles. -->
+    <!-- back card (peeking, upper-right) -->
+    <path d="M9 4 H19 A1.5 1.5 0 0 1 20.5 5.5 V15"/>
+    <!-- front study card -->
+    <rect x="3.5" y="8" width="13" height="12" rx="2"/>
+    <!-- checkmark: learned / exam-ready -->
+    <path d="M6.3 14.2 L8.9 16.8 L13.7 11.4"/>
+  </g>
+</svg>

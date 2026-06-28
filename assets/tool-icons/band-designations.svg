@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Band Designations (HF / VHF / UHF / SHF tiers). A monotonic ASCENDING
+         STAIRCASE of four steps, rising left-to-right with frequency: the tiered
+         designations climbing from HF up through SHF.
+         GL-003 §8.6.1: 24x24 master, single currentColor, fill=none, 2px stroke,
+         round cap/join, legible at 20px.
+         Differentiated from rf-bands (separate THIN ascending bars that dip on the
+         last one) and from ham-band-plan (horizontal blocks on a ruler): this is a
+         single CONNECTED stepped silhouette — four treads climbing in order — which
+         reads as discrete ascending tiers. One solid shape, no sub-pixel accents,
+         holds at the 20px floor. -->
+    <path d="M3 20 V16 H7.5 V12.5 H12 V9 H16.5 V5.5 H21 V20 Z"/>
+  </g>
+</svg>
