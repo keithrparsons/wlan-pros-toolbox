@@ -19,9 +19,15 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:wlan_pros_toolbox/data/content_type.dart';
+import 'package:wlan_pros_toolbox/data/tool_assets.dart';
 import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
 import 'package:wlan_pros_toolbox/router/app_router.dart';
+import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+import 'package:wlan_pros_toolbox/widgets/tool_row.dart';
 
 void main() {
   // id → title contract for the two Ham Radio PDF cards. A rename here is a
@@ -92,6 +98,66 @@ void main() {
             reason: 'help name mismatch for "$id"');
         expect(entry['category'], 'Quick Reference',
             reason: '"$id" help category should be Quick Reference');
+      }
+    });
+
+    // Regression: both cards are bundled PDFs opened in PdfReferenceScreen,
+    // identical in kind to the 10 laminated Wi-Fi cards, so their §8.17 chip
+    // must read "Card" — NOT the quick-reference "Table" default they fell
+    // through to before being added to content_type.dart's _pdfCardIds.
+    test('content-type chip is "Card", not the quick-reference "Table" default',
+        () {
+      final ToolCategory quickRef = kToolCategories.firstWhere(
+        (ToolCategory c) => c.id == 'quick-reference',
+      );
+      final Map<String, ToolEntry> byId = <String, ToolEntry>{
+        for (final ToolEntry t in quickRef.tools) t.id: t,
+      };
+
+      for (final String id in hamPdfCards.keys) {
+        final ToolEntry t = byId[id]!;
+        expect(contentTypeFor(t, 'quick-reference'), ContentType.card,
+            reason: '"$id" is a PDF card; its chip must say "Card", not '
+                '"Table" (the quick-reference fallthrough)');
+        expect(contentTypeFor(t, 'quick-reference').label, 'Card');
+      }
+    });
+
+    // Each card's CUSTOM Tier-2 tile icon (Charta's bespoke SVG) must resolve
+    // by the assets/tool-icons/<id>.svg convention and render in ToolRow,
+    // NOT the generic Icons.bolt fallback. Asset presence is simulated with
+    // ToolAssets.debugSetBundledAssets, matching glossary_edu_icons_test.dart.
+    group('custom tile icons render (not the bolt fallback)', () {
+      tearDown(ToolAssets.debugReset);
+
+      for (final String id in hamPdfCards.keys) {
+        test('$id resolves to its assets/tool-icons SVG path', () {
+          expect(ToolAssets.iconPath(id), 'assets/tool-icons/$id.svg');
+        });
+
+        testWidgets('$id tile renders the bespoke SVG when bundled',
+            (tester) async {
+          final ToolCategory quickRef = kToolCategories.firstWhere(
+            (ToolCategory c) => c.id == 'quick-reference',
+          );
+          final ToolEntry tool =
+              quickRef.tools.firstWhere((ToolEntry t) => t.id == id);
+
+          ToolAssets.debugSetBundledAssets(
+            <String>{'assets/tool-icons/$id.svg'},
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: AppTheme.dark(),
+              home: Scaffold(body: ToolRow(tool: tool)),
+            ),
+          );
+
+          expect(find.byType(SvgPicture), findsOneWidget,
+              reason: '"$id" must render its convention-resolved Tier-2 SVG');
+          expect(find.byIcon(Icons.bolt), findsNothing,
+              reason: '"$id" must NOT fall back to the generic bolt icon');
+        });
       }
     });
   });
