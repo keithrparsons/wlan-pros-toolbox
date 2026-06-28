@@ -1742,7 +1742,8 @@
       "howToUse": [
         "macOS: opens recording automatically — it polls the Wi-Fi link continuously while the screen is open. Walk your space; each roam is logged as it happens. (roaming_log_screen.dart)",
         "iOS: install the \"WLAN Pros Live\" companion Shortcut (same one Wi-Fi Information uses), tap Start, then walk with the screen open. Firing the Shortcut switches to the Shortcuts app, so it waits for your deliberate Start tap rather than auto-firing. (roaming_log_screen.dart; wifi_signal_sampler.dart)",
-        "Read the list newest-first: time · network, the from→to BSSID pair, and the signal (RSSI/SNR) read at the roam."
+        "Read the list newest-first: time · network, the from→to BSSID pair, and the signal (RSSI/SNR) read at the roam.",
+        "Tap Copy results in the top bar to put the whole session on the clipboard as plain text (header plus one line per roam) — paste it into Notes or a report instead of screenshotting. The action stays disabled until at least one roam is recorded."
       ],
       "inputs": [],
       "algorithm": "The shared WifiSignalSampler feeds every fresh connected-AP sample to a pure RoamDetector. The detector records a roam only when the current BSSID differs from the prior non-null BSSID AND the SSID is unchanged (roam_detector.dart). A null/blank BSSID breaks the chain without fabricating a roam; the first known BSSID seeds the anchor (no roam); a same-BSSID sample is ignored; a changed SSID is a network switch, not a roam, and is excluded. On macOS the detector is fed on every poll (before the sparkline's unchanged-RF guard) so a roam at identical signal still registers; on iOS it is fed from each new streamed payload and reset on a fresh Stop→Start. (wifi_signal_sampler.dart; roam_detector.dart)",

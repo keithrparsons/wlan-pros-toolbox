@@ -30,6 +30,7 @@ import '../../../services/network/wifi_signal_sampler.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'network_unavailable_view.dart';
 
@@ -63,6 +64,12 @@ class _RoamingLogScreenState extends State<RoamingLogScreen>
   late final WifiInfoSource _source;
   WifiSignalSampler? _sampler;
 
+  /// Wall-clock time this foreground recording session opened — stamped when the
+  /// sampler is wired (macOS auto-polls from here; iOS begins on the Start tap,
+  /// so this is the honest "log opened" time, never a fabricated reading). Feeds
+  /// the §8.16 copy export header. Null when no sampler is active.
+  DateTime? _sessionStart;
+
   @override
   void initState() {
     super.initState();
@@ -73,6 +80,7 @@ class _RoamingLogScreenState extends State<RoamingLogScreen>
             _source == WifiInfoSource.androidWifiManager ||
             _source == WifiInfoSource.iosShortcuts)) {
       _sampler = widget.sampler ?? WifiSignalSampler(source: _source);
+      _sessionStart = DateTime.now();
       WidgetsBinding.instance.addObserver(this);
       _sampler!.load();
       // macOS / Android source the feed from NATIVE polling (no app switch), so
@@ -113,9 +121,43 @@ class _RoamingLogScreenState extends State<RoamingLogScreen>
       appBar: AppBar(
         title: const Text('Roaming Log'),
         toolbarHeight: 64,
+        // §8.16: copy is the sanctioned AppBar action on a results screen. The
+        // closure serializes the session log on demand and returns null until at
+        // least one roam exists, so the affordance is disabled (not focusable)
+        // on the honest empty state — never copies a fake/empty log.
+        actions: <Widget>[
+          AppCopyAction(textBuilder: _buildCopyText),
+        ],
       ),
       body: SafeArea(top: false, child: _body()),
     );
+  }
+
+  /// §8.16 copy payload — delegates to the pure [buildRoamLogCopyText] so the
+  /// serialization is unit-testable without a live sampler. Returns null
+  /// (→ disabled affordance) when no sampler is active or no roam is recorded.
+  String? _buildCopyText() {
+    final WifiSignalSampler? s = _sampler;
+    if (s == null) return null;
+    final List<RoamEvent> events = s.roamEvents;
+    return buildRoamLogCopyText(
+      events: events,
+      network: _sessionNetwork(s, events),
+      sessionStart: _sessionStart,
+    );
+  }
+
+  /// The network the session belongs to: the live SSID where the platform still
+  /// exposes it, else the most recent roam's SSID, else the honest "Wi-Fi"
+  /// fallback the rows use when no name was read.
+  String _sessionNetwork(WifiSignalSampler s, List<RoamEvent> events) {
+    final String? live = s.latest?.ssid;
+    if (live != null && live.trim().isNotEmpty) return live;
+    for (final RoamEvent e in events.reversed) {
+      final String? ssid = e.ssid;
+      if (ssid != null && ssid.trim().isNotEmpty) return ssid;
+    }
+    return 'Wi-Fi';
   }
 
   Widget _body() {
@@ -184,6 +226,71 @@ class _RoamingLogScreenState extends State<RoamingLogScreen>
       style: text.bodyLarge?.copyWith(color: colors.textSecondary),
     );
   }
+}
+
+/// Builds the §8.16 copy payload: the recorded roam session as paste-ready plain
+/// text. A short header (network · session-open time · roam count) then one
+/// block per [RoamEvent] in chronological order, each carrying the timestamp,
+/// the from→to BSSID pair, the signal read at the roam, and the dwell on the
+/// prior AP (derived from consecutive roam timestamps).
+///
+/// Honesty (GL-005): a field a sample omitted prints as "unavailable", matching
+/// the on-screen wording — never a fabricated value. Returns null (→ disabled
+/// affordance) when [events] is empty; the empty session is not a "log to keep".
+///
+/// Pure and deterministic (no clock, no I/O), so it is unit-tested directly with
+/// synthetic [RoamEvent]s — no live sampler required.
+@visibleForTesting
+String? buildRoamLogCopyText({
+  required List<RoamEvent> events,
+  required String network,
+  DateTime? sessionStart,
+}) {
+  if (events.isEmpty) return null;
+
+  final StringBuffer buf = StringBuffer()
+    ..writeln('Roaming Log')
+    ..writeln('Network: $network');
+  if (sessionStart != null) {
+    buf.writeln('Session started: ${_RoamRow._formatTime(sessionStart)}');
+  }
+  buf.writeln(
+    events.length == 1 ? '1 roam recorded' : '${events.length} roams recorded',
+  );
+
+  for (int i = 0; i < events.length; i++) {
+    final RoamEvent e = events[i];
+    final String evNetwork =
+        e.ssid != null && e.ssid!.trim().isNotEmpty ? e.ssid! : 'Wi-Fi';
+    final String signal = e.rssiDbm != null ? '${e.rssiDbm} dBm' : 'unavailable';
+    final String snr = e.snrDb != null ? ' · SNR ${e.snrDb} dB' : '';
+
+    buf
+      ..writeln()
+      ..writeln('${i + 1}. ${_RoamRow._formatTime(e.at)} · $evNetwork')
+      ..writeln('   ${e.fromBssid} -> ${e.toBssid}')
+      ..writeln('   Signal at roam: $signal$snr');
+    // Dwell on the AP just left = time between this roam and the prior one. The
+    // first roam has no prior roam to measure from, so it is omitted rather than
+    // guessed.
+    if (i > 0) {
+      final Duration dwell = e.at.difference(events[i - 1].at);
+      buf.writeln('   Time on previous AP: ${_formatDwell(dwell)}');
+    }
+  }
+
+  return buf.toString().trimRight();
+}
+
+/// "45s" / "2m" / "2m 5s" — dwell between consecutive roams, no intl dependency.
+/// Negative/zero clamps to "0s".
+String _formatDwell(Duration d) {
+  final int total = d.inSeconds;
+  if (total <= 0) return '0s';
+  if (total < 60) return '${total}s';
+  final int minutes = total ~/ 60;
+  final int seconds = total % 60;
+  return seconds == 0 ? '${minutes}m' : '${minutes}m ${seconds}s';
 }
 
 /// The roam-log card: a header with the live/Start control + roam count, then
