@@ -24,7 +24,16 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 
-import '../windows_arp_ffi.dart';
+// Guard the dart:ffi carrier so it never compiles into the web target.
+// Default to the web stub; pull in the real iphlpapi FFI reader only when
+// dart:io (hence dart:ffi) is available — i.e. on native targets. `if
+// (dart.library.io)` is the robust key here: `dart.library.html` evaluates
+// false on the Flutter 3.44 / Dart 3.12 web build (dart:html is deprecated for
+// dart:js_interop), so an `if (dart.library.html)` guard would silently fall
+// through to the FFI default and break `flutter build web`.
+import '../windows_arp_ffi_web_stub.dart'
+    if (dart.library.io) '../windows_arp_ffi.dart'
+    show readArpTableViaIpHlpApi, WindowsArpReadException;
 
 /// One IP → MAC entry read from the ARP cache. Plain data; pure.
 class ArpEntry {

@@ -57,8 +57,15 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'wifi_info_service.dart'
     show WifiInfo, WifiInfoUnavailable, WifiInfoUnavailableReason;
-import 'windows_wifi_ffi.dart'
-    if (dart.library.html) 'windows_wifi_ffi_web_stub.dart'
+// Default to the web stub; pull in the real dart:ffi/win32 reader only when
+// dart:io (hence dart:ffi) is available — i.e. on native targets. The previous
+// `if (dart.library.html)` key evaluated false on the Flutter 3.44 / Dart 3.12
+// web build (dart:html is deprecated for dart:js_interop), so it silently fell
+// through to the windows_wifi_ffi.dart default and dragged dart:ffi into the
+// web target, breaking `flutter build web`. `if (dart.library.io)` selects the
+// stub on web and the FFI file on every native platform.
+import 'windows_wifi_ffi_web_stub.dart'
+    if (dart.library.io) 'windows_wifi_ffi.dart'
     show readConnectedApFromNativeWifi;
 
 // The win32 surface lives entirely in windows_wifi_ffi.dart. This wrapper is the
