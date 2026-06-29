@@ -12,6 +12,7 @@ import '../screens/about_screen.dart';
 import '../screens/help_browse_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/tools/educational/educational_resources_screen.dart';
+import '../screens/tools/educational/spectrum_analysis_screen.dart';
 import '../screens/tools/educational/ham_study_resources_screen.dart';
 import '../screens/search_screen.dart';
 import '../data/tool_catalog.dart' show kEducationalResourcesRoute;
@@ -464,6 +465,15 @@ class AppRouter {
   /// permanent (route, catalog, diagram lookup, help, tests).
   static const String antennaFundamentals = '/tools/antenna-fundamentals';
 
+  /// Spectrum Analysis — a read-along teaching MODULE (hub + eight topic
+  /// screens) on what a spectrum analyzer is, how to read it, how to fingerprint
+  /// interference (a nine-card signature gallery), and how to mitigate it. An
+  /// in-app reference in Educational Resources, alongside Antenna Fundamentals.
+  /// The id `spectrum-analysis` is permanent (route, catalog, help, tests). The
+  /// eight topic screens are pushed from the hub via MaterialPageRoute, so only
+  /// this hub route is registered.
+  static const String spectrumAnalysis = '/tools/spectrum-analysis';
+
   // PDF reference cards — Keith's 10 laminated reference cards bundled as PDFs
   // (assets/reference-cards/<id>.pdf), rendered pinch-zoomable by the single
   // PdfReferenceScreen. They interleave alphabetically with the other Quick
@@ -700,6 +710,7 @@ class AppRouter {
         ),
     antennaConnectors: (_) => const AntennaConnectorsScreen(),
     antennaFundamentals: (_) => const AntennaFundamentalsScreen(),
+    spectrumAnalysis: (_) => const SpectrumAnalysisScreen(),
     // PDF reference cards — one PdfReferenceScreen per bundled card. Title +
     // asset path are the only per-card inputs; the screen is otherwise shared.
     bubbleDiagram: (_) => const PdfReferenceScreen(

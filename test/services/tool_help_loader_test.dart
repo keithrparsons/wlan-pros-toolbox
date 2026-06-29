@@ -223,7 +223,12 @@ void main() {
       // generator (flutter_soloud behind the ToneEngine seam) that bridges
       // audio pitch/octaves/harmonics to RF, with the honest limits flagged
       // (an octave is not a dB; RF harmonics are the unwanted kind). 153 + 1 = 154.
-      expect(store.count, 154);
+      // 155 = + the Spectrum Analysis teaching module (spectrum-analysis)
+      // 2026-06-28: an in-app reference in Educational Resources (hub + 8 topic
+      // screens: NIC-vs-spectrum, how it works, the knobs, the three views, a
+      // nine-card interferer signature gallery, comparing captures, the tool
+      // landscape, mitigation). The hub carries the one help footer. 154 + 1 = 155.
+      expect(store.count, 155);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

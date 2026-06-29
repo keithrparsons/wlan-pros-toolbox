@@ -591,6 +591,18 @@ flutter:
     # figures are REPRESENTATIVE order-of-magnitude demands, not exact MCS
     # thresholds (the diagrams and the help entry say so).
     - assets/tool-diagrams/modulation/
+    # Spectrum Analysis signature cards (2026-06-28) — nine Vera-passed,
+    # DARK-BAKED raster cards (analyzer-rainbow data area + WLAN Pros green
+    # chrome on the §8 #1A1A1A canvas) for the Spectrum Analysis educational
+    # module's signature gallery (microwave-oven, bluetooth-classic,
+    # analog-video-camera, ble, baby-monitor, drone-fpv-downlink,
+    # zigbee-802-15-4, cordless-phone-24ghz, wireless-bridge). Like the
+    # modulation cards they are pre-rendered PNGs (text is baked, so the §8.6.1
+    # tofu-glyph rule does not apply and they take no §8.20.7 light swap); each
+    # renders on an ALWAYS-DARK surface card in both themes (DarkRasterDiagramCard)
+    # so it never reads inverted on light. The fingerprint caption beneath each
+    # card is the text equivalent for screen readers (Vera LOW alt-text note).
+    - assets/tool-diagrams/spectrum-signatures/
     # PDF reference cards — Keith's 10 laminated reference cards (Excel→PDF
     # exports), one bundled PDF per "PDF reference card" tool, named by catalog
     # id: assets/reference-cards/<tool-id>.pdf. Rendered offline in a
