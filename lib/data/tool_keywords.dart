@@ -341,6 +341,17 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'radiation pattern', 'omni', 'directional', 'dipole', 'azimuth',
     'elevation', 'polar plot',
   ],
+  // Spectrum Analysis teaching module. Keywords describe the TOPICS it teaches
+  // (GL-005 keyword honesty) — interference recognition and mitigation — not an
+  // analyze capability it does not have (the module states a phone cannot
+  // capture RF).
+  'spectrum-analysis': <String>[
+    'spectrum analysis', 'interference', 'interferer', 'non-wifi interference',
+    'rf interference', 'waterfall', 'spectrogram', 'duty cycle', 'rbw', 'fft',
+    'microwave interference', 'bluetooth interference', 'zigbee', 'fingerprint',
+    'signature', 'noise floor', 'rtsa', 'ekahau sidekick', 'wi-spy', 'oscium',
+    'netally', 'metageek', 'rf explorer',
+  ],
   'port-reference': <String>[
     'tcp', 'udp', 'iana', 'service port', 'port number', 'well known',
     'common ports',

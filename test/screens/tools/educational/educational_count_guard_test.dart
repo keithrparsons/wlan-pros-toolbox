@@ -26,9 +26,9 @@ void main() {
     // + Antenna Fundamentals, moved here 2026-06-06 BF6-3; + Ham Radio Study
     // Resources, added 2026-06-28).
     final int cardCount = edu.tools.length;
-    expect(cardCount, 12,
+    expect(cardCount, 13,
         reason: 'expected 10 PDF reference cards + Antenna Fundamentals + '
-            'Ham Radio Study Resources');
+            'Ham Radio Study Resources + Spectrum Analysis');
 
     // Online-resource count from the bundled dataset's _meta block.
     final File asset = File('assets/data/educational_resources.json');

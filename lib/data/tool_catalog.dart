@@ -1762,7 +1762,9 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
     // count + the bundled JSON `_meta.count`.
     // 53 = 52 + the Ham Radio Study Resources in-app reference (2026-06-28),
     // which lifts the in-app reference cards from 11 to 12.
-    countLabelOverride: '53',
+    // 54 = 53 + the Spectrum Analysis teaching module (2026-06-28), an in-app
+    // reference alongside Antenna Fundamentals, lifting in-app references 12→13.
+    countLabelOverride: '54',
     tools: <ToolEntry>[
       // The 6 PDF reference cards.
       ToolEntry(
@@ -1862,6 +1864,23 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'Where to study for the amateur-radio exams: hamstudy.org, ARRL '
             'manuals, FCC Part 97, and AREDN, with the current exam structure',
         routeName: '/tools/ham-study-resources',
+        isLive: true,
+      ),
+      // Spectrum Analysis (2026-06-28) — a read-along teaching MODULE (hub + 8
+      // topic screens) on spectrum analyzers: the NIC-vs-spectrum distinction,
+      // how the instrument works, the knobs, the three views, a nine-card
+      // interferer signature gallery, comparing captures, the tool landscape,
+      // and mitigation. Like Antenna Fundamentals it is an in-app reference, not
+      // a PDF card; the hub carries the help footer. The honest "a phone cannot
+      // capture RF" scope note leads the module.
+      ToolEntry(
+        id: 'spectrum-analysis',
+        title: 'Spectrum Analysis',
+        description:
+            'What a spectrum analyzer sees that a Wi-Fi adapter cannot, how to '
+            'read the three views, nine interferer signatures, and how to fix '
+            'interference — teaching content, not a live tool',
+        routeName: '/tools/spectrum-analysis',
         isLive: true,
       ),
     ],

@@ -3631,6 +3631,29 @@
         "HaLow is real, certified, and shipping (Morse Micro silicon, sub-$130 developer gateways) but is at the early-adoption stage in 2026. It has not displaced Zigbee or Z-Wave yet; that is a roadmap claim, not a 2026 fact."
       ],
       "source": "Wi-Fi Alliance, Wi-Fi CERTIFIED HaLow Technology Overview (Nov 2021), cross-checked against the IEEE 802.11ah Wikipedia article and Electronics-Notes; maturity cross-checked against Morse Micro releases (2025/2026)."
+    },
+    "spectrum-analysis": {
+      "name": "Spectrum Analysis",
+      "category": "Educational Resources",
+      "purpose": "A read-along teaching module on RF spectrum analysis for Wi-Fi: why a spectrum analyzer sees energy a Wi-Fi adapter is blind to (the NIC-versus-spectrum distinction), how the instrument works (swept versus real-time FFT, and the time/frequency trade), the knobs an operator touches (span, RBW, VBW, reference level, the dBm scale, detectors, max-hold and averaging), the three primary views (live FFT, waterfall, density / duty cycle) and how to read each, a nine-card gallery of interferer signatures (microwave oven, Bluetooth Classic and BLE, analog video camera, baby monitor, drone / FPV downlink, ZigBee, analog cordless phone, continuous wireless bridge), how to compare captures (max-hold, averaging, baselines, before and after), the current tool landscape, and the mitigation ladder.",
+      "whyHere": "It is the spectrum-analysis companion to the rest of the toolbox: when a Wi-Fi scan shows a clean channel but performance is poor, the cause is usually a non-Wi-Fi interferer only a spectrum analyzer can see. This module teaches you to recognize those interferers by their waterfall shape and to choose a mitigation. It is an in-app reference, alongside Antenna Fundamentals.",
+      "howToUse": [
+        "Open the module from Educational Resources, then read the eight topic screens in order from the hub. They build from the why (a spectrum analyzer versus a Wi-Fi NIC) through how it works, the knobs, the three views, fingerprinting, comparing captures, the tools, and mitigation.",
+        "On Fingerprinting interferers, swipe through the nine signature cards and tap any card to zoom in. The caption under each card is its waterfall fingerprint.",
+        "On The knobs, tap the Wi-Fi Glossary link to resolve any term in one tap."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "This is teaching content, not a working analyzer. A phone's Wi-Fi chipset is a NIC, not wideband RF capture hardware, so the app cannot perform spectrum analysis. The module states this in-app.",
+        "The nine signature cards are illustrative teaching diagrams (a representative live-FFT trace plus a waterfall and a dBm legend drawn to the canonical signatures), not captures from your environment. Signature accuracy was set by Keith as domain authority.",
+        "The drone / FPV downlink signature is model-dependent and lower-confidence: analog FPV is a continuous carrier while digital systems spread a wider, adaptive OFDM block. The card flags this.",
+        "Cordless phones split two ways: the 2.4 GHz analog kind interferes, but DECT 6.0 at 1.9 GHz does not touch any Wi-Fi band. Baby monitors vary by model for the same reason.",
+        "Tool specifications are kept to confirmed capabilities only; pricing is deliberately omitted because it moves and varies by region. Oscium now owns MetaGeek, so the Wi-Spy and Chanalyzer line is one product family.",
+        "The 6 GHz band being the cleanest is a current condition, not a permanent property; it will erode as adoption grows."
+      ],
+      "source": "Felix-condensed teaching copy from Pax's research brief (Deliverables/2026-06-28-spectrum-analysis-toolbox/research-brief.md), Keith's corrections folded in; nine signature cards by Charta (Vera SOP-009 PASS 2026-06-28). Rendered in spectrum_analysis_screen.dart. Candidate for a Penn SOP-020 voice polish before public launch."
     }
   }
 }
