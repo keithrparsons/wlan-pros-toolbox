@@ -1,7 +1,1 @@
-On a fresh install, tapping Check My Connection no longer bounces you to the Shortcuts app, and your internet speed test now reads accurately on the first run.
-
-The Wavelength tool now shows millimeters, alongside meters, centimeters, feet, and inches.
-
-More reliable connection speed tests, with an automatic fallback when the primary is busy.
-
-Visual polish and reliability fixes.
+New: a Spectrum Analysis learning module. See how a spectrum analyzer differs from a Wi-Fi adapter, learn the three core views (live, waterfall, and density), and fingerprint nine common interferers by their signatures: microwave ovens, Bluetooth and BLE, video cameras, baby monitors, drones, ZigBee, cordless phones, and continuous bridges. It finishes with the leading analyzer tools and how to mitigate interference once you find it.
