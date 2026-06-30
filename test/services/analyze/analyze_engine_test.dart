@@ -243,6 +243,69 @@ void main() {
       );
     });
 
+    // Regression: 802.11be (Wi-Fi 7) must NOT be misread as legacy. The
+    // case-insensitive substring "802.11b" also matched "802.11be", so every
+    // Wi-Fi 7 device wrongly tripped R-21 ("802.11n or earlier"). A real beta
+    // tester on "802.11be - Wi-Fi 7" (Tx 1921 / Rx 2041 Mbps) saw this.
+    group('802.11be (Wi-Fi 7) legacy-classification regression', () {
+      const String wifi7 = '802.11be - Wi-Fi 7'; // exact iOS Shortcut string
+      const double wifi7Rate = 1981; // avg(1921, 2041)
+
+      test('802.11be is NOT legacy (the bug case)', () {
+        expect(const AnalyzeInput(standard: wifi7).isLegacyPhy, isFalse);
+      });
+
+      test('802.11be is NOT flagged by R-21 or R-22, end to end', () {
+        // The beta tester's real reading: Wi-Fi 7, fast link rate, no problems.
+        final Set<String> ids = _firedIds(const AnalyzeInput(
+          standard: wifi7,
+          linkRateMbps: wifi7Rate,
+        ));
+        expect(ids, isNot(contains('R-21')));
+        expect(ids, isNot(contains('R-22')));
+      });
+
+      test('802.11be is recognized as modern (Wi-Fi 6+)', () {
+        // _isWifi6Plus is private, so assert via R-20: a modern PHY on the
+        // 2.4 GHz band fires the "use a faster band" finding; a legacy PHY
+        // would not. This proves be reads as modern, not legacy.
+        final Set<String> ids = _firedIds(const AnalyzeInput(
+          band: '2.4 GHz',
+          standard: wifi7,
+        ));
+        expect(ids, contains('R-20'));
+        expect(ids, isNot(contains('R-21')));
+      });
+
+      test('real legacy 802.11b labels still classify as legacy (no regression)',
+          () {
+        // The labels the app actually produces: macOS emits a bare "802.11b"
+        // (pre-branding modes get no Wi-Fi generation); iOS emits the dash
+        // form; a parenthesized form is also covered defensively.
+        for (final String legacy in <String>[
+          '802.11b',
+          '802.11b - Wi-Fi 1',
+          '802.11b (Wi-Fi 1)',
+        ]) {
+          expect(AnalyzeInput(standard: legacy).isLegacyPhy, isTrue,
+              reason: '"$legacy" must read as legacy');
+          expect(_firedIds(AnalyzeInput(standard: legacy)), contains('R-21'),
+              reason: '"$legacy" must fire R-21');
+        }
+      });
+
+      test('802.11ac is Wi-Fi 5 (not legacy); 802.11ax/be are not legacy', () {
+        const AnalyzeInput ac = AnalyzeInput(standard: '802.11ac (Wi-Fi 5)');
+        expect(ac.isWifi5Phy, isTrue);
+        expect(ac.isLegacyPhy, isFalse);
+
+        expect(
+            const AnalyzeInput(standard: '802.11ax (Wi-Fi 6)').isLegacyPhy,
+            isFalse);
+        expect(const AnalyzeInput(standard: wifi7).isLegacyPhy, isFalse);
+      });
+    });
+
     test('2.4 GHz channel outside 1/6/11 fires R-24', () {
       expect(
         _firedIds(const AnalyzeInput(band: '2.4 GHz', channel: 3)),

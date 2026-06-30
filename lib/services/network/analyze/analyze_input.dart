@@ -215,7 +215,13 @@ class AnalyzeInput {
     return s.contains('wi-fi 4') ||
         s.contains('802.11n') ||
         s.contains('802.11g') ||
-        s.contains('802.11b') ||
+        // Match real 802.11b but NOT 802.11be (Wi-Fi 7): a bare "802.11b" is
+        // only legacy when not immediately followed by another letter. The
+        // lookahead excludes "802.11be …" (and any future 802.11b-prefixed
+        // token) while still catching every label the app produces — the macOS
+        // bare "802.11b", the iOS dash form "802.11b - Wi-Fi 1", and a
+        // parenthesized "802.11b (…)".
+        RegExp(r'802\.11b(?![a-z])').hasMatch(s) ||
         s.contains('802.11a)') || // "802.11a (…)", avoid matching 802.11ac/ax
         s == '802.11a';
   }
