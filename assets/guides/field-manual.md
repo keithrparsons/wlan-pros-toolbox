@@ -1,21 +1,23 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-06-19 · covers 144 tools · app v1.5.4_
+_Compiled 2026-06-29 · covers 157 tools · app v1.5.8_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
 ## Contents
 
 - **Test Network** (6 tools)
-- **Networking Tools** (24 tools)
-- **Calculators & Tools** (28 tools)
+- **Networking Tools** (25 tools)
+- **Calculators & Tools** (32 tools)
   - RF & Propagation (9)
   - Antenna & Coverage (4)
   - Capacity & Power (3)
   - Coordinates & GPS (4)
-  - Conversions (4)
+  - Conversions (5)
   - Utilities & Generators (4)
-- **Quick Reference** (81 tools)
+  - Ham Radio (2)
+  - Learn / RF intuition (1)
+- **Quick Reference** (89 tools)
   - Wi-Fi & RF (23)
   - Cabling & Connectors (10)
   - Protocols (19)
@@ -24,7 +26,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - CLI & Capture (3)
   - Checklists (2)
   - Guides (2)
-  - Reference Cards (11)
+  - Ham Radio (6)
+  - Reference Cards (13)
 - **Field conveniences** (5 handy tools: reference, not curriculum)
 
 
@@ -44,19 +47,21 @@ Answer the everyday question "is the slowdown my Wi-Fi or my internet?" in plain
 **How to use**
 1. Open the tool and tap Run.
 2. On iOS, install the companion Shortcut first if prompted; the Wi-Fi link read comes from it (see Wi-Fi Information). Without it, the tool still measures the internet and degrades honestly.
-3. On macOS, granting Location is optional; it only affects whether the SSID name shows. The verdict never needs Location (it is rate-based). (test_my_connection_screen.dart:188)
+3. On macOS, granting Location is optional; it only affects whether the SSID name shows. The verdict never needs Location (it is rate-based). On macOS the app can proactively surface the native "Allow Location" prompt so the name resolves without a settings trip. (test_my_connection_screen.dart:539-591)
 4. Read the two status chips (Wi-Fi / Internet) and the headline.
 
-**Formula or method.** It runs two things in one pass and feeds both into the shared verdict engine: a connected-link read via WifiInfoSourceResolver → MacWifiInfoAdapter (macOS CoreWLAN) or WiFiDetailsBridge → ConnectedAp.fromWifiDetails (iOS Shortcut) (test_my_connection_screen.dart:11-13, 142-208); a full net_quality run via OwnEngineQualityClient.forHost('one.one.one.one') (test_my_connection_screen.dart:154). It translates the net_quality grades into the engine's internet-health flag: GOOD only when download AND upload AND latency AND loss all grade good or excellent; otherwise marginal (test_my_connection_screen.dart:308-324). The engine's five engineer verdicts are collapsed into four consumer outcomes plus a two-axis chip status (Wi-Fi / Internet each "Fine", "Slow", or "Couldn't check") (consumer_verdict.dart:33-96, 159-249). Outcomes: A "Looks like your Wi-Fi"; A-lead "Mostly your Wi-Fi"; B "Looks like your Internet"; C "Both look fine"; D1 "Couldn't check everything" (internet measured, Wi-Fi not); D2 "Couldn't complete the check" (neither measured) (consumer_verdict.dart:164-247).
+**Formula or method.** It runs two things in one pass and feeds both into the shared verdict engine: a connected-link read via WifiInfoSourceResolver → MacWifiInfoAdapter (macOS CoreWLAN) or WiFiDetailsBridge → ConnectedAp.fromWifiDetails (iOS Shortcut) (test_my_connection_screen.dart:334-343, 630); a full net_quality run via OwnEngineQualityClient.forHost('one.one.one.one') (test_my_connection_screen.dart:366). It translates the net_quality grades into the engine's internet-health flag via the shared ConnectionCheck.internetHealth: GOOD only when download AND upload AND latency AND loss all grade good or excellent; otherwise marginal (connection_check.dart:57-75). The engine's five engineer verdicts are collapsed into four consumer outcomes plus a two-axis chip status (Wi-Fi / Internet each "Fine", "Slow", or "Couldn't check") by ConsumerVerdictMapper (test_my_connection_screen.dart:969, 1030; consumer_verdict.dart:33-110, 203-360). Outcomes: A "Looks like your Wi-Fi"; A-lead "Mostly your Wi-Fi"; B "Looks like your Internet"; C "Both look fine"; D1 "Couldn't check everything" (internet measured, Wi-Fi not); D2 "Couldn't complete the check" (neither measured) (consumer_verdict.dart:246-314).
 
 **Field notes**
-- Platform differences: macOS reads the link via CoreWLAN (Tx rate, RSSI/SNR, no Rx). iOS reads it via the Shortcut (Tx and Rx). If the link can't be read (wired, or iOS without the Shortcut), it falls to the D1/D2 honest path; it does not guess a side. (consumer_verdict.dart:217-247)
+- Platform differences: macOS reads the link via CoreWLAN (Tx rate, RSSI/SNR, no Rx). iOS reads it via the Shortcut (Tx and Rx). If the link can't be read (wired, or iOS without the Shortcut), it falls to the D1/D2 honest path; it does not guess a side. D1 keeps the real internet figure it did measure; D2 admits neither side was read. (consumer_verdict.dart:18-28, 299-314)
 - The headline is a hedge by design ("Looks like…", not "your Wi-Fi is broken"). The two chips teach the model that Wi-Fi and internet are two separate things. "Both look fine" is the most useful real-world answer; it points the user at the specific app/site instead of the connection.
+- Cloud Apps reachability panel: the result column also mounts a Cloud Apps panel that TCP-connects (port 443) to the recurated kCloudApps named-service list and reports each as reachable or "unreachable" (a word + glyph, never color alone). It proves the service edge/CDN is reachable and times that hop; it is NOT a measure of in-app call or stream quality, and the caption says so. It reuses the same shared ReachabilityProbe the Network Quality tool runs. (test_my_connection_screen.dart:1409-1415; cloud_apps_panel.dart)
+- Analyze Results sits beside Copy on the result screen: Copy saves the raw report, Analyze explains the verdict and recommends next steps, entirely on-device (see Analyze Results).
 - The verdict copy is deliberately non-diagnostic for a layperson. The underlying numbers and bands are the same as Wi-Fi vs Internet; if you want the numbers, use that tool.
 - How it picks a side: it compares how much internet speed you're actually getting against how much your Wi-Fi link could realistically carry. When the internet measures fine on its own, it says both look fine; otherwise it leans toward Wi-Fi or internet depending on which one has the headroom to spare.
 - D2 ("Make sure you're on Wi-Fi and try again") is the honest answer when nothing measured, never a fake zero.
 
-_Source: test_my_connection_screen.dart:11-208 / consumer_verdict.dart:33-249_
+_Source: test_my_connection_screen.dart / consumer_verdict.dart:1-363 / connection_check.dart:57-83 / cloud_apps_panel.dart_
 
 
 ### Analyze Results
@@ -71,7 +76,7 @@ Turn a finished Test My Connection result into a plain-language, conclusion-firs
 3. Read the findings top to bottom: the most important (the verdict, an open network, packet loss, a dead path) lead, then signal/band/internet-quality context. Each carries a severity word (ACTION / WORTH A LOOK / CONTEXT) plus a color, never color alone.
 4. Use the Copy action (top right) to save the whole analysis as plain text.
 
-**Formula or method.** A pure, local rule engine (AnalyzeEngine) evaluates a structured rule library (analyze_rules.dart — 35 rules across 9 categories: verdict, signal, noise/SNR, band/PHY/width, internet quality, DNS, security, cloud reachability, and honesty/not-captured guards) against the same result data already on screen, read directly from the in-memory models (ConnectedAp, the net_quality result, the Wi-Fi-vs-Internet verdict, the DNS probe, and the cloud reachability tally) — never by re-parsing the copied report text. Every threshold is imported from the ratified app constants, not duplicated: RSSI/SNR from WifiGradingBands (wifi_grading.dart), latency/jitter/loss/responsiveness/download from QualityScoring (net_quality scoring.dart), the verdict thresholds from the Wi-Fi-vs-Internet engine (wifi_vs_internet.dart), and the security labels from WifiSecurity (wifi_security.dart). Fired rules are sorted by severity (P1 critical, P2 important, P3 context) then by the rule library's declaration order, so the verdict always leads. Context-only reassurances ("no problem here") are suppressed unless a real finding also fired, so the report never narrates a non-issue. Runs entirely on the device: no network call, nothing stored, nothing leaves the device.
+**Formula or method.** A pure, local rule engine (AnalyzeEngine) evaluates a structured rule library (analyze_rules.dart — 33 rules across 9 categories: verdict, signal, noise/SNR, band/PHY/width, internet quality, DNS, security, cloud reachability, and honesty/not-captured guards) against the same result data already on screen, read directly from the in-memory models (ConnectedAp, the net_quality result, the Wi-Fi-vs-Internet verdict, the DNS probe, and the cloud reachability tally) — never by re-parsing the copied report text. Every threshold is imported from the ratified app constants, not duplicated: RSSI/SNR from WifiGradingBands (wifi_grading.dart), latency/jitter/loss/responsiveness/download from QualityScoring (net_quality scoring.dart), the verdict thresholds from the Wi-Fi-vs-Internet engine (wifi_vs_internet.dart), and the security labels from WifiSecurity (wifi_security.dart). Fired rules are sorted by severity (P1 critical, P2 important, P3 context) then by the rule library's declaration order, so the verdict always leads. Context-only reassurances ("no problem here") are suppressed unless a real finding also fired, so the report never narrates a non-issue. Runs entirely on the device: no network call, nothing stored, nothing leaves the device.
 
 **Field notes**
 - The recommendation wording is currently DRAFT (Pax's response-library-v1), pending Keith's ratification and a Penn SOP-020 voice pass. Findings from a still-pending rule carry an honest "draft guidance" note, and the report shows a draft banner, so the advice never reads as final before it is. The advice is structured as swappable data (analyze_rules.dart): the ratified, voiced copy drops in by editing that file alone, with no engine or UI change.
@@ -162,13 +167,14 @@ Record each time your device roams from one access point (BSSID) to another on t
 - BSSID is the AP radio's MAC address. A roam between two radios in the SAME physical AP (e.g. 2.4 GHz → 5 GHz) is still a BSSID change and is logged; that is correct — it is a real roam.
 - The signal shown is the reading at the moment the new BSSID first appeared, not an average. "Signal unavailable" prints honestly when the platform omitted RSSI for that sample (GL-005), never a fake value.
 - Stopping and starting (iOS) clears the session log so a new walk does not inherit the prior walk's roams.
+- Copy-to-save: the §8.16 Copy action in the app bar exports the whole recorded roam session as paste-ready plain text (each roam with its time, network, from→to BSSID pair, and signal), built by the pure buildRoamLogCopyText so a walk can be saved to a ticket or note. (roaming_log_screen.dart:124-143, 244)
 
-_Source: roaming_log_screen.dart / roam_detector.dart / wifi_signal_sampler.dart_
+_Source: roaming_log_screen.dart / roam_detector.dart / wifi_signal_sampler.dart / app_copy_action.dart_
 
 
 ---
 
-# Networking Tools (24 tools)
+# Networking Tools (25 tools)
 
 Socket, lookup, and scan utilities for working a network from the device in hand. Ping, traceroute, port and host discovery, DNS and registry lookups, and packet-level senders and inspectors.
 
@@ -595,6 +601,28 @@ TCP connect scan of a host, either a common-ports preset or a custom range, repo
 _Source: port_scan_service.dart:1-310_
 
 
+### Time Server (NTP)
+
+Query an NTP server over SNTP and report the server's time, your device clock's offset from it, and the round-trip network delay.
+
+**Why it's here.** When a log timestamp, a certificate window, or an 802.1X/Kerberos handshake looks wrong, the first question is whether the device clock is off. This answers it against a real time source and tells you which way and by how much, in plain language.
+
+**How to use**
+1. Open the tool. The server field defaults to time.apple.com; tap Run to query it. (ntp_screen.dart:47, kDefaultNtpServer at ntp_service.dart:50)
+2. If the default is blocked or slow, switch to the public fallback pool.ntp.org. (kFallbackNtpServer at ntp_service.dart:54)
+3. Read the stratum, the server time (UTC and local), the device time, the signed clock offset with its plain-language verdict, and the round-trip delay.
+
+**Formula or method.** A single unicast SNTP exchange (RFC 4330 / RFC 5905): a 48-byte client request whose first byte is 0x1B (leap 0, version 3, mode 3) is sent over an outbound UDP datagram to port 123, and one reply is read (ntp_service.dart:181, 257-264, 338-406). The four-timestamp math runs on integer microseconds: clock offset = ((t2 − t1) + (t3 − t4)) / 2 and round-trip delay = (t4 − t1) − (t3 − t2), where t1/t4 are the client transmit/receive instants and t2/t3 are the server receive/transmit timestamps read from reply bytes 32–39 and 40–47 (ntp_service.dart:280-316). NTP timestamps are 64-bit fixed-point seconds since 1900-01-01; the converter subtracts the 2208988800-second NTP-to-Unix epoch offset (ntp_service.dart:45, 320-336). A positive offset means the device clock is behind the server; the screen translates the sign so you never have to remember the convention (ntp_service.dart:82-85).
+
+**Field notes**
+- Not a subprocess and not an HTTPS time API by design: an HTTPS endpoint can report the server's time but cannot measure the symmetric round-trip the SNTP four-timestamp formula needs to separate offset from delay. The outbound UDP/123 datagram is the unicast cousin of Wake-on-LAN's send, covered by the same network-client entitlement, and works the same on iOS / macOS / Android / Windows. (ntp_service.dart:1-19)
+- Honest failures, never a fabricated offset (GL-005): a timeout (3 s), a DNS failure, a reply shorter than 48 bytes, or a "kiss-o'-death" stratum 0 each surface as a clear message that suggests the fallback server, rather than a zeroed delay or a made-up offset (ntp_service.dart:185, 204-254, 218-226).
+- A tiny negative delay from clock jitter on a fast LAN is clamped to 0 so the reading is never nonsensical (ntp_service.dart:304-307). Stratum is reported as-is (1–15 valid, 16 unsynchronized, 0 the kiss-o'-death marker).
+- Web has no dart:io UDP socket, so the screen routes to the download-the-app fallback via NetworkSupport.ntpSupported.
+
+_Source: ntp_screen.dart / ntp_service.dart:1-412 / network_support.dart_
+
+
 ### Traceroute (Mobile)
 
 Hop-by-hop path via an ICMP TTL-walk, Android only (iOS unsupported).
@@ -673,7 +701,7 @@ _Source: whois_service.dart:1-353_
 
 ---
 
-# Calculators & Tools (28 tools)
+# Calculators & Tools (32 tools)
 
 RF math and field utilities. Link-budget building blocks, antenna and coverage geometry, capacity and power figures, coordinate work, and unit conversions, each computed locally on the device.
 
@@ -1312,7 +1340,28 @@ Computes the great-circle midpoint between two latitude/longitude points.
 _Source: midpoint_screen.dart_
 
 
-## Conversions (4)
+## Conversions (5)
+
+
+### Channel / Frequency
+
+Convert a Wi-Fi channel number to its center frequency and back, across 2.4 / 5 / 6 GHz, with the bonded-channel component lists.
+
+**Why it's here.** Specs, radios, and regulators talk in both channels and megahertz. This converts either direction and shows which 20 MHz channels make up a wide channel, so a "channel 100, 80 MHz wide" entry on a controller stops being a guess.
+
+**How to use**
+1. Pick a band (band is required for channel→frequency because channel numbers collide across 5 and 6 GHz — channel 36 exists in both).
+2. Enter a channel to get the center frequency, or a frequency to get the channel and the band it falls in (the frequency ranges are disjoint, so the band comes back for free).
+3. Read the bonded-channel breakdown for 40/80/160/320 MHz widths.
+
+**Formula or method.** One linear rule for almost every channel: center_freq_MHz = channel_starting_freq + 5 × channel_number, where the starting frequency is 2407 (2.4 GHz), 5000 (5 GHz), or 5950 (6 GHz) (channel_frequency_data.dart:49-58, 246-252). Two hard-coded special cases bypass it: 2.4 GHz channel 14 = 2484 MHz, and 6 GHz channel 2 = 5935 MHz (channel_frequency_data.dart:248-249). The 6 GHz start of 5950 is the verified value (channel 1 = 5955), not the 5940+5n some bad sources use. Channel↔frequency is universal physics, identical everywhere; channel availability (US 1–11 vs world 1–13, DFS, UNII-4, 6 GHz adoption) is regulatory and is surfaced as a caveat string, never as a reason to change a computed frequency.
+
+**Field notes**
+- The selectable 20 MHz primaries are the exact allowed sets, not a naive arithmetic range: 2.4 GHz is 1–14; 5 GHz is the verified UNII-1/2A/2C/3/4 list (anything like 37, 49, 51, 145, 181 is rejected); 6 GHz is the sequence 1, 5, 9 … 233 plus the special channel 2 (channel_frequency_data.dart:76-95).
+- DFS channels, UNII-4, and the 6 GHz Preferred Scanning Channels are flagged as caveats, not enforced (channel_frequency_data.dart:99-111). Channel 2 (6 GHz) is flagged "Special (5935 MHz, reserved/guard)" and channel 14 (2.4 GHz) "Special (2484 MHz)".
+- Source of truth: the Pax-verified channel-plan brief against IEEE 802.11-2020/2024 channelization plus the FCC 6 GHz / 5.9 GHz Reports & Orders. No channel data comes from a secondary source.
+
+_Source: channel_frequency_converter_screen.dart / channel_frequency_data.dart:1-504_
 
 
 ### dBm / Watt Converter
@@ -1558,9 +1607,82 @@ Turns any text or URL you type into a scannable QR code, then lets you share or 
 _Source: qr_generator_screen.dart / wifi_qr.dart_
 
 
+## Ham Radio (2)
+
+The pure-math amateur-radio tools. Channel/frequency physics that a Wi-Fi pro already trusts, applied to antenna dimensions and grid-square locators. The band-dependent amateur references live under Quick Reference → Ham Radio.
+
+
+### Antenna Length
+
+Compute the half-wave dipole and quarter-wave vertical physical lengths from a frequency (or a wavelength), velocity-factor adjusted, shown beside the classic 468/f and 234/f rules of thumb.
+
+**Why it's here.** Cutting an antenna is the one piece of RF where a wrong number means a saw cut you cannot undo. This gives the physics length and the field rule-of-thumb side by side, so you see the spread before you cut.
+
+**How to use**
+1. Enter a frequency in MHz (or switch to wavelength→frequency for the inverse).
+2. Set the velocity factor; it defaults to 0.95 (thin bare wire).
+3. Read the half-wave dipole and quarter-wave vertical lengths in meters, feet, and inches, plus the 468/234 rule-of-thumb feet.
+
+**Formula or method.** It uses the exact speed of light, c = 299.792458 in MHz·m form, not the rounded 300 (antenna_length_screen.dart:68). Wavelength λ(m) = 299.792458 / f(MHz), and the inverse f(MHz) = 299.792458 / λ(m). Physical length = electrical length × velocity factor: half-wave dipole L = (λ / 2) × VF, quarter-wave vertical L = (λ / 4) × VF (antenna_length_screen.dart:77-82). The rules of thumb are the classic feet forms L(ft) ≈ 468 / f(MHz) for the dipole and L(ft) ≈ 234 / f(MHz) for the quarter-wave vertical (antenna_length_screen.dart:85-88); those figures already fold in a typical end-effect/VF, which is why they read a touch shorter than the bare physics half/quarter wavelength. Both are shown so you see the spread.
+
+**Field notes**
+- VF is the knob that matters: the 468/234 rules assume a typical wire, while the physics length × your chosen VF is the honest computed value. Insulated wire, traps, and tubing all shift VF, so confirm it for the element in your hand.
+- Worked sanity checks built into the source: 14.2 MHz → λ ≈ 21.11 m, half-wave dipole ≈ 33 ft (VF 0.95); 146 MHz → quarter-wave vertical ≈ 19–20 in; 2400 MHz → quarter-wave vertical ≈ 3 cm (antenna_length_screen.dart:20-22).
+- Pure math, no network or platform call; the Copy action exports the full computed report as labeled text.
+
+_Source: antenna_length_screen.dart:1-708_
+
+
+### Maidenhead Grid Square
+
+Encode a latitude/longitude to a Maidenhead (QTH) locator and back at 4, 6, or 8 characters, plus the great-circle distance and bearing between two grid squares.
+
+**Why it's here.** Hams trade positions as grid squares, not lat/long. This crosses between the two and gives the distance-and-bearing leg, the same spherical math the Distance & Bearing tool uses, so cross-tool results agree.
+
+**How to use**
+1. Enter a lat/lon to encode (choose 4, 6, or 8 characters), or a locator to decode to its cell.
+2. Decode returns the cell's south-west corner, its width/height in degrees, and the center point (what a locator→position lookup returns).
+3. Enter two locators to get the great-circle distance (km and miles) and the initial bearing between their centers.
+
+**Formula or method.** The IARU locator standard: normalize longitude to 0–360 and latitude to 0–180, then subdivide each axis level by level, most-significant pair first, with per-level divisions 18 / 10 / 24 / 10 (maidenhead_data.dart:88, 94-129). Each pair writes the longitude character first, then the latitude character; the field is A–R, the square 0–9, the subsquare a–x, the extended square 0–9, and decode is case-insensitive (maidenhead_data.dart:203-228). Encoding clamps exactly +180 lon / +90 lat one ulp inside the range so the top edge does not index past the last cell (maidenhead_data.dart:107-109). The great-circle leg is the spherical haversine with R = 6371 km plus the forward-bearing formula, miles = km × 0.621371 (maidenhead_data.dart:85, 176-198).
+
+**Field notes**
+- Output precision is in characters: 4 = field + square, 6 = + subsquare, 8 = + extended square. A 6-character locator is the common amateur exchange.
+- Verified anchors baked into the source: lon −122.0, lat 37.4 → CM87 (the SF Bay anchor); Berlin 13.4 E, 52.5 N → JO62 (maidenhead_data.dart:20-23).
+- Pure math, no I/O or platform API, so it works identically on every platform offline.
+
+_Source: maidenhead_screen.dart / maidenhead_data.dart:1-232_
+
+
+## Learn / RF intuition (1)
+
+Interactive teaching tools that build RF intuition you can sense, not just compute.
+
+
+### Hear the Frequency
+
+Turn a frequency into a sounding tone so the logarithmic instinct behind RF — pitch, octaves, the twelve piano keys, and harmonics — becomes something you hear, with the honest bridge to RF stated plainly.
+
+**Why it's here.** "An octave is a doubling" and "a dB is a logarithm" are the same instinct, and hearing it lands harder than reading it. This makes frequency audible to build that intuition, then states the limit of the analogy out loud so you do not carry a wrong equivalence into RF work.
+
+**How to use**
+1. Tap Play to sound the current frequency. Use the octave ×2 / ÷2 buttons, the one-octave C4→C5 keyboard, or the octave-ladder presets; the sounding voice retunes live with no click.
+2. Pick a waveform (Triangle is the default; sine, square, and saw are available).
+3. Read the live nearest-note, cents offset, octaves-from-A4, and the first five harmonics.
+
+**Formula or method.** Pure equal-temperament math: every note frequency is computed, never transcribed, from f(n) = 440 × 2^((n − 49) / 12), where n is the piano key number and key 49 = A4 = 440 Hz (ISO 16) (music_theory.dart:163-166). The semitone ratio is 2^(1/12) = 1.0594630943592953, an octave is exactly ×2 (octaveUp = hz × 2, octaveDown = hz / 2), and 12 semitones make an octave (music_theory.dart:47, 206-209). The nearest-note readout uses 69 + 12·log2(f / 440) to find the MIDI note and the cents offset; harmonics are integer multiples (order 1 = f, 2 = 2f, …) (music_theory.dart:215-225, 233-237). Audio synthesis runs behind the ToneEngine seam (SoLoudToneEngine, the only place flutter_soloud is imported); octave/keyboard/preset changes call setFrequency on the one sounding voice so it glides without a stop/restart (tone_engine.dart:85-95; hear_frequency_screen.dart:10-13).
+
+**Field notes**
+- The analogy honesty is baked into the copy (GL-005): an octave is a base-2 FREQUENCY ratio while a dB is a base-10 POWER ratio — both are logarithmic ratio measures (the real, teachable bridge), but they are NOT the same unit, and the tool never converts an octave to a dB (music_theory.dart:18-24). Audio harmonics are WANTED (timbre); RF harmonics are usually UNWANTED (spurious emissions). The integer-multiple math is identical; the desirability flips.
+- Playback is clamped to the audible range 20 Hz–20 kHz (kMinAudibleHz / kMaxAudibleHz); a number above it may still be DISPLAYED for the RF analogy, clearly labeled, but is never driven to the speaker (music_theory.dart:34-35). Above ~5 kHz the waveform is forced to sine because square/triangle harmonics alias near Nyquist (tone_engine.dart:28-31; hear_frequency_screen.dart:54).
+- Honest no-audio state (GL-005 / GL-008): if the engine cannot initialize (no output device on Windows, a muted session), it reports ToneEngineStatus.unavailable and the screen shows a non-fatal "No audio output detected" banner instead of pretending a tone played (tone_engine.dart:36-49). The tone auto-stops on screen exit so it never runs unattended.
+
+_Source: hear_frequency_screen.dart / lib/services/audio/tone_engine.dart / music_theory.dart:1-298 / piano_keyboard.dart_
+
+
 ---
 
-# Quick Reference (81 tools)
+# Quick Reference (89 tools)
 
 Offline lookup tables and the laminated field cards. Channel plans, standards, thresholds, connector and cabling pinouts, protocol references, CLI and capture cheat sheets, checklists, and guides, all available without a connection.
 
@@ -3111,7 +3233,134 @@ Reference for the IEC World Plugs letter system (Types A through M) by region, w
 _Source: lib/screens/tools/reference/international_plugs_screen.dart_
 
 
-## Reference Cards (11)
+## Ham Radio (6)
+
+The band-dependent amateur-radio references, grouped so all the ham material is findable in one place. Every numeric value traces to FCC Part 97 (eCFR Title 47), the FCC Online Table of Frequency Allocations, ARRL, or NCVEC, current as of June 2026, with the corrected figures used throughout — never an older chart. The pure-math ham tools (Antenna Length, Maidenhead Grid) live under Calculators & Tools → Ham Radio.
+
+
+### US Amateur Band Plan
+
+The US amateur bands from HF to SHF, by license class: each band's frequency range, the Technician / General / Extra privileges, the power limit, and the mode segments.
+
+**Why it's here.** A Wi-Fi pro crossing into amateur radio needs to know what they may transmit where and at what power. This is the band plan with the current, corrected numbers, grouped by ITU region (HF / VHF / UHF / SHF).
+
+**How to use**
+1. Browse the bands grouped by region; read the per-class privileges and the mode/segment notes on each band.
+2. Check the power summary and the HF data rule for the rules that cut across bands.
+
+**What it shows**
+- Per-band frequency range, license-class privileges, power, and mode segments (kHamBandPlan in ham_reference_data.dart:114-326).
+- The corrected power picture: a 1500 W PEP general ceiling, with the real exceptions — 30 m = 200 W PEP; 60 m = 100 W ERP (channels) and 9.15 W ERP (segment); 2200 m = 1 W EIRP; 630 m = 5 W EIRP; a Technician on any HF band = 200 W PEP — always under the "minimum necessary power" rule, 97.313(a) (ham_reference_data.dart:388-392). The old blanket "200 W" entries were wrong.
+- 60 m as 4 channels plus the 5351.5–5366.5 kHz segment at 9.15 W ERP, effective 13 Feb 2026 (the old 5-channel chart is wrong) (ham_reference_data.dart:352-386, 865-867).
+- The HF data rule that replaced the obsolete baud column: no symbol-rate limit on HF, a 2.8 kHz maximum-bandwidth cap, effective 8 Jan 2024 (FCC 23-93) (ham_reference_data.dart:395-397). No baud value is shown anywhere, because the VHF/UHF baud status is unconfirmed.
+- 9 cm (3300–3500 MHz) is omitted as a band in active sunset that does not overlap 5 GHz Wi-Fi (ham_reference_data.dart:401-405).
+
+**Field notes**
+- Data source: the Pax-accuracy-gated build-spec (Deliverables/2026-06-28-ham-radio-toolbox-research/build-spec.md) against FCC Part 97, the FCC frequency-allocation table, ARRL, and NCVEC. The Toolbox renders its own band plan from FCC data rather than reproducing ARRL's copyrighted chart.
+- ASCII hyphen-minus throughout for ranges; a privilege absence reads as a sentence ("No Technician privileges"), never a bare dash. Offline, read-only.
+
+_Source: ham_band_plan_screen.dart / ham_reference_data.dart:114-405_
+
+
+### Band Names & Wavelengths
+
+The two-worlds translation: amateur band names (160 m, 2 m, 13 cm) to their actual frequency ranges, with the λ = 300 / f rule of thumb.
+
+**Why it's here.** Hams name bands by wavelength in meters and centimeters; Wi-Fi people think in megahertz and gigahertz. This is the lookup that crosses between them.
+
+**How to use**
+1. Find a band by its wavelength name to read its frequency range and ITU region tag.
+2. Use the λ = 300 / f rule to sanity-check the relationship in your head.
+
+**What it shows**
+- The band-name → frequency table from 2200 m (135.7–137.8 kHz) up through 3 cm (10.0–10.5 GHz), each with an LF/MF/HF/VHF/UHF/SHF region tag (kBandBridge in ham_reference_data.dart:438-472).
+- 60 m shown honestly as "~5.332–5.405 MHz (4 ch + segment)" and 13 cm as the split "2300–2310 / 2390–2450 MHz"; 9 cm flagged sunset/out.
+
+**Field notes**
+- The wavelength is the nominal band name; the range is the actual allocation, so the rounded λ = 300 / f relationship is a memory aid, not the exact band edges.
+- Offline, read-only. Same data source as the band plan.
+
+_Source: ham_band_wavelengths_screen.dart / ham_reference_data.dart:438-472_
+
+
+### Spectrum Band Designations
+
+The ITU decade-band designations — HF, VHF, UHF, SHF — with their frequency and wavelength spans and what each band's propagation implies, plus the aviation airband and military UHF neighbors a Wi-Fi pro lives next to.
+
+**Why it's here.** Knowing which decade band you are in tells you how the energy travels — ionospheric skip, line-of-sight, or short-range. This sets that context around the Wi-Fi bands.
+
+**How to use**
+1. Read the four ITU decade bands (each is ×10 the previous) and their propagation character.
+2. Check the neighbor list for the non-amateur services that sit beside the bands you work.
+
+**What it shows**
+- The four ITU decade bands a Wi-Fi pro lives near (HF 3–30 MHz sky-wave / ionospheric skip; VHF / UHF / SHF), each with frequency, wavelength, and an operational propagation note (kItuBands in ham_reference_data.dart:507-543). MF/LF below and EHF above are noted, not tabled.
+- The spectrum neighbors — the aviation airband and military UHF allocations — that border these bands (kSpectrumNeighbors in ham_reference_data.dart:560-594).
+
+**Field notes**
+- Propagation notes are operational summaries (HF "talk around the world," higher bands line-of-sight), not predictions for a specific path.
+- Offline, read-only.
+
+_Source: band_designations_screen.dart / ham_reference_data.dart:507-594_
+
+
+### Part 15 vs Part 97
+
+Where the amateur 13 cm and 5 cm bands overlap 2.4 and 5 GHz Wi-Fi, and how the unlicensed (Part 15) and amateur (Part 97) rules differ — the rules behind running commodity Wi-Fi hardware as an AREDN mesh node.
+
+**Why it's here.** The same 802.11 silicon can run under two completely different rule sets. This lays the two side by side so the trade — Part 97's higher power ceiling for Part 15's encryption and commercial freedom — is explicit.
+
+**How to use**
+1. Read the overlap table to see which Wi-Fi channels fall inside an amateur allocation.
+2. Read the rule-delta table for how license, power, station ID, encryption, business use, and content differ between Part 15 and Part 97.
+
+**What it shows**
+- The overlapping allocations mapped to the Wi-Fi grid: 13 cm (2390–2450 MHz) covers the lower ~60 MHz of 2.4 GHz (channels 1–6 fully inside, 7 partially); 5 cm (5650–5925 MHz) covers upper U-NII-2C through U-NII-4; 33 cm (902–928 MHz) is full co-channel with the 900 MHz ISM band (kWifiHamOverlaps in ham_reference_data.dart:616-637).
+- The rule deltas (kRuleDeltas in ham_reference_data.dart:657-713): Part 97 requires a licensed control operator and a callsign every 10 minutes (including digital/mesh links), prohibits encryption (mesh traffic must be in the clear), and bars business use and broadcast content; Part 15 needs no license, allows WPA2/WPA3 and commercial use. Part 15 2.4 GHz power is 1 W (30 dBm) conducted / 4 W (36 dBm) EIRP at up to 6 dBi; Part 97 runs to the 1500 W PEP ceiling.
+- The AREDN example: AREDN and Broadband-Hamnet run commodity 802.11 a/b/g/n hardware on the overlapping ham channels under Part 97 instead of Part 15 (ham_reference_data.dart:717-723).
+
+**Field notes**
+- The 3.3–3.5 GHz amateur band (9 cm) is being sunset and does NOT overlap Wi-Fi 5 GHz; do not confuse it with the 5 cm band (5650–5925 MHz), which does (ham_reference_data.dart:726-729).
+- Both Part 15 and Part 97 are secondary on these bands and carry the same "do not cause harmful interference" ethic. Offline, read-only.
+
+_Source: part15_vs_part97_screen.dart / ham_reference_data.dart:616-729_
+
+
+### General License Frequency Chart
+
+A bundled, offline, pinch-zoomable copy of the US amateur General-class HF/VHF/UHF privilege chart: frequency segments, power limits, and the corrected 60 m channels.
+
+**Why it's here.** You want the General-class privileges as a single printable chart you can zoom on the phone you already have, with no network needed.
+
+**How to use**
+1. Open the card and pinch / double-tap to zoom; the page is fit-to-screen on open.
+2. This is a flat print PDF, not an in-app data table, so the content is not screen-reader readable.
+
+**Field notes**
+- Card inner content is not accessible to screen readers (flat rasterized PDF). The card title and "pinch to zoom" gesture are announced.
+- Source / basis: Keith's corrected amateur-radio reference, bundled under assets/reference-cards/general-license-frequency-chart.pdf and rendered offline via the shared pdfx PdfView viewer (Apple PDFKit on iOS + macOS), exactly like the laminated Wi-Fi cards.
+
+_Source: lib/screens/tools/reference/pdf_reference_screen.dart (shared viewer) / assets/reference-cards/general-license-frequency-chart.pdf_
+
+
+### Ham Radio General Exam Study Notes
+
+A bundled, offline, pinch-zoomable copy of condensed study notes for the amateur-radio General exam: rules, operating practice, and the RF concepts a Wi-Fi pro already knows.
+
+**Why it's here.** You want a compact, zoomable General-exam study sheet on the phone, offline, with no network needed.
+
+**How to use**
+1. Open the card and pinch / double-tap to zoom; the page is fit-to-screen on open.
+2. This is a flat print PDF, not an in-app data table, so the content is not screen-reader readable.
+
+**Field notes**
+- Card inner content is not accessible to screen readers (flat rasterized PDF). The card title and "pinch to zoom" gesture are announced.
+- Source / basis: Keith's amateur-radio study notes, bundled under assets/reference-cards/ham-radio-general-exam-study-notes.pdf and rendered offline via the shared pdfx PdfView viewer (Apple PDFKit on iOS + macOS).
+
+_Source: lib/screens/tools/reference/pdf_reference_screen.dart (shared viewer) / assets/reference-cards/ham-radio-general-exam-study-notes.pdf_
+
+
+## Reference Cards (13)
 
 
 ### 2.4 GHz Channel Allocations
@@ -3184,6 +3433,56 @@ A read-along teaching reference for antenna literacy: what an antenna actually d
 - The point-to-point note is one line by design: a link needs real Fresnel-zone clearance around the straight line between antennas, not just a visible path. Use the Fresnel and Point-to-Point tools to size that clearance.
 
 _Source: Penn teaching copy (SOP-020 PASS, 2026-06-05), from Pax's research brief; diagrams by Charta. Rendered verbatim in antenna_fundamentals_screen.dart._
+
+
+### Spectrum Analysis
+
+A read-along teaching module on spectrum analyzers: what a spectrum analyzer sees that a Wi-Fi adapter cannot, how the instrument works, the knobs, the three views, a nine-signature interferer gallery, how to compare captures, the current tool landscape, and how to mitigate interference. Teaching content, not a live tool — the phone does not capture RF.
+
+**Why it's here.** When users report poor performance but a Wi-Fi scanner shows a clean channel, the missing piece is almost always a non-802.11 energy source only a spectrum analyzer can see. This is the read-first reference for understanding that instrument and reading its output, the spectrum companion to Antenna Fundamentals. It is the single most important honest scope: a phone's Wi-Fi chipset is a NIC that decodes frames, not the wideband RF capture hardware spectrum analysis needs, so the module never pretends to be a working analyzer (spectrum_analysis_screen.dart:1-7, 296-300).
+
+**How to use**
+1. Start on the hub: an intro, the honest scope note, and eight numbered topic cards (spectrum_analysis_screen.dart:72-121).
+2. Read the eight topics in order — Why a spectrum analyzer?, How it works, The knobs, The three views, Fingerprinting interferers, Comparing captures, The tools, Mitigation — or jump to the one you need.
+3. On "The knobs," tap through to the Wi-Fi Glossary for term lookups (a one-tap cross-link, spectrum_analysis_screen.dart:57, 658-674).
+
+**What it shows**
+- Two instruments contrasted: a Wi-Fi NIC is a protocol decoder that only perceives energy it can read as 802.11; a spectrum analyzer measures raw RF power versus frequency regardless of protocol (spectrum_analysis_screen.dart:734-765).
+- How it works: swept-tuned versus real-time/FFT (RTSA), why real-time matters for bursty and frequency-hopping Wi-Fi interference, the probability-of-intercept figure of merit, and what the FFT and its window function do (spectrum_analysis_screen.dart:783-832).
+- The knobs: span, RBW, VBW, reference level, the dBm amplitude scale, detectors, and max-hold/averaging (spectrum_analysis_screen.dart:854-897).
+- The three views — live FFT (power vs frequency), waterfall/spectrogram (frequency, time, color), and density/duty cycle (how often a frequency is occupied) — and which question each answers (spectrum_analysis_screen.dart:917-956).
+- A nine-signature interferer gallery, one waterfall shape each, with a fingerprint caption per card: microwave oven, Bluetooth Classic, analog video camera, Bluetooth Low Energy (BLE), analog baby monitor, drone/FPV downlink, ZigBee/802.15.4, analog cordless phone, and continuous wireless bridge (spectrum_analysis_screen.dart:987-1070).
+- Comparing captures (max-hold vs averaging, overlays, before/after with a baseline) and the mitigation ladder, conclusion-first: removing the source is the only complete fix; relocate, shield, plan channels around 1/6/11, and move critical traffic from 2.4 to 5 to 6 GHz route Wi-Fi around it (spectrum_analysis_screen.dart:1166-1191, 1306-1356).
+
+**Field notes**
+- The honest scope note leads the module and repeats on the first topic: this is teaching content, the phone cannot run a spectrum analyzer (spectrum_analysis_screen.dart:289-300, 726-732).
+- The nine signature diagrams are illustrative teaching rasters drawn to the canonical signatures — an illustrative live-FFT trace plus a waterfall and a dBm legend — not captures from your environment (spectrum_analysis_screen.dart:1083-1087). Each card's fingerprint caption is real text below the diagram, so a screen-reader user hears the teaching content even though the raster itself is decorative.
+- Tool landscape, current and honest: leaders are the Ekahau Sidekick 2, NetAlly NXT-2000 (the spectrum accessory for the AirCheck G3 Pro), and Oscium Lucid (Wi-Spy Lucid / WiPry Clarity, now under the same MetaGeek family); heritage gear (MetaGeek Wi-Spy DBx, Cisco Cognio) is named as heritage, not a current buy; RF Explorer is the budget entry below survey grade. Pricing is deliberately not quoted (spectrum_analysis_screen.dart:1219-1282).
+- 6 GHz being the cleanest band is flagged as a current condition that will erode as adoption grows (spectrum_analysis_screen.dart:1351-1356). One catalog tile, one route, one help entry; the eight topic screens are pushed in-module.
+- Source / basis: condensed by Felix (GL-004 voice) from Pax's research brief (Deliverables/2026-06-28-spectrum-analysis-toolbox/research-brief.md) with Keith's domain corrections folded in; signature diagrams by Charta (Vera SOP-009 PASS 2026-06-28). A Penn SOP-020 voice polish is flagged as a candidate before public launch.
+
+_Source: lib/screens/tools/educational/spectrum_analysis_screen.dart:1-1360 / assets/tool-diagrams/spectrum-signatures/_
+
+
+### Ham Radio Study Resources
+
+A vetted, offline list of where to study for the amateur-radio exams — hamstudy.org, the ARRL License Manuals, FCC Part 97, and AREDN — each credited, with an "Open website" button and the current exam structure.
+
+**Why it's here.** The companion to the in-app ham references: when you decide to actually sit an exam, this points you at the strongest current study material instead of a stale chart, with the two currency landmines flagged.
+
+**How to use**
+1. Read the resource cards; tap "Open website" to hand off to the browser (HTTPS, externalApplication mode).
+2. Read the exam-structure block for the stable "N questions, M to pass" figures.
+
+**What it shows**
+- Four vetted resources (kHamStudyResources in ham_reference_data.dart:772-815): hamstudy.org (the study platform, not its links page), the ARRL License Manuals (the authority reference, cited not reproduced), FCC Part 97 + the frequency-allocation table (the law and the app's data source of truth), and AREDN (the explicit Wi-Fi tie-in — commodity 802.11 hardware run under Part 97).
+- The stable exam structure (NCVEC / 97.503): Technician (Element 2) 35 questions / 26 to pass; General (Element 3) 35 / 26; Amateur Extra (Element 4) 50 / 37 (ham_reference_data.dart:839-855). No Morse requirement since 23 Feb 2007; the FCC application fee is $35.
+
+**Field notes**
+- The two currency landmines are surfaced as guardrails, never hard-coded around: a new Technician question pool takes effect 1 Jul 2026 (so the pool count is deliberately not memorized — only the stable 35/26 structure is shown), and the 60 m rules changed effective 13 Feb 2026 (ham_reference_data.dart:859-867).
+- The only network action is a browser hand-off via url_launcher (HTTPS), not an in-app fetch, so no ATS exception or macOS entitlement is needed. A failed hand-off shows an honest inline note with the raw URL, never a silent failure.
+
+_Source: ham_study_resources_screen.dart / ham_reference_data.dart:772-871_
 
 
 ### Extended Checklist (Non-Advertised Items)
