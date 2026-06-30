@@ -1,1 +1,3 @@
 New: a Spectrum Analysis learning module. See how a spectrum analyzer differs from a Wi-Fi adapter, learn the three core views (live, waterfall, and density), and fingerprint nine common interferers by their signatures: microwave ovens, Bluetooth and BLE, video cameras, baby monitors, drones, ZigBee, cordless phones, and continuous bridges. It finishes with the leading analyzer tools and how to mitigate interference once you find it.
+
+Fixed: Wi-Fi 7 (802.11be) connections are now correctly identified in the connection analyzer. Reliability and polish fixes across the toolbox.
