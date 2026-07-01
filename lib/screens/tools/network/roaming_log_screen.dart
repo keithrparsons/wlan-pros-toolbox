@@ -75,24 +75,25 @@ class _RoamingLogScreenState extends State<RoamingLogScreen>
     super.initState();
     _source = widget.sourceOverride ?? WifiInfoSourceResolver.resolve();
 
-    if (widget.enableSampling &&
-        (_source == WifiInfoSource.macosCoreWlan ||
-            _source == WifiInfoSource.androidWifiManager ||
-            _source == WifiInfoSource.windowsNativeWifi ||
-            _source == WifiInfoSource.iosShortcuts)) {
+    // Delegate the "can this platform monitor at all?" decision to the shared
+    // SSOT [WifiSignalSampler.isSupportedSource] rather than repeating an inline
+    // four-source list here (Vera LOW finding, 2026-06-30). The inline list is
+    // exactly what let the roam log drift from the sampler and darken Windows
+    // (bug C3); anchoring to the predicate means a new native source the sampler
+    // learns to poll lights up here automatically with no edit, and can never
+    // fall out of sync.
+    if (widget.enableSampling && WifiSignalSampler.isSupportedSource(_source)) {
       _sampler = widget.sampler ?? WifiSignalSampler(source: _source);
       _sessionStart = DateTime.now();
       WidgetsBinding.instance.addObserver(this);
       _sampler!.load();
-      // macOS / Android / Windows source the feed from NATIVE polling (no app
-      // switch), so they auto-start on entry; iOS waits for the single deliberate
-      // Start tap (firing the companion Shortcut would bounce the user out of the
-      // app). Windows (Native Wifi via FFI) was previously omitted here, which
-      // made the roam log tell Windows users monitoring was "off on this device"
-      // even though [WifiSignalSampler] polls Windows exactly like macOS/Android.
-      if (_source == WifiInfoSource.macosCoreWlan ||
-          _source == WifiInfoSource.androidWifiManager ||
-          _source == WifiInfoSource.windowsNativeWifi) {
+      // Every supported NON-iOS source (macOS / Android / Windows, and any future
+      // native adapter) reads the feed from NATIVE polling with no app switch, so
+      // it auto-starts on entry. iOS alone waits for the single deliberate Start
+      // tap — firing the companion Shortcut on entry would bounce the user out of
+      // the app (GL-008). Expressed as "supported and not iOS" so it, too, tracks
+      // the SSOT instead of re-listing platforms.
+      if (_source != WifiInfoSource.iosShortcuts) {
         _sampler!.start();
       }
     }
