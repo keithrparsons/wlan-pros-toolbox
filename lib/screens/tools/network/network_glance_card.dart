@@ -164,6 +164,7 @@ class NetworkGlanceCard extends StatefulWidget {
   const NetworkGlanceCard({
     super.key,
     this.wifiFetcher,
+    this.nameAuthStatus,
     this.seedDeriver,
     this.publicIpService,
     this.ipGeoService,
@@ -177,6 +178,17 @@ class NetworkGlanceCard extends StatefulWidget {
   /// [ConnectedAp] or throws [WifiInfoUnavailable]. NOT used on the iOS branch
   /// (iOS reads the shared [ConnectedApCache] instead — see [apCache]).
   final Future<ConnectedAp> Function()? wifiFetcher;
+
+  /// Reads the CURRENT name-gating (Location) authorization for the snapshot
+  /// source WITHOUT surfacing a prompt, so a null SSID names the RIGHT reason:
+  /// the permission gate ONLY when Location is not granted, and a plain honest
+  /// absence when it IS granted (a disconnected / hidden network — never blame a
+  /// granted permission, GL-005; mirrors the Wi-Fi Information tool). Null in
+  /// production reads the resolved per-platform
+  /// [WifiInfoAdapter.nameAuthorizationStatus]. NOT consulted on Windows (no
+  /// name gate) or when the SSID is present. A test injects a fake to drive the
+  /// denied vs authorized branch deterministically.
+  final Future<LocationAuthStatus> Function()? nameAuthStatus;
 
   /// The app-wide connected-AP cache the iOS lane READS on mount (never firing
   /// the Shortcut). Null in production → the process-wide
@@ -328,10 +340,21 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
           widget.wifiFetcher ?? _defaultWifiFetch;
       final ConnectedAp ap = await fetch();
       if (!mounted) return;
+      // A null SSID needs a source-accurate, authorization-aware reason so the
+      // glance card agrees with the Wi-Fi Information tool in BOTH conditions:
+      // blame the Location permission ONLY when the name is gated AND not
+      // granted; when it IS granted (or the source has no gate) the name is
+      // simply absent from this reading, never a permission problem (GL-005).
+      final GlanceField ssidField;
+      if (ap.ssid != null) {
+        ssidField = GlanceField.value(ap.ssid!);
+      } else {
+        final String reason = await _nameMissingReason();
+        if (!mounted) return;
+        ssidField = GlanceField.unavailable(reason);
+      }
       setState(() => _snapshot = _snapshot.copyWith(
-            ssid: ap.ssid != null
-                ? GlanceField.value(ap.ssid!)
-                : GlanceField.unavailable(_nameMissingReason),
+            ssid: ssidField,
             signal: ap.rssiDbm != null
                 ? GlanceField.value('${ap.rssiDbm} dBm')
                 : const GlanceField.unavailable('No signal reading'),
@@ -349,13 +372,46 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
     }
   }
 
-  /// The honest reason a snapshot arrived with no SSID, by source. macOS/Android
-  /// gate the name behind Location; Windows Native Wifi does not, so a null name
-  /// there is simply absent from this reading, never a permission problem.
-  String get _nameMissingReason =>
-      _wifiSource == WifiInfoSource.windowsNativeWifi
-          ? 'No network name in this reading'
-          : 'Network name needs Location permission';
+  /// The honest reason a snapshot arrived with no SSID, by source AND — for the
+  /// name-gated sources — by the CURRENT Location authorization. Windows Native
+  /// Wifi has no name gate, so a null name is simply absent. macOS / Android gate
+  /// the name behind Location: the permission reason is honest ONLY when Location
+  /// is not granted; when it IS granted the name is genuinely absent (a
+  /// disconnected / hidden network), so blaming the permission would be a lie
+  /// (GL-005). This matches the Wi-Fi Information tool's `_nameGateNote`, so the
+  /// two surfaces agree in both the denied and the authorized-but-absent states.
+  Future<String> _nameMissingReason() async {
+    if (_wifiSource == WifiInfoSource.windowsNativeWifi) {
+      return 'No network name in this reading';
+    }
+    final Future<LocationAuthStatus> Function() reader =
+        widget.nameAuthStatus ?? _defaultNameAuthStatus;
+    LocationAuthStatus status;
+    try {
+      status = await reader();
+    } on Object {
+      // Unknown authorization: default to the permission reason (the dominant
+      // cause of a gated-source null name). Never fabricate a network name.
+      status = LocationAuthStatus.notDetermined;
+    }
+    return status == LocationAuthStatus.authorized
+        ? 'No network name in this reading'
+        : 'Network name needs Location permission';
+  }
+
+  /// Production name-authorization read: build the resolved per-platform snapshot
+  /// adapter and ask its no-prompt [WifiInfoAdapter.nameAuthorizationStatus].
+  /// Only reached for the name-gated sources (macOS / Android); Windows is
+  /// short-circuited in [_nameMissingReason] and never builds an adapter here.
+  Future<LocationAuthStatus> _defaultNameAuthStatus() {
+    final WifiInfoAdapter adapter = switch (_wifiSource) {
+      WifiInfoSource.macosCoreWlan => MacWifiInfoAdapter(),
+      WifiInfoSource.androidWifiManager => AndroidWifiInfoAdapter(),
+      WifiInfoSource.windowsNativeWifi => WindowsWifiInfoAdapter(),
+      _ => MacWifiInfoAdapter(),
+    };
+    return adapter.nameAuthorizationStatus();
+  }
 
   /// iOS Lane 1 — SSID + Signal from the shared [ConnectedApCache] (READ-ONLY;
   /// never fires the Shortcut). A recent reading renders the real SSID + Signal,

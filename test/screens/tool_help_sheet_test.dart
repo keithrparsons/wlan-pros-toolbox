@@ -127,9 +127,22 @@ void main() {
     final Finder lead =
         find.textContaining('Read this before the numbers');
     expect(lead, findsOneWidget);
-    // ...and sits ABOVE the Purpose heading (smaller dy = higher on screen).
+    // ...under a quiet "Read first" heading that is a real Semantics header, so
+    // screen-reader heading navigation reaches the priority notes (WCAG 1.3.1).
+    final Finder heading = find.text('Read first');
+    expect(heading, findsOneWidget);
+    final SemanticsHandle handle = tester.ensureSemantics();
+    expect(
+      tester.getSemantics(heading),
+      matchesSemantics(label: 'Read first', isHeader: true),
+    );
+    handle.dispose();
+    // ...and the whole lead block sits ABOVE the Purpose heading (smaller dy =
+    // higher on screen).
     final double leadY = tester.getTopLeft(lead).dy;
+    final double headingY = tester.getTopLeft(heading).dy;
     final double purposeY = tester.getTopLeft(find.text('Purpose')).dy;
+    expect(headingY, lessThan(purposeY));
     expect(
       leadY,
       lessThan(purposeY),

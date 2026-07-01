@@ -214,6 +214,48 @@ class _SequenceMacAdapter implements WifiInfoAdapter {
   Future<bool> openNamePermissionSettings() async => true;
 }
 
+/// A fake Windows Native Wifi adapter: like the real [WindowsWifiInfoAdapter],
+/// it does NOT gate the network name behind a permission
+/// (`gatesNameBehindPermission => false`) and always reports authorized. Returns
+/// a queued snapshot. Used to pin the leak-guard: a null name on an ungated
+/// source must NOT show a Location card or a permission note — plain
+/// "Unavailable" only.
+class _FakeWindowsAdapter implements WifiInfoAdapter {
+  _FakeWindowsAdapter({required this.snapshot});
+
+  final ConnectedAp snapshot;
+  int grantCalls = 0;
+  int openSettingsCalls = 0;
+
+  @override
+  String get platformLabel => 'Windows';
+
+  @override
+  bool get gatesNameBehindPermission => false;
+
+  @override
+  Future<ConnectedAp> fetch() async => snapshot;
+
+  @override
+  Future<bool> requestNamePermission() async {
+    grantCalls++;
+    return true;
+  }
+
+  @override
+  Future<bool> currentNameAuthorization() async => true;
+
+  @override
+  Future<LocationAuthStatus> nameAuthorizationStatus() async =>
+      LocationAuthStatus.authorized;
+
+  @override
+  Future<bool> openNamePermissionSettings() async {
+    openSettingsCalls++;
+    return false;
+  }
+}
+
 /// A fake iOS Shortcuts bridge driving the Live streaming flow without a
 /// platform channel.
 class _FakeBridge implements WiFiDetailsBridge {
@@ -640,6 +682,43 @@ void main() {
       expect(find.text('a4:83:e7:00:11:22'), findsOneWidget);
       expect(find.textContaining('Needs Location permission'), findsNothing);
       expect(find.text('Grant Location'), findsNothing);
+    });
+
+    testWidgets(
+        'LEAK GUARD (Windows, ungated source): a null name shows NO Location '
+        'card and NO permission note — plain "Unavailable" only, since Windows '
+        'Native Wifi has no name gate', (tester) async {
+      // Regression pin: the macOS-worded Location card / "Needs Location
+      // permission" note must never leak onto a source that does not gate the
+      // name behind a permission. Windows returns SSID/BSSID with no grant, so a
+      // null name is a genuine absence, not a permission problem.
+      final adapter = _FakeWindowsAdapter(
+        // RF present, name absent — the ungated null-name case.
+        snapshot: const ConnectedAp(
+          rssiDbm: -55,
+          channel: 36,
+          band: '5 GHz',
+          txRateMbps: 866,
+          poweredOn: true,
+          rxRateAvailable: true,
+        ),
+      );
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.windowsNativeWifi,
+          macAdapter: adapter,
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      // No Location card / grant affordance and no permission note.
+      expect(find.text('Grant Location'), findsNothing);
+      expect(find.textContaining('Needs Location permission'), findsNothing);
+      expect(find.textContaining('Location Services'), findsNothing);
+      // The name rows fall back to the plain, honest "Unavailable".
+      expect(find.text('Unavailable'), findsWidgets);
+      // And the grant path was never even offered (no settings deep-link fired).
+      expect(adapter.openSettingsCalls, 0);
     });
 
     testWidgets('channel error shows an error card with retry', (tester) async {
