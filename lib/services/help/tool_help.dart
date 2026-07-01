@@ -87,6 +87,7 @@ class ToolHelp {
     required this.inputs,
     required this.algorithm,
     required this.example,
+    required this.topNotes,
     required this.fieldNotes,
     required this.source,
   });
@@ -118,6 +119,14 @@ class ToolHelp {
 
   /// Worked example, or null when the source had none.
   final String? example;
+
+  /// LEAD notes — the trust-context caveats that must render at the TOP of the
+  /// help sheet, before Purpose, so the most important framing is visible
+  /// without scrolling (Keith, 2026-06-30: the throughput-methodology notes on
+  /// test-my-connection / net-quality). Same class as [fieldNotes] and rendered
+  /// verbatim + never dropped (GL-005); the only difference is placement (top,
+  /// not bottom). Empty for every tool that has no lead note.
+  final List<String> topNotes;
 
   /// Field notes / caveats. Rendered verbatim and never dropped (GL-005).
   final List<String> fieldNotes;
@@ -190,6 +199,7 @@ class ToolHelp {
       inputs: List<ToolHelpInput>.unmodifiable(inputs),
       algorithm: strOrNull('algorithm'),
       example: strOrNull('example'),
+      topNotes: strList('topNotes'),
       fieldNotes: strList('fieldNotes'),
       source: str('source'),
     );

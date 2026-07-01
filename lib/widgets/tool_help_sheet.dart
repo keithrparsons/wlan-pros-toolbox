@@ -69,6 +69,16 @@ class ToolHelpSheet extends StatelessWidget {
       sections.add(body);
     }
 
+    // Lead / top notes — the important trust-context caveats, rendered FIRST so
+    // they are visible without scrolling, AHEAD of Purpose and every other
+    // section (Keith, 2026-06-30). Verbatim + never dropped (GL-005). Each note
+    // is self-labeling ("Why your speed test may read differently: …"), so the
+    // lead block carries no heading; it reads as the opening trust context. The
+    // remaining caveats still render in the "Field notes" section at the bottom.
+    if (help.topNotes.isNotEmpty) {
+      sections.add(_BulletedNotes(notes: help.topNotes));
+    }
+
     // Purpose.
     if (help.purpose.isNotEmpty) {
       addSection('Purpose', _Paragraph(help.purpose));
@@ -183,6 +193,15 @@ String _helpPlainText(ToolHelp help) {
   final StringBuffer b = StringBuffer()..writeln(help.name);
   if (help.category.isNotEmpty) b.writeln(help.category);
   b.writeln();
+
+  // Lead / top notes copy FIRST, mirroring the on-screen order (top, ahead of
+  // Purpose). Verbatim (GL-005).
+  if (help.topNotes.isNotEmpty) {
+    for (final String note in help.topNotes) {
+      b.writeln('- $note');
+    }
+    b.writeln();
+  }
 
   void section(String title, String body) {
     b
