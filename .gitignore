@@ -2,6 +2,12 @@
 *.class
 *.log
 *.pyc
+
+# fastlane auto-generated run artifacts (regenerate on every run)
+android/fastlane/README.md
+android/fastlane/report.xml
+ios/fastlane/README.md
+ios/fastlane/report.xml
 *.swp
 .DS_Store
 .atom/
