@@ -78,16 +78,21 @@ class _RoamingLogScreenState extends State<RoamingLogScreen>
     if (widget.enableSampling &&
         (_source == WifiInfoSource.macosCoreWlan ||
             _source == WifiInfoSource.androidWifiManager ||
+            _source == WifiInfoSource.windowsNativeWifi ||
             _source == WifiInfoSource.iosShortcuts)) {
       _sampler = widget.sampler ?? WifiSignalSampler(source: _source);
       _sessionStart = DateTime.now();
       WidgetsBinding.instance.addObserver(this);
       _sampler!.load();
-      // macOS / Android source the feed from NATIVE polling (no app switch), so
-      // they auto-start on entry; iOS waits for the single deliberate Start tap
-      // (firing the companion Shortcut would bounce the user out of the app).
+      // macOS / Android / Windows source the feed from NATIVE polling (no app
+      // switch), so they auto-start on entry; iOS waits for the single deliberate
+      // Start tap (firing the companion Shortcut would bounce the user out of the
+      // app). Windows (Native Wifi via FFI) was previously omitted here, which
+      // made the roam log tell Windows users monitoring was "off on this device"
+      // even though [WifiSignalSampler] polls Windows exactly like macOS/Android.
       if (_source == WifiInfoSource.macosCoreWlan ||
-          _source == WifiInfoSource.androidWifiManager) {
+          _source == WifiInfoSource.androidWifiManager ||
+          _source == WifiInfoSource.windowsNativeWifi) {
         _sampler!.start();
       }
     }
@@ -220,9 +225,12 @@ class _RoamingLogScreenState extends State<RoamingLogScreen>
               'from one access point to another on the same network. iOS records '
               'roams while this screen is open and running. There is no '
               'background Wi-Fi monitoring on iOS.'
+          // macOS / Android / Windows all auto-poll the link natively — keep the
+          // copy platform-neutral so it stays true on each (it previously said
+          // "macOS" for every non-iOS platform, wrong on Android and Windows).
           : 'Walk around with this open to record each time your device roams '
-              'from one access point to another on the same network. macOS reads '
-              'the link continuously while this screen is open.',
+              'from one access point to another on the same network. Your device '
+              'reads the link continuously while this screen is open.',
       style: text.bodyLarge?.copyWith(color: colors.textSecondary),
     );
   }

@@ -9,11 +9,47 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/roaming_log_screen.dart';
+import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
 import 'package:wlan_pros_toolbox/services/network/roam_detector.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart'
+    show LocationAuthStatus;
+import 'package:wlan_pros_toolbox/services/network/wifi_signal_sampler.dart';
 import 'package:wlan_pros_toolbox/services/help/tool_help_loader.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 import 'package:wlan_pros_toolbox/widgets/tool_help_footer.dart';
+
+/// A no-network snapshot adapter standing in for the Windows Native Wifi reader,
+/// so the Windows sampler path runs hermetically (no FFI, no wlanapi.dll).
+class _FakeSnapshotAdapter implements WifiInfoAdapter {
+  const _FakeSnapshotAdapter();
+
+  @override
+  Future<ConnectedAp> fetch() async => const ConnectedAp(
+        ssid: 'KeithNet',
+        bssid: 'a4:83:e7:00:11:22',
+        rssiDbm: -55,
+      );
+
+  @override
+  bool get gatesNameBehindPermission => false;
+
+  @override
+  Future<bool> requestNamePermission() async => true;
+
+  @override
+  Future<bool> currentNameAuthorization() async => true;
+
+  @override
+  Future<LocationAuthStatus> nameAuthorizationStatus() async =>
+      LocationAuthStatus.authorized;
+
+  @override
+  Future<bool> openNamePermissionSettings() async => false;
+
+  @override
+  String get platformLabel => 'Windows';
+}
 
 RoamEvent _roam({
   required DateTime at,
@@ -89,6 +125,42 @@ void main() {
     );
     expect(find.text('Roaming Log'), findsOneWidget);
     expect(find.text('Roams this session'), findsNothing);
+  });
+
+  testWidgets(
+      'Windows source wires the live sampler — monitoring is AVAILABLE, never '
+      'the false "off on this device" (C3 fix)', (t) async {
+    // Windows Native Wifi polls exactly like macOS/Android; the roam log must
+    // treat it as an auto-monitoring platform, not darken it. A fake-adapter
+    // sampler runs the path with no FFI.
+    final WifiSignalSampler sampler = WifiSignalSampler(
+      source: WifiInfoSource.windowsNativeWifi,
+      macAdapter: const _FakeSnapshotAdapter(),
+    );
+
+    await pump(
+      t,
+      RoamingLogScreen(
+        sourceOverride: WifiInfoSource.windowsNativeWifi,
+        sampler: sampler,
+      ),
+    );
+
+    // The live card renders (monitoring available) — NOT the disabled card.
+    expect(find.text('Roams this session'), findsOneWidget);
+    expect(
+      find.text('Live Wi-Fi monitoring is off on this device.'),
+      findsNothing,
+    );
+    // The intro copy is platform-neutral, not the old macOS-only wording.
+    expect(find.textContaining('Your device reads the link'), findsOneWidget);
+
+    // Unmount the screen (detaches the card's listener), then dispose the
+    // injected sampler within the test body so its 2 s auto-poll timer is
+    // cancelled before the pending-timer invariant check (the screen never
+    // disposes an INJECTED sampler).
+    await t.pumpWidget(const SizedBox());
+    sampler.dispose();
   });
 
   testWidgets(
