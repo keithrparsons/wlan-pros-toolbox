@@ -178,6 +178,28 @@ void main() {
     expect(find.text('Not reported on iOS'), findsNothing);
   });
 
+  testWidgets(
+      'Windows: auto-reads SSID + Signal via the shipped adapter (no permission '
+      'gate) — never "Not reported on this platform" (C2 fix)',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(_host(NetworkGlanceCard(
+      platformOverride: TargetPlatform.windows,
+      // Windows resolves to windowsNativeWifi and auto-reads through the SAME
+      // wifiFetcher seam macOS/Android use — the fake stands in for the FFI read.
+      wifiFetcher: () async => const ConnectedAp(ssid: 'WLANPros', rssiDbm: -41),
+      seedDeriver: _seed(),
+      publicIpService: _publicIp('203.0.113.7'),
+      ipGeoService: _geo('Comcast'),
+    )));
+    await tester.pumpAndSettle();
+
+    expect(find.text('WLANPros'), findsOneWidget);
+    expect(find.text('-41 dBm'), findsOneWidget);
+    // The old false ceiling must be gone.
+    expect(find.textContaining('Not reported'), findsNothing);
+    expect(find.text('Get a live reading'), findsNothing);
+  });
+
   testWidgets('public IP unavailable (offline) renders "Unavailable", distinct '
       'from the platform "Not reported"', (WidgetTester tester) async {
     await tester.pumpWidget(_host(NetworkGlanceCard(

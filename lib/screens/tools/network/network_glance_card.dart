@@ -243,14 +243,15 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
   TargetPlatform get _platform =>
       widget.platformOverride ?? defaultTargetPlatform;
 
-  /// Whether the current platform can auto-read the SSID/RSSI without a user
-  /// gesture. macOS (CoreWLAN) and Android (WifiManager) can; iOS cannot (it
-  /// needs the install-once Shortcut, which the app can't fire on mount).
-  bool get _wifiAutoReadable {
-    if (kIsWeb) return false;
-    return _platform == TargetPlatform.macOS ||
-        _platform == TargetPlatform.android;
-  }
+  /// The Wi-Fi data source for the current platform, resolved through the SAME
+  /// shared seam the healthy tools (Wi-Fi Information, Test My Connection,
+  /// Interface Info) use. The glance card MUST NOT carry its own inline platform
+  /// list: that is exactly how it drifted from the SSOT and darkened iOS +
+  /// Windows while those platforms could read the link. Delegating here means a
+  /// future native source (e.g. desktop Linux) that [WifiInfoSourceResolver]
+  /// learns to resolve auto-lights up in this card with no edit.
+  WifiInfoSource get _wifiSource =>
+      WifiInfoSourceResolver.resolve(platformOverride: widget.platformOverride);
 
   String get _platformLabel {
     if (kIsWeb) return 'the web';
@@ -258,6 +259,7 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
       TargetPlatform.iOS => 'iOS',
       TargetPlatform.macOS => 'macOS',
       TargetPlatform.android => 'Android',
+      TargetPlatform.windows => 'Windows',
       _ => 'this platform',
     };
   }
@@ -279,32 +281,48 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
     setState(() => _refreshing = false);
   }
 
-  /// Lane 1 — SSID + signal from the platform Wi-Fi adapter.
+  /// Lane 1 — SSID + signal, routed by the resolved [WifiInfoSource] (never a
+  /// bespoke platform list). Each native source that ships a working reader
+  /// auto-reads; iOS reads the shared cache; only the genuinely-unreadable
+  /// surfaces (web, an unsupported native platform) say "Not reported".
   Future<void> _loadWifi() async {
-    // iOS: the app cannot AUTO-read the link (the reading comes from a
-    // user-installed Shortcut that must not auto-fire). But the Wi-Fi
-    // Information tool writes every reading it captures into the shared
-    // [ConnectedApCache], so on mount/refresh we READ that cache (never firing
-    // the Shortcut). A recent reading renders the real SSID + Signal — the same
-    // values the other tool shows; a cold cache offers "Get a live reading"
-    // instead of the false "Not reported on iOS".
-    if (!kIsWeb && _platform == TargetPlatform.iOS) {
-      _loadIosWifiFromCache();
-      return;
+    switch (_wifiSource) {
+      case WifiInfoSource.iosShortcuts:
+        // iOS: the app cannot AUTO-read the link (the reading comes from a
+        // user-installed Shortcut that must not auto-fire). But the Wi-Fi
+        // Information tool writes every reading into the shared
+        // [ConnectedApCache], so we READ that cache on mount/refresh (never
+        // firing the Shortcut). A recent reading renders the real SSID + Signal;
+        // a cold cache offers "Get a live reading" — never a false ceiling.
+        _loadIosWifiFromCache();
+        return;
+      case WifiInfoSource.macosCoreWlan:
+      case WifiInfoSource.androidWifiManager:
+      case WifiInfoSource.windowsNativeWifi:
+        // Snapshot sources with a shipped adapter: read the link directly.
+        // Windows (Native Wifi via FFI) has NO permission gate at all — it was
+        // wrongly darkened before because the card kept a macOS||Android list.
+        await _autoReadWifi();
+        return;
+      case WifiInfoSource.web:
+      case WifiInfoSource.unsupported:
+        // Genuinely unreadable: no shipped reader for this surface. State it
+        // honestly, per-field, instead of a blank that implies "no Wi-Fi".
+        final String reason = 'Not reported on $_platformLabel';
+        if (!mounted) return;
+        setState(() => _snapshot = _snapshot.copyWith(
+              ssid: GlanceField.notReported(reason),
+              signal: GlanceField.notReported(reason),
+            ));
+        return;
     }
+  }
 
-    if (!_wifiAutoReadable) {
-      // web / other unsupported native: the app cannot read the link at all —
-      // state it honestly, per-field, instead of a blank that implies "no Wi-Fi".
-      final String reason = 'Not reported on $_platformLabel';
-      if (!mounted) return;
-      setState(() => _snapshot = _snapshot.copyWith(
-            ssid: GlanceField.notReported(reason),
-            signal: GlanceField.notReported(reason),
-          ));
-      return;
-    }
-
+  /// Reads a snapshot from the resolved adapter (macOS / Android / Windows) and
+  /// maps it into the SSID + Signal rows. A null SSID gets a source-accurate
+  /// reason: the Location gate on macOS/Android, a plain "not in this reading"
+  /// on Windows (which has no permission gate).
+  Future<void> _autoReadWifi() async {
     try {
       final Future<ConnectedAp> Function() fetch =
           widget.wifiFetcher ?? _defaultWifiFetch;
@@ -313,11 +331,7 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
       setState(() => _snapshot = _snapshot.copyWith(
             ssid: ap.ssid != null
                 ? GlanceField.value(ap.ssid!)
-                // A reading arrived but no SSID — on macOS/Android that is the
-                // Location-permission gate, not a missing network.
-                : const GlanceField.unavailable(
-                    'Network name needs Location permission',
-                  ),
+                : GlanceField.unavailable(_nameMissingReason),
             signal: ap.rssiDbm != null
                 ? GlanceField.value('${ap.rssiDbm} dBm')
                 : const GlanceField.unavailable('No signal reading'),
@@ -334,6 +348,14 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
       setState(() => _snapshot = _snapshot.copyWith(ssid: gone, signal: gone));
     }
   }
+
+  /// The honest reason a snapshot arrived with no SSID, by source. macOS/Android
+  /// gate the name behind Location; Windows Native Wifi does not, so a null name
+  /// there is simply absent from this reading, never a permission problem.
+  String get _nameMissingReason =>
+      _wifiSource == WifiInfoSource.windowsNativeWifi
+          ? 'No network name in this reading'
+          : 'Network name needs Location permission';
 
   /// iOS Lane 1 — SSID + Signal from the shared [ConnectedApCache] (READ-ONLY;
   /// never fires the Shortcut). A recent reading renders the real SSID + Signal,
@@ -516,13 +538,15 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
   }
 
   Future<ConnectedAp> _defaultWifiFetch() {
-    final WifiInfoSource source =
-        WifiInfoSourceResolver.resolve(platformOverride: widget.platformOverride);
-    final WifiInfoAdapter adapter = switch (source) {
+    final WifiInfoAdapter adapter = switch (_wifiSource) {
       WifiInfoSource.macosCoreWlan => MacWifiInfoAdapter(),
       WifiInfoSource.androidWifiManager => AndroidWifiInfoAdapter(),
-      // iOS/unsupported/web never reach here (gated by _wifiAutoReadable), but
-      // be defensive: an unsupported source reads as an honest unavailable.
+      // Windows Native Wifi (wlanapi.dll via FFI) — a real dBm RSSI + SSID with
+      // no permission gate. Was missing here, which (with the old macOS||Android
+      // list) left Windows falsely "Not reported".
+      WifiInfoSource.windowsNativeWifi => WindowsWifiInfoAdapter(),
+      // iOS/unsupported/web never reach here (gated in [_loadWifi] by the
+      // resolved source), but be defensive: read as an honest unavailable.
       _ => throw const WifiInfoUnavailable(
           WifiInfoUnavailableReason.channelError,
           'No auto-readable Wi-Fi source on this platform.',
