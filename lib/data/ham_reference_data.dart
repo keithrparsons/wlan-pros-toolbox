@@ -20,7 +20,7 @@
 //     unconfirmed [VERIFY], so no baud value is shown anywhere.
 //
 // GLYPHS: ASCII hyphen-minus for every frequency range (matches the rest of the
-// app's reference data, e.g. spectrum_screen.dart "2400 - 2484 MHz"); no em
+// app's reference data, e.g. spectrum_screen.dart "2400 - 2483.5 MHz"); no em
 // dash anywhere (GL-004). Privilege absence reads as a sentence ("No Technician
 // privileges"), never a bare dash.
 //

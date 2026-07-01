@@ -947,9 +947,11 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   /// re-serializes on demand, so a later sample copies its newer values.
   ///
   /// Honesty (GL-005): a field the platform cannot expose is written as
-  /// "Unavailable", and the two per-platform reasons the cards surface
-  /// (Rx rate, Channel width) travel as an explicit "Not reported on this
-  /// platform" note, never a blank, never a fabricated value.
+  /// "Unavailable" with a per-platform reason (e.g. Rx rate). Channel width is
+  /// different — every snapshot platform derives it from the AP's advertised
+  /// info, so when it is missing the note is per-network ("Not reported for this
+  /// network"), never an OS-blaming claim. Never a blank, never a fabricated
+  /// value.
   String? _buildCopyText() {
     final ConnectedAp? info = _currentAp();
     if (info == null) return null;
@@ -1016,7 +1018,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         '${isPsc ? ' (Preferred Scanning Channel)' : ''}',
       )
       ..writeln(
-        '  Width: ${info.channelWidthAvailable ? _copyVal(_formatChannelWidth(info.channelWidthMhz), _channelWidthHasUnit(info.channelWidthMhz) ? 'MHz' : null) : 'Not reported by $platformLabel'}',
+        '  Width: ${info.channelWidthAvailable ? _copyVal(_formatChannelWidth(info.channelWidthMhz), _channelWidthHasUnit(info.channelWidthMhz) ? 'MHz' : null) : 'Not reported for this network'}',
       )
       ..writeln(
         '  Band: ${_copyVal(info.band, null)}'
@@ -1313,7 +1315,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       const SizedBox(height: AppSpacing.sm),
       _rateCard(info, platformLabel),
       const SizedBox(height: AppSpacing.sm),
-      _channelCard(info, platformLabel),
+      _channelCard(info),
       const SizedBox(height: AppSpacing.sm),
       _radioCard(info),
       const SizedBox(height: AppSpacing.sm),
@@ -1545,7 +1547,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     ),
   );
 
-  Widget _channelCard(ConnectedAp info, String platformLabel) {
+  Widget _channelCard(ConnectedAp info) {
     final bool isPsc = _isPscChannel(info.channel, info.band);
     return _Card(
       title: 'Channel',
@@ -1563,9 +1565,15 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
             value: _formatChannelWidth(info.channelWidthMhz),
             unit: _channelWidthHasUnit(info.channelWidthMhz) ? 'MHz' : null,
             mono: true,
+            // Channel width nulls per-reading, never per-OS: Windows and Android
+            // both derive it from the AP's advertised info (beacon IEs / matching
+            // ScanResult), so it is absent only when THIS network's reading did
+            // not carry it — not an OS-permanent ceiling. Honest per-network copy
+            // (matches androidUnreadReason), not an OS-blaming "Not reported by
+            // <platform>". (GL-005; pre-launch accuracy pass.)
             note: info.channelWidthAvailable
                 ? null
-                : 'Not reported by $platformLabel',
+                : 'Not reported for this network',
           ),
           _MetricRow(
             label: 'Band',

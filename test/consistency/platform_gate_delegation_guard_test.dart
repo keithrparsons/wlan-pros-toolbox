@@ -4,10 +4,28 @@
 // ============================================================================
 //
 // This is the source-level companion to platform_capability_invariant_test.dart.
-// The behavioral invariant proves the SHIPPED SCREENS behave; this proves the
-// CODE SHAPE that caused C1/C2/C3 (a screen carrying its own inline
-// `TargetPlatform` / `Platform.isX` capability list) cannot creep back into a
-// Wi-Fi/signal consumer without a seam in the same file.
+// The behavioral invariant proves the SHIPPED SCREENS behave; this proves one
+// ADJACENT code shape cannot creep into a Wi-Fi/signal consumer: a screen
+// carrying its OWN raw `TargetPlatform.` / `Platform.isX` capability branch
+// without a shared resolver seam in the same file.
+//
+// ---------------------------------------------------------------------------
+// SCOPE — WHAT THIS GUARD DOES NOT CATCH (read before trusting a green run).
+//   The ACTUAL shape of C1/C2/C3 was NOT a raw platform primitive. It was an
+//   inline `WifiInfoSource` enum-list used as a capability gate (a hand-typed
+//   set of sources treated as "the ones that can't do X"). This guard's scan is
+//   LEXICAL and matches only `TargetPlatform.` / `Platform.isX` — it does NOT,
+//   and cannot cheaply, match an enum-list gate without a regex that would
+//   false-positive on every legitimate `switch (source)` in the codebase (that
+//   is exactly why the enum-list check was scoped out — behavioral coverage is
+//   safer than a brittle lexical one). So an enum-list false-ceiling is INVISIBLE
+//   to this guard. That shape is caught BEHAVIORALLY by the sibling invariant's
+//   Part B, which pumps each consumer (glance card, roaming log, Wi-Fi
+//   Information, cellular) per platform and fails on the false-ceiling STRING
+//   itself. This raw-platform scan is a cheap SECOND net for the adjacent smell,
+//   not the primary defense against the C1/C2/C3 class. Do not read a green run
+//   here as "no false ceiling can exist."
+// ---------------------------------------------------------------------------
 //
 // WHAT IT DOES.
 //   1. AUTO-DISCOVERS Wi-Fi/signal consumers: every file under the network

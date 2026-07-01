@@ -1,15 +1,17 @@
-// Nearby AP Scan (H3) — ANDROID-ONLY.
+// Nearby AP Scan (H3) — wired for Android today.
 //
 // Lists the access points visible to a Wi-Fi scan and draws a simple
 // channel-occupancy bar per band. The data comes from the Android
 // `com.wlanpros.toolbox/ap_scan` method channel (MainActivity.kt →
 // WifiManager.getScanResults()).
 //
-// Apple blocks nearby-AP scanning on iOS and macOS, so this tool is Android-only.
-// Larry gates it out of the catalog on Apple platforms; this screen ALSO guards
-// itself: off Android (including iOS, macOS, web) it renders an honest
-// "Android only" state instead of touching the channel (GL-008 honest
-// per-platform unavailable state).
+// Per-platform reality (GL-005 honesty): iOS and macOS block nearby-AP scanning
+// at the OS level. Windows CAN enumerate nearby APs through its Native Wifi API
+// (WlanGetNetworkBssList), but that path is not wired into this tool yet — so the
+// unavailable state says so honestly instead of implying only Apple restricts
+// it. This screen guards itself: off Android it renders an honest per-platform
+// unavailable state instead of touching the channel (GL-008), with copy chosen
+// from ApScanService.platformStatus.
 //
 // HONESTY (GL-005 / GL-008): the scan exposes CLEAN fields only — SSID, BSSID,
 // channel, band, RSSI. The Android scan API does not expose a per-BSS noise
@@ -176,7 +178,7 @@ class _ApScanScreenState extends State<ApScanScreen> {
 
   Widget _body() {
     if (!_service.isSupportedPlatform) {
-      return const _AndroidOnly();
+      return _ScanUnavailable(status: _service.platformStatus);
     }
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
@@ -315,8 +317,48 @@ class _ApScanScreenState extends State<ApScanScreen> {
 // Android-only state (off-Android guard)
 // ---------------------------------------------------------------------------
 
-class _AndroidOnly extends StatelessWidget {
-  const _AndroidOnly();
+/// Honest per-platform unavailable state for the nearby-AP scan.
+///
+/// The scan is wired for Android only today. This card explains WHY it isn't
+/// running here without overstating the reason: iOS and macOS block it at the
+/// OS level, whereas Windows can do it (Native Wifi) but the path isn't wired
+/// into this tool yet. Copy is chosen from [ApScanPlatformStatus].
+class _ScanUnavailable extends StatelessWidget {
+  const _ScanUnavailable({required this.status});
+
+  final ApScanPlatformStatus status;
+
+  static const String _lead =
+      'Nearby AP Scan lists the access points around you using a native Wi-Fi '
+      'scan. It currently runs on Android. ';
+
+  String get _heading {
+    switch (status) {
+      case ApScanPlatformStatus.windowsNotWired:
+        return 'Not wired for Windows yet';
+      case ApScanPlatformStatus.appleRestricted:
+      case ApScanPlatformStatus.unavailable:
+      case ApScanPlatformStatus.supported:
+        return 'Runs on Android';
+    }
+  }
+
+  String get _detail {
+    switch (status) {
+      case ApScanPlatformStatus.windowsNotWired:
+        return '${_lead}Windows can list nearby access points through its '
+            'Native Wifi API, but this tool does not wire up the Windows scan '
+            'yet. The rest of the toolbox works normally here.';
+      case ApScanPlatformStatus.appleRestricted:
+        return '${_lead}iOS and macOS block nearby-AP scanning at the OS level, '
+            'so this tool cannot run it there. The rest of the toolbox works '
+            'normally here.';
+      case ApScanPlatformStatus.unavailable:
+      case ApScanPlatformStatus.supported:
+        return '${_lead}It is not available on this platform. The rest of the '
+            'toolbox works normally here.';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -330,19 +372,16 @@ class _AndroidOnly extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Icon(Icons.android, size: 48, color: colors.textTertiary),
+              Icon(Icons.wifi_find, size: 48, color: colors.textTertiary),
               const SizedBox(height: AppSpacing.sm),
               Text(
-                'Android only',
+                _heading,
                 style: text.headlineSmall?.copyWith(color: colors.textPrimary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'Nearby AP Scan lists the access points around you using the '
-                'Android Wi-Fi scan API. Apple blocks nearby-AP scanning on iOS '
-                'and macOS, so this tool runs on Android only. The rest of the '
-                'toolbox works normally here.',
+                _detail,
                 style: text.bodyLarge?.copyWith(color: colors.textSecondary),
                 textAlign: TextAlign.center,
               ),

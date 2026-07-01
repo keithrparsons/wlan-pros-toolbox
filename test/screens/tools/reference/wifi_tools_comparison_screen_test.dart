@@ -18,8 +18,8 @@ import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 const String _fixture = '''
 {
   "_meta": {
-    "pricingDate": "February 2026",
-    "pricingNote": "Pricing as of February 2026. Confirm current pricing with the vendor before you buy.",
+    "pricingDate": "July 2026",
+    "pricingNote": "Pricing as of July 2026. Confirm current pricing with the vendor before you buy.",
     "estimateNote": "Cost figures are modeled estimates, not vendor-published quotes.",
     "betaNote": "This comparison is in beta review. Vendors are being consulted on the figures.",
     "neutralityNote": "This is a capability and cost reference, not a ranking.",
@@ -123,7 +123,7 @@ void main() {
       expect(find.text('Wi-Fi Tools Comparison'), findsWidgets);
       // The honesty disclaimers are all on-screen (not just in data).
       expect(find.textContaining('beta review'), findsOneWidget);
-      expect(find.textContaining('Pricing as of February 2026'), findsOneWidget);
+      expect(find.textContaining('Pricing as of July 2026'), findsOneWidget);
       expect(find.textContaining('modeled estimates'), findsOneWidget);
       expect(find.textContaining('not a ranking'), findsOneWidget);
       expect(find.textContaining('No vendor logos'), findsOneWidget);

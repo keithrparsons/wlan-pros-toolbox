@@ -7,7 +7,7 @@
 // Every `responseDraft` string below is the FINAL, Keith-ratified, Penn-voiced
 // copy, dropped in VERBATIM from:
 //   Deliverables/2026-06-16-website-connection-analyzer-research/
-//     response-library-final.md  (35 rules, 9 categories)
+//     response-library-final.md  (33 rules, 9 categories)
 //
 // The copy is ship-ready. The two style rules baked into every line are
 // non-negotiable on any future edit:

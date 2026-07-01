@@ -361,10 +361,12 @@ class AppRouter {
   /// icon/graphic assets, and tests; never renamed).
   static const String networkDiscovery = '/tools/network-discovery';
 
-  /// Nearby AP Scan — ANDROID ONLY. Lists nearby Wi-Fi access points via the
-  /// Android scan API; gated out of the catalog on iOS / macOS / Web (Apple
-  /// blocks nearby-AP scanning). The id `nearby-ap-scan` is permanent (backs
-  /// this route, the catalog entry, the help entry, and tests).
+  /// Nearby AP Scan — wired for Android today. Lists nearby Wi-Fi access points
+  /// via the Android scan API; gated out of the catalog on every other platform.
+  /// Per-platform reality: iOS and macOS block nearby-AP scanning at the OS
+  /// level; Windows IS capable via its Native Wifi API but the Windows scan path
+  /// isn't wired into this tool yet (not Apple-blocked). The id `nearby-ap-scan`
+  /// is permanent (backs this route, the catalog entry, the help entry, tests).
   static const String nearbyApScan = '/tools/nearby-ap-scan';
 
   // Quick Reference category — offline lookup tables (bundled assets, all

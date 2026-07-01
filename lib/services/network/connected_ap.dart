@@ -243,10 +243,12 @@ class ConnectedAp {
   ///
   /// The public Native Wifi API exposes NO noise floor, so SNR cannot be
   /// computed — both stay null and [snrDerived] is false (no estimate, GL-005),
-  /// exactly the two fields Android omits. Channel WIDTH needs IE-blob parsing
-  /// (HT/VHT/HE operation elements) deferred to device-time, so it arrives null
-  /// and [channelWidthAvailable] rides false until that lands — the same honest
-  /// "Not reported" posture Android uses when there is no scan match.
+  /// exactly the two fields Android omits. Channel WIDTH IS parsed from the
+  /// connected AP's beacon IEs (HT/VHT/HE/EHT Operation elements) on the FFI
+  /// side, so it resolves per network; [channelWidthAvailable] is false only when
+  /// that AP advertised no width element (or the IE offset still needs device
+  /// verification) — the same honest per-network "Not reported" posture Android
+  /// uses when there is no scan match.
   factory ConnectedAp.fromWindowsWifiInfo(WifiInfo info) {
     return ConnectedAp(
       ssid: info.ssid,
@@ -275,8 +277,9 @@ class ConnectedAp {
       // Windows CAN expose Rx (ulRxRate) — the row shows it when present and a
       // precise "not in this reading" when the platform reports 0/unknown.
       rxRateAvailable: true,
-      // Channel width is IE-derived and deferred; null until that lands, so the
-      // row reads "Not reported" rather than guessing.
+      // Channel width is parsed from the AP's beacon IEs per network; the row
+      // reads "Not reported for this network" when that AP advertised none,
+      // rather than guessing.
       channelWidthAvailable: info.channelWidthMhz != null,
       // The reader derives band/channel from the BSS center frequency on the
       // native (FFI) side and never the noise floor, so neither is app-derived

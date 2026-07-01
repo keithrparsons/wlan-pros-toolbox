@@ -21,17 +21,21 @@
 //                                  cipher algorithm) for the security type.
 //   4. WlanGetNetworkBssList     → WLAN_BSS_ENTRY for the connected BSSID:
 //                                  lRssi (REAL dBm, not 0–100), ulChCenterFreq
-//                                  (→ channel + band), the IE blob (channel
-//                                  width, deferred — see the TODO). This is the
-//                                  one field macOS supplies that signal-quality
-//                                  alone cannot: a true dBm RSSI.
+//                                  (→ channel + band), and the IE blob, which is
+//                                  parsed for channel width (HT/VHT/HE/EHT
+//                                  Operation elements). This is the one field
+//                                  macOS supplies that signal-quality alone
+//                                  cannot: a true dBm RSSI.
 //   5. WlanFreeMemory on every buffer the API allocated, WlanCloseHandle at the
 //      end. Pointer/free discipline is the only real hazard of the FFI path.
 //
 // HONESTY (GL-005 / GL-008): noise floor and SNR are NOT exposed by the public
 // Native Wifi API, exactly like Android — so they stay null and are never
-// derived. Channel WIDTH needs IE parsing (HT/VHT/HE operation elements) that is
-// deferred to device-time; until then it is honestly null. Everything else
+// derived. Channel WIDTH IS parsed from the connected AP's beacon IEs (HT/VHT/
+// HE/EHT Operation elements) in windows_wifi_ffi.dart, so it resolves per
+// network; it stays null only when that AP's beacon advertised no width element,
+// the TLV was malformed, or the IE-blob offset still needs device verification
+// (see the `TODO(windows-verify)` markers). Everything else
 // (SSID/BSSID/RSSI-dBm/Tx+Rx rate/PHY/channel/band/security) the API supplies
 // directly.
 //

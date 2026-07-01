@@ -91,7 +91,7 @@ class WifiToolsComparisonMeta {
     required this.source,
   });
 
-  /// Human pricing date-stamp (e.g. `February 2026`).
+  /// Human pricing date-stamp (e.g. `July 2026`).
   final String pricingDate;
 
   /// "Pricing as of `<date>`, confirm current pricing with the vendor" line.

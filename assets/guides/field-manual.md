@@ -465,7 +465,7 @@ Find live hosts on the local network and enrich each with name, services, inferr
 _Source: lan_discovery_engine.dart:23-510 / device_type.dart:47-146 / mdns_browse.dart:1-51_
 
 
-### Nearby AP Scan (Android only)
+### Nearby AP Scan (runs on Android today)
 
 List the Wi-Fi access points a scan can see around you, each with SSID, BSSID, channel, band, and signal, with a per-band channel-occupancy bar.
 
@@ -474,10 +474,10 @@ List the Wi-Fi access points a scan can see around you, each with SSID, BSSID, c
 **How to use**
 1. Tap Scan to run a Wi-Fi scan. Each visible AP lists its SSID, BSSID, channel, band, and RSSI. Sort by signal or channel, and read the occupancy bars per band. Re-run to refresh.
 
-**Formula or method.** ANDROID ONLY. The screen reads WifiManager.getScanResults() through the native com.wlanpros.toolbox/ap_scan method channel (MainActivity.kt); ApScanService parses each result into a clean record (SSID, BSSID, RSSI, channel and band derived from the center frequency). Off Android, including iOS, macOS, and web, the screen renders an honest "Android only" state and never touches the channel (GL-008 honest per-platform unavailable state).
+**Formula or method.** Wired for Android today. The screen reads WifiManager.getScanResults() through the native com.wlanpros.toolbox/ap_scan method channel (MainActivity.kt); ApScanService parses each result into a clean record (SSID, BSSID, RSSI, channel and band derived from the center frequency). Off Android the screen renders an honest per-platform state and never touches the channel (GL-008): on iOS and macOS it says the OS blocks nearby-AP scanning; on Windows it says the scan is not wired into this tool yet (Windows Native Wifi CAN enumerate nearby APs — the FFI already fetches every BSS — so this is a not-yet-built path, not an OS block).
 
 **Field notes**
-- Android only. Apple blocks third-party nearby-AP scanning on iOS and macOS, so this tool is gated out of the catalog on those platforms; only Android shows it.
+- Runs on Android today. iOS and macOS block nearby-AP scanning at the OS level, so the tool is gated out of the catalog there. Windows is capable via its Native Wifi API (WlanGetNetworkBssList already fetches every visible BSS), but the Windows scan path is not wired into this tool yet — the copy says so honestly rather than implying only Apple restricts it.
 - Clean fields only (GL-005). The Android scan API exposes SSID, BSSID, channel, band, and RSSI for a scanned (non-connected) BSS. It does not expose a per-BSS noise floor, SNR, or MCS, so those columns do not exist here and are never shown.
 - Android throttles Wi-Fi scans. When throttled, a rapid re-scan returns the last cached results and the screen notes it rather than faking a fresh scan. Location permission and Wi-Fi must both be on for the scan to return results.
 
@@ -1953,7 +1953,7 @@ A per-band fact sheet for the three Wi-Fi bands: total usable spectrum, supporte
 - What it shows: each band shows a range badge plus eight key/value facts: Total spectrum, Standards, Channels (US), Non-overlapping, Channel widths, DFS / Radar, Co-existence, and Key notes.
 - US-default; the footnote on every band reads "US (FCC) regulatory domain. Verify local rules before deployment."
 - Carries useful specifics: UNII-1 indoor-only in some regions; UNII-2A/2C DFS implies a 60-second channel-availability delay after radar detection; 6 GHz has three US power modes, namely Standard Power (up to 36 dBm EIRP, AFC outdoors), LPI (up to 30 dBm, no AFC), and VLP (up to 14 dBm EIRP, no AFC, mobile); WPA3 mandatory on 6 GHz.
-- Data source: US (FCC) regulatory domain. Ported verbatim from the rf-tools-pwa spectrum tool. Values: 2.4 GHz = 84 MHz (US); 5 GHz = ~580 MHz usable (UNII-1/2A/2C/3); 6 GHz = 1200 MHz (5925 to 7125 MHz).
+- Data source: US (FCC) regulatory domain. Ported verbatim from the rf-tools-pwa spectrum tool. Values: 2.4 GHz = 83.5 MHz (US); 5 GHz = ~580 MHz usable (UNII-1/2A/2C/3); 6 GHz = 1200 MHz (5925 to 7125 MHz).
 
 _Source: lib/screens/tools/reference/spectrum_screen.dart_
 
@@ -2011,7 +2011,7 @@ A vendor-neutral, offline reference that compares professional Wi-Fi survey, des
 
 **Field notes**
 - This comparison is in BETA REVIEW. Vendors are being consulted on the figures, and a few may change before the final release.
-- Pricing is dated. The figures are as of February 2026; confirm current pricing with each vendor, because prices, bundles, and product names change often.
+- Pricing is dated. The figures are as of July 2026; confirm current pricing with each vendor, because prices, bundles, and product names change often.
 - Cost figures are MODELED ESTIMATES assembled by WLAN Pros from vendor-supplied numbers and list pricing, not vendor-published quotes. Treat every dollar amount as a planning estimate, never a binding price.
 - This is NOT a ranking. There is no score and no "best". Tools are listed alphabetically and the same vendor can appear under more than one activity, because real toolkits are assembled across vendors. The set reflects vendors interviewed by WLAN Pros, not every tool that exists, so an omitted tool is not a snub.
 - No vendor logos or product photos appear here. Those are trademarks and copyrighted images that need each vendor's written permission, which is still being gathered. The reference is text and data only for now.

@@ -32,14 +32,14 @@ import 'package:package_info_plus/package_info_plus.dart';
 class AppVersionInfo {
   const AppVersionInfo({required this.version, required this.buildNumber});
 
-  /// Marketing version — CFBundleShortVersionString, e.g. `1.1.0`.
+  /// Marketing version — CFBundleShortVersionString, e.g. `1.5.9`.
   final String version;
 
   /// Build number — CFBundleVersion, e.g. `202606052247`. May be empty on
   /// platforms/builds that did not set one.
   final String buildNumber;
 
-  /// The labeled, copy-ready line, e.g. `Version 1.1.0 (build 202606052247)`.
+  /// The labeled, copy-ready line, e.g. `Version 1.5.9 (build 202606052247)`.
   /// When the build number is empty, the `(build …)` clause is omitted rather
   /// than printing an empty paren.
   String get display => buildNumber.isEmpty
@@ -52,10 +52,21 @@ class AppVersion {
   AppVersion._();
 
   /// Pubspec-mirrored marketing version — the synchronous fallback only.
-  static const String fallbackVersion = '1.1.0';
+  ///
+  /// MUST equal pubspec's `version:` marketing part. This isn't only a
+  /// failure-case value: it renders unconditionally on the license page
+  /// (`showLicensePage`) and as the pre-resolve copy fallback, so a stale value
+  /// here is a wrong version shown to a user, not just a rare degrade. Pinned to
+  /// pubspec by `app_version_fallback_matches_pubspec_test.dart` so it can't
+  /// silently drift again (it had drifted to 1.1.0 while pubspec was 1.5.9).
+  static const String fallbackVersion = '1.5.9';
 
-  /// Pubspec-mirrored build number — the synchronous fallback only.
-  static const String fallbackBuildNumber = '12';
+  /// Pubspec-mirrored build number — the synchronous fallback only. MUST equal
+  /// pubspec's `+<build>` part; pinned by the same drift test as
+  /// [fallbackVersion]. (iOS ship builds inject a CFBundleVersion timestamp that
+  /// PackageInfo reads at runtime; this constant is the pubspec-declared build
+  /// used only when that runtime read is unavailable.)
+  static const String fallbackBuildNumber = '44';
 
   /// A const fallback snapshot, used before [load] resolves and in tests that
   /// do not bind the platform channel.

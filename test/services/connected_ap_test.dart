@@ -198,7 +198,7 @@ void main() {
       expect(ap.snrDerived, isFalse);
     });
 
-    test('channel width deferred (IE parse) → channelWidthAvailable false', () {
+    test('no width IE for this network → channelWidthAvailable false', () {
       final ap = ConnectedAp.fromWindowsWifiInfo(windowsInfo());
       expect(ap.channelWidthMhz, isNull);
       expect(ap.channelWidthAvailable, isFalse);
