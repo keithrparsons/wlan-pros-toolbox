@@ -172,6 +172,67 @@ Record each time your device roams from one access point (BSSID) to another on t
 _Source: roaming_log_screen.dart / roam_detector.dart / wifi_signal_sampler.dart / app_copy_action.dart_
 
 
+### How the Toolbox Measures Throughput
+
+The Toolbox reports two throughput numbers, and they answer two different questions. One measures your path to the internet. The other measures the Wi-Fi hop between your device and the Access Point. Read each as its own answer and both make sense. Compare them to each other, or to a headline speed test, and you will only confuse yourself.
+
+Keep them straight from the start.
+
+#### Two numbers, two questions
+
+- **Internet throughput** is shown by *Test My Connection* and *Network Quality*. This is how much real data your device can push to and pull from the wider internet right now.
+- **Usable Wi-Fi capacity** is shown by *Wi-Fi vs Internet*. This is roughly how much throughput the Wi-Fi hop itself can carry, based on the rate your radios negotiated.
+
+Same app, two measurements, two purposes. Everything below explains what each one actually does and why a number you see somewhere else may not match.
+
+#### How the internet number is measured
+
+The internet throughput figure comes from an aggregate-capacity measurement, the same class of test the well-known speed tests run. It is built to be comparable to them, not built to read low.
+
+Here is what the app actually does:
+
+- **Download uses two streams at once, to two different independent public servers.** The bytes from both streams are summed to get the aggregate download rate. Running parallel streams is how you fill a fast connection; a single stream often cannot.
+- **The measurement runs inside one bounded window of about 10 seconds.** Download and upload each get that same bounded window. The rate is the data moved divided by the time it took.
+- **Upload uses a single stream** over the same bounded window.
+- **The servers are neutral public destinations, not a cherry-picked host.** The app does not go shopping for the one nearby server that will post the best possible peak.
+- **When it cannot get a clean measurement, it says so.** You get an honest "couldn't measure," never a fake 0. A zero on a working connection would be a lie, and the app will not tell it.
+
+That is the whole method. Parallel streams, neutral servers, a bounded window, and an honest failure state when the network will not cooperate.
+
+#### Why your speed test may read differently
+
+No single number is "the" speed of a connection. Throughput is a measurement, and every measurement depends on how it was taken. Run two honest tests on the same connection and they can land on different numbers for reasons that have nothing to do with either one being broken.
+
+What moves the number:
+
+- **Which server you hit, and how well it is peered to your ISP.** A server your provider peers with directly has a shorter, cleaner path than a neutral public host somewhere else.
+- **How many parallel streams the test opens.** More streams fill a fast connection more completely and post a higher aggregate.
+- **How long the window runs, and whether the test ramps up first.** A longer run with a warm-up ramp gives a connection time to reach its peak; a short bounded window captures a steady real-world rate instead.
+- **Time of day and congestion.** The same connection is not the same connection at 3 a.m. and at 8 p.m.
+
+Put those together and the pattern is easy to see. A test tuned to saturate a nearby, ISP-peered server with many parallel streams over a longer ramp can post a higher peak than a bounded two-stream test to neutral public servers. That gap is a difference in method. Both tests measured something real; they just measured it differently.
+
+#### What the Wi-Fi number is, and what it is not
+
+The *Wi-Fi vs Internet* tool shows a different figure entirely: usable Wi-Fi capacity, which the app estimates at about 55% of the negotiated Wi-Fi link rate.
+
+Two things to understand about that 55%.
+
+First, it is deliberately below the headline link rate, and that is correct. The rate your device and the Access Point negotiate is a ceiling, not a delivery. Real-world throughput over Wi-Fi runs roughly 50 to 60% of that negotiated rate once you account for protocol overhead, acknowledgments, contention, and retries. Taking 55% of the link rate is a reasonable estimate of what the hop can actually carry.
+
+Second, this number describes the Wi-Fi hop only. It is the road between your device and the Access Point, and nothing past it. It says nothing about your internet speed.
+
+Do not compare the Wi-Fi capacity number to an internet speed test. Different road, different question. One tells you how much the local Wi-Fi hop can move; the other tells you how much your connection to the internet can move. The whole point of putting them side by side in the tool is to show you which of the two is the limiting factor, not to make them agree.
+
+#### What our internet number represents
+
+When the Toolbox shows you an internet throughput figure, it is real throughput to neutral public destinations, measured over a bounded window and reported honestly. It is not the highest number the app could have coaxed out of a hand-picked nearby server, and it is not padded to look good next to anyone else's result.
+
+If another test on the same connection reads higher, that is the method talking: a different server, more streams, a longer ramp. If the Toolbox cannot get a clean read, it tells you it couldn't rather than inventing a number.
+
+Two throughput numbers, two questions. The internet figure is your honest path to the wider internet. The Wi-Fi figure is the capacity of the hop to your Access Point. Keep them straight and each one tells you exactly what it means.
+
+
 ---
 
 # Networking Tools (25 tools)
