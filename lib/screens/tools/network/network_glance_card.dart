@@ -613,8 +613,10 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
   /// A prominent [FilledButton.icon] with the custom [GetReadingIcon] (a generic
   /// Material glyph here would be a flag per [[feedback_custom_icons]]). The
   /// button inherits the theme's focus ring and its foreground/background clear
-  /// WCAG 2.2 AA (the lime-on-ink primary pair, GL-003 §8.2). The enclosing
-  /// [Semantics] carries the accessible name so the decorative glyph is silent.
+  /// WCAG 2.2 AA (the lime-on-ink primary pair, GL-003 §8.2). The button
+  /// self-labels via its [Text] child and the decorative [GetReadingIcon] is
+  /// silent (excludeFromSemantics), so no extra [Semantics] wrapper is needed —
+  /// wrapping it would create a duplicate VoiceOver stop (SOP-009 §5.5).
   Widget _getReadingAction() {
     const String label = 'Get a live reading';
     return Padding(
@@ -624,14 +626,10 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
       ),
       child: Align(
         alignment: Alignment.centerLeft,
-        child: Semantics(
-          button: true,
-          label: label,
-          child: FilledButton.icon(
-            onPressed: _requestIosLiveReading,
-            icon: const GetReadingIcon(size: 18),
-            label: const Text(label),
-          ),
+        child: FilledButton.icon(
+          onPressed: _requestIosLiveReading,
+          icon: const GetReadingIcon(size: 18),
+          label: const Text(label),
         ),
       ),
     );
