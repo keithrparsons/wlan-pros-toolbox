@@ -122,7 +122,12 @@ ConnectedAp _macSampleRssi(int rssi) {
 
 /// A fake macOS adapter: returns a queued snapshot or throws a queued error.
 class _FakeMacAdapter implements WifiInfoAdapter {
-  _FakeMacAdapter({this.snapshot, this.error, this.snapshotAfterGrant});
+  _FakeMacAdapter({
+    this.snapshot,
+    this.error,
+    this.snapshotAfterGrant,
+    bool authorized = false,
+  }) : _granted = authorized;
 
   final ConnectedAp? snapshot;
   final WifiInfoUnavailable? error;
@@ -135,7 +140,12 @@ class _FakeMacAdapter implements WifiInfoAdapter {
 
   int grantCalls = 0;
   int openSettingsCalls = 0;
-  bool _granted = false;
+
+  /// Seeded from the constructor's `authorized` flag so a test can model a
+  /// source where Location is ALREADY granted (the name is missing for a
+  /// genuine reason, not a permission gate) without going through the grant
+  /// flow. Flipped true by [requestNamePermission] to model an in-app grant.
+  bool _granted;
 
   @override
   String get platformLabel => 'macOS CoreWLAN';
@@ -202,6 +212,48 @@ class _SequenceMacAdapter implements WifiInfoAdapter {
 
   @override
   Future<bool> openNamePermissionSettings() async => true;
+}
+
+/// A fake Windows Native Wifi adapter: like the real [WindowsWifiInfoAdapter],
+/// it does NOT gate the network name behind a permission
+/// (`gatesNameBehindPermission => false`) and always reports authorized. Returns
+/// a queued snapshot. Used to pin the leak-guard: a null name on an ungated
+/// source must NOT show a Location card or a permission note — plain
+/// "Unavailable" only.
+class _FakeWindowsAdapter implements WifiInfoAdapter {
+  _FakeWindowsAdapter({required this.snapshot});
+
+  final ConnectedAp snapshot;
+  int grantCalls = 0;
+  int openSettingsCalls = 0;
+
+  @override
+  String get platformLabel => 'Windows';
+
+  @override
+  bool get gatesNameBehindPermission => false;
+
+  @override
+  Future<ConnectedAp> fetch() async => snapshot;
+
+  @override
+  Future<bool> requestNamePermission() async {
+    grantCalls++;
+    return true;
+  }
+
+  @override
+  Future<bool> currentNameAuthorization() async => true;
+
+  @override
+  Future<LocationAuthStatus> nameAuthorizationStatus() async =>
+      LocationAuthStatus.authorized;
+
+  @override
+  Future<bool> openNamePermissionSettings() async {
+    openSettingsCalls++;
+    return false;
+  }
 }
 
 /// A fake iOS Shortcuts bridge driving the Live streaming flow without a
@@ -556,6 +608,117 @@ void main() {
       expect(adapter.grantCalls, 1);
       expect(find.text('KeithNet'), findsOneWidget);
       expect(find.text('a4:83:e7:00:11:22'), findsOneWidget);
+    });
+
+    testWidgets(
+        'Location denied → the SSID and BSSID rows name the actionable '
+        '"Needs Location permission" reason, NOT a bare "Unavailable", and the '
+        'grant affordance is present', (tester) async {
+      // The reported bug: with macOS Location NOT granted, SSID/BSSID rendered a
+      // flat "Unavailable" (implying the data does not exist) even though the
+      // real, fixable cause is the missing Location permission. Model that state
+      // with a not-authorized adapter returning a name-gated snapshot.
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          macAdapter: _FakeMacAdapter(
+            snapshot: _macSample(ssid: null, bssid: null),
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      // The SSID/BSSID rows carry the actionable Location reason (worded to
+      // agree with the glance card's "Network name needs Location permission").
+      // The row label supplies the "Network name" subject, so the note reads
+      // "Needs Location permission" — one per gated row (SSID + BSSID).
+      expect(find.textContaining('Needs Location permission'), findsWidgets);
+      // The grant affordance is present so the user can act on the reason.
+      expect(find.text('Grant Location'), findsWidgets);
+      expect(find.text('Open Location Settings'), findsOneWidget);
+    });
+
+    testWidgets(
+        'Location AUTHORIZED but name absent (disconnected/hidden) → the rows '
+        'fall back to a plain unavailable, NOT the Location reason, and no '
+        'Location card is shown (the permission is granted)', (tester) async {
+      // Distinguish "Location not authorized" (actionable) from a genuine
+      // absence: when Location IS granted yet the name is still missing, the
+      // cause is a disconnected / hidden network, NOT a permission gate. We must
+      // never blame a permission that is actually granted (GL-005).
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          macAdapter: _FakeMacAdapter(
+            authorized: true,
+            snapshot: _macSample(ssid: null, bssid: null),
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      // The Location reason must NOT appear — the permission is granted.
+      expect(find.textContaining('Needs Location permission'), findsNothing);
+      // And no Location card / grant affordance is shown for a granted permission.
+      expect(find.text('Grant Location'), findsNothing);
+      expect(find.text('Open Location Settings'), findsNothing);
+    });
+
+    testWidgets(
+        'Location authorized WITH a name → the real SSID/BSSID render and no '
+        'Location reason note appears', (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          macAdapter: _FakeMacAdapter(
+            authorized: true,
+            snapshot: _macSample(),
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('KeithNet'), findsOneWidget);
+      expect(find.text('a4:83:e7:00:11:22'), findsOneWidget);
+      expect(find.textContaining('Needs Location permission'), findsNothing);
+      expect(find.text('Grant Location'), findsNothing);
+    });
+
+    testWidgets(
+        'LEAK GUARD (Windows, ungated source): a null name shows NO Location '
+        'card and NO permission note — plain "Unavailable" only, since Windows '
+        'Native Wifi has no name gate', (tester) async {
+      // Regression pin: the macOS-worded Location card / "Needs Location
+      // permission" note must never leak onto a source that does not gate the
+      // name behind a permission. Windows returns SSID/BSSID with no grant, so a
+      // null name is a genuine absence, not a permission problem.
+      final adapter = _FakeWindowsAdapter(
+        // RF present, name absent — the ungated null-name case.
+        snapshot: const ConnectedAp(
+          rssiDbm: -55,
+          channel: 36,
+          band: '5 GHz',
+          txRateMbps: 866,
+          poweredOn: true,
+          rxRateAvailable: true,
+        ),
+      );
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.windowsNativeWifi,
+          macAdapter: adapter,
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      // No Location card / grant affordance and no permission note.
+      expect(find.text('Grant Location'), findsNothing);
+      expect(find.textContaining('Needs Location permission'), findsNothing);
+      expect(find.textContaining('Location Services'), findsNothing);
+      // The name rows fall back to the plain, honest "Unavailable".
+      expect(find.text('Unavailable'), findsWidgets);
+      // And the grant path was never even offered (no settings deep-link fired).
+      expect(adapter.openSettingsCalls, 0);
     });
 
     testWidgets('channel error shows an error card with retry', (tester) async {

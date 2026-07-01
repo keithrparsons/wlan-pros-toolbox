@@ -162,6 +162,19 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   WifiInfoUnavailable? _macError;
   bool _locationGrantAttempted = false;
 
+  /// The current name-gating (Location) authorization for the snapshot source,
+  /// or null until the first no-prompt status read resolves. Only meaningful
+  /// when the active adapter gates the network name behind an OS permission
+  /// (macOS Location Services / Android ACCESS_FINE_LOCATION); it stays
+  /// null/irrelevant for ungated sources (Windows Native Wifi). This is what
+  /// lets the SSID/BSSID rows name the REAL cause: a not-authorized status makes
+  /// them read the actionable "Needs Location permission" instead of a flat,
+  /// misleading "Unavailable", while an authorized-but-empty read (a genuinely
+  /// disconnected / hidden network — NOT a permission problem) falls back to the
+  /// plain unavailable. Read via the adapter's [WifiInfoAdapter.nameAuthorizationStatus]
+  /// no-prompt seam (never surfaces a system prompt). See [_nameGateNote].
+  LocationAuthStatus? _nameAuth;
+
   /// Rolling window of CoreWLAN snapshots for the macOS sparklines. macOS reads
   /// the same RF fields as iOS (RSSI / SNR / Tx rate), so the SAME [_LiveCharts]
   /// surface renders from a series fed by automatic polling rather than a stream.
@@ -743,6 +756,9 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       _appendMacSample(info);
       // Share the reading app-wide so Interface Info shows the same identity.
       _apCache.update(info);
+      // Resolve WHY the name is (or is not) present so the SSID/BSSID rows can
+      // name the actionable Location cause vs a genuine absence (no-prompt read).
+      await _refreshNameAuth();
       if (manual && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -827,6 +843,10 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       _appendMacSample(info);
       // Keep the shared cache current so Interface Info tracks the live link.
       _apCache.update(info);
+      // Re-resolve the name-gate status each poll so a grant made in System
+      // Settings while the screen is open flips the SSID/BSSID reason without a
+      // relaunch.
+      await _refreshNameAuth();
     } on WifiInfoUnavailable {
       // Transient read failure: keep the last good snapshot + series on screen.
     } catch (_) {
@@ -842,6 +862,25 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     if (!mounted) return;
     _locationGrantAttempted = true;
     await _fetchMac();
+  }
+
+  /// Re-reads the CURRENT name-gating (Location) authorization for the snapshot
+  /// source WITHOUT surfacing a prompt, and stores it so the SSID/BSSID rows can
+  /// name the real cause (a Location permission gate vs a genuinely absent name).
+  /// No-op for ungated sources (Windows Native Wifi) and off the snapshot path.
+  /// Bounded by the adapter's own timeout; never throws — on a read failure it
+  /// leaves the last known status, so the row degrades to a plain unavailable
+  /// rather than asserting a cause it could not confirm.
+  Future<void> _refreshNameAuth() async {
+    final WifiInfoAdapter? adapter = _macAdapter;
+    if (adapter == null || !adapter.gatesNameBehindPermission) return;
+    try {
+      final LocationAuthStatus auth = await adapter.nameAuthorizationStatus();
+      if (!mounted) return;
+      setState(() => _nameAuth = auth);
+    } on Object {
+      // Honest fallback: keep the prior status; never fabricate a reason.
+    }
   }
 
   /// macOS: deep-links to System Settings → Privacy & Security → Location
@@ -1179,6 +1218,23 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     final bool nameMissing = info.ssid == null && info.bssid == null;
     if (info.ssid != null) return null;
 
+    // Only sources that gate the name behind an OS permission (macOS Location
+    // Services / Android ACCESS_FINE_LOCATION) get a Location card. Windows
+    // Native Wifi returns SSID/BSSID with no grant, so a null name there is
+    // simply absent from this reading — never a permission problem, no card.
+    final WifiInfoAdapter? adapter = _macAdapter;
+    if (!(adapter?.gatesNameBehindPermission ?? false)) return null;
+
+    // When Location IS authorized yet the name is still missing, this is NOT a
+    // permission problem (a genuinely disconnected / hidden network). Don't show
+    // a card that blames a granted permission. A null (unresolved) or a
+    // not-authorized status keeps the card, since a gated name is the dominant
+    // cause of a missing name on these sources. The post-grant informational
+    // path (below) still owns the just-granted case.
+    if (_nameAuth == LocationAuthStatus.authorized && !_locationGrantAttempted) {
+      return null;
+    }
+
     final bool isAndroid = _source == WifiInfoSource.androidWifiManager;
 
     if (info.ssid == null && _locationGrantAttempted) {
@@ -1323,12 +1379,50 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     ];
   }
 
+  /// The actionable reason the network name is empty when a snapshot source
+  /// gates it behind an OS Location permission that is not granted. Worded to
+  /// agree with the Network-at-a-glance card's
+  /// 'Network name needs Location permission' (network_glance_card.dart) so the
+  /// two surfaces name the macOS/Android Location condition the same way
+  /// (Phase 5.5 cross-surface consistency). Kept short here because the row's
+  /// own label ('SSID' / 'BSSID') already supplies the "Network name" subject.
+  static const String _kNeedsLocationPermission = 'Needs Location permission';
+
+  /// The honest, ACTIONABLE reason an SSID/BSSID row is empty on a snapshot
+  /// source that gates the network name behind an OS Location permission (macOS
+  /// Location Services / Android ACCESS_FINE_LOCATION). Returns
+  /// [_kNeedsLocationPermission] ONLY when the value is missing, the active
+  /// adapter gates the name, and the current authorization is NOT granted — so
+  /// the row names the true, fixable cause instead of a flat "Unavailable".
+  ///
+  /// Returns null (→ the row's plain "Unavailable") when the value is present,
+  /// when the source has no name gate (Windows Native Wifi, or the iOS path
+  /// where `_macAdapter` is null), or when Location IS authorized yet the name
+  /// is still absent — a genuinely disconnected / hidden network, which is NOT a
+  /// permission problem, so we never blame a granted permission (GL-005).
+  String? _nameGateNote(String? value) {
+    if (value != null && value.trim().isNotEmpty) return null;
+    final WifiInfoAdapter? adapter = _macAdapter;
+    if (adapter == null || !adapter.gatesNameBehindPermission) return null;
+    if (_nameAuth == LocationAuthStatus.authorized) return null;
+    return _kNeedsLocationPermission;
+  }
+
   Widget _networkCard(ConnectedAp info) => _Card(
     title: 'Network',
     child: Column(
       children: [
-        _MetricRow(label: 'SSID', value: info.ssid),
-        _MetricRow(label: 'BSSID', value: info.bssid, mono: true),
+        _MetricRow(
+          label: 'SSID',
+          value: info.ssid,
+          note: _nameGateNote(info.ssid),
+        ),
+        _MetricRow(
+          label: 'BSSID',
+          value: info.bssid,
+          mono: true,
+          note: _nameGateNote(info.bssid),
+        ),
         // AP vendor (manufacturer) resolved offline from the BSSID's IEEE OUI.
         // This is the AP MANUFACTURER, not the configured AP name (which is not
         // readable on iOS/macOS), the note says so.

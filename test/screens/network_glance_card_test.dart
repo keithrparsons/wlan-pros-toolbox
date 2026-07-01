@@ -19,6 +19,7 @@ import 'package:wlan_pros_toolbox/services/network/ip_geo_service.dart';
 import 'package:wlan_pros_toolbox/services/network/json_http_client.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/subnet_seed.dart';
 import 'package:wlan_pros_toolbox/services/network/public_ip_service.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
 Widget _host(Widget child) =>
@@ -221,13 +222,15 @@ void main() {
     expect(find.textContaining('Not reported'), findsNothing);
   });
 
-  testWidgets('macOS reading with no SSID (Location not granted) → an honest '
+  testWidgets('macOS reading with no SSID + Location NOT granted → the honest '
       'permission reason, not a fabricated network name',
       (WidgetTester tester) async {
     await tester.pumpWidget(_host(NetworkGlanceCard(
       platformOverride: TargetPlatform.macOS,
       // A reading arrived (rssi present) but SSID is null — the Location gate.
       wifiFetcher: () async => const ConnectedAp(rssiDbm: -60),
+      // Location is NOT granted, so the permission reason is the honest cause.
+      nameAuthStatus: () async => LocationAuthStatus.notDetermined,
       seedDeriver: _seed(),
       publicIpService: _publicIp('203.0.113.7'),
       ipGeoService: _geo('Comcast'),
@@ -235,6 +238,30 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('Location permission'), findsOneWidget);
+    expect(find.text('-60 dBm'), findsOneWidget);
+  });
+
+  testWidgets(
+      'macOS reading with no SSID but Location GRANTED (hidden / not associated) '
+      '→ a plain honest absence, NOT the permission reason (agrees with Wi-Fi '
+      'Information; never blames a granted permission)',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(_host(NetworkGlanceCard(
+      platformOverride: TargetPlatform.macOS,
+      // rssi present, SSID null, but Location IS authorized — so the missing
+      // name is a genuine absence, not a permission gate.
+      wifiFetcher: () async => const ConnectedAp(rssiDbm: -60),
+      nameAuthStatus: () async => LocationAuthStatus.authorized,
+      seedDeriver: _seed(),
+      publicIpService: _publicIp('203.0.113.7'),
+      ipGeoService: _geo('Comcast'),
+    )));
+    await tester.pumpAndSettle();
+
+    // The permission reason must NOT appear — Location is granted.
+    expect(find.textContaining('Location permission'), findsNothing);
+    // Instead, the honest plain absence, matching the Wi-Fi Information tool.
+    expect(find.text('No network name in this reading'), findsOneWidget);
     expect(find.text('-60 dBm'), findsOneWidget);
   });
 

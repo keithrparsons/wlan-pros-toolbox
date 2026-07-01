@@ -33,6 +33,7 @@ const ToolHelp _calc = ToolHelp(
   ],
   algorithm: 'FSPL(dB) = 20·log10(f) + 20·log10(d) + 92.45',
   example: '5 GHz, 1 km -> 106.4 dB.',
+  topNotes: <String>['Read this before the numbers: it is a floor, not a truth.'],
   fieldNotes: <String>[
     'Free space only. Real-world links always lose more, so use this as a '
         'floor, not a prediction.',
@@ -50,6 +51,7 @@ const ToolHelp _reference = ToolHelp(
   inputs: <ToolHelpInput>[],
   algorithm: null,
   example: null,
+  topNotes: <String>[],
   fieldNotes: <String>['DFS channels may require radar avoidance.'],
   source: 'wifi_channels_screen.dart',
 );
@@ -114,6 +116,48 @@ void main() {
       find.bySemanticsLabel('Copy help'),
       findsOneWidget,
     );
+  });
+
+  testWidgets(
+      'lead topNotes render at the TOP — ABOVE the Purpose section — so the '
+      'trust context is visible without scrolling', (tester) async {
+    await _pumpSheet(tester, _calc);
+
+    // The lead note renders verbatim...
+    final Finder lead =
+        find.textContaining('Read this before the numbers');
+    expect(lead, findsOneWidget);
+    // ...under a quiet "Read first" heading that is a real Semantics header, so
+    // screen-reader heading navigation reaches the priority notes (WCAG 1.3.1).
+    final Finder heading = find.text('Read first');
+    expect(heading, findsOneWidget);
+    final SemanticsHandle handle = tester.ensureSemantics();
+    expect(
+      tester.getSemantics(heading),
+      matchesSemantics(label: 'Read first', isHeader: true),
+    );
+    handle.dispose();
+    // ...and the whole lead block sits ABOVE the Purpose heading (smaller dy =
+    // higher on screen).
+    final double leadY = tester.getTopLeft(lead).dy;
+    final double headingY = tester.getTopLeft(heading).dy;
+    final double purposeY = tester.getTopLeft(find.text('Purpose')).dy;
+    expect(headingY, lessThan(purposeY));
+    expect(
+      leadY,
+      lessThan(purposeY),
+      reason: 'topNotes must render above Purpose (at the very top of the sheet)',
+    );
+  });
+
+  test('the model carries topNotes as a distinct lead list, separate from '
+      'fieldNotes (parsed from the JSON topNotes key)', () {
+    // The lead list is populated and kept SEPARATE from the bottom field notes,
+    // so the renderer + copy text can place it first without duplicating it.
+    expect(_calc.topNotes, isNotEmpty);
+    expect(_calc.topNotes.first, startsWith('Read this before the numbers'));
+    expect(_calc.fieldNotes, isNotEmpty);
+    expect(_calc.topNotes, isNot(equals(_calc.fieldNotes)));
   });
 
   testWidgets('skips inputs/algorithm/example for a reference entry', (

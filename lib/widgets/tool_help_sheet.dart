@@ -69,6 +69,20 @@ class ToolHelpSheet extends StatelessWidget {
       sections.add(body);
     }
 
+    // Lead / top notes — the important trust-context caveats, rendered FIRST so
+    // they are visible without scrolling, AHEAD of Purpose and every other
+    // section (Keith, 2026-06-30). Verbatim + never dropped (GL-005). It carries
+    // a quiet "Read first" heading — a real Semantics header so screen-reader
+    // heading-jump navigation reaches these priority notes (WCAG 1.3.1), styled
+    // quietly (not the loud titleMedium section heading) and distinct from the
+    // bottom "Field notes" heading, so it neither duplicates nor shouts.
+    if (help.topNotes.isNotEmpty) {
+      sections
+        ..add(const _LeadHeading('Read first'))
+        ..add(const SizedBox(height: AppSpacing.xs))
+        ..add(_BulletedNotes(notes: help.topNotes));
+    }
+
     // Purpose.
     if (help.purpose.isNotEmpty) {
       addSection('Purpose', _Paragraph(help.purpose));
@@ -184,6 +198,16 @@ String _helpPlainText(ToolHelp help) {
   if (help.category.isNotEmpty) b.writeln(help.category);
   b.writeln();
 
+  // Lead / top notes copy FIRST, mirroring the on-screen order (the "Read first"
+  // block, ahead of Purpose). Verbatim (GL-005).
+  if (help.topNotes.isNotEmpty) {
+    b.writeln('Read first');
+    for (final String note in help.topNotes) {
+      b.writeln('- $note');
+    }
+    b.writeln();
+  }
+
   void section(String title, String body) {
     b
       ..writeln(title)
@@ -246,6 +270,32 @@ class _SectionHeading extends StatelessWidget {
             .textTheme
             .titleMedium
             ?.copyWith(color: context.colors.textPrimary),
+      ),
+    );
+  }
+}
+
+/// A QUIET section heading for the lead ("Read first") notes — a real
+/// Semantics header (so heading-jump navigation reaches the priority notes,
+/// WCAG 1.3.1) but styled like the category rubric (labelMedium / textTertiary,
+/// letter-spaced) rather than the loud titleMedium [_SectionHeading]. Kept
+/// visually understated so it frames the lead notes without competing with the
+/// tool name above it.
+class _LeadHeading extends StatelessWidget {
+  const _LeadHeading(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      header: true,
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: context.colors.textTertiary,
+              letterSpacing: 0.4,
+            ),
       ),
     );
   }
