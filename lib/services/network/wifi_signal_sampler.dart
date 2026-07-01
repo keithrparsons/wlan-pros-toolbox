@@ -149,9 +149,30 @@ class WifiSignalSampler extends ChangeNotifier {
   /// never shows Start/Stop.
   bool get isIos => source == WifiInfoSource.iosShortcuts;
 
-  /// Whether this platform can ever produce a live feed (macOS + Android + iOS).
-  /// web / unsupported render the honest unavailable state instead of the card.
-  bool get isSupported =>
+  /// Whether this platform can ever produce a live feed (macOS + Android +
+  /// Windows + iOS). web / unsupported render the honest unavailable state
+  /// instead of the card. Delegates to the static [isSupportedSource] so the
+  /// instance answer and the pre-construction answer a screen gates on can never
+  /// diverge.
+  bool get isSupported => isSupportedSource(source);
+
+  /// The SSOT for "can this [WifiInfoSource] ever back a live RF feed?" — the
+  /// single predicate every live-signal consumer (the Roaming Log, Test My
+  /// Connection, the Wi-Fi-signal sparkline card) must gate on instead of
+  /// carrying its own inline platform list. That inline-list drift is exactly
+  /// what darkened Windows on the roaming log (bug C3): the screen enumerated
+  /// {macOS, Android, iOS} itself and forgot Windows, while this sampler polls
+  /// Windows just like macOS/Android.
+  ///
+  /// macOS/Android/Windows poll a snapshot [WifiInfoAdapter]; iOS streams the
+  /// companion Shortcut. A NEW native adapter wired into the constructor switch
+  /// above (e.g. a future desktop-Linux source) MUST be added here in the same
+  /// change — the consistency harness
+  /// (test/consistency/platform_capability_invariant_test.dart) asserts this
+  /// predicate stays in lock-step with the constructor's live-feed branches, so
+  /// an omission fails a test rather than silently shipping a false "monitoring
+  /// is off on this device".
+  static bool isSupportedSource(WifiInfoSource source) =>
       source == WifiInfoSource.macosCoreWlan ||
       source == WifiInfoSource.androidWifiManager ||
       source == WifiInfoSource.windowsNativeWifi ||
