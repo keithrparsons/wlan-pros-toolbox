@@ -64,7 +64,7 @@ class SpectrumBandInfo {
   /// Tab/badge label: "2.4 GHz" / "5 GHz" / "6 GHz".
   final String label;
 
-  /// Frequency range shown in the badge (e.g. "2400 - 2484 MHz").
+  /// Frequency range shown in the badge (e.g. "2400 - 2483.5 MHz").
   final String range;
 
   /// Decorative badge accent tone — a design-system status token, NOT the PWA
@@ -132,9 +132,9 @@ class SpectrumScreen extends StatefulWidget {
     SpectrumBandInfo(
       band: SpectrumBand.ghz24,
       label: '2.4 GHz',
-      range: '2400 - 2484 MHz',
+      range: '2400 - 2483.5 MHz',
       accentTone: StatusTone.warning,
-      total: '84 MHz (US)',
+      total: '83.5 MHz (US)',
       standards: '802.11b / g / n / ax (Wi-Fi 4 / 6)',
       channels: 'Ch 1-11 (US) · Ch 1-13 (EU) · Ch 1-14 (JP)',
       nonOverlap: '3 channels at 20 MHz: 1, 6, 11',

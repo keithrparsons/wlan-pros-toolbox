@@ -3426,7 +3426,7 @@
     "nearby-ap-scan": {
       "name": "Nearby AP Scan",
       "category": "Networking Tools",
-      "purpose": "Lists the Wi-Fi access points a scan can see around you - SSID, BSSID, channel, band, and signal - and draws a simple channel-occupancy bar per band so you can read how crowded each channel is at a glance. Android only.",
+      "purpose": "Lists the Wi-Fi access points a scan can see around you - SSID, BSSID, channel, band, and signal - and draws a simple channel-occupancy bar per band so you can read how crowded each channel is at a glance. Runs on Android today.",
       "whyHere": "A fast read of who else is on the air. When you are picking a channel or chasing co-channel interference, seeing the nearby BSSIDs and where they sit across 2.4, 5, and 6 GHz tells you which channels are busy and which are clear, without carrying a separate analyzer.",
       "howToUse": [
         "Tap Scan to run a Wi-Fi scan. Results list each visible AP with its SSID, BSSID, channel, band, and signal (RSSI).",
@@ -3437,7 +3437,7 @@
       "algorithm": null,
       "example": "On a busy 2.4 GHz band the occupancy bars cluster on channels 1, 6, and 11; an AP sitting on channel 3 overlaps both 1 and 6, which the bars make visible at a glance.",
       "fieldNotes": [
-        "ANDROID ONLY. Apple blocks third-party nearby-AP scanning on iOS and macOS, so this tool does not appear on those platforms; on Android it reads WifiManager.getScanResults() through a native channel.",
+        "Runs on Android today. iOS and macOS block nearby-AP scanning at the OS level, so the tool is gated out of the catalog there. Windows is capable via its Native Wifi API (WlanGetNetworkBssList already fetches every visible BSS), but the Windows scan path is not wired into this tool yet - the copy says so honestly rather than implying only Apple restricts it. On Android it reads WifiManager.getScanResults() through a native channel.",
         "Clean fields only. The Android scan API exposes SSID, BSSID, channel, band, and RSSI for a scanned (non-connected) BSS. It does not expose a per-BSS noise floor, SNR, or MCS, so those columns do not exist here and are never shown (GL-005).",
         "Android throttles Wi-Fi scans. Foreground apps get a limited number of scans per window; when throttled, a re-scan returns the last cached results and the screen notes it rather than faking a fresh scan.",
         "Location permission and Wi-Fi must be on for the scan to return results; the screen shows an honest Wi-Fi-off or Location-gate card when either is missing."

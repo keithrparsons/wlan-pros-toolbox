@@ -465,7 +465,7 @@ Find live hosts on the local network and enrich each with name, services, inferr
 _Source: lan_discovery_engine.dart:23-510 / device_type.dart:47-146 / mdns_browse.dart:1-51_
 
 
-### Nearby AP Scan (Android only)
+### Nearby AP Scan (runs on Android today)
 
 List the Wi-Fi access points a scan can see around you, each with SSID, BSSID, channel, band, and signal, with a per-band channel-occupancy bar.
 
@@ -474,10 +474,10 @@ List the Wi-Fi access points a scan can see around you, each with SSID, BSSID, c
 **How to use**
 1. Tap Scan to run a Wi-Fi scan. Each visible AP lists its SSID, BSSID, channel, band, and RSSI. Sort by signal or channel, and read the occupancy bars per band. Re-run to refresh.
 
-**Formula or method.** ANDROID ONLY. The screen reads WifiManager.getScanResults() through the native com.wlanpros.toolbox/ap_scan method channel (MainActivity.kt); ApScanService parses each result into a clean record (SSID, BSSID, RSSI, channel and band derived from the center frequency). Off Android, including iOS, macOS, and web, the screen renders an honest "Android only" state and never touches the channel (GL-008 honest per-platform unavailable state).
+**Formula or method.** Wired for Android today. The screen reads WifiManager.getScanResults() through the native com.wlanpros.toolbox/ap_scan method channel (MainActivity.kt); ApScanService parses each result into a clean record (SSID, BSSID, RSSI, channel and band derived from the center frequency). Off Android the screen renders an honest per-platform state and never touches the channel (GL-008): on iOS and macOS it says the OS blocks nearby-AP scanning; on Windows it says the scan is not wired into this tool yet (Windows Native Wifi CAN enumerate nearby APs — the FFI already fetches every BSS — so this is a not-yet-built path, not an OS block).
 
 **Field notes**
-- Android only. Apple blocks third-party nearby-AP scanning on iOS and macOS, so this tool is gated out of the catalog on those platforms; only Android shows it.
+- Runs on Android today. iOS and macOS block nearby-AP scanning at the OS level, so the tool is gated out of the catalog there. Windows is capable via its Native Wifi API (WlanGetNetworkBssList already fetches every visible BSS), but the Windows scan path is not wired into this tool yet — the copy says so honestly rather than implying only Apple restricts it.
 - Clean fields only (GL-005). The Android scan API exposes SSID, BSSID, channel, band, and RSSI for a scanned (non-connected) BSS. It does not expose a per-BSS noise floor, SNR, or MCS, so those columns do not exist here and are never shown.
 - Android throttles Wi-Fi scans. When throttled, a rapid re-scan returns the last cached results and the screen notes it rather than faking a fresh scan. Location permission and Wi-Fi must both be on for the scan to return results.
 

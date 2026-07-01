@@ -32,10 +32,14 @@ void main() {
       );
     });
 
-    test('2.4 GHz spans 2400-2484 MHz with 84 MHz total (US)', () {
+    test('2.4 GHz spans 2400-2483.5 MHz with 83.5 MHz total (US), without Ch 14',
+        () {
+      // App-wide the 2.4 GHz band is stated WITHOUT Ch 14 (Keith, 2026-06-30),
+      // matching the band reference (rf_bands_data.dart): the ISM edge is
+      // 2483.5 MHz, an 83.5 MHz span. Ch 14's 2484 MHz center sits above it.
       final SpectrumBandInfo b = bandOf(SpectrumBand.ghz24);
-      expect(b.range, '2400 - 2484 MHz');
-      expect(b.total, '84 MHz (US)');
+      expect(b.range, '2400 - 2483.5 MHz');
+      expect(b.total, '83.5 MHz (US)');
       expect(b.nonOverlap, '3 channels at 20 MHz: 1, 6, 11');
     });
 
@@ -144,8 +148,8 @@ void main() {
 
         // Title + default 2.4 GHz fact sheet.
         expect(find.text('Spectrum Ref'), findsOneWidget);
-        expect(find.text('2400 - 2484 MHz'), findsOneWidget);
-        expect(find.text('84 MHz (US)'), findsOneWidget);
+        expect(find.text('2400 - 2483.5 MHz'), findsOneWidget);
+        expect(find.text('83.5 MHz (US)'), findsOneWidget);
 
         // Switch to 6 GHz and confirm a 6 GHz fact appears.
         await tester.tap(find.text('6 GHz'));

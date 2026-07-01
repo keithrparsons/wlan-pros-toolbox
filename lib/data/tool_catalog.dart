@@ -398,12 +398,16 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         routeName: '/tools/network-discovery',
         isLive: true,
       ),
-      // Nearby AP Scan — ANDROID ONLY. Lists nearby Wi-Fi access points (SSID,
-      // BSSID, channel, band, RSSI) via the Android Wi-Fi scan API. Apple
-      // blocks third-party nearby-AP scanning on iOS and macOS, so this tool is
-      // gated to Android via `androidOnly` and is dropped from the catalog on
-      // every other platform (see [_buildCatalog]). No asset resolver — the
-      // screen reads a native MethodChannel through ApScanService.
+      // Nearby AP Scan — wired for Android today. Lists nearby Wi-Fi access
+      // points (SSID, BSSID, channel, band, RSSI) via the Android Wi-Fi scan
+      // API. Gated via `androidOnly` and dropped from the catalog on every other
+      // platform (see [_buildCatalog]). Per-platform reality: iOS and macOS block
+      // nearby-AP scanning at the OS level; Windows IS capable via its Native
+      // Wifi API (WlanGetNetworkBssList already fetches every BSS) but the
+      // Windows scan path isn't wired into this tool yet — the screen's
+      // unavailable state (ApScanService.platformStatus) says so honestly rather
+      // than implying only Apple restricts it. No asset resolver — the screen
+      // reads a native MethodChannel through ApScanService.
       ToolEntry(
         id: 'nearby-ap-scan',
         title: 'Nearby AP Scan',
