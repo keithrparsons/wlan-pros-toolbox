@@ -1953,7 +1953,7 @@ A per-band fact sheet for the three Wi-Fi bands: total usable spectrum, supporte
 - What it shows: each band shows a range badge plus eight key/value facts: Total spectrum, Standards, Channels (US), Non-overlapping, Channel widths, DFS / Radar, Co-existence, and Key notes.
 - US-default; the footnote on every band reads "US (FCC) regulatory domain. Verify local rules before deployment."
 - Carries useful specifics: UNII-1 indoor-only in some regions; UNII-2A/2C DFS implies a 60-second channel-availability delay after radar detection; 6 GHz has three US power modes, namely Standard Power (up to 36 dBm EIRP, AFC outdoors), LPI (up to 30 dBm, no AFC), and VLP (up to 14 dBm EIRP, no AFC, mobile); WPA3 mandatory on 6 GHz.
-- Data source: US (FCC) regulatory domain. Ported verbatim from the rf-tools-pwa spectrum tool. Values: 2.4 GHz = 84 MHz (US); 5 GHz = ~580 MHz usable (UNII-1/2A/2C/3); 6 GHz = 1200 MHz (5925 to 7125 MHz).
+- Data source: US (FCC) regulatory domain. Ported verbatim from the rf-tools-pwa spectrum tool. Values: 2.4 GHz = 83.5 MHz (US); 5 GHz = ~580 MHz usable (UNII-1/2A/2C/3); 6 GHz = 1200 MHz (5925 to 7125 MHz).
 
 _Source: lib/screens/tools/reference/spectrum_screen.dart_
 
