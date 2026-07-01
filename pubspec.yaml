@@ -364,8 +364,8 @@ msix_config:
   # Microsoft re-signs Store builds, so this is the manifest identity, not a cert.
   publisher: "CN=3160F864-430A-46A3-88F1-A229CE5344BB"
   # MSIX requires a strict 4-part version. Tracks the app version (currently
-  # 1.5.7) with a trailing .0 revision; the user-facing version stays 1.5.7+42.
-  msix_version: 1.5.7.0
+  # 1.5.10) with a trailing .0 revision; the user-facing version stays 1.5.10+45.
+  msix_version: 1.5.10.0
   logo_path: assets/branding/app-icon-1024.png
   # Capabilities: internetClient for outbound HTTP/DNS/speed-test probes;
   # internetClientServer for the inbound side of the LAN/socket tools (port
