@@ -19,9 +19,17 @@
 //     never a fabricated value.
 //   * iOS does NOT auto-expose SSID/RSSI to a sandboxed app (the Wi-Fi
 //     Information tool reaches them only through a user-installed Shortcut that
-//     cannot auto-fire). So on iOS the SSID + signal rows say "Not reported on
-//     iOS" rather than guess. The local-network rows (IP/gateway/subnet) and
-//     the public IP/ISP still populate, because those sources DO work on iOS.
+//     cannot auto-fire). But the app is NOT blind on iOS: the Wi-Fi Information
+//     tool writes every reading it obtains into the app-wide [ConnectedApCache].
+//     So on iOS this card READS that shared cache on mount (never firing the
+//     Shortcut itself) — if a recent live reading exists, SSID + Signal render
+//     the SAME values the Wi-Fi Information tool shows. Only when the cache is
+//     cold does the card offer a "Get a live reading" affordance (a user tap
+//     routes to the Wi-Fi Information tool, which owns the Shortcut trigger and
+//     the install fall-through). Saying "Not reported on iOS" while a live
+//     reading already sits in the cache would be a lie (GL-005) — so the card no
+//     longer does. The local-network rows (IP/gateway/subnet) and the public
+//     IP/ISP still populate independently, because those sources DO work on iOS.
 //   * The public IP + ISP need the internet; offline, those two rows say
 //     "Unavailable" (a transient/network reason), distinct from "Not reported"
 //     (a platform that never exposes the field). The distinction is deliberate.
@@ -42,7 +50,9 @@ import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/material.dart';
 
+import '../../../router/app_router.dart';
 import '../../../services/network/connected_ap.dart';
+import '../../../services/network/connected_ap_cache.dart';
 import '../../../services/network/ip_geo_service.dart';
 import '../../../services/network/lan_discovery/subnet_seed.dart';
 import '../../../services/network/public_ip_service.dart';
@@ -51,13 +61,25 @@ import '../../../services/network/wifi_info_service.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import 'get_reading_icon.dart';
 
 /// How a single glance field resolved. Drives the value rendering:
 ///   * [loading]      → "Reading…" (the field's read is in flight);
 ///   * [value]        → a real datum to show;
 ///   * [notReported]  → this platform never exposes the field (a stable ceiling);
-///   * [unavailable]  → a transient failure (offline, blocked) — try again.
-enum GlanceFieldState { loading, value, notReported, unavailable }
+///   * [unavailable]  → a transient failure (offline, blocked) — try again;
+///   * [awaitingLiveRead] → iOS-only: the app CAN show this field, but no live
+///     reading has been captured yet this session (cold cache). This is neither a
+///     platform ceiling nor a failure — it is an idle state the user resolves by
+///     tapping "Get a live reading". Never rendered as a value.
+enum GlanceFieldState { loading, value, notReported, unavailable, awaitingLiveRead }
+
+/// How long a cached iOS reading stays presentable as "current" before it is
+/// treated as cold. Mirrors the Interface Info staleness gate
+/// (`InterfaceInfoService.cacheStaleThreshold`), duplicated here rather than
+/// imported because that service pulls in `dart:io` (web-unsafe) — a reading
+/// older than this belongs to a previous network and must not be shown as live.
+const Duration _kIosCacheStaleThreshold = Duration(minutes: 5);
 
 /// One resolved glance field: a state plus the value/reason text. Immutable.
 @immutable
@@ -71,6 +93,8 @@ class GlanceField {
       : this._(GlanceFieldState.notReported, reason);
   const GlanceField.unavailable(String reason)
       : this._(GlanceFieldState.unavailable, reason);
+  const GlanceField.awaitingLiveRead()
+      : this._(GlanceFieldState.awaitingLiveRead, 'Not read yet');
 
   final GlanceFieldState state;
 
@@ -144,12 +168,32 @@ class NetworkGlanceCard extends StatefulWidget {
     this.publicIpService,
     this.ipGeoService,
     this.platformOverride,
+    this.apCache,
+    this.liveReadingRequester,
   });
 
   /// Reads the connected AP (SSID + RSSI). Null in production → the per-platform
   /// [WifiInfoAdapter] is used. A test injects a fake that returns a scripted
-  /// [ConnectedAp] or throws [WifiInfoUnavailable].
+  /// [ConnectedAp] or throws [WifiInfoUnavailable]. NOT used on the iOS branch
+  /// (iOS reads the shared [ConnectedApCache] instead — see [apCache]).
   final Future<ConnectedAp> Function()? wifiFetcher;
+
+  /// The app-wide connected-AP cache the iOS lane READS on mount (never firing
+  /// the Shortcut). Null in production → the process-wide
+  /// [ConnectedApCache.instance], the SAME cache the Wi-Fi Information tool
+  /// writes every reading into. A test injects an isolated instance (warm or
+  /// cold) to drive the iOS branch deterministically.
+  final ConnectedApCache? apCache;
+
+  /// Obtains a fresh live reading on the iOS "Get a live reading" tap. Null in
+  /// production → [_defaultLiveReadingRequest], which routes to the Wi-Fi
+  /// Information tool (the SSOT for the Shortcut trigger + the install
+  /// fall-through) and returns the reading it cached. Returns null when no
+  /// reading could be obtained (Shortcut not installed / user cancelled) — the
+  /// card then keeps the affordance rather than lying with "Not reported". A
+  /// test injects a fake returning a scripted [ConnectedAp] (or null). Fired
+  /// ONLY by an explicit user tap — never on mount.
+  final Future<ConnectedAp?> Function()? liveReadingRequester;
 
   /// Derives the local subnet seed (local IP / gateway / subnet label). Null in
   /// production → a real [SubnetSeedDeriver]; tests inject a fake reader.
@@ -174,9 +218,25 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
   GlanceSnapshot _snapshot = const GlanceSnapshot.loading();
   bool _refreshing = false;
 
+  /// The shared connected-AP cache the iOS lane reads. Resolved once from the
+  /// injected cache or the process-wide singleton.
+  late final ConnectedApCache _apCache;
+
+  /// iOS-only: true when the cache was cold on the last read, so the SSID/Signal
+  /// rows sit in the idle "Not read yet" state and the "Get a live reading"
+  /// affordance is offered. False once a reading (cached or freshly obtained) is
+  /// on screen.
+  bool _iosNeedsLiveReading = false;
+
+  /// iOS-only: true while a user-initiated live reading is in flight (the
+  /// "Get a live reading" tap). Hides the affordance and shows the rows as
+  /// "Reading…" until the requester resolves.
+  bool _iosLiveReadInFlight = false;
+
   @override
   void initState() {
     super.initState();
+    _apCache = widget.apCache ?? ConnectedApCache.instance;
     _load();
   }
 
@@ -221,9 +281,21 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
 
   /// Lane 1 — SSID + signal from the platform Wi-Fi adapter.
   Future<void> _loadWifi() async {
+    // iOS: the app cannot AUTO-read the link (the reading comes from a
+    // user-installed Shortcut that must not auto-fire). But the Wi-Fi
+    // Information tool writes every reading it captures into the shared
+    // [ConnectedApCache], so on mount/refresh we READ that cache (never firing
+    // the Shortcut). A recent reading renders the real SSID + Signal — the same
+    // values the other tool shows; a cold cache offers "Get a live reading"
+    // instead of the false "Not reported on iOS".
+    if (!kIsWeb && _platform == TargetPlatform.iOS) {
+      _loadIosWifiFromCache();
+      return;
+    }
+
     if (!_wifiAutoReadable) {
-      // iOS / web: the app cannot auto-read the link — state it honestly,
-      // per-field, instead of leaving a blank that implies "no Wi-Fi".
+      // web / other unsupported native: the app cannot read the link at all —
+      // state it honestly, per-field, instead of a blank that implies "no Wi-Fi".
       final String reason = 'Not reported on $_platformLabel';
       if (!mounted) return;
       setState(() => _snapshot = _snapshot.copyWith(
@@ -261,6 +333,120 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
           GlanceField.unavailable('No Wi-Fi reading');
       setState(() => _snapshot = _snapshot.copyWith(ssid: gone, signal: gone));
     }
+  }
+
+  /// iOS Lane 1 — SSID + Signal from the shared [ConnectedApCache] (READ-ONLY;
+  /// never fires the Shortcut). A recent reading renders the real SSID + Signal,
+  /// matching the Wi-Fi Information tool. A cold/stale cache drops to the idle
+  /// "Not read yet" state and flags the "Get a live reading" affordance.
+  void _loadIosWifiFromCache() {
+    if (!mounted) return;
+    final ConnectedAp? cached = _freshCachedReading();
+    if (cached != null && (cached.ssid != null || cached.rssiDbm != null)) {
+      setState(() {
+        _iosNeedsLiveReading = false;
+        _iosLiveReadInFlight = false;
+        _snapshot = _snapshot.copyWith(
+          ssid: _iosSsidField(cached),
+          signal: _iosSignalField(cached),
+        );
+      });
+      return;
+    }
+    // Cold cache: honest idle state + the actionable affordance. NOT "Not
+    // reported on iOS" (a lie once the tool has ever cached a reading).
+    setState(() {
+      _iosNeedsLiveReading = true;
+      _iosLiveReadInFlight = false;
+      _snapshot = _snapshot.copyWith(
+        ssid: const GlanceField.awaitingLiveRead(),
+        signal: const GlanceField.awaitingLiveRead(),
+      );
+    });
+  }
+
+  /// The most-recent cached reading, but only when it is fresh enough to present
+  /// as current (mirrors the Interface Info staleness gate: a reading older than
+  /// [_kIosCacheStaleThreshold] belongs to a previous network and is treated as
+  /// cold). Null when the cache is empty, data-empty, or stale.
+  ConnectedAp? _freshCachedReading() {
+    final ConnectedAp? cached = _apCache.latest;
+    final DateTime? at = _apCache.updatedAt;
+    if (cached == null || !cached.hasAnyData || at == null) return null;
+    final bool fresh =
+        DateTime.now().difference(at) < _kIosCacheStaleThreshold;
+    return fresh ? cached : null;
+  }
+
+  GlanceField _iosSsidField(ConnectedAp ap) => ap.ssid != null
+      ? GlanceField.value(ap.ssid!)
+      : const GlanceField.unavailable('Not in this reading');
+
+  GlanceField _iosSignalField(ConnectedAp ap) => ap.rssiDbm != null
+      ? GlanceField.value('${ap.rssiDbm} dBm')
+      : const GlanceField.unavailable('No signal reading');
+
+  /// iOS "Get a live reading" tap: obtains a fresh reading through the injected
+  /// [NetworkGlanceCard.liveReadingRequester] (default: route to the Wi-Fi
+  /// Information tool). Fired ONLY here, by an explicit user gesture. On success
+  /// the SSID + Signal rows populate from the real reading; on a null result
+  /// (Shortcut not installed / cancelled) the affordance stays — never a dead
+  /// "Not reported" string.
+  Future<void> _requestIosLiveReading() async {
+    if (_iosLiveReadInFlight) return;
+    setState(() {
+      _iosLiveReadInFlight = true;
+      _snapshot = _snapshot.copyWith(
+        ssid: const GlanceField.loading(),
+        signal: const GlanceField.loading(),
+      );
+    });
+
+    final Future<ConnectedAp?> Function() request =
+        widget.liveReadingRequester ?? _defaultLiveReadingRequest;
+    ConnectedAp? reading;
+    try {
+      reading = await request();
+    } on Object {
+      reading = null;
+    }
+    if (!mounted) return;
+
+    if (reading != null && (reading.ssid != null || reading.rssiDbm != null)) {
+      // A genuine reading: share it app-wide (consistency with the Wi-Fi
+      // Information tool's cache) and render it.
+      _apCache.update(reading);
+      setState(() {
+        _iosLiveReadInFlight = false;
+        _iosNeedsLiveReading = false;
+        _snapshot = _snapshot.copyWith(
+          ssid: _iosSsidField(reading!),
+          signal: _iosSignalField(reading),
+        );
+      });
+      return;
+    }
+
+    // No reading obtained. The install/onboarding fall-through already happened
+    // in the Wi-Fi Information tool; keep the honest idle state + affordance.
+    setState(() {
+      _iosLiveReadInFlight = false;
+      _iosNeedsLiveReading = true;
+      _snapshot = _snapshot.copyWith(
+        ssid: const GlanceField.awaitingLiveRead(),
+        signal: const GlanceField.awaitingLiveRead(),
+      );
+    });
+  }
+
+  /// Default production live-reading request: route to the Wi-Fi Information
+  /// tool, which owns the "WLAN Pros Live" Shortcut trigger, the app-lifecycle
+  /// bounce handling, and the companion-install fall-through — so no bridge
+  /// logic is duplicated here. On return, read whatever reading the tool cached.
+  Future<ConnectedAp?> _defaultLiveReadingRequest() async {
+    if (!mounted) return null;
+    await Navigator.of(context).pushNamed(AppRouter.wifiInfo);
+    return _freshCachedReading();
   }
 
   /// Lane 2 — local IP / gateway / subnet from the subnet seed (instant, local).
@@ -385,12 +571,44 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
           const SizedBox(height: AppSpacing.xxs),
           _row(context, 'SSID', _snapshot.ssid, identifier: false),
           _row(context, 'Signal', _snapshot.signal, identifier: false),
+          // iOS-only: when no fresh live reading is cached, offer to get one
+          // (an explicit tap → the Wi-Fi Information tool's Shortcut flow),
+          // instead of the false "Not reported on iOS".
+          if (_iosNeedsLiveReading && !_iosLiveReadInFlight) _getReadingAction(),
           _row(context, 'Local IP', _snapshot.localIp, identifier: true),
           _row(context, 'Gateway', _snapshot.gateway, identifier: true),
           _row(context, 'Subnet', _snapshot.subnet, identifier: true),
           _row(context, 'Public IP', _snapshot.publicIp, identifier: true),
           _row(context, 'ISP', _snapshot.isp, identifier: false),
         ],
+      ),
+    );
+  }
+
+  /// iOS "Get a live reading" affordance (§8.6.1 custom icon + §8.3 focus ring).
+  /// A prominent [FilledButton.icon] with the custom [GetReadingIcon] (a generic
+  /// Material glyph here would be a flag per [[feedback_custom_icons]]). The
+  /// button inherits the theme's focus ring and its foreground/background clear
+  /// WCAG 2.2 AA (the lime-on-ink primary pair, GL-003 §8.2). The enclosing
+  /// [Semantics] carries the accessible name so the decorative glyph is silent.
+  Widget _getReadingAction() {
+    const String label = 'Get a live reading';
+    return Padding(
+      padding: const EdgeInsets.only(
+        top: AppSpacing.xxs,
+        bottom: AppSpacing.xs,
+      ),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Semantics(
+          button: true,
+          label: label,
+          child: FilledButton.icon(
+            onPressed: _requestIosLiveReading,
+            icon: const GetReadingIcon(size: 18),
+            label: const Text(label),
+          ),
+        ),
       ),
     );
   }

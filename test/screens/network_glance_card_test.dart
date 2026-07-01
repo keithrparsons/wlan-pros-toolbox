@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/network_glance_card.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
+import 'package:wlan_pros_toolbox/services/network/connected_ap_cache.dart';
 import 'package:wlan_pros_toolbox/services/network/ip_geo_service.dart';
 import 'package:wlan_pros_toolbox/services/network/json_http_client.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/subnet_seed.dart';
@@ -85,24 +86,96 @@ void main() {
     expect(find.text('Comcast'), findsOneWidget);
   });
 
-  testWidgets('iOS: SSID + signal say "Not reported on iOS", never a blank — '
-      'but local IP/gateway/subnet still populate', (WidgetTester tester) async {
+  testWidgets(
+      'iOS: a fresh cached live reading renders SSID + Signal (the SAME values '
+      'the Wi-Fi Information tool shows) — never "Not reported on iOS"',
+      (WidgetTester tester) async {
+    // The Wi-Fi Information tool writes into this shared cache. A warm cache is
+    // the common case once the user has used the live tools this session.
+    final ConnectedApCache cache = ConnectedApCache()
+      ..update(const ConnectedAp(ssid: 'WLANPros', rssiDbm: -47));
+
     await tester.pumpWidget(_host(NetworkGlanceCard(
       platformOverride: TargetPlatform.iOS,
-      // wifiFetcher is intentionally omitted: iOS must NOT call it (the card
-      // knows the link is not auto-readable). If it did, this throwing fetcher
-      // would surface a different reason and fail the assertion below.
+      apCache: cache,
+      // wifiFetcher must NOT be consulted on iOS (the reading comes from the
+      // cache); a call here would throw and fail the test.
       wifiFetcher: () async => throw StateError('iOS must not auto-fetch Wi-Fi'),
+      // The live requester must NOT fire on mount — only on an explicit tap.
+      liveReadingRequester: () async =>
+          throw StateError('must not fire on mount'),
       seedDeriver: _seed(),
       publicIpService: _publicIp('203.0.113.7'),
       ipGeoService: _geo('Comcast'),
     )));
     await tester.pumpAndSettle();
 
-    expect(find.text('Not reported on iOS'), findsNWidgets(2)); // SSID + signal
+    // The real cached values render — no lie about iOS being unable to report.
+    expect(find.text('WLANPros'), findsOneWidget);
+    expect(find.text('-47 dBm'), findsOneWidget);
+    expect(find.text('Not reported on iOS'), findsNothing);
+    expect(find.text('Get a live reading'), findsNothing);
     // The local-network rows DO work on iOS.
     expect(find.text('192.168.1.50'), findsOneWidget);
     expect(find.text('192.168.1.1–192.168.1.254'), findsOneWidget);
+  });
+
+  testWidgets(
+      'iOS + cold cache: shows "Get a live reading" (NOT "Not reported"); '
+      'firing it populates SSID + Signal from the returned reading',
+      (WidgetTester tester) async {
+    final ConnectedApCache cache = ConnectedApCache(); // cold
+    await tester.pumpWidget(_host(NetworkGlanceCard(
+      platformOverride: TargetPlatform.iOS,
+      apCache: cache,
+      wifiFetcher: () async => throw StateError('iOS must not auto-fetch Wi-Fi'),
+      // A fake live requester standing in for the Wi-Fi Information tool's
+      // Shortcut flow: returns a real reading when the user taps.
+      liveReadingRequester: () async =>
+          const ConnectedAp(ssid: 'LiveNet', rssiDbm: -55),
+      seedDeriver: _seed(),
+      publicIpService: _publicIp('203.0.113.7'),
+      ipGeoService: _geo('Comcast'),
+    )));
+    await tester.pumpAndSettle();
+
+    // Cold cache → the honest actionable state, never the false ceiling.
+    expect(find.text('Get a live reading'), findsOneWidget);
+    expect(find.text('Not reported on iOS'), findsNothing);
+    expect(find.text('LiveNet'), findsNothing);
+
+    // Fire the affordance → the reading returns and the rows populate.
+    await tester.tap(find.text('Get a live reading'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('LiveNet'), findsOneWidget);
+    expect(find.text('-55 dBm'), findsOneWidget);
+    // The affordance retires once a reading is on screen.
+    expect(find.text('Get a live reading'), findsNothing);
+  });
+
+  testWidgets(
+      'iOS + cold cache + no reading obtained (Shortcut not installed): the '
+      '"Get a live reading" affordance stays — never a dead "Not reported"',
+      (WidgetTester tester) async {
+    final ConnectedApCache cache = ConnectedApCache(); // cold
+    await tester.pumpWidget(_host(NetworkGlanceCard(
+      platformOverride: TargetPlatform.iOS,
+      apCache: cache,
+      // Requester returns null: no reading (the tool's install fall-through ran).
+      liveReadingRequester: () async => null,
+      seedDeriver: _seed(),
+      publicIpService: _publicIp('203.0.113.7'),
+      ipGeoService: _geo('Comcast'),
+    )));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Get a live reading'));
+    await tester.pumpAndSettle();
+
+    // Honest: the affordance remains, no fabricated value, no false ceiling.
+    expect(find.text('Get a live reading'), findsOneWidget);
+    expect(find.text('Not reported on iOS'), findsNothing);
   });
 
   testWidgets('public IP unavailable (offline) renders "Unavailable", distinct '
