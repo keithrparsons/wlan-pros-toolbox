@@ -2011,7 +2011,7 @@ A vendor-neutral, offline reference that compares professional Wi-Fi survey, des
 
 **Field notes**
 - This comparison is in BETA REVIEW. Vendors are being consulted on the figures, and a few may change before the final release.
-- Pricing is dated. The figures are as of February 2026; confirm current pricing with each vendor, because prices, bundles, and product names change often.
+- Pricing is dated. The figures are as of July 2026; confirm current pricing with each vendor, because prices, bundles, and product names change often.
 - Cost figures are MODELED ESTIMATES assembled by WLAN Pros from vendor-supplied numbers and list pricing, not vendor-published quotes. Treat every dollar amount as a planning estimate, never a binding price.
 - This is NOT a ranking. There is no score and no "best". Tools are listed alphabetically and the same vendor can appear under more than one activity, because real toolkits are assembled across vendors. The set reflects vendors interviewed by WLAN Pros, not every tool that exists, so an omitted tool is not a snub.
 - No vendor logos or product photos appear here. Those are trademarks and copyrighted images that need each vendor's written permission, which is still being gathered. The reference is text and data only for now.

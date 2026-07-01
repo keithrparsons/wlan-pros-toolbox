@@ -123,11 +123,32 @@ class ApScanSnapshot {
 
 /// Why a nearby-AP scan could not run.
 enum ApScanUnavailableReason {
-  /// The current platform has no nearby-AP scan (iOS and macOS block it).
+  /// This build has no wired nearby-AP scan for the current platform. iOS and
+  /// macOS block it at the OS level; the Windows Native Wifi path exists but is
+  /// not wired into this tool yet. Only Android is wired today.
   unsupportedPlatform,
 
   /// The native channel returned an error or a null payload.
   channelError,
+}
+
+/// Why a nearby-AP scan is or isn't available on the current platform.
+///
+/// Drives honest per-platform copy in the UI. This is about what THIS tool has
+/// wired up today, not a permanent claim about each OS's capabilities.
+enum ApScanPlatformStatus {
+  /// The scan is wired and runs here (Android).
+  supported,
+
+  /// iOS and macOS block nearby-AP scanning at the OS level.
+  appleRestricted,
+
+  /// Windows can enumerate nearby APs through its Native Wifi API
+  /// (`WlanGetNetworkBssList`), but that path is not wired into this tool yet.
+  windowsNotWired,
+
+  /// Any other platform (web, Linux) where the scan is not available.
+  unavailable,
 }
 
 /// Thrown when a nearby-AP scan cannot run on this platform.
@@ -148,9 +169,12 @@ class ApScanUnavailable implements Exception {
 
 /// Reads nearby APs through the Android native scan bridge.
 ///
-/// ANDROID-ONLY. iOS and macOS block nearby-AP scanning at the platform level,
-/// so [isSupportedPlatform] is true only on Android and [scan] throws
-/// [ApScanUnavailable] everywhere else rather than fabricating a list.
+/// Wired for Android only today: [isSupportedPlatform] is true only on Android
+/// and [scan] throws [ApScanUnavailable] everywhere else rather than fabricating
+/// a list. iOS and macOS block nearby-AP scanning at the OS level. Windows can
+/// enumerate nearby APs through its Native Wifi API (`WlanGetNetworkBssList`),
+/// but that path is not wired into this tool yet. [platformStatus] reports which
+/// case applies so the UI can show honest per-platform copy.
 ///
 /// The [invoke] seam is injectable so tests exercise the mapping without a real
 /// platform channel.
@@ -182,6 +206,20 @@ class ApScanService {
 
   /// Whether this platform supports a nearby-AP scan. Android only.
   bool get isSupportedPlatform => !kIsWeb && _platform == 'android';
+
+  /// Categorizes why the scan is or isn't available here, for honest UI copy.
+  ///
+  /// Reports what THIS tool has wired up today. Windows genuinely can enumerate
+  /// nearby APs via Native Wifi; that path just isn't wired here yet, so it maps
+  /// to [ApScanPlatformStatus.windowsNotWired] rather than a false OS-block.
+  ApScanPlatformStatus get platformStatus {
+    if (isSupportedPlatform) return ApScanPlatformStatus.supported;
+    if (_platform == 'windows') return ApScanPlatformStatus.windowsNotWired;
+    if (_platform == 'ios' || _platform == 'macos') {
+      return ApScanPlatformStatus.appleRestricted;
+    }
+    return ApScanPlatformStatus.unavailable;
+  }
 
   /// Requests a fresh scan and returns the resulting snapshot.
   ///

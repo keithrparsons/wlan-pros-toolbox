@@ -382,9 +382,10 @@ class AndroidWifiInfoAdapter implements WifiInfoAdapter {
 ///
 /// Fields Windows cannot supply stay honestly null (GL-005 / GL-008): the public
 /// Native Wifi API exposes no noise floor, so noise + SNR are null and never
-/// derived (the same two Android omits). Channel WIDTH needs IE-blob parsing
-/// deferred to device-time, so it rides null for now. Windows supplies MORE than
-/// macOS, though: a real dBm RSSI (`lRssi`) AND the Rx rate — so
+/// derived (the same two Android omits). Channel WIDTH is parsed from the
+/// connected AP's beacon IEs, so it resolves per network and rides null only when
+/// that AP advertised no width element. Windows supplies MORE than macOS, though:
+/// a real dBm RSSI (`lRssi`) AND the Rx rate — so
 /// [ConnectedAp.fromWindowsWifiInfo] sets `rxRateAvailable: true`.
 class WindowsWifiInfoAdapter implements WifiInfoAdapter {
   /// [reader] is injectable so tests drive a fake/Windows-override without a

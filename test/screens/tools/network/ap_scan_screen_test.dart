@@ -9,7 +9,8 @@
 //   * list renders (SSID / BSSID / channel / band / RSSI).
 //   * channel-occupancy bars render for 2.4 and 5 GHz.
 //   * CLEAN fields only — no Noise / SNR / MCS column ever appears.
-//   * off-Android (iOS) shows the honest "Android only" state and never scans.
+//   * off-Android shows the honest per-platform unavailable state and never
+//     scans; Windows copy says the path isn't wired yet (not an Apple block).
 //   * Location-gate and Wi-Fi-off empty states.
 //   * sort control reorders the list.
 
@@ -186,14 +187,37 @@ void main() {
   });
 
   group('ApScanScreen — off-Android (unsupported)', () {
-    testWidgets('iOS shows the honest "Android only" state', (tester) async {
+    testWidgets('iOS shows the honest OS-block copy, not a Windows-style note',
+        (tester) async {
       await tester.pumpWidget(
         host(ApScanScreen(service: _service(_payload(), platform: 'ios'))),
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Android only'), findsOneWidget);
+      expect(find.text('Runs on Android'), findsOneWidget);
+      expect(
+        find.textContaining('iOS and macOS block nearby-AP scanning'),
+        findsOneWidget,
+      );
       // No list, no AP names off-Android.
+      expect(find.text('KeithNet'), findsNothing);
+    });
+
+    testWidgets('Windows says the scan path is not wired yet (never an Apple '
+        'block, never "can\'t")', (tester) async {
+      await tester.pumpWidget(
+        host(ApScanScreen(service: _service(_payload(), platform: 'windows'))),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Not wired for Windows yet'), findsOneWidget);
+      expect(
+        find.textContaining('Windows can list nearby access points'),
+        findsOneWidget,
+      );
+      // Must NOT blame Apple or claim Windows fundamentally can't scan.
+      expect(find.textContaining('Apple'), findsNothing);
+      expect(find.textContaining('block'), findsNothing);
       expect(find.text('KeithNet'), findsNothing);
     });
 
@@ -210,7 +234,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(touched, isFalse);
-      expect(find.text('Android only'), findsOneWidget);
+      expect(find.text('Runs on Android'), findsOneWidget);
     });
   });
 
@@ -230,6 +254,33 @@ void main() {
 
       expect(find.text('Retry'), findsOneWidget);
       expect(find.textContaining('scan failed'), findsOneWidget);
+    });
+  });
+
+  group('ApScanService.platformStatus — honest per-platform mapping', () {
+    ApScanService svc(String os) => ApScanService(
+          platformOverride: os,
+          invoke: (String method, [dynamic args]) async => _payload(),
+        );
+
+    test('android is the supported (wired) status', () {
+      expect(svc('android').platformStatus, ApScanPlatformStatus.supported);
+    });
+
+    test('ios and macOS map to an OS-level Apple restriction', () {
+      expect(svc('ios').platformStatus, ApScanPlatformStatus.appleRestricted);
+      expect(svc('macos').platformStatus, ApScanPlatformStatus.appleRestricted);
+    });
+
+    test('windows maps to not-wired-yet, NOT an OS block', () {
+      expect(
+        svc('windows').platformStatus,
+        ApScanPlatformStatus.windowsNotWired,
+      );
+    });
+
+    test('other native platforms map to generic unavailable', () {
+      expect(svc('linux').platformStatus, ApScanPlatformStatus.unavailable);
     });
   });
 }

@@ -59,14 +59,25 @@
 //      calculator reference-value tests (eirp/fspl/link_budget/throughput/…)
 //      guard the arithmetic; they cannot vouch that the chosen model matches
 //      Keith's first-principles derivation.
-//   4. Heavy live screens driven end-to-end. Wi-Fi Information, Test My
-//      Connection, and Interface Info are anchored here via Part A (the exact
-//      seams they delegate to) and by the source-scan delegation guard
-//      (platform_gate_delegation_guard_test.dart), NOT by a full hermetic
-//      widget drive — their iOS Shortcut / streaming machinery makes a 5-
-//      platform pump brittle. A new inline platform gate in ANY of them is
-//      still caught by the delegation guard; their per-field honesty is covered
-//      by their own suites. This split is deliberate, not an omission.
+//   4. Heavy live screens driven end-to-end. The Network-at-a-glance card,
+//      Roaming Log, and — as of the 2026-06-30 pre-launch pass — Wi-Fi
+//      Information ARE pumped hermetically in Part B across the native snapshot
+//      sources (macOS/Windows/Android) plus the Linux unsupported sentinel, so
+//      an enum-list false-ceiling that denies a datum on a capable native
+//      platform fails HERE, not just in each screen's own suite. What is still
+//      NOT pumped end-to-end: the iOS-Shortcut / streaming paths — iOS Wi-Fi
+//      Information's onboarding-bridge state machine, Test My Connection's
+//      live-quality streaming, and the iOS-obtainable Cellular case — plus
+//      Interface Info, whose per-source branch selects a MAC-label reason, not a
+//      data ceiling. Those are anchored via Part A (the exact seams they
+//      delegate to) plus their own suites; a full 5-platform pump of their
+//      Shortcut/streaming machinery is brittle, so that split is deliberate.
+//      HONEST LIMIT (do not overread): the source-scan delegation guard
+//      (platform_gate_delegation_guard_test.dart) catches only a RAW
+//      `TargetPlatform.` / `Platform.isX` gate — it does NOT catch an inline
+//      `WifiInfoSource` enum-list gate, which was the ACTUAL C1/C2/C3 shape. For
+//      the un-pumped iOS/streaming paths above, that enum-list residual rests on
+//      their own suites, NOT on this harness or the delegation guard.
 // ----------------------------------------------------------------------------
 
 import 'package:flutter/material.dart';
@@ -75,6 +86,7 @@ import 'package:wlan_pros_toolbox/screens/tools/network/cellular_info_screen.dar
 import 'package:wlan_pros_toolbox/screens/tools/network/network_glance_card.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/network_unavailable_view.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/roaming_log_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/network/wifi_info_screen.dart';
 import 'package:wlan_pros_toolbox/services/help/tool_help_loader.dart';
 import 'package:wlan_pros_toolbox/services/network/cellular_info_adapter.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
@@ -135,6 +147,13 @@ const List<_Platform> _platforms = <_Platform>[
 /// reader (the four native adapters) or an app-readable cache (iOS Shortcut).
 /// False only for a native platform with no adapter and the web build. Derived
 /// from the resolver's own source enum — never a hand-listed platform set.
+///
+/// CAUTION (keep INDEPENDENT): this is a hand-maintained EXPECTATION, deliberately
+/// spelled out as its own boolean expression. Part A cross-checks it against the
+/// live seam (`WifiSignalSampler.isSupportedSource`). Never refactor this to call
+/// that seam (or the resolver) — doing so makes the check `seam == seam`, a
+/// tautology, and the harness silently stops catching seam drift. Same rule for
+/// `expectedSignalCapable` in Part A below.
 bool _wifiIdentityObtainable(WifiInfoSource source) =>
     source != WifiInfoSource.unsupported && source != WifiInfoSource.web;
 
@@ -403,10 +422,72 @@ List<_Case> _cellularCases() {
   return cases;
 }
 
+// ---------------------------------------------------------------------------
+// Consumer 4 — Wi-Fi Information (the heavy identity tool). Added 2026-06-30 to
+// close the enum-list gap called out in the skip-note above: it IS hermetically
+// pumpable on the native snapshot sources via the injected adapter (the same
+// pattern its own suite uses), so a source-level enum-list false-ceiling — a
+// capable native source wrongly rendered as "coming soon / not available" (the
+// C2 Windows family) — fails HERE, not only in the screen's own suite.
+//
+// iOS is deliberately NOT pumped here: its onboarding-bridge state machine makes
+// a clean "reading present, no ceiling" pump brittle, so iOS Wi-Fi identity
+// stays anchored via Part A + the screen's own iOS suite (documented in skip-
+// note #4). Web is compile-time `kIsWeb` only, like the glance card.
+// ---------------------------------------------------------------------------
+List<_Case> _wifiInfoCases() {
+  final List<_Case> cases = <_Case>[];
+  for (final _Platform p in _platforms) {
+    // Native snapshot sources + the Linux unsupported sentinel only.
+    if (p.wifi == WifiInfoSource.iosShortcuts) continue; // documented skip
+    if (p.isWeb) continue; // compile-time kIsWeb
+    final bool obtainable = _wifiIdentityObtainable(p.wifi);
+    cases.add(_Case(
+      consumer: 'Wi-Fi Information (identity)',
+      platform: p,
+      obtainable: obtainable,
+      build: () => _Built(
+        // A snapshot source auto-reads via the injected adapter; the Linux
+        // sentinel (unsupported) ignores the adapter and renders the honest
+        // "coming in a later update" state, never a fabricated reading.
+        WifiInfoScreen(
+          sourceOverride: p.wifi,
+          macAdapter: const _FakeSnapshotAdapter(),
+        ),
+        settle: true,
+      ),
+      verify: (WidgetTester tester, {required bool obtainable}) {
+        const String comingSoon = 'Coming in a later update';
+        if (obtainable) {
+          // A capable native source MUST render the real identity and MUST NOT
+          // fall to the platform-unavailable ceiling. An enum-list gate that
+          // excluded this source (the C2 shape) would trip both expectations.
+          expect(find.text('WLANPros'), findsWidgets,
+              reason: 'Wi-Fi Information hides the real SSID on ${p.label} while '
+                  'the resolver marks the identity obtainable');
+          expect(find.text(comingSoon), findsNothing,
+              reason: 'Wi-Fi Information shows a FALSE platform ceiling on '
+                  '${p.label} (capable native source)');
+        } else {
+          // No adapter for this platform → honest unavailable state, no guess.
+          expect(find.text('WLANPros'), findsNothing,
+              reason: 'Wi-Fi Information fabricated a reading on ${p.label} '
+                  '(no adapter)');
+          expect(find.text(comingSoon), findsOneWidget,
+              reason: 'Wi-Fi Information must state its honest unavailable state '
+                  'on ${p.label}');
+        }
+      },
+    ));
+  }
+  return cases;
+}
+
 List<_Case> get _allCases => <_Case>[
       ..._glanceCases(),
       ..._roamingCases(),
       ..._cellularCases(),
+      ..._wifiInfoCases(),
     ];
 
 // ---------------------------------------------------------------------------
@@ -464,6 +545,10 @@ void main() {
         () {
       // Expected live-feed capability for EVERY source. A source added to the
       // enum without an entry here trips the coverage assertion below.
+      // CAUTION (keep INDEPENDENT): these are hand-maintained expectations, not
+      // a mirror of the seam. Never refactor this map to be built from
+      // `WifiSignalSampler.isSupportedSource` — that turns the assertion below
+      // into `seam == seam` and the harness stops catching drift.
       const Map<WifiInfoSource, bool> expectedSignalCapable =
           <WifiInfoSource, bool>{
         WifiInfoSource.macosCoreWlan: true,

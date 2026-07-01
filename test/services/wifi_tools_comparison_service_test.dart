@@ -19,8 +19,8 @@ import 'package:wlan_pros_toolbox/services/network/wifi_tools_comparison_service
 const String _fixture = '''
 {
   "_meta": {
-    "pricingDate": "February 2026",
-    "pricingNote": "Pricing as of February 2026. Confirm current pricing with the vendor before you buy.",
+    "pricingDate": "July 2026",
+    "pricingNote": "Pricing as of July 2026. Confirm current pricing with the vendor before you buy.",
     "estimateNote": "Cost figures are modeled estimates, not vendor-published quotes.",
     "betaNote": "This comparison is in beta review.",
     "neutralityNote": "This is not a ranking.",
@@ -78,7 +78,7 @@ void main() {
 
     test('preserves the disclaimer + date-stamp meta verbatim (GL-005)', () {
       final WifiToolsComparisonMeta m = svc.meta;
-      expect(m.pricingDate, 'February 2026');
+      expect(m.pricingDate, 'July 2026');
       expect(m.pricingNote, contains('Confirm current pricing'));
       expect(m.estimateNote, contains('modeled estimates'));
       expect(m.betaNote, contains('beta review'));
@@ -161,13 +161,30 @@ void main() {
       expect(svc.configCount, greaterThan(20));
     });
 
-    test('carries the date-stamp + modeled-estimate + beta disclaimers', () {
+    test('carries the July 2026 date-stamp + modeled-estimate + beta disclaimers',
+        () {
       final WifiToolsComparisonMeta m = svc.meta;
-      expect(m.pricingDate, isNotEmpty);
+      // Pinned to the July 2026 refresh (was February 2026). The stamp is a
+      // user-facing honesty claim, so it is guarded exactly.
+      expect(m.pricingDate, 'July 2026');
+      expect(m.pricingNote, contains('July 2026'));
       expect(m.pricingNote.toLowerCase(), contains('pricing as of'));
       expect(m.estimateNote.toLowerCase(), contains('modeled estimate'));
       expect(m.betaNote.toLowerCase(), contains('beta'));
       expect(m.noLogosNote.toLowerCase(), contains('logo'));
+    });
+
+    test('WLAN Pi R4 + Wi-Fi NIC is the verified \$350 (July 2026 drop from '
+        '\$400; Big QAM)', () {
+      final Iterable<WifiToolConfig> allConfigs = svc.activities
+          .expand((WifiToolActivity a) => a.configs);
+      final WifiToolConfig r4 = allConfigs.firstWhere(
+        (WifiToolConfig c) =>
+            c.vendor == 'WLAN Pi' && c.product.contains('R4'),
+        orElse: () => throw StateError('WLAN Pi R4 config missing'),
+      );
+      expect(r4.upFront, 350, reason: 'R4 up-front must be the verified \$350');
+      expect(r4.tco3yr, 350, reason: 'R4 3-yr TCO must be the verified \$350');
     });
 
     test('every config carries non-empty vendor + product', () {

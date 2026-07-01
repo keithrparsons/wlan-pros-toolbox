@@ -1354,9 +1354,14 @@ void main() {
       await tester.pumpAndSettle(); // resolve fetch
       expect(find.text('Network'), findsOneWidget);
       expect(find.text('KeithNet'), findsOneWidget);
-      // Android cannot read channel width via the public API → honest note that
-      // names the real platform (not "macOS").
-      expect(find.textContaining('Not reported by Android'), findsWidgets);
+      // Channel width is absent for this reading → honest per-network note
+      // ("Not reported for this network"), never an OS-blaming "Not reported by
+      // Android" (width is derived per-network, not blocked by the OS).
+      expect(
+        find.textContaining('Not reported for this network'),
+        findsWidgets,
+      );
+      expect(find.textContaining('Not reported by Android'), findsNothing);
       // FIX 2: Android exposes no noise floor, so the Noise + SNR rows carry an
       // explicit reason note instead of a bare "Unavailable".
       expect(
@@ -1500,6 +1505,10 @@ void main() {
       await tester.pumpAndSettle();
       // The width shows as a real value and the "Not reported" note disappears.
       expect(find.text('160 MHz'), findsWidgets);
+      expect(
+        find.textContaining('Not reported for this network'),
+        findsNothing,
+      );
       expect(find.textContaining('Not reported by Android'), findsNothing);
     });
 

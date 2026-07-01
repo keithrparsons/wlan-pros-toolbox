@@ -1,8 +1,8 @@
 {
   "_meta": {
     "title": "Wi-Fi Tools Comparison",
-    "pricingDate": "February 2026",
-    "pricingNote": "Pricing as of February 2026. Confirm current pricing with the vendor before you buy.",
+    "pricingDate": "July 2026",
+    "pricingNote": "Pricing as of July 2026. Confirm current pricing with the vendor before you buy.",
     "estimateNote": "Cost figures are modeled estimates assembled by WLAN Pros from vendor-supplied numbers and list pricing, not vendor-published quotes. Treat every dollar amount as a planning estimate, not a binding price.",
     "betaNote": "This comparison is in beta review. Vendors are being consulted on the figures, and a few may change before the final release.",
     "neutralityNote": "This is a capability and cost reference, not a ranking. Tools are listed alphabetically within each activity. The same vendor can appear under more than one activity. Real toolkits are assembled across vendors. This reflects vendors interviewed by WLAN Pros, not every tool that exists.",
@@ -212,7 +212,7 @@
           "costModel": "one-time",
           "upFront": 900,
           "tco3yr": 900,
-          "notes": "Includes a 13-inch MacBook Air. A fast on-Mac diagnostic toolkit. This config does not include spectrum analysis."
+          "notes": "A fast on-Mac diagnostic toolkit. The NetViews Pro app is $49.99 one-time; the $900 total is a planning estimate for the app plus a 13-inch MacBook Air, not a single SKU. This config does not include spectrum analysis."
         },
         {
           "vendor": "Oscium",
@@ -242,8 +242,8 @@
           "vendor": "WLAN Pi",
           "product": "WLAN Pi R4 + Wi-Fi NIC",
           "costModel": "one-time",
-          "upFront": 400,
-          "tco3yr": 400,
+          "upFront": 350,
+          "tco3yr": 350,
           "notes": "External Wi-Fi 6E NIC."
         }
       ]
@@ -290,7 +290,7 @@
   "vendors": [
     {
       "name": "Ekahau",
-      "summary": "A long-established Wi-Fi design and survey company, now part of Ookla. Its platform centers on Ekahau AI Pro for design and analysis, paired with Connect services and the Sidekick 2 measurement device, plus mobile Survey, Measure, and Analyzer apps. Together the suite spans predictive design, on-site survey and validation, spectrum analysis with the Sidekick, and troubleshooting.",
+      "summary": "A long-established Wi-Fi design and survey company, now part of Ookla. Its platform centers on Ekahau AI Pro for design and analysis, paired with Connect services and the Sidekick 2 measurement device, plus mobile Survey, Measure, and Analyzer apps. Together the suite spans predictive design, on-site survey and validation, spectrum analysis with the Sidekick, and troubleshooting. The Ekahau figures here were confirmed directly with the vendor in June 2026.",
       "website": "https://www.ekahau.com",
       "docs": "https://support.ekahau.com"
     },
@@ -308,7 +308,7 @@
     },
     {
       "name": "NetAlly",
-      "summary": "Makes portable, ruggedized network test instruments for wired and wireless networks, from the former Fluke Networks and NetScout enterprise test line. AirMagnet Survey PRO plans and validates Wi-Fi, AirCheck G3 Pro is a handheld tester, the NXT-2000 is a triband spectrum analyzer accessory used in many cross-vendor kits, and EtherScope nXG is a combined wired and wireless analyzer.",
+      "summary": "Makes portable, ruggedized network test instruments for wired and wireless networks, from the former Fluke Networks and NetScout enterprise test line. AirMagnet Survey PRO plans and validates Wi-Fi, AirCheck G3 Pro is a handheld tester, the NXT-2000 is a triband spectrum analyzer accessory used in many cross-vendor kits, and EtherScope nXG is a combined wired and wireless analyzer. NetAlly withdrew its published pricing during a 2026 leadership transition, so the NetAlly figures here are last-known prices, not currently published — expect them to change when NetAlly republishes.",
       "website": "https://www.netally.com",
       "docs": "https://support.netally.com"
     },
