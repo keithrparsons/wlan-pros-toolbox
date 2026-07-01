@@ -1,6 +1,6 @@
 This release is about accuracy and honesty.
 
-Clearer connection details: your network name and signal now show wherever your platform allows, with a plain, actionable reason when they don't (for example, "Needs Location permission") instead of a vague "Unavailable."
+Clearer connection details: your network name and signal now show wherever your platform allows, with a plain, actionable reason when they don't (for example, "Needs Location permission" on macOS) instead of a vague "Unavailable."
 
 New: a short explainer of how the Toolbox measures throughput, and why that number can differ from a speed test.
 
