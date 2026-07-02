@@ -26,16 +26,18 @@ The Toolbox collects no personal data. There is no account, no login, and no ana
 
 ## Platforms
 
-One Flutter codebase targets iOS, macOS, web, and Android.
+One Flutter codebase targets iOS, macOS, Windows, Android, and the web.
 
-- **iOS and macOS** are live on the App Store.
+- **iOS** is on the Apple App Store.
+- **macOS** ships as a direct `.dmg` download from the WLAN Pros website (not the App Store).
+- **Android** is live on Google Play.
+- **Windows** is live in the Microsoft Store.
 - **Web** is a hosted build. Calculators and reference tables work in the browser; network-dependent tools (ping, port scan, traceroute, and similar) need a native build and are hidden on web with a prompt to install the app.
-- **Android** is in progress. Most tools already run; the remaining native bridges and Play Store distribution are staged behind the iOS and macOS release.
 
 ### Platform capability notes
 
 - **iOS** has no public API for RSSI or PHY rate / MCS index. Those metrics are surfaced through a companion Apple Shortcut ("WLAN Pros Live") where iOS allows it, and are reported as honestly unavailable where it does not. Local Network access prompts on first use.
-- **Nearby AP scan** is Android-only. Apple platforms block third-party Wi-Fi scanning, so the tool is filtered out of navigation and search on iOS and macOS.
+- **Nearby AP scan** runs on Android today. Apple platforms (iOS and macOS) block third-party Wi-Fi scanning at the OS level; a Windows version is planned (Windows can enumerate access points, it is just not wired into this tool yet).
 - **Traceroute** has two forms: a system-binary traceroute on desktop (macOS, Windows, Linux), and a mobile TTL-walk that works on Android but is honestly unavailable on iOS (the available ICMP layer only parses Echo Reply, never Time Exceeded).
 - **Ping (TCP)** is a TCP-handshake RTT probe, labeled as such; **Ping (ICMP)** is the separate echo-based tool.
 
