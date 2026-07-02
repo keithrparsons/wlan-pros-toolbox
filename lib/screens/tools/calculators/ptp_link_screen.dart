@@ -1005,19 +1005,20 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
             'EIRP   = Tx + Gtx - Ltx',
-            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            style: mono.robotoMono.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
+            // log10 base stays ASCII (₁₀ subscript absent from Roboto Mono).
             'FSPL   = 20·log10(d) + 20·log10(f) + 92.45',
-            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            style: mono.robotoMono.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
             'Rx     = EIRP - FSPL - rain + Grx - Lrx',
-            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            style: mono.robotoMono.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
             'Margin = Rx - sensitivity',
-            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            style: mono.robotoMono.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(

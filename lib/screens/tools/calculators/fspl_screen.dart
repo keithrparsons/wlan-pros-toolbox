@@ -411,8 +411,11 @@ class _FsplScreenState extends State<FsplScreen> {
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
+            // log10: the ₁₀ subscript glyph is absent from the bundled
+            // Roboto Mono, so the base stays ASCII while the rest is real
+            // notation. GL-003 Roboto Mono token (Greek/symbol-capable).
             'FSPL(dB) = 20·log10(f) + 20·log10(d) + 92.45',
-            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            style: mono.robotoMono.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(

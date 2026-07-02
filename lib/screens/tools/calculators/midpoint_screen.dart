@@ -450,20 +450,22 @@ class _MidpointScreenState extends State<MidpointScreen> {
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
-            'Bx = cos(phi2)·cos(dLambda)',
-            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            // Real Greek (φ λ Δ); numeric subscripts use ASCII digits (₁ ₂
+            // absent from the bundled Roboto Mono). √ and ² are real.
+            'Bx = cos(φ2)·cos(Δλ)',
+            style: mono.robotoMono.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
-            'By = cos(phi2)·sin(dLambda)',
-            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            'By = cos(φ2)·sin(Δλ)',
+            style: mono.robotoMono.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
-            'phiM = atan2(sin(phi1) + sin(phi2), √((cos(phi1) + Bx)² + By²))',
-            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            'φm = atan2(sin(φ1) + sin(φ2), √((cos(φ1) + Bx)² + By²))',
+            style: mono.robotoMono.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
-            'lambdaM = lambda1 + atan2(By, cos(phi1) + Bx)',
-            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            'λm = λ1 + atan2(By, cos(φ1) + Bx)',
+            style: mono.robotoMono.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(

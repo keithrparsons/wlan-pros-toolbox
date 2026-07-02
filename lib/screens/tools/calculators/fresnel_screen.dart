@@ -475,16 +475,18 @@ class _FresnelScreenState extends State<FresnelScreen> {
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
-            'lambda = 0.3 / f(GHz)',
-            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            // d1/d2 use ASCII digits — subscripts (₁ ₂) are absent from the
+            // bundled Roboto Mono; λ and √ are real.
+            'λ = 0.3 / f(GHz)',
+            style: mono.robotoMono.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
-            'r = √(lambda · d1 · d2 / (d1 + d2))',
-            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            'r = √(λ · d1 · d2 / (d1 + d2))',
+            style: mono.robotoMono.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
             'clearance = 0.6 · r',
-            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            style: mono.robotoMono.copyWith(color: colors.textPrimary),
           ),
         ],
       ),

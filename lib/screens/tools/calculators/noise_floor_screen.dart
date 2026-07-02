@@ -460,8 +460,9 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
+            // log10 base stays ASCII (₁₀ subscript absent from Roboto Mono).
             'N(dBm) = 10·log10(k·T·B) + 30 + NF',
-            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            style: mono.robotoMono.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(

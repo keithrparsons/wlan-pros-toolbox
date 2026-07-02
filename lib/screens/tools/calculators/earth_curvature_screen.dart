@@ -431,12 +431,14 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
+            // Re: the ₑ subscript is absent from every bundled face, so the
+            // effective-radius symbol stays ASCII; d² uses the real superscript.
             'h(m) = d² · 1000 / (8 · Re)',
-            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            style: mono.robotoMono.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
             'Re   = 6371 · k',
-            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            style: mono.robotoMono.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(

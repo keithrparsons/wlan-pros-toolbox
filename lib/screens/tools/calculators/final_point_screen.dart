@@ -528,16 +528,18 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
-            'phi2 = asin(sin(phi1)·cos(delta) + cos(phi1)·sin(delta)·cos(theta))',
-            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            // Real Greek (φ λ θ δ); numeric subscripts use ASCII digits since
+            // ₁ ₂ are absent from the bundled Roboto Mono.
+            'φ2 = asin(sin(φ1)·cos(δ) + cos(φ1)·sin(δ)·cos(θ))',
+            style: mono.robotoMono.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
-            'lambda2 = lambda1 + atan2(sin(theta)·sin(delta)·cos(phi1), cos(delta) − sin(phi1)·sin(phi2))',
-            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            'λ2 = λ1 + atan2(sin(θ)·sin(δ)·cos(φ1), cos(δ) − sin(φ1)·sin(φ2))',
+            style: mono.robotoMono.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'delta = distance / R, theta = bearing. Great-circle destination on a '
+            'δ = distance / R, θ = bearing. Great-circle destination on a '
             'sphere of radius R = 6371 km.',
             style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),

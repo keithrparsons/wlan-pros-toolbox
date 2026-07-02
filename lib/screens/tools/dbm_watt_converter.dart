@@ -299,12 +299,13 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
+            // log10 base stays ASCII (₁₀ subscript absent from Roboto Mono).
             'dBm = 10 · log10(mW)',
-            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            style: mono.robotoMono.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
             'W   = 10^(dBm/10) / 1000',
-            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            style: mono.robotoMono.copyWith(color: colors.textPrimary),
           ),
         ],
       ),

@@ -606,20 +606,22 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
-            'gamma = k · R^alpha     (dB/km)',
-            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            // Real Greek γ and α; d0 keeps an ASCII digit — ₀ is absent from
+            // the bundled Roboto Mono.
+            'γ = k · R^α            (dB/km)',
+            style: mono.robotoMono.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
             'L_eff = L / (1 + L/d0)  (km)',
-            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            style: mono.robotoMono.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
-            'A = gamma · L_eff       (dB)',
-            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            'A = γ · L_eff          (dB)',
+            style: mono.robotoMono.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'k and alpha from ITU-R P.838-3 by frequency and polarization. '
+            'k and α from ITU-R P.838-3 by frequency and polarization. '
             'd0 = 35 · e^(-0.015·R) per the simplified ITU-R P.530 path '
             'reduction. R is rain rate in mm/hr.',
             style: text.labelMedium?.copyWith(color: colors.textTertiary),

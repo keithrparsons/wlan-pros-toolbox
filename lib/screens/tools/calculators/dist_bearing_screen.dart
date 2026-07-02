@@ -568,11 +568,13 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
             'd = 2R · atan2(√a, √(1−a)),  R = 6371 km',
-            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            style: mono.robotoMono.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
-            'a = sin²(dPhi/2) + cos(phi1) · cos(phi2) · sin²(dLambda/2)',
-            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            // Real Greek (Δ φ λ); sin² uses the real superscript. φ1/φ2 keep
+            // ASCII digits — ₁ ₂ are absent from the bundled Roboto Mono.
+            'a = sin²(Δφ/2) + cos(φ1) · cos(φ2) · sin²(Δλ/2)',
+            style: mono.robotoMono.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(

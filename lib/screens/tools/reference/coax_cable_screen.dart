@@ -413,7 +413,10 @@ class _CoaxRow extends StatelessWidget {
                   width: 56,
                   child: Text(
                     cable.impedance,
-                    style: mono.inlineCode.copyWith(
+                    // Ω (U+03A9) is absent from DM Mono (inlineCode) and would
+                    // render as tofu; the bundled Roboto Mono has it, so the
+                    // impedance value routes through that GL-003 mono token.
+                    style: mono.robotoMono.copyWith(
                       color: muted ? colors.textTertiary : colors.textAccent,
                     ),
                   ),
