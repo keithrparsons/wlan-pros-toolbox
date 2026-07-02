@@ -1069,7 +1069,7 @@
         "Plans marked \"verify\" (CN470 is version-dependent, CN779 is deprecated or limited, RU864 is thinly sourced) should be confirmed against the LoRa Alliance RP002 regional parameters and your local regulator.",
         "The Bluetooth LE table lists each channel's true frequency directly rather than using the simple \"2402 + 2 x index\" formula, which is a common shortcut that produces the wrong frequencies.",
         "The 868 and 915 MHz bands of 802.15.4 are region-restricted; channels 11 to 26 in 2.4 GHz are global.",
-        "Data source: Pax's verified research brief, cross-checked against the LoRa Alliance RP002, IEEE 802.15.4, the Bluetooth SIG Core Spec, and the CSA/Zigbee spec. The 802.15.4 center frequencies were verified against the standard's formula (channel 0 = 868.3 MHz; channels 1 to 10 = 906 + 2 x (k-1); channels 11 to 26 = 2405 + 5 x (k-11))."
+        "Data source: cross-checked against the LoRa Alliance RP002, IEEE 802.15.4, the Bluetooth SIG Core Spec, and the CSA/Zigbee spec. The 802.15.4 center frequencies were verified against the standard's formula (channel 0 = 868.3 MHz; channels 1 to 10 = 906 + 2 x (k-1); channels 11 to 26 = 2405 + 5 x (k-11))."
       ],
       "source": "Values come from a verified research brief cross-checked against the published standards."
     },
@@ -2797,7 +2797,7 @@
         "Reach figures are IEEE-standard maximums on the listed fiber; real vendor modules may differ. Multimode reach depends on the fiber grade (OM3 vs OM4 vs OM5), so those rows give per-grade numbers rather than one figure.",
         "What it contains: 35 verified variants spanning 1G to 400G across SFP, SFP+, SFP28, QSFP+, QSFP28, QSFP56, and QSFP-DD / OSFP, plus a 9-row form-factor ladder (max rate, lane count, typical power envelope). Power figures are typical vendor ranges, not a single standard, so treat them as guidance.",
         "Fully offline: the table lives inside the app and is read once when the screen opens; malformed rows are skipped, not shown as blanks.",
-        "Verified against IEEE 802.3 standards tables (via Wikipedia's clause-mirroring pages) and Cisco / FS.com vendor datasheets (Pax verification brief, 2026-06-05). Out-of-scope bleeding edge (800G / 1.6T, CPO / LPO, SFP-DD) was deliberately excluded as not yet stable or field-relevant."
+        "Verified against IEEE 802.3 standards tables (via Wikipedia's clause-mirroring pages) and Cisco / FS.com vendor datasheets. Out-of-scope bleeding edge (800G / 1.6T, CPO / LPO, SFP-DD) was deliberately excluded as not yet stable or field-relevant."
       ],
       "source": "Reads a built-in, verified table of transceiver variants; fully offline, nothing fetched."
     },
@@ -2892,7 +2892,7 @@
         "The floor-plan coverage shapes illustrate how a pattern fills a space; they are not survey predictions or measured coverage.",
         "The point-to-point note is one line by design: a link needs real Fresnel-zone clearance around the straight line between antennas, not just a visible path. Use the Fresnel and Point-to-Point tools to size that clearance."
       ],
-      "source": "Penn teaching copy (SOP-020 PASS, 2026-06-05), from Pax's research brief; diagrams by Charta."
+      "source": "Original WLAN Pros teaching copy and diagrams."
     },
     "wifi-tools-comparison": {
       "name": "Wi-Fi Tools Comparison",
@@ -2915,7 +2915,7 @@
         "This is NOT a ranking. There is no score and no \"best\". Tools are listed alphabetically and the same vendor can appear under more than one activity, because real toolkits are assembled across vendors. The set reflects vendors interviewed by WLAN Pros, not every tool that exists, so an omitted tool is not a snub.",
         "No vendor logos or product photos appear here. Those are trademarks and copyrighted images that need each vendor's written permission, which is still being gathered. The reference is text and data only for now.",
         "Fully offline: the comparison lives inside the app and is read once when the screen opens; malformed rows are skipped, not shown as blanks.",
-        "Source: the Wi-Fi Design, Validation, Spectrum Analysis & Troubleshooting Tools V6 workbook (Keith Parsons, vendor-interviewed, last revised 2026-02-16), with neutral writeups from the Pax research brief, 2026-06-05."
+        "Source: the Wi-Fi Design, Validation, Spectrum Analysis & Troubleshooting Tools V6 workbook (Keith Parsons, vendor-interviewed, last revised 2026-02-16)."
       ],
       "source": "Reads a built-in, vendor-interviewed comparison table; fully offline, nothing fetched."
     },
@@ -2937,7 +2937,7 @@
         "Split-phase is single-phase, NOT two-phase: the two phasors don't define a rotating field. The center conductor is the grounded, current-carrying neutral (center tap), not the equipment ground.",
         "208V and 240V are not interchangeable: they differ by about 32V and arise from different topologies (a single-phase center tap versus two legs of a 3-phase wye).",
         "Written \"Access Point\" not \"router\". Nominal voltages per NEC Article 100/210.",
-        "Data source: Pax research brief Topic 2, sourced to NEC Article 100/210, split-phase and three-phase EE references, and the line-to-line = square-root-of-3 times line-to-neutral relationship."
+        "Data source: NEC Article 100/210, split-phase and three-phase EE references, and the line-to-line = square-root-of-3 times line-to-neutral relationship."
       ],
       "source": "Reads a built-in reference of power topologies grounded in NEC Article 100/210; fully offline."
     },
@@ -2958,7 +2958,7 @@
         "What it shows: the four core identities, the 12-form power wheel (four quantities x three forms), and the single-phase versus three-phase power formulas with a power-factor note.",
         "Power factor is 1 only for resistive loads and DC, where P = V x I is exact. On reactive loads (motors, compressors, switch-mode supplies) V x I gives apparent power in VA, not real power in watts; do not read P = V x I as universally giving watts in AC.",
         "Notation: I squared and V squared use the caret in the app, square root is written out, and the power-factor angle is written cos(phi). Written \"Access Point\" not \"router\".",
-        "Data source: Pax research brief Topic 1, the standard EE identity set, the 12-form Ohm's-law wheel, and the AC real / apparent / reactive power relationships."
+        "Data source: the standard EE identity set, the 12-form Ohm's-law wheel, and the AC real / apparent / reactive power relationships."
       ],
       "source": "Reads a built-in reference of the Ohm's-law identities and power-wheel forms; fully offline."
     },
