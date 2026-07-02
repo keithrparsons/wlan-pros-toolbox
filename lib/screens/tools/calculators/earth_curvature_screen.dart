@@ -431,16 +431,16 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
-            'h(m) = d² · 1000 / (8 · Rₑ)',
+            'h(m) = d² · 1000 / (8 · Re)',
             style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
-            'Rₑ   = 6371 · k',
+            'Re   = 6371 · k',
             style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'd in km, Rₑ is the effective earth radius in km. h is the bulge '
+            'd in km, Re is the effective earth radius in km. h is the bulge '
             'at the path midpoint. The K-factor scales the radius for '
             'atmospheric refraction.',
             style: text.labelMedium?.copyWith(color: colors.textTertiary),

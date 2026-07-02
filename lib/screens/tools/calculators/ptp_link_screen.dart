@@ -1008,7 +1008,7 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
             style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
-            'FSPL   = 20·log₁₀(d) + 20·log₁₀(f) + 92.45',
+            'FSPL   = 20·log10(d) + 20·log10(f) + 92.45',
             style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(

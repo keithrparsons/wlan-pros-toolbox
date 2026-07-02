@@ -299,7 +299,7 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
-            'dBm = 10 · log₁₀(mW)',
+            'dBm = 10 · log10(mW)',
             style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(

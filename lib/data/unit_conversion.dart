@@ -176,15 +176,15 @@ class UnitConversion {
   // Base: the unprefixed unit (1). Each prefix is its decimal power. Pico→tera
   // per the brief; the value is dimensionless ("5 mega-units = 5,000,000 units").
   static const List<Unit> metricPrefixUnits = <Unit>[
-    Unit(id: 'pico', symbol: 'p (10⁻¹²)', factorToBase: 1e-12),
-    Unit(id: 'nano', symbol: 'n (10⁻⁹)', factorToBase: 1e-9),
-    Unit(id: 'micro', symbol: 'µ (10⁻⁶)', factorToBase: 1e-6),
-    Unit(id: 'milli', symbol: 'm (10⁻³)', factorToBase: 1e-3),
+    Unit(id: 'pico', symbol: 'p (10^-12)', factorToBase: 1e-12),
+    Unit(id: 'nano', symbol: 'n (10^-9)', factorToBase: 1e-9),
+    Unit(id: 'micro', symbol: 'µ (10^-6)', factorToBase: 1e-6),
+    Unit(id: 'milli', symbol: 'm (10^-3)', factorToBase: 1e-3),
     Unit(id: 'base', symbol: '(none)', factorToBase: 1),
-    Unit(id: 'kilo', symbol: 'k (10³)', factorToBase: 1e3),
-    Unit(id: 'mega', symbol: 'M (10⁶)', factorToBase: 1e6),
-    Unit(id: 'giga', symbol: 'G (10⁹)', factorToBase: 1e9),
-    Unit(id: 'tera', symbol: 'T (10¹²)', factorToBase: 1e12),
+    Unit(id: 'kilo', symbol: 'k (10^3)', factorToBase: 1e3),
+    Unit(id: 'mega', symbol: 'M (10^6)', factorToBase: 1e6),
+    Unit(id: 'giga', symbol: 'G (10^9)', factorToBase: 1e9),
+    Unit(id: 'tera', symbol: 'T (10^12)', factorToBase: 1e12),
   ];
 
   // ─── Speed ─────────────────────────────────────────────────────────────────

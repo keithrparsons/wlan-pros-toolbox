@@ -450,19 +450,19 @@ class _MidpointScreenState extends State<MidpointScreen> {
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
-            'Bx = cos(φ₂)·cos(Δλ)',
+            'Bx = cos(phi2)·cos(dLambda)',
             style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
-            'By = cos(φ₂)·sin(Δλ)',
+            'By = cos(phi2)·sin(dLambda)',
             style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
-            'φm = atan2(sin φ₁ + sin φ₂, √((cos φ₁ + Bx)² + By²))',
+            'phiM = atan2(sin(phi1) + sin(phi2), √((cos(phi1) + Bx)² + By²))',
             style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
-            'λm = λ₁ + atan2(By, cos φ₁ + Bx)',
+            'lambdaM = lambda1 + atan2(By, cos(phi1) + Bx)',
             style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),

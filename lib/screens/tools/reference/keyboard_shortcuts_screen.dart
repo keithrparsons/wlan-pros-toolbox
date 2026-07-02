@@ -416,6 +416,7 @@ class _GreekPanel extends StatelessWidget {
               combo: '${g.lower}  ${g.upper}',
               glyph: g.lower,
               name: g.use.isEmpty ? g.name : '${g.name} (${g.use})',
+              comboHasGreek: true,
             ),
         ],
       ),
@@ -430,11 +431,20 @@ class _GlyphRowTile extends StatelessWidget {
     required this.combo,
     required this.glyph,
     required this.name,
+    this.comboHasGreek = false,
   });
 
   final String combo;
   final String glyph;
   final String name;
+
+  /// When the combo column carries Greek letters (the RF-symbol panel), render
+  /// it in Roboto Mono, which has full Greek coverage. DM Mono (`inlineCode`)
+  /// lacks the Greek block, so those glyphs would render as tofu boxes. The
+  /// device OS font-fallback chain does not reliably backfill them inside a
+  /// requested family (confirmed on iOS), so we pick a bundled face that has
+  /// the glyphs rather than depending on fallback.
+  final bool comboHasGreek;
 
   @override
   Widget build(BuildContext context) {
@@ -451,7 +461,8 @@ class _GlyphRowTile extends StatelessWidget {
             width: 168,
             child: Text(
               combo,
-              style: mono.inlineCode.copyWith(color: colors.textSecondary),
+              style: (comboHasGreek ? mono.robotoMono : mono.inlineCode)
+                  .copyWith(color: colors.textSecondary),
             ),
           ),
           const SizedBox(width: AppSpacing.sm),

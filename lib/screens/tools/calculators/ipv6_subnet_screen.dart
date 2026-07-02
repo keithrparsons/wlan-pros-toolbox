@@ -227,12 +227,12 @@ class Ipv6SubnetScreen extends StatefulWidget {
   }
 
   /// Host-count string for a prefix. Mirrors PWA hosts logic:
-  ///   hostBits > 63 → "More than 2⁶³"
+  ///   hostBits > 63 → "More than 2^63"
   ///   hostBits == 0 → "1 address"
   ///   else          → `2^N = <grouped count> addresses`
   static String hostsForPrefix(int prefix) {
     final int hostBits = 128 - prefix;
-    if (hostBits > 63) return 'More than 2⁶³'; // "More than 2⁶³"
+    if (hostBits > 63) return 'More than 2^63'; // "More than 2^63"
     if (hostBits == 0) return '1 address';
     final BigInt count = BigInt.two.pow(hostBits);
     return '2^$hostBits = ${_grouped(count)} addresses';

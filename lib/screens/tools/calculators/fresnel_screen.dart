@@ -475,11 +475,11 @@ class _FresnelScreenState extends State<FresnelScreen> {
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
-            'λ = 0.3 / f(GHz)',
+            'lambda = 0.3 / f(GHz)',
             style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
-            'r = √(λ · d₁ · d₂ / (d₁ + d₂))',
+            'r = √(lambda · d1 · d2 / (d1 + d2))',
             style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(

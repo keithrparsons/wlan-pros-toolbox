@@ -460,14 +460,14 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
-            'N(dBm) = 10·log₁₀(k·T·B) + 30 + NF',
+            'N(dBm) = 10·log10(k·T·B) + 30 + NF',
             style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'k = 1.380649×10⁻²³ J/K, T = °C + 273.15 K, B in Hz. NF is the '
+            'k = 1.380649×10^-23 J/K, T = °C + 273.15 K, B in Hz. NF is the '
             'receiver noise figure. The rule of thumb uses -174 dBm/Hz + '
-            '10·log₁₀(B).',
+            '10·log10(B).',
             style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],

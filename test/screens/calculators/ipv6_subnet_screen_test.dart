@@ -86,7 +86,7 @@ void main() {
       expect(r.network, '2001:db8/32');
       expect(r.first, '2001:db8');
       expect(r.last, '2001:db8:ffff:ffff:ffff:ffff:ffff:ffff');
-      expect(r.hosts, 'More than 2⁶³');
+      expect(r.hosts, 'More than 2^63');
       expect(r.type, 'Documentation (2001:db8::/32)');
     });
 
@@ -97,7 +97,7 @@ void main() {
       expect(r.network, '2001:db8/64');
       expect(r.first, '2001:db8');
       expect(r.last, '2001:db8::ffff:ffff:ffff:ffff');
-      expect(r.hosts, 'More than 2⁶³');
+      expect(r.hosts, 'More than 2^63');
     });
 
     test('fe80::1/10 detects link-local', () {
@@ -121,7 +121,7 @@ void main() {
       expect(r.network, '::/0');
       expect(r.first, '::');
       expect(r.last, 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff');
-      expect(r.hosts, 'More than 2⁶³');
+      expect(r.hosts, 'More than 2^63');
       expect(r.type, 'Unspecified (::)');
     });
 

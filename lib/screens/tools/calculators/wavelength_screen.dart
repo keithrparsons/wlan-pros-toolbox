@@ -424,7 +424,7 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
-            'λ(m) = 300 / f',
+            'lambda(m) = 300 / f',
             style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),

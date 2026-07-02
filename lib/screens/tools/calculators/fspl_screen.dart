@@ -411,7 +411,7 @@ class _FsplScreenState extends State<FsplScreen> {
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
-            'FSPL(dB) = 20·log₁₀(f) + 20·log₁₀(d) + 92.45',
+            'FSPL(dB) = 20·log10(f) + 20·log10(d) + 92.45',
             style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),

@@ -571,7 +571,7 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
             style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
-            'a = sin²(Δφ/2) + cos φ₁ · cos φ₂ · sin²(Δλ/2)',
+            'a = sin²(dPhi/2) + cos(phi1) · cos(phi2) · sin²(dLambda/2)',
             style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),

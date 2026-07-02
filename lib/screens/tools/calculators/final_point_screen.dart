@@ -528,16 +528,16 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
           ),
           const SizedBox(height: AppSpacing.xs),
           SelectableText(
-            'φ₂ = asin(sinφ₁·cosδ + cosφ₁·sinδ·cosθ)',
+            'phi2 = asin(sin(phi1)·cos(delta) + cos(phi1)·sin(delta)·cos(theta))',
             style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           SelectableText(
-            'λ₂ = λ₁ + atan2(sinθ·sinδ·cosφ₁, cosδ − sinφ₁·sinφ₂)',
+            'lambda2 = lambda1 + atan2(sin(theta)·sin(delta)·cos(phi1), cos(delta) − sin(phi1)·sin(phi2))',
             style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'δ = distance / R, θ = bearing. Great-circle destination on a '
+            'delta = distance / R, theta = bearing. Great-circle destination on a '
             'sphere of radius R = 6371 km.',
             style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),

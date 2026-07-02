@@ -1,13 +1,20 @@
 // Counter guard — the Educational Resources home-tile badge shows a pinned
 // countLabelOverride rather than the live tool count (the in-app references).
-// This test asserts that override equals the true total: the number of in-app
-// reference tools in the catalog category + the bundled JSON `_meta.count` (the
-// online-resource count). If a tool is added/removed, or the dataset's count
-// changes, the override must be updated in lockstep or this test fails — the
-// number cannot silently drift.
+// This test asserts that override equals the true total the Educational
+// Resources screen advertises in its "$total curated places" intro:
+//   in-app reference cards (catalog category tools)
+//   + 1 in-app Field Manual (the "In-Depth Guide" the screen always counts)
+//   + the bundled JSON `_meta.count` (the online-resource count).
+// If a tool is added/removed, or the dataset's count changes, the override must
+// be updated in lockstep or this test fails — the number cannot silently drift,
+// and the home badge can never again contradict the screen header.
 //
 // 2026-06-06: the in-app references are now 11 = the 10 PDF reference cards +
 // Antenna Fundamentals (moved here from Quick Reference, BF6-3).
+// 2026-07-02: added the +1 Field Manual term. The screen's intro counts the
+// in-app Field Manual (educational_resources_screen.dart: `1 + _cards.length +
+// svc.count`) but the override had omitted it, so the badge (54) contradicted
+// the header (55). The guard now includes it so both surfaces stay in step.
 
 import 'dart:convert';
 import 'dart:io';
@@ -39,7 +46,13 @@ void main() {
     final Map<String, dynamic> meta = decoded['_meta'] as Map<String, dynamic>;
     final int onlineCount = meta['count'] as int;
 
-    final int expectedTotal = cardCount + onlineCount;
+    // The in-app Field Manual ("In-Depth Guide") is a bundled reader entry the
+    // screen always counts in its intro total but that does NOT live in the
+    // catalog category `tools` list. Mirror the screen's `1 +` term here so the
+    // guard total equals what the header shows.
+    const int fieldManualCount = 1;
+
+    final int expectedTotal = cardCount + fieldManualCount + onlineCount;
 
     expect(
       edu.countLabelOverride,
@@ -50,7 +63,9 @@ void main() {
       edu.countLabelOverride,
       '$expectedTotal',
       reason: 'tile badge ($expectedTotal) = $cardCount cards + '
-          '$onlineCount online resources; update the override if either changes',
+          '$fieldManualCount Field Manual + $onlineCount online resources; '
+          'this must equal the screen header total (1 + cards + online). '
+          'Update the override if any term changes',
     );
   });
 }

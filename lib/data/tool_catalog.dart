@@ -1742,11 +1742,14 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
   // references section at the top, above the 37 online resources. No `subgroup`
   // — this is not a subgroup-ordered category.
   //
-  // Tile count: the home badge would show only the live tool count (the 11 in-
-  // app references). The true total is 11 + 37 online resources = 48, so
-  // [countLabelOverride] pins '48' (guard test in
-  // test/screens/tools/educational/ asserts it equals card-count + the bundled
-  // JSON `_meta.count` so the number cannot silently drift).
+  // Tile count: the home badge would otherwise show only the live tool count
+  // (the in-app reference cards). The true total the Educational Resources
+  // screen advertises in its "$total curated places" intro is
+  //   in-app Field Manual (1) + reference cards + bundled JSON `_meta.count`,
+  // so [countLabelOverride] pins that same total. The guard test in
+  // test/screens/tools/educational/ recomputes it (cards + 1 Field Manual +
+  // JSON count) and asserts the override matches, so the number cannot silently
+  // drift out of step with the screen.
   ToolCategory(
     id: 'educational-resources',
     title: 'Educational Resources',
@@ -1768,7 +1771,12 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
     // which lifts the in-app reference cards from 11 to 12.
     // 54 = 53 + the Spectrum Analysis teaching module (2026-06-28), an in-app
     // reference alongside Antenna Fundamentals, lifting in-app references 12→13.
-    countLabelOverride: '54',
+    // 55 = 13 reference cards + the in-app Field Manual (In-Depth Guide) + 41
+    // online resources. The prior '54' omitted the Field Manual, which the
+    // Educational Resources screen has always counted in its "curated places"
+    // intro — so the home badge (54) contradicted the screen header (55). Pin
+    // 55 to match what the screen actually presents.
+    countLabelOverride: '55',
     tools: <ToolEntry>[
       // The 6 PDF reference cards.
       ToolEntry(
