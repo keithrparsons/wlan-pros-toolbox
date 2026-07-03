@@ -365,7 +365,7 @@ msix_config:
   publisher: "CN=3160F864-430A-46A3-88F1-A229CE5344BB"
   # MSIX requires a strict 4-part version. Tracks the app version (currently
   # 1.5.10) with a trailing .0 revision; the user-facing version stays 1.5.10+45.
-  msix_version: 1.5.11.0
+  msix_version: 1.5.12.0
   logo_path: assets/branding/app-icon-1024.png
   # Capabilities: internetClient for outbound HTTP/DNS/speed-test probes;
   # internetClientServer for the inbound side of the LAN/socket tools (port
