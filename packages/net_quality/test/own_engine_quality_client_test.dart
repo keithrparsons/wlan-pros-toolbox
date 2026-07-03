@@ -340,6 +340,104 @@ void main() {
       expect(dl.grade, QualityGrade.excellent);
       expect(dl.value, closeTo(100.0, 0.0001));
     });
+
+    test('carries the per-provider download diagnostics onto QualityResult',
+        () async {
+      // Three providers over a 4s window: two fast (30 MB -> 60 Mbps) and one
+      // throttled (5 MB -> 10 Mbps). The throttled one is rejected, so the
+      // headline (sum-of-survivors) is 120 Mbps and the median-of-survivors is
+      // 60 Mbps. All three appear in downloadProviderRates with their flags.
+      final latency = LatencyProbe(
+        host: 'h',
+        samples: 2,
+        connector: constConnector(10),
+      );
+      final throughput = ThroughputProbe(
+        downloadStreamCount: 3,
+        warmUp: Duration.zero,
+        uploadBytes: 10 * 1000 * 1000,
+        downloadEndpoints: <Uri>[
+          Uri.parse('https://fast1.test/down'),
+          Uri.parse('https://fast2.test/down'),
+          Uri.parse('https://throttled.test/down'),
+        ],
+        downloader: (uri, max) async =>
+            uri.host == 'throttled.test' ? 5 * 1000 * 1000 : 30 * 1000 * 1000,
+        uploader: (uri, bytes, max) async => bytes,
+        windowTimer: _passthroughTimer(const Duration(seconds: 4)),
+        timer: _passthroughTimer(const Duration(seconds: 2)),
+      );
+      final responsiveness = ResponsivenessProbe(
+        idleSamples: 1,
+        loadedSamples: 1,
+        latencySampler: () async => const Duration(milliseconds: 20),
+        loadGenerator: () async {},
+      );
+
+      final client = OwnEngineQualityClient(
+        latencyProbe: latency,
+        throughputProbe: throughput,
+        responsivenessProbe: responsiveness,
+      );
+
+      await client.measure().drain<void>();
+      final result = client.lastResult!;
+
+      // All three providers carried through, each flagged.
+      expect(result.downloadProviderRates, hasLength(3));
+      final byHost = <String, ProviderRate>{
+        for (final p in result.downloadProviderRates) p.host: p,
+      };
+      expect(byHost['fast1.test']!.mbps, closeTo(60.0, 0.0001));
+      expect(byHost['fast1.test']!.includedInAggregate, isTrue);
+      expect(byHost['throttled.test']!.mbps, closeTo(10.0, 0.0001));
+      expect(byHost['throttled.test']!.includedInAggregate, isFalse);
+
+      // Both aggregations exposed; headline metric stays sum-of-survivors.
+      expect(result.downloadSumOfSurvivors, closeTo(120.0, 0.0001));
+      expect(result.downloadMedianOfSurvivors, closeTo(60.0, 0.0001));
+      expect(result.metric(MetricIds.download)!.value, closeTo(120.0, 0.0001));
+      expect(result.downloadSumOfSurvivors,
+          closeTo(result.metric(MetricIds.download)!.value!, 0.0001));
+    });
+
+    test('download diagnostics are empty/null when the download stage fails',
+        () async {
+      final latency = LatencyProbe(
+        host: 'h',
+        samples: 2,
+        connector: constConnector(10),
+      );
+      final throughput = ThroughputProbe(
+        downloadStreamCount: 1,
+        maxRetries: 0,
+        throughputRetries: 0,
+        downloadEndpoints: <Uri>[Uri.parse('https://only.test/down')],
+        downloader: (uri, max) async =>
+            throw const ThroughputUnmeasurable('down'),
+        uploader: (uri, bytes, max) async => bytes,
+        windowTimer: _passthroughTimer(const Duration(seconds: 1)),
+        timer: _passthroughTimer(const Duration(seconds: 1)),
+      );
+      final responsiveness = ResponsivenessProbe(
+        idleSamples: 1,
+        loadedSamples: 1,
+        latencySampler: () async => const Duration(milliseconds: 20),
+        loadGenerator: () async {},
+      );
+
+      final client = OwnEngineQualityClient(
+        latencyProbe: latency,
+        throughputProbe: throughput,
+        responsivenessProbe: responsiveness,
+      );
+
+      await client.measure().drain<void>();
+      final result = client.lastResult!;
+      expect(result.downloadProviderRates, isEmpty);
+      expect(result.downloadSumOfSurvivors, isNull);
+      expect(result.downloadMedianOfSurvivors, isNull);
+    });
   });
 }
 
