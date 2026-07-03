@@ -304,6 +304,7 @@ void main() {
         ]);
 
       final client = Ndt7Client(
+        measureUpload: true,
         measurementDuration: const Duration(milliseconds: 300),
         locateFetcher: locateReturning(200, locateBodyFor()),
         connector: (url, protocol) async =>
@@ -335,6 +336,7 @@ void main() {
         ]);
 
       final client = Ndt7Client(
+        measureUpload: true,
         measurementDuration: const Duration(milliseconds: 200),
         locateFetcher: locateReturning(200, locateBodyFor()),
         connector: (url, protocol) async =>
@@ -349,12 +351,14 @@ void main() {
       expect(result.uploadMbps, closeTo(64.0, 0.0001));
     });
 
-    test('no server measurement -> Ndt7Unmeasurable', () async {
+    test('upload failure is non-fatal: download returns, upload stays null',
+        () async {
       final dl = FakeSocket()
         ..scriptAndClose(<Object>[List<int>.filled(1000, 1)]);
       final ul = FakeSocket()..script(<Object>[]); // server stays silent
 
       final client = Ndt7Client(
+        measureUpload: true,
         measurementDuration: const Duration(milliseconds: 200),
         locateFetcher: locateReturning(200, locateBodyFor()),
         connector: (url, protocol) async =>
@@ -363,7 +367,36 @@ void main() {
         clock: advancingClock(step: const Duration(milliseconds: 40)),
       );
 
-      expect(client.measure(), throwsA(isA<Ndt7Unmeasurable>()));
+      final result = await client.measure();
+      expect(result.downloadBytes, greaterThan(0),
+          reason: 'the download still stands on its own');
+      expect(result.uploadMbps, isNull,
+          reason: 'a silent upload server must not fail the whole test');
+    });
+
+    test('upload is OFF by default: uploadMbps null even if a server would answer',
+        () async {
+      final dl = FakeSocket()
+        ..scriptAndClose(<Object>[List<int>.filled(1000, 1)]);
+      final ul = FakeSocket()
+        ..script(<Object>[
+          serverUploadMeasurement(numBytes: 8000000, elapsedMicros: 1000000),
+        ]);
+
+      final client = Ndt7Client(
+        // measureUpload defaults to false
+        measurementDuration: const Duration(milliseconds: 200),
+        locateFetcher: locateReturning(200, locateBodyFor()),
+        connector: (url, protocol) async =>
+            url.path.contains('download') ? dl : ul,
+        downloadTimer: fixedTimer(const Duration(seconds: 1)),
+        clock: advancingClock(step: const Duration(milliseconds: 40)),
+      );
+
+      final result = await client.measure();
+      expect(result.uploadMbps, isNull);
+      expect(ul.sent, isEmpty,
+          reason: 'the upload socket must not be driven when upload is off');
     });
   });
 

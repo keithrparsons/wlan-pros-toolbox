@@ -107,6 +107,14 @@ class Ndt7Client {
   /// Defaults to [DateTime.now].
   final DateTime Function() clock;
 
+  /// Whether to run the upload stage. Defaults to **false**: download is the
+  /// honest headline number nearly everyone cares about, the upload stage adds
+  /// ~10s and is the memory-/parse-fragile path (it OOM-crashed iOS via
+  /// unbounded send queuing and the real server's measurement JSON didn't parse
+  /// the same as the test fake). Kept behind a flag — not deleted — so upload
+  /// can be re-enabled as an optional secondary metric once it's made reliable.
+  final bool measureUpload;
+
   /// Creates an NDT7 client. All seams default to real implementations; pass a
   /// fake [locateFetcher] / [connector] / [downloadTimer] / [clock] to drive the
   /// protocol logic with no network.
@@ -114,6 +122,7 @@ class Ndt7Client {
     Uri? locateUrl,
     this.measurementDuration = const Duration(seconds: 10),
     this.deadlineSlack = const Duration(seconds: 5),
+    this.measureUpload = false,
     this.minUploadMessageBytes = 8 * 1024,
     this.maxUploadMessageBytes = 64 * 1024,
     Ndt7LocateFetcher? locateFetcher,
@@ -152,16 +161,28 @@ class Ndt7Client {
   Future<Ndt7Result> measure() async {
     final targets = await locate();
 
+    // Download is the primary, honest number and must succeed for a result.
     final download = await _runDownload(targets);
-    final upload = await _runUpload(targets);
+
+    // Upload is best-effort and OFF by default ([measureUpload]). It is never
+    // allowed to fail the whole test or crash: a good download stands on its
+    // own, and its fields are simply null when upload was skipped or failed.
+    _StageOutcome? upload;
+    if (measureUpload) {
+      try {
+        upload = await _runUpload(targets);
+      } catch (_) {
+        upload = null;
+      }
+    }
 
     return Ndt7Result(
       downloadMbps: mbpsFor(download.bytes, download.elapsed),
-      uploadMbps: mbpsFor(upload.bytes, upload.elapsed),
+      uploadMbps: upload == null ? null : mbpsFor(upload.bytes, upload.elapsed),
       downloadBytes: download.bytes,
-      uploadBytes: upload.bytes,
+      uploadBytes: upload?.bytes,
       elapsedDownload: download.elapsed,
-      elapsedUpload: upload.elapsed,
+      elapsedUpload: upload?.elapsed,
       serverHost: download.serverHost,
     );
   }
@@ -644,39 +665,44 @@ class Ndt7Result {
   /// Download rate, megabits per second (client-side goodput).
   final double downloadMbps;
 
-  /// Upload rate, megabits per second (server-reported goodput).
-  final double uploadMbps;
+  /// Upload rate, megabits per second (server-reported goodput). Null when the
+  /// upload stage was skipped (the default) or could not be measured — the
+  /// download stands on its own; never a fabricated 0.
+  final double? uploadMbps;
 
   /// Total bytes received during the download window.
   final int downloadBytes;
 
-  /// Bytes the SERVER reported receiving during the upload window.
-  final int uploadBytes;
+  /// Bytes the SERVER reported receiving during the upload window. Null when
+  /// upload was skipped or unmeasurable.
+  final int? uploadBytes;
 
   /// Wall-clock elapsed of the download window.
   final Duration elapsedDownload;
 
-  /// Server-reported elapsed of the upload window.
-  final Duration elapsedUpload;
+  /// Server-reported elapsed of the upload window. Null when upload was skipped
+  /// or unmeasurable.
+  final Duration? elapsedUpload;
 
   /// The M-Lab server the measurement ran against.
   final String serverHost;
 
-  /// Creates a result.
+  /// Creates a result. Upload fields are optional — omitted/null when the upload
+  /// stage did not run or could not be measured.
   const Ndt7Result({
     required this.downloadMbps,
-    required this.uploadMbps,
     required this.downloadBytes,
-    required this.uploadBytes,
     required this.elapsedDownload,
-    required this.elapsedUpload,
     required this.serverHost,
+    this.uploadMbps,
+    this.uploadBytes,
+    this.elapsedUpload,
   });
 
   @override
   String toString() =>
       'Ndt7Result(down ${downloadMbps.toStringAsFixed(1)}Mbps, '
-      'up ${uploadMbps.toStringAsFixed(1)}Mbps, '
+      'up ${uploadMbps == null ? "n/a" : "${uploadMbps!.toStringAsFixed(1)}Mbps"}, '
       'server $serverHost)';
 }
 

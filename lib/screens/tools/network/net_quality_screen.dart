@@ -574,8 +574,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
             child: Semantics(
               liveRegion: true,
               child: Text(
-                'Running the full internet test, about 20 seconds (download, '
-                'then upload).',
+                'Running the full internet test, about 10 seconds.',
                 style: text.bodyLarge?.copyWith(color: colors.textSecondary),
               ),
             ),
@@ -605,7 +604,9 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final double elapsedSeconds =
-        (r.elapsedDownload + r.elapsedUpload).inMilliseconds / 1000.0;
+        (r.elapsedDownload + (r.elapsedUpload ?? Duration.zero))
+                .inMilliseconds /
+            1000.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -628,13 +629,16 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
           spokenValue: '${r.downloadMbps.toStringAsFixed(1)} megabits per second',
           emphasis: true,
         ),
-        _ndt7ReadoutRow(
-          context,
-          label: 'Upload',
-          value: '${r.uploadMbps.toStringAsFixed(1)} Mbps',
-          spokenValue: '${r.uploadMbps.toStringAsFixed(1)} megabits per second',
-          emphasis: true,
-        ),
+        // Upload is off by default; only render the row when it was measured.
+        if (r.uploadMbps != null)
+          _ndt7ReadoutRow(
+            context,
+            label: 'Upload',
+            value: '${r.uploadMbps!.toStringAsFixed(1)} Mbps',
+            spokenValue:
+                '${r.uploadMbps!.toStringAsFixed(1)} megabits per second',
+            emphasis: true,
+          ),
         _ndt7ReadoutRow(
           context,
           label: 'M-Lab server',
