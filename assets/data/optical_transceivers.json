@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "source": "Pax verification brief 2026-06-05 (IEEE 802.3 standards tables via Wikipedia + Cisco/FS.com vendor datasheets).",
+    "source": "IEEE 802.3 standards; Cisco and FS.com transceiver datasheets.",
     "note": "Reach figures are IEEE-standard maximums on the listed fiber. Rows flagged vendor:true are NOT IEEE-ratified (ZR/ZX/EX, 400G-ZR coherent DWDM); their reach is loss-budget dependent and must never be presented as an IEEE guarantee. Lead tiers (10G/25G/100G) carry lead:true and surface first. Edit this file to add/correct entries; OpticalTransceiverService re-parses it at load.",
     "schema": "tiers[]: { tier, formFactor, lead:bool, entries[]: { designation, rate, reach, fiber, fiberKind, wavelength, connector, connectorKind, notes, vendor:bool, reachCaveat } }; formFactors[]: { formFactor, maxRate, lanes, power, notes }",
     "variantCount": 35,
