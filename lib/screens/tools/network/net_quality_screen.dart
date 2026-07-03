@@ -55,21 +55,12 @@ class NetQualityScreen extends StatefulWidget {
     this.client,
     this.reachabilityProbe,
     this.monitor,
-    this.ndt7Client,
   });
 
   /// Measurement backend. Injected in tests (a [MockQualityClient] with no
   /// network); null in production, where the screen builds a real
   /// [OwnEngineQualityClient] targeting Cloudflare's one.one.one.one.
   final QualityClient? client;
-
-  /// Authoritative single-stream throughput engine for the opt-in "full
-  /// internet test" against an M-Lab research server. Injected with a fake in
-  /// tests; null in production, where the screen builds a real [Ndt7Client]
-  /// (production defaults: real Locate API + WebSocket + clock). Never touched
-  /// until the user accepts the consent sheet and taps run, so constructing a
-  /// real one here opens no network.
-  final Ndt7Client? ndt7Client;
 
   /// Reachability backend. Injected in tests with a fake [SiteProber] and a
   /// short site list; null in production, where the screen builds a real
@@ -91,19 +82,9 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
   late final QualityClient _client;
   late final ReachabilityProbe _reachability;
   late final LiveQualityMonitor _monitor;
-  late final Ndt7Client _ndt7;
 
   bool _running = false;
   String? _error;
-
-  // Opt-in "full internet test" (M-Lab NDT7) state. Separate from the quick
-  // test above: idle · running (~20s: download then upload) · success
-  // ([_ndt7Result]) · error ([_ndt7Error], with [_ndt7NoServer] distinguishing
-  // "no M-Lab server available" from a general "couldn't measure").
-  bool _ndt7Running = false;
-  Ndt7Result? _ndt7Result;
-  String? _ndt7Error;
-  bool _ndt7NoServer = false;
 
   // Transport progress.
   QualityPhase _phase = QualityPhase.idle;
@@ -128,9 +109,6 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     // one-shot client); injected with a fake sampler in tests. Only started on
     // a platform that can actually run the sockets — never on web.
     _monitor = widget.monitor ?? LiveQualityMonitor(host: 'one.one.one.one');
-    // Authoritative M-Lab engine. Constructing it opens no network; it only
-    // reaches out when measure() runs, gated behind the consent sheet below.
-    _ndt7 = widget.ndt7Client ?? Ndt7Client();
     if (NetworkSupport.activeNetworkSupported) {
       _monitor.start();
     }
@@ -210,57 +188,6 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
         });
       },
     );
-  }
-
-  /// Opt-in "full internet test": show the honest consent sheet first, and only
-  /// run the M-Lab NDT7 measurement if the user accepts. On failure it shows an
-  /// honest "couldn't measure" state (never a fabricated number), distinguishing
-  /// "no M-Lab server available" ([Ndt7NoServerAvailable]) from a general
-  /// unmeasurable transfer ([Ndt7Unmeasurable]).
-  Future<void> _runFullInternetTest() async {
-    final bool accepted =
-        await showFullInternetTestConsentSheet(context) ?? false;
-    if (!accepted || !mounted) return;
-
-    setState(() {
-      _ndt7Running = true;
-      _ndt7Result = null;
-      _ndt7Error = null;
-      _ndt7NoServer = false;
-    });
-
-    try {
-      final Ndt7Result result = await _ndt7.measure();
-      if (!mounted) return;
-      setState(() {
-        _ndt7Running = false;
-        _ndt7Result = result;
-      });
-      // WCAG 4.1.3 — announce completion to assistive tech.
-      SemanticsService.sendAnnouncement(
-        View.of(context),
-        'Full internet test complete',
-        TextDirection.ltr,
-      );
-    } on Ndt7NoServerAvailable {
-      // Subtype MUST be caught before its Ndt7Unmeasurable parent.
-      if (!mounted) return;
-      setState(() {
-        _ndt7Running = false;
-        _ndt7NoServer = true;
-        _ndt7Error =
-            'No M-Lab server is available to test against right now. '
-            'Please try again in a little while.';
-      });
-    } on Ndt7Unmeasurable {
-      if (!mounted) return;
-      setState(() {
-        _ndt7Running = false;
-        _ndt7Error =
-            "The internet test couldn't complete a measurement. Check your "
-            'connection and try again.';
-      });
-    }
   }
 
   @override
@@ -384,14 +311,6 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
                   if (ToolAssets.hasGraphic('net-quality'))
                     const SizedBox(height: AppSpacing.md),
                   _runCard(context),
-                  const SizedBox(height: AppSpacing.sm),
-                  _fullInternetTestCard(context),
-                  if (_ndt7Running ||
-                      _ndt7Result != null ||
-                      _ndt7Error != null) ...[
-                    const SizedBox(height: AppSpacing.sm),
-                    _fullInternetTestResultCard(context),
-                  ],
                   if (_running) ...[
                     const SizedBox(height: AppSpacing.sm),
                     _progressCard(context),
@@ -488,262 +407,6 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  /// Secondary, opt-in action card for the authoritative M-Lab NDT7 test. It is
-  /// visually distinct from the quick test above — an OUTLINED (secondary)
-  /// button, not the filled primary — and additive: the quick test is
-  /// untouched. Tapping it opens the honest consent sheet before anything runs.
-  Widget _fullInternetTestCard(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: colors.border, width: 1),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Semantics(
-            header: true,
-            child: Text(
-              'Full internet test',
-              style: text.labelMedium?.copyWith(
-                color: colors.textSecondary,
-                letterSpacing: 0.4,
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xxs),
-          Text(
-            'Runs a single-stream throughput test against an independent M-Lab '
-            'research server. It measures real end-to-end performance to a '
-            'remote server, so it reads lower than tools that hit the nearest '
-            "cache. That's the honest number.",
-            style: text.bodyLarge?.copyWith(color: colors.textSecondary),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Semantics(
-            button: true,
-            enabled: !_ndt7Running,
-            label: _ndt7Running
-                ? 'Running the full internet test'
-                : 'Run a full internet test against an M-Lab server',
-            child: OutlinedButton(
-              onPressed: _ndt7Running ? null : _runFullInternetTest,
-              child: Text(
-                _ndt7Running
-                    ? 'Running…'
-                    : 'Run a full internet test (M-Lab)',
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// States for the full internet test (SOP-007 §5): running (spinner + honest
-  /// ~20s caption) · success (download / upload / server / elapsed readout) ·
-  /// error (honest "couldn't measure", with the no-server case distinguished).
-  /// Never renders a fabricated number — the engine throws instead of faking 0.
-  Widget _fullInternetTestResultCard(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-
-    final Widget content;
-    if (_ndt7Running) {
-      content = Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
-          SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 2.5,
-              valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            // WCAG 4.1.3 — the running caption is the live status.
-            child: Semantics(
-              liveRegion: true,
-              child: Text(
-                'Running the full internet test, about 10 seconds.',
-                style: text.bodyLarge?.copyWith(color: colors.textSecondary),
-              ),
-            ),
-          ),
-        ],
-      );
-    } else if (_ndt7Result != null) {
-      content = _ndt7SuccessBody(context, _ndt7Result!);
-    } else {
-      content = _ndt7ErrorBody(context);
-    }
-
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: colors.border, width: 1),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: content,
-    );
-  }
-
-  /// Success readout: download / upload in mono lime (the computed values),
-  /// server host + elapsed in inline mono. Mbps rounded to one decimal.
-  Widget _ndt7SuccessBody(BuildContext context, Ndt7Result r) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    final double elapsedSeconds =
-        (r.elapsedDownload + (r.elapsedUpload ?? Duration.zero))
-                .inMilliseconds /
-            1000.0;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Semantics(
-          header: true,
-          child: Text(
-            'Full internet test result',
-            style: text.labelMedium?.copyWith(
-              color: colors.textSecondary,
-              letterSpacing: 0.4,
-            ),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        _ndt7ReadoutRow(
-          context,
-          label: 'Download',
-          value: '${r.downloadMbps.toStringAsFixed(1)} Mbps',
-          spokenValue: '${r.downloadMbps.toStringAsFixed(1)} megabits per second',
-          emphasis: true,
-        ),
-        // Upload is off by default; only render the row when it was measured.
-        if (r.uploadMbps != null)
-          _ndt7ReadoutRow(
-            context,
-            label: 'Upload',
-            value: '${r.uploadMbps!.toStringAsFixed(1)} Mbps',
-            spokenValue:
-                '${r.uploadMbps!.toStringAsFixed(1)} megabits per second',
-            emphasis: true,
-          ),
-        _ndt7ReadoutRow(
-          context,
-          label: 'M-Lab server',
-          value: r.serverHost,
-          spokenValue: r.serverHost,
-        ),
-        _ndt7ReadoutRow(
-          context,
-          label: 'Elapsed',
-          value: '${elapsedSeconds.toStringAsFixed(1)} s',
-          spokenValue: '${elapsedSeconds.toStringAsFixed(1)} seconds',
-        ),
-      ],
-    );
-  }
-
-  /// One label→value row in the full-test readout. The whole row is a single
-  /// semantic node (`label, value`) and the value uses DM Mono; [emphasis]
-  /// promotes it to the lime accent + H3-size mono for the two throughput
-  /// numbers (§8.5 — computed values), leaving server/elapsed as inline mono.
-  Widget _ndt7ReadoutRow(
-    BuildContext context, {
-    required String label,
-    required String value,
-    required String spokenValue,
-    bool emphasis = false,
-  }) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    final AppMonoText mono =
-        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
-    final TextStyle valueStyle = emphasis
-        ? mono.outputMedium.copyWith(color: colors.textAccent)
-        : mono.inlineCode.copyWith(color: colors.textSecondary);
-
-    return Semantics(
-      label: '$label, $spokenValue',
-      container: true,
-      child: ExcludeSemantics(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  label,
-                  style: text.bodyLarge?.copyWith(
-                    color: colors.textPrimary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Flexible(
-                child: Text(
-                  value,
-                  textAlign: TextAlign.right,
-                  overflow: TextOverflow.ellipsis,
-                  style: valueStyle,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Honest "couldn't measure" state. The verdict word carries the meaning
-  /// (§8.13 / WCAG 1.4.1 — the danger color only reinforces it); the no-server
-  /// case gets its own icon + heading so the user knows it is not their fault.
-  Widget _ndt7ErrorBody(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    final IconData icon =
-        _ndt7NoServer ? Icons.cloud_off_outlined : Icons.error_outline;
-    final String heading =
-        _ndt7NoServer ? 'No server available' : "Couldn't measure";
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Icon(icon, size: 20, color: colors.statusDanger),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Semantics(
-                header: true,
-                child: Text(
-                  heading,
-                  style: text.labelLarge?.copyWith(color: colors.statusDanger),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xxs),
-              Text(
-                _ndt7Error ?? 'The internet test could not complete.',
-                style: text.bodyLarge?.copyWith(color: colors.textSecondary),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 
@@ -1435,83 +1098,6 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
       'The Responsiveness grade is an indicative figure inspired by RFC 9097, '
       'not the full standard.',
       style: text.labelMedium?.copyWith(color: colors.textSecondary),
-    );
-  }
-}
-
-/// Honest consent sheet shown before the opt-in full internet test runs. The app
-/// has no AlertDialog convention; its established "dialog" is a modal bottom
-/// sheet on `surface2` (see `install_shortcut_sheet.dart`), so this matches it.
-///
-/// Resolves to `true` only when the user taps "Run test"; `false` on Cancel and
-/// `null` on a barrier/scrim dismissal — callers treat anything but `true` as a
-/// decline.
-Future<bool?> showFullInternetTestConsentSheet(BuildContext context) {
-  return showModalBottomSheet<bool>(
-    context: context,
-    backgroundColor: context.colors.surface2,
-    isScrollControlled: true,
-    builder: (BuildContext sheetContext) =>
-        const _FullInternetTestConsentSheet(),
-  );
-}
-
-/// The consent body: what the test does, why its number reads lower, the M-Lab
-/// open-data disclosure, and the run-sparingly ask — then [Cancel] / [Run test].
-class _FullInternetTestConsentSheet extends StatelessWidget {
-  const _FullInternetTestConsentSheet();
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-
-    return SafeArea(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 560),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            AppSpacing.sm,
-            AppSpacing.md,
-            AppSpacing.md,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Semantics(
-                header: true,
-                child: Text(
-                  'Run a full internet test?',
-                  style: text.headlineSmall,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                'This runs a single-stream internet throughput test against an '
-                'independent M-Lab research server (measurementlab.net). It '
-                'measures real end-to-end performance to a remote server, so it '
-                'reads lower than tools that hit the nearest cache. That\'s the '
-                'honest number. M-Lab publishes each result and your public IP '
-                'address as open research data. Please run it no more than a few '
-                'times per day.',
-                style: text.bodyLarge?.copyWith(color: colors.textSecondary),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              FilledButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Run test'),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              OutlinedButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancel'),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

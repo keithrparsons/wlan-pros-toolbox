@@ -8,7 +8,6 @@ export 'src/mock_quality_client.dart';
 export 'src/own_engine_quality_client.dart';
 export 'src/popular_sites.dart';
 export 'src/probes/latency_probe.dart';
-export 'src/probes/ndt7_client.dart';
 export 'src/probes/reachability_probe.dart';
 export 'src/probes/responsiveness_probe.dart';
 export 'src/probes/throughput_probe.dart';

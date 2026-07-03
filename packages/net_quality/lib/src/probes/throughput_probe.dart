@@ -95,6 +95,64 @@ enum ThroughputStage {
   upload,
 }
 
+/// Default low-side outlier threshold: a provider slower than 50% of the median
+/// per-provider download rate is treated as throttled and excluded. Chosen at
+/// the conservative end of the 50–60% band so only genuinely throttled servers
+/// are dropped; tunable per-probe via [ThroughputProbe.outlierRejectionFraction].
+const double kDefaultOutlierRejectionFraction = 0.5;
+
+/// How the surviving (non-outlier) providers are combined into the reported
+/// download rate.
+enum DownloadAggregation {
+  /// Sum the survivors' rates — the aggregate concurrent capacity of the link
+  /// (the default; the Ookla / Fast.com model).
+  sumOfSurvivors,
+
+  /// The median of the survivors' rates — a representative single-provider
+  /// rate, closer to a single-stream TCP-to-remote benchmark.
+  medianOfSurvivors,
+}
+
+/// One provider's achieved download rate, flagged with whether it survived
+/// outlier rejection. Exposed on [ThroughputStats.providerRates] so a caller
+/// can SEE the rejection working (which providers were dropped and why) during
+/// tuning and diagnostics.
+class ProviderRate {
+  /// The provider host that produced this stream's bytes.
+  final String host;
+
+  /// The provider's achieved rate over the steady-state window, in Mbps.
+  final double mbps;
+
+  /// Whether this provider was included in the reported aggregate (false = it
+  /// was rejected as a throttled/slow outlier).
+  final bool includedInAggregate;
+
+  /// Creates a per-provider rate record.
+  const ProviderRate({
+    required this.host,
+    required this.mbps,
+    required this.includedInAggregate,
+  });
+
+  @override
+  String toString() => 'ProviderRate($host ${mbps.toStringAsFixed(1)}Mbps'
+      '${includedInAggregate ? '' : ' [dropped]'})';
+}
+
+/// Result of combining per-provider rates: the aggregate Mbps plus the input
+/// providers annotated with their inclusion decision (order preserved).
+class DownloadAggregateResult {
+  /// The combined download rate over the survivors.
+  final double mbps;
+
+  /// The input providers, each annotated with [ProviderRate.includedInAggregate].
+  final List<ProviderRate> providers;
+
+  /// Creates an aggregate result.
+  const DownloadAggregateResult({required this.mbps, required this.providers});
+}
+
 /// Aggregated throughput statistics.
 class ThroughputStats {
   /// Download rate, megabits per second.
@@ -115,11 +173,25 @@ class ThroughputStats {
   /// Wall-clock time spent uploading.
   final Duration elapsedUpload;
 
-  /// Number of download streams that produced a usable measurement. With the
-  /// parallel-summed approach this is 1 or 2 (or more, if configured); the
-  /// reported [downloadMbps] is the aggregate of these streams over the shared
-  /// window, not a per-stream average.
+  /// Number of providers that produced a usable steady-state measurement (before
+  /// outlier rejection) — i.e. the number of real TCP connections that carried
+  /// bytes. Equals `providerRates.length`. The reported [downloadMbps] is the
+  /// outlier-rejected aggregate of these providers over the steady window, not a
+  /// per-stream average.
   final int downloadStreams;
+
+  /// Per-provider achieved download rates, each flagged with whether it survived
+  /// outlier rejection. Exposed for diagnostics/logging so the rejection can be
+  /// observed during tuning (empty on the upload-only / mock paths).
+  final List<ProviderRate> providerRates;
+
+  /// How the surviving providers were combined into [downloadMbps].
+  final DownloadAggregation aggregation;
+
+  /// The providers that were rejected as throttled/slow outliers (a convenience
+  /// view over [providerRates]).
+  List<ProviderRate> get droppedProviders =>
+      providerRates.where((p) => !p.includedInAggregate).toList();
 
   /// Creates throughput statistics.
   const ThroughputStats({
@@ -130,6 +202,8 @@ class ThroughputStats {
     required this.elapsedDownload,
     required this.elapsedUpload,
     this.downloadStreams = 1,
+    this.providerRates = const <ProviderRate>[],
+    this.aggregation = DownloadAggregation.sumOfSurvivors,
   });
 
   @override
@@ -157,19 +231,39 @@ class ThroughputUnmeasurable implements Exception {
 
 /// Measures download and upload throughput against swappable endpoints.
 ///
-/// Download uses a parallel-summed, multi-CDN strategy (the Ookla / Fast.com
-/// model): [downloadStreamCount] concurrent download streams run within ONE
-/// shared measurement window, each against a DIFFERENT endpoint from an ordered
-/// [downloadEndpoints] fallback list. The reported download rate is the SUM of
-/// all streams' bytes over the wall-clock window, divided into Mbps. Two flows
-/// share the link and each gets ~half its capacity, so summing their byte
-/// counts over the shared window yields the true aggregate throughput;
-/// averaging would under-report by ~half.
+/// ### Download — diverse pool, steady-state, outlier-rejected
 ///
-/// Upload is a single stream with the same multi-CDN fallback chain (the only
-/// verified reliable large-POST sink is Cloudflare `__up`; a second independent
-/// upload sink was not found, so upload is honest single-stream-with-fallback
-/// rather than faked parallelism).
+/// [downloadStreamCount] concurrent streams run within ONE shared window, each
+/// against a DIFFERENT provider from the diverse [downloadEndpoints] pool (see
+/// [_defaultDownloadEndpoints]). Using several independent networks — rather
+/// than hammering one provider — is what stops a single CDN's rate-limiting from
+/// collapsing the measurement mid-session (the 448→141 Mbps bug).
+///
+/// The rate is computed over the STEADY-STATE portion of the window only: the
+/// first [warmUp] seconds (TCP slow-start / ramp) are discarded, so the reported
+/// number reflects sustained throughput, not the ramp.
+///
+/// Each surviving provider's OWN achieved rate is measured, then combined with
+/// robust OUTLIER REJECTION: providers whose rate falls below
+/// [outlierRejectionFraction] × the median per-provider rate are treated as
+/// throttled/slow and EXCLUDED, so one rate-limited server can't drag the number
+/// down and repeated runs stay consistent even when a CDN throttles us mid-run.
+/// The survivors are combined per [downloadAggregation] (sum-of-survivors by
+/// default; median-of-survivors is a one-flag switch). Per-provider rates and
+/// which providers were dropped are exposed on [ThroughputStats.providerRates]
+/// for diagnostics.
+///
+/// Real parallelism: a separate [HttpClient] per stream over dart:io's HTTP/1.1
+/// transport, to DISTINCT hosts, guarantees N streams = N TCP connections = N
+/// congestion windows (no HTTP/2 multiplexing collapse). The observed
+/// per-provider stream count is [ThroughputStats.downloadStreams].
+///
+/// ### Upload
+///
+/// Upload is unchanged: a single stream with a multi-CDN fallback chain (the
+/// only verified reliable large-POST sink is Cloudflare `__up`), honest
+/// single-stream-with-fallback rather than faked parallelism. Warm-up discard
+/// and outlier rejection apply to the download path only.
 ///
 /// All network access goes through the [downloader] and [uploader] seams and
 /// timing through [timer] (and the parallel-window timing through
@@ -208,8 +302,38 @@ class ThroughputProbe {
 
   /// Hard cap on each transfer (per attempt). For the parallel download this is
   /// the WHOLE shared window, not per-stream, so the parallel run does not
-  /// double the time budget.
+  /// double the time budget. This is the download measurement window; longer is
+  /// steadier. Defaults to ~15 s (configurable).
   final Duration maxDuration;
+
+  /// The initial slice of the download window discarded as TCP slow-start /
+  /// ramp, so the reported rate is sustained STEADY-STATE throughput rather than
+  /// the inflated-or-deflated ramp. The steady window is `maxDuration - warmUp`.
+  ///
+  /// Applied to the download path only. Guarded: if [warmUp] is not strictly
+  /// less than the actual window, nothing is discarded (the whole window is
+  /// measured) so a short window can never divide by zero or go negative.
+  /// Defaults to ~3 s.
+  final Duration warmUp;
+
+  /// Robust low-side outlier threshold for combining per-provider download
+  /// rates: a provider whose achieved rate is below
+  /// `outlierRejectionFraction × medianPerProviderRate` is treated as
+  /// throttled/slow and EXCLUDED from the reported aggregate. Rejecting a
+  /// throttled outlier is what keeps repeated runs consistent when one CDN
+  /// rate-limits us mid-run. When providers cluster, none are dropped (the
+  /// max is always ≥ the median, so at least one provider always survives).
+  /// Defaults to [kDefaultOutlierRejectionFraction] (0.5 = drop anything slower
+  /// than half the median).
+  final double outlierRejectionFraction;
+
+  /// How the surviving (non-outlier) providers are combined into the reported
+  /// download rate. [DownloadAggregation.sumOfSurvivors] (default) reports the
+  /// aggregate concurrent capacity; [DownloadAggregation.medianOfSurvivors]
+  /// reports a representative single-provider rate (closer to a single-stream
+  /// TCP-to-remote benchmark). Switchable in one line for tuning against a real
+  /// link.
+  final DownloadAggregation downloadAggregation;
 
   /// Maximum number of fallback substitutions per download stream after its
   /// first endpoint fails, bounded so the run never loops forever. Also the
@@ -313,19 +437,43 @@ class ThroughputProbe {
   /// The first upload endpoint.
   Uri get uploadEndpoint => uploadEndpoints.first;
 
-  /// Default ordered download endpoints for the parallel-summed window. Six
-  /// independent Cloudflare streams (distinct `s=` query so no HTTP layer
-  /// coalesces them onto a single connection) fill the link the way Ookla /
-  /// Fast.com do, followed by two independent-provider large-file fallbacks used
-  /// only if Cloudflare is unhealthy. All HTTPS, no-auth, sized 2xx payloads.
-  ///   1-6. Cloudflare — honors `?bytes=N`, one stream each, proven primary.
-  ///   7.   OVH proof  — fixed 1 GB file, plain HTTPS GET (fallback).
-  ///   8.   Cachefly   — fixed 100 MB file, plain HTTPS GET (fallback).
+  /// Default ordered download endpoints — a DIVERSE, multi-provider pool spanning
+  /// five independent networks so no single provider can throttle the whole
+  /// measurement (the failure that produced the 448→141 Mbps intra-session
+  /// collapse: six streams hammering ONE provider that then rate-limited our IP).
+  ///
+  /// The first [downloadStreamCount] entries are each a DIFFERENT provider, so
+  /// concurrent streams land on distinct hosts/networks — distinct hosts also
+  /// cannot be coalesced onto one TCP connection, which (with a separate
+  /// `HttpClient` per stream and dart:io's HTTP/1.1 transport) guarantees N
+  /// streams = N real TCP connections and N congestion windows. The remainder
+  /// are per-stream fallbacks.
+  ///
+  /// Every endpoint below was curl-verified (2026-07-03) to return a sized,
+  /// streaming 2xx (200/206, `application/octet-stream` or `application/zip`),
+  /// not a 403/404 or an HTML redirect:
+  ///   0. Cloudflare  — honors `?bytes=N` (kept < 100 MB; ≥ 100 MB returns 403).
+  ///   1. OVH         — fixed 1 GB file, plain HTTPS GET.
+  ///   2. Hetzner nbg1 (Nuremberg) — fixed 1 GB file.
+  ///   3. Cachefly    — fixed 100 MB file.
+  ///   4. ThinkBroadband (UK) — fixed 1 GB file (the `download.` host; the
+  ///      `ipv4.download.` host has a cert-name mismatch, so it is NOT used).
+  ///   5. Hetzner fsn1 (Falkenstein) — fallback.
+  ///   6. Hetzner hel1 (Helsinki)    — fallback.
+  ///   7. OVH 10 GB   — fallback (same provider as [1], larger file).
+  ///
+  /// The literal count parameter on the Cloudflare entry is [bytes]; the fixed-
+  /// file providers ignore it. The per-stream request LOOP (see [_downloadOnce])
+  /// re-requests back-to-back so a capped endpoint still fills the whole window.
   static List<Uri> _defaultDownloadEndpoints(int bytes) => <Uri>[
-        for (var i = 0; i < 6; i++)
-          Uri.parse('https://speed.cloudflare.com/__down?bytes=$bytes&s=$i'),
+        Uri.parse('https://speed.cloudflare.com/__down?bytes=$bytes'),
         Uri.parse('https://proof.ovh.net/files/1Gb.dat'),
+        Uri.parse('https://nbg1-speed.hetzner.com/1GB.bin'),
         Uri.parse('https://cachefly.cachefly.net/100mb.test'),
+        Uri.parse('https://download.thinkbroadband.com/1GB.zip'),
+        Uri.parse('https://fsn1-speed.hetzner.com/1GB.bin'),
+        Uri.parse('https://hel1-speed.hetzner.com/1GB.bin'),
+        Uri.parse('https://proof.ovh.net/files/10Gb.dat'),
       ];
 
   /// Creates a throughput probe.
@@ -334,8 +482,11 @@ class ThroughputProbe {
     this.uploadBytes = 10 * 1000 * 1000,
     List<Uri>? downloadEndpoints,
     List<Uri>? uploadEndpoints,
-    this.downloadStreamCount = 6,
-    this.maxDuration = const Duration(seconds: 10),
+    this.downloadStreamCount = 5,
+    this.maxDuration = const Duration(seconds: 15),
+    this.warmUp = const Duration(seconds: 3),
+    this.outlierRejectionFraction = kDefaultOutlierRejectionFraction,
+    this.downloadAggregation = DownloadAggregation.sumOfSurvivors,
     this.maxRetries = 2,
     this.throughputRetries = 1,
     this.minBytesFloor = 0,
@@ -349,6 +500,9 @@ class ThroughputProbe {
     ElapsedTimer? windowTimer,
   })  : assert(downloadStreamCount >= 1, 'need at least one download stream'),
         assert(throughputRetries >= 0, 'retry budget cannot be negative'),
+        assert(warmUp >= Duration.zero, 'warm-up cannot be negative'),
+        assert(outlierRejectionFraction >= 0 && outlierRejectionFraction <= 1,
+            'outlier fraction must be in [0, 1]'),
         httpClientFactory = httpClientFactory ?? HttpClient.new,
         livenessProbe = livenessProbe ?? _defaultLivenessProbe,
         downloadEndpoints =
@@ -379,6 +533,71 @@ class ThroughputProbe {
     final seconds = elapsed.inMicroseconds / 1e6;
     if (seconds <= 0) return 0.0;
     return bytes * 8 / seconds / 1e6;
+  }
+
+  /// Combines per-provider download rates with robust low-side outlier
+  /// rejection, then aggregates the survivors. Pure and side-effect-free, so the
+  /// consistency-critical rejection logic is directly unit-testable.
+  ///
+  /// Rejection: compute the MEDIAN of the input rates; drop any provider whose
+  /// rate is below `rejectionFraction × median`. Because the maximum rate is
+  /// always ≥ the median ≥ the threshold, at least one provider always survives
+  /// — a throttled outlier is dropped, but the pack is never wiped out. When the
+  /// providers cluster (all within the threshold), none are dropped.
+  ///
+  /// Aggregation of survivors: [DownloadAggregation.sumOfSurvivors] returns the
+  /// sum; [DownloadAggregation.medianOfSurvivors] returns their median.
+  ///
+  /// Returns the aggregate Mbps and the input providers annotated (order
+  /// preserved) with their inclusion decision. An empty input yields `0.0` with
+  /// no providers (callers treat "no providers" as [ThroughputUnmeasurable],
+  /// never a reported 0).
+  static DownloadAggregateResult aggregateDownloadRates(
+    List<ProviderRate> providers, {
+    double rejectionFraction = kDefaultOutlierRejectionFraction,
+    DownloadAggregation mode = DownloadAggregation.sumOfSurvivors,
+  }) {
+    if (providers.isEmpty) {
+      return const DownloadAggregateResult(
+        mbps: 0.0,
+        providers: <ProviderRate>[],
+      );
+    }
+
+    final median = _median(providers.map((p) => p.mbps).toList());
+    final threshold = rejectionFraction * median;
+
+    final annotated = <ProviderRate>[];
+    final survivorRates = <double>[];
+    for (final p in providers) {
+      final keep = p.mbps >= threshold;
+      annotated.add(ProviderRate(
+        host: p.host,
+        mbps: p.mbps,
+        includedInAggregate: keep,
+      ));
+      if (keep) survivorRates.add(p.mbps);
+    }
+
+    final double aggregate;
+    switch (mode) {
+      case DownloadAggregation.sumOfSurvivors:
+        aggregate = survivorRates.fold<double>(0.0, (a, b) => a + b);
+      case DownloadAggregation.medianOfSurvivors:
+        aggregate = _median(survivorRates);
+    }
+
+    return DownloadAggregateResult(mbps: aggregate, providers: annotated);
+  }
+
+  /// Median of [values]. Returns `0.0` for an empty list; averages the two
+  /// middle elements for an even count. Sorts a copy (does not mutate input).
+  static double _median(List<double> values) {
+    if (values.isEmpty) return 0.0;
+    final sorted = List<double>.from(values)..sort();
+    final mid = sorted.length ~/ 2;
+    if (sorted.length.isOdd) return sorted[mid];
+    return (sorted[mid - 1] + sorted[mid]) / 2;
   }
 
   /// Runs the parallel-summed download then the single-stream upload and
@@ -434,13 +653,15 @@ class ThroughputProbe {
         ));
 
     return ThroughputStats(
-      downloadMbps: mbpsFor(dl.totalBytes, dl.elapsed),
+      downloadMbps: dl.aggregateMbps,
       uploadMbps: mbpsFor(ulBytes, ulElapsed),
-      downloadBytes: dl.totalBytes,
+      downloadBytes: dl.includedBytes,
       uploadBytes: ulBytes,
       elapsedDownload: dl.elapsed,
       elapsedUpload: ulElapsed,
       downloadStreams: dl.successfulStreams,
+      providerRates: dl.providerRates,
+      aggregation: downloadAggregation,
     );
   }
 
@@ -537,13 +758,20 @@ class ThroughputProbe {
     // list for its fallbacks, skipping back to its own start ordering.
     final perStreamEndpoints = _partitionEndpoints(streamCount);
 
+    // Per-stream STEADY-STATE bytes (post-warm-up) and the host that produced
+    // them, so each provider's own achieved rate can be computed and outliers
+    // rejected.
     final streamBytes = List<int>.filled(streamCount, 0);
+    final streamHosts = List<String?>.filled(streamCount, null);
 
     final elapsed = await windowTimer(() async {
       await Future.wait<void>(<Future<void>>[
         for (var i = 0; i < streamCount; i++)
           _runOneDownloadStream(perStreamEndpoints[i], maxDuration).then(
-            (bytes) => streamBytes[i] = bytes,
+            (result) {
+              streamBytes[i] = result.$1;
+              streamHosts[i] = result.$2.host;
+            },
             // A stream that exhausts its endpoints contributes 0 and does not
             // abort the window; the aggregate is computed from the survivors.
             onError: (Object _) => streamBytes[i] = 0,
@@ -551,20 +779,59 @@ class ThroughputProbe {
       ]);
     });
 
-    final totalBytes = streamBytes.fold<int>(0, (a, b) => a + b);
-    final successfulStreams = streamBytes.where((b) => b > minBytesFloor).length;
+    // Steady-state window = measured window minus the warm-up ramp. Guard:
+    // never discard the whole window (a short window or warm-up >= window keeps
+    // the full elapsed, so the rate can't divide by zero or go negative).
+    final effectiveWarmUp = warmUp < elapsed ? warmUp : Duration.zero;
+    var steadyElapsed = elapsed - effectiveWarmUp;
+    if (steadyElapsed <= Duration.zero) steadyElapsed = elapsed;
 
-    if (totalBytes <= minBytesFloor) {
+    // Build one sample per provider that delivered usable steady-state bytes.
+    final samples = <_ProviderSample>[];
+    for (var i = 0; i < streamCount; i++) {
+      final bytes = streamBytes[i];
+      final host = streamHosts[i];
+      if (bytes > minBytesFloor && host != null) {
+        samples.add(_ProviderSample(
+          host: host,
+          bytes: bytes,
+          mbps: mbpsFor(bytes, steadyElapsed),
+        ));
+      }
+    }
+
+    if (samples.isEmpty) {
       throw ThroughputUnmeasurable(
         'all $streamCount download stream(s) failed across '
         '${chain.length} endpoint(s)',
       );
     }
 
+    // Reject throttled/slow providers, then combine the survivors.
+    final result = aggregateDownloadRates(
+      <ProviderRate>[
+        for (final s in samples)
+          ProviderRate(host: s.host, mbps: s.mbps, includedInAggregate: true),
+      ],
+      rejectionFraction: outlierRejectionFraction,
+      mode: downloadAggregation,
+    );
+
+    // Sum the steady bytes of the providers that survived rejection (index-
+    // aligned with `samples`, since order is preserved end to end).
+    var includedBytes = 0;
+    for (var i = 0; i < samples.length; i++) {
+      if (result.providers[i].includedInAggregate) {
+        includedBytes += samples[i].bytes;
+      }
+    }
+
     return _DownloadOutcome(
-      totalBytes: totalBytes,
-      elapsed: elapsed,
-      successfulStreams: successfulStreams,
+      aggregateMbps: result.mbps,
+      includedBytes: includedBytes,
+      elapsed: steadyElapsed,
+      successfulStreams: samples.length,
+      providerRates: result.providers,
     );
   }
 
@@ -582,10 +849,11 @@ class ThroughputProbe {
   }
 
   /// Runs one download stream against an ordered [endpoints] try-list. Returns
-  /// the bytes of the first endpoint that yields a usable transfer. On failure
-  /// (throw, or bytes at or below [minBytesFloor]) substitutes the next
+  /// the steady-state bytes AND the [Uri] of the first endpoint that yields a
+  /// usable transfer (the host is needed for per-provider outlier rejection). On
+  /// failure (throw, or bytes at or below [minBytesFloor]) substitutes the next
   /// endpoint, bounded to `1 + [maxRetries]` attempts. Throws when exhausted.
-  Future<int> _runOneDownloadStream(
+  Future<(int, Uri)> _runOneDownloadStream(
     List<Uri> endpoints,
     Duration windowDuration,
   ) async {
@@ -601,7 +869,7 @@ class ThroughputProbe {
             'empty transfer from $uri ($bytes bytes <= floor $minBytesFloor)',
           );
         }
-        return bytes;
+        return (bytes, uri);
       } catch (e) {
         lastError = e;
       }
@@ -765,9 +1033,15 @@ class ThroughputProbe {
   Future<int> _downloadOnce(Uri uri, Duration maxDuration) async {
     final client = httpClientFactory()
       ..connectionTimeout = const Duration(seconds: 5);
-    var total = 0;
+    var rawTotal = 0; // all bytes received, any phase
+    var steadyTotal = 0; // bytes received AFTER the warm-up ramp
     var seq = 0;
-    final deadline = DateTime.now().add(maxDuration);
+    final start = DateTime.now();
+    final deadline = start.add(maxDuration);
+    // Discard the warm-up ramp (TCP slow-start), but never the whole window: if
+    // warm-up is not strictly shorter than the window (e.g. a short test window),
+    // measure everything so the returned rate is real, not zero.
+    final steadyStart = warmUp < maxDuration ? start.add(warmUp) : start;
     try {
       // Loop sized requests back-to-back (the keep-alive connection is reused
       // when the server allows it) until the window closes, so the stream stays
@@ -787,7 +1061,7 @@ class ThroughputProbe {
           // A failure on the FIRST request surfaces so the stream falls back to
           // another endpoint; a failure after real bytes just ends this
           // endpoint's contribution for the remaining window.
-          if (total == 0) {
+          if (rawTotal == 0) {
             throw ThroughputUnmeasurable(
               'download HTTP ${response.statusCode}',
             );
@@ -795,14 +1069,17 @@ class ThroughputProbe {
           break;
         }
         await for (final chunk in response) {
-          total += chunk.length;
-          if (DateTime.now().isAfter(deadline)) break;
+          rawTotal += chunk.length;
+          final now = DateTime.now();
+          // Count only steady-state bytes toward the measured throughput.
+          if (!now.isBefore(steadyStart)) steadyTotal += chunk.length;
+          if (now.isAfter(deadline)) break;
         }
       } while (DateTime.now().isBefore(deadline));
-      if (total == 0) {
+      if (rawTotal == 0) {
         throw const ThroughputUnmeasurable('download returned 0 bytes');
       }
-      return total;
+      return steadyTotal;
     } finally {
       client.close(force: true);
     }
@@ -890,15 +1167,46 @@ class ThroughputProbe {
   }
 }
 
-/// Internal result of the parallel download window.
+/// Internal result of the parallel download window, after warm-up discard and
+/// outlier-rejected aggregation.
 class _DownloadOutcome {
-  final int totalBytes;
+  /// The reported aggregate download rate (survivors combined per the probe's
+  /// [DownloadAggregation]).
+  final double aggregateMbps;
+
+  /// Sum of steady-state bytes across the providers that survived rejection.
+  final int includedBytes;
+
+  /// The steady-state elapsed the rate was computed over (window minus warm-up).
   final Duration elapsed;
+
+  /// Number of providers that delivered usable steady-state bytes (before
+  /// rejection). Equals the number of entries in [providerRates].
   final int successfulStreams;
 
+  /// Per-provider achieved rates, each flagged with whether it survived
+  /// outlier rejection.
+  final List<ProviderRate> providerRates;
+
   const _DownloadOutcome({
-    required this.totalBytes,
+    required this.aggregateMbps,
+    required this.includedBytes,
     required this.elapsed,
     required this.successfulStreams,
+    required this.providerRates,
+  });
+}
+
+/// Internal per-provider sample: the host, its steady-state bytes, and its
+/// achieved rate over the steady window.
+class _ProviderSample {
+  final String host;
+  final int bytes;
+  final double mbps;
+
+  const _ProviderSample({
+    required this.host,
+    required this.bytes,
+    required this.mbps,
   });
 }

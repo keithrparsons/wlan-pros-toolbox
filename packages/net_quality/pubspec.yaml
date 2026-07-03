@@ -14,16 +14,5 @@ publish_to: none
 environment:
   sdk: ^3.5.0
 
-dependencies:
-  # Cross-platform WebSocket transport for the M-Lab NDT7 client (works on all
-  # five Toolbox targets incl. web — it selects the dart:io or dart:html channel
-  # implementation at compile time). The NDT7 protocol logic depends only on the
-  # abstract Ndt7Socket seam, so this is used solely by the default connector.
-  web_socket_channel: ^3.0.0
-  # Cross-platform HTTP client for the NDT7 Locate API call (plain HTTPS/JSON).
-  # Used only by the default LocateFetcher seam; the Locate parsing is injectable
-  # and unit-tested with no network.
-  http: ^1.2.0
-
 dev_dependencies:
   test: ^1.25.0

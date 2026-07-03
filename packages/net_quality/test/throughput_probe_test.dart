@@ -26,19 +26,46 @@ void main() {
   });
 
   group('ThroughputProbe defaults', () {
-    test('ships >= 3 independent download endpoints, not all Cloudflare', () {
+    test('ships a DIVERSE multi-provider pool (not all one provider)', () {
       final probe = ThroughputProbe();
-      expect(probe.downloadEndpoints.length, greaterThanOrEqualTo(3));
+      expect(probe.downloadEndpoints.length, greaterThanOrEqualTo(5));
       final hosts = probe.downloadEndpoints.map((u) => u.host).toSet();
-      // Distinct providers — the whole point of multi-CDN fallback.
-      expect(hosts.length, greaterThanOrEqualTo(3));
+      // Several independent providers/networks — the whole point of the rework.
+      expect(hosts.length, greaterThanOrEqualTo(5));
       expect(probe.downloadEndpoints.first.host, 'speed.cloudflare.com');
+      // No single provider dominates the first (concurrent) slots: the first
+      // downloadStreamCount endpoints are all distinct hosts.
+      final firstN = probe.downloadEndpoints
+          .take(probe.downloadStreamCount)
+          .map((u) => u.host)
+          .toList();
+      expect(firstN.toSet().length, firstN.length,
+          reason: 'each concurrent stream must start on a distinct provider');
     });
 
-    test('download stream count defaults to 6 and is configurable', () {
-      expect(ThroughputProbe().downloadStreamCount, 6);
+    test('download stream count defaults to 5 and is configurable', () {
+      expect(ThroughputProbe().downloadStreamCount, 5);
       expect(ThroughputProbe(downloadStreamCount: 3).downloadStreamCount, 3);
       expect(ThroughputProbe(downloadStreamCount: 1).downloadStreamCount, 1);
+    });
+
+    test('window is ~15s, warm-up ~3s, and both are configurable', () {
+      expect(ThroughputProbe().maxDuration, const Duration(seconds: 15));
+      expect(ThroughputProbe().warmUp, const Duration(seconds: 3));
+      expect(
+        ThroughputProbe(
+          maxDuration: const Duration(seconds: 20),
+          warmUp: const Duration(seconds: 5),
+        ).maxDuration,
+        const Duration(seconds: 20),
+      );
+    });
+
+    test('outlier + aggregation defaults', () {
+      expect(ThroughputProbe().outlierRejectionFraction, 0.5);
+      expect(kDefaultOutlierRejectionFraction, 0.5);
+      expect(ThroughputProbe().downloadAggregation,
+          DownloadAggregation.sumOfSurvivors);
     });
 
     test('downloadEndpoint getter exposes the first endpoint (load gen seam)',
@@ -49,31 +76,94 @@ void main() {
     });
   });
 
-  group('ThroughputProbe.measure — parallel-summed download', () {
+  group('ThroughputProbe.aggregateDownloadRates — outlier rejection (pure)', () {
+    List<ProviderRate> rates(Map<String, double> m) => <ProviderRate>[
+          for (final e in m.entries)
+            ProviderRate(host: e.key, mbps: e.value, includedInAggregate: true),
+        ];
+
+    test('all providers cluster -> all kept, summed', () {
+      final r = ThroughputProbe.aggregateDownloadRates(
+        rates(<String, double>{'a': 100, 'b': 110, 'c': 95}),
+      );
+      expect(r.providers.every((p) => p.includedInAggregate), isTrue);
+      expect(r.mbps, closeTo(305.0, 0.0001)); // sum of survivors (default)
+    });
+
+    test('one throttled provider (< 50% of median) is DROPPED', () {
+      // median of [100,110,20] = 100; threshold = 50; 20 < 50 -> dropped.
+      final r = ThroughputProbe.aggregateDownloadRates(
+        rates(<String, double>{'fast1': 100, 'fast2': 110, 'throttled': 20}),
+      );
+      final dropped =
+          r.providers.where((p) => !p.includedInAggregate).map((p) => p.host);
+      expect(dropped, <String>['throttled']);
+      // Only the survivors are summed; the throttled server can't drag it down.
+      expect(r.mbps, closeTo(210.0, 0.0001));
+    });
+
+    test('median-of-survivors aggregation mode', () {
+      final r = ThroughputProbe.aggregateDownloadRates(
+        rates(<String, double>{'fast1': 100, 'fast2': 110, 'throttled': 20}),
+        mode: DownloadAggregation.medianOfSurvivors,
+      );
+      // Survivors [100,110] -> median 105.
+      expect(r.mbps, closeTo(105.0, 0.0001));
+    });
+
+    test('never wipes out the pack: the max always survives', () {
+      // Even a wildly spread set keeps at least the top provider.
+      final r = ThroughputProbe.aggregateDownloadRates(
+        rates(<String, double>{'a': 5, 'b': 6, 'c': 500}),
+      );
+      expect(r.providers.where((p) => p.includedInAggregate), isNotEmpty);
+      expect(r.mbps, greaterThan(0.0));
+    });
+
+    test('empty input -> 0 with no providers (caller treats as unmeasurable)',
+        () {
+      final r = ThroughputProbe.aggregateDownloadRates(<ProviderRate>[]);
+      expect(r.mbps, 0.0);
+      expect(r.providers, isEmpty);
+    });
+
+    test('threshold is tunable via rejectionFraction', () {
+      // With a 0.9 fraction, even a mild laggard (70 vs median 100) is dropped.
+      final r = ThroughputProbe.aggregateDownloadRates(
+        rates(<String, double>{'a': 100, 'b': 100, 'c': 70}),
+        rejectionFraction: 0.9,
+      );
+      final dropped =
+          r.providers.where((p) => !p.includedInAggregate).map((p) => p.host);
+      expect(dropped, <String>['c']);
+    });
+  });
+
+  group('ThroughputProbe.measure — parallel download aggregation', () {
     test('two streams of known byte counts SUM (not average) over the window',
         () async {
-      // Each stream returns 30 MB. The shared window is 4s. Aggregate must be
-      // the SUM: (30+30) MB * 8 / 4s / 1e6 = 120 Mbps. The AVERAGE of the two
-      // per-stream rates (each 30MB/4s = 60 Mbps) would be 60 Mbps — explicitly
-      // NOT what we report.
+      // Each stream returns 30 MB. Steady window is 4s (warm-up 0 in the test).
+      // Aggregate must be the SUM: (30+30) MB * 8 / 4s / 1e6 = 120 Mbps. The
+      // AVERAGE of the two per-stream rates (each 60 Mbps) would be 60 — NOT it.
       const perStream = 30 * 1000 * 1000;
       final probe = ThroughputProbe(
         downloadStreamCount: 2,
+        warmUp: Duration.zero,
         downloader: (uri, max) async => perStream,
         uploader: (uri, bytes, max) async => bytes,
         uploadBytes: 10 * 1000 * 1000,
-        // Window: 4s for the parallel download. Upload: 2s.
         windowTimer: _passthroughTimer(const Duration(seconds: 4)),
         timer: _passthroughTimer(const Duration(seconds: 2)),
       );
       final s = await probe.measure();
 
       expect(s.downloadStreams, 2);
-      expect(s.downloadBytes, 2 * perStream); // summed bytes
+      expect(s.downloadBytes, 2 * perStream); // summed steady bytes
       expect(s.downloadMbps, closeTo(120.0, 0.0001)); // the SUM
-      // Guard: it is NOT the per-stream average (which would be 60 Mbps).
       const perStreamRate = 60.0;
       expect(s.downloadMbps, isNot(closeTo(perStreamRate, 0.5)));
+      expect(s.providerRates, hasLength(2));
+      expect(s.providerRates.every((p) => p.includedInAggregate), isTrue);
       // 10 MB * 8 / 2s / 1e6 = 40 Mbps upload.
       expect(s.uploadMbps, closeTo(40.0, 0.0001));
     });
@@ -81,6 +171,7 @@ void main() {
     test('single-stream config reports just that one stream', () async {
       final probe = ThroughputProbe(
         downloadStreamCount: 1,
+        warmUp: Duration.zero,
         downloader: (uri, max) async => 50 * 1000 * 1000,
         uploader: (uri, bytes, max) async => bytes,
         uploadBytes: 10 * 1000 * 1000,
@@ -95,13 +186,93 @@ void main() {
       expect(s.uploadMbps, closeTo(40.0, 0.0001));
     });
 
-    test('one stream fails -> falls back to next endpoint; aggregate uses the '
-        'survivors', () async {
-      // Three endpoints. Stream 0 starts at endpoints[0], stream 1 at
-      // endpoints[1]. We make endpoints[0] fail; stream 0 falls back to its
-      // next endpoint and succeeds. Both streams ultimately contribute bytes.
+    test('a throttled provider is dropped from the reported aggregate',
+        () async {
+      // Three distinct providers. Two deliver 30 MB (60 Mbps over 4s); one is
+      // throttled to 5 MB (10 Mbps). Median = 60, threshold = 30, so the 10 Mbps
+      // outlier is EXCLUDED and can't drag the number down.
+      final probe = ThroughputProbe(
+        downloadStreamCount: 3,
+        warmUp: Duration.zero,
+        downloadEndpoints: <Uri>[
+          Uri.parse('https://fast1.test/down'),
+          Uri.parse('https://fast2.test/down'),
+          Uri.parse('https://throttled.test/down'),
+        ],
+        downloader: (uri, max) async =>
+            uri.host == 'throttled.test' ? 5 * 1000 * 1000 : 30 * 1000 * 1000,
+        uploader: (uri, bytes, max) async => bytes,
+        uploadBytes: 10 * 1000 * 1000,
+        windowTimer: _passthroughTimer(const Duration(seconds: 4)),
+        timer: _passthroughTimer(const Duration(seconds: 2)),
+      );
+      final s = await probe.measure();
+      // All three delivered bytes (real connections)...
+      expect(s.downloadStreams, 3);
+      // ...but only the two fast survivors are summed: 60 + 60 = 120 Mbps.
+      expect(s.downloadMbps, closeTo(120.0, 0.0001));
+      expect(s.downloadBytes, 2 * 30 * 1000 * 1000);
+      // Diagnostics expose exactly which provider was dropped.
+      final dropped = s.droppedProviders.map((p) => p.host);
+      expect(dropped, <String>['throttled.test']);
+    });
+
+    test('providers that all cluster are ALL kept', () async {
+      final bytesByHost = <String, int>{
+        'a.test': 30 * 1000 * 1000, // 60 Mbps
+        'b.test': 28 * 1000 * 1000, // 56 Mbps
+        'c.test': 31 * 1000 * 1000, // 62 Mbps
+      };
+      final probe = ThroughputProbe(
+        downloadStreamCount: 3,
+        warmUp: Duration.zero,
+        downloadEndpoints: <Uri>[
+          Uri.parse('https://a.test/down'),
+          Uri.parse('https://b.test/down'),
+          Uri.parse('https://c.test/down'),
+        ],
+        downloader: (uri, max) async => bytesByHost[uri.host]!,
+        uploader: (uri, bytes, max) async => bytes,
+        uploadBytes: 10 * 1000 * 1000,
+        windowTimer: _passthroughTimer(const Duration(seconds: 4)),
+        timer: _passthroughTimer(const Duration(seconds: 2)),
+      );
+      final s = await probe.measure();
+      expect(s.droppedProviders, isEmpty);
+      expect(s.providerRates.every((p) => p.includedInAggregate), isTrue);
+      // 60 + 56 + 62 = 178 Mbps.
+      expect(s.downloadMbps, closeTo(178.0, 0.0001));
+    });
+
+    test('median-of-survivors aggregation switch changes the reported number',
+        () async {
+      final probe = ThroughputProbe(
+        downloadStreamCount: 3,
+        warmUp: Duration.zero,
+        downloadAggregation: DownloadAggregation.medianOfSurvivors,
+        downloadEndpoints: <Uri>[
+          Uri.parse('https://fast1.test/down'),
+          Uri.parse('https://fast2.test/down'),
+          Uri.parse('https://throttled.test/down'),
+        ],
+        downloader: (uri, max) async =>
+            uri.host == 'throttled.test' ? 5 * 1000 * 1000 : 30 * 1000 * 1000,
+        uploader: (uri, bytes, max) async => bytes,
+        uploadBytes: 10 * 1000 * 1000,
+        windowTimer: _passthroughTimer(const Duration(seconds: 4)),
+        timer: _passthroughTimer(const Duration(seconds: 2)),
+      );
+      final s = await probe.measure();
+      expect(s.aggregation, DownloadAggregation.medianOfSurvivors);
+      // Survivors 60 & 60 -> median 60 (not the sum, 120).
+      expect(s.downloadMbps, closeTo(60.0, 0.0001));
+    });
+
+    test('one stream fails -> falls back to next endpoint; survivors aggregate',
+        () async {
       final probe = ThroughputProbe(
         downloadStreamCount: 2,
+        warmUp: Duration.zero,
         downloadEndpoints: <Uri>[
           Uri.parse('https://primary.test/down'), // fails
           Uri.parse('https://second.test/down'), // ok
@@ -119,22 +290,19 @@ void main() {
         timer: _passthroughTimer(const Duration(seconds: 2)),
       );
       final s = await probe.measure();
-      // Both streams succeeded (stream 0 via fallback, stream 1 directly).
       expect(s.downloadStreams, 2);
       expect(s.downloadBytes, 2 * 20 * 1000 * 1000);
       // (20+20) MB * 8 / 4s / 1e6 = 80 Mbps.
       expect(s.downloadMbps, closeTo(80.0, 0.0001));
     });
 
-    test('one stream fully fails (no fallback succeeds) -> aggregate from the '
-        'one survivor, never 0', () async {
-      // Single endpoint per direction so the failing stream has nowhere to fall
-      // back; the surviving stream still produces an honest aggregate.
+    test('one stream fully fails -> aggregate from the one survivor, never 0',
+        () async {
       var calls = 0;
       final probe = ThroughputProbe(
         downloadStreamCount: 2,
+        warmUp: Duration.zero,
         maxRetries: 0,
-        // Two endpoints: stream 0 -> good.test, stream 1 -> bad.test.
         downloadEndpoints: <Uri>[
           Uri.parse('https://good.test/down'),
           Uri.parse('https://bad.test/down'),
@@ -152,13 +320,11 @@ void main() {
         timer: _passthroughTimer(const Duration(seconds: 2)),
       );
       final s = await probe.measure();
-      // Only the good stream contributed.
       expect(s.downloadStreams, 1);
       expect(s.downloadBytes, 25 * 1000 * 1000);
-      // 25 MB * 8 / 4s / 1e6 = 50 Mbps — a real, honest value, not 0.
+      // 25 MB * 8 / 4s / 1e6 = 50 Mbps — honest, not 0.
       expect(s.downloadMbps, closeTo(50.0, 0.0001));
       expect(s.downloadMbps, greaterThan(0.0));
-      // maxRetries 0 -> each stream tries exactly one endpoint.
       expect(calls, 2);
     });
 
@@ -203,18 +369,58 @@ void main() {
     });
   });
 
+  group('ThroughputProbe.measure — warm-up (steady-state) discard', () {
+    test('rate is computed over window MINUS warm-up (ramp discarded)',
+        () async {
+      // The injected downloader returns the steady-state bytes for the window.
+      // With a 15s window and 3s warm-up, the steady window is 12s, so 120 MB
+      // of steady bytes => 120 MB * 8 / 12s / 1e6 = 80 Mbps (NOT /15s = 64).
+      final probe = ThroughputProbe(
+        downloadStreamCount: 1,
+        maxDuration: const Duration(seconds: 15),
+        warmUp: const Duration(seconds: 3),
+        downloader: (uri, max) async => 120 * 1000 * 1000,
+        uploader: (uri, bytes, max) async => bytes,
+        uploadBytes: 10 * 1000 * 1000,
+        windowTimer: _passthroughTimer(const Duration(seconds: 15)),
+        timer: _passthroughTimer(const Duration(seconds: 2)),
+      );
+      final s = await probe.measure();
+      expect(s.elapsedDownload, const Duration(seconds: 12));
+      expect(s.downloadMbps, closeTo(80.0, 0.0001));
+    });
+
+    test('warm-up >= window is guarded: whole window measured, never negative',
+        () async {
+      // A short window (2s) with a longer warm-up (3s): the guard measures the
+      // whole window rather than dividing by a negative steady elapsed.
+      final probe = ThroughputProbe(
+        downloadStreamCount: 1,
+        maxDuration: const Duration(seconds: 2),
+        warmUp: const Duration(seconds: 3),
+        downloader: (uri, max) async => 25 * 1000 * 1000,
+        uploader: (uri, bytes, max) async => bytes,
+        uploadBytes: 10 * 1000 * 1000,
+        windowTimer: _passthroughTimer(const Duration(seconds: 2)),
+        timer: _passthroughTimer(const Duration(seconds: 2)),
+      );
+      final s = await probe.measure();
+      expect(s.elapsedDownload, const Duration(seconds: 2));
+      // 25 MB * 8 / 2s / 1e6 = 100 Mbps.
+      expect(s.downloadMbps, closeTo(100.0, 0.0001));
+    });
+  });
+
   group('ThroughputProbe.measure — whole-window retry (stall, then success)',
       () {
     test(
         'download window stalls on every endpoint the first time, then the '
         'retry re-opens a fresh window and measures a real rate (not 0)',
         () async {
-      // The hotel transient: the whole parallel download window stalls out
-      // (every endpoint fails), then a moment later it measures fine. With one
-      // automatic retry the stall is absorbed and a real number comes back.
       var pass = 0;
       final probe = ThroughputProbe(
         downloadStreamCount: 1,
+        warmUp: Duration.zero,
         maxRetries: 0, // no inner endpoint fallback, so the WHOLE window fails
         throughputRetries: 1, // one outer retry of the window
         downloadEndpoints: <Uri>[Uri.parse('https://only.test/down')],
@@ -231,7 +437,6 @@ void main() {
         timer: _passthroughTimer(const Duration(seconds: 2)),
       );
       final s = await probe.measure();
-      // Two passes: the stalled window, then the successful retry window.
       expect(pass, 2);
       // 50 MB * 8 / 4s / 1e6 = 100 Mbps — a real measurement, not "Not measured".
       expect(s.downloadMbps, closeTo(100.0, 0.0001));
@@ -255,8 +460,6 @@ void main() {
         timer: _passthroughTimer(const Duration(seconds: 2)),
       );
       await probe.measure();
-      // Exactly one download call: a healthy window is never re-run, so a normal
-      // run never doubles in time.
       expect(calls, 1);
     });
 
@@ -280,7 +483,6 @@ void main() {
         probe.measure(),
         throwsA(isA<ThroughputUnmeasurable>()),
       );
-      // 1 initial window + 1 retry window = 2 download attempts.
       expect(calls, 2);
     });
 
@@ -288,20 +490,16 @@ void main() {
         'the retry NEVER unbounds the run: a persistently-stalled window plus '
         'one retry still aborts within ~2x the hard deadline, never hangs',
         () async {
-      // Defense-in-depth: even with the default retry, a real hung endpoint
-      // must abort within roughly two hard-deadline windows, not hang forever.
       final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
       server.listen((socket) {/* accept, send nothing */});
       addTearDown(() async => server.close());
 
       const maxDuration = Duration(seconds: 2);
-      // One window aborts at maxDuration + 5s slack = 7s; one retry => ~14s.
-      // Allow headroom but prove it is bounded, not hung.
       const upperBound = Duration(seconds: 22);
       final probe = ThroughputProbe(
         downloadStreamCount: 1,
         maxRetries: 0,
-        throughputRetries: 1, // the default — exercised end to end
+        throughputRetries: 1,
         maxDuration: maxDuration,
         downloadEndpoints: <Uri>[
           Uri.parse('http://127.0.0.1:${server.port}/down'),
@@ -337,7 +535,7 @@ void main() {
         probe.measure(),
         throwsA(isA<ThroughputUnmeasurable>()),
       );
-      expect(calls, 1); // no retry
+      expect(calls, 1);
     });
   });
 
@@ -404,7 +602,6 @@ void main() {
       final hitHosts = <String>{};
       final probe = ThroughputProbe(
         downloadStreamCount: 1,
-        // selfHostedFallbackEnabled defaults to false.
         livenessProbe: (uri, timeout) async {
           livenessCalls++;
           return true;
@@ -435,8 +632,8 @@ void main() {
       final hitHosts = <String>{};
       final probe = ThroughputProbe(
         downloadStreamCount: 1,
+        warmUp: Duration.zero,
         selfHostedFallbackEnabled: true,
-        // The endpoint does not resolve yet → probe reports "not live".
         livenessProbe: (uri, timeout) async => false,
         downloader: (uri, max) async {
           hitHosts.add(uri.host);
@@ -451,7 +648,6 @@ void main() {
         timer: _passthroughTimer(const Duration(seconds: 2)),
       );
       final s = await probe.measure();
-      // Real measurement off the primary, no fabricated 0, no scary error.
       expect(s.downloadMbps, closeTo(100.0, 0.0001));
       expect(hitHosts, contains('speed.cloudflare.com'));
       expect(hitHosts, isNot(contains('speedtest.wlanpros.com')),
@@ -468,7 +664,7 @@ void main() {
         maxRetries: 2,
         throughputRetries: 0,
         selfHostedFallbackEnabled: true,
-        livenessProbe: (uri, timeout) async => false, // not deployed yet
+        livenessProbe: (uri, timeout) async => false,
         downloader: (uri, max) async {
           hitHosts.add(uri.host);
           throw const ThroughputUnmeasurable('all public CDNs down');
@@ -492,6 +688,7 @@ void main() {
       final hitHosts = <String>{};
       final probe = ThroughputProbe(
         downloadStreamCount: 1,
+        warmUp: Duration.zero,
         selfHostedFallbackEnabled: true,
         livenessProbe: (uri, timeout) async =>
             throw StateError('probe blew up'),
@@ -517,7 +714,7 @@ void main() {
       final attemptedHosts = <String>[];
       final probe = ThroughputProbe(
         downloadStreamCount: 1,
-        // No inner endpoint cap so the stream walks the full chain.
+        warmUp: Duration.zero,
         maxRetries: 9,
         throughputRetries: 0,
         selfHostedFallbackEnabled: true,
@@ -528,10 +725,7 @@ void main() {
         },
         downloader: (uri, max) async {
           attemptedHosts.add(uri.host);
-          // Every public CDN fails this run; only our box answers, so the
-          // stream walks to the appended Rung-2 endpoint.
           if (uri.host == 'speedtest.wlanpros.com') {
-            // Cache-bust must be present per the OpenSpeedTest contract.
             expect(uri.queryParameters.containsKey('r'), isTrue);
             return 40 * 1000 * 1000;
           }
@@ -544,7 +738,6 @@ void main() {
       );
       final s = await probe.measure();
       expect(livenessCalls, 1);
-      // Cloudflare was attempted FIRST (primary), our box LAST (fallback).
       expect(attemptedHosts.first, 'speed.cloudflare.com');
       expect(attemptedHosts.last, 'speedtest.wlanpros.com');
       // 40 MB * 8 / 4s / 1e6 = 80 Mbps, measured via the live fallback.
@@ -563,7 +756,6 @@ void main() {
     });
 
     test('the host gate admits ONLY the fallback host, not the CDNs', () {
-      // Presence: every fallback endpoint variant is gated in.
       expect(
         ThroughputProbe.isFallbackRequest(speedTestFallbackDownloadEndpoint()),
         isTrue,
@@ -578,7 +770,6 @@ void main() {
         ),
         isTrue,
       );
-      // Absence: the shipped CDN / public endpoints are gated OUT.
       expect(
         ThroughputProbe.isFallbackRequest(
           Uri.parse('https://speed.cloudflare.com/__down?bytes=100'),
@@ -603,9 +794,6 @@ void main() {
         'real download to the FALLBACK host puts X-Toolbox-Client on the wire '
         '(end to end, via the real default transport)', () async {
       final headers = await _captureRequestHeaders(
-        // The request URI carries the real fallback host (so the host gate
-        // matches); connectionFactory redirects the socket to loopback so no
-        // DNS / network is needed. This is the actual wire, not a stubbed seam.
         requestUri: speedTestFallbackDownloadEndpoint(),
         isUpload: false,
       );
@@ -634,7 +822,6 @@ void main() {
         'real download to a NON-fallback (CDN) host does NOT leak the header',
         () async {
       final headers = await _captureRequestHeaders(
-        // A non-fallback host: the gate must leave the request untouched.
         requestUri: Uri.parse('https://speed.cloudflare.com/__down?bytes=1'),
         isUpload: false,
       );
@@ -661,14 +848,6 @@ void main() {
     test(
         'native (non-web) still applies the header: the web guard does not '
         'suppress it on the VM', () {
-      // The web omission is enforced by the compile-time `if (_kIsWeb) return;`
-      // guard in `_applyFallbackClientHeader`, which on dart2js makes the token
-      // string tree-shakeable out of the JS bundle. A pure unit test cannot
-      // observe that web-only elimination (these tests run on the native VM),
-      // so this asserts the COMPLEMENT: on native, `identical(0, 0.0)` is false,
-      // so the guard is dead and the header path above stays live. The two
-      // "real ... FALLBACK host puts X-Toolbox-Client on the wire" tests prove
-      // the header is still sent; this guards the sentinel that gates them.
       expect(
         identical(0, 0.0),
         isFalse,
@@ -711,6 +890,7 @@ void main() {
       var calls = 0;
       final probe = ThroughputProbe(
         downloadStreamCount: 1,
+        warmUp: Duration.zero,
         uploadBytes: 10 * 1000 * 1000,
         downloadEndpoints: <Uri>[
           Uri.parse('https://first.test/down'),
@@ -739,8 +919,6 @@ void main() {
       final probe = ThroughputProbe(
         downloadStreamCount: 1,
         maxRetries: 2,
-        // Isolate the INNER per-endpoint fallback count here; the OUTER
-        // whole-window retry has its own group above.
         throughputRetries: 0,
         downloadEndpoints: <Uri>[
           Uri.parse('https://a.test/down'),
@@ -757,7 +935,6 @@ void main() {
       );
       await expectLater(
           probe.measure(), throwsA(isA<ThroughputUnmeasurable>()));
-      // One stream, 3 endpoints, maxRetries 2 -> 3 attempts.
       expect(calls, 3);
     });
 
@@ -767,8 +944,6 @@ void main() {
       final probe = ThroughputProbe(
         downloadStreamCount: 1,
         maxRetries: 2,
-        // Isolate the INNER per-endpoint fallback count (floor-failure is
-        // retried, not accepted as 0); the OUTER window retry is tested above.
         throughputRetries: 0,
         downloadEndpoints: <Uri>[
           Uri.parse('https://a.test/down'),
@@ -785,7 +960,7 @@ void main() {
       );
       await expectLater(
           probe.measure(), throwsA(isA<ThroughputUnmeasurable>()));
-      expect(calls, 3); // floor-failure was retried, not accepted as 0
+      expect(calls, 3);
     });
   });
 }
@@ -802,12 +977,6 @@ ElapsedTimer _passthroughTimer(Duration d) {
 /// Runs the REAL default downloader / uploader against a loopback server while
 /// the request URI keeps its public host (so the host gate sees the true host),
 /// captures the raw request headers off the wire, and returns them lower-cased.
-///
-/// The request URI carries the real host (e.g. `speedtest.wlanpros.com`), but
-/// `HttpClient.connectionFactory` redirects the actual socket to a loopback
-/// server, so no DNS or network is needed and the gate is exercised against the
-/// genuine host. The loopback server reads the request head, then sends a tiny
-/// 200 with a 1-byte body so the transport sees a usable transfer.
 Future<Map<String, String>> _captureRequestHeaders({
   required Uri requestUri,
   required bool isUpload,
@@ -820,12 +989,6 @@ Future<Map<String, String>> _captureRequestHeaders({
     socket.listen(
       (data) {
         buffer.write(String.fromCharCodes(data));
-        // Respond as soon as the full request head (terminated by a blank line)
-        // has arrived. For an upload the body follows, but the headers we assert
-        // on are already on the wire by then. The download probe now LOOPS
-        // requests until its window closes, so every request (each a fresh
-        // connection — we send `Connection: close`) must be served, not just the
-        // first; the captured head is taken from the first request only.
         if (buffer.toString().contains('\r\n\r\n')) {
           final head = buffer.toString().split('\r\n\r\n').first;
           if (!captured.isCompleted) captured.complete(head.split('\r\n'));
@@ -842,8 +1005,6 @@ Future<Map<String, String>> _captureRequestHeaders({
     );
   });
 
-  // Route the public-host request to the loopback server. The probe's host gate
-  // sees `requestUri.host` (the real host), while bytes flow over loopback.
   HttpClient makeClient() => HttpClient()
     ..connectionFactory = (uri, proxyHost, proxyPort) =>
         Socket.startConnect(InternetAddress.loopbackIPv4, server.port);
@@ -863,20 +1024,16 @@ Future<Map<String, String>> _captureRequestHeaders({
     if (isUpload) {
       await probe.uploader(requestUri, 4 * 1024, const Duration(seconds: 3));
     } else {
-      // Short window: the download probe loops requests until the window closes,
-      // and we only need the first request's headers captured, so keep it brief.
       await probe.downloader(requestUri, const Duration(milliseconds: 200));
     }
   } catch (_) {
-    // The tiny canned response may trip the byte floor or close early; we only
-    // care about the request head, which is captured before any failure.
+    // We only care about the request head, captured before any failure.
   }
 
   final lines = await captured.future.timeout(const Duration(seconds: 5));
   await server.close();
 
   final headers = <String, String>{};
-  // Skip the request line (index 0); parse `Name: value` header lines.
   for (final line in lines.skip(1)) {
     final idx = line.indexOf(':');
     if (idx <= 0) continue;
@@ -888,19 +1045,10 @@ Future<Map<String, String>> _captureRequestHeaders({
 }
 
 /// Regression guard for the shipped 40%-freeze: the REAL default downloader /
-/// uploader (not an injected seam) must never hang on a stalled endpoint. These
-/// run against loopback servers that complete the TCP handshake (so
-/// HttpClient.connectionTimeout is satisfied) but then never send response
-/// headers, or stall mid-body — the exact conditions that froze the download
-/// stage at 40% on macOS + iOS. The transfer must ABORT within the hard
-/// deadline, never block forever.
+/// uploader (not an injected seam) must never hang on a stalled endpoint.
 void _registerRealTransportRegressionTests() {
   group('ThroughputProbe — real transport hard-deadline (40%-freeze guard)', () {
-    // Short maxDuration so the test's bound (maxDuration + 5s slack) stays well
-    // under the default test timeout, while still proving the deadline fires.
     const maxDuration = Duration(seconds: 2);
-    // The probe aborts at maxDuration + _transferDeadlineSlack (5s) = 7s.
-    // Allow headroom but assert it is bounded, not hung.
     const upperBound = Duration(seconds: 12);
 
     late ServerSocket noHeaderServer; // accepts, never responds
@@ -920,7 +1068,6 @@ void _registerRealTransportRegressionTests() {
             'Content-Length: 1000000\r\n'
             'Connection: keep-alive\r\n\r\n');
         socket.add(List<int>.filled(1024, 0)); // one chunk, then silence
-        // Never close: the response stream stalls awaiting the rest.
       });
     });
 
@@ -933,8 +1080,6 @@ void _registerRealTransportRegressionTests() {
       final probe = ThroughputProbe(
         downloadStreamCount: 1,
         maxRetries: 0,
-        // Isolate the per-transfer hard deadline (one window): the outer
-        // whole-window retry is exercised in its own group above.
         throughputRetries: 0,
         maxDuration: maxDuration,
         downloadEndpoints: <Uri>[
@@ -956,8 +1101,6 @@ void _registerRealTransportRegressionTests() {
       final probe = ThroughputProbe(
         downloadStreamCount: 1,
         maxRetries: 0,
-        // Isolate the per-transfer hard deadline (one window); outer retry
-        // is tested above.
         throughputRetries: 0,
         maxDuration: maxDuration,
         downloadEndpoints: <Uri>[
@@ -977,8 +1120,6 @@ void _registerRealTransportRegressionTests() {
     test(
         'a stalled endpoint falls back to a healthy one within the bound '
         '(stage completes, never freezes)', () async {
-      // Stream starts on the hung server, then falls back to a seam-injected
-      // healthy endpoint. The whole measure() must complete bounded.
       final probe = ThroughputProbe(
         downloadStreamCount: 1,
         maxRetries: 1,
@@ -987,11 +1128,8 @@ void _registerRealTransportRegressionTests() {
           Uri.parse('http://127.0.0.1:${noHeaderServer.port}/down'), // hangs
           Uri.parse('https://healthy.test/down'), // fallback
         ],
-        // Inject a healthy downloader ONLY for the fallback host; let the real
-        // default handle the loopback host so its hard deadline is exercised.
         downloader: (uri, max) async {
           if (uri.host == 'healthy.test') return 25 * 1000 * 1000;
-          // Delegate to the real transport for the loopback (hung) endpoint.
           return _realDownload(uri, max);
         },
         uploader: (uri, bytes, max) async => bytes,

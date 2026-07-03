@@ -19,6 +19,7 @@ void main() {
       );
       final throughput = ThroughputProbe(
         downloadStreamCount: 1,
+        warmUp: Duration.zero,
         downloader: (uri, max) async => 50 * 1000 * 1000,
         uploader: (uri, bytes, max) async => bytes,
         // 50MB/4s = 100 Mbps download -> excellent (single stream window).
@@ -298,6 +299,7 @@ void main() {
       );
       final throughput = ThroughputProbe(
         downloadStreamCount: 1,
+        warmUp: Duration.zero,
         downloadBytes: 50 * 1000 * 1000,
         uploadBytes: 10 * 1000 * 1000,
         downloadEndpoints: <Uri>[
