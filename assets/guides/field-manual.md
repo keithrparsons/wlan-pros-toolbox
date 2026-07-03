@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · covers 153 tools · app v1.5.11_
+_Compiled 2026-07-02 · covers 153 tools · app v1.5.12_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -88,7 +88,7 @@ A one-shot transport-quality measurement covering latency, jitter, loss, downloa
 2. Tap "Run test" for the full one-shot measurement (download/upload/responsiveness run only on a full run).
 3. Read the six graded rows and the popular-sites reachability table.
 
-**Formula or method.** All this app's own engine. Latency / jitter / loss: 10 sequential TCP-connect RTTs to one.one.one.one:443 (not ICMP — the sandbox blocks raw sockets). Jitter is RFC-3550-style mean deviation between consecutive samples; loss is failed-connects ÷ attempts × 100. With zero successful samples, latency and jitter report "Unavailable" but loss is a real 100%. Download: parallel-summed, multi-CDN. Two concurrent streams in one shared window, each against a different endpoint (Cloudflare speed.cloudflare.com/__down, OVH proof.ovh.net, Cachefly), summing bytes over the wall-clock window. ~25 MB/stream, 10s window cap. If every stream fails, it raises an honest "couldn't measure" — never a fake 0 Mbps. Upload: single stream with multi-CDN fallback (only Cloudflare __up is a verified large-POST sink — honest single-stream, not faked parallelism). A non-2xx or empty transfer is an honest failure, not 0. Responsiveness (RPM): a simplified single-flow loaded-latency estimate inspired by RFC 9097 / Apple networkQuality, NOT the full multi-flow RPM standard. It samples loaded RTT while a download flow runs, then RPM = 60000 / loadedAvgMs. Reachability: TCP-connect (port 443) to 14 well-known cloud-app hosts — a mix the public and a WLAN pro both recognize: social/consumer (Facebook, Instagram, TikTok, YouTube, Netflix) plus pro/infra (Google, iCloud, Microsoft 365, Cloudflare, AWS, Zoom, Slack, GitHub) and a Cloudflare DNS anchor. Grade bands: Latency ms — Excellent <20, Good <50, Fair <100, Poor ≥100 (grounded in ITU-T G.114, our cut points). Jitter ms — <5/<15/<30. Loss % — 0/<1/<2.5. Responsiveness RPM — ≥1000/≥500/≥100. Download Mbps — ≥100/≥25/≥5 (explicitly a heuristic). Upload Mbps — ≥20/≥5/≥1 (heuristic).
+**Formula or method.** All this app's own engine. Latency / jitter / loss: 10 sequential TCP-connect RTTs to one.one.one.one:443 (not ICMP — the sandbox blocks raw sockets). Jitter is RFC-3550-style mean deviation between consecutive samples; loss is failed-connects ÷ attempts × 100. With zero successful samples, latency and jitter report "Unavailable" but loss is a real 100%. Download: parallel-summed, multi-server. Several concurrent streams (5 by default) share one window of about 15 seconds, each against a different independent public server or CDN from a diverse pool (Cloudflare, OVH, Hetzner, Cachefly, ThinkBroadband). The first few seconds of TCP slow-start ramp are discarded, so the number is sustained steady-state throughput, not the ramp. Each server's own rate is measured; any server that comes back below roughly half the median (a throttled or slow outlier) is dropped, and the survivors' rates are summed into the aggregate download figure, so one slow server cannot drag the result down. If every stream fails, it raises an honest "couldn't measure" — never a fake 0 Mbps. Upload: single stream with multi-CDN fallback (only Cloudflare __up is a verified large-POST sink — honest single-stream, not faked parallelism). A non-2xx or empty transfer is an honest failure, not 0. Responsiveness (RPM): a simplified single-flow loaded-latency estimate inspired by RFC 9097 / Apple networkQuality, NOT the full multi-flow RPM standard. It samples loaded RTT while a download flow runs, then RPM = 60000 / loadedAvgMs. Reachability: TCP-connect (port 443) to 14 well-known cloud-app hosts — a mix the public and a WLAN pro both recognize: social/consumer (Facebook, Instagram, TikTok, YouTube, Netflix) plus pro/infra (Google, iCloud, Microsoft 365, Cloudflare, AWS, Zoom, Slack, GitHub) and a Cloudflare DNS anchor. Grade bands: Latency ms — Excellent <20, Good <50, Fair <100, Poor ≥100 (grounded in ITU-T G.114, our cut points). Jitter ms — <5/<15/<30. Loss % — 0/<1/<2.5. Responsiveness RPM — ≥1000/≥500/≥100. Download Mbps — ≥100/≥25/≥5 (explicitly a heuristic). Upload Mbps — ≥20/≥5/≥1 (heuristic).
 
 **Field notes**
 - Platform differences: runs on macOS, Windows, Linux, Android, iOS over dart:io sockets/HTTP. On web it routes to the download-the-app fallback (no sockets).
@@ -106,7 +106,7 @@ Show the live connected-AP link details: SSID, BSSID, RSSI, noise, SNR, Tx/Rx ra
 1. macOS: open the tool; it pulls a CoreWLAN snapshot. Tap Refresh to re-read. SSID and BSSID are gated behind macOS Location Services; tap Grant (or open the Location settings pane) to reveal them. The radio metrics do not need Location.
 2. iOS: this is live streaming only. Install the combined "WLAN Pros Live" companion Shortcut (one-time, via the iCloud link), then tap Start. The Shortcut loops, harvesting the connected AP each cycle via the stock "Get Network Details" action and handing JSON back to the app; Stop freezes the last values. There is no one-tap snapshot on iOS.
 
-**Formula or method.** All sources normalize into one ConnectedAp model. macOS comes from CoreWLAN via the com.wlanpros.toolbox/wifi_info native channel; iOS comes from the Shortcut JSON parsed by WiFiDetails (case-insensitive keys, tolerant numeric parse). In iOS Live mode, RSSI and SNR get hard grades against Keith-reviewed bands; Tx/Rx rates get a trend (Rising/Falling/Steady) rather than a hard grade, because a "good" data rate is entirely relative to band/width/MCS. RSSI bands (dBm): Excellent ≥-59 (>-60), Good ≥-67, Fair ≥-72, Poor below. SNR bands (dB): Excellent ≥36 (>35), Good ≥25, Fair ≥15, Poor below.
+**Formula or method.** All sources normalize into one ConnectedAp model. macOS comes from CoreWLAN via the com.wlanpros.toolbox/wifi_info native channel; iOS comes from the Shortcut JSON parsed by WiFiDetails (case-insensitive keys, tolerant numeric parse). In iOS Live mode, RSSI and SNR get hard grades against the bands below; Tx/Rx rates get a trend (Rising/Falling/Steady) rather than a hard grade, because a "good" data rate is entirely relative to band/width/MCS. RSSI bands (dBm): Excellent ≥-59 (>-60), Good ≥-67, Fair ≥-72, Poor below. SNR bands (dB): Excellent ≥36 (>35), Good ≥25, Fair ≥15, Poor below.
 
 **Field notes**
 - macOS (CoreWLAN): exposes SSID/BSSID (Location-gated), RSSI, noise, SNR (reported directly), Tx rate, PHY mode → standard label, channel, channel width, band (reported), country code, interface name, hardware MAC. It does NOT expose the Rx rate or Tx power (public CoreWLAN limitation); those render "Not exposed by macOS CoreWLAN", never estimated.
@@ -159,24 +159,26 @@ Keep them straight from the start.
 
 #### Two numbers, two questions
 
-- **Internet throughput** is shown by *Test My Connection* and *Network Quality*. This is how much real data your device can push to and pull from the wider internet right now.
+- **Internet throughput** is shown by *Test My Connection* and *Network Quality*. The headline figure is your download, what people mean by internet speed, measured against the wider internet right now. Upload is measured too and shown as its own separate number.
 - **Usable Wi-Fi capacity** is shown by *Wi-Fi vs Internet*. This is roughly how much throughput the Wi-Fi hop itself can carry, based on the rate your radios negotiated.
 
 Same app, two measurements, two purposes. Everything below explains what each one actually does and why a number you see somewhere else may not match.
 
 #### How the internet number is measured
 
-The internet throughput figure comes from an aggregate-capacity measurement, the same class of test the well-known speed tests run. It is built to be comparable to them, not built to read low.
+The internet download figure comes from an aggregate-capacity measurement, the same class of test the well-known speed tests run. It is built to be comparable to them, not built to read low.
 
 Here is what the app actually does:
 
-- **Download uses two streams at once, to two different independent public servers.** The bytes from both streams are summed to get the aggregate download rate. Running parallel streams is how you fill a fast connection; a single stream often cannot.
-- **The measurement runs inside one bounded window of about 10 seconds.** Download and upload each get that same bounded window. The rate is the data moved divided by the time it took.
-- **Upload uses a single stream** over the same bounded window.
-- **The servers are neutral public destinations, not a cherry-picked host.** The app does not go shopping for the one nearby server that will post the best possible peak.
+- **Download opens several streams at once, to a diverse set of independent public servers.** Five streams by default, each against a different provider or CDN, never a single provider. Running parallel streams across independent networks is how you fill a fast connection, and how you keep one provider's rate-limiting from collapsing the whole measurement.
+- **The window runs about 15 seconds, and the ramp-up is thrown away.** The first few seconds are TCP slow-start, when the connection has not yet reached full speed. The app discards them and reports the sustained, steady-state rate, not the ramp.
+- **Each server's own rate is measured, and slow outliers are dropped.** Any server that comes back far below the pack, below roughly half the median rate, is treated as throttled and excluded. The surviving servers' rates are summed into the aggregate download figure, so one bad or throttled server cannot drag the result down.
+- **The reported internet number is the download.** That is what people mean by internet speed. Upload is measured too, over its own window, and shown as its own separate number.
 - **When it cannot get a clean measurement, it says so.** You get an honest "couldn't measure," never a fake 0. A zero on a working connection would be a lie, and the app will not tell it.
 
-That is the whole method. Parallel streams, neutral servers, a bounded window, and an honest failure state when the network will not cooperate.
+Responsiveness, the RPM figure, is a single-flow loaded-latency reading taken while a download runs. It holds up well across servers, so it stays steady even when the throughput number moves.
+
+Privacy stays simple. These are anonymous downloads from public servers. Nothing about you is sent or published, and the whole measurement runs on your device.
 
 #### Why your speed test may read differently
 
@@ -184,12 +186,12 @@ No single number is "the" speed of a connection. Throughput is a measurement, an
 
 What moves the number:
 
-- **Which server you hit, and how well it is peered to your ISP.** A server your provider peers with directly has a shorter, cleaner path than a neutral public host somewhere else.
-- **How many parallel streams the test opens.** More streams fill a fast connection more completely and post a higher aggregate.
-- **How long the window runs, and whether the test ramps up first.** A longer run with a warm-up ramp gives a connection time to reach its peak; a short bounded window captures a steady real-world rate instead.
+- **Which server you hit, and how well it is peered to your ISP.** A single nearby edge cache that your provider peers with directly has a shorter, cleaner path than a spread of independent public servers out on the wider internet.
+- **How many streams the test opens, and to how many destinations.** More streams across more independent networks measure real aggregate capacity; a single stream to one close cache often posts a higher-looking peak.
+- **Whether the ramp-up counts.** A test that includes the first seconds of TCP slow-start can report a different number than one that throws the ramp away and measures only the sustained rate, the way this app does.
 - **Time of day and congestion.** The same connection is not the same connection at 3 a.m. and at 8 p.m.
 
-Put those together and the pattern is easy to see. A test tuned to saturate a nearby, ISP-peered server with many parallel streams over a longer ramp can post a higher peak than a bounded two-stream test to neutral public servers. That gap is a difference in method. Both tests measured something real; they just measured it differently.
+Put those together and the pattern is easy to see. A one-number tool that saturates the single nearest edge cache can post a higher figure than a steady-state measurement summed across several independent public servers. That gap is a difference in method. Both tests measured something real. This app measures the honest, sustained throughput to real internet destinations, which is the number that matches what your connection actually delivers day to day.
 
 #### What the Wi-Fi number is, and what it is not
 
@@ -205,9 +207,9 @@ Do not compare the Wi-Fi capacity number to an internet speed test. Different ro
 
 #### What our internet number represents
 
-When the Toolbox shows you an internet throughput figure, it is real throughput to neutral public destinations, measured over a bounded window and reported honestly. It is not the highest number the app could have coaxed out of a hand-picked nearby server, and it is not padded to look good next to anyone else's result.
+When the Toolbox shows you an internet download figure, it is real, sustained throughput to a diverse set of neutral public servers, measured over about a 15-second window with the slow-start ramp discarded and throttled outliers dropped. It is not the highest number the app could have coaxed out of a single hand-picked nearby cache, and it is not padded to look good next to anyone else's result.
 
-If another test on the same connection reads higher, that is the method talking: a different server, more streams, a longer ramp. If the Toolbox cannot get a clean read, it tells you it couldn't rather than inventing a number.
+If another test on the same connection reads higher, that is the method talking: a single nearby edge cache, or a run that counts its ramp-up. If the Toolbox cannot get a clean read, it tells you it couldn't rather than inventing a number.
 
 Two throughput numbers, two questions. The internet figure is your honest path to the wider internet. The Wi-Fi figure is the capacity of the hop to your Access Point. Keep them straight and each one tells you exactly what it means.
 

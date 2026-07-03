@@ -374,7 +374,7 @@ String _aboutPlainText(AppVersionInfo? info) {
     ..writeln(v.display)
     ..writeln()
     ..writeln('Credits')
-    ..writeln('Built by the team at WLAN Pros.')
+    ..writeln('Built by WLAN Pros.')
     ..writeln('This app uses open-source software. See the in-app licenses.');
   return b.toString();
 }
@@ -1129,7 +1129,7 @@ class _CreditsSection extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'Built by the team at WLAN Pros.',
+              'Built by WLAN Pros.',
               style: text.bodyLarge?.copyWith(color: colors.textSecondary),
             ),
             const SizedBox(height: AppSpacing.xs),

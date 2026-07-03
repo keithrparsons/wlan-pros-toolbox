@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "generatedFrom": "FIELD-MANUAL.md (2026-06-03)",
+  "generatedFrom": "FIELD-MANUAL.md",
   "tools": {
     "fspl": {
       "name": "Free Space Path Loss",
@@ -1071,7 +1071,7 @@
         "The 868 and 915 MHz bands of 802.15.4 are region-restricted; channels 11 to 26 in 2.4 GHz are global.",
         "Data source: cross-checked against the LoRa Alliance RP002, IEEE 802.15.4, the Bluetooth SIG Core Spec, and the CSA/Zigbee spec. The 802.15.4 center frequencies were verified against the standard's formula (channel 0 = 868.3 MHz; channels 1 to 10 = 906 + 2 x (k-1); channels 11 to 26 = 2405 + 5 x (k-11))."
       ],
-      "source": "Values come from a verified research brief cross-checked against the published standards."
+      "source": "Values are cross-checked against the published standards."
     },
     "channel-map": {
       "name": "Channel Map",
@@ -1151,12 +1151,12 @@
       "algorithm": null,
       "example": null,
       "fieldNotes": [
-        "The SNR and EVM figures on the cards are representative, order-of-magnitude demands, not exact 802.11 MCS thresholds (Keith-confirmed). The relationship, not the precise number, is the point. Use the MCS Index tool for the spec rate and modulation table.",
+        "The SNR and EVM figures on the cards are representative, order-of-magnitude demands, not exact 802.11 MCS thresholds. The relationship, not the precise number, is the point. Use the MCS Index tool for the spec rate and modulation table.",
         "EVM (Error Vector Magnitude) is how far the received symbol lands from the ideal point, expressed as a percentage (or in dB) of the reference amplitude. As the order rises, the decision boundaries shrink, so higher-order QAM needs a lower EVM and a higher SNR.",
         "The diagrams are shown on an always-dark card in both light and dark app themes so they never look inverted. They are marked decorative for screen readers, since every fact is also in the screen's text and copy output.",
         "The Copy action exports the order, bits, and SNR/EVM summary as a tab-separated table plus the note that the numbers are representative."
       ],
-      "source": "Educational reference content reviewed by Keith."
+      "source": "Educational reference content."
     },
     "signal-thresholds": {
       "name": "Signal Thresholds",
@@ -1451,7 +1451,7 @@
         "Size is the connector body width (across the flats for threaded parts, outer diameter for board-level parts). Treat it as a rough field-recognition aid, not a precise mechanical spec.",
         "Connector photos appear only where a freely-licensed one exists. N-Type, TNC, and RP-TNC currently have no such photo, so they show a line diagram rather than a stand-in."
       ],
-      "source": "Drafted by Keith Parsons, then verified and expanded by the team (2026-06-05)."
+      "source": "By Keith Parsons."
     },
     "plmn-id-reference": {
       "name": "PLMN ID Reference",
@@ -1533,7 +1533,7 @@
       "fieldNotes": [
         "What it shows: the 7 layers, top (7 Application) to bottom (1 Physical), each with its layer number (in lime), name, a one-word function keyword, PDU (Data / Segment / Packet / Frame / Bit), example protocols, and typical hardware.",
         "Footnote: PDU means protocol data unit; layers 5 through 7 are commonly grouped together as \"data\" in TCP/IP practice; ARP is widely placed at Layer 2 (some texts call it L2/L3), and it resolves Layer 3 addresses to Layer 2 addresses.",
-        "The function column is a neutral keyword (Keith's decision: no custom mnemonic). Standard reference, not region-specific.",
+        "The function column is a neutral keyword. Standard reference, not region-specific.",
         "Based on the ISO/IEC 7498-1:1994 standard plus the usual IETF/IEEE mappings of protocols to layers."
       ],
       "source": "The tool draws on the published OSI standard and the standard protocol-to-layer mappings."
@@ -1614,7 +1614,7 @@
         "What it shows, per emoji: rank (1 to 30), the emoji itself, its official Unicode name, and a \"common use\" note on how people usually read it today.",
         "The intro is explicit: \"common use\" is how people usually read each emoji today, not an official Unicode definition; meanings drift by audience, region, and generation.",
         "The emoji is drawn using your device's built-in color-emoji font, so it looks native on each platform.",
-        "Names come from Unicode; the ranking is weighted toward private-messaging use (Keith's decision, 2026-05-31), not social-media chatter."
+        "Names come from Unicode; the ranking is weighted toward private-messaging use, not social-media chatter."
       ],
       "source": "The tool draws on the official Unicode names, with a messaging-weighted popularity ranking."
     },
@@ -1628,16 +1628,17 @@
         "On iOS, the Wi-Fi signal details (RSSI, channel, rate, PHY) come from the companion Shortcut, and running the test fires it AUTOMATICALLY. You don't have to tap anything to capture the Wi-Fi RF. The details then appear both on screen (the live \"Wi-Fi signal\" graphs) and in the copied report. If the automatic capture can't reach the Shortcut (not installed, or the launch was cancelled), the \"Your Wi-Fi link\" card offers a manual \"Capture Wi-Fi details\" button instead of a grid of \"Unavailable,\" so you know it's a capture step, not a broken tool. The security type and BSSID still fill in on their own without the Shortcut.",
         "On macOS, granting Location only affects whether the network name and BSSID show (macOS 14 and later hide those two fields until you allow Location); the verdict itself is based on link rate and never needs it. To save you a trip into System Settings, running the test brings up the native \"Allow Location\" prompt the FIRST time the permission hasn't been set (at most once per screen open, never on every run). If Location isn't granted, the \"Your Wi-Fi link\" card shows a short inline hint where the network name would sit, \"Wi-Fi network name hidden — Location access needed,\" with a one-tap action: \"Allow Location\" while the prompt can still appear, or \"Open settings\" (a direct link to the macOS Location Services pane) once it's been denied. After you grant it, the network name and BSSID fill in; until then the copied report labels them \"Unavailable (grant Location access to show the network name)\" rather than a bare \"Unavailable.\"",
         "Read the two status chips (Wi-Fi / Internet) and the headline.",
-        "The whole test takes about half a minute (three back-to-back roughly 10-second measurement windows: download, upload, then a loaded-responsiveness check). A short \"This usually takes about half a minute\" note shows under the loader.",
+        "The whole test takes up to about a minute (three back-to-back measurement windows of up to about 15 seconds each: download, upload, then a loaded-responsiveness check). A short \"This usually takes about half a minute\" note shows under the loader.",
         "Use the \"Run again\" action at the top right to re-run the whole Wi-Fi and internet test.",
         "Tap \"Copy these details\" for a thorough, help-desk-ready report. It opens with a \"WLAN Pros Toolbox — Connection Report\" header plus the test date and time, then clearly labelled sections: Wi-Fi (SSID, BSSID, RSSI, noise, SNR, Tx/Rx rate, channel, width, band, PHY, security), Internet (download, upload, latency, jitter, loss, responsiveness), DNS (a real resolution-time measurement), Network (local IP, subnet mask, default gateway, plus DHCP server / DNS server(s) / VLAN marked honestly unavailable), ISP (public IP, ISP/org, ASN, when reachable), cloud apps reachability, and the verdict. Unavailable fields say so; the ISP and cloud-apps sections are left out cleanly when you're offline.",
         "Scroll to the bottom for the \"Cloud apps reachable?\" panel. It checks whether your device can reach recognizable services (Facebook, Instagram, TikTok, YouTube, Netflix, Google, iCloud, Microsoft 365, Cloudflare, AWS, Zoom, Slack, GitHub, and a Cloudflare DNS anchor) and times each connection. Its \"Re-check cloud apps\" button re-runs ONLY this panel, not the whole test."
       ],
       "inputs": [],
-      "algorithm": "It runs two things in one pass and feeds both into the shared verdict logic: a read of your current Wi-Fi link (from macOS directly, or from the companion Shortcut on iOS), and a full network-quality run against a neutral public destination. It turns the network-quality grades into a simple internet-health call: internet is rated GOOD only when download, upload, latency, and loss all grade good or excellent; otherwise it's marginal. The five engineer-grade verdicts are collapsed into four everyday outcomes, plus a two-part chip status where Wi-Fi and internet each read \"Fine,\" \"Slow,\" or \"Couldn't check.\" The outcomes are: \"Looks like your Wi-Fi\"; \"Mostly your Wi-Fi\"; \"Looks like your Internet\"; \"Both look fine\"; \"Couldn't check everything\" (internet measured, Wi-Fi not); and \"Couldn't complete the check\" (neither measured).",
+      "algorithm": "It runs two things in one pass and feeds both into the shared verdict logic: a read of your current Wi-Fi link (from macOS directly, or from the companion Shortcut on iOS), and a full network-quality run against a diverse set of neutral public servers. It turns the network-quality grades into a simple internet-health call: internet is rated GOOD only when download, upload, latency, and loss all grade good or excellent; otherwise it's marginal. The five engineer-grade verdicts are collapsed into four everyday outcomes, plus a two-part chip status where Wi-Fi and internet each read \"Fine,\" \"Slow,\" or \"Couldn't check.\" The outcomes are: \"Looks like your Wi-Fi\"; \"Mostly your Wi-Fi\"; \"Looks like your Internet\"; \"Both look fine\"; \"Couldn't check everything\" (internet measured, Wi-Fi not); and \"Couldn't complete the check\" (neither measured).",
       "example": null,
       "topNotes": [
-        "Why your speed test may read differently: no single number is \"the\" speed of a connection. When the Toolbox shows you an internet throughput figure, it is real throughput to neutral public destinations, measured over a set window and reported honestly. If another test on the same connection reads higher, that's the method talking: a different server, more streams, a longer ramp-up. If the Toolbox can't get a clean read, it tells you so rather than inventing a number. (reference: How the Toolbox Measures Throughput)",
+        "The internet number is a real-world download measurement. The app pulls from several independent public servers at once, drops any that come back throttled or far below the pack, and adds up the rest. That makes it an honest figure for your everyday path to the internet, and it can read lower than a one-number tool that hits only the single nearest cache. Upload is measured and shown on its own. (reference: How the Toolbox Measures Throughput)",
+        "Why your speed test may read differently: no single number is \"the\" speed of a connection. When the Toolbox shows you an internet download figure, it is real, sustained throughput to a diverse set of neutral public servers, measured over about a 15-second window with the slow-start ramp discarded. If another test on the same connection reads higher, that's the method talking: a single nearby edge cache, or a run that counts its ramp-up. If the Toolbox can't get a clean read, it tells you so rather than inventing a number. (reference: How the Toolbox Measures Throughput)",
         "What the Wi-Fi number is, and what it is not: it's your usable Wi-Fi capacity, which the app estimates at about 55% of the negotiated Wi-Fi link rate. Real-world throughput over Wi-Fi runs roughly 50 to 60% of that negotiated rate once you account for protocol overhead, acknowledgments, contention, and retries. This number describes the Wi-Fi hop only. It is the road between your device and the access point, and nothing past it. It says nothing about your internet speed. Don't compare the Wi-Fi capacity number to an internet speed test. (reference: How the Toolbox Measures Throughput)"
       ],
       "fieldNotes": [
@@ -1650,7 +1651,7 @@
         "\"Make sure you're on Wi-Fi and try again\" is the honest answer when nothing measured, never a fake zero.",
         "The cloud apps panel times a connection to each service on port 443 (sandboxed iOS and macOS apps can't send raw pings). A green check means the service answered and shows how long that connection took; it is NOT a measure of in-app call or stream quality. An unreachable service shows the word \"unreachable\" with its own distinct icon, never color alone. The list is a mix both the public and a WLAN pro recognize: social and consumer services (Facebook, Instagram, TikTok, YouTube, Netflix) plus pro and infrastructure services (Google, iCloud, Microsoft 365, Cloudflare, AWS, Zoom, Slack, GitHub) and a Cloudflare DNS liveness anchor.",
         "The copied report and ISP info: \"Copy these details\" produces a sectioned report (header and date/time, then Wi-Fi / Internet / DNS / Network / ISP / cloud apps / verdict). The ISP section comes from a keyless lookup of your device's public internet address, giving the public IP, ISP or org name, and ASN. It runs alongside the measurement, never holds up the verdict, and fails gracefully: offline or a failed lookup simply leaves the ISP section out rather than inventing an address.",
-        "The test isn't a fixed length. It runs a quick under-a-second latency burst, then a roughly 10-second download window, a roughly 10-second upload window, and a roughly 10-second loaded-responsiveness check, so about 25 to 35 seconds end to end, near the low end on a fast link and the high end on a slow or stalled endpoint.",
+        "The test isn't a fixed length. It runs a quick under-a-second latency burst, then a roughly 15-second download window, an up-to-15-second upload window, and a roughly 15-second loaded-responsiveness check, so roughly 30 to 45 seconds end to end, near the low end on a fast link and the high end on a slow or stalled endpoint.",
         "DNS resolution time: the report and the on-screen Network card carry a REAL DNS resolution-time measurement, timing a lookup of a stable host (cloudflare.com, then google.com, then apple.com) through your device's own resolver. It's a native in-app measurement, so it's safe inside the sandboxed macOS App Store build and works on iOS. It's labelled \"DNS resolution time\" so it's never confused with anything the network-quality measurement produces (that measurement does not test DNS). A failed lookup marks DNS \"Not available,\" never a made-up time.",
         "Network detail fields, what is and isn't obtainable: local IP, subnet mask, and default gateway are read natively and work on both platforms. DHCP server and DNS server(s) are NOT available to a sandboxed app (reading them needs system-level access the macOS sandbox blocks and iOS doesn't provide), so both show \"Not available on this device.\" A VLAN (802.1Q) tag is stripped by the switch or access point before the frame reaches the device's OS, so no app on the device can see it; it shows \"Not visible to endpoint devices.\" None of these are ever guessed."
       ],
@@ -1671,7 +1672,7 @@
       "algorithm": "The tool runs a set of about 33 plain-English rules across nine areas: the overall verdict, signal, noise and signal-to-noise, band and channel width, internet quality, DNS, security, whether popular cloud apps are reachable, and honesty checks for anything the phone didn't measure. It checks those rules against the same result already on your screen, using the exact same thresholds the rest of the app uses, so nothing contradicts. Findings are ordered by how serious they are (critical, then important, then context), which is why the verdict always comes first. Reassuring \"no problem here\" notes are hidden unless a real issue also turned up, so the report never wastes your time narrating a non-issue. Everything happens on your device: no network call, nothing stored, nothing leaves the phone.",
       "example": null,
       "fieldNotes": [
-        "The exact recommendation wording is still in draft, pending final sign-off and a voice pass. Any finding whose wording isn't final yet carries an honest \"draft guidance\" note, and the report shows a draft banner, so advice never reads as final before it is.",
+        "Some recommendation wording is still being finalized. Any finding whose wording isn't final yet carries an honest \"draft guidance\" note, and the report shows a draft banner, so advice never reads as final before it is.",
         "Two rules deliberately give you the honest trade-off instead of a blanket \"switch\": the \"you're on 2.4 GHz\" note and the \"narrow channel width\" note never tell you to just change bands or force the widest channel. Wider is not automatically better, and 2.4 GHz is the right choice for range and IoT.",
         "If the platform didn't measure a field, no rule fires on it. Where something genuinely couldn't be read (for example channel width on an iPhone, or Wi-Fi signal details), the report explains the gap rather than guessing."
       ],
@@ -1688,7 +1689,7 @@
         "Read the six graded rows and the popular-sites reachability table."
       ],
       "inputs": [],
-      "algorithm": "The app measures everything itself. Latency, jitter, and loss come from timing 10 back-to-back connection attempts to a well-known public host on port 443 (it times connections rather than classic ping, because the desktop sandbox blocks that). Jitter is the average variation between one sample and the next; loss is the share of attempts that failed. If every attempt fails, latency and jitter honestly read \"Unavailable\" while loss is a real 100%. Download runs two streams at once against different public content servers and adds up the bytes moved over the timed window (about 25 MB per stream, capped at 10 seconds), so it reflects your link's total capacity; if every stream fails it says so rather than showing a fake 0. Upload is an honest single stream (only one public destination is a verified large-upload sink), and an empty or failed transfer reads as a failure, not 0. Responsiveness is a simplified estimate of how the connection holds up while busy: it measures round-trip time during a download and converts it to a responsiveness-per-minute figure (this is a lightweight take inspired by the industry method, not the full standard). Reachability is a quick connection test to 14 well-known cloud hosts a mix of everyday and professional users recognize (Facebook, Instagram, TikTok, YouTube, Netflix, Google, iCloud, Microsoft 365, Cloudflare, AWS, Zoom, Slack, GitHub, and a DNS anchor). Grade bands: Latency ms Excellent under 20, Good under 50, Fair under 100, Poor 100 or more (grounded in the ITU-T G.114 guidance). Jitter ms under 5 / under 15 / under 30. Loss % 0 / under 1 / under 2.5. Responsiveness 1000+ / 500+ / 100+. Download Mbps 100+ / 25+ / 5+ (a rule of thumb). Upload Mbps 20+ / 5+ / 1+ (a rule of thumb).",
+      "algorithm": "The app measures everything itself. Latency, jitter, and loss come from timing 10 back-to-back connection attempts to a well-known public host on port 443 (it times connections rather than classic ping, because the desktop sandbox blocks that). Jitter is the average variation between one sample and the next; loss is the share of attempts that failed. If every attempt fails, latency and jitter honestly read \"Unavailable\" while loss is a real 100%. Download runs several streams at once (five by default), each against a different independent public server or CDN from a diverse pool, over a shared window of about 15 seconds. The first few seconds of TCP slow-start ramp are discarded, so the figure is sustained steady-state throughput, not the ramp. Each server's own rate is measured, any server that comes back below roughly half the median is dropped as a throttled outlier, and the survivors' rates are summed into the aggregate download, so one slow server cannot drag the number down; if every stream fails it says so rather than showing a fake 0. Upload is an honest single stream (only one public destination is a verified large-upload sink), and an empty or failed transfer reads as a failure, not 0. Responsiveness is a simplified estimate of how the connection holds up while busy: it measures round-trip time during a download and converts it to a responsiveness-per-minute figure (this is a lightweight take inspired by the industry method, not the full standard). Reachability is a quick connection test to 14 well-known cloud hosts a mix of everyday and professional users recognize (Facebook, Instagram, TikTok, YouTube, Netflix, Google, iCloud, Microsoft 365, Cloudflare, AWS, Zoom, Slack, GitHub, and a DNS anchor). Grade bands: Latency ms Excellent under 20, Good under 50, Fair under 100, Poor 100 or more (grounded in the ITU-T G.114 guidance). Jitter ms under 5 / under 15 / under 30. Loss % 0 / under 1 / under 2.5. Responsiveness 1000+ / 500+ / 100+. Download Mbps 100+ / 25+ / 5+ (a rule of thumb). Upload Mbps 20+ / 5+ / 1+ (a rule of thumb).",
       "example": null,
       "topNotes": [
         "Why your speed test may read differently: no single number is \"the\" speed of a connection. When the Toolbox shows an internet throughput figure, it is real throughput to neutral public destinations, measured over a fixed window and reported honestly. If another test on the same connection reads higher, that is the method talking: a different server, more streams, a longer ramp-up. If the Toolbox can't get a clean read, it tells you it couldn't rather than inventing a number. (see: How the Toolbox Measures Throughput)"
@@ -1711,7 +1712,7 @@
         "iOS: this is live streaming only. Install the combined \"WLAN Pros Live\" companion Shortcut once (via the iCloud link), then tap Start. The Shortcut loops, reading the connected access point each cycle and handing the details back to the app; Stop freezes the last values. There is no one-tap snapshot on iOS."
       ],
       "inputs": [],
-      "algorithm": "All the platforms feed into one common picture of the connected access point. On macOS the details come straight from the system Wi-Fi framework; on iOS they come from the companion Shortcut, read tolerantly so small formatting differences don't break anything. In iOS Live mode, RSSI and SNR are graded against Keith-reviewed bands, while Tx/Rx rates get a trend (Rising / Falling / Steady) rather than a hard grade, because a \"good\" data rate depends entirely on band, width, and modulation. RSSI bands (dBm): Excellent -59 or stronger, Good -67 or stronger, Fair -72 or stronger, Poor below that. SNR bands (dB): Excellent 36 or higher, Good 25 or higher, Fair 15 or higher, Poor below that.",
+      "algorithm": "All the platforms feed into one common picture of the connected access point. On macOS the details come straight from the system Wi-Fi framework; on iOS they come from the companion Shortcut, read tolerantly so small formatting differences don't break anything. In iOS Live mode, RSSI and SNR are graded against the bands below, while Tx/Rx rates get a trend (Rising / Falling / Steady) rather than a hard grade, because a \"good\" data rate depends entirely on band, width, and modulation. RSSI bands (dBm): Excellent -59 or stronger, Good -67 or stronger, Fair -72 or stronger, Poor below that. SNR bands (dB): Excellent 36 or higher, Good 25 or higher, Fair 15 or higher, Poor below that.",
       "example": null,
       "fieldNotes": [
         "macOS shows SSID/BSSID (Location-gated), RSSI, noise, SNR (reported directly), Tx rate, the 802.11 standard, channel, channel width, band, country code, interface name, and hardware MAC. It does not expose the Rx rate or Tx power (a limitation of the macOS Wi-Fi framework); those read \"Not exposed by macOS CoreWLAN\", never estimated.",
@@ -2189,7 +2190,7 @@
       "algorithm": null,
       "example": "Representative rows (Task | Windows | macOS | Linux): Connected Wi-Fi link state | netsh wlan show interfaces | wdutil info | iw dev wlan0 link. Interface IP config | ipconfig /all | ifconfig | ip addr. Renew DHCP | ipconfig /renew | sudo ipconfig set en0 DHCP | sudo dhclient -r && sudo dhclient. Flush DNS | ipconfig /flushdns | sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder | sudo resolvectl flush-caches. Active connections | netstat -ano | netstat -an | ss -tunap. Routing table | route print | netstat -rn | ip route. DNS full detail | (no native command) | dig name | dig name. Linux shell essentials: ls -lah, tail -f file, grep -i pattern file, screen, chmod 755 file.",
       "fieldNotes": [
-        "Three-column layout: macOS and Linux are kept separate so a command that differs between them is never collapsed into a single wrong \"macOS/Linux\" value. Per Keith's standing decision, the macOS Wi-Fi entry shows only wdutil info; the retired airport command is removed entirely.",
+        "Three-column layout: macOS and Linux are kept separate so a command that differs between them is never collapsed into a single wrong \"macOS/Linux\" value. The macOS Wi-Fi entry shows only wdutil info; the retired airport command is removed entirely.",
         "Older Linux forms (ifconfig, route, arp, iwconfig, netstat) are noted alongside the current forms (ip addr, ip route, ip neigh, iw, ss) so you can read older documentation and still write modern commands. netsh wlan is Windows only; dig, whois, and nbtstat honestly show \"no native command\" where that is the case.",
         "These are reference text. The Toolbox does not run them; it shows the correct syntax for you to run yourself. Some need administrator or sudo rights, and the flags shown are the common field subset, not the full list.",
         "Basis: consolidated and de-duplicated from Keith's Network CLI sheet and the WLAN Pros Linux command cheat sheets, checked against current Windows, macOS, and Linux documentation. Retired commands were replaced with their current equivalents rather than carried forward."
@@ -2231,7 +2232,7 @@
       "example": null,
       "fieldNotes": [
         "The sudo note matters and is carried on screen: run sudo wdutil info, or RSSI, noise, MCS, and BSSID come back hidden.",
-        "Standing Keith decision: the airport command is gone (retired in macOS Sonoma 14.4). This reference does not list airport as a working path, because on current macOS it is not one; use wdutil and Wireless Diagnostics instead.",
+        "The airport command is gone (retired in macOS Sonoma 14.4). This reference does not list airport as a working path, because on current macOS it is not one; use wdutil and Wireless Diagnostics instead.",
         "RSSI is your coverage number, noise is the background floor, and RSSI minus noise is the SNR that predicts link quality. Tx rate is the negotiated link rate, not throughput. BSSID identifies the exact AP radio, which is how you track roaming.",
         "Sources: Apple \"Use Wireless Diagnostics on your Mac\" plus corroborating field-availability references and the Toolbox team's on-device Shortcuts verification. Verified live 2026-06-12."
       ],
@@ -2252,7 +2253,7 @@
       "fieldNotes": [
         "Good to know: iwconfig, iwlist, and ifconfig are older \"wireless extensions\" tools. Modern Linux distributions prefer iw and the iproute2 commands. Monitor-mode sequences need sudo and an adapter and driver that support it.",
         "A bit more detail: the older wireless extensions have been retired in favor of iw and nl80211 (both are shown here because field gear still ships the older tools). HT40+ / HT40- picks a 40 MHz channel with the second 20 MHz channel above (+) or below (-) the control channel. Adding your user to the access_bpf group lets you capture on a Mac without running as root. Replace USERNAME and wlan0 with your own user and interface.",
-        "Source: a Linux-focused list, with a small macOS capture group, compiled by the team and cross-checked against the Linux manual pages, the iw and nl80211 documentation, and the aircrack-ng documentation."
+        "Source: a Linux-focused list, with a small macOS capture group, cross-checked against the Linux manual pages, the iw and nl80211 documentation, and the aircrack-ng documentation."
       ],
       "source": "A built-in, offline list of commands you copy and run yourself; the app runs nothing."
     },
@@ -2290,7 +2291,7 @@
       "example": "Before Installing Access Point: Cable meets/exceeds Cat5e specs · Total cable distance with patch cords < 100 m · PoE meets the AP's specific requirements · Check 802.3 af, at, or bt · Confirm DHCP address & VLAN · Confirm correct VLAN assignment · Confirm access or trunk port as required · Confirm default gateway · Ping default gateway · Confirm target IP addresses reachable · Confirm DNS reachable · Confirm target DNS addresses reachable · Management VLAN assigned & available. Install Access Point: Install access point (kept as its own one-item phase). After Installing Access Point: Document AP's MAC & assigned name · Document AP's location · Document AP's switch / port used · Document AP's IP address · Confirm AP installed in proper orientation · Confirm external antennas installed correctly · Wait for access point to receive configuration · Wait for a 2nd reboot of the AP if needed · Listen in air for all SSIDs being broadcast · Connect client to each SSID · Check each SSID for proper VLAN & IP pool.",
       "fieldNotes": [
         "Your checkmarks aren't saved; they reset when you leave the screen.",
-        "Source: Keith Parsons / WLAN Pros original card (© 2024 WLAN Pros), transcribed by the team with obvious typos fixed. Per a Keith decision (2026-05-30), the \"After Installing\" list is renumbered to a clean 1-12 (the original card was gap-numbered with no item 2); items are numbered in the order shown."
+        "Source: Keith Parsons / WLAN Pros original card (© 2024 WLAN Pros), with obvious typos fixed. The \"After Installing\" list is renumbered to a clean 1-12 (the original card was gap-numbered with no item 2); items are numbered in the order shown."
       ],
       "source": "A built-in, offline checklist; tap items to track your progress. Nothing is sent anywhere."
     },
@@ -2307,7 +2308,7 @@
       "example": "Items in order: Can see all SSIDs being broadcast · Associate to target SSID · Complete SSID authentication · Receive an IP address via DHCP · Receive default gateway & DNS · Ping default gateway · Ping DNS · Ping remote IP address · Ping remote DNS address · Check client MCS · Check client Tx data rate · Complete network speed test.",
       "fieldNotes": [
         "Your progress is per-session only and isn't saved.",
-        "Source: Keith Parsons / WLAN Pros original card (© 2024 WLAN Pros), transcribed by the team."
+        "Source: Keith Parsons / WLAN Pros original card (© 2024 WLAN Pros)."
       ],
       "source": "A built-in, offline checklist; tap items to track your progress. Nothing is sent anywhere."
     },
@@ -2575,7 +2576,7 @@
         "Bonded center numbers (5 GHz 42/50, 6 GHz 7/15/31) are labels for the middle of a wide channel, not selectable 20 MHz channels.",
         "802.11be defines overlapping 320 MHz channels in 6 GHz, so one primary can sit in two of them. Both are shown, without claiming the unverified 320 MHz-1 / 320 MHz-2 naming."
       ],
-      "source": "Uses the verified WLAN Pros channel plan, computed on the device."
+      "source": "Uses the WLAN Pros channel plan, computed on the device."
     },
     "ipv4-subnet": {
       "name": "IP Subnetting (IPv4)",
@@ -2819,7 +2820,7 @@
         "Honest note on mechanism: Wi-Fi radio energy is non-ionizing. It can only gently warm tissue. It cannot cause the photochemical or DNA damage that sunburn does, at any Wi-Fi power level. This is a comparison of total energy and warmth, never of sunburn: the UV in sunlight burns; Wi-Fi has no UV and no comparable mechanism.",
         "The basis is 30 dBm (1 W) EIRP per access point (the US 2.4 GHz maximum) at 4 meters (13 feet). 4 m is realistic for how far a person sits from the access points around them; free-space density falls with the square of distance, so the figures are conservative for the point being made.",
         "Where it sits against the limit: the FCC and ICNIRP cap public RF exposure at 10 W/m2. The 10-access-point ring at about 0.05 W/m2 is roughly 200 times below that limit, and measured real-world Wi-Fi runs far lower still.",
-        "Every figure is stated as approximate and traces to a verified brief: FCC 47 CFR 1.1310 and OET-65; ICNIRP 2020 RF guidelines; ASTM G173 / NREL reference solar spectrum; WHO and IARC on non-ionizing RF (Group 2B) versus solar UV (Group 1); peer-reviewed Wi-Fi exposure surveys (PMC5927334, PMC8172712)."
+        "Every figure is stated as approximate and traces to a verified source: FCC 47 CFR 1.1310 and OET-65; ICNIRP 2020 RF guidelines; ASTM G173 / NREL reference solar spectrum; WHO and IARC on non-ionizing RF (Group 2B) versus solar UV (Group 1); peer-reviewed Wi-Fi exposure surveys (PMC5927334, PMC8172712)."
       ],
       "source": "A read-along reference built from verified, stated numbers; no inputs and no live calculation."
     },
@@ -3328,7 +3329,7 @@
         "Over-pulling stretches the conductors and raises return loss and NEXT.",
         "Each row is labeled Standard or Practice so the distinction survives when you copy it."
       ],
-      "source": "TIA-568, ISO 11801, and BICSI, with a WLAN Pros research brief (2026-06-08)."
+      "source": "TIA-568, ISO 11801, and BICSI."
     },
     "rack-units": {
       "name": "Rack Units",
@@ -3348,7 +3349,7 @@
         "Many racks ship as bare square holes and need cage nuts; few come tapped.",
         "Vendor thread guides such as Dell's or HP's are a convention, not a rule."
       ],
-      "source": "ANSI/EIA-310-D, IEC 60297, with a WLAN Pros research brief (2026-06-08)."
+      "source": "ANSI/EIA-310-D and IEC 60297."
     },
     "screw-drives": {
       "name": "Screw Drives",
@@ -3367,7 +3368,7 @@
         "Phillips was not designed to cam out; the 1933 patent sought no cam-out.",
         "Torx is sized by T-number, not star. Robertson color coding is a trade convention, not an ISO standard."
       ],
-      "source": "Based on the ISO 1173, 8764, and 10664 drive standards and a WLAN Pros research brief."
+      "source": "Based on the ISO 1173, 8764, and 10664 drive standards."
     },
     "markdown-cheatsheet": {
       "name": "Markdown Cheatsheet",
@@ -3404,7 +3405,7 @@
         "IEEE writes 802.11; the Wi-Fi Alliance certifies and brands it. They are different organizations.",
         "ETSI appears here as a standards body and also as the EU's referenced harmonizer on the Regulatory Domains page."
       ],
-      "source": "Drawn from each body's official site (IEEE, Wi-Fi Alliance, WBA, ITU, IETF, 3GPP, Bluetooth SIG, CWNP, ETSI, Ecma, Wi-SUN, CSA, LoRa Alliance) and a WLAN Pros research brief."
+      "source": "Drawn from each body's official site (IEEE, Wi-Fi Alliance, WBA, ITU, IETF, 3GPP, Bluetooth SIG, CWNP, ETSI, Ecma, Wi-SUN, CSA, LoRa Alliance)."
     },
     "speedtest-services": {
       "name": "Speed Test Services",
@@ -3424,8 +3425,9 @@
         "Data-per-test figures are the weak column. Each one carries a confidence marker (\"est.\", \"rough est.\", or \"measured\"), and a persistent band states up front that these are community-measured estimates, not vendor-published numbers.",
         "Not all of these are independent measurement backends. Where a brand rides on another service's network, the card shows a \"Runs on\" note and a top-level caveat repeats it.",
         "Orb is a continuous monitor, not a one-shot test, and carries its own badge and framing note. The Toolbox's own Network Quality tool is the analog, and it deliberately reports no single composite score.",
+        "The Toolbox's own internet number sits on these same two axes on purpose: it opens several streams at once across a diverse set of independent public servers, throws away the TCP slow-start ramp, and drops throttled outliers, so it reports an honest, sustained download rather than a peak off the single nearest edge cache.",
         "Fully offline: the service list is bundled in the app, so the page works with no network connection. Brand names appear on a neutral chip so they read in both light and dark.",
-        "The list is built from a verified WLAN Pros research brief; all 12 services were Keith-approved."
+        "The list is a curated set of 12 popular speed test services."
       ],
       "source": "A curated list bundled in the app, so it works entirely offline with no network call."
     },
@@ -3659,7 +3661,7 @@
         "Tool details are kept to confirmed capabilities only; pricing is deliberately left out because it moves and varies by region. Oscium now owns MetaGeek, so the Wi-Spy and Chanalyzer line is one product family.",
         "The 6 GHz band being the cleanest is a current condition, not a permanent property; it will erode as adoption grows."
       ],
-      "source": "Condensed teaching copy drawn from an internal research brief with Keith's corrections folded in; the nine signature cards were drawn to the classic interferer signatures and reviewed for accuracy."
+      "source": "Condensed teaching copy based on Keith Parsons' spectrum-analysis notes; the nine signature cards were drawn to the classic interferer signatures."
     }
   }
 }
