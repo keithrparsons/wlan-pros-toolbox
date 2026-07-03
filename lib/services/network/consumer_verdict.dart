@@ -180,7 +180,7 @@ class ConsumerVerdict {
 
   /// The Internet axis status for the top "Internet:" chip (R1-A). REVISION 2:
   /// an ABSOLUTE 3-tier read bucketed from the engine's measured internet rate
-  /// ([WifiVsInternetResult.internetAvgMbps]) via the SAME
+  /// ([WifiVsInternetResult.internetMbps]) via the SAME
   /// [AxisStatusThresholds.tierFor] thresholds as the Wi-Fi axis. Unmeasured
   /// internet → [AxisStatus.unknown] (GL-005 — no tier forced onto missing data).
   final AxisStatus internetStatus;
@@ -206,13 +206,13 @@ class ConsumerVerdictMapper {
   /// Translates an engine [WifiVsInternetResult] into its [ConsumerVerdict].
   ///
   /// The D1/D2 split keys off whether the engine measured an internet figure:
-  /// `wifiUnknown` with a non-null [WifiVsInternetResult.internetAvgMbps] is D1
+  /// `wifiUnknown` with a non-null [WifiVsInternetResult.internetMbps] is D1
   /// (we have a real internet result to report); without one it is D2.
   ///
   /// REVISION 2 (2026-06-07): the two axis chips are now ABSOLUTE 3-tier reads
   /// bucketed from the engine's rate figures via [AxisStatusThresholds.tierFor]
   /// — [WifiVsInternetResult.usableWifiMbps] drives [wifiStatus] and
-  /// [WifiVsInternetResult.internetAvgMbps] drives [internetStatus], with the
+  /// [WifiVsInternetResult.internetMbps] drives [internetStatus], with the
   /// SAME > 250 / 100–250 / < 100 Mbps thresholds on both. The chips therefore
   /// depend ONLY on the measured rates, not on which `verdict` branch fires; the
   /// branch below still chooses the consumer OUTCOME (the comparative "is it your
@@ -234,7 +234,7 @@ class ConsumerVerdictMapper {
     final AxisStatus wifiTier =
         AxisStatusThresholds.tierFor(engineResult.usableWifiMbps);
     final AxisStatus internetTier =
-        AxisStatusThresholds.tierFor(engineResult.internetAvgMbps);
+        AxisStatusThresholds.tierFor(engineResult.internetMbps);
 
     switch (engineResult.verdict) {
       // A — Wi-Fi link is the limiter.
@@ -294,7 +294,7 @@ class ConsumerVerdictMapper {
       // The Wi-Fi chip is `unknown` here BY THE RATE (usableWifiMbps is null on
       // this path), so `wifiTier` already resolves to unknown — no override.
       case WifiVsInternetVerdict.wifiUnknown:
-        final bool internetMeasured = engineResult.internetAvgMbps != null;
+        final bool internetMeasured = engineResult.internetMbps != null;
         if (internetMeasured) {
           // D1 — internet measured, Wi-Fi not. Wi-Fi chip is `unknown` (no
           // rate); the Internet chip is its absolute tier. The screen
@@ -341,21 +341,21 @@ class ConsumerVerdictMapper {
 
   /// Builds the D1 body with the measured-internet figure substituted in, per
   /// the spec row: "Your internet measured about [X] Mbps, which looks
-  /// [fine/slow]." [internetAvgMbps] is the engine's averaged figure; [healthy]
+  /// [fine/slow]." [internetMbps] is the engine's download figure; [healthy]
   /// is whether the internet graded good (→ "fine") or not (→ "slow"). Rounds
   /// the figure to a whole number — a consumer does not need decimals.
   ///
-  /// Returns the non-substituted template when [internetAvgMbps] is null (a
+  /// Returns the non-substituted template when [internetMbps] is null (a
   /// defensive guard: the D1 path only fires with a non-null figure).
   static String bodyForCouldntCheckWifi({
-    required double? internetAvgMbps,
+    required double? internetMbps,
     required bool healthy,
   }) {
-    if (internetAvgMbps == null) {
+    if (internetMbps == null) {
       return 'Your internet measured, but we couldn’t read your Wi-Fi '
           'details on this device.';
     }
-    final int mbps = internetAvgMbps.round();
+    final int mbps = internetMbps.round();
     final String quality = healthy ? 'fine' : 'slow';
     return 'Your internet measured about $mbps Mbps, which looks $quality. '
         'We couldn’t read your Wi-Fi details on this device.';

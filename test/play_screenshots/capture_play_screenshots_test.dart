@@ -348,7 +348,7 @@ void main() {
   });
 
   // ── 2. Test My Connection — the verdict (Wi-Fi is the slow part) ────────────
-  // Tx 60 → usable 33 Mbps (Wi-Fi "Weak"); internet avg 400 (Strong) but graded
+  // Tx 60 → usable 33 Mbps (Wi-Fi "Weak"); internet download 440 (Strong) but graded
   // FAIR so the verdict honestly lands on the Wi-Fi link. The hero sentence is
   // the engine's OWN output. Same coherent fixture as book fig-8-1.
   testWidgets('play-2 Test My Connection — verdict', (tester) async {

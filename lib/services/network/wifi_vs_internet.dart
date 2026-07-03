@@ -23,8 +23,9 @@
 //      records which path was taken.
 //   2. Usable Wi-Fi capacity = 0.55 × link rate (real throughput runs ~50-60%
 //      of the PHY rate).
-//   3. Internet throughput = avg(download, upload).
-//   4. Headroom ratio = internetThroughput / usableWiFiCapacity.
+//   3. Internet speed = the DOWNLOAD throughput (what a consumer means by
+//      "internet speed"). Upload alone is NOT treated as internet speed.
+//   4. Headroom ratio = internet download / usableWiFiCapacity.
 //
 // VERDICT LOGIC (grade gate first, then the ratio):
 //   * Grade gate - if the internet is GOOD (throughput + latency + loss all
@@ -155,7 +156,7 @@ class WifiVsInternetResult {
     required this.snrContext,
     required this.rateBasis,
     required this.usableWifiMbps,
-    required this.internetAvgMbps,
+    required this.internetMbps,
     required this.linkRateMbps,
     required this.ratio,
   });
@@ -181,15 +182,16 @@ class WifiVsInternetResult {
   /// unknown ([rateBasis] == none / [verdict] == wifiUnknown).
   final double? usableWifiMbps;
 
-  /// Internet throughput = avg(download, upload), Mbps. Null when neither was
-  /// measured.
-  final double? internetAvgMbps;
+  /// The consumer-facing internet speed = the DOWNLOAD throughput, Mbps (what a
+  /// user means by "internet speed"). Null when download was not measured —
+  /// upload alone is deliberately NOT treated as internet speed (Keith 2026-07).
+  final double? internetMbps;
 
   /// The negotiated link rate that fed the capacity figure, Mbps. Null when
   /// unknown. Exposed so the screen can show the basis without re-averaging.
   final double? linkRateMbps;
 
-  /// Headroom ratio = internetAvg / usableWifi. Null when either input is
+  /// Headroom ratio = internet download / usableWifi. Null when either input is
   /// unknown (so no ratio-based verdict was possible).
   final double? ratio;
 }
@@ -247,13 +249,15 @@ class WifiVsInternetEngine {
         ? null
         : kUsableWifiFactor * linkRate;
 
-    // --- Internet throughput: avg(download, upload). ---
-    final double? internetAvg = _avgInternet(internetDownMbps, internetUpMbps);
+    // --- Consumer internet speed: DOWNLOAD only (what a user means by
+    //     "internet speed"); upload alone is NOT internet speed. A null download
+    //     falls through to the online-evidence / unmeasured paths below. ---
+    final double? internet = _downloadInternet(internetDownMbps);
 
     // --- Headroom ratio (only when both sides are known and capacity > 0). ---
     final double? ratio =
-        (usableWifi != null && usableWifi > 0 && internetAvg != null)
-        ? internetAvg / usableWifi
+        (usableWifi != null && usableWifi > 0 && internet != null)
+        ? internet / usableWifi
         : null;
 
     // The signal context line is the same regardless of verdict; compute once.
@@ -271,7 +275,7 @@ class WifiVsInternetEngine {
     //     Tx-only case (Rx never exposed, so the ratio can't fully compute) -
     //     in either case, strong reachability evidence outranks the missing
     //     throughput number (Keith 2026-06-17). ---
-    if (internetAvg == null && onlineEvidence.isOnline) {
+    if (internet == null && onlineEvidence.isOnline) {
       return WifiVsInternetResult(
         verdict: WifiVsInternetVerdict.onlineUnmeasured,
         headline: 'You are online',
@@ -281,7 +285,7 @@ class WifiVsInternetEngine {
         snrContext: basis == WifiRateBasis.none ? '' : snrContext,
         rateBasis: basis,
         usableWifiMbps: usableWifi,
-        internetAvgMbps: null,
+        internetMbps: null,
         linkRateMbps: linkRate,
         ratio: null,
       );
@@ -292,18 +296,18 @@ class WifiVsInternetEngine {
       return WifiVsInternetResult(
         verdict: WifiVsInternetVerdict.wifiUnknown,
         headline: 'Wi-Fi link not measured',
-        explanation: internetAvg == null
+        explanation: internet == null
             ? 'The Wi-Fi link rate could not be read, so the verdict cannot '
                   'localize the bottleneck. Connect over Wi-Fi (on iOS, install '
                   'the companion Shortcut) for the full read.'
             : 'The Wi-Fi link rate could not be read, so this is an '
                   'internet-only result. Measured internet throughput is '
-                  '${_mbps(internetAvg)}. Connect over Wi-Fi (on iOS, install '
+                  '${_mbps(internet)}. Connect over Wi-Fi (on iOS, install '
                   'the companion Shortcut) to compare it against the link.',
         snrContext: '',
         rateBasis: basis,
         usableWifiMbps: null,
-        internetAvgMbps: internetAvg,
+        internetMbps: internet,
         linkRateMbps: null,
         ratio: null,
       );
@@ -325,7 +329,7 @@ class WifiVsInternetEngine {
         snrContext: snrContext,
         rateBasis: basis,
         usableWifiMbps: usableWifi,
-        internetAvgMbps: internetAvg,
+        internetMbps: internet,
         linkRateMbps: linkRate,
         ratio: ratio,
       );
@@ -345,7 +349,7 @@ class WifiVsInternetEngine {
         snrContext: snrContext,
         rateBasis: basis,
         usableWifiMbps: usableWifi,
-        internetAvgMbps: null,
+        internetMbps: null,
         linkRateMbps: linkRate,
         ratio: null,
       );
@@ -362,13 +366,13 @@ class WifiVsInternetEngine {
         headline: "It's your Wi-Fi",
         explanation:
             'The internet path can carry more than your Wi-Fi link is passing '
-            '(${_mbps(internetAvg)} internet vs ${_mbps(usableWifi)} usable '
+            '(${_mbps(internet)} internet vs ${_mbps(usableWifi)} usable '
             'Wi-Fi). The air link is the limiter: get closer to the AP, or '
             'check the channel, width, and AP, then re-test.',
         snrContext: snrContext,
         rateBasis: basis,
         usableWifiMbps: usableWifi,
-        internetAvgMbps: internetAvg,
+        internetMbps: internet,
         linkRateMbps: linkRate,
         ratio: ratio,
       );
@@ -380,12 +384,12 @@ class WifiVsInternetEngine {
         headline: "It's upstream, not your Wi-Fi",
         explanation:
             'Your Wi-Fi link has unused headroom (${_mbps(usableWifi)} usable '
-            'vs ${_mbps(internetAvg)} internet). The bottleneck is upstream: '
+            'vs ${_mbps(internet)} internet). The bottleneck is upstream: '
             'the ISP, modem, or the path beyond your access point.',
         snrContext: snrContext,
         rateBasis: basis,
         usableWifiMbps: usableWifi,
-        internetAvgMbps: internetAvg,
+        internetMbps: internet,
         linkRateMbps: linkRate,
         ratio: ratio,
       );
@@ -397,26 +401,24 @@ class WifiVsInternetEngine {
       headline: 'Both contributing',
       explanation:
           'The internet and the Wi-Fi link are in the same range '
-          '(${_mbps(internetAvg)} internet vs ${_mbps(usableWifi)} usable '
+          '(${_mbps(internet)} internet vs ${_mbps(usableWifi)} usable '
           'Wi-Fi), so both are limiting throughput. Improving either one will '
           'help; improving both will help most.',
       snrContext: snrContext,
       rateBasis: basis,
       usableWifiMbps: usableWifi,
-      internetAvgMbps: internetAvg,
+      internetMbps: internet,
       linkRateMbps: linkRate,
       ratio: ratio,
     );
   }
 
-  /// Averages download/upload with a single-side fallback. Null when neither
-  /// was measured. Treats a non-positive figure as absent.
-  static double? _avgInternet(double? down, double? up) {
-    final bool hasDown = down != null && down > 0;
-    final bool hasUp = up != null && up > 0;
-    if (hasDown && hasUp) return (down + up) / 2;
-    if (hasDown) return down;
-    if (hasUp) return up;
+  /// The consumer-facing internet speed: the DOWNLOAD throughput, or null when
+  /// download was not measured. Upload alone is deliberately NOT treated as
+  /// "internet speed" (Keith 2026-07) — a consumer's "internet speed" is the
+  /// download number. Treats a non-positive figure as absent.
+  static double? _downloadInternet(double? down) {
+    if (down != null && down > 0) return down;
     return null;
   }
 

@@ -10,7 +10,7 @@
 // now an ABSOLUTE 3-tier scale — Strong / Moderate / Weak — bucketed from each
 // axis's data rate in Mbps via AxisStatusThresholds (same thresholds both axes:
 // >250 Strong, 100-250 inclusive Moderate, <100 Weak, unmeasured Unknown). The
-// chips therefore depend on the engine's usableWifiMbps / internetAvgMbps, NOT
+// chips therefore depend on the engine's usableWifiMbps / internetMbps, NOT
 // on the comparative verdict. These tests assert (a) the threshold boundaries
 // directly, and (b) that each verdict row still carries the right outcome/copy
 // AND surfaces the correct rate-driven tiers.
@@ -33,7 +33,7 @@ import 'package:wlan_pros_toolbox/services/network/wifi_vs_internet.dart';
 /// does not have to spell out rates; tests that assert tiers pass them in.
 WifiVsInternetResult result(
   WifiVsInternetVerdict verdict, {
-  double? internetAvgMbps,
+  double? internetMbps,
   double? usableWifiMbps = 150,
 }) {
   return WifiVsInternetResult(
@@ -43,7 +43,7 @@ WifiVsInternetResult result(
     snrContext: '',
     rateBasis: WifiRateBasis.averaged,
     usableWifiMbps: usableWifiMbps,
-    internetAvgMbps: internetAvgMbps,
+    internetMbps: internetMbps,
     linkRateMbps: usableWifiMbps == null ? null : usableWifiMbps / 0.55,
     ratio: 0.5,
   );
@@ -100,7 +100,7 @@ void main() {
         result(
           WifiVsInternetVerdict.bothHealthy,
           usableWifiMbps: 600,
-          internetAvgMbps: 500,
+          internetMbps: 500,
         ),
       );
       expect(v.wifiStatus, AxisStatus.strong);
@@ -112,7 +112,7 @@ void main() {
         result(
           WifiVsInternetVerdict.upstream,
           usableWifiMbps: 150,
-          internetAvgMbps: 40,
+          internetMbps: 40,
         ),
       );
       expect(v.wifiStatus, AxisStatus.moderate);
@@ -124,7 +124,7 @@ void main() {
         result(
           WifiVsInternetVerdict.wifiLimiter,
           usableWifiMbps: 60,
-          internetAvgMbps: 180,
+          internetMbps: 180,
         ),
       );
       expect(v.wifiStatus, AxisStatus.weak);
@@ -136,7 +136,7 @@ void main() {
         result(
           WifiVsInternetVerdict.bothContributing,
           usableWifiMbps: 250,
-          internetAvgMbps: 250,
+          internetMbps: 250,
         ),
       );
       expect(v.wifiStatus, AxisStatus.moderate);
@@ -151,7 +151,7 @@ void main() {
         result(
           WifiVsInternetVerdict.wifiLimiter,
           usableWifiMbps: 60,
-          internetAvgMbps: 180,
+          internetMbps: 180,
         ),
       );
       expect(v.outcome, ConsumerOutcome.wifi);
@@ -171,7 +171,7 @@ void main() {
         result(
           WifiVsInternetVerdict.bothContributing,
           usableWifiMbps: 80,
-          internetAvgMbps: 40,
+          internetMbps: 40,
         ),
       );
       expect(v.outcome, ConsumerOutcome.wifiLead);
@@ -192,7 +192,7 @@ void main() {
         result(
           WifiVsInternetVerdict.upstream,
           usableWifiMbps: 400,
-          internetAvgMbps: 20,
+          internetMbps: 20,
         ),
       );
       expect(v.outcome, ConsumerOutcome.internet);
@@ -212,7 +212,7 @@ void main() {
         result(
           WifiVsInternetVerdict.bothHealthy,
           usableWifiMbps: 500,
-          internetAvgMbps: 300,
+          internetMbps: 300,
         ),
       );
       expect(v.outcome, ConsumerOutcome.bothFine);
@@ -236,7 +236,7 @@ void main() {
           result(
             WifiVsInternetVerdict.wifiUnknown,
             usableWifiMbps: null,
-            internetAvgMbps: 180,
+            internetMbps: 180,
           ),
           internetHealthy: true,
         );
@@ -257,7 +257,7 @@ void main() {
         result(
           WifiVsInternetVerdict.wifiUnknown,
           usableWifiMbps: null,
-          internetAvgMbps: 12,
+          internetMbps: 12,
         ),
       );
       expect(v.outcome, ConsumerOutcome.couldntCheckWifi);
@@ -270,7 +270,7 @@ void main() {
         result(
           WifiVsInternetVerdict.wifiUnknown,
           usableWifiMbps: null,
-          internetAvgMbps: 320,
+          internetMbps: 320,
         ),
       );
       expect(v.internetStatus, AxisStatus.strong);
@@ -283,7 +283,7 @@ void main() {
           result(
             WifiVsInternetVerdict.wifiUnknown,
             usableWifiMbps: null,
-            internetAvgMbps: null,
+            internetMbps: null,
           ),
           internetHealthy: true,
         );
@@ -306,7 +306,7 @@ void main() {
           result(
             WifiVsInternetVerdict.onlineUnmeasured,
             usableWifiMbps: 300,
-            internetAvgMbps: null,
+            internetMbps: null,
           ),
         );
         expect(v.outcome, ConsumerOutcome.online);
@@ -324,7 +324,7 @@ void main() {
   group('D1 body substitution (bodyForCouldntCheckWifi)', () {
     test('substitutes the rounded figure and "fine" when healthy', () {
       final body = ConsumerVerdictMapper.bodyForCouldntCheckWifi(
-        internetAvgMbps: 83.6,
+        internetMbps: 83.6,
         healthy: true,
       );
       expect(
@@ -336,7 +336,7 @@ void main() {
 
     test('substitutes "slow" when not healthy', () {
       final body = ConsumerVerdictMapper.bodyForCouldntCheckWifi(
-        internetAvgMbps: 12.2,
+        internetMbps: 12.2,
         healthy: false,
       );
       expect(body, contains('about 12 Mbps'));
@@ -345,7 +345,7 @@ void main() {
 
     test('falls back to the non-substituted form when figure is null', () {
       final body = ConsumerVerdictMapper.bodyForCouldntCheckWifi(
-        internetAvgMbps: null,
+        internetMbps: null,
         healthy: true,
       );
       expect(body, isNot(contains('[X]')));
@@ -377,8 +377,8 @@ void main() {
     }
 
     test('low link vs faster internet → A (Wi-Fi)', () {
-      // usable = 0.55 × avg(200,200) = 110 (Moderate); internet avg 200
-      // (Moderate) → ratio ≈ 1.8 → wifiLimiter.
+      // usable = 0.55 × avg(200,200) = 110 (Moderate); internet download 250
+      // (Moderate) → ratio ≈ 2.3 → wifiLimiter.
       final v = mapFromEngine(tx: 200, rx: 200, down: 250, up: 150);
       expect(v.outcome, ConsumerOutcome.wifi);
       expect(v.wifiStatus, AxisStatus.moderate);
@@ -386,7 +386,7 @@ void main() {
     });
 
     test('link headroom, slow internet → B (Internet), Wi-Fi Strong', () {
-      // usable = 0.55 × avg(1000,1000) = 550 (Strong); internet avg 20 (Weak).
+      // usable = 0.55 × avg(1000,1000) = 550 (Strong); internet download 25 (Weak).
       final v = mapFromEngine(tx: 1000, rx: 1000, down: 25, up: 15);
       expect(v.outcome, ConsumerOutcome.internet);
       expect(v.wifiStatus, AxisStatus.strong);
@@ -394,16 +394,16 @@ void main() {
     });
 
     test('mid band → A (Wi-Fi lead)', () {
-      // usable = 0.55 × avg(200,200) = 110 (Moderate); internet avg 55 (Weak).
+      // usable = 0.55 × avg(200,200) = 110 (Moderate); internet download 60 (Weak).
       final v = mapFromEngine(tx: 200, rx: 200, down: 60, up: 50);
       expect(v.outcome, ConsumerOutcome.wifiLead);
       expect(v.wifiStatus, AxisStatus.moderate);
       expect(v.internetStatus, AxisStatus.weak);
     });
 
-    test('good internet grade-gate → C (Both fine), both Strong', () {
-      // usable = 0.55 × avg(400,400) = 220 (Moderate); internet avg 225
-      // (Moderate). Tiers track the absolute rates even on the bothHealthy row.
+    test('good internet grade-gate → C (Both fine), tiers track the rates', () {
+      // usable = 0.55 × avg(400,400) = 220 (Moderate); internet download 300
+      // (Strong). Tiers track the absolute rates even on the bothHealthy row.
       final v = mapFromEngine(
         tx: 400,
         rx: 400,
@@ -413,11 +413,11 @@ void main() {
       );
       expect(v.outcome, ConsumerOutcome.bothFine);
       expect(v.wifiStatus, AxisStatus.moderate);
-      expect(v.internetStatus, AxisStatus.moderate);
+      expect(v.internetStatus, AxisStatus.strong);
     });
 
     test('no link rate but internet measured → D1, Wi-Fi Unknown', () {
-      // No Tx/Rx → basis none → wifiUnknown; internet avg 60 (Weak).
+      // No Tx/Rx → basis none → wifiUnknown; internet download 80 (Weak).
       final v = mapFromEngine(tx: null, rx: null, down: 80, up: 40);
       expect(v.outcome, ConsumerOutcome.couldntCheckWifi);
       expect(v.wifiStatus, AxisStatus.unknown);

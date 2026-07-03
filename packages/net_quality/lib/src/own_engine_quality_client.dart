@@ -51,14 +51,6 @@ class OwnEngineQualityClient implements QualityClient {
   /// never goes backwards even if a stage finishes early or a band is re-entered.
   double _maxFraction = 0;
 
-  // TEMPORARY tuning diagnostics captured by [_runThroughputStage] and folded
-  // into the [QualityResult] built at the end of [measure]. Reset at the start
-  // of every run; left empty/null when the download stage fails. Strip before
-  // ship along with the matching fields on [QualityResult].
-  List<ProviderRate> _downloadProviderRates = const <ProviderRate>[];
-  double? _downloadSumOfSurvivors;
-  double? _downloadMedianOfSurvivors;
-
   /// Cadence of the elapsed-time progress ticker during a throughput window.
   /// ~120ms is smooth to the eye without flooding the stream/UI.
   static const Duration _tickInterval = Duration(milliseconds: 120);
@@ -182,9 +174,6 @@ class OwnEngineQualityClient implements QualityClient {
   Stream<QualityProgress> measure() async* {
     final metrics = <QualityMetric>[];
     _maxFraction = 0;
-    _downloadProviderRates = const <ProviderRate>[];
-    _downloadSumOfSurvivors = null;
-    _downloadMedianOfSurvivors = null;
 
     // --- Latency / jitter / loss ---
     // The instant metrics finish in well under a second, so they only get a thin
@@ -274,10 +263,6 @@ class OwnEngineQualityClient implements QualityClient {
       metrics: metrics,
       source: QualitySource.ownEngine,
       measuredAt: clock(),
-      // TEMPORARY tuning diagnostics (empty/null when the download stage failed).
-      downloadProviderRates: _downloadProviderRates,
-      downloadSumOfSurvivors: _downloadSumOfSurvivors,
-      downloadMedianOfSurvivors: _downloadMedianOfSurvivors,
     );
     yield _emit(QualityPhase.complete, 1.0);
   }
@@ -365,21 +350,6 @@ class OwnEngineQualityClient implements QualityClient {
         if (!controller.isClosed) {
           controller.add(_emit(QualityPhase.upload, uploadBand.end));
         }
-        // TEMPORARY tuning diagnostics: carry the per-provider breakdown up to
-        // the QualityResult. The per-provider list already carries each
-        // provider's inclusion flag; recompute both aggregations from the same
-        // rates (using the probe's own rejection fraction) so the numbers match
-        // the headline. The headline Download metric stays sum-of-survivors.
-        _downloadProviderRates = t.providerRates;
-        _downloadSumOfSurvivors = ThroughputProbe.aggregateDownloadRates(
-          t.providerRates,
-          rejectionFraction: throughputProbe.outlierRejectionFraction,
-        ).mbps;
-        _downloadMedianOfSurvivors = ThroughputProbe.aggregateDownloadRates(
-          t.providerRates,
-          rejectionFraction: throughputProbe.outlierRejectionFraction,
-          mode: DownloadAggregation.medianOfSurvivors,
-        ).mbps;
         metrics
           ..add(QualityMetric(
             id: MetricIds.download,

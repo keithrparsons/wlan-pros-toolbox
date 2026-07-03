@@ -602,11 +602,13 @@ void main() {
       build: () => TestMyConnectionScreen(
         enableLiveSampling: false,
         sourceOverride: WifiInfoSource.macosCoreWlan,
-        // Tx 720 → usable 396 (Strong). Internet 200/100 → avg 150 (Moderate).
+        // Tx 720 → usable 396 (Strong). Internet download 140 (Moderate); the
+        // consumer internet number is the DOWNLOAD, and 140 < 0.40 × 396 so the
+        // verdict names the internet as the slower side (ratio ≈ 0.35 → upstream).
         macAdapter: _TxLinkMacAdapter(720),
         qualityClient: MockQualityClient(
           scriptedResult: _internetResult(
-            down: 200, up: 100, latencyMs: 22, jitterMs: 4, lossPct: 0,
+            down: 140, up: 100, latencyMs: 22, jitterMs: 4, lossPct: 0,
             downUpGrade: QualityGrade.fair,
           ),
         ),
@@ -654,21 +656,21 @@ void main() {
   // wifiLimiter verdict (→ ConsumerOutcome.wifi) drives the hero
   // "Your Wi-Fi is the slow part." For that verdict to fire, the engine's grade
   // gate must NOT engage — i.e. internet health must read MARGINAL — and the
-  // headroom ratio (internetAvg / usableWifi) must be ≥ 0.70. (When the internet
+  // headroom ratio (internet download / usableWifi) must be ≥ 0.70. (When the internet
   // grades GOOD/EXCELLENT the gate short-circuits to bothHealthy → the wrong,
   // contradictory "both look fine" hero — which is exactly the bug this fixture
   // fixes.) So the internet down/up are graded FAIR here: the grade gate stays
   // open, the ratio diagnoses, and the verdict lands on the Wi-Fi link.
   //
   // The two axis CHIPS are absolute-rate driven (independent of the verdict /
-  // grades): usable Wi-Fi 33 Mbps → "Weak", internet avg 400 Mbps → "Strong".
+  // grades): usable Wi-Fi 33 Mbps → "Weak", internet download 440 Mbps → "Strong".
   // Wi-Fi Weak ≠ Internet Strong (different tiers), so the same-tier hero
   // override does not fire and the per-outcome "Your Wi-Fi is the slow part."
   // hero stands. Mirrors fig-8-2 (Linksys-Home, 2.4 GHz, -68 Fair, SNR 18).
   //
   //   Tx 60   → usable 0.55×60 = 33 Mbps  → Wi-Fi chip "Weak"
-  //   440/360 → internet avg   = 400 Mbps → Internet chip "Strong"
-  //   ratio   = 400 / 33 = 12.1 ≥ 0.70    → wifiLimiter
+  //   440/360 → internet down  = 440 Mbps → Internet chip "Strong"
+  //   ratio   = 440 / 33 = 13.3 ≥ 0.70    → wifiLimiter
   testWidgets('fig-8-1 Test My Connection — Wi-Fi is the slow part',
       (tester) async {
     await _capture(
@@ -681,7 +683,7 @@ void main() {
         // Tx 60 → usable 33 (Weak), RSSI -68 / SNR 18 (matches fig-8-2).
         macAdapter: _TxLinkMacAdapter(60, rssi: -68, snr: 18),
         qualityClient: MockQualityClient(
-          // Internet avg 400 (Strong chip) but graded FAIR so the grade gate
+          // Internet download 440 (Strong chip) but graded FAIR so the grade gate
           // stays open and the verdict lands on the Wi-Fi link.
           scriptedResult: _internetResult(
             down: 440, up: 360, latencyMs: 22, jitterMs: 4, lossPct: 0,

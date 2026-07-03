@@ -154,14 +154,14 @@ Future<void> _renderAtWidth(
             textScaler: const TextScaler.linear(1.0),
           ),
           // "Both sides are weak. Your Wi-Fi is slightly ahead." — the exact
-          // wording Keith cited. Tx 120 → usable 66 (weak); 80/40 → avg 60
-          // (weak); Wi-Fi ahead by margin.
+          // wording Keith cited. Tx 120 → usable 66 (weak); internet download 40
+          // (weak); Wi-Fi ahead by margin (+65%).
           child: TestMyConnectionScreen(
             enableLiveSampling: false,
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: _MacLinkAdapter(120),
             qualityClient: MockQualityClient(
-              scriptedResult: _internet(down: 80, up: 40),
+              scriptedResult: _internet(down: 40, up: 20),
             ),
             nowOverride: () => DateTime.utc(2026, 6, 15, 14, 30),
           ),

@@ -74,7 +74,7 @@ void main() {
         tx: 400,
         rx: 400, // usable = 0.55 × 400 = 220
         down: 300,
-        up: 150, // avg 225 → ratio ≈ 1.02
+        up: 150, // download 300 → ratio ≈ 1.36
         health: InternetHealth.good,
       );
       expect(r.verdict, WifiVsInternetVerdict.bothHealthy);
@@ -90,7 +90,7 @@ void main() {
           tx: 1200,
           rx: 1200, // usable = 660
           down: 200,
-          up: 50, // avg 125 → ratio ≈ 0.19 (would be "upstream" if marginal)
+          up: 50, // download 200 → ratio ≈ 0.30 (would be "upstream" if marginal)
           health: InternetHealth.good,
         );
         expect(r.verdict, WifiVsInternetVerdict.bothHealthy);
@@ -101,8 +101,8 @@ void main() {
 
   group('ratio bands (marginal/poor internet)', () {
     test('ratio ≥ 0.70 → wifiLimiter', () {
-      // usable = 452.65; internet avg needs ≥ 0.70 × 452.65 ≈ 316.9.
-      final r = eval(down: 400, up: 360); // avg 380 → ratio ≈ 0.84
+      // usable = 452.65; internet download needs ≥ 0.70 × 452.65 ≈ 316.9.
+      final r = eval(down: 400, up: 360); // download 400 → ratio ≈ 0.88
       expect(r.verdict, WifiVsInternetVerdict.wifiLimiter);
       expect(r.headline, "It's your Wi-Fi");
       expect(r.ratio, greaterThanOrEqualTo(0.70));
@@ -116,7 +116,7 @@ void main() {
     });
 
     test('ratio < 0.40 → upstream', () {
-      final r = eval(down: 100, up: 60); // avg 80 → ratio ≈ 0.177
+      final r = eval(down: 100, up: 60); // download 100 → ratio ≈ 0.221
       expect(r.verdict, WifiVsInternetVerdict.upstream);
       expect(r.headline, "It's upstream, not your Wi-Fi");
       expect(r.ratio, lessThan(0.40));
@@ -140,7 +140,7 @@ void main() {
     );
 
     test('0.40 ≤ ratio < 0.70 → bothContributing', () {
-      final r = eval(down: 280, up: 200); // avg 240 → ratio ≈ 0.53
+      final r = eval(down: 280, up: 200); // download 280 → ratio ≈ 0.62
       expect(r.verdict, WifiVsInternetVerdict.bothContributing);
       expect(r.headline, 'Both contributing');
       expect(r.ratio, inInclusiveRange(0.40, 0.70));
@@ -154,15 +154,15 @@ void main() {
       expect(r.rateBasis, WifiRateBasis.none);
       expect(r.usableWifiMbps, isNull);
       expect(r.ratio, isNull);
-      // The measured internet figure is still surfaced in the caveat.
-      expect(r.internetAvgMbps, closeTo(70, 0.001));
+      // The measured internet figure (download) is still surfaced in the caveat.
+      expect(r.internetMbps, closeTo(100, 0.001));
       expect(r.explanation, contains('internet-only'));
     });
 
     test('no rate AND no internet → wifiUnknown, prompts a full read', () {
       final r = eval(tx: null, rx: null, down: null, up: null);
       expect(r.verdict, WifiVsInternetVerdict.wifiUnknown);
-      expect(r.internetAvgMbps, isNull);
+      expect(r.internetMbps, isNull);
       expect(r.explanation, contains('cannot localize'));
     });
 
@@ -172,16 +172,29 @@ void main() {
         final r = eval(down: null, up: null, health: InternetHealth.marginal);
         expect(r.verdict, WifiVsInternetVerdict.wifiUnknown);
         expect(r.linkRateMbps, isNotNull);
-        expect(r.internetAvgMbps, isNull);
+        expect(r.internetMbps, isNull);
         expect(r.explanation, contains('internet throughput could not be'));
       },
     );
 
-    test('single internet side present still averages (download only)', () {
-      final r = eval(down: 80, up: null); // avg = 80 (single-side fallback)
-      expect(r.internetAvgMbps, 80);
+    test('download present → download is the internet figure', () {
+      final r = eval(down: 80, up: null); // internet = download = 80
+      expect(r.internetMbps, 80);
       expect(r.verdict, isNot(WifiVsInternetVerdict.wifiUnknown));
     });
+
+    test(
+      'upload only, no download → internet unmeasured (upload is NOT internet '
+      'speed)',
+      () {
+        // Keith 2026-07: a consumer's "internet speed" is the DOWNLOAD; upload
+        // alone must not stand in for it. With the Wi-Fi link known but no
+        // download, the internet side is honestly unmeasured.
+        final r = eval(down: null, up: 55);
+        expect(r.internetMbps, isNull);
+        expect(r.verdict, WifiVsInternetVerdict.wifiUnknown);
+      },
+    );
   });
 
   group('honest "you are online" path (throughput unmeasurable + online)', () {
@@ -204,7 +217,7 @@ void main() {
         expect(r.explanation, contains('reachable'));
         expect(r.explanation, contains('Try again in a moment'));
         // No fabricated number: the speed stays unmeasured (GL-005).
-        expect(r.internetAvgMbps, isNull);
+        expect(r.internetMbps, isNull);
         expect(r.ratio, isNull);
         // The known link rate is still carried through.
         expect(r.linkRateMbps, 600);
@@ -275,11 +288,11 @@ void main() {
         // hijack a real measurement into the online-unmeasured verdict.
         final r = eval(
           down: 100,
-          up: 60, // avg 80, ratio ≈ 0.18 → upstream
+          up: 60, // download 100 → ratio ≈ 0.22 → upstream
           onlineEvidence: fullOnline,
         );
         expect(r.verdict, WifiVsInternetVerdict.upstream);
-        expect(r.internetAvgMbps, isNotNull);
+        expect(r.internetMbps, isNotNull);
       },
     );
   });

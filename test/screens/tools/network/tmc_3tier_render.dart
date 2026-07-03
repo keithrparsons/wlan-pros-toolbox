@@ -168,33 +168,33 @@ typedef _Scenario = ({
 });
 
 final List<_Scenario> _scenarios = <_Scenario>[
-  // Strong / Strong — usable 550 (Tx 1000), internet avg 300 (400/200).
+  // Strong / Strong — usable 550 (Tx 1000), internet download 400 (Strong).
   (
     slug: 'wifi-strong_internet-strong',
     adapter: _MacLinkAdapter(1000),
     internet: _internet(down: 400, up: 200, grade: QualityGrade.excellent),
   ),
-  // Moderate / Moderate — usable 181.5 (Tx 330), internet avg 150 (200/100).
+  // Moderate / Moderate — usable 181.5 (Tx 330), internet download 200 (Moderate).
   (
     slug: 'wifi-moderate_internet-moderate',
     adapter: _MacLinkAdapter(330),
     internet: _internet(down: 200, up: 100),
   ),
-  // Weak / Weak — usable 16.5 (Tx 30), internet avg 40 (60/20).
+  // Weak / Weak — usable 16.5 (Tx 30), internet download 60 (Weak).
   (
     slug: 'wifi-weak_internet-weak',
     adapter: _MacLinkAdapter(30),
     internet: _internet(down: 60, up: 20),
   ),
-  // Strong / Weak — the mixed case (usable 550, internet avg 40): the lower
-  // tier (internet, Weak) is the limiter the conclusion sentence names.
+  // Strong / Weak — the mixed case (usable 550, internet download 60, Weak): the
+  // lower tier (internet, Weak) is the limiter the conclusion sentence names.
   (
     slug: 'wifi-strong_internet-weak',
     adapter: _MacLinkAdapter(1000),
     internet: _internet(down: 60, up: 20),
   ),
   // Couldn't check / Moderate — no link rate (Tx 0 → wifiUnknown), internet
-  // avg 150 measured. Proves the honest neutral Wi-Fi chip beside a real tier.
+  // download 200 measured. Proves the honest neutral Wi-Fi chip beside a real tier.
   (
     slug: 'wifi-unknown_internet-moderate',
     adapter: _NoLinkAdapter(),

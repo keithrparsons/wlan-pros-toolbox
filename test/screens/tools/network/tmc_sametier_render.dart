@@ -121,29 +121,29 @@ typedef _Scenario = ({
 
 final List<_Scenario> _scenarios = <_Scenario>[
   // Moderate / Moderate, Wi-Fi slightly ahead — Vera's example case.
-  // Tx 360 → usable 198; internet 200/100 → avg 150; margin +32%.
+  // Tx 360 → usable 198; internet download 150; margin +32%.
   (
     slug: 'moderate-moderate_wifi-ahead',
     adapter: _MacLinkAdapter(360),
-    internet: _internet(down: 200, up: 100),
+    internet: _internet(down: 150, up: 100),
   ),
-  // Moderate / Moderate, about the same — Tx 360 → usable 198; 240/160 → 200.
+  // Moderate / Moderate, about the same — Tx 360 → usable 198; download 200.
   (
     slug: 'moderate-moderate_about-same',
     adapter: _MacLinkAdapter(360),
-    internet: _internet(down: 240, up: 160),
+    internet: _internet(down: 200, up: 160),
   ),
-  // Strong / Strong, about the same — Tx 720 → usable 396; 440/360 → avg 400.
+  // Strong / Strong, about the same — Tx 720 → usable 396; download 400.
   (
     slug: 'strong-strong_about-same',
     adapter: _MacLinkAdapter(720),
-    internet: _internet(down: 440, up: 360),
+    internet: _internet(down: 400, up: 360),
   ),
-  // Weak / Weak, about the same — Tx 120 → usable 66; 80/40 → avg 60.
+  // Weak / Weak, about the same — Tx 120 → usable 66; download 63.
   (
     slug: 'weak-weak_about-same',
     adapter: _MacLinkAdapter(120),
-    internet: _internet(down: 80, up: 40),
+    internet: _internet(down: 63, up: 40),
   ),
 ];
 

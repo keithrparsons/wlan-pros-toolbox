@@ -247,27 +247,6 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
       buf.writeln('  $label: $value — $grade$note');
     }
 
-    // TEMPORARY tuning diagnostic (strip before ship — grep "TEMPORARY tuning"):
-    // per-provider download breakdown so we can pick the aggregation + prune the
-    // pool from a real link. Populated only on the own-engine success path.
-    if (r.downloadProviderRates.isNotEmpty) {
-      buf
-        ..writeln()
-        ..writeln('Download providers (tuning)');
-      for (final ProviderRate p in r.downloadProviderRates) {
-        final String tag = p.includedInAggregate ? 'KEEP' : 'DROP';
-        buf.writeln('  $tag  ${p.mbps.toStringAsFixed(1)} Mbps  ${p.host}');
-      }
-      final double? sum = r.downloadSumOfSurvivors;
-      final double? med = r.downloadMedianOfSurvivors;
-      if (sum != null) {
-        buf.writeln('  Sum of survivors: ${sum.toStringAsFixed(1)} Mbps');
-      }
-      if (med != null) {
-        buf.writeln('  Median of survivors: ${med.toStringAsFixed(1)} Mbps');
-      }
-    }
-
     buf
       ..writeln()
       ..writeln('Cloud apps reachable?');

@@ -349,7 +349,7 @@ void _expectText(String exact) {
 void main() {
   // A reusable internet "Strong/healthy" result for the chip-only shots.
   QualityResult strongInternet() => _internetResult(
-        down: 480, up: 360, latencyMs: 12, jitterMs: 2, lossPct: 0,
+        down: 400, up: 360, latencyMs: 12, jitterMs: 2, lossPct: 0,
         downUpGrade: QualityGrade.excellent,
         latencyGrade: QualityGrade.excellent,
         lossGrade: QualityGrade.excellent,
@@ -379,7 +379,7 @@ void main() {
   });
 
   // S2 — Wi-Fi the weaker road. Tx 60 → usable 33 Mbps (Wi-Fi chip "Weak");
-  // internet 440/360 → avg 400 (Internet chip "Strong") but graded FAIR so the
+  // internet download 440 (Internet chip "Strong") but graded FAIR so the
   // verdict honestly lands on the Wi-Fi link → hero "Your Wi-Fi is the slow
   // part." (The app's middle tier word is "Moderate"; ch1's "Fair" is prose
   // shorthand — captured honestly as the app states it.)
@@ -413,7 +413,7 @@ void main() {
   });
 
   // S3 — Internet the weaker road. Tx 720 → usable 396 (Wi-Fi chip "Strong");
-  // internet 40/20 → avg 30 (Internet chip "Weak") graded fair → upstream verdict
+  // internet download 40 (Internet chip "Weak") graded fair → upstream verdict
   // → hero "Your internet is the slow part." Headline points at the provider.
   testWidgets('S03 Test My Connection — Internet weaker', (tester) async {
     await _capture(
@@ -445,7 +445,7 @@ void main() {
   });
 
   // S4 — both roads strong → hero "Your Wi-Fi and internet both look fine."
-  // Tx 720 → usable 396 (Strong); internet 480/360 → avg 420 (Strong), graded
+  // Tx 720 → usable 396 (Strong); internet download 400 (Strong), graded
   // excellent → bothHealthy. The headline sends you downstream to the app/site.
   testWidgets('S04 Test My Connection — both strong', (tester) async {
     await _capture(
@@ -506,7 +506,7 @@ void main() {
   // ════════════════════════════════════════════════════════════════════════
 
   // S6 — the verdict line + the walk-around tip. Run close to the box: Tx 720 →
-  // usable 396 Mbps; internet 200/100 → avg 150. deltaPct = 100×(396−150)/150
+  // usable 396 Mbps; internet download 150. deltaPct = 100×(396−150)/150
   // = +164% → the app's OWN comparison line "Your Wi-Fi link is 164% faster than
   // your internet connection." enableLiveSampling true so the live-signal card —
   // which carries the walk-around tip — renders; the macOS sampler polls the
@@ -539,7 +539,7 @@ void main() {
         macAdapter: _TxLinkMacAdapter(720, rssi: -52, snr: 38),
         qualityClient: MockQualityClient(
           scriptedResult: _internetResult(
-            down: 200, up: 100, latencyMs: 18, jitterMs: 3, lossPct: 0,
+            down: 150, up: 100, latencyMs: 18, jitterMs: 3, lossPct: 0,
           ),
         ),
       ),

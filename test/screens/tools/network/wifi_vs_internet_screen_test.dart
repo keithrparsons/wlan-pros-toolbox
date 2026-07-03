@@ -190,7 +190,7 @@ void main() {
       expect(find.text('Wi-Fi vs Internet'), findsOneWidget);
 
       // The pro verdict line: macOS Tx-only 866 → usable 476.3; marginal
-      // internet avg 40 → ratio ≈ 0.084 → upstream.
+      // internet download 60 → ratio ≈ 0.126 → upstream.
       expect(find.text("It's upstream, not your Wi-Fi"), findsOneWidget);
 
       // Both data sub-cards render.

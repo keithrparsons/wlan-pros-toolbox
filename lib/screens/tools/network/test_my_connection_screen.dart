@@ -1656,7 +1656,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     }
 
     final double? usable = _engine?.usableWifiMbps;
-    final double? internet = _engine?.internetAvgMbps;
+    final double? internet = _engine?.internetMbps;
     if (usable == null || internet == null || internet < 0.5) return null;
 
     final String tierWord = _lowerTierWord(tier);
@@ -1748,7 +1748,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     }
 
     final double? usable = _engine?.usableWifiMbps;
-    final double? internet = _engine?.internetAvgMbps;
+    final double? internet = _engine?.internetMbps;
     if (usable == null || internet == null || internet < 0.5) return null;
 
     final String tierWord = _lowerTierWord(tier);
@@ -1771,7 +1771,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// figure is only ever shown from real measured numbers, never fabricated).
   String? _comparisonLine(ConsumerVerdict verdict) {
     final double? usable = _engine?.usableWifiMbps;
-    final double? internet = _engine?.internetAvgMbps;
+    final double? internet = _engine?.internetMbps;
     // Suppress when either side is missing or the internet rate is ~0 (no truthful
     // denominator). The verdict line already states the honest couldn't-check.
     if (usable == null || internet == null || internet < 0.5) return null;
@@ -2809,7 +2809,7 @@ class _ComparisonCard extends StatelessWidget {
         return 'Both your Wi-Fi and your internet are keeping up. Neither side '
             'is holding you back right now.';
       case WifiVsInternetVerdict.wifiUnknown:
-        return result.internetAvgMbps == null
+        return result.internetMbps == null
             ? 'We could not read your Wi-Fi link, so there is nothing to '
                 'compare the internet against yet.'
             : 'We could not read your Wi-Fi link, so only the internet side is '
@@ -2827,7 +2827,7 @@ class _ComparisonCard extends StatelessWidget {
   /// real tier (the caller then falls through to the engine-verdict wording).
   ///
   /// Buckets the SAME two rates the bars draw — [WifiVsInternetResult.usableWifiMbps]
-  /// and [WifiVsInternetResult.internetAvgMbps] — into Strong / Moderate / Weak via
+  /// and [WifiVsInternetResult.internetMbps] — into Strong / Moderate / Weak via
   /// [AxisStatusThresholds.tierFor], the EXACT source the consumer chips use, so
   /// "same tier" here means the same thing the chips show. Fires only when both
   /// rates are real (non-null, internet not ~0) and land on the same real tier;
@@ -2836,7 +2836,7 @@ class _ComparisonCard extends StatelessWidget {
   /// weak link" / "boost the Wi-Fi" / "the slower part". Null otherwise (GL-005).
   String? _sameTierReadingLine() {
     final double? usable = result.usableWifiMbps;
-    final double? internet = result.internetAvgMbps;
+    final double? internet = result.internetMbps;
     if (usable == null || internet == null || internet < 0.5) return null;
 
     final AxisStatus wifiTier = AxisStatusThresholds.tierFor(usable);
@@ -2857,7 +2857,7 @@ class _ComparisonCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
     final double? usable = result.usableWifiMbps;
-    final double? internet = result.internetAvgMbps;
+    final double? internet = result.internetMbps;
 
     // Shared scale: the larger of the two figures is full width, so the bars are
     // directly comparable. When one side is unknown, the other still draws.

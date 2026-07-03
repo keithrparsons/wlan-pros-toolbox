@@ -1,4 +1,3 @@
-import 'probes/throughput_probe.dart' show ProviderRate;
 import 'quality_metric.dart';
 
 /// Where a [QualityResult] came from.
@@ -30,30 +29,11 @@ class QualityResult {
   /// When the measurement completed.
   final DateTime measuredAt;
 
-  /// TEMPORARY tuning diagnostic (own-engine only): the per-provider download
-  /// rates behind the headline Download metric, each flagged with whether it
-  /// survived outlier rejection. Empty on the mock path and whenever the
-  /// download stage failed. Lets a real-link run be pasted back with a full
-  /// per-provider breakdown for tuning; strip before ship.
-  final List<ProviderRate> downloadProviderRates;
-
-  /// TEMPORARY tuning diagnostic: the sum of the surviving providers' rates
-  /// (the current headline aggregation), in Mbps. Null when unavailable.
-  final double? downloadSumOfSurvivors;
-
-  /// TEMPORARY tuning diagnostic: the median of the surviving providers' rates,
-  /// in Mbps (the alternative single-stream-style aggregation). Null when
-  /// unavailable.
-  final double? downloadMedianOfSurvivors;
-
   /// Creates a result.
   const QualityResult({
     required this.metrics,
     required this.source,
     required this.measuredAt,
-    this.downloadProviderRates = const <ProviderRate>[],
-    this.downloadSumOfSurvivors,
-    this.downloadMedianOfSurvivors,
   });
 
   /// Returns the metric whose [QualityMetric.id] matches [id], or null.
@@ -69,19 +49,6 @@ class QualityResult {
         'source': source.name,
         'measuredAt': measuredAt.toIso8601String(),
         'metrics': metrics.map((m) => m.toJson()).toList(),
-        if (downloadProviderRates.isNotEmpty)
-          'downloadProviderRates': <Map<String, Object?>>[
-            for (final p in downloadProviderRates)
-              <String, Object?>{
-                'host': p.host,
-                'mbps': p.mbps,
-                'includedInAggregate': p.includedInAggregate,
-              },
-          ],
-        if (downloadSumOfSurvivors != null)
-          'downloadSumOfSurvivors': downloadSumOfSurvivors,
-        if (downloadMedianOfSurvivors != null)
-          'downloadMedianOfSurvivors': downloadMedianOfSurvivors,
       };
 
   @override
