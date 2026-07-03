@@ -133,12 +133,7 @@ class OwnEngineQualityClient implements QualityClient {
 
     final responsivenessProbe = ResponsivenessProbe(
       latencySampler: sampleRtt,
-      loadGenerator: () async {
-        await throughputProbe.downloader(
-          throughputProbe.downloadEndpoint,
-          throughputProbe.maxDuration,
-        );
-      },
+      loadGenerator: () => runResilientRpmLoad(throughputProbe),
     );
 
     return OwnEngineQualityClient(
@@ -147,6 +142,34 @@ class OwnEngineQualityClient implements QualityClient {
       responsivenessProbe: responsivenessProbe,
       clock: clock,
     );
+  }
+
+  /// Runs the SINGLE-FLOW load for the responsiveness (RPM) stage, resilient to
+  /// a flaky provider.
+  ///
+  /// RPM is single-flow BY DESIGN — it must never fan out into the parallel
+  /// download pool. But it also must not fail just because one provider (e.g.
+  /// Cloudflare, [ThroughputProbe.downloadEndpoints] index 0) is throttling us:
+  /// the download POOL falls back fine, yet a load call pinned to a single flaky
+  /// endpoint would throw and drag RPM to "Unavailable". So this walks the same
+  /// diverse pool in order and stops at the FIRST endpoint whose single download
+  /// flow runs. Only when EVERY endpoint fails does it throw (honest: no load
+  /// could be generated, so RPM is genuinely unmeasurable) — never a fake value.
+  static Future<void> runResilientRpmLoad(ThroughputProbe probe) async {
+    Object? lastError;
+    for (final endpoint in probe.downloadEndpoints) {
+      try {
+        // One healthy single-flow load for the whole RPM window is enough.
+        await probe.downloader(endpoint, probe.maxDuration);
+        return;
+      } catch (e) {
+        lastError = e; // try the next provider
+      }
+    }
+    throw lastError ??
+        const ThroughputUnmeasurable(
+          'RPM load: no download endpoint available',
+        );
   }
 
   @override

@@ -439,6 +439,69 @@ void main() {
       expect(result.downloadMedianOfSurvivors, isNull);
     });
   });
+
+  group('OwnEngineQualityClient.runResilientRpmLoad (RPM load resilience)', () {
+    test('falls back past a flaky first endpoint (Cloudflare) so RPM still runs',
+        () async {
+      // The download POOL's first provider (Cloudflare) flakes, but the RPM
+      // single-flow load must NOT fail — it walks to the next provider.
+      final hit = <String>[];
+      final probe = ThroughputProbe(
+        downloadEndpoints: <Uri>[
+          Uri.parse('https://speed.cloudflare.com/__down?bytes=1'), // flaky
+          Uri.parse('https://proof.ovh.net/files/1Gb.dat'), // healthy
+          Uri.parse('https://cachefly.cachefly.net/100mb.test'),
+        ],
+        downloader: (uri, max) async {
+          hit.add(uri.host);
+          if (uri.host == 'speed.cloudflare.com') {
+            throw const ThroughputUnmeasurable('cloudflare flaked');
+          }
+          return 50 * 1000 * 1000;
+        },
+      );
+
+      // Completes without throwing (RPM would have gone Unavailable otherwise).
+      await OwnEngineQualityClient.runResilientRpmLoad(probe);
+
+      // Tried Cloudflare first, then stopped at the first healthy provider —
+      // it stays SINGLE-FLOW (did not fan out to the whole pool).
+      expect(hit, <String>['speed.cloudflare.com', 'proof.ovh.net']);
+    });
+
+    test('healthy first endpoint is used alone (single-flow, no fan-out)',
+        () async {
+      final hit = <String>[];
+      final probe = ThroughputProbe(
+        downloadEndpoints: <Uri>[
+          Uri.parse('https://a.test/down'),
+          Uri.parse('https://b.test/down'),
+        ],
+        downloader: (uri, max) async {
+          hit.add(uri.host);
+          return 50 * 1000 * 1000;
+        },
+      );
+      await OwnEngineQualityClient.runResilientRpmLoad(probe);
+      expect(hit, <String>['a.test']); // only the first, single flow
+    });
+
+    test('throws only when EVERY provider fails (honest, never a fake value)',
+        () async {
+      final probe = ThroughputProbe(
+        downloadEndpoints: <Uri>[
+          Uri.parse('https://a.test/down'),
+          Uri.parse('https://b.test/down'),
+        ],
+        downloader: (uri, max) async =>
+            throw const ThroughputUnmeasurable('all down'),
+      );
+      await expectLater(
+        OwnEngineQualityClient.runResilientRpmLoad(probe),
+        throwsA(isA<ThroughputUnmeasurable>()),
+      );
+    });
+  });
 }
 
 /// A timer that runs the body and reports a fixed duration. Used for both the
