@@ -35,8 +35,8 @@ void main() {
       expect(probe.downloadEndpoints.first.host, 'speed.cloudflare.com');
     });
 
-    test('download stream count defaults to 2 and is configurable', () {
-      expect(ThroughputProbe().downloadStreamCount, 2);
+    test('download stream count defaults to 6 and is configurable', () {
+      expect(ThroughputProbe().downloadStreamCount, 6);
       expect(ThroughputProbe(downloadStreamCount: 3).downloadStreamCount, 3);
       expect(ThroughputProbe(downloadStreamCount: 1).downloadStreamCount, 1);
     });
@@ -822,10 +822,13 @@ Future<Map<String, String>> _captureRequestHeaders({
         buffer.write(String.fromCharCodes(data));
         // Respond as soon as the full request head (terminated by a blank line)
         // has arrived. For an upload the body follows, but the headers we assert
-        // on are already on the wire by then.
-        if (!captured.isCompleted && buffer.toString().contains('\r\n\r\n')) {
+        // on are already on the wire by then. The download probe now LOOPS
+        // requests until its window closes, so every request (each a fresh
+        // connection — we send `Connection: close`) must be served, not just the
+        // first; the captured head is taken from the first request only.
+        if (buffer.toString().contains('\r\n\r\n')) {
           final head = buffer.toString().split('\r\n\r\n').first;
-          captured.complete(head.split('\r\n'));
+          if (!captured.isCompleted) captured.complete(head.split('\r\n'));
           socket.write('HTTP/1.1 200 OK\r\n'
               'Content-Type: application/octet-stream\r\n'
               'Content-Length: 1\r\n'
@@ -860,7 +863,9 @@ Future<Map<String, String>> _captureRequestHeaders({
     if (isUpload) {
       await probe.uploader(requestUri, 4 * 1024, const Duration(seconds: 3));
     } else {
-      await probe.downloader(requestUri, const Duration(seconds: 3));
+      // Short window: the download probe loops requests until the window closes,
+      // and we only need the first request's headers captured, so keep it brief.
+      await probe.downloader(requestUri, const Duration(milliseconds: 200));
     }
   } catch (_) {
     // The tiny canned response may trip the byte floor or close early; we only

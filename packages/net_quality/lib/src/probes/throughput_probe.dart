@@ -175,7 +175,13 @@ class ThroughputUnmeasurable implements Exception {
 /// timing through [timer] (and the parallel-window timing through
 /// [windowTimer]), so the rate math can be unit-tested with no real network.
 class ThroughputProbe {
-  /// Approximate download payload size in bytes, PER STREAM (~25 MB default).
+  /// Download payload size in bytes, PER REQUEST (~90 MB default — just under
+  /// Cloudflare's hard <100 MB `__down` cap; 100 MB+ returns 403). This is NOT
+  /// the whole measurement: each stream LOOPS sized requests back-to-back until
+  /// [maxDuration] closes (see [_downloadOnce]), so the WINDOW is the binding
+  /// constraint, not the payload. The old bug used ONE small request that
+  /// drained in well under a second on a fast link, collapsing the measurement
+  /// onto TCP connect + slow-start and under-reporting the link several-fold.
   final int downloadBytes;
 
   /// Approximate upload payload size in bytes (~10 MB by default).
@@ -195,7 +201,9 @@ class ThroughputProbe {
   final List<Uri> uploadEndpoints;
 
   /// Number of concurrent download streams to run in the shared window.
-  /// Defaults to 2 (the Ookla / Fast.com aggregate-capacity model).
+  /// Defaults to 6 (the Ookla / Fast.com aggregate-capacity model): a single
+  /// TCP stream is bandwidth-delay-product limited and cannot fill a fast link,
+  /// so several summed concurrent flows are required to measure true capacity.
   final int downloadStreamCount;
 
   /// Hard cap on each transfer (per attempt). For the parallel download this is
@@ -305,24 +313,28 @@ class ThroughputProbe {
   /// The first upload endpoint.
   Uri get uploadEndpoint => uploadEndpoints.first;
 
-  /// Default ordered download endpoints. Three independent providers, all
-  /// HTTPS, all no-auth, all verified to return a sized 2xx payload:
-  ///   1. Cloudflare  — honors `?bytes=N` (configurable), proven primary.
-  ///   2. OVH proof   — fixed 100 MB file, plain HTTPS GET.
-  ///   3. Cachefly    — fixed 100 MB file, plain HTTPS GET.
+  /// Default ordered download endpoints for the parallel-summed window. Six
+  /// independent Cloudflare streams (distinct `s=` query so no HTTP layer
+  /// coalesces them onto a single connection) fill the link the way Ookla /
+  /// Fast.com do, followed by two independent-provider large-file fallbacks used
+  /// only if Cloudflare is unhealthy. All HTTPS, no-auth, sized 2xx payloads.
+  ///   1-6. Cloudflare — honors `?bytes=N`, one stream each, proven primary.
+  ///   7.   OVH proof  — fixed 1 GB file, plain HTTPS GET (fallback).
+  ///   8.   Cachefly   — fixed 100 MB file, plain HTTPS GET (fallback).
   static List<Uri> _defaultDownloadEndpoints(int bytes) => <Uri>[
-        Uri.parse('https://speed.cloudflare.com/__down?bytes=$bytes'),
-        Uri.parse('https://proof.ovh.net/files/100Mb.dat'),
+        for (var i = 0; i < 6; i++)
+          Uri.parse('https://speed.cloudflare.com/__down?bytes=$bytes&s=$i'),
+        Uri.parse('https://proof.ovh.net/files/1Gb.dat'),
         Uri.parse('https://cachefly.cachefly.net/100mb.test'),
       ];
 
   /// Creates a throughput probe.
   ThroughputProbe({
-    this.downloadBytes = 25 * 1000 * 1000,
+    this.downloadBytes = 90 * 1000 * 1000,
     this.uploadBytes = 10 * 1000 * 1000,
     List<Uri>? downloadEndpoints,
     List<Uri>? uploadEndpoints,
-    this.downloadStreamCount = 2,
+    this.downloadStreamCount = 6,
     this.maxDuration = const Duration(seconds: 10),
     this.maxRetries = 2,
     this.throughputRetries = 1,
@@ -753,23 +765,40 @@ class ThroughputProbe {
   Future<int> _downloadOnce(Uri uri, Duration maxDuration) async {
     final client = httpClientFactory()
       ..connectionTimeout = const Duration(seconds: 5);
+    var total = 0;
+    var seq = 0;
+    final deadline = DateTime.now().add(maxDuration);
     try {
-      final request = await client.getUrl(uri);
-      _applyFallbackClientHeader(request);
-      final response = await request.close();
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        // Drain so the socket can be reused/closed cleanly, then fail.
-        await response.drain<void>();
-        throw ThroughputUnmeasurable(
-          'download HTTP ${response.statusCode}',
-        );
-      }
-      var total = 0;
-      final deadline = DateTime.now().add(maxDuration);
-      await for (final chunk in response) {
-        total += chunk.length;
-        if (DateTime.now().isAfter(deadline)) break;
-      }
+      // Loop sized requests back-to-back (the keep-alive connection is reused
+      // when the server allows it) until the window closes, so the stream stays
+      // saturated for the FULL window. A single request is bounded — Cloudflare
+      // caps `__down` below 100 MB, and even the max drains in well under the
+      // window on a fast link — so looping is what turns a capped endpoint into
+      // a full-window measurement instead of a slow-start snapshot. A do/while
+      // guarantees at least one request even if the clock is already at the
+      // deadline.
+      do {
+        final request = await client.getUrl(_repeatBust(uri, seq++));
+        _applyFallbackClientHeader(request);
+        final response = await request.close();
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          // Drain so the socket can be reused/closed cleanly, then fail.
+          await response.drain<void>();
+          // A failure on the FIRST request surfaces so the stream falls back to
+          // another endpoint; a failure after real bytes just ends this
+          // endpoint's contribution for the remaining window.
+          if (total == 0) {
+            throw ThroughputUnmeasurable(
+              'download HTTP ${response.statusCode}',
+            );
+          }
+          break;
+        }
+        await for (final chunk in response) {
+          total += chunk.length;
+          if (DateTime.now().isAfter(deadline)) break;
+        }
+      } while (DateTime.now().isBefore(deadline));
       if (total == 0) {
         throw const ThroughputUnmeasurable('download returned 0 bytes');
       }
@@ -777,6 +806,21 @@ class ThroughputProbe {
     } finally {
       client.close(force: true);
     }
+  }
+
+  /// Appends a distinct per-repeat `rr` query param so the looped requests to
+  /// the same endpoint each pull a fresh payload and never hit a cache / 304.
+  /// Unlike [_withCacheBust] (scoped to the Rung-2 fallback host), this applies
+  /// to every host because the loop re-requests the SAME url many times. The
+  /// first request (seq 0) is returned untouched so the shipped single-request
+  /// behavior — and the header/gate tests that assert on the exact URI — are
+  /// byte-for-byte unchanged.
+  static Uri _repeatBust(Uri uri, int seq) {
+    if (seq == 0) return uri;
+    return uri.replace(queryParameters: <String, String>{
+      ...uri.queryParameters,
+      'rr': '$seq',
+    });
   }
 
   /// Default upload: sends [bytes] of payload, counting bytes written, stopping
