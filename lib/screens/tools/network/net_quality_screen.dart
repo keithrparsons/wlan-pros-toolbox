@@ -523,7 +523,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
             'Runs a single-stream throughput test against an independent M-Lab '
             'research server. It measures real end-to-end performance to a '
             'remote server, so it reads lower than tools that hit the nearest '
-            "cache — that's the honest number.",
+            "cache. That's the honest number.",
             style: text.bodyLarge?.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.md),
@@ -574,7 +574,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
             child: Semantics(
               liveRegion: true,
               child: Text(
-                'Running the full internet test — about 20 seconds (download, '
+                'Running the full internet test, about 20 seconds (download, '
                 'then upload).',
                 style: text.bodyLarge?.copyWith(color: colors.textSecondary),
               ),
@@ -1488,7 +1488,7 @@ class _FullInternetTestConsentSheet extends StatelessWidget {
                 'This runs a single-stream internet throughput test against an '
                 'independent M-Lab research server (measurementlab.net). It '
                 'measures real end-to-end performance to a remote server, so it '
-                'reads lower than tools that hit the nearest cache — that\'s the '
+                'reads lower than tools that hit the nearest cache. That\'s the '
                 'honest number. M-Lab publishes each result and your public IP '
                 'address as open research data. Please run it no more than a few '
                 'times per day.',
