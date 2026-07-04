@@ -551,4 +551,49 @@ void main() {
       await bridge.close();
     });
   });
+
+  // App-wide single-flight (Option B). The "WLAN Pros Live" monitoring flag is
+  // SHARED across the Wi-Fi and cellular tools (one combined Shortcut), so a
+  // cellular Start while the flag is already active (the Wi-Fi tool or another
+  // scene started it) must ADOPT the running stream, not stack a second loop.
+  group('app-wide single-flight (Option B)', () {
+    test(
+        'a Start while the shared loop is ALREADY active ADOPTS it and does NOT '
+        'fire a second run-shortcut', () async {
+      // RED on the pre-fix code: startMonitoring always fired the trigger.
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _info()
+        ..monitoringFlag = true; // Wi-Fi tool / another scene already streaming
+      final c = CellularMonitorController(bridge: bridge);
+      await c.load();
+
+      final bool ok =
+          await c.startMonitoring(triggerShortcutName: 'WLAN Pros Live');
+
+      expect(ok, isTrue);
+      expect(c.isStreaming, isTrue, reason: 'adopts the shared running stream');
+      expect(bridge.runShortcutCalls, 0,
+          reason: 'the shared active flag is adopted, never re-fired');
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('a Start from a clean (inactive) state fires exactly ONE run-shortcut',
+        () async {
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _info()
+        ..monitoringFlag = false; // clean slate (cold-start reset ran)
+      final c = CellularMonitorController(bridge: bridge);
+      await c.load();
+
+      await c.startMonitoring(triggerShortcutName: 'WLAN Pros Live');
+
+      expect(bridge.runShortcutCalls, 1,
+          reason: 'a genuine false→true transition fires the trigger once');
+      c.dispose();
+      await bridge.close();
+    });
+  });
 }

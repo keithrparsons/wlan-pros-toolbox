@@ -94,6 +94,25 @@ enum ShortcutsBridge {
   /// out-of-process Shortcut and the app agree on one value.
   static let monitoringActiveKey = "shortcuts_bridge.monitoring_active"
 
+  /// Epoch-seconds wall-clock stamp of when the CURRENT monitoring session
+  /// started (Option B, launch-safe runaway mitigation). Written by
+  /// [setMonitoringActive] on a true transition, cleared on a false. Paired with
+  /// [monitoringMaxDuration] so [shouldContinueMonitoring] can HARD-CAP every
+  /// loop: even if the app is force-quit / crashes mid-stream and never clears
+  /// [monitoringActiveKey], the loop self-terminates once the cap elapses,
+  /// because the published Shortcut polls the gate every cycle. Survives process
+  /// death in the App Group exactly like the active flag, which is why it can
+  /// bound an orphaned loop.
+  static let monitoringStartedAtKey = "shortcuts_bridge.monitoring_started_at"
+
+  /// Hard time cap for one monitoring session (Option B). The loop gate returns
+  /// false once this elapses regardless of the active flag, so a runaway
+  /// (force-quit while streaming → the clear never arrives) is bounded to at most
+  /// this window rather than running forever. Five minutes: long enough for a
+  /// deliberate live-walk, short enough that an orphaned loop cannot drain the
+  /// battery unnoticed.
+  static let monitoringMaxDuration: TimeInterval = 5 * 60
+
   /// Darwin notification name posted after a write, so a foregrounded Flutter
   /// engine can react immediately. Plain Darwin names are process-global.
   static let darwinNotificationName = "com.wlanpros.toolbox.shortcuts_bridge.delivered"
@@ -238,6 +257,9 @@ enum ShortcutsBridge {
     defaults?.removeObject(forKey: latestPayloadKey)
     defaults?.removeObject(forKey: latestCellularPayloadKey)
     defaults?.set(false, forKey: monitoringActiveKey)
+    // Drop the session start stamp too so no orphaned window survives the reset
+    // (Option B); the gate now reads active=false anyway, this keeps state clean.
+    defaults?.removeObject(forKey: monitoringStartedAtKey)
     // A confirmed-missing Shortcut means setup did NOT complete: drop the priming
     // marker so the user returns to FULL setup (install), not the "tap Get reading
     // to finish" priming step.
@@ -343,15 +365,59 @@ enum ShortcutsBridge {
     sharedDefaults?.bool(forKey: hasReceivedCellularPayloadKey) ?? false
   }
 
-  /// Set the monitoring-active flag the looping Shortcut consumes (A2/A3).
+  /// Set the monitoring-active flag the looping Shortcut consumes (A2/A3). On a
+  /// true transition it also STAMPS [monitoringStartedAtKey] with the current
+  /// wall-clock so the hard time cap in [shouldContinueMonitoring] can bound the
+  /// session; on false it clears the stamp (Option B).
   static func setMonitoringActive(_ active: Bool) {
-    sharedDefaults?.set(active, forKey: monitoringActiveKey)
-    sharedDefaults?.synchronize()
+    let defaults = sharedDefaults
+    defaults?.set(active, forKey: monitoringActiveKey)
+    if active {
+      defaults?.set(Date().timeIntervalSince1970, forKey: monitoringStartedAtKey)
+    } else {
+      defaults?.removeObject(forKey: monitoringStartedAtKey)
+    }
+    defaults?.synchronize()
   }
 
   /// Read the monitoring-active flag (A2/A3). Defaults to false.
   static func isMonitoringActive() -> Bool {
     sharedDefaults?.bool(forKey: monitoringActiveKey) ?? false
+  }
+
+  /// The loop gate the recursive companion Shortcut polls each cycle via
+  /// `ShouldContinueMonitoringIntent` (Option B). Returns true ONLY while the app
+  /// wants monitoring AND the session is within the hard time cap. The cap makes
+  /// every runaway self-terminating: if the app is force-quit / crashes mid-
+  /// stream and never clears [monitoringActiveKey], the loop still stops once
+  /// [monitoringMaxDuration] elapses, because the Shortcut checks this gate on
+  /// every iteration. A missing/zero start stamp (an active flag we cannot bound)
+  /// fails SAFE — the gate returns false rather than allowing an unbounded loop.
+  static func shouldContinueMonitoring() -> Bool {
+    let defaults = sharedDefaults
+    guard defaults?.bool(forKey: monitoringActiveKey) == true else { return false }
+    let startedAt = defaults?.double(forKey: monitoringStartedAtKey) ?? 0
+    // No stamp → we cannot bound the loop → stop (fail safe). A legitimate live
+    // session always stamps the start in setMonitoringActive(true).
+    guard startedAt > 0 else { return false }
+    let elapsed = Date().timeIntervalSince1970 - startedAt
+    // A negative elapsed (clock moved backwards) is treated as "cannot bound" →
+    // stop, rather than trusting a nonsensical window.
+    return elapsed >= 0 && elapsed < monitoringMaxDuration
+  }
+
+  /// Cold-start reset (Option B). Called once on app launch, before any live
+  /// screen can run. A fresh process cannot assume a monitoring loop it can't
+  /// see is still alive, and a stale `true` left by a prior force-quit would
+  /// suppress a legitimate new Start (the app-wide single-flight would ADOPT the
+  /// phantom flag instead of firing the trigger). Clearing the flag + stamp on
+  /// launch guarantees a clean slate: the next real Start is a genuine
+  /// false→true transition that fires the Shortcut.
+  static func resetMonitoringOnColdStart() {
+    let defaults = sharedDefaults
+    defaults?.set(false, forKey: monitoringActiveKey)
+    defaults?.removeObject(forKey: monitoringStartedAtKey)
+    defaults?.synchronize()
   }
 
   static func postDarwinNotification() {

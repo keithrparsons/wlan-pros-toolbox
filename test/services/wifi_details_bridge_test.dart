@@ -68,6 +68,24 @@ void main() {
       messenger.setMockMethodCallHandler(channel, null);
       expect(await WiFiDetailsBridge().isMonitoringActive(), isFalse);
     });
+
+    test('resetMonitoringColdStart invokes the native reset method', () async {
+      // Option B cold-start reset: main() calls this once so a stale force-quit
+      // flag neither keeps an orphaned loop trusted nor suppresses a new Start.
+      MethodCall? seen;
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        seen = call;
+        return null;
+      });
+      await WiFiDetailsBridge().resetMonitoringColdStart();
+      expect(seen!.method, 'resetMonitoringColdStart');
+    });
+
+    test('resetMonitoringColdStart is a safe no-op off-iOS (no handler)', () async {
+      messenger.setMockMethodCallHandler(channel, null);
+      // Must not throw when the channel is absent (non-iOS / runner not built).
+      await WiFiDetailsBridge().resetMonitoringColdStart();
+    });
   });
 
   group('openUrl', () {

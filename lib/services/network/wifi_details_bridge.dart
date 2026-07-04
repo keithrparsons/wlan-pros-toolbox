@@ -193,6 +193,23 @@ class WiFiDetailsBridge {
     }
   }
 
+  /// Cold-start reset of the persisted Live monitoring loop state (Option B).
+  /// Clears the monitoring-active flag AND its hard-cap start stamp. Called once
+  /// from `main()` before any live screen can run, so a stale `true` left by a
+  /// prior force-quit/crash mid-stream can neither keep an orphaned loop trusted
+  /// nor suppress a legitimate new Start (the app-wide single-flight would
+  /// otherwise ADOPT the phantom flag instead of firing the trigger). No-op
+  /// off-iOS (no persisted loop state) and never throws.
+  Future<void> resetMonitoringColdStart() async {
+    try {
+      await _method.invokeMethod<void>('resetMonitoringColdStart');
+    } on MissingPluginException {
+      // Non-iOS: no persisted loop state to reset.
+    } on PlatformException catch (e) {
+      debugPrint('WiFiDetailsBridge.resetMonitoringColdStart failed: $e');
+    }
+  }
+
   /// Opens an external URL (the iCloud companion-Shortcut link, TICKET-03 A1).
   /// Routed through the existing app-owned channel so the app keeps a single
   /// native surface and adds no URL-launcher plugin. Returns false when the

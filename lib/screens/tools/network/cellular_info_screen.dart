@@ -268,12 +268,12 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
       // Ignore the background half of the Shortcut bounce (the app opening
       // Shortcuts), the recursion is supposed to continue.
       if (_shortcutBounceInFlight) return;
-      // A genuine background: stop sampling (clears the loop-gate flag). The last
-      // values stay frozen on screen; the user re-taps Start to resume.
-      final CellularMonitorController? c = _liveController;
-      if (c != null && c.isStreaming) {
-        c.stopMonitoring();
-      }
+      // A genuine background: ALWAYS clear the shared loop-gate flag (Option B
+      // defensive clear) — unconditionally, not only when we believe we're
+      // streaming — so a stale or adopted flag can never keep the external loop
+      // alive after the user leaves. The last values stay frozen on screen; the
+      // user re-taps Start to resume.
+      _liveController?.stopMonitoring();
     }
   }
 
@@ -288,9 +288,10 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
       // Detach the listener FIRST so the stopMonitoring() notify below does not
       // re-enter _captureSample's setState on a defunct element.
       controller?.removeListener(_captureSample);
-      if (controller != null && controller.isStreaming) {
-        controller.stopMonitoring();
-      }
+      // ALWAYS clear the shared flag on teardown (Option B defensive clear) — not
+      // only when streaming — so leaving the screen can never strand the external
+      // loop as "keep going". dispose is a permanent teardown, never a bounce.
+      controller?.stopMonitoring();
       controller?.dispose();
     }
     super.dispose();

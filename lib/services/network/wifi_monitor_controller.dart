@@ -250,9 +250,11 @@ class WifiMonitorController extends ChangeNotifier {
   ///      looping Shortcut never hangs the app.
   /// The app's only job from here is to passively consume [WiFiDetailsBridge.updates].
   ///
-  /// The flag write and the stream subscription are kicked off synchronously
-  /// (before the first `await`) so a tap-driven rebuild does not wait on a later
-  /// microtask. When [triggerShortcutName] is null the trigger is skipped (the
+  /// The stream subscription is kicked off synchronously (before the first
+  /// `await`) so a tap-driven rebuild does not wait on a later microtask; the
+  /// flag write + trigger fire happen after an app-wide single-flight check so a
+  /// second concurrent Start ADOPTS the running loop instead of stacking a second
+  /// one. When [triggerShortcutName] is null the trigger is skipped (the
   /// recursion is assumed already running, e.g. a relaunch-resumed loop).
   ///
   /// Returns false ONLY when iOS could not OPEN the trigger (Shortcuts app
@@ -268,10 +270,28 @@ class WifiMonitorController extends ChangeNotifier {
     _sampleSinceStart = false;
     // A fresh Start clears any lingering missing verdict from a prior attempt.
     if (_shortcutMissing) _shortcutMissing = false;
-    final Future<void> write = _bridge.setMonitoringActive(true);
+
+    // Enter streaming optimistically and synchronously (before the first await)
+    // so a tap-driven rebuild does not wait on a microtask — unchanged intent.
     _startListening();
     _safeNotify();
-    await write;
+
+    // APP-WIDE SINGLE-FLIGHT (Option B). Fire the trigger and (re)stamp the flag
+    // ONLY on a genuine false→true transition. If a monitoring loop is ALREADY
+    // active — another scene/surface started it, or a relaunch resumed it — ADOPT
+    // the existing stream instead of firing a SECOND run-shortcut: two concurrent
+    // fires stack independent Shortcut loops that never supersede each other (the
+    // multi-run stacking symptom). We also do NOT re-write the flag on adopt, so
+    // the existing session's hard-cap start stamp is left intact (re-stamping
+    // would silently extend the 5-minute cap on every surface that adopts).
+    final bool alreadyActive = await _bridge.isMonitoringActive();
+    if (alreadyActive) {
+      // Adopted a live loop: the settle-based missing verdict is the starting
+      // surface's job (it fired the trigger); here we just consume the stream.
+      return true;
+    }
+
+    await _bridge.setMonitoringActive(true);
     if (triggerShortcutName == null) return true;
     final bool opened = await _bridge.runShortcut(triggerShortcutName);
     if (!opened) return false;

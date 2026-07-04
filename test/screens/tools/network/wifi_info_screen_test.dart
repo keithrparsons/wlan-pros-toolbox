@@ -317,6 +317,11 @@ class _FakeBridge implements WiFiDetailsBridge {
   }
 
   @override
+  Future<void> resetMonitoringColdStart() async {
+    monitoringActive = false;
+  }
+
+  @override
   Future<bool> openUrl(String url) async => true;
 
   @override

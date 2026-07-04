@@ -33,6 +33,7 @@ import 'router/app_router.dart';
 import 'router/live_error_nav_gate.dart';
 import 'services/help/tool_help_loader.dart';
 import 'services/network/dart_ping_icmp_backend.dart';
+import 'services/network/wifi_details_bridge.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
 
@@ -51,6 +52,20 @@ Future<void> main() async {
   // off iOS and idempotent; kept behind this helper so the dart_ping_ios import
   // stays confined to the backend file.
   registerIcmpBackend();
+
+  // Cold-start reset of the Live monitoring loop flag (Option B). A stale `true`
+  // left by a force-quit/crash mid-stream must NOT (a) keep an orphaned external
+  // Shortcut loop trusted, nor (b) suppress a legitimate new Start — the app-wide
+  // single-flight ADOPTS an already-active flag instead of firing, so a phantom
+  // flag would silently no-op the user's next Start. A fresh process cannot
+  // assume a loop it can't see is alive, so we clear the flag + start stamp
+  // before any live screen can run. No-op off iOS; never blocks startup.
+  try {
+    await WiFiDetailsBridge().resetMonitoringColdStart();
+  } catch (_) {
+    // Channel absent (non-iOS) or a transient failure — safe to ignore; the
+    // hard time cap in ShouldContinueMonitoringIntent still bounds any loop.
+  }
 
   // Cache which per-tool icon/concept-graphic SVGs the build actually bundled,
   // so the convention-based resolver (ToolAssets) degrades gracefully for the
