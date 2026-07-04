@@ -28,9 +28,10 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../utils/decimal_input.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/field_unit_row.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/field_unit_row.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -95,9 +96,7 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
 
   // Unsigned-decimal only. Height and coverage are always positive values a
   // human types by hand, so no sign and no scientific notation here.
-  static final List<TextInputFormatter> _unsignedDecimal = [
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-  ];
+  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
 
   @override
   void dispose() {
@@ -111,8 +110,8 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
   void _recompute() {
-    final double? height = _tryParseDouble(_heightCtrl.text);
-    final double? coverage = _tryParseDouble(_coverageCtrl.text);
+    final double? height = tryParseFlexibleDouble(_heightCtrl.text);
+    final double? coverage = tryParseFlexibleDouble(_coverageCtrl.text);
     if (height == null || coverage == null) {
       setState(() => _angleDeg = null);
       return;
@@ -129,12 +128,6 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
   }
 
   // ─── Formatting ───────────────────────────────────────────────────────────
-
-  static double? _tryParseDouble(String raw) {
-    final String s = raw.trim();
-    if (s.isEmpty || s == '.') return null;
-    return double.tryParse(s);
-  }
 
   /// PWA fmt(angle, 2): fixed 2-decimal, "—" when not finite.
   static String _formatAngle(double? angle) {

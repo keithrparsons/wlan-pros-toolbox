@@ -27,10 +27,11 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../utils/decimal_input.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/field_unit_row.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/field_unit_row.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -99,9 +100,7 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
   double? _bulgeM;
 
   // Unsigned-decimal only. Path lengths are always positive and hand-typed.
-  static final List<TextInputFormatter> _unsignedDecimal = [
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-  ];
+  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
 
   @override
   void dispose() {
@@ -113,7 +112,7 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
   void _recompute() {
-    final double? dist = _tryParseDouble(_distCtrl.text);
+    final double? dist = tryParseFlexibleDouble(_distCtrl.text);
     if (dist == null) {
       setState(() => _bulgeM = null);
       return;
@@ -131,12 +130,6 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
   }
 
   // ─── Formatting ───────────────────────────────────────────────────────────
-
-  static double? _tryParseDouble(String raw) {
-    final String s = raw.trim();
-    if (s.isEmpty || s == '.') return null;
-    return double.tryParse(s);
-  }
 
   /// PWA fmt(n, 2): fixed 2-decimal, "—" when not finite or null.
   static String _formatFixed(double? n) {

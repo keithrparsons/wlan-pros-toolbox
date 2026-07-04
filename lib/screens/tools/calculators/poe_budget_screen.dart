@@ -35,6 +35,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../utils/decimal_input.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
@@ -126,9 +127,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
   PoeBudgetResult? _result;
 
   // Unsigned-decimal for watts/budget; unsigned-integer for quantity.
-  static final List<TextInputFormatter> _unsignedDecimal = [
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-  ];
+  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
   static final List<TextInputFormatter> _unsignedInteger = [
     FilteringTextInputFormatter.digitsOnly,
   ];
@@ -162,7 +161,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
   void _recompute() {
-    final double? budget = _tryParseDouble(_budgetCtrl.text);
+    final double? budget = tryParseFlexibleDouble(_budgetCtrl.text);
     if (budget == null) {
       setState(() => _result = null);
       return;
@@ -171,7 +170,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
       for (int i = 0; i < PoeBudgetScreen.deviceRowCount; i++)
         PoeDeviceRow(
           // PWA: parseFloat(...) || 0 — blank / invalid → 0.
-          _tryParseDouble(_wattsCtrls[i].text) ?? 0,
+          tryParseFlexibleDouble(_wattsCtrls[i].text) ?? 0,
           _tryParseInt(_qtyCtrls[i].text) ?? 0,
         ),
     ];
@@ -179,12 +178,6 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
   }
 
   // ─── Parsing ──────────────────────────────────────────────────────────────
-
-  static double? _tryParseDouble(String raw) {
-    final String s = raw.trim();
-    if (s.isEmpty || s == '.') return null;
-    return double.tryParse(s);
-  }
 
   static int? _tryParseInt(String raw) {
     final String s = raw.trim();

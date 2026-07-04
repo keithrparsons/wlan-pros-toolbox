@@ -60,9 +60,10 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../utils/decimal_input.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/field_unit_row.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/field_unit_row.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -283,15 +284,11 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
 
   // Unsigned decimal for positive-only fields (freq, dist, gains, losses, rain,
   // required margin).
-  static final List<TextInputFormatter> _unsignedDecimal = [
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-  ];
+  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
 
   // Signed decimal for dBm fields (Tx power can be set low, Rx sensitivity is
   // typically negative). Leading '-' allowed.
-  static final List<TextInputFormatter> _signedDecimal = [
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.\-]')),
-  ];
+  static final List<TextInputFormatter> _signedDecimal = signedDecimalFormatters;
 
   @override
   void dispose() {
@@ -330,18 +327,18 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
 
   void _recompute() {
     // Required fields (PWA: isFinite guard on each).
-    final double? freq = _parseSigned(_freqCtrl.text);
-    final double? dist = _parseSigned(_distCtrl.text);
-    final double? txPow = _parseSigned(_txPowCtrl.text);
-    final double? txGain = _parseSigned(_txGainCtrl.text);
-    final double? rxGain = _parseSigned(_rxGainCtrl.text);
-    final double? rxSens = _parseSigned(_sensCtrl.text);
+    final double? freq = tryParseFlexibleDouble(_freqCtrl.text);
+    final double? dist = tryParseFlexibleDouble(_distCtrl.text);
+    final double? txPow = tryParseFlexibleDouble(_txPowCtrl.text);
+    final double? txGain = tryParseFlexibleDouble(_txGainCtrl.text);
+    final double? rxGain = tryParseFlexibleDouble(_rxGainCtrl.text);
+    final double? rxSens = tryParseFlexibleDouble(_sensCtrl.text);
 
     // Optional fields fall back to PWA defaults when blank/invalid.
-    final double txLoss = _parseSigned(_txLossCtrl.text) ?? 0;
-    final double rxLoss = _parseSigned(_rxLossCtrl.text) ?? 0;
-    final double rainRate = _parseSigned(_rainCtrl.text) ?? 0;
-    final double reqMargin = _parseSigned(_reqMarginCtrl.text) ?? 10;
+    final double txLoss = tryParseFlexibleDouble(_txLossCtrl.text) ?? 0;
+    final double rxLoss = tryParseFlexibleDouble(_rxLossCtrl.text) ?? 0;
+    final double rainRate = tryParseFlexibleDouble(_rainCtrl.text) ?? 0;
+    final double reqMargin = tryParseFlexibleDouble(_reqMarginCtrl.text) ?? 10;
 
     if (freq == null ||
         dist == null ||
@@ -382,11 +379,6 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
   // ─── Parsing / formatting ───────────────────────────────────────────────────
 
   /// Parse a signed decimal; null on empty or non-numeric (e.g. "-", ".").
-  static double? _parseSigned(String raw) {
-    final String s = raw.trim();
-    if (s.isEmpty || s == '.' || s == '-' || s == '-.') return null;
-    return double.tryParse(s);
-  }
 
   /// PWA fmt(n, decimals): fixed decimals, "—" when not finite or null.
   static String _fmt(double? n, int decimals) {

@@ -35,6 +35,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../utils/decimal_input.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
@@ -141,9 +142,7 @@ class _FresnelScreenState extends State<FresnelScreen> {
 
   // Unsigned decimal only — frequency and distances are never negative and are
   // typed by humans, not pasted from instruments (no scientific notation here).
-  static final List<TextInputFormatter> _unsignedDecimal = [
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-  ];
+  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
 
   FresnelResult? _result;
 
@@ -163,20 +162,14 @@ class _FresnelScreenState extends State<FresnelScreen> {
   void _recompute() {
     setState(() {
       _result = FresnelScreen.compute(
-        freqGHz: _tryParseDouble(_freqCtrl.text),
-        totalMeters: _tryParseDouble(_distCtrl.text),
-        pointFromTxMeters: _tryParseDouble(_pointCtrl.text),
+        freqGHz: tryParseFlexibleDouble(_freqCtrl.text),
+        totalMeters: tryParseFlexibleDouble(_distCtrl.text),
+        pointFromTxMeters: tryParseFlexibleDouble(_pointCtrl.text),
       );
     });
   }
 
   // ─── Formatting ─────────────────────────────────────────────────────────────
-
-  static double? _tryParseDouble(String raw) {
-    final String s = raw.trim();
-    if (s.isEmpty || s == '.') return null;
-    return double.tryParse(s);
-  }
 
   /// app.js fmt(n, 1): 1-decimal fixed, em dash for non-finite. We use the same
   /// ASCII "—" the dBm/Watt screen settled on (Vera F-08) for empty results.

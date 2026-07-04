@@ -27,6 +27,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../utils/decimal_input.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/field_unit_row.dart';
@@ -95,9 +96,7 @@ class _FsplScreenState extends State<FsplScreen> {
 
   // Unsigned-decimal only. Frequency and distance are always positive humans
   // type by hand, so no sign and no scientific notation here.
-  static final List<TextInputFormatter> _unsignedDecimal = [
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-  ];
+  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
 
   @override
   void dispose() {
@@ -111,8 +110,8 @@ class _FsplScreenState extends State<FsplScreen> {
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
   void _recompute() {
-    final double? freq = _tryParseDouble(_freqCtrl.text);
-    final double? dist = _tryParseDouble(_distCtrl.text);
+    final double? freq = tryParseFlexibleDouble(_freqCtrl.text);
+    final double? dist = tryParseFlexibleDouble(_distCtrl.text);
     if (freq == null || dist == null) {
       setState(() => _lossDb = null);
       return;
@@ -129,12 +128,6 @@ class _FsplScreenState extends State<FsplScreen> {
   }
 
   // ─── Formatting ───────────────────────────────────────────────────────────
-
-  static double? _tryParseDouble(String raw) {
-    final String s = raw.trim();
-    if (s.isEmpty || s == '.') return null;
-    return double.tryParse(s);
-  }
 
   /// PWA fmt(loss, 1): fixed 1-decimal, "—" when not finite.
   static String _formatLoss(double? loss) {

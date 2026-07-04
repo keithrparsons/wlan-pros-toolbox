@@ -23,6 +23,7 @@ import '../../../data/unit_conversion.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../utils/decimal_input.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/tool_help_footer.dart';
@@ -49,9 +50,7 @@ class _UnitConverterScreenState extends State<UnitConverterScreen> {
   // Signed decimal + scientific input. A temperature can be negative; an RF
   // power can be entered as a pasted scientific value; so accept digits, a dot,
   // a sign, and e/E. (The model guards non-finite results downstream.)
-  static final List<TextInputFormatter> _signedDecimal = <TextInputFormatter>[
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.eE+\-]')),
-  ];
+  static final List<TextInputFormatter> _signedDecimal = scientificDecimalFormatters;
 
   @override
   void initState() {
@@ -95,7 +94,7 @@ class _UnitConverterScreenState extends State<UnitConverterScreen> {
   }
 
   void _recompute() {
-    final double? value = _tryParseDouble(_valueCtrl.text);
+    final double? value = tryParseFlexibleDouble(_valueCtrl.text);
     if (value == null) {
       setState(() => _result = null);
       return;
@@ -103,12 +102,6 @@ class _UnitConverterScreenState extends State<UnitConverterScreen> {
     setState(() {
       _result = UnitConversion.convert(value, _category, _fromUnit, _toUnit);
     });
-  }
-
-  static double? _tryParseDouble(String raw) {
-    final String s = raw.trim();
-    if (s.isEmpty || s == '-' || s == '.' || s == '-.' || s == '+') return null;
-    return double.tryParse(s);
   }
 
   String _resultText() => UnitConversion.formatResult(_result ?? double.nan);

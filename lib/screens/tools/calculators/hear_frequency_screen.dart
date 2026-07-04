@@ -41,6 +41,7 @@ import '../../../services/audio/tone_engine.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../utils/decimal_input.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/piano_keyboard.dart';
@@ -90,10 +91,7 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
   int? _activeKeyNumber;
   bool _showKeyMath = false;
 
-  static final List<TextInputFormatter> _unsignedDecimal =
-      <TextInputFormatter>[
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-  ];
+  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
 
   static const List<_Preset> _octaveLadder = <_Preset>[
     (label: 'A2', hz: 110),
@@ -140,9 +138,7 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
   // ── Parsing / derived state ────────────────────────────────────────────────
 
   static double? _tryParse(String raw) {
-    final String s = raw.trim();
-    if (s.isEmpty || s == '.') return null;
-    final double? v = double.tryParse(s);
+    final double? v = tryParseFlexibleDouble(raw);
     if (v == null || v <= 0 || !v.isFinite) return null;
     return v;
   }

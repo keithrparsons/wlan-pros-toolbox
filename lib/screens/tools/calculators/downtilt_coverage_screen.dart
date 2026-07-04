@@ -38,9 +38,10 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../utils/decimal_input.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/field_unit_row.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/field_unit_row.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -151,9 +152,7 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
 
   // Unsigned-decimal only. Height, tilt, and beamwidth are positive values a
   // human types by hand, so no sign and no scientific notation here.
-  static final List<TextInputFormatter> _unsignedDecimal = [
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-  ];
+  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
 
   @override
   void dispose() {
@@ -169,9 +168,9 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
   void _recompute() {
-    final double? height = _tryParseDouble(_heightCtrl.text);
-    final double? tilt = _tryParseDouble(_tiltCtrl.text);
-    final double? bw = _tryParseDouble(_bwCtrl.text);
+    final double? height = tryParseFlexibleDouble(_heightCtrl.text);
+    final double? tilt = tryParseFlexibleDouble(_tiltCtrl.text);
+    final double? bw = tryParseFlexibleDouble(_bwCtrl.text);
     if (height == null || tilt == null || bw == null) {
       setState(() => _result = null);
       return;
@@ -181,12 +180,6 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
   }
 
   // ─── Formatting ───────────────────────────────────────────────────────────
-
-  static double? _tryParseDouble(String raw) {
-    final String s = raw.trim();
-    if (s.isEmpty || s == '.') return null;
-    return double.tryParse(s);
-  }
 
   /// `<m> m / <ft> ft` at 0 decimals (PWA fmt(value, 0)); "—" when null /
   /// non-finite.

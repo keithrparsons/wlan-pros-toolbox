@@ -30,6 +30,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../utils/decimal_input.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/field_unit_row.dart';
@@ -89,9 +90,7 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
   double? _freqMHz;
 
   // Unsigned-decimal only. Frequency is always a positive value typed by hand.
-  static final List<TextInputFormatter> _unsignedDecimal = [
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-  ];
+  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
 
   @override
   void dispose() {
@@ -103,7 +102,7 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
   void _recompute() {
-    final double? freq = _tryParseDouble(_freqCtrl.text);
+    final double? freq = tryParseFlexibleDouble(_freqCtrl.text);
     if (freq == null) {
       setState(() => _freqMHz = null);
       return;
@@ -119,12 +118,6 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
   }
 
   // ─── Formatting ───────────────────────────────────────────────────────────
-
-  static double? _tryParseDouble(String raw) {
-    final String s = raw.trim();
-    if (s.isEmpty || s == '.') return null;
-    return double.tryParse(s);
-  }
 
   /// PWA fmt(value, decimals): fixed-decimal, "—" when not finite.
   static String _fmt(double? value, int decimals) {

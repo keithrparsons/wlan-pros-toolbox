@@ -24,6 +24,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../utils/decimal_input.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/field_unit_row.dart';
@@ -97,9 +98,7 @@ class _EirpScreenState extends State<EirpScreen> {
   // Power/gain accept a sign (dBm and dBi can be negative); loss accepts a
   // sign too so a negative-loss paste fails cleanly rather than being coerced.
   // `e/E/+` ride along so a scientific paste like "1e2" parses or fails whole.
-  static final List<TextInputFormatter> _signedDecimal = [
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.eE+\-]')),
-  ];
+  static final List<TextInputFormatter> _signedDecimal = scientificDecimalFormatters;
 
   @override
   void dispose() {
@@ -115,9 +114,9 @@ class _EirpScreenState extends State<EirpScreen> {
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
   void _recompute() {
-    final double? power = _tryParseDouble(_powerCtrl.text);
-    final double? loss = _tryParseDouble(_lossCtrl.text);
-    final double? gain = _tryParseDouble(_gainCtrl.text);
+    final double? power = tryParseFlexibleDouble(_powerCtrl.text);
+    final double? loss = tryParseFlexibleDouble(_lossCtrl.text);
+    final double? gain = tryParseFlexibleDouble(_gainCtrl.text);
 
     if (power == null || loss == null || gain == null) {
       setState(() => _eirpDbm = null);
@@ -140,12 +139,6 @@ class _EirpScreenState extends State<EirpScreen> {
   }
 
   // ─── Formatting ───────────────────────────────────────────────────────────
-
-  static double? _tryParseDouble(String raw) {
-    final String s = raw.trim();
-    if (s.isEmpty || s == '-' || s == '.' || s == '-.') return null;
-    return double.tryParse(s);
-  }
 
   /// Mirrors app.js `fmt(eirp_dbm, 1)`.
   static String _formatDbm(double dbm) =>
