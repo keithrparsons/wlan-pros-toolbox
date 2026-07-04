@@ -43,6 +43,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../utils/decimal_input.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/field_unit_row.dart';
@@ -110,10 +111,7 @@ class _AntennaLengthScreenState extends State<AntennaLengthScreen> {
   final TextEditingController _vfCtrl = TextEditingController(text: '0.95');
   final FocusNode _vfFocus = FocusNode();
 
-  static final List<TextInputFormatter> _unsignedDecimal =
-      <TextInputFormatter>[
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-  ];
+  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
 
   @override
   void dispose() {
@@ -129,7 +127,7 @@ class _AntennaLengthScreenState extends State<AntennaLengthScreen> {
   /// Effective frequency in MHz from whichever input mode is active, or null
   /// when the input is empty / unparseable / non-positive.
   double? get _freqMHz {
-    final double? v = _tryParse(_valueCtrl.text);
+    final double? v = tryParseFlexibleDouble(_valueCtrl.text);
     if (v == null || v <= 0) return null;
     switch (_mode) {
       case _InputMode.frequency:
@@ -151,15 +149,9 @@ class _AntennaLengthScreenState extends State<AntennaLengthScreen> {
 
   /// Velocity factor in (0, 1], or null when the VF field is invalid.
   double? get _vf {
-    final double? v = _tryParse(_vfCtrl.text);
+    final double? v = tryParseFlexibleDouble(_vfCtrl.text);
     if (v == null || v <= 0 || v > 1.0) return null;
     return v;
-  }
-
-  static double? _tryParse(String raw) {
-    final String s = raw.trim();
-    if (s.isEmpty || s == '.') return null;
-    return double.tryParse(s);
   }
 
   // ── Copy payload (sec 8.16) ─────────────────────────────────────────────────

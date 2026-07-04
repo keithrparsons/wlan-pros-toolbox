@@ -42,6 +42,7 @@ import '../../../data/channel_frequency_data.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../utils/decimal_input.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
@@ -75,10 +76,7 @@ class _ChannelFrequencyConverterScreenState
   final TextEditingController _freqCtrl = TextEditingController();
   final FocusNode _freqFocus = FocusNode();
 
-  static final List<TextInputFormatter> _unsignedDecimal =
-      <TextInputFormatter>[
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-  ];
+  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
 
   @override
   void dispose() {
@@ -113,7 +111,7 @@ class _ChannelFrequencyConverterScreenState
       get _freqState {
     final String raw = _freqCtrl.text.trim();
     if (raw.isEmpty) return (parsed: false, mhz: null, match: null);
-    final double? mhz = double.tryParse(raw);
+    final double? mhz = tryParseFlexibleDouble(raw);
     if (mhz == null) return (parsed: false, mhz: null, match: null);
     return (parsed: true, mhz: mhz, match: frequencyToChannel(mhz));
   }

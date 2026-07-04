@@ -36,6 +36,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../utils/decimal_input.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/tool_help_footer.dart';
@@ -118,12 +119,8 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
 
   // Noise figure: unsigned decimal (PWA min=0). Temperature: signed decimal so
   // negative °C is allowed (PWA min=-40).
-  static final List<TextInputFormatter> _unsignedDecimal = [
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-  ];
-  static final List<TextInputFormatter> _signedDecimal = [
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.\-]')),
-  ];
+  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
+  static final List<TextInputFormatter> _signedDecimal = signedDecimalFormatters;
 
   @override
   void initState() {
@@ -144,7 +141,7 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
 
   void _recompute() {
     final String nfRaw = _nfCtrl.text.trim();
-    final double? nf = _tryParseDouble(_nfCtrl.text);
+    final double? nf = tryParseFlexibleDouble(_nfCtrl.text);
     // PWA: nf must be finite and >= 0, else showError (blank outputs). An empty
     // field stays silent (a legitimate not-yet-entered state); a non-empty but
     // invalid or negative value gets a visible field-level message instead of a
@@ -161,7 +158,7 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
       return;
     }
     // PWA: temperature falls back to 20°C when the field is non-numeric.
-    final double? tempParsed = _tryParseDouble(_tempCtrl.text);
+    final double? tempParsed = tryParseFlexibleDouble(_tempCtrl.text);
     final double tempC = tempParsed ?? NoiseFloorScreen.defaultTempC;
 
     final double bwMhz = _bw.mhz.toDouble();
@@ -174,12 +171,6 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
   }
 
   // ─── Formatting ───────────────────────────────────────────────────────────
-
-  static double? _tryParseDouble(String raw) {
-    final String s = raw.trim();
-    if (s.isEmpty || s == '.' || s == '-') return null;
-    return double.tryParse(s);
-  }
 
   /// PWA fmt(value, 1): fixed 1-decimal, "—" when not finite.
   static String _formatDbm(double? value) {
@@ -268,7 +259,7 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
     if (rx == null || !rx.isFinite) return null;
 
     final double tempC =
-        _tryParseDouble(_tempCtrl.text) ?? NoiseFloorScreen.defaultTempC;
+        tryParseFlexibleDouble(_tempCtrl.text) ?? NoiseFloorScreen.defaultTempC;
 
     return (StringBuffer()
           ..writeln('Noise Floor')

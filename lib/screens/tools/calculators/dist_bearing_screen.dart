@@ -37,6 +37,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../utils/decimal_input.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
@@ -112,9 +113,7 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
 
   // Latitude / longitude are signed decimals. Allow digits, dot, and a leading
   // minus; reject scientific notation since coordinates are typed by hand.
-  static final List<TextInputFormatter> _signedDecimal = [
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.\-]')),
-  ];
+  static final List<TextInputFormatter> _signedDecimal = signedDecimalFormatters;
 
   @override
   void dispose() {
@@ -132,10 +131,10 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
   void _recompute() {
-    final double? lat1 = _tryParseDouble(_lat1Ctrl.text);
-    final double? lon1 = _tryParseDouble(_lon1Ctrl.text);
-    final double? lat2 = _tryParseDouble(_lat2Ctrl.text);
-    final double? lon2 = _tryParseDouble(_lon2Ctrl.text);
+    final double? lat1 = tryParseFlexibleDouble(_lat1Ctrl.text);
+    final double? lon1 = tryParseFlexibleDouble(_lon1Ctrl.text);
+    final double? lat2 = tryParseFlexibleDouble(_lat2Ctrl.text);
+    final double? lon2 = tryParseFlexibleDouble(_lon2Ctrl.text);
 
     // Any field empty / non-numeric → blank everything, no note (cold state).
     if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) {
@@ -173,12 +172,6 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
   }
 
   // ─── Formatting ───────────────────────────────────────────────────────────
-
-  static double? _tryParseDouble(String raw) {
-    final String s = raw.trim();
-    if (s.isEmpty || s == '-' || s == '.' || s == '-.') return null;
-    return double.tryParse(s);
-  }
 
   /// PWA fmt(n, decimals): fixed decimals, "—" when not finite / null.
   static String _fmt(double? n, int decimals) {

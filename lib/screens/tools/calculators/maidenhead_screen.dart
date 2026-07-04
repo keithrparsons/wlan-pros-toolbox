@@ -38,6 +38,7 @@ import '../../../data/maidenhead_data.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../utils/decimal_input.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/tool_help_footer.dart';
@@ -76,9 +77,7 @@ class _MaidenheadScreenState extends State<MaidenheadScreen> {
   final FocusNode _gridBFocus = FocusNode();
 
   // Signed decimal for coordinates; locator chars for grids (cap 8).
-  static final List<TextInputFormatter> _signedDecimal = <TextInputFormatter>[
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.\-]')),
-  ];
+  static final List<TextInputFormatter> _signedDecimal = signedDecimalFormatters;
   static final List<TextInputFormatter> _locatorChars = <TextInputFormatter>[
     FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
     LengthLimitingTextInputFormatter(8),
@@ -101,20 +100,14 @@ class _MaidenheadScreenState extends State<MaidenheadScreen> {
 
   // ── Parsing helpers ─────────────────────────────────────────────────────────
 
-  static double? _tryParse(String raw) {
-    final String s = raw.trim();
-    if (s.isEmpty || s == '.' || s == '-') return null;
-    return double.tryParse(s);
-  }
-
   double? get _lat {
-    final double? v = _tryParse(_latCtrl.text);
+    final double? v = tryParseFlexibleDouble(_latCtrl.text);
     if (v == null || !v.isFinite || v < -90 || v > 90) return null;
     return v;
   }
 
   double? get _lon {
-    final double? v = _tryParse(_lonCtrl.text);
+    final double? v = tryParseFlexibleDouble(_lonCtrl.text);
     if (v == null || !v.isFinite || v < -180 || v > 180) return null;
     return v;
   }

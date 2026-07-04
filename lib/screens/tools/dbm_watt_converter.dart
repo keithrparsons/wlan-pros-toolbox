@@ -25,6 +25,7 @@ import '../../data/tool_assets.dart';
 import '../../theme/app_color_scheme.dart';
 import '../../theme/app_tokens.dart';
 import '../../theme/app_typography.dart';
+import '../../utils/decimal_input.dart';
 import '../../widgets/tool_help_footer.dart';
 import 'concept_graphic_band.dart';
 import 'labeled_field.dart';
@@ -50,12 +51,8 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
   // pre-fix formatter silently stripped the `e` and coerced `1e2` to `12`
   // (Vera F-07). mW stays unsigned-decimal — no scientific notation, no sign,
   // because mW values are entered by humans, not pasted from instruments.
-  static final List<TextInputFormatter> _signedDecimal = [
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.eE+\-]')),
-  ];
-  static final List<TextInputFormatter> _unsignedDecimal = [
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-  ];
+  static final List<TextInputFormatter> _signedDecimal = scientificDecimalFormatters;
+  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
 
   @override
   void dispose() {
@@ -78,7 +75,7 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
   void _onDbmChanged(String raw) {
-    final double? dbm = _tryParseDouble(raw);
+    final double? dbm = tryParseFlexibleDouble(raw);
     if (dbm == null) {
       _wattsCtrl.text = '';
       _mwCtrl.text = '';
@@ -93,7 +90,7 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
   }
 
   void _onWattsChanged(String raw) {
-    final double? w = _tryParseDouble(raw);
+    final double? w = tryParseFlexibleDouble(raw);
     if (w == null || w <= 0) {
       // Vera F-06 — write the zero case as a fixed 4-decimal "0.0000" so the
       // mirror field reads consistently with normal mW formatting, instead of
@@ -109,7 +106,7 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
   }
 
   void _onMwChanged(String raw) {
-    final double? mw = _tryParseDouble(raw);
+    final double? mw = tryParseFlexibleDouble(raw);
     if (mw == null || mw <= 0) {
       // Vera F-06 (mirror) — same fix on the mW→Watts side. Watts uses
       // scientific format normally; show "0.0000" in the zero case so the
@@ -125,12 +122,6 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
   }
 
   // ─── Formatting ───────────────────────────────────────────────────────────
-
-  static double? _tryParseDouble(String raw) {
-    final String s = raw.trim();
-    if (s.isEmpty || s == '-' || s == '.' || s == '-.') return null;
-    return double.tryParse(s);
-  }
 
   /// Mirrors the PWA: Watts > 0 → 4-sig scientific notation, with explicit
   /// "1.2345e-10" form so the magnitude is obvious. The PWA used

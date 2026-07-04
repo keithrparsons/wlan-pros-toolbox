@@ -35,6 +35,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../utils/decimal_input.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/field_unit_row.dart';
@@ -132,12 +133,8 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
   // accept a leading minus. Losses are non-negative in the PWA (min="0") but we
   // keep the formatter permissive and rely on the math; a stray sign just
   // shifts the budget, never crashes.
-  static final List<TextInputFormatter> _signedDecimal = [
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.eE+\-]')),
-  ];
-  static final List<TextInputFormatter> _unsignedDecimal = [
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-  ];
+  static final List<TextInputFormatter> _signedDecimal = scientificDecimalFormatters;
+  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
 
   @override
   void dispose() {
@@ -163,16 +160,16 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
   void _recompute() {
-    final double? txPower = _tryParseDouble(_txPowerCtrl.text);
-    final double? txGain = _tryParseDouble(_txGainCtrl.text);
-    final double? txLoss = _tryParseDouble(_txLossCtrl.text);
-    final double? pathLoss = _tryParseDouble(_pathLossCtrl.text);
-    final double? rxLoss = _tryParseDouble(_rxLossCtrl.text);
-    final double? rxGain = _tryParseDouble(_rxGainCtrl.text);
-    final double? rxSens = _tryParseDouble(_rxSensCtrl.text);
+    final double? txPower = tryParseFlexibleDouble(_txPowerCtrl.text);
+    final double? txGain = tryParseFlexibleDouble(_txGainCtrl.text);
+    final double? txLoss = tryParseFlexibleDouble(_txLossCtrl.text);
+    final double? pathLoss = tryParseFlexibleDouble(_pathLossCtrl.text);
+    final double? rxLoss = tryParseFlexibleDouble(_rxLossCtrl.text);
+    final double? rxGain = tryParseFlexibleDouble(_rxGainCtrl.text);
+    final double? rxSens = tryParseFlexibleDouble(_rxSensCtrl.text);
     // Misc is the only optional field; blank → 0, matching the PWA's
     // isFinite(num('lb-misc')) ? num : 0 guard.
-    final double misc = _tryParseDouble(_miscCtrl.text) ?? 0;
+    final double misc = tryParseFlexibleDouble(_miscCtrl.text) ?? 0;
 
     // PWA blocks the whole calc unless every required field is finite.
     if (txPower == null ||
@@ -219,12 +216,6 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
   }
 
   // ─── Formatting ───────────────────────────────────────────────────────────
-
-  static double? _tryParseDouble(String raw) {
-    final String s = raw.trim();
-    if (s.isEmpty || s == '-' || s == '.' || s == '-.') return null;
-    return double.tryParse(s);
-  }
 
   /// PWA fmt(value, 1): fixed 1-decimal, "—" when not finite.
   static String _format(double? value) {

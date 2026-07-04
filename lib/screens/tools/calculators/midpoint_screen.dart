@@ -36,6 +36,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../utils/decimal_input.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
@@ -107,9 +108,7 @@ class _MidpointScreenState extends State<MidpointScreen> {
 
   // Signed decimal — coordinates carry a sign (S / W are negative). No
   // scientific notation; humans type plain decimal degrees by hand.
-  static final List<TextInputFormatter> _signedDecimal = [
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.\-]')),
-  ];
+  static final List<TextInputFormatter> _signedDecimal = signedDecimalFormatters;
 
   @override
   void dispose() {
@@ -127,10 +126,10 @@ class _MidpointScreenState extends State<MidpointScreen> {
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
   void _recompute() {
-    final double? lat1 = _tryParseDouble(_lat1Ctrl.text);
-    final double? lon1 = _tryParseDouble(_lon1Ctrl.text);
-    final double? lat2 = _tryParseDouble(_lat2Ctrl.text);
-    final double? lon2 = _tryParseDouble(_lon2Ctrl.text);
+    final double? lat1 = tryParseFlexibleDouble(_lat1Ctrl.text);
+    final double? lon1 = tryParseFlexibleDouble(_lon1Ctrl.text);
+    final double? lat2 = tryParseFlexibleDouble(_lat2Ctrl.text);
+    final double? lon2 = tryParseFlexibleDouble(_lon2Ctrl.text);
     // PWA guards `.some(v => !isFinite(v))` — any blank/invalid blanks output.
     if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) {
       setState(() => _mid = null);
@@ -142,12 +141,6 @@ class _MidpointScreenState extends State<MidpointScreen> {
   }
 
   // ─── Formatting ───────────────────────────────────────────────────────────
-
-  static double? _tryParseDouble(String raw) {
-    final String s = raw.trim();
-    if (s.isEmpty || s == '-' || s == '.' || s == '-.') return null;
-    return double.tryParse(s);
-  }
 
   /// PWA fmtCoord `dd.toFixed(6)`: fixed 6-decimal, "—" when not finite.
   static String _formatCoord(double? dd) {
@@ -235,10 +228,10 @@ class _MidpointScreenState extends State<MidpointScreen> {
     final MidpointResult? m = _mid;
     if (m == null) return null;
 
-    final String aLat = _formatCoord(_tryParseDouble(_lat1Ctrl.text));
-    final String aLon = _formatCoord(_tryParseDouble(_lon1Ctrl.text));
-    final String bLat = _formatCoord(_tryParseDouble(_lat2Ctrl.text));
-    final String bLon = _formatCoord(_tryParseDouble(_lon2Ctrl.text));
+    final String aLat = _formatCoord(tryParseFlexibleDouble(_lat1Ctrl.text));
+    final String aLon = _formatCoord(tryParseFlexibleDouble(_lon1Ctrl.text));
+    final String bLat = _formatCoord(tryParseFlexibleDouble(_lat2Ctrl.text));
+    final String bLon = _formatCoord(tryParseFlexibleDouble(_lon2Ctrl.text));
 
     return (StringBuffer()
           ..writeln('Midpoint (great-circle)')

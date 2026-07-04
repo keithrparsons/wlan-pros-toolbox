@@ -32,9 +32,10 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../utils/decimal_input.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/field_unit_row.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/field_unit_row.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
@@ -125,13 +126,9 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
   String? _rangeNote;
 
   // Lat/lon/bearing can be negative; allow a leading minus and decimal point.
-  static final List<TextInputFormatter> _signedDecimal = [
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.\-]')),
-  ];
+  static final List<TextInputFormatter> _signedDecimal = signedDecimalFormatters;
   // Distance is always positive — unsigned decimal only.
-  static final List<TextInputFormatter> _unsignedDecimal = [
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-  ];
+  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
 
   @override
   void dispose() {
@@ -198,9 +195,7 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
   // ─── Formatting ───────────────────────────────────────────────────────────
 
   static double? _tryParseDouble(String raw) {
-    final String s = raw.trim();
-    if (s.isEmpty || s == '-' || s == '.' || s == '-.') return null;
-    final double? v = double.tryParse(s);
+    final double? v = tryParseFlexibleDouble(raw);
     if (v == null || !v.isFinite) return null;
     return v;
   }

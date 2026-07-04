@@ -49,6 +49,7 @@ import '../../../services/location/device_location.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../utils/decimal_input.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/location_map.dart';
 import '../../../widgets/tool_help_footer.dart';
@@ -176,9 +177,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
 
   // Signed decimal: degrees can be negative for S/W. No scientific notation —
   // coordinates are typed by hand, not pasted from instruments.
-  static final List<TextInputFormatter> _signedDecimal = [
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.\-]')),
-  ];
+  static final List<TextInputFormatter> _signedDecimal = signedDecimalFormatters;
 
   @override
   void initState() {
@@ -320,8 +319,8 @@ class _LatLongScreenState extends State<LatLongScreen> {
   // shown only when there is a real coordinate to point at (honest affordance —
   // never a button that opens a map of 0,0).
   ({double lat, double lon})? _mapCoords() {
-    final double? lat = _tryParseDouble(_latCtrl.text);
-    final double? lon = _tryParseDouble(_lonCtrl.text);
+    final double? lat = tryParseFlexibleDouble(_latCtrl.text);
+    final double? lon = tryParseFlexibleDouble(_lonCtrl.text);
     if (lat == null || lon == null) return null;
     if (!lat.isFinite || !lon.isFinite) return null;
     if (lat.abs() > 90 || lon.abs() > 180) return null;
@@ -382,20 +381,14 @@ class _LatLongScreenState extends State<LatLongScreen> {
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
   void _recompute() {
-    final double? lat = _tryParseDouble(_latCtrl.text);
-    final double? lon = _tryParseDouble(_lonCtrl.text);
+    final double? lat = tryParseFlexibleDouble(_latCtrl.text);
+    final double? lon = tryParseFlexibleDouble(_lonCtrl.text);
     setState(() {
       _lat = lat == null ? null : LatLongScreen.format(lat, CoordAxis.latitude);
       _lon = lon == null
           ? null
           : LatLongScreen.format(lon, CoordAxis.longitude);
     });
-  }
-
-  static double? _tryParseDouble(String raw) {
-    final String s = raw.trim();
-    if (s.isEmpty || s == '-' || s == '.' || s == '-.') return null;
-    return double.tryParse(s);
   }
 
   /// §8.16 copy payload — the coordinate conversions as a labeled text block.

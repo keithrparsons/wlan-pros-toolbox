@@ -34,6 +34,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../utils/decimal_input.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/tool_help_footer.dart';
@@ -173,9 +174,7 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
   // Signed-decimal: a length delta can be negative, and the PWA only guards
   // isFinite, so allow a leading minus. No scientific notation — these are
   // hand-typed lengths.
-  static final List<TextInputFormatter> _signedDecimal = [
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9.\-]')),
-  ];
+  static final List<TextInputFormatter> _signedDecimal = signedDecimalFormatters;
 
   @override
   void dispose() {
@@ -187,7 +186,7 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
   void _recompute() {
-    final double? value = _tryParseDouble(_valueCtrl.text);
+    final double? value = tryParseFlexibleDouble(_valueCtrl.text);
     if (value == null) {
       setState(() => _result = null);
       return;
@@ -198,12 +197,6 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
   }
 
   // ─── Formatting ───────────────────────────────────────────────────────────
-
-  static double? _tryParseDouble(String raw) {
-    final String s = raw.trim();
-    if (s.isEmpty || s == '-' || s == '.' || s == '-.') return null;
-    return double.tryParse(s);
-  }
 
   /// PWA fmt(): fixed decimals, "—" when not finite.
   static String _formatResult(double? value, LengthUnit unit) {
