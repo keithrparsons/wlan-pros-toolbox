@@ -1869,8 +1869,13 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
+      // Value: honest human label, not the generic "Unavailable".
+      expect(find.text('Private address'), findsOneWidget);
+      // Note: explains WHY there's no manufacturer to look up.
       expect(
-        find.textContaining('locally administered, no registered vendor'),
+        find.textContaining(
+          'locally administered (normal for personal hotspots',
+        ),
         findsOneWidget,
       );
     });

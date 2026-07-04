@@ -28,11 +28,11 @@ class WifiLiveShortcutsConfig {
 
   /// iCloud share link that installs the combined LIVE companion Shortcut.
   ///
-  /// Published "WLAN Pros Live" Shortcut (Keith, 2026-06-02). This is the link
-  /// users tap to install the one combined Shortcut that drives Live streaming
-  /// on both screens.
+  /// Published "WLAN Pros Live" Shortcut (Keith; re-shared FIXED link 2026-07-04).
+  /// This is the link users tap to install the one combined Shortcut that drives
+  /// Live streaming on both screens.
   static const String kLiveShortcutUrl =
-      'https://www.icloud.com/shortcuts/3e3e600b050441a5923dda5e660d055b';
+      'https://www.icloud.com/shortcuts/73a342c0120b4777b2f0085776e9fd6f';
 
   /// True while [kLiveShortcutUrl] is still the placeholder. The Live UI uses
   /// this to disable the "get the Live Shortcut" action so the app never opens a

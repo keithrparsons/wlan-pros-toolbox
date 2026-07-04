@@ -1006,7 +1006,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       ..writeln('Network')
       ..writeln('  SSID: ${_copyVal(info.ssid, null)}')
       ..writeln('  BSSID: ${_copyVal(info.bssid, null)}')
-      ..writeln('  AP vendor: ${_copyVal(_apVendorLabel(info.bssid), null)}');
+      ..writeln('  AP vendor: ${_copyVal(_apVendorValue(info.bssid), null)}');
 
     buf
       ..writeln()
@@ -1436,10 +1436,30 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     ),
   );
 
-  /// The AP-vendor row value: the manufacturer resolved from the BSSID's OUI,
-  /// or null (→ "Unavailable") when the BSSID is absent, the table has not
-  /// loaded, or the BSSID is locally-administered (no IEEE vendor).
-  String? _apVendorValue(String? bssid) => _apVendorLabel(bssid);
+  /// The AP-vendor row value: the manufacturer resolved from the BSSID's OUI.
+  /// When the BSSID is locally-administered (personal hotspots, MAC
+  /// randomization) there is no IEEE vendor to resolve, so we surface the honest
+  /// human label "Private address" rather than the generic "Unavailable". All
+  /// other not-resolved states (absent BSSID, table not loaded, unregistered
+  /// global OUI) still return null (→ "Unavailable"); the note explains each.
+  String? _apVendorValue(String? bssid) {
+    final String? vendor = _apVendorLabel(bssid);
+    if (vendor != null) return vendor;
+    if (_isLocallyAdministeredBssid(bssid)) return 'Private address';
+    return null;
+  }
+
+  /// True when the BSSID is a locally-administered / multicast MAC (no
+  /// IEEE-registered vendor exists to look up). Mirrors the branch in
+  /// [_apVendorNote] exactly: reachable only when the OUI did not match a
+  /// registry entry and the address is a readable MAC.
+  bool _isLocallyAdministeredBssid(String? bssid) {
+    final MacOuiService? svc = _ouiService;
+    if (svc == null || bssid == null || bssid.trim().isEmpty) return false;
+    final OuiResult r = svc.lookup(bssid);
+    if (r.matched || !r.isValid) return false;
+    return r.isLocal || r.isMulticast;
+  }
 
   /// The honest note for the AP-vendor row: explains WHY it is unavailable
   /// (no BSSID / database loading / randomized BSSID / unregistered OUI), or
@@ -1463,7 +1483,9 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     }
     if (r.isLocal || r.isMulticast) {
       // Randomized / software-assigned address, not from an IEEE block.
-      return 'BSSID is locally administered, no registered vendor';
+      return "This BSSID is locally administered (normal for personal "
+          "hotspots and MAC randomization), so there's no manufacturer to "
+          "look up.";
     }
     // Globally administered but the OUI prefix is not in the bundled IEEE
     // snapshot. A bare hex prefix is not a manufacturer, so the value reads
