@@ -169,13 +169,21 @@ struct ReceiveLiveDetailsIntent: AppIntent {
   }
 }
 
-/// Streaming-loop gate (TICKET-03 A3). A looping companion Shortcut calls this
-/// after each delivery to decide whether to run itself again: it returns the
-/// App Group monitoring-active flag, which the app sets on Start and clears on
-/// Stop (via the method channel). This is the mechanism that lets in-app Stop
-/// actually halt the loop. Mirrors the decoded "should stop" kill-switch pattern
-/// from the shipping WiFi Monitor Agent shortcut, inverted to a "continue" gate
-/// so the Shortcut's `If` branch reads naturally (If true → Run Shortcut self).
+/// Streaming-loop gate (TICKET-03 A3; Option B hard cap). A looping companion
+/// Shortcut calls this after each delivery to decide whether to run itself
+/// again. It returns [ShortcutsBridge.shouldContinueMonitoring] — the App Group
+/// monitoring-active flag (set on Start, cleared on Stop via the method channel)
+/// AND-ed with a HARD 5-minute time cap. The active flag alone let a runaway
+/// survive process death: on a force-quit/crash mid-stream the app never cleared
+/// the flag, it survived in App Group UserDefaults, and the loop ran forever with
+/// no cap. The cap bounds every such orphaned loop because this gate is polled
+/// every cycle. Mirrors the decoded "should stop" kill-switch pattern from the
+/// shipping WiFi Monitor Agent shortcut, inverted to a "continue" gate so the
+/// Shortcut's `If` branch reads naturally (If true → Run Shortcut self).
+///
+/// CRITICAL: the cap only works if the published "WLAN Pros Live" Shortcut polls
+/// THIS intent every loop iteration. That is the settled contract; if inspection
+/// ever shows it does not, a minimal Shortcut republish is required.
 @available(iOS 17.0, *)
 struct ShouldContinueMonitoringIntent: AppIntent {
   static var title: LocalizedStringResource = "Should Continue Monitoring"
@@ -185,7 +193,7 @@ struct ShouldContinueMonitoringIntent: AppIntent {
   )
 
   func perform() async throws -> some IntentResult & ReturnsValue<Bool> {
-    return .result(value: ShortcutsBridge.isMonitoringActive())
+    return .result(value: ShortcutsBridge.shouldContinueMonitoring())
   }
 }
 

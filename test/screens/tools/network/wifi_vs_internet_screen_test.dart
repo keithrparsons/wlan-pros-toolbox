@@ -86,6 +86,8 @@ class _NoPayloadBridge implements WiFiDetailsBridge {
   @override
   Future<void> setMonitoringActive(bool active) async {}
   @override
+  Future<void> resetMonitoringColdStart() async {}
+  @override
   Future<bool> openUrl(String url) async => true;
   @override
   Future<bool> runShortcut(String name) async => true;

@@ -116,6 +116,14 @@ import UIKit
         result(nil)
       case "isMonitoringActive":
         result(ShortcutsBridge.isMonitoringActive())
+      case "resetMonitoringColdStart":
+        // Option B cold-start reset: clear a stale monitoring flag + start stamp
+        // left by a prior force-quit so it neither keeps an orphaned loop trusted
+        // nor suppresses a legitimate new Start (the app-wide single-flight would
+        // otherwise ADOPT the phantom flag instead of firing the trigger). Called
+        // once from Dart main() before any live screen can run.
+        ShortcutsBridge.resetMonitoringOnColdStart()
+        result(nil)
       case "openUrl":
         // Open the iCloud companion-Shortcut link (TICKET-03 A1). Routed
         // through this app-owned channel so no URL-launcher plugin is added.

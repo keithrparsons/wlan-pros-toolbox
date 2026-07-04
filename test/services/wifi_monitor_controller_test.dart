@@ -106,6 +106,17 @@ class _FakeBridge extends WiFiDetailsBridge {
     monitoringFlag = active;
   }
 
+  /// Mirrors the native cold-start reset (Option B): clears the shared
+  /// monitoring flag (and, natively, its start stamp) so a stale force-quit flag
+  /// does not suppress a legitimate new Start via the app-wide single-flight.
+  int resetColdStartCalls = 0;
+
+  @override
+  Future<void> resetMonitoringColdStart() async {
+    resetColdStartCalls++;
+    monitoringFlag = false;
+  }
+
   @override
   Future<bool> runShortcut(String name) async {
     runShortcutCalls++;
@@ -771,6 +782,103 @@ void main() {
       expect(bridge.consumeShortcutMissingCalls, 1);
       expect(c.shortcutMissing, isFalse);
       expect(c.phase, WifiMonitorPhase.idleWithData);
+      c.dispose();
+      await bridge.close();
+    });
+  });
+
+  // App-wide single-flight + cold-start reset (Option B, launch-safe mitigation
+  // for the live-monitoring runaway). Two symptoms this guards:
+  //   (2) multiple scenes/surfaces each fired their own run and none superseded
+  //       each other — no app-wide single-flight, only per-screen re-entrancy.
+  //   (1)+(3) a stale force-quit flag survived process death; on relaunch it must
+  //       neither keep an orphaned loop trusted nor SUPPRESS a legitimate new
+  //       Start (which the single-flight would otherwise adopt).
+  group('app-wide single-flight (Option B)', () {
+    test(
+        'a Start while the loop is ALREADY active ADOPTS it and does NOT fire a '
+        'second run-shortcut', () async {
+      // RED on the pre-fix code: startMonitoring always fired the trigger, so a
+      // second surface Start stacked a second independent Shortcut loop.
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _details()
+        ..monitoringFlag = true; // another scene already started the loop
+      final c = WifiMonitorController(bridge: bridge);
+      await c.load(); // resumes streaming from the active flag
+
+      final bool ok =
+          await c.startMonitoring(triggerShortcutName: 'WLAN Pros Live');
+
+      expect(ok, isTrue);
+      expect(c.isStreaming, isTrue, reason: 'adopts the running stream');
+      expect(bridge.runShortcutCalls, 0,
+          reason: 'an already-active loop is adopted, never re-fired (no stacking)');
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('a Start from a clean (inactive) state fires exactly ONE run-shortcut',
+        () async {
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _details()
+        ..monitoringFlag = false; // clean slate (cold-start reset ran)
+      final c = WifiMonitorController(bridge: bridge);
+      await c.load();
+
+      await c.startMonitoring(triggerShortcutName: 'WLAN Pros Live');
+
+      expect(bridge.runShortcutCalls, 1,
+          reason: 'a genuine false→true transition fires the trigger once');
+      expect(bridge.lastMonitoringValue, isTrue);
+      c.dispose();
+      await bridge.close();
+    });
+  });
+
+  group('cold-start reset (Option B)', () {
+    test(
+        'WITHOUT reset: a stale force-quit flag makes single-flight ADOPT and NOT '
+        'fire — the bug the reset guards', () async {
+      // A prior force-quit left the flag stale-true but the external loop is dead.
+      // Single-flight adopts the phantom flag and fires nothing → the user\'s Start
+      // silently no-ops. This test documents WHY the cold-start reset is required.
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _details()
+        ..monitoringFlag = true; // stale from a force-quit
+      final c = WifiMonitorController(bridge: bridge);
+      await c.load();
+
+      await c.startMonitoring(triggerShortcutName: 'WLAN Pros Live');
+
+      expect(bridge.runShortcutCalls, 0,
+          reason: 'a stale flag is adopted, so a legit Start fires nothing');
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('WITH reset: clearing the stale flag lets the next Start fire the trigger',
+        () async {
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _details()
+        ..monitoringFlag = true; // stale from a force-quit
+
+      // Cold start: main() calls resetMonitoringColdStart before any screen runs.
+      await bridge.resetMonitoringColdStart();
+      expect(bridge.resetColdStartCalls, 1);
+      expect(bridge.monitoringFlag, isFalse,
+          reason: 'the reset cleared the stale flag');
+
+      final c = WifiMonitorController(bridge: bridge);
+      await c.load();
+
+      await c.startMonitoring(triggerShortcutName: 'WLAN Pros Live');
+
+      expect(bridge.runShortcutCalls, 1,
+          reason: 'a clean slate makes the Start a genuine false→true transition');
       c.dispose();
       await bridge.close();
     });

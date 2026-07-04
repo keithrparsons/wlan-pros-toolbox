@@ -410,13 +410,13 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         // is the app opening Shortcuts, not the user leaving, and the recursion
         // is supposed to continue.
         if (_shortcutBounceInFlight) return;
-        // A genuine background: stop sampling (clears the loop-gate flag so the
-        // recursive Shortcut halts on its next check). The last values stay on
-        // screen. The user re-taps Start to resume — no auto-resume, no loop.
-        final WifiMonitorController? c = _liveController;
-        if (c != null && c.isStreaming) {
-          c.stopMonitoring();
-        }
+        // A genuine background: ALWAYS clear the loop-gate flag so the recursive
+        // Shortcut halts on its next check — unconditionally, not only when we
+        // believe we're streaming. A stale or adopted flag (or a one-shot in
+        // flight) must never keep the external loop alive after the user leaves.
+        // The last values stay frozen on screen; the user re-taps Start to resume
+        // — no auto-resume, no loop. (Option B defensive clear.)
+        _liveController?.stopMonitoring();
       }
     }
 
@@ -448,9 +448,10 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       // Detach the listener FIRST so the stopMonitoring() notify below does not
       // re-enter _captureSample's setState on a defunct element.
       controller?.removeListener(_captureSample);
-      if (controller != null && controller.isStreaming) {
-        controller.stopMonitoring();
-      }
+      // ALWAYS clear the flag on teardown (Option B defensive clear) — not only
+      // when streaming — so leaving the screen can never strand the external loop
+      // as "keep going". dispose is a permanent teardown, never a Shortcut bounce.
+      controller?.stopMonitoring();
       controller?.dispose();
     }
     super.dispose();

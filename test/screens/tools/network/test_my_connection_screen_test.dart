@@ -304,6 +304,8 @@ class _PayloadBridge implements WiFiDetailsBridge {
   @override
   Future<void> setMonitoringActive(bool active) async {}
   @override
+  Future<void> resetMonitoringColdStart() async {}
+  @override
   Future<bool> openUrl(String url) async => true;
   @override
   Future<bool> runShortcut(String name) async => true;
@@ -608,6 +610,11 @@ class _StaleFlagBridge implements WiFiDetailsBridge {
   }
 
   @override
+  Future<void> resetMonitoringColdStart() async {
+    monitoringFlag = false;
+  }
+
+  @override
   Future<bool> openUrl(String url) async => true;
   @override
   Future<bool> runShortcut(String name) async {
@@ -656,6 +663,8 @@ class _FreshBridge implements WiFiDetailsBridge {
   Future<bool> isMonitoringActive() async => false;
   @override
   Future<void> setMonitoringActive(bool active) async {}
+  @override
+  Future<void> resetMonitoringColdStart() async {}
   @override
   Future<bool> openUrl(String url) async {
     openUrlCalls++;
@@ -3057,6 +3066,9 @@ class _StreamingBridge implements WiFiDetailsBridge {
   Future<void> setMonitoringActive(bool active) async {
     _monitoring = active;
   }
+
+  @override
+  Future<void> resetMonitoringColdStart() async {}
 
   @override
   Future<bool> openUrl(String url) async => true;

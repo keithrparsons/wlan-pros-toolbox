@@ -487,9 +487,12 @@ class WifiSignalSampler extends ChangeNotifier {
     _stopMacPoll();
     final WifiMonitorController? c = _controller;
     c?.removeListener(_onControllerChanged);
-    if (c != null && c.isStreaming) {
-      c.stopMonitoring();
-    }
+    // ALWAYS clear the iOS loop-gate flag on teardown (Option B defensive clear)
+    // — not only when streaming — so leaving Test My Connection can never strand
+    // the external "WLAN Pros Live" loop as "keep going". dispose is a permanent
+    // teardown, never a Shortcut bounce; a stale/adopted flag must be cleared.
+    // No-op off iOS (stopMonitoring writes a flag no non-iOS Shortcut reads).
+    c?.stopMonitoring();
     c?.dispose();
     super.dispose();
   }

@@ -188,10 +188,25 @@ class CellularMonitorController extends ChangeNotifier {
     // Fresh Start: a working stream delivers a first sample within the settle.
     _sampleSinceStart = false;
     if (_shortcutMissing) _shortcutMissing = false;
-    final Future<void> write = _bridge.setMonitoringActive(true);
+
+    // Enter streaming optimistically and synchronously (before the first await)
+    // so a tap-driven rebuild does not wait on a microtask.
     _startListening();
     _safeNotify();
-    await write;
+
+    // APP-WIDE SINGLE-FLIGHT (Option B). Fire the trigger and stamp the flag ONLY
+    // on a genuine false→true transition. If a loop is already active (the shared
+    // "WLAN Pros Live" flag is set by the Wi-Fi tool or another scene), ADOPT the
+    // running stream instead of firing a SECOND run-shortcut — two concurrent
+    // fires stack independent Shortcut loops. Do NOT re-stamp the flag on adopt so
+    // the existing session's hard-cap start time is left intact. Mirrors
+    // [WifiMonitorController.startMonitoring].
+    final bool alreadyActive = await _bridge.isMonitoringActive();
+    if (alreadyActive) {
+      return true;
+    }
+
+    await _bridge.setMonitoringActive(true);
     if (triggerShortcutName == null) return true;
     final bool opened = await _bridge.runShortcut(triggerShortcutName);
     if (!opened) return false;
