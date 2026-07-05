@@ -13,16 +13,30 @@
 // Renders led_decoder_data.dart VERBATIM (Penn/Pax voice-gated, SOP-020 PASS;
 // source Deliverables/2026-07-05-field-trade-reference/content/18-led-decoder.md).
 //
+// The vendor picker also carries, at its head (above the vendor list), the
+// Vera-passed MASTER CROSS-VENDOR COMPARISON plate (a dark-baked raster, the
+// whole color matrix on one dense chart) mounted in the established zoomable
+// DarkRasterDiagramCard — tap to open the full-screen pinch-zoom view, the
+// right presentation for a large dense chart. It is an ADDITION at the top, not
+// a replacement: the drill-down (pick vendor -> line -> table) is intact, and it
+// is decorative for screen readers (every fact is also in the tables the
+// drill-down reaches). It is gated on the PNG actually being bundled
+// (ReferenceImages.isBundled), so a missing asset degrades to just the
+// drill-down and never a broken box.
+//
 // States (SOP-007 §5): local const data, nothing fetched, shelled out to, or
 // fabricated (GL-008 does not apply — there is nothing to reach). So only the
 // success and interactive states are reachable:
 //   - success     → the compile-time const data always renders. The three views
-//     (vendor picker / line picker / state table) are the success surface.
+//     (vendor picker / line picker / state table) are the success surface. The
+//     comparison plate is a bundled-asset-gated success element on the picker.
 //   - interactive → the picker rows and the back button carry the §8.3 lime
-//     focus ring and are keyboard-reachable; the AppBar §8.16 copy action and
-//     the §8.16.1 help footer each carry their own ring.
+//     focus ring and are keyboard-reachable; the comparison plate is a labeled
+//     tap-to-zoom target; the AppBar §8.16 copy action and the §8.16.1 help
+//     footer each carry their own ring.
 //   - loading / empty / error → not reachable; there is no async boundary and
-//     the const dataset is never empty.
+//     the const dataset is never empty. A missing plate PNG is not an error
+//     state — the card is simply omitted.
 //   - disabled → copy is always enabled (the full reference is always present).
 //
 // THEME: every chrome color comes from context.colors (dark §8 / light §8.20).
@@ -36,13 +50,22 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/led_decoder_data.dart';
+import '../../../data/reference_images.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/centered_content.dart';
+import '../../../widgets/dark_raster_diagram_card.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'reference_drilldown.dart';
 import 'reference_prose.dart';
+
+/// Asset id (under the convention-based [ReferenceImages] resolver) for the
+/// Vera-passed master cross-vendor comparison plate — the whole color matrix on
+/// one dense chart. Distinct from [kLedDecoderToolId]: the decoder tool is the
+/// interactive drill-down; THIS is a single supporting overview plate the
+/// picker shows at the top. Resolves to `assets/reference/led-master-comparison.png`.
+const String kLedComparisonPlateId = 'led-master-comparison';
 
 class LedDecoderScreen extends StatefulWidget {
   const LedDecoderScreen({super.key});
@@ -150,6 +173,8 @@ class _LedDecoderScreenState extends State<LedDecoderScreen> {
         .where((LedVendor v) => v.vendorClass == LedVendorClass.consumer)
         .toList();
 
+    final Widget? plate = _comparisonPlate();
+
     return <Widget>[
       const ReferenceLead(kLedLead),
       const SizedBox(height: AppSpacing.md),
@@ -157,6 +182,14 @@ class _LedDecoderScreenState extends State<LedDecoderScreen> {
       const SizedBox(height: AppSpacing.md),
       const ReferenceInfoBand(kLedStandingCaveat),
       const SizedBox(height: AppSpacing.md),
+      // The cross-vendor overview plate at the head of the list — an addition
+      // above the drill-down, only when its PNG is bundled.
+      if (plate != null) ...<Widget>[
+        _sectionLabel('Cross-vendor comparison'),
+        const SizedBox(height: AppSpacing.xs),
+        plate,
+        const SizedBox(height: AppSpacing.md),
+      ],
       _sectionLabel('Enterprise'),
       const SizedBox(height: AppSpacing.xs),
       ..._vendorRows(enterprise),
@@ -194,6 +227,30 @@ class _LedDecoderScreenState extends State<LedDecoderScreen> {
       );
     }
     return rows;
+  }
+
+  // ─────────────────── cross-vendor comparison plate (top) ───────────────────
+
+  /// True aspect ratio (width / height) of the master comparison PNG, pinned so
+  /// the inline card is the right shape with no letterbox gutters. Matches the
+  /// real asset dims (3760 x 3368).
+  static const double _comparisonPlateAspect = 3760 / 3368;
+
+  /// The Vera-passed master cross-vendor comparison plate, or null when the PNG
+  /// is not bundled (the resolver gate keeps a missing asset from ever reaching
+  /// Image.asset, so the drill-down still reads end-to-end). Mounted in the
+  /// established DarkRasterDiagramCard: a tap-to-zoom, always-dark plate that
+  /// opens the full-screen pinch-zoom view — the right presentation for a large,
+  /// dense chart. Decorative for screen readers (every fact is also in the
+  /// per-vendor tables the drill-down reaches).
+  Widget? _comparisonPlate() {
+    if (!ReferenceImages.isBundled(kLedComparisonPlateId)) return null;
+    return DarkRasterDiagramCard(
+      assetPath: ReferenceImages.pathFor(kLedComparisonPlateId),
+      aspectRatio: _comparisonPlateAspect,
+      semanticLabel: 'cross-vendor LED comparison chart',
+      caption: 'See the full cross-vendor comparison on one chart.',
+    );
   }
 
   // ─────────────────────────── view: line picker ────────────────────────────
@@ -374,17 +431,30 @@ class _LedDecoderScreenState extends State<LedDecoderScreen> {
         b.writeln(v.honestNote);
         continue;
       }
+      // The confidence column is a debug-only QA taxonomy, gated with the
+      // chips (§ debugShowLedConfidenceChips). The honest disclosure the user
+      // needs is already carried by the Signal/Meaning columns (the
+      // kLabConfirmMarker text and the "no distinct signal" notes), so a
+      // release copy stays fully honest without the QA stamp.
+      final bool withConfidence = debugShowLedConfidenceChips;
       for (final LedModelLine l in v.lines) {
         b
           ..writeln()
           ..writeln('- ${l.name}');
         if (l.blurb != null) b.writeln(l.blurb);
-        b.writeln(<String>['State', 'Signal', 'Meaning', 'Confidence'].join(tab));
+        b.writeln(<String>[
+          'State',
+          'Signal',
+          'Meaning',
+          if (withConfidence) 'Confidence',
+        ].join(tab));
         for (final LedStateRow r in l.rows) {
-          b.writeln(
-            <String>[r.state, r.signal, r.meaning, _confidenceWord(r.confidence)]
-                .join(tab),
-          );
+          b.writeln(<String>[
+            r.state,
+            r.signal,
+            r.meaning,
+            if (withConfidence) _confidenceWord(r.confidence),
+          ].join(tab));
         }
         if (l.extraNote != null) b.writeln(l.extraNote);
         if (l.source != null) b.writeln('Source: ${l.source}');
@@ -423,9 +493,17 @@ class _LedStateRowView extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     final bool labConfirm = row.confidence == LedConfidence.labConfirm;
 
-    final String semantics =
-        '${row.state}. ${row.signal}. ${row.meaning}. '
-        '${_confidenceWord(row.confidence)}.';
+    // The confidence chip (and its semantics phrase) is a DEBUG-ONLY QA marker
+    // (Keith-directed 2026-07-05): it shows while testing a debug build and
+    // never ships in release. The user-facing honesty is unaffected — the
+    // signal text (incl. kLabConfirmMarker) and the LedColor.unknown "?" glyph
+    // on undocumented rows stay visible in both build modes.
+    final bool showChip = debugShowLedConfidenceChips;
+
+    final String semantics = showChip
+        ? '${row.state}. ${row.signal}. ${row.meaning}. '
+            '${_confidenceWord(row.confidence)}.'
+        : '${row.state}. ${row.signal}. ${row.meaning}.';
 
     return Semantics(
       container: true,
@@ -446,20 +524,36 @@ class _LedStateRowView extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: AppSpacing.xs),
-              _ConfidenceChip(confidence: row.confidence),
+              if (showChip) ...<Widget>[
+                const SizedBox(width: AppSpacing.xs),
+                _ConfidenceChip(confidence: row.confidence),
+              ],
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
-          // The signal line. For a lab-confirm row this is the honest marker,
-          // rendered in the caution tone and italic — deliberately NOT a color
-          // swatch, because the vendor documents none (GL-005).
-          Text(
-            row.signal,
-            style: (text.bodySmall ?? const TextStyle()).copyWith(
-              color: labConfirm ? colors.statusWarning : colors.textSecondary,
-              fontStyle: labConfirm ? FontStyle.italic : FontStyle.normal,
-            ),
+          // The signal line, LED-BALL FIRST: the literal colored indicator(s)
+          // lead the verbatim signal text. The dot is never the only signal —
+          // the color name is in the text beside it (GL-003 §8.13 / WCAG 1.4.1).
+          // For a lab-confirm row the signal is the honest marker, rendered in
+          // the caution tone and italic; its glyph is the neutral "?" (no
+          // fabricated color, GL-005).
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              _LedIndicatorCluster(indicators: row.indicators),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: Text(
+                  row.signal,
+                  style: (text.bodySmall ?? const TextStyle()).copyWith(
+                    color: labConfirm
+                        ? colors.statusWarning
+                        : colors.textSecondary,
+                    fontStyle: labConfirm ? FontStyle.italic : FontStyle.normal,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: AppSpacing.xxs),
           Text(
@@ -532,6 +626,248 @@ class _ConfidenceChip extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────── literal LED indicator glyphs ─────────────────────
+//
+// The colored "ball" per state. GL-003 governance:
+//   * The dot COLORS are literal light hues (green/amber/red/blue/white/purple/
+//     magenta) under the §8.15 case-1 / §8.6.2 canonical-color exception — the
+//     color IS the data, the same clause as the T568A/B wire colors and the
+//     TIA-598-C fiber jacket swatches. The §8.13 status palette is deliberately
+//     NOT reused (rule 6 bars status hues on indicator dots).
+//   * The color is never the only signal: the signal text names the color in
+//     words beside the dot (§8.13 / WCAG 1.4.1). The glyph is decorative and is
+//     excluded from semantics.
+//   * Perceptibility floor (SC 1.4.11, 3:1 on both canvases) is carried by the
+//     theme-aware borderStrong RING on every dot, so a true white/amber fill
+//     stays legible on a white card.
+//   * Solid = a filled dot; flashing = a gentle ~1s opacity pulse. Under reduced
+//     motion / MediaQuery.disableAnimations the pulse is dropped and a static
+//     concentric HALO ring is drawn instead, so solid-vs-flashing still reads
+//     without motion (§8.8). Off = a hollow grey ring; a by-design "no distinct
+//     signal" = a neutral dash; an undocumented lab-confirm state = a neutral
+//     hollow "?" (never a fabricated color, GL-005).
+
+/// Diameter of a single LED "ball".
+const double _kLedDotSize = 12;
+
+/// Footprint reserved for each glyph — larger than the dot so the reduced-motion
+/// halo ring never changes the row's layout between motion-on and reduced
+/// motion. Solid and flashing glyphs occupy the same box.
+const double _kLedGlyphBox = 20;
+
+/// Blink loop period — a gentle ~1s opacity pulse (Keith-directed), an ambient
+/// loop like [PacketFlowProgress], not a §8.8 transition token. Collapsed to a
+/// static halo under reduced motion.
+const Duration _kLedBlinkPeriod = Duration(milliseconds: 1000);
+
+/// Maps a [LedColor] to its literal light hue, or null for the hollow / neutral
+/// glyphs (off / none / unknown). Canonical subject-matter colors per §8.15
+/// case-1 — NOT design tokens.
+Color? _ledFill(LedColor c) {
+  switch (c) {
+    case LedColor.green:
+      return const Color(0xFF3FB950);
+    case LedColor.amber:
+      return const Color(0xFFF5A623);
+    case LedColor.red:
+      return const Color(0xFFE5484D);
+    case LedColor.blue:
+      return const Color(0xFF2E90FA);
+    case LedColor.white:
+      return const Color(0xFFFFFFFF);
+    case LedColor.purple:
+      return const Color(0xFFA25DDC);
+    case LedColor.magenta:
+      return const Color(0xFFD6409F);
+    case LedColor.off:
+    case LedColor.none:
+    case LedColor.unknown:
+      return null;
+  }
+}
+
+/// Renders the literal LED "ball(s)" for one state row. Owns a single ambient
+/// pulse controller (started only when motion is allowed AND a dot flashes),
+/// mirroring the [PacketFlowProgress] reduced-motion contract.
+class _LedIndicatorCluster extends StatefulWidget {
+  const _LedIndicatorCluster({required this.indicators});
+
+  final List<LedIndicator> indicators;
+
+  @override
+  State<_LedIndicatorCluster> createState() => _LedIndicatorClusterState();
+}
+
+class _LedIndicatorClusterState extends State<_LedIndicatorCluster>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: _kLedBlinkPeriod);
+    // Never fully off — the dot stays perceivable; the pulse only reads as
+    // "flashing". Dim floor 0.4 keeps the fill's hue legible mid-pulse.
+    _pulse = Tween<double>(begin: 1.0, end: 0.4).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final bool reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final bool anyFlashing = widget.indicators
+        .any((LedIndicator i) => i.blink == LedBlink.flashing);
+
+    // A controller that never animates costs nothing per frame; run it only
+    // when motion is allowed and something actually flashes.
+    if (!reduceMotion && anyFlashing) {
+      if (!_controller.isAnimating) _controller.repeat(reverse: true);
+    } else if (_controller.isAnimating) {
+      _controller.stop();
+    }
+
+    return ExcludeSemantics(
+      child: AnimatedBuilder(
+        animation: _pulse,
+        builder: (BuildContext context, _) {
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              for (int i = 0; i < widget.indicators.length; i++) ...<Widget>[
+                if (i > 0) const SizedBox(width: AppSpacing.xxs),
+                _LedGlyph(
+                  indicator: widget.indicators[i],
+                  colors: colors,
+                  reduceMotion: reduceMotion,
+                  pulseOpacity: _pulse.value,
+                ),
+              ],
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// One LED glyph within a [_LedIndicatorCluster].
+class _LedGlyph extends StatelessWidget {
+  const _LedGlyph({
+    required this.indicator,
+    required this.colors,
+    required this.reduceMotion,
+    required this.pulseOpacity,
+  });
+
+  final LedIndicator indicator;
+  final AppColorScheme colors;
+  final bool reduceMotion;
+  final double pulseOpacity;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color ring = colors.borderStrong; // SC 1.4.11 floor carrier
+    final Color? fill = _ledFill(indicator.color);
+    final bool flashing = indicator.blink == LedBlink.flashing;
+
+    final Widget core;
+    if (indicator.color == LedColor.none) {
+      // No distinct signal (by-design / confirmed-none): a neutral dash.
+      core = Container(
+        width: _kLedDotSize,
+        height: 2,
+        decoration: BoxDecoration(
+          color: colors.textTertiary,
+          borderRadius: BorderRadius.circular(1),
+        ),
+      );
+    } else if (indicator.color == LedColor.unknown) {
+      // Undocumented: a neutral hollow "?" — never a color (GL-005).
+      core = Container(
+        width: _kLedDotSize,
+        height: _kLedDotSize,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: ring, width: 1.5),
+        ),
+        child: Text(
+          '?',
+          style: TextStyle(
+            fontSize: 9,
+            height: 1.0,
+            fontWeight: FontWeight.w700,
+            color: colors.textSecondary,
+          ),
+        ),
+      );
+    } else if (fill == null) {
+      // Off: a hollow grey ring.
+      core = Container(
+        width: _kLedDotSize,
+        height: _kLedDotSize,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: ring, width: 1.5),
+        ),
+      );
+    } else {
+      // A literal colored ball. The ring carries the SC 1.4.11 floor so the
+      // true fill (incl. white / amber) stays legible on both canvases.
+      core = Container(
+        width: _kLedDotSize,
+        height: _kLedDotSize,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: fill,
+          border: Border.all(color: ring, width: 1.0),
+        ),
+      );
+    }
+
+    // Flashing under motion → pulse the opacity; under reduced motion → a static
+    // concentric halo instead (the solid-vs-flashing cue without motion, §8.8).
+    final Widget shown = (flashing && !reduceMotion)
+        ? Opacity(opacity: pulseOpacity, child: core)
+        : core;
+    final bool showHalo = flashing && reduceMotion;
+
+    return SizedBox(
+      width: _kLedGlyphBox,
+      height: _kLedGlyphBox,
+      child: Stack(
+        alignment: Alignment.center,
+        children: <Widget>[
+          if (showHalo)
+            Container(
+              key: const ValueKey<String>('led-flash-halo'),
+              width: _kLedGlyphBox - 2,
+              height: _kLedGlyphBox - 2,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: colors.borderStrong.withValues(alpha: 0.6),
+                  width: 1.5,
+                ),
+              ),
+            ),
+          shown,
         ],
       ),
     );
