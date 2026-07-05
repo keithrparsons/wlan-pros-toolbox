@@ -32,12 +32,14 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/reference_images.dart';
+import '../../../data/reference_pdfs.dart';
 import '../../../data/safety_basics_data.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/dark_raster_diagram_card.dart';
+import '../../../widgets/reference_pdf_download.dart';
 import '../../../widgets/tool_help_footer.dart';
 
 class SafetyBasicsScreen extends StatelessWidget {
@@ -93,6 +95,13 @@ class SafetyBasicsScreen extends StatelessWidget {
                           'safety-toe footwear, high-visibility apparel, and '
                           'eye protection',
                       caption: 'The PPE a GC expects before you badge on.',
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+                  if (ReferencePdfs.isBundled(kSafetyBasicsToolId)) ...<Widget>[
+                    ReferencePdfDownloadCard(
+                      assetPath: ReferencePdfs.pathFor(kSafetyBasicsToolId),
+                      title: 'Safety Basics',
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],

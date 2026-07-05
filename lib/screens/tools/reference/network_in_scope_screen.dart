@@ -19,9 +19,11 @@ import 'package:flutter/material.dart';
 
 import '../../../data/network_in_scope_data.dart';
 import '../../../data/reference_images.dart';
+import '../../../data/reference_pdfs.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/dark_raster_diagram_card.dart';
+import '../../../widgets/reference_pdf_download.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'reference_prose.dart';
 
@@ -78,6 +80,13 @@ class NetworkInScopeScreen extends StatelessWidget {
                           'network',
                       caption: 'Recognize the framework; never certify it '
                           'yourself.',
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+                  if (ReferencePdfs.isBundled(kNetworkInScopeToolId)) ...<Widget>[
+                    ReferencePdfDownloadCard(
+                      assetPath: ReferencePdfs.pathFor(kNetworkInScopeToolId),
+                      title: 'Network in Scope',
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],

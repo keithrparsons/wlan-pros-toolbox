@@ -51,11 +51,13 @@ import 'package:flutter/material.dart';
 
 import '../../../data/led_decoder_data.dart';
 import '../../../data/reference_images.dart';
+import '../../../data/reference_pdfs.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/centered_content.dart';
 import '../../../widgets/dark_raster_diagram_card.dart';
+import '../../../widgets/reference_pdf_download.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'reference_drilldown.dart';
 import 'reference_prose.dart';
@@ -174,6 +176,12 @@ class _LedDecoderScreenState extends State<LedDecoderScreen> {
         .toList();
 
     final Widget? plate = _comparisonPlate();
+    // The master comparison plate is also offered as a "Download PDF" (save/
+    // share) right on the comparison card at the top of the picker, via the same
+    // seam the PDF reference cards use. Gated independently of the PNG so the
+    // download degrades separately from the inline plate.
+    final bool hasComparisonPdf =
+        ReferencePdfs.isBundled(kLedComparisonPlateId);
 
     return <Widget>[
       const ReferenceLead(kLedLead),
@@ -183,11 +191,19 @@ class _LedDecoderScreenState extends State<LedDecoderScreen> {
       const ReferenceInfoBand(kLedStandingCaveat),
       const SizedBox(height: AppSpacing.md),
       // The cross-vendor overview plate at the head of the list — an addition
-      // above the drill-down, only when its PNG is bundled.
-      if (plate != null) ...<Widget>[
+      // above the drill-down, shown when the PNG and/or the download PDF exist.
+      if (plate != null || hasComparisonPdf) ...<Widget>[
         _sectionLabel('Cross-vendor comparison'),
         const SizedBox(height: AppSpacing.xs),
-        plate,
+        ?plate,
+        if (plate != null && hasComparisonPdf)
+          const SizedBox(height: AppSpacing.sm),
+        if (hasComparisonPdf)
+          ReferencePdfDownloadCard(
+            assetPath: ReferencePdfs.pathFor(kLedComparisonPlateId),
+            title: 'LED Decoder',
+            subtitle: 'Save or share the cross-vendor comparison plate',
+          ),
         const SizedBox(height: AppSpacing.md),
       ],
       _sectionLabel('Enterprise'),

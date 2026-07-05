@@ -42,10 +42,12 @@ import 'package:flutter/material.dart';
 
 import '../../../data/nec_gotchas_data.dart';
 import '../../../data/reference_images.dart';
+import '../../../data/reference_pdfs.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/dark_raster_diagram_card.dart';
+import '../../../widgets/reference_pdf_download.dart';
 import '../../../widgets/tool_help_footer.dart';
 
 class NecGotchasScreen extends StatelessWidget {
@@ -99,6 +101,13 @@ class NecGotchasScreen extends StatelessWidget {
                           'install',
                       caption:
                           'Where each code article bites on a real building.',
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+                  if (ReferencePdfs.isBundled(kNecGotchasToolId)) ...<Widget>[
+                    ReferencePdfDownloadCard(
+                      assetPath: ReferencePdfs.pathFor(kNecGotchasToolId),
+                      title: 'NEC Gotchas',
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],

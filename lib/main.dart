@@ -14,6 +14,7 @@ import 'data/connector_sections.dart';
 import 'data/mac_bit_field_diagram.dart';
 import 'data/modulation_diagrams.dart';
 import 'data/reference_images.dart';
+import 'data/reference_pdfs.dart';
 import 'data/power_phasing_diagrams.dart';
 import 'data/ohms_law_diagrams.dart';
 import 'data/iec_connectors_diagrams.dart';
@@ -133,6 +134,17 @@ Future<void> main() async {
     await ReferenceImages.ensureLoaded();
   } catch (_) {
     // Manifest unavailable → isBundled stays false → card omitted. No crash.
+  }
+
+  // Same convention for the Field & Trade Reference plate PDFs
+  // (assets/reference-pdf/<id>.pdf) offered as a "Download PDF" on each
+  // field-reference screen. If the manifest is unavailable, ReferencePdfs.isBundled
+  // stays false and the download control is omitted — the on-screen plate and
+  // native text still read end-to-end. Never block startup.
+  try {
+    await ReferencePdfs.ensureLoaded();
+  } catch (_) {
+    // Manifest unavailable → isBundled stays false → control omitted. No crash.
   }
 
   // Same convention for the Antenna Connectors per-connector PHOTOS

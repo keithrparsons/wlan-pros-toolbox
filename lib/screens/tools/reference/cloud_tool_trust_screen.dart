@@ -31,9 +31,11 @@ import 'package:flutter/material.dart';
 
 import '../../../data/cloud_tool_trust_data.dart';
 import '../../../data/reference_images.dart';
+import '../../../data/reference_pdfs.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/dark_raster_diagram_card.dart';
+import '../../../widgets/reference_pdf_download.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'reference_prose.dart';
 
@@ -89,6 +91,13 @@ class CloudToolTrustScreen extends StatelessWidget {
                           'five Trust Services Criteria, and the six questions '
                           'to ask a trust page',
                       caption: 'Read the badge; do not just see the logo.',
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+                  if (ReferencePdfs.isBundled(kCloudToolTrustToolId)) ...<Widget>[
+                    ReferencePdfDownloadCard(
+                      assetPath: ReferencePdfs.pathFor(kCloudToolTrustToolId),
+                      title: 'Cloud Tool Trust',
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],

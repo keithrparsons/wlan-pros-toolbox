@@ -18,9 +18,11 @@ import 'package:flutter/material.dart';
 
 import '../../../data/facility_spaces_data.dart';
 import '../../../data/reference_images.dart';
+import '../../../data/reference_pdfs.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/dark_raster_diagram_card.dart';
+import '../../../widgets/reference_pdf_download.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'reference_prose.dart';
 
@@ -78,6 +80,13 @@ class FacilitySpacesScreen extends StatelessWidget {
                           'Room hierarchy in a star',
                       caption: 'MDF, IDF, TR, and "data closet" are often one '
                           'room.',
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+                  if (ReferencePdfs.isBundled(kFacilitySpacesToolId)) ...<Widget>[
+                    ReferencePdfDownloadCard(
+                      assetPath: ReferencePdfs.pathFor(kFacilitySpacesToolId),
+                      title: 'Telecom Spaces',
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],

@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.6.1+56
+version: 1.7.0+57
 
 environment:
   sdk: ^3.12.0
@@ -546,6 +546,14 @@ flutter:
     # Flutter directory entries are NOT recursive, so this subdir is declared
     # explicitly alongside the parent.
     - assets/reference/phonetic-blocks/
+    # Field & Trade Reference PLATE PDFs (2026-07-05) — Vera-passed print plates
+    # bundled as vector PDFs, offered as a "Download PDF" (save/share) on each
+    # field-reference screen (and the LED Decoder's master comparison plate) via
+    # the existing pdf_download.dart -> sharePdf seam. Path convention:
+    # assets/reference-pdf/<tool-id>.pdf. Directory glob, so dropping a new
+    # <id>.pdf needs no pubspec change. Resolved by ReferencePdfs (gated on the
+    # asset manifest); a missing PDF omits the download control (graceful).
+    - assets/reference-pdf/
     # Regulatory authority logos (2026-06-08) — official regulator marks, mixed
     # svg/png; the Regulatory Domains page degrades to an abbreviation badge for
     # any regulator without a bundled logo.

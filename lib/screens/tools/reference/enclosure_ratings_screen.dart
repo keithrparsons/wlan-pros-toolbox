@@ -37,11 +37,13 @@ import 'package:flutter/material.dart';
 
 import '../../../data/enclosure_ratings_data.dart';
 import '../../../data/reference_images.dart';
+import '../../../data/reference_pdfs.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/dark_raster_diagram_card.dart';
+import '../../../widgets/reference_pdf_download.dart';
 import '../../../widgets/tool_help_footer.dart';
 
 class EnclosureRatingsScreen extends StatelessWidget {
@@ -100,6 +102,14 @@ class EnclosureRatingsScreen extends StatelessWidget {
                       // teaching line — no on-plate badge to collide with the
                       // baked logo / eyebrow / footer marks.
                       caption: 'Decode an IP code and bridge NEMA to IP.',
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+                  if (ReferencePdfs.isBundled(kEnclosureRatingsToolId)) ...<Widget>[
+                    ReferencePdfDownloadCard(
+                      assetPath:
+                          ReferencePdfs.pathFor(kEnclosureRatingsToolId),
+                      title: 'Enclosure Ratings',
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],

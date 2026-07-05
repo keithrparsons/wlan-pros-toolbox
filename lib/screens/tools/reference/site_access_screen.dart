@@ -30,11 +30,13 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/reference_images.dart';
+import '../../../data/reference_pdfs.dart';
 import '../../../data/site_access_data.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/dark_raster_diagram_card.dart';
+import '../../../widgets/reference_pdf_download.dart';
 import '../../../widgets/tool_help_footer.dart';
 
 class SiteAccessScreen extends StatelessWidget {
@@ -87,6 +89,13 @@ class SiteAccessScreen extends StatelessWidget {
                           'Site-access matrix: environment, what may gate you, '
                           'and what to ask about before you mobilize',
                       caption: 'Scope the credential before you quote.',
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+                  if (ReferencePdfs.isBundled(kSiteAccessToolId)) ...<Widget>[
+                    ReferencePdfDownloadCard(
+                      assetPath: ReferencePdfs.pathFor(kSiteAccessToolId),
+                      title: 'Site Access',
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],

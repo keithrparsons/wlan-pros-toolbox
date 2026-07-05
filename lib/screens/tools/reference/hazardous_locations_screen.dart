@@ -42,10 +42,12 @@ import 'package:flutter/material.dart';
 
 import '../../../data/hazardous_locations_data.dart';
 import '../../../data/reference_images.dart';
+import '../../../data/reference_pdfs.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/dark_raster_diagram_card.dart';
+import '../../../widgets/reference_pdf_download.dart';
 import '../../../widgets/tool_help_footer.dart';
 
 class HazardousLocationsScreen extends StatelessWidget {
@@ -100,6 +102,13 @@ class HazardousLocationsScreen extends StatelessWidget {
                           'Class, Division, and Zone hazardous-location decoder '
                           'diagram',
                       caption: 'Decode Class, Division, and the IEC Zone system.',
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+                  if (ReferencePdfs.isBundled(kHazardousLocationsToolId)) ...<Widget>[
+                    ReferencePdfDownloadCard(
+                      assetPath: ReferencePdfs.pathFor(kHazardousLocationsToolId),
+                      title: 'Hazardous Locations',
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],

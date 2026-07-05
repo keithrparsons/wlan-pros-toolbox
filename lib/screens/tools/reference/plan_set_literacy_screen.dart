@@ -30,11 +30,13 @@ import 'package:flutter/material.dart';
 
 import '../../../data/plan_set_literacy_data.dart';
 import '../../../data/reference_images.dart';
+import '../../../data/reference_pdfs.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/dark_raster_diagram_card.dart';
+import '../../../widgets/reference_pdf_download.dart';
 import '../../../widgets/tool_help_footer.dart';
 
 class PlanSetLiteracyScreen extends StatelessWidget {
@@ -89,6 +91,13 @@ class PlanSetLiteracyScreen extends StatelessWidget {
                           'Sheet-number anatomy diagram: discipline letter, '
                           'sheet-type digit, and sequence number',
                       caption: 'Decode a sheet number and find the RCP.',
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+                  if (ReferencePdfs.isBundled(kPlanSetLiteracyToolId)) ...<Widget>[
+                    ReferencePdfDownloadCard(
+                      assetPath: ReferencePdfs.pathFor(kPlanSetLiteracyToolId),
+                      title: 'Plan-Set Literacy',
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],

@@ -18,9 +18,11 @@ import 'package:flutter/material.dart';
 
 import '../../../data/credentials_licenses_data.dart';
 import '../../../data/reference_images.dart';
+import '../../../data/reference_pdfs.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/dark_raster_diagram_card.dart';
+import '../../../widgets/reference_pdf_download.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'reference_prose.dart';
 
@@ -79,6 +81,13 @@ class CredentialsLicensesScreen extends StatelessWidget {
                           'takes to obtain',
                       caption: 'The credential you do not hold is the schedule '
                           'you cannot keep.',
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+                  if (ReferencePdfs.isBundled(kCredentialsLicensesToolId)) ...<Widget>[
+                    ReferencePdfDownloadCard(
+                      assetPath: ReferencePdfs.pathFor(kCredentialsLicensesToolId),
+                      title: 'Credentials & Licenses',
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],

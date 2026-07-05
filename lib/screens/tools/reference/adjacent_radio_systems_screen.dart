@@ -19,9 +19,11 @@ import 'package:flutter/material.dart';
 
 import '../../../data/adjacent_radio_systems_data.dart';
 import '../../../data/reference_images.dart';
+import '../../../data/reference_pdfs.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/dark_raster_diagram_card.dart';
+import '../../../widgets/reference_pdf_download.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'reference_prose.dart';
 
@@ -79,6 +81,13 @@ class AdjacentRadioSystemsScreen extends StatelessWidget {
                           '2.4 GHz air and which run coexistence-clean in '
                           'sub-GHz or licensed spectrum',
                       caption: 'Five of them contend for your 2.4 GHz airtime.',
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+                  if (ReferencePdfs.isBundled(kAdjacentRadioSystemsToolId)) ...<Widget>[
+                    ReferencePdfDownloadCard(
+                      assetPath: ReferencePdfs.pathFor(kAdjacentRadioSystemsToolId),
+                      title: 'Adjacent Radio Systems',
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],

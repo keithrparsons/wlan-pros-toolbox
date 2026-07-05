@@ -19,9 +19,11 @@ import 'package:flutter/material.dart';
 
 import '../../../data/healthcare_vertical_data.dart';
 import '../../../data/reference_images.dart';
+import '../../../data/reference_pdfs.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/dark_raster_diagram_card.dart';
+import '../../../widgets/reference_pdf_download.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'reference_prose.dart';
 
@@ -80,6 +82,13 @@ class HealthcareVerticalScreen extends StatelessWidget {
                           'four authorities',
                       caption: 'Coordinate with biomed before you touch the '
                           'RF environment.',
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+                  if (ReferencePdfs.isBundled(kHealthcareVerticalToolId)) ...<Widget>[
+                    ReferencePdfDownloadCard(
+                      assetPath: ReferencePdfs.pathFor(kHealthcareVerticalToolId),
+                      title: 'Healthcare Wi-Fi',
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],
