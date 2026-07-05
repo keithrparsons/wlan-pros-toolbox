@@ -1132,7 +1132,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       ),
       ToolEntry(
         id: 'facility-spaces',
-        title: 'Facility Spaces',
+        title: 'Telecom Spaces',
         description: 'Decode MDF, IDF, TR, and the data closet',
         routeName: '/tools/facility-spaces',
         isLive: true,

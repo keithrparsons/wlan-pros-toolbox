@@ -35,7 +35,7 @@ class FacilitySpacesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Facility Spaces'),
+        title: const Text('Telecom Spaces'),
         toolbarHeight: 64,
         actions: <Widget>[AppCopyAction(textBuilder: _copyText)],
       ),

@@ -78,7 +78,7 @@ const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
     // coexists with and designs around. Member: Adjacent Radio Systems.
     'Wireless Landscape',
     // Verticals (2026-07-05): what each industry tends to trigger. Members:
-    // Verticals Index, Healthcare Wi-Fi, Data Centers & Wi-Fi, Facility Spaces.
+    // Verticals Index, Healthcare Wi-Fi, Data Centers & Wi-Fi, Telecom Spaces.
     'Verticals',
   ],
   'rf-calculators': <String>[

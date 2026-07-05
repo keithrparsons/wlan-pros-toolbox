@@ -4,7 +4,7 @@
 // Formats) each hand-rolled a private _Card / _Body / _InfoBand shell. The
 // second wave of eight reference screens (Cloud Tool Trust, Network in Scope,
 // Adjacent Radio Systems, Credentials & Licenses, By-Vertical Index, Healthcare
-// Wi-Fi, Data Centers & Wi-Fi, Facility Spaces) is prose-heavy and shares the
+// Wi-Fi, Data Centers & Wi-Fi, Telecom Spaces) is prose-heavy and shares the
 // exact same shell, so the shell is factored into ONE library-public widget set
 // here - the same "factor the repeated reference idiom into a shared widget"
 // move that produced ReferenceRowSemantics and DarkRasterDiagramCard. One

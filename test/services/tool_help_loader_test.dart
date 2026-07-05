@@ -264,7 +264,7 @@ void main() {
       // (adjacent-radio-systems) in "Wireless Landscape"; Credentials & Licenses
       // (credentials-licenses) in "Codes & Safety"; and Verticals Index
       // (by-vertical-index), Healthcare Wi-Fi (healthcare-vertical), Data
-      // Centers & Wi-Fi (data-centers-wifi), and Facility Spaces
+      // Centers & Wi-Fi (data-centers-wifi), and Telecom Spaces
       // (facility-spaces) in "Verticals". 165 + 8 = 173.
       expect(store.count, 173);
     });

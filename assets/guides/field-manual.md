@@ -78,10 +78,10 @@ Turn a finished Test My Connection result into a plain-language, conclusion-firs
 3. Read the findings top to bottom: the most important (the verdict, an open network, packet loss, a dead path) lead, then signal/band/internet-quality context. Each carries a severity word (ACTION / WORTH A LOOK / CONTEXT) plus a color, never color alone.
 4. Use the Copy action (top right) to save the whole analysis as plain text.
 
-**Formula or method.** A pure, local rule engine (AnalyzeEngine) evaluates a structured rule library against the same result data already on screen, read directly from the in-memory models (ConnectedAp, the net_quality result, the Wi-Fi-vs-Internet verdict, the DNS probe, and the cloud reachability tally) — never by re-parsing the copied report text. Every threshold is imported from the app constants, not duplicated: RSSI/SNR from WifiGradingBands, latency/jitter/loss/responsiveness/download from QualityScoring, the verdict thresholds from the Wi-Fi-vs-Internet engine, and the security labels from WifiSecurity. Fired rules are sorted by severity (P1 critical, P2 important, P3 context) then by the rule library's declaration order, so the verdict always leads. Context-only reassurances ("no problem here") are suppressed unless a real finding also fired, so the report never narrates a non-issue. Runs entirely on the device: no network call, nothing stored, nothing leaves the device.
+**Formula or method.** A pure, local rule engine (AnalyzeEngine) evaluates a structured rule library against the same result data already on screen, read directly from the in-memory models (ConnectedAp, the net_quality result, the Wi-Fi-vs-Internet verdict, the DNS probe, and the cloud reachability tally), never by re-parsing the copied report text. Every threshold is imported from the app constants, not duplicated: RSSI/SNR from WifiGradingBands, latency/jitter/loss/responsiveness/download from QualityScoring, the verdict thresholds from the Wi-Fi-vs-Internet engine, and the security labels from WifiSecurity. Fired rules are sorted by severity (P1 critical, P2 important, P3 context) then by the rule library's declaration order, so the verdict always leads. Context-only reassurances ("no problem here") are suppressed unless a real finding also fired, so the report never narrates a non-issue. Runs entirely on the device: no network call, nothing stored, nothing leaves the device.
 
 **Field notes**
-- Doctrine guardrails: the "you're on 2.4 GHz" (R-20) and "narrow channel width" (R-23) rules deliberately carry the honest trade-off and never tell a user to blanket-switch bands or force 160 MHz — wider is not automatically better, and 2.4 GHz is the right choice for range and IoT.
+- Doctrine guardrails: the "you're on 2.4 GHz" (R-20) and "narrow channel width" (R-23) rules deliberately carry the honest trade-off and never tell a user to blanket-switch bands or force 160 MHz: wider is not automatically better, and 2.4 GHz is the right choice for range and IoT.
 - Null discipline: a field the platform did not measure fires no rule. The honesty rules (channel width not captured on iPhone; Wi-Fi signal details not captured) explain the gap instead of guessing.
 
 ### Network Quality
@@ -95,7 +95,7 @@ A one-shot transport-quality measurement covering latency, jitter, loss, downloa
 2. Tap "Run test" for the full one-shot measurement (download/upload/responsiveness run only on a full run).
 3. Read the six graded rows and the popular-sites reachability table.
 
-**Formula or method.** All this app's own engine. Latency / jitter / loss: 10 sequential TCP-connect RTTs to one.one.one.one:443 (not ICMP — the sandbox blocks raw sockets). Jitter is RFC-3550-style mean deviation between consecutive samples; loss is failed-connects ÷ attempts × 100. With zero successful samples, latency and jitter report "Unavailable" but loss is a real 100%. Download: parallel-summed, multi-server. Several concurrent streams (5 by default) share one window of about 15 seconds, each against a different independent public server or CDN from a diverse pool (Cloudflare, OVH, Hetzner, Cachefly, ThinkBroadband). The first few seconds of TCP slow-start ramp are discarded, so the number is sustained steady-state throughput, not the ramp. Each server's own rate is measured; any server that comes back below roughly half the median (a throttled or slow outlier) is dropped, and the survivors' rates are summed into the aggregate download figure, so one slow server cannot drag the result down. If every stream fails, it raises an honest "couldn't measure" — never a fake 0 Mbps. Upload: single stream with multi-CDN fallback (only Cloudflare __up is a verified large-POST sink — honest single-stream, not faked parallelism). A non-2xx or empty transfer is an honest failure, not 0. Responsiveness (RPM): a simplified single-flow loaded-latency estimate inspired by RFC 9097 / Apple networkQuality, NOT the full multi-flow RPM standard. It samples loaded RTT while a download flow runs, then RPM = 60000 / loadedAvgMs. Reachability: TCP-connect (port 443) to 14 well-known cloud-app hosts — a mix the public and a WLAN pro both recognize: social/consumer (Facebook, Instagram, TikTok, YouTube, Netflix) plus pro/infra (Google, iCloud, Microsoft 365, Cloudflare, AWS, Zoom, Slack, GitHub) and a Cloudflare DNS anchor. Grade bands: Latency ms — Excellent <20, Good <50, Fair <100, Poor ≥100 (grounded in ITU-T G.114, our cut points). Jitter ms — <5/<15/<30. Loss % — 0/<1/<2.5. Responsiveness RPM — ≥1000/≥500/≥100. Download Mbps — ≥100/≥25/≥5 (explicitly a heuristic). Upload Mbps — ≥20/≥5/≥1 (heuristic).
+**Formula or method.** All this app's own engine. Latency / jitter / loss: 10 sequential TCP-connect RTTs to one.one.one.one:443 (not ICMP, the sandbox blocks raw sockets). Jitter is RFC-3550-style mean deviation between consecutive samples; loss is failed-connects ÷ attempts × 100. With zero successful samples, latency and jitter report "Unavailable" but loss is a real 100%. Download: parallel-summed, multi-server. Several concurrent streams (5 by default) share one window of about 15 seconds, each against a different independent public server or CDN from a diverse pool (Cloudflare, OVH, Hetzner, Cachefly, ThinkBroadband). The first few seconds of TCP slow-start ramp are discarded, so the number is sustained steady-state throughput, not the ramp. Each server's own rate is measured; any server that comes back below roughly half the median (a throttled or slow outlier) is dropped, and the survivors' rates are summed into the aggregate download figure, so one slow server cannot drag the result down. If every stream fails, it raises an honest "couldn't measure", never a fake 0 Mbps. Upload: single stream with multi-CDN fallback (only Cloudflare __up is a verified large-POST sink, honest single-stream, not faked parallelism). A non-2xx or empty transfer is an honest failure, not 0. Responsiveness (RPM): a simplified single-flow loaded-latency estimate inspired by RFC 9097 / Apple networkQuality, NOT the full multi-flow RPM standard. It samples loaded RTT while a download flow runs, then RPM = 60000 / loadedAvgMs. Reachability: TCP-connect (port 443) to 14 well-known cloud-app hosts, a mix the public and a WLAN pro both recognize: social/consumer (Facebook, Instagram, TikTok, YouTube, Netflix) plus pro/infra (Google, iCloud, Microsoft 365, Cloudflare, AWS, Zoom, Slack, GitHub) and a Cloudflare DNS anchor. Grade bands: Latency ms: Excellent <20, Good <50, Fair <100, Poor ≥100 (grounded in ITU-T G.114, our cut points). Jitter ms: <5/<15/<30. Loss %: 0/<1/<2.5. Responsiveness RPM: ≥1000/≥500/≥100. Download Mbps: ≥100/≥25/≥5 (explicitly a heuristic). Upload Mbps: ≥20/≥5/≥1 (heuristic).
 
 **Field notes**
 - Platform differences: runs on macOS, Windows, Linux, Android, iOS over dart:io sockets/HTTP. On web it routes to the download-the-app fallback (no sockets).
@@ -142,18 +142,18 @@ Show the iPhone's mobile-network details: carrier, radio technology, signal bars
 
 Record each time your device roams from one access point (BSSID) to another on the same network (SSID) during an open monitoring session, with the timestamp, the from→to BSSID pair, and the signal at the roam.
 
-**Why it's here.** A roam is a BSSID change while the SSID stays the same. Watching the live Wi-Fi signal shows a roam happen, but nothing recorded it. Reach for this when you want a timestamped list of roams from a walk-around — e.g. to see where the device clings to a far AP or hops too often.
+**Why it's here.** A roam is a BSSID change while the SSID stays the same. Watching the live Wi-Fi signal shows a roam happen, but nothing recorded it. Reach for this when you want a timestamped list of roams from a walk-around, e.g. to see where the device clings to a far AP or hops too often.
 
 **How to use**
-1. macOS: opens recording automatically — it polls the Wi-Fi link continuously while the screen is open. Walk your space; each roam is logged as it happens.
+1. macOS: opens recording automatically. It polls the Wi-Fi link continuously while the screen is open. Walk your space; each roam is logged as it happens.
 2. iOS: install the "WLAN Pros Live" companion Shortcut (same one Wi-Fi Information uses), tap Start, then walk with the screen open. Firing the Shortcut switches to the Shortcuts app, so it waits for your deliberate Start tap rather than auto-firing.
 3. Read the list newest-first: time · network, the from→to BSSID pair, and the signal (RSSI/SNR) read at the roam.
 
 **Formula or method.** The shared WifiSignalSampler feeds every fresh connected-AP sample to a pure RoamDetector. The detector records a roam only when the current BSSID differs from the prior non-null BSSID AND the SSID is unchanged. A null/blank BSSID breaks the chain without fabricating a roam; the first known BSSID seeds the anchor (no roam); a same-BSSID sample is ignored; a changed SSID is a network switch, not a roam, and is excluded. On macOS the detector is fed on every poll (before the sparkline's unchanged-RF guard) so a roam at identical signal still registers; on iOS it is fed from each new streamed payload and reset on a fresh Stop→Start.
 
 **Field notes**
-- Foreground session only on iOS. There is no public iOS API for background Wi-Fi or BSSID-change callbacks, so no app can log roams with the app closed or the phone in a pocket — the same ceiling Wi-Fi Check shares. macOS records continuously while the screen is open.
-- BSSID is the AP radio's MAC address. A roam between two radios in the SAME physical AP (e.g. 2.4 GHz → 5 GHz) is still a BSSID change and is logged; that is correct — it is a real roam.
+- Foreground session only on iOS. There is no public iOS API for background Wi-Fi or BSSID-change callbacks, so no app can log roams with the app closed or the phone in a pocket: the same ceiling Wi-Fi Check shares. macOS records continuously while the screen is open.
+- BSSID is the AP radio's MAC address. A roam between two radios in the SAME physical AP (e.g. 2.4 GHz → 5 GHz) is still a BSSID change and is logged; that is correct: it is a real roam.
 - The signal shown is the reading at the moment the new BSSID first appeared, not an average. "Signal unavailable" prints honestly when the platform omitted RSSI for that sample, never a fake value.
 - Stopping and starting (iOS) clears the session log so a new walk does not inherit the prior walk's roams.
 - Copy-to-save: the §8.16 Copy action in the app bar exports the whole recorded roam session as paste-ready plain text (each roam with its time, network, from→to BSSID pair, and signal), built by the pure buildRoamLogCopyText so a walk can be saved to a ticket or note.
@@ -237,7 +237,7 @@ Show the device's own system facts: model (marketing name plus the raw identifie
 2. Tap Refresh in the top bar to re-read (uptime advances; the rest is stable).
 3. Use Copy to put the whole snapshot on the clipboard as labeled text.
 
-**Formula or method.** Model and total memory come from the device_info_plus package (BSD-3): on iOS, modelName (the package maps utsname.machine — e.g. iPhone16,2 — to a marketing name) plus physicalRamSize; on macOS, modelName/model plus memorySize. Uptime comes from a tiny native MethodChannel (com.wlanpros.toolbox/system_info → systemUptime) reading ProcessInfo.processInfo.systemUptime — no package exposes it. The cellular IP comes from dart:io NetworkInterface.list, matching the conventional iOS cellular interface name pdp_ip0.
+**Formula or method.** Model and total memory come from the device_info_plus package (BSD-3): on iOS, modelName (the package maps utsname.machine, e.g. iPhone16,2, to a marketing name) plus physicalRamSize; on macOS, modelName/model plus memorySize. Uptime comes from a tiny native MethodChannel (com.wlanpros.toolbox/system_info → systemUptime) reading ProcessInfo.processInfo.systemUptime: no package exposes it. The cellular IP comes from dart:io NetworkInterface.list, matching the conventional iOS cellular interface name pdp_ip0.
 
 **Field notes**
 - Cellular IP uses a heuristic: Apple does not treat interface names as a stable API, so detection matches the conventional iOS cellular name pdp_ip0. "No cellular interface" is the normal, honest result on a Wi-Fi-only iPhone, in airplane mode, or on a Mac (which has no cellular interface).
@@ -270,7 +270,7 @@ Connect to host:port over TLS and report the server certificate as inspectable d
 **How to use**
 1. Enter a host (URLs are accepted and stripped to the host), optional port (443 default), inspect.
 
-**Formula or method.** SecureSocket.connect with onBadCertificate: (cert) => true — it accepts any certificate at the socket layer so an expired/self-signed/mismatched cert is still captured and shown; the validity verdict is computed from the cert dates, not thrown as an error. A bad cert is a successful inspection, not a failure. Field coverage is split: dart:io X509Certificate gives PEM/DER, subject/issuer DN, notBefore/notAfter, SHA-1; basic_utils X509Utils re-parses the PEM to recover structured DN, SAN list, serial, signature algorithm, public-key algorithm + bits, and SHA-256. Validity is computed against "now": valid / expired / not-yet-valid + days-to-expiry.
+**Formula or method.** SecureSocket.connect with onBadCertificate: (cert) => true: it accepts any certificate at the socket layer so an expired/self-signed/mismatched cert is still captured and shown; the validity verdict is computed from the cert dates, not thrown as an error. A bad cert is a successful inspection, not a failure. Field coverage is split: dart:io X509Certificate gives PEM/DER, subject/issuer DN, notBefore/notAfter, SHA-1; basic_utils X509Utils re-parses the PEM to recover structured DN, SAN list, serial, signature algorithm, public-key algorithm + bits, and SHA-256. Validity is computed against "now": valid / expired / not-yet-valid + days-to-expiry.
 
 **Field notes**
 - Platform differences: same on every native platform. Gated off on web.
@@ -286,7 +286,7 @@ Show the device's own network state: per-interface IPv4/IPv6 addresses, interfac
 **How to use**
 1. Open the tool; it reads a snapshot. Each field that a platform can't provide returns null and renders "Not available on this platform".
 
-**Formula or method.** Built on dart:io NetworkInterface.list for the address/interface table, plus network_info_plus for Wi-Fi-link details (SSID, BSSID, gateway, subnet mask, Wi-Fi IPv4/IPv6) that dart:io doesn't expose. Each sub-read is independently guarded so one denied call (e.g. SSID) never blanks the whole screen. Interface kind (Wi-Fi/Ethernet/Cellular/Loopback/VPN/Other) is a heuristic from the OS interface name — e.g. macOS en0 is guessed Wi-Fi, en1+ Ethernet; explicitly conservative. primaryIPv4 prefers the Wi-Fi link IP, else the first non-loopback IPv4.
+**Formula or method.** Built on dart:io NetworkInterface.list for the address/interface table, plus network_info_plus for Wi-Fi-link details (SSID, BSSID, gateway, subnet mask, Wi-Fi IPv4/IPv6) that dart:io doesn't expose. Each sub-read is independently guarded so one denied call (e.g. SSID) never blanks the whole screen. Interface kind (Wi-Fi/Ethernet/Cellular/Loopback/VPN/Other) is a heuristic from the OS interface name, e.g. macOS en0 is guessed Wi-Fi, en1+ Ethernet; explicitly conservative. primaryIPv4 prefers the Wi-Fi link IP, else the first non-loopback IPv4.
 
 **Field notes**
 - Platform differences: SSID/BSSID/gateway depend on network_info_plus and OS permission state. iOS needs the wifi-info entitlement + Location for SSID/BSSID; macOS/Android vary. Web is gated off. SSID is cleaned of wrapping quotes and the <unknown ssid> placeholder.
@@ -302,7 +302,7 @@ Country, region, city, coordinates, timezone, ISP/org, and ASN for an IP (or you
 **How to use**
 1. Enter an IP or hostname, or leave blank to locate your own public IP, look up. A copyable "lat,long" and an OpenStreetMap URL are offered.
 
-**Formula or method.** Queries ipwho.is (free, no key, HTTPS — chosen because it's keyless AND returns ASN + timezone in one response; ip-api.com is HTTP-only and would trip iOS ATS, so it's explicitly not used). An empty query hits https://ipwho.is/ (your IP); otherwise https://ipwho.is/{ip}. A cheap client-side sanity check rejects obvious junk before spending a round-trip; ipwho.is's in-band {"success": false} is mapped to a precise "check your input" or rate-limited state, not read as OK.
+**Formula or method.** Queries ipwho.is (free, no key, HTTPS, chosen because it's keyless AND returns ASN + timezone in one response; ip-api.com is HTTP-only and would trip iOS ATS, so it's explicitly not used). An empty query hits https://ipwho.is/ (your IP); otherwise https://ipwho.is/{ip}. A cheap client-side sanity check rejects obvious junk before spending a round-trip; ipwho.is's in-band {"success": false} is mapped to a precise "check your input" or rate-limited state, not read as OK.
 
 **Field notes**
 - Platform differences: JsonHttpClient → dart:io, native-only; web gated to the download fallback (ipwho.is CORS unverified).
@@ -311,7 +311,7 @@ Country, region, city, coordinates, timezone, ISP/org, and ASN for an IP (or you
 
 ### Current Location
 
-Reads the device's GPS location on open and shows latitude, longitude, altitude, and horizontal accuracy directly — no conversion step.
+Reads the device's GPS location on open and shows latitude, longitude, altitude, and horizontal accuracy directly, no conversion step.
 
 **Why it's here.** The fast "where am I right now" answer. The same fix is available inside the Lat / Long converter, but people expect a dedicated location tool rather than a coordinate calculator.
 
@@ -396,7 +396,7 @@ Discover local-network neighbors: IP, and MAC where the platform exposes it.
 **How to use**
 1. Open and run; it derives the local subnet and sweeps it, attaching cached MACs where available.
 
-**Formula or method.** Active discovery — derive the local /24 (or real prefix), TCP-connect-probe each host (curated LAN ports 80/443/22/445/139/53/8080, refused RST counts as up), list the responders, and on Linux/Android read /proc/net/arp to attach the real cached MAC. No subprocess (arp -a is sandbox-blocked). Safety cap refuses anything larger than a /22 (1022 hosts).
+**Formula or method.** Active discovery: derive the local /24 (or real prefix), TCP-connect-probe each host (curated LAN ports 80/443/22/445/139/53/8080, refused RST counts as up), list the responders, and on Linux/Android read /proc/net/arp to attach the real cached MAC. No subprocess (arp -a is sandbox-blocked). Safety cap refuses anything larger than a /22 (1022 hosts).
 
 **Field notes**
 - Platform matrix (honest, in the source): Android / Linux, active sweep with MAC from /proc/net/arp. macOS / Windows, active sweep, no MAC (no readable ARP file; arp -a/GetIpNetTable out of scope), so MAC renders "Not exposed on this platform". iOS, unavailable; neighbor tables aren't accessible to third-party apps. Web, download fallback.
@@ -412,7 +412,7 @@ ASN, holder, announced prefix, registry, and peer/upstream counts for an IP or A
 **How to use**
 1. Enter an IPv4/IPv6 or an ASN (AS15169, 15169, or as15169), look up.
 
-**Formula or method.** Queries the RIPEstat Data API (free, no key, HTTPS, authoritative — operated by RIPE NCC). IP path: network-info (prefix + ASN) then as-overview (holder, type, registry, announced). ASN path: as-overview then asn-neighbours mapped to upstream/peer/downstream counts. Input is classified IP vs ASN before any call.
+**Formula or method.** Queries the RIPEstat Data API (free, no key, HTTPS, authoritative, operated by RIPE NCC). IP path: network-info (prefix + ASN) then as-overview (holder, type, registry, announced). ASN path: as-overview then asn-neighbours mapped to upstream/peer/downstream counts. Input is classified IP vs ASN before any call.
 
 **Field notes**
 - Platform differences: built on JsonHttpClient (→ dart:io), so native-only; web is gated to the download fallback (RIPEstat CORS unverified, so no maybe-broken web tool).
@@ -448,7 +448,7 @@ Turn a MAC address into its registered vendor, fully offline.
 **How to use**
 1. Enter a MAC in any common notation (colon, hyphen, Cisco dot aabb.ccdd.eeff, or no separators; any case), look up.
 
-**Formula or method.** Pure-Dart resolver over a bundled IEEE registry table loaded once and cached — no HTTP, no dart:io. It honors the three IEEE block sizes and matches most-specific-first: MA-S (/36, 9 hex), then MA-M (/28, 7 hex), then MA-L (/24, 6 hex), so a /36 sub-allocation names the real sub-assignee, not the /24 parent.
+**Formula or method.** Pure-Dart resolver over a bundled IEEE registry table loaded once and cached, no HTTP, no dart:io. It honors the three IEEE block sizes and matches most-specific-first: MA-S (/36, 9 hex), then MA-M (/28, 7 hex), then MA-L (/24, 6 hex), so a /36 sub-allocation names the real sub-assignee, not the /24 parent.
 
 **Field notes**
 - Platform differences: identical everywhere (offline, pure Dart), including web-safe in principle, though it ships in the gated Networking category. No platform exposes more or less here.
@@ -464,7 +464,7 @@ Find live hosts on the local network and enrich each with name, services, inferr
 **How to use**
 1. Open and run. The engine seeds the local /24, connect-scans it, reverse-DNS resolves, mDNS-browses, then (macOS) reads the ARP cache for MAC/vendor.
 
-**Formula or method.** Four passes: 1. Subnet seed — derive the local /24 host list from network_info_plus (:181-199). 2. Connect-scan — bounded-concurrency (64) TCP connect across the /24 × a curated port set, run in a background isolate; streams progress (:201-262). 3. Reverse DNS — InternetAddress.reverse() per discovered host (null when no PTR) (:264-275, 499-510). 4. mDNS browse — in-house native NetServiceBrowser/NetService (Apple Bonjour daemon) over a curated DNS-SD service set. Then the ARP-cache read (macOS only, via Swift sysctl NET_RT_FLAGS/RTF_LLINFO — never a subprocess) runs after the scan warms the kernel cache, attaching MAC + vendor (:303-335). Finally a pure device-type heuristic runs on each host's open ports + mDNS services. Device-type rules (first match wins, most specific first): IPP/LPD/9100 or printing mDNS → Printer; RTSP → Camera/NVR; iOS lockdownd (62078) → iOS device; SMB (445) → Windows/SMB; _sonos/_spotify-connect → Speaker; _googlecast → Media streamer; _airplay/_raop/_companion-link → Apple device; then weak signals 80/443/8080 → Web server, 22 → SSH host; any mDNS → mDNS device; else Unknown. MAC→vendor resolves through the full bundled IEEE OUI registry; the resolver owns the honesty contract — null for randomized/local MACs, raw-OUI fallback for unlisted global prefixes, named vendor otherwise.
+**Formula or method.** Four passes: 1. Subnet seed: derive the local /24 host list from network_info_plus (:181-199). 2. Connect-scan: bounded-concurrency (64) TCP connect across the /24 × a curated port set, run in a background isolate; streams progress (:201-262). 3. Reverse DNS: InternetAddress.reverse() per discovered host (null when no PTR) (:264-275, 499-510). 4. mDNS browse: in-house native NetServiceBrowser/NetService (Apple Bonjour daemon) over a curated DNS-SD service set. Then the ARP-cache read (macOS only, via Swift sysctl NET_RT_FLAGS/RTF_LLINFO, never a subprocess) runs after the scan warms the kernel cache, attaching MAC + vendor (:303-335). Finally a pure device-type heuristic runs on each host's open ports + mDNS services. Device-type rules (first match wins, most specific first): IPP/LPD/9100 or printing mDNS → Printer; RTSP → Camera/NVR; iOS lockdownd (62078) → iOS device; SMB (445) → Windows/SMB; _sonos/_spotify-connect → Speaker; _googlecast → Media streamer; _airplay/_raop/_companion-link → Apple device; then weak signals 80/443/8080 → Web server, 22 → SSH host; any mDNS → mDNS device; else Unknown. MAC→vendor resolves through the full bundled IEEE OUI registry; the resolver owns the honesty contract: null for randomized/local MACs, raw-OUI fallback for unlisted global prefixes, named vendor otherwise.
 
 **Field notes**
 - Platform differences (the heart of it): MAC + vendor: macOS only (the sysctl ARP read). On iOS/Android a sandboxed app cannot read the ARP table, so MAC/vendor stay null. mDNS: iOS + macOS via the native NetServiceBrowser channel. It deliberately does NOT use pure-Dart multicast (iOS 14+ silently drops it without Apple's multicast entitlement) and does NOT use bonsoir (GPL-3.0, incompatible with the closed-source App Store app). Android/other platforms get a clean empty mDNS pass (NsdManager deferred). Service types must be declared in Info.plist NSBonjourServices. The connect-scan core is pure-Dart and cross-platform; only mDNS/ARP enrichment are native.
@@ -480,10 +480,10 @@ List the Wi-Fi access points a scan can see around you, each with SSID, BSSID, c
 **How to use**
 1. Tap Scan to run a Wi-Fi scan. Each visible AP lists its SSID, BSSID, channel, band, and RSSI. Sort by signal or channel, and read the occupancy bars per band. Re-run to refresh.
 
-**Formula or method.** Wired for Android today. The screen reads WifiManager.getScanResults() through the native com.wlanpros.toolbox/ap_scan method channel; ApScanService parses each result into a clean record (SSID, BSSID, RSSI, channel and band derived from the center frequency). Off Android the screen renders an honest per-platform state and never touches the channel: on iOS and macOS it says the OS blocks nearby-AP scanning; on Windows it says the scan is not wired into this tool yet (Windows Native Wifi CAN enumerate nearby APs — the FFI already fetches every BSS — so this is a not-yet-built path, not an OS block).
+**Formula or method.** Wired for Android today. The screen reads WifiManager.getScanResults() through the native com.wlanpros.toolbox/ap_scan method channel; ApScanService parses each result into a clean record (SSID, BSSID, RSSI, channel and band derived from the center frequency). Off Android the screen renders an honest per-platform state and never touches the channel: on iOS and macOS it says the OS blocks nearby-AP scanning; on Windows it says the scan is not wired into this tool yet (Windows Native Wifi CAN enumerate nearby APs, the FFI already fetches every BSS, so this is a not-yet-built path, not an OS block).
 
 **Field notes**
-- Runs on Android today. iOS and macOS block nearby-AP scanning at the OS level, so the tool is gated out of the catalog there. Windows is capable via its Native Wifi API (WlanGetNetworkBssList already fetches every visible BSS), but the Windows scan path is not wired into this tool yet — the copy says so honestly rather than implying only Apple restricts it.
+- Runs on Android today. iOS and macOS block nearby-AP scanning at the OS level, so the tool is gated out of the catalog there. Windows is capable via its Native Wifi API (WlanGetNetworkBssList already fetches every visible BSS), but the Windows scan path is not wired into this tool yet: the copy says so honestly rather than implying only Apple restricts it.
 - Clean fields only. The Android scan API exposes SSID, BSSID, channel, band, and RSSI for a scanned (non-connected) BSS. It does not expose a per-BSS noise floor, SNR, or MCS, so those columns do not exist here and are never shown.
 - Android throttles Wi-Fi scans. When throttled, a rapid re-scan returns the last cached results and the screen notes it rather than faking a fresh scan. Location permission and Wi-Fi must both be on for the scan to return results.
 
@@ -496,7 +496,7 @@ Send a custom TCP or UDP payload to host:port and read the reply (raw bytes + he
 **How to use**
 1. Enter host, port, transport (TCP/UDP), and a payload (plain text, or \xNN hex escapes plus \r \n \t \0 \\), send. The reply is shown as hex and decoded text.
 
-**Formula or method.** TCP via Socket, UDP via RawDatagramSocket — no raw sockets, no custom ICMP/IP framing (same sandbox wall as ICMP traceroute), so it ships clean everywhere. TCP: connect → send → read until the peer closes or the read goes idle for the timeout, with a hard total cap (timeout×3) so a chatty stream can't run forever. UDP: bind ephemeral → send one datagram → wait up to the timeout for a reply; no reply is a first-class non-error outcome (timedOut/isNoReply), not an exception, because UDP has no delivery guarantee. Errors are typed: DNS failure, refused, unreachable, timeout, invalid input, other — each mapped to a precise message.
+**Formula or method.** TCP via Socket, UDP via RawDatagramSocket, no raw sockets, no custom ICMP/IP framing (same sandbox wall as ICMP traceroute), so it ships clean everywhere. TCP: connect → send → read until the peer closes or the read goes idle for the timeout, with a hard total cap (timeout×3) so a chatty stream can't run forever. UDP: bind ephemeral → send one datagram → wait up to the timeout for a reply; no reply is a first-class non-error outcome (timedOut/isNoReply), not an exception, because UDP has no delivery guarantee. Errors are typed: DNS failure, refused, unreachable, timeout, invalid input, other, each mapped to a precise message.
 
 **Field notes**
 - Platform differences: identical on every native platform. Gated off on web.
@@ -512,7 +512,7 @@ Real ICMP echo round-trip on mobile: live RTT, min/avg/max, loss.
 **How to use**
 1. Enter a host, run (mobile only). Streams replies with running stats, same UI shape as TCP Ping.
 
-**Formula or method.** Real ICMP echo request/reply via the native backend (dart_ping_ios SimplePing/GBPing on iOS; dart_ping spawning system ping on Android). The method label is "ICMP echo" — never relabeled from a TCP probe.
+**Formula or method.** Real ICMP echo request/reply via the native backend (dart_ping_ios SimplePing/GBPing on iOS; dart_ping spawning system ping on Android). The method label is "ICMP echo", never relabeled from a TCP probe.
 
 **Field notes**
 - Platform matrix (honest): iOS, real ICMP echo available. Android, real ICMP echo via system ping, available. macOS / Windows / Linux desktop: the only ICMP path is spawning /sbin/ping, which the macOS App Sandbox blocks, so it gives an honest "not available in the sandboxed desktop build", and the UI points the user at TCP Ping instead. Web: no sockets → download fallback.
@@ -563,7 +563,7 @@ Discover responsive hosts on a subnet via a TCP-probe sweep (no ICMP).
 **How to use**
 1. Enter a CIDR (192.168.1.0/24), a range (192.168.1.10-40 or full end address), or a single IP; run. A live progress bar and a running responsive count build as hosts settle.
 
-**Formula or method.** For each candidate, a TCP Socket.connect to a common port (443 default; the sweep can probe 443/80/22/53 and a host is responsive the moment ANY answers — first-answer wins). A completed handshake or a refused RST both prove the host answered; a timeout means silent on that port. Bounded worker pool (default 32 in flight). Hard cap of 254 hosts (a /24); anything larger is rejected with "that's N hosts, the cap is M" — never silently truncated.
+**Formula or method.** For each candidate, a TCP Socket.connect to a common port (443 default; the sweep can probe 443/80/22/53 and a host is responsive the moment ANY answers, first-answer wins). A completed handshake or a refused RST both prove the host answered; a timeout means silent on that port. Bounded worker pool (default 32 in flight). Hard cap of 254 hosts (a /24); anything larger is rejected with "that's N hosts, the cap is M", never silently truncated.
 
 **Field notes**
 - Platform differences: identical on every native platform. Gated off on web.
@@ -630,7 +630,7 @@ Hop-by-hop path discovery via the OS traceroute/tracert (desktop).
 **How to use**
 1. Desktop only. Enter a host, run; hops fill in live as the OS tool emits them. Cancellable mid-flight.
 
-**Formula or method.** Spawns the system traceroute (Unix: -m maxHops -q 3 -w 2) or tracert (Windows: -d -h maxHops -w 2000) and parses each hop line live from stdout/stderr — TTL, host/IP, per-probe RTTs, and * * * timeouts. A real traceroute needs to read ICMP TIME_EXCEEDED replies, which require either a raw socket or the privileged system binary — so faking hops from TCP timing is explicitly refused.
+**Formula or method.** Spawns the system traceroute (Unix: -m maxHops -q 3 -w 2) or tracert (Windows: -d -h maxHops -w 2000) and parses each hop line live from stdout/stderr: TTL, host/IP, per-probe RTTs, and * * * timeouts. A real traceroute needs to read ICMP TIME_EXCEEDED replies, which require either a raw socket or the privileged system binary, so faking hops from TCP timing is explicitly refused.
 
 **Field notes**
 - Platform matrix (honest): macOS / Windows / Linux desktop spawns the OS binary. But under the macOS App Sandbox (the App Store build) spawning is blocked, so the screen runs a live isLaunchable() probe (a side-effect-free no-arg launch) and adapts: a non-sandboxed Developer-ID macOS build and Windows/Linux launch it fine; the sandboxed build shows an explicit "binary unavailable" verdict rather than hanging or pretending. iOS / Android: subprocess execution is sandboxed out entirely → "Traceroute runs on desktop, use Ping here.". Web: never reached (gated).
@@ -646,7 +646,7 @@ Send a Wake-on-LAN magic packet to wake a host by MAC address.
 **How to use**
 1. Enter the target MAC (colons, hyphens, Cisco dots, or no separators all parse), optionally a subnet-directed broadcast (e.g. 192.168.1.255) and port (9 default, 7 alternative), send.
 
-**Formula or method.** Builds the 102-byte magic packet (6× 0xFF then the 6-byte MAC repeated 16 times) and sends it as a UDP broadcast via RawDatagramSocket with broadcastEnabled = true — no subprocess, no privileged socket. The MAC is normalized to canonical form; an invalid MAC, bad broadcast IP, or out-of-range port is rejected with a clear message.
+**Formula or method.** Builds the 102-byte magic packet (6× 0xFF then the 6-byte MAC repeated 16 times) and sends it as a UDP broadcast via RawDatagramSocket with broadcastEnabled = true, no subprocess, no privileged socket. The MAC is normalized to canonical form; an invalid MAC, bad broadcast IP, or out-of-range port is rejected with a clear message.
 
 **Field notes**
 - Platform differences: works on every native platform (outbound UDP broadcast is covered by the existing entitlements). Gated off on web.
@@ -662,7 +662,7 @@ Domain/IP registration lookup over WHOIS (TCP port 43), with parsed highlights a
 **How to use**
 1. Enter a domain or IP, look up.
 
-**Formula or method.** Raw WHOIS over TCP/43 via Socket.connect — not a whois subprocess (sandbox-blocked) and not RDAP/HTTPS (uneven coverage, no CORS). It does the hierarchical two-hop dance: query whois.iana.org for the target, parse the refer:/whois: referral to the authoritative registry, re-query that, and follow one optional further hop to a Registrar WHOIS Server: if it returns a fuller record. Highlights (registrar, created/updated/expires, status, name servers) are parsed from the free-form record where reliably present; anything missing is omitted, never faked.
+**Formula or method.** Raw WHOIS over TCP/43 via Socket.connect, not a whois subprocess (sandbox-blocked) and not RDAP/HTTPS (uneven coverage, no CORS). It does the hierarchical two-hop dance: query whois.iana.org for the target, parse the refer:/whois: referral to the authoritative registry, re-query that, and follow one optional further hop to a Registrar WHOIS Server: if it returns a fuller record. Highlights (registrar, created/updated/expires, status, name servers) are parsed from the free-form record where reliably present; anything missing is omitted, never faked.
 
 **Field notes**
 - Platform differences: same on every native platform. Gated off on web.
@@ -695,7 +695,7 @@ Estimates total coax attenuation for a run of a known cable type, length, and fr
 
 | Input | Unit | Range |
 |---|---|---|
-| Cable type | one of: LMR-100A, LMR-200, LMR-400 (default), LMR-600, LMR-900, LMR-1200, RG-58, RG-8/U, RG-213, RG-214 | — |
+| Cable type | one of: LMR-100A, LMR-200, LMR-400 (default), LMR-600, LMR-900, LMR-1200, RG-58, RG-8/U, RG-213, RG-214 | - |
 | Frequency | GHz (default) or MHz | must be > 0 |
 | Length | ft (default) or m | must be > 0 |
 
@@ -746,7 +746,7 @@ Computes the loss in dB a signal suffers traveling through free space between tr
 **How to use**
 1. Enter the frequency and pick its unit (GHz or MHz).
 2. Enter the distance and pick its unit (km, mi, or m).
-3. Read the path loss in dB. The result blanks to "—" until both fields hold valid positive numbers.
+3. Read the path loss in dB. The result blanks to a dash until both fields hold valid positive numbers.
 
 **Inputs**
 
@@ -814,7 +814,7 @@ Estimates rain attenuation on a microwave link using ITU-R P.838-3 (specific att
 | Frequency | GHz (fixed) | must be > 0 |
 | Rain rate | mm/hr | must be > 0 |
 | Path length | km (default) or mi | must be > 0 |
-| Polarization | Horizontal or Vertical | — |
+| Polarization | Horizontal or Vertical | - |
 
 **How it works.** The two coefficients k and α come from the ITU-R P.838-3 published table (18 frequency points spanning 1–100 GHz, with separate horizontal and vertical values). For your exact frequency the tool interpolates k on a log-log basis and α on a log-linear basis, clamping at the table ends. Specific attenuation is then γ (dB/km) = k × (rain rate)^α. The effective path length shortens the geometric length to account for non-uniform rain cells: L_eff = L ÷ (1 + L/d0), where d0 = 35 × e^(−0.015 × rain rate). Total rain attenuation (dB) = γ × L_eff. Outputs are shown to two decimals for attenuation, four for γ, and two for L_eff.
 
@@ -843,12 +843,12 @@ Full point-to-point link budget: combines transmit power, antenna gains, cable l
 | Input | Unit | Range |
 |---|---|---|
 | TX power | dBm (default), W, or mW | W/mW must be > 0 |
-| TX gain | dBi | — |
-| TX loss | dB | — |
-| Path loss | dB | — |
-| RX loss | dB | — |
-| RX gain | dBi | — |
-| RX sensitivity | dBm | — |
+| TX gain | dBi | - |
+| TX loss | dB | - |
+| Path loss | dB | - |
+| RX loss | dB | - |
+| RX gain | dBi | - |
+| RX sensitivity | dBm | - |
 | Other losses | dB | optional, default 0 |
 
 **How it works.** Power in watts is first converted to dBm (10 × log10(W × 1000); milliwatts convert via W = mW/1000). The received signal is the sum of gains minus losses along the chain: received (dBm) = TX power + TX gain − TX loss − path loss − RX loss + RX gain − misc losses. The link margin is received signal minus receiver sensitivity. The margin is color-coded: 10 dB or more is healthy (green), 0 to 10 dB is marginal (amber), and below 0 dB is negative (red).
@@ -909,13 +909,13 @@ Full point-to-point backhaul link budget end to end, from TX power through anten
 | Distance | km (default) or mi | must be > 0 |
 | TX power | dBm | signed |
 | RX sensitivity | dBm | signed; sensitivity usually negative |
-| TX gain | dBi | — |
-| RX gain | dBi | — |
+| TX gain | dBi | - |
+| RX gain | dBi | - |
 | TX loss | dB | default 0 |
 | RX loss | dB | default 0 |
 | Rain rate | mm/hr | default 0 (no fade) |
 | Required margin | dB | default 10 |
-| Polarization | Horizontal or Vertical | — |
+| Polarization | Horizontal or Vertical | - |
 
 **How it works.** This tool chains the link budget, free space path loss, and rain fade into one calculation. EIRP = TX power + TX gain − TX loss. Free space path loss = 20 × log10(distance in km) + 20 × log10(frequency in GHz) + 92.45. Rain fade uses the same ITU-R P.838-3 table and interpolation as the Rain Fade tool (γ = k × R^α, d0 = 35 × e^(−0.015 × R), L_eff = distance ÷ (1 + distance/d0), rain fade = γ × L_eff), returning zero when the rain rate is not greater than zero. The received level = EIRP − free space loss − rain fade + RX gain − RX loss, and the margin = received level − RX sensitivity. The verdict is PASS when margin is at or above the required margin, MARGINAL when the link still closes (margin 0 up to the required value), and FAIL when the margin is below zero. Outputs are shown to one decimal, except rain fade to two.
 
@@ -972,8 +972,8 @@ Computes the mechanical downtilt angle that aims an antenna's beam center at a t
 
 | Input | Unit | Range |
 |---|---|---|
-| Antenna height (AGL) | ft or m | — |
-| Target coverage distance | km, ft, or m | — |
+| Antenna height (AGL) | ft or m | - |
+| Target coverage distance | km, ft, or m | - |
 
 **How it works.** The downtilt angle is the arctangent of the antenna height divided by the coverage distance, converted to degrees: downtilt = atan(height ÷ distance). Both values are converted to meters first (feet × 0.3048, kilometers × 1000).
 
@@ -1001,7 +1001,7 @@ Computes the near and far ground coverage edges (and coverage depth) of a downti
 | Input | Unit | Range |
 |---|---|---|
 | Antenna height (AGL) | ft or m | must be > 0 |
-| Downtilt angle | degrees | — |
+| Downtilt angle | degrees | - |
 | Vertical beamwidth | degrees | must be in the open range (0, 180) |
 
 **How it works.** The beam's upper and lower edges are the tilt angle minus and plus half the vertical beamwidth. The near edge on the ground is the height divided by the tangent of the near (lower) angle; the far edge is the height divided by the tangent of the far (upper) angle. Coverage depth is the far edge minus the near edge. If the upper beam edge reaches or clears the horizon (its angle drops to zero or below), the far edge is unbounded and reported as beam-above-horizon, with no far edge or depth. The result blanks out if height is not positive or beamwidth falls outside the (0, 180) range.
@@ -1057,7 +1057,7 @@ Converts a frequency to its wavelength in meters, centimeters, feet, and inches.
 |---|---|---|
 | Frequency | MHz (default) or GHz | must be > 0 |
 
-**How it works.** Wavelength in meters is 300 divided by the frequency in MHz — the 300 comes from the speed of light (3 × 10⁸ m/s) scaled for the MHz-to-meter form. From there: centimeters = meters × 100, feet = meters × 3.28084, inches = feet × 12. A frequency entered in GHz is multiplied by 1000 to get MHz first. Display precision: meters to 4 decimals, centimeters to 2, feet to 4, inches to 3.
+**How it works.** Wavelength in meters is 300 divided by the frequency in MHz: the 300 comes from the speed of light (3 × 10⁸ m/s) scaled for the MHz-to-meter form. From there: centimeters = meters × 100, feet = meters × 3.28084, inches = feet × 12. A frequency entered in GHz is multiplied by 1000 to get MHz first. Display precision: meters to 4 decimals, centimeters to 2, feet to 4, inches to 3.
 
 **Example.** 2400 MHz → 300/2400 = 0.1250 m, 12.50 cm, 0.4101 ft, 4.921 in.
 
@@ -1149,7 +1149,7 @@ Computes the PHY rate and an estimated real throughput for a Wi-Fi connection fr
 | Spatial streams | count | up to: HT 4, VHT/HE/EHT 8 |
 | Guard interval | µs | HT/VHT {0.4, 0.8}; HE/EHT {0.8, 1.6, 3.2} |
 
-**How it works.** The PHY rate in Mbps is the number of data subcarriers times the bits carried per symbol times the number of spatial streams, all divided by the OFDM symbol duration in microseconds. The data-subcarrier count depends on the standard and channel width (for example, 802.11ax at 80 MHz uses 980 subcarriers). Bits per symbol comes from the MCS index — its modulation and coding rate (for example, MCS 11 carries about 8.3333 bits per symbol). The symbol duration depends on the standard and the chosen guard interval (for example, 802.11ax at a 0.8 µs guard interval is 13.6 µs). Estimated real throughput is the PHY rate times a flat per-standard efficiency factor: 0.70 for 802.11n, 0.72 for 802.11ac, 0.76 for 802.11ax, and 0.80 for 802.11be. Results round to one decimal, and an invalid width/guard-interval combination or an out-of-range MCS returns a blank.
+**How it works.** The PHY rate in Mbps is the number of data subcarriers times the bits carried per symbol times the number of spatial streams, all divided by the OFDM symbol duration in microseconds. The data-subcarrier count depends on the standard and channel width (for example, 802.11ax at 80 MHz uses 980 subcarriers). Bits per symbol comes from the MCS index: its modulation and coding rate (for example, MCS 11 carries about 8.3333 bits per symbol). The symbol duration depends on the standard and the chosen guard interval (for example, 802.11ax at a 0.8 µs guard interval is 13.6 µs). Estimated real throughput is the PHY rate times a flat per-standard efficiency factor: 0.70 for 802.11n, 0.72 for 802.11ac, 0.76 for 802.11ax, and 0.80 for 802.11be. Results round to one decimal, and an invalid width/guard-interval combination or an out-of-range MCS returns a blank.
 
 **Example.** HE, 80 MHz, MCS 11, 2 streams, GI 0.8 → PHY = (980 · 8.3333 · 2) / 13.6 = 1201.0 Mbps; real = 1201.0 · 0.76 = 912.7 Mbps.
 
@@ -1174,7 +1174,7 @@ Computes the great-circle distance and the initial (forward) and reverse bearing
 
 | Input | Unit | Range |
 |---|---|---|
-| Point 1 / Point 2 latitude and longitude | decimal degrees | — |
+| Point 1 / Point 2 latitude and longitude | decimal degrees | - |
 
 **How it works.** It treats the Earth as a sphere with a mean radius of 6371 km and uses the haversine method for distance. In plain terms: it measures the angular gap between the two points from their differences in latitude and longitude, then multiplies that angle by the Earth's radius to get the distance along the surface. The forward bearing is the compass heading you'd start out on to follow the shortest (great-circle) path from point 1 to point 2, and the reverse bearing is simply that heading plus 180°.
 
@@ -1202,8 +1202,8 @@ Computes the destination latitude/longitude given a starting point, an initial b
 
 | Input | Unit | Range |
 |---|---|---|
-| Start latitude / longitude | decimal degrees | — |
-| Bearing | degrees | — |
+| Start latitude / longitude | decimal degrees | - |
+| Bearing | degrees | - |
 | Distance | km, mi, or m | mi × 1.60934 → km; m ÷ 1000 → km |
 
 **How it works.** It treats the Earth as a sphere with a mean radius of 6371 km. First it converts your distance into an angle by dividing it by the Earth's radius. Then, starting from your point and heading off on the bearing you gave, it walks that angular distance along a great circle and reports where you land. The result longitude is wrapped to the −180° to +180° range so it always reads as a normal coordinate.
@@ -1256,7 +1256,7 @@ Computes the great-circle midpoint between two latitude/longitude points.
 
 | Input | Unit | Range |
 |---|---|---|
-| Point 1 / Point 2 latitude and longitude | decimal degrees | — |
+| Point 1 / Point 2 latitude and longitude | decimal degrees | - |
 
 **How it works.** Rather than averaging the two coordinates, it finds the point that sits halfway along the shortest (great-circle) path between them. It does this by combining the two positions as directions on the sphere and locating the heading that lands exactly between them, then converts that back to a latitude and longitude. The result longitude is wrapped to the −180° to +180° range so it always reads as a normal coordinate.
 
@@ -1276,7 +1276,7 @@ Convert a Wi-Fi channel number to its center frequency and back, across 2.4 / 5 
 **Why it's here.** Specs, radios, and regulators talk in both channels and megahertz. This converts either direction and shows which 20 MHz channels make up a wide channel, so a "channel 100, 80 MHz wide" entry on a controller stops being a guess.
 
 **How to use**
-1. Pick a band (band is required for channel→frequency because channel numbers collide across 5 and 6 GHz — channel 36 exists in both).
+1. Pick a band (band is required for channel→frequency because channel numbers collide across 5 and 6 GHz, channel 36 exists in both).
 2. Enter a channel to get the center frequency, or a frequency to get the channel and the band it falls in (the frequency ranges are disjoint, so the band comes back for free).
 3. Read the bonded-channel breakdown for 40/80/160/320 MHz widths.
 
@@ -1298,17 +1298,17 @@ Live two-way conversion between dBm, Watts, and milliwatts. Type in any one fiel
 1. Type a value in any of the three fields (dBm, Watts, or Milliwatts); the other two recompute instantly.
 2. dBm and Watts accept scientific notation (e.g. 1e-10) plus a sign; Milliwatts is unsigned decimal.
 3. Watts renders in scientific notation (5 sig figs) because real Wi-Fi receive levels are tiny (e.g. 1e-10 W); mW shows 4 fixed decimals.
-4. Entering Watts or mW that are zero or negative shows "—" in the dBm field, since the logarithm of a non-positive number is undefined.
+4. Entering Watts or mW that are zero or negative shows a dash in the dBm field, since the logarithm of a non-positive number is undefined.
 
 **Inputs**
 
 | Input | Unit | Range |
 |---|---|---|
 | dBm | dBm (decibel-milliwatts) | any real number; signed + scientific notation accepted |
-| Watts | W | > 0 to convert to dBm; ≤ 0 yields —; signed + scientific notation accepted |
-| Milliwatts | mW | > 0 to convert to dBm; ≤ 0 yields —; unsigned decimal |
+| Watts | W | > 0 to convert to dBm; ≤ 0 yields a dash; signed + scientific notation accepted |
+| Milliwatts | mW | > 0 to convert to dBm; ≤ 0 yields a dash; unsigned decimal |
 
-**How it works.** Three conversions do the work: dBm→W = 10^(dBm/10) ÷ 1000; dBm→mW = 10^(dBm/10); and W→dBm = 10 × log10(W × 1000). Converting mW→dBm just divides mW by 1000 to get Watts and reuses the W→dBm math. The factor of 1000 is the Watt-to-milliwatt relationship (1 W = 1000 mW). In plain form, dBm = 10 × log10(mW) and W = 10^(dBm/10) ÷ 1000. Watts display in scientific notation to 5 significant figures; mW shows 4 decimals and dBm shows 2. A zero or negative Watts or mW yields "—" in the dBm field because the logarithm is undefined there.
+**How it works.** Three conversions do the work: dBm→W = 10^(dBm/10) ÷ 1000; dBm→mW = 10^(dBm/10); and W→dBm = 10 × log10(W × 1000). Converting mW→dBm just divides mW by 1000 to get Watts and reuses the W→dBm math. The factor of 1000 is the Watt-to-milliwatt relationship (1 W = 1000 mW). In plain form, dBm = 10 × log10(mW) and W = 10^(dBm/10) ÷ 1000. Watts display in scientific notation to 5 significant figures; mW shows 4 decimals and dBm shows 2. A zero or negative Watts or mW yields a dash in the dBm field because the logarithm is undefined there.
 
 **Example.** 0 dBm → 10^(0/10) = 1 mW = 1e-3 W. +30 dBm → 10^(30/10) = 1000 mW = 1 W. 20 mW → 10 · log10(20) = 13.01 dBm.
 
@@ -1332,8 +1332,8 @@ A live decimal/hexadecimal/binary integer converter plus a printable-ASCII refer
 
 | Input | Unit | Range |
 |---|---|---|
-| Decimal | digits only | — |
-| Hexadecimal | 0-9, a-f, A-F (optional 0x prefix stripped) | — |
+| Decimal | digits only | - |
+| Hexadecimal | 0-9, a-f, A-F (optional 0x prefix stripped) | - |
 | Binary | 0/1 (optional 0b prefix stripped) | Unsigned-integer domain, backed by arbitrary-precision integers so arbitrarily long strings never overflow; a blank/invalid field blanks the mirrors |
 
 **How it works.** Each value is parsed as an arbitrary-precision unsigned integer and re-expressed in base 16, base 2, and base 10. The ASCII table is generated from the character codes rather than hand-transcribed: hex is shown as 2-digit uppercase, binary as 8-bit zero-padded.
@@ -1360,7 +1360,7 @@ Converts a length between meters, kilometers, miles, feet, centimeters, inches, 
 
 | Input | Unit | Range |
 |---|---|---|
-| Value and source unit | one of m, km, mi, ft, cm, in, nmi | — |
+| Value and source unit | one of m, km, mi, ft, cm, in, nmi | - |
 
 **How it works.** Every unit is defined by its length in meters: m = 1, km = 1000, mi = 1609.344, ft = 0.3048, cm = 0.01, in = 0.0254, nmi = 1852. To convert, multiply the value by the "from" unit's meters, then divide by the "to" unit's meters. Display decimals vary by unit: m 4, km 6, mi 6, ft 4, cm 2, in 4, nmi 6.
 
@@ -1386,7 +1386,7 @@ Converts a value between units in one of eight categories: data transfer rate, d
 
 | Input | Unit | Range |
 |---|---|---|
-| Category | one of eight categories | — |
+| Category | one of eight categories | - |
 | Value, from-unit, to-unit | the units offered in the chosen category | signed and scientific input accepted (a temperature can be negative) |
 
 **How it works.** Linear categories convert through a single base unit: multiply the value by the "from" unit's factor, then divide by the "to" unit's factor. Power and temperature are not linear and use their own math. Power treats dBm with the same log math as the dBm/Watt converter (W = 10^(dBm/10) ÷ 1000; dBm = 10 × log10(W × 1000)); temperature converts through Kelvin using its affine (offset-and-scale) relationships.
@@ -1561,7 +1561,7 @@ Interactive teaching tools that build RF intuition you can sense, not just compu
 
 ### Hear the Frequency
 
-Turn a frequency into a sounding tone so the logarithmic instinct behind RF — pitch, octaves, the twelve piano keys, and harmonics — becomes something you hear, with the honest bridge to RF stated plainly.
+Turn a frequency into a sounding tone so the logarithmic instinct behind RF (pitch, octaves, the twelve piano keys, and harmonics) becomes something you hear, with the honest bridge to RF stated plainly.
 
 **Why it's here.** "An octave is a doubling" and "a dB is a logarithm" are the same instinct, and hearing it lands harder than reading it. This makes frequency audible to build that intuition, then states the limit of the analogy out loud so you do not carry a wrong equivalence into RF work.
 
@@ -1573,7 +1573,7 @@ Turn a frequency into a sounding tone so the logarithmic instinct behind RF — 
 **How it works.** The tool uses pure equal-temperament math: every note frequency is computed, never transcribed. Each note's frequency equals 440 Hz times 2 raised to the power of (n − 49) divided by 12, where n is the piano key number and key 49 = A4 = 440 Hz (ISO 16). The semitone ratio is 2 raised to the 1/12 power (about 1.0594630943592953), an octave is exactly a doubling (octave up multiplies by 2, octave down divides by 2), and 12 semitones make an octave. The nearest-note readout finds the note by taking 69 plus 12 times the base-2 logarithm of the frequency divided by 440, then reports the cents offset. Harmonics are simple integer multiples (the first is the frequency itself, the second is twice it, and so on). When you change octave, key, or preset, the single sounding voice retunes to the new frequency so it glides smoothly without a stop and restart.
 
 **Field notes**
-- The analogy honesty is baked into the copy: an octave is a base-2 FREQUENCY ratio while a dB is a base-10 POWER ratio — both are logarithmic ratio measures (the real, teachable bridge), but they are NOT the same unit, and the tool never converts an octave to a dB. Audio harmonics are WANTED (timbre); RF harmonics are usually UNWANTED (spurious emissions). The integer-multiple math is identical; the desirability flips.
+- The analogy honesty is baked into the copy: an octave is a base-2 FREQUENCY ratio while a dB is a base-10 POWER ratio: both are logarithmic ratio measures (the real, teachable bridge), but they are NOT the same unit, and the tool never converts an octave to a dB. Audio harmonics are WANTED (timbre); RF harmonics are usually UNWANTED (spurious emissions). The integer-multiple math is identical; the desirability flips.
 - Playback is clamped to the audible range 20 Hz–20 kHz; a number above it may still be DISPLAYED for the RF analogy, clearly labeled, but is never driven to the speaker. Above ~5 kHz the waveform is forced to sine because square and triangle harmonics alias near the Nyquist limit.
 - Honest no-audio state: if audio cannot initialize (no output device, a muted session), the screen shows a non-fatal "No audio output detected" message instead of pretending a tone played. The tone auto-stops on screen exit so it never runs unattended.
 
@@ -1596,7 +1596,7 @@ A PHY-layer comparison of every major 802.11 amendment from the original 802.11 
 **How to use**
 1. Scan by generation badge (Wi-Fi 4 through Wi-Fi 7).
 2. The band filter answers "which generations reach 6 GHz" (Wi-Fi 6E and Wi-Fi 7).
-3. The original 802.11 shows "—" for generation and MIMO (it predates both).
+3. The original 802.11 shows a dash for generation and MIMO (it predates both).
 
 **Field notes**
 - What it shows: one card per amendment with the IEEE designation, a Wi-Fi generation badge, year, and rows for Bands (GHz), Max PHY rate, MIMO, Channel width (MHz), and Modulation. An optional band filter (All / 2.4 / 5 / 6 GHz) narrows the list.
@@ -1664,7 +1664,7 @@ Look up the modulation, coding rate, and PHY data rate for any 802.11 MCS index 
 
 **How to use**
 1. Choose the standard (n / ac / ax) and stream count (1 to 8); rates update (rate = per-stream value × streams).
-2. MCS 0 (BPSK 1/2) is the most robust/slowest; higher MCS indices use denser modulation (up to 1024-QAM for ax) for higher rates needing better signal.
+2. MCS 0 (BPSK 1/2) is the most resilient/slowest; higher MCS indices use denser modulation (up to 1024-QAM for ax) for higher rates needing better signal.
 3. Cells shown as "N/A" are genuinely invalid combinations, not zero or fabricated.
 
 **Field notes**
@@ -1746,7 +1746,7 @@ A per-section reference for IEEE 802.11ah, Wi-Fi moved down into the sub-1-GHz I
 2. Work down through the cards: headline numbers, bands by region (with a confidence tag on the secondary-source rows), channel widths, the MCS rate table, then power, PHY/MAC, use cases, and the comparison.
 3. The MCS table's peak cell (MCS 9, 256-QAM, 16 MHz, short guard interval) carries the lime accent: that is the 86.7 Mbps headline.
 
-**How it works.** The clean mental model: the 802.11ac PHY clocked at one tenth. Same OFDM machinery, ten times slower clock, so symbols are 10x longer (more robust over distance and multipath) and rates land at about a tenth of 802.11ac. Capacity comes from a 13-bit Association ID (2^13 minus 1 = 8,191 devices per AP) plus a hierarchical TIM. Power efficiency comes from Target Wake Time, Restricted Access Window, Extended Max Idle, non-TIM mode, and short MAC headers.
+**How it works.** The clean mental model: the 802.11ac PHY clocked at one tenth. Same OFDM machinery, ten times slower clock, so symbols are 10x longer (more resilient over distance and multipath) and rates land at about a tenth of 802.11ac. Capacity comes from a 13-bit Association ID (2^13 minus 1 = 8,191 devices per AP) plus a hierarchical TIM. Power efficiency comes from Target Wake Time, Restricted Access Window, Extended Max Idle, non-TIM mode, and short MAC headers.
 
 **Field notes**
 - The defensible single-stream maximum is 86.7 Mbps (MCS 9, 256-QAM, 16 MHz, SGI), from the Wi-Fi Alliance overview. Use that number, NOT the contested 433.3 Mbps. Wikipedia's 433 figure is a 4-spatial-stream claim, but a 4x scaling of the WFA figure is about 347 Mbps, and first-generation HaLow silicon is single-stream. The far edge of the cell drops to about 150 kbps.
@@ -1957,22 +1957,22 @@ The RF data a Wi-Fi pro can pull from a stock Mac without a third-party app, acr
 
 ### How Strong Is Wi-Fi, Really?
 
-A vendor-neutral comparison of how much energy Wi-Fi puts into your body versus the everyday sun, using verified, stated numbers. No inputs and no runtime math — it is a read-along reference.
+A vendor-neutral comparison of how much energy Wi-Fi puts into your body versus the everyday sun, using verified, stated numbers. No inputs and no runtime math: it is a read-along reference.
 
 **Why it's here.** Wi-Fi exposure questions come up constantly. This puts the energy in perspective against a thing everyone already lives with: sunlight, using verified numbers instead of hand-waving. Using stated assumptions (ten access points at 30 dBm / 1 watt EIRP, four meters away, free-space spread), the ring of APs delivers about 0.05 W/m². The midday sun delivers about 1,000 W/m², full spectrum, which makes it about 20,000 times stronger per square meter.
 
 **How to use**
 1. Read the short version first: one hour of midday sun puts about as much energy into your body as roughly 2.3 years sitting inside a ring of ten Wi-Fi access points 4 meters (13 feet) away.
-2. The energy-parity table shows the same idea as time — 10 seconds of sun ≈ 2.3 days in the ring, 1 minute ≈ two weeks, 1 hour ≈ 2.3 years.
+2. The energy-parity table shows the same idea as time: 10 seconds of sun ≈ 2.3 days in the ring, 1 minute ≈ two weeks, 1 hour ≈ 2.3 years.
 3. The assumptions card states every input behind the numbers, so nothing is hidden: 10 APs at 1 W EIRP, 4 m free-space spread, the sun at 1,000 W/m² full spectrum.
-4. The safety-limit card states where this sits against the FCC (47 CFR 1.1310) and ICNIRP 2020 public limit of 10 W/m² — the ring is about 200 times below it.
+4. The safety-limit card states where this sits against the FCC (47 CFR 1.1310) and ICNIRP 2020 public limit of 10 W/m²: the ring is about 200 times below it.
 
 **How it works.** Power density falls off with the square of distance: density = EIRP / (4πr²), free space at 4 m, stated as approximate.
 
 **Example.** At 30 dBm (1 W) EIRP and 4 m, each AP is 0.00497 W/m²; ten of them ≈ 0.05 W/m². The sun at 1,000 W/m² is ≈ 20,000× stronger, so 1 hour of sun ≈ 2.3 years in the ring.
 
 **Field notes**
-- Honest note on mechanism: Wi-Fi radio energy is non-ionizing. It can only gently warm tissue. It cannot cause the photochemical or DNA damage that sunburn does, at any Wi-Fi power level. This is a comparison of total energy and warmth, never of sunburn — the UV in sunlight burns; Wi-Fi has no UV and no comparable mechanism.
+- Honest note on mechanism: Wi-Fi radio energy is non-ionizing. It can only gently warm tissue. It cannot cause the photochemical or DNA damage that sunburn does, at any Wi-Fi power level. This is a comparison of total energy and warmth, never of sunburn: the UV in sunlight burns; Wi-Fi has no UV and no comparable mechanism.
 - The basis is 30 dBm (1 W) EIRP per AP (the US 2.4 GHz maximum) at 4 meters (13 feet). 4 m is realistic for how far a person sits from the access points around them; free-space density falls with r², so the figures are conservative for the point.
 - Where it sits against the limit: the FCC and ICNIRP cap public RF exposure at 10 W/m². The 10-AP ring at about 0.05 W/m² is roughly 200× below that limit, and measured real-world Wi-Fi runs far lower still.
 - Every figure is stated as approximate and traces to a verified source: FCC 47 CFR 1.1310 and OET-65; ICNIRP 2020 RF guidelines; ASTM G173 / NREL reference solar spectrum; WHO and IARC on non-ionizing RF (Group 2B) versus solar UV (Group 1); peer-reviewed Wi-Fi exposure surveys (PMC5927334, PMC8172712).
@@ -1991,7 +1991,7 @@ The radio regulator that governs Wi-Fi in each market: name, official website, g
 
 **Field notes**
 - What it shows: region-level (not per-country) FCC and ETSI rules for the Wi-Fi bands plus the ITU three-region note. Structural rules (band edges, DFS/TPC, power-class availability) are high confidence; the exact dBm figures are a snapshot.
-- Regulatory-volatility caveat: the 6 GHz dBm values are being amended (VLP extended band-wide, new geofenced classes). Never a settled constant — verify before deploying or certifying.
+- Regulatory-volatility caveat: the 6 GHz dBm values are being amended (VLP extended band-wide, new geofenced classes). Never a settled constant: verify before deploying or certifying.
 - Data source / standard: cross-checked across FCC/ETSI documents and vendor regulatory white papers, as of 2026. Offline, read-only.
 
 
@@ -2030,7 +2030,7 @@ An 18-connector practical reference for Wi-Fi antenna systems: each connector's 
 - The key field gotcha: every connector here is 50 ohm, and an RP connector will thread onto its standard counterpart but the center contacts will not connect.
 - U.FL intermates with I-PEX MHF I (same footprint); the smaller MHF 4 does NOT mate with either.
 - DART is Cisco's Smart Antenna Connector, a proprietary multi-port interface that breaks out to RP-TNC, N-type or RP-N via Cisco adapter cables.
-- Size is the connector body width (across-flats for threaded parts, outer diameter for board-level parts) — an approximate field-recognition aid, not a precision mechanical spec.
+- Size is the connector body width (across-flats for threaded parts, outer diameter for board-level parts): an approximate field-recognition aid, not a precision mechanical spec.
 - Some connectors show a photo; where one isn't available (N-Type, TNC, RP-TNC), a line diagram is shown instead.
 
 _Source: Keith Parsons._
@@ -2077,7 +2077,7 @@ Fiber types (OM1 to OM5, OS1/OS2) with core/cladding, modal bandwidth, jacket co
 **Why it's here.** When specifying fiber, confirm a fiber type's reach at a given rate, its jacket color, and whether it's current or legacy.
 
 **How to use**
-1. Scroll the distance matrix horizontally. A "—" in a rate column means that rate isn't supported (OM1/OM2 don't do 40G/100G).
+1. Scroll the distance matrix horizontally. A dash in a rate column means that rate isn't supported (OM1/OM2 don't do 40G/100G).
 2. OM1/OM2 are shown dimmed (legacy). Jacket colors: OM1/OM2 = Orange, OM3 = Aqua, OM4 = Aqua (violet is a manufacturer convention, not the standard), OM5 = Lime Green, OS1/OS2 = Yellow.
 3. Multimode (OM) lists modal bandwidth; singlemode (OS) shows "N/A" bandwidth but reaches 10+ to 80+ km.
 
@@ -2133,21 +2133,21 @@ _Sources: TIA-598-D, IEC 61754 (FOA, Cisco, Fluke corroboration)._
 
 ### Optical Transceivers
 
-Searchable, offline reference of 35 optical Ethernet transceiver variants (1G to 400G) grouped by speed tier, plus the 9-row SFP-to-OSFP form-factor ladder. Each variant lists its designation, data rate, reach, fiber type, wavelength, and connector — with reach as the lead, trust-first column.
+Searchable, offline reference of 35 optical Ethernet transceiver variants (1G to 400G) grouped by speed tier, plus the 9-row SFP-to-OSFP form-factor ladder. Each variant lists its designation, data rate, reach, fiber type, wavelength, and connector, with reach as the lead, trust-first column.
 
 **Why it's here.** Picking an optic, the field's first question is "which module, and how far will it go on this fiber?" This answers it without leaving the app or going online, and keeps the IEEE-vs-vendor line visible so you never quote a vendor reach as a standard guarantee.
 
 **How to use**
 1. Browse by speed tier. The commonly-ordered tiers (10G / 25G / 100G) surface first and are flagged "Commonly ordered"; 1G / 40G / 200G / 400G follow.
 2. Search by designation (e.g. LR4), reach, fiber (SMF / MMF / OM4), wavelength (e.g. 850 nm), connector (LC / MPO), or tier (e.g. 100G). The match is a case-insensitive substring across all of those, and it narrows the tiers in place.
-3. Read the REACH line first — it is the IEEE maximum on the listed fiber. The fiber type (MMF / SMF) and connector (LC / MPO) give the physical-layer specifics at a glance.
+3. Read the REACH line first: it is the IEEE maximum on the listed fiber. The fiber type (MMF / SMF) and connector (LC / MPO) give the physical-layer specifics at a glance.
 4. A query that matches nothing shows an honest "No match" card; it never fabricates a module. The form-factor table is always available below the variants.
 
 **Field notes**
-- IEEE vs VENDOR: variants standardized in IEEE 802.3 carry a neutral IEEE label. Vendor / coherent variants (1000BASE-EX, 1000BASE-ZX, 10GBASE-ZR, and 400GBASE-ZR) carry a VENDOR label and a "loss-budget dependent" caveat. Their reach is real and widely sold but NOT an IEEE guarantee — it depends on the link's loss budget. Never quote a vendor reach as a standard figure.
-- 400GBASE-ZR is coherent DWDM (OIF 400ZR), beyond base IEEE 802.3 — a metro / data-center-interconnect optic, not a base Ethernet PHY. Its 80-120 km reach is loss-budget and DWDM-line-system dependent.
+- IEEE vs VENDOR: variants standardized in IEEE 802.3 carry a neutral IEEE label. Vendor / coherent variants (1000BASE-EX, 1000BASE-ZX, 10GBASE-ZR, and 400GBASE-ZR) carry a VENDOR label and a "loss-budget dependent" caveat. Their reach is real and widely sold but NOT an IEEE guarantee: it depends on the link's loss budget. Never quote a vendor reach as a standard figure.
+- 400GBASE-ZR is coherent DWDM (OIF 400ZR), beyond base IEEE 802.3: a metro / data-center-interconnect optic, not a base Ethernet PHY. Its 80-120 km reach is loss-budget and DWDM-line-system dependent.
 - Reach figures are IEEE-standard maximums on the listed fiber; real vendor modules may differ. Multimode reach is grade-dependent (OM3 vs OM4 vs OM5), so those rows give per-grade numbers rather than one figure.
-- What it contains: 35 verified variants spanning 1G to 400G across SFP, SFP+, SFP28, QSFP+, QSFP28, QSFP56, and QSFP-DD / OSFP, plus a 9-row form-factor ladder (max rate, lane count, typical power envelope). Power figures are typical vendor ranges, not a single standard — treat as guidance.
+- What it contains: 35 verified variants spanning 1G to 400G across SFP, SFP+, SFP28, QSFP+, QSFP28, QSFP56, and QSFP-DD / OSFP, plus a 9-row form-factor ladder (max rate, lane count, typical power envelope). Power figures are typical vendor ranges, not a single standard: treat as guidance.
 - Fully offline: the reference is bundled in the app and works with no connection.
 - Verified against IEEE 802.3 standards tables and Cisco / FS.com vendor datasheets. Out-of-scope bleeding edge (800G / 1.6T, CPO / LPO, SFP-DD) was deliberately excluded as not yet stable or field-relevant.
 
@@ -2466,7 +2466,7 @@ Searchable, offline reference of 86 curated TCP/UDP ports a network or Wi-Fi pro
 
 ### IP Address Reference
 
-IANA/IETF special-use address blocks for IPv4 and IPv6 — CIDR prefix, what each block is reserved for, and the defining RFC — plus the IPv6 text-notation rules.
+IANA/IETF special-use address blocks for IPv4 and IPv6 (CIDR prefix, what each block is reserved for, and the defining RFC) plus the IPv6 text-notation rules.
 
 **Why it's here.** When you see an unexpected address on a link, this tells you fast whether it is private, loopback, link-local, documentation, or multicast, and which RFC governs it.
 
@@ -2476,7 +2476,7 @@ IANA/IETF special-use address blocks for IPv4 and IPv6 — CIDR prefix, what eac
 
 **Field notes**
 - What it shows: the IANA IPv4 and IPv6 Special-Purpose Address Registries (private-use, loopback, link-local, documentation, and more), each row carrying its defining RFC.
-- The multicast blocks 224.0.0.0/4 (IPv4) and ff00::/8 (IPv6) are not in the special-purpose registries — they live in the separate IANA multicast registries and are sourced to RFC 5771 / RFC 1112 and RFC 4291 section 2.7, flagged with a footnote.
+- The multicast blocks 224.0.0.0/4 (IPv4) and ff00::/8 (IPv6) are not in the special-purpose registries: they live in the separate IANA multicast registries and are sourced to RFC 5771 / RFC 1112 and RFC 4291 section 2.7, flagged with a footnote.
 - Data source / standard: IANA IPv4/IPv6 Special-Purpose Address Registries (fetched 2026-06-08) cross-checked against each defining RFC; IPv6 notation per RFC 5952. Offline, read-only.
 
 
@@ -2508,7 +2508,7 @@ Hostname / DNS-label rules, MAC EUI-48 and EUI-64 format, the U/L (universal/loc
 
 **Field notes**
 - What it shows: hostname/FQDN rules (RFC 952, RFC 1123 section 2.1, RFC 1035), MAC EUI-48/EUI-64 format, the U/L and I/G bit positions in the first octet, and OUI/CID assignment.
-- The first-octet bit-field diagram is decorative for screen readers — every fact it depicts (U/L and I/G positions and meanings) is also in the bit table.
+- The first-octet bit-field diagram is decorative for screen readers: every fact it depicts (U/L and I/G positions and meanings) is also in the bit table.
 - Data source / standard: IEEE Std 802-2014 with RFC 5342 section 2.1 as the freely available IETF restatement, RFC 4291 Appendix A (Modified EUI-64). The IEEE Registration Authority is the sole assigner of OUI/CID. Offline, read-only.
 
 
@@ -2529,7 +2529,7 @@ The DNS resource-record TYPE codes a network or Wi-Fi pro meets: numeric TYPE co
 
 ### DHCP Options
 
-The DHCPv4 option codes a network or Wi-Fi pro meets, led by Option 138 (CAPWAP-AC) — how a lightweight AP learns its WLAN controller address from DHCP — plus the Option 53 message-type table.
+The DHCPv4 option codes a network or Wi-Fi pro meets, led by Option 138 (CAPWAP-AC), how a lightweight AP learns its WLAN controller address from DHCP, plus the Option 53 message-type table.
 
 **Why it's here.** Reading a DHCP capture or a scope config: this names the option code and what value it carries, with the controller-discovery option called out first.
 
@@ -2563,7 +2563,7 @@ The HTTP request methods with their safe / idempotent properties, plus the commo
 
 The Wi-Fi-to-wired QoS mapping: the four WMM Access Categories, the 802.11 User Priority values they carry, and the DSCP markings RFC 8325 recommends so wired and wireless agree.
 
-**Why it's here.** QoS only works end to end when the wired DSCP markings and the Wi-Fi access categories line up — this is that mapping, with the default-mapping trap flagged.
+**Why it's here.** QoS only works end to end when the wired DSCP markings and the Wi-Fi access categories line up: this is that mapping, with the default-mapping trap flagged.
 
 **How to use**
 1. Read the mapping table for each WMM Access Category, its User Priority values, and the recommended DSCP marking.
@@ -2618,15 +2618,15 @@ A reference for ISO 8601 / RFC 3339 date-time formats, UTC-offset notation, the 
 
 **Field notes**
 - What it shows: ISO 8601 and RFC 3339 formats and the difference between them, UTC-offset notation, the Unix epoch and 2038 wraparound, the UTC-vs-TAI leap-second relationship, and NTP stratum levels (1-15 valid; stratum 0 is the kiss-o'-death / unspecified marker).
-- Honesty note: the UTC-TAI offset of -37 s is a static educational value current as of the 2017-01-01 leap second, shown with a 'static value' badge and a footnote pointing at the IERS Bulletin C — never presented as a live truth.
+- Honesty note: the UTC-TAI offset of -37 s is a static educational value current as of the 2017-01-01 leap second, shown with a 'static value' badge and a footnote pointing at the IERS Bulletin C: never presented as a live truth.
 - Data source / standard: ISO 8601-1:2019, RFC 3339, RFC 5905 (NTP), POSIX.1-2017, BIPM/IERS. Offline, read-only.
 
 
 ### Data Units
 
-Bit vs byte units, the SI (decimal) vs IEC (binary) prefix ladders — kB vs KiB through EB vs EiB — and how link rates in bits relate to storage in bytes.
+Bit vs byte units, the SI (decimal) vs IEC (binary) prefix ladders, kB vs KiB through EB vs EiB, and how link rates in bits relate to storage in bytes.
 
-**Why it's here.** The reason a '1 TB' drive shows as ~931 GiB, and the reason a 100 Mbps link is not 100 MB/s — kept in one place.
+**Why it's here.** The reason a '1 TB' drive shows as ~931 GiB, and the reason a 100 Mbps link is not 100 MB/s, kept in one place.
 
 **How to use**
 1. Read the SI vs IEC ladder for each rank (kB/KiB through EB/EiB), its powers, byte counts, and the percent divergence.
@@ -2634,7 +2634,7 @@ Bit vs byte units, the SI (decimal) vs IEC (binary) prefix ladders — kB vs KiB
 
 **Field notes**
 - What it shows: the two parallel prefix ladders (SI base-1000 vs IEC base-1024), the per-step divergence (compounding ~2.4 points per rank), and the bit-vs-byte relationship.
-- Note: SI uses lowercase k for kilo (kB) but uppercase for M and above; IEC binary prefixes are Ki, Mi, Gi, Ti, Pi, Ei — Ki is a capital K, unlike SI's lowercase k. Network/link speeds are quoted in bits per second; storage in bytes.
+- Note: SI uses lowercase k for kilo (kB) but uppercase for M and above; IEC binary prefixes are Ki, Mi, Gi, Ti, Pi, Ei. Ki is a capital K, unlike SI's lowercase k. Network/link speeds are quoted in bits per second; storage in bytes.
 - Data source / standard: BIPM SI prefixes and IEC 80000-13 binary prefixes. Offline, read-only.
 
 ## Encoding (5)
@@ -2708,7 +2708,7 @@ Common hash algorithms by output size (bits / bytes / hex characters), family, a
 
 ### Regex Cheatsheet
 
-Regular-expression syntax — anchors, character classes, quantifiers, groups and references, and alternation / escapes — scoped to the common PCRE2 (Perl-compatible) dialect.
+Regular-expression syntax (anchors, character classes, quantifiers, groups and references, and alternation / escapes) scoped to the common PCRE2 (Perl-compatible) dialect.
 
 **Why it's here.** The token you half-remember, looked up fast, with a flag where a dialect would behave differently.
 
@@ -2718,7 +2718,7 @@ Regular-expression syntax — anchors, character classes, quantifiers, groups an
 
 **Field notes**
 - What it shows: the common PCRE2 regex token set with meaning and examples, grouped by function. A 'Dialect: PCRE2 (Perl-compatible)' banner sits at the top.
-- Honesty note: there is no single normative regex authority — POSIX (BRE/ERE), PCRE2, ECMAScript, Python, Java, Go (RE2), and .NET differ. No token is presented as universal unless the source data marks it so; non-universal tokens carry a DIALECT badge.
+- Honesty note: there is no single normative regex authority: POSIX (BRE/ERE), PCRE2, ECMAScript, Python, Java, Go (RE2), and .NET differ. No token is presented as universal unless the source data marks it so; non-universal tokens carry a DIALECT badge.
 - Data source / standard: the common PCRE2 subset per the PCRE2 syntax reference. Offline, read-only.
 
 ## CLI & Capture (3)
@@ -2991,7 +2991,7 @@ Reference for the IEC World Plugs letter system (Types A through M) by region, w
 
 ## Ham Radio (6)
 
-The band-dependent amateur-radio references, grouped so all the ham material is findable in one place. Every numeric value traces to FCC Part 97 (eCFR Title 47), the FCC Online Table of Frequency Allocations, ARRL, or NCVEC, current as of June 2026, with the corrected figures used throughout — never an older chart. The pure-math ham tools (Antenna Length, Maidenhead Grid) live under Calculators & Tools → Ham Radio.
+The band-dependent amateur-radio references, grouped so all the ham material is findable in one place. Every numeric value traces to FCC Part 97 (eCFR Title 47), the FCC Online Table of Frequency Allocations, ARRL, or NCVEC, current as of June 2026, with the corrected figures used throughout: never an older chart. The pure-math ham tools (Antenna Length, Maidenhead Grid) live under Calculators & Tools → Ham Radio.
 
 
 ### US Amateur Band Plan
@@ -3006,7 +3006,7 @@ The US amateur bands from HF to SHF, by license class: each band's frequency ran
 
 **What it shows**
 - Per-band frequency range, license-class privileges, power, and mode segments.
-- The corrected power picture: a 1500 W PEP general ceiling, with the real exceptions — 30 m = 200 W PEP; 60 m = 100 W ERP (channels) and 9.15 W ERP (segment); 2200 m = 1 W EIRP; 630 m = 5 W EIRP; a Technician on any HF band = 200 W PEP — always under the "minimum necessary power" rule, 97.313(a). The old blanket "200 W" entries were wrong.
+- The corrected power picture: a 1500 W PEP general ceiling, with the real exceptions (30 m = 200 W PEP; 60 m = 100 W ERP (channels) and 9.15 W ERP (segment); 2200 m = 1 W EIRP; 630 m = 5 W EIRP; a Technician on any HF band = 200 W PEP), always under the "minimum necessary power" rule, 97.313(a). The old blanket "200 W" entries were wrong.
 - 60 m as 4 channels plus the 5351.5–5366.5 kHz segment at 9.15 W ERP, effective 13 Feb 2026 (the old 5-channel chart is wrong).
 - The HF data rule that replaced the obsolete baud column: no symbol-rate limit on HF, a 2.8 kHz maximum-bandwidth cap, effective 8 Jan 2024 (FCC 23-93). No baud value is shown anywhere, because the VHF/UHF baud status is unconfirmed.
 - 9 cm (3300–3500 MHz) is omitted as a band in active sunset that does not overlap 5 GHz Wi-Fi.
@@ -3037,9 +3037,9 @@ The two-worlds translation: amateur band names (160 m, 2 m, 13 cm) to their actu
 
 ### Spectrum Band Designations
 
-The ITU decade-band designations — HF, VHF, UHF, SHF — with their frequency and wavelength spans and what each band's propagation implies, plus the aviation airband and military UHF neighbors a Wi-Fi pro lives next to.
+The ITU decade-band designations (HF, VHF, UHF, SHF) with their frequency and wavelength spans and what each band's propagation implies, plus the aviation airband and military UHF neighbors a Wi-Fi pro lives next to.
 
-**Why it's here.** Knowing which decade band you are in tells you how the energy travels — ionospheric skip, line-of-sight, or short-range. This sets that context around the Wi-Fi bands.
+**Why it's here.** Knowing which decade band you are in tells you how the energy travels: ionospheric skip, line-of-sight, or short-range. This sets that context around the Wi-Fi bands.
 
 **How to use**
 1. Read the four ITU decade bands (each is ×10 the previous) and their propagation character.
@@ -3047,7 +3047,7 @@ The ITU decade-band designations — HF, VHF, UHF, SHF — with their frequency 
 
 **What it shows**
 - The four ITU decade bands a Wi-Fi pro lives near (HF 3–30 MHz sky-wave / ionospheric skip; VHF / UHF / SHF), each with frequency, wavelength, and an operational propagation note. MF/LF below and EHF above are noted, not tabled.
-- The spectrum neighbors — the aviation airband and military UHF allocations — that border these bands.
+- The spectrum neighbors (the aviation airband and military UHF allocations) that border these bands.
 
 **Field notes**
 - Propagation notes are operational summaries (HF "talk around the world," higher bands line-of-sight), not predictions for a specific path.
@@ -3056,9 +3056,9 @@ The ITU decade-band designations — HF, VHF, UHF, SHF — with their frequency 
 
 ### Part 15 vs Part 97
 
-Where the amateur 13 cm and 5 cm bands overlap 2.4 and 5 GHz Wi-Fi, and how the unlicensed (Part 15) and amateur (Part 97) rules differ — the rules behind running commodity Wi-Fi hardware as an AREDN mesh node.
+Where the amateur 13 cm and 5 cm bands overlap 2.4 and 5 GHz Wi-Fi, and how the unlicensed (Part 15) and amateur (Part 97) rules differ: the rules behind running commodity Wi-Fi hardware as an AREDN mesh node.
 
-**Why it's here.** The same 802.11 silicon can run under two completely different rule sets. This lays the two side by side so the trade — Part 97's higher power ceiling for Part 15's encryption and commercial freedom — is explicit.
+**Why it's here.** The same 802.11 silicon can run under two completely different rule sets. This lays the two side by side so the trade (Part 97's higher power ceiling for Part 15's encryption and commercial freedom) is explicit.
 
 **How to use**
 1. Read the overlap table to see which Wi-Fi channels fall inside an amateur allocation.
@@ -3172,33 +3172,33 @@ A read-along teaching reference for antenna literacy: what an antenna actually d
 
 ### Spectrum Analysis
 
-A read-along teaching module on spectrum analyzers: what a spectrum analyzer sees that a Wi-Fi adapter cannot, how the instrument works, the knobs, the three views, a nine-signature interferer gallery, how to compare captures, the current tool landscape, and how to mitigate interference. Teaching content, not a live tool — the phone does not capture RF.
+A read-along teaching module on spectrum analyzers: what a spectrum analyzer sees that a Wi-Fi adapter cannot, how the instrument works, the knobs, the three views, a nine-signature interferer gallery, how to compare captures, the current tool landscape, and how to mitigate interference. Teaching content, not a live tool: the phone does not capture RF.
 
 **Why it's here.** When users report poor performance but a Wi-Fi scanner shows a clean channel, the missing piece is almost always a non-802.11 energy source only a spectrum analyzer can see. This is the read-first reference for understanding that instrument and reading its output, the spectrum companion to Antenna Fundamentals. It is the single most important honest scope: a phone's Wi-Fi chipset decodes frames, it is not the wideband RF capture hardware spectrum analysis needs, so the module never pretends to be a working analyzer.
 
 **How to use**
 1. Start on the hub: an intro, the honest scope note, and eight numbered topic cards.
-2. Read the eight topics in order — Why a spectrum analyzer?, How it works, The knobs, The three views, Fingerprinting interferers, Comparing captures, The tools, Mitigation — or jump to the one you need.
+2. Read the eight topics in order (Why a spectrum analyzer?, How it works, The knobs, The three views, Fingerprinting interferers, Comparing captures, The tools, Mitigation) or jump to the one you need.
 3. On "The knobs," tap through to the Wi-Fi Glossary for term lookups (a one-tap cross-link).
 
 **What it shows**
 - Two instruments contrasted: a Wi-Fi adapter is a protocol decoder that only perceives energy it can read as 802.11; a spectrum analyzer measures raw RF power versus frequency regardless of protocol.
 - How it works: swept-tuned versus real-time (RTSA), why real-time matters for bursty and frequency-hopping Wi-Fi interference, the probability-of-intercept figure of merit, and what the frequency transform and its window function do.
 - The knobs: span, RBW, VBW, reference level, the dBm amplitude scale, detectors, and max-hold/averaging.
-- The three views — live power vs frequency, waterfall/spectrogram (frequency, time, color), and density/duty cycle (how often a frequency is occupied) — and which question each answers.
+- The three views: live power vs frequency, waterfall/spectrogram (frequency, time, color), and density/duty cycle (how often a frequency is occupied), plus which question each answers.
 - A nine-signature interferer gallery, one waterfall shape each, with a fingerprint caption per card: microwave oven, Bluetooth Classic, analog video camera, Bluetooth Low Energy (BLE), analog baby monitor, drone/FPV downlink, ZigBee/802.15.4, analog cordless phone, and continuous wireless bridge.
 - Comparing captures (max-hold vs averaging, overlays, before/after with a baseline) and the mitigation ladder, conclusion-first: removing the source is the only complete fix; relocate, shield, plan channels around 1/6/11, and move critical traffic from 2.4 to 5 to 6 GHz to route Wi-Fi around it.
 
 **Field notes**
 - The honest scope note leads the module and repeats on the first topic: this is teaching content, the phone cannot run a spectrum analyzer.
-- The nine signature diagrams are illustrative teaching rasters drawn to the canonical signatures — an illustrative trace plus a waterfall and a dBm legend — not captures from your environment. Each card's fingerprint caption is real text below the diagram, so a screen-reader user hears the teaching content even though the raster itself is decorative.
+- The nine signature diagrams are illustrative teaching rasters drawn to the canonical signatures (an illustrative trace plus a waterfall and a dBm legend), not captures from your environment. Each card's fingerprint caption is real text below the diagram, so a screen-reader user hears the teaching content even though the raster itself is decorative.
 - Tool landscape, current and honest: leaders are the Ekahau Sidekick 2, NetAlly NXT-2000 (the spectrum accessory for the AirCheck G3 Pro), and Oscium Lucid (Wi-Spy Lucid / WiPry Clarity, now under the same MetaGeek family); heritage gear (MetaGeek Wi-Spy DBx, Cisco Cognio) is named as heritage, not a current buy; RF Explorer is the budget entry below survey grade. Pricing is deliberately not quoted.
 - 6 GHz being the cleanest band is flagged as a current condition that will erode as adoption grows.
 
 
 ### Ham Radio Study Resources
 
-A vetted, offline list of where to study for the amateur-radio exams — hamstudy.org, the ARRL License Manuals, FCC Part 97, and AREDN — each credited, with an "Open website" button and the current exam structure.
+A vetted, offline list of where to study for the amateur-radio exams (hamstudy.org, the ARRL License Manuals, FCC Part 97, and AREDN) each credited, with an "Open website" button and the current exam structure.
 
 **Why it's here.** The companion to the in-app ham references: when you decide to actually sit an exam, this points you at the strongest current study material instead of a stale chart, with the two currency landmines flagged.
 
@@ -3207,11 +3207,11 @@ A vetted, offline list of where to study for the amateur-radio exams — hamstud
 2. Read the exam-structure block for the stable "N questions, M to pass" figures.
 
 **What it shows**
-- Four vetted resources: hamstudy.org (the study platform, not its links page), the ARRL License Manuals (the authority reference, cited not reproduced), FCC Part 97 + the frequency-allocation table (the law and the app's data source of truth), and AREDN (the explicit Wi-Fi tie-in — commodity 802.11 hardware run under Part 97).
+- Four vetted resources: hamstudy.org (the study platform, not its links page), the ARRL License Manuals (the authority reference, cited not reproduced), FCC Part 97 + the frequency-allocation table (the law and the app's data source of truth), and AREDN (the explicit Wi-Fi tie-in: commodity 802.11 hardware run under Part 97).
 - The stable exam structure (NCVEC / 97.503): Technician (Element 2) 35 questions / 26 to pass; General (Element 3) 35 / 26; Amateur Extra (Element 4) 50 / 37. No Morse requirement since 23 Feb 2007; the FCC application fee is $35.
 
 **Field notes**
-- The two currency landmines are surfaced as guardrails, never hard-coded around: a new Technician question pool takes effect 1 Jul 2026 (so the pool count is deliberately not memorized — only the stable 35/26 structure is shown), and the 60 m rules changed effective 13 Feb 2026.
+- The two currency landmines are surfaced as guardrails, never hard-coded around: a new Technician question pool takes effect 1 Jul 2026 (so the pool count is deliberately not memorized, only the stable 35/26 structure is shown), and the 60 m rules changed effective 13 Feb 2026.
 - The only network action is a browser hand-off over HTTPS, not an in-app fetch, so no special network exception is needed. A failed hand-off shows an honest inline note with the raw URL, never a silent failure.
 
 
@@ -3619,7 +3619,7 @@ A plain-language index of the industries you quote and what each one tends to tr
 
 **How to use**
 1. Find the vertical you are bidding in the map and read what it tends to trigger.
-2. Open the "read first" entry (Hazardous Locations, Enclosure Ratings, Healthcare Wi-Fi, Site Access, Data Centers, or Facility Spaces) before you quote.
+2. Open the "read first" entry (Hazardous Locations, Enclosure Ratings, Healthcare Wi-Fi, Site Access, Data Centers, or Telecom Spaces) before you quote.
 3. For retail, recognize PCI DSS scope when Wi-Fi touches cardholder data, then defer the ruling to the client's QSA.
 4. For high-density venues, remember the design axis flips from coverage to capacity, driven by seat count and peak concurrent users.
 
@@ -3671,7 +3671,7 @@ The read a WLAN pro needs before quoting Wi-Fi in or around a data center: why p
 - Data source: framework detail per ANSI/TIA-942 and the Uptime Institute Tier Standard.
 
 
-### Facility Spaces
+### Telecom Spaces
 
 A decoder for the telecom room names that get used interchangeably and are not interchangeable: Entrance Facility, Equipment Room, Telecommunications Room (the current TIA-569 term), MDF and IDF (legacy distribution-frame terms the field still uses), and "data closet" (slang), plus the hierarchical-star topology that ties them together.
 

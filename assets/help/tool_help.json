@@ -3995,7 +3995,7 @@
       "whyHere": "Nobody standing in a building thinks 'this is NAICS 622110'; you think 'it's a hospital.' Classification codes are back-office filing labels, not design inputs. The vertical you name in the first phone call tells you which reference entry to open before you quote.",
       "howToUse": [
         "Find the vertical you are bidding in the map and read what it tends to trigger.",
-        "Open the 'read first' entry (Hazardous Locations, Enclosure Ratings, Healthcare Wi-Fi, Site Access, Data Centers, or Facility Spaces) before you quote.",
+        "Open the 'read first' entry (Hazardous Locations, Enclosure Ratings, Healthcare Wi-Fi, Site Access, Data Centers, or Telecom Spaces) before you quote.",
         "For retail, recognize PCI DSS scope when Wi-Fi touches cardholder data, then defer the ruling to the client's QSA.",
         "For high-density venues, remember the design axis flips from coverage to capacity, driven by seat count and peak concurrent users."
       ],
@@ -4055,7 +4055,7 @@
       "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in data_centers_wifi_screen.dart. Text-reference only (no decoder plate). Framework detail per ANSI/TIA-942 and the Uptime Institute Tier Standard."
     },
     "facility-spaces": {
-      "name": "Facility Spaces",
+      "name": "Telecom Spaces",
       "category": "Quick Reference",
       "purpose": "A decoder for the telecom room names that get used interchangeably and are not interchangeable: Entrance Facility, Equipment Room, Telecommunications Room (the current TIA-569 term), MDF and IDF (legacy distribution-frame terms the field still uses), and 'data closet' (slang), plus the hierarchical-star topology that ties them together.",
       "whyHere": "When the electrician says 'MDF,' the architect's drawing says 'TR,' and the client says 'the data closet,' knowing they usually mean the same room keeps you from designing a phantom extra space or missing a real one. The IDF and TR locations are where your APs get their uplink and power.",

@@ -293,6 +293,7 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'campus distributor', 'building distributor', 'floor distributor',
     'demarcation', 'demarc', 'backbone', 'riser', 'horizontal cabling',
     'telecom room', 'cross-connect',
+    'telecom spaces', 'facility spaces', 'facility',
   ],
   'wavelength': <String>[
     'lambda', 'antenna length', 'quarter wave', 'frequency to wavelength',

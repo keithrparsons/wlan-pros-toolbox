@@ -1,4 +1,4 @@
-// Tests for the Facility Spaces reference screen, a Field & Trade Reference set
+// Tests for the Telecom Spaces reference screen, a Field & Trade Reference set
 // entry (2026-07-05). Three layers: data fidelity (the six-term decode table,
 // plus the no-em-dash / "Wi-Fi" guards), registration (a live "Verticals" Quick
 // Reference tile, route, keywords), and widget render (dark + light, no overflow
@@ -66,7 +66,7 @@ void main() {
       );
       expect(t.isLive, isTrue);
       expect(t.routeName, '/tools/facility-spaces');
-      expect(t.title, 'Facility Spaces');
+      expect(t.title, 'Telecom Spaces');
       expect(t.subgroup, 'Verticals');
     });
 
@@ -117,7 +117,7 @@ void main() {
             MaterialApp(theme: theme, home: const FacilitySpacesScreen()),
           );
           await tester.pump();
-          expect(find.text('Facility Spaces'), findsWidgets);
+          expect(find.text('Telecom Spaces'), findsWidgets);
           expect(find.text('The terms, decoded'), findsOneWidget);
           expect(find.text('Why a WLAN pro cares'), findsOneWidget);
           expect(find.byType(TextField), findsNothing);
