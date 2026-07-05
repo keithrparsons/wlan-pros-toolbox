@@ -140,7 +140,7 @@ class TimeZonesScreen extends StatelessWidget {
                       semanticLabel: 'world UTC time-zone map',
                       caption:
                           'Vertical bands are one-hour UTC offsets; the prime '
-                          'meridian (UTC 0) runs through Greenwich. Tap to zoom.',
+                          'meridian (UTC 0) runs through Greenwich.',
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],
@@ -151,7 +151,7 @@ class TimeZonesScreen extends StatelessWidget {
                       semanticLabel: 'United States time-zone map',
                       caption:
                           'The continental US spans four zones, plus Alaska and '
-                          'Hawaii-Aleutian. Tap to zoom.',
+                          'Hawaii-Aleutian.',
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],

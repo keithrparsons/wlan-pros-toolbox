@@ -108,23 +108,7 @@ class DiffieHellmanScreen extends StatelessWidget {
                       semanticLabel:
                           'Diffie-Hellman paint-mixing key-exchange diagram',
                       caption:
-                          'The paint-mixing analogy with the real math labeled. '
-                          'Tap to zoom.',
-                      // This plate is dense with baked text and connector lines:
-                      // top-left = title block, top-right = logo, top-center =
-                      // the "...public channel, never sending the secret itself"
-                      // subtitle, bottom-left = shared-secret callout,
-                      // bottom-right = EAVESDROPPER callout, and the whole middle
-                      // band carries the secret-color/mixture node boxes plus the
-                      // dashed + solid connector curves. No standard 9-position
-                      // anchor lands in clean canvas. The one verified void is the
-                      // RIGHT EDGE, LOWER THIRD: the dark gap below Bob's mixture
-                      // box (and its rightward dashed stub) and above the
-                      // EAVESDROPPER callout. Anchor the badge there so it clears
-                      // every baked label, box, and line (Keith's
-                      // no-text/element-overlap rule). Verified by-eye in the
-                      // light + dark in-app renders.
-                      zoomBadgeAlignment: Alignment(1, 0.66),
+                          'The paint-mixing analogy with the real math labeled.',
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],

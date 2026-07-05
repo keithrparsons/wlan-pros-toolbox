@@ -228,7 +228,29 @@ void main() {
       // screens: NIC-vs-spectrum, how it works, the knobs, the three views, a
       // nine-card interferer signature gallery, comparing captures, the tool
       // landscape, mitigation). The hub carries the one help footer. 154 + 1 = 155.
-      expect(store.count, 155);
+      // 156 = + Architectural Scale (architectural-scale) 2026-07-05: the pilot
+      // tool of the AEC & Documentation field-reference set — a scale↔ratio and
+      // drawn↔real converter (architectural / engineer's / metric scales), pure
+      // on-device math in Calculators & Tools. 155 + 1 = 156.
+      // 157 = + Enclosure Ratings (enclosure-ratings) 2026-07-05: the pilot
+      // REFERENCE-screen entry of the Field & Trade Reference set — a read-only
+      // IP (IEC 60529) / NEMA (NEMA 250) ingress-rating decoder in Quick
+      // Reference (proposed "Codes & Safety" subgroup). 156 + 1 = 157.
+      // 158 = + Hazardous Locations (hazardous-locations) 2026-07-05: Field
+      // Reference #3 — a read-only Class/Division (NEC 500) and IEC Zone
+      // recognize-and-defer reference in Quick Reference ("Codes & Safety").
+      // 157 + 1 = 158.
+      // 159 = + NEC Gotchas (nec-gotchas) 2026-07-05: Field Reference #4 — the
+      // read-only recognize-and-defer set of NEC articles that bite a WLAN
+      // install, in Quick Reference ("Codes & Safety"). 158 + 1 = 159.
+      // 162 = + the next 3 Field & Trade Reference screens (2026-07-05), all
+      // read-only in Quick Reference ("Codes & Safety"): Safety Basics
+      // (safety-basics) PPE + ESD + recognize-and-STOP hazards; Plan-Set
+      // Literacy (plan-set-literacy) sheet-number anatomy + the RCP as the AP
+      // sheet (placement flagged for Keith, defaulted to Codes & Safety); Site
+      // Access (site-access) the "Know Before You Go" pre-mobilization
+      // checklist. 159 + 3 = 162.
+      expect(store.count, 162);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

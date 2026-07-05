@@ -17,6 +17,7 @@ import '../screens/tools/educational/ham_study_resources_screen.dart';
 import '../screens/search_screen.dart';
 import '../data/tool_catalog.dart' show kEducationalResourcesRoute;
 import '../screens/tools/dbm_watt_converter.dart';
+import '../screens/tools/calculators/architectural_scale_screen.dart';
 import '../screens/tools/calculators/cable_loss_screen.dart';
 import '../screens/tools/calculators/channel_frequency_converter_screen.dart';
 import '../screens/tools/calculators/downtilt_screen.dart';
@@ -109,6 +110,12 @@ import '../screens/tools/reference/dhcp_options_screen.dart';
 import '../screens/tools/reference/http_methods_screen.dart';
 import '../screens/tools/reference/dscp_qos_screen.dart';
 import '../screens/tools/reference/eap_types_screen.dart';
+import '../screens/tools/reference/enclosure_ratings_screen.dart';
+import '../screens/tools/reference/hazardous_locations_screen.dart';
+import '../screens/tools/reference/nec_gotchas_screen.dart';
+import '../screens/tools/reference/plan_set_literacy_screen.dart';
+import '../screens/tools/reference/safety_basics_screen.dart';
+import '../screens/tools/reference/site_access_screen.dart';
 import '../screens/tools/reference/wifi_feature_matrix_screen.dart';
 import '../screens/tools/reference/regulatory_domains_screen.dart';
 import '../screens/tools/reference/datetime_standards_screen.dart';
@@ -204,6 +211,9 @@ class AppRouter {
   static const String fresnel = '/tools/fresnel';
   static const String cableLoss = '/tools/cable-loss';
   static const String linkBudget = '/tools/link-budget';
+  // AEC & Documentation field-reference set (pilot, 2026-07-05). Pure math,
+  // offline, all platforms incl. web.
+  static const String architecturalScale = '/tools/architectural-scale';
   static const String wavelength = '/tools/wavelength';
   // Ham Radio pure-math tools (no network, all platforms incl. web).
   static const String antennaLength = '/tools/antenna-length';
@@ -263,6 +273,18 @@ class AppRouter {
   static const String roaming = '/tools/roaming';
   static const String apPlacement = '/tools/ap-placement';
   static const String poeReference = '/tools/poe-reference';
+  // Field & Trade Reference set (pilot, 2026-07-05). Read-only IP/NEMA ingress
+  // reference; static content, offline, all platforms incl. web.
+  static const String enclosureRatings = '/tools/enclosure-ratings';
+  // Field Reference #3/#4 (2026-07-05). Read-only recognize-and-defer code
+  // references; static content, offline, all platforms incl. web.
+  static const String hazardousLocations = '/tools/hazardous-locations';
+  static const String necGotchas = '/tools/nec-gotchas';
+  // Field Reference #5/#6/#7 (2026-07-05). Read-only PPE/ESD, plan-set literacy,
+  // and site-access references; static content, offline, all platforms incl. web.
+  static const String safetyBasics = '/tools/safety-basics';
+  static const String planSetLiteracy = '/tools/plan-set-literacy';
+  static const String siteAccess = '/tools/site-access';
 
   /// Power Phasing — the pilot reference for the Power & Cooling category. The
   /// id `power-phasing` is permanent (backs this route, the catalog entry, the
@@ -549,6 +571,7 @@ class AppRouter {
     eirp: (_) => const EirpScreen(),
     fresnel: (_) => const FresnelScreen(),
     cableLoss: (_) => const CableLossScreen(),
+    architecturalScale: (_) => const ArchitecturalScaleScreen(),
     linkBudget: (_) => const LinkBudgetScreen(),
     wavelength: (_) => const WavelengthScreen(),
     antennaLength: (_) => const AntennaLengthScreen(),
@@ -594,6 +617,12 @@ class AppRouter {
     roaming: (_) => const RoamingScreen(),
     apPlacement: (_) => const ApPlacementScreen(),
     poeReference: (_) => const PoeReferenceScreen(),
+    enclosureRatings: (_) => const EnclosureRatingsScreen(),
+    hazardousLocations: (_) => const HazardousLocationsScreen(),
+    necGotchas: (_) => const NecGotchasScreen(),
+    safetyBasics: (_) => const SafetyBasicsScreen(),
+    planSetLiteracy: (_) => const PlanSetLiteracyScreen(),
+    siteAccess: (_) => const SiteAccessScreen(),
     powerPhasing: (_) => const PowerPhasingScreen(),
     ohmsLaw: (_) => const OhmsLawScreen(),
     coolingThermal: (_) => const CoolingThermalScreen(),

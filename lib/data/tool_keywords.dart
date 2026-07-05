@@ -165,8 +165,56 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
   'cable-loss': <String>[
     'coax loss', 'feedline', 'attenuation', 'insertion loss', 'db loss',
   ],
+  'architectural-scale': <String>[
+    'scale', 'architect scale', 'engineer scale', 'ratio', 'scale factor',
+    'drawing scale', 'plan set', 'floor plan', 'blueprint', 'rcp',
+    'measure pdf', 'scale ruler', 'aec', 'cad', 'ekahau scale', 'calibrate',
+    '1:48', '1:96', '1/4 inch', '1/8 inch', 'drawn to real', 'metric scale',
+  ],
   'link-budget': <String>[
     'received signal', 'fade margin', 'rsl', 'ptp', 'system gain', 'path',
+  ],
+  'enclosure-ratings': <String>[
+    'ip rating', 'ip code', 'ip67', 'ip66', 'ip65', 'ip68', 'ip69k',
+    'nema', 'nema 250', 'nema 4x', 'iec 60529', 'ingress protection',
+    'waterproof', 'weatherproof', 'dust-tight', 'outdoor ap', 'enclosure',
+    'washdown', 'corrosion', 'nema to ip', 'water resistance', 'ingress',
+  ],
+  'hazardous-locations': <String>[
+    'hazardous location', 'classified area', 'class division', 'class 1 div 2',
+    'class i div 2', 'nec 500', 'nec 505', 'nec 506', 'zone', 'atex', 'iecex',
+    'explosion proof', 'intrinsically safe', 'ex d', 'ex i', 'ex p', 'ex e',
+    'flammable', 'combustible dust', 'refinery', 'grain elevator', 'spray booth',
+    'ignition', 'purged', 'ul 1203', 'explosive atmosphere',
+  ],
+  'nec-gotchas': <String>[
+    'nec', 'national electrical code', 'code violation', 'hoistway',
+    'elevator', 'article 620', 'plenum', 'cmp', 'cmr', 'article 300.22',
+    'article 800', 'cable rating', 'poe bundle', 'ampacity', 'article 725.144',
+    'grounding', 'bonding', 'article 810', 'firestop', 'article 300.21',
+    'abandoned cable', 'article 800.25', 'surge arrestor', 'riser',
+  ],
+  'safety-basics': <String>[
+    'ppe', 'personal protective equipment', 'hard hat', 'safety helmet',
+    'z89.1', 'safety-toe', 'steel toe', 'astm f2413', 'hi-vis',
+    'high visibility', 'ansi 107', 'eye protection', 'z87', 'esd',
+    'static discharge', 's20.20', 'wrist strap', 'asbestos', 'lead paint',
+    'arc flash', 'nfpa 70e', 'lockout tagout', 'loto', 'confined space',
+    'seismic bracing', 'jobsite safety', 'stop work',
+  ],
+  'plan-set-literacy': <String>[
+    'plan set', 'drawing set', 'sheet number', 'discipline designator',
+    'national cad standard', 'architectural', 'reflected ceiling plan', 'rcp',
+    'ceiling grid', 'title block', 'keynotes', 'revision cloud', 'north arrow',
+    'scale', 'engineer scale', 'telecom sheet', 't sheets', 'a-201',
+    'ap placement', 'floor plan', 'construction documents', 'blueprint',
+  ],
+  'site-access': <String>[
+    'site access', 'know before you go', 'mobilization', 'credential',
+    'background check', 'orientation', 'escort', 'man-lift', 'boom lift',
+    'scissor lift', 'railroad', 'erailsafe', 'flagman', 'hospital', 'icra',
+    'ilsm', 'maritime', 'twic', 'over-water', 'warehouse', 'data center',
+    'correctional', 'school', 'fingerprinting', 'badging', 'tool control',
   ],
   'wavelength': <String>[
     'lambda', 'antenna length', 'quarter wave', 'frequency to wavelength',

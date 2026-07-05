@@ -57,6 +57,13 @@ const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
     // Step-by-step how-tos that bundle a downloadable companion file
     // (Dual Orbs on WLAN Pi, FreeRADIUS on WLAN Pi). Added 2026-06-05.
     'Guides',
+    // Codes & Safety (2026-07-05): the field/trade-reference cluster — the
+    // codes, ratings, and standards a Wi-Fi pro reads on spec sheets and job
+    // sites but was never taught. Pilot member: Enclosure Ratings (IP / NEMA
+    // ingress protection). Sits last as a distinct trade-literacy pillar.
+    // SUBGROUP NAME flagged for Keith (Codes & Safety vs. a single "Field
+    // Reference" umbrella that would also re-home the Architectural Scale calc).
+    'Codes & Safety',
   ],
   'rf-calculators': <String>[
     'RF & Propagation',
@@ -78,6 +85,11 @@ const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
     // Batch 4b/4c: standalone field utilities that aren't unit conversions or
     // RF math (QR Code Generator, DTMF Generator).
     'Utilities & Generators',
+    // AEC & Documentation (2026-07-05): the built-environment / plan-set
+    // literacy set. Pilot member: Architectural Scale (scale↔ratio +
+    // drawn↔real). Sits last — a distinct pillar from the RF/ham math above.
+    // Future plan-set-reading references land in Quick Reference, not here.
+    'AEC & Documentation',
   ],
 };
 

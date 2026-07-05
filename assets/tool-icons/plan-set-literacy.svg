@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- PLACEHOLDER icon (Felix, 2026-07-05) - flag for Charta: a drawing-set /
+       blueprint motif. A rolled/sheeted plan with a title-block corner, standing
+       in for the "read the plan set, find the RCP" idea. currentColor stroke,
+       24x24. -->
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- sheet -->
+    <rect x="4" y="4" width="16" height="16" rx="1.5"/>
+    <!-- title-block corner -->
+    <path d="M13 20 V13 H20"/>
+    <!-- plan lines -->
+    <path d="M7 8 H11 M7 11 H10"/>
+  </g>
+</svg>

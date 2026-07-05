@@ -20,8 +20,12 @@
 //
 // INTERACTION: tap (or keyboard-activate) the diagram to open a full-screen
 // pinch-zoom + pan view (raster `InteractiveViewer`, minScale 1, maxScale 5) —
-// these detail-dense diagrams are hard to read inline on a phone. A subtle
-// magnifier badge advertises the affordance.
+// these detail-dense diagrams are hard to read inline on a phone. The whole
+// plate is the tap target; a magnifier + "Tap to enlarge" hint sits in a row
+// BELOW the plate (never overlaid on it). These full-bleed reference plates bake
+// a logo / eyebrow / footer marks into every corner, so an on-plate badge always
+// collides with baked art; keeping the affordance off the image removes the
+// collision by construction for every plate the set clones.
 //
 // A11Y (§8.6.2): the image itself is decorative (every fact it depicts is in the
 // screen's prose and in the diagram's own baked-in labels, which a screen reader
@@ -57,7 +61,6 @@ class DarkRasterDiagramCard extends StatelessWidget {
     required this.aspectRatio,
     required this.semanticLabel,
     this.caption,
-    this.zoomBadgeAlignment = Alignment.bottomRight,
   });
 
   /// Bundled asset path, e.g. `assets/tool-diagrams/modulation/<slug>.png`.
@@ -75,14 +78,6 @@ class DarkRasterDiagramCard extends StatelessWidget {
   /// Optional one-line teaching caption shown below the card on the live theme
   /// surface. Omitted (no gap) when null.
   final String? caption;
-
-  /// Corner the magnifier badge sits in. Defaults to bottom-right. Call sites
-  /// whose plate has baked caption text in the bottom-right corner (e.g. the
-  /// Diffie-Hellman eavesdropper note, the Phonetic-Alphabet flag legend) pass a
-  /// clear corner so the badge never sits over information-bearing baked text
-  /// (Keith's no-text-over-element rule). The plate is a fixed raster, so the
-  /// badge must dodge the baked text rather than the other way round.
-  final Alignment zoomBadgeAlignment;
 
   void _openZoom(BuildContext context) {
     final AppColorScheme zoomColors = AppColorScheme.dark();
@@ -168,38 +163,37 @@ class DarkRasterDiagramCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Subtle, discoverable magnifier badge. Placed in the corner the
-                // call site declares is clear of baked caption text (default
-                // bottom-right; plates with bottom-right baked text override).
-                Positioned.fill(
-                  child: ExcludeSemantics(
-                    child: Align(
-                      alignment: zoomBadgeAlignment,
-                      child: Padding(
-                        padding: const EdgeInsets.all(AppSpacing.xs),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: dark.scrim,
-                            borderRadius:
-                                BorderRadius.circular(AppRadius.control),
-                          ),
-                          padding: const EdgeInsets.all(AppSpacing.xxs),
-                          child: Icon(
-                            Icons.zoom_in,
-                            color: dark.textPrimary,
-                            size: AppSpacing.sm,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
         ),
+        // Off-image zoom affordance. The plate itself is the tap target (the
+        // Semantics button above), so this row is a decorative discoverability
+        // hint only (ExcludeSemantics keeps it out of the a11y tree — the plate
+        // already announces one operable "Zoom <name>" control). It lives BELOW
+        // the plate, never overlaid on it: these dense full-bleed reference
+        // plates occupy every corner with baked logo / eyebrow / footer marks,
+        // so any on-plate badge collides. Moving the affordance off the image
+        // removes the collision by construction for every plate in the set.
+        const SizedBox(height: AppSpacing.xs),
+        ExcludeSemantics(
+          child: Row(
+            children: <Widget>[
+              Icon(
+                Icons.zoom_in,
+                size: AppSpacing.sm,
+                color: live.textTertiary,
+              ),
+              const SizedBox(width: AppSpacing.xxs),
+              Text(
+                'Tap to enlarge',
+                style: t.bodySmall?.copyWith(color: live.textTertiary),
+              ),
+            ],
+          ),
+        ),
         if (caption != null) ...<Widget>[
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: AppSpacing.xxs),
           Text(
             caption!,
             style: t.bodySmall?.copyWith(color: live.textTertiary),

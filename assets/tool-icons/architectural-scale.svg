@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Architectural Scale (scale calculator: relate real dimensions to a
+         drawing at a given ratio). Concept = "the scale of an architectural
+         drawing": a graduated SCALE RULER stacked above a FLOOR PLAN (a room
+         outline with one interior wall). The ruler says "graduated scale"; the
+         plan says "architectural drawing". Together = architectural scale.
+
+         Two separated gross shapes, stacked, per the section 8.6.1 house pattern
+         (antenna-length, channel-frequency). They cannot merge and carry no
+         sub-1.75px accents that vanish at 20px. Differentiated by gross
+         silhouette from channel-map / maidenhead-grid (bare grids, no ruler) by
+         the dominant graduated bar on top, and from antenna-length (a bare
+         horizontal double-arrow) by the ruled scale + floor plan (no arrowheads).
+
+         GL-003 section 8.6.1: 24x24 master, single currentColor, fill=none,
+         2px stroke, round cap/join, silhouette-first, legible at 20px. QA
+         rendered in headless Chrome (never ImageMagick) at 20/24/28px, lime
+         #A1CC3A on app surface #222222. -->
+    <!-- scale ruler: graduated bar, spans wider than the plan below it -->
+    <rect x="2.5" y="3" width="19" height="5" rx="1.5"/>
+    <!-- graduation marks (alternating tall/short) rising from the ruler's edge -->
+    <path d="M6 8 V4.5"/>
+    <path d="M9 8 V6.4"/>
+    <path d="M12 8 V4.5"/>
+    <path d="M15 8 V6.4"/>
+    <path d="M18 8 V4.5"/>
+    <!-- floor plan: a room outline with one interior wall (the drawing) -->
+    <rect x="6" y="11" width="12" height="10" rx="1.5"/>
+    <path d="M9 14 V18 H14"/>
+  </g>
+</svg>

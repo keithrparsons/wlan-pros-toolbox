@@ -829,6 +829,19 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'RF & Propagation',
       ),
+      // ── AEC & Documentation field-reference set (pilot, 2026-07-05). The one
+      // buildable tool in the Pax AEC brief: an architectural-scale converter.
+      // New "AEC & Documentation" subgroup (registered in tool_subgroups.dart);
+      // future plan-set / RCP reference screens hang off the same section.
+      // Custom icon is a placeholder pending Charta/Iris. ──
+      ToolEntry(
+        id: 'architectural-scale',
+        title: 'Architectural Scale',
+        description: 'Scale to ratio, and measured-on-drawing to real-world',
+        routeName: '/tools/architectural-scale',
+        isLive: true,
+        subgroup: 'AEC & Documentation',
+      ),
     ],
   ),
 
@@ -922,6 +935,89 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         routeName: '/tools/ham-radio-general-exam-study-notes',
         isLive: true,
         subgroup: 'Ham Radio',
+      ),
+      // ── Field & Trade Reference set (pilot, 2026-07-05) ──
+      // Enclosure Ratings is the pilot REFERENCE-screen entry of the Field
+      // Reference build order: the IP (IEC 60529) and NEMA (NEMA 250) ingress
+      // codes a WLAN pro reads on every outdoor / industrial spec sheet, with
+      // Vera's IP/NEMA decoder plate embedded. Proposed subgroup "Codes &
+      // Safety" (registered in tool_subgroups.dart) — the codes/safety cluster
+      // the remaining Field Reference entries join. SUBGROUP NAME flagged for
+      // Keith (Codes & Safety vs. a single "Field Reference" umbrella). Custom
+      // icon is a placeholder pending Charta/Iris.
+      ToolEntry(
+        id: 'enclosure-ratings',
+        title: 'Enclosure Ratings',
+        description: 'Decode IP and NEMA ingress ratings, and bridge NEMA to IP',
+        routeName: '/tools/enclosure-ratings',
+        isLive: true,
+        subgroup: 'Codes & Safety',
+      ),
+      // Field Reference #3 — read-only recognize-and-defer reference for
+      // classified (hazardous) areas: NEC Class/Division and the IEC Zone
+      // system. Same "Codes & Safety" subgroup (subgroup name still flagged for
+      // Keith). Custom icon is a placeholder pending Charta/Iris.
+      ToolEntry(
+        id: 'hazardous-locations',
+        title: 'Hazardous Locations',
+        description: 'Class, Division, and Zone classified-area basics',
+        routeName: '/tools/hazardous-locations',
+        isLive: true,
+        subgroup: 'Codes & Safety',
+      ),
+      // Field Reference #4 — the NEC articles that bite a WLAN install
+      // (hoistways, plenum, cable ladder, PoE bundle heat, grounding, firestop,
+      // abandoned cable). Recognize-and-defer. Same "Codes & Safety" subgroup.
+      // Custom icon is a placeholder pending Charta/Iris.
+      ToolEntry(
+        id: 'nec-gotchas',
+        title: 'NEC Gotchas',
+        description: 'Code articles that bite a WLAN install, then defer',
+        routeName: '/tools/nec-gotchas',
+        isLive: true,
+        subgroup: 'Codes & Safety',
+      ),
+      // Field Reference #5 — read-only PPE + ESD awareness reference: the gear a
+      // GC expects to badge you on, plus the recognize-and-STOP hazards
+      // (asbestos/lead, arc-flash/LOTO, confined space, seismic) rendered
+      // named-and-stopped. Same "Codes & Safety" subgroup. Custom icon is a
+      // placeholder pending Charta/Iris.
+      ToolEntry(
+        id: 'safety-basics',
+        title: 'Safety Basics',
+        description: 'PPE ratings, ESD, and the recognize-and-STOP hazards',
+        routeName: '/tools/safety-basics',
+        isLive: true,
+        subgroup: 'Codes & Safety',
+      ),
+      // Field Reference #6 — read-only plan-set literacy: sheet-number anatomy,
+      // discipline designators, the RCP as the AP sheet, and drawing scales.
+      // PLACEMENT FLAGGED FOR KEITH: an "AEC & Documentation" subgroup exists
+      // only under Calculators & Tools (rf-calculators, for the Architectural
+      // Scale calc); it is NOT a Quick Reference subgroup, and tool_subgroups
+      // notes "future plan-set-reading references land in Quick Reference." So
+      // this reference screen defaults to "Codes & Safety" until Keith rules on
+      // the umbrella-vs-topical taxonomy. Custom icon is a placeholder pending
+      // Charta/Iris.
+      ToolEntry(
+        id: 'plan-set-literacy',
+        title: 'Plan-Set Literacy',
+        description: 'Read a drawing set, and find the RCP for AP placement',
+        routeName: '/tools/plan-set-literacy',
+        isLive: true,
+        subgroup: 'Codes & Safety',
+      ),
+      // Field Reference #7 — read-only "Know Before You Go" site-access
+      // checklist: the credential, screening, orientation, or escort that gates
+      // eight site types before you can reach the work. Same "Codes & Safety"
+      // subgroup. Custom icon is a placeholder pending Charta/Iris.
+      ToolEntry(
+        id: 'site-access',
+        title: 'Site Access',
+        description: 'Know before you go: the credential that gates the site',
+        routeName: '/tools/site-access',
+        isLive: true,
+        subgroup: 'Codes & Safety',
       ),
       // ── from the dissolved Infrastructure category ──
       ToolEntry(

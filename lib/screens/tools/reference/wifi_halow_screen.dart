@@ -195,8 +195,7 @@ class WifiHalowScreen extends StatelessWidget {
                           'HaLow channel widths versus a 20 MHz Wi-Fi channel',
                       caption:
                           'HaLow channels are 1 to 16 MHz wide; even the widest '
-                          'is narrower than the minimum 20 MHz Wi-Fi channel. '
-                          'Tap to zoom.',
+                          'is narrower than the minimum 20 MHz Wi-Fi channel.',
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],

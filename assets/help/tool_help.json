@@ -422,6 +422,177 @@
       ],
       "source": "Manufacturer loss specs for each cable type, interpolated to your frequency and length on your device."
     },
+    "architectural-scale": {
+      "name": "Architectural Scale",
+      "category": "Calculators & Tools",
+      "purpose": "Converts a named drawing scale to its dimensionless ratio and back, and converts a distance measured on a drawing to its real-world length (or the reverse). Covers US architectural fractional-inch scales, engineer's decimal scales, and common metric scales.",
+      "whyHere": "WLAN pros work inside plan sets and scaled PDFs they were never taught to read. Every coverage prediction, wall distance, and mounting height is wrong if the scale is wrong — this is the same calibration step Ekahau, Hamina, and iBwave ask for on import.",
+      "howToUse": [
+        "Pick the scale family (Architectural, Engineering, or Metric).",
+        "Pick the specific scale, for example 1/4\" = 1'-0\". Read its ratio (1:48).",
+        "In Measure, choose a direction: Drawn → Real, or Real → Drawn.",
+        "Set the drawing units (in / mm / cm) and real-world units (ft / m).",
+        "Enter your measurement and read the converted length, with a friendly feet-inches or fractional-inch form beneath it."
+      ],
+      "inputs": [
+        {
+          "name": "Scale family",
+          "unit": "Architectural, Engineering, or Metric",
+          "range": ""
+        },
+        {
+          "name": "Scale",
+          "unit": "A named scale within the family (default 1/4\" = 1'-0\")",
+          "range": ""
+        },
+        {
+          "name": "Measurement",
+          "unit": "Drawing units (in / mm / cm) or real-world units (ft / m), per direction",
+          "range": "Must be 0 or greater"
+        }
+      ],
+      "algorithm": "ratio = real ÷ drawn. Imperial: ratio = 12 ÷ inches-per-foot (1/8\" = 1'-0\" → 12 ÷ 0.125 = 96 → 1:96). Engineer's: feet-per-inch × 12 (1\" = 20' → 240 → 1:240). Metric scales are already ratios. Drawn → real multiplies the measurement by the ratio; real → drawn divides. The ratio is dimensionless, so the conversion runs through a millimetre base and the two ends can carry different units.",
+      "example": "3.5\" measured on a 1/8\" = 1'-0\" (1:96) sheet is 3.5 × 96 = 336 inches = 28 ft. In reverse, a 45 ft hallway at 1/4\" = 1'-0\" (1:48) draws at 45 ÷ 48 = 0.9375 ft = 11-1/4 inches.",
+      "fieldNotes": [
+        "The result is only as good as the scale. If a PDF has no embedded scale, confirm which scale it is by measuring a known dimension — a 3'-0\" door or a 2×4 ft ceiling tile.",
+        "Printed and PDF plans are often not to true scale (fit-to-page printing, cropped sheets). Trust a dimensioned callout on the sheet over any measurement.",
+        "US-primary: architectural scales use fractional inches, engineer's scales use decimal feet per inch. Metric ratios (1:50, 1:100) are provided for ISO drawing sets."
+      ],
+      "source": "architectural_scale_screen.dart — pure on-device math, no network."
+    },
+    "enclosure-ratings": {
+      "name": "Enclosure Ratings",
+      "category": "Quick Reference",
+      "purpose": "A field reference for the two enclosure-rating systems a WLAN pro reads on outdoor and industrial spec sheets: the IP code (IEC 60529, international) and NEMA types (NEMA 250, US). It decodes each IP digit, lists the NEMA types that matter for Wi-Fi, and shows the one-way NEMA-to-IP translation.",
+      "whyHere": "US spec sheets quote NEMA and international sheets quote IP, so pros translate between them to compare gear on the same terms and spec an enclosure, AP, antenna, or PoE injector to the real hazard at the mount point.",
+      "howToUse": [
+        "Read an IP code left to right: first digit is solids and dust (0 to 6), second digit is water (0 to 9K). Each digit maps to a defined lab test.",
+        "Use the common-ratings table to place a code (for example IP66 = dust-tight plus powerful jets, the mainstream outdoor AP rating).",
+        "For a US spec sheet, read the NEMA type, then use the NEMA-to-IP table as a minimum floor. The reverse (IP to NEMA) is not valid.",
+        "Use the placement table to pick a rating for where the gear mounts."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "X means not tested, not zero: IPX7 is water-rated 7 with the solids digit unrated. Read X as no data, never as fails.",
+        "NEMA to IP is valid only as a minimum. NEMA tests corrosion, icing, gasket aging, and oil, which IP never checks, so a NEMA 4X box exceeds IP66 but an IP66 box is not automatically NEMA 4X.",
+        "The water ladder is not a clean superset past 6: an IP67 (immersion) device is not guaranteed to pass IP66 (jets). Gear that must survive both is dual-marked, such as IP66/IP67.",
+        "IP tests use fresh water only. Salt, detergents, and solvents need separate chemical-resistance verification.",
+        "This is a field reference, not code or design guidance. Confirm requirements with the AHJ, the architect of record, and a licensed electrician."
+      ],
+      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in enclosure_ratings_screen.dart with the IP/NEMA decoder plate. IP per IEC 60529; NEMA per NEMA 250."
+    },
+    "hazardous-locations": {
+      "name": "Hazardous Locations",
+      "category": "Quick Reference",
+      "purpose": "A recognize-and-defer field reference for classified (hazardous) areas: the NEC Class and Division system (US, Article 500) and the IEC Zone system (Article 505/506, ATEX, IECEx). It names what the hazard is (Class), how often it is present (Division / Zone), the recognized protection concepts, and the field read, then stops.",
+      "whyHere": "A standard commercial AP is a genuine ignition source in a flammable atmosphere. Mounting one in a classified area is illegal, uninsurable, and dangerous. WLAN pros need to recognize a refinery, grain elevator, fuel depot, or spray booth before quoting, and route the install to rated gear and the AHJ.",
+      "howToUse": [
+        "Read Class as what the hazard is made of: Class I (gases/vapors), Class II (dust), Class III (fibers/flyings).",
+        "Read Division as how often it is present: Div 1 during normal operation, Div 2 only under fault. Div 2 is the far larger wireless market.",
+        "Map to the IEC Zone system where a facility uses it (Div 1 is roughly Zone 0+1 for gas; Div 2 is roughly Zone 2).",
+        "Match a recognized protection concept (Ex d, Ex i, Ex p, Ex e/nR) to the Division or Zone, or keep the AP out and remote the antenna in."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Never just mount a commercial AP in a classified area. The default move is to keep the AP in the adjacent general-purpose area and remote the antenna into the zone through a rated penetration.",
+        "\"Class I Div 2 rated\" buys permission to install that specific listed device, in that specific Division or Zone, wired per its control drawing. It is not a blanket safe-anywhere stamp; a Div 2 device is not approved for Div 1.",
+        "You cannot mix Division and Zone classification in the same installation. Which one is in force is set by the facility area-classification drawing and the AHJ, not the installer.",
+        "This is a field reference, not code or design guidance. Confirm requirements with the AHJ, the architect of record, and a licensed electrician."
+      ],
+      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in hazardous_locations_screen.dart with the Class/Division/Zone decoder plate. Class/Division per NEC Article 500; Zone per NEC 505/506, ATEX, and IECEx."
+    },
+    "nec-gotchas": {
+      "name": "NEC Gotchas",
+      "category": "Quick Reference",
+      "purpose": "A recognize-and-defer field reference for the NEC articles that actually bite a WLAN installer: elevator hoistways (620), plenum air spaces (300.22), the communications-cable rating ladder (800), PoE bundle heat (725.144), antenna and mast grounding (810), firestopping fire-rated assemblies (300.21), and abandoned cable (800.25).",
+      "whyHere": "These are the code articles most likely to surface on an everyday install. Recognizing each one on site, then handing it to the AHJ, a licensed electrician, or the equipment listing, keeps a WLAN pro out of trouble. This is recognize-and-defer, never how-to-comply.",
+      "howToUse": [
+        "Use it to recognize a code issue on site: the hoistway you cannot put an AP in, the plenum that dictates your cable jacket, the PoE bundle that can overheat, the antenna that needs grounding, the fire wall you must not breach, and the dead cable you must pull.",
+        "Read the cable-rating ladder as a jacket fire-rating only (CMP plenum, CMR riser, CM/CMG general, CMX limited); substitution runs downhill only.",
+        "On the two STOP items (PoE ampacity, firestop assembly), do not eyeball a number or pick an assembly yourself; hand it to the licensed electrician or the listed system.",
+        "Then defer to the right authority for the actual requirement."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "STOP on PoE bundle heat (725.144): the exact ampacity and bundle-count numbers come from the code table and the specific install conditions. Do not eyeball them. Size the bundle with a licensed electrician or the cabling designer against the adopted NEC.",
+        "STOP on firestopping (300.21): the approved firestop is a specific listed assembly matched to the wall type, penetrant, and opening. Never improvise it and never pick the assembly yourself.",
+        "Grounding (810) caveat: nothing survives a direct strike. Bonding and surge protection mitigate nearby strikes and static, not a direct hit. Conductor sizing is an electrician's call.",
+        "This is a field reference, not code or design guidance. Confirm requirements with the AHJ, the architect of record, and a licensed electrician."
+      ],
+      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in nec_gotchas_screen.dart with the building-cutaway plate. Article numbers per the NEC (NFPA 70); confirm against the locally adopted edition."
+    },
+    "safety-basics": {
+      "name": "Safety Basics",
+      "category": "Quick Reference",
+      "purpose": "A field-awareness reference for the personal protective equipment a general contractor expects before badging you onto an active site, a short note on ESD (protecting the electronics you install, not the person), and the recognize-and-STOP hazards a WLAN pro must hand off rather than work.",
+      "whyHere": "Half of a WLAN pro's installs happen on a ladder or lift, on an active construction site, around other trades. Knowing the PPE ratings a GC will ask for keeps you from being turned away at the gate, cheap ESD gear prevents latent failures in the gear you install, and the STOP flags keep a routine cable pull from becoming a health or legal incident. This is awareness and lookup, not compliance instruction.",
+      "howToUse": [
+        "Use the PPE ladder to recognize the four common baseline items and the standard each is rated to (hard hat Z89.1, safety-toe F2413, hi-vis ANSI 107, eye protection Z87.1).",
+        "Read the ESD note as gear protection: a grounded wrist strap, mat, and static bags under ANSI/ESD S20.20 guard against latent damage to APs, optics, and boards.",
+        "On the four recognize-and-STOP hazards (asbestos/lead, arc flash and energized work, confined spaces, seismic bracing), stop and hand it off. Never run any of them as a procedure yourself.",
+        "Confirm the site's specific PPE policy with the employer and GC, who own the assessment."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "The four PPE items are the common 'let me on the site' baseline. On a finished office install street clothes are usually fine; on active construction expect the GC to require all four to badge on.",
+        "ESD risk is highest in data centers and any time you handle bare optics or boards. For a sealed AP coming out of a static bag, mounted and cabled, the risk is lower but not zero.",
+        "The recognize-and-STOP items are named-and-stopped on purpose: the Toolbox names the hazard and tells you to hand it off, and deliberately gives no procedure for working any of them.",
+        "This is a field reference, not code or design guidance. Confirm requirements with the AHJ, the architect of record, and a licensed electrician."
+      ],
+      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in safety_basics_screen.dart with the PPE-standards plate. Standards designators (ANSI/ISEA Z89.1, ASTM F2413, ANSI/ISEA 107, ANSI Z87.1, ANSI/ESD S20.20, NFPA 70E); confirm the site's PPE policy with the employer and GC."
+    },
+    "plan-set-literacy": {
+      "name": "Plan-Set Literacy",
+      "category": "Quick Reference",
+      "purpose": "A field reference for reading an architectural drawing set: how a sheet number is built (discipline letter, sheet-type digit, sequence), what each discipline designator and sheet-type digit means, why the Reflected Ceiling Plan (RCP) is the sheet for AP placement, the rest of a plan set worth knowing, and US drawing scales.",
+      "whyHere": "A WLAN designer who can pull the right sheet, read the RCP, and speak in sheet numbers looks like a peer to the other trades instead of a junior. The RCP is where a coverage design meets the physical ceiling, and catching an AP-versus-diffuser conflict on paper is far cheaper than catching it at rough-in.",
+      "howToUse": [
+        "Read a sheet number left to right: discipline letter, sheet-type digit, sequence. A-201 is Architectural, an elevation, sheet 01.",
+        "Use the discipline table to find the sheet owner (A architectural, E electrical, T telecommunications; the WLAN and structured cabling usually live on the T sheets).",
+        "Use the sheet-type digit to find the drawing kind (1 plans, 2 elevations, 6 schedules), so A-1xx is an architectural plan and E-6xx an electrical schedule.",
+        "For AP placement, open the RCP: overlay your AP locations and resolve conflicts with diffusers, troffers, sprinklers, and soffits before rough-in. Never place APs on the floor plan alone."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "The RCP is drawn as if a mirror on the floor reflects the ceiling upward, so it reads in the same left-right orientation as the floor plan; it carries the ceiling grid, mounting heights, and every ceiling-mounted element.",
+        "Always build to the latest revision: the revision cloud marks what changed and the delta triangle carries the revision number.",
+        "US architectural sheets use fractional-inch scales (1/8\" = 1'-0\" is 1:96); to get the ratio, invert the fraction and multiply by 12.",
+        "Reference only. Confirm drawing conventions, revisions, and responsibility with the architect of record and your contract for the specific project."
+      ],
+      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in plan_set_literacy_screen.dart with the sheet-number-anatomy plate. Conventions per the US National CAD Standard; sheet-numbering practice varies on smaller jobs."
+    },
+    "site-access": {
+      "name": "Site Access",
+      "category": "Quick Reference",
+      "purpose": "A 'Know Before You Go' pre-mobilization checklist: eight site types (aerial and man-lifts, rail, hospitals, maritime, warehouse and distribution, schools, data centers, correctional) and the credential, screening, orientation, or escort that can gate you from reaching the work before it even starts.",
+      "whyHere": "On many sites you cannot reach the work area without a specific credential, background check, orientation, or escort. That is a quoting and scheduling factor, not just a safety one. Rail screening, a hospital ICRA permit, or lift-operator proof can each add days or weeks between winning a job and touching a cable.",
+      "howToUse": [
+        "Before you quote, scan the checklist for the site type you are bidding and read what may gate you.",
+        "Use the 'ask about' column as the questions to put to the GC, site owner, or authority: screening programs, orientations, escorts, flagman, PFD and TWIC, ICRA and ILSM, tool control.",
+        "Budget the lead time (rail screening and hospital ICRA in particular run long) into the schedule you promise.",
+        "Confirm each requirement with the site, general contractor, and authority before you mobilize; the Toolbox certifies nothing and clears no one."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "The pattern across every item: the requirement is set by someone other than you, must be satisfied before work starts, and carries real lead time and cost.",
+        "Maritime and over-water work adds PFD and drowning-hazard rules plus heavy salt corrosion, so spec NEMA 4X or high-IP with explicit corrosion resistance.",
+        "There is no OSHA-issued 'lift license'; the employer trains and certifies lift operators, and GCs demand documented proof.",
+        "This is a field reference, not code or design guidance. The site, general contractor, and authority set every requirement; confirm each one with them before you mobilize."
+      ],
+      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in site_access_screen.dart with the site-access-matrix plate. Access requirements are set by the site, GC, and authority having jurisdiction; confirm each before mobilizing."
+    },
     "link-budget": {
       "name": "Link Budget",
       "category": "Calculators & Tools",

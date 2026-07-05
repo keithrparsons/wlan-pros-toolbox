@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- PLACEHOLDER icon (Felix, 2026-07-05) — flag for Charta: a hazardous-area
+       warning motif. A warning triangle with a flame, standing in for the
+       Class / Division / Zone classified-location idea. currentColor stroke,
+       24x24. -->
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- warning triangle -->
+    <path d="M12 3 L21 19 H3 Z"/>
+    <!-- flame inside -->
+    <path d="M12 9 c1.6 1.6 2.2 2.8 2.2 3.9 a2.2 2.2 0 0 1 -4.4 0 c0 -1.1 0.6 -2.3 2.2 -3.9 z"/>
+  </g>
+</svg>

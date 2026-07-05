@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- PLACEHOLDER icon (Felix, 2026-07-05) — flag for Charta: a weatherproof
+       enclosure / shield motif. A sealed box with a water droplet, standing in
+       for the IP/NEMA ingress-protection idea. currentColor stroke, 24x24. -->
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- sealed enclosure body -->
+    <rect x="4" y="7" width="16" height="13" rx="2"/>
+    <!-- gasket / lid seam -->
+    <path d="M4 11 H20"/>
+    <!-- water droplet (water-ingress test) -->
+    <path d="M12 13.5 c-1.6 1.8 -2.4 3 -2.4 4 a2.4 2.4 0 0 0 4.8 0 c0 -1 -0.8 -2.2 -2.4 -4 z"/>
+  </g>
+</svg>
