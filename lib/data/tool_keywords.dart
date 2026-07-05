@@ -216,6 +216,26 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'ilsm', 'maritime', 'twic', 'over-water', 'warehouse', 'data center',
     'correctional', 'school', 'fingerprinting', 'badging', 'tool control',
   ],
+  'cad-bim-formats': <String>[
+    'cad', 'bim', 'dwg', 'dxf', 'dgn', 'ifc', 'rvt', 'revit', 'navisworks',
+    'nwd', 'nwc', 'cobie', 'autocad', 'microstation', 'buildingsmart',
+    'level of development', 'lod', 'loi', 'ekahau', 'hamina', 'ibwave',
+    'floor plan import', 'scale calibration', 'cad layers', 'building file',
+  ],
+  'structured-cabling': <String>[
+    'structured cabling', 'tia', 'ansi/tia-568', 'tia-568', 'tia-569',
+    'tia-606', 'tia-607', 'j-std-607', 'bicsi', 'rcdd', 'tdmm', 'cat 5e',
+    'cat 6', 'cat 6a', 'cat 8', 't568a', 't568b', 'pin-out', '90 meter',
+    'channel', 'permanent link', 'mdf', 'idf', 'horizontal cabling',
+    'riser', 'work-area outlet', 'poe switch',
+  ],
+  'aec-process-glossary': <String>[
+    'aec', 'aia', 'design phase', 'schematic design', 'design development',
+    'construction documents', 'construction administration', 'programming',
+    'rfi', 'submittal', 'shop drawings', 'asi', 'change order', 'punch list',
+    'ahj', 'general contractor', 'mep', 'oac', 'aor', 'eor', 'basis of design',
+    'owner project requirements', 'addendum', 'rfp', 'rfq', 'glossary',
+  ],
   'wavelength': <String>[
     'lambda', 'antenna length', 'quarter wave', 'frequency to wavelength',
   ],

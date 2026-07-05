@@ -1,12 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-  <!-- PLACEHOLDER icon (Felix, 2026-07-05) — flag for Charta: a hazardous-area
-       warning motif. A warning triangle with a flame, standing in for the
-       Class / Division / Zone classified-location idea. currentColor stroke,
-       24x24. -->
   <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <!-- warning triangle -->
-    <path d="M12 3 L21 19 H3 Z"/>
-    <!-- flame inside -->
-    <path d="M12 9 c1.6 1.6 2.2 2.8 2.2 3.9 a2.2 2.2 0 0 1 -4.4 0 c0 -1.1 0.6 -2.3 2.2 -3.9 z"/>
+    <!-- Hazardous Locations (Class/Division/Zone classified areas: flammable /
+         explosive atmospheres). Concept = a hazard PLACARD DIAMOND with a FLAME
+         inside. The DIAMOND is the gross silhouette, chosen deliberately so this
+         does NOT collide with the Tier-1 system warning TRIANGLE (nec-gotchas is
+         also non-triangle) - a diamond reads as a placard/classification marker.
+         Rounded vertices come from round linejoin (2px corner treatment). The
+         flame names the flammable-atmosphere hazard; its up-teardrop shape is
+         distinguished from enclosure-ratings' down-droplet by its container
+         (diamond vs box). GL-003 8.6.1: 24x24, single currentColor, fill=none,
+         2px stroke, round cap/join, legible at 20px. QA headless Chrome at
+         20/24/28px, lime #A1CC3A on #222222. -->
+    <!-- hazard placard diamond -->
+    <path d="M12 3 L21 12 L12 21 L3 12 Z"/>
+    <!-- flame (flammable / explosive atmosphere); asymmetric profile with a left
+         shoulder so it reads as a FLAME, not a mirrored droplet -->
+    <path d="M11.7 8 C 13.4 10, 14.4 11.4, 14.4 13 a 2.4 2.4 0 0 1 -4.8 0 c 0 -1.1 0.5 -2 1.6 -3.1 c 0.15 0.7 0.5 1.05 1 1.25 C 12.6 10.4 11.9 9.3 11.7 8 Z"/>
   </g>
 </svg>

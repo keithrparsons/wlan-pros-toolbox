@@ -1,15 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-  <!-- PLACEHOLDER icon (Felix, 2026-07-05) - flag for Charta: a site-access /
-       gate motif. A badge/credential card, standing in for the "know before you
-       go: credential + orientation to reach the work" idea. currentColor stroke,
-       24x24. -->
   <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <!-- badge card -->
-    <rect x="4" y="5" width="16" height="14" rx="2"/>
-    <!-- clip -->
-    <path d="M10 5 V3 H14 V5"/>
-    <!-- photo + lines -->
-    <circle cx="9" cy="11" r="1.6"/>
-    <path d="M13 10 H17 M13 13 H17 M7 15 H17"/>
+    <!-- Site Access (checkpoint / credential to reach the work). Concept = a BOOM
+         BARRIER gate: a vertical POST on a ground base, with a long BOOM ARM
+         lowered across the frame (access controlled) carrying two hazard STRIPE
+         ticks, and a pivot at the post. Gross silhouette = post + long descending
+         arm, chosen deliberately so it does NOT collide with the many rounded-rect
+         card glyphs (device-info, cli-commands, enclosure-ratings) - a barrier is
+         unmistakably "access control".
+         GL-003 8.6.1: 24x24, single currentColor, fill=none, 2px stroke, round
+         cap/join, legible at 20px. QA headless Chrome at 20/24/28px, lime
+         #A1CC3A on #222222. -->
+    <!-- ground base -->
+    <path d="M3.5 20 H9.5"/>
+    <!-- gate post -->
+    <path d="M6.5 20 V8"/>
+    <!-- pivot -->
+    <circle cx="6.5" cy="8" r="1"/>
+    <!-- boom arm lowered across the access -->
+    <path d="M7.5 8.4 L21 12.5"/>
+    <!-- hazard stripes on the boom -->
+    <path d="M11.6 11 L12.7 8.4"/>
+    <path d="M15.6 12.2 L16.7 9.6"/>
   </g>
 </svg>

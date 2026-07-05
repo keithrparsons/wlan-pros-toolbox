@@ -593,6 +593,72 @@
       ],
       "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in site_access_screen.dart with the site-access-matrix plate. Access requirements are set by the site, GC, and authority having jurisdiction; confirm each before mobilizing."
     },
+    "cad-bim-formats": {
+      "name": "CAD & BIM Formats",
+      "category": "Quick Reference",
+      "purpose": "A field reference for what the building files an architect hands you actually are: the format decode table (DWG, DXF, DGN, IFC, RVT, NWD/NWC, COBie), the Level of Development (LOD 100-500) ladder for how much of a model to trust, and how a building file flows into a Wi-Fi design tool (Ekahau, Hamina, iBwave).",
+      "whyHere": "You receive these files on every design job. The difference between a clean import and a wasted afternoon is knowing what the format is, what LOD you were handed, which CAD layers to ask for, and that scale calibration is the single step that makes or breaks the whole design. The Toolbox explains these formats; it does not open, render, or convert them.",
+      "howToUse": [
+        "Use the decode table to recognize a format on sight: DWG and DXF are Autodesk CAD, IFC is the open BIM standard, RVT is a Revit model, NWD/NWC are Navisworks coordination files, COBie is asset data.",
+        "Read the LOD you were handed before trusting geometry: LOD 100-200 is a massing study (do not derive wall attenuation from it), LOD 300 and up is dimensionally trustworthy.",
+        "Follow the import flow: import the CAD or PDF, calibrate the scale on a known distance (get this wrong and every downstream distance is wrong), then assign wall materials and run the prediction.",
+        "Ask the architect for a clean layer set (walls, doors, structure; strip furniture, dimensions, title blocks) instead of an unusable 80-layer dump."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Scale calibration is the step that matters most: draw a line over a known length and enter the real measurement. An error here corrupts every distance, coverage prediction, and attenuation value downstream.",
+        "LOI (Level of Information) is the data-completeness sibling of LOD: LOD is geometry, LOI is data.",
+        "The boundary: the Toolbox explains DWG, IFC, RVT, and the rest and how they reach the design tools. It is not a CAD or BIM viewer, converter, or editor.",
+        "Reference only. Confirm file handling, model reliability, and responsibility with the architect of record and your design-tool documentation."
+      ],
+      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in cad_bim_formats_screen.dart. Text-reference only (no decoder plate); a plate may be added later. Format and LOD conventions per Autodesk, buildingSMART, and the AIA/AGC LOD framework."
+    },
+    "structured-cabling": {
+      "name": "Structured Cabling",
+      "category": "Quick Reference",
+      "purpose": "A field reference for the TIA and BICSI structured-cabling standards that decide where an AP can go and what feeds it: the TIA-568 family, the 90 m permanent link plus 10 m of cords for a 100 m channel, the cable-category ladder (Cat 5e through Cat 8), and the MDF-IDF topology that ties AP locations to telecom rooms.",
+      "whyHere": "The 90 m rule and the Cat 6A bar shape real WLAN decisions: they set the outer edge of where you can place an AP and what uplink it can carry, which quietly drives IDF placement, switch selection, and the whole coverage plan. The physical grounding-as-safety side lives in the NEC codes reference; this is the TIA and BICSI infrastructure side.",
+      "howToUse": [
+        "Use the TIA family to know who owns what: 568 is cabling, 569 pathways and spaces, 606 labeling and administration, 607 telecom bonding and grounding.",
+        "Apply the 90+10 m channel rule as an AP-cable-run reality check: an AP more than about 90 m of cable-path from the IDF needs an intermediate closet, a different topology, or fiber.",
+        "Read the cable-category table for the multi-gig bar: Cat 6A carries 10 Gbps to 100 m and is the practical minimum for Wi-Fi 6, 6E, and 7 APs with multi-gig uplinks.",
+        "Coordinate with the RCDD (BICSI's cabling-design credential) whose 90 m constraint ties AP locations to IDF locations."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "The 90 m permanent link is solid horizontal cable from the telecom room to the outlet; add up to 10 m of stranded patch and equipment cords for a 100 m channel maximum. Exceed it and you are outside TIA.",
+        "T568A and T568B are the two pin-out standards; a jack is wired to one, so be consistent end to end.",
+        "AP count and placement drive IDF count and PoE-switch port budgeting, so the WLAN design and the cabling design have to talk to each other.",
+        "Reference only. Confirm cabling design and standards currency with the RCDD, the architect of record, and your contract for the specific project."
+      ],
+      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in structured_cabling_screen.dart. Text-reference only (no decoder plate); a plate may be added later. Standards per ANSI/TIA-568/569/606/607 and BICSI; confirm the current edition."
+    },
+    "aec-process-glossary": {
+      "name": "AEC Process & Glossary",
+      "category": "Quick Reference",
+      "purpose": "A field reference for the architecture-engineering-construction workflow you work inside and the shorthand the other trades use: the AIA design phases (Programming, SD, DD, CD, Bidding, CA) and when Wi-Fi should engage, plus the AEC glossary (RFI, submittal, ASI, AHJ, GC, MEP, OAC, AOR/EOR, and more) that trips WLAN pros up. US convention (AIA).",
+      "whyHere": "Speak the process fluently and you look like a peer in the room instead of the network person who wandered in. The RFI, the submittal, the punch list, and the OAC are the levers that get your coverage design built the way you drew it. Engaging at Schematic Design is the difference between designing Wi-Fi in and retrofitting it later.",
+      "howToUse": [
+        "Use the phase table to engage at the right moment: establish RF requirements and reserve IDF and ceiling access at SD, coordinate AP locations against the RCP at DD, finalize plans and telecom sheets at CD.",
+        "Raise an RFI the moment the Reflected Ceiling Plan and your AP plan disagree, so the conflict is resolved on paper before rough-in.",
+        "Get your APs, mounts, and cable approved as a submittal (the contractor's proof that what is installed matches the spec).",
+        "Treat anything about contractual responsibility as 'confirm with the architect of record and your contract,' never as a ruling."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "The AHJ (Authority Having Jurisdiction) is the building official, fire marshal, or inspector who interprets and enforces code locally; the AHJ's word governs.",
+        "An ASI is a minor clarification with no cost or time impact; a Change Order is a formal, signed change to scope, cost, or schedule (what an ASI is not).",
+        "The OAC is the recurring Owner-Architect-Contractor coordination meeting; if Wi-Fi matters, someone has to carry it into the OAC.",
+        "Reference only. Confirm contractual responsibility, code compliance, and phase deliverables with the architect of record, the AHJ, and your contract for the specific project."
+      ],
+      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in aec_process_glossary_screen.dart. Text-reference only, glossary-heavy (no decoder plate); a plate may be added later. Phase and contract vocabulary per US AIA convention."
+    },
     "link-budget": {
       "name": "Link Budget",
       "category": "Calculators & Tools",

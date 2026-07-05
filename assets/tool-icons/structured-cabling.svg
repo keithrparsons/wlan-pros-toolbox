@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Structured Cabling (TIA / BICSI horizontal cabling, the permanent link).
+         Concept = a PATCH PANEL: a wide landscape rack unit with a rack-ear
+         divider at each end and a row of three PORT openings across the middle.
+         The patch panel is the load-bearing element of a structured-cabling
+         system (the cross-connect where the horizontal runs terminate), so it
+         reads as the CABLING SYSTEM, not a single connector.
+         Deliberately distinct from every single-connector glyph in the set:
+           - rj-connectors   (a latch-topped modular PLUG in profile + tail)
+           - ethernet-pinout (a near-square RJ45 plug FACE with a bottom tab-notch)
+           - ethernet-cable  (a twisted-pair run into a plug end)
+           - iec/nema/coax   (single inlets / cross-sections)
+         Only this icon is a wide 2:1 rack bar with mounting ears + a port row;
+         port openings are drawn as small rectangles (not bare ticks) so it does
+         not read as channel-map's full grid.
+         GL-003 §8.6.1: 24x24 master, single currentColor, fill=none, 2px stroke,
+         round cap/join, silhouette-first, legible at 20px. QA rendered in headless
+         Chrome (never ImageMagick) at 20/24/28px, lime #A1CC3A on app surface
+         #222222. -->
+    <!-- panel body (wide 1U rack unit) -->
+    <rect x="2" y="7" width="20" height="10" rx="1.5"/>
+    <!-- rack-ear dividers (the mounting flanges at each end) -->
+    <path d="M6 7 V17"/>
+    <path d="M18 7 V17"/>
+    <!-- three port openings across the panel face -->
+    <rect x="7.5" y="10.5" width="2.5" height="3"/>
+    <rect x="11" y="10.5" width="2.5" height="3"/>
+    <rect x="14.5" y="10.5" width="2.5" height="3"/>
+  </g>
+</svg>

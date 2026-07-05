@@ -1,14 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-  <!-- PLACEHOLDER icon (Felix, 2026-07-05) - flag for Charta: a drawing-set /
-       blueprint motif. A rolled/sheeted plan with a title-block corner, standing
-       in for the "read the plan set, find the RCP" idea. currentColor stroke,
-       24x24. -->
   <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <!-- sheet -->
-    <rect x="4" y="4" width="16" height="16" rx="1.5"/>
-    <!-- title-block corner -->
-    <path d="M13 20 V13 H20"/>
-    <!-- plan lines -->
-    <path d="M7 8 H11 M7 11 H10"/>
+    <!-- Plan Set Literacy (read the drawing set: find the RCP, the title block,
+         the revision). Concept = a PORTRAIT drawing SHEET with a folded DOG-EAR
+         corner (the "it's a sheet of paper" tell) and a TITLE BLOCK boxed in the
+         lower-right (the marker of an engineering/architectural plan sheet), plus
+         two content lines. The notched-portrait silhouette is deliberately unlike
+         architectural-scale (a graduated RULER stacked over a floor plan) and
+         unlike enclosure-ratings (a LANDSCAPE box + droplet).
+         GL-003 8.6.1: 24x24, single currentColor, fill=none, 2px stroke, round
+         cap/join, legible at 20px. QA headless Chrome at 20/24/28px, lime
+         #A1CC3A on #222222. -->
+    <!-- sheet outline with folded top-right corner -->
+    <path d="M6 3 H15 L18 6 V21 H6 Z"/>
+    <!-- the fold (dog-ear) -->
+    <path d="M15 3 V6 H18"/>
+    <!-- title block in the lower-right corner -->
+    <path d="M18 16 H11 V21"/>
+    <!-- drawing content lines -->
+    <path d="M9 9 H13"/>
+    <path d="M9 12 H12"/>
   </g>
 </svg>

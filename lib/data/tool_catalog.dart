@@ -1019,6 +1019,46 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Codes & Safety',
       ),
+      // Field Reference #8 — read-only "what the building files actually are":
+      // the CAD/BIM format decode table (DWG, IFC, RVT, ...), Level of
+      // Development, and how a building file flows into a Wi-Fi design tool.
+      // Text-reference (no decoder plate). Same "Codes & Safety" subgroup
+      // (umbrella-vs-topical taxonomy still flagged for Keith). Custom icon is a
+      // placeholder pending Charta/Iris.
+      ToolEntry(
+        id: 'cad-bim-formats',
+        title: 'CAD & BIM Formats',
+        description: 'Decode DWG, IFC, RVT, and how they reach a design tool',
+        routeName: '/tools/cad-bim-formats',
+        isLive: true,
+        subgroup: 'Codes & Safety',
+      ),
+      // Field Reference #9 — read-only TIA/BICSI structured-cabling reference:
+      // the TIA-568 family, the 90+10 m channel rule, the cable-category ladder
+      // (Cat 5e-8), and how the cabling design ties AP locations to IDF
+      // locations. Text-reference (no decoder plate). Same "Codes & Safety"
+      // subgroup. Custom icon is a placeholder pending Charta/Iris.
+      ToolEntry(
+        id: 'structured-cabling',
+        title: 'Structured Cabling',
+        description: 'TIA standards, the 90 m channel, and cable categories',
+        routeName: '/tools/structured-cabling',
+        isLive: true,
+        subgroup: 'Codes & Safety',
+      ),
+      // Field Reference #10 — read-only AEC process + glossary: the AIA design
+      // phases (and when Wi-Fi should engage), and the AEC shorthand (RFI,
+      // submittal, AHJ, OAC, ...) that trips WLAN pros up. Text-reference,
+      // glossary-heavy (no decoder plate). Same "Codes & Safety" subgroup.
+      // Custom icon is a placeholder pending Charta/Iris.
+      ToolEntry(
+        id: 'aec-process-glossary',
+        title: 'AEC Process & Glossary',
+        description: 'Design phases and the AEC shorthand the trades use',
+        routeName: '/tools/aec-process-glossary',
+        isLive: true,
+        subgroup: 'Codes & Safety',
+      ),
       // ── from the dissolved Infrastructure category ──
       ToolEntry(
         id: 'poe-reference',

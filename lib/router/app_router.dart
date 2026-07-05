@@ -116,6 +116,9 @@ import '../screens/tools/reference/nec_gotchas_screen.dart';
 import '../screens/tools/reference/plan_set_literacy_screen.dart';
 import '../screens/tools/reference/safety_basics_screen.dart';
 import '../screens/tools/reference/site_access_screen.dart';
+import '../screens/tools/reference/cad_bim_formats_screen.dart';
+import '../screens/tools/reference/structured_cabling_screen.dart';
+import '../screens/tools/reference/aec_process_glossary_screen.dart';
 import '../screens/tools/reference/wifi_feature_matrix_screen.dart';
 import '../screens/tools/reference/regulatory_domains_screen.dart';
 import '../screens/tools/reference/datetime_standards_screen.dart';
@@ -285,6 +288,12 @@ class AppRouter {
   static const String safetyBasics = '/tools/safety-basics';
   static const String planSetLiteracy = '/tools/plan-set-literacy';
   static const String siteAccess = '/tools/site-access';
+  // Field Reference #8/#9/#10 (2026-07-05). Read-only text-reference screens (no
+  // decoder plate): CAD/BIM formats, TIA/BICSI structured cabling, and the AEC
+  // process + glossary; static content, offline, all platforms incl. web.
+  static const String cadBimFormats = '/tools/cad-bim-formats';
+  static const String structuredCabling = '/tools/structured-cabling';
+  static const String aecProcessGlossary = '/tools/aec-process-glossary';
 
   /// Power Phasing — the pilot reference for the Power & Cooling category. The
   /// id `power-phasing` is permanent (backs this route, the catalog entry, the
@@ -623,6 +632,9 @@ class AppRouter {
     safetyBasics: (_) => const SafetyBasicsScreen(),
     planSetLiteracy: (_) => const PlanSetLiteracyScreen(),
     siteAccess: (_) => const SiteAccessScreen(),
+    cadBimFormats: (_) => const CadBimFormatsScreen(),
+    structuredCabling: (_) => const StructuredCablingScreen(),
+    aecProcessGlossary: (_) => const AecProcessGlossaryScreen(),
     powerPhasing: (_) => const PowerPhasingScreen(),
     ohmsLaw: (_) => const OhmsLawScreen(),
     coolingThermal: (_) => const CoolingThermalScreen(),

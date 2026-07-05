@@ -250,7 +250,14 @@ void main() {
       // sheet (placement flagged for Keith, defaulted to Codes & Safety); Site
       // Access (site-access) the "Know Before You Go" pre-mobilization
       // checklist. 159 + 3 = 162.
-      expect(store.count, 162);
+      // 165 = + the last 3 Field & Trade Reference screens (2026-07-05), all
+      // read-only text-reference (no decoder plate) in Quick Reference ("Codes &
+      // Safety"): CAD & BIM Formats (cad-bim-formats) the format decode table +
+      // LOD ladder + CAD-to-Wi-Fi-design import flow; Structured Cabling
+      // (structured-cabling) the TIA/BICSI standards + 90 m channel + cable
+      // categories; AEC Process & Glossary (aec-process-glossary) the AIA design
+      // phases + the AEC shorthand. 162 + 3 = 165.
+      expect(store.count, 165);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

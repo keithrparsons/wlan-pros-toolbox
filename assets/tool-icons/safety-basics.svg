@@ -1,13 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-  <!-- PLACEHOLDER icon (Felix, 2026-07-05) - flag for Charta: a PPE / safety
-       motif. A hard hat, standing in for the "PPE + ESD before you badge on"
-       idea. currentColor stroke, 24x24. -->
   <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Safety Basics (PPE / job-site safety before you badge on). Concept = a
+         HARD HAT: a rounded DOME, a wide BRIM that clearly protrudes past the
+         dome on both sides (the hard-hat tell), and the characteristic center
+         RIDGE. Gross silhouette = dome-over-wide-brim, distinct from
+         educational-resources' flat mortarboard DIAMOND and from every box glyph.
+         GL-003 8.6.1: 24x24, single currentColor, fill=none, 2px stroke, round
+         cap/join, legible at 20px. QA headless Chrome at 20/24/28px, lime
+         #A1CC3A on #222222. -->
     <!-- hard-hat dome -->
-    <path d="M5 15 a7 7 0 0 1 14 0"/>
-    <!-- brim -->
-    <path d="M3 15 H21"/>
+    <path d="M5.5 15 A 6.5 6.5 0 0 1 18.5 15"/>
+    <!-- brim (protrudes past the dome on both sides) -->
+    <path d="M3 15.3 Q12 17.4 21 15.3"/>
     <!-- center ridge -->
-    <path d="M12 8 V15"/>
+    <path d="M12 8.6 V15"/>
   </g>
 </svg>

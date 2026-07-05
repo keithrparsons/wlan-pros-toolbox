@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- AEC Process & Glossary. Concept = a TREE / PROCESS BREAKDOWN: a parent
+         node on the left branching through an elbow spine to two child nodes on
+         the right. Reads as a structured breakdown of the AEC domain - the
+         design-phase / work-breakdown structure AND the term taxonomy a glossary
+         organizes. Square NODES (not circles) plus a right-angle connector spine.
+         Deliberately distinct from:
+           - bubble-diagram        (three CIRCLES joined by plain diagonal links)
+           - frame-exchange        (two vertical rails + horizontal arrows)
+           - capacity-planner      (a central AP with radial spokes to dot clients)
+           - educational-resources (a graduation-cap mortarboard)
+           - wifi/auth-glossary    (an OPEN BOOK) and checklist glyphs (clipboards)
+         Only this icon is a left-rooted tree of squares with a right-angle spine -
+         no circles, no rails, no book, no list.
+         GL-003 §8.6.1: 24x24 master, single currentColor, fill=none, 2px stroke,
+         round cap/join, silhouette-first, legible at 20px. QA rendered in headless
+         Chrome (never ImageMagick) at 20/24/28px, lime #A1CC3A on app surface
+         #222222. -->
+    <!-- parent node (left) -->
+    <rect x="2" y="8" width="6" height="8" rx="1.5"/>
+    <!-- child nodes (right, top and bottom) -->
+    <rect x="16" y="3" width="6" height="6" rx="1.5"/>
+    <rect x="16" y="15" width="6" height="6" rx="1.5"/>
+    <!-- connector spine: trunk out of the parent, vertical riser, two branches -->
+    <path d="M8 12 H12"/>
+    <path d="M12 6 V18"/>
+    <path d="M12 6 H16"/>
+    <path d="M12 18 H16"/>
+  </g>
+</svg>

@@ -1,13 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-  <!-- PLACEHOLDER icon (Felix, 2026-07-05) — flag for Charta: a weatherproof
-       enclosure / shield motif. A sealed box with a water droplet, standing in
-       for the IP/NEMA ingress-protection idea. currentColor stroke, 24x24. -->
   <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <!-- sealed enclosure body -->
-    <rect x="4" y="7" width="16" height="13" rx="2"/>
-    <!-- gasket / lid seam -->
-    <path d="M4 11 H20"/>
-    <!-- water droplet (water-ingress test) -->
-    <path d="M12 13.5 c-1.6 1.8 -2.4 3 -2.4 4 a2.4 2.4 0 0 0 4.8 0 c0 -1 -0.8 -2.2 -2.4 -4 z"/>
+    <!-- Enclosure Ratings (IP / NEMA ingress protection). Concept = a sealed
+         weatherproof ENCLOSURE keeping WATER out: a landscape enclosure body
+         with a gasketed LID SEAM near the top, and a large WATER DROPLET as the
+         ingress-test motif. The droplet is the load-bearing silhouette element
+         and survives 20px. Deliberately LANDSCAPE (18x14) so its gross shape
+         reads apart from plan-set-literacy (a PORTRAIT sheet) and from cli-commands
+         (a terminal chevron, no droplet); the droplet appears in no other icon.
+         GL-003 8.6.1: 24x24 master, single currentColor, fill=none, 2px stroke,
+         round cap/join, silhouette-first, legible at 20px. QA in headless Chrome
+         (never ImageMagick) at 20/24/28px, lime #A1CC3A on app surface #222222. -->
+    <!-- enclosure body (landscape) -->
+    <rect x="3" y="6" width="18" height="14" rx="2"/>
+    <!-- gasketed lid seam -->
+    <path d="M4 10 H20"/>
+    <!-- water droplet (ingress-protection test) -->
+    <path d="M12 12 C 9.6 15, 8.9 16.4, 8.9 17.7 A 3.1 3.1 0 0 0 15.1 17.7 C 15.1 16.4 14.4 15 12 12 Z"/>
   </g>
 </svg>
