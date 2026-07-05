@@ -39,9 +39,16 @@ List<String> _allProse() => <String>[
 
 void main() {
   group('data fidelity (GL-005) — Penn\'s approved copy verbatim', () {
-    test('PCI asks: exactly 5; WPA2-PSK inadequate and the quarterly scan', () {
+    test('PCI asks: exactly 5; CDE steered to 802.1X/EAP and the quarterly scan',
+        () {
       expect(kPciAsks.length, 5);
-      expect(kPciAsks[1].contains('WPA2-PSK is inadequate for the CDE'), isTrue);
+      expect(
+        kPciAsks[1].contains(
+          'PCI guidance steers the cardholder-data environment to 802.1X/EAP; '
+          'PSK is discouraged there',
+        ),
+        isTrue,
+      );
       expect(kPciAsks[3].contains('at least quarterly'), isTrue);
     });
 

@@ -214,16 +214,23 @@ const List<HazConcept> kHazConcepts = <HazConcept>[
     where: 'Larger cabinets',
   ),
   HazConcept(
-    concept: 'Increased safety / restricted breathing (Ex e / Ex nR)',
-    how: 'Sealed against gas ingress, no arcing parts',
+    concept: 'Increased safety (Ex e)',
+    how:
+        'Construction prevents arcs and hot surfaces in normal operation',
+    where: 'Zone 1',
+  ),
+  HazConcept(
+    concept: 'Restricted breathing (Ex nR)',
+    how: 'Enclosure sealed against gas ingress',
     where: 'Zone 2 / Div 2, the common wireless case',
   ),
 ];
 
 /// The listing-standards note under the concept table.
 const String kHazListingNote =
-    'US listing runs to UL 1203 under NEC 500, 505, and 506. Internationally, '
-    'ATEX (mandatory in Europe) and IECEx (global) apply.';
+    'US listing runs to UL 1203 for the explosionproof / Division method under '
+    'NEC 500, and to the UL 60079 series for the Zone system under NEC 505 and '
+    '506. Internationally, ATEX (mandatory in Europe) and IECEx (global) apply.';
 
 // ──────────────── What "Class I Div 2 rated" actually buys you ───────────────
 

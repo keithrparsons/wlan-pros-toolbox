@@ -820,6 +820,37 @@ void main() {
   }
 
   testWidgets(
+    "the idle state offers the low-key \"What's the difference?\" explainer "
+    'aside beneath the intro line, before any check runs',
+    (tester) async {
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: false,
+            sourceOverride: WifiInfoSource.iosShortcuts,
+            iosBridge: _PayloadBridge(),
+            qualityClient: MockQualityClient(
+              scriptedResult: _marginalInternet(),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // Present in the pre-run idle state, as a text-weight aside (not a second
+      // filled button), sitting beside the primary "Check My Connection" action.
+      expect(find.text("What's the difference?"), findsOneWidget);
+      expect(find.text('Check My Connection'), findsOneWidget);
+      // The aside is a TextButton carrying the help_outline glyph (the bottom
+      // ToolHelpFooter also uses that glyph, so scope the match to the button).
+      expect(
+        find.widgetWithIcon(TextButton, Icons.help_outline),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
     '(A) verdict hero renders the plain-language sentence (H1) + the two '
     'side-by-side status chips, each WORD + GLYPH',
     (tester) async {

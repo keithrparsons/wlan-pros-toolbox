@@ -3714,4 +3714,4 @@ Converts a named drawing scale to its dimensionless ratio and back, and converts
 - The result is only as good as the scale. If a PDF has no embedded scale, confirm which scale it is by measuring a known dimension, a 3'-0" door or a 2x4 ft ceiling tile.
 - Printed and PDF plans are often not to true scale (fit-to-page printing, cropped sheets). Trust a dimensioned callout on the sheet over any measurement.
 - US-primary: architectural scales use fractional inches, engineer's scales use decimal feet per inch. Metric ratios (1:50, 1:100) are provided for ISO drawing sets.
-- Data source: architectural_scale_screen.dart, pure on-device math, no network.
+- Data source: pure on-device math, no network.

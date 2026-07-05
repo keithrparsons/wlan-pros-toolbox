@@ -126,8 +126,9 @@ const List<RadioSystemRow> kRadioSystems = <RadioSystemRow>[
 
 /// The five systems that share your 2.4 GHz air, verbatim from the copy.
 const List<String> kTwoFourContenders = <String>[
-  'BLE and Bluetooth Classic (2400 to 2483.5 MHz, 40 channels, adaptive '
-      'frequency hopping). Wearables, audio, beacons, device onboarding, RTLS, '
+  'BLE (2400 to 2483.5 MHz, 40 channels at 2 MHz spacing) and Bluetooth '
+      'Classic (same band, 79 channels at 1 MHz spacing), both adaptive '
+      'frequency hopping. Wearables, audio, beacons, device onboarding, RTLS, '
       'and BT 5.1 direction finding.',
   'Zigbee (16 channels at 250 kbps, self-healing mesh). Lighting, building '
       'automation, HVAC, sensors.',

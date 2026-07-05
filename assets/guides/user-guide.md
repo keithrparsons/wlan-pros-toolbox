@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox: How This App Works
 
-_A 5-minute tour of the app · app v1.5.4 · updated 2026-06-24_
+_A 5-minute tour of the app · app v1.5.4 · updated 2026-07-05_
 
 This is a quick map of the app: what's in it, where things live, and which parts are for you. It is not a Wi-Fi lesson. If you want to understand and fix your own Wi-Fi, open the free book "Fix Your Own Wi-Fi" from the front page; that book does the teaching. This guide just shows you around the software.
 
@@ -39,6 +39,94 @@ When something is wrong, the tool also tells you what to say when you call suppo
 Apple limits what any app is allowed to read about your live Wi-Fi connection on an iPhone. To work around that fairly, the app uses a small free helper from Apple's own Shortcuts app. The first time you run a live Wi-Fi test on iPhone, the app will offer to set this helper up for you. It's a one-time step. Once it's in place, the live readings flow through cleanly. On a Mac, you don't need any of this; the readings come straight through.
 
 If you skip the helper on iPhone, the tool still works. It just measures your internet honestly and tells you it couldn't read the Wi-Fi side, rather than pretending.
+
+## Wi-Fi vs Cellular vs Internet: what's the difference?
+
+Most people use "Wi-Fi" and "the internet" as the same word. They are two different things, and cellular is a third. Knowing which of the three is having a bad day is the difference between a 30-second fix and a wasted afternoon on hold with someone who can't help you.
+
+Here they are, plain:
+
+- Wi-Fi is the wireless link between your device and your router, inside your home or office.
+- The internet is the worldwide network your provider delivers to your building.
+- Cellular is your phone's connection to the carrier's towers, a separate path to that same internet.
+
+Three different things. Let's walk each one.
+
+### Think of it as roads
+
+Picture your street.
+
+Wi-Fi is the road inside your neighborhood. It connects your house to the entrance and no farther.
+
+The internet is the highway system out past that entrance, the roads that reach every other town.
+
+Cellular is a different on-ramp to those same highways, one you can take when you're away from the neighborhood or the neighborhood road is blocked.
+
+One set of roads. That picture will carry you through the rest.
+
+### Wi-Fi: the link inside your building
+
+Wi-Fi covers the short hop from your phone or laptop to your router. That's it. It's the neighborhood road.
+
+Strong Wi-Fi means that short hop is clean and fast. Your device and your router are talking clearly.
+
+Here's what trips everyone up: Wi-Fi does not reach the internet on its own. It carries your traffic to the router, and the router hands that traffic to the internet feed. Full Wi-Fi bars tell you the hop to the router is good. They tell you nothing about whether the internet behind the router is working.
+
+### The internet: the feed from outside
+
+The internet is the connection your provider, your ISP, runs into your building. One connection comes in. Your router shares that one connection with every device in the house, over Wi-Fi and over the network cables.
+
+This is the highway system. When people say "the internet is down," they usually mean this feed is blocked, even though every road inside the neighborhood is perfectly fine.
+
+You pay your ISP for a certain speed on this feed. If that speed is slow, or the feed drops, no amount of great Wi-Fi will fix it. The neighborhood road can be freshly paved and empty. If the highway is jammed, you still don't get anywhere.
+
+### Cellular: a different road to the same place
+
+Your phone has a second way to reach the internet that has nothing to do with your Wi-Fi or your router. It talks to your carrier's cell towers over the air, and the carrier connects it to the same internet everyone else uses.
+
+That's the other on-ramp. When your Wi-Fi is off, or you walk out of range of your router, your phone switches to cellular on its own. Same highways, different way in.
+
+### Look at the top of your screen
+
+Glance at the top of your phone. You read two little meters up there all day without thinking about them, and there is a third you never get to see.
+
+![A diagram titled "Two signals you can see. One you can't." The top row shows the Wi-Fi signal meter climbing from no bars to full arcs; the middle row shows the cellular signal meter climbing from none to four bars. A highlighted panel shows a third meter, a dashed globe for the internet feed, that your phone never displays, which is why full bars can still mean nothing loads, and why the Test My Connection tool exists.](assets/guides/signal-meters.png)
+
+The Wi-Fi symbol, those stacked arcs, measures the strength of the hop to your router. More arcs, a cleaner link to the neighborhood road. It tells you nothing about the internet behind it.
+
+The cellular bars measure the strength to the nearest tower. More bars, a stronger path to the carrier.
+
+Here is the catch that explains everything: there is no internet meter. Your phone will happily show full Wi-Fi arcs and full cellular bars while the internet itself is down, because it has no icon for the health of the feed coming into the building. That missing third meter is exactly why "full bars, nothing loads" fools people, and it is the gap the Test My Connection tool fills. It runs the check your status bar cannot.
+
+### The confusions this clears up
+
+**Full Wi-Fi bars, but nothing loads.** Your phone has a clean link to the router, and the internet feed behind the router is down or crawling. The bars measure the neighborhood road, not the highway. This exact question is what the Toolbox's Test My Connection answers for you.
+
+**Great signal, still slow.** Same idea, gentler. Your Wi-Fi is fine and the page still takes forever. The limit is the internet plan or the provider, not the Wi-Fi in your living room. Standing closer to the router won't help, because the router was never the problem.
+
+**Turning Wi-Fi off "fixes" it.** You've probably done this. A page won't load, you switch Wi-Fi off, and suddenly your phone works. Wi-Fi didn't break anything. When you turned it off, your phone stopped trying the dead Wi-Fi path and jumped to cellular, which had a working road to the internet the whole time.
+
+### Modem, router, ISP: who does what
+
+Three pieces sit between your phone and the wider internet. One line each:
+
+- The ISP is the company you pay to deliver the internet to your building.
+- The modem is the box that turns the ISP's incoming signal into data your network can use.
+- The router is the box that shares that one internet connection with all your devices and creates your Wi-Fi.
+
+In many homes the modem and router are the same box, which is part of why the two jobs blur together. They are still two jobs.
+
+### How to tell which one is your problem
+
+When something's wrong, ask one question first: is the neighborhood road bad, or is the highway bad?
+
+- If one device is slow but the others are fine, look at that device and its Wi-Fi.
+- If everything on the Wi-Fi is slow at once, suspect the internet feed or the provider.
+- If your phone works the moment you turn Wi-Fi off, the Wi-Fi path is the trouble, not the internet.
+
+You don't have to guess at it. The Test My Connection tool in the WLAN Pros Toolbox runs the check and tells you plainly: is it your Wi-Fi, or is it your internet? That one answer decides who you call and saves you the afternoon on hold.
+
+Wi-Fi, the internet, and cellular are three different things. Get clear on which one is failing, and you fix the right problem the first time.
 
 ## A tour of the app, section by section
 
@@ -106,5 +194,3 @@ Welcome to the Toolbox. I hope it makes your Wi-Fi a little less mysterious.
 
 Keith R. Parsons  
 Wireless LAN Professionals, Inc.
-</content>
-</invoke>

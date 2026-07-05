@@ -1138,6 +1138,28 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Verticals',
       ),
+      // Vendor & Hardware (2026-07-05): the two INTERACTIVE drill-down
+      // references (selection state, not static screens). LED Decoder =
+      // vendor -> line -> LED state table; Vendor Model Decode = vendor ->
+      // model-number scheme + worked example. Local const data, offline, all
+      // platforms incl. web. Custom icons are placeholders pending Charta/Iris.
+      // Subgroup name "Vendor & Hardware" flagged for Keith's confirmation.
+      ToolEntry(
+        id: 'led-decoder',
+        title: 'LED Decoder',
+        description: 'Pick a vendor, read that AP\'s status-LED meanings',
+        routeName: '/tools/led-decoder',
+        isLive: true,
+        subgroup: 'Vendor & Hardware',
+      ),
+      ToolEntry(
+        id: 'vendor-model-decode',
+        title: 'Vendor Model Decode',
+        description: 'How to read an AP model number, per vendor',
+        routeName: '/tools/vendor-model-decode',
+        isLive: true,
+        subgroup: 'Vendor & Hardware',
+      ),
       // ── from the dissolved Infrastructure category ──
       ToolEntry(
         id: 'poe-reference',

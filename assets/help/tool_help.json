@@ -458,7 +458,7 @@
         "Printed and PDF plans are often not to true scale (fit-to-page printing, cropped sheets). Trust a dimensioned callout on the sheet over any measurement.",
         "US-primary: architectural scales use fractional inches, engineer's scales use decimal feet per inch. Metric ratios (1:50, 1:100) are provided for ISO drawing sets."
       ],
-      "source": "architectural_scale_screen.dart — pure on-device math, no network."
+      "source": "Pure on-device math, no network."
     },
     "enclosure-ratings": {
       "name": "Enclosure Ratings",
@@ -481,7 +481,7 @@
         "IP tests use fresh water only. Salt, detergents, and solvents need separate chemical-resistance verification.",
         "This is a field reference, not code or design guidance. Confirm requirements with the AHJ, the architect of record, and a licensed electrician."
       ],
-      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in enclosure_ratings_screen.dart with the IP/NEMA decoder plate. IP per IEC 60529; NEMA per NEMA 250."
+      "source": "IP per IEC 60529; NEMA per NEMA 250."
     },
     "hazardous-locations": {
       "name": "Hazardous Locations",
@@ -503,7 +503,7 @@
         "You cannot mix Division and Zone classification in the same installation. Which one is in force is set by the facility area-classification drawing and the AHJ, not the installer.",
         "This is a field reference, not code or design guidance. Confirm requirements with the AHJ, the architect of record, and a licensed electrician."
       ],
-      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in hazardous_locations_screen.dart with the Class/Division/Zone decoder plate. Class/Division per NEC Article 500; Zone per NEC 505/506, ATEX, and IECEx."
+      "source": "Class/Division per NEC Article 500; Zone per NEC 505/506, ATEX, and IECEx."
     },
     "nec-gotchas": {
       "name": "NEC Gotchas",
@@ -525,7 +525,7 @@
         "Grounding (810) caveat: nothing survives a direct strike. Bonding and surge protection mitigate nearby strikes and static, not a direct hit. Conductor sizing is an electrician's call.",
         "This is a field reference, not code or design guidance. Confirm requirements with the AHJ, the architect of record, and a licensed electrician."
       ],
-      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in nec_gotchas_screen.dart with the building-cutaway plate. Article numbers per the NEC (NFPA 70); confirm against the locally adopted edition."
+      "source": "Article numbers per the NEC (NFPA 70); confirm against the locally adopted edition."
     },
     "safety-basics": {
       "name": "Safety Basics",
@@ -547,7 +547,7 @@
         "The recognize-and-STOP items are named-and-stopped on purpose: the Toolbox names the hazard and tells you to hand it off, and deliberately gives no procedure for working any of them.",
         "This is a field reference, not code or design guidance. Confirm requirements with the AHJ, the architect of record, and a licensed electrician."
       ],
-      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in safety_basics_screen.dart with the PPE-standards plate. Standards designators (ANSI/ISEA Z89.1, ASTM F2413, ANSI/ISEA 107, ANSI Z87.1, ANSI/ESD S20.20, NFPA 70E); confirm the site's PPE policy with the employer and GC."
+      "source": "Standards designators (ANSI/ISEA Z89.1, ASTM F2413, ANSI/ISEA 107, ANSI Z87.1, ANSI/ESD S20.20, NFPA 70E); confirm the site's PPE policy with the employer and GC."
     },
     "plan-set-literacy": {
       "name": "Plan-Set Literacy",
@@ -569,7 +569,7 @@
         "US architectural sheets use fractional-inch scales (1/8\" = 1'-0\" is 1:96); to get the ratio, invert the fraction and multiply by 12.",
         "Reference only. Confirm drawing conventions, revisions, and responsibility with the architect of record and your contract for the specific project."
       ],
-      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in plan_set_literacy_screen.dart with the sheet-number-anatomy plate. Conventions per the US National CAD Standard; sheet-numbering practice varies on smaller jobs."
+      "source": "Conventions per the US National CAD Standard; sheet-numbering practice varies on smaller jobs."
     },
     "site-access": {
       "name": "Site Access",
@@ -591,7 +591,7 @@
         "There is no OSHA-issued 'lift license'; the employer trains and certifies lift operators, and GCs demand documented proof.",
         "This is a field reference, not code or design guidance. The site, general contractor, and authority set every requirement; confirm each one with them before you mobilize."
       ],
-      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in site_access_screen.dart with the site-access-matrix plate. Access requirements are set by the site, GC, and authority having jurisdiction; confirm each before mobilizing."
+      "source": "Access requirements are set by the site, GC, and authority having jurisdiction; confirm each before mobilizing."
     },
     "cad-bim-formats": {
       "name": "CAD & BIM Formats",
@@ -613,7 +613,7 @@
         "The boundary: the Toolbox explains DWG, IFC, RVT, and the rest and how they reach the design tools. It is not a CAD or BIM viewer, converter, or editor.",
         "Reference only. Confirm file handling, model reliability, and responsibility with the architect of record and your design-tool documentation."
       ],
-      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in cad_bim_formats_screen.dart. Text-reference only (no decoder plate); a plate may be added later. Format and LOD conventions per Autodesk, buildingSMART, and the AIA/AGC LOD framework."
+      "source": "Format and LOD conventions per Autodesk, buildingSMART, and the AIA/AGC LOD framework."
     },
     "structured-cabling": {
       "name": "Structured Cabling",
@@ -635,7 +635,7 @@
         "AP count and placement drive IDF count and PoE-switch port budgeting, so the WLAN design and the cabling design have to talk to each other.",
         "Reference only. Confirm cabling design and standards currency with the RCDD, the architect of record, and your contract for the specific project."
       ],
-      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in structured_cabling_screen.dart. Text-reference only (no decoder plate); a plate may be added later. Standards per ANSI/TIA-568/569/606/607 and BICSI; confirm the current edition."
+      "source": "Standards per ANSI/TIA-568/569/606/607 and BICSI; confirm the current edition."
     },
     "aec-process-glossary": {
       "name": "AEC Process & Glossary",
@@ -657,7 +657,7 @@
         "The OAC is the recurring Owner-Architect-Contractor coordination meeting; if Wi-Fi matters, someone has to carry it into the OAC.",
         "Reference only. Confirm contractual responsibility, code compliance, and phase deliverables with the architect of record, the AHJ, and your contract for the specific project."
       ],
-      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in aec_process_glossary_screen.dart. Text-reference only, glossary-heavy (no decoder plate); a plate may be added later. Phase and contract vocabulary per US AIA convention."
+      "source": "Phase and contract vocabulary per US AIA convention."
     },
     "link-budget": {
       "name": "Link Budget",
@@ -3920,7 +3920,7 @@
         "Some data, a client's full network design, is sensitive enough that the right home is your own device, not a cloud you never vetted.",
         "Reference only. Compliance status, scope, and sufficiency are determined by the client's security or compliance officer and a qualified auditor (a CPA firm or counsel), not by this tool."
       ],
-      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in cloud_tool_trust_screen.dart with the cloud-cert-decoder plate. Frameworks per ISO/IEC 27001:2022, the AICPA SOC 2 framework, and the EU GDPR."
+      "source": "Frameworks per ISO/IEC 27001:2022, the AICPA SOC 2 framework, and the EU GDPR."
     },
     "network-in-scope": {
       "name": "Network in Scope",
@@ -3942,7 +3942,7 @@
         "SOX is the narrowest fit: the network shows up as the access-and-change-control substrate under the financial systems, which is why an AP config change can suddenly need a ticket and an approver.",
         "Reference only. Whether a network is in scope, and whether a design is sufficient, is determined by the client's compliance officer and a qualified auditor, not by this tool."
       ],
-      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in network_in_scope_screen.dart with the compliance-scope-matrix plate. Framework requirements per PCI DSS v4.0.1, HIPAA 45 CFR 164.312, SOX Section 404, and the EU GDPR."
+      "source": "Framework requirements per PCI DSS v4.0.1, HIPAA 45 CFR 164.312, SOX Section 404, and the EU GDPR."
     },
     "adjacent-radio-systems": {
       "name": "Adjacent Radio Systems",
@@ -3964,7 +3964,7 @@
         "A Zigbee mesh and a wall of BLE beacons show up in a 2.4 GHz sweep as non-Wi-Fi energy; naming what you see is the difference between a diagnosis and a guess.",
         "Reference only. Confirm current standards editions and regional band allocations for the specific deployment."
       ],
-      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in adjacent_radio_systems_screen.dart with the spectrum-matrix plate. Bands and topologies per the relevant IEEE 802.15.4, Bluetooth SIG, LoRa Alliance, and 3GPP specifications."
+      "source": "Bands and topologies per the relevant IEEE 802.15.4, Bluetooth SIG, LoRa Alliance, and 3GPP specifications."
     },
     "credentials-licenses": {
       "name": "Credentials & Licenses",
@@ -3986,7 +3986,7 @@
         "CAC versus DBIDS is the military-base question: the CAC needs a sponsor and an investigation that can run many months, while DBIDS is the lighter get-on-base path.",
         "Reference only. The issuing authority sets and grants every credential; the Toolbox certifies nothing and clears no one."
       ],
-      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in credentials_licenses_screen.dart with the credential-lead-time plate. FCC license scope per Parts 15, 97, and 101; credential detail per TSA, USCG, DoD, and OSHA 29 CFR 1910.120(e)."
+      "source": "FCC license scope per Parts 15, 97, and 101; credential detail per TSA, USCG, DoD, and OSHA 29 CFR 1910.120(e)."
     },
     "by-vertical-index": {
       "name": "Verticals Index",
@@ -4008,7 +4008,7 @@
         "Use the index the other direction too: pick the industry, see the cluster, read the entry that owns the detail.",
         "This is a field reference, not code, design, or compliance guidance; confirm every requirement with the client, the AHJ, and the relevant assessor."
       ],
-      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in by_vertical_index_screen.dart. Text-reference only (no decoder plate); this entry is the index that points at the other reference entries."
+      "source": "An index to the other reference entries."
     },
     "healthcare-vertical": {
       "name": "Healthcare Wi-Fi",
@@ -4030,7 +4030,7 @@
         "Segmentation is a performance control here, not only a security one: guest, clinical, device, and RTLS traffic get separated for airtime protection as much as for HIPAA.",
         "This is a field reference, not clinical, code, or compliance guidance; confirm every requirement with biomed, the compliance and security officers, the WMTS coordinator, and the AHJ."
       ],
-      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in healthcare_vertical_screen.dart with the healthcare-demands plate. Standards per the FCC WMTS allocation, IEC 60601-1-2, HIPAA, FDA guidance, and The Joint Commission."
+      "source": "Standards per the FCC WMTS allocation, IEC 60601-1-2, HIPAA, FDA guidance, and The Joint Commission."
     },
     "data-centers-wifi": {
       "name": "Data Centers & Wi-Fi",
@@ -4052,7 +4052,7 @@
         "Access is a credentialing exercise: expect badging, mantraps, escort, no-photography rules, NDAs, and change-control windows, the same 'know before you go' pattern as any high-security site.",
         "This is a field reference, not design or facility-rating guidance; confirm resilience ratings, access, and change-control rules with the operator and its design engineer."
       ],
-      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in data_centers_wifi_screen.dart. Text-reference only (no decoder plate). Framework detail per ANSI/TIA-942 and the Uptime Institute Tier Standard."
+      "source": "Framework detail per ANSI/TIA-942 and the Uptime Institute Tier Standard."
     },
     "facility-spaces": {
       "name": "Telecom Spaces",
@@ -4074,7 +4074,51 @@
         "'Data closet' is not a standard term at all; it is an informal catch-all for any TR or IDF.",
         "Reference only. Confirm the space names, standards currency, and cabling design with the architect of record, the RCDD, and your contract."
       ],
-      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in facility_spaces_screen.dart with the facility-spaces-topology plate. Space vocabulary per ANSI/TIA-569-E, alongside ANSI/TIA-568 and ISO/IEC 11801."
+      "source": "Space vocabulary per ANSI/TIA-569-E, alongside ANSI/TIA-568 and ISO/IEC 11801."
+    },
+    "led-decoder": {
+      "name": "LED Decoder",
+      "category": "Quick Reference",
+      "purpose": "An interactive cross-vendor decoder for an access point's status LED. Pick the vendor, pick the model line (when the vendor forks, e.g. Cisco Catalyst vs Meraki, Aruba Campus vs Instant On, Extreme IQ Engine vs WiNG), then read that line's own color-and-blink state table: booting, needs adoption, healthy, upgrading, fault, locate, and factory reset.",
+      "whyHere": "The color on the front of an AP is the fastest read you get before you open a laptop, but the same color means opposite things across vendors, so a flat 'green equals healthy' legend is actively wrong. Solid green is 'healthy, no clients' on Meraki but 'healthy, clients present' on Ruckus; solid white is 'needs adoption' on UniFi but 'healthy on cloud' on Extreme. Resolving the model line first is what keeps the read honest.",
+      "howToUse": [
+        "Pick the vendor from the list (enterprise lines first, consumer mesh kept separate).",
+        "If the vendor forks by management line, pick the line; a single-line vendor jumps straight to its table.",
+        "Read the state row: the color and blink pattern, what it means, and a confidence marker.",
+        "Treat every color as a heuristic and confirm against the exact model's install or getting-started guide."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Each row carries a confidence marker: Confirmed (anchored to a dated official vendor doc), By design (the vendor deliberately ships no distinct signal, so the 'reads as a reboot' note is the answer), or Lab-confirm (not documented in any reachable vendor doc).",
+        "The six Lab-confirm rows render as 'Not documented by the vendor, confirm on a lab AP' with no invented color, because guessing one would fabricate meaning.",
+        "MikroTik ships as an honest note, not a table: RouterOS LEDs are user-configurable, so there is no standardized status-LED scheme to decode.",
+        "LED behavior can change with a firmware or dashboard release on cloud-managed lines. Reference only; confirm on the vendor's own documentation."
+      ],
+      "source": "Cross-vendor field reference compiled by Keith Parsons / WLAN Pros. Per-line sources are cited on each table: Cisco Catalyst Getting Started Guides, the Meraki MR46 Installation Guide, the Juniper Mist LED documentation, the Aruba AP-635 and AP22 installation guides, the Extreme Networks documentation portal, help.ui.com, and Ruckus KB 000001629."
+    },
+    "vendor-model-decode": {
+      "name": "Vendor Model Decode",
+      "category": "Quick Reference",
+      "purpose": "A per-vendor reference for reading an enterprise AP model number: what each segment of the SKU encodes (product series, Wi-Fi generation, radio and stream tier, antenna type, regulatory domain), plus a worked example that decodes one real SKU end to end. Covers Cisco (Catalyst/Meraki/CW), HPE Aruba, Ubiquiti UniFi, Ruckus, and Extreme.",
+      "whyHere": "Model numbers are position- and suffix-encoded and stable within a vendor generation, so a clean decode is possible offline. But every vendor encodes differently, so this is a per-vendor decoder, never a shared letter dictionary: the letter E alone means a regulatory domain on Cisco, an external antenna on Aruba, and a product tier on UniFi.",
+      "howToUse": [
+        "Pick the vendor.",
+        "Read the token table left to right: each segment and what it encodes.",
+        "Read the worked example to see one real SKU decoded segment by segment.",
+        "Check the confidence-and-caveats note for where a segment needs a per-model datasheet lookup instead of a digit rule."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "This is deliberately not a 'paste a model number, auto-decode' input. Several vendors (Extreme especially) do not digit-encode Wi-Fi generation, streams, or antenna, so an auto-decoder would fabricate precision the SKU does not carry.",
+        "Aruba's even/odd last-digit antenna rule (even = external, odd = internal) is confirmed back to the Wi-Fi 5 300 series; the 200 series is reported to follow it but is unverified, so decode pre-300-series from a per-model lookup.",
+        "Extreme is Medium confidence: only the first digit (tier) decodes; Wi-Fi generation, stream count, and antenna come from the datasheet.",
+        "Reference only. A decode is a heuristic; confirm against the exact model's datasheet or ordering guide before you spec, order, or troubleshoot on it."
+      ],
+      "source": "Per-vendor field reference compiled by Keith Parsons / WLAN Pros. Sources per vendor: the Cisco Catalyst 9130AX datasheet and Getting Started Guide, the Aruba 310 Series datasheet, UniFi Tech Specs, the Ruckus product guide, and Extreme Networks product pages."
     }
   }
 }

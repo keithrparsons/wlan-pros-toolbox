@@ -306,7 +306,7 @@ const List<String> kIpLetterNotes = <String>[
       'parts. Supplementary letters H, M, S, W flag test conditions (M = the '
       'gear was running during the water test, S = it was stationary). These are '
       'rare on AP gear.',
-  'The letters F, O, and K you sometimes see belong to the automotive standard '
+  'The letters F and K you sometimes see belong to the automotive standard '
       'ISO 20653, not IEC 60529. Recognize them, do not treat them as IP letters.',
 ];
 

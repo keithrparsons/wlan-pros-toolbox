@@ -52,8 +52,8 @@ class HazardousLocationsScreen extends StatelessWidget {
   const HazardousLocationsScreen({super.key});
 
   /// The decoder plate's true aspect ratio (width / height). Master render is
-  /// 3360 x 3236.
-  static const double _diagramAspect = 3360 / 3236;
+  /// 3360 x 3272.
+  static const double _diagramAspect = 3360 / 3272;
 
   @override
   Widget build(BuildContext context) {

@@ -183,7 +183,9 @@ const NecArticle kNecCableLadder = NecArticle(
   tail:
       'Substitution runs downhill only. CMP can replace CMR anywhere, but CMR '
       'cannot be used in a plenum. Parallel ladders exist for power-limited '
-      'cable (CL2P/CL3P) and optical (OFNP/OFCP).',
+      'cable (CL2P/CL3P) and optical (OFNP/OFCP). Currency note: NEC-2023 '
+      'reorganized the cable-substitution hierarchy into Article 722, '
+      'consolidating it from the old per-article tables.',
 );
 
 // ────────────────────────── Why a WLAN pro cares ────────────────────────────

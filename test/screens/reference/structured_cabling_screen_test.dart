@@ -45,12 +45,27 @@ void main() {
           isTrue);
     });
 
-    test('cable categories: exactly 4, Cat 6A is the multi-gig bar', () {
-      expect(kCableCategories.length, 4);
+    test('cable categories: exactly 5, incl. the NBASE-T row, Cat 6A is the '
+        'multi-gig bar', () {
+      expect(kCableCategories.length, 5);
       expect(
         kCableCategories.map((CableCategory c) => c.category).toList(),
-        <String>['Cat 5e', 'Cat 6', 'Cat 6A', 'Cat 8'],
+        <String>[
+          'Cat 5e',
+          '2.5G / 5G (NBASE-T, IEEE 802.3bz)',
+          'Cat 6',
+          'Cat 6A',
+          'Cat 8',
+        ],
       );
+      final CableCategory nbaseT = kCableCategories.firstWhere(
+        (CableCategory c) => c.category.contains('NBASE-T'),
+      );
+      expect(nbaseT.reach.contains('2.5 and 5 Gbps on existing Cat 5e'), isTrue);
+      final CableCategory cat6 = kCableCategories
+          .firstWhere((CableCategory c) => c.category == 'Cat 6');
+      expect(cat6.reach.contains('dense-bundle planning distance is 37 m'),
+          isTrue);
       final CableCategory cat6a = kCableCategories
           .firstWhere((CableCategory c) => c.category == 'Cat 6A');
       expect(cat6a.reach.contains('10 Gbps to 100 m'), isTrue);

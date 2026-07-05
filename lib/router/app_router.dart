@@ -127,6 +127,8 @@ import '../screens/tools/reference/by_vertical_index_screen.dart';
 import '../screens/tools/reference/healthcare_vertical_screen.dart';
 import '../screens/tools/reference/data_centers_wifi_screen.dart';
 import '../screens/tools/reference/facility_spaces_screen.dart';
+import '../screens/tools/reference/led_decoder_screen.dart';
+import '../screens/tools/reference/vendor_model_decode_screen.dart';
 import '../screens/tools/reference/wifi_feature_matrix_screen.dart';
 import '../screens/tools/reference/regulatory_domains_screen.dart';
 import '../screens/tools/reference/datetime_standards_screen.dart';
@@ -314,6 +316,11 @@ class AppRouter {
   static const String healthcareVertical = '/tools/healthcare-vertical';
   static const String dataCentersWifi = '/tools/data-centers-wifi';
   static const String facilitySpaces = '/tools/facility-spaces';
+  // Vendor & Hardware (2026-07-05): two INTERACTIVE drill-down references
+  // (selection state, not static screens). Local const data, offline, all
+  // platforms incl. web.
+  static const String ledDecoder = '/tools/led-decoder';
+  static const String vendorModelDecode = '/tools/vendor-model-decode';
 
   /// Power Phasing — the pilot reference for the Power & Cooling category. The
   /// id `power-phasing` is permanent (backs this route, the catalog entry, the
@@ -663,6 +670,8 @@ class AppRouter {
     healthcareVertical: (_) => const HealthcareVerticalScreen(),
     dataCentersWifi: (_) => const DataCentersWifiScreen(),
     facilitySpaces: (_) => const FacilitySpacesScreen(),
+    ledDecoder: (_) => const LedDecoderScreen(),
+    vendorModelDecode: (_) => const VendorModelDecodeScreen(),
     powerPhasing: (_) => const PowerPhasingScreen(),
     ohmsLaw: (_) => const OhmsLawScreen(),
     coolingThermal: (_) => const CoolingThermalScreen(),

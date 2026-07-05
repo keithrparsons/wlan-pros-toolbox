@@ -37,6 +37,8 @@
 // Offline + App-Store-safe: the guides are plain `.md` assets read from the
 // bundle via rootBundle — no network, no executable content (90035-safe).
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:markdown_widget/markdown_widget.dart';
@@ -52,6 +54,15 @@ import '../../widgets/app_copy_action.dart';
 const String kUserGuideAsset = 'assets/guides/user-guide.md';
 const String kFieldManualAsset = 'assets/guides/field-manual.md';
 
+/// Deep-link anchor (the exact chapter heading text) for the user guide's
+/// "Wi-Fi vs Cellular vs Internet" explainer. Shared with the Test My Connection
+/// "What's the difference?" aside so both sides agree on ONE target string
+/// (SSOT) — pass it to [GuideReaderScreen.initialHeadingAnchor] to open the
+/// reader scrolled to that chapter. Must match the `##` heading verbatim in
+/// assets/guides/user-guide.md.
+const String kWifiCellularInternetChapter =
+    "Wi-Fi vs Cellular vs Internet: what's the difference?";
+
 /// A bundled markdown guide rendered natively in a themed, navigable reader.
 ///
 /// [assetPath] is the bundled `.md` to read; [title] is the AppBar title. An
@@ -62,6 +73,7 @@ class GuideReaderScreen extends StatefulWidget {
     required this.assetPath,
     required this.title,
     this.markdownOverride,
+    this.initialHeadingAnchor,
     super.key,
   });
 
@@ -74,6 +86,13 @@ class GuideReaderScreen extends StatefulWidget {
   /// Test seam: when non-null, this markdown string is rendered instead of
   /// reading [assetPath] from the bundle. Production never sets it.
   final String? markdownOverride;
+
+  /// Optional deep-link: the exact heading text of a section to scroll to once
+  /// the document has loaded (e.g. [kWifiCellularInternetChapter] from the Test
+  /// My Connection "What's the difference?" aside). Null (the default) opens the
+  /// guide at the top, unchanged. A value that matches no heading is a no-op —
+  /// the reader simply stays at the top rather than failing.
+  final String? initialHeadingAnchor;
 
   @override
   State<GuideReaderScreen> createState() => _GuideReaderScreenState();
@@ -94,6 +113,7 @@ class _GuideReaderScreenState extends State<GuideReaderScreen> {
     final String? override = widget.markdownOverride;
     if (override != null) {
       _markdown = override;
+      _scheduleInitialJump();
     } else {
       _load();
     }
@@ -110,10 +130,36 @@ class _GuideReaderScreenState extends State<GuideReaderScreen> {
       final String raw = await rootBundle.loadString(widget.assetPath);
       if (!mounted) return;
       setState(() => _markdown = raw);
+      _scheduleInitialJump();
     } on Object catch (e) {
       if (!mounted) return;
       setState(() => _loadError = 'Could not load this guide: $e');
     }
+  }
+
+  /// Deep-link: after the document renders, scroll to the section whose heading
+  /// matches [GuideReaderScreen.initialHeadingAnchor]. No-op when no anchor was
+  /// requested or none matches.
+  ///
+  /// Timing: [MarkdownWidget] populates [TocController.tocList] and registers its
+  /// jump callback synchronously in its own `initState` (which runs while this
+  /// build renders it), so the first post-frame callback after the markdown is
+  /// set has a fully-populated TOC to look up and a live scroll target. The jump
+  /// (scroll_to_index under the hood) progressively scrolls to an off-screen
+  /// heading, so a chapter far down the guide still lands correctly.
+  void _scheduleInitialJump() {
+    final String? anchor = widget.initialHeadingAnchor;
+    if (anchor == null) return;
+    final String target = anchor.trim();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      for (final Toc toc in _tocController.tocList) {
+        if (_headingText(toc.node).trim() == target) {
+          _tocController.jumpToIndex(toc.widgetIndex);
+          return;
+        }
+      }
+    });
   }
 
   /// Open a link in the system browser. The guides are largely self-contained,
@@ -429,6 +475,14 @@ class _GuideReaderScreenState extends State<GuideReaderScreen> {
           sideColor: colors.borderStrong,
           textColor: colors.textTertiary,
         ),
+        // Figures — bundled asset images (e.g. the signal-meters diagram in the
+        // "Wi-Fi vs Cellular vs Internet" chapter). markdown_widget's default
+        // ImageNode renders `Image.asset` at the image's INTRINSIC pixel size
+        // inside a WidgetSpan, so a 3200px-wide diagram would overflow every
+        // phone width; this builder caps the figure to the reading column, gives
+        // it a GL-003 hairline + card radius, an accessible alt-text label, and
+        // an honest error card if the asset ever fails to decode.
+        ImgConfig(builder: _figureBuilder),
         CodeConfig(style: codeStyle),
         PreConfig(
           textStyle: preTextStyle,
@@ -441,6 +495,56 @@ class _GuideReaderScreenState extends State<GuideReaderScreen> {
         ),
         HrConfig(color: colors.border),
       ],
+    );
+  }
+
+  /// Themed figure for a bundled asset image (`![alt](assets/...)`).
+  ///
+  /// Caps the width to the reading column (screen width, edge-inset, then the
+  /// shared §contentMaxWidth), preserving aspect ratio, and frames it with the
+  /// §8.1 hairline + §8.11 card radius. `alt` becomes the AT image label (SC
+  /// 1.1.1); a decode failure renders that same alt as an honest caption rather
+  /// than a broken-image glyph. Network images are not used by the bundled
+  /// guides, so this handles the asset case only.
+  Widget _figureBuilder(String url, Map<String, String> attributes) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final String alt = attributes['alt'] ?? '';
+    final Size size = MediaQuery.of(context).size;
+    final double edge = size.width >= 720
+        ? AppSpacing.screenEdgeDesktop
+        : AppSpacing.screenEdgeMobile;
+    final double maxWidth =
+        math.min(size.width, AppSpacing.contentMaxWidth) - edge * 2;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+      child: Semantics(
+        image: true,
+        label: alt.isEmpty ? null : alt,
+        child: Container(
+          constraints: BoxConstraints(maxWidth: math.max(maxWidth, 0)),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            border: Border.all(color: colors.border, width: 1),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Image.asset(
+            url,
+            width: math.max(maxWidth, 0),
+            fit: BoxFit.contain,
+            errorBuilder: (BuildContext context, Object error, StackTrace? _) {
+              return Padding(
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                child: Text(
+                  alt.isEmpty ? 'Figure unavailable' : alt,
+                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
     );
   }
 

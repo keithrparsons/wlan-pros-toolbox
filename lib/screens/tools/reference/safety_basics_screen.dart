@@ -44,8 +44,8 @@ class SafetyBasicsScreen extends StatelessWidget {
   const SafetyBasicsScreen({super.key});
 
   /// The plate's true aspect ratio (width / height). Master render is 3360 x
-  /// 2110 (assets/reference/safety-basics.png).
-  static const double _diagramAspect = 3360 / 2110;
+  /// 2146 (assets/reference/safety-basics.png).
+  static const double _diagramAspect = 3360 / 2146;
 
   @override
   Widget build(BuildContext context) {
@@ -132,6 +132,7 @@ class SafetyBasicsScreen extends StatelessWidget {
       b.writeln(<String>[p.name, p.standard, p.meaning].join(tab));
     }
     b
+      ..writeln(kPpeProofTestNote)
       ..writeln(kPpeNote)
       ..writeln()
       ..writeln('ESD: protecting the gear, not the person');
@@ -262,6 +263,8 @@ class _PpeLadderCard extends StatelessWidget {
             if (i > 0) Divider(color: colors.border, height: AppSpacing.md),
             _PpeRow(item: kPpeItems[i]),
           ],
+          const SizedBox(height: AppSpacing.sm),
+          const _Caption(kPpeProofTestNote),
           const SizedBox(height: AppSpacing.sm),
           const _Caption(kPpeNote),
         ],

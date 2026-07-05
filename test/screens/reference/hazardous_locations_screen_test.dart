@@ -65,11 +65,23 @@ void main() {
         (HazConcept c) => c.concept.contains('Intrinsically safe'),
       );
       expect(exI.how.contains('only concept accepted in Zone 0'), isTrue);
-      // Ex e / Ex nR is the common Div 2 / Zone 2 wireless case.
+    });
+
+    test('protection concepts: Ex e and Ex nR are split into their own rows', () {
+      // Ex e (increased safety) is a Zone 1 concept, distinct from Ex nR.
       final HazConcept exE = kHazConcepts.firstWhere(
-        (HazConcept c) => c.concept.contains('Increased safety'),
+        (HazConcept c) => c.concept == 'Increased safety (Ex e)',
       );
-      expect(exE.where.contains('common wireless case'), isTrue);
+      expect(exE.where, 'Zone 1');
+      expect(exE.how.contains('prevents arcs and hot surfaces'), isTrue);
+      // Ex nR (restricted breathing) is the common Div 2 / Zone 2 wireless case.
+      final HazConcept exNr = kHazConcepts.firstWhere(
+        (HazConcept c) => c.concept == 'Restricted breathing (Ex nR)',
+      );
+      expect(exNr.where.contains('common wireless case'), isTrue);
+      expect(exNr.how.contains('sealed against gas ingress'), isTrue);
+      // The split brings the concept table to five rows.
+      expect(kHazConcepts.length, 5);
     });
 
     test('the load-bearing safety takeaway: a commercial AP is an ignition '

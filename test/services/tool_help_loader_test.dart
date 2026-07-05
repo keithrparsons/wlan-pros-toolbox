@@ -266,7 +266,13 @@ void main() {
       // (by-vertical-index), Healthcare Wi-Fi (healthcare-vertical), Data
       // Centers & Wi-Fi (data-centers-wifi), and Telecom Spaces
       // (facility-spaces) in "Verticals". 165 + 8 = 173.
-      expect(store.count, 173);
+      // 175 = + the 2 INTERACTIVE drill-down references (2026-07-05), both new
+      // Quick Reference tiles in the new "Vendor & Hardware" subgroup: LED
+      // Decoder (led-decoder), the cross-vendor AP status-LED decoder
+      // (vendor -> line -> state table), and Vendor Model Decode
+      // (vendor-model-decode), the per-vendor model-number scheme reader. Unlike
+      // the static reference screens these carry selection state. 173 + 2 = 175.
+      expect(store.count, 175);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

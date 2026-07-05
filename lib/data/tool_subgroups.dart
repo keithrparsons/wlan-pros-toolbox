@@ -80,6 +80,13 @@ const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
     // Verticals (2026-07-05): what each industry tends to trigger. Members:
     // Verticals Index, Healthcare Wi-Fi, Data Centers & Wi-Fi, Telecom Spaces.
     'Verticals',
+    // Vendor & Hardware (2026-07-05): the two INTERACTIVE drill-down references
+    // for identifying gear in the field — the cross-vendor AP status-LED decoder
+    // (LED Decoder) and the per-vendor model-number scheme reader (Vendor Model
+    // Decode). NAME flagged for Keith's confirmation ("Vendor & Hardware" vs
+    // "Hardware ID"); defaulted here so the catalog compiles. Sits last as the
+    // hardware-identification pillar of Quick Reference.
+    'Vendor & Hardware',
   ],
   'rf-calculators': <String>[
     'RF & Propagation',

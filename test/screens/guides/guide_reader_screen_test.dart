@@ -39,10 +39,25 @@ A short subsection under Start here.
 A second top-level section with its own body copy.
 ''';
 
+/// A fixture carrying an asset-image figure, to prove the reader renders a
+/// bundled `![alt](assets/...)` figure (the "Wi-Fi vs Cellular vs Internet"
+/// chapter's signal-meters diagram) rather than dropping or overflowing it.
+const String _fixtureWithFigure = '''
+# A Guide for Everyone
+
+Some intro copy above the figure.
+
+![Signal meters diagram](assets/guides/signal-meters.png)
+
+Some copy below the figure.
+''';
+
 Future<void> _pump(
   WidgetTester tester, {
   String title = 'A Guide for Everyone',
   ThemeData? theme,
+  String markdown = _fixture,
+  String? initialHeadingAnchor,
 }) async {
   addTearDown(() {
     tester.view.resetPhysicalSize();
@@ -56,7 +71,8 @@ Future<void> _pump(
       home: GuideReaderScreen(
         assetPath: kUserGuideAsset,
         title: title,
-        markdownOverride: _fixture,
+        markdownOverride: markdown,
+        initialHeadingAnchor: initialHeadingAnchor,
       ),
     ),
   );
@@ -156,5 +172,41 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Start here'), findsWidgets);
+  });
+
+  testWidgets('renders a bundled asset figure with its alt-text label',
+      (tester) async {
+    await _pump(tester, markdown: _fixtureWithFigure);
+
+    // The themed figure builder produces an Image (the asset need not decode in
+    // the test bundle — the widget is built either way).
+    expect(find.byType(Image), findsOneWidget);
+    // Alt text becomes the accessible image label (SC 1.1.1) so a screen reader
+    // announces the figure.
+    expect(find.bySemanticsLabel('Signal meters diagram'), findsOneWidget);
+    // Prose on both sides of the figure still reflows.
+    expect(find.textContaining('above the figure'), findsOneWidget);
+    expect(find.textContaining('below the figure'), findsOneWidget);
+  });
+
+  testWidgets('an initialHeadingAnchor deep-link renders without error',
+      (tester) async {
+    // Passing an anchor that matches a heading exercises the tocList lookup +
+    // jumpToIndex path; the document must still render (the jump is a scroll,
+    // not a filter).
+    await _pump(tester, initialHeadingAnchor: 'A tour of the app');
+    expect(find.text('A tour of the app'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('an unmatched initialHeadingAnchor is a safe no-op',
+      (tester) async {
+    await _pump(tester, initialHeadingAnchor: 'No Such Heading');
+    // Falls back to the top of the guide, rendered normally, no throw.
+    expect(
+      find.textContaining('opening paragraph of the guide'),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
   });
 }

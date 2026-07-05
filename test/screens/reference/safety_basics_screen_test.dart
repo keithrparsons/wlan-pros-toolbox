@@ -62,10 +62,20 @@ void main() {
       expect(kEsdParagraphs[0].contains('latent damage'), isTrue);
     });
 
+    test('hard-hat proof-test note: dielectric figures are not a working limit',
+        () {
+      expect(kPpeProofTestNote.contains('proof-test voltages'), isTrue);
+      expect(
+        kPpeProofTestNote.contains('never treat them as a safe working limit'),
+        isTrue,
+      );
+    });
+
     test('no em dash in any rendered prose; "Wi-Fi" casing where used', () {
       final List<String> prose = <String>[
         kSafetyLead,
         kPpeIntro,
+        kPpeProofTestNote,
         kPpeNote,
         kSafetyStopIntro,
         kSafetyStopClosing,

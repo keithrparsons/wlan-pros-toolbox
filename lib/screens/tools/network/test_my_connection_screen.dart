@@ -35,6 +35,7 @@ import 'package:flutter/services.dart';
 import 'package:net_quality/net_quality.dart';
 
 import '../../../router/app_router.dart';
+import '../../guides/guide_reader_screen.dart';
 import '../../../services/network/analyze/analyze_engine.dart';
 import '../../../services/network/analyze/analyze_input.dart';
 import '../../../services/network/analyze/analyze_report_text.dart';
@@ -1447,10 +1448,57 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     final AppColorScheme colors = context.colors;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: Text(
-        "Not sure if it's your Wi-Fi or your internet? Tap below and find out "
-        'in about a minute.',
-        style: text.bodyLarge?.copyWith(color: colors.textSecondary),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            "Not sure if it's your Wi-Fi or your internet? Tap below and find "
+            'out in about a minute.',
+            style: text.bodyLarge?.copyWith(color: colors.textSecondary),
+          ),
+          // Low-key aside for the first-timer who reads that sentence and
+          // realizes they aren't sure Wi-Fi and internet are even different
+          // things. Opens the user guide's plain-language explainer, deep-linked
+          // straight to that chapter. Kept text-weight (not a second filled
+          // button) so it reads as a helpful link beneath the intro line and
+          // never competes with the primary "Check My Connection" action below.
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () => _openWifiVsInternetExplainer(context),
+              icon: const Icon(Icons.help_outline, size: 18),
+              label: const Text("What's the difference?"),
+              style: TextButton.styleFrom(
+                foregroundColor: colors.textAccent,
+                textStyle: text.bodyMedium,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.xs,
+                  vertical: AppSpacing.xs,
+                ),
+                // §8.3 / WCAG 2.2: hold the 44pt minimum touch target even at
+                // this compact text-link weight.
+                minimumSize: const Size(0, 44),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Opens the user guide scrolled to its "Wi-Fi vs Cellular vs Internet"
+  /// explainer chapter (the [kWifiCellularInternetChapter] deep-link anchor),
+  /// answering the confused-first-timer question in plain language without
+  /// leaving the app. Falls back to the top of the guide if the anchor ever
+  /// stops matching a heading (the reader treats a missing anchor as a no-op).
+  void _openWifiVsInternetExplainer(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const GuideReaderScreen(
+          assetPath: kUserGuideAsset,
+          title: 'How this app works',
+          initialHeadingAnchor: kWifiCellularInternetChapter,
+        ),
       ),
     );
   }

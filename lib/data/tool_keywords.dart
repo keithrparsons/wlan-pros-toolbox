@@ -295,6 +295,21 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'telecom room', 'cross-connect',
     'telecom spaces', 'facility spaces', 'facility',
   ],
+  'led-decoder': <String>[
+    'led', 'status light', 'status led', 'indicator light', 'ap led', 'blink',
+    'blinking', 'solid green', 'solid white', 'amber', 'orange', 'flashing',
+    'meraki', 'catalyst', 'ios-xe', 'juniper mist', 'aruba', 'instant on',
+    'extreme', 'iq engine', 'wing', 'unifi', 'ruckus', 'mikrotik', 'orbi',
+    'eero', 'locate', 'blink to find', 'factory reset', 'boot', 'joining',
+    'troubleshoot', 'triage', 'what does the light mean',
+  ],
+  'vendor-model-decode': <String>[
+    'model number', 'sku', 'part number', 'decode', 'ordering guide', 'nomenclature',
+    'naming', 'cisco', 'catalyst', 'aironet', 'meraki', 'cw', 'aruba', 'ap-',
+    'even odd', 'external antenna', 'internal antenna', 'regulatory domain',
+    'unifi', 'u6', 'u7', 'ruckus', 'r730', 'extreme', 'ap4000', 'wi-fi generation',
+    'stream', 'tier', 'suffix', 'what does the model number mean',
+  ],
   'wavelength': <String>[
     'lambda', 'antenna length', 'quarter wave', 'frequency to wavelength',
   ],

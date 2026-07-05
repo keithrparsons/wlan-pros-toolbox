@@ -10,9 +10,9 @@
 //
 // GL-005 / truthfulness: the five PCI asks, the four HIPAA safeguards, and the
 // three SOX touches are the load-bearing facts, so the widget test asserts the
-// anchor items (WPA2-PSK inadequate for the CDE, the quarterly rogue scan,
-// transmission security) against these consts so a future edit cannot silently
-// drift a value away from Penn's approved copy.
+// anchor items (the CDE steered to 802.1X/EAP with PSK discouraged, the
+// quarterly rogue scan, transmission security) against these consts so a future
+// edit cannot silently drift a value away from Penn's approved copy.
 //
 // Glyph rules (GL-004): ASCII hyphen-minus only, never an em dash; "Wi-Fi"
 // casing; "802.1X" casing.
@@ -52,9 +52,9 @@ const List<String> kPciAsks = <String>[
       'validated.',
   'Strong cryptography. The current bar is WPA2-AES or WPA3 at a minimum, with '
       'no fallback to weaker protocols. WEP and WPA/TKIP are prohibited, and '
-      'WPA2-PSK is inadequate for the CDE. If you are working from a 2011-era '
-      'wireless guideline that still frames WPA2-PSK as the standard, it is out '
-      'of date.',
+      'PCI guidance steers the cardholder-data environment to 802.1X/EAP; PSK '
+      'is discouraged there. If you are working from a 2011-era wireless '
+      'guideline that still frames WPA2-PSK as the standard, it is out of date.',
   'No default credentials or settings on wireless gear: SSIDs, keys, SNMP '
       'strings, admin passwords.',
   'Rogue and unauthorized wireless scanning, at least quarterly, under '

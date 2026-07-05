@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- LED Decoder (read the AP status LED: a solid / blink / color STATE that
+         decodes to a meaning). Concept = a lit INDICATOR LIGHT (an outline ring
+         with a filled glowing core - the classic "this light is on" glyph) feeding
+         a DIGITAL ON/OFF SQUARE WAVE to the right - the blink pattern being read
+         out and decoded. "Decode the blinking light" = the LED's on/off cadence
+         rendered as its signal. The lamp+square-wave pairing is a purely geometric
+         silhouette (no emission rays - a dot-with-rays over a body reads as a
+         plant), so it survives 20px cleanly. Deliberately distinct from:
+           - get-reading   (a single spiky analog PULSE over a flat trace)
+           - wifi-info / wifi-vs-internet (upward ARC fans)
+           - cellular-info / signal-thresholds (ascending BARS)
+           - morse-code    (rows of dot/dash ticks)
+         Only this glyph is a ring-lamp + rectangular step wave.
+         GL-003 8.6.1: 24x24 master, single currentColor, fill=none base, 2px
+         stroke, round cap/join, silhouette-first, legible at 20px. QA in headless
+         Chrome (never ImageMagick) at 20/24/28px, lime #A1CC3A on surface #222222. -->
+    <!-- status LED: outline ring + lit core -->
+    <circle cx="5" cy="12" r="2.4"/>
+    <circle cx="5" cy="12" r="0.9" fill="currentColor" stroke="none"/>
+    <!-- blink pattern: on/off square wave decoded from the LED -->
+    <path d="M8.6 15 H11 V9.5 H13.5 V15 H16 V9.5 H18.5 V15 H21"/>
+  </g>
+</svg>

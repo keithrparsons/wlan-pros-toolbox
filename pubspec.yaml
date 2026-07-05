@@ -639,6 +639,11 @@ flutter:
     #     WLAN-Pros-Toolbox-Field-Manual.md  (canonical v1.1.2 regen)
     - assets/guides/user-guide.md
     - assets/guides/field-manual.md
+    # Figure for the user guide's "Wi-Fi vs Cellular vs Internet" chapter (the
+    # status-bar signal-meters diagram). SOURCE OF TRUTH lives in myPKA:
+    #   Deliverables/2026-07-05-wifi-cellular-internet-explainer/graphics/
+    #     signal-meters.png  (re-copy on edit)
+    - assets/guides/signal-meters.png
     # Keith's consumer book "Fix Your Own Wi-Fi" (Book 3), bundled FREE and shown
     # in the existing offline pdfx viewer (PdfReferenceScreen) — the consumer
     # companion to the app, surfaced as a home callout near "Check My Connection".

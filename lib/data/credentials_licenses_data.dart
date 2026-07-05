@@ -67,7 +67,7 @@ const List<CredentialRow> kCredentials = <CredentialRow>[
     gatesYou: 'DoD contractors with an ongoing need on military installations',
     leadTime:
         'Card can issue on a favorable fingerprint check, but the underlying '
-        'NACI can run many months',
+        'investigation (formerly NACI) can run many months',
     validity: '~3 years / contract term',
   ),
   CredentialRow(
@@ -183,7 +183,9 @@ const List<String> kCredentialNotes = <String>[
   'CAC versus DBIDS is the military-base question. The CAC is for contractors '
       'with an ongoing DoD affiliation, and it needs a sponsor, a favorable '
       'FBI fingerprint check, and a background investigation whose full run can '
-      'take many months. DBIDS is the lighter path for a contractor who just '
+      'take many months; the investigation formerly called NACI is now part of '
+      'the federal Tier system (Tier 1 to 5). DBIDS is the lighter path for a '
+      'contractor who just '
       'needs to get on base: identity vetting, a paper pass first, then up to '
       '180 days for the physical card. Which one applies is set by the '
       'installation and the contract.',

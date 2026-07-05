@@ -159,7 +159,10 @@ const String kWmtsIntro =
 
 /// WMTS 14-MHz history paragraph, verbatim.
 const String kWmtsHistory =
-    '14 MHz of protected spectrum in total. The 608 to 614 MHz band sits on TV '
+    '14 MHz of protected spectrum in total. In the upper band, WMTS is primary '
+    'and exclusive only in 1429 to 1432 MHz; 1427 to 1429 MHz is shared, which '
+    'is why the protected total is 14 MHz even though the band is designated '
+    '1427 to 1432 MHz. The 608 to 614 MHz band sits on TV '
     'channel 37, which no television station uses because it is reserved for '
     'radio astronomy, so it was already quiet. Before WMTS existed, telemetry '
     'rode vacant TV channels and had to accept interference. The digital-TV '

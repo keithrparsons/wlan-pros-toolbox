@@ -78,8 +78,16 @@ class CableCategory {
 const List<CableCategory> kCableCategories = <CableCategory>[
   CableCategory(category: 'Cat 5e', reach: '1 Gbps'),
   CableCategory(
+    category: '2.5G / 5G (NBASE-T, IEEE 802.3bz)',
+    reach:
+        '2.5 and 5 Gbps on existing Cat 5e to 100 m, no re-pull. Why Wi-Fi 6 '
+        'and 6E AP uplinks run over the cable already in the wall.',
+  ),
+  CableCategory(
     category: 'Cat 6',
-    reach: '1 Gbps to 100 m; 10 Gbps to about 55 m',
+    reach:
+        '1 Gbps to 100 m; 10 Gbps to about 55 m in the favorable case, but the '
+        'dense-bundle planning distance is 37 m',
   ),
   CableCategory(
     category: 'Cat 6A',

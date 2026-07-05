@@ -89,6 +89,14 @@ const String kPpeIntro =
     'finished office install, street clothes are usually fine. On active '
     'construction, expect the GC to require the four to badge on.';
 
+/// The hard-hat proof-test clarification, rendered as a caption directly under
+/// the PPE ladder (a load-bearing safety correction: the dielectric figures are
+/// proof-test voltages, never a safe-working limit). Verbatim from the copy.
+const String kPpeProofTestNote =
+    'The hard-hat Class G (2,200 V) and Class E (20,000 V) figures are '
+    'dielectric proof-test voltages, not safe-working ratings; never treat them '
+    'as a safe working limit.';
+
 /// Caption under the PPE ladder.
 const String kPpeNote =
     'Confirm the site\'s specific PPE policy. The employer and GC set what is '
