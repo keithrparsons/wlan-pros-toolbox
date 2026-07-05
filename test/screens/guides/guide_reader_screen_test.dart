@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:markdown_widget/markdown_widget.dart';
 import 'package:visibility_detector/visibility_detector.dart';
+import 'package:wlan_pros_toolbox/data/app_version.dart';
 import 'package:wlan_pros_toolbox/screens/guides/guide_reader_screen.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
@@ -83,7 +84,35 @@ Future<void> _pump(
   await tester.pump(const Duration(seconds: 1));
 }
 
+/// A fixture carrying the runtime app-version placeholder in a metadata line,
+/// mirroring the real guides' header (`_A 5-minute tour of the app · app
+/// v{{app_version}}_`). Proves the reader FILLS the placeholder with the actual
+/// version instead of printing the raw token or a baked-in literal that drifts.
+const String _fixtureWithVersion = '''
+# A Guide for Everyone
+
+app v{{app_version}} — the tour of the app.
+''';
+
 void main() {
+  // Pure substitution: the version fill is a plain string replace, unit-tested
+  // in isolation so both the production load path and the widget-test override
+  // path share one verified transform.
+  test('applyGuidePlaceholders fills {{app_version}} with the given version',
+      () {
+    expect(
+      applyGuidePlaceholders('app v{{app_version}} shipped', '1.7.0'),
+      'app v1.7.0 shipped',
+    );
+    // No placeholder → returned unchanged.
+    expect(applyGuidePlaceholders('no token here', '1.7.0'), 'no token here');
+    // Every occurrence is filled, not just the first.
+    expect(
+      applyGuidePlaceholders('{{app_version}}/{{app_version}}', '9.9.9'),
+      '9.9.9/9.9.9',
+    );
+  });
+
   setUp(() {
     // markdown_widget wraps each block in a VisibilityDetector whose periodic
     // update timer otherwise leaves a pending timer at test teardown. Zeroing
@@ -163,6 +192,19 @@ void main() {
       (tester) async {
     await _pump(tester);
     expect(find.byTooltip('Copy guide text'), findsOneWidget);
+  });
+
+  testWidgets('fills the {{app_version}} placeholder with the runtime version',
+      (tester) async {
+    await _pump(tester, markdown: _fixtureWithVersion);
+
+    // The reader renders the ACTUAL version (the const fallback stands in for
+    // the runtime PackageInfo read in tests), never the raw placeholder token.
+    expect(
+      find.textContaining('app v${AppVersion.fallback.version}'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('{{app_version}}'), findsNothing);
   });
 
   testWidgets('renders under the light theme too', (tester) async {

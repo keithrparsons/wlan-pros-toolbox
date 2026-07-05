@@ -4079,20 +4079,22 @@
     "led-decoder": {
       "name": "LED Decoder",
       "category": "Quick Reference",
-      "purpose": "An interactive cross-vendor decoder for an access point's status LED. Pick the vendor, pick the model line (when the vendor forks, e.g. Cisco Catalyst vs Meraki, Aruba Campus vs Instant On, Extreme IQ Engine vs WiNG), then read that line's own color-and-blink state table: booting, needs adoption, healthy, upgrading, fault, locate, and factory reset.",
+      "purpose": "An interactive cross-vendor decoder for an access point's status LED. Pick the vendor, pick the model line (when the vendor forks, e.g. Cisco Catalyst vs Meraki, Aruba Campus vs Instant On, Extreme IQ Engine vs WiNG), then read that line's own state table: booting, needs adoption, healthy, upgrading, fault, locate, and factory reset. Each state carries a literal colored indicator (a green, amber, red, blue, white, purple, or magenta dot, solid or gently flashing) beside the verbatim signal text. A master cross-vendor comparison chart sits at the top of the vendor picker with the whole color matrix on one plate, and it downloads as a PDF.",
       "whyHere": "The color on the front of an AP is the fastest read you get before you open a laptop, but the same color means opposite things across vendors, so a flat 'green equals healthy' legend is actively wrong. Solid green is 'healthy, no clients' on Meraki but 'healthy, clients present' on Ruckus; solid white is 'needs adoption' on UniFi but 'healthy on cloud' on Extreme. Resolving the model line first is what keeps the read honest.",
       "howToUse": [
+        "Scan the master cross-vendor comparison chart at the top of the picker for the whole color matrix on one plate; tap it to pinch-zoom, or download it as a PDF.",
         "Pick the vendor from the list (enterprise lines first, consumer mesh kept separate).",
         "If the vendor forks by management line, pick the line; a single-line vendor jumps straight to its table.",
-        "Read the state row: the color and blink pattern, what it means, and a confidence marker.",
+        "Read the state row: the colored indicator (color plus solid or flashing), the verbatim signal text, and what it means in the field.",
         "Treat every color as a heuristic and confirm against the exact model's install or getting-started guide."
       ],
       "inputs": [],
       "algorithm": null,
       "example": null,
       "fieldNotes": [
-        "Each row carries a confidence marker: Confirmed (anchored to a dated official vendor doc), By design (the vendor deliberately ships no distinct signal, so the 'reads as a reboot' note is the answer), or Lab-confirm (not documented in any reachable vendor doc).",
-        "The six Lab-confirm rows render as 'Not documented by the vendor, confirm on a lab AP' with no invented color, because guessing one would fabricate meaning.",
+        "The colored dot is never the only signal: the color is always named in words in the signal text beside it, and that verbatim text stays the authority for any nuance a dot cannot carry (sequences, alternating patterns, blink-count error codes).",
+        "Undocumented states are marked honestly. The six states with no reachable vendor doc render 'Not documented by the vendor, confirm on a lab AP' with a neutral '?' indicator and no invented color, because guessing one would fabricate meaning.",
+        "Some vendors ship no distinct signal by design (a Meraki factory reset reads as an ordinary reboot); the 'reads as X' note is the answer, not a gap.",
         "MikroTik ships as an honest note, not a table: RouterOS LEDs are user-configurable, so there is no standardized status-LED scheme to decode.",
         "LED behavior can change with a firmware or dashboard release on cloud-managed lines. Reference only; confirm on the vendor's own documentation."
       ],

@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox: How This App Works
 
-_A 5-minute tour of the app · app v1.5.4 · updated 2026-07-05_
+_A 5-minute tour of the app · app v{{app_version}}_
 
 This is a quick map of the app: what's in it, where things live, and which parts are for you. It is not a Wi-Fi lesson. If you want to understand and fix your own Wi-Fi, open the free book "Fix Your Own Wi-Fi" from the front page; that book does the teaching. This guide just shows you around the software.
 

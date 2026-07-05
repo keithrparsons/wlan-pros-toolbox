@@ -44,6 +44,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:markdown_widget/markdown_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../data/app_version.dart';
 import '../../theme/app_color_scheme.dart';
 import '../../theme/app_tokens.dart';
 import '../../widgets/app_copy_action.dart';
@@ -53,6 +54,27 @@ import '../../widgets/app_copy_action.dart';
 /// source of truth rather than re-typing the string.
 const String kUserGuideAsset = 'assets/guides/user-guide.md';
 const String kFieldManualAsset = 'assets/guides/field-manual.md';
+
+/// The placeholder the guide markdown carries where the app's version belongs,
+/// e.g. the header line `app v{{app_version}}`. The reader fills it at load time
+/// with the ACTUAL running version (from [AppVersion], which reads package
+/// metadata at runtime) so the printed version can never drift from the shipped
+/// build. Any release that bumps pubspec updates every guide automatically — the
+/// literal that used to rot here (a hand-typed `app v1.5.4`) is gone.
+///
+/// A hardcoded app-version literal in guide/help prose is caught mechanically by
+/// scripts/version-guard.sh (wired into `flutter test` via
+/// test/consistency/version_consistency_guard_test.dart), so a future edit that
+/// reintroduces a baked-in version and lets it drift cannot ship.
+const String kAppVersionPlaceholder = '{{app_version}}';
+
+/// Fill guide-content placeholders with runtime values before rendering.
+///
+/// Pure and synchronous so it is trivially unit-testable and so the widget-test
+/// override path shares the exact substitution the production load path uses.
+/// Today it fills only [kAppVersionPlaceholder]; add future runtime tokens here.
+String applyGuidePlaceholders(String raw, String appVersion) =>
+    raw.replaceAll(kAppVersionPlaceholder, appVersion);
 
 /// Deep-link anchor (the exact chapter heading text) for the user guide's
 /// "Wi-Fi vs Cellular vs Internet" explainer. Shared with the Test My Connection
@@ -112,7 +134,11 @@ class _GuideReaderScreenState extends State<GuideReaderScreen> {
     super.initState();
     final String? override = widget.markdownOverride;
     if (override != null) {
-      _markdown = override;
+      // Test seam: fill placeholders synchronously with the const fallback
+      // version so widget tests exercise the same substituted output the
+      // production path renders, without binding the PackageInfo channel.
+      _markdown =
+          applyGuidePlaceholders(override, AppVersion.fallback.version);
       _scheduleInitialJump();
     } else {
       _load();
@@ -128,8 +154,14 @@ class _GuideReaderScreenState extends State<GuideReaderScreen> {
   Future<void> _load() async {
     try {
       final String raw = await rootBundle.loadString(widget.assetPath);
+      // Runtime version fill: read the ACTUAL running build's version (falls
+      // back to the pubspec-mirrored const if the platform channel is
+      // unavailable) so the guide's `app v…` line always matches the build the
+      // user is running. Never a hand-typed literal that can drift.
+      final AppVersionInfo version = await AppVersion.load();
       if (!mounted) return;
-      setState(() => _markdown = raw);
+      setState(() =>
+          _markdown = applyGuidePlaceholders(raw, version.version));
       _scheduleInitialJump();
     } on Object catch (e) {
       if (!mounted) return;

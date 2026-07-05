@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · covers 171 tools · app v1.5.12_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · covers 173 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -28,12 +28,13 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Guides (2)
   - Ham Radio (6)
   - Reference Cards (13)
-- **Field & Trade Reference** (18 tools)
+- **Field & Trade Reference** (20 tools)
   - Codes & Safety (6)
   - AEC & Documentation (4)
   - Compliance & Governance (2)
   - Wireless Landscape (1)
   - Verticals (4)
+  - Vendor & Hardware (2)
   - Calculators (1)
 - **Field conveniences** (5 handy tools: reference, not curriculum)
 
@@ -3336,9 +3337,11 @@ A handful of tools in the kit are not Wi-Fi curriculum. They are the things that
 
 ---
 
-# Field & Trade Reference (18 tools)
+# Field & Trade Reference (20 tools)
 
 The codes, trades, documents, compliance frameworks, and adjacent radios a WLAN pro meets on a real job and never learned in a Wi-Fi cert. Every entry does one job: it lets you recognize what you are looking at, quote it honestly, and hand the ruling to the right authority. They point you at the AHJ, the licensed electrician, the RCDD, the QSA, the biomed team, or the architect of record. They certify nothing and clear no one. Grouped and ordered the way the app groups them.
+
+Every reference plate in this set is downloadable as a PDF from inside the app, so you can save, share, or AirDrop the full-resolution plate for print. The two entries under Vendor & Hardware are interactive drill-downs (they carry selection state) rather than static plates.
 
 ## Codes & Safety (6)
 
@@ -3689,6 +3692,51 @@ A decoder for the telecom room names that get used interchangeably and are not i
 - "Data closet" is not a standard term at all; it is an informal catch-all for any TR or IDF.
 - Reference only. Confirm the space names, standards currency, and cabling design with the architect of record, the RCDD, and your contract.
 - Data source: space vocabulary per ANSI/TIA-569-E, alongside ANSI/TIA-568 and ISO/IEC 11801.
+
+## Vendor & Hardware (2)
+
+
+### LED Decoder
+
+An interactive cross-vendor decoder for an access point's status LED. Pick the vendor, pick the model line when the vendor forks (Cisco Catalyst vs Meraki, Aruba Campus vs Instant On, Extreme IQ Engine vs WiNG), then read that line's own color-and-blink state table: booting, needs adoption, healthy, upgrading, fault, locate, and factory reset. Each state carries a literal colored indicator, a green, amber, red, blue, white, purple, or magenta dot, solid or gently flashing, beside the verbatim signal text. A master cross-vendor comparison chart rides at the top of the vendor picker with the whole color matrix on one plate.
+
+**Why it's here.** The color on the front of an AP is the fastest read you get before you open a laptop, but the same color means opposite things across vendors, so a flat "green equals healthy" legend is actively wrong. Solid green is healthy-but-no-clients on Meraki and healthy-with-clients on Ruckus; solid white is needs-adoption on UniFi and healthy-on-cloud on Extreme. Resolving the model line first is what keeps the read honest.
+
+**How to use**
+1. Scan the master cross-vendor comparison chart at the top of the picker to see the whole color matrix on one plate; tap it to pinch-zoom, or download it as a PDF.
+2. Pick the vendor (enterprise lines first, consumer mesh kept separate).
+3. If the vendor forks by management line, pick the line; a single-line vendor jumps straight to its table.
+4. Read the state row: the colored indicator (color plus solid or flashing), the verbatim signal text, and what it means in the field.
+5. Treat every color as a heuristic and confirm against the exact model's install or getting-started guide.
+
+**Field notes**
+- The colored dot is never the only signal: the color is always named in words beside it, and the verbatim signal text stays the authority for any nuance a dot cannot carry (sequences, alternating patterns, blink-count error codes).
+- Undocumented states are marked honestly. A state with no reachable vendor doc renders "Not documented by the vendor, confirm on a lab AP" with a neutral "?" indicator and no invented color. There are exactly six such states.
+- Some vendors ship no distinct signal by design (a Meraki factory reset reads as an ordinary reboot); the "reads as X" note is the answer, not a gap.
+- MikroTik ships as an honest note, not a table: RouterOS LEDs are user-configurable, so there is no standardized status-LED scheme to decode.
+- LED behavior can change with a firmware or dashboard release on cloud-managed lines. Reference only; confirm on the vendor's own documentation.
+- Data source: per-line vendor docs cited on each table, including the Cisco Catalyst Getting Started Guides, the Meraki MR46 Installation Guide, the Juniper Mist LED documentation, the Aruba AP-635 and AP22 installation guides, the Extreme Networks documentation portal, help.ui.com, and Ruckus KB 000001629.
+
+
+### Vendor Model Decode
+
+A per-vendor reference for reading an enterprise AP model number. Pick the vendor, then read that vendor's own model-number scheme: what each segment of the SKU encodes (product series, Wi-Fi generation, radio and stream tier, antenna type, regulatory domain), plus a worked example that decodes one real SKU end to end. Covers Cisco (Catalyst/Meraki/CW), HPE Aruba, Ubiquiti UniFi, Ruckus, and Extreme.
+
+**Why it's here.** Model numbers are position- and suffix-encoded and stable within a vendor generation, so a clean decode is possible offline. But every vendor encodes differently, so this is a per-vendor decoder, never a shared letter dictionary: the letter E alone means a regulatory domain on Cisco, an external antenna on Aruba, and a product tier on UniFi. One universal letter map would turn all three into one wrong answer.
+
+**How to use**
+1. Pick the vendor.
+2. Read the token table left to right: each segment and what it encodes.
+3. Read the worked example to see one real SKU decoded segment by segment.
+4. Check the confidence-and-caveats note for where a segment needs a per-model datasheet lookup instead of a digit rule.
+
+**Field notes**
+- This is deliberately not a "paste a model number, auto-decode" input. Several vendors (Extreme especially) do not digit-encode Wi-Fi generation, streams, or antenna, so an auto-decoder would fabricate precision the SKU does not carry.
+- Aruba's even/odd last-digit antenna rule (even = external, odd = internal) is confirmed back to the Wi-Fi 5 300 series; the 200 series is reported to follow it but is unverified, so decode pre-300-series from a per-model lookup.
+- Extreme is Medium confidence: only the first digit (tier) decodes; Wi-Fi generation, stream count, and antenna come from the datasheet.
+- Juniper Mist, Fortinet, Cambium, and Omada are flagged for a later pass and are not decoded here; when built, each gets its own module rather than another vendor's rules stretched onto it.
+- Reference only. A decode is a heuristic; confirm against the exact model's datasheet or ordering guide before you spec, order, or troubleshoot on it.
+- Data source: per-vendor field reference compiled by Keith Parsons / WLAN Pros; sources include the Cisco Catalyst 9130AX datasheet and Getting Started Guide, the Aruba 310 Series datasheet, UniFi Tech Specs, the Ruckus product guide, and Extreme Networks product pages.
 
 ## Calculators (1)
 
