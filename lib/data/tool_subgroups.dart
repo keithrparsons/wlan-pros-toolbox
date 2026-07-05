@@ -60,10 +60,26 @@ const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
     // Codes & Safety (2026-07-05): the field/trade-reference cluster — the
     // codes, ratings, and standards a Wi-Fi pro reads on spec sheets and job
     // sites but was never taught. Pilot member: Enclosure Ratings (IP / NEMA
-    // ingress protection). Sits last as a distinct trade-literacy pillar.
-    // SUBGROUP NAME flagged for Keith (Codes & Safety vs. a single "Field
-    // Reference" umbrella that would also re-home the Architectural Scale calc).
+    // ingress protection). Keeps Enclosure Ratings, Hazardous Locations, NEC
+    // Gotchas, Safety Basics, Site Access, and Credentials & Licenses.
     'Codes & Safety',
+    // AEC & Documentation (2026-07-05): the built-environment / plan-set
+    // literacy cluster, split OUT of Codes & Safety on Keith's confirmed
+    // topical-subgroup taxonomy. Members re-homed from Codes & Safety: Plan-Set
+    // Literacy, CAD & BIM Formats, Structured Cabling, AEC Process & Glossary.
+    // (Separate from the same-named Calculators subgroup that holds the
+    // Architectural Scale calc — that calc stays in rf-calculators.)
+    'AEC & Documentation',
+    // Compliance & Governance (2026-07-05): the "before you upload / when the
+    // framework reaches the WLAN" cluster. Members: Cloud Tool Trust (reading a
+    // cloud tool's security badges) and Network in Scope (PCI/HIPAA/SOX/GDPR).
+    'Compliance & Governance',
+    // Wireless Landscape (2026-07-05): the non-Wi-Fi radios a WLAN pro
+    // coexists with and designs around. Member: Adjacent Radio Systems.
+    'Wireless Landscape',
+    // Verticals (2026-07-05): what each industry tends to trigger. Members:
+    // Verticals Index, Healthcare Wi-Fi, Data Centers & Wi-Fi, Facility Spaces.
+    'Verticals',
   ],
   'rf-calculators': <String>[
     'RF & Propagation',

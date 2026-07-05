@@ -992,12 +992,12 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       ),
       // Field Reference #6 — read-only plan-set literacy: sheet-number anatomy,
       // discipline designators, the RCP as the AP sheet, and drawing scales.
-      // PLACEMENT FLAGGED FOR KEITH: an "AEC & Documentation" subgroup exists
-      // only under Calculators & Tools (rf-calculators, for the Architectural
-      // Scale calc); it is NOT a Quick Reference subgroup, and tool_subgroups
-      // notes "future plan-set-reading references land in Quick Reference." So
-      // this reference screen defaults to "Codes & Safety" until Keith rules on
-      // the umbrella-vs-topical taxonomy. Custom icon is a placeholder pending
+      // RE-HOMED 2026-07-05 (Keith's confirmed topical-subgroup taxonomy): moved
+      // from "Codes & Safety" to the new "AEC & Documentation" Quick Reference
+      // subgroup (registered in tool_subgroups.dart), which now gathers the
+      // built-environment / plan-set references. This Quick Reference subgroup
+      // is SEPARATE from the same-named Calculators subgroup that holds the
+      // Architectural Scale calc. Custom icon is a placeholder pending
       // Charta/Iris.
       ToolEntry(
         id: 'plan-set-literacy',
@@ -1005,7 +1005,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Read a drawing set, and find the RCP for AP placement',
         routeName: '/tools/plan-set-literacy',
         isLive: true,
-        subgroup: 'Codes & Safety',
+        subgroup: 'AEC & Documentation',
       ),
       // Field Reference #7 — read-only "Know Before You Go" site-access
       // checklist: the credential, screening, orientation, or escort that gates
@@ -1022,34 +1022,36 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       // Field Reference #8 — read-only "what the building files actually are":
       // the CAD/BIM format decode table (DWG, IFC, RVT, ...), Level of
       // Development, and how a building file flows into a Wi-Fi design tool.
-      // Text-reference (no decoder plate). Same "Codes & Safety" subgroup
-      // (umbrella-vs-topical taxonomy still flagged for Keith). Custom icon is a
-      // placeholder pending Charta/Iris.
+      // Text-reference (no decoder plate). RE-HOMED 2026-07-05 to the new "AEC &
+      // Documentation" Quick Reference subgroup (Keith's topical taxonomy).
+      // Custom icon is a placeholder pending Charta/Iris.
       ToolEntry(
         id: 'cad-bim-formats',
         title: 'CAD & BIM Formats',
         description: 'Decode DWG, IFC, RVT, and how they reach a design tool',
         routeName: '/tools/cad-bim-formats',
         isLive: true,
-        subgroup: 'Codes & Safety',
+        subgroup: 'AEC & Documentation',
       ),
       // Field Reference #9 — read-only TIA/BICSI structured-cabling reference:
       // the TIA-568 family, the 90+10 m channel rule, the cable-category ladder
       // (Cat 5e-8), and how the cabling design ties AP locations to IDF
-      // locations. Text-reference (no decoder plate). Same "Codes & Safety"
-      // subgroup. Custom icon is a placeholder pending Charta/Iris.
+      // locations. Text-reference (no decoder plate). RE-HOMED 2026-07-05 to the
+      // new "AEC & Documentation" Quick Reference subgroup (Keith's topical
+      // taxonomy). Custom icon is a placeholder pending Charta/Iris.
       ToolEntry(
         id: 'structured-cabling',
         title: 'Structured Cabling',
         description: 'TIA standards, the 90 m channel, and cable categories',
         routeName: '/tools/structured-cabling',
         isLive: true,
-        subgroup: 'Codes & Safety',
+        subgroup: 'AEC & Documentation',
       ),
       // Field Reference #10 — read-only AEC process + glossary: the AIA design
       // phases (and when Wi-Fi should engage), and the AEC shorthand (RFI,
       // submittal, AHJ, OAC, ...) that trips WLAN pros up. Text-reference,
-      // glossary-heavy (no decoder plate). Same "Codes & Safety" subgroup.
+      // glossary-heavy (no decoder plate). RE-HOMED 2026-07-05 to the new "AEC &
+      // Documentation" Quick Reference subgroup (Keith's topical taxonomy).
       // Custom icon is a placeholder pending Charta/Iris.
       ToolEntry(
         id: 'aec-process-glossary',
@@ -1057,7 +1059,84 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Design phases and the AEC shorthand the trades use',
         routeName: '/tools/aec-process-glossary',
         isLive: true,
+        subgroup: 'AEC & Documentation',
+      ),
+      // ── Field & Trade Reference set, second wave (2026-07-05) ──
+      // Eight read-only references cloning the pilot pattern, split into three
+      // new Quick Reference subgroups (registered in tool_subgroups.dart). All
+      // static content, offline, all platforms incl. web. Custom icons are
+      // placeholders pending Charta/Iris.
+      //
+      // Compliance & Governance: reading a cloud tool's trust badges before you
+      // upload client data, and the frameworks that reach the WLAN itself.
+      ToolEntry(
+        id: 'cloud-tool-trust',
+        title: 'Cloud Tool Trust',
+        description: 'Read a cloud tool\'s security badges before you upload',
+        routeName: '/tools/cloud-tool-trust',
+        isLive: true,
+        subgroup: 'Compliance & Governance',
+      ),
+      ToolEntry(
+        id: 'network-in-scope',
+        title: 'Network in Scope',
+        description: 'When PCI, HIPAA, SOX, or GDPR reaches the WLAN',
+        routeName: '/tools/network-in-scope',
+        isLive: true,
+        subgroup: 'Compliance & Governance',
+      ),
+      // Wireless Landscape: the non-Wi-Fi radios a WLAN pro coexists with.
+      ToolEntry(
+        id: 'adjacent-radio-systems',
+        title: 'Adjacent Radio Systems',
+        description: 'The non-Wi-Fi radios, and what shares 2.4 GHz',
+        routeName: '/tools/adjacent-radio-systems',
+        isLive: true,
+        subgroup: 'Wireless Landscape',
+      ),
+      // Codes & Safety: portable credentials and the mobilization lead-time
+      // landmine (pairs with Site Access, which stays in Codes & Safety).
+      ToolEntry(
+        id: 'credentials-licenses',
+        title: 'Credentials & Licenses',
+        description: 'Portable IDs, FCC licenses, and their lead times',
+        routeName: '/tools/credentials-licenses',
+        isLive: true,
         subgroup: 'Codes & Safety',
+      ),
+      // Verticals: what each industry tends to trigger. by-vertical-index and
+      // data-centers-wifi are text-reference (no decoder plate).
+      ToolEntry(
+        id: 'by-vertical-index',
+        title: 'Verticals Index',
+        description: 'Pick the industry, see what it triggers, read the entry',
+        routeName: '/tools/by-vertical-index',
+        isLive: true,
+        subgroup: 'Verticals',
+      ),
+      ToolEntry(
+        id: 'healthcare-vertical',
+        title: 'Healthcare Wi-Fi',
+        description: 'WMTS, EMC, roaming grades, and the four authorities',
+        routeName: '/tools/healthcare-vertical',
+        isLive: true,
+        subgroup: 'Verticals',
+      ),
+      ToolEntry(
+        id: 'data-centers-wifi',
+        title: 'Data Centers & Wi-Fi',
+        description: 'Why the room fights RF, and Rated vs Tier',
+        routeName: '/tools/data-centers-wifi',
+        isLive: true,
+        subgroup: 'Verticals',
+      ),
+      ToolEntry(
+        id: 'facility-spaces',
+        title: 'Facility Spaces',
+        description: 'Decode MDF, IDF, TR, and the data closet',
+        routeName: '/tools/facility-spaces',
+        isLive: true,
+        subgroup: 'Verticals',
       ),
       // ── from the dissolved Infrastructure category ──
       ToolEntry(

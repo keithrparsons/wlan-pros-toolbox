@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · covers 153 tools · app v1.5.12_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · covers 171 tools · app v1.5.12_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -28,6 +28,13 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Guides (2)
   - Ham Radio (6)
   - Reference Cards (13)
+- **Field & Trade Reference** (18 tools)
+  - Codes & Safety (6)
+  - AEC & Documentation (4)
+  - Compliance & Governance (2)
+  - Wireless Landscape (1)
+  - Verticals (4)
+  - Calculators (1)
 - **Field conveniences** (5 handy tools: reference, not curriculum)
 
 ---
@@ -3326,3 +3333,385 @@ A handful of tools in the kit are not Wi-Fi curriculum. They are the things that
 - **Keyboard Shortcuts** (Encoding): macOS and Windows system and terminal keys, the Mac modifier symbols, and the Greek letters that show up in RF math.
 - **Time Zones** (Time & Formats): world UTC offsets, anchor cities, and the US time-zone table, for coordinating work across sites and scheduling calls.
 - **Emergency Phrases** (Travel & Field): travel and emergency phrases in English, Spanish, French, Italian, and German, searchable and offline, for the install trip that crosses a border.
+
+---
+
+# Field & Trade Reference (18 tools)
+
+The codes, trades, documents, compliance frameworks, and adjacent radios a WLAN pro meets on a real job and never learned in a Wi-Fi cert. Every entry does one job: it lets you recognize what you are looking at, quote it honestly, and hand the ruling to the right authority. They point you at the AHJ, the licensed electrician, the RCDD, the QSA, the biomed team, or the architect of record. They certify nothing and clear no one. Grouped and ordered the way the app groups them.
+
+## Codes & Safety (6)
+
+
+### Enclosure Ratings
+
+The two enclosure-rating systems a WLAN pro reads on outdoor and industrial spec sheets: the IP code (IEC 60529, international) and NEMA types (NEMA 250, US). It decodes each IP digit, lists the NEMA types that matter for Wi-Fi, and shows the one-way NEMA-to-IP translation.
+
+**Why it's here.** US spec sheets quote NEMA and international sheets quote IP, so you translate between them to compare gear on the same terms and spec an enclosure, AP, antenna, or PoE injector to the real hazard at the mount point.
+
+**How to use**
+1. Read an IP code left to right: first digit is solids and dust (0 to 6), second digit is water (0 to 9K). Each digit maps to a defined lab test.
+2. Use the common-ratings table to place a code (IP66 is dust-tight plus powerful jets, the mainstream outdoor AP rating).
+3. For a US spec sheet, read the NEMA type, then use the NEMA-to-IP table as a minimum floor. The reverse (IP to NEMA) is not valid.
+4. Use the placement table to pick a rating for where the gear mounts.
+
+**Field notes**
+- X means not tested, not zero. IPX7 is water-rated 7 with the solids digit unrated. Read X as no data, never as fails.
+- NEMA to IP is valid only as a minimum. NEMA tests corrosion, icing, gasket aging, and oil, which IP never checks, so a NEMA 4X box exceeds IP66 but an IP66 box is not automatically NEMA 4X.
+- The water ladder is not a clean superset past 6. An IP67 (immersion) device is not guaranteed to pass IP66 (jets); gear that must survive both is dual-marked, such as IP66/IP67.
+- IP tests use fresh water only. Salt, detergents, and solvents need separate chemical-resistance verification.
+- This is a field reference, not code or design guidance. Confirm requirements with the AHJ, the architect of record, and a licensed electrician.
+- Data source: IP per IEC 60529; NEMA per NEMA 250.
+
+
+### Hazardous Locations
+
+A recognize-and-defer reference for classified (hazardous) areas: the NEC Class and Division system (US, Article 500) and the IEC Zone system (Article 505/506, ATEX, IECEx). It names what the hazard is (Class), how often it is present (Division or Zone), the recognized protection concepts, and the field read, then stops.
+
+**Why it's here.** A standard commercial AP is a genuine ignition source in a flammable atmosphere. Mounting one in a classified area is illegal, uninsurable, and dangerous. You need to recognize a refinery, grain elevator, fuel depot, or spray booth before quoting, and route the install to rated gear and the AHJ.
+
+**How to use**
+1. Read Class as what the hazard is made of: Class I (gases and vapors), Class II (dust), Class III (fibers and flyings).
+2. Read Division as how often it is present: Div 1 during normal operation, Div 2 only under fault. Div 2 is the far larger wireless market.
+3. Map to the IEC Zone system where a facility uses it (Div 1 is roughly Zone 0 plus 1 for gas; Div 2 is roughly Zone 2).
+4. Match a recognized protection concept (Ex d, Ex i, Ex p, Ex e/nR) to the Division or Zone, or keep the AP out and remote the antenna in.
+
+**Field notes**
+- Never just mount a commercial AP in a classified area. The default move is to keep the AP in the adjacent general-purpose area and remote the antenna into the zone through a rated penetration.
+- "Class I Div 2 rated" buys permission to install that specific listed device, in that specific Division or Zone, wired per its control drawing. It is not a blanket safe-anywhere stamp; a Div 2 device is not approved for Div 1.
+- You cannot mix Division and Zone classification in the same installation. Which one is in force is set by the facility area-classification drawing and the AHJ, not the installer.
+- This is a field reference, not code or design guidance. Confirm requirements with the AHJ, the architect of record, and a licensed electrician.
+- Data source: Class/Division per NEC Article 500; Zone per NEC 505/506, ATEX, and IECEx.
+
+
+### NEC Gotchas
+
+A recognize-and-defer reference for the NEC articles that actually bite a WLAN installer: elevator hoistways (620), plenum air spaces (300.22), the communications-cable rating ladder (800), PoE bundle heat (725.144), antenna and mast grounding (810), firestopping fire-rated assemblies (300.21), and abandoned cable (800.25).
+
+**Why it's here.** These are the code articles most likely to surface on an everyday install. Recognizing each one on site, then handing it to the AHJ, a licensed electrician, or the equipment listing, keeps you out of trouble. Recognize-and-defer, never how-to-comply.
+
+**How to use**
+1. Use it to recognize a code issue on site: the hoistway you cannot put an AP in, the plenum that dictates your cable jacket, the PoE bundle that can overheat, the antenna that needs grounding, the fire wall you must not breach, and the dead cable you must pull.
+2. Read the cable-rating ladder as a jacket fire-rating only (CMP plenum, CMR riser, CM/CMG general, CMX limited); substitution runs downhill only.
+3. On the two STOP items (PoE ampacity, firestop assembly), do not eyeball a number or pick an assembly yourself; hand it to the licensed electrician or the listed system.
+4. Then defer to the right authority for the actual requirement.
+
+**Field notes**
+- STOP on PoE bundle heat (725.144): the exact ampacity and bundle-count numbers come from the code table and the specific install conditions. Do not eyeball them. Size the bundle with a licensed electrician or the cabling designer against the adopted NEC.
+- STOP on firestopping (300.21): the approved firestop is a specific listed assembly matched to the wall type, penetrant, and opening. Never improvise it and never pick the assembly yourself.
+- Grounding (810) caveat: nothing survives a direct strike. Bonding and surge protection mitigate nearby strikes and static, not a direct hit. Conductor sizing is an electrician's call.
+- This is a field reference, not code or design guidance. Confirm requirements with the AHJ, the architect of record, and a licensed electrician.
+- Data source: article numbers per the NEC (NFPA 70); confirm against the locally adopted edition.
+
+
+### Safety Basics
+
+A field-awareness reference for the personal protective equipment a general contractor expects before badging you onto an active site, a short note on ESD (protecting the electronics you install, not the person), and the recognize-and-STOP hazards you must hand off rather than work.
+
+**Why it's here.** Half of a WLAN pro's installs happen on a ladder or lift, on an active construction site, around other trades. Knowing the PPE ratings a GC will ask for keeps you from being turned away at the gate, cheap ESD gear prevents latent failures in the gear you install, and the STOP flags keep a routine cable pull from becoming a health or legal incident. Awareness and lookup, not compliance instruction.
+
+**How to use**
+1. Use the PPE ladder to recognize the four common baseline items and the standard each is rated to (hard hat Z89.1, safety-toe F2413, hi-vis ANSI 107, eye protection Z87.1).
+2. Read the ESD note as gear protection: a grounded wrist strap, mat, and static bags under ANSI/ESD S20.20 guard against latent damage to APs, optics, and boards.
+3. On the four recognize-and-STOP hazards (asbestos or lead, arc flash and energized work, confined spaces, seismic bracing), stop and hand it off. Never run any of them as a procedure yourself.
+4. Confirm the site's specific PPE policy with the employer and GC, who own the assessment.
+
+**Field notes**
+- The four PPE items are the common "let me on the site" baseline. On a finished office install street clothes are usually fine; on active construction expect the GC to require all four to badge on.
+- ESD risk is highest in data centers and any time you handle bare optics or boards. For a sealed AP coming out of a static bag, mounted and cabled, the risk is lower but not zero.
+- The recognize-and-STOP items are named-and-stopped on purpose: the app names the hazard and tells you to hand it off, and deliberately gives no procedure for working any of them.
+- This is a field reference, not code or design guidance. Confirm requirements with the AHJ, the architect of record, and a licensed electrician.
+- Data source: standards designators ANSI/ISEA Z89.1, ASTM F2413, ANSI/ISEA 107, ANSI Z87.1, ANSI/ESD S20.20, NFPA 70E; confirm the site's PPE policy with the employer and GC.
+
+
+### Site Access
+
+A "Know Before You Go" pre-mobilization checklist: eight site types (aerial and man-lifts, rail, hospitals, maritime, warehouse and distribution, schools, data centers, correctional) and the credential, screening, orientation, or escort that can gate you from reaching the work before it even starts.
+
+**Why it's here.** On many sites you cannot reach the work area without a specific credential, background check, orientation, or escort. That is a quoting and scheduling factor, not just a safety one. Rail screening, a hospital ICRA permit, or lift-operator proof can each add days or weeks between winning a job and touching a cable.
+
+**How to use**
+1. Before you quote, scan the checklist for the site type you are bidding and read what may gate you.
+2. Use the "ask about" column as the questions to put to the GC, site owner, or authority: screening programs, orientations, escorts, flagman, PFD and TWIC, ICRA and ILSM, tool control.
+3. Budget the lead time (rail screening and hospital ICRA in particular run long) into the schedule you promise.
+4. Confirm each requirement with the site, general contractor, and authority before you mobilize.
+
+**Field notes**
+- The pattern across every item: the requirement is set by someone other than you, must be satisfied before work starts, and carries real lead time and cost.
+- Maritime and over-water work adds PFD and drowning-hazard rules plus heavy salt corrosion, so spec NEMA 4X or high-IP with explicit corrosion resistance.
+- There is no OSHA-issued "lift license"; the employer trains and certifies lift operators, and GCs demand documented proof.
+- This is a field reference, not code or design guidance. The site, general contractor, and authority set every requirement; the Toolbox certifies nothing and clears no one.
+
+
+### Credentials & Licenses
+
+The portable IDs and licenses a WLAN pro carries from job to job, and the mobilization landmine in them: why you almost never need an FCC operator license (even for licensed microwave backhaul), and the federal and background-check credentials (TWIC, CAC, DBIDS, SIDA, HAZWOPER-40, background checks) that gate restricted sites with weeks-to-months lead time.
+
+**Why it's here.** The credential you do not already hold is the schedule you cannot keep. A TWIC, a base credential, or a SIDA badge can each add weeks between the award and touching a cable, so scope the credential before you quote, not after you win. Companion to the Site Access entry.
+
+**How to use**
+1. Settle the license question first: unlicensed Wi-Fi (Part 15) and licensed point-to-point microwave (Part 101) both require no FCC operator license (GROL).
+2. For a restricted site, read the credential table for the ID, issuing authority, lead time, and validity you will need.
+3. Bucket the lead time: fast and you control it (GROL exam, school check), weeks (SIDA, TWIC, DBIDS), or weeks-to-months (CAC).
+4. Confirm what your specific job requires with the issuing authority before you quote and before you mobilize.
+
+**Field notes**
+- You would only need a GROL if the work crossed into servicing aviation or marine radios, which is outside a normal WLAN scope of work.
+- TWIC gets you the maritime jobs; TSA tells applicants to enroll at least 60 days out and warns processing can exceed 45 days.
+- CAC versus DBIDS is the military-base question: the CAC needs a sponsor and an investigation that can run many months, while DBIDS is the lighter get-on-base path.
+- Reference only. The issuing authority sets and grants every credential; the Toolbox certifies nothing and clears no one.
+- Data source: FCC license scope per Parts 15, 97, and 101; credential detail per TSA, USCG, DoD, and OSHA 29 CFR 1910.120(e).
+
+## AEC & Documentation (4)
+
+
+### Plan-Set Literacy
+
+A reference for reading an architectural drawing set: how a sheet number is built (discipline letter, sheet-type digit, sequence), what each discipline designator and sheet-type digit means, why the Reflected Ceiling Plan (RCP) is the sheet for AP placement, the rest of a plan set worth knowing, and US drawing scales.
+
+**Why it's here.** A WLAN designer who can pull the right sheet, read the RCP, and speak in sheet numbers looks like a peer to the other trades instead of a junior. The RCP is where a coverage design meets the physical ceiling, and catching an AP-versus-diffuser conflict on paper is far cheaper than catching it at rough-in.
+
+**How to use**
+1. Read a sheet number left to right: discipline letter, sheet-type digit, sequence. A-201 is Architectural, an elevation, sheet 01.
+2. Use the discipline table to find the sheet owner (A architectural, E electrical, T telecommunications; the WLAN and structured cabling usually live on the T sheets).
+3. Use the sheet-type digit to find the drawing kind (1 plans, 2 elevations, 6 schedules), so A-1xx is an architectural plan and E-6xx an electrical schedule.
+4. For AP placement, open the RCP: overlay your AP locations and resolve conflicts with diffusers, troffers, sprinklers, and soffits before rough-in. Never place APs on the floor plan alone.
+
+**Field notes**
+- The RCP is drawn as if a mirror on the floor reflects the ceiling upward, so it reads in the same left-right orientation as the floor plan; it carries the ceiling grid, mounting heights, and every ceiling-mounted element.
+- Always build to the latest revision: the revision cloud marks what changed and the delta triangle carries the revision number.
+- US architectural sheets use fractional-inch scales (1/8" = 1'-0" is 1:96); to get the ratio, invert the fraction and multiply by 12.
+- Reference only. Confirm drawing conventions, revisions, and responsibility with the architect of record and your contract for the specific project.
+- Data source: conventions per the US National CAD Standard; sheet-numbering practice varies on smaller jobs.
+
+
+### CAD & BIM Formats
+
+What the building files an architect hands you actually are: the format decode table (DWG, DXF, DGN, IFC, RVT, NWD/NWC, COBie), the Level of Development (LOD 100 to 500) ladder for how much of a model to trust, and how a building file flows into a Wi-Fi design tool (Ekahau, Hamina, iBwave).
+
+**Why it's here.** You receive these files on every design job. The difference between a clean import and a wasted afternoon is knowing what the format is, what LOD you were handed, which CAD layers to ask for, and that scale calibration is the single step that makes or breaks the whole design. The Toolbox explains these formats; it does not open, render, or convert them.
+
+**How to use**
+1. Use the decode table to recognize a format on sight: DWG and DXF are Autodesk CAD, IFC is the open BIM standard, RVT is a Revit model, NWD/NWC are Navisworks coordination files, COBie is asset data.
+2. Read the LOD you were handed before trusting geometry: LOD 100 to 200 is a massing study (do not derive wall attenuation from it), LOD 300 and up is dimensionally trustworthy.
+3. Follow the import flow: import the CAD or PDF, calibrate the scale on a known distance (get this wrong and every downstream distance is wrong), then assign wall materials and run the prediction.
+4. Ask the architect for a clean layer set (walls, doors, structure; strip furniture, dimensions, title blocks) instead of an unusable 80-layer dump.
+
+**Field notes**
+- Scale calibration is the step that matters most: draw a line over a known length and enter the real measurement. An error here corrupts every distance, coverage prediction, and attenuation value downstream.
+- LOI (Level of Information) is the data-completeness sibling of LOD: LOD is geometry, LOI is data.
+- The boundary: the Toolbox explains DWG, IFC, RVT, and the rest and how they reach the design tools. It is not a CAD or BIM viewer, converter, or editor.
+- Reference only. Confirm file handling, model reliability, and responsibility with the architect of record and your design-tool documentation.
+- Data source: format and LOD conventions per Autodesk, buildingSMART, and the AIA/AGC LOD framework.
+
+
+### Structured Cabling
+
+The TIA and BICSI structured-cabling standards that decide where an AP can go and what feeds it: the TIA-568 family, the 90 m permanent link plus 10 m of cords for a 100 m channel, the cable-category ladder (Cat 5e through Cat 8), and the MDF-IDF topology that ties AP locations to telecom rooms.
+
+**Why it's here.** The 90 m rule and the Cat 6A bar shape real WLAN decisions: they set the outer edge of where you can place an AP and what uplink it can carry, which quietly drives IDF placement, switch selection, and the whole coverage plan. The physical grounding-as-safety side lives in the NEC codes reference; this is the TIA and BICSI infrastructure side.
+
+**How to use**
+1. Use the TIA family to know who owns what: 568 is cabling, 569 pathways and spaces, 606 labeling and administration, 607 telecom bonding and grounding.
+2. Apply the 90 plus 10 m channel rule as an AP-cable-run reality check: an AP more than about 90 m of cable-path from the IDF needs an intermediate closet, a different topology, or fiber.
+3. Read the cable-category table for the multi-gig bar: Cat 6A carries 10 Gbps to 100 m and is the practical minimum for Wi-Fi 6, 6E, and 7 APs with multi-gig uplinks.
+4. Coordinate with the RCDD (BICSI's cabling-design credential) whose 90 m constraint ties AP locations to IDF locations.
+
+**Field notes**
+- The 90 m permanent link is solid horizontal cable from the telecom room to the outlet; add up to 10 m of stranded patch and equipment cords for a 100 m channel maximum. Exceed it and you are outside TIA.
+- T568A and T568B are the two pin-out standards; a jack is wired to one, so be consistent end to end.
+- AP count and placement drive IDF count and PoE-switch port budgeting, so the WLAN design and the cabling design have to talk to each other.
+- Reference only. Confirm cabling design and standards currency with the RCDD, the architect of record, and your contract for the specific project.
+- Data source: standards per ANSI/TIA-568/569/606/607 and BICSI; confirm the current edition.
+
+
+### AEC Process & Glossary
+
+The architecture-engineering-construction workflow you work inside and the shorthand the other trades use: the AIA design phases (Programming, SD, DD, CD, Bidding, CA) and when Wi-Fi should engage, plus the AEC glossary (RFI, submittal, ASI, AHJ, GC, MEP, OAC, AOR/EOR, and more) that trips WLAN pros up. US convention (AIA).
+
+**Why it's here.** Speak the process fluently and you look like a peer in the room instead of the network person who wandered in. The RFI, the submittal, the punch list, and the OAC are the levers that get your coverage design built the way you drew it. Engaging at Schematic Design is the difference between designing Wi-Fi in and retrofitting it later.
+
+**How to use**
+1. Use the phase table to engage at the right moment: establish RF requirements and reserve IDF and ceiling access at SD, coordinate AP locations against the RCP at DD, finalize plans and telecom sheets at CD.
+2. Raise an RFI the moment the Reflected Ceiling Plan and your AP plan disagree, so the conflict is resolved on paper before rough-in.
+3. Get your APs, mounts, and cable approved as a submittal (the contractor's proof that what is installed matches the spec).
+4. Treat anything about contractual responsibility as "confirm with the architect of record and your contract," never as a ruling.
+
+**Field notes**
+- The AHJ (Authority Having Jurisdiction) is the building official, fire marshal, or inspector who interprets and enforces code locally; the AHJ's word governs.
+- An ASI is a minor clarification with no cost or time impact; a Change Order is a formal, signed change to scope, cost, or schedule (what an ASI is not).
+- The OAC is the recurring Owner-Architect-Contractor coordination meeting; if Wi-Fi matters, someone has to carry it into the OAC.
+- Reference only. Confirm contractual responsibility, code compliance, and phase deliverables with the architect of record, the AHJ, and your contract for the specific project.
+- Data source: phase and contract vocabulary per US AIA convention.
+
+## Compliance & Governance (2)
+
+
+### Cloud Tool Trust
+
+How to read the security badges on a cloud Wi-Fi tool before you upload a client's floor plan, AP inventory, or survey data: ISO/IEC 27001 (a certified management system), SOC 2 (an attestation report, not a certificate), GDPR (a law you conform to), the five Trust Services Criteria, and the adjacent badges (ISO 27017/27018, FedRAMP, CSA STAR).
+
+**Why it's here.** A compliance badge is a claim about a defined scope and a time window, not a guarantee about your data. You are the one uploading a client's network into someone else's cloud, so the badge tells you which questions to ask, not that the data is safe.
+
+**How to use**
+1. Ask whether it is a certificate or an attestation: ISO 27001 is a certificate; SOC 2 is a report plus an opinion, so "SOC 2 certificate" is a wording tell.
+2. Read the scope: does it cover the actual product you will use, or the vendor's corporate IT?
+3. For SOC 2, confirm Type 2 (operating effectiveness over a period) over Type 1, and that Confidentiality (and Privacy, if personal data) is in scope.
+4. Ask where the data lives and under whose law: residency is not sovereignty, and EU hosting does not by itself solve GDPR.
+
+**Field notes**
+- Third-party-audited claims (ISO 27001 certificate, SOC 2 Type 2, CSA STAR Level 2, FedRAMP) outrank self-asserted ones, and even an audited claim only covers the scope, criteria, and time window printed on it.
+- A vendor unwilling to share a SOC 2 report under NDA is itself a flag; read the opinion, scope, period, and the complementary controls you are responsible for.
+- Some data, a client's full network design, is sensitive enough that the right home is your own device, not a cloud you never vetted.
+- Reference only. Compliance status, scope, and sufficiency are determined by the client's security or compliance officer and a qualified auditor (a CPA firm or counsel), not by this tool.
+- Data source: frameworks per ISO/IEC 27001:2022, the AICPA SOC 2 framework, and the EU GDPR.
+
+
+### Network in Scope
+
+The regulatory frameworks that reach the WLAN itself: PCI DSS (cardholder data), HIPAA (electronic health information), SOX (public-company financial systems), and GDPR (EU personal data). Each entry names the trigger, what the framework generally asks of the network, and the owner to route the specifics to.
+
+**Why it's here.** When the Wi-Fi carries cardholder data, ePHI, or sits inside a public company's financial systems, the design inherits requirements long before anyone audits it. Recognizing the scope lets you quote honestly and design toward the requirement instead of retrofitting after the auditor shows up.
+
+**How to use**
+1. Recognize the trigger: card-present retail and hospitality (PCI), covered entities and business associates (HIPAA), US public companies (SOX), EU personal data on the network (GDPR).
+2. Read the general asks: segmentation and strong crypto for PCI, the section 164.312 technical safeguards for HIPAA, access and change controls for SOX.
+3. Route the specifics to the owner: the QSA for PCI, the privacy or security officer for HIPAA and GDPR, internal audit and the external auditor for SOX.
+4. Never tell a client the design "meets PCI" or "is HIPAA compliant"; you recognize the framework, and the assessor rules on it.
+
+**Field notes**
+- PCI DSS v4.0.1 makes WPA2-PSK inadequate for the Cardholder Data Environment; WEP and WPA/TKIP are prohibited, and quarterly rogue-AP scanning is required even at a site with no Wi-Fi at all.
+- HIPAA encryption is currently "addressable," meaning you implement it or document a defensible reason not to; a January 2025 proposed rule would make it mandatory.
+- SOX is the narrowest fit: the network shows up as the access-and-change-control substrate under the financial systems, which is why an AP config change can suddenly need a ticket and an approver.
+- Reference only. Whether a network is in scope, and whether a design is sufficient, is determined by the client's compliance officer and a qualified auditor, not by this tool.
+- Data source: framework requirements per PCI DSS v4.0.1, HIPAA 45 CFR 164.312, SOX Section 404, and the EU GDPR.
+
+## Wireless Landscape (1)
+
+
+### Adjacent Radio Systems
+
+The non-Wi-Fi radios a WLAN pro coexists with, designs around, and gets asked about: which five (BLE, Bluetooth Classic, Zigbee, Thread, ANT+) contend for your 2.4 GHz airtime, and which (LoRaWAN, Z-Wave, UWB, NB-IoT, LTE-M, CBRS and private 5G, Wi-Fi HaLow) run coexistence-clean in sub-GHz or licensed spectrum.
+
+**Why it's here.** The client increasingly hands you the whole smart-building radio stack, not just the Wi-Fi. Knowing what shares the 2.4 GHz air, what runs clean in sub-GHz, and when to talk a client out of a private-cellular pitch that Wi-Fi already covers is both authority and self-defense in a spectrum sweep.
+
+**How to use**
+1. Scan the 2.4 GHz contenders: BLE, Bluetooth Classic, Zigbee, Thread, and ANT+ subtract real airtime at scale, so coordinate a Zigbee lighting mesh with your 1/6/11 plan.
+2. Use the coexistence table to route congested-band IoT onto a coexistence-clean radio (LoRaWAN, Z-Wave, cellular IoT) rather than fighting for airtime.
+3. Carry the three corrections: Matter is an application layer that can ride Wi-Fi, 802.15.4 is not 2.4 GHz only, and CBRS and private 5G never touch your air.
+4. Use the "which radio when" picker to answer the "should this be Wi-Fi or something else" question honestly.
+
+**Field notes**
+- Read every range, rate, and battery figure as a real-world envelope, not a hard spec; they move with power, antenna, spreading factor, channel width, and environment.
+- CBRS lives at 3.55 to 3.70 GHz and does not overlap any Wi-Fi band; private cellular competes for the job and the budget, never for your air.
+- A Zigbee mesh and a wall of BLE beacons show up in a 2.4 GHz sweep as non-Wi-Fi energy; naming what you see is the difference between a diagnosis and a guess.
+- Reference only. Confirm current standards editions and regional band allocations for the specific deployment.
+- Data source: bands and topologies per the relevant IEEE 802.15.4, Bluetooth SIG, LoRa Alliance, and 3GPP specifications.
+
+## Verticals (4)
+
+
+### Verticals Index
+
+A plain-language index of the industries you quote and what each one tends to trigger: manufacturing, oil and gas, warehouse, healthcare, hospitality and stadiums, education, retail, data centers, maritime, and correctional or government. It maps the vertical you name to the other reference entries you should read before you quote it.
+
+**Why it's here.** Nobody standing in a building thinks "this is NAICS 622110"; you think "it's a hospital." Classification codes are back-office filing labels, not design inputs. The vertical you name in the first phone call tells you which reference entry to open before you quote.
+
+**How to use**
+1. Find the vertical you are bidding in the map and read what it tends to trigger.
+2. Open the "read first" entry (Hazardous Locations, Enclosure Ratings, Healthcare Wi-Fi, Site Access, Data Centers, or Facility Spaces) before you quote.
+3. For retail, recognize PCI DSS scope when Wi-Fi touches cardholder data, then defer the ruling to the client's QSA.
+4. For high-density venues, remember the design axis flips from coverage to capacity, driven by seat count and peak concurrent users.
+
+**Field notes**
+- Miss the hazloc on an oil site, the ICRA gate on a hospital, or the PCI scope in retail, and the timeline and price you promised were wrong before you started.
+- Treat a classification code (NAICS, SIC, GICS, ISIC, NACE) as a label a client hands you, never a design input.
+- Use the index the other direction too: pick the industry, see the cluster, read the entry that owns the detail.
+- This is a field reference, not code, design, or compliance guidance; confirm every requirement with the client, the AHJ, and the relevant assessor.
+- Data source: this entry is the index that points at the other Field & Trade Reference entries.
+
+
+### Healthcare Wi-Fi
+
+Why a hospital is the one building where you cannot design Wi-Fi like an office: the protected WMTS telemetry band, medical-device EMC (IEC 60601-1-2), the voice-and-RTLS roaming grades, shielded rooms, and the four authorities (HIPAA, FDA, FCC, The Joint Commission) plus the in-house biomedical engineering handoff.
+
+**Why it's here.** The air is shared with life-critical, EMC-regulated devices and a protected telemetry band, a dropped roam can mean a missed alarm, and the "just cover it like an office" instinct is exactly the mistake that gets telemetry stepped on and alarms missed.
+
+**How to use**
+1. Coordinate with clinical and biomedical engineering before you touch a hospital RF environment; that is the single most important handoff.
+2. Do not assume all patient monitoring is on Wi-Fi: WMTS is a separate, licensed system on 608 to 614, 1395 to 1400, and 1427 to 1432 MHz, coordinated by a WMTS coordinator.
+3. Design to voice-and-RTLS grade, not data grade: continuous facility-wide roaming, overlapping cells, and no dead zones, and design around shielded rooms and the MRI Faraday cage.
+4. Recognize each of the four authorities, then defer the rulings to the people who own them.
+
+**Field notes**
+- Medical devices are tested to tolerate a defined RF environment under IEC 60601-1-2, but tested to a limit is not the same as immune to anything; a dense, high-power deployment can push local field strength toward what a nearby monitor was qualified for.
+- Coverage grade drives AP count more than floor area does; a hospital quoted at data-grade density fails when it has to carry voice handsets and location services.
+- Segmentation is a performance control here, not only a security one: guest, clinical, device, and RTLS traffic get separated for airtime protection as much as for HIPAA.
+- This is a field reference, not clinical, code, or compliance guidance; confirm every requirement with biomed, the compliance and security officers, the WMTS coordinator, and the AHJ.
+- Data source: standards per the FCC WMTS allocation, IEC 60601-1-2, HIPAA, FDA guidance, and The Joint Commission.
+
+
+### Data Centers & Wi-Fi
+
+The read a WLAN pro needs before quoting Wi-Fi in or around a data center: why production Wi-Fi on the floor is usually minimal, why the room is RF-hostile by construction, and how the two resilience frameworks (ANSI/TIA-942 Rated-1 to Rated-4 and the Uptime Institute Tier I to Tier IV) differ.
+
+**Why it's here.** Walk into a data center expecting office-style coverage and you get two things wrong at once: you fight an RF environment engineered to reflect and contain, and you quote a schedule that ignores the badging and change-control gate.
+
+**How to use**
+1. Clarify the actual use case first: it is rarely production; it is usually out-of-band management, staff mobility, or guest.
+2. Survey with the containment in place, because empty-room predictions lie once the racks and aisle barriers are up.
+3. Keep the frameworks straight: TIA-942 says Rated, Uptime says Tier, and mixing them ("a Tier 3 TIA rating") is a telling error.
+4. Budget the badging and change-control lead time up front, and defer the facility rating to the operator and its design engineer.
+
+**Field notes**
+- Dense metal racks, hot-aisle and cold-aisle containment, and overhead trays chop the space into sealed RF pockets, so the design problem is coverage, not capacity.
+- The telecom rooms themselves are small and metal-dense, so APs often go outside or at the doorway rather than inside the rack cage.
+- Access is a credentialing exercise: expect badging, mantraps, escort, no-photography rules, NDAs, and change-control windows, the same "know before you go" pattern as any high-security site.
+- This is a field reference, not design or facility-rating guidance; confirm resilience ratings, access, and change-control rules with the operator and its design engineer.
+- Data source: framework detail per ANSI/TIA-942 and the Uptime Institute Tier Standard.
+
+
+### Facility Spaces
+
+A decoder for the telecom room names that get used interchangeably and are not interchangeable: Entrance Facility, Equipment Room, Telecommunications Room (the current TIA-569 term), MDF and IDF (legacy distribution-frame terms the field still uses), and "data closet" (slang), plus the hierarchical-star topology that ties them together.
+
+**Why it's here.** When the electrician says "MDF," the architect's drawing says "TR," and the client says "the data closet," knowing they usually mean the same room keeps you from designing a phantom extra space or missing a real one. The IDF and TR locations are where your APs get their uplink and power.
+
+**How to use**
+1. Use the decode table to map a room name to what it actually is and whether it is a standard, legacy, or slang term.
+2. Recognize that MDF and IDF are legacy frame terms and TR is the current TIA-569 word; IDF and TR describe the same space.
+3. Read the topology as a hierarchical star: EF in, MDF or Equipment Room at the center, backbone out to the IDF or TR per floor, horizontal out to the AP.
+4. On an international job, recognize the ISO/IEC 11801 "distributor" terms (Campus, Building, Floor Distributor) for the same hierarchy.
+
+**Field notes**
+- The cable mechanics (the 90 meter horizontal link, categories, PoE budgeting) live in the Structured Cabling reference and are not repeated here.
+- One TR per floor at minimum, more for large floors, because horizontal runs are distance-limited.
+- "Data closet" is not a standard term at all; it is an informal catch-all for any TR or IDF.
+- Reference only. Confirm the space names, standards currency, and cabling design with the architect of record, the RCDD, and your contract.
+- Data source: space vocabulary per ANSI/TIA-569-E, alongside ANSI/TIA-568 and ISO/IEC 11801.
+
+## Calculators (1)
+
+
+### Architectural Scale
+
+Converts a named drawing scale to its dimensionless ratio and back, and converts a distance measured on a drawing to its real-world length or the reverse. Covers US architectural fractional-inch scales, engineer's decimal scales, and common metric scales. This is a calculator, not a reference page.
+
+**Why it's here.** WLAN pros work inside plan sets and scaled PDFs they were never taught to read. Every coverage prediction, wall distance, and mounting height is wrong if the scale is wrong. This is the same calibration step Ekahau, Hamina, and iBwave ask for on import.
+
+**How to use**
+1. Pick the scale family (Architectural, Engineering, or Metric).
+2. Pick the specific scale, for example 1/4" = 1'-0". Read its ratio (1:48).
+3. In Measure, choose a direction: Drawn to Real, or Real to Drawn.
+4. Set the drawing units (in / mm / cm) and real-world units (ft / m).
+5. Enter your measurement and read the converted length, with a friendly feet-inches or fractional-inch form beneath it.
+
+**How it works.** ratio = real / drawn. Imperial: ratio = 12 / inches-per-foot (1/8" = 1'-0" gives 12 / 0.125 = 96, so 1:96). Engineer's: feet-per-inch times 12 (1" = 20' gives 240, so 1:240). Metric scales are already ratios. Drawn to real multiplies the measurement by the ratio; real to drawn divides. The ratio is dimensionless, so the two ends can carry different units.
+
+**Example.** 3.5" measured on a 1/8" = 1'-0" (1:96) sheet is 3.5 x 96 = 336 inches = 28 ft. In reverse, a 45 ft hallway at 1/4" = 1'-0" (1:48) draws at 45 / 48 = 0.9375 ft = 11-1/4 inches.
+
+**Field notes**
+- The result is only as good as the scale. If a PDF has no embedded scale, confirm which scale it is by measuring a known dimension, a 3'-0" door or a 2x4 ft ceiling tile.
+- Printed and PDF plans are often not to true scale (fit-to-page printing, cropped sheets). Trust a dimensioned callout on the sheet over any measurement.
+- US-primary: architectural scales use fractional inches, engineer's scales use decimal feet per inch. Metric ratios (1:50, 1:100) are provided for ISO drawing sets.
+- Data source: architectural_scale_screen.dart, pure on-device math, no network.

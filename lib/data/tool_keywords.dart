@@ -236,6 +236,64 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'ahj', 'general contractor', 'mep', 'oac', 'aor', 'eor', 'basis of design',
     'owner project requirements', 'addendum', 'rfp', 'rfq', 'glossary',
   ],
+  'cloud-tool-trust': <String>[
+    'iso 27001', 'iso/iec 27001', 'soc 2', 'soc2', 'attestation', 'trust '
+        'services criteria', 'gdpr', 'compliance badge', 'certification',
+    'statement of applicability', 'annex a', 'type 1', 'type 2', 'availability',
+    'confidentiality', 'processing integrity', 'privacy', 'data residency',
+    'data sovereignty', 'cloud act', 'fedramp', 'csa star', 'iso 27017',
+    'iso 27018', 'nda', 'trust page', 'security badge',
+  ],
+  'network-in-scope': <String>[
+    'pci dss', 'pci', 'cardholder data', 'cde', 'qsa', 'hipaa', 'ephi',
+    'security rule', '164.312', 'sox', 'sarbanes-oxley', 'section 404', 'itgc',
+    'sec', 'gdpr', 'segmentation', 'wpa2-psk', 'wpa3-enterprise', 'rogue ap',
+    'quarterly scan', 'compliance scope', 'in scope', 'cardholder',
+    'transmission security', 'audit trail', 'change management',
+  ],
+  'adjacent-radio-systems': <String>[
+    'ble', 'bluetooth', 'zigbee', 'thread', 'matter', 'ant+', 'lorawan',
+    'z-wave', 'uwb', '802.15.4', 'nb-iot', 'lte-m', 'cbrs', 'private 5g',
+    'wi-fi halow', '802.11ah', 'iot', 'coexistence', '2.4 ghz', 'sub-ghz',
+    'rtls', 'smart building', 'non-wifi', 'interference', 'sensor network',
+  ],
+  'credentials-licenses': <String>[
+    'grol', 'general radiotelephone operator license', 'fcc license', 'part 15',
+    'part 97', 'part 101', 'microwave backhaul', 'twic', 'cac', 'dbids',
+    'sida badge', 'hazwoper', 'background check', 'fingerprinting',
+    'security clearance', 'tsa', 'dod', 'lead time', 'mobilization',
+    'federal id', 'operator license', 'amateur license', 'equipment '
+        'authorization',
+  ],
+  'by-vertical-index': <String>[
+    'vertical', 'industry', 'naics', 'sic', 'gics', 'manufacturing',
+    'oil and gas', 'refining', 'warehouse', 'distribution', 'healthcare',
+    'hospital', 'hospitality', 'stadium', 'arena', 'education', 'k-12',
+    'retail', 'data center', 'maritime', 'correctional', 'index', 'sector',
+    'high density', 'what you are walking into',
+  ],
+  'healthcare-vertical': <String>[
+    'healthcare', 'hospital', 'wmts', 'wireless medical telemetry service',
+    'telemetry', 'iec 60601', '60601-1-2', 'emc', 'medical device', 'rtls',
+    'vowifi', 'nurse call', 'infusion pump', 'faraday cage', 'mri', 'hipaa',
+    'fda', 'joint commission', 'icra', 'ilsm', 'biomed', 'biomedical '
+        'engineering', 'voice grade', 'roaming', 'clinical',
+  ],
+  'data-centers-wifi': <String>[
+    'data center', 'datacenter', 'tia-942', 'ansi/tia-942', 'rated', 'uptime '
+        'institute', 'tier', 'tier iii', 'tier iv', 'concurrently '
+        'maintainable', 'fault tolerant', 'hot aisle', 'cold aisle',
+    'containment', 'out-of-band', 'oob', 'mdf', 'idf', 'change control',
+    'mantrap', 'rf hostile', 'resilience', 'white space',
+  ],
+  'facility-spaces': <String>[
+    'mdf', 'idf', 'main distribution frame', 'intermediate distribution frame',
+    'telecommunications room', 'tr', 'equipment room', 'entrance facility',
+    'data closet', 'wiring closet', 'tia-569', 'ansi/tia-569', 'iso/iec 11801',
+    'campus distributor', 'building distributor', 'floor distributor',
+    'demarcation', 'demarc', 'backbone', 'riser', 'horizontal cabling',
+    'telecom room', 'cross-connect',
+  ],
   'wavelength': <String>[
     'lambda', 'antenna length', 'quarter wave', 'frequency to wavelength',
   ],

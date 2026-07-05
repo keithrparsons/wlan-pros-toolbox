@@ -3899,6 +3899,182 @@
         "The 6 GHz band being the cleanest is a current condition, not a permanent property; it will erode as adoption grows."
       ],
       "source": "Condensed teaching copy based on Keith Parsons' spectrum-analysis notes; the nine signature cards were drawn to the classic interferer signatures."
+    },
+    "cloud-tool-trust": {
+      "name": "Cloud Tool Trust",
+      "category": "Quick Reference",
+      "purpose": "How to read the security badges on a cloud Wi-Fi tool before you upload a client's floor plan, AP inventory, or survey data: ISO/IEC 27001 (a certified management system), SOC 2 (an attestation report, not a certificate), GDPR (a law you conform to), the five Trust Services Criteria, and the adjacent badges (ISO 27017/27018, FedRAMP, CSA STAR).",
+      "whyHere": "A compliance badge is a claim about a defined scope and a time window, not a guarantee about your data. You are the one uploading a client's network into someone else's cloud, so the badge tells you which questions to ask, not that the data is safe.",
+      "howToUse": [
+        "Ask whether it is a certificate or an attestation: ISO 27001 is a certificate; SOC 2 is a report plus an opinion, so 'SOC 2 certificate' is a wording tell.",
+        "Read the scope: does it cover the actual product you will use, or the vendor's corporate IT?",
+        "For SOC 2, confirm Type 2 (operating effectiveness over a period) over Type 1, and that Confidentiality (and Privacy, if personal data) is in scope.",
+        "Ask where the data lives and under whose law: residency is not sovereignty, and EU hosting does not by itself solve GDPR."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Third-party-audited claims (ISO 27001 certificate, SOC 2 Type 2, CSA STAR Level 2, FedRAMP) outrank self-asserted ones, and even an audited claim only covers the scope, criteria, and time window printed on it.",
+        "A vendor unwilling to share a SOC 2 report under NDA is itself a flag; read the opinion, scope, period, and the complementary controls you are responsible for.",
+        "Some data, a client's full network design, is sensitive enough that the right home is your own device, not a cloud you never vetted.",
+        "Reference only. Compliance status, scope, and sufficiency are determined by the client's security or compliance officer and a qualified auditor (a CPA firm or counsel), not by this tool."
+      ],
+      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in cloud_tool_trust_screen.dart with the cloud-cert-decoder plate. Frameworks per ISO/IEC 27001:2022, the AICPA SOC 2 framework, and the EU GDPR."
+    },
+    "network-in-scope": {
+      "name": "Network in Scope",
+      "category": "Quick Reference",
+      "purpose": "The regulatory frameworks that reach the WLAN itself: PCI DSS (cardholder data), HIPAA (electronic health information), SOX (public-company financial systems), and GDPR (EU personal data). Each entry names the trigger, what the framework generally asks of the network, and the owner to route the specifics to.",
+      "whyHere": "When the Wi-Fi carries cardholder data, ePHI, or sits inside a public company's financial systems, the design inherits requirements long before anyone audits it. Recognizing the scope lets you quote honestly and design toward the requirement instead of retrofitting after the auditor shows up.",
+      "howToUse": [
+        "Recognize the trigger: card-present retail and hospitality (PCI), covered entities and business associates (HIPAA), US public companies (SOX), EU personal data on the network (GDPR).",
+        "Read the general asks: segmentation and strong crypto for PCI, the section 164.312 technical safeguards for HIPAA, access and change controls for SOX.",
+        "Route the specifics to the owner: the QSA for PCI, the privacy or security officer for HIPAA and GDPR, internal audit and the external auditor for SOX.",
+        "Never tell a client the design 'meets PCI' or 'is HIPAA compliant'; you recognize the framework, and the assessor rules on it."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "PCI DSS v4.0.1 makes WPA2-PSK inadequate for the Cardholder Data Environment; WEP and WPA/TKIP are prohibited, and quarterly rogue-AP scanning is required even at a site with no Wi-Fi at all.",
+        "HIPAA encryption is currently 'addressable', meaning you implement it or document a defensible reason not to; a January 2025 proposed rule would make it mandatory.",
+        "SOX is the narrowest fit: the network shows up as the access-and-change-control substrate under the financial systems, which is why an AP config change can suddenly need a ticket and an approver.",
+        "Reference only. Whether a network is in scope, and whether a design is sufficient, is determined by the client's compliance officer and a qualified auditor, not by this tool."
+      ],
+      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in network_in_scope_screen.dart with the compliance-scope-matrix plate. Framework requirements per PCI DSS v4.0.1, HIPAA 45 CFR 164.312, SOX Section 404, and the EU GDPR."
+    },
+    "adjacent-radio-systems": {
+      "name": "Adjacent Radio Systems",
+      "category": "Quick Reference",
+      "purpose": "The non-Wi-Fi radios a WLAN pro coexists with, designs around, and gets asked about: which five (BLE, Bluetooth Classic, Zigbee, Thread, ANT+) contend for your 2.4 GHz airtime, and which (LoRaWAN, Z-Wave, UWB, NB-IoT, LTE-M, CBRS/private 5G, Wi-Fi HaLow) run coexistence-clean in sub-GHz or licensed spectrum.",
+      "whyHere": "The client increasingly hands you the whole smart-building radio stack, not just the Wi-Fi. Knowing what shares the 2.4 GHz air, what runs clean in sub-GHz, and when to talk a client out of a private-cellular pitch that Wi-Fi already covers is both authority and self-defense in a spectrum sweep.",
+      "howToUse": [
+        "Scan the 2.4 GHz contenders: BLE, Bluetooth Classic, Zigbee, Thread, and ANT+ subtract real airtime at scale, so coordinate a Zigbee lighting mesh with your 1/6/11 plan.",
+        "Use the coexistence table to route congested-band IoT onto a coexistence-clean radio (LoRaWAN, Z-Wave, cellular IoT) rather than fighting for airtime.",
+        "Carry the three corrections: Matter is an application layer that can ride Wi-Fi, 802.15.4 is not 2.4 GHz only, and CBRS/private 5G never touch your air.",
+        "Use the 'which radio when' picker to answer the 'should this be Wi-Fi or something else' question honestly."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Read every range, rate, and battery figure as a real-world envelope, not a hard spec; they move with power, antenna, spreading factor, channel width, and environment.",
+        "CBRS lives at 3.55 to 3.70 GHz and does not overlap any Wi-Fi band; private cellular competes for the job and the budget, never for your air.",
+        "A Zigbee mesh and a wall of BLE beacons show up in a 2.4 GHz sweep as non-Wi-Fi energy; naming what you see is the difference between a diagnosis and a guess.",
+        "Reference only. Confirm current standards editions and regional band allocations for the specific deployment."
+      ],
+      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in adjacent_radio_systems_screen.dart with the spectrum-matrix plate. Bands and topologies per the relevant IEEE 802.15.4, Bluetooth SIG, LoRa Alliance, and 3GPP specifications."
+    },
+    "credentials-licenses": {
+      "name": "Credentials & Licenses",
+      "category": "Quick Reference",
+      "purpose": "The portable IDs and licenses a WLAN pro carries from job to job, and the mobilization landmine in them: why you almost never need an FCC operator license (even for licensed microwave backhaul), and the federal and background-check credentials (TWIC, CAC, DBIDS, SIDA, HAZWOPER-40, background checks) that gate restricted sites with weeks-to-months lead time.",
+      "whyHere": "The credential you do not already hold is the schedule you cannot keep. A TWIC, a base credential, or a SIDA badge can each add weeks between the award and touching a cable, so scope the credential before you quote, not after you win. Companion to the Site Access entry.",
+      "howToUse": [
+        "Settle the license question first: unlicensed Wi-Fi (Part 15) and licensed point-to-point microwave (Part 101) both require no FCC operator license (GROL).",
+        "For a restricted site, read the credential table for the ID, issuing authority, lead time, and validity you will need.",
+        "Bucket the lead time: fast and you control it (GROL exam, school check), weeks (SIDA, TWIC, DBIDS), or weeks-to-months (CAC).",
+        "Confirm what your specific job requires with the issuing authority before you quote and before you mobilize."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "You would only need a GROL if the work crossed into servicing aviation or marine radios, which is outside a normal WLAN scope of work.",
+        "TWIC gets you the maritime jobs; TSA tells applicants to enroll at least 60 days out and warns processing can exceed 45 days.",
+        "CAC versus DBIDS is the military-base question: the CAC needs a sponsor and an investigation that can run many months, while DBIDS is the lighter get-on-base path.",
+        "Reference only. The issuing authority sets and grants every credential; the Toolbox certifies nothing and clears no one."
+      ],
+      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in credentials_licenses_screen.dart with the credential-lead-time plate. FCC license scope per Parts 15, 97, and 101; credential detail per TSA, USCG, DoD, and OSHA 29 CFR 1910.120(e)."
+    },
+    "by-vertical-index": {
+      "name": "Verticals Index",
+      "category": "Quick Reference",
+      "purpose": "A plain-language index of the industries you quote and what each one tends to trigger: manufacturing, oil and gas, warehouse, healthcare, hospitality/stadiums, education, retail, data centers, maritime, and correctional/government. It maps the vertical you name to the other reference entries you should read before you quote it.",
+      "whyHere": "Nobody standing in a building thinks 'this is NAICS 622110'; you think 'it's a hospital.' Classification codes are back-office filing labels, not design inputs. The vertical you name in the first phone call tells you which reference entry to open before you quote.",
+      "howToUse": [
+        "Find the vertical you are bidding in the map and read what it tends to trigger.",
+        "Open the 'read first' entry (Hazardous Locations, Enclosure Ratings, Healthcare Wi-Fi, Site Access, Data Centers, or Facility Spaces) before you quote.",
+        "For retail, recognize PCI DSS scope when Wi-Fi touches cardholder data, then defer the ruling to the client's QSA.",
+        "For high-density venues, remember the design axis flips from coverage to capacity, driven by seat count and peak concurrent users."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Miss the hazloc on an oil site, the ICRA gate on a hospital, or the PCI scope in retail, and the timeline and price you promised were wrong before you started.",
+        "Treat a classification code (NAICS, SIC, GICS, ISIC, NACE) as a label a client hands you, never a design input.",
+        "Use the index the other direction too: pick the industry, see the cluster, read the entry that owns the detail.",
+        "This is a field reference, not code, design, or compliance guidance; confirm every requirement with the client, the AHJ, and the relevant assessor."
+      ],
+      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in by_vertical_index_screen.dart. Text-reference only (no decoder plate); this entry is the index that points at the other reference entries."
+    },
+    "healthcare-vertical": {
+      "name": "Healthcare Wi-Fi",
+      "category": "Quick Reference",
+      "purpose": "Why a hospital is the one building where you cannot design Wi-Fi like an office: the protected WMTS telemetry band, medical-device EMC (IEC 60601-1-2), the voice-and-RTLS roaming grades, shielded rooms, and the four authorities (HIPAA, FDA, FCC, The Joint Commission) plus the in-house biomedical engineering handoff.",
+      "whyHere": "The air is shared with life-critical, EMC-regulated devices and a protected telemetry band, a dropped roam can mean a missed alarm, and the 'just cover it like an office' instinct is exactly the mistake that gets telemetry stepped on and alarms missed.",
+      "howToUse": [
+        "Coordinate with clinical and biomedical engineering before you touch a hospital RF environment; that is the single most important handoff.",
+        "Do not assume all patient monitoring is on Wi-Fi: WMTS is a separate, licensed system on 608-614, 1395-1400, and 1427-1432 MHz, coordinated by a WMTS coordinator.",
+        "Design to voice-and-RTLS grade, not data grade: continuous facility-wide roaming, overlapping cells, and no dead zones, and design around shielded rooms and the MRI Faraday cage.",
+        "Recognize each of the four authorities, then defer the rulings to the people who own them."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Medical devices are tested to tolerate a defined RF environment under IEC 60601-1-2, but tested to a limit is not the same as immune to anything; a dense, high-power deployment can push local field strength toward what a nearby monitor was qualified for.",
+        "Coverage grade drives AP count more than floor area does; a hospital quoted at data-grade density fails when it has to carry voice handsets and location services.",
+        "Segmentation is a performance control here, not only a security one: guest, clinical, device, and RTLS traffic get separated for airtime protection as much as for HIPAA.",
+        "This is a field reference, not clinical, code, or compliance guidance; confirm every requirement with biomed, the compliance and security officers, the WMTS coordinator, and the AHJ."
+      ],
+      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in healthcare_vertical_screen.dart with the healthcare-demands plate. Standards per the FCC WMTS allocation, IEC 60601-1-2, HIPAA, FDA guidance, and The Joint Commission."
+    },
+    "data-centers-wifi": {
+      "name": "Data Centers & Wi-Fi",
+      "category": "Quick Reference",
+      "purpose": "The read a WLAN pro needs before quoting Wi-Fi in or around a data center: why production Wi-Fi on the floor is usually minimal, why the room is RF-hostile by construction, and how the two resilience frameworks (ANSI/TIA-942 Rated-1 to Rated-4 and the Uptime Institute Tier I to Tier IV) differ.",
+      "whyHere": "Walk into a data center expecting office-style coverage and you get two things wrong at once: you fight an RF environment engineered to reflect and contain, and you quote a schedule that ignores the badging and change-control gate.",
+      "howToUse": [
+        "Clarify the actual use case first: it is rarely production; it is usually out-of-band management, staff mobility, or guest.",
+        "Survey with the containment in place, because empty-room predictions lie once the racks and aisle barriers are up.",
+        "Keep the frameworks straight: TIA-942 says Rated, Uptime says Tier, and mixing them ('a Tier 3 TIA rating') is a telling error.",
+        "Budget the badging and change-control lead time up front, and defer the facility rating to the operator and its design engineer."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Dense metal racks, hot- and cold-aisle containment, and overhead trays chop the space into sealed RF pockets, so the design problem is coverage, not capacity.",
+        "The telecom rooms themselves are small and metal-dense, so APs often go outside or at the doorway rather than inside the rack cage.",
+        "Access is a credentialing exercise: expect badging, mantraps, escort, no-photography rules, NDAs, and change-control windows, the same 'know before you go' pattern as any high-security site.",
+        "This is a field reference, not design or facility-rating guidance; confirm resilience ratings, access, and change-control rules with the operator and its design engineer."
+      ],
+      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in data_centers_wifi_screen.dart. Text-reference only (no decoder plate). Framework detail per ANSI/TIA-942 and the Uptime Institute Tier Standard."
+    },
+    "facility-spaces": {
+      "name": "Facility Spaces",
+      "category": "Quick Reference",
+      "purpose": "A decoder for the telecom room names that get used interchangeably and are not interchangeable: Entrance Facility, Equipment Room, Telecommunications Room (the current TIA-569 term), MDF and IDF (legacy distribution-frame terms the field still uses), and 'data closet' (slang), plus the hierarchical-star topology that ties them together.",
+      "whyHere": "When the electrician says 'MDF,' the architect's drawing says 'TR,' and the client says 'the data closet,' knowing they usually mean the same room keeps you from designing a phantom extra space or missing a real one. The IDF and TR locations are where your APs get their uplink and power.",
+      "howToUse": [
+        "Use the decode table to map a room name to what it actually is and whether it is a standard, legacy, or slang term.",
+        "Recognize that MDF/IDF are legacy frame terms and TR is the current TIA-569 word; IDF and TR describe the same space.",
+        "Read the topology as a hierarchical star: EF in, MDF or Equipment Room at the center, backbone out to the IDF or TR per floor, horizontal out to the AP.",
+        "On an international job, recognize the ISO/IEC 11801 'distributor' terms (Campus, Building, Floor Distributor) for the same hierarchy."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "The cable mechanics (the 90 meter horizontal link, categories, PoE budgeting) live in the Structured Cabling reference and are not repeated here.",
+        "One TR per floor at minimum, more for large floors, because horizontal runs are distance-limited.",
+        "'Data closet' is not a standard term at all; it is an informal catch-all for any TR or IDF.",
+        "Reference only. Confirm the space names, standards currency, and cabling design with the architect of record, the RCDD, and your contract."
+      ],
+      "source": "Penn's voice-gated field reference (Deliverables/2026-07-05-field-trade-reference), rendered verbatim in facility_spaces_screen.dart with the facility-spaces-topology plate. Space vocabulary per ANSI/TIA-569-E, alongside ANSI/TIA-568 and ISO/IEC 11801."
     }
   }
 }

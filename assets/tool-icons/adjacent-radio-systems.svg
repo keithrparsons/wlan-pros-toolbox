@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Adjacent Radio Systems (non-Wi-Fi transmitters sharing the RF neighborhood
+         - broadcast, cellular, radar, backhaul). Concept = a BROADCAST LATTICE
+         TOWER emitting CONCENTRIC WAVES on both sides. The splayed trapezoidal
+         MAST is the load-bearing gross silhouette and is UNIQUE in the set - no
+         other glyph is a tower - so it reads as "transmitter / radio system",
+         not a Wi-Fi client. Deliberately distinct from wifi-info and
+         macos-menubar-wifi (an UP-FANNING arc set over a source dot, no mast),
+         and from non-wifi-channels (a center dot with symmetric side arcs and no
+         mast). The mast is what tells these apart at 20px.
+         GL-003 8.6.1: 24x24 master, single currentColor, fill=none, 2px stroke,
+         round cap/join, silhouette-first, legible at 20px. QA in headless Chrome
+         (never ImageMagick) at 20/24/28px, lime #A1CC3A on app surface #222222. -->
+    <!-- mast legs (splayed lattice tower) -->
+    <path d="M10 7 L7.5 20"/>
+    <path d="M14 7 L16.5 20"/>
+    <!-- ground base -->
+    <path d="M6.8 20 H17.2"/>
+    <!-- cross-brace -->
+    <path d="M9.5 13.2 H14.5"/>
+    <!-- antenna tip at the apex -->
+    <path d="M12 7 V5.2"/>
+    <!-- concentric emission waves, both sides of the apex -->
+    <path d="M9.6 6 A2.7 2.7 0 0 0 9.6 9.4"/>
+    <path d="M7.9 4.6 A4.7 4.7 0 0 0 7.9 10.4"/>
+    <path d="M14.4 6 A2.7 2.7 0 0 1 14.4 9.4"/>
+    <path d="M16.1 4.6 A4.7 4.7 0 0 1 16.1 10.4"/>
+  </g>
+</svg>

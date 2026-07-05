@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Network In Scope (which parts of the network fall inside the compliance
+         boundary / audit scope). Concept = a DASHED SCOPE PERIMETER enclosing a
+         small NETWORK HUB. The broken-line boundary is the load-bearing gross
+         silhouette - a dashed rectangle reads unmistakably as "scope / selection
+         perimeter" and is UNIQUE in the set (no other glyph uses a dashed edge),
+         so it survives 20px. The hub-plus-two-leaves inside says "the network
+         that is in scope". Deliberately distinct from aec-process-glossary (a
+         solid left-rooted tree of SQUARES with a right-angle spine), bubble-diagram
+         (three large CIRCLES on diagonal links, no boundary), and capacity-planner
+         (a central AP with MANY radial spokes, no boundary).
+         GL-003 8.6.1: 24x24 master, single currentColor, fill=none, 2px stroke,
+         round cap/join, silhouette-first, legible at 20px. QA in headless Chrome
+         (never ImageMagick) at 20/24/28px, lime #A1CC3A on app surface #222222. -->
+    <!-- dashed compliance / scope boundary -->
+    <rect x="3" y="4" width="18" height="16" rx="2.5" stroke-dasharray="3.5 3"/>
+    <!-- hub-and-spoke links out to three leaf nodes (a 3-spoke star, deliberately
+         NOT a two-link V, which would read as a checkmark) -->
+    <path d="M12 12.2 L7.8 9"/>
+    <path d="M12 12.2 L16.2 9"/>
+    <path d="M12 12.2 L12 17"/>
+    <!-- network nodes (central hub + three leaves) -->
+    <circle cx="12" cy="12.2" r="1.5" fill="currentColor" stroke="none"/>
+    <circle cx="7.8" cy="9" r="1.2" fill="currentColor" stroke="none"/>
+    <circle cx="16.2" cy="9" r="1.2" fill="currentColor" stroke="none"/>
+    <circle cx="12" cy="17" r="1.2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

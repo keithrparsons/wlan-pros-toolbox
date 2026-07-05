@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Healthcare Vertical (Wi-Fi in hospitals / clinics). Concept = a HOSPITAL
+         BUILDING marked with a bold MEDICAL CROSS, with an entrance door at the
+         base. The CROSS is the load-bearing differentiator - a bold plus is the
+         universal healthcare mark and survives 20px; the door plus the wall
+         outline read the whole glyph as a BUILDING, not a first-aid box.
+         Deliberately distinct from by-vertical-index (a multi-building skyline,
+         varied rooflines, no cross), facility-spaces (two linked rooms + riser),
+         and channel-map (a bare 2x2 grid box). The cross appears in no other icon.
+         GL-003 8.6.1: 24x24 master, single currentColor, fill=none, 2px stroke,
+         round cap/join, silhouette-first, legible at 20px. QA in headless Chrome
+         (never ImageMagick) at 20/24/28px, lime #A1CC3A on app surface #222222. -->
+    <!-- hospital building outline -->
+    <rect x="5" y="8" width="14" height="12" rx="1.5"/>
+    <!-- medical cross (healthcare mark) -->
+    <path d="M12 10 V14"/>
+    <path d="M10 12 H14"/>
+    <!-- entrance door at the base -->
+    <path d="M10.3 20 V16.5 H13.7 V20"/>
+  </g>
+</svg>

@@ -257,7 +257,16 @@ void main() {
       // (structured-cabling) the TIA/BICSI standards + 90 m channel + cable
       // categories; AEC Process & Glossary (aec-process-glossary) the AIA design
       // phases + the AEC shorthand. 162 + 3 = 165.
-      expect(store.count, 165);
+      // 173 = + the Field & Trade Reference second wave (2026-07-05), 8 new
+      // read-only Quick Reference screens across three new subgroups: Cloud Tool
+      // Trust (cloud-tool-trust) and Network in Scope (network-in-scope) in
+      // "Compliance & Governance"; Adjacent Radio Systems
+      // (adjacent-radio-systems) in "Wireless Landscape"; Credentials & Licenses
+      // (credentials-licenses) in "Codes & Safety"; and Verticals Index
+      // (by-vertical-index), Healthcare Wi-Fi (healthcare-vertical), Data
+      // Centers & Wi-Fi (data-centers-wifi), and Facility Spaces
+      // (facility-spaces) in "Verticals". 165 + 8 = 173.
+      expect(store.count, 173);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

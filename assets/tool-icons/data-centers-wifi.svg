@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Data Centers (Wi-Fi) (Wi-Fi in the data-center vertical). Concept = a
+         VERTICAL STACK OF THREE POPULATED SERVER UNITS, each a 1U blade with a
+         status LED on the left and a vent line to the right. The load-bearing
+         gross silhouette is THREE equal stacked blades with left LEDs - it reads
+         as "populated server stack". Deliberately distinct from:
+           - rack-units        (an EMPTY tall frame: two vertical rails + horizontal
+                                U-dividers, no blades, no LEDs)
+           - structured-cabling (a SINGLE wide 2:1 patch-panel bar + a row of port
+                                rectangles - horizontal, not stacked)
+           - cellular-info     (four VERTICAL ascending bars)
+         Only this icon is three stacked 1U blades with status LEDs.
+         GL-003 8.6.1: 24x24 master, single currentColor, fill=none, 2px stroke,
+         round cap/join, silhouette-first, legible at 20px. QA in headless Chrome
+         (never ImageMagick) at 20/24/28px, lime #A1CC3A on app surface #222222. -->
+    <!-- three stacked 1U server blades -->
+    <rect x="4.5" y="4" width="15" height="4" rx="1"/>
+    <rect x="4.5" y="10" width="15" height="4" rx="1"/>
+    <rect x="4.5" y="16" width="15" height="4" rx="1"/>
+    <!-- status LEDs (left of each blade) -->
+    <circle cx="7.5" cy="6" r="1" fill="currentColor" stroke="none"/>
+    <circle cx="7.5" cy="12" r="1" fill="currentColor" stroke="none"/>
+    <circle cx="7.5" cy="18" r="1" fill="currentColor" stroke="none"/>
+    <!-- vent lines (right of each blade) -->
+    <path d="M11 6 H16.5"/>
+    <path d="M11 12 H16.5"/>
+    <path d="M11 18 H16.5"/>
+  </g>
+</svg>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Cloud Tool Trust (is this cloud/web tool safe to trust with your data).
+         Concept = a CLOUD carrying a VERIFICATION CHECK. The bumpy cloud outline
+         is the load-bearing gross silhouette and is UNIQUE in the set - no other
+         glyph is a cloud - so it survives 20px without relying on the inner mark.
+         The bold check inside says "trusted / verified". Deliberately distinct
+         from wpa-security (a SHIELD with Wi-Fi arcs) and network-in-scope (a
+         DASHED boundary): this is the only cloud, and the only cloud+check.
+         GL-003 8.6.1: 24x24 master, single currentColor, fill=none, 2px stroke,
+         round cap/join, silhouette-first, legible at 20px. QA in headless Chrome
+         (never ImageMagick) at 20/24/28px, lime #A1CC3A on app surface #222222. -->
+    <!-- cloud body (broad top hump + two side lobes, flat base) -->
+    <path d="M6.8 18 A4 4 0 0 1 6.4 10.2 A5.3 5.3 0 0 1 16.5 9.2 A3.9 3.9 0 0 1 16.9 18 Z"/>
+    <!-- verification check inside the cloud (trusted / vetted) -->
+    <path d="M9.3 13.6 L11.2 15.6 L15 11"/>
+  </g>
+</svg>

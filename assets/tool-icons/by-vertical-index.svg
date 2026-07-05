@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- By-Vertical Index (browse the guidance by industry vertical). Concept = a
+         SKYLINE OF THREE DIFFERENT BUILDINGS reading as "different industries":
+         a PITCHED-ROOF SHED with a chimney (industrial / factory), a TALL FLAT
+         TOWER (office / enterprise), and a LOW CURVED-ROOF SHELL (warehouse /
+         hangar), all seated on one ground line. The load-bearing differentiator
+         is the VARIED ROOFLINE + HEIGHT across three forms - that gross contrast
+         survives 20px. Deliberately distinct from healthcare-vertical (ONE
+         building dominated by a cross), facility-spaces (two linked rooms with a
+         riser), and data-centers-wifi (stacked server blades). No other glyph is
+         a multi-building skyline.
+         GL-003 8.6.1: 24x24 master, single currentColor, fill=none, 2px stroke,
+         round cap/join, silhouette-first, legible at 20px. QA in headless Chrome
+         (never ImageMagick) at 20/24/28px, lime #A1CC3A on app surface #222222. -->
+    <!-- ground line under the skyline -->
+    <path d="M2.5 20 H21.5"/>
+    <!-- pitched-roof shed (industrial / factory) -->
+    <path d="M3 20 V13.5 L5.75 11 L8.5 13.5 V20"/>
+    <!-- chimney / vent on the shed -->
+    <path d="M7 12 V9.8"/>
+    <!-- tall flat tower (office / enterprise) -->
+    <path d="M9.5 20 V6.5 H13.5 V20"/>
+    <!-- low curved-roof shell (warehouse / hangar) -->
+    <path d="M14.3 20 V16.2 Q14.3 14.6 15.9 14.6 H19.7 Q21.3 14.6 21.3 16.2 V20"/>
+  </g>
+</svg>

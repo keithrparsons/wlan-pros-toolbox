@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Facility Spaces (the MDF / IDF equipment closets and the riser that links
+         them). Concept = TWO OFFSET ROOMS joined by an L-shaped RISER, each room
+         holding an equipment block. The load-bearing gross silhouette is TWO
+         SEPARATE ROOM BOXES connected by a link - it reads as "linked closets /
+         telecom spaces". Deliberately distinct from architectural-scale (ONE room
+         with an interior wall, under a graduated ruler), plan-set-literacy (a flat
+         portrait DRAWING SHEET with a dog-ear), and healthcare-vertical (one
+         building + a cross). Two linked rooms with racks appears in no other icon.
+         GL-003 8.6.1: 24x24 master, single currentColor, fill=none, 2px stroke,
+         round cap/join, silhouette-first, legible at 20px. QA in headless Chrome
+         (never ImageMagick) at 20/24/28px, lime #A1CC3A on app surface #222222. -->
+    <!-- MDF room (lower-left) -->
+    <rect x="3" y="10" width="8" height="10" rx="1.5"/>
+    <!-- IDF room (upper-right) -->
+    <rect x="14" y="4" width="7" height="8" rx="1.5"/>
+    <!-- riser / backbone linking the two closets -->
+    <path d="M7 10 V7 H14"/>
+    <!-- equipment rack block in each room -->
+    <rect x="5.5" y="13.5" width="3" height="4" rx="0.5" fill="currentColor" stroke="none"/>
+    <rect x="16" y="6.5" width="3" height="3.5" rx="0.5" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

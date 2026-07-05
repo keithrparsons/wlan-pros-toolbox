@@ -119,6 +119,14 @@ import '../screens/tools/reference/site_access_screen.dart';
 import '../screens/tools/reference/cad_bim_formats_screen.dart';
 import '../screens/tools/reference/structured_cabling_screen.dart';
 import '../screens/tools/reference/aec_process_glossary_screen.dart';
+import '../screens/tools/reference/cloud_tool_trust_screen.dart';
+import '../screens/tools/reference/network_in_scope_screen.dart';
+import '../screens/tools/reference/adjacent_radio_systems_screen.dart';
+import '../screens/tools/reference/credentials_licenses_screen.dart';
+import '../screens/tools/reference/by_vertical_index_screen.dart';
+import '../screens/tools/reference/healthcare_vertical_screen.dart';
+import '../screens/tools/reference/data_centers_wifi_screen.dart';
+import '../screens/tools/reference/facility_spaces_screen.dart';
 import '../screens/tools/reference/wifi_feature_matrix_screen.dart';
 import '../screens/tools/reference/regulatory_domains_screen.dart';
 import '../screens/tools/reference/datetime_standards_screen.dart';
@@ -294,6 +302,18 @@ class AppRouter {
   static const String cadBimFormats = '/tools/cad-bim-formats';
   static const String structuredCabling = '/tools/structured-cabling';
   static const String aecProcessGlossary = '/tools/aec-process-glossary';
+  // Field & Trade Reference set, second wave (2026-07-05). Read-only references
+  // in three new Quick Reference subgroups; static content, offline, all
+  // platforms incl. web. Six carry a Charta decoder plate; two
+  // (by-vertical-index, data-centers-wifi) are text-reference.
+  static const String cloudToolTrust = '/tools/cloud-tool-trust';
+  static const String networkInScope = '/tools/network-in-scope';
+  static const String adjacentRadioSystems = '/tools/adjacent-radio-systems';
+  static const String credentialsLicenses = '/tools/credentials-licenses';
+  static const String byVerticalIndex = '/tools/by-vertical-index';
+  static const String healthcareVertical = '/tools/healthcare-vertical';
+  static const String dataCentersWifi = '/tools/data-centers-wifi';
+  static const String facilitySpaces = '/tools/facility-spaces';
 
   /// Power Phasing — the pilot reference for the Power & Cooling category. The
   /// id `power-phasing` is permanent (backs this route, the catalog entry, the
@@ -635,6 +655,14 @@ class AppRouter {
     cadBimFormats: (_) => const CadBimFormatsScreen(),
     structuredCabling: (_) => const StructuredCablingScreen(),
     aecProcessGlossary: (_) => const AecProcessGlossaryScreen(),
+    cloudToolTrust: (_) => const CloudToolTrustScreen(),
+    networkInScope: (_) => const NetworkInScopeScreen(),
+    adjacentRadioSystems: (_) => const AdjacentRadioSystemsScreen(),
+    credentialsLicenses: (_) => const CredentialsLicensesScreen(),
+    byVerticalIndex: (_) => const ByVerticalIndexScreen(),
+    healthcareVertical: (_) => const HealthcareVerticalScreen(),
+    dataCentersWifi: (_) => const DataCentersWifiScreen(),
+    facilitySpaces: (_) => const FacilitySpacesScreen(),
     powerPhasing: (_) => const PowerPhasingScreen(),
     ohmsLaw: (_) => const OhmsLawScreen(),
     coolingThermal: (_) => const CoolingThermalScreen(),
