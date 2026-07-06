@@ -34,7 +34,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 
 import 'network_target.dart';
 
@@ -141,10 +141,21 @@ class TracerouteService {
         processStarter,
     String? platformOverride,
   })  : _start = processStarter ?? Process.start,
-        _platform = platformOverride ?? Platform.operatingSystem;
+        _platform = platformOverride ?? _hostOperatingSystem();
 
   final Future<Process> Function(String executable, List<String> args) _start;
   final String _platform;
+
+  /// The host OS name, or an empty string on web. `Platform.operatingSystem`
+  /// throws `Unsupported operation: Platform._operatingSystem` in a web build,
+  /// so it must never be read there — an empty platform makes [isSupportedPlatform]
+  /// false and the screen renders NetworkUnavailableView instead of crashing.
+  /// Mirrors ApScanService._hostOperatingSystem. Native behavior is unchanged
+  /// (kIsWeb is false, so `Platform.operatingSystem` is read exactly as before).
+  static String _hostOperatingSystem() {
+    if (kIsWeb) return '';
+    return Platform.operatingSystem;
+  }
 
   bool get _isWindows => _platform == 'windows';
   bool get _isDesktop =>

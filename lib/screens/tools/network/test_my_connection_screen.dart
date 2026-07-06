@@ -328,11 +328,28 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   @override
   void initState() {
     super.initState();
+    _source = widget.sourceOverride ?? WifiInfoSourceResolver.resolve();
+
+    // WEB GATE (launch-critical, 2026-07-06). The browser has no dart:io, and
+    // several of the native services constructed below touch it at CONSTRUCTION
+    // time — NetworkDetailsService's field initializer reads `Platform.isAndroid`,
+    // which throws `Unsupported operation: Platform._operatingSystem` on web and
+    // blanks the whole screen before build() ever runs. build() -> _body()
+    // already returns NetworkUnavailableView on web (the same gate every other
+    // network tool uses), and NONE of the late-final services below are ever read
+    // on that path (_run / the fetch helpers are the only readers, and they never
+    // fire without a Check button, which the web body never shows). So we bail out
+    // HERE, before constructing them. Native platforms are byte-for-byte
+    // unaffected: kIsWeb is false, so the full setup runs exactly as before.
+    if (!NetworkSupport.activeNetworkSupported ||
+        _source == WifiInfoSource.web) {
+      return;
+    }
+
     _ipGeo = widget.ipGeoService ?? IpGeoService();
     _dnsProbe = widget.dnsProbeService ?? DnsProbeService();
     _netDetailsService =
         widget.networkDetailsService ?? NetworkDetailsService();
-    _source = widget.sourceOverride ?? WifiInfoSourceResolver.resolve();
     switch (_source) {
       case WifiInfoSource.macosCoreWlan:
         _macAdapter = widget.macAdapter ?? MacWifiInfoAdapter();
