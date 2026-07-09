@@ -1,7 +1,9 @@
-This release is about accuracy and honesty.
+This release adds a Field and Trade Reference library for Wi-Fi professionals working on real job sites.
 
-Clearer connection details: your network name and signal now show wherever your platform allows, with a plain, actionable reason when they don't (for example, "Needs Location permission") instead of a vague "Unavailable."
+New reference sections cover the built environment you rarely find in one place: enclosure ratings (IP and NEMA), hazardous-location rules, the electrical-code details that affect a wireless install, safety and site-access basics, and the credentials a project needs.
 
-New: a short explainer of how the Toolbox measures throughput, and why that number can differ from a speed test.
+New interactive decoders read vendor status LEDs and model numbers, with honest markers wherever a meaning is not publicly documented.
 
-Plus consistency and reference fixes across the tools and refreshed tool pricing.
+Every reference sheet now downloads as a PDF to save or share from the field.
+
+Also new: a short, plain explainer of the difference between Wi-Fi, cellular, and internet, and why a strong signal is not the same as a working connection.

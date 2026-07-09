@@ -1,0 +1,5 @@
+New Field and Trade Reference for Wi-Fi pros on the job: enclosure ratings (IP and NEMA), hazardous-location rules, electrical-code details, safety and site-access basics, and the credentials a project needs.
+
+New decoders read vendor status LEDs and model numbers, with honest markers where a meaning is not documented.
+
+Every reference sheet now downloads as a PDF. Also new: a plain explainer of Wi-Fi vs cellular vs internet.

@@ -1445,7 +1445,7 @@
       "howToUse": [
         "Each protocol heading shows the designation (lime) and the full name.",
         "In the thresholds table, the scenario word is color-tinted with a dot: green = good (the two design targets), amber = marginal (the overlap zone), red = bad (the sticky-client trigger and the unusable level).",
-        "Design rules carry the actionable target (for example, \"at least 2 APs at -67 dBm everywhere\" or \"15 to 20% cell overlap minimum\")."
+        "Design rules carry the actionable target (for example, \"at least 2 APs at -67 dBm everywhere\" or \"a second AP at -72 dBm or better across the overlap zone\")."
       ],
       "inputs": [],
       "algorithm": null,
@@ -1562,26 +1562,6 @@
         "Source: the dBm context column cites specific regulatory limits: FCC 6 GHz standard-power EIRP (+36 dBm, AFC required), FCC 2.4 GHz maximum conducted (Part 15.247, +30 dBm), the FCC UNII-2A/2C and UNII-1 conducted maximums, and the ETSI 5 GHz EIRP limit (EN 301 893, +23 dBm)."
       ],
       "source": "The ratios are standard decibel math and the dBm anchors cite published FCC and ETSI limits."
-    },
-    "ap-placement": {
-      "name": "AP Placement",
-      "category": "Quick Reference",
-      "purpose": "Field-tested design rules for where to put access points, how to size and overlap cells, plan channels, and handle high-density venues.",
-      "whyHere": "A pre-survey checklist of placement do's and don'ts: mounting, spacing, overlap targets, and how many clients to expect per radio.",
-      "howToUse": [
-        "Read it top to bottom as guidance; each bullet is a complete recommendation.",
-        "The coverage distances given are starting points (20 to 30 m in open office, 10 to 15 m through walls), not guarantees."
-      ],
-      "inputs": [],
-      "algorithm": null,
-      "example": null,
-      "fieldNotes": [
-        "What it shows: five rule groups, each a heading over a bulleted list: Start with requirements, AP location, Cell sizing and overlap (at least 2 access points at -70 dBm everywhere, 15 to 20% overlap, typical coverage distances), Channel planning (2.4 GHz uses only channels 1/6/11, co-channel spacing, prefer 5/6 GHz, DFS), and High-density venues (lower power and add access points, directional antennas, a ceiling of 20 to 30 clients per radio, tri-radio caveats).",
-        "The intro notes that coverage distances and spacing are starting points; always confirm a design with a survey after install.",
-        "An access point is never called a router. The per-radio client ceiling depends on the model.",
-        "Source: accumulated Wi-Fi design best practice from the field, not a single named standard."
-      ],
-      "source": "Accumulated Wi-Fi design best practice from the field, not a single named standard."
     },
     "poe-reference": {
       "name": "PoE Reference",
@@ -3114,7 +3094,7 @@
       "name": "Antenna Fundamentals",
       "category": "Quick Reference",
       "purpose": "A read-along teaching reference for antenna literacy: what an antenna actually does (it shapes where the radio's energy goes, it does not add power), azimuth vs elevation, why gain trades against beamwidth, polarization and the wall-clock mistake, downtilt, how to read a radiation-pattern polar plot (main lobe, the -3 dB beamwidth points, side lobes, nulls, front-to-back ratio), and which antenna type (omni, patch, sector, Yagi, dish) fits which space. Seven line diagrams are embedded at the points they teach.",
-      "whyHere": "It is the antenna-literacy companion to the directional tools in the toolbox (AP Placement, Downtilt, Point-to-Point, Fresnel). When you are choosing or mounting an antenna and want to reason about coverage shape rather than chase a gain number, this is the read-first reference.",
+      "whyHere": "It is the antenna-literacy companion to the directional tools in the toolbox (Downtilt, Point-to-Point, Fresnel). When you are choosing or mounting an antenna and want to reason about coverage shape rather than chase a gain number, this is the read-first reference.",
       "howToUse": [
         "Read top to bottom: it builds from one idea (an antenna is a shaper, not a booster) through azimuth/elevation, orientation, reading a pattern chart, and what to use where.",
         "Use the embedded diagrams alongside the prose: the polar-plot anatomy diagram labels every feature (main lobe, -3 dB beamwidth, side lobes, nulls, back lobe, front-to-back) so a manufacturer's chart stops being a mystery.",

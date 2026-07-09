@@ -161,7 +161,7 @@ class RoamingScreen extends StatelessWidget {
       minRssi: '−70 to −72 dBm',
       minSnr: '≥ 15 dB',
       roamLatency: '—',
-      designRule: '15–20% cell overlap minimum',
+      designRule: '2nd AP ≥ −72 dBm across the overlap zone',
       grade: RoamGrade.marginal,
     ),
     RoamingThreshold(

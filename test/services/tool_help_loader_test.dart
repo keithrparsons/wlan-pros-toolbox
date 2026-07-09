@@ -272,7 +272,8 @@ void main() {
       // (vendor -> line -> state table), and Vendor Model Decode
       // (vendor-model-decode), the per-vendor model-number scheme reader. Unlike
       // the static reference screens these carry selection state. 173 + 2 = 175.
-      expect(store.count, 175);
+      // AP Placement retired 2026-07-07 (Keith's call): 175 − 1 = 174.
+      expect(store.count, 174);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

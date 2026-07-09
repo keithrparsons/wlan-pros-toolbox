@@ -474,10 +474,6 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     '802.11r', '802.11k', '802.11v', 'fast transition', 'ft', 'sticky client',
     'handoff', 'thresholds',
   ],
-  'ap-placement': <String>[
-    'mounting', 'spacing', 'cell overlap', 'where to put aps', 'ceiling',
-    'design', 'survey',
-  ],
   'antenna-fundamentals': <String>[
     'antenna', 'gain', 'dbi', 'beamwidth', 'polarization', 'downtilt',
     'radiation pattern', 'omni', 'directional', 'dipole', 'azimuth',

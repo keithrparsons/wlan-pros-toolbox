@@ -82,7 +82,6 @@ import '../screens/tools/reference/antenna_connectors_screen.dart';
 import '../screens/tools/reference/antenna_fundamentals_screen.dart';
 import '../screens/tools/reference/fiber_optic_screen.dart';
 import '../screens/tools/reference/roaming_screen.dart';
-import '../screens/tools/reference/ap_placement_screen.dart';
 import '../screens/tools/reference/non_wifi_channels_screen.dart';
 import '../screens/tools/reference/emergency_phrases_screen.dart';
 import '../screens/tools/reference/wifi_glossary_screen.dart';
@@ -284,7 +283,6 @@ class AppRouter {
   // `/tools/rf-connectors` was REMOVED 2026-06-06 (BF6-18): RF Connectors merged
   // into the single Antenna Connectors tool.
   static const String roaming = '/tools/roaming';
-  static const String apPlacement = '/tools/ap-placement';
   static const String poeReference = '/tools/poe-reference';
   // Field & Trade Reference set (pilot, 2026-07-05). Read-only IP/NEMA ingress
   // reference; static content, offline, all platforms incl. web.
@@ -446,7 +444,8 @@ class AppRouter {
   /// Wi-Fi RF exposure in perspective against everyday sunlight (verified, stated
   /// numbers; no inputs). The id `wifi-exposure-perspective` is permanent (route,
   /// catalog, concept graphic, help, tests) even if the display title is renamed.
-  static const String wifiExposurePerspective = '/tools/wifi-exposure-perspective';
+  static const String wifiExposurePerspective =
+      '/tools/wifi-exposure-perspective';
 
   /// Wi-Fi Tools Comparison — v1.1 beta. Offline, vendor-neutral capability-and-
   /// cost reference of professional Wi-Fi survey/design/spectrum/troubleshooting
@@ -651,7 +650,6 @@ class AppRouter {
     rackUnits: (_) => const RackUnitsScreen(),
     screwDrives: (_) => const ScrewDrivesScreen(),
     roaming: (_) => const RoamingScreen(),
-    apPlacement: (_) => const ApPlacementScreen(),
     poeReference: (_) => const PoeReferenceScreen(),
     enclosureRatings: (_) => const EnclosureRatingsScreen(),
     hazardousLocations: (_) => const HazardousLocationsScreen(),
@@ -692,9 +690,9 @@ class AppRouter {
     wifiFeatureMatrix: (_) => const WifiFeatureMatrixScreen(),
     regulatoryDomains: (_) => const RegulatoryDomainsScreen(),
     wifiStandardsBodies: (context) => WifiStandardsBodiesScreen(
-          onOpenRegulatoryDomains: () =>
-              Navigator.of(context).pushNamed(regulatoryDomains),
-        ),
+      onOpenRegulatoryDomains: () =>
+          Navigator.of(context).pushNamed(regulatoryDomains),
+    ),
     datetimeStandards: (_) => const DatetimeStandardsScreen(),
     dataUnits: (_) => const DataUnitsScreen(),
     hashLengths: (_) => const HashLengthsScreen(),
@@ -718,8 +716,7 @@ class AppRouter {
     // to the merged Test My Connection screen, opened in the EXPANDED technical
     // state (a pro hitting the old route expects the detail view). It does NOT
     // auto-run — the user taps Check to populate the verdict + technical data.
-    wifiVsInternet: (_) =>
-        const TestMyConnectionScreen(startExpanded: true),
+    wifiVsInternet: (_) => const TestMyConnectionScreen(startExpanded: true),
     // `arguments: true` (passed by the home consumer hero) auto-runs the check
     // on arrival; a plain push without arguments stays tap-to-run.
     testMyConnection: (ctx) => TestMyConnectionScreen(
@@ -785,77 +782,75 @@ class AppRouter {
     emergencyPhrases: (_) => const EmergencyPhrasesScreen(),
     wifiGlossary: (_) => const WifiGlossaryScreen(),
     wifiAuthGlossary: (_) => const WifiGlossaryScreen(
-          assetPath: kWifiAuthGlossaryAsset,
-          title: 'Wi-Fi Authentication Glossary',
-        ),
+      assetPath: kWifiAuthGlossaryAsset,
+      title: 'Wi-Fi Authentication Glossary',
+    ),
     antennaConnectors: (_) => const AntennaConnectorsScreen(),
     antennaFundamentals: (_) => const AntennaFundamentalsScreen(),
     spectrumAnalysis: (_) => const SpectrumAnalysisScreen(),
     // PDF reference cards — one PdfReferenceScreen per bundled card. Title +
     // asset path are the only per-card inputs; the screen is otherwise shared.
     bubbleDiagram: (_) => const PdfReferenceScreen(
-          title: 'WLAN Pros Bubble Diagram',
-          assetPath: 'assets/reference-cards/bubble-diagram.pdf',
-          toolId: 'bubble-diagram',
-        ),
+      title: 'WLAN Pros Bubble Diagram',
+      assetPath: 'assets/reference-cards/bubble-diagram.pdf',
+      toolId: 'bubble-diagram',
+    ),
     troubleshootingCauses: (_) => const PdfReferenceScreen(
-          title: 'Wireless LAN Troubleshooting Causes',
-          assetPath: 'assets/reference-cards/troubleshooting-causes.pdf',
-          toolId: 'troubleshooting-causes',
-        ),
+      title: 'Wireless LAN Troubleshooting Causes',
+      assetPath: 'assets/reference-cards/troubleshooting-causes.pdf',
+      toolId: 'troubleshooting-causes',
+    ),
     top20Checklist: (_) => const PdfReferenceScreen(
-          title: 'Top 20 Wi-Fi Checklist',
-          assetPath: 'assets/reference-cards/top-20-checklist.pdf',
-          toolId: 'top-20-checklist',
-        ),
+      title: 'Top 20 Wi-Fi Checklist',
+      assetPath: 'assets/reference-cards/top-20-checklist.pdf',
+      toolId: 'top-20-checklist',
+    ),
     extendedChecklist: (_) => const PdfReferenceScreen(
-          title: 'Extended Wi-Fi Checklist',
-          assetPath: 'assets/reference-cards/extended-checklist.pdf',
-          toolId: 'extended-checklist',
-        ),
+      title: 'Extended Wi-Fi Checklist',
+      assetPath: 'assets/reference-cards/extended-checklist.pdf',
+      toolId: 'extended-checklist',
+    ),
     extendedChecklistNonadvertised: (_) => const PdfReferenceScreen(
-          title: 'Extended Checklist (Non-Advertised Items)',
-          assetPath:
-              'assets/reference-cards/extended-checklist-nonadvertised.pdf',
-          toolId: 'extended-checklist-nonadvertised',
-        ),
+      title: 'Extended Checklist (Non-Advertised Items)',
+      assetPath: 'assets/reference-cards/extended-checklist-nonadvertised.pdf',
+      toolId: 'extended-checklist-nonadvertised',
+    ),
     connectionChecklist: (_) => const PdfReferenceScreen(
-          title: 'Wi-Fi Connection Checklist',
-          assetPath: 'assets/reference-cards/connection-checklist.pdf',
-          toolId: 'connection-checklist',
-        ),
+      title: 'Wi-Fi Connection Checklist',
+      assetPath: 'assets/reference-cards/connection-checklist.pdf',
+      toolId: 'connection-checklist',
+    ),
     channelAllocations24ghz: (_) => const PdfReferenceScreen(
-          title: '2.4 GHz Channel Allocations',
-          assetPath: 'assets/reference-cards/channel-allocations-24ghz.pdf',
-          toolId: 'channel-allocations-24ghz',
-        ),
+      title: '2.4 GHz Channel Allocations',
+      assetPath: 'assets/reference-cards/channel-allocations-24ghz.pdf',
+      toolId: 'channel-allocations-24ghz',
+    ),
     channelAllocations5ghz: (_) => const PdfReferenceScreen(
-          title: '5 GHz Channel Allocations',
-          assetPath: 'assets/reference-cards/channel-allocations-5ghz.pdf',
-          toolId: 'channel-allocations-5ghz',
-        ),
+      title: '5 GHz Channel Allocations',
+      assetPath: 'assets/reference-cards/channel-allocations-5ghz.pdf',
+      toolId: 'channel-allocations-5ghz',
+    ),
     channelAllocations6ghz: (_) => const PdfReferenceScreen(
-          title: '6 GHz Channel Allocations',
-          assetPath: 'assets/reference-cards/channel-allocations-6ghz.pdf',
-          toolId: 'channel-allocations-6ghz',
-        ),
+      title: '6 GHz Channel Allocations',
+      assetPath: 'assets/reference-cards/channel-allocations-6ghz.pdf',
+      toolId: 'channel-allocations-6ghz',
+    ),
     mcsIndexCard: (_) => const PdfReferenceScreen(
-          title: 'Modulation and Coding Schemes (MCS Index)',
-          assetPath: 'assets/reference-cards/mcs-index-card.pdf',
-          toolId: 'mcs-index-card',
-        ),
+      title: 'Modulation and Coding Schemes (MCS Index)',
+      assetPath: 'assets/reference-cards/mcs-index-card.pdf',
+      toolId: 'mcs-index-card',
+    ),
     generalLicenseFrequencyChart: (_) => const PdfReferenceScreen(
-          title: 'General License Frequency Chart',
-          assetPath:
-              'assets/reference-cards/general-license-frequency-chart.pdf',
-          toolId: 'general-license-frequency-chart',
-        ),
+      title: 'General License Frequency Chart',
+      assetPath: 'assets/reference-cards/general-license-frequency-chart.pdf',
+      toolId: 'general-license-frequency-chart',
+    ),
     hamRadioGeneralExamStudyNotes: (_) => const PdfReferenceScreen(
-          title: 'Ham Radio General Exam Study Notes',
-          assetPath:
-              'assets/reference-cards/ham-radio-general-exam-study-notes.pdf',
-          toolId: 'ham-radio-general-exam-study-notes',
-        ),
+      title: 'Ham Radio General Exam Study Notes',
+      assetPath:
+          'assets/reference-cards/ham-radio-general-exam-study-notes.pdf',
+      toolId: 'ham-radio-general-exam-study-notes',
+    ),
     hexAscii: (_) => const HexAsciiScreen(),
     unitConverter: (_) => const UnitConverterScreen(),
     qrGenerator: (_) => const QrGeneratorScreen(),
@@ -865,13 +860,13 @@ class AppRouter {
     linuxWlanCommands: (_) => const LinuxWlanCommandsScreen(),
     wiresharkFilters: (_) => const WiresharkFiltersScreen(),
     checklistApInstall: (_) => const ChecklistScreen(
-          checklist: kApInstallChecklist,
-          toolId: 'checklist-ap-install',
-        ),
+      checklist: kApInstallChecklist,
+      toolId: 'checklist-ap-install',
+    ),
     checklistClientTest: (_) => const ChecklistScreen(
-          checklist: kClientTestChecklist,
-          toolId: 'checklist-client-test',
-        ),
+      checklist: kClientTestChecklist,
+      toolId: 'checklist-client-test',
+    ),
     dualOrbWlanpi: (_) => const DualOrbScreen(),
   };
 

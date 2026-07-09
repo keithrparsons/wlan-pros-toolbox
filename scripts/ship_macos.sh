@@ -50,13 +50,30 @@ xcrun notarytool submit "$ZIP" --key "$KEY" --key-id "$KEY_ID" --issuer "$ISSUER
 echo "==> Stapling the notarization ticket"
 xcrun stapler staple "$APP"
 
-echo "==> Packaging .dmg"
+echo "==> Packaging .dmg (staged with a drag-to-Applications alias)"
 rm -f "$DMG"
-hdiutil create -volname "WLAN Pros Toolbox" -srcfolder "$APP" -ov -format UDZO "$DMG"
+# Stage the signed+stapled .app next to an /Applications alias so the mounted
+# volume shows the usual "drag the app onto Applications" install layout. ditto
+# preserves the code signature and the stapled notarization ticket; hdiutil then
+# packs the whole staging folder instead of the bare .app.
+STAGE="build/macos/dmg-stage"
+rm -rf "$STAGE"
+mkdir -p "$STAGE"
+ditto "$APP" "$STAGE/$(basename "$APP")"
+ln -s /Applications "$STAGE/Applications"
+hdiutil create -volname "WLAN Pros Toolbox" -srcfolder "$STAGE" -ov -format UDZO "$DMG"
+rm -rf "$STAGE"
 
 echo "==> Verifying Gatekeeper acceptance"
 spctl -a -vvv -t install "$APP" || true
 
 echo ""
-echo "==> Done. Send testers this file:"
+echo "==> Done. Built + notarized .dmg (with drag-to-Applications alias):"
 echo "    $ROOT/$DMG"
+echo ""
+echo "    Beta testers: send them this file directly."
+echo "    PUBLIC SITE DOWNLOAD (Matthew's workflow, 2026-07-07): do NOT commit the .dmg."
+echo "    Publish it as a GitHub Release on the toolbox-wlanpros-site repo — the site"
+echo "    download link auto-picks the newest release, no page edits:"
+echo "      gh release create v<VERSION> \"$ROOT/$DMG\" --title v<VERSION> --notes \"...\""
+echo "    (the .dmg is already named WLAN-Pros-Toolbox.dmg, exactly as required). See that repo's README."

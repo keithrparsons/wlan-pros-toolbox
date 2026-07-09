@@ -43,7 +43,6 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wlan_pros_toolbox/screens/tools/reference/ap_placement_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/ascii_reference_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/channel_map_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/coax_cable_screen.dart';
@@ -73,7 +72,6 @@ typedef _RefScreen = ({String slug, Widget Function() build});
 /// 2026-06-12 when it merged into ethernet_cable; its baseline is dropped and
 /// the ethernet_cable baseline is regenerated for the consolidated layout.)
 final List<_RefScreen> _screens = <_RefScreen>[
-  (slug: 'ap_placement', build: () => const ApPlacementScreen()),
   (slug: 'ascii_reference', build: () => const AsciiReferenceScreen()),
   (slug: 'channel_map', build: () => const ChannelMapScreen()),
   (slug: 'coax_cable', build: () => const CoaxCableScreen()),
@@ -96,13 +94,11 @@ final List<_RefScreen> _screens = <_RefScreen>[
 /// Width variants. 320 is the narrow-phone case F-04 calls out; 800 is the
 /// wide (desktop/tablet) branch. Height is generous so the whole scroll surface
 /// is captured rather than just the viewport.
-const List<({String name, double width})> _variants = <({
-  String name,
-  double width
-})>[
-  (name: '320w', width: 320),
-  (name: '800w', width: 800),
-];
+const List<({String name, double width})> _variants =
+    <({String name, double width})>[
+      (name: '320w', width: 320),
+      (name: '800w', width: 800),
+    ];
 
 const double _captureHeight = 2400;
 
@@ -137,10 +133,7 @@ Future<void> _pumpAndCapture(
   // Let any SVG concept graphics and font shaping settle before snapping.
   await tester.pumpAndSettle();
 
-  await expectLater(
-    find.byType(MaterialApp),
-    matchesGoldenFile(goldenPath),
-  );
+  await expectLater(find.byType(MaterialApp), matchesGoldenFile(goldenPath));
 }
 
 void main() {

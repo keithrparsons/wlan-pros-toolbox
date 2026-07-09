@@ -1606,23 +1606,6 @@ A PHY-layer comparison of every major 802.11 amendment from the original 802.11 
 - Data source: IEEE 802.11 amendments. Key rows: 802.11ac = Wi-Fi 5 (2013, 6.9 Gbps); 802.11ax = Wi-Fi 6 (2019) and Wi-Fi 6E (2021, adds 6 GHz); 802.11be = Wi-Fi 7 (2024, 46 Gbps MLO, 4K-QAM, up to 320 MHz).
 
 
-### AP Placement
-
-Field-tested design rules for AP location, cell sizing and overlap, channel planning, and high-density venues.
-
-**Why it's here.** A pre-survey checklist of placement do's and don'ts: mounting, spacing, overlap targets, and density ceilings.
-
-**How to use**
-1. Read top to bottom as guidance; each bullet is a complete recommendation.
-2. Coverage radii given are starting points (20 to 30 m open office, 10 to 15 m walled), not guarantees.
-
-**Field notes**
-- What it shows: five rule groups, each a heading over a bulleted list: Start with requirements, AP location, Cell sizing and overlap (≥ 2 APs at −70 dBm everywhere, 15 to 20% overlap, typical coverage radii), Channel planning (2.4 GHz only 1/6/11, co-channel spacing, prefer 5/6 GHz, DFS), and High-density venues (reduce power add APs, directional antennas, 20 to 30 clients/radio ceiling, tri-radio caveats).
-- The intro says coverage radii and spacing are starting points; validate every design with a post-installation survey.
-- An access point is never called a router. Per-radio capacity is a model-dependent ceiling.
-- Data source: accumulated WLAN design best practice, not a single named standard.
-
-
 ### Channel Map
 
 A visual channel-bonding map showing, per band, how 20/40/80/160/320 MHz channels bond together, which primary (center) channel labels each bonded block, and which blocks require DFS.
@@ -1784,7 +1767,7 @@ The 802.11k/r/v fast-roaming protocols (what each does, what it requires) plus R
 **How to use**
 1. The protocol heading shows the designation (lime) and full name.
 2. In the thresholds table, the scenario word is status-tinted with a dot: green = good (the two design targets), amber = marginal (the overlap zone), red = bad (sticky-client trigger and unusable).
-3. Design rules carry the actionable target (e.g. "≥ 2 APs at −67 dBm everywhere," "15 to 20% cell overlap minimum").
+3. Design rules carry the actionable target (e.g. "≥ 2 APs at −67 dBm everywhere," "second AP at −72 dBm or better across the overlap zone").
 
 **Field notes**
 - What it shows: Protocols block: 802.11r (Fast BSS Transition), 802.11k (Neighbor Report), 802.11v (BSS Transition Management), each with what it does, deployment requirements, and a field note. Thresholds block: five scenarios (VoIP/UC design target, standard data design target, roaming overlap zone, sticky-client trigger, unusable) each with min RSSI, min SNR, roam latency, design rule, and a status verdict.
@@ -3156,7 +3139,7 @@ A bundled, offline, pinch-zoomable copy of Keith's published "6 GHz channel layo
 
 A read-along teaching reference for antenna literacy: what an antenna actually does (shapes where the radio's energy goes, it does not add power), azimuth vs elevation, why gain trades against beamwidth, polarization and the wall-clock mistake, downtilt, how to read a radiation-pattern polar plot (main lobe, the -3 dB beamwidth points, side lobes, nulls, front-to-back ratio), and which antenna type (omni, patch, sector, Yagi, dish) fits which space. Seven line diagrams are embedded at the points they teach.
 
-**Why it's here.** It is the antenna-literacy companion to the directional tools in the toolbox (AP Placement, Downtilt, Point-to-Point, Fresnel). When you are choosing or mounting an antenna and want to reason about coverage shape rather than chase a gain number, this is the read-first reference.
+**Why it's here.** It is the antenna-literacy companion to the directional tools in the toolbox (Downtilt, Point-to-Point, Fresnel). When you are choosing or mounting an antenna and want to reason about coverage shape rather than chase a gain number, this is the read-first reference.
 
 **How to use**
 1. Read top to bottom: it builds from one idea (an antenna is a shaper, not a booster) through azimuth/elevation, orientation, reading a pattern chart, and what to use where.

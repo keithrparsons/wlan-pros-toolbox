@@ -1,6 +1,6 @@
 // Modulation — a fully offline, read-only Quick Reference that teaches what
 // modulation order means on the I/Q plane and why higher orders demand a cleaner
-// link. Mirrors the ap_placement_screen idiom: Scaffold + AppBar
+// link. Mirrors the sibling reference-screen idiom: Scaffold + AppBar
 // (toolbarHeight 64) + AppCopyAction, SafeArea(top:false), LayoutBuilder
 // isDesktop@720, Center + ConstrainedBox(calculatorMaxWidth), one
 // SingleChildScrollView of cards built from semantic tokens, ToolHelpFooter.

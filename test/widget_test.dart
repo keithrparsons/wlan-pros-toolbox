@@ -21,7 +21,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
 import 'package:wlan_pros_toolbox/main.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/noise_floor_screen.dart';
-import 'package:wlan_pros_toolbox/screens/tools/reference/ap_placement_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/ethernet_cable_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/frame_exchange_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/mcs_index_screen.dart';
@@ -87,8 +86,9 @@ void main() {
           // for live categories — isNew is false on everything in this build),
           // then the example-tools line. The summary sentence is no longer on
           // the tile (replaced by the example list).
-          final int liveCount =
-              cat.tools.where((ToolEntry t) => t.isLive).length;
+          final int liveCount = cat.tools
+              .where((ToolEntry t) => t.isLive)
+              .length;
           // The badge (and its semantic label) shows countLabelOverride when set
           // — e.g. Educational Resources pins '42' (10 cards + 32 online) — else
           // the live tool count.
@@ -307,26 +307,6 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Beacon Frame'), findsOneWidget);
-    });
-  });
-
-  testWidgets('AP Placement screen renders in a 375x900 phone viewport', (
-    tester,
-  ) async {
-    // Phone-viewport smoke for the AP-placement reference: it pumps, renders
-    // its rule-group headings and a known PWA guidance line (the 15-20% cell
-    // overlap target, verbatim from AP_RULES) without a RenderFlex overflow.
-    await _withViewport(tester, const Size(375, 900), () async {
-      await tester.pumpWidget(
-        MaterialApp(theme: AppTheme.dark(), home: const ApPlacementScreen()),
-      );
-      await tester.pump();
-
-      expect(find.text('AP Placement'), findsOneWidget);
-      expect(find.text('Cell sizing and overlap'), findsOneWidget);
-      expect(find.text('Channel planning'), findsOneWidget);
-      // Known guidance line, verbatim from the PWA aplace AP_RULES.
-      expect(find.textContaining('15-20% cell overlap'), findsOneWidget);
     });
   });
 

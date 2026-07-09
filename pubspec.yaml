@@ -44,6 +44,12 @@ dependencies:
   # network_info_plus — Wi-Fi link details (SSID/BSSID/gateway/submask/IP)
   #   that dart:io NetworkInterface does not expose. Used by Interface Info.
   network_info_plus: ^6.1.1
+  # http — same-origin REST calls to the Pi hosting backend (/toolboxapi/) from
+  #   the WEB build only (PiBackendClient, guarded by kIsWeb && PiBackend.available).
+  #   On web `package:http` uses the browser fetch client, so no dart:io / socket
+  #   path is taken. Already resolved as a transitive dep; pinned direct here as
+  #   it is now imported by first-party code. BSD-3, first-party Dart team plugin.
+  http: ^1.6.0
   # basic_utils — DnsUtils.lookupRecord over DNS-over-HTTPS (Google/Cloudflare
   #   JSON resolvers). MIT, pure-Dart, actively maintained. Used by DNS Lookup.
   #   Chosen over raw UDP/53 so the query traverses HTTPS:443 uniformly across
@@ -364,8 +370,9 @@ msix_config:
   # Microsoft re-signs Store builds, so this is the manifest identity, not a cert.
   publisher: "CN=3160F864-430A-46A3-88F1-A229CE5344BB"
   # MSIX requires a strict 4-part version. Tracks the app version (currently
-  # 1.5.10) with a trailing .0 revision; the user-facing version stays 1.5.10+45.
-  msix_version: 1.6.1.0
+  # 1.7.0) with a trailing .0 revision; the user-facing version stays 1.7.0+57.
+  # Must exceed the live Store version (1.6.1.0) for the cert to accept it.
+  msix_version: 1.7.0.0
   logo_path: assets/branding/app-icon-1024.png
   # Capabilities: internetClient for outbound HTTP/DNS/speed-test probes;
   # internetClientServer for the inbound side of the LAN/socket tools (port
