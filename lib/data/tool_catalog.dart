@@ -31,6 +31,7 @@ import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/material.dart';
 
+import '../services/network/pi_backend.dart';
 import 'tool_keywords.dart';
 
 /// A single tool that can be launched from a category screen.
@@ -223,8 +224,18 @@ const Set<String> kWebUnavailableToolIds = <String>{
 /// so the UI should show the honest web-unavailable warning (badge on the tile,
 /// `NetworkUnavailableView` on the screen). Off web this is ALWAYS false, which
 /// keeps native iOS/macOS/Android behavior unchanged — the set is web-only.
+///
+/// PI-HOSTED EXCEPTION (brief Phase A): when this web bundle is served from a
+/// WLAN Pi, a same-origin `/toolboxapi/` backend CAN do the network work for the
+/// tools it serves ([PiBackend.canServe]). Those tools route through the Pi and
+/// are genuinely available, so they drop the web-unavailable badge/fallback. On
+/// Netlify (no backend) `PiBackend.available` is false, so the set behaves
+/// exactly as before and every listed tool stays hidden — one artifact, two
+/// behaviors.
 bool toolUnavailableOnWeb(String toolId) =>
-    kIsWeb && kWebUnavailableToolIds.contains(toolId);
+    kIsWeb &&
+    kWebUnavailableToolIds.contains(toolId) &&
+    !PiBackend.canServe(toolId);
 
 /// Catalog seed — the 4-category reorganization (Keith, 2026-06-01; see file
 /// header). The list order IS the home-grid order: Test Network, Networking

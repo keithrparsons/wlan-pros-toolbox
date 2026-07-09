@@ -18,6 +18,7 @@
 // ConstrainedBox + scroll, surface1 cards with hairline border, mono for
 // numeric/address values.
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
@@ -25,6 +26,8 @@ import '../../../data/tool_assets.dart';
 import '../../../services/network/interface_info_service.dart';
 import '../../../services/network/mac_randomization.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/pi_backend.dart';
+import '../../../services/network/pi_backend_client.dart';
 import '../../../services/network/public_ip_service.dart';
 import '../../../services/network/shortcuts_config.dart';
 import '../../../services/network/wifi_details_bridge.dart';
@@ -77,6 +80,15 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
   PublicIpService? _publicIpService;
   Future<InterfaceInfoSnapshot>? _future;
 
+  /// True when the interface table is read from the Pi (Pi-hosted web) rather
+  /// than the device's own `dart:io` interface table. On this path the screen
+  /// renders the Pi's interfaces directly and never constructs the native
+  /// (dart:io) services.
+  late final bool _piBacked;
+  List<PiInterface>? _piInterfaces;
+  bool _piLoading = false;
+  Object? _piError;
+
   /// iOS Shortcuts bridge for the on-demand "Refresh Wi-Fi" affordance, and the
   /// resolved Wi-Fi source so the affordance only appears on the iOS Shortcut
   /// path (item 1). Both null off the supported/native path.
@@ -122,7 +134,13 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
   @override
   void initState() {
     super.initState();
-    if (NetworkSupport.interfaceInfoSupported) {
+    // Pi-hosted web takes precedence over the native path so the dart:io
+    // services are never constructed in a browser. Only on web, with a Pi
+    // backend, and no injected test service.
+    _piBacked = kIsWeb && PiBackend.available && widget.service == null;
+    if (_piBacked) {
+      _loadPi();
+    } else if (NetworkSupport.interfaceInfoSupported) {
       _service = widget.service ?? InterfaceInfoService();
       _publicIpService = widget.publicIpService ?? PublicIpService();
       _wifiSource = widget.wifiSourceOverride ?? WifiInfoSourceResolver.resolve();
@@ -133,6 +151,29 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
         WidgetsBinding.instance.addObserver(this);
       }
       _load();
+    }
+  }
+
+  /// Reads the Pi's interface table via `/toolboxapi/interfaces`. Never throws —
+  /// a failure resolves to the honest error state with a Retry (GL-005).
+  Future<void> _loadPi() async {
+    setState(() {
+      _piLoading = true;
+      _piError = null;
+    });
+    try {
+      final List<PiInterface> list = await PiBackendClient().interfaces();
+      if (!mounted) return;
+      setState(() {
+        _piInterfaces = list;
+        _piLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _piError = e;
+        _piLoading = false;
+      });
     }
   }
 
@@ -254,7 +295,7 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
             IconButton(
               icon: const Icon(Icons.refresh),
               tooltip: 'Refresh',
-              onPressed: _load,
+              onPressed: _piBacked ? _loadPi : _load,
             ),
           ],
         ],
@@ -271,6 +312,7 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
   /// `ValueRow` treatment. The Wi-Fi link and each active interface are grouped
   /// under their own subheadings, mirroring the on-screen card grouping.
   String? _buildCopyText() {
+    if (_piBacked) return _buildPiCopyText();
     final InterfaceInfoSnapshot? data = _snapshot;
     if (data == null) return null;
 
@@ -353,6 +395,9 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
       );
     }
 
+    // Pi-hosted web: render the Pi's own interface table.
+    if (_piBacked) return _piBody();
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool isDesktop = constraints.maxWidth >= 720;
@@ -389,6 +434,171 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
           },
         );
       },
+    );
+  }
+
+  /// Pi-hosted body: the WLAN Pi's own interface table. Loading / error / empty /
+  /// success states, same tokens as the native `_Success` layout.
+  Widget _piBody() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isDesktop = constraints.maxWidth >= 720;
+        final double edge = isDesktop
+            ? AppSpacing.screenEdgeDesktop
+            : AppSpacing.screenEdgeMobile;
+
+        if (_piLoading && _piInterfaces == null) {
+          return const _LoadingState();
+        }
+        if (_piError != null && _piInterfaces == null) {
+          return _ErrorState(onRetry: _loadPi);
+        }
+        final List<PiInterface> ifaces = _piInterfaces ?? const <PiInterface>[];
+        return _PiInterfacesView(
+          interfaces: ifaces,
+          edge: edge,
+          isDesktop: isDesktop,
+        );
+      },
+    );
+  }
+
+  /// §8.16 copy payload for the Pi interface table.
+  String? _buildPiCopyText() {
+    final List<PiInterface>? ifaces = _piInterfaces;
+    if (ifaces == null || _piLoading) return null;
+
+    final StringBuffer buf = StringBuffer()
+      ..writeln('Interface Info (WLAN Pi)');
+    if (ifaces.isEmpty) {
+      buf
+        ..writeln()
+        ..writeln('No interfaces reported.');
+      return buf.toString().trimRight();
+    }
+    for (final PiInterface iface in ifaces) {
+      buf
+        ..writeln()
+        ..writeln('${iface.name}  ·  '
+            '${_Success._kindLabel(InterfaceInfoService.classifyInterface(iface.name))}');
+      if (iface.operState != null) buf.writeln('State: ${iface.operState}');
+      if (iface.mac != null && iface.mac!.isNotEmpty) {
+        buf.writeln('MAC: ${iface.mac}');
+      }
+      if (iface.linkSpeedMbps != null) {
+        buf.writeln('Link speed: ${iface.linkSpeedMbps} Mbps');
+      }
+      if (iface.mtu != null) buf.writeln('MTU: ${iface.mtu}');
+      for (final PiInterfaceAddress a in iface.addresses) {
+        buf.writeln('${a.isIPv4 ? 'IPv4' : 'IPv6'}: ${a.cidr}');
+      }
+    }
+    buf
+      ..writeln()
+      ..writeln('Reported by the WLAN Pi hosting this page.');
+    return buf.toString().trimRight();
+  }
+}
+
+/// The Pi-hosted interface table. Renders each interface reported by the Pi
+/// (`/toolboxapi/interfaces`) as a card, using the same tokens/shape as the
+/// native `_Success` layout. This is the Pi's OWN interface table, clearly
+/// attributed — not the browser's device (a browser cannot read one).
+class _PiInterfacesView extends StatelessWidget {
+  const _PiInterfacesView({
+    required this.interfaces,
+    required this.edge,
+    required this.isDesktop,
+  });
+
+  final List<PiInterface> interfaces;
+  final double edge;
+  final bool isDesktop;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(
+            edge,
+            AppSpacing.sm,
+            edge,
+            edge + AppSpacing.sm,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              ConceptGraphicBand(toolId: 'interface-info', isDesktop: isDesktop),
+              if (ToolAssets.hasGraphic('interface-info'))
+                const SizedBox(height: AppSpacing.md),
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                child: Text(
+                  'Interfaces reported by the WLAN Pi hosting this page. A '
+                  'browser cannot read this device\'s own interface table, so '
+                  'these are the Pi\'s.',
+                  style: text.bodySmall?.copyWith(color: colors.textTertiary),
+                ),
+              ),
+              if (interfaces.isEmpty)
+                _Card(
+                  title: 'Interfaces',
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                    child: Text(
+                      'No interfaces reported by the Pi.',
+                      style:
+                          text.bodyLarge?.copyWith(color: colors.textTertiary),
+                    ),
+                  ),
+                )
+              else
+                ...interfaces.map(
+                  (PiInterface i) => Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                    child: _piInterfaceCard(context, i),
+                  ),
+                ),
+              ToolHelpFooter(toolId: 'interface-info'),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _piInterfaceCard(BuildContext context, PiInterface iface) {
+    final String kind = _Success._kindLabel(
+      InterfaceInfoService.classifyInterface(iface.name),
+    );
+    return _Card(
+      title: '${iface.name}  ·  $kind',
+      child: Column(
+        children: <Widget>[
+          if (iface.operState != null)
+            ValueRow(label: 'State', value: iface.operState),
+          if (iface.mac != null && iface.mac!.isNotEmpty)
+            ValueRow(label: 'MAC', value: iface.mac, identifier: true),
+          if (iface.linkSpeedMbps != null)
+            ValueRow(label: 'Link speed', value: '${iface.linkSpeedMbps} Mbps'),
+          if (iface.mtu != null)
+            ValueRow(label: 'MTU', value: '${iface.mtu}'),
+          for (final PiInterfaceAddress a in iface.addresses)
+            ValueRow(
+              label: a.isIPv4 ? 'IPv4' : 'IPv6',
+              value: a.cidr,
+              identifier: true,
+            ),
+          if (iface.addresses.isEmpty)
+            ValueRow(label: 'Addresses', value: null),
+        ],
+      ),
     );
   }
 }
