@@ -78,6 +78,7 @@ import 'install_shortcut_sheet.dart';
 import 'live_setup_card.dart';
 import 'network_unavailable_view.dart';
 import 'not_on_wifi_card.dart';
+import 'pi_view_honesty.dart';
 
 /// The footnote method-disclosure, VERBATIM from the pro screen's spec. Kept as
 /// a named constant so the test asserts the exact string and the technical
@@ -1232,6 +1233,18 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Pi-hosted front door: hand the whole screen to the self-contained
+    // [_PiConnectionBody], which carries its OWN AppBar + working copy action.
+    // The parent's AppBar copy action reads [_verdict], which the Pi path never
+    // produces (the browser cannot read the visitor's Wi-Fi link), so under the
+    // parent it would sit permanently greyed even after a good Pi run — the
+    // dead-copy bug Vera flagged (MEDIUM-1, 2026-07-09). Branching here keeps the
+    // Pi body self-contained and the native path byte-for-byte unchanged:
+    // _piBacked is false on native and Netlify web, so the native Scaffold below
+    // renders exactly as before.
+    if (_piBacked) {
+      return _PiConnectionBody(autoStart: widget.autoStart);
+    }
     return Scaffold(
       appBar: AppBar(
         // §8.5 `--text-h2` (28px) screen title. At every real iPhone width
@@ -1278,12 +1291,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   }
 
   Widget _body() {
-    // Pi-hosted web: the front door runs the Pi's own connection test. This is
-    // checked FIRST so the hosted home hero lands on a real reading instead of
-    // the "download the native app" fallback below.
-    if (_piBacked) {
-      return _PiConnectionBody(autoStart: widget.autoStart);
-    }
+    // NB: the Pi-hosted front door is handled in [build] (it returns the
+    // self-contained [_PiConnectionBody] with its own AppBar + copy action), so
+    // this native body is only ever reached when `_piBacked` is false.
     // The internet measurement needs dart:io sockets the browser does not have;
     // route web (and any no-socket platform) to the shared fallback.
     if (!NetworkSupport.activeNetworkSupported) {
@@ -4768,8 +4778,47 @@ class _PiConnectionBodyState extends State<_PiConnectionBody> {
     }
   }
 
+  /// §8.16 copy payload for the Pi front door — the conntest reading as a labeled
+  /// summary plus a hop TSV, honest about the Pi origin. Returns null (→ the
+  /// disabled affordance) until a run has produced a result: idle, loading, and
+  /// a failed run all have nothing to keep — matching the three sibling Pi tools.
+  /// The content is built by the pure [piConntestCopyText], which is unit-tested
+  /// so the copy can never silently regress to the old always-greyed state
+  /// (Vera MEDIUM-1). Never fabricates a value (GL-005).
+  String? _buildPiCopyText() {
+    final PiConntestResult? ct = _result;
+    if (_running || ct == null) return null;
+    return piConntestCopyText(ct);
+  }
+
   @override
   Widget build(BuildContext context) {
+    // The Pi front door carries its OWN Scaffold + AppBar so the §8.16 copy
+    // action reads THIS widget's [_result] (via [_buildPiCopyText]) rather than
+    // the parent's [_verdict], which the Pi path never sets. That is the fix for
+    // the dead, permanently-greyed copy button Vera flagged (MEDIUM-1): copy is
+    // now enabled the moment a run lands and disabled only when there is nothing
+    // to keep. The title matches the native AppBar so the page reads identically.
+    return Scaffold(
+      appBar: AppBar(
+        title: const Align(
+          alignment: Alignment.centerLeft,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text('Test My Connection'),
+          ),
+        ),
+        toolbarHeight: 64,
+        actions: <Widget>[
+          AppCopyAction(textBuilder: _buildPiCopyText),
+        ],
+      ),
+      body: SafeArea(top: false, child: _content(context)),
+    );
+  }
+
+  Widget _content(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool isDesktop = constraints.maxWidth >= 720;

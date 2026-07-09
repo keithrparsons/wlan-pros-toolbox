@@ -49,6 +49,7 @@ import 'live_quality_monitor.dart';
 import 'metric_sparkline.dart';
 import 'net_quality_help_sheet.dart';
 import 'network_unavailable_view.dart';
+import 'pi_view_honesty.dart';
 
 /// Network Quality screen. Runs one transport measurement and a popular-site
 /// reachability pass, then renders six graded metric rows and a reachability
@@ -460,23 +461,11 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            _piBacked
-                // GL-005: on the Pi the sensor measures only latency and packet
-                // loss (to the internet and the gateway) and DNS resolution
-                // time, and it measures the PI, not "your device." Do not
-                // promise the four dimensions the Pi cannot back (jitter,
-                // download, upload, responsiveness) or a browser-side cloud-app
-                // reachability sweep.
-                ? 'Measures latency and packet loss from the WLAN Pi hosting '
-                    'this page to the internet and its gateway, plus DNS '
-                    'resolution time. Jitter, download, upload, and '
-                    'responsiveness are not available from the Pi sensor. Each '
-                    'dimension is graded on its own; there is no single score.'
-                : 'Measures latency, jitter, loss, download, upload, and '
-                    'responsiveness over a TCP-connect probe and HTTPS '
-                    'transfers, then checks whether your device can reach a set '
-                    'of popular cloud apps right now. Each dimension is graded '
-                    'on its own; there is no single score.',
+            // GL-005 honesty branch (Pi vs native), extracted to a pure,
+            // kIsWeb-independent function so both blurbs are unit-tested without
+            // a web harness (Vera MEDIUM-2). The Pi blurb promises only what the
+            // Pi sensor backs; the native blurb is unchanged.
+            netQualityBlurb(_piBacked),
             style: text.bodyLarge?.copyWith(color: colors.textSecondary),
           ),
           if (_error != null) ...[

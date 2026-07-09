@@ -38,6 +38,7 @@ import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'network_unavailable_view.dart';
+import 'pi_view_honesty.dart';
 import 'value_row.dart';
 
 class InterfaceInfoScreen extends StatefulWidget {
@@ -537,8 +538,11 @@ class _PiInterfacesView extends StatelessWidget {
               // device's own interface table — so showing that illustration here
               // would have the picture claim the visitor's live local interface
               // while the text says that is impossible. The graphic is therefore
-              // omitted on the Pi view; the native `_Success` layout keeps it,
-              // where it is truthful. (Netlify web never reaches this view.)
+              // omitted on the Pi view, per the shared [showInterfaceConceptGraphic]
+              // decision (false when piBacked) that the native `_Success` layout
+              // also gates on, where it is truthful. That one pure decision is
+              // unit-tested on both branches (Vera MEDIUM-2). (Netlify web never
+              // reaches this view.)
               Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                 child: Text(
@@ -654,12 +658,20 @@ class _Success extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              ConceptGraphicBand(
-                toolId: 'interface-info',
-                isDesktop: isDesktop,
-              ),
-              if (ToolAssets.hasGraphic('interface-info'))
-                const SizedBox(height: AppSpacing.md),
+              // Screenshot-must-match-prose (GL-005): the concept graphic depicts
+              // a specific local device. It renders only where that is truthful —
+              // the native view (never Pi-backed). The Pi view omits it. Both
+              // sites gate on the SAME pure decision so a VM unit test pins the
+              // rule without a web harness (Vera MEDIUM-2). `_Success` is the
+              // native success layout, so piBacked is definitionally false here.
+              if (showInterfaceConceptGraphic(false)) ...[
+                ConceptGraphicBand(
+                  toolId: 'interface-info',
+                  isDesktop: isDesktop,
+                ),
+                if (ToolAssets.hasGraphic('interface-info'))
+                  const SizedBox(height: AppSpacing.md),
+              ],
               _summaryCard(context),
               const SizedBox(height: AppSpacing.sm),
               _wifiCard(context),

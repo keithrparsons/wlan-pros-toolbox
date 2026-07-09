@@ -331,8 +331,6 @@ class _PingScreenState extends State<PingScreen> {
         final double edge = isDesktop
             ? AppSpacing.screenEdgeDesktop
             : AppSpacing.screenEdgeMobile;
-        final AppColorScheme colors = context.colors;
-        final TextTheme text = Theme.of(context).textTheme;
         return Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 560),
@@ -354,16 +352,11 @@ class _PingScreenState extends State<PingScreen> {
                     const SizedBox(height: AppSpacing.sm),
                     _statsCard(context),
                   ],
-                  if (_stats.sent > 0 && !_running) ...[
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      'Measured on the WLAN Pi hosting this page (real ICMP '
-                      'echo), not from this browser.',
-                      style: text.labelMedium?.copyWith(
-                        color: colors.textSecondary,
-                      ),
-                    ),
-                  ],
+                  // The Pi attribution is stated once, in the form caption
+                  // ("A real ICMP echo, sent from the WLAN Pi hosting this
+                  // page…"). Traceroute, DNS, and the front door each attribute
+                  // once too; the former post-result caption here double-stated
+                  // it, so it is dropped for parity (Vera LOW-1, 2026-07-09).
                   ToolHelpFooter(toolId: 'ping'),
                 ],
               ),
