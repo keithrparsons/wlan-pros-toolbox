@@ -10,12 +10,15 @@
 //  - disabled → "Send magic packet" disabled until a MAC is entered.
 //  - web      → NetworkUnavailableView (UDP broadcast impossible in a browser).
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/pi_backend.dart';
+import '../../../services/network/pi_backend_client.dart';
 import '../../../services/network/wake_on_lan_service.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_color_scheme.dart';
@@ -49,10 +52,23 @@ class _WakeOnLanScreenState extends State<WakeOnLanScreen> {
 
   static const List<int> _ports = <int>[9, 7];
 
+  /// True when this build is served FROM a WLAN Pi (Pi-hosted web): the browser
+  /// cannot open a UDP broadcast socket, so the magic packet is sent ON the Pi
+  /// via POST `/toolboxapi/wol`. Gated on [PiBackend.canServe] (not just
+  /// `available`), so the body stays dormant until the tool id is activated in
+  /// [PiBackend.servedToolIds] — native and Netlify-web behavior are unchanged.
+  late final bool _piBacked;
+
   @override
   void initState() {
     super.initState();
-    _service = widget.service ?? WakeOnLanService();
+    _piBacked =
+        kIsWeb && PiBackend.canServe('wake-on-lan') && widget.service == null;
+    // On the Pi path the native UDP service is never constructed (the browser
+    // has no datagram socket); the send runs server-side through the client.
+    if (!_piBacked) {
+      _service = widget.service ?? WakeOnLanService();
+    }
     _macCtrl.addListener(_recomputeCanRun);
   }
 
@@ -73,11 +89,13 @@ class _WakeOnLanScreenState extends State<WakeOnLanScreen> {
     if (_loading || !_canRun) return;
     _macFocus.unfocus();
     setState(() => _loading = true);
-    final WakeOnLanResult result = await _service.wake(
-      rawMac: _macCtrl.text,
-      rawBroadcast: _broadcastCtrl.text,
-      port: _port,
-    );
+    final WakeOnLanResult result = _piBacked
+        ? await _wakePi()
+        : await _service.wake(
+            rawMac: _macCtrl.text,
+            rawBroadcast: _broadcastCtrl.text,
+            port: _port,
+          );
     if (!mounted) return;
     setState(() {
       _loading = false;
@@ -93,6 +111,39 @@ class _WakeOnLanScreenState extends State<WakeOnLanScreen> {
       announcement,
       TextDirection.ltr,
     );
+  }
+
+  /// Pi-hosted send: the magic packet is broadcast FROM the Pi hosting this page
+  /// (POST `/toolboxapi/wol`), returning the SAME [WakeOnLanResult] the native
+  /// UDP path builds so the result renders identically. The MAC is normalized
+  /// locally first (same inline validation as the native service), so an invalid
+  /// MAC fails immediately without a round-trip. A transport failure surfaces the
+  /// [PiBackendException] message through the existing failure card. Never throws.
+  Future<WakeOnLanResult> _wakePi() async {
+    final String? mac = WakeOnLanService.normalizeMac(_macCtrl.text);
+    if (mac == null) {
+      return WakeOnLanResult.failure(
+        message: 'Enter a valid MAC address — 6 bytes, e.g. '
+            'AA:BB:CC:DD:EE:FF (colons, hyphens, or no separators all work).',
+      );
+    }
+    final String broadcast = _broadcastCtrl.text.trim().isEmpty
+        ? WakeOnLanService.defaultBroadcast
+        : _broadcastCtrl.text.trim();
+    try {
+      return await PiBackendClient().wakeOnLan(
+        mac: mac,
+        broadcast: broadcast,
+        port: _port,
+      );
+    } on PiBackendException catch (e) {
+      return WakeOnLanResult.failure(
+        message: e.message,
+        normalizedMac: mac,
+        broadcast: broadcast,
+        port: _port,
+      );
+    }
   }
 
   @override
@@ -141,8 +192,12 @@ class _WakeOnLanScreenState extends State<WakeOnLanScreen> {
 
     buf
       ..writeln(
-        'Status: Sent (the packet left this device; Wake-on-LAN is '
-        'unacknowledged, so this is not confirmation the target woke)',
+        _piBacked
+            ? 'Status: Sent (the packet left the WLAN Pi hosting this page; '
+                  'Wake-on-LAN is unacknowledged, so this is not confirmation '
+                  'the target woke)'
+            : 'Status: Sent (the packet left this device; Wake-on-LAN is '
+                  'unacknowledged, so this is not confirmation the target woke)',
       )
       ..writeln('  Target MAC: ${r.normalizedMac}')
       ..writeln('  Broadcast: ${r.broadcast}')
@@ -327,14 +382,19 @@ class _WakeOnLanScreenState extends State<WakeOnLanScreen> {
         body: r.errorMessage!,
       );
     }
-    return _SentCard(result: r);
+    return _SentCard(result: r, piBacked: _piBacked);
   }
 }
 
 class _SentCard extends StatelessWidget {
-  const _SentCard({required this.result});
+  const _SentCard({required this.result, this.piBacked = false});
 
   final WakeOnLanResult result;
+
+  /// True on the Pi-hosted path: the packet was broadcast from the WLAN Pi, not
+  /// this device, so the honesty copy attributes it to the Pi (GL-005 /
+  /// feedback_screenshot_text_match).
+  final bool piBacked;
 
   @override
   Widget build(BuildContext context) {
@@ -380,12 +440,20 @@ class _SentCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           // Honesty: WoL is fire-and-forget. State exactly what is and isn't
-          // verifiable.
+          // verifiable — and, on the Pi path, WHERE it was sent from.
           Text(
-            'Wake-on-LAN is fire-and-forget — there is no acknowledgement, so '
-            'this confirms the packet left this device, not that the target '
-            'woke. If it does not wake, check that WoL is enabled in the '
-            "target's BIOS/OS and that the broadcast reaches its segment.",
+            piBacked
+                ? 'Wake-on-LAN is fire-and-forget — there is no acknowledgement, '
+                      'so this confirms the packet left the WLAN Pi hosting this '
+                      'page, not that the target woke. The Pi broadcasts on its '
+                      'own segment, so a target on a different segment than the '
+                      "Pi will not receive it. If it does not wake, check that "
+                      "WoL is enabled in the target's BIOS/OS."
+                : 'Wake-on-LAN is fire-and-forget — there is no acknowledgement, '
+                      'so this confirms the packet left this device, not that '
+                      'the target woke. If it does not wake, check that WoL is '
+                      "enabled in the target's BIOS/OS and that the broadcast "
+                      'reaches its segment.',
             style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.sm),

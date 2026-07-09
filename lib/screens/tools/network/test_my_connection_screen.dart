@@ -4739,6 +4739,24 @@ class _PiConnectionBodyState extends State<_PiConnectionBody> {
   PiConntestResult? _result;
   String? _error;
 
+  /// The Pi's own uplink throughput (Pi -> internet) for the most recent run.
+  /// Best-effort: measured AFTER the conntest lands (so the two internet-bound
+  /// probes do not contend), it never fails the whole run. Null until it lands;
+  /// a leg that failed on the Pi stays honest-null inside the result. Mirrors
+  /// net_quality_screen's Pi wiring via [PiBackendClient.throughput].
+  PiThroughputResult? _throughput;
+  bool _throughputRunning = false;
+
+  /// The browser<->Pi Wi-Fi-hop throughput (this device to the Pi over the local
+  /// network), timed same-origin in the browser via the garbage/perfsink loop.
+  /// DISTINCT from the Pi uplink above; the two rows are never conflated (Keith
+  /// decision + [[project_throughput_methodology]]). Null until the run measures
+  /// them; [_deviceToPiError] is set when the local timing failed.
+  double? _deviceToPiDownMbps;
+  double? _deviceToPiUpMbps;
+  bool _deviceToPiRunning = false;
+  String? _deviceToPiError;
+
   @override
   void initState() {
     super.initState();
@@ -4754,7 +4772,17 @@ class _PiConnectionBodyState extends State<_PiConnectionBody> {
       _running = true;
       _error = null;
       _result = null;
+      _throughput = null;
+      _throughputRunning = false;
+      _deviceToPiDownMbps = null;
+      _deviceToPiUpMbps = null;
+      _deviceToPiError = null;
     });
+    // The local Wi-Fi hop (this device <-> the Pi) is a DIFFERENT link than the
+    // Pi's internet uplink, so it runs concurrently with the conntest. Best-
+    // effort: a failure records the honest error, never a fabricated number, and
+    // never fails the whole run. Mirrors net_quality_screen's `_measureDeviceToPiHop`.
+    unawaited(_measureDeviceToPiHop());
     try {
       final PiConntestResult ct = await _client.conntest();
       if (!mounted) return;
@@ -4775,7 +4803,56 @@ class _PiConnectionBodyState extends State<_PiConnectionBody> {
             "The WLAN Pi couldn't complete the connection test. Please try "
             'again.';
       });
+      return;
     }
+    // Pi uplink throughput runs AFTER the conntest so the two internet-bound
+    // measurements do not contend for the Pi's uplink. Best-effort and honest.
+    await _measurePiUplink();
+  }
+
+  /// Measures the Pi's own uplink to the internet (Pi -> internet download /
+  /// upload). Best-effort: a failure leaves [_throughput] null and the uplink
+  /// card falls back to its honest "Unavailable" rows, never a fabricated number
+  /// (GL-005). Uses the SAME [PiBackendClient.throughput] path Network Quality uses.
+  Future<void> _measurePiUplink() async {
+    if (!mounted) return;
+    setState(() => _throughputRunning = true);
+    PiThroughputResult? tp;
+    try {
+      tp = await _client.throughput();
+    } on Object {
+      tp = null;
+    }
+    if (!mounted) return;
+    setState(() {
+      _throughputRunning = false;
+      _throughput = tp;
+    });
+  }
+
+  /// LibreSpeed-style local-hop timing: download then upload against the Pi's
+  /// garbage/perfsink endpoints, sequentially so they do not contend for the
+  /// Wi-Fi link. Best-effort and honest — a failure records the error, never a
+  /// fake number. Mirrors net_quality_screen's identical helper.
+  Future<void> _measureDeviceToPiHop() async {
+    if (!mounted) return;
+    setState(() => _deviceToPiRunning = true);
+    double? down;
+    double? up;
+    String? error;
+    try {
+      down = await _client.deviceToPiDownloadMbps();
+      up = await _client.deviceToPiUploadMbps();
+    } on Object catch (e) {
+      error = 'The local Wi-Fi-hop test to the Pi could not complete ($e).';
+    }
+    if (!mounted) return;
+    setState(() {
+      _deviceToPiRunning = false;
+      _deviceToPiDownMbps = down;
+      _deviceToPiUpMbps = up;
+      _deviceToPiError = error;
+    });
   }
 
   /// §8.16 copy payload for the Pi front door — the conntest reading as a labeled
@@ -4788,7 +4865,13 @@ class _PiConnectionBodyState extends State<_PiConnectionBody> {
   String? _buildPiCopyText() {
     final PiConntestResult? ct = _result;
     if (_running || ct == null) return null;
-    return piConntestCopyText(ct);
+    return piConntestCopyText(
+      ct,
+      throughput: _throughput,
+      deviceToPiDownMbps: _deviceToPiDownMbps,
+      deviceToPiUpMbps: _deviceToPiUpMbps,
+      deviceToPiError: _deviceToPiError,
+    );
   }
 
   @override
@@ -4848,6 +4931,23 @@ class _PiConnectionBodyState extends State<_PiConnectionBody> {
                   if (_result != null) ...<Widget>[
                     const SizedBox(height: AppSpacing.sm),
                     _hopsCard(context, _result!),
+                    // Pi -> Internet throughput card — the Pi's OWN uplink,
+                    // measured after the conntest. Shown once the probe starts;
+                    // a failed leg stays honest-null (never a fabricated 0).
+                    if (_throughputRunning || _throughput != null) ...<Widget>[
+                      const SizedBox(height: AppSpacing.sm),
+                      _piUplinkCard(context),
+                    ],
+                    // This device <-> Pi Wi-Fi-hop card — the SECOND, local
+                    // throughput number, in its own labeled card so it is never
+                    // read as the Pi's uplink. Shown once its timing starts.
+                    if (_deviceToPiRunning ||
+                        _deviceToPiDownMbps != null ||
+                        _deviceToPiUpMbps != null ||
+                        _deviceToPiError != null) ...<Widget>[
+                      const SizedBox(height: AppSpacing.sm),
+                      _deviceToPiCard(context),
+                    ],
                     const SizedBox(height: AppSpacing.sm),
                     _caption(context),
                   ],
@@ -4875,11 +4975,13 @@ class _PiConnectionBodyState extends State<_PiConnectionBody> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            'Runs a connection test on the WLAN Pi hosting this page: latency '
-            'and packet loss to the internet and to the gateway, plus DNS '
-            'resolution time. A browser cannot read your own device\'s Wi-Fi '
-            'link, so the full "is it your Wi-Fi or your internet?" comparison '
-            'runs in the native app, not here.',
+            'Runs a connection test on the WLAN Pi hosting this page: latency, '
+            'jitter, and packet loss to the internet and to the gateway, DNS '
+            'resolution time, and two throughput numbers. The Pi measures its '
+            'own uplink to the internet, and this page times the local Wi-Fi '
+            'hop between your device and the Pi. A browser cannot read your own '
+            'device\'s Wi-Fi signal, so the full "is it your Wi-Fi or your '
+            'internet?" verdict runs in the native app.',
             style: text.bodyLarge?.copyWith(color: colors.textSecondary),
           ),
           if (_error != null) ...<Widget>[
@@ -5026,9 +5128,232 @@ class _PiConnectionBodyState extends State<_PiConnectionBody> {
     final TextTheme text = Theme.of(context).textTheme;
     return Text(
       'Measured on the WLAN Pi hosting this page, not from this browser and not '
-      'an Orb or Ookla score. To compare your device\'s Wi-Fi link against your '
-      'internet, run Test My Connection in the native app.',
+      'an Orb or Ookla score. Two throughput numbers are reported: the Pi '
+      'uplink to the internet, and the local hop between this device and the '
+      'Pi. To read your own device\'s Wi-Fi signal and get the full "is it your '
+      'Wi-Fi or your internet?" verdict, run Test My Connection in the native app.',
       style: text.labelMedium?.copyWith(color: colors.textSecondary),
+    );
+  }
+
+  /// The Pi -> Internet throughput card: the Pi's OWN uplink download/upload,
+  /// clearly attributed so it is never confused with the local Wi-Fi hop below.
+  /// A leg that has not landed shows a spinner; a leg the Pi could not measure
+  /// shows the honest "Unavailable" (or the Pi's own error), never a fabricated
+  /// number (GL-005).
+  Widget _piUplinkCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final PiThroughputResult? tp = _throughput;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Semantics(
+            header: true,
+            child: Text(
+              'Pi to internet (throughput)',
+              style: text.labelMedium?.copyWith(
+                color: colors.textSecondary,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            'The WLAN Pi\'s own uplink to the internet, measured on the Pi. This '
+            'is separate from the local Wi-Fi hop between this device and the Pi '
+            'shown below.',
+            style: text.bodySmall?.copyWith(color: colors.textTertiary),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          _throughputRow(context, 'Download', tp?.downloadMbps, tp?.downloadError),
+          _throughputRow(context, 'Upload', tp?.uploadMbps, tp?.uploadError),
+        ],
+      ),
+    );
+  }
+
+  /// One Pi-uplink throughput row. Pending (no value, probe still running) shows
+  /// a spinner; a present value renders in Mbps; a null value with the probe
+  /// done renders the Pi's own error note when present, else a plain
+  /// "Unavailable" — never a fabricated number (GL-005).
+  Widget _throughputRow(
+    BuildContext context,
+    String label,
+    double? mbps,
+    String? error,
+  ) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final bool pending = mbps == null && _throughputRunning;
+    final String valueLabel =
+        mbps != null ? '${mbps.toStringAsFixed(1)} Mbps' : 'Unavailable';
+    final String? errText =
+        (error != null && error.trim().isNotEmpty) ? error.trim() : null;
+    final bool showErr = mbps == null && !pending && errText != null;
+    return Semantics(
+      label: '$label, ${pending ? 'measuring' : valueLabel}',
+      container: true,
+      child: ExcludeSemantics(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: text.bodyLarge?.copyWith(
+                        color: colors.textPrimary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  if (pending)
+                    SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: colors.textTertiary,
+                      ),
+                    )
+                  else
+                    Text(
+                      valueLabel,
+                      textAlign: TextAlign.right,
+                      style: mono.outputMedium.copyWith(
+                        color: mbps != null
+                            ? colors.textAccent
+                            : colors.textTertiary,
+                      ),
+                    ),
+                ],
+              ),
+              if (showErr) ...<Widget>[
+                const SizedBox(height: 2),
+                Text(
+                  errText,
+                  style: text.labelSmall?.copyWith(color: colors.textTertiary),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// The browser<->Pi Wi-Fi-hop throughput card — the SECOND, local throughput
+  /// number, in its own labeled card so it is never confused with the Pi's
+  /// uplink above. A value that has not measured yet shows a spinner; a failure
+  /// shows the honest error, never a fabricated number (GL-005).
+  Widget _deviceToPiCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Semantics(
+            header: true,
+            child: Text(
+              'This device ↔ Pi (Wi-Fi hop)',
+              style: text.labelMedium?.copyWith(
+                color: colors.textSecondary,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            'Throughput between this device and the WLAN Pi over your local '
+            'network, timed in the browser. This is the local hop, separate from '
+            'the Pi uplink to the internet shown above.',
+            style: text.bodySmall?.copyWith(color: colors.textTertiary),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          if (_deviceToPiError != null)
+            Text(
+              _deviceToPiError!,
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
+            )
+          else ...<Widget>[
+            _deviceToPiRow(context, 'Download', _deviceToPiDownMbps),
+            _deviceToPiRow(context, 'Upload', _deviceToPiUpMbps),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _deviceToPiRow(BuildContext context, String label, double? mbps) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final bool pending = mbps == null && _deviceToPiRunning;
+    final String valueLabel =
+        mbps != null ? '${mbps.toStringAsFixed(1)} Mbps' : 'Unavailable';
+    return Semantics(
+      label: '$label, ${pending ? 'measuring' : valueLabel}',
+      container: true,
+      child: ExcludeSemantics(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  label,
+                  style: text.bodyLarge?.copyWith(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              if (pending)
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: colors.textTertiary,
+                  ),
+                )
+              else
+                Text(
+                  valueLabel,
+                  textAlign: TextAlign.right,
+                  style: mono.outputMedium.copyWith(
+                    color: mbps != null
+                        ? colors.textAccent
+                        : colors.textTertiary,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

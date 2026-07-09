@@ -20,6 +20,7 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
@@ -27,6 +28,8 @@ import '../../../data/tool_assets.dart';
 import '../../../services/network/arp_ndp_service.dart';
 import '../../../services/network/interface_info_service.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/pi_backend.dart';
+import '../../../services/network/pi_backend_client.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
@@ -68,16 +71,31 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
   StreamSubscription<ArpScanProgress>? _sub;
   Completer<void>? _cancel;
 
+  /// True when this build is served FROM a WLAN Pi (Pi-hosted web): the browser
+  /// cannot sweep the LAN, so the Pi's live neighbor table (`ip -j neigh`) is
+  /// READ once via `/toolboxapi/neigh` — a one-shot read, no active probe. Only
+  /// when no test service is injected, on web, with a Pi backend present —
+  /// otherwise the native sweep path is byte-for-byte unchanged.
+  late final bool _piBacked;
+
+  /// True once a Pi neighbor-table read has completed, so the results card can
+  /// distinguish "not read yet" from "read, table was empty".
+  bool _piRead = false;
+
   @override
   void initState() {
     super.initState();
-    if (NetworkSupport.arpNdpSupported) {
+    _piBacked = kIsWeb && PiBackend.available && widget.service == null;
+    // On the Pi path the native sweep/interface services and the platform
+    // capability probe are never constructed — the read runs server-side on the
+    // Pi through PiBackendClient.
+    if (!_piBacked && NetworkSupport.arpNdpSupported) {
       _service = widget.service ?? ArpNdpService();
       _interfaceService = widget.interfaceService ?? InterfaceInfoService();
     }
     _capability =
         widget.capabilityOverride ??
-        (NetworkSupport.arpNdpSupported
+        (!_piBacked && NetworkSupport.arpNdpSupported
             ? ArpNdpService.capabilityFor()
             : ArpCapability.unavailable);
   }
@@ -164,6 +182,42 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
     setState(() => _running = false);
   }
 
+  /// Pi-hosted one-shot read: the Pi's live neighbor table is READ once and the
+  /// returned neighbors render through the SAME [Neighbor] rows the native sweep
+  /// uses. No active probe, no subnet sweep, so RTT is null on every row (a
+  /// table read timed nothing — GL-005). Never throws to the UI.
+  Future<void> _readPi() async {
+    if (_running) return;
+    setState(() {
+      _error = null;
+      _running = true;
+      _neighbors.clear();
+    });
+    try {
+      final List<Neighbor> found = await PiBackendClient().neighbors();
+      if (!mounted) return;
+      setState(() {
+        _running = false;
+        _piRead = true;
+        _neighbors
+          ..clear()
+          ..addAll(found);
+      });
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        'Neighbor table read. Found ${found.length} '
+        '${found.length == 1 ? 'entry' : 'entries'}.',
+        TextDirection.ltr,
+      );
+    } on PiBackendException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _running = false;
+        _error = e.message;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -217,6 +271,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
             NetworkSupport.unavailableReason ?? NetworkUnavailableReason.web,
       );
     }
+    if (_piBacked) return _piBody();
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool isDesktop = constraints.maxWidth >= 720;
@@ -269,6 +324,137 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
       // §8.16.1 — per-tool help footer at the end of the scan body.
       const ToolHelpFooter(toolId: 'arp-ndp'),
     ];
+  }
+
+  /// Pi-hosted body: a read control + the neighbor rows (reusing [_neighborRow])
+  /// with table-read wording, plus an honest caption attributing the table to
+  /// the Pi. No capability/sweep states — the read runs server-side on the Pi.
+  Widget _piBody() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isDesktop = constraints.maxWidth >= 720;
+        final double edge = isDesktop
+            ? AppSpacing.screenEdgeDesktop
+            : AppSpacing.screenEdgeMobile;
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                edge,
+                AppSpacing.sm,
+                edge,
+                edge + AppSpacing.sm,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  ConceptGraphicBand(toolId: 'arp-ndp', isDesktop: isDesktop),
+                  if (ToolAssets.hasGraphic('arp-ndp'))
+                    const SizedBox(height: AppSpacing.md),
+                  _piControlCard(context),
+                  if (_error != null) ...<Widget>[
+                    const SizedBox(height: AppSpacing.sm),
+                    _MessageCard(
+                      icon: Icons.error_outline,
+                      title: 'Cannot read the neighbor table',
+                      body: _error!,
+                    ),
+                  ],
+                  if (_piRead || _neighbors.isNotEmpty) ...<Widget>[
+                    const SizedBox(height: AppSpacing.sm),
+                    _piResultsCard(context),
+                  ],
+                  const ToolHelpFooter(toolId: 'arp-ndp'),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _piControlCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'Reads the neighbor table (ARP/NDP) of the WLAN Pi hosting this page '
+            '— a one-shot read of what the Pi already knows, not an active sweep '
+            'from this browser. Each entry carries its real MAC where the Pi has '
+            'one; a table read times nothing, so no round-trip is shown.',
+            style: text.labelMedium?.copyWith(color: colors.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          FilledButton(
+            onPressed: _running ? null : _readPi,
+            child: _running
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Read neighbor table'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _piResultsCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+
+    if (_piRead && _neighbors.isEmpty) {
+      return _MessageCard(
+        icon: Icons.search_off,
+        title: 'Neighbor table is empty',
+        body:
+            'The WLAN Pi has no current ARP/NDP entries. Entries appear as the '
+            'Pi exchanges traffic with hosts on its network; nothing has been '
+            'learned yet.',
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.borderStrong, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            '${_neighbors.length} '
+            '${_neighbors.length == 1 ? 'neighbor' : 'neighbors'} · via the '
+            'WLAN Pi',
+            style: text.labelMedium?.copyWith(
+              color: colors.textSecondary,
+              letterSpacing: 0.4,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          ..._neighbors.map(
+            (Neighbor n) => _neighborRow(context, n, text, mono),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _capabilityCard(BuildContext context) {

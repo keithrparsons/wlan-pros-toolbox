@@ -10,12 +10,15 @@
 //  - disabled → "Look up" disabled until a query is entered.
 //  - web      → NetworkUnavailableView (native-only; CORS unverified).
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/bgp_asn_service.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/pi_backend.dart';
+import '../../../services/network/pi_backend_client.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -44,10 +47,26 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
   bool _canRun = false;
   BgpAsnResult? _result;
 
+  /// True when this build is served FROM a WLAN Pi (Pi-hosted web): the browser
+  /// cannot reach RIPEstat directly, so the lookup runs ON the Pi via
+  /// `/toolboxapi/bgpasn`. Only when no test service is injected, on web, with a
+  /// Pi backend present — otherwise the native path is byte-for-byte unchanged.
+  late final bool _piBacked;
+
+  /// A transport-level failure reaching the Pi (a thrown [PiBackendException]),
+  /// shown inline on the query card. Pi-reported application errors arrive as a
+  /// [BgpAsnResult] failure and render through the shared results section.
+  String? _piError;
+
   @override
   void initState() {
     super.initState();
-    _service = widget.service ?? BgpAsnService();
+    _piBacked = kIsWeb && PiBackend.available && widget.service == null;
+    // On the Pi path the native RIPEstat service is never constructed (the
+    // lookup runs server-side on the Pi through PiBackendClient).
+    if (!_piBacked) {
+      _service = widget.service ?? BgpAsnService();
+    }
     _queryCtrl.addListener(_recomputeCanRun);
   }
 
@@ -89,6 +108,50 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
       announcement,
       TextDirection.ltr,
     );
+  }
+
+  /// Pi-hosted lookup: runs ON the Pi and renders through the SAME
+  /// [BgpAsnResult] the native path builds, so the results section is shared. A
+  /// Pi-reported application error comes back as a failure result; only a
+  /// transport-level failure reaching the Pi throws, and that surfaces inline on
+  /// the query card. Never throws to the UI.
+  Future<void> _runPi() async {
+    if (_loading || !_canRun) return;
+    _queryFocus.unfocus();
+    setState(() {
+      _loading = true;
+      _piError = null;
+    });
+    try {
+      final BgpAsnResult result =
+          await PiBackendClient().bgpAsn(query: _queryCtrl.text.trim());
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _result = result;
+      });
+
+      final String announcement;
+      if (result.isError) {
+        announcement = 'BGP lookup failed';
+      } else if (result.isEmpty) {
+        announcement = 'No routing data found';
+      } else {
+        announcement = 'Routing data retrieved';
+      }
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        announcement,
+        TextDirection.ltr,
+      );
+    } on PiBackendException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _result = null;
+        _piError = e.message;
+      });
+    }
   }
 
   @override
@@ -162,6 +225,7 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
             NetworkSupport.unavailableReason ?? NetworkUnavailableReason.web,
       );
     }
+    if (_piBacked) return _piBody();
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool isDesktop = constraints.maxWidth >= 720;
@@ -194,6 +258,111 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
           ),
         );
       },
+    );
+  }
+
+  /// Pi-hosted body: a query form wired to [_runPi] plus the SHARED results
+  /// section (fed the same [BgpAsnResult]), with an honest caption attributing
+  /// the lookup to the Pi.
+  Widget _piBody() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isDesktop = constraints.maxWidth >= 720;
+        final double edge = isDesktop
+            ? AppSpacing.screenEdgeDesktop
+            : AppSpacing.screenEdgeMobile;
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                edge,
+                AppSpacing.sm,
+                edge,
+                edge + AppSpacing.sm,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ConceptGraphicBand(toolId: 'bgp-asn', isDesktop: isDesktop),
+                  if (ToolAssets.hasGraphic('bgp-asn'))
+                    const SizedBox(height: AppSpacing.md),
+                  _piQueryCard(context),
+                  const SizedBox(height: AppSpacing.sm),
+                  _resultsSection(context),
+                  ToolHelpFooter(toolId: 'bgp-asn'),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _piQueryCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LabeledField(
+            label: 'IP address or ASN',
+            field: TextField(
+              controller: _queryCtrl,
+              focusNode: _queryFocus,
+              enabled: !_loading,
+              autocorrect: false,
+              enableSuggestions: false,
+              keyboardType: TextInputType.url,
+              textInputAction: TextInputAction.search,
+              onSubmitted: (_) => _loading ? null : _runPi(),
+              cursorColor: colors.textAccent,
+              decoration: const InputDecoration(
+                hintText: '8.8.8.8  or  AS15169',
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Looked up from the WLAN Pi hosting this page, not this browser. '
+            'Data from the RIPEstat API — no account or key required.',
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
+          ),
+          if (_piError != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              _piError!,
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.md),
+          FilledButton(
+            onPressed: (_loading || !_canRun) ? null : _runPi,
+            child: _loading
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: Semantics(
+                      label: 'Looking up routing data…',
+                      liveRegion: true,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: colors.onPrimary,
+                      ),
+                    ),
+                  )
+                : const Text('Look up'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -262,7 +431,7 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
       return LookupErrorCard(
         errorKind: r.errorKind,
         message: r.errorMessage!,
-        onRetry: _run,
+        onRetry: _piBacked ? _runPi : _run,
       );
     }
     if (r.isEmpty) {

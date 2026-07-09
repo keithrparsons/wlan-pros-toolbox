@@ -16,13 +16,17 @@
 //  - disabled  → "Send" disabled until a host is entered.
 //  - web       → NetworkUnavailableView (no sockets in a browser).
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/network_target.dart';
 import '../../../services/network/packet_sender_service.dart';
+import '../../../services/network/pi_backend.dart';
+import '../../../services/network/pi_backend_client.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
@@ -58,10 +62,23 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
   String? _inputError;
   PacketResult? _result;
 
+  /// True when this build is served FROM a WLAN Pi (Pi-hosted web): the browser
+  /// cannot open a TCP/UDP socket, so the payload is sent ON the Pi via POST
+  /// `/toolboxapi/packet`. Gated on [PiBackend.canServe] (not just `available`),
+  /// so the body stays dormant until the tool id is activated in
+  /// [PiBackend.servedToolIds] — native and Netlify-web behavior are unchanged.
+  late final bool _piBacked;
+
   @override
   void initState() {
     super.initState();
-    _service = widget.service ?? PacketSenderService();
+    _piBacked =
+        kIsWeb && PiBackend.canServe('packet-sender') && widget.service == null;
+    // On the Pi path the native socket service is never constructed (the browser
+    // has no Socket / RawDatagramSocket); the send runs server-side via the client.
+    if (!_piBacked) {
+      _service = widget.service ?? PacketSenderService();
+    }
     _hostCtrl.addListener(_recomputeCanRun);
     _portCtrl.addListener(_recomputeCanRun);
   }
@@ -109,12 +126,14 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
       _result = null;
     });
 
-    final PacketResult result = await _service.send(
-      transport: _transport,
-      host: _hostCtrl.text,
-      port: port,
-      payload: payload,
-    );
+    final PacketResult result = _piBacked
+        ? await _sendPi(port, payload)
+        : await _service.send(
+            transport: _transport,
+            host: _hostCtrl.text,
+            port: port,
+            payload: payload,
+          );
     if (!mounted) return;
     setState(() {
       _sending = false;
@@ -135,6 +154,42 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
       announcement,
       TextDirection.ltr,
     );
+  }
+
+  /// Pi-hosted send: the payload is sent FROM the Pi hosting this page (POST
+  /// `/toolboxapi/packet`), returning the SAME [PacketResult] the native socket
+  /// path builds so the reply card renders identically (bytes sent/received,
+  /// text/hex view, honest no-reply outcome). Port and payload are already
+  /// validated by the caller; a pasted URL / `host:port` is reduced to a bare
+  /// host with [NetworkTarget.hostFromUserInput]. A transport failure surfaces
+  /// the [PiBackendException] message through the existing error card. Never throws.
+  Future<PacketResult> _sendPi(int port, List<int> payload) async {
+    final String host = NetworkTarget.hostFromUserInput(_hostCtrl.text);
+    if (host.isEmpty) {
+      return PacketResult.failure(
+        transport: _transport,
+        host: host,
+        port: port,
+        kind: PacketErrorKind.invalidInput,
+        message: 'Enter a host or IP address.',
+      );
+    }
+    try {
+      return await PiBackendClient().packetSend(
+        transport: _transport,
+        host: host,
+        port: port,
+        payload: payload,
+      );
+    } on PiBackendException catch (e) {
+      return PacketResult.failure(
+        transport: _transport,
+        host: host,
+        port: port,
+        kind: PacketErrorKind.other,
+        message: e.message,
+      );
+    }
   }
 
   @override
@@ -168,7 +223,12 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
     if (_sending || r == null) return null;
 
     final String transport = r.transport == PacketTransport.tcp ? 'TCP' : 'UDP';
-    final StringBuffer buf = StringBuffer()..writeln('Packet Sender');
+    final StringBuffer buf = StringBuffer()
+      ..writeln(
+        _piBacked
+            ? 'Packet Sender — sent from the WLAN Pi hosting this page'
+            : 'Packet Sender',
+      );
 
     if (r.isError) {
       buf
@@ -250,6 +310,16 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
                   if (_result != null) ...[
                     const SizedBox(height: AppSpacing.sm),
                     _resultSection(context, _result!),
+                    if (_piBacked) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        'Sent from the WLAN Pi hosting this page, not from this '
+                        'browser.',
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: context.colors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ],
                   ToolHelpFooter(toolId: 'packet-sender'),
                 ],
@@ -345,6 +415,14 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
             r'Plain text, or hex escapes: \xNN for a byte, plus \r \n \t \0 \\.',
             style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
+          if (_piBacked) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'The payload is sent over TCP/UDP from the WLAN Pi hosting this '
+              'page, not from this browser — the target is reached from the Pi.',
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
+            ),
+          ],
           if (_inputError != null) ...[
             const SizedBox(height: AppSpacing.sm),
             // WCAG 4.1.3 — the synchronous validation failures (bad port, bad

@@ -24,6 +24,7 @@ import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/network_target.dart';
 import '../../../services/network/pi_backend.dart';
 import '../../../services/network/pi_backend_client.dart';
 import '../../../services/network/traceroute_service.dart';
@@ -104,9 +105,13 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
   }
 
   void _start() {
-    final String host = _hostCtrl.text.trim();
+    // Pull a bare host out of whatever was typed — a pasted URL
+    // (`http://example.com/path`) or a `host:port` becomes just the host, so
+    // the value that reaches NetworkTarget's syntax check (and the binary) is
+    // clean. Empty after stripping → an inline hint, never a spawn.
+    final String host = NetworkTarget.hostFromUserInput(_hostCtrl.text);
     if (host.isEmpty) {
-      setState(() => _error = 'Enter a host or IP to trace.');
+      setState(() => _error = 'Enter a host or IP, e.g. example.com or 1.1.1.1');
       return;
     }
 
@@ -173,9 +178,12 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
   /// shared. A hop that did not answer carries a null target and renders as "no
   /// response" — never zero-filled (GL-005). Never throws to the UI.
   Future<void> _startPi() async {
-    final String host = _hostCtrl.text.trim();
+    // Same host-extraction as the native path: a pasted URL or `host:port`
+    // becomes just the host, so the Pi backend receives a clean target instead
+    // of choking on it and returning a raw PiBackendException.
+    final String host = NetworkTarget.hostFromUserInput(_hostCtrl.text);
     if (host.isEmpty) {
-      setState(() => _error = 'Enter a host or IP to trace.');
+      setState(() => _error = 'Enter a host or IP, e.g. example.com or 1.1.1.1');
       return;
     }
     _hostFocus.unfocus();

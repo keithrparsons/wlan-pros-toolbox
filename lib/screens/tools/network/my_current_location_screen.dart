@@ -28,6 +28,7 @@
 //  - empty / error  → not separately reachable; the sealed states above cover
 //                     every outcome of a single read.
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -295,6 +296,13 @@ class _MyCurrentLocationScreenState extends State<MyCurrentLocationScreen> {
       return _PermissionCard(onGrant: _requestThenRead, locating: _locating);
     }
     if (_permission == LocationPermissionState.blocked) {
+      // On the web / Pi-hosted build the fix comes from the browser's
+      // Geolocation API, not the OS — so an OS "Open Settings" deep-link is
+      // meaningless. Point the user at the browser's own site-permission
+      // control instead, and be honest that a browser build has no GPS.
+      if (kIsWeb) {
+        return _WebBlockedCard(locating: _locating, onRetry: _read);
+      }
       return _BlockedCard(
         serviceDisabled: _serviceDisabled,
         onOpenSettings: _openSettings,
@@ -653,6 +661,51 @@ class _BlockedCard extends StatelessWidget {
             onPressed: onOpenSettings,
             icon: const Icon(Icons.settings_outlined, size: 18),
             label: const Text('Open Settings'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Blocked-state card for the web / Pi-hosted build. The fix comes from the
+/// browser's Geolocation API, so an OS Settings deep-link does not apply;
+/// instead this points the user at the browser's own site-permission control
+/// and states honestly that a browser build has no direct GPS (GL-005). Kept
+/// separate so the native [_BlockedCard] stays byte-for-byte unchanged.
+class _WebBlockedCard extends StatelessWidget {
+  const _WebBlockedCard({required this.locating, required this.onRetry});
+  final bool locating;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return _CardShell(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Text(
+            'Location blocked by your browser',
+            style: text.titleMedium?.copyWith(
+              color: colors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Your browser is blocking location for this page. Re-enable it from '
+            'the site-permission control in the address bar (the lock or '
+            'site-info icon), then try again. A browser build reads only the '
+            'location your browser shares, not a direct GPS fix.',
+            style: text.bodyMedium?.copyWith(color: colors.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          OutlinedButton.icon(
+            onPressed: locating ? null : onRetry,
+            icon: const Icon(Icons.refresh, size: 18),
+            label: Text(locating ? 'Trying…' : 'Try again'),
           ),
         ],
       ),

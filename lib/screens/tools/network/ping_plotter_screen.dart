@@ -33,11 +33,15 @@
 import 'dart:async';
 
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/network_target.dart';
+import '../../../services/network/pi_backend.dart';
+import '../../../services/network/pi_backend_client.dart';
 import '../../../services/network/ping_plot_controller.dart';
 import '../../../services/network/ping_service.dart';
 import '../../../theme/app_theme.dart';
@@ -78,6 +82,19 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
   PingPlotState _state = PingPlotState.empty;
   StreamSubscription<PingPlotState>? _sub;
 
+  /// True when this build is served FROM a WLAN Pi (Pi-hosted web): the browser
+  /// cannot open the TCP-handshake ping socket, so a BOUNDED ICMP ping series
+  /// runs ON the Pi via `/toolboxapi/pingseries` and is drawn as one static plot
+  /// (no live streaming). Gated on [PiBackend.canServe] (not just `available`),
+  /// so the body stays dormant until the tool id is activated in
+  /// [PiBackend.servedToolIds] — native and Netlify-web behavior are unchanged.
+  late final bool _piBacked;
+  bool _piLoading = false;
+
+  /// Sample count for the Pi series (the Pi clamps 1..30).
+  int _piCount = 20;
+  static const List<int> _piCountPresets = <int>[10, 20, 30];
+
   // Debounced a11y: hold the last announced time so the live region updates at
   // most ~1/sec regardless of sample cadence (brief §31, the IPv6 lesson).
   DateTime _lastAnnounced = DateTime.fromMillisecondsSinceEpoch(0);
@@ -86,6 +103,10 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
   @override
   void initState() {
     super.initState();
+    _piBacked =
+        kIsWeb && PiBackend.canServe('ping-plotter') && widget.controller == null;
+    // The controller is constructed on both paths (it opens no socket until
+    // start(), which the Pi path never calls) so dispose() stays uniform.
     _controller = widget.controller ?? PingPlotController();
     _sub = _controller.states.listen(
       (PingPlotState s) {
@@ -149,6 +170,48 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
     );
   }
 
+  /// Pi-hosted one-shot series: a bounded ICMP ping series runs ON the Pi and
+  /// the WHOLE series comes back folded into a [PingPlotState], rendered as a
+  /// static plot (no streaming). Feeds the SAME chart renderer the native path
+  /// uses. A transport failure surfaces the [PiBackendException] message inline.
+  /// Never throws to the UI.
+  Future<void> _runPi() async {
+    if (_piLoading) return;
+    final String host = NetworkTarget.hostFromUserInput(_hostCtrl.text);
+    if (host.isEmpty) {
+      setState(() => _error = 'Enter a host or IP to plot.');
+      return;
+    }
+    _hostFocus.unfocus();
+    setState(() {
+      _error = null;
+      _piLoading = true;
+      _state = PingPlotState.empty;
+    });
+    try {
+      final PingPlotState result =
+          await PiBackendClient().pingSeries(host: host, count: _piCount);
+      if (!mounted) return;
+      setState(() {
+        _piLoading = false;
+        _state = result;
+      });
+      final String avg = result.avgMs == null
+          ? 'no replies'
+          : 'average ${result.avgMs!.toStringAsFixed(1)} milliseconds';
+      _announce(
+        'Ping series complete, ${result.totalReceived} of '
+        '${result.totalSent} replies, $avg',
+      );
+    } on PiBackendException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _piLoading = false;
+        _error = e.message;
+      });
+    }
+  }
+
   void _maybeAnnounce(PingPlotState s) {
     final DateTime now = DateTime.now();
     if (now.difference(_lastAnnounced) < _announceEvery) return;
@@ -198,6 +261,8 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
       );
     }
 
+    if (_piBacked) return _piBody();
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool isDesktop = constraints.maxWidth >= 720;
@@ -239,6 +304,207 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
           ),
         );
       },
+    );
+  }
+
+  /// Pi-hosted body: a host + sample-count form, then the SHARED chart renderer
+  /// fed the bounded series, plus a Pi-honest readout. No TCP-port / interval
+  /// controls (the Pi run is a real ICMP echo series, not a TCP-handshake probe).
+  Widget _piBody() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isDesktop = constraints.maxWidth >= 720;
+        final double edge = isDesktop
+            ? AppSpacing.screenEdgeDesktop
+            : AppSpacing.screenEdgeMobile;
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: AppSpacing.contentMaxWidth,
+            ),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                edge,
+                AppSpacing.sm,
+                edge,
+                edge + AppSpacing.sm,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ConceptGraphicBand(
+                    toolId: 'ping-plotter',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('ping-plotter'))
+                    const SizedBox(height: AppSpacing.md),
+                  _piFormCard(context),
+                  if (_state.totalSent > 0) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    _piReadoutCard(context),
+                    const SizedBox(height: AppSpacing.sm),
+                    _chartCard(context),
+                  ],
+                  ToolHelpFooter(toolId: 'ping-plotter'),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _piFormCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LabeledField(
+            label: 'Host or IP',
+            field: TextField(
+              controller: _hostCtrl,
+              focusNode: _hostFocus,
+              enabled: !_piLoading,
+              autocorrect: false,
+              enableSuggestions: false,
+              keyboardType: TextInputType.url,
+              textInputAction: TextInputAction.go,
+              onSubmitted: (_) => _piLoading ? null : _runPi(),
+              cursorColor: colors.textAccent,
+              decoration: const InputDecoration(hintText: '1.1.1.1'),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _chipGroupLabel(context, 'Samples'),
+          const SizedBox(height: AppSpacing.xs),
+          Wrap(
+            spacing: AppSpacing.xs,
+            runSpacing: AppSpacing.xs,
+            children: _piCountPresets
+                .map((int c) => _choice(
+                      context,
+                      label: '$c',
+                      selected: _piCount == c,
+                      onSelected: () => setState(() => _piCount = c),
+                    ))
+                .toList(),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            child: Text(
+              'A bounded ICMP ping series run ON the WLAN Pi hosting this page — '
+              'it sends the chosen number of echoes to the target and returns '
+              'the whole series as one static plot, measured from the Pi, not '
+              'this browser.',
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
+            ),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              _error!,
+              style: text.labelMedium?.copyWith(color: colors.statusDanger),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.md),
+          FilledButton(
+            onPressed: _piLoading ? null : _runPi,
+            child: _piLoading
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: Semantics(
+                      label: 'Running the ping series…',
+                      liveRegion: true,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: colors.onPrimary,
+                      ),
+                    ),
+                  )
+                : const Text('Run series'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The Pi series readout — the same [_metric] cells the native readout uses,
+  /// worded honestly for a completed ICMP echo series measured on the Pi.
+  Widget _piReadoutCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+
+    final String lossPct =
+        (_state.totalLossFraction * 100).toStringAsFixed(0);
+    String ms(double? v) => v == null ? '—' : v.toStringAsFixed(1);
+    final bool noReplies =
+        _state.totalSent > 0 && _state.totalReceived == 0;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Summary · via the WLAN Pi',
+                style: text.labelMedium?.copyWith(
+                  color: colors.textSecondary,
+                  letterSpacing: 0.4,
+                ),
+              ),
+              Text(
+                '${_state.totalReceived} / ${_state.totalSent} · $lossPct% loss',
+                style: text.labelMedium?.copyWith(color: colors.textTertiary),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Semantics(
+            label: 'Ping series from the WLAN Pi, ${_state.totalReceived} of '
+                '${_state.totalSent} replies, $lossPct percent loss, average '
+                '${ms(_state.avgMs)} milliseconds',
+            child: Wrap(
+              spacing: AppSpacing.lg,
+              runSpacing: AppSpacing.sm,
+              children: [
+                _metric(context, mono, 'last', ms(_state.lastMs)),
+                _metric(context, mono, 'min', ms(_state.minMs)),
+                _metric(context, mono, 'avg', ms(_state.avgMs)),
+                _metric(context, mono, 'max', ms(_state.maxMs)),
+                _metric(context, mono, 'jitter', ms(_state.jitterMs)),
+              ],
+            ),
+          ),
+          if (noReplies) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'No replies. The host did not answer the ICMP echo from the WLAN '
+              'Pi — it may be down, or ICMP may be filtered on the path.',
+              style: text.bodyLarge?.copyWith(color: colors.textTertiary),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -600,6 +866,7 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
   /// probe. Copies a labeled summary plus a per-sample TSV in send order. A lost
   /// sample carries its honest reason word (GL-005) and a blank time, never a 0.
   String? _buildCopyText() {
+    if (_piBacked) return _buildPiCopyText();
     if (_state.totalSent == 0) return null;
 
     final String host = _hostCtrl.text.trim();
@@ -628,6 +895,44 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
       final String result = s.lost ? (s.errorLabel ?? 'lost') : 'reply';
       final String rtt = s.lost ? '' : ms(s.rttMs);
       buf.writeln(<String>['${s.sequence}', t, result, rtt].join(tab));
+    }
+
+    return buf.toString().trimRight();
+  }
+
+  /// §8.16 copy payload for the Pi ICMP series — a labeled summary plus a
+  /// per-sample TSV, honest about the Pi origin. The Pi gives no per-sample
+  /// timestamp (the X axis is the 1-based sequence), so there is no "t (s)"
+  /// column. A lost sample carries its honest reason word and a blank RTT, never
+  /// a 0 (GL-005). Null until a series has been fetched.
+  String? _buildPiCopyText() {
+    if (_state.totalSent == 0) return null;
+
+    final String host = NetworkTarget.hostFromUserInput(_hostCtrl.text);
+    final String lossPct =
+        (_state.totalLossFraction * 100).toStringAsFixed(0);
+    String ms(double? v) => v == null ? '—' : v.toStringAsFixed(1);
+
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()
+      ..writeln(
+        'Ping series — ICMP echo, measured on the WLAN Pi hosting this page',
+      )
+      ..writeln('Target: ${host.isEmpty ? '(unknown)' : host}  ·  '
+          '${_state.totalSent} samples')
+      ..writeln(
+        'Summary: ${_state.totalReceived}/${_state.totalSent} replies, '
+        '$lossPct% loss · min ${ms(_state.minMs)} ms / '
+        'avg ${ms(_state.avgMs)} ms / max ${ms(_state.maxMs)} ms / '
+        'jitter ${ms(_state.jitterMs)} ms',
+      )
+      ..writeln()
+      ..writeln(<String>['Seq', 'Result', 'RTT (ms)'].join(tab));
+
+    for (final PingSample s in _state.samples) {
+      final String result = s.lost ? (s.errorLabel ?? 'lost') : 'reply';
+      final String rtt = s.lost ? '' : ms(s.rttMs);
+      buf.writeln(<String>['${s.sequence}', result, rtt].join(tab));
     }
 
     return buf.toString().trimRight();

@@ -14,11 +14,16 @@
 //   * Location-gate and Wi-Fi-off empty states.
 //   * sort control reorders the list.
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/ap_scan_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/ap_scan_service.dart';
+import 'package:wlan_pros_toolbox/services/network/pi_backend_client.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
 /// Builds a native-shaped scan payload (the map the Kotlin channel returns).
@@ -254,6 +259,130 @@ void main() {
 
       expect(find.text('Retry'), findsOneWidget);
       expect(find.textContaining('scan failed'), findsOneWidget);
+    });
+  });
+
+  group('ApScanScreen — Pi-hosted scan-radio picker', () {
+    http.Response jsonResp(Object body, {int status = 200}) =>
+        http.Response(jsonEncode(body), status,
+            headers: <String, String>{'content-type': 'application/json'});
+
+    // One Pi BSS (the `/toolboxapi/scan` wire shape).
+    Map<String, dynamic> nets() => <String, dynamic>{
+          'nets': <dynamic>[
+            <String, dynamic>{
+              'ssid': 'KeithNet',
+              'bssid': 'a4:83:e7:00:11:22',
+              'signal': -42,
+              'freq': 5180,
+              'key_mgmt': 'wpa2',
+            },
+          ],
+        };
+
+    /// A Pi-backed [ApScanService] whose MockClient serves the interface list
+    /// and the scan, capturing the `interface` query the scan was run with.
+    ApScanService piService({
+      required List<Map<String, dynamic>> interfaces,
+      int interfacesStatus = 200,
+      List<String>? interfaceCalls,
+      List<String?>? scanInterfaceCalls,
+    }) {
+      final MockClient mock = MockClient((http.Request req) async {
+        if (req.url.path == '/toolboxapi/scan-interfaces') {
+          interfaceCalls?.add(req.url.path);
+          if (interfacesStatus != 200) {
+            return jsonResp(<String, dynamic>{'error': 'boom'},
+                status: interfacesStatus);
+          }
+          return jsonResp(<String, dynamic>{'interfaces': interfaces});
+        }
+        if (req.url.path == '/toolboxapi/scan') {
+          scanInterfaceCalls?.add(req.url.queryParameters['interface']);
+          return jsonResp(nets());
+        }
+        return jsonResp(<String, dynamic>{}, status: 404);
+      });
+      return ApScanService(
+        piBackedOverride: true,
+        piClient:
+            PiBackendClient(httpClient: mock, base: Uri.parse('http://pi.local/')),
+      );
+    }
+
+    testWidgets('two radios render the picker and default to wlan0',
+        (tester) async {
+      await tester.pumpWidget(host(ApScanScreen(
+        service: piService(interfaces: <Map<String, dynamic>>[
+          <String, dynamic>{'name': 'wlan0', 'driver': 'mt7921u'},
+          <String, dynamic>{'name': 'wlan1', 'driver': 'iwlwifi'},
+        ]),
+      )));
+      await tester.pumpAndSettle();
+
+      // Picker label + the default (wlan0) selection shown in the closed control.
+      expect(find.text('Scan radio'), findsOneWidget);
+      expect(find.text('wlan0 (mt7921u)'), findsWidgets);
+      // The scan still renders on the Pi path.
+      expect(find.text('KeithNet'), findsOneWidget);
+    });
+
+    testWidgets('choosing wlan1 re-scans on the chosen interface',
+        (tester) async {
+      final List<String?> scanCalls = <String?>[];
+      await tester.pumpWidget(host(ApScanScreen(
+        service: piService(
+          interfaces: <Map<String, dynamic>>[
+            <String, dynamic>{'name': 'wlan0', 'driver': 'mt7921u'},
+            <String, dynamic>{'name': 'wlan1', 'driver': 'iwlwifi'},
+          ],
+          scanInterfaceCalls: scanCalls,
+        ),
+      )));
+      await tester.pumpAndSettle();
+
+      // The seed + fresh initial scans ran on the wlan0 default.
+      expect(scanCalls, everyElement('wlan0'));
+
+      // Open the select (tap its closed-state value) and pick wlan1.
+      await tester.tap(find.text('wlan0 (mt7921u)').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('wlan1 (iwlwifi)').last);
+      await tester.pumpAndSettle();
+
+      // The most recent scan was threaded onto wlan1.
+      expect(scanCalls.last, 'wlan1');
+    });
+
+    testWidgets('a single radio shows no picker (no clutter)', (tester) async {
+      await tester.pumpWidget(host(ApScanScreen(
+        service: piService(interfaces: <Map<String, dynamic>>[
+          <String, dynamic>{'name': 'wlan0', 'driver': 'mt7921u'},
+        ]),
+      )));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Scan radio'), findsNothing);
+      // The scan still runs and renders.
+      expect(find.text('KeithNet'), findsOneWidget);
+    });
+
+    testWidgets('scan-interfaces failure falls back to wlan0 with no picker',
+        (tester) async {
+      final List<String?> scanCalls = <String?>[];
+      await tester.pumpWidget(host(ApScanScreen(
+        service: piService(
+          interfaces: const <Map<String, dynamic>>[],
+          interfacesStatus: 500,
+          scanInterfaceCalls: scanCalls,
+        ),
+      )));
+      await tester.pumpAndSettle();
+
+      // Graceful: no picker, no crash, and the scan defaulted to wlan0.
+      expect(find.text('Scan radio'), findsNothing);
+      expect(find.text('KeithNet'), findsOneWidget);
+      expect(scanCalls, everyElement('wlan0'));
     });
   });
 

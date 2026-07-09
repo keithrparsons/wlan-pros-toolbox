@@ -38,6 +38,7 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart' show rootBundle;
@@ -49,6 +50,8 @@ import '../../../services/network/lan_discovery/lan_discovery_engine.dart';
 import '../../../services/network/lan_discovery/lan_host.dart';
 import '../../../services/network/mac_oui_service.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/pi_backend.dart';
+import '../../../services/network/pi_backend_client.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
@@ -107,12 +110,26 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
   // the scan can still run before it lands (vendor stays null, never faked).
   MacOuiService? _oui;
 
+  /// True when this build is served FROM a WLAN Pi (Pi-hosted web): the browser
+  /// cannot run the socket/mDNS/ARP engine, so the scan runs ON the Pi via
+  /// `/toolboxapi/discovery` (the Pi derives its own /24 and connect-scans it),
+  /// returning the same [DiscoveryResult] the native engine produces — one-shot,
+  /// no phased progress. Gated on [PiBackend.canServe] (not just `available`),
+  /// so the body stays dormant until the tool id is activated in
+  /// [PiBackend.servedToolIds] — native and Netlify-web behavior are unchanged.
+  late final bool _piBacked;
+
   @override
   void initState() {
     super.initState();
+    _piBacked = kIsWeb &&
+        PiBackend.canServe('network-discovery') &&
+        widget.engineFactory == null;
     if (widget.service != null) {
       _oui = widget.service;
-    } else {
+    } else if (!_piBacked) {
+      // The Pi returns any vendor itself, so the local OUI registry is not
+      // loaded on the Pi path.
       _loadOuiRegistry();
     }
   }
@@ -193,6 +210,44 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
     );
   }
 
+  /// Pi-hosted one-shot scan: the discovery runs ON the Pi (it derives its own
+  /// /24 and connect-scans it) and returns the full [DiscoveryResult] at once —
+  /// a spinner, then the final host list, with no phased progress. The result
+  /// feeds the SAME summary + host-list renderers the native scan uses. A
+  /// transport failure surfaces the [PiBackendException] message inline. Never
+  /// throws to the UI.
+  Future<void> _scanPi() async {
+    if (_scanning) return;
+    setState(() {
+      _scanning = true;
+      _ranOnce = true;
+      _result = null;
+      _error = null;
+    });
+    try {
+      final DiscoveryResult r = await PiBackendClient().discovery();
+      if (!mounted) return;
+      setState(() {
+        _scanning = false;
+        _result = r;
+      });
+      // WCAG 4.1.3 — announce the outcome to assistive tech.
+      if (r.error != null) {
+        _announce('Scan could not complete.');
+      } else {
+        final int n = r.hosts.length;
+        _announce('Scan complete. $n host${n == 1 ? '' : 's'} found.');
+      }
+    } on PiBackendException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _scanning = false;
+        _error = e.message;
+      });
+      _announce('Scan failed.');
+    }
+  }
+
   void _stop() {
     // Cancelling the engine stream tears down the underlying isolate / mDNS
     // stream via the engine's own cleanup. A full cooperative-cancel API is W8;
@@ -251,18 +306,23 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
     }
 
     const String tab = '\t';
-    final StringBuffer buf = StringBuffer()
-      ..writeln(
-        <String>[
-          'IP',
-          'Name',
-          'Type',
-          'MAC',
-          'Vendor',
-          'Services',
-          'Open ports',
-        ].join(tab),
+    final StringBuffer buf = StringBuffer();
+    if (_piBacked) {
+      buf.writeln(
+        'Network Discovery — scanned from the WLAN Pi hosting this page',
       );
+    }
+    buf.writeln(
+      <String>[
+        'IP',
+        'Name',
+        'Type',
+        'MAC',
+        'Vendor',
+        'Services',
+        'Open ports',
+      ].join(tab),
+    );
 
     for (final LanHost h in r.hosts) {
       final String name = h.mdnsName ?? h.hostname ?? '';
@@ -292,6 +352,8 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
             NetworkSupport.unavailableReason ?? NetworkUnavailableReason.web,
       );
     }
+
+    if (_piBacked) return _piBody();
 
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
@@ -342,6 +404,232 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
           ),
         );
       },
+    );
+  }
+
+  /// Pi-hosted body: no "network at a glance" card (the browser cannot read
+  /// this device's own SSID / IP / gateway — that would claim the visitor's live
+  /// local network while the scan reports the Pi's), and a one-shot Pi scan
+  /// control instead of the streaming engine. Results feed the SHARED host-list
+  /// renderer through a Pi-honest summary.
+  Widget _piBody() {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final bool isDesktop = constraints.maxWidth >= _desktopBreakpoint;
+        final double edge = isDesktop
+            ? AppSpacing.screenEdgeDesktop
+            : AppSpacing.screenEdgeMobile;
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                edge,
+                AppSpacing.sm,
+                edge,
+                edge + AppSpacing.sm,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  ConceptGraphicBand(
+                    toolId: 'network-discovery',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('network-discovery'))
+                    const SizedBox(height: AppSpacing.md),
+                  _piControlCard(context),
+                  if (_scanning) ...<Widget>[
+                    const SizedBox(height: AppSpacing.sm),
+                    _piProgressCard(context),
+                  ],
+                  if (_error != null) ...<Widget>[
+                    const SizedBox(height: AppSpacing.sm),
+                    _MessageCard(
+                      icon: Icons.error_outline,
+                      title: 'Scan failed',
+                      body: _error!,
+                    ),
+                  ],
+                  ..._piResultSection(context),
+                  ToolHelpFooter(toolId: 'network-discovery'),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _piControlCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'Scan the subnet the WLAN Pi hosting this page is on for live hosts. '
+            'The Pi derives its own /24 and connect-scans it, so the hosts are '
+            'the ones on the Pi\'s network, not this browser\'s.',
+            style: text.bodyMedium?.copyWith(color: colors.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          FilledButton(
+            onPressed: _scanning ? null : _scanPi,
+            child: _scanning
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: Semantics(
+                      label: 'Scanning the Pi network…',
+                      liveRegion: true,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: colors.onPrimary,
+                      ),
+                    ),
+                  )
+                : Text(_ranOnce ? 'Scan again' : 'Scan the Pi network'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// A lightweight indeterminate progress card so the one-shot Pi scan (which can
+  /// take up to ~40 seconds while the Pi probes its /24) never looks frozen.
+  Widget _piProgressCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Semantics(
+        liveRegion: true,
+        label: 'Scanning the WLAN Pi network',
+        child: ExcludeSemantics(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.control),
+                child: LinearProgressIndicator(
+                  minHeight: 6,
+                  backgroundColor: colors.surface2,
+                  valueColor:
+                      AlwaysStoppedAnimation<Color>(colors.textAccent),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                'Scanning the WLAN Pi\'s /24 — connect-probing each address. '
+                'This can take up to about 40 seconds.',
+                style: text.labelSmall?.copyWith(color: colors.textTertiary),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Pi result section: the SHARED [_hostListCard] + [_MessageCard] renderers,
+  /// with a Pi-honest summary in place of the native ARP-availability card.
+  List<Widget> _piResultSection(BuildContext context) {
+    final DiscoveryResult? r = _result;
+    if (r == null || r.error != null) {
+      if (r?.error != null) {
+        return <Widget>[
+          const SizedBox(height: AppSpacing.sm),
+          _MessageCard(
+            icon: Icons.wifi_find_outlined,
+            title: 'Could not scan',
+            body: r!.error!,
+          ),
+        ];
+      }
+      return const <Widget>[];
+    }
+
+    return <Widget>[
+      const SizedBox(height: AppSpacing.sm),
+      _piSummaryCard(context, r),
+      const SizedBox(height: AppSpacing.sm),
+      if (r.hosts.isEmpty)
+        _MessageCard(
+          icon: Icons.search_off_outlined,
+          title: 'No hosts responded',
+          body:
+              'No devices on ${r.subnetLabel} answered the WLAN Pi\'s connect '
+              'probes. They may be firewalled, asleep, or the subnet may be '
+              'empty.',
+        )
+      else
+        _hostListCard(context, r),
+    ];
+  }
+
+  Widget _piSummaryCard(BuildContext context, DiscoveryResult r) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final int n = r.hosts.length;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            '$n host${n == 1 ? '' : 's'} found',
+            style: text.bodyLarge?.copyWith(
+              color: colors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          _summaryRow(context, 'Subnet', r.subnetLabel, mono),
+          if (r.selfIp != null)
+            _summaryRow(context, 'The Pi', r.selfIp!, mono),
+          if (r.gateway != null)
+            _summaryRow(context, 'Gateway', r.gateway!, mono),
+          const SizedBox(height: AppSpacing.xs),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Icon(Icons.info_outline, size: 16, color: colors.textTertiary),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: Text(
+                  'Scanned from the WLAN Pi hosting this page — these are the '
+                  'hosts on the Pi\'s network, not this browser\'s. A MAC and '
+                  'vendor appear only for hosts the Pi already has in its '
+                  'neighbor table.',
+                  style: text.labelSmall?.copyWith(color: colors.textTertiary),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

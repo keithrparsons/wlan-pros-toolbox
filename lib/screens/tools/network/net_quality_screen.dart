@@ -97,6 +97,17 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
   /// internet / DNS hops for the reachability card. Null off the Pi path.
   PiBackendQualityClient? _piClient;
 
+  /// The browser↔Pi Wi-Fi-hop throughput (this device to the Pi over the local
+  /// network), measured same-origin in the browser via the garbage/perfsink
+  /// LibreSpeed-style timing loop. DISTINCT from the Pi's own uplink (Pi →
+  /// internet) which the QualityClient carries; the two rows are never conflated
+  /// (Keith decision + [[project_throughput_methodology]]). Null until the Pi
+  /// run measures them; the error string is set when the local timing failed.
+  double? _deviceToPiDownMbps;
+  double? _deviceToPiUpMbps;
+  bool _deviceToPiRunning = false;
+  String? _deviceToPiError;
+
   bool _running = false;
   String? _error;
 
@@ -157,6 +168,9 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
       _fraction = 0;
       _result = null;
       _sites = <SiteReachability>[];
+      _deviceToPiDownMbps = null;
+      _deviceToPiUpMbps = null;
+      _deviceToPiError = null;
     });
 
     // Reachability runs concurrently with the transport stream. Its result
@@ -179,6 +193,13 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
               setState(() => _sites = <SiteReachability>[]);
             }),
       );
+    } else {
+      // Pi-hosted web: measure the LOCAL Wi-Fi hop (this device ↔ the Pi) with a
+      // same-origin timing loop against the Pi's garbage/perfsink endpoints. This
+      // is the second, distinct throughput number — the browser side of the two
+      // the tool reports. Best-effort: a failure fills the honest error state,
+      // never a fabricated number, and never fails the whole run.
+      unawaited(_measureDeviceToPiHop());
     }
 
     _sub = _client.measure().listen(
@@ -221,6 +242,32 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
         });
       },
     );
+  }
+
+  /// LibreSpeed-style local-hop timing: download then upload against the Pi's
+  /// garbage/perfsink endpoints, sequentially so they do not contend for the
+  /// Wi-Fi link. Best-effort and honest — a failure records the error, never a
+  /// fake number.
+  Future<void> _measureDeviceToPiHop() async {
+    if (!mounted) return;
+    setState(() => _deviceToPiRunning = true);
+    final PiBackendClient client = PiBackendClient();
+    double? down;
+    double? up;
+    String? error;
+    try {
+      down = await client.deviceToPiDownloadMbps();
+      up = await client.deviceToPiUploadMbps();
+    } on Object catch (e) {
+      error = 'The local Wi-Fi-hop test to the Pi could not complete ($e).';
+    }
+    if (!mounted) return;
+    setState(() {
+      _deviceToPiRunning = false;
+      _deviceToPiDownMbps = down;
+      _deviceToPiUpMbps = up;
+      _deviceToPiError = error;
+    });
   }
 
   @override
@@ -306,14 +353,39 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
       );
     }
 
+    // The local device ↔ Pi Wi-Fi-hop throughput — the second, distinct
+    // throughput number, kept clearly labeled in the clipboard too.
+    if (_piBacked &&
+        (_deviceToPiDownMbps != null ||
+            _deviceToPiUpMbps != null ||
+            _deviceToPiError != null)) {
+      buf
+        ..writeln()
+        ..writeln('This device ↔ Pi (Wi-Fi hop)');
+      if (_deviceToPiError != null) {
+        buf.writeln('  ${_deviceToPiError!}');
+      } else {
+        final String d = _deviceToPiDownMbps != null
+            ? '${_deviceToPiDownMbps!.toStringAsFixed(1)} Mbps'
+            : 'Unavailable';
+        final String u = _deviceToPiUpMbps != null
+            ? '${_deviceToPiUpMbps!.toStringAsFixed(1)} Mbps'
+            : 'Unavailable';
+        buf
+          ..writeln('  Download: $d')
+          ..writeln('  Upload: $u');
+      }
+    }
+
     buf
       ..writeln()
       ..writeln(
         _piBacked
             ? 'Measured on the WLAN Pi hosting this page, not from this browser '
-                'and not an Orb or Ookla score. Throughput, jitter, loaded '
-                'responsiveness, and your own Wi-Fi RF are not available via the '
-                'Pi sensor.'
+                'and not an Orb or Ookla score. Two throughput numbers are '
+                'reported: the Pi uplink to the internet, and the local hop '
+                'between this device and the Pi. Your own Wi-Fi RF is not '
+                'visible to the Pi.'
             : "These are this app's own measurements, not an Orb or Ookla "
                 'score. The Responsiveness grade is an indicative figure '
                 'inspired by RFC 9097, not the full standard.',
@@ -422,6 +494,18 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
                   if (_result != null || _sites.isNotEmpty) ...[
                     const SizedBox(height: AppSpacing.sm),
                     _sitesCard(context),
+                  ],
+                  // The browser↔Pi Wi-Fi-hop throughput card — the SECOND, local
+                  // throughput number, kept in its own labeled card so it is
+                  // never read as the Pi's uplink (the Download/Upload rows
+                  // above). Shown once a Pi run has started measuring it.
+                  if (_piBacked &&
+                      (_deviceToPiRunning ||
+                          _deviceToPiDownMbps != null ||
+                          _deviceToPiUpMbps != null ||
+                          _deviceToPiError != null)) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    _deviceToPiCard(context),
                   ],
                   if (_result != null) ...[
                     const SizedBox(height: AppSpacing.sm),
@@ -660,6 +744,16 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
               if (!_piBacked) Expanded(child: _liveIndicator(context)),
             ],
           ),
+          // Pi path: attribute the download/upload rows to the Pi's OWN uplink so
+          // they read as the Pi → internet number, distinct from the local
+          // device ↔ Pi hop shown in its own card below.
+          if (_piBacked) ...<Widget>[
+            const SizedBox(height: AppSpacing.xxs),
+            Text(
+              'Download and upload are the Pi uplink to the internet.',
+              style: text.bodySmall?.copyWith(color: colors.textTertiary),
+            ),
+          ],
           const SizedBox(height: AppSpacing.xs),
           for (final String id in _metricOrder) _metricRow(context, id),
         ],
@@ -1182,6 +1276,108 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     );
   }
 
+  /// The browser↔Pi Wi-Fi-hop throughput card. Two rows — download and upload
+  /// between THIS device and the Pi over the local network — clearly attributed
+  /// so they are never confused with the Pi's own uplink (the Download/Upload
+  /// rows in the Transport card). A value that has not measured yet shows a
+  /// spinner; a failure shows the honest error, never a fabricated number.
+  Widget _deviceToPiCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Semantics(
+            header: true,
+            child: Text(
+              'This device ↔ Pi (Wi-Fi hop)',
+              style: text.labelMedium?.copyWith(
+                color: colors.textSecondary,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            'Throughput between this device and the WLAN Pi over your local '
+            'network, timed in the browser. This is the local hop, separate '
+            'from the Pi uplink to the internet shown above.',
+            style: text.bodySmall?.copyWith(color: colors.textTertiary),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          if (_deviceToPiError != null)
+            Text(
+              _deviceToPiError!,
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
+            )
+          else ...<Widget>[
+            _deviceToPiRow(context, 'Download', _deviceToPiDownMbps),
+            _deviceToPiRow(context, 'Upload', _deviceToPiUpMbps),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _deviceToPiRow(BuildContext context, String label, double? mbps) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final bool pending = mbps == null && _deviceToPiRunning;
+    final String valueLabel =
+        mbps != null ? '${mbps.toStringAsFixed(1)} Mbps' : 'Unavailable';
+    return Semantics(
+      label: '$label, ${pending ? 'measuring' : valueLabel}',
+      container: true,
+      child: ExcludeSemantics(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  label,
+                  style: text.bodyLarge?.copyWith(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              if (pending)
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: colors.textTertiary,
+                  ),
+                )
+              else
+                Text(
+                  valueLabel,
+                  textAlign: TextAlign.right,
+                  style: mono.outputMedium.copyWith(
+                    color: mbps != null
+                        ? colors.textAccent
+                        : colors.textTertiary,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _honestyCaption(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
@@ -1192,9 +1388,10 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     return Text(
       _piBacked
           ? 'Measured on the WLAN Pi hosting this page, not from this browser '
-              'and not an Orb or Ookla score. Throughput, jitter, loaded '
-              'responsiveness, and your own Wi-Fi RF are not available via the '
-              'Pi sensor and are shown as unavailable.'
+              'and not an Orb or Ookla score. Two throughput numbers are '
+              'reported: the Pi uplink to the internet, and the local hop '
+              'between this device and the Pi. Your own Wi-Fi RF is not visible '
+              'to the Pi.'
           : 'These are this app\'s own measurements, not an Orb or Ookla score. '
               'The Responsiveness grade is an indicative figure inspired by '
               'RFC 9097, not the full standard.',

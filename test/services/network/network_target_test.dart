@@ -176,4 +176,56 @@ void main() {
       expect(NetworkTarget.validateReferralTarget('').isValid, isFalse);
     });
   });
+
+  // Regression: a pasted URL used to reach the traceroute binary / Pi backend
+  // verbatim (`http://example.com/path`), where it failed. hostFromUserInput
+  // strips it down to a bare host BEFORE validation.
+  group('hostFromUserInput — extracts a bare host from looser input', () {
+    test('strips a URL scheme, path, query, and fragment', () {
+      expect(NetworkTarget.hostFromUserInput('http://example.com/path'),
+          'example.com');
+      expect(
+          NetworkTarget.hostFromUserInput('https://example.com'), 'example.com');
+      expect(
+          NetworkTarget.hostFromUserInput('https://example.com/a/b?q=1#frag'),
+          'example.com');
+      // Scheme match is case-insensitive; the host case is preserved.
+      expect(
+          NetworkTarget.hostFromUserInput('HTTP://Example.com/'), 'Example.com');
+    });
+
+    test('strips a trailing port and userinfo', () {
+      expect(NetworkTarget.hostFromUserInput('example.com:8080'), 'example.com');
+      expect(NetworkTarget.hostFromUserInput('http://example.com:8080/x'),
+          'example.com');
+      expect(NetworkTarget.hostFromUserInput('1.1.1.1:53'), '1.1.1.1');
+      expect(NetworkTarget.hostFromUserInput('user:pass@example.com/x'),
+          'example.com');
+    });
+
+    test('preserves bare and bracketed IPv6 literals', () {
+      expect(NetworkTarget.hostFromUserInput('::1'), '::1');
+      expect(NetworkTarget.hostFromUserInput('2001:db8::1'), '2001:db8::1');
+      expect(NetworkTarget.hostFromUserInput('fe80::1%eth0'), 'fe80::1%eth0');
+      expect(NetworkTarget.hostFromUserInput('http://[2001:db8::1]:8080/p'),
+          '2001:db8::1');
+      expect(NetworkTarget.hostFromUserInput('[::1]:443'), '::1');
+    });
+
+    test('passes a plain host or IP through, trimmed', () {
+      expect(NetworkTarget.hostFromUserInput('example.com'), 'example.com');
+      expect(NetworkTarget.hostFromUserInput('  8.8.8.8  '), '8.8.8.8');
+    });
+
+    test('returns empty when nothing host-like remains', () {
+      for (final String s in <String>['', '   ', 'http://', 'https:///path']) {
+        expect(NetworkTarget.hostFromUserInput(s), '', reason: s);
+      }
+    });
+
+    test('the extracted host still passes validateHostOrIp', () {
+      final String h = NetworkTarget.hostFromUserInput('http://example.com/x');
+      expect(NetworkTarget.validateHostOrIp(h).isValid, isTrue);
+    });
+  });
 }

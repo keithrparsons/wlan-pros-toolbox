@@ -13,6 +13,7 @@
 // as selectable mono data with a copyable "lat,long" pair and a copyable
 // OpenStreetMap URL the user can open. Interactive map = documented future item.
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
@@ -20,6 +21,9 @@ import 'package:flutter/services.dart';
 import '../../../data/tool_assets.dart';
 import '../../../services/network/ip_geo_service.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/network_target.dart';
+import '../../../services/network/pi_backend.dart';
+import '../../../services/network/pi_backend_client.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
@@ -48,10 +52,24 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
   bool _loading = false;
   IpGeoResult? _result;
 
+  /// True when this build is served FROM a WLAN Pi (Pi-hosted web): the lookup
+  /// runs ON the Pi via `/toolboxapi/ipgeo` (keyless ipinfo / geojs proxy),
+  /// returning the SAME [IpGeoResult] the native path builds, so the existing
+  /// location / coordinates cards render it unchanged. Only when no test service
+  /// is injected, on web, with a Pi backend that serves this tool — otherwise
+  /// the native path is byte-for-byte unchanged.
+  late final bool _piBacked;
+
   @override
   void initState() {
     super.initState();
-    _service = widget.service ?? IpGeoService();
+    _piBacked =
+        kIsWeb && PiBackend.canServe('ip-geo') && widget.service == null;
+    // On the Pi path the native geolocation service is never constructed — the
+    // lookup runs server-side on the Pi through PiBackendClient.
+    if (!_piBacked) {
+      _service = widget.service ?? IpGeoService();
+    }
   }
 
   @override
@@ -65,7 +83,9 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
     if (_loading) return;
     _queryFocus.unfocus();
     setState(() => _loading = true);
-    final IpGeoResult result = await _service.lookup(rawQuery: _queryCtrl.text);
+    final IpGeoResult result = _piBacked
+        ? await _runPi()
+        : await _service.lookup(rawQuery: _queryCtrl.text);
     if (!mounted) return;
     setState(() {
       _loading = false;
@@ -79,6 +99,24 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
           : 'Location retrieved for ${result.locationLine ?? result.ip ?? 'the address'}',
       TextDirection.ltr,
     );
+  }
+
+  /// Pi-hosted lookup: the geolocation query runs ON the WLAN Pi hosting this
+  /// page and comes back as the SAME [IpGeoResult] the native path builds, so
+  /// [_resultsSection] renders the location and coordinate cards identically.
+  /// A pasted URL is reduced to its host with the shared
+  /// [NetworkTarget.hostFromUserInput]; a blank query stays blank, which the Pi
+  /// resolves to its OWN public IP (not this browser's — see the query note). A
+  /// transport failure — including a [PiBackendException] from an unreachable
+  /// Pi — is folded into the model's failure state and surfaced by the existing
+  /// error card. Never throws.
+  Future<IpGeoResult> _runPi() async {
+    final String query = NetworkTarget.hostFromUserInput(_queryCtrl.text);
+    try {
+      return await PiBackendClient().ipGeo(query: query);
+    } on PiBackendException catch (e) {
+      return IpGeoResult.failure(query: query, message: e.message);
+    }
   }
 
   Future<void> _copy(String value, String label) async {
@@ -216,8 +254,10 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
               textInputAction: TextInputAction.search,
               onSubmitted: (_) => _run(),
               cursorColor: colors.textAccent,
-              decoration: const InputDecoration(
-                hintText: 'Leave blank for my public IP',
+              decoration: InputDecoration(
+                hintText: _piBacked
+                    ? "Leave blank for the Pi's public IP"
+                    : 'Leave blank for my public IP',
               ),
             ),
           ),
@@ -228,6 +268,14 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
             '(city-level) and can be wrong for some ISPs.',
             style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
+          if (_piBacked) ...<Widget>[
+            const SizedBox(height: 6),
+            Text(
+              'The lookup runs on the WLAN Pi hosting this page. A blank query '
+              "returns the Pi's public IP, not this browser's.",
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
+            ),
+          ],
           const SizedBox(height: AppSpacing.md),
           FilledButton(
             onPressed: _loading ? null : _run,

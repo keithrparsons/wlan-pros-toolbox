@@ -26,6 +26,7 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
@@ -34,6 +35,8 @@ import '../../../router/app_router.dart';
 import '../../../services/network/dart_ping_icmp_backend.dart';
 import '../../../services/network/icmp_service.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/pi_backend.dart';
+import '../../../services/network/pi_backend_client.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
@@ -66,10 +69,58 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
   StreamSubscription<IcmpTraceEvent>? _sub;
   Completer<void>? _cancel;
 
+  /// True when served FROM a WLAN Pi (Pi-hosted web): the traceroute runs ON the
+  /// Pi via `/toolboxapi/traceroute` and returns the final hop list (one-shot,
+  /// no per-hop animation). Native path unchanged when false.
+  late final bool _piBacked;
+  bool _piLoading = false;
+  List<PiHop>? _piHops;
+  Object? _piError;
+
   @override
   void initState() {
     super.initState();
-    _service = widget.service ?? IcmpService(backend: defaultIcmpBackend());
+    _piBacked = kIsWeb && PiBackend.available && widget.service == null;
+    if (!_piBacked) {
+      _service = widget.service ?? IcmpService(backend: defaultIcmpBackend());
+    }
+  }
+
+  /// Pi-hosted traceroute: runs ON the Pi, renders the final hop list. Never
+  /// throws to the UI.
+  Future<void> _runPi() async {
+    if (_piLoading) return;
+    final String host = _hostCtrl.text.trim();
+    final String? invalid = IcmpService.validateHost(host);
+    if (invalid != null) {
+      setState(() => _piError = invalid);
+      return;
+    }
+    _hostFocus.unfocus();
+    setState(() {
+      _piLoading = true;
+      _piHops = null;
+      _piError = null;
+    });
+    try {
+      final List<PiHop> hops = await PiBackendClient().traceroute(host: host);
+      if (!mounted) return;
+      setState(() {
+        _piLoading = false;
+        _piHops = hops;
+      });
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        'Traceroute complete, ${hops.length} hops',
+        TextDirection.ltr,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _piLoading = false;
+        _piError = e;
+      });
+    }
   }
 
   @override
@@ -172,6 +223,7 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
   /// honestly as "no response" with a "*" time (GL-005); the status header
   /// carries the reached/stopped verdict WORD.
   String? _buildCopyText() {
+    if (_piBacked) return _buildPiCopyText();
     if (_hops.isEmpty) return null;
 
     final String host = _hostCtrl.text.trim();
@@ -207,6 +259,29 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
     return buf.toString().trimRight();
   }
 
+  /// §8.16 copy payload for the Pi traceroute — the final hop list, honest about
+  /// the Pi origin. Null until a run has hops.
+  String? _buildPiCopyText() {
+    final List<PiHop>? hops = _piHops;
+    if (_piLoading || hops == null || hops.isEmpty) return null;
+    final String host = _hostCtrl.text.trim();
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()
+      ..writeln(
+        'Traceroute (mobile) — ICMP TTL-walk on the WLAN Pi hosting this page, '
+        'to ${host.isEmpty ? '(unknown)' : host}',
+      )
+      ..writeln('Status: ${hops.length} hops')
+      ..writeln()
+      ..writeln(<String>['Hop', 'Host / IP', 'Time (ms)'].join(tab));
+    for (final PiHop h in hops) {
+      final String addr = h.reachable ? (h.target ?? '—') : 'no response';
+      final String time = h.ms == null ? '*' : h.ms!.toStringAsFixed(1);
+      buf.writeln(<String>['${h.hopNumber ?? ''}', addr, time].join(tab));
+    }
+    return buf.toString().trimRight();
+  }
+
   Widget _body() {
     if (!NetworkSupport.icmpTracerouteSupported) {
       return NetworkUnavailableView(
@@ -215,6 +290,8 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
             NetworkSupport.unavailableReason ?? NetworkUnavailableReason.web,
       );
     }
+
+    if (_piBacked) return _piBody();
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -344,6 +421,205 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Pi-hosted body: a host form, then the final hop list (one-shot).
+  Widget _piBody() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isDesktop = constraints.maxWidth >= 720;
+        final double edge = isDesktop
+            ? AppSpacing.screenEdgeDesktop
+            : AppSpacing.screenEdgeMobile;
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                edge,
+                AppSpacing.sm,
+                edge,
+                edge + AppSpacing.sm,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  ConceptGraphicBand(
+                    toolId: 'mobile-traceroute',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('mobile-traceroute'))
+                    const SizedBox(height: AppSpacing.md),
+                  _piFormCard(context),
+                  if (_piHops != null) ...<Widget>[
+                    const SizedBox(height: AppSpacing.sm),
+                    _piHopsCard(context, _piHops!),
+                  ],
+                  ToolHelpFooter(toolId: 'mobile-traceroute'),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _piFormCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          LabeledField(
+            label: 'Host or IP',
+            field: TextField(
+              controller: _hostCtrl,
+              focusNode: _hostFocus,
+              enabled: !_piLoading,
+              autocorrect: false,
+              enableSuggestions: false,
+              keyboardType: TextInputType.url,
+              textInputAction: TextInputAction.go,
+              onSubmitted: (_) => _piLoading ? null : _runPi(),
+              cursorColor: colors.textAccent,
+              decoration: const InputDecoration(hintText: 'example.com'),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            child: Text(
+              'Hop-by-hop path traced ON the WLAN Pi hosting this page, not from '
+              'this browser. Shows the final hop list.',
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
+            ),
+          ),
+          if (_piError != null) ...<Widget>[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              _piError is String
+                  ? _piError! as String
+                  : 'The WLAN Pi could not complete the traceroute.',
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.md),
+          FilledButton(
+            onPressed: _piLoading ? null : _runPi,
+            child: _piLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Trace'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _piHopsCard(BuildContext context, List<PiHop> hops) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            '${hops.length} hops · via the WLAN Pi',
+            style: text.labelMedium?.copyWith(
+              color: colors.textSecondary,
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          if (hops.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+              child: Text(
+                'The Pi returned no hops for that target.',
+                style: text.bodyLarge?.copyWith(color: colors.textTertiary),
+              ),
+            )
+          else
+            ...hops.map((PiHop h) => _piHopRow(context, h, text, mono)),
+        ],
+      ),
+    );
+  }
+
+  Widget _piHopRow(
+    BuildContext context,
+    PiHop h,
+    TextTheme text,
+    AppMonoText mono,
+  ) {
+    final AppColorScheme colors = context.colors;
+    final bool answered = h.reachable && h.target != null;
+    final String rttLabel = h.ms == null ? '*' : '${h.ms!.toStringAsFixed(1)} ms';
+    final String addr = answered ? h.target! : 'no response';
+    final String semantic = answered
+        ? 'Hop ${h.hopNumber ?? ''}, ${h.target}, $rttLabel'
+        : 'Hop ${h.hopNumber ?? ''}, no response';
+
+    return Semantics(
+      label: semantic,
+      container: true,
+      child: ExcludeSemantics(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              SizedBox(
+                width: 32,
+                child: Text(
+                  '${h.hopNumber ?? ''}',
+                  style: mono.inlineCode.copyWith(
+                    color: colors.textAccent,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: SelectableText(
+                  addr,
+                  style: answered
+                      ? mono.robotoMono.copyWith(color: colors.textPrimary)
+                      : text.bodyLarge?.copyWith(
+                          color: colors.textTertiary,
+                          fontStyle: FontStyle.italic,
+                        ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Text(
+                rttLabel,
+                style: mono.inlineCode.copyWith(
+                  color: answered ? colors.textSecondary : colors.textTertiary,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

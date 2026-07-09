@@ -39,6 +39,30 @@ class PiBackend {
     // path explicitly — see that method. Keep both names as-is.
     'dns-lookup', // -> /toolboxapi/dns  (route is `dns`, not `dns-lookup`)
     'test-my-connection', // -> /toolboxapi/conntest (front door; same as net-quality)
+    // Phase C reuse (2026-07-09): the ICMP tools map onto the same ping /
+    // traceroute routes as their TCP-Ping / system-Traceroute siblings, but
+    // carry their own catalog ids. Both render a one-shot final result on the
+    // Pi path (no per-echo / per-hop animation).
+    'icmp-ping', // -> /toolboxapi/ping (final aggregate)
+    'mobile-traceroute', // -> /toolboxapi/traceroute (final hop list)
+    // Phase C activation (2026-07-09): the 12 tools whose dormant `_piBacked`
+    // bodies and PiBackendClient methods are wired and tested. Each has a live
+    // proxy route on the Pi backend; enabling here (plus the matching
+    // NetworkSupport.*Supported Pi clause) makes the tool run ON the Pi from the
+    // same web bundle. Off the Pi (Netlify), PiBackend.available is false so
+    // these stay hidden exactly as before.
+    'ssl-inspect', // -> /toolboxapi/ssl
+    'http-headers', // -> /toolboxapi/httphead
+    'whois', // -> /toolboxapi/whois
+    'ip-geo', // -> /toolboxapi/ipgeo
+    'bgp-asn', // -> /toolboxapi/bgpasn
+    'arp-ndp', // -> /toolboxapi/neigh
+    'port-scan', // -> /toolboxapi/portscan
+    'ping-sweep', // -> /toolboxapi/pingsweep
+    'network-discovery', // -> /toolboxapi/discovery
+    'ping-plotter', // -> /toolboxapi/pingseries
+    'wake-on-lan', // -> /toolboxapi/wol (POST)
+    'packet-sender', // -> /toolboxapi/packet (POST)
   };
 
   static bool _available = false;

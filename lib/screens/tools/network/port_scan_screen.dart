@@ -15,11 +15,15 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/network_target.dart';
+import '../../../services/network/pi_backend.dart';
+import '../../../services/network/pi_backend_client.dart';
 import '../../../services/network/port_scan_service.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_color_scheme.dart';
@@ -61,10 +65,23 @@ class _PortScanScreenState extends State<PortScanScreen> {
   StreamSubscription<PortScanProgress>? _sub;
   Completer<void>? _cancel;
 
+  /// True when this build is served FROM a WLAN Pi (Pi-hosted web): the browser
+  /// cannot open TCP sockets, so the scan runs ON the Pi via
+  /// `/toolboxapi/portscan` and returns the whole result at once (one-shot, no
+  /// live per-port progress). Only when no test service is injected, on web,
+  /// with a Pi backend present — otherwise the native path is byte-for-byte
+  /// unchanged.
+  late final bool _piBacked;
+
   @override
   void initState() {
     super.initState();
-    _service = widget.service ?? PortScanService();
+    _piBacked = kIsWeb && PiBackend.available && widget.service == null;
+    // On the Pi path the native socket-scanning service is never constructed
+    // (the scan runs server-side on the Pi through PiBackendClient).
+    if (!_piBacked) {
+      _service = widget.service ?? PortScanService();
+    }
   }
 
   @override
@@ -144,6 +161,62 @@ class _PortScanScreenState extends State<PortScanScreen> {
   void _stop() {
     if (_cancel != null && !_cancel!.isCompleted) _cancel!.complete();
     setState(() => _scanning = false);
+  }
+
+  /// Pi-hosted one-shot scan: the TCP-connect scan runs ON the Pi and the whole
+  /// [PortResult] list comes back at once (no live per-port progress on this
+  /// path). Results render through the SAME results card as native. Never throws
+  /// to the UI — a Pi rejection (e.g. too many ports) surfaces inline.
+  Future<void> _scanPi() async {
+    if (_scanning) return;
+    final String host = NetworkTarget.hostFromUserInput(_hostCtrl.text);
+    if (host.isEmpty) {
+      setState(() => _error = 'Enter a host or IP to scan.');
+      return;
+    }
+    final List<int> ports = _selectedPorts();
+    if (ports.isEmpty) {
+      setState(
+        () => _error = 'No valid ports. Use e.g. "22, 80, 443, 8000-8100".',
+      );
+      return;
+    }
+
+    _hostFocus.unfocus();
+    setState(() {
+      _error = null;
+      _scanning = true;
+      _completed = 0;
+      _total = ports.length;
+      _results.clear();
+    });
+
+    try {
+      final List<PortResult> results = await PiBackendClient()
+          .portScan(host: host, ports: ports.join(','));
+      if (!mounted) return;
+      setState(() {
+        _scanning = false;
+        _completed = _total;
+        _results
+          ..clear()
+          ..addAll(results);
+      });
+      final int openCount =
+          results.where((PortResult r) => r.status == PortStatus.open).length;
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        'Scan complete, $openCount open port${openCount == 1 ? '' : 's'}',
+        TextDirection.ltr,
+      );
+    } on PiBackendException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _scanning = false;
+        _total = 0;
+        _error = e.message;
+      });
+    }
   }
 
   @override
@@ -230,6 +303,8 @@ class _PortScanScreenState extends State<PortScanScreen> {
       );
     }
 
+    if (_piBacked) return _piBody();
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool isDesktop = constraints.maxWidth >= 720;
@@ -268,6 +343,149 @@ class _PortScanScreenState extends State<PortScanScreen> {
           ),
         );
       },
+    );
+  }
+
+  /// Pi-hosted body: a scan form wired to [_scanPi] plus the SHARED results
+  /// card, with an honest caption attributing the scan to the Pi. One-shot: a
+  /// spinner while the Pi scans, then the whole result — no live progress bar.
+  Widget _piBody() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isDesktop = constraints.maxWidth >= 720;
+        final double edge = isDesktop
+            ? AppSpacing.screenEdgeDesktop
+            : AppSpacing.screenEdgeMobile;
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                edge,
+                AppSpacing.sm,
+                edge,
+                edge + AppSpacing.sm,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ConceptGraphicBand(toolId: 'port-scan', isDesktop: isDesktop),
+                  if (ToolAssets.hasGraphic('port-scan'))
+                    const SizedBox(height: AppSpacing.md),
+                  _piFormCard(context),
+                  if (_results.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    _resultsCard(context),
+                  ],
+                  ToolHelpFooter(toolId: 'port-scan'),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _piFormCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LabeledField(
+            label: 'Host or IP',
+            field: TextField(
+              controller: _hostCtrl,
+              focusNode: _hostFocus,
+              enabled: !_scanning,
+              autocorrect: false,
+              enableSuggestions: false,
+              keyboardType: TextInputType.url,
+              textInputAction: TextInputAction.next,
+              cursorColor: colors.textAccent,
+              decoration: const InputDecoration(hintText: '192.168.1.1'),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Ports',
+            style: text.labelMedium?.copyWith(
+              color: colors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Row(
+            children: [
+              _modeChip(context, _Mode.common, 'Common'),
+              const SizedBox(width: AppSpacing.xs),
+              _modeChip(context, _Mode.custom, 'Custom'),
+            ],
+          ),
+          if (_mode == _Mode.common)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.xs),
+              child: Text(
+                '${PortScanService.commonPorts.ports.length} well-known '
+                'ports (SSH, HTTP, HTTPS, SMB, RDP, iperf3, …).',
+                style: text.labelSmall?.copyWith(color: colors.textTertiary),
+              ),
+            )
+          else ...[
+            const SizedBox(height: AppSpacing.xs),
+            Semantics(
+              label: 'Custom ports',
+              textField: true,
+              child: TextField(
+                controller: _portsCtrl,
+                enabled: !_scanning,
+                autocorrect: false,
+                enableSuggestions: false,
+                keyboardType: TextInputType.text,
+                cursorColor: colors.textAccent,
+                decoration: const InputDecoration(
+                  hintText: '22, 80, 443, 8000-8100',
+                ),
+              ),
+            ),
+          ],
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            child: Text(
+              'Scanned from the WLAN Pi hosting this page, not this browser — the '
+              'ports are probed from the Pi. Runs in one shot and shows the whole '
+              'result.',
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
+            ),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              _error!,
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.md),
+          FilledButton(
+            onPressed: _scanning ? null : _scanPi,
+            child: _scanning
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Scan'),
+          ),
+        ],
+      ),
     );
   }
 

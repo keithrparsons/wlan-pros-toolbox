@@ -13,12 +13,16 @@
 // as a successful inspection with a clear validity verdict (icon + text, never
 // color-only, since status colors are §8.4 v1.1-deferred).
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/network_target.dart';
+import '../../../services/network/pi_backend.dart';
+import '../../../services/network/pi_backend_client.dart';
 import '../../../services/network/ssl_inspect_service.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
@@ -51,10 +55,24 @@ class _SslInspectScreenState extends State<SslInspectScreen> {
   bool _canRun = false;
   SslInspectResult? _result;
 
+  /// True when this build is served FROM a WLAN Pi (Pi-hosted web): the TLS
+  /// handshake runs ON the Pi via `/toolboxapi/ssl` and returns the SAME
+  /// [SslInspectResult] the native path builds, so the existing certificate
+  /// cards render it unchanged. Only when no test service is injected, on web,
+  /// with a Pi backend that serves this tool — otherwise the native path is
+  /// byte-for-byte unchanged.
+  late final bool _piBacked;
+
   @override
   void initState() {
     super.initState();
-    _service = widget.service ?? SslInspectService();
+    _piBacked =
+        kIsWeb && PiBackend.canServe('ssl-inspect') && widget.service == null;
+    // On the Pi path the native TLS service is never constructed — the
+    // inspection runs server-side on the Pi through PiBackendClient.
+    if (!_piBacked) {
+      _service = widget.service ?? SslInspectService();
+    }
     _hostCtrl.addListener(_recomputeCanRun);
   }
 
@@ -77,10 +95,9 @@ class _SslInspectScreenState extends State<SslInspectScreen> {
     final int port =
         int.tryParse(_portCtrl.text.trim()) ?? SslInspectService.defaultPort;
     setState(() => _loading = true);
-    final SslInspectResult result = await _service.inspect(
-      rawHost: _hostCtrl.text,
-      port: port,
-    );
+    final SslInspectResult result = _piBacked
+        ? await _runPi(port)
+        : await _service.inspect(rawHost: _hostCtrl.text, port: port);
     if (!mounted) return;
     setState(() {
       _loading = false;
@@ -104,6 +121,22 @@ class _SslInspectScreenState extends State<SslInspectScreen> {
       announcement,
       TextDirection.ltr,
     );
+  }
+
+  /// Pi-hosted inspection: the TLS handshake runs ON the WLAN Pi hosting this
+  /// page and comes back as the SAME [SslInspectResult] the native path builds,
+  /// so [_resultsSection] and the certificate cards render it identically. A bad
+  /// certificate (expired / self-signed) is still a successful inspection; only
+  /// a transport / parse failure — including a [PiBackendException] from an
+  /// unreachable Pi — is folded into the model's failure state and surfaced by
+  /// the existing error card. Never throws to the UI.
+  Future<SslInspectResult> _runPi(int port) async {
+    final String host = NetworkTarget.hostFromUserInput(_hostCtrl.text);
+    try {
+      return await PiBackendClient().sslInspect(host: host, port: port);
+    } on PiBackendException catch (e) {
+      return SslInspectResult.failure(host: host, port: port, message: e.message);
+    }
   }
 
   @override
@@ -280,6 +313,7 @@ class _SslInspectScreenState extends State<SslInspectScreen> {
 
   Widget _queryCard(BuildContext context) {
     final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
         color: colors.surface1,
@@ -322,6 +356,14 @@ class _SslInspectScreenState extends State<SslInspectScreen> {
               ),
             ),
           ),
+          if (_piBacked) ...<Widget>[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'The TLS handshake runs on the WLAN Pi hosting this page, not from '
+              'this browser.',
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
+            ),
+          ],
           const SizedBox(height: AppSpacing.md),
           FilledButton(
             onPressed: (_loading || !_canRun) ? null : _run,

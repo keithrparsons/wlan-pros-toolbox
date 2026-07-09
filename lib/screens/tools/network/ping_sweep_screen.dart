@@ -23,11 +23,14 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/pi_backend.dart';
+import '../../../services/network/pi_backend_client.dart';
 import '../../../services/network/ping_sweep_service.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_color_scheme.dart';
@@ -68,10 +71,27 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
   StreamSubscription<SweepProgress>? _sub;
   Completer<void>? _cancel;
 
+  /// True when this build is served FROM a WLAN Pi (Pi-hosted web): the browser
+  /// cannot open TCP sockets across a subnet, so the sweep runs ON the Pi via
+  /// `/toolboxapi/pingsweep` and returns the responders at once (one-shot, no
+  /// live progress). The Pi caps the range (≤256 hosts) and returns a 400 with a
+  /// message on oversize, surfaced inline. Only when no test service is injected,
+  /// on web, with a Pi backend present — otherwise the native path is unchanged.
+  late final bool _piBacked;
+
+  /// True once a Pi sweep has completed, so the results card can distinguish
+  /// "not swept yet" from "swept, nothing responded".
+  bool _piSwept = false;
+
   @override
   void initState() {
     super.initState();
-    _service = widget.service ?? PingSweepService();
+    _piBacked = kIsWeb && PiBackend.available && widget.service == null;
+    // On the Pi path the native socket-sweep service is never constructed (the
+    // sweep runs server-side on the Pi through PiBackendClient).
+    if (!_piBacked) {
+      _service = widget.service ?? PingSweepService();
+    }
   }
 
   @override
@@ -150,6 +170,64 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
     setState(() => _sweeping = false);
   }
 
+  /// Pi-hosted one-shot sweep: the TCP-probe sweep runs ON the Pi and the
+  /// responders come back at once (no live progress on this path). Responders
+  /// render through the SAME [SweepHostResult] rows as native. The Pi caps the
+  /// range at 256 hosts and returns a 400 with a message on oversize, which
+  /// surfaces inline ("range too large … use the native app"). Never throws to
+  /// the UI.
+  Future<void> _startPi() async {
+    if (_sweeping) return;
+    // A CIDR/range is NOT a host, so hostFromUserInput (which strips at the
+    // first "/") must not touch it — trim only.
+    final String cidr = _subnetCtrl.text.trim();
+    if (cidr.isEmpty) {
+      setState(() {
+        _error =
+            'Enter a subnet in CIDR (192.168.1.0/24) or a range '
+            '(192.168.1.1-50).';
+      });
+      return;
+    }
+
+    _subnetFocus.unfocus();
+    setState(() {
+      _error = null;
+      _sweeping = true;
+      _completed = 0;
+      _total = 0;
+      _live = 0;
+      _rangeLabel = cidr;
+      _responsive.clear();
+    });
+
+    try {
+      final List<SweepHostResult> hosts =
+          await PiBackendClient().pingSweep(cidr: cidr, ports: '$_port');
+      if (!mounted) return;
+      setState(() {
+        _sweeping = false;
+        _piSwept = true;
+        _responsive
+          ..clear()
+          ..addAll(hosts);
+        _live = hosts.length;
+      });
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        'Sweep complete, $_live '
+        'host${_live == 1 ? '' : 's'} responded on TCP $_port',
+        TextDirection.ltr,
+      );
+    } on PiBackendException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _sweeping = false;
+        _error = e.message;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -216,6 +294,8 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
       );
     }
 
+    if (_piBacked) return _piBody();
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool isDesktop = constraints.maxWidth >= 720;
@@ -257,6 +337,206 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
           ),
         );
       },
+    );
+  }
+
+  /// Pi-hosted body: a sweep form wired to [_startPi] plus a Pi results card
+  /// (reusing [_hostRow]) with one-shot wording, and an honest caption. One-shot:
+  /// a spinner while the Pi sweeps, then the responders — no live progress bar.
+  Widget _piBody() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isDesktop = constraints.maxWidth >= 720;
+        final double edge = isDesktop
+            ? AppSpacing.screenEdgeDesktop
+            : AppSpacing.screenEdgeMobile;
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                edge,
+                AppSpacing.sm,
+                edge,
+                edge + AppSpacing.sm,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ConceptGraphicBand(
+                    toolId: 'ping-sweep',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('ping-sweep'))
+                    const SizedBox(height: AppSpacing.md),
+                  _piFormCard(context),
+                  if (_piSwept || _responsive.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    _piResultsCard(context),
+                  ],
+                  ToolHelpFooter(toolId: 'ping-sweep'),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _piFormCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LabeledField(
+            label: 'Subnet or range',
+            field: TextField(
+              controller: _subnetCtrl,
+              focusNode: _subnetFocus,
+              enabled: !_sweeping,
+              autocorrect: false,
+              enableSuggestions: false,
+              keyboardType: TextInputType.url,
+              textInputAction: TextInputAction.go,
+              onSubmitted: (_) => _sweeping ? null : _startPi(),
+              cursorColor: colors.textAccent,
+              decoration: const InputDecoration(hintText: '192.168.1.0/24'),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'CIDR (192.168.1.0/24) or a range (192.168.1.1-50). The Pi caps a '
+            'sweep at 256 hosts (a /24); a larger range is declined.',
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'TCP port',
+            style: text.labelMedium?.copyWith(
+              color: colors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Wrap(
+            spacing: AppSpacing.xs,
+            runSpacing: AppSpacing.xs,
+            children: PingSweepService.commonPorts
+                .map((int p) => _portChip(context, p))
+                .toList(),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            child: Text(
+              'Swept from the WLAN Pi hosting this page, not this browser — a '
+              'host is listed when it answers a TCP handshake on port $_port from '
+              'the Pi. Reachability on that port, not ICMP liveness. A host '
+              'silent on TCP $_port may still be up.',
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
+            ),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              _error!,
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.md),
+          FilledButton(
+            onPressed: _sweeping ? null : _startPi,
+            child: _sweeping
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Sweep'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _piResultsCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+
+    final List<SweepHostResult> sorted = List<SweepHostResult>.of(_responsive)
+      ..sort(
+        (SweepHostResult a, SweepHostResult b) =>
+            _ipKey(a.host).compareTo(_ipKey(b.host)),
+      );
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Responsive hosts · via the WLAN Pi',
+                style: text.labelMedium?.copyWith(
+                  color: colors.textSecondary,
+                  letterSpacing: 0.4,
+                ),
+              ),
+              if (_rangeLabel.isNotEmpty)
+                Flexible(
+                  child: Text(
+                    _rangeLabel,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
+                    style: mono.robotoMono.copyWith(
+                      color: colors.textTertiary,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          if (_responsive.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+              child: Text(
+                'No host in ${_rangeLabel.isEmpty ? 'the range' : _rangeLabel} '
+                'answered on TCP $_port. That does not mean the subnet is empty '
+                '— hosts that are ICMP-only or that firewall TCP $_port will not '
+                'appear. Try another common port.',
+                style: text.bodyLarge?.copyWith(color: colors.textTertiary),
+              ),
+            )
+          else ...[
+            ...sorted.map(
+              (SweepHostResult r) => _hostRow(context, r, text, mono),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'Responded on TCP $_port — reachability on that port, not ICMP '
+              'liveness. Silent hosts may still be up.',
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
+            ),
+          ],
+        ],
+      ),
     );
   }
 

@@ -231,6 +231,30 @@ class ApScanService {
 
   PiBackendClient get _pi => _piClient ??= PiBackendClient();
 
+  /// True when this bundle is served from a WLAN Pi (web only). The Nearby AP
+  /// Scan screen consults this to offer the scan-radio picker — the picker is
+  /// Pi-path only, so native and Netlify web never see it and stay unchanged.
+  bool get isPiBacked => _piBacked;
+
+  /// The Pi radio the next [scan] will run on. Defaults to "wlan0".
+  String get piInterface => _piInterface;
+
+  /// Sets the Pi radio the next [scan] runs on (the picker selection), so a
+  /// multi-NIC Pi scans on the chosen radio.
+  void selectPiInterface(String name) => _piInterface = name;
+
+  /// The Pi's scan-capable radios, for the picker. Empty off the Pi path
+  /// (native / Netlify) and empty — not thrown — when the endpoint is missing or
+  /// errors, so the caller falls back to the wlan0 default with no crash.
+  Future<List<PiScanInterface>> scanInterfaces() async {
+    if (!_piBacked) return const <PiScanInterface>[];
+    try {
+      return await _pi.scanInterfaces();
+    } on PiBackendException {
+      return const <PiScanInterface>[];
+    }
+  }
+
   /// Whether this platform supports a nearby-AP scan. Android natively, OR any
   /// browser served from a WLAN Pi (the scan runs on the Pi's radio).
   bool get isSupportedPlatform =>

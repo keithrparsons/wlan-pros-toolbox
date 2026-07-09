@@ -23,6 +23,7 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
@@ -31,6 +32,8 @@ import '../../../router/app_router.dart';
 import '../../../services/network/dart_ping_icmp_backend.dart';
 import '../../../services/network/icmp_service.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/pi_backend.dart';
+import '../../../services/network/pi_backend_client.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
@@ -69,10 +72,67 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
   StreamSubscription<IcmpProgress>? _sub;
   Completer<void>? _cancel;
 
+  /// True when this build is served FROM a WLAN Pi (Pi-hosted web): the ICMP
+  /// ping runs ON the Pi via `/toolboxapi/ping` and returns a final aggregate
+  /// (one-shot, no per-echo animation). Only when no test service is injected,
+  /// on web, with a Pi backend present — otherwise the native path is unchanged.
+  late final bool _piBacked;
+  bool _piLoading = false;
+  PiHop? _piHop;
+  Object? _piError;
+
   @override
   void initState() {
     super.initState();
-    _service = widget.service ?? IcmpService(backend: defaultIcmpBackend());
+    _piBacked = kIsWeb && PiBackend.available && widget.service == null;
+    // On the Pi path the native ICMP service is never constructed (the ping
+    // runs server-side on the Pi through PiBackendClient).
+    if (!_piBacked) {
+      _service = widget.service ?? IcmpService(backend: defaultIcmpBackend());
+    }
+  }
+
+  /// Pi-hosted ICMP ping: runs ON the Pi and renders the final aggregate. The
+  /// Pi endpoint is bounded (1..20 echoes), so the "until stopped" count is
+  /// clamped to 20 on this path. Never throws to the UI.
+  Future<void> _runPi() async {
+    if (_piLoading) return;
+    final String host = _hostCtrl.text.trim();
+    final String? invalid = IcmpService.validateHost(host);
+    if (invalid != null) {
+      setState(() => _piError = invalid);
+      return;
+    }
+    _hostFocus.unfocus();
+    setState(() {
+      _piLoading = true;
+      _piHop = null;
+      _piError = null;
+    });
+    try {
+      final PiHop hop =
+          await PiBackendClient().ping(host: host, count: _count == 0 ? 20 : _count);
+      if (!mounted) return;
+      setState(() {
+        _piLoading = false;
+        _piHop = hop;
+      });
+      final String avg = hop.avgMs == null
+          ? 'no replies'
+          : 'average ${hop.avgMs!.toStringAsFixed(1)} milliseconds';
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        'ICMP ping complete, ${hop.received ?? 0} of ${hop.sent ?? 0} replies, '
+        '$avg',
+        TextDirection.ltr,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _piLoading = false;
+        _piError = e;
+      });
+    }
   }
 
   @override
@@ -168,6 +228,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
   /// order; the ICMP responder IP is carried per reply when known; a lost probe
   /// keeps its honest reason word (GL-005), never a fabricated time.
   String? _buildCopyText() {
+    if (_piBacked) return _buildPiCopyText();
     if (_stats.sent == 0) return null;
 
     final String host = _hostCtrl.text.trim();
@@ -200,6 +261,26 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
     return buf.toString().trimRight();
   }
 
+  /// §8.16 copy payload for the Pi ICMP run — the final aggregate, honest about
+  /// the Pi origin. Null until a run has produced an aggregate.
+  String? _buildPiCopyText() {
+    final PiHop? h = _piHop;
+    if (_piLoading || h == null) return null;
+    final String host = _hostCtrl.text.trim();
+    String ms(double? v) => v == null ? '—' : v.toStringAsFixed(1);
+    final String lossPct =
+        h.lossPct == null ? '—' : h.lossPct!.toStringAsFixed(0);
+    return (StringBuffer()
+          ..writeln('Ping — ICMP echo, measured on the WLAN Pi hosting this page')
+          ..writeln('Target: ${host.isEmpty ? '(unknown)' : host}')
+          ..writeln(
+            'Summary: ${h.received ?? 0}/${h.sent ?? 0} replies, $lossPct% loss · '
+            'min ${ms(h.minMs)} ms / avg ${ms(h.avgMs)} ms / max ${ms(h.maxMs)} ms',
+          ))
+        .toString()
+        .trimRight();
+  }
+
   Widget _body() {
     if (!NetworkSupport.icmpPingSupported) {
       return NetworkUnavailableView(
@@ -208,6 +289,8 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
             NetworkSupport.unavailableReason ?? NetworkUnavailableReason.web,
       );
     }
+
+    if (_piBacked) return _piBody();
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -316,6 +399,189 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  /// Pi-hosted body: a host + count form, then the final aggregate. No per-echo
+  /// list (the Pi path is one-shot — a spinner then the result).
+  Widget _piBody() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isDesktop = constraints.maxWidth >= 720;
+        final double edge = isDesktop
+            ? AppSpacing.screenEdgeDesktop
+            : AppSpacing.screenEdgeMobile;
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                edge,
+                AppSpacing.sm,
+                edge,
+                edge + AppSpacing.sm,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  ConceptGraphicBand(toolId: 'icmp-ping', isDesktop: isDesktop),
+                  if (ToolAssets.hasGraphic('icmp-ping'))
+                    const SizedBox(height: AppSpacing.md),
+                  _piFormCard(context),
+                  if (_piHop != null) ...<Widget>[
+                    const SizedBox(height: AppSpacing.sm),
+                    _piStatsCard(context, _piHop!),
+                  ],
+                  const ToolHelpFooter(toolId: 'icmp-ping'),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _piFormCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          LabeledField(
+            label: 'Host or IP',
+            field: TextField(
+              controller: _hostCtrl,
+              focusNode: _hostFocus,
+              enabled: !_piLoading,
+              autocorrect: false,
+              enableSuggestions: false,
+              keyboardType: TextInputType.url,
+              textInputAction: TextInputAction.go,
+              onSubmitted: (_) => _piLoading ? null : _runPi(),
+              cursorColor: colors.textAccent,
+              decoration: const InputDecoration(hintText: '1.1.1.1'),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Count',
+            style: text.labelMedium?.copyWith(
+              color: colors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Wrap(
+            spacing: AppSpacing.xs,
+            runSpacing: AppSpacing.xs,
+            // The Pi endpoint is bounded (1..20 echoes), so the "until stopped"
+            // option is not offered on this path.
+            children: const <int>[5, 10, 20]
+                .map((int c) => _countChip(context, c))
+                .toList(),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            child: Text(
+              'A real ICMP echo run ON the WLAN Pi hosting this page, not from '
+              'this browser. Shows the final aggregate.',
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
+            ),
+          ),
+          if (_piError != null) ...<Widget>[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              _piError is String
+                  ? _piError! as String
+                  : 'The WLAN Pi could not complete the ping.',
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.md),
+          FilledButton(
+            onPressed: _piLoading ? null : _runPi,
+            child: _piLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Ping'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The Pi aggregate rendered through the same stat-cell layout the native
+  /// summary uses, so the reading looks identical whichever path produced it.
+  Widget _piStatsCard(BuildContext context, PiHop hop) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final int sent = hop.sent ?? 0;
+    final int received = hop.received ?? 0;
+    final String lossPct =
+        hop.lossPct == null ? '—' : hop.lossPct!.toStringAsFixed(0);
+    String ms(double? v) => v == null ? '—' : v.toStringAsFixed(1);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text(
+                'Summary · via the WLAN Pi',
+                style: text.labelMedium?.copyWith(
+                  color: colors.textSecondary,
+                  letterSpacing: 0.4,
+                ),
+              ),
+              Text(
+                '$received / $sent · $lossPct% loss',
+                style: text.labelMedium?.copyWith(color: colors.textTertiary),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Semantics(
+            label: 'ICMP ping complete, $received of $sent replies, '
+                '$lossPct percent loss, average ${ms(hop.avgMs)} milliseconds',
+            child: Row(
+              children: <Widget>[
+                _statCell(context, mono, 'min', ms(hop.minMs)),
+                _statCell(context, mono, 'avg', ms(hop.avgMs)),
+                _statCell(context, mono, 'max', ms(hop.maxMs)),
+              ],
+            ),
+          ),
+          if (!hop.reachable) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'The host did not answer the ICMP echo from the Pi — it may be '
+              'down, or ICMP may be filtered on the path.',
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
+            ),
+          ],
         ],
       ),
     );

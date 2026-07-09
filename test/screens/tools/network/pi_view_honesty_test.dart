@@ -38,22 +38,22 @@ void main() {
       );
     });
 
-    test('Pi blurb promises only what the Pi sensor backs, attributed to the Pi',
+    test('Pi blurb reports the two throughput numbers and only excludes RF',
         () {
       final String pi = netQualityBlurb(true);
       // Attributes to the Pi, not "your device".
       expect(pi, contains('WLAN Pi hosting'));
       expect(pi, isNot(contains('your device')));
-      // Names the four dimensions the Pi cannot back as NOT available, rather
-      // than promising them the way the native blurb does.
-      expect(
-        pi,
-        contains(
-          'Jitter, download, upload, and responsiveness are not available',
-        ),
-      );
-      // The Pi sensor's real measurements are named.
-      expect(pi, contains('latency and packet loss'));
+      // Throughput IS measured now (endpoint 11 + local-hop loop): the blurb
+      // names the two distinct throughput numbers rather than calling
+      // throughput unavailable.
+      expect(pi, contains('two throughput numbers'));
+      expect(pi, contains('Pi uplink to the internet'));
+      expect(pi, contains('local hop between this device and the Pi'));
+      // The one thing the Pi genuinely cannot see is the client's own RF.
+      expect(pi, contains('Your own Wi-Fi RF is not visible to the Pi'));
+      // The Pi sensor's real latency/loss/DNS measurements are still named.
+      expect(pi, contains('packet loss'));
       expect(pi, contains('DNS resolution time'));
     });
 
@@ -145,6 +145,76 @@ void main() {
       // old front door produced null here, leaving the copy button dead-greyed).
       expect(copy, isNotEmpty);
       expect(copy, startsWith('Connection test — measured on the WLAN Pi'));
+    });
+
+    // Change 1 (2026-07-09): Test My Connection's Pi path now measures the two
+    // throughput numbers Network Quality shows, so the copy carries them too.
+    group('with throughput evidence', () {
+      PiConntestResult goodCt() => result(
+            gateway: const PiHop(target: '192.168.1.1', reachable: true, avgMs: 2),
+            internet:
+                const PiHop(target: '1.1.1.1', reachable: true, avgMs: 18, lossPct: 0),
+            dns: const PiDns(host: 'cloudflare.com', ms: 12),
+          );
+
+      test('appends both labeled throughput sections when present', () {
+        final String copy = piConntestCopyText(
+          goodCt(),
+          throughput: const PiThroughputResult(
+            downloadMbps: 712.3,
+            uploadMbps: 462.8,
+          ),
+          deviceToPiDownMbps: 240.5,
+          deviceToPiUpMbps: 180.2,
+        );
+        // The hop TSV is preserved (nothing stripped — "DO NOT re-simplify").
+        expect(copy, contains('Internet (1.1.1.1)\treachable\t18 ms\t0%'));
+        // Pi uplink section — the Pi's own uplink, clearly labeled.
+        expect(copy, contains('Pi to internet (throughput)'));
+        expect(copy, contains('Download: 712.3 Mbps'));
+        expect(copy, contains('Upload: 462.8 Mbps'));
+        // Local Wi-Fi hop section — the second, distinct number, never conflated.
+        expect(copy, contains('This device to Pi (Wi-Fi hop)'));
+        expect(copy, contains('Download: 240.5 Mbps'));
+        expect(copy, contains('Upload: 180.2 Mbps'));
+      });
+
+      test('a failed Pi uplink leg copies Unavailable, never a fabricated 0', () {
+        final String copy = piConntestCopyText(
+          goodCt(),
+          throughput: const PiThroughputResult(
+            downloadMbps: null,
+            uploadMbps: 80.2,
+            downloadError: 'download failed',
+          ),
+        );
+        expect(copy, contains('Pi to internet (throughput)'));
+        expect(copy, contains('Download: Unavailable'));
+        expect(copy, contains('Upload: 80.2 Mbps'));
+        expect(copy, isNot(contains('Download: 0')));
+      });
+
+      test('a local-hop error copies the honest message, not numbers', () {
+        final String copy = piConntestCopyText(
+          goodCt(),
+          deviceToPiError:
+              'The local Wi-Fi-hop test to the Pi could not complete.',
+        );
+        expect(copy, contains('This device to Pi (Wi-Fi hop)'));
+        expect(
+          copy,
+          contains('The local Wi-Fi-hop test to the Pi could not complete.'),
+        );
+        expect(copy, isNot(contains('Wi-Fi hop)\n  Download')));
+      });
+
+      test('no throughput evidence keeps the original hop-only payload', () {
+        final String bare = piConntestCopyText(goodCt());
+        expect(bare, isNot(contains('throughput')));
+        expect(bare, isNot(contains('Wi-Fi hop')));
+        // Ends on the DNS row exactly as before the throughput additions.
+        expect(bare, endsWith('DNS resolve (cloudflare.com)\treachable\t12 ms'));
+      });
     });
   });
 }
