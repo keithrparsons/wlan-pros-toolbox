@@ -34,7 +34,6 @@ import 'router/app_router.dart';
 import 'router/live_error_nav_gate.dart';
 import 'services/help/tool_help_loader.dart';
 import 'services/network/dart_ping_icmp_backend.dart';
-import 'services/network/pi_backend.dart';
 import 'services/network/wifi_details_bridge.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
@@ -277,21 +276,6 @@ Future<void> main() async {
     await ToolHelpLoader.ensureLoaded();
   } catch (_) {
     // Asset unavailable → helpForId() stays null → help icons hide. No crash.
-  }
-
-  // Pi-hosted mode detection (RECON.md §9). On WEB only, probe the same-origin
-  // `/toolboxapi/health` ONCE before the first build so the tool grid renders
-  // the correct gate state (no flash of hidden-then-shown tiles). Any 200 means
-  // this bundle is served from a WLAN Pi whose backend can do the network work a
-  // browser cannot, and the Phase-A networking tools (Test My Connection, Nearby
-  // AP Scan, Interface Info) route through it. No-op off web and a no-op on
-  // Netlify (no backend -> stays hidden), so the identical bundle behaves
-  // correctly in both places and native builds are byte-for-byte unchanged.
-  // Never blocks startup: probe() swallows every failure and caps itself at ~2s.
-  try {
-    await PiBackend.probe();
-  } catch (_) {
-    // Defensive — probe() already never throws; leave PiBackend.available false.
   }
 
   // §8.20.5 — appearance controller. Default System; loads the persisted

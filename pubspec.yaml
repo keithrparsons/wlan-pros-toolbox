@@ -44,12 +44,6 @@ dependencies:
   # network_info_plus — Wi-Fi link details (SSID/BSSID/gateway/submask/IP)
   #   that dart:io NetworkInterface does not expose. Used by Interface Info.
   network_info_plus: ^6.1.1
-  # http — same-origin REST calls to the Pi hosting backend (/toolboxapi/) from
-  #   the WEB build only (PiBackendClient, guarded by kIsWeb && PiBackend.available).
-  #   On web `package:http` uses the browser fetch client, so no dart:io / socket
-  #   path is taken. Already resolved as a transitive dep; pinned direct here as
-  #   it is now imported by first-party code. BSD-3, first-party Dart team plugin.
-  http: ^1.6.0
   # basic_utils — DnsUtils.lookupRecord over DNS-over-HTTPS (Google/Cloudflare
   #   JSON resolvers). MIT, pure-Dart, actively maintained. Used by DNS Lookup.
   #   Chosen over raw UDP/53 so the query traverses HTTPS:443 uniformly across

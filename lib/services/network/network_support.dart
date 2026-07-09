@@ -18,8 +18,6 @@
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 
-import 'pi_backend.dart';
-
 /// Why a given network capability is unavailable, so the UI can render a
 /// precise, non-apologetic message (brief §10 anti-patterns) instead of a
 /// zero or a crash.
@@ -50,22 +48,7 @@ class NetworkSupport {
   static bool get dnsLookupSupported => !kIsWeb;
 
   /// Interface Information support.
-  ///
-  /// Native everywhere; ALSO available on Pi-hosted web, where the device
-  /// interface table is read from the Pi via `/toolboxapi/interfaces` (the
-  /// browser has no `dart:io` interface table). On Netlify web the Pi backend is
-  /// absent so this stays false and the tool keeps the download-the-app fallback.
-  static bool get interfaceInfoSupported => !kIsWeb || PiBackend.available;
-
-  /// Network Quality (Test My Connection, `net-quality`) support.
-  ///
-  /// Native everywhere; ALSO available on Pi-hosted web, where the connection
-  /// test runs ON the Pi via `/toolboxapi/conntest` instead of the browser's
-  /// (absent) `dart:io` sockets. On Netlify web this stays false and the tool
-  /// keeps the download-the-app fallback. Distinct from
-  /// [activeNetworkSupported], which stays `!kIsWeb`: only the capabilities with
-  /// a live Pi endpoint are re-enabled on web (brief Phase A).
-  static bool get netQualitySupported => !kIsWeb || PiBackend.available;
+  static bool get interfaceInfoSupported => !kIsWeb;
 
   /// Port Scan support.
   static bool get portScanSupported => !kIsWeb;

@@ -7,10 +7,6 @@ import 'dart:io' if (dart.library.html) 'wifi_info_service_web_stub.dart'
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-import '../../data/channel_frequency_data.dart';
-import 'pi_backend.dart';
-import 'pi_backend_client.dart';
-
 /// One visible access point (BSS) from an Android Wi-Fi scan.
 ///
 /// CLEAN fields only — SSID, BSSID, channel, band, RSSI. The Android scan API
@@ -187,24 +183,11 @@ class ApScanService {
   ///
   /// [invoke] defaults to the real method channel; tests pass a fake.
   /// [platformOverride] defaults to the host operating system.
-  ///
-  /// PI-HOSTED WEB: when this bundle is served from a WLAN Pi, the scan runs on
-  /// the Pi's radio via `/toolboxapi/scan` (a genuine off-channel neighbor scan
-  /// the browser cannot do). [piBackedOverride] / [piClient] / [piInterface] are
-  /// test seams; in production `_piBacked` is `kIsWeb && PiBackend.available`, so
-  /// native behavior is byte-for-byte unchanged and Netlify web stays unsupported.
   ApScanService({
     Future<Object?> Function(String method, [dynamic args])? invoke,
     String? platformOverride,
-    bool? piBackedOverride,
-    PiBackendClient? piClient,
-    String piInterface = 'wlan0',
   })  : _invoke = invoke ?? _defaultInvoke,
-        _platform = platformOverride ?? _hostOperatingSystem(),
-        _piBacked = piBackedOverride ?? (kIsWeb && PiBackend.available) {
-    _piClient = piClient;
-    _piInterface = piInterface;
-  }
+        _platform = platformOverride ?? _hostOperatingSystem();
 
   /// Returns the host OS name, or an empty string on web. Never throws.
   static String _hostOperatingSystem() {
@@ -221,20 +204,8 @@ class ApScanService {
   final Future<Object?> Function(String method, [dynamic args]) _invoke;
   final String _platform;
 
-  /// True when the scan is served by the Pi hosting backend (web only).
-  final bool _piBacked;
-
-  /// The Pi's scan-radio interface. Lazily-created client so native builds never
-  /// construct an http.Client they will not use.
-  PiBackendClient? _piClient;
-  String _piInterface = 'wlan0';
-
-  PiBackendClient get _pi => _piClient ??= PiBackendClient();
-
-  /// Whether this platform supports a nearby-AP scan. Android natively, OR any
-  /// browser served from a WLAN Pi (the scan runs on the Pi's radio).
-  bool get isSupportedPlatform =>
-      _piBacked || (!kIsWeb && _platform == 'android');
+  /// Whether this platform supports a nearby-AP scan. Android only.
+  bool get isSupportedPlatform => !kIsWeb && _platform == 'android';
 
   /// Categorizes why the scan is or isn't available here, for honest UI copy.
   ///
@@ -261,28 +232,6 @@ class ApScanService {
   Future<ApScanSnapshot> lastResults() => _read('lastResults');
 
   Future<ApScanSnapshot> _read(String method) async {
-    // Pi-hosted web: fetch a neighbor scan from the Pi's radio and map it into
-    // the same snapshot shape. The Pi has no Location gate or scan throttle, so
-    // those flags are true/false accordingly; a backend failure surfaces as the
-    // same channelError the native path uses.
-    if (_piBacked) {
-      try {
-        final List<PiScanNet> nets =
-            await _pi.scan(interface: _piInterface);
-        return ApScanSnapshot(
-          accessPoints:
-              nets.map(_scannedApFromPi).toList(growable: false),
-          poweredOn: true,
-          locationAuthorized: true,
-          scanThrottled: false,
-        );
-      } on PiBackendException catch (e) {
-        throw ApScanUnavailable(
-          ApScanUnavailableReason.channelError,
-          e.message,
-        );
-      }
-    }
     if (!isSupportedPlatform) {
       throw const ApScanUnavailable(
         ApScanUnavailableReason.unsupportedPlatform,
@@ -303,66 +252,17 @@ class ApScanService {
     }
   }
 
-  /// Whether ACCESS_FINE_LOCATION is currently granted (no prompt). Always true
-  /// on the Pi-hosted path — the scan runs on the Pi, not behind an Android
-  /// Location gate, so the Location card never shows there.
+  /// Whether ACCESS_FINE_LOCATION is currently granted (no prompt).
   Future<bool> isLocationAuthorized() async {
-    if (_piBacked) return true;
     final result = await _invoke('isLocationAuthorized');
     return (result as bool?) ?? false;
   }
 
   /// Requests ACCESS_FINE_LOCATION. Returns whether it is granted afterward.
-  /// Android gates scan results behind it. No-op (already authorized) on the
-  /// Pi-hosted path.
+  /// Android gates scan results behind it.
   Future<bool> requestLocationPermission() async {
-    if (_piBacked) return true;
     final result = await _invoke('requestLocationPermission');
     return (result as bool?) ?? false;
-  }
-
-  /// Maps one Pi BSS into a [ScannedAp], deriving the channel + band from the
-  /// reported center frequency via the verified channel-plan converter. Falls
-  /// back to arithmetic band/channel derivation only when the frequency does not
-  /// snap to a known 20 MHz primary (rare), so a scanned AP is always shown.
-  static ScannedAp _scannedApFromPi(PiScanNet net) {
-    final ({WifiBand band, int channel})? match =
-        frequencyToChannel(net.freqMhz.toDouble());
-    final int channel;
-    final String band;
-    if (match != null) {
-      channel = match.channel;
-      band = match.band.label;
-    } else {
-      final (int ch, String b) = _deriveChannelBand(net.freqMhz);
-      channel = ch;
-      band = b;
-    }
-    return ScannedAp(
-      ssid: net.ssid,
-      bssid: net.bssid,
-      rssiDbm: net.signalDbm,
-      channel: channel,
-      band: band,
-      frequencyMhz: net.freqMhz,
-    );
-  }
-
-  /// Arithmetic fallback (channel, band) from a center frequency (MHz), using
-  /// the universal channel<->frequency formula. Only reached when
-  /// [frequencyToChannel] returns null.
-  static (int, String) _deriveChannelBand(int freq) {
-    if (freq == 2484) return (14, '2.4 GHz');
-    if (freq >= 2401 && freq <= 2495) {
-      return (((freq - 2407) / 5).round(), '2.4 GHz');
-    }
-    if (freq >= 5150 && freq <= 5895) {
-      return (((freq - 5000) / 5).round(), '5 GHz');
-    }
-    if (freq >= 5925 && freq <= 7125) {
-      return (((freq - 5950) / 5).round(), '6 GHz');
-    }
-    return (0, '$freq MHz');
   }
 
   /// Opens this app's system settings page so the user can enable Location
