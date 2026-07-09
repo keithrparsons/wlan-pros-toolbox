@@ -18,11 +18,14 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/pi_backend.dart';
+import '../../../services/network/pi_backend_client.dart';
 import '../../../services/network/traceroute_service.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
@@ -61,11 +64,24 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
   /// probe is never run; the platform notice handles that case.
   bool? _launchable;
 
+  /// True when this build is served FROM a WLAN Pi (Pi-hosted web): the browser
+  /// cannot spawn traceroute, so the trace runs ON the Pi via
+  /// `/toolboxapi/traceroute`. Only when no test service is injected, on web,
+  /// with a Pi backend present — otherwise the native subprocess path is
+  /// byte-for-byte unchanged.
+  late final bool _piBacked;
+
   @override
   void initState() {
     super.initState();
-    _service = widget.service ?? TracerouteService();
-    _probeLaunchable();
+    _piBacked = kIsWeb && PiBackend.available && widget.service == null;
+    // On the Pi path the dart:io traceroute service and its launch probe are
+    // never constructed — the browser has no Process to spawn. The Pi run reads
+    // through PiBackendClient instead.
+    if (!_piBacked) {
+      _service = widget.service ?? TracerouteService();
+      _probeLaunchable();
+    }
   }
 
   /// Probes whether this build can actually spawn the system traceroute, so the
@@ -151,6 +167,53 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
     setState(() => _running = false);
   }
 
+  /// Pi-hosted one-shot traceroute: the trace runs ON the Pi and returns the
+  /// full hop list at once (not streamed). We adapt each Pi hop into the same
+  /// [TracerouteHop] the native `_hopsCard` renders, so the results card is
+  /// shared. A hop that did not answer carries a null target and renders as "no
+  /// response" — never zero-filled (GL-005). Never throws to the UI.
+  Future<void> _startPi() async {
+    final String host = _hostCtrl.text.trim();
+    if (host.isEmpty) {
+      setState(() => _error = 'Enter a host or IP to trace.');
+      return;
+    }
+    _hostFocus.unfocus();
+    setState(() {
+      _error = null;
+      _running = true;
+      _hops.clear();
+      _result = null;
+    });
+    try {
+      final List<PiHop> piHops = await PiBackendClient().traceroute(host: host);
+      if (!mounted) return;
+      setState(() {
+        _running = false;
+        for (int i = 0; i < piHops.length; i++) {
+          final PiHop h = piHops[i];
+          _hops.add(TracerouteHop(
+            ttl: h.hopNumber ?? i + 1,
+            ip: h.target,
+            rttsMs: h.ms != null ? <double>[h.ms!] : const <double>[],
+            timedOut: h.target == null,
+          ));
+        }
+      });
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        'Traceroute complete, ${_hops.length} hops',
+        TextDirection.ltr,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _running = false;
+        _error = 'Traceroute error: $e';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -197,8 +260,11 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
     const String tab = '\t';
     final StringBuffer buf = StringBuffer()
       ..writeln(
-        'Traceroute (system) — path to '
-        '${host.isEmpty ? '(unknown)' : host}',
+        _piBacked
+            ? 'Traceroute — path from the WLAN Pi hosting this page to '
+                '${host.isEmpty ? '(unknown)' : host}'
+            : 'Traceroute (system) — path to '
+                '${host.isEmpty ? '(unknown)' : host}',
       )
       ..writeln('Status: $status')
       ..writeln()
@@ -228,6 +294,8 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
       );
     }
 
+    if (_piBacked) return _piBody();
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool isDesktop = constraints.maxWidth >= 720;
@@ -254,6 +322,112 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
           ),
         );
       },
+    );
+  }
+
+  /// Pi-hosted body: a host form + the SHARED hops card (fed the adapted Pi
+  /// hops), plus an honest caption attributing the trace to the Pi. No launch
+  /// probe / sandbox states — the trace runs server-side on the Pi.
+  Widget _piBody() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isDesktop = constraints.maxWidth >= 720;
+        final double edge = isDesktop
+            ? AppSpacing.screenEdgeDesktop
+            : AppSpacing.screenEdgeMobile;
+        final AppColorScheme colors = context.colors;
+        final TextTheme text = Theme.of(context).textTheme;
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                edge,
+                AppSpacing.sm,
+                edge,
+                edge + AppSpacing.sm,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  ConceptGraphicBand(toolId: 'traceroute', isDesktop: isDesktop),
+                  if (ToolAssets.hasGraphic('traceroute'))
+                    const SizedBox(height: AppSpacing.md),
+                  _piFormCard(context),
+                  if (_hops.isNotEmpty || _running) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    _hopsCard(context),
+                  ],
+                  if (_hops.isNotEmpty && !_running) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      'Traced from the WLAN Pi hosting this page, not from this '
+                      'browser.',
+                      style: text.labelMedium?.copyWith(
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                  const ToolHelpFooter(toolId: 'traceroute'),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _piFormCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LabeledField(
+            label: 'Host or IP',
+            field: TextField(
+              controller: _hostCtrl,
+              focusNode: _hostFocus,
+              enabled: !_running,
+              autocorrect: false,
+              enableSuggestions: false,
+              keyboardType: TextInputType.url,
+              textInputAction: TextInputAction.go,
+              onSubmitted: (_) => _running ? null : _startPi(),
+              cursorColor: colors.textAccent,
+              decoration: const InputDecoration(hintText: 'example.com'),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            child: Text(
+              'The path is traced from the WLAN Pi hosting this page — the hops '
+              'are the route from the Pi, not from this browser.',
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
+            ),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              _error!,
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.md),
+          FilledButton(
+            onPressed: _running ? null : _startPi,
+            child: Text(_running ? 'Tracing…' : 'Trace'),
+          ),
+        ],
+      ),
     );
   }
 

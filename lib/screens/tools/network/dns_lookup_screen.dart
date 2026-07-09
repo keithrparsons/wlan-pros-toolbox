@@ -27,12 +27,15 @@
 // Resolver is selectable (Cloudflare default, Google failover) so a blocked
 // resolver is one tap away. PTR auto-detects an IP input.
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/dns_lookup_service.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/pi_backend.dart';
+import '../../../services/network/pi_backend_client.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
@@ -72,10 +75,31 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
   DnsLookupResult? _result;
   DnsDigResult? _digResult;
 
+  /// True when this build is served FROM a WLAN Pi (Pi-hosted web): the lookup
+  /// runs ON the Pi via `/toolboxapi/dns` instead of the browser's (absent) DoH
+  /// transport. Only when no test service is injected, on web, with a Pi backend
+  /// present — otherwise the native DoH path is byte-for-byte unchanged.
+  late final bool _piBacked;
+
+  /// Pi record types (the Pi's supported set — note CNAME, which the native DoH
+  /// enum does not carry, and no SPF, which the native path derives from TXT).
+  static const List<String> _piTypes = <String>[
+    'A', 'AAAA', 'CNAME', 'MX', 'NS', 'TXT', 'SOA', 'PTR', 'SRV', 'CAA',
+  ];
+  String _piType = 'A';
+  bool _piLoading = false;
+  PiDns? _piResult;
+  Object? _piError;
+
   @override
   void initState() {
     super.initState();
-    _service = widget.service ?? DnsLookupService();
+    _piBacked = kIsWeb && PiBackend.available && widget.service == null;
+    // On the Pi path the native DoH service is never constructed — the lookup
+    // runs server-side on the Pi through PiBackendClient.
+    if (!_piBacked) {
+      _service = widget.service ?? DnsLookupService();
+    }
   }
 
   @override
@@ -143,6 +167,39 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
       _result = result;
     });
     _announce(_singleAnnouncement(result));
+  }
+
+  /// Pi-hosted single-type lookup: resolves ON the Pi via `/toolboxapi/dns`.
+  /// Empty answers are the honest "resolved, no records of this type" state, not
+  /// an error (GL-005). Never throws to the UI.
+  Future<void> _runPi() async {
+    if (_piLoading) return;
+    _hostFocus.unfocus();
+    setState(() {
+      _piLoading = true;
+      _piResult = null;
+      _piError = null;
+    });
+    try {
+      final PiDns dns = await PiBackendClient()
+          .dnsLookup(host: _hostCtrl.text.trim(), type: _piType);
+      if (!mounted) return;
+      setState(() {
+        _piLoading = false;
+        _piResult = dns;
+      });
+      final int n = dns.answers.length;
+      _announce(n == 0
+          ? 'No $_piType records found'
+          : '$n $_piType record${n == 1 ? '' : 's'} found');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _piLoading = false;
+        _piError = e;
+      });
+      _announce('Lookup failed');
+    }
   }
 
   // WCAG 4.1.3 — announce the outcome so AT users learn results landed without
@@ -231,6 +288,7 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
   /// the on-screen [_displayData] so parsed SRV/CAA rows copy as they render; a
   /// null TTL is written as an empty cell (honest blank, GL-005).
   String? _buildCopyText() {
+    if (_piBacked) return _buildPiCopyText();
     if (_loading) return null;
 
     const String tab = '\t';
@@ -273,6 +331,21 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
     return buf.toString().trimRight();
   }
 
+  /// §8.16 copy payload for the Pi lookup — the resolved answers as TSV, honest
+  /// about the Pi origin. Null until a lookup resolves with at least one answer.
+  String? _buildPiCopyText() {
+    final PiDns? r = _piResult;
+    if (_piLoading || r == null || r.answers.isEmpty) return null;
+    const String tab = '\t';
+    final StringBuffer buf = StringBuffer()
+      ..writeln('DNS Lookup — resolved on the WLAN Pi hosting this page')
+      ..writeln(<String>['Type', 'Name', 'Value'].join(tab));
+    for (final String a in r.answers) {
+      buf.writeln(<String>[r.type ?? _piType, r.host ?? '', a].join(tab));
+    }
+    return buf.toString().trimRight();
+  }
+
   Widget _body() {
     if (!NetworkSupport.dnsLookupSupported) {
       return NetworkUnavailableView(
@@ -281,6 +354,8 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
             NetworkSupport.unavailableReason ?? NetworkUnavailableReason.web,
       );
     }
+
+    if (_piBacked) return _piBody();
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -317,6 +392,158 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
           ),
         );
       },
+    );
+  }
+
+  /// Pi-hosted body: a host + record-type form (single-type only — the Pi
+  /// endpoint takes one type and resolves server-side, so there is no DoH
+  /// resolver selector or dig-style sweep here), then the resolved answers.
+  Widget _piBody() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isDesktop = constraints.maxWidth >= 720;
+        final double edge = isDesktop
+            ? AppSpacing.screenEdgeDesktop
+            : AppSpacing.screenEdgeMobile;
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                edge,
+                AppSpacing.sm,
+                edge,
+                edge + AppSpacing.sm,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ConceptGraphicBand(toolId: 'dns-lookup', isDesktop: isDesktop),
+                  if (ToolAssets.hasGraphic('dns-lookup'))
+                    const SizedBox(height: AppSpacing.md),
+                  _piQueryCard(context),
+                  const SizedBox(height: AppSpacing.sm),
+                  _piResultsSection(context),
+                  ToolHelpFooter(toolId: 'dns-lookup'),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _piQueryCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LabeledField(
+            label: 'Hostname or IP',
+            field: TextField(
+              controller: _hostCtrl,
+              focusNode: _hostFocus,
+              enabled: !_piLoading,
+              autocorrect: false,
+              enableSuggestions: false,
+              keyboardType: TextInputType.url,
+              textInputAction: TextInputAction.search,
+              onSubmitted: (_) => _runPi(),
+              cursorColor: colors.textAccent,
+              decoration: const InputDecoration(hintText: 'WLANPros.com'),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text('Record type', style: _fieldLabelStyle(text, colors)),
+          const SizedBox(height: AppSpacing.xs),
+          Wrap(
+            spacing: AppSpacing.xs,
+            runSpacing: AppSpacing.xs,
+            children: _piTypes.map((String t) {
+              return _selectChipRaw(
+                context,
+                label: t,
+                selected: t == _piType,
+                onSelected: () => setState(() => _piType = t),
+                enabled: !_piLoading,
+              );
+            }).toList(),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            child: Text(
+              'Resolved on the WLAN Pi hosting this page, through the Pi\'s own '
+              'resolver — not from this browser.',
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          FilledButton(
+            onPressed: _piLoading ? null : _runPi,
+            child: _piLoading ? const _ButtonSpinner() : const Text('Look up'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _piResultsSection(BuildContext context) {
+    if (_piError != null) {
+      return const _MessageCard(
+        icon: Icons.error_outline,
+        title: 'Lookup failed',
+        body: 'The WLAN Pi could not resolve that name. Check the hostname and '
+            'try again.',
+      );
+    }
+    final PiDns? r = _piResult;
+    if (r == null) return const SizedBox.shrink();
+    if (r.answers.isEmpty) {
+      return _MessageCard(
+        icon: Icons.search_off,
+        title: 'No records',
+        body: 'No $_piType records found for ${r.host ?? _hostCtrl.text.trim()}.',
+      );
+    }
+    return _PiDnsCard(result: r, type: _piType);
+  }
+
+  /// A [_selectChip] variant whose disabled state is driven by an explicit flag
+  /// (the Pi form gates on [_piLoading], not the native [_loading]).
+  Widget _selectChipRaw(
+    BuildContext context, {
+    required String label,
+    required bool selected,
+    required VoidCallback onSelected,
+    required bool enabled,
+  }) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      showCheckmark: false,
+      labelStyle: text.labelMedium?.copyWith(
+        color: selected ? colors.onPrimary : colors.textSecondary,
+        fontWeight: FontWeight.w500,
+      ),
+      selectedColor: colors.primary,
+      backgroundColor: colors.surface2,
+      materialTapTargetSize: MaterialTapTargetSize.padded,
+      side: AppTheme.chipSide(Theme.of(context).brightness),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.control),
+      ),
+      onSelected: enabled ? (_) => onSelected() : null,
     );
   }
 
@@ -824,6 +1051,59 @@ class _RecordRow extends StatelessWidget {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Pi-hosted single-type result card. Renders the Pi's answers through the SAME
+/// [_RecordRow] the native cards use (one [DnsRecord] per answer), so a record
+/// looks identical whether it came over DoH or from the Pi. The summary line
+/// carries the answer count and the Pi's query time; the resolver is the Pi's
+/// own (stated in the query card copy), so no DoH-resolver label is shown here.
+class _PiDnsCard extends StatelessWidget {
+  const _PiDnsCard({required this.result, required this.type});
+
+  final PiDns result;
+  final String type;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final int n = result.answers.length;
+    final String timing =
+        result.queryMs == null ? '' : ' · ${result.queryMs!.round()} ms';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            '$n $type record${n == 1 ? '' : 's'}$timing · via the WLAN Pi',
+            style: text.labelMedium?.copyWith(
+              color: colors.textSecondary,
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          ...result.answers.map(
+            (String a) => _RecordRow(
+              rec: DnsRecord(
+                type: type,
+                name: result.host ?? '',
+                ttl: null,
+                data: a,
+              ),
+            ),
+          ),
         ],
       ),
     );

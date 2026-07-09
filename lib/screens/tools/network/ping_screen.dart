@@ -17,11 +17,14 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/pi_backend.dart';
+import '../../../services/network/pi_backend_client.dart';
 import '../../../services/network/ping_service.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_color_scheme.dart';
@@ -58,9 +61,20 @@ class _PingScreenState extends State<PingScreen> {
   StreamSubscription<PingProgress>? _sub;
   Completer<void>? _cancel;
 
+  /// True when this build is served FROM a WLAN Pi (Pi-hosted web): the browser
+  /// has no sockets, so the ping runs ON the Pi via `/toolboxapi/ping` (a real
+  /// ICMP echo). Only when no test service is injected, on web, with a Pi
+  /// backend present — otherwise the native TCP-handshake path runs unchanged.
+  late final bool _piBacked;
+
+  /// Pi ping echo count (1–20, the Pi's bound). Separate from the native
+  /// [_count] (which allows 0 = until stopped, unsupported on the one-shot Pi).
+  int _piCount = 10;
+
   @override
   void initState() {
     super.initState();
+    _piBacked = kIsWeb && PiBackend.available && widget.service == null;
     _service = widget.service ?? PingService();
   }
 
@@ -127,6 +141,55 @@ class _PingScreenState extends State<PingScreen> {
     setState(() => _running = false);
   }
 
+  /// Pi-hosted one-shot ping: the real ICMP echo runs ON the Pi and returns an
+  /// aggregate (sent/received/loss + min/avg/max). We fold it into the same
+  /// [PingStats] the native `_statsCard` renders, so the results card is shared;
+  /// there is no per-reply stream, so [_replies] stays empty (no replies card,
+  /// no sparkline — honest, GL-005). Never throws to the UI.
+  Future<void> _startPi() async {
+    final String host = _hostCtrl.text.trim();
+    if (host.isEmpty) {
+      setState(() => _error = 'Enter a host or IP to ping.');
+      return;
+    }
+    _hostFocus.unfocus();
+    setState(() {
+      _error = null;
+      _running = true;
+      _replies.clear();
+      _stats = PingStats.empty;
+    });
+    try {
+      final PiHop hop = await PiBackendClient().ping(host: host, count: _piCount);
+      if (!mounted) return;
+      setState(() {
+        _running = false;
+        _stats = PingStats(
+          sent: hop.sent ?? _piCount,
+          received: hop.received ?? 0,
+          minMs: hop.minMs,
+          avgMs: hop.avgMs,
+          maxMs: hop.maxMs,
+          rttsMs: const <double>[],
+        );
+      });
+      final String avg = _stats.avgMs == null
+          ? 'no replies'
+          : 'average ${_stats.avgMs!.toStringAsFixed(1)} milliseconds';
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        'Ping complete, ${_stats.received} of ${_stats.sent} replies, $avg',
+        TextDirection.ltr,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _running = false;
+        _error = 'Ping error: $e';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -156,6 +219,7 @@ class _PingScreenState extends State<PingScreen> {
   /// honest reason word in the Result column (GL-005); nothing is fabricated.
   String? _buildCopyText() {
     if (_stats.sent == 0) return null;
+    if (_piBacked) return _buildPiCopyText();
 
     final String host = _hostCtrl.text.trim();
     final String lossPct = (_stats.lossFraction * 100).toStringAsFixed(0);
@@ -186,6 +250,25 @@ class _PingScreenState extends State<PingScreen> {
     return buf.toString().trimRight();
   }
 
+  /// §8.16 copy payload for the Pi ping — honest about ICMP + the Pi origin,
+  /// with no TCP-port line (the Pi runs a real ICMP echo, not a TCP handshake).
+  String? _buildPiCopyText() {
+    if (_stats.sent == 0) return null;
+    final String host = _hostCtrl.text.trim();
+    final String lossPct = (_stats.lossFraction * 100).toStringAsFixed(0);
+    String ms(double? v) => v == null ? '—' : v.toStringAsFixed(1);
+    return (StringBuffer()
+          ..writeln('Ping — ICMP echo, measured on the WLAN Pi hosting this page')
+          ..writeln('Target: ${host.isEmpty ? '(unknown)' : host}')
+          ..writeln(
+            'Summary: ${_stats.received}/${_stats.sent} replies, $lossPct% '
+            'loss · min ${ms(_stats.minMs)} ms / avg ${ms(_stats.avgMs)} ms / '
+            'max ${ms(_stats.maxMs)} ms',
+          ))
+        .toString()
+        .trimRight();
+  }
+
   Widget _body() {
     if (!NetworkSupport.pingSupported) {
       return NetworkUnavailableView(
@@ -194,6 +277,8 @@ class _PingScreenState extends State<PingScreen> {
             NetworkSupport.unavailableReason ?? NetworkUnavailableReason.web,
       );
     }
+
+    if (_piBacked) return _piBody();
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -233,6 +318,151 @@ class _PingScreenState extends State<PingScreen> {
           ),
         );
       },
+    );
+  }
+
+  /// Pi-hosted body: a simplified form (host + echo count — no TCP port, since
+  /// the Pi runs a real ICMP echo) and the SHARED stats card, plus an honest
+  /// caption attributing the measurement to the Pi.
+  Widget _piBody() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isDesktop = constraints.maxWidth >= 720;
+        final double edge = isDesktop
+            ? AppSpacing.screenEdgeDesktop
+            : AppSpacing.screenEdgeMobile;
+        final AppColorScheme colors = context.colors;
+        final TextTheme text = Theme.of(context).textTheme;
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                edge,
+                AppSpacing.sm,
+                edge,
+                edge + AppSpacing.sm,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ConceptGraphicBand(toolId: 'ping', isDesktop: isDesktop),
+                  if (ToolAssets.hasGraphic('ping'))
+                    const SizedBox(height: AppSpacing.md),
+                  _piFormCard(context),
+                  if (_stats.sent > 0 || _running) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    _statsCard(context),
+                  ],
+                  if (_stats.sent > 0 && !_running) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      'Measured on the WLAN Pi hosting this page (real ICMP '
+                      'echo), not from this browser.',
+                      style: text.labelMedium?.copyWith(
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                  ToolHelpFooter(toolId: 'ping'),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _piFormCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LabeledField(
+            label: 'Host or IP',
+            field: TextField(
+              controller: _hostCtrl,
+              focusNode: _hostFocus,
+              enabled: !_running,
+              autocorrect: false,
+              enableSuggestions: false,
+              keyboardType: TextInputType.url,
+              textInputAction: TextInputAction.go,
+              onSubmitted: (_) => _running ? null : _startPi(),
+              cursorColor: colors.textAccent,
+              decoration: const InputDecoration(hintText: '1.1.1.1'),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Count',
+            style: text.labelMedium?.copyWith(
+              color: colors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Wrap(
+            spacing: AppSpacing.xs,
+            runSpacing: AppSpacing.xs,
+            children: const <int>[5, 10, 20]
+                .map((int c) => _piCountChip(context, c))
+                .toList(),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            child: Text(
+              'A real ICMP echo, sent from the WLAN Pi hosting this page — not '
+              'from this browser.',
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
+            ),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              _error!,
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.md),
+          FilledButton(
+            onPressed: _running ? null : _startPi,
+            child: Text(_running ? 'Pinging…' : 'Ping'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _piCountChip(BuildContext context, int count) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final bool selected = _piCount == count;
+    return ChoiceChip(
+      label: Text('$count'),
+      selected: selected,
+      showCheckmark: false,
+      labelStyle: text.labelMedium?.copyWith(
+        color: selected ? colors.onPrimary : colors.textSecondary,
+        fontWeight: FontWeight.w500,
+      ),
+      selectedColor: colors.primary,
+      backgroundColor: colors.surface2,
+      materialTapTargetSize: MaterialTapTargetSize.padded,
+      side: AppTheme.chipSide(Theme.of(context).brightness),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.control),
+      ),
+      onSelected: _running ? null : (_) => setState(() => _piCount = count),
     );
   }
 

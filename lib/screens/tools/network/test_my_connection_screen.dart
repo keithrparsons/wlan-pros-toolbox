@@ -29,11 +29,13 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:net_quality/net_quality.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../router/app_router.dart';
 import '../../guides/guide_reader_screen.dart';
 import '../../../services/network/analyze/analyze_engine.dart';
@@ -49,6 +51,8 @@ import '../../../services/network/ip_geo_service.dart';
 import '../../../services/network/network_details_service.dart';
 import '../../../services/network/live_onboarding_service.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/pi_backend.dart';
+import '../../../services/network/pi_backend_client.dart';
 import '../../../services/network/wifi_details_bridge.dart';
 import '../../../services/network/wifi_grading.dart';
 import '../../../services/network/wifi_info_adapter.dart';
@@ -65,6 +69,7 @@ import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/packet_flow_progress.dart';
 import '../../../widgets/sparkline.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../concept_graphic_band.dart';
 import 'analyze_results_screen.dart';
 import 'cloud_apps_panel.dart';
 import 'get_reading_icon.dart';
@@ -213,6 +218,16 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   LiveOnboardingService? _onboardingService;
   late final QualityClient _quality;
 
+  /// True when this build is served FROM a WLAN Pi (Pi-hosted web) — this is the
+  /// home hero and the `/tools/wifi-vs-internet` redirect target, so it is the
+  /// most likely first click on the hosted page. The browser cannot read the
+  /// visitor's own Wi-Fi link, so the full consumer "is it your Wi-Fi or your
+  /// internet?" verdict is impossible here; instead the Pi runs a connection
+  /// test on itself (`/toolboxapi/conntest`) and the honest reading is rendered
+  /// by [_PiConnectionBody]. False on native and on Netlify web (no Pi backend),
+  /// so both are byte-for-byte unchanged. Set before the web bail in initState.
+  late final bool _piBacked;
+
   /// Guards the first-run onboarding gate so it presents at most once per mount.
   /// Retained with [_maybeShowFirstRunOnboarding] for the inline opt-in path; the
   /// AUTO-FIRE was removed 2026-06-23 (native-first), but the gate logic stays so
@@ -329,6 +344,13 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   void initState() {
     super.initState();
     _source = widget.sourceOverride ?? WifiInfoSourceResolver.resolve();
+
+    // Pi-hosted web: the front door runs a Pi-side connection test instead of
+    // the native consumer verdict (the browser cannot read this device's Wi-Fi
+    // link). Computed BEFORE the web bail below so _body() can branch to the
+    // self-contained [_PiConnectionBody]. Never true on native or Netlify web,
+    // where the injected-client guard also keeps every test on the native path.
+    _piBacked = kIsWeb && PiBackend.available && widget.qualityClient == null;
 
     // WEB GATE (launch-critical, 2026-07-06). The browser has no dart:io, and
     // several of the native services constructed below touch it at CONSTRUCTION
@@ -1256,6 +1278,12 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   }
 
   Widget _body() {
+    // Pi-hosted web: the front door runs the Pi's own connection test. This is
+    // checked FIRST so the hosted home hero lands on a real reading instead of
+    // the "download the native app" fallback below.
+    if (_piBacked) {
+      return _PiConnectionBody(autoStart: widget.autoStart);
+    }
     // The internet measurement needs dart:io sockets the browser does not have;
     // route web (and any no-socket platform) to the shared fallback.
     if (!NetworkSupport.activeNetworkSupported) {
@@ -4668,6 +4696,290 @@ class _ShortcutOfferCard extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// Pi-hosted front-door body. The browser cannot read the visitor's own Wi-Fi
+/// link, so the consumer "is it your Wi-Fi or your internet?" verdict is
+/// impossible here (that needs the native app). Instead this runs the WLAN Pi's
+/// own connection test (`/toolboxapi/conntest`) and renders the honest reading:
+/// latency + packet loss to the internet and the gateway, plus DNS resolution
+/// time. It is deliberately self-contained — it touches none of the native
+/// screen's state — so the native path stays byte-for-byte unchanged.
+///
+/// States (SOP-007 §5): idle · loading (spinner, Run disabled) · success (the
+/// hop reachability rows + latency/loss summary) · error (honest failure with a
+/// Retry). It never fabricates a value or claims to measure the visitor's own
+/// device (GL-005 / GL-008).
+class _PiConnectionBody extends StatefulWidget {
+  const _PiConnectionBody({this.autoStart = false});
+
+  /// When true (the home hero's one-tap entry) the test runs on first mount.
+  final bool autoStart;
+
+  @override
+  State<_PiConnectionBody> createState() => _PiConnectionBodyState();
+}
+
+class _PiConnectionBodyState extends State<_PiConnectionBody> {
+  final PiBackendClient _client = PiBackendClient();
+
+  bool _running = false;
+  PiConntestResult? _result;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.autoStart) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _run();
+      });
+    }
+  }
+
+  Future<void> _run() async {
+    setState(() {
+      _running = true;
+      _error = null;
+      _result = null;
+    });
+    try {
+      final PiConntestResult ct = await _client.conntest();
+      if (!mounted) return;
+      setState(() {
+        _running = false;
+        _result = ct;
+      });
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        'Connection test complete',
+        TextDirection.ltr,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _running = false;
+        _error =
+            "The WLAN Pi couldn't complete the connection test. Please try "
+            'again.';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isDesktop = constraints.maxWidth >= 720;
+        final double edge = isDesktop
+            ? AppSpacing.screenEdgeDesktop
+            : AppSpacing.screenEdgeMobile;
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                edge,
+                AppSpacing.sm,
+                edge,
+                edge + AppSpacing.sm,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  ConceptGraphicBand(
+                    toolId: 'net-quality',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('net-quality'))
+                    const SizedBox(height: AppSpacing.md),
+                  _runCard(context),
+                  if (_result != null) ...<Widget>[
+                    const SizedBox(height: AppSpacing.sm),
+                    _hopsCard(context, _result!),
+                    const SizedBox(height: AppSpacing.sm),
+                    _caption(context),
+                  ],
+                  const ToolHelpFooter(toolId: 'net-quality'),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _runCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'Runs a connection test on the WLAN Pi hosting this page: latency '
+            'and packet loss to the internet and to the gateway, plus DNS '
+            'resolution time. A browser cannot read your own device\'s Wi-Fi '
+            'link, so the full "is it your Wi-Fi or your internet?" comparison '
+            'runs in the native app, not here.',
+            style: text.bodyLarge?.copyWith(color: colors.textSecondary),
+          ),
+          if (_error != null) ...<Widget>[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              _error!,
+              style: text.labelMedium?.copyWith(color: colors.statusDanger),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.md),
+          Semantics(
+            button: true,
+            enabled: !_running,
+            label: _running
+                ? 'Running the connection test'
+                : 'Run the connection test on the WLAN Pi',
+            child: FilledButton(
+              onPressed: _running ? null : _run,
+              child: Text(_running ? 'Running…' : 'Run connection test'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _hopsCard(BuildContext context, PiConntestResult ct) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Semantics(
+            header: true,
+            child: Text(
+              'Measured on the WLAN Pi',
+              style: text.labelMedium?.copyWith(
+                color: colors.textSecondary,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          _hopRow(
+            context,
+            label: _named('Gateway', ct.gateway.target),
+            reachable: ct.gateway.reachable,
+            latencyMs: ct.gateway.reachable ? ct.gateway.avgMs : null,
+          ),
+          _hopRow(
+            context,
+            label: _named('Internet', ct.internet.target),
+            reachable: ct.internet.reachable,
+            latencyMs: ct.internet.reachable ? ct.internet.avgMs : null,
+            lossPct: ct.internet.lossPct,
+          ),
+          _hopRow(
+            context,
+            label: _named('DNS resolve', ct.dns.host),
+            reachable: ct.dns.ms != null,
+            latencyMs: ct.dns.ms,
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _named(String base, String? id) =>
+      (id == null || id.isEmpty) ? base : '$base ($id)';
+
+  Widget _hopRow(
+    BuildContext context, {
+    required String label,
+    required bool reachable,
+    double? latencyMs,
+    double? lossPct,
+  }) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+
+    // WCAG 1.4.1 — outcome carried by icon shape AND a status word, never color.
+    final IconData icon = reachable ? Icons.check_circle : Icons.cancel;
+    final Color iconColor =
+        reachable ? colors.statusSuccess : colors.statusDanger;
+    final String status = reachable ? 'reachable' : 'unreachable';
+    final String rtt = reachable && latencyMs != null
+        ? '${latencyMs.round()} ms'
+        : '—';
+    final String lossSuffix =
+        lossPct == null ? '' : ', ${lossPct.round()}% loss';
+
+    return Semantics(
+      label: '$label, $status'
+          '${reachable && latencyMs != null ? ', ${latencyMs.round()} milliseconds' : ''}'
+          '$lossSuffix',
+      container: true,
+      child: ExcludeSemantics(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
+          child: Row(
+            children: <Widget>[
+              Icon(icon, size: 16, color: iconColor),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: Text(
+                  label,
+                  style: text.bodyLarge?.copyWith(color: colors.textPrimary),
+                ),
+              ),
+              Text(
+                status,
+                style: text.labelMedium?.copyWith(color: colors.textSecondary),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              SizedBox(
+                width: 64,
+                child: Text(
+                  rtt,
+                  textAlign: TextAlign.right,
+                  style: mono.inlineCode.copyWith(
+                    color: reachable ? colors.textAccent : colors.textTertiary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _caption(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Text(
+      'Measured on the WLAN Pi hosting this page, not from this browser and not '
+      'an Orb or Ookla score. To compare your device\'s Wi-Fi link against your '
+      'internet, run Test My Connection in the native app.',
+      style: text.labelMedium?.copyWith(color: colors.textSecondary),
     );
   }
 }

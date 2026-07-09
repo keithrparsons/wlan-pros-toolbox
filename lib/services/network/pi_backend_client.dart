@@ -38,11 +38,17 @@ class PiBackendException implements Exception {
   String toString() => 'PiBackendException: $message';
 }
 
-/// One reachability hop from `conntest` (the internet target or the gateway).
+/// One hop / probe summary from the Pi. Shared across three endpoints, since all
+/// three describe "an address that was probed and how it answered":
+///   * `conntest` — the internet target or the gateway ([PiHop.fromJson]);
+///   * `ping` — the aggregate of N ICMP echoes to one host ([PiHop.fromJson],
+///     which also fills [sent] / [received] / [count]);
+///   * `traceroute` — one hop on the path ([PiHop.fromTracerouteJson], which
+///     fills [hopNumber] and the single-probe [ms]).
 ///
-/// `target` is the probed address (the internet target's IP, or the gateway's
-/// IP). Latency fields are null when the hop was unreachable or the Pi did not
-/// report them — never zero-filled.
+/// `target` is the probed address (the internet target's IP, the gateway's IP,
+/// the ping host, or the traceroute hop's IP). Latency fields are null when the
+/// hop was unreachable or the Pi did not report them — never zero-filled.
 class PiHop {
   const PiHop({
     required this.target,
@@ -51,6 +57,11 @@ class PiHop {
     this.minMs,
     this.maxMs,
     this.lossPct,
+    this.sent,
+    this.received,
+    this.count,
+    this.hopNumber,
+    this.ms,
   });
 
   final String? target;
@@ -60,8 +71,21 @@ class PiHop {
   final double? maxMs;
   final double? lossPct;
 
-  /// Parses an internet/gateway hop. The internet hop names its address under
-  /// `target`; the gateway hop under `ip`.
+  /// `ping` only: echoes sent / received and the requested count. Null on the
+  /// conntest and traceroute paths (those do not report an echo count).
+  final int? sent;
+  final int? received;
+  final int? count;
+
+  /// `traceroute` only: 1-based hop number, and this hop's single round-trip
+  /// time in milliseconds. Null on the conntest and ping paths.
+  final int? hopNumber;
+  final double? ms;
+
+  /// Parses a conntest hop (`target`/`ip` + `reachable` + min/avg/max/loss) OR a
+  /// `ping` aggregate (the same fields plus `sent`/`received`/`count`). The
+  /// conntest hop names its address under `target`; the gateway hop under `ip`;
+  /// the ping aggregate under `target`.
   factory PiHop.fromJson(Map<String, dynamic> json) {
     return PiHop(
       target: (json['target'] ?? json['ip']) as String?,
@@ -70,22 +94,84 @@ class PiHop {
       minMs: _toDouble(json['min_ms']),
       maxMs: _toDouble(json['max_ms']),
       lossPct: _toDouble(json['loss_pct']),
+      sent: _toInt(json['sent']),
+      received: _toInt(json['received']),
+      count: _toInt(json['count']),
+    );
+  }
+
+  /// Parses one `traceroute` hop: `{"hop":1,"ip":"10.0.10.1","ms":0.4}`. A hop
+  /// that did not answer arrives with a null `ip` (and no `ms`); we mark it
+  /// unreachable rather than zero-filling a latency (GL-005).
+  factory PiHop.fromTracerouteJson(Map<String, dynamic> json) {
+    final String? ip = json['ip'] as String?;
+    final double? ms = _toDouble(json['ms']);
+    return PiHop(
+      target: ip,
+      reachable: ip != null && ip.isNotEmpty,
+      hopNumber: _toInt(json['hop']),
+      ms: ms,
+      // Mirror the single-probe RTT into avg/min/max so any hop consumer that
+      // reads the aggregate fields still sees the one measured value.
+      avgMs: ms,
+      minMs: ms,
+      maxMs: ms,
     );
   }
 }
 
-/// The DNS-resolution timing from `conntest`. `ms` is null when the Pi did not
-/// resolve the probe host.
+/// A DNS timing/result from the Pi. Shared across two endpoints:
+///   * `conntest` — just the resolve time for a probe host ([PiDns.fromJson]);
+///   * `dns` — a full record lookup (`type` + `answers` + `count` + `query_ms`)
+///     via [PiDns.fromLookupJson].
+///
+/// `ms` is null when the conntest path did not resolve the probe host; on the
+/// lookup path the timing lives in [queryMs] and `ms` stays null.
 class PiDns {
-  const PiDns({required this.host, required this.ms});
+  const PiDns({
+    required this.host,
+    required this.ms,
+    this.type,
+    this.answers = const <String>[],
+    this.count,
+    this.queryMs,
+  });
 
   final String? host;
   final double? ms;
+
+  /// `dns` lookup only: the queried record type, the resolved answers (empty is
+  /// a valid negative result, not an error — GL-005), the answer count the Pi
+  /// reported, and the query time in milliseconds.
+  final String? type;
+  final List<String> answers;
+  final int? count;
+  final double? queryMs;
 
   factory PiDns.fromJson(Map<String, dynamic> json) {
     return PiDns(
       host: json['host'] as String?,
       ms: _toDouble(json['ms']),
+    );
+  }
+
+  /// Parses a `dns` lookup:
+  /// `{"host":"cloudflare.com","type":"A","answers":[...],"count":2,
+  ///   "query_ms":36.8,"raw":"..."}`. A resolvable name with no records of the
+  /// requested type returns an empty `answers` list — a normal negative result.
+  factory PiDns.fromLookupJson(Map<String, dynamic> json) {
+    final List<dynamic> raw =
+        (json['answers'] as List<dynamic>?) ?? const <dynamic>[];
+    return PiDns(
+      host: json['host'] as String?,
+      ms: null,
+      type: json['type'] as String?,
+      answers: raw
+          .whereType<String>()
+          .where((String s) => s.isNotEmpty)
+          .toList(growable: false),
+      count: _toInt(json['count']),
+      queryMs: _toDouble(json['query_ms']),
     );
   }
 }
@@ -296,6 +382,63 @@ class PiBackendClient {
     return out;
   }
 
+  /// ICMP ping run ON the Pi to [host], [count] echoes (clamped 1–20 to match
+  /// the Pi's own bound). Returns the aggregate as a [PiHop] (reachable, loss,
+  /// min/avg/max, sent/received). Ping can be slow, so the client timeout sits
+  /// OUTSIDE the Pi's own: `count * 2 + 8`s.
+  Future<PiHop> ping({required String host, int count = 5}) async {
+    final int c = count.clamp(1, 20);
+    final Map<String, dynamic> json = await _getJsonObject(
+      'ping',
+      query: <String, String>{'host': host, 'count': '$c'},
+      timeout: Duration(seconds: c * 2 + 8),
+    );
+    return PiHop.fromJson(json);
+  }
+
+  /// Traceroute run ON the Pi to [host], up to [maxHops] (clamped 1–30 to match
+  /// the Pi's own bound). Returns the hops in path order; a hop that did not
+  /// answer carries a null target and is not zero-filled. Traceroute can be
+  /// slow, so the client timeout sits OUTSIDE the Pi's own: `maxHops * 2 + 12`s.
+  Future<List<PiHop>> traceroute({
+    required String host,
+    int maxHops = 30,
+  }) async {
+    final int m = maxHops.clamp(1, 30);
+    final Map<String, dynamic> json = await _getJsonObject(
+      'traceroute',
+      query: <String, String>{'host': host, 'max_hops': '$m'},
+      timeout: Duration(seconds: m * 2 + 12),
+    );
+    final List<dynamic> hops =
+        (json['hops'] as List<dynamic>?) ?? const <dynamic>[];
+    return hops
+        .whereType<Map<dynamic, dynamic>>()
+        .map((Map<dynamic, dynamic> h) =>
+            PiHop.fromTracerouteJson(h.cast<String, dynamic>()))
+        .toList(growable: false);
+  }
+
+  /// DNS lookup run ON the Pi for [host], record [type] (A, AAAA, CNAME, MX, NS,
+  /// TXT, SOA, PTR, SRV, CAA — one of the Pi's supported types).
+  ///
+  /// NAMING MISMATCH (deliberate): the CATALOG tool id is `dns-lookup` (that is
+  /// what [PiBackend.servedToolIds] carries and what the tool-grid gate checks),
+  /// but the PROXY ROUTE is `/toolboxapi/dns`. So this method hits the `dns`
+  /// path even though the tool is `dns-lookup`. Do not "fix" one to match the
+  /// other — they are intentionally different names.
+  Future<PiDns> dnsLookup({
+    required String host,
+    required String type,
+  }) async {
+    final Map<String, dynamic> json = await _getJsonObject(
+      'dns', // catalog id is `dns-lookup`; the proxy route is `dns`.
+      query: <String, String>{'host': host, 'type': type},
+      timeout: const Duration(seconds: 12),
+    );
+    return PiDns.fromLookupJson(json);
+  }
+
   Future<Map<String, dynamic>> _getJsonObject(
     String path, {
     Map<String, String>? query,
@@ -316,5 +459,10 @@ class PiBackendClient {
 
 double? _toDouble(Object? v) {
   if (v is num) return v.toDouble();
+  return null;
+}
+
+int? _toInt(Object? v) {
+  if (v is num) return v.toInt();
   return null;
 }

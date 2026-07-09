@@ -457,7 +457,6 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
         return _PiInterfacesView(
           interfaces: ifaces,
           edge: edge,
-          isDesktop: isDesktop,
         );
       },
     );
@@ -508,12 +507,10 @@ class _PiInterfacesView extends StatelessWidget {
   const _PiInterfacesView({
     required this.interfaces,
     required this.edge,
-    required this.isDesktop,
   });
 
   final List<PiInterface> interfaces;
   final double edge;
-  final bool isDesktop;
 
   @override
   Widget build(BuildContext context) {
@@ -533,9 +530,15 @@ class _PiInterfacesView extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              ConceptGraphicBand(toolId: 'interface-info', isDesktop: isDesktop),
-              if (ToolAssets.hasGraphic('interface-info'))
-                const SizedBox(height: AppSpacing.md),
+              // HONESTY (screenshot/graphic text must match prose): the
+              // 'interface-info' concept graphic depicts a SPECIFIC local device
+              // ("this device", en0, 192.168.1.42, a MAC). On the Pi-hosted page
+              // the prose directly below states a browser CANNOT read this
+              // device's own interface table — so showing that illustration here
+              // would have the picture claim the visitor's live local interface
+              // while the text says that is impossible. The graphic is therefore
+              // omitted on the Pi view; the native `_Success` layout keeps it,
+              // where it is truthful. (Netlify web never reaches this view.)
               Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                 child: Text(

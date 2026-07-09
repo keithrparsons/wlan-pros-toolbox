@@ -43,11 +43,12 @@ class NetworkSupport {
   /// (Interface Info, Port Scan, future Ping/Traceroute). False on web.
   static bool get activeNetworkSupported => !kIsWeb;
 
-  /// DNS Lookup support. Tied to [activeNetworkSupported] per the §15 product
-  /// decision (DoH is technically web-capable, but the network category is
-  /// native-only for a coherent download story). Flip this independently if
-  /// that decision changes.
-  static bool get dnsLookupSupported => !kIsWeb;
+  /// DNS Lookup support. Native everywhere; ALSO available on Pi-hosted web,
+  /// where the lookup runs ON the Pi via `/toolboxapi/dns` (the catalog id is
+  /// `dns-lookup`; the proxy route is `dns`). On Netlify web the Pi backend is
+  /// absent so this stays false and the tool keeps the download-the-app
+  /// fallback. Off the Pi it remains the §15 native-only DoH decision.
+  static bool get dnsLookupSupported => !kIsWeb || PiBackend.available;
 
   /// Interface Information support.
   ///
@@ -70,10 +71,12 @@ class NetworkSupport {
   /// Port Scan support.
   static bool get portScanSupported => !kIsWeb;
 
-  /// Ping support. Implemented as a TCP-handshake RTT probe (see
-  /// PingService) — needs no raw socket and works on every native platform,
-  /// so the gate is the same `!kIsWeb` as the other socket tools.
-  static bool get pingSupported => !kIsWeb;
+  /// Ping support. Native everywhere as a TCP-handshake RTT probe (see
+  /// PingService — needs no raw socket, works on every native platform); ALSO
+  /// available on Pi-hosted web, where a real ICMP ping runs ON the Pi via
+  /// `/toolboxapi/ping`. On Netlify web the Pi backend is absent so this stays
+  /// false and the tool keeps the download-the-app fallback.
+  static bool get pingSupported => !kIsWeb || PiBackend.available;
 
   /// Ping Sweep support. Discovers responsive hosts on a subnet by running the
   /// same TCP-handshake probe as Ping across a range of addresses (see
@@ -161,8 +164,10 @@ class NetworkSupport {
   /// hop-by-hop run only works on desktop where the OS traceroute binary can
   /// be spawned. The per-platform desktop-vs-mobile verdict is decided inside
   /// TracerouteService (`isSupportedPlatform`) and surfaced in the UI; this
-  /// flag only excludes web, where no part of it can run.
-  static bool get tracerouteSupported => !kIsWeb;
+  /// flag excludes web EXCEPT Pi-hosted web, where the traceroute runs ON the
+  /// Pi via `/toolboxapi/traceroute`. On Netlify web the Pi backend is absent
+  /// so this stays false and the tool keeps the download-the-app fallback.
+  static bool get tracerouteSupported => !kIsWeb || PiBackend.available;
 
   /// Network Discovery (LAN host + service scan) support. The *screen* is
   /// reachable off-web on every native platform so the catalog can route to it.

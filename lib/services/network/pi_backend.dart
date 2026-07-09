@@ -31,6 +31,14 @@ class PiBackend {
     'net-quality', // -> /toolboxapi/conntest
     'nearby-ap-scan', // -> /toolboxapi/scan
     'interface-info', // -> /toolboxapi/interfaces
+    'ping', // -> /toolboxapi/ping
+    'traceroute', // -> /toolboxapi/traceroute
+    // NAMING MISMATCH (deliberate): the CATALOG tool id is `dns-lookup`, so the
+    // grid gate and this set use `dns-lookup`, but the PROXY ROUTE is
+    // `/toolboxapi/dns`. PiBackendClient.dnsLookup() maps the id to the `dns`
+    // path explicitly — see that method. Keep both names as-is.
+    'dns-lookup', // -> /toolboxapi/dns  (route is `dns`, not `dns-lookup`)
+    'test-my-connection', // -> /toolboxapi/conntest (front door; same as net-quality)
   };
 
   static bool _available = false;
