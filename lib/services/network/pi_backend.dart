@@ -7,7 +7,7 @@
 // screen can decide — at runtime, from one artifact — whether the Pi-hosted
 // path is available.
 //
-// DETECTION: on WEB only, `GET /toolboxapi/health` (same-origin, ~2s). Any 200
+// DETECTION: on WEB only, `GET /toolboxapi/health` (same-origin, ~5s cap). Any 200
 // means a Pi backend is answering -> `available == true`. On non-web, or when
 // the probe fails / times out / 404s (Netlify), `available` stays false and the
 // networking tools stay hidden exactly as before — no regression, one artifact,
@@ -85,7 +85,7 @@ class PiBackend {
     try {
       final bool ok = await (client ?? PiBackendClient())
           .health()
-          .timeout(const Duration(seconds: 2));
+          .timeout(const Duration(seconds: 5));
       _available = ok;
     } catch (_) {
       _available = false;

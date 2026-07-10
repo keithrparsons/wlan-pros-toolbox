@@ -440,7 +440,7 @@ class PiBackendClient {
   /// startup gate never stalls; callers apply their own outer timeout too.
   Future<bool> health() async {
     final http.Response resp =
-        await _http.get(_endpoint('health')).timeout(const Duration(seconds: 2));
+        await _http.get(_endpoint('health')).timeout(const Duration(seconds: 5));
     return resp.statusCode == 200;
   }
 
