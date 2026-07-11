@@ -442,7 +442,7 @@ const String kSpeedtestOrbNote =
     'own net_quality engine and Network Quality tool are the in-app analog: '
     'per-dimension grades for latency, jitter, loss, download, upload, and '
     'responsiveness, with deliberately no composite score — our own '
-    'measurements, not an Orb or Ookla score.';
+    'measurements, not a third-party score.';
 
 /// The independence caveat (load-bearing): several "different" tests share a
 /// backend, so they are not independent measurements.

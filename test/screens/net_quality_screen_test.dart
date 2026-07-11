@@ -251,11 +251,12 @@ void main() {
       await tester.tap(help);
       await tester.pumpAndSettle();
 
-      // The not-an-Orb/Ookla-score caveat — the load-bearing honesty claim —
+      // The not-a-third-party-score caveat — the load-bearing honesty claim —
       // is rendered. Matched on a substring so a copy tweak elsewhere in the
-      // paragraph does not break the test.
+      // paragraph does not break the test. Deliberately names NO vendor: the
+      // claim is about whose measurements these are, not whose they are not.
       expect(
-        find.textContaining('not an Orb or Ookla score'),
+        find.textContaining('not a third-party score'),
         findsOneWidget,
       );
       // The RFC 9097 single-stream Responsiveness caveat is present (it appears
