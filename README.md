@@ -97,4 +97,15 @@ Built for and by the WLAN Pros community. RF calculator formulas mirror the WLAN
 
 ## License
 
-Copyright © 2026 Wireless LAN Professionals, Inc. All rights reserved. See [`LICENSE`](LICENSE). The source is published for transparency and reference; it is not licensed for reuse or redistribution. Bundled third-party components keep their own licenses, aggregated in [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md). The `pubspec.yaml` also carries `publish_to: 'none'` as a guard against accidental pub.dev publication.
+**The WLAN Pros Toolbox is free software, licensed under the [GNU AGPL-3.0](LICENSE).**
+
+In plain English:
+
+- **Use it for anything, including your paid consulting work.** Running the Toolbox on a billable site survey is exactly what it is for. There is no restriction on commercial use.
+- **Fork it, read it, improve it.** Pull requests welcome — see [`CONTRIBUTING.md`](CONTRIBUTING.md). You will be asked to sign a [CLA](CLA.md), which is what lets us keep shipping the app on the App Store.
+- **If you distribute a modified version — including running it over a network — you must publish your source** under the same license. That is the AGPL's bargain, and the reason we chose it.
+- **You may not use the "WLAN Pros" name or logo on your fork.** The AGPL covers the code, not the brand. See [`TRADEMARK.md`](TRADEMARK.md). Rename and rebrand.
+
+Third-party dependencies keep their own licenses: [`THIRD-PARTY-LICENSES.md`](THIRD-PARTY-LICENSES.md) (generated) and [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md) (bundled components). Store distribution is addressed in [`LICENSE-EXCEPTION-APPSTORE.md`](LICENSE-EXCEPTION-APPSTORE.md). The rationale behind all of this is in [`docs/LICENSING.md`](docs/LICENSING.md).
+
+Copyright © 2026 Wireless LAN Professionals, Inc.
