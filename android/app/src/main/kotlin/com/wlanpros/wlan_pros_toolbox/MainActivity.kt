@@ -58,18 +58,68 @@ import java.net.InetAddress
 //      that the OS throttles still yields the previous results (the honest
 //      "last scan" fallback) rather than nothing.
 //
+//   4. com.wlanpros.toolbox/platform_env — the ChromeOS / ARC-VM probe. See the
+//      CHROMEOS block below; the Dart SSOT is ChromeOsArc.
+//
 // Honesty (GL-005 / GL-008): every field the public Android API cannot supply
 // is returned as a genuine null — never an estimate. Android exposes no noise
 // floor, so noiseDbm and snrDb are always null and SNR is never computed.
 // SSID/BSSID require ACCESS_FINE_LOCATION granted at runtime; without it Android
 // redacts them and we pass null with locationAuthorized=false so the Dart UI
 // shows its honest Location-gate card.
+//
+// ============================ CHROMEOS / ARCVM =============================
+// On a Chromebook this app does NOT run on the Chromebook's network stack. It
+// runs inside ARCVM, a virtual machine whose network is a small NAT'd private
+// network created by ChromeOS (`patchpanel`) out of the RFC 6598 shared-address
+// block at 100.115.92.0/24. That breaks two whole classes of reading, and BOTH
+// are suppressed at the source here so no Dart consumer can render them:
+//
+//   (a) ADDRESSING. getDhcpInfo() and getLinkProperties() describe the ARC VM's
+//       virtual adapter — a 100.115.92.x address, a /30 subnet, a 100.115.92.x
+//       gateway, and ChromeOS's own DNS proxy. The user's REAL gateway and REAL
+//       resolvers sit on the far side of the NAT and are not visible to us at
+//       all. Reporting the VM's as "your network" is not degraded data, it is
+//       WRONG data — a K-12 admin troubleshooting a school network would be
+//       handed a virtual machine's gateway with no way to know. So on ChromeOS
+//       readNetworkAddressing() returns nulls and the Dart side says why.
+//
+//   (b) RF. ARC's Wi-Fi bridge is fed from ChromeOS's ONC (Open Network
+//       Configuration) vocabulary, which defines signal strength as a 0-100
+//       PERCENTAGE and carries NO dBm field, and which has no vocabulary at all
+//       for channel width, PHY/link rate, the 802.11 generation, or MLO. Any
+//       dBm we could read here is therefore at best a lossy reconstruction of a
+//       percentage — a number that LOOKS like dBm and is not one. We do not have
+//       the percentage either (there is no ONC access from inside Android), so
+//       the honest answer is nothing-plus-a-reason, never a converted number.
+//       readWifiInfo() therefore nulls rssiDbm, txRateMbps, rxRateMbps, phyMode,
+//       and channelWidthMhz on ChromeOS. (noiseDbm/snrDb are already always null
+//       on Android.)
+//
+// WHAT SURVIVES, and why: the fields ONC actually defines pass through and are
+// kept — SSID (WiFi.SSID), BSSID (WiFi.BSSID), the center frequency (WiFi.
+// Frequency, from which channel + band derive), and the security type (WiFi.
+// Security). BSSID's failure mode is a null or the 02:00:00:00:00:00 sentinel,
+// both already mapped to null below — it cannot come back plausibly WRONG. A
+// frequency of 0 already resolves to a null channel/band.
+//
+// DETECTION: hasSystemFeature("org.chromium.arc") is the canonical probe. We
+// also accept "org.chromium.arc.device_management" (managed/enterprise
+// Chromebooks — the K-12 case) and FEATURE_PC ("android.hardware.type.pc",
+// which ChromeOS declares), so a device reporting any of the three is treated as
+// ChromeOS. Resolved once, cached, and never guessed.
+// ===========================================================================
 class MainActivity : FlutterActivity() {
     private val multicastChannelName = "lan_discovery/multicast"
     private val wifiInfoChannelName = "com.wlanpros.toolbox/wifi_info"
     private val apScanChannelName = "com.wlanpros.toolbox/ap_scan"
     private val networkAddressingChannelName = "com.wlanpros.toolbox/network_addressing"
+    private val platformEnvChannelName = "com.wlanpros.toolbox/platform_env"
     private var multicastLock: WifiManager.MulticastLock? = null
+
+    /// Cached ChromeOS / ARC-VM verdict. Null until first probed; the answer
+    /// cannot change while the process is alive, so it is computed once.
+    private var chromeOsCache: Boolean? = null
 
     // The pending Flutter result for an in-flight runtime permission request, so
     // the onRequestPermissionsResult callback can resolve the same Dart Future.
@@ -138,6 +188,46 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, platformEnvChannelName)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "isChromeOs" -> result.success(isChromeOs())
+                    else -> result.notImplemented()
+                }
+            }
+    }
+
+    // ---- ChromeOS / ARC-VM detection ------------------------------------
+
+    /// True when this Android process is running inside ChromeOS's ARC virtual
+    /// machine. See the CHROMEOS block in the file header for what that breaks
+    /// and why every affected field is suppressed rather than shown.
+    ///
+    /// Three probes, OR-ed:
+    ///   * "org.chromium.arc" — the canonical ARC presence feature.
+    ///   * "org.chromium.arc.device_management" — declared on managed /
+    ///     enterprise-enrolled Chromebooks (the K-12 fleet case). Belt-and-
+    ///     suspenders: a managed device that somehow withheld the base feature
+    ///     is still correctly identified.
+    ///   * FEATURE_PC ("android.hardware.type.pc") — declared by ChromeOS.
+    ///
+    /// A throw resolves to FALSE, deliberately: the cost of a false negative is
+    /// a Chromebook keeping the old behavior; the cost of a false positive is a
+    /// real phone hiding its perfectly good RSSI. We take the former (GL-005 —
+    /// a failed read never manufactures a ceiling).
+    private fun isChromeOs(): Boolean {
+        chromeOsCache?.let { return it }
+        val verdict = try {
+            val pm = packageManager
+            pm.hasSystemFeature(ARC_FEATURE) ||
+                pm.hasSystemFeature(ARC_DEVICE_MANAGEMENT_FEATURE) ||
+                pm.hasSystemFeature(PackageManager.FEATURE_PC)
+        } catch (e: Throwable) {
+            false
+        }
+        chromeOsCache = verdict
+        return verdict
     }
 
     // ---- Local network addressing (DHCP server + DNS, Android) ----------
@@ -152,10 +242,29 @@ class MainActivity : FlutterActivity() {
     /// When nothing is readable (not connected, no active network), `dhcpServer`
     /// is null and `dnsServers` is empty and the Dart side shows its honest
     /// "not reported for this network" state.
-    private fun readNetworkAddressing(): Map<String, Any?> = mapOf(
-        "dhcpServer" to readDhcpServer(),
-        "dnsServers" to readDnsServers(),
-    )
+    ///
+    /// CHROMEOS (2026-07-10): on a Chromebook BOTH reads describe the ARC virtual
+    /// machine's private NAT'd network (100.115.92.x — the DHCP server is
+    /// ChromeOS's own, the resolvers are ChromeOS's DNS proxy), NOT the user's
+    /// real LAN. Showing them as "your network" is wrong, not merely degraded, so
+    /// they are suppressed AT THE SOURCE here — a Dart consumer cannot render
+    /// what never arrives. `isChromeOs` rides along so the Dart side can carry
+    /// the precise reason instead of a bare "Unavailable".
+    private fun readNetworkAddressing(): Map<String, Any?> {
+        val chromeOs = isChromeOs()
+        if (chromeOs) {
+            return mapOf(
+                "isChromeOs" to true,
+                "dhcpServer" to null,
+                "dnsServers" to emptyList<String>(),
+            )
+        }
+        return mapOf(
+            "isChromeOs" to false,
+            "dhcpServer" to readDhcpServer(),
+            "dnsServers" to readDnsServers(),
+        )
+    }
 
     /// DHCP server identifier (option 54) from WifiManager.getDhcpInfo(). That
     /// API is deprecated but is the only public Android source for the DHCP
@@ -322,8 +431,28 @@ class MainActivity : FlutterActivity() {
         val locationOk = isLocationAuthorized()
         val poweredOn = wifiManager.isWifiEnabled
 
+        // CHROMEOS: a scan list's headline datum is SIGNAL, and ChromeOS gives
+        // Android no trustworthy dBm (ONC is a 0-100 percentage with no dBm
+        // field — see the CHROMEOS block in the header). Per-BSS channel width
+        // has no ONC vocabulary either. A list of APs carrying a signal column we
+        // cannot vouch for is exactly the "confidently wrong" failure this whole
+        // change exists to stop, so nothing is returned and the Dart side shows
+        // the honest per-platform unavailable state (GL-008 decision order,
+        // step 4). Suppressed at the source so no consumer can render a partial,
+        // half-trustworthy scan.
+        if (isChromeOs()) {
+            return mapOf(
+                "isChromeOs" to true,
+                "poweredOn" to poweredOn,
+                "locationAuthorized" to locationOk,
+                "scanThrottled" to false,
+                "accessPoints" to emptyList<Map<String, Any?>>(),
+            )
+        }
+
         if (!locationOk || !poweredOn) {
             return mapOf(
+                "isChromeOs" to false,
                 "poweredOn" to poweredOn,
                 "locationAuthorized" to locationOk,
                 "scanThrottled" to false,
@@ -353,6 +482,7 @@ class MainActivity : FlutterActivity() {
         } catch (e: SecurityException) {
             // Location revoked between the check and the read — honest empty.
             return mapOf(
+                "isChromeOs" to false,
                 "poweredOn" to poweredOn,
                 "locationAuthorized" to false,
                 "scanThrottled" to false,
@@ -363,6 +493,7 @@ class MainActivity : FlutterActivity() {
         val aps = results.mapNotNull { mapScanResult(it) }
 
         return mapOf(
+            "isChromeOs" to false,
             "poweredOn" to poweredOn,
             "locationAuthorized" to locationOk,
             "scanThrottled" to throttled,
@@ -409,6 +540,7 @@ class MainActivity : FlutterActivity() {
             .getSystemService(Context.WIFI_SERVICE) as WifiManager
         val locationOk = isLocationAuthorized()
         val poweredOn = wifiManager.isWifiEnabled
+        val chromeOs = isChromeOs()
 
         @Suppress("DEPRECATION")
         val info: WifiInfo? = wifiManager.connectionInfo
@@ -417,7 +549,7 @@ class MainActivity : FlutterActivity() {
         val connected = info != null && info.networkId != -1
 
         if (info == null || !connected) {
-            return baseSnapshot(poweredOn, locationOk)
+            return baseSnapshot(poweredOn, locationOk, chromeOs)
         }
 
         val frequency = info.frequency // MHz, 0 if unknown
@@ -429,10 +561,33 @@ class MainActivity : FlutterActivity() {
         val ssid = sanitizeSsid(info.ssid, locationOk)
         val bssid = sanitizeBssid(info.bssid, locationOk)
 
-        val txRate = if (info.linkSpeed > 0) info.linkSpeed.toDouble() else null
+        // ---- ChromeOS honest-null (see the CHROMEOS block in the header) ----
+        // ONC — the vocabulary ChromeOS feeds ARC — has NO dBm field (signal is a
+        // 0-100 percentage there) and NO field at all for link rate, channel
+        // width, or the 802.11 generation. Whatever WifiInfo hands back for those
+        // on a Chromebook is either a lossy reconstruction of a percentage or an
+        // Android default (e.g. WIFI_STANDARD_LEGACY, CHANNEL_WIDTH_20MHZ) that
+        // would render as a CONFIDENT, WRONG claim: "802.11a/b/g" on a Wi-Fi 6E
+        // Chromebook, "20 MHz" on an 80 MHz link, "-45 dBm" that was never
+        // measured in dBm. All five are nulled here, at the source.
+        //
+        // We do NOT synthesize a percentage from the dBm either — that would be a
+        // second lossy hop on top of the first, and we have no access to ONC's
+        // real percentage from inside Android. Nothing-plus-a-reason is the only
+        // honest answer (GL-005 / GL-008).
+
+        val txRate: Double? = if (chromeOs) {
+            null
+        } else if (info.linkSpeed > 0) {
+            info.linkSpeed.toDouble()
+        } else {
+            null
+        }
 
         val rxRate: Double? =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (chromeOs) {
+                null
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 val rx = info.rxLinkSpeedMbps
                 if (rx > 0) rx.toDouble() else null
             } else {
@@ -440,20 +595,25 @@ class MainActivity : FlutterActivity() {
             }
 
         val standard: String? =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (chromeOs) {
+                null
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 standardLabel(info.wifiStandard)
             } else {
                 null
             }
 
+        // Security IS an ONC field (WiFi.Security), so it survives on ChromeOS.
         val securityToken: String? = securityTokenForConnected(wifiManager, info, locationOk)
 
         // Channel width: WifiInfo does not carry it, but the matching ScanResult
         // does (ScanResult.channelWidth, available since API 23). Match the
         // connected BSSID in getScanResults() and map the enum to MHz. Scan
         // results are Location-gated, so this only resolves with the grant; null
-        // otherwise and the Dart side says "Not reported".
-        val channelWidthMhz: Int? = channelWidthForConnected(wifiManager, info, locationOk)
+        // otherwise and the Dart side says "Not reported". ONC has no
+        // channel-width vocabulary, so on ChromeOS it is never read.
+        val channelWidthMhz: Int? =
+            if (chromeOs) null else channelWidthForConnected(wifiManager, info, locationOk)
 
         // Regulatory country code: WifiManager.getCountryCode() exists but is a
         // restricted/system API (hidden on the public SDK, and limited on
@@ -465,9 +625,15 @@ class MainActivity : FlutterActivity() {
         return mapOf(
             "interfaceName" to "wlan0",
             "poweredOn" to poweredOn,
+            // Rides on every snapshot so the Dart side can carry the precise
+            // ChromeOS reason on each suppressed row (and show the notice card)
+            // instead of a bare "Unavailable".
+            "isChromeOs" to chromeOs,
             "ssid" to ssid,
             "bssid" to bssid,
-            "rssiDbm" to info.rssi,
+            // ChromeOS: no trustworthy dBm exists (ONC is a 0-100 percentage with
+            // no dBm field). Never a converted number.
+            "rssiDbm" to if (chromeOs) null else info.rssi,
             // Android public API exposes no noise floor → SNR cannot be computed.
             "noiseDbm" to null,
             "snrDb" to null,
@@ -476,7 +642,8 @@ class MainActivity : FlutterActivity() {
             "phyMode" to standard,
             "channel" to channel,
             // Channel width from the matching ScanResult (null when no scan
-            // match / no Location grant); the Dart side says "Not reported".
+            // match / no Location grant, and always null on ChromeOS); the Dart
+            // side says "Not reported" / names ChromeOS.
             "channelWidthMhz" to channelWidthMhz,
             "band" to band,
             // Regulatory country, restricted on Android 11+; null when the OS
@@ -490,10 +657,15 @@ class MainActivity : FlutterActivity() {
         )
     }
 
-    private fun baseSnapshot(poweredOn: Boolean, locationOk: Boolean): Map<String, Any?> =
+    private fun baseSnapshot(
+        poweredOn: Boolean,
+        locationOk: Boolean,
+        chromeOs: Boolean,
+    ): Map<String, Any?> =
         mapOf(
             "interfaceName" to "wlan0",
             "poweredOn" to poweredOn,
+            "isChromeOs" to chromeOs,
             "ssid" to null,
             "bssid" to null,
             "rssiDbm" to null,
@@ -802,5 +974,16 @@ class MainActivity : FlutterActivity() {
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 4711
+
+        /// The canonical ChromeOS / ARC presence feature. Declared by every
+        /// Chromebook that can run Android apps. This is the primary probe.
+        private const val ARC_FEATURE = "org.chromium.arc"
+
+        /// Declared on managed / enterprise-enrolled Chromebooks — i.e. the K-12
+        /// fleet, which is exactly the population this whole fix protects.
+        /// Checked as a belt-and-suspenders second probe so a managed device that
+        /// somehow withheld the base feature is still identified correctly.
+        private const val ARC_DEVICE_MANAGEMENT_FEATURE =
+            "org.chromium.arc.device_management"
     }
 }

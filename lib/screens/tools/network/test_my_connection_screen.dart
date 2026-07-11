@@ -40,6 +40,7 @@ import '../../../services/network/analyze/analyze_engine.dart';
 import '../../../services/network/analyze/analyze_input.dart';
 import '../../../services/network/analyze/analyze_report_text.dart';
 import '../../../services/network/analyze/analysis_finding.dart';
+import '../../../services/network/chromeos_arc.dart';
 import '../../../services/network/connected_ap.dart';
 import '../../../services/network/connection_check.dart';
 import '../../../services/network/connection_comparison.dart';
@@ -62,6 +63,7 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/chromeos_arc_notice.dart';
 import '../../../widgets/packet_flow_progress.dart';
 import '../../../widgets/sparkline.dart';
 import '../../../widgets/tool_help_footer.dart';
@@ -308,7 +310,13 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       widget.networkDetailsService != null;
 
   /// Plain platform word for the "Tested … on `<platform>`" fact (GL-005).
+  ///
+  /// CHROMEOS: the SOURCE really is `androidWifiManager` (it is the Android
+  /// build), but "Tested … on Android" on a Chromebook is a small lie that lands
+  /// in a support ticket and misdirects whoever reads it. Name the actual device
+  /// the test ran on.
   String get _platformLabel {
+    if (ChromeOsArc.isChromeOs) return 'ChromeOS';
     switch (_source) {
       case WifiInfoSource.macosCoreWlan:
         return 'macOS';
@@ -1351,11 +1359,35 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: <Widget>[
+                        // CHROMEOS: the explanation sits at the TOP OF THE DETAILS
+                        // block, above every card whose data the ARC VM taints
+                        // (comparison, live signal, help-desk facts, network
+                        // details, technical readout) — and deliberately BELOW the
+                        // verdict hero, because the verdict itself is honest: it
+                        // comes from real measured throughput out through the NAT
+                        // onto the real internet. Caveating the verdict would be
+                        // its own kind of dishonesty. Renders nothing off ChromeOS.
+                        if (ChromeOsArc.isChromeOs) ...<Widget>[
+                          const ChromeOsArcNotice(
+                            stillTrue: ChromeOsArc.stillTrueConnection,
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                        ],
                         // Core comparison — usable Wi-Fi vs internet bars.
                         _ComparisonCard(result: _engine!),
                         const SizedBox(height: AppSpacing.sm),
                         // Live "Wi-Fi signal" sparkline card.
-                        if (_sampler != null) ...[
+                        //
+                        // CHROMEOS: suppressed. The card plots RSSI over time, and
+                        // ChromeOS gives Android no trustworthy dBm — so with the
+                        // native suppression in place the sampler yields null
+                        // signal and this card would sit forever on "Waiting for
+                        // the first reading…", which reads as a BROKEN TOOL rather
+                        // than an honest limit. The notice above already says why.
+                        // The sampler itself is deliberately left running: it still
+                        // supplies the real SSID / BSSID / channel / band the
+                        // technical section below renders.
+                        if (_sampler != null && !ChromeOsArc.isChromeOs) ...[
                           _LiveSignalCard(
                             sampler: _sampler!,
                             onSetUp: _openShortcutSheet,
@@ -1900,13 +1932,19 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// RSSI alone, for the copy line. "Unavailable" when the NIC omits it.
   static String _rssiOnly(ConnectedAp? ap) {
     final int? rssi = ap?.rssiDbm;
-    return rssi != null ? '$rssi dBm' : 'Unavailable';
+    if (rssi != null) return '$rssi dBm';
+    // ChromeOS: name the real reason. A bare "Unavailable" in a pasted ticket
+    // invites the reader to assume the tool glitched (GL-005).
+    if (ap?.isChromeOs ?? false) return ChromeOsArc.signalReason;
+    return 'Unavailable';
   }
 
   /// SNR alone, for the copy line. "Unavailable" when the NIC omits it.
   static String _snrOnly(ConnectedAp? ap) {
     final int? snr = ap?.snrDb;
-    return snr != null ? '$snr dB' : 'Unavailable';
+    if (snr != null) return '$snr dB';
+    if (ap?.isChromeOs ?? false) return ChromeOsArc.snrReason;
+    return 'Unavailable';
   }
 
   /// Wi-Fi Down — the NIC's average Rx data rate. When the platform never
@@ -1914,9 +1952,17 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// KNOWN platform limit ("Unavailable (not exposed on macOS)") so a help-desk
   /// reader does not mistake it for a glitch. iOS supplies Rx via the Shortcut
   /// bridge, so its empty state is the plain "Unavailable" (GL-005).
+  ///
+  /// CHROMEOS ORDERING IS LOAD-BEARING. `rxRateAvailable` is false on ChromeOS
+  /// too (ONC has no PHY-rate field — a permanent ceiling, not a per-read miss),
+  /// and the macOS branch below is keyed on exactly that flag. So without this
+  /// check FIRST, a Chromebook's pasted report would read "Unavailable (not
+  /// exposed on macOS)" — a confidently wrong statement about the wrong OS,
+  /// written into a support ticket. The ChromeOS branch must precede it.
   static String _rxRate(ConnectedAp? ap) {
     final double? rx = ap?.rxRateMbps;
     if (rx != null) return '${rx.round()} Mbps';
+    if (ap?.isChromeOs ?? false) return ChromeOsArc.rateReason;
     if (ap != null && !ap.rxRateAvailable) {
       return 'Unavailable (not exposed on macOS)';
     }
@@ -1926,7 +1972,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// Wi-Fi Up — the NIC's average Tx data rate. "Unavailable" when omitted.
   static String _txRate(ConnectedAp? ap) {
     final double? tx = ap?.txRateMbps;
-    return tx != null ? '${tx.round()} Mbps' : 'Unavailable';
+    if (tx != null) return '${tx.round()} Mbps';
+    if (ap?.isChromeOs ?? false) return ChromeOsArc.rateReason;
+    return 'Unavailable';
   }
 
   /// Mbps rounded to a whole number for a consumer, or "Not measured".
@@ -2013,6 +2061,21 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       );
     }
 
+    // CHROMEOS: the caveat must survive the clipboard. This report ends up in a
+    // help-desk ticket, read by someone who never saw the screen or its notice
+    // card — and a ticket is a PERMANENT record. Leading with the note means the
+    // blank RF and addressing rows below can never be misread as "the tool
+    // failed", and no one can later mistake a suppressed field for a measured
+    // one. (Everything measured over the internet in this report IS real; the
+    // note says so, so the ticket does not undersell good data either.)
+    if (ChromeOsArc.isChromeOs) {
+      buf
+        ..writeln()
+        ..writeln('NOTE — ${ChromeOsArc.noticeHeadline}')
+        ..writeln(ChromeOsArc.noticeBody.replaceAll('\n\n', ' '))
+        ..writeln(ChromeOsArc.stillTrueConnection);
+    }
+
     // ── Wi-Fi ─────────────────────────────────────────────────────────────
     final String? wifiName = _consumerWifiName(ap);
     _copySection(buf, 'WI-FI', <_CopyRow>[
@@ -2028,7 +2091,16 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       _CopyRow('Channel', _channelCopy(ap?.channel)),
       _CopyRow('Channel width', _channelWidth(ap)),
       _CopyRow('Band', _orUnavailable(ap?.band)),
-      _CopyRow('Standard (PHY)', _orUnavailable(ap?.standard)),
+      // ChromeOS: ONC has no PHY-generation field, so the standard is suppressed
+      // at the source. Name that, rather than a bare "Unavailable" — a ticket
+      // reader must not think the link had no 802.11 generation.
+      _CopyRow(
+        'Standard (PHY)',
+        ap?.standard ??
+            ((ap?.isChromeOs ?? false)
+                ? ChromeOsArc.standardReason
+                : 'Unavailable'),
+      ),
       _CopyRow('Security', _security(ap)),
       // iOS, no RF captured: the empty RF rows above are a CAPTURE step, not a
       // failure. Name that explicitly so a help-desk reader (and Keith) knows the
@@ -2081,11 +2153,28 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     // exposes them) and honestly unavailable on iOS/macOS; when a value is
     // null/empty its precise per-platform reason is shown, never a guess. VLAN
     // is a true platform fact on every OS (GL-005 / GL-008).
+    //
+    // CHROMEOS: this text is PASTED INTO A SUPPORT TICKET, where it is read by
+    // someone who never saw the screen. The five addressing rows carry the
+    // suppression reason inline (via `addressingReason`), so the ticket can never
+    // record a virtual machine's gateway as the site's — and the reader learns
+    // WHY the fields are blank instead of assuming the tool failed. The leading
+    // NOTE block is emitted in [_buildCopyText]'s header (see below).
     final NetworkDetails nd = _networkDetails ?? NetworkDetails.empty;
+    final String? addrReason = nd.addressingReason;
     _copySection(buf, 'NETWORK', <_CopyRow>[
-      _CopyRow('Local IP address', nd.localIp ?? 'Not available'),
-      _CopyRow('Subnet mask', nd.subnetMask ?? 'Not available'),
-      _CopyRow('Default gateway', nd.gateway ?? 'Not available'),
+      _CopyRow(
+        'Local IP address',
+        nd.localIp ?? addrReason ?? 'Not available',
+      ),
+      _CopyRow(
+        'Subnet mask',
+        nd.subnetMask ?? addrReason ?? 'Not available',
+      ),
+      _CopyRow(
+        'Default gateway',
+        nd.gateway ?? addrReason ?? 'Not available',
+      ),
       _CopyRow('DHCP server', nd.dhcpServer ?? nd.dhcpReason),
       _CopyRow(
         'DNS server(s)',
@@ -2191,13 +2280,16 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// Noise floor for the copy line. "Unavailable" when the NIC omits it.
   static String _noiseOnly(ConnectedAp? ap) {
     final int? noise = ap?.noiseDbm;
-    return noise != null ? '$noise dBm' : 'Unavailable';
+    if (noise != null) return '$noise dBm';
+    if (ap?.isChromeOs ?? false) return ChromeOsArc.noiseReason;
+    return 'Unavailable';
   }
 
   /// Channel width for the copy line, honoring the platform-availability flag.
   static String _channelWidth(ConnectedAp? ap) {
     final int? w = ap?.channelWidthMhz;
     if (w != null) return '$w MHz';
+    if (ap?.isChromeOs ?? false) return ChromeOsArc.channelWidthReason;
     return 'Unavailable';
   }
 
@@ -3713,9 +3805,33 @@ class _NetworkDetailsCard extends StatelessWidget {
         ),
         // Local IP / subnet / gateway — obtainable, sandbox-safe. A null shows
         // the _DataRow "Unavailable" treatment (honest, not fabricated).
-        _DataRow(label: 'Local IP address', value: d?.localIp, mono: true),
-        _DataRow(label: 'Subnet mask', value: d?.subnetMask, mono: true),
-        _DataRow(label: 'Default gateway', value: d?.gateway, mono: true),
+        //
+        // CHROMEOS (the headline bug this change fixes): inside the ARC virtual
+        // machine all three describe the VM's private, NAT'd 100.115.92.x network
+        // — NOT the user's LAN. Before this fix, a K-12 admin troubleshooting a
+        // school network was handed a virtual machine's gateway, presented as
+        // theirs, with no way to know. The service now SUPPRESSES the values and
+        // supplies `addressingReason`, which every one of these three rows shows
+        // in place of the number. Off ChromeOS `addressingReason` is null and the
+        // rows behave exactly as before.
+        _DataRow(
+          label: 'Local IP address',
+          value: d?.localIp,
+          mono: true,
+          note: d?.localIp == null ? d?.addressingReason : null,
+        ),
+        _DataRow(
+          label: 'Subnet mask',
+          value: d?.subnetMask,
+          mono: true,
+          note: d?.subnetMask == null ? d?.addressingReason : null,
+        ),
+        _DataRow(
+          label: 'Default gateway',
+          value: d?.gateway,
+          mono: true,
+          note: d?.gateway == null ? d?.addressingReason : null,
+        ),
         // DHCP server / DNS server(s) — REAL on Android (WifiManager.getDhcpInfo
         // + ConnectivityManager link properties), structurally unavailable on
         // iOS/macOS (no sandbox-safe source). When the value is present it shows;

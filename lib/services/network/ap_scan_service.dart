@@ -7,6 +7,8 @@ import 'dart:io' if (dart.library.html) 'wifi_info_service_web_stub.dart'
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import 'chromeos_arc.dart';
+
 /// One visible access point (BSS) from an Android Wi-Fi scan.
 ///
 /// CLEAN fields only — SSID, BSSID, channel, band, RSSI. The Android scan API
@@ -147,6 +149,17 @@ enum ApScanPlatformStatus {
   /// (`WlanGetNetworkBssList`), but that path is not wired into this tool yet.
   windowsNotWired,
 
+  /// ChromeOS: this IS the Android build, and the scan channel is present — but
+  /// the result cannot be trusted. Android apps run inside ChromeOS's ARC
+  /// virtual machine, fed from ChromeOS's ONC vocabulary, which carries signal
+  /// as a 0–100 PERCENTAGE with no dBm field and has no per-BSS channel-width
+  /// field at all. Signal is this tool's headline datum and its whole reason to
+  /// exist (channel planning, co-channel hunting), so a list whose dBm column is
+  /// a reconstruction of a percentage is worse than no list — it is the
+  /// "confidently wrong" failure mode. GL-008's decision order ends at an honest
+  /// per-platform unavailable state, and this is it. See [ChromeOsArc].
+  chromeOsUnreliable,
+
   /// Any other platform (web, Linux) where the scan is not available.
   unavailable,
 }
@@ -186,8 +199,12 @@ class ApScanService {
   ApScanService({
     Future<Object?> Function(String method, [dynamic args])? invoke,
     String? platformOverride,
+    bool? isChromeOs,
   })  : _invoke = invoke ?? _defaultInvoke,
-        _platform = platformOverride ?? _hostOperatingSystem();
+        _platform = platformOverride ?? _hostOperatingSystem(),
+        // Reads the verdict resolved once in main(). The seam lets a test pin
+        // the ARC case without a platform channel.
+        _isChromeOs = isChromeOs ?? ChromeOsArc.isChromeOs;
 
   /// Returns the host OS name, or an empty string on web. Never throws.
   static String _hostOperatingSystem() {
@@ -204,15 +221,28 @@ class ApScanService {
   final Future<Object?> Function(String method, [dynamic args]) _invoke;
   final String _platform;
 
-  /// Whether this platform supports a nearby-AP scan. Android only.
-  bool get isSupportedPlatform => !kIsWeb && _platform == 'android';
+  /// Whether this process is inside ChromeOS's ARC virtual machine, where the
+  /// scan's signal readings are not trustworthy. See
+  /// [ApScanPlatformStatus.chromeOsUnreliable].
+  final bool _isChromeOs;
+
+  /// Whether this platform supports a nearby-AP scan. Android only — and NOT
+  /// ChromeOS, where the Android scan channel exists but its signal readings
+  /// cannot be trusted (see [ApScanPlatformStatus.chromeOsUnreliable]).
+  bool get isSupportedPlatform =>
+      !kIsWeb && _platform == 'android' && !_isChromeOs;
 
   /// Categorizes why the scan is or isn't available here, for honest UI copy.
   ///
   /// Reports what THIS tool has wired up today. Windows genuinely can enumerate
   /// nearby APs via Native Wifi; that path just isn't wired here yet, so it maps
   /// to [ApScanPlatformStatus.windowsNotWired] rather than a false OS-block.
+  /// ChromeOS gets its own verdict — the channel is there, the DATA is not
+  /// trustworthy — so it is never lumped in with the Apple OS-level block or a
+  /// generic "unavailable".
   ApScanPlatformStatus get platformStatus {
+    // Checked BEFORE `supported`: on ChromeOS `_platform` IS 'android'.
+    if (_isChromeOs) return ApScanPlatformStatus.chromeOsUnreliable;
     if (isSupportedPlatform) return ApScanPlatformStatus.supported;
     if (_platform == 'windows') return ApScanPlatformStatus.windowsNotWired;
     if (_platform == 'ios' || _platform == 'macos') {

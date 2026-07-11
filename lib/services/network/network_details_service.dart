@@ -51,6 +51,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 
+import 'chromeos_arc.dart';
+
 /// The device's local network addressing snapshot for the connection report.
 ///
 /// Each obtainable field is nullable: a null is the honest "not available"
@@ -68,6 +70,8 @@ class NetworkDetails {
     this.dnsServers = const <String>[],
     this.dhcpReason = defaultUnavailableReason,
     this.dnsReason = defaultUnavailableReason,
+    this.addressingReason,
+    this.isChromeOs = false,
   });
 
   /// The honest empty snapshot — every obtainable field null. Used when the
@@ -115,6 +119,25 @@ class NetworkDetails {
   /// platform. Same platform split as [dhcpReason].
   final String dnsReason;
 
+  /// The honest reason [localIp] / [subnetMask] / [gateway] are not shown.
+  ///
+  /// Null on every platform where those three are real — they are then rendered
+  /// as values, and a null value falls to the row's plain "Unavailable" (a
+  /// genuine per-reading miss).
+  ///
+  /// NON-NULL ONLY ON CHROMEOS, where all three describe the ARC virtual
+  /// machine's private, NAT'd `100.115.92.x` network rather than the user's LAN.
+  /// The service SUPPRESSES the values there (they are set to null) and carries
+  /// this reason instead, so a K-12 admin is never handed a virtual machine's
+  /// gateway as if it were the school's. See [ChromeOsArc].
+  final String? addressingReason;
+
+  /// Whether this snapshot was taken inside ChromeOS's ARC virtual machine.
+  /// Drives the screen's explanation card. When true, [localIp], [subnetMask],
+  /// [gateway], and [dhcpServer] are null and [dnsServers] is empty BY DESIGN —
+  /// suppressed, not merely unread.
+  final bool isChromeOs;
+
   /// The default reason used on platforms where the field is structurally
   /// unavailable to a sandboxed app (iOS / macOS), and the safe transient
   /// default for [empty].
@@ -140,16 +163,25 @@ class NetworkDetailsService {
     NetworkInfo? networkInfo,
     Future<List<NetworkInterface>> Function()? interfaceLister,
     bool? isAndroid,
+    bool? isChromeOs,
     Future<Map<Object?, Object?>?> Function()? androidAddressingReader,
   })  : _networkInfo = networkInfo ?? NetworkInfo(),
         _interfaceLister = interfaceLister ?? _defaultLister,
         _isAndroid = isAndroid ?? Platform.isAndroid,
+        // Reads the cached verdict resolved once in main(). The seam exists so a
+        // unit test can pin the ARC case with no platform channel.
+        _isChromeOs = isChromeOs ?? ChromeOsArc.isChromeOs,
         _androidAddressingReader =
             androidAddressingReader ?? _defaultAndroidAddressingReader;
 
   final NetworkInfo _networkInfo;
   final Future<List<NetworkInterface>> Function() _interfaceLister;
   final bool _isAndroid;
+
+  /// Whether this process is inside ChromeOS's ARC virtual machine. When true,
+  /// [read] suppresses all five local-addressing fields — see the block at the
+  /// top of [read] for why every source of them describes the VM, not the LAN.
+  final bool _isChromeOs;
   final Future<Map<Object?, Object?>?> Function() _androidAddressingReader;
 
   /// The Android-only native channel that surfaces the DHCP server identifier
@@ -177,6 +209,44 @@ class NetworkDetailsService {
   /// a field that cannot be read comes back null (honest "not available").
   /// Never throws to the caller.
   Future<NetworkDetails> read() async {
+    // ---- CHROMEOS: suppress ALL FIVE local-addressing fields ----------------
+    //
+    // Inside ChromeOS's ARC virtual machine, EVERY source of local addressing
+    // describes the VM, not the LAN:
+    //   * network_info_plus's getWifiIP / getWifiSubmask / getWifiGatewayIP read
+    //     the ARC VM's virtual adapter — a 100.115.92.x address in a /30, whose
+    //     "gateway" is ChromeOS's patchpanel bridge, not the user's router.
+    //   * NetworkInterface.list() (the fallback below) enumerates the SAME
+    //     virtual adapter, so it is not an escape hatch either.
+    //   * getDhcpInfo() / getLinkProperties() (the Android channel) return the
+    //     VM's DHCP server and ChromeOS's DNS proxy.
+    //
+    // The user's real gateway and resolvers sit on the far side of the NAT and
+    // are simply not visible to this process. Handing a K-12 IT admin
+    // "100.115.92.1" as their school's gateway is WRONG, not degraded — so all
+    // five are suppressed here with one precise reason (GL-005 / GL-008, and
+    // Keith's rule: a tool that is confidently wrong is worse than no tool).
+    //
+    // NOTE what this deliberately does NOT touch: WifiConnectionService still
+    // calls getWifiIP() itself to answer "is this device on Wi-Fi at all?". That
+    // BOOLEAN is still correct under ARC (a non-empty VM address does prove an
+    // active Wi-Fi join, since ARC is bridged to the real radio), so the
+    // on-Wi-Fi probe keeps working. Only the DISPLAY of the address is
+    // suppressed, never the liveness signal.
+    if (_isChromeOs) {
+      return const NetworkDetails(
+        localIp: null,
+        subnetMask: null,
+        gateway: null,
+        dhcpServer: null,
+        dnsServers: <String>[],
+        dhcpReason: ChromeOsArc.addressingReason,
+        dnsReason: ChromeOsArc.addressingReason,
+        addressingReason: ChromeOsArc.addressingReason,
+        isChromeOs: true,
+      );
+    }
+
     final String? wifiIp = await _tryStr(() => _networkInfo.getWifiIP());
     final String? submask = await _tryStr(() => _networkInfo.getWifiSubmask());
     final String? gateway =
@@ -214,6 +284,10 @@ class NetworkDetailsService {
       dnsServers: dnsServers,
       dhcpReason: dhcpReason,
       dnsReason: dnsReason,
+      // Null off ChromeOS: these three ARE real everywhere else, so a missing one
+      // is a genuine per-reading miss and falls to the row's plain "Unavailable".
+      addressingReason: null,
+      isChromeOs: false,
     );
   }
 

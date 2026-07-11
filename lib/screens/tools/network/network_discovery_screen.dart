@@ -43,6 +43,7 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 import '../../../data/tool_assets.dart';
+import '../../../services/network/chromeos_arc.dart';
 import '../../../services/network/lan_discovery/arp_reader.dart';
 import '../../../services/network/lan_discovery/device_type.dart';
 import '../../../services/network/lan_discovery/lan_discovery_engine.dart';
@@ -290,6 +291,33 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
         toolName: 'Network Discovery',
         reason:
             NetworkSupport.unavailableReason ?? NetworkUnavailableReason.web,
+      );
+    }
+
+    // CHROMEOS (2026-07-10). This tool's failure here is the WORST shape of the
+    // ARC-VM bug, because it does not look like a failure at all — it looks like
+    // an answer.
+    //
+    // The sweep seeds its target range from the device's own address and mask.
+    // Inside ARC that is a 100.115.92.x address in a /30 — a subnet with exactly
+    // two usable hosts, one of which is us. So the scan runs, completes cleanly,
+    // finds nothing, and reports "no devices found" about a school network with
+    // two hundred devices on it. There is no error, no empty-state hint, nothing
+    // to tip the admin off: it is a confident, wrong, actionable answer, and an
+    // admin could reasonably conclude their LAN or their discovery protocols are
+    // broken. That is precisely the "confidently wrong is worse than no tool"
+    // case, so the tool is not offered here at all.
+    //
+    // (ARC's traffic IS NAT'd out onto the real LAN, so a DIRECTED probe at a
+    // known real address can still work. But this tool does not take a target —
+    // it derives one — so there is nothing honest to run. The copy points the
+    // user at a device that can do the job.)
+    if (ChromeOsArc.isChromeOs) {
+      return const NetworkUnavailableView(
+        toolName: 'Network Discovery',
+        reason: NetworkUnavailableReason.platformApiMissing,
+        headline: ChromeOsArc.lanScanUnavailableHeadline,
+        message: ChromeOsArc.lanScanUnavailableBody,
       );
     }
 

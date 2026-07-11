@@ -32,6 +32,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../services/network/ap_scan_service.dart';
+import '../../../services/network/chromeos_arc.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
@@ -336,6 +337,10 @@ class _ScanUnavailable extends StatelessWidget {
     switch (status) {
       case ApScanPlatformStatus.windowsNotWired:
         return 'Not wired for Windows yet';
+      // ChromeOS is NOT "runs on Android" — this IS the Android build. The
+      // scan runs; its signal readings just cannot be trusted. Say that.
+      case ApScanPlatformStatus.chromeOsUnreliable:
+        return ChromeOsArc.scanUnavailableHeadline;
       case ApScanPlatformStatus.appleRestricted:
       case ApScanPlatformStatus.unavailable:
       case ApScanPlatformStatus.supported:
@@ -353,6 +358,12 @@ class _ScanUnavailable extends StatelessWidget {
         return '${_lead}iOS and macOS block nearby-AP scanning at the OS level, '
             'so this tool cannot run it there. The rest of the toolbox works '
             'normally here.';
+      // The ChromeOS copy does NOT reuse `_lead` ("It currently runs on
+      // Android") — on a Chromebook that sentence is actively confusing, since
+      // the user IS running the Android build. The reason here is data trust,
+      // not platform support (SSOT: ChromeOsArc).
+      case ApScanPlatformStatus.chromeOsUnreliable:
+        return ChromeOsArc.scanUnavailableBody;
       case ApScanPlatformStatus.unavailable:
       case ApScanPlatformStatus.supported:
         return '${_lead}It is not available on this platform. The rest of the '

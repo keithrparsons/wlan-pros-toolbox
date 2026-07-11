@@ -48,6 +48,7 @@ import 'package:net_quality/net_quality.dart' show QualityGrade, QualityGradeLab
 
 import '../../../data/tool_assets.dart';
 import '../../../router/app_router.dart';
+import '../../../services/network/chromeos_arc.dart';
 import '../../../services/network/connected_ap.dart';
 import '../../../services/network/connected_ap_cache.dart';
 import '../../../services/network/live_onboarding_service.dart';
@@ -69,6 +70,7 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/chromeos_arc_notice.dart';
 import '../../../widgets/sparkline.dart';
 import '../concept_graphic_band.dart';
 import 'install_shortcut_sheet.dart';
@@ -343,11 +345,29 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   /// "not exposed by `<platform>`" copy. Each snapshot platform exposes a
   /// different field subset (Android + Windows have no noise/SNR), so the reason
   /// text names the real source.
-  String get _snapshotPlatformLabel => switch (_source) {
-        WifiInfoSource.androidWifiManager => 'Android',
-        WifiInfoSource.windowsNativeWifi => 'Windows',
-        _ => 'macOS CoreWLAN',
-      };
+  ///
+  /// CHROMEOS: the source is still `androidWifiManager` (the reading really does
+  /// come from Android's WifiManager — ChromeOS is not a separate source, it is a
+  /// virtualized HOST for the Android one, which is why no new `WifiInfoSource`
+  /// value was added). But a Chromebook user must not be told about "Android"
+  /// limitations — the ceiling they are hitting is ChromeOS's, and naming Android
+  /// would send them looking for an Android fix that does not exist. So the label
+  /// flips to ChromeOS whenever the reading came from inside ARC.
+  String get _snapshotPlatformLabel {
+    if (_isChromeOsReading) return 'ChromeOS';
+    return switch (_source) {
+      WifiInfoSource.androidWifiManager => 'Android',
+      WifiInfoSource.windowsNativeWifi => 'Windows',
+      _ => 'macOS CoreWLAN',
+    };
+  }
+
+  /// Whether the CURRENT reading came from inside ChromeOS's ARC virtual
+  /// machine. Read from the reading itself (which the native side stamps) and
+  /// falling back to the app-wide cached verdict, so the honest copy is right
+  /// even before the first snapshot lands.
+  bool get _isChromeOsReading =>
+      (_macInfo?.isChromeOs ?? false) || ChromeOsArc.isChromeOs;
 
   /// The platform that owns an unreadable-MAC reason note, so the "MAC type"
   /// note names the RIGHT OS limit (the S24 bug was the iOS "Apple does not
@@ -992,6 +1012,15 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   /// info, so when it is missing the note is per-network ("Not reported for this
   /// network"), never an OS-blaming claim. Never a blank, never a fabricated
   /// value.
+  ///
+  /// CHROMEOS (2026-07-10) — the highest-stakes path in this whole change. This
+  /// text is what an IT admin PASTES INTO A TICKET, at which point it is read by
+  /// someone who never saw the screen or its explanation card. A bare list of
+  /// "Unavailable" rows in a ticket is an invitation to assume the tool was
+  /// broken; worse, before this fix it would have carried a VM's numbers into a
+  /// permanent written record of a real network. So the report leads with the
+  /// ChromeOS caveat and every suppressed row carries its own reason inline. The
+  /// caveat must survive the clipboard, not just the screen.
   String? _buildCopyText() {
     final ConnectedAp? info = _currentAp();
     if (info == null) return null;
@@ -999,7 +1028,16 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     final String platformLabel = _source == WifiInfoSource.iosShortcuts
         ? 'iOS'
         : _snapshotPlatformLabel;
+    final bool arc = info.isChromeOs;
     final StringBuffer buf = StringBuffer()..writeln('Wi-Fi Information');
+
+    if (arc) {
+      buf
+        ..writeln()
+        ..writeln('NOTE — ${ChromeOsArc.noticeHeadline}')
+        ..writeln('  ${ChromeOsArc.noticeBody.replaceAll('\n\n', ' ')}')
+        ..writeln('  ${ChromeOsArc.stillTrueWifi}');
+    }
 
     buf
       ..writeln()
@@ -1018,38 +1056,67 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
 
     // Android exposes no noise floor, so Noise + SNR carry an explicit reason in
     // the copy text too (matches the on-screen notes; GL-005). macOS reports
-    // both; iOS derives SNR.
+    // both; iOS derives SNR. On ChromeOS every one of these names ChromeOS —
+    // the SAME strings the screen shows, so the paste matches the screenshot.
     final bool isAndroid = _source == WifiInfoSource.androidWifiManager;
-    final String noiseCopy = isAndroid && info.noiseDbm == null
-        ? 'Not available on $platformLabel (no noise-floor API)'
-        : _copyVal(info.noiseDbm?.toString(), 'dBm');
-    final String snrCopy = isAndroid && info.snrDb == null
-        ? 'Needs the noise floor, which $platformLabel does not expose'
-        : '${_copyVal(info.snrDb?.toString(), 'dB')}'
-            '${info.snrDerived ? ' (derived)' : ''}';
+    final String rssiCopy = arc && info.rssiDbm == null
+        ? ChromeOsArc.signalReason
+        : _copyVal(info.rssiDbm?.toString(), 'dBm');
+    final String noiseCopy = arc
+        ? (info.noiseDbm == null
+            ? ChromeOsArc.noiseReason
+            : _copyVal(info.noiseDbm?.toString(), 'dBm'))
+        : (isAndroid && info.noiseDbm == null
+            ? 'Not available on $platformLabel (no noise-floor API)'
+            : _copyVal(info.noiseDbm?.toString(), 'dBm'));
+    final String snrCopy = arc
+        ? (info.snrDb == null
+            ? ChromeOsArc.snrReason
+            : _copyVal(info.snrDb?.toString(), 'dB'))
+        : (isAndroid && info.snrDb == null
+            ? 'Needs the noise floor, which $platformLabel does not expose'
+            : '${_copyVal(info.snrDb?.toString(), 'dB')}'
+                '${info.snrDerived ? ' (derived)' : ''}');
     buf
       ..writeln()
       ..writeln('Signal')
-      ..writeln('  RSSI: ${_copyVal(info.rssiDbm?.toString(), 'dBm')}')
+      ..writeln('  RSSI: $rssiCopy')
       ..writeln('  Noise: $noiseCopy')
       ..writeln('  SNR: $snrCopy');
 
     // Rx: a permanent platform limit (rxRateAvailable false → macOS) vs the
     // Android sentinel (-1) → an Android-specific note vs a present value.
-    final String rxCopy = !info.rxRateAvailable
-        ? 'Not exposed by $platformLabel'
-        : (info.rxRateMbps == null
-            ? (isAndroid
-                ? "Not reported by this device's $platformLabel link"
-                : 'Not in this reading')
-            : _copyVal(_formatRate(info.rxRateMbps), 'Mbps'));
+    // ChromeOS is its own permanent ceiling (no ONC rate vocabulary) and names
+    // itself, so a pasted report never blames Android for a ChromeOS limit.
+    final String txCopy = arc && info.txRateMbps == null
+        ? ChromeOsArc.rateReason
+        : _copyVal(_formatRate(info.txRateMbps), 'Mbps');
+    final String rxCopy = arc
+        ? (info.rxRateMbps == null
+            ? ChromeOsArc.rateReason
+            : _copyVal(_formatRate(info.rxRateMbps), 'Mbps'))
+        : (!info.rxRateAvailable
+            ? 'Not exposed by $platformLabel'
+            : (info.rxRateMbps == null
+                ? (isAndroid
+                    ? "Not reported by this device's $platformLabel link"
+                    : 'Not in this reading')
+                : _copyVal(_formatRate(info.rxRateMbps), 'Mbps')));
     buf
       ..writeln()
       ..writeln('Rate')
-      ..writeln('  Tx Rate: ${_copyVal(_formatRate(info.txRateMbps), 'Mbps')}')
+      ..writeln('  Tx Rate: $txCopy')
       ..writeln('  Rx Rate: $rxCopy');
 
     final bool isPsc = _isPscChannel(info.channel, info.band);
+    final String widthCopy = arc
+        ? ChromeOsArc.channelWidthReason
+        : (info.channelWidthAvailable
+            ? _copyVal(
+                _formatChannelWidth(info.channelWidthMhz),
+                _channelWidthHasUnit(info.channelWidthMhz) ? 'MHz' : null,
+              )
+            : 'Not reported for this network');
     buf
       ..writeln()
       ..writeln('Channel')
@@ -1057,18 +1124,19 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         '  Channel: ${_copyVal(info.channel?.toString(), null)}'
         '${isPsc ? ' (Preferred Scanning Channel)' : ''}',
       )
-      ..writeln(
-        '  Width: ${info.channelWidthAvailable ? _copyVal(_formatChannelWidth(info.channelWidthMhz), _channelWidthHasUnit(info.channelWidthMhz) ? 'MHz' : null) : 'Not reported for this network'}',
-      )
+      ..writeln('  Width: $widthCopy')
       ..writeln(
         '  Band: ${_copyVal(info.band, null)}'
         '${info.bandDerived ? ' (derived)' : ''}',
       );
 
+    final String standardCopy = arc && info.standard == null
+        ? ChromeOsArc.standardReason
+        : _copyVal(info.standard, null);
     buf
       ..writeln()
       ..writeln('Radio')
-      ..writeln('  Wi-Fi Standard: ${_copyVal(info.standard, null)}')
+      ..writeln('  Wi-Fi Standard: $standardCopy')
       ..writeln('  Country: ${_copyVal(info.countryCode, null)}')
       ..writeln('  Interface: ${_copyVal(info.interfaceName, null)}')
       ..writeln('  Hardware Address: ${_copyVal(info.hardwareAddress, null)}')
@@ -1144,6 +1212,17 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       if (ToolAssets.hasGraphic('wifi-info'))
         const SizedBox(height: AppSpacing.md),
     ];
+
+    // CHROMEOS: explain the suppressions BEFORE the user reads the cards, so an
+    // empty Signal row is understood as an honest limit rather than a broken
+    // tool. Renders nothing off ChromeOS. It sits above the loading/error
+    // branches deliberately — the explanation is true regardless of whether this
+    // particular read succeeded.
+    if (_isChromeOsReading) {
+      children
+        ..add(const ChromeOsArcNotice(stillTrue: ChromeOsArc.stillTrueWifi))
+        ..add(const SizedBox(height: AppSpacing.sm));
+    }
 
     if (_macLoading && _macInfo == null && _macError == null) {
       children.add(const _LoadingCard());
@@ -1592,12 +1671,36 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     final bool isWindows = _source == WifiInfoSource.windowsNativeWifi;
     final bool noNoiseFloorApi =
         _source == WifiInfoSource.androidWifiManager || isWindows;
-    final String? noiseNote = noNoiseFloorApi && info.noiseDbm == null
-        ? 'Not available on $platformLabel (no noise-floor API)'
-        : null;
-    final String? snrNote = noNoiseFloorApi && info.snrDb == null
-        ? 'Needs the noise floor, which $platformLabel does not expose'
-        : null;
+    final bool arc = info.isChromeOs;
+
+    // CHROMEOS RSSI (2026-07-10). This is the row the whole fix exists for.
+    //
+    // ChromeOS feeds ARC from its ONC vocabulary, in which signal strength is a
+    // 0–100 PERCENTAGE and there is NO dBm field at all. So a dBm figure here
+    // could only ever be a reconstruction of a percentage — a number that LOOKS
+    // like a measurement and is not one. On macOS/Windows/iOS this row is a real
+    // radio reading; on a Chromebook it would be a plausible-looking fiction, and
+    // a plausible-looking fiction is precisely what we refuse to ship.
+    //
+    // We do not fall back to showing "72%" either: Android has no ONC access, so
+    // we do not HAVE the percentage — we would be deriving it back out of the
+    // dBm we already distrust, which is a second lossy hop on top of the first.
+    // The native side therefore delivers a genuine null and this note says why.
+    // (If ChromeOS ever exposes the real ONC percentage to ARC, the right change
+    // is to show it AS a percentage, clearly labeled — never to convert it.)
+    final String? rssiNote =
+        arc && info.rssiDbm == null ? ChromeOsArc.signalReason : null;
+
+    final String? noiseNote = arc
+        ? (info.noiseDbm == null ? ChromeOsArc.noiseReason : null)
+        : (noNoiseFloorApi && info.noiseDbm == null
+            ? 'Not available on $platformLabel (no noise-floor API)'
+            : null);
+    final String? snrNote = arc
+        ? (info.snrDb == null ? ChromeOsArc.snrReason : null)
+        : (noNoiseFloorApi && info.snrDb == null
+            ? 'Needs the noise floor, which $platformLabel does not expose'
+            : null);
     return _Card(
       title: 'Signal',
       child: Column(
@@ -1607,6 +1710,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
             value: info.rssiDbm?.toString(),
             unit: 'dBm',
             mono: true,
+            note: rssiNote,
           ),
           _MetricRow(
             label: 'Noise',
@@ -1637,6 +1741,12 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           value: _formatRate(info.txRateMbps),
           unit: 'Mbps',
           mono: true,
+          // CHROMEOS: ONC has no PHY-rate field, so no link rate reaches the
+          // Android layer at all. Suppressed at the source; this names why.
+          // (Tx carried no note before because every OTHER platform reports it.)
+          note: info.isChromeOs && info.txRateMbps == null
+              ? ChromeOsArc.rateReason
+              : null,
         ),
         _MetricRow(
           label: 'Rx Rate',
@@ -1644,6 +1754,11 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           unit: 'Mbps',
           mono: true,
           // Say WHY precisely (FIX 2, 2026-06-08):
+          //   * ChromeOS → a PERMANENT ceiling (no ONC rate vocabulary), so
+          //     rxRateAvailable is false here and we name ChromeOS, not Android.
+          //     Without this branch the row would read "Not reported by this
+          //     device's link" — which implies a transient miss on a capable
+          //     platform and would send a Chromebook user hunting a phantom fix.
           //   * rxRateAvailable false → the platform NEVER exposes Rx (macOS
           //     public CoreWLAN). Permanent platform limit.
           //   * Android, rxRateAvailable true but the value null → the device
@@ -1652,13 +1767,15 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           //     matches the SNR rows above, never a bare "Unavailable".
           //   * iOS, rxRateAvailable true but null → a per-reading miss; the
           //     Shortcut can carry Rx, this harvest just lacked it.
-          note: !info.rxRateAvailable
-              ? 'Not exposed by $platformLabel'
-              : (info.rxRateMbps == null
-                  ? (_source == WifiInfoSource.androidWifiManager
-                      ? "Not reported by this device's $platformLabel link"
-                      : 'Not in this reading')
-                  : null),
+          note: info.isChromeOs
+              ? (info.rxRateMbps == null ? ChromeOsArc.rateReason : null)
+              : (!info.rxRateAvailable
+                  ? 'Not exposed by $platformLabel'
+                  : (info.rxRateMbps == null
+                      ? (_source == WifiInfoSource.androidWifiManager
+                          ? "Not reported by this device's $platformLabel link"
+                          : 'Not in this reading')
+                      : null)),
         ),
       ],
     ),
@@ -1688,9 +1805,19 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
             // not carry it — not an OS-permanent ceiling. Honest per-network copy
             // (matches androidUnreadReason), not an OS-blaming "Not reported by
             // <platform>". (GL-005; pre-launch accuracy pass.)
-            note: info.channelWidthAvailable
-                ? null
-                : 'Not reported for this network',
+            //
+            // CHROMEOS is the one true OS-PERMANENT ceiling for this row: ONC has
+            // no channel-width vocabulary, so it can never arrive. Saying "Not
+            // reported for this network" there would be a lie of implication —
+            // it suggests another network might report it, and none ever will.
+            // Worse, the pre-fix path would have read ScanResult.channelWidth's
+            // default (CHANNEL_WIDTH_20MHZ) and confidently printed "20 MHz" on
+            // an 80 MHz link. Suppressed at the source; named precisely here.
+            note: info.isChromeOs
+                ? ChromeOsArc.channelWidthReason
+                : (info.channelWidthAvailable
+                    ? null
+                    : 'Not reported for this network'),
           ),
           _MetricRow(
             label: 'Band',
@@ -1706,7 +1833,18 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     title: 'Radio',
     child: Column(
       children: [
-        _MetricRow(label: 'Wi-Fi Standard', value: info.standard),
+        // CHROMEOS: ONC has no PHY-generation field. Before this fix, a
+        // Chromebook read WifiInfo.getWifiStandard()'s default and could print
+        // "802.11a/b/g" on a Wi-Fi 6E link — a confident, wrong claim about the
+        // network's capability, exactly the kind an IT admin would act on.
+        // Suppressed at the source; the reason names ChromeOS.
+        _MetricRow(
+          label: 'Wi-Fi Standard',
+          value: info.standard,
+          note: info.isChromeOs && info.standard == null
+              ? ChromeOsArc.standardReason
+              : null,
+        ),
         // Country: Android's WifiManager.getCountryCode() is restricted on
         // Android 11+ and often returns nothing to a non-privileged app. When it
         // does, the row carries the honest Android limit note rather than a bare

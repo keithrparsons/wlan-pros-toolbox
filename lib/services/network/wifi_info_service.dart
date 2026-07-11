@@ -39,6 +39,7 @@ class WifiInfo {
     this.securityToken,
     required this.poweredOn,
     required this.locationAuthorized,
+    this.isChromeOs = false,
   });
 
   /// The BSD interface name, such as "en0".
@@ -104,6 +105,21 @@ class WifiInfo {
   /// Whether Location Services is authorized, which gates SSID and BSSID.
   final bool locationAuthorized;
 
+  /// Whether this snapshot came from the Android build running inside ChromeOS's
+  /// ARC virtual machine.
+  ///
+  /// When true, the native side has ALREADY nulled every field ChromeOS cannot
+  /// supply truthfully — [rssiDbm], [txRateMbps], [rxRateMbps], [phyMode], and
+  /// [channelWidthMhz] — because ChromeOS's ONC vocabulary carries a 0–100
+  /// signal percentage with no dBm field, and no field at all for link rate,
+  /// channel width, or the 802.11 generation. This flag exists so the UI can
+  /// state the precise reason on each empty row (and show the explanation card)
+  /// rather than a bare "Unavailable". See [ChromeOsArc] for the full rationale.
+  ///
+  /// The fields ONC DOES define ([ssid], [bssid], [channel], [band],
+  /// [securityToken]) are real and arrive unchanged.
+  final bool isChromeOs;
+
   /// Builds a snapshot from the native channel payload.
   ///
   /// Numeric values may arrive as int or double; they are coerced safely.
@@ -126,6 +142,9 @@ class WifiInfo {
       securityToken: map['securityToken'] as String?,
       poweredOn: (map['poweredOn'] as bool?) ?? false,
       locationAuthorized: (map['locationAuthorized'] as bool?) ?? false,
+      // Absent on the macOS channel (which never sends it) → false. Only the
+      // Android channel emits it, and only Android can be inside ARC.
+      isChromeOs: (map['isChromeOs'] as bool?) ?? false,
     );
   }
 
@@ -138,7 +157,8 @@ class WifiInfo {
       'channelWidthMhz: $channelWidthMhz, band: $band, '
       'countryCode: $countryCode, hardwareAddress: $hardwareAddress, '
       'securityToken: $securityToken, '
-      'poweredOn: $poweredOn, locationAuthorized: $locationAuthorized)';
+      'poweredOn: $poweredOn, locationAuthorized: $locationAuthorized, '
+      'isChromeOs: $isChromeOs)';
 }
 
 /// The tri-state Location (name-gating) authorization status.

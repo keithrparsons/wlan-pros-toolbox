@@ -33,6 +33,7 @@ import 'data/tool_assets.dart';
 import 'router/app_router.dart';
 import 'router/live_error_nav_gate.dart';
 import 'services/help/tool_help_loader.dart';
+import 'services/network/chromeos_arc.dart';
 import 'services/network/dart_ping_icmp_backend.dart';
 import 'services/network/wifi_details_bridge.dart';
 import 'theme/app_theme.dart';
@@ -53,6 +54,21 @@ Future<void> main() async {
   // off iOS and idempotent; kept behind this helper so the dart_ping_ios import
   // stays confined to the backend file.
   registerIcmpBackend();
+
+  // Resolve ChromeOS / ARC-VM ONCE, before the first frame.
+  //
+  // On a Chromebook this app runs inside a virtual machine whose network is NOT
+  // the user's network, and whose Wi-Fi bridge cannot supply a trustworthy dBm,
+  // link rate, channel width, or 802.11 standard. Every affected screen and
+  // service reads the cached verdict SYNCHRONOUSLY in `build()`, so it has to be
+  // settled before anything renders — otherwise a screen could paint one frame
+  // of un-caveated VM data before the probe lands, which is the exact thing this
+  // fix exists to prevent.
+  //
+  // Never throws, never blocks meaningfully (one method-channel round trip), and
+  // resolves to `false` — the pre-existing behavior — on every non-Android
+  // platform and on any failure. See ChromeOsArc for the full rationale.
+  await ChromeOsArc.ensureDetected();
 
   // Cold-start reset of the Live monitoring loop flag (Option B). A stale `true`
   // left by a force-quit/crash mid-stream must NOT (a) keep an orphaned external

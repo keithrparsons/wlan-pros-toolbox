@@ -51,6 +51,7 @@ import 'package:flutter/foundation.dart'
 import 'package:flutter/material.dart';
 
 import '../../../router/app_router.dart';
+import '../../../services/network/chromeos_arc.dart';
 import '../../../services/network/connected_ap.dart';
 import '../../../services/network/connected_ap_cache.dart';
 import '../../../services/network/ip_geo_service.dart';
@@ -353,11 +354,22 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
         if (!mounted) return;
         ssidField = GlanceField.unavailable(reason);
       }
+      // CHROMEOS: the signal row is a PERMANENT ceiling, not a failed reading.
+      // ChromeOS's ONC vocabulary carries signal as a 0–100 percentage with no
+      // dBm field, so no trustworthy dBm exists to show and the native side
+      // delivers a genuine null. That makes it `notReported` (a stable platform
+      // ceiling the user can stop fighting), NOT `unavailable` ("try again" —
+      // which would be a lie, since retrying can never produce it). The SSID
+      // beside it is real and still renders. See [ChromeOsArc].
       setState(() => _snapshot = _snapshot.copyWith(
             ssid: ssidField,
             signal: ap.rssiDbm != null
                 ? GlanceField.value('${ap.rssiDbm} dBm')
-                : const GlanceField.unavailable('No signal reading'),
+                : (ap.isChromeOs
+                    ? const GlanceField.notReported(
+                        ChromeOsArc.signalReason,
+                      )
+                    : const GlanceField.unavailable('No signal reading')),
           ));
     } on WifiInfoUnavailable {
       if (!mounted) return;
@@ -528,7 +540,28 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
   }
 
   /// Lane 2 — local IP / gateway / subnet from the subnet seed (instant, local).
+  ///
+  /// CHROMEOS: suppressed entirely. The subnet seed reads `network_info_plus`,
+  /// which inside ARC returns the VIRTUAL MACHINE's addressing — a 100.115.92.x
+  /// address in a /30 whose "gateway" is ChromeOS's patchpanel bridge, not the
+  /// user's router. This card's whole promise is "the essentials about the
+  /// network this device is on"; handing over a VM's gateway under that heading
+  /// is the exact confidently-wrong failure we are removing. All three rows show
+  /// the honest ceiling instead. The public IP / ISP lane is untouched — that
+  /// traffic really does egress through the user's real path, so those rows are
+  /// true. (This is also why the LAN scan below the card is gated: it would seed
+  /// from this same VM address and sweep a /30 that contains nothing.)
   Future<void> _loadSubnet() async {
+    if (ChromeOsArc.isChromeOs) {
+      const GlanceField virt =
+          GlanceField.notReported(ChromeOsArc.addressingReason);
+      setState(() => _snapshot = _snapshot.copyWith(
+            localIp: virt,
+            gateway: virt,
+            subnet: virt,
+          ));
+      return;
+    }
     try {
       final SubnetSeedDeriver deriver =
           widget.seedDeriver ?? SubnetSeedDeriver();

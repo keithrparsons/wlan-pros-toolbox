@@ -51,6 +51,7 @@ class ConnectedAp {
     this.bandDerived = false,
     this.snrDerived = false,
     this.securityAvailable = false,
+    this.isChromeOs = false,
   });
 
   /// Connected network name. Null when not connected, hidden, or omitted.
@@ -136,6 +137,25 @@ class ConnectedAp {
   /// macOS reports SNR directly. Drives the honest "derived" caption.
   final bool snrDerived;
 
+  /// Whether this reading came from the Android build running inside ChromeOS's
+  /// ARC virtual machine.
+  ///
+  /// ChromeOS feeds ARC from its ONC vocabulary, which carries signal as a 0–100
+  /// PERCENTAGE with no dBm field and has no field at all for the link rate, the
+  /// channel width, or the 802.11 generation. So on ChromeOS the native side
+  /// already delivers [rssiDbm], [txRateMbps], [rxRateMbps], [standard], and
+  /// [channelWidthMhz] as genuine nulls — a dBm figure there would be a
+  /// reconstruction of a percentage, and a standard/width would be an Android
+  /// default masquerading as a measurement. Both are the "confidently wrong"
+  /// failure this flag exists to prevent (GL-005 / GL-008).
+  ///
+  /// It drives TWO things in the UI and nothing else: the precise per-row reason
+  /// text (so an empty row reads as an honest fact, not a broken tool), and the
+  /// one-time explanation card at the top of the screen. The fields ONC DOES
+  /// define — [ssid], [bssid], [channel], [band], [securityType] — are real here
+  /// and render normally. See [ChromeOsArc].
+  final bool isChromeOs;
+
   /// Maps the macOS CoreWLAN snapshot into the normalized model.
   ///
   /// macOS reports band and SNR directly (not derived), exposes channel width
@@ -215,18 +235,27 @@ class ConnectedAp {
       // Android CAN expose Rx on API 30+; the row shows it when present, and a
       // precise "not in this reading" when the platform returns the unknown
       // sentinel — never "not on this platform".
-      rxRateAvailable: true,
+      //
+      // CHROMEOS: it genuinely CANNOT, ever. ONC has no PHY-rate field, so the
+      // rate is a permanent platform ceiling here, not a per-reading miss — the
+      // row must say "ChromeOS does not give Android the link rate", not "not
+      // reported by this device's link" (which would imply a transient miss on a
+      // capable platform). That is exactly what rxRateAvailable=false encodes.
+      rxRateAvailable: !info.isChromeOs,
       // Channel width is read from the matching ScanResult.channelWidth (the
       // connected WifiInfo does not carry it). When the native side could not
       // read it (no scan match / no Location grant), it passes null and the row
       // says "Not reported". The 80+80 MHz case arrives as the sentinel 8080.
-      channelWidthAvailable: info.channelWidthMhz != null,
+      // On ChromeOS it is never read (no ONC vocabulary) → always false.
+      channelWidthAvailable: !info.isChromeOs && info.channelWidthMhz != null,
       // Android reports the band/channel from the frequency directly (native
       // side), and never the noise floor, so neither is app-derived here.
       bandDerived: false,
       snrDerived: false,
       // Android exposes the security type whenever a scan match is found.
+      // ChromeOS does too — WiFi.Security IS an ONC field, so it survives.
       securityAvailable: true,
+      isChromeOs: info.isChromeOs,
     );
   }
 
@@ -361,6 +390,7 @@ class ConnectedAp {
       bandDerived: bandDerived,
       snrDerived: snrDerived,
       securityAvailable: securityAvailable,
+      isChromeOs: isChromeOs,
     );
   }
 
@@ -383,10 +413,22 @@ class ConnectedAp {
   /// enrichment already folded onto [this] is never overwritten by a live sample
   /// that lacks it. The platform-availability flags (rxRateAvailable, etc.) are
   /// OR-ed so a "platform can expose this" signal from either source is kept.
+  /// CHROMEOS GUARD (load-bearing). A gap-filling merge is exactly how a
+  /// suppressed value comes back from the dead: this reading's honest null gets
+  /// "filled" from a stale sibling reading that still carries the untrustworthy
+  /// number, and the screen confidently shows a dBm ChromeOS never measured. So
+  /// when EITHER side is an ARC reading, the five ChromeOS-suppressed fields are
+  /// pinned to null and never inherited — the merge can still fill SSID / BSSID /
+  /// channel / band / security (all real on ChromeOS), but it can never resurrect
+  /// signal, rates, standard, or width. The availability flags are AND-ed down
+  /// for the same reason: a ChromeOS reading must not inherit "this platform can
+  /// expose Rx" from a non-ARC sibling.
   ConnectedAp mergedWith(ConnectedAp? other) {
     if (other == null) return this;
-    final int? mergedRssi = rssiDbm ?? other.rssiDbm;
-    final int? mergedNoise = noiseDbm ?? other.noiseDbm;
+    final bool arc = isChromeOs || other.isChromeOs;
+
+    final int? mergedRssi = arc ? null : (rssiDbm ?? other.rssiDbm);
+    final int? mergedNoise = arc ? null : (noiseDbm ?? other.noiseDbm);
     return ConnectedAp(
       ssid: ssid ?? other.ssid,
       bssid: bssid ?? other.bssid,
@@ -394,36 +436,44 @@ class ConnectedAp {
       noiseDbm: mergedNoise,
       // Prefer a directly-reported SNR from either side; only fall back to a
       // derived value if both sides lack one but the inputs are now present.
-      snrDb: snrDb ??
-          other.snrDb ??
-          ((mergedRssi != null && mergedNoise != null)
-              ? mergedRssi - mergedNoise
-              : null),
-      txRateMbps: txRateMbps ?? other.txRateMbps,
-      rxRateMbps: rxRateMbps ?? other.rxRateMbps,
+      // Under ARC both inputs are null by construction, so SNR stays null too.
+      snrDb: arc
+          ? null
+          : (snrDb ??
+              other.snrDb ??
+              ((mergedRssi != null && mergedNoise != null)
+                  ? mergedRssi - mergedNoise
+                  : null)),
+      txRateMbps: arc ? null : (txRateMbps ?? other.txRateMbps),
+      rxRateMbps: arc ? null : (rxRateMbps ?? other.rxRateMbps),
       channel: channel ?? other.channel,
-      channelWidthMhz: channelWidthMhz ?? other.channelWidthMhz,
+      channelWidthMhz: arc ? null : (channelWidthMhz ?? other.channelWidthMhz),
       band: band ?? other.band,
-      standard: standard ?? other.standard,
+      standard: arc ? null : (standard ?? other.standard),
       countryCode: countryCode ?? other.countryCode,
       interfaceName: interfaceName ?? other.interfaceName,
       hardwareAddress: hardwareAddress ?? other.hardwareAddress,
       securityType: securityType ?? other.securityType,
       poweredOn: poweredOn,
-      rxRateAvailable: rxRateAvailable || other.rxRateAvailable,
-      channelWidthAvailable:
-          channelWidthAvailable || other.channelWidthAvailable,
+      rxRateAvailable:
+          arc ? false : (rxRateAvailable || other.rxRateAvailable),
+      channelWidthAvailable: arc
+          ? false
+          : (channelWidthAvailable || other.channelWidthAvailable),
       // The "derived" captions only apply when the value itself came from the
       // side that derived it; keep this read's flag when it supplied the value,
       // otherwise inherit the contributing side's.
       bandDerived: band != null ? bandDerived : other.bandDerived,
-      snrDerived: snrDb != null
-          ? snrDerived
-          : (other.snrDb != null
-              ? other.snrDerived
-              // We synthesized SNR from merged rssi/noise above → it is derived.
-              : true),
+      snrDerived: arc
+          ? false
+          : (snrDb != null
+              ? snrDerived
+              : (other.snrDb != null
+                  ? other.snrDerived
+                  // We synthesized SNR from merged rssi/noise above → derived.
+                  : true)),
       securityAvailable: securityAvailable || other.securityAvailable,
+      isChromeOs: arc,
     );
   }
 

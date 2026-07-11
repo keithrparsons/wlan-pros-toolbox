@@ -22,6 +22,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../services/network/chromeos_arc.dart';
 import '../../../services/network/interface_info_service.dart';
 import '../../../services/network/mac_randomization.dart';
 import '../../../services/network/network_support.dart';
@@ -32,6 +33,7 @@ import '../../../services/network/wifi_info_adapter.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/chromeos_arc_notice.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'network_unavailable_view.dart';
@@ -447,6 +449,31 @@ class _Success extends StatelessWidget {
               ),
               if (ToolAssets.hasGraphic('interface-info'))
                 const SizedBox(height: AppSpacing.md),
+              // CHROMEOS — LABELED, NOT SUPPRESSED. This is the one screen where
+              // the ARC VM's addresses are legitimately the answer, so the
+              // treatment differs from Test My Connection on purpose.
+              //
+              // Test My Connection asks "what is MY NETWORK?", so a VM address
+              // under that heading is a WRONG answer and gets suppressed.
+              // Interface Information asks "what interfaces and addresses does
+              // THIS PROCESS hold?" — and inside ARC, `100.115.92.2` on `wlan0`
+              // is the true, correct answer to that question. Suppressing it
+              // would be its own dishonesty (hiding a real fact), and it is
+              // genuinely useful to a developer or an admin diagnosing ARC.
+              //
+              // The failure mode is therefore not the VALUE, it is the
+              // INTERPRETATION: an admin could read "my Chromebook is on
+              // 100.115.92.2" and go hunting for that subnet on their switch.
+              // The notice is what closes that gap — it names the addresses as
+              // the virtual machine's before the user reads a single one, which
+              // is exactly the "label them unambiguously" branch of the fix.
+              // Renders nothing off ChromeOS.
+              if (ChromeOsArc.isChromeOs) ...<Widget>[
+                const ChromeOsArcNotice(
+                  stillTrue: ChromeOsArc.stillTrueInterface,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+              ],
               _summaryCard(context),
               const SizedBox(height: AppSpacing.sm),
               _wifiCard(context),
