@@ -9,7 +9,7 @@
 // SingleChildScrollView).
 //
 // HONESTY (GL-005): this screen explains that these are the app's OWN
-// measurements (not an Orb/Ookla score), that there is no single composite
+// measurements (not a third-party score), that there is no single composite
 // score on purpose, that latency/loss stand in over a port-443 TCP connect
 // because the iOS/macOS security model forbids raw pings, and that
 // Responsiveness is a simplified single-stream figure inspired by RFC 9097 /
@@ -478,7 +478,7 @@ class _HonestyCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'These are this app\'s own measurements, not an Orb or Ookla score. '
+            'These are this app\'s own measurements, not a third-party score. '
             'There is no single composite score on purpose; each dimension is '
             'graded on its own. Latency and loss use a timed connection on port '
             '443 rather than a raw ping, because sandboxed iPhone and Mac apps '

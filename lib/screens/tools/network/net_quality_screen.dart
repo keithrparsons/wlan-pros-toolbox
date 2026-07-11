@@ -6,7 +6,7 @@
 // real network.
 //
 // HONESTY (GL-005 + ARCHITECTURE.md): these are this app's OWN measurements,
-// not an Orb or Ookla score, and there is deliberately no single composite
+// not a third-party score, and there is deliberately no single composite
 // "score" — each dimension is graded on its own. The Responsiveness grade is a
 // simplified single-flow figure inspired by RFC 9097 / Apple networkQuality,
 // not the full multi-flow RPM standard. Latency and reachability use a
@@ -265,7 +265,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     buf
       ..writeln()
       ..writeln(
-        "These are this app's own measurements, not an Orb or Ookla score. "
+        "These are this app's own measurements, not a third-party score. "
         'The Responsiveness grade is an indicative figure inspired by '
         'RFC 9097, not the full standard.',
       );
@@ -1094,7 +1094,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     // (textSecondary) so it remains supporting copy without dropping below the
     // 12px floor.
     return Text(
-      'These are this app\'s own measurements, not an Orb or Ookla score. '
+      'These are this app\'s own measurements, not a third-party score. '
       'The Responsiveness grade is an indicative figure inspired by RFC 9097, '
       'not the full standard.',
       style: text.labelMedium?.copyWith(color: colors.textSecondary),
