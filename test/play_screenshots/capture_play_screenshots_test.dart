@@ -39,6 +39,8 @@ library;
 // and verifies every PNG is exactly 1080×1920).
 
 import 'dart:io';
+
+import '../support/figure_write_gate.dart';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -321,7 +323,9 @@ Future<void> _writePng(
         await image.toByteData(format: ui.ImageByteFormat.png);
     final Directory dir = Directory(outDir);
     if (!dir.existsSync()) dir.createSync(recursive: true);
-    File('$outDir/$id.png').writeAsBytesSync(byteData!.buffer.asUint8List());
+    if (kWriteFigures) {
+      File('$outDir/$id.png').writeAsBytesSync(byteData!.buffer.asUint8List());
+    }
     // ignore: avoid_print
     print('WROTE $id.png  ${image.width}x${image.height}px');
     image.dispose();

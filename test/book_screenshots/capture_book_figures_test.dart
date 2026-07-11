@@ -29,6 +29,8 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import '../support/figure_write_gate.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -331,13 +333,17 @@ Future<void> _writePng(WidgetTester tester, String figId) async {
   await tester.runAsync(() async {
     final image = await boundary.toImage(pixelRatio: kPixelRatio);
     final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-    final Directory dir = Directory(kOutDir);
-    if (!dir.existsSync()) dir.createSync(recursive: true);
-    final File file = File('$kOutDir/$figId.png');
-    file.writeAsBytesSync(byteData!.buffer.asUint8List());
-    // Echo dimensions so the run log records them.
-    // ignore: avoid_print
-    print('WROTE $figId.png  ${image.width}x${image.height}px');
+    // Render always runs; the WRITE is opt-in so a plain `flutter test` never
+    // dirties the tree. See test/support/figure_write_gate.dart.
+    if (kWriteFigures) {
+      final Directory dir = Directory(kOutDir);
+      if (!dir.existsSync()) dir.createSync(recursive: true);
+      final File file = File('$kOutDir/$figId.png');
+      file.writeAsBytesSync(byteData!.buffer.asUint8List());
+      // Echo dimensions so the run log records them.
+      // ignore: avoid_print
+      print('WROTE $figId.png  ${image.width}x${image.height}px');
+    }
     image.dispose();
   });
 }
