@@ -97,6 +97,35 @@ class AntennaLengthScreen extends StatefulWidget {
   /// Feet -> meters.
   static double feetToMeters(double ft) => ft / 3.28084;
 
+  // ── Input routing ──────────────────────────────────────────────────────────
+  // Lifted verbatim out of the State's private getters so the mode/unit routing
+  // is callable (and therefore testable) in isolation. Logic unchanged.
+
+  /// Resolve the active input to a frequency in MHz.
+  ///
+  /// [wavelengthMode] true → [value] is a wavelength in metres, inverted to a
+  /// frequency. Otherwise [value] is a frequency in [freqUnit].
+  /// Returns null when the input is null or non-positive.
+  static double? resolveFreqMHz({
+    required double? value,
+    required bool wavelengthMode,
+    required AntennaFreqUnit freqUnit,
+  }) {
+    if (value == null || value <= 0) return null;
+    if (wavelengthMode) {
+      // value is a wavelength in meters; invert to frequency.
+      return frequencyMHz(value);
+    }
+    final double mhz = freqUnit == AntennaFreqUnit.ghz ? value * 1000.0 : value;
+    return mhz > 0 ? mhz : null;
+  }
+
+  /// Velocity-factor gate: valid only in (0, 1]. Null otherwise.
+  static double? resolveVf(double? value) {
+    if (value == null || value <= 0 || value > 1.0) return null;
+    return value;
+  }
+
   @override
   State<AntennaLengthScreen> createState() => _AntennaLengthScreenState();
 }
@@ -126,19 +155,11 @@ class _AntennaLengthScreenState extends State<AntennaLengthScreen> {
 
   /// Effective frequency in MHz from whichever input mode is active, or null
   /// when the input is empty / unparseable / non-positive.
-  double? get _freqMHz {
-    final double? v = tryParseFlexibleDouble(_valueCtrl.text);
-    if (v == null || v <= 0) return null;
-    switch (_mode) {
-      case _InputMode.frequency:
-        final double mhz =
-            _freqUnit == AntennaFreqUnit.ghz ? v * 1000.0 : v;
-        return mhz > 0 ? mhz : null;
-      case _InputMode.wavelength:
-        // v is wavelength in meters; invert to frequency.
-        return AntennaLengthScreen.frequencyMHz(v);
-    }
-  }
+  double? get _freqMHz => AntennaLengthScreen.resolveFreqMHz(
+    value: tryParseFlexibleDouble(_valueCtrl.text),
+    wavelengthMode: _mode == _InputMode.wavelength,
+    freqUnit: _freqUnit,
+  );
 
   /// Free-space wavelength in meters, or null when the frequency is unresolved.
   double? get _wavelengthM {
@@ -148,11 +169,8 @@ class _AntennaLengthScreenState extends State<AntennaLengthScreen> {
   }
 
   /// Velocity factor in (0, 1], or null when the VF field is invalid.
-  double? get _vf {
-    final double? v = tryParseFlexibleDouble(_vfCtrl.text);
-    if (v == null || v <= 0 || v > 1.0) return null;
-    return v;
-  }
+  double? get _vf =>
+      AntennaLengthScreen.resolveVf(tryParseFlexibleDouble(_vfCtrl.text));
 
   // ── Copy payload (sec 8.16) ─────────────────────────────────────────────────
 

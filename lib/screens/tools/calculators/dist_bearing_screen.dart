@@ -87,6 +87,19 @@ class DistBearingScreen extends StatefulWidget {
   /// Reverse bearing = (forward + 180) mod 360. PWA bRev.
   static double reverseBearingDeg(double forward) => (forward + 180) % 360;
 
+  // ── Output-unit conversions ────────────────────────────────────────────────
+  // Lifted verbatim out of the State's display getters so they are callable
+  // (and therefore testable) in isolation. Arithmetic unchanged.
+
+  /// Kilometres → miles.
+  static double kmToMiles(double km) => km * 0.621371;
+
+  /// Kilometres → metres.
+  static double kmToMeters(double km) => km * 1000;
+
+  /// Kilometres → feet.
+  static double kmToFeet(double km) => km * 1000 * 3.28084;
+
   @override
   State<DistBearingScreen> createState() => _DistBearingScreenState();
 }
@@ -181,9 +194,12 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
 
   // Derived display values from the canonical km + forward bearing.
   String get _kmText => _fmt(_km, 4);
-  String get _miText => _fmt(_km == null ? null : _km! * 0.621371, 4);
-  String get _mText => _fmt(_km == null ? null : _km! * 1000, 1);
-  String get _ftText => _fmt(_km == null ? null : _km! * 1000 * 3.28084, 1);
+  String get _miText =>
+      _fmt(_km == null ? null : DistBearingScreen.kmToMiles(_km!), 4);
+  String get _mText =>
+      _fmt(_km == null ? null : DistBearingScreen.kmToMeters(_km!), 1);
+  String get _ftText =>
+      _fmt(_km == null ? null : DistBearingScreen.kmToFeet(_km!), 1);
   String get _bFwdText =>
       _bearingFwd == null ? '—' : '${_fmt(_bearingFwd, 1)}°';
   String get _bRevText => _bearingFwd == null

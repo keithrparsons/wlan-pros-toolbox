@@ -45,6 +45,14 @@ import '../labeled_field.dart';
 /// Wi-Fi standard, mirroring the PWA tput-std select (ht/vht/he/eht).
 enum WifiStd { ht, vht, he, eht }
 
+/// The four dependent selector values, as reclamped for a given [WifiStd].
+typedef ThroughputOptions = ({
+  int bandwidthMHz,
+  int mcs,
+  int streams,
+  String giKey,
+});
+
 class ThroughputCalcScreen extends StatefulWidget {
   const ThroughputCalcScreen({super.key});
 
@@ -149,6 +157,31 @@ class ThroughputCalcScreen extends StatefulWidget {
   // ─── Math (pure) ────────────────────────────────────────────────────────────
   // Mirrors app.js calcThroughput.
 
+  /// The dependent-option reclamp applied when the standard changes.
+  ///
+  /// Lifted verbatim out of `_onStdChanged`'s `setState` so it is callable (and
+  /// therefore testable) in isolation. Logic unchanged: an out-of-range
+  /// bandwidth or guard interval falls back to the standard's first legal
+  /// value; MCS and stream counts clamp down to the standard's maximum.
+  static ThroughputOptions reclampFor({
+    required WifiStd std,
+    required int bandwidthMHz,
+    required int mcs,
+    required int streams,
+    required String giKey,
+  }) {
+    final List<int> bws = bandwidths[std]!;
+    final List<String> gis = giKeys[std]!;
+    final int max = maxMcs[std]!;
+    final int maxSS = maxStreams[std]!;
+    return (
+      bandwidthMHz: bws.contains(bandwidthMHz) ? bandwidthMHz : bws.first,
+      mcs: mcs > max ? max : mcs,
+      streams: streams > maxSS ? maxSS : streams,
+      giKey: gis.contains(giKey) ? giKey : gis.first,
+    );
+  }
+
   /// PHY rate in Mbps, or null when the bandwidth / guard-interval combination
   /// is invalid for the standard or the MCS exceeds the standard's max — the
   /// PWA showError paths. (nsd · MCS_BPS[mcs] · ss) / sym.
@@ -206,20 +239,19 @@ class _ThroughputCalcScreenState extends State<ThroughputCalcScreen> {
   /// Reclamp the dependent selections to the new standard's valid sets, keeping
   /// the prior choice where it still fits (PWA updateTputOptions behavior).
   void _onStdChanged(WifiStd std) {
+    final ThroughputOptions next = ThroughputCalcScreen.reclampFor(
+      std: std,
+      bandwidthMHz: _bandwidth,
+      mcs: _mcs,
+      streams: _streams,
+      giKey: _gi,
+    );
     setState(() {
       _std = std;
-
-      final List<int> bws = ThroughputCalcScreen.bandwidths[std]!;
-      if (!bws.contains(_bandwidth)) _bandwidth = bws.first;
-
-      final int max = ThroughputCalcScreen.maxMcs[std]!;
-      if (_mcs > max) _mcs = max;
-
-      final int maxSS = ThroughputCalcScreen.maxStreams[std]!;
-      if (_streams > maxSS) _streams = maxSS;
-
-      final List<String> gis = ThroughputCalcScreen.giKeys[std]!;
-      if (!gis.contains(_gi)) _gi = gis.first;
+      _bandwidth = next.bandwidthMHz;
+      _mcs = next.mcs;
+      _streams = next.streams;
+      _gi = next.giKey;
     });
   }
 
