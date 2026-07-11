@@ -690,8 +690,9 @@ void main() {
           reason: 'a host that only ever produced EHOSTUNREACH is dead');
     });
 
-    test('also drops on ENETUNREACH / EHOSTDOWN / ETIMEDOUT and null osError',
-        () async {
+    test(
+        'also drops on ENETUNREACH / EHOSTDOWN / ETIMEDOUT / the Dart '
+        'connect-timeout (errno 110)', () async {
       final List<HostPorts> result = await runConnectScan(
         const ConnectScanRequest(
           hosts: <String>['10.0.0.1', '10.0.0.2', '10.0.0.3', '10.0.0.4'],
@@ -710,13 +711,59 @@ void main() {
               return Future<Socket>.error(
                   _errnoEx(60, 'Operation timed out')); // ETIMEDOUT (BSD)
             default:
-              // Our own connect-timeout surfaces a null osError.
+              // Dart's OWN connect-timeout. It carries a NON-null osError with
+              // the synthetic errno 110 — measured, not assumed. This fake used
+              // to throw a null-osError SocketException and carried a comment
+              // asserting that "our own connect-timeout surfaces a null
+              // osError". That belief is FALSE and is the belief that caused the
+              // whole class defect; it has no business living in the test file
+              // for the one probe that got the fix right.
               return Future<Socket>.error(
-                  const SocketException('Connection timed out'));
+                  _errnoEx(110, 'Connection timed out'));
           }
         },
       );
       expect(result, isEmpty);
+    });
+
+    test(
+        'REGRESSION: errno 110 alone drops the host — the exact errno behind '
+        '"254 / 254 · 254 live"', () async {
+      // connect_scan had the classification right, but never had a test for
+      // the one errno that broke the other four probes. Pin it here too: the
+      // shared classifier is now load-bearing for this file.
+      final List<HostPorts> result = await runConnectScan(
+        const ConnectScanRequest(
+          hosts: <String>['10.0.0.7', '10.0.0.8'],
+          ports: <int>[22, 80, 443, 445, 515, 631],
+        ),
+        connector: connectorWith(
+          openPorts: const <int>{},
+          thrown: (_) => _errnoEx(110, 'Connection timed out'),
+        ),
+      );
+      expect(result, isEmpty,
+          reason: 'errno 110 is Dart\'s own connect-timeout: NOBODY answered. '
+              'Reading it as "the host replied" is what listed every dead IP '
+              'on the subnet as live.');
+    });
+
+    test('a REFUSED host is still kept (no over-correction on errno 61)',
+        () async {
+      final List<HostPorts> result = await runConnectScan(
+        const ConnectScanRequest(
+          hosts: <String>['10.0.0.9'],
+          ports: <int>[22, 80],
+        ),
+        connector: connectorWith(
+          openPorts: const <int>{},
+          thrown: (_) => _errnoEx(61, 'Connection refused'), // ECONNREFUSED
+        ),
+      );
+      expect(result, hasLength(1),
+          reason: 'a RST proves the host answered the SYN — alive, ports closed');
+      expect(result.single.openPorts, isEmpty);
+      expect(result.single.alive, isTrue);
     });
 
     test('some ports connect, others refuse → openPorts holds only the '

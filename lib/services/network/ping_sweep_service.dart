@@ -98,17 +98,34 @@ class SweepHostResult {
     required this.host,
     required this.responded,
     this.rtt,
+    this.answer,
   });
 
   /// The probed IPv4 address.
   final String host;
 
-  /// True when the TCP handshake completed (or was actively refused with a
-  /// RST) — i.e. the host answered on the probed port. NOT a liveness claim.
+  /// True when the host ANSWERED on the probed port — the handshake completed,
+  /// or the host actively refused it with a RST. NOT a liveness claim.
   final bool responded;
 
-  /// Round-trip time of the handshake, or null when the host did not respond.
+  /// Round-trip time of the answer, or null when the host did not respond.
   final Duration? rtt;
+
+  /// HOW the host answered: [TcpProbeOutcome.open] (handshake completed) or
+  /// [TcpProbeOutcome.refused] (RST — the host answered, port closed). Null
+  /// when the host did not answer at all.
+  ///
+  /// This is surfaced to the user, on screen AND in the copied report. A
+  /// refusal counting as "responded" is correct, but it must be VISIBLE: a
+  /// middlebox RSTing on behalf of every address would otherwise produce a
+  /// report reading "254 of 254 hosts responded" with nothing to distinguish it
+  /// from 254 genuinely-listening hosts. That is the exact string that started
+  /// this investigation, and the reader of a pasted report never saw the screen.
+  final TcpProbeOutcome? answer;
+
+  /// True when the host answered by actively REFUSING (a RST). It is there, but
+  /// nothing is listening on the probed port.
+  bool get refused => answer == TcpProbeOutcome.refused;
 
   double? get rttMs => rtt == null ? null : rtt!.inMicroseconds / 1000.0;
 }
@@ -399,12 +416,22 @@ class PingSweepService {
         final Socket socket = await _connect(host, port, timeout: timeout);
         sw.stop();
         socket.destroy();
-        return SweepHostResult(host: host, responded: true, rtt: sw.elapsed);
+        return SweepHostResult(
+          host: host,
+          responded: true,
+          rtt: sw.elapsed,
+          answer: TcpProbeOutcome.open,
+        );
       } on Object catch (e) {
         sw.stop();
         if (classifyTcpError(e) == TcpProbeOutcome.refused) {
           // The host answered with a RST: alive, this port closed.
-          return SweepHostResult(host: host, responded: true, rtt: sw.elapsed);
+          return SweepHostResult(
+            host: host,
+            responded: true,
+            rtt: sw.elapsed,
+            answer: TcpProbeOutcome.refused,
+          );
         }
         // DEAD on this port → try the next one.
       }

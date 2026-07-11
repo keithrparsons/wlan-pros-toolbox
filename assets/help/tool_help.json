@@ -2056,7 +2056,7 @@
       "fieldNotes": [
         "Platform differences: works the same on every native platform (no special permission beyond ordinary network access). Turned off on the web version.",
         "\"Filtered\" means the request went unanswered (likely a firewall); it does not mean the port is closed. A custom range is de-duplicated and kept within the valid 1 to 65535 range.",
-        "\"Closed\" is a positive signal: it means the host ANSWERED and refused. A host that isn't there reads as all-filtered, never all-closed. If every port comes back filtered, suspect the host is down or firewalled wholesale rather than idle.",
+        "\"Closed\" is a positive signal: it means the host ANSWERED and refused. A host that isn't there reads as all-filtered, never all-closed. If every port comes back filtered, suspect the host is down or firewalled wholesale rather than idle. The copied report spells this legend out.",
         "This is a TCP connect scan, not a stealth scan; it completes each connection and then tears it down."
       ],
       "source": "Tries to open a TCP connection to each port and reports whether it opened, was actively refused, or went unanswered."
@@ -2076,7 +2076,8 @@
         "Platform differences: identical on every native platform. Turned off on the web version. The screen labels the metric \"TCP RTT\" and shows the target port, so it's never mistaken for classic ICMP ping.",
         "The round-trip time is the connection time to a port, slightly higher than classic ping, and it depends on that port answering. Even a \"refused\" target gives you a valid timing number, because the host answered.",
         "A host that never answers is reported as loss with no round-trip time. The tool never invents an RTT for a packet it did not get back.",
-        "This is not classic ICMP echo (see Ping (ICMP) for the real-ICMP path on mobile). If a host blocks the probe port, it reads as loss even if the host is up on another port; try a different probe port."
+        "This is not classic ICMP echo (see Ping (ICMP) for the real-ICMP path on mobile). If a host blocks the probe port, it reads as loss even if the host is up on another port; try a different probe port.",
+        "The copied report carries a Method line defining what counts as a reply (a completed handshake or an active refusal), so a pasted result can't be misread by someone who never saw the screen."
       ],
       "source": "Times how long it takes to open a TCP connection to the host, and reports that as the round-trip time."
     },
@@ -2097,7 +2098,8 @@
         "This is a TCP round-trip probe, not an ICMP echo. The reading is labeled \"TCP RTT\" and the probe port is shown, so you can't mistake it for ICMP. For true ICMP, see Ping (ICMP) on mobile.",
         "It runs on every native platform, including the Mac desktop where true ICMP can't run. It's turned off on the web version, which shows a prompt to download the app.",
         "Dropped probes are always shown, never hidden. A lost sample is a red dot on the axis and counts toward the loss percentage, so a flaky path reads honestly instead of as a smooth line.",
-        "The chart keeps a fixed number of recent samples so a long run stays light on memory, and the copy export notes how many of the total samples are shown."
+        "The chart keeps a fixed number of recent samples so a long run stays light on memory, and the copy export notes how many of the total samples are shown.",
+        "The copied report carries a Method line defining what counts as a reply (a completed handshake or an active refusal), so a pasted result can't be misread by someone who never saw the screen."
       ],
       "source": "It repeatedly sends TCP round-trip probes to the host and charts each reply as it arrives."
     },
@@ -2133,7 +2135,7 @@
       "fieldNotes": [
         "It works the same on every native platform and is turned off on the web version.",
         "A host is reported as \"responded,\" not \"up.\" A host that stays silent on the probed ports may still be alive but only answering ICMP, or behind a firewall. The tool never claims ICMP-style liveness.",
-        "A refused connection still counts as responded, and that is deliberate: the host answered, it just isn't listening on that port. That is how tcping behaves too.",
+        "A refused connection still counts as responded, and that is deliberate: the host answered, it just isn't listening on that port. That is how tcping behaves too. The list and the copied report say which it was — \"handshake\" or \"refused\" — so a middlebox refusing on behalf of a whole range can't be mistaken for a range full of live servers.",
         "This finds hosts that answer TCP on the probed ports. For richer detail (name, services, device type, vendor), use Network Discovery. A /31 or /32 includes every address; larger blocks leave out the network and broadcast addresses."
       ],
       "source": "It tries a quick TCP connection to a common port on each address and lists only the ones that answer, whether they accept the connection or refuse it."

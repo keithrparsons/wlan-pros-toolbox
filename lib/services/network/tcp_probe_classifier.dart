@@ -129,6 +129,26 @@ class TcpProbeFailure {
       'TcpProbeFailure($reason, errno: $errorCode, "$message")';
 }
 
+/// VERIFICATION STATUS OF THE ERRNO TABLES BELOW — read before trusting them.
+///
+///   macOS / iOS (BSD):  MEASURED. 61 (refused, 8ms) and Dart's synthetic 110
+///                       (connect-timeout, 607ms) confirmed on a real machine,
+///                       2026-07-10. These are the constants the bug turned on.
+///   Linux / Android:    from documentation. NOT measured on a device.
+///   Windows (Winsock):  from documentation. NOT measured on a real Windows box.
+///                       OWED: confirm 10061 (WSAECONNREFUSED) on hardware via
+///                       SOP-057 remote-SSH. Until a real box confirms it, do
+///                       NOT record Windows as "verified" anywhere.
+///
+/// This is safe to ship UNVERIFIED, and the reason is structural, not optimistic:
+/// the classifier FAILS SAFE. An errno it does not recognise falls through to
+/// [TcpFailureReason.unknown] → [TcpProbeOutcome.dead]. So a wrong or missing
+/// constant can only ever make a live host look dead (a visible under-report the
+/// user will notice), NEVER a dead host look alive (the silent over-report that
+/// produced "254 / 254 · 254 live"). The message fallback covers the gap in
+/// practice. The failure direction is the safe one BY CONSTRUCTION — do not
+/// "optimise" that away by defaulting unknown errnos to alive.
+///
 /// errno values that prove the host ANSWERED — the only two errors that mean
 /// "alive". They differ across the BSD family (macOS/iOS), Linux (Android), and
 /// Winsock (Windows), so all three are matched. Every shipped platform, not

@@ -197,13 +197,32 @@ class _PortScanScreenState extends State<PortScanScreen> {
         .where((PortResult r) => r.status == PortStatus.open)
         .length;
 
+    final int closedCount = _results
+        .where((PortResult r) => r.status == PortStatus.closed)
+        .length;
+    final int filteredCount = _results
+        .where((PortResult r) => r.status == PortStatus.filtered)
+        .length;
+
     const String tab = '\t';
     final StringBuffer buf = StringBuffer()
       ..writeln('Port Scan — TCP connect')
       ..writeln('Target: ${host.isEmpty ? '(unknown)' : host}')
       ..writeln(
-        'Summary: $openCount open of ${_results.length} probed '
-        '($_completed/$_total complete)',
+        'Summary: $openCount open, $closedCount closed, $filteredCount '
+        'filtered of ${_results.length} probed ($_completed/$_total complete)',
+      )
+      // CLOSED and FILTERED are opposite claims about the HOST, and the pasted
+      // report is read by someone who never saw the screen. CLOSED says the
+      // host answered and refused; FILTERED says nothing came back at all. An
+      // all-FILTERED result means the host is probably not there — it does NOT
+      // mean the ports are shut. Spell it out; the words are load-bearing.
+      ..writeln(
+        'Legend: OPEN = the connection completed, something is listening. '
+        'CLOSED = the host ANSWERED and actively refused (the host is up, '
+        'nothing on that port). FILTERED = no answer at all before the timeout '
+        '(silently dropped, or the host is not there). A host that comes back '
+        'all-FILTERED is usually down or firewalled wholesale, not idle.',
       )
       ..writeln()
       ..writeln(<String>['Port', 'State', 'Service'].join(tab));

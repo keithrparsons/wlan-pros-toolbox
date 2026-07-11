@@ -16,6 +16,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/ping_sweep_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/ping_sweep_service.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+import 'package:wlan_pros_toolbox/widgets/app_copy_action.dart';
 
 /// Every probe times out — the DEAD case, in the shape the platform really
 /// throws it (non-null osError, synthetic errno 110).
@@ -28,9 +29,21 @@ PingSweepService _deadService() => PingSweepService(
       },
     );
 
-Widget _app() => MaterialApp(
+/// Every probe is REFUSED — the middlebox case. A host that RSTs is genuinely
+/// alive and is correctly counted as answered, but the user must be able to see
+/// that it answered with a refusal, not a listening service.
+PingSweepService _refusingService() => PingSweepService(
+      connector: (String host, int port, {required Duration timeout}) async {
+        throw const SocketException(
+          'Connection refused',
+          osError: OSError('Connection refused', 61),
+        );
+      },
+    );
+
+Widget _app([PingSweepService? service]) => MaterialApp(
       theme: AppTheme.dark(),
-      home: PingSweepScreen(service: _deadService()),
+      home: PingSweepScreen(service: service ?? _deadService()),
     );
 
 /// Collect the text of every rendered Text widget.
@@ -38,6 +51,27 @@ String _allText(WidgetTester tester) => tester
     .widgetList<Text>(find.byType(Text))
     .map((Text t) => t.data ?? '')
     .join(' | ');
+
+/// Drive a real sweep over a small range and return the copy-report payload —
+/// the thing that actually gets pasted into a ticket or an email.
+Future<String> _runSweepAndCopy(
+  WidgetTester tester,
+  PingSweepService service, {
+  String range = '10.99.99.1-4',
+}) async {
+  await tester.pumpWidget(_app(service));
+  await tester.pumpAndSettle();
+
+  await tester.enterText(find.byType(TextField).first, range);
+  await tester.pump();
+  await tester.tap(find.widgetWithText(FilledButton, 'Sweep'));
+  await tester.pumpAndSettle();
+
+  // The payload AppCopyAction would put on the clipboard — the permanent record.
+  final AppCopyAction action =
+      tester.widgetList<AppCopyAction>(find.byType(AppCopyAction)).single;
+  return action.textBuilder() ?? '';
+}
 
 void main() {
   group('method blurb describes what the tool ACTUALLY does', () {
@@ -89,6 +123,71 @@ void main() {
         expect(tester.takeException(), isNull, reason: '$label overflowed');
         expect(find.byType(PingSweepScreen), findsOneWidget);
       });
+    });
+  });
+
+  group('copy report — the permanent record must define its own terms', () {
+    // VERA'S KICKER. A middlebox that RSTs on behalf of every address in the
+    // range yields a pasted report reading "254 of 254 hosts responded" — the
+    // exact string that started this whole investigation — unless the report
+    // says HOW they answered. The person reading a pasted report never saw the
+    // screen. It has to stand on its own.
+    testWidgets('all-refused does NOT paste as an undifferentiated "responded"',
+        (WidgetTester tester) async {
+      final String report =
+          await _runSweepAndCopy(tester, _refusingService());
+
+      expect(report, contains('4 of 4 hosts answered'));
+      expect(
+        report,
+        contains('0 by completing the handshake, 4 by actively refusing'),
+        reason: 'a wall of RSTs must be visible AS a wall of RSTs, not as four '
+            'indistinguishable live hosts',
+      );
+      expect(report, contains('answered (refused)'),
+          reason: 'the State column must name HOW the host answered');
+      expect(report, isNot(contains('answered (handshake)')));
+
+      // The Method line defines the term the summary uses.
+      expect(report, contains('Method:'));
+      expect(report, contains('an active refusal (RST) count'));
+      expect(report, contains('Silence is not an answer'));
+    });
+
+    testWidgets('a dead range copies a tally of zero, and lists no hosts',
+        (WidgetTester tester) async {
+      final String report = await _runSweepAndCopy(tester, _deadService());
+
+      expect(report, contains('0 of 4 hosts answered'));
+      expect(report, isNot(contains('answered (refused)')));
+      expect(report, isNot(contains('answered (handshake)')));
+      expect(report, contains('Method:'));
+    });
+
+    testWidgets('the report still carries the ICMP-liveness caveat (GL-005)',
+        (WidgetTester tester) async {
+      final String report =
+          await _runSweepAndCopy(tester, _refusingService());
+      expect(report, contains('not ICMP liveness'));
+      expect(report, contains('may still be up'));
+    });
+  });
+
+  group('on-screen rows match the copied report (screenshot-text rule)', () {
+    testWidgets('a refused host renders as "refused", not a bare green tick',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_app(_refusingService()));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, '10.99.99.1-2');
+      await tester.pump();
+      await tester.tap(find.widgetWithText(FilledButton, 'Sweep'));
+      await tester.pumpAndSettle();
+
+      final String onScreen = _allText(tester);
+      expect(onScreen, contains('refused'),
+          reason: 'the screen must say the same thing the clipboard does');
+      expect(find.byIcon(Icons.block), findsWidgets,
+          reason: 'WCAG 1.4.1 — a distinct SHAPE per outcome, not a color swap');
     });
   });
 }

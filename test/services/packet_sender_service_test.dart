@@ -104,11 +104,21 @@ void main() {
       expect(r.errorKind, PacketErrorKind.refused);
     });
 
-    test('connect timeout to typed timeout error', () async {
+    // THE case that matters: Dart's own connect-timeout carries a NON-null
+    // osError with the synthetic errno 110. This fake used to throw
+    // `SocketException('timed out')` with a NULL osError — a shape no platform
+    // produces. It passed via the message fallback, so it was green AND
+    // vacuous: it exercised a branch real hardware never takes, and gave zero
+    // coverage of the one errno that caused the whole class defect.
+    test('connect timeout (Connection timed out, errno 110) → typed timeout',
+        () async {
       final PacketSenderService svc = PacketSenderService(
         tcpConnector: (host, port, {required timeout}) async {
           await Future<void>.delayed(timeout);
-          throw const SocketException('timed out'); // osError == null
+          throw const SocketException(
+            'Connection timed out',
+            osError: OSError('Connection timed out', 110),
+          );
         },
       );
       final PacketResult r = await svc.send(
@@ -119,8 +129,59 @@ void main() {
         timeout: const Duration(milliseconds: 80),
       );
       expect(r.isError, isTrue);
-      expect(r.errorKind, PacketErrorKind.timeout);
+      expect(r.errorKind, PacketErrorKind.timeout,
+          reason: 'errno 110 is a TIMEOUT, not a generic "other" error. Before '
+              'the classifier, the timeout branch was gated on '
+              '`os == null && elapsed >= timeout - 50ms` and could NEVER fire.');
       expect(r.timedOut, isTrue);
+    });
+
+    test('a dead host never reports as refused (110 is not 61)', () async {
+      // The inverse guard: a timeout must not be promoted into "refused",
+      // which would imply the host answered.
+      final PacketSenderService svc = PacketSenderService(
+        tcpConnector: (host, port, {required timeout}) async {
+          throw const SocketException(
+            'Connection timed out',
+            osError: OSError('Connection timed out', 110),
+          );
+        },
+      );
+      final PacketResult r = await svc.send(
+        transport: PacketTransport.tcp,
+        host: '10.255.255.1',
+        port: 9,
+        payload: 'x'.codeUnits,
+        timeout: const Duration(milliseconds: 80),
+      );
+      expect(r.errorKind, isNot(PacketErrorKind.refused));
+      expect(r.errorKind, PacketErrorKind.timeout);
+    });
+
+    test('unreachable and lookup failures get their own typed kinds', () async {
+      Future<PacketResult> sendWith(SocketException e) {
+        final PacketSenderService svc = PacketSenderService(
+          tcpConnector: (host, port, {required timeout}) async => throw e,
+        );
+        return svc.send(
+          transport: PacketTransport.tcp,
+          host: 'target.invalid',
+          port: 9,
+          payload: 'x'.codeUnits,
+          timeout: const Duration(milliseconds: 80),
+        );
+      }
+
+      final PacketResult unreachable = await sendWith(const SocketException(
+        'No route to host',
+        osError: OSError('No route to host', 65),
+      ));
+      expect(unreachable.errorKind, PacketErrorKind.unreachable);
+
+      final PacketResult dns = await sendWith(
+        const SocketException('Failed host lookup: target.invalid'),
+      );
+      expect(dns.errorKind, PacketErrorKind.dnsFailure);
     });
   });
 

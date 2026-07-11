@@ -303,10 +303,12 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.xs),
             child: Text(
-              'Plots TCP handshake round-trip time to port $_port over time, a '
-              'reachability and latency trend, not ICMP echo. Runs until you '
-              'stop it; the chart keeps the most recent '
-              '${_controller.windowSize} samples.',
+              'Plots TCP round-trip time to port $_port over time, a '
+              'reachability and latency trend, not ICMP echo. A sample counts '
+              'when the host ANSWERS: either the handshake completes, or the '
+              'host actively refuses (a refusal is a real round trip). No '
+              'answer counts as loss. Runs until you stop it; the chart keeps '
+              'the most recent ${_controller.windowSize} samples.',
               style: text.labelSmall?.copyWith(color: colors.textTertiary),
             ),
           ),
@@ -609,7 +611,7 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
 
     const String tab = '\t';
     final StringBuffer buf = StringBuffer()
-      ..writeln('Ping Plotter: TCP handshake RTT over time (not ICMP echo)')
+      ..writeln('Ping Plotter: TCP RTT over time (not ICMP echo)')
       ..writeln('Target: ${host.isEmpty ? '(unknown)' : host}  port $_port  '
           'interval ${_intervalLabel(_intervalMs)}')
       ..writeln(
@@ -617,6 +619,15 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
         '$lossPct% loss · min ${ms(_state.minMs)} ms / '
         'avg ${ms(_state.avgMs)} ms / max ${ms(_state.maxMs)} ms / '
         'jitter ${ms(_state.jitterMs)} ms',
+      )
+      // The method caveat travels WITH the numbers — the pasted report is read
+      // by someone who never saw the screen. A refusal produces a timing sample
+      // here, and a RST is not a handshake.
+      ..writeln(
+        'Method: a reply is counted when the host ANSWERS — either the TCP '
+        'handshake completes, or the host actively refuses (a refusal is a '
+        'real round trip, the same way tcping counts it). No answer at all '
+        '(timeout / unreachable) counts as loss, with no time recorded.',
       )
       ..writeln('Showing the most recent ${_state.samples.length} of '
           '${_state.totalSent} samples.')
