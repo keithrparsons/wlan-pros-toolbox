@@ -782,6 +782,18 @@ void main() {
   // S10 — the call-killer profile: a gorgeous DOWNLOAD grade (Excellent) sitting
   // next to WEAK jitter and FAIR loss. A speed test would call this great; the
   // call still freezes. download/upload Excellent; jitter Poor; loss Fair.
+  //
+  // Loss is set to 2.0 % — genuinely FAIR by the engine (scoring.dart grades
+  // loss < 2.5 % as Fair, >= 2.5 % as Poor), so the rendered loss chip honestly
+  // reads Fair, matching the "shaky Fair loss" caption. NOTE: the loss row is
+  // part of the live-sampled trio (latency/jitter/loss), so its on-screen value
+  // AND grade come from the live MONITOR sample below, which grades via
+  // QualityScoring.gradeLossPct — NOT from the one-shot lossGrade override. The
+  // monitor sampler's lossPct is therefore the source of truth for this figure
+  // and is set to 2.0 % here. (A prior fixture used 3 %, which the engine grades
+  // Poor, contradicting the "Fair" caption — Book 3 technical-edit item C2.)
+  // sent/received (72/71 ≈ 1.4 %) only gate the latency-success path and stay
+  // realistic; the explicit lossPct field drives the displayed loss.
   testWidgets('S10 Network Quality — call-killer profile', (tester) async {
     await _capture(
       tester,
@@ -790,7 +802,7 @@ void main() {
       build: () => NetQualityScreen(
         client: MockQualityClient(
           scriptedResult: _internetResult(
-            down: 480, up: 240, latencyMs: 60, jitterMs: 45, lossPct: 3,
+            down: 480, up: 240, latencyMs: 60, jitterMs: 45, lossPct: 2,
             downUpGrade: QualityGrade.excellent,
             latencyGrade: QualityGrade.fair,
             jitterGrade: QualityGrade.poor,
@@ -801,8 +813,8 @@ void main() {
         reachabilityProbe: ReachabilityProbe(prober: fakeProber, sites: sites),
         monitor: LiveQualityMonitor(
           sampler: () async => const LatencyStats(
-            avgMs: 60, minMs: 22, maxMs: 140, jitterMs: 45, lossPct: 3,
-            sent: 20, received: 19,
+            avgMs: 60, minMs: 22, maxMs: 140, jitterMs: 45, lossPct: 2,
+            sent: 72, received: 71,
           ),
         ),
       ),
@@ -814,6 +826,15 @@ void main() {
         _expectText('Download');
         _expectText('Jitter');
         _expectText('Loss');
+        // C2 honesty gate: the loss row must render the engine's OWN computed
+        // grade. 2 % loss grades Fair (scoring.dart: < 2.5 % → Fair), matching
+        // the "shaky Fair loss" caption. "2%" is the rendered loss value (the
+        // monitor sample, rounded to an integer percent). Jitter 45 ms stays
+        // Poor, and Download Excellent — the call-killer trap intact.
+        _expectText('2%'); // loss value, displayed
+        _expectText('Fair'); // loss grade chip (engine-computed)
+        _expectText('Poor'); // jitter grade chip
+        _expectText('Excellent'); // download grade chip
       },
     );
   });
