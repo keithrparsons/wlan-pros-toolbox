@@ -2051,14 +2051,15 @@
         "Enter a host, pick the common-ports preset or type a custom spec (for example 22, 80, 443, 8000-8100), and run. Results stream in as ports settle."
       ],
       "inputs": [],
-      "algorithm": "For each port, the tool tries to open a connection with an 800ms default timeout. Open means the connection completed; Closed means the host actively refused it (the host is reachable, nothing is listening on that port); Filtered means no response before the timeout (likely a firewall silently dropping the request). That's the same open/closed/filtered result a full connect scan gives. Connections run in a capped pool (up to 64 at a time) and stream in as they finish. The common-ports preset is 44 ports a network pro actually checks (from 20 up to 27017, each labeled with its service, for example 443 as HTTPS and 3389 as RDP).",
+      "algorithm": "For each port, the tool tries to open a connection with an 800ms default timeout. Open means the connection completed. Closed means the host actively refused it, which tells you the host is reachable and simply has nothing listening on that port. Filtered means nothing came back at all before the timeout: the request was silently dropped, or the host isn't there. That's the same open/closed/filtered result a full connect scan gives. Connections run in a capped pool (up to 64 at a time) and stream in as they finish. The common-ports preset is 44 ports a network pro actually checks (from 20 up to 27017, each labeled with its service, for example 443 as HTTPS and 3389 as RDP).",
       "example": null,
       "fieldNotes": [
         "Platform differences: works the same on every native platform (no special permission beyond ordinary network access). Turned off on the web version.",
         "\"Filtered\" means the request went unanswered (likely a firewall); it does not mean the port is closed. A custom range is de-duplicated and kept within the valid 1 to 65535 range.",
-        "This is a TCP connect scan, not a stealth scan; it completes each connection and then tears it down. A host that comes back all-filtered is usually unreachable or firewalled wholesale."
+        "\"Closed\" is a positive signal: it means the host ANSWERED and refused. A host that isn't there reads as all-filtered, never all-closed. If every port comes back filtered, suspect the host is down or firewalled wholesale rather than idle. The copied report spells this legend out.",
+        "This is a TCP connect scan, not a stealth scan; it completes each connection and then tears it down."
       ],
-      "source": "Tries to open a TCP connection to each port and reports whether it opened, was refused, or went unanswered."
+      "source": "Tries to open a TCP connection to each port and reports whether it opened, was actively refused, or went unanswered."
     },
     "ping": {
       "name": "Ping (TCP)",
@@ -2069,12 +2070,14 @@
         "Enter a host, optionally pick a probe port (443 default; presets 443, 80, 53, 22, 7) and a count, and run. Live min/avg/max/loss and a sparkline build as replies land."
       ],
       "inputs": [],
-      "algorithm": "Each \"ping\" times how long it takes to open a connection to the host on the chosen port (443 by default). Either a completed connection OR an active refusal counts as a successful round trip for timing (exactly how tcping treats it); only a genuine timeout or a name-lookup failure counts as loss. Probes are spaced by your chosen interval minus the time the last probe took, so the cadence stays steady even under high latency.",
+      "algorithm": "Each \"ping\" times how long it takes to open a connection to the host on the chosen port (443 by default). Either a completed connection OR an active refusal counts as a successful round trip for timing (exactly how tcping treats it, because the host answered either way). A timeout, an unreachable host, or a failed name lookup counts as loss, and no round-trip time is recorded for it. Probes are spaced by your chosen interval minus the time the last probe took, so the cadence stays steady even under high latency.",
       "example": null,
       "fieldNotes": [
         "Platform differences: identical on every native platform. Turned off on the web version. The screen labels the metric \"TCP RTT\" and shows the target port, so it's never mistaken for classic ICMP ping.",
         "The round-trip time is the connection time to a port, slightly higher than classic ping, and it depends on that port answering. Even a \"refused\" target gives you a valid timing number, because the host answered.",
-        "This is not classic ICMP echo (see Ping (ICMP) for the real-ICMP path on mobile). If a host blocks the probe port, it reads as loss even if the host is up on another port; try a different probe port."
+        "A host that never answers is reported as loss with no round-trip time. The tool never invents an RTT for a packet it did not get back.",
+        "This is not classic ICMP echo (see Ping (ICMP) for the real-ICMP path on mobile). If a host blocks the probe port, it reads as loss even if the host is up on another port; try a different probe port.",
+        "The copied report carries a Method line defining what counts as a reply (a completed handshake or an active refusal), so a pasted result can't be misread by someone who never saw the screen."
       ],
       "source": "Times how long it takes to open a TCP connection to the host, and reports that as the round-trip time."
     },
@@ -2095,7 +2098,8 @@
         "This is a TCP round-trip probe, not an ICMP echo. The reading is labeled \"TCP RTT\" and the probe port is shown, so you can't mistake it for ICMP. For true ICMP, see Ping (ICMP) on mobile.",
         "It runs on every native platform, including the Mac desktop where true ICMP can't run. It's turned off on the web version, which shows a prompt to download the app.",
         "Dropped probes are always shown, never hidden. A lost sample is a red dot on the axis and counts toward the loss percentage, so a flaky path reads honestly instead of as a smooth line.",
-        "The chart keeps a fixed number of recent samples so a long run stays light on memory, and the copy export notes how many of the total samples are shown."
+        "The chart keeps a fixed number of recent samples so a long run stays light on memory, and the copy export notes how many of the total samples are shown.",
+        "The copied report carries a Method line defining what counts as a reply (a completed handshake or an active refusal), so a pasted result can't be misread by someone who never saw the screen."
       ],
       "source": "It repeatedly sends TCP round-trip probes to the host and charts each reply as it arrives."
     },
@@ -2126,14 +2130,15 @@
         "Enter a range: a CIDR block (192.168.1.0/24), a range (192.168.1.10-40, or with a full end address), or a single IP. Then run it. A live progress bar and a running count of responsive hosts build as it goes."
       ],
       "inputs": [],
-      "algorithm": "For each address it tries to open a TCP connection to a common port (443 by default; it can also try 80, 22, and 53, and a host counts as responsive the instant any of them answers). Both a completed connection and a refused connection prove the host answered; only silence on the port means no response. It works through a batch of hosts at a time (32 in flight by default) to stay fast. It's capped at 254 hosts (a /24); anything larger is rejected with a clear \"that's N hosts, the cap is M\" message rather than being silently cut short.",
+      "algorithm": "For each address it tries to open a TCP connection to a common port (443 by default; it can also try 80, 22, and 53, and a host counts as responsive the instant any of them answers). A host is listed when it ANSWERS: either the connection completes, or the host actively refuses it (a refusal is a reply, and proves something is there). Silence is not an answer, so a host that times out, is unreachable, or is simply not there is NOT listed and is NOT counted as live. It works through a batch of hosts at a time (32 in flight by default) to stay fast. It's capped at 254 hosts (a /24); anything larger is rejected with a clear \"that's N hosts, the cap is M\" message rather than being silently cut short.",
       "example": null,
       "fieldNotes": [
         "It works the same on every native platform and is turned off on the web version.",
         "A host is reported as \"responded,\" not \"up.\" A host that stays silent on the probed ports may still be alive but only answering ICMP, or behind a firewall. The tool never claims ICMP-style liveness.",
+        "A refused connection still counts as responded, and that is deliberate: the host answered, it just isn't listening on that port. That is how tcping behaves too. The list and the copied report say which it was — \"handshake\" or \"refused\" — so a middlebox refusing on behalf of a whole range can't be mistaken for a range full of live servers.",
         "This finds hosts that answer TCP on the probed ports. For richer detail (name, services, device type, vendor), use Network Discovery. A /31 or /32 includes every address; larger blocks leave out the network and broadcast addresses."
       ],
-      "source": "It tries a quick TCP connection to a common port on each address and lists the ones that answer."
+      "source": "It tries a quick TCP connection to a common port on each address and lists only the ones that answer, whether they accept the connection or refuse it."
     },
     "network-discovery": {
       "name": "Network Discovery",
@@ -2270,11 +2275,12 @@
         "Open it and run it. It works out your local network range, checks each address, and attaches the known hardware address wherever the platform makes one available."
       ],
       "inputs": [],
-      "algorithm": "It figures out your local network range (usually a /24, or the real one if different) and quickly checks each address by trying to open a connection on a handful of common ports (80, 443, 22, 445, 139, 53, 8080). A device that answers, even with a refusal, counts as present. On Android and Linux it also reads the system's own address table to attach the real hardware (MAC) address it has already learned. As a safety limit, it refuses to scan anything larger than about 1,000 addresses.",
+      "algorithm": "It figures out your local network range (usually a /24, or the real one if different) and quickly checks each address by trying to open a connection on a handful of common ports (80, 443, 22, 445, 139, 53, 8080). A device counts as present when it ANSWERS, whether it accepts the connection or actively refuses it. An address that stays silent, times out, or is unreachable is not listed. On Android and Linux it also reads the system's own address table to attach the real hardware (MAC) address it has already learned. As a safety limit, it refuses to scan anything larger than about 1,000 addresses.",
       "example": null,
       "fieldNotes": [
         "What each platform can do: Android and Linux give you the device list plus the real hardware address. macOS and Windows give you the device list but no hardware address, because the system does not make that table readable here, so MAC shows \"Not exposed on this platform\". iOS cannot do this at all, because Apple does not let apps read the neighbor table. On web it offers a download fallback.",
         "A blank MAC means the platform genuinely does not expose it, never a guessed value. Empty or all-zero entries are skipped.",
+        "Only addresses that answer are listed. A silent address is left out rather than guessed at, so the list is what replied, not what might be there.",
         "On macOS and Windows you get a device list without hardware addresses; that is the platform's limit. For richer detail, and hardware addresses on macOS, use Network Discovery."
       ],
       "source": "It quietly checks each address on your local network and, on Android and Linux, reads the system's learned hardware-address table to fill in the MAC."

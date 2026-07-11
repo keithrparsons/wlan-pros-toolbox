@@ -70,7 +70,7 @@ void main() {
       expect(result.serviceName, 'HTTP');
     });
 
-    test('refused (osError present) → CLOSED', () async {
+    test('refused (ECONNREFUSED, errno 61) → CLOSED', () async {
       final PortScanService svc = PortScanService(
         connector: (host, port, {required timeout}) async {
           throw const SocketException(
@@ -84,11 +84,20 @@ void main() {
       expect(ticks.last.lastResult!.status, PortStatus.closed);
     });
 
-    test('timeout (no osError, elapsed ~ timeout) → FILTERED', () async {
+    // NOTE: this fake used to throw `SocketException('timed out')` with a NULL
+    // osError. The platform does not do that — Dart's connect-timeout carries a
+    // synthetic errno 110. The old fake matched the old (wrong) code, so every
+    // port on a DEAD host was reported "closed" (i.e. "the host is up and
+    // refusing") and this suite never noticed. The fake now throws the REAL
+    // shape. See test/services/network/dead_host_classification_test.dart.
+    test('timeout (Connection timed out, errno 110) → FILTERED', () async {
       final PortScanService svc = PortScanService(
         connector: (host, port, {required timeout}) async {
           await Future<void>.delayed(timeout);
-          throw const SocketException('timed out'); // osError == null
+          throw const SocketException(
+            'Connection timed out',
+            osError: OSError('Connection timed out', 110),
+          );
         },
       );
       final List<PortScanProgress> ticks = await svc

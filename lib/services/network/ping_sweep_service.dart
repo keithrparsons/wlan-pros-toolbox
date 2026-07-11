@@ -36,6 +36,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'tcp_probe_classifier.dart';
+
 /// Why a sweep spec was rejected before any socket opened. Drives a precise,
 /// non-apologetic inline message instead of a silent no-op or a crash.
 enum SweepSpecError {
@@ -96,17 +98,34 @@ class SweepHostResult {
     required this.host,
     required this.responded,
     this.rtt,
+    this.answer,
   });
 
   /// The probed IPv4 address.
   final String host;
 
-  /// True when the TCP handshake completed (or was actively refused with a
-  /// RST) — i.e. the host answered on the probed port. NOT a liveness claim.
+  /// True when the host ANSWERED on the probed port — the handshake completed,
+  /// or the host actively refused it with a RST. NOT a liveness claim.
   final bool responded;
 
-  /// Round-trip time of the handshake, or null when the host did not respond.
+  /// Round-trip time of the answer, or null when the host did not respond.
   final Duration? rtt;
+
+  /// HOW the host answered: [TcpProbeOutcome.open] (handshake completed) or
+  /// [TcpProbeOutcome.refused] (RST — the host answered, port closed). Null
+  /// when the host did not answer at all.
+  ///
+  /// This is surfaced to the user, on screen AND in the copied report. A
+  /// refusal counting as "responded" is correct, but it must be VISIBLE: a
+  /// middlebox RSTing on behalf of every address would otherwise produce a
+  /// report reading "254 of 254 hosts responded" with nothing to distinguish it
+  /// from 254 genuinely-listening hosts. That is the exact string that started
+  /// this investigation, and the reader of a pasted report never saw the screen.
+  final TcpProbeOutcome? answer;
+
+  /// True when the host answered by actively REFUSING (a RST). It is there, but
+  /// nothing is listening on the probed port.
+  bool get refused => answer == TcpProbeOutcome.refused;
 
   double? get rttMs => rtt == null ? null : rtt!.inMicroseconds / 1000.0;
 }
@@ -374,9 +393,18 @@ class PingSweepService {
     return controller.stream;
   }
 
-  /// Probe one host across [ports]; first port to answer wins. The host is
-  /// "responded" on a completed handshake OR an actively-refused RST (both
-  /// prove the host answered the SYN). A timeout / lookup failure → silent.
+  /// Probe one host across [ports]; first port to answer wins.
+  ///
+  /// The host "responded" iff a probe came back OPEN (handshake completed) or
+  /// REFUSED (the host answered our SYN with a RST — tcping semantics). A DEAD
+  /// probe (timeout, unreachable, host-down, lookup failure) answers nothing:
+  /// try the next port, and if every port is dead the host is NOT listed and
+  /// NOT counted in `live`.
+  ///
+  /// The classification is [classifyTcpError]'s job, not ours. The old code here
+  /// asked `e.osError != null` and called that "the host answered" — which is
+  /// how a /24 of dead IPs reported "254 / 254 · 254 live". Dart stamps a
+  /// synthetic errno on its OWN connect-timeout. See tcp_probe_classifier.dart.
   Future<SweepHostResult> _probeHost(
     String host,
     List<int> ports,
@@ -388,18 +416,24 @@ class PingSweepService {
         final Socket socket = await _connect(host, port, timeout: timeout);
         sw.stop();
         socket.destroy();
-        return SweepHostResult(host: host, responded: true, rtt: sw.elapsed);
-      } on SocketException catch (e) {
+        return SweepHostResult(
+          host: host,
+          responded: true,
+          rtt: sw.elapsed,
+          answer: TcpProbeOutcome.open,
+        );
+      } on Object catch (e) {
         sw.stop();
-        // An OS error (refused/reset) means the host answered the SYN with a
-        // RST — it is reachable on TCP, the same way tcping treats it. A null
-        // osError is our own timeout: no answer on this port, try the next.
-        if (e.osError != null) {
-          return SweepHostResult(host: host, responded: true, rtt: sw.elapsed);
+        if (classifyTcpError(e) == TcpProbeOutcome.refused) {
+          // The host answered with a RST: alive, this port closed.
+          return SweepHostResult(
+            host: host,
+            responded: true,
+            rtt: sw.elapsed,
+            answer: TcpProbeOutcome.refused,
+          );
         }
-        // timeout on this port → fall through to the next port.
-      } on Object {
-        // Lookup or unexpected error on this port → try the next port.
+        // DEAD on this port → try the next one.
       }
     }
     return SweepHostResult(host: host, responded: false);

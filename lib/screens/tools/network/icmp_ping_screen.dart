@@ -298,8 +298,10 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
             'A real ICMP echo on this desktop build needs the system ping '
             'binary, which the macOS App Sandbox blocks for distributed apps. '
             'Use the TCP Ping tool here — it measures reachability and '
-            'round-trip latency over a TCP handshake (not ICMP). Run ICMP Ping '
-            'from the iOS or Android build.',
+            'round-trip latency over a TCP round trip, counting a reply when '
+            'the host answers, whether it completes the connection or actively '
+            'refuses it (not ICMP). Run ICMP Ping from the iOS or Android '
+            'build.',
             style: text.bodyLarge?.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.md),

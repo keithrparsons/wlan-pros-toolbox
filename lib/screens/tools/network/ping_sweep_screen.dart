@@ -131,7 +131,7 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
             SemanticsService.sendAnnouncement(
               View.of(context),
               'Sweep complete, $_live of $_total '
-              'host${_total == 1 ? '' : 's'} responded on TCP $_port',
+              'host${_total == 1 ? '' : 's'} answered on TCP $_port',
               TextDirection.ltr,
             );
           },
@@ -171,12 +171,20 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
   ///
   /// Returns null (→ disabled) until a sweep has begun (`_total > 0`). Mid-run
   /// it copies the partial tally and the responsive hosts found so far (the
-  /// §8.16 streaming rule). The service only retains hosts that RESPONDED — it
+  /// §8.16 streaming rule). The service only retains hosts that ANSWERED — it
   /// keeps no per-address list of silent hosts — so the TSV is the responsive
-  /// set (State column always "responded"), and the honest caveat that silent
-  /// hosts may still be up is carried into the copied text exactly as it is
-  /// shown on screen (GL-005). Hosts sort by numeric address, matching the
-  /// on-screen order.
+  /// set. The State column names HOW each host answered ("answered (handshake)"
+  /// vs "answered (refused)"), matching the on-screen rows, and the report
+  /// carries its own Method line defining "responded" plus the caveat that
+  /// silent hosts may still be up (GL-005). Hosts sort by numeric address,
+  /// matching the on-screen order.
+  ///
+  /// The Method line and the split count are NOT decoration. A middlebox that
+  /// RSTs on behalf of every address in the range would otherwise paste as
+  /// "254 of 254 hosts responded" — the exact string that started this
+  /// investigation — with nothing to distinguish it from 254 live web servers.
+  /// The pasted report is the permanent record, read by someone who never saw
+  /// the screen; it has to define its own terms.
   String? _buildCopyText() {
     if (_total == 0) return null;
 
@@ -186,6 +194,10 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
             _ipKey(a.host).compareTo(_ipKey(b.host)),
       );
 
+    final int refusedCount =
+        sorted.where((SweepHostResult r) => r.refused).length;
+    final int handshakeCount = sorted.length - refusedCount;
+
     const String tab = '\t';
     final StringBuffer buf = StringBuffer()
       ..writeln('Ping Sweep — TCP-probe (reachability on a port, not ICMP)')
@@ -193,15 +205,27 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
         _rangeLabel.isEmpty ? 'Range: (unknown)' : 'Range: $_rangeLabel',
       )
       ..writeln(
-        'Summary: $_live of $_total host${_total == 1 ? '' : 's'} responded '
-        'on TCP $_port. A host silent on TCP $_port may still be up.',
+        'Summary: $_live of $_total host${_total == 1 ? '' : 's'} answered '
+        'on TCP $_port '
+        '($handshakeCount by completing the handshake, '
+        '$refusedCount by actively refusing).',
+      )
+      ..writeln(
+        'Method: a host is listed when it ANSWERS. Both a completed handshake '
+        'and an active refusal (RST) count — a refusal proves the host is '
+        'there, it just is not listening on TCP $_port. Silence is not an '
+        'answer: hosts that never replied are not listed, though a host silent '
+        'on TCP $_port may still be up. This is reachability on one port, not '
+        'ICMP liveness.',
       )
       ..writeln()
       ..writeln(<String>['IP', 'State', 'Time (ms)'].join(tab));
 
     for (final SweepHostResult r in sorted) {
       final String time = r.rttMs == null ? '' : r.rttMs!.toStringAsFixed(1);
-      buf.writeln(<String>[r.host, 'responded', time].join(tab));
+      final String state =
+          r.refused ? 'answered (refused)' : 'answered (handshake)';
+      buf.writeln(<String>[r.host, state, time].join(tab));
     }
 
     return buf.toString().trimRight();
@@ -313,9 +337,12 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.xs),
             child: Text(
-              'TCP-probe sweep: a host is listed when it answers a TCP '
-              'handshake on port $_port. This is reachability on that port — '
-              'not ICMP liveness. A host silent on TCP $_port may still be up.',
+              'TCP-probe sweep: a host is listed when it ANSWERS on port '
+              '$_port, either by completing the TCP handshake or by actively '
+              'refusing it. Both prove the host replied. Silence does not, so '
+              'a host that never answers is not listed. This is reachability '
+              'on that port, not ICMP liveness: a host silent on TCP $_port '
+              'may still be up.',
               style: text.labelSmall?.copyWith(color: colors.textTertiary),
             ),
           ),
@@ -399,9 +426,9 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
           // the live "scanning N/total" state and the running live tally.
           Semantics(
             label: _sweeping
-                ? 'Scanning, $_completed of $_total hosts, $_live responded'
+                ? 'Scanning, $_completed of $_total hosts, $_live answered'
                 : 'Sweep complete, $_live of $_total '
-                      'host${_total == 1 ? '' : 's'} responded',
+                      'host${_total == 1 ? '' : 's'} answered',
             liveRegion: true,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(AppRadius.control),
@@ -512,11 +539,19 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
         ? '—'
         : '${r.rttMs!.toStringAsFixed(1)} ms';
 
-    // WCAG 1.4.1 — outcome carried by text + icon shape, never color alone.
-    // The whole row is one semantic node so AT reads "<host> responded, <rtt>".
+    // HOW the host answered. A refusal counts as responded (correct — a RST
+    // proves the host is there), but the user must be able to SEE that it was a
+    // refusal, not a listening service. Otherwise a middlebox RSTing for the
+    // whole range renders as a screen full of indistinguishable green ticks.
+    // This label is the on-screen twin of the copy-report's State column.
+    final bool refused = r.refused;
+    final String stateLabel = refused ? 'refused' : 'handshake';
+
+    // WCAG 1.4.1 — outcome carried by text + icon SHAPE, never color alone.
+    // The whole row is one semantic node so AT reads the full outcome.
     return Semantics(
-      label:
-          'Host ${r.host} responded on TCP $_port'
+      label: 'Host ${r.host} answered on TCP $_port by '
+          '${refused ? 'actively refusing (port closed, host is there)' : 'completing the handshake'}'
           '${r.rttMs == null ? '' : ', ${r.rttMs!.toStringAsFixed(1)} milliseconds'}',
       container: true,
       child: ExcludeSemantics(
@@ -526,9 +561,10 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
           child: Row(
             children: [
               Icon(
-                Icons.check_circle,
+                // Distinct SHAPE per outcome, not a color swap (WCAG 1.4.1).
+                refused ? Icons.block : Icons.check_circle,
                 size: 16,
-                color: colors.textAccent,
+                color: refused ? colors.textSecondary : colors.textAccent,
               ),
               const SizedBox(width: AppSpacing.xs),
               Expanded(
@@ -542,6 +578,11 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
                   ),
                 ),
               ),
+              Text(
+                stateLabel,
+                style: text.labelSmall?.copyWith(color: colors.textTertiary),
+              ),
+              const SizedBox(width: AppSpacing.xs),
               Text(
                 rttLabel,
                 style: mono.inlineCode.copyWith(

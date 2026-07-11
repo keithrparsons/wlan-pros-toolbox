@@ -4,24 +4,17 @@
 // `Socket.connect` across the subnet on a curated port set. NO ICMP — raw ICMP
 // sockets are privileged on both mobile OSes.
 //
-// THREE honest probe outcomes, not two. A TCP connect probe to (host, port)
-// settles one of three ways, and they must NOT be collapsed:
-//   1. open    — the handshake completed. The port is genuinely OPEN. This is
-//                the ONLY signal that feeds openPorts + the device-type
-//                heuristic + the debug display.
-//   2. refused — the host answered the SYN with a RST (ECONNREFUSED) or reset an
-//                in-flight connection (ECONNRESET). The host is ALIVE but that
-//                port is CLOSED. Proves liveness; does NOT open the port.
-//   3. dead    — host/network unreachable or timeout (EHOSTUNREACH / EHOSTDOWN
-//                / ENETUNREACH / ETIMEDOUT, or our own connect-timeout with a
-//                null osError). NO host answered on this port. Contributes
-//                nothing — not a port, not liveness.
+// THREE honest probe outcomes, not two — see [TcpProbeOutcome] in
+// `../tcp_probe_classifier.dart`, which is the SINGLE source of truth for "did
+// this host answer?" for every probe in this repo. This file consumes it; it no
+// longer carries its own copy of the classification.
+//
+// (It used to. That local copy was correct, but it stayed local — and four other
+// probes went on classifying dead hosts as alive by testing `osError != null`.
+// One classifier, one behaviour, no drift.)
 //
 // A host enters the result set iff it had ≥1 OPEN port OR ≥1 REFUSED response.
-// A host that only ever produced DEAD outcomes is dropped. This is the fix for
-// the on-device bug where dead IPs (which throw SocketException-with-osError for
-// EHOSTUNREACH on iOS/macOS) were all being reported live with the full curated
-// port set and stamped `Printer`.
+// A host that only ever produced DEAD outcomes is dropped.
 //
 // ISOLATE: the whole sweep (up to 254 hosts × 10 ports = ~2540 connects) is
 // run off the UI isolate via Isolate.run in lan_discovery_engine.dart, so the
@@ -35,6 +28,8 @@
 
 import 'dart:async';
 import 'dart:io';
+
+import '../tcp_probe_classifier.dart';
 
 /// Immutable request describing one connect-scan. Plain data only, so it can
 /// cross the isolate boundary.
@@ -61,16 +56,11 @@ class ConnectScanRequest {
 }
 
 /// The three honest outcomes of a single TCP connect probe.
-enum ProbeOutcome {
-  /// Handshake completed — the port is genuinely OPEN.
-  open,
-
-  /// Host answered with a RST / reset the connection — ALIVE, port CLOSED.
-  refused,
-
-  /// Host/network unreachable or timeout — NO host answered on this port.
-  dead,
-}
+///
+/// Alias of the shared [TcpProbeOutcome] — the classification itself lives in
+/// `tcp_probe_classifier.dart` and is shared by every probe in the app. Kept as
+/// a name so existing call sites read unchanged.
+typedef ProbeOutcome = TcpProbeOutcome;
 
 /// One host's connect-scan result.
 ///
@@ -99,11 +89,8 @@ class HostPorts {
 }
 
 /// Connector seam: returns an open socket or throws. Injectable for tests.
-typedef Connector = Future<Socket> Function(
-  String host,
-  int port,
-  Duration timeout,
-);
+/// Alias of the shared [TcpConnector] seam.
+typedef Connector = TcpConnector;
 
 /// Runs a TCP connect-scan with bounded concurrency and returns only the hosts
 /// that answered TCP on at least one probe (open OR refused). Each returned
@@ -186,63 +173,16 @@ Future<List<HostPorts>> runConnectScan(
   return results;
 }
 
-/// errno values for the only two errors that prove liveness (host answered).
-/// They differ between the BSD family (iOS/macOS) and Linux (Android), so we
-/// match BOTH so the classification is correct on every target, not iOS-only.
-///
-///   ECONNREFUSED — SYN answered with a RST: host alive, port closed.
-///   ECONNRESET   — an established connection was reset by the peer.
-///
-/// Everything else (EHOSTUNREACH, EHOSTDOWN, ENETUNREACH, ETIMEDOUT, …) and a
-/// null osError (our own connect-timeout) is DEAD: no host answered.
-const Set<int> _kRefusedErrno = <int>{
-  61, // ECONNREFUSED on macOS / iOS (BSD)
-  54, // ECONNRESET   on macOS / iOS (BSD)
-  111, // ECONNREFUSED on Linux / Android
-  104, // ECONNRESET   on Linux / Android
-};
-
 /// Probe one (host, port) and classify the result into the three honest
-/// outcomes. See [ProbeOutcome].
+/// outcomes. Delegates to the shared [probeTcp] — the classification lives in
+/// `tcp_probe_classifier.dart` and nowhere else.
 Future<ProbeOutcome> _probe(
   Connector connect,
   String host,
   int port,
   Duration timeout,
-) async {
-  try {
-    final Socket socket = await connect(host, port, timeout);
-    socket.destroy();
-    return ProbeOutcome.open; // #1: handshake completed.
-  } on SocketException catch (e) {
-    // Classify by errno. ECONNREFUSED/ECONNRESET → the host answered (alive,
-    // port closed). Crucially, EHOSTUNREACH/EHOSTDOWN/ENETUNREACH/ETIMEDOUT all
-    // carry a NON-null osError on iOS/macOS too — the old code treated any
-    // non-null osError as "alive", which is exactly why every dead IP looked
-    // live with the full port set. We must match the refusal errnos
-    // specifically, not "osError != null".
-    final int? code = e.osError?.errorCode;
-    if (code != null && _kRefusedErrno.contains(code)) {
-      return ProbeOutcome.refused; // #2: alive, port closed.
-    }
-    // Belt-and-braces for platforms/locales where the errno isn't surfaced:
-    // a message that names a refusal still counts as alive; unreachable/down/
-    // timeout messages do NOT. Default is dead.
-    final String msg = (e.osError?.message ?? e.message).toLowerCase();
-    final bool unreachable = msg.contains('unreachable') ||
-        msg.contains('no route') ||
-        msg.contains('host is down') ||
-        msg.contains('timed out') ||
-        msg.contains('timeout');
-    if (!unreachable &&
-        (msg.contains('refused') || msg.contains('reset'))) {
-      return ProbeOutcome.refused;
-    }
-    return ProbeOutcome.dead; // #3: nothing answered.
-  } catch (_) {
-    return ProbeOutcome.dead;
-  }
-}
+) =>
+    probeTcp(connect, host, port, timeout);
 
 Future<Socket> _defaultConnect(String host, int port, Duration timeout) {
   return Socket.connect(host, port, timeout: timeout);
