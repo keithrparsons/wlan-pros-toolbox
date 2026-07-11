@@ -11,6 +11,8 @@ library;
 //   flutter test --tags capture test/play_screenshots/capture_signaling_history_test.dart
 
 import 'dart:io';
+
+import '../support/figure_write_gate.dart';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -57,7 +59,9 @@ Future<void> _write(WidgetTester tester, String id) async {
         await image.toByteData(format: ui.ImageByteFormat.png);
     final Directory dir = Directory(kOut);
     if (!dir.existsSync()) dir.createSync(recursive: true);
-    File('$kOut/$id.png').writeAsBytesSync(bytes!.buffer.asUint8List());
+    if (kWriteFigures) {
+      File('$kOut/$id.png').writeAsBytesSync(bytes!.buffer.asUint8List());
+    }
     // ignore: avoid_print
     print('WROTE $id.png ${image.width}x${image.height}');
     image.dispose();
