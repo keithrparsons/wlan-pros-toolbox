@@ -79,7 +79,8 @@ void main() {
       expect(ticks.single.stats.received, 1);
     });
 
-    test('refused (osError present) still counts as a round trip', () async {
+    test('refused (ECONNREFUSED, errno 61) still counts as a round trip',
+        () async {
       final PingService svc = PingService(
         connector: (host, port, {required timeout}) async {
           throw const SocketException(
@@ -95,11 +96,21 @@ void main() {
           reason: 'a RST proves reachability — tcping semantics');
     });
 
-    test('timeout (no osError, elapsed ~ deadline) → loss', () async {
+    // NOTE: this fake used to throw `SocketException('timed out')` with a NULL
+    // osError and call that "a timeout". That is NOT what the platform throws —
+    // Dart's own connect-timeout carries an osError with the synthetic errno
+    // 110. The old fake encoded the same false assumption as the code, which is
+    // precisely why this suite stayed green while Ping reported every dead host
+    // as a success with a fake RTT. The fake now throws the REAL shape.
+    // See test/services/network/dead_host_classification_test.dart.
+    test('timeout (Connection timed out, errno 110) → loss', () async {
       final PingService svc = PingService(
         connector: (host, port, {required timeout}) async {
           await Future<void>.delayed(timeout);
-          throw const SocketException('timed out'); // osError == null
+          throw const SocketException(
+            'Connection timed out',
+            osError: OSError('Connection timed out', 110),
+          );
         },
       );
       final List<PingProgress> ticks = await svc

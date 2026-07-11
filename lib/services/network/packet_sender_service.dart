@@ -25,6 +25,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'tcp_probe_classifier.dart';
+
 /// Transport for a send attempt.
 enum PacketTransport { tcp, udp }
 
@@ -355,6 +357,14 @@ class PacketSenderService {
     }
   }
 
+  /// Map a failed TCP connect onto a typed error kind + copy.
+  ///
+  /// The reason comes from the shared classifier — this service never inspects
+  /// `osError` itself. It previously guessed a timeout from `os == null &&
+  /// elapsed >= timeout - 50ms`; that branch could never fire, because Dart's
+  /// own connect-timeout DOES carry an osError. Real timeouts fell all the way
+  /// through to [PacketErrorKind.other] with a generic message. The errno is
+  /// authoritative.
   PacketResult _classifyTcp(
     String host,
     int port,
@@ -362,29 +372,26 @@ class PacketSenderService {
     Duration elapsed,
     Duration timeout,
   ) {
-    final OSError? os = e.osError;
-    final String msg = e.message.toLowerCase();
+    final TcpProbeFailure failure = classifyTcpFailure(e);
     final PacketErrorKind kind;
     final String message;
-    if (os == null && elapsed >= timeout - const Duration(milliseconds: 50)) {
-      kind = PacketErrorKind.timeout;
-      message = 'Timed out connecting to $host:$port — no response before the '
-          'deadline (a firewall may be dropping the connection).';
-    } else if (msg.contains('refused') || msg.contains('reset')) {
-      kind = PacketErrorKind.refused;
-      message = 'Connection refused — nothing is listening on $host:$port.';
-    } else if (msg.contains('unreachable') || msg.contains('no route')) {
-      kind = PacketErrorKind.unreachable;
-      message = 'Host unreachable — no route to $host.';
-    } else if (msg.contains('failed host lookup') ||
-        msg.contains('lookup') ||
-        msg.contains('nodename') ||
-        msg.contains('not known')) {
-      kind = PacketErrorKind.dnsFailure;
-      message = 'Could not resolve "$host" — check the host name.';
-    } else {
-      kind = PacketErrorKind.other;
-      message = 'Could not connect: ${_short(e.message)}.';
+    switch (failure.reason) {
+      case TcpFailureReason.timedOut:
+        kind = PacketErrorKind.timeout;
+        message = 'Timed out connecting to $host:$port — no response before '
+            'the deadline (a firewall may be dropping the connection).';
+      case TcpFailureReason.refused:
+        kind = PacketErrorKind.refused;
+        message = 'Connection refused — nothing is listening on $host:$port.';
+      case TcpFailureReason.unreachable:
+        kind = PacketErrorKind.unreachable;
+        message = 'Host unreachable — no route to $host.';
+      case TcpFailureReason.lookupFailure:
+        kind = PacketErrorKind.dnsFailure;
+        message = 'Could not resolve "$host" — check the host name.';
+      case TcpFailureReason.unknown:
+        kind = PacketErrorKind.other;
+        message = 'Could not connect: ${_short(failure.message)}.';
     }
     return PacketResult.failure(
       transport: PacketTransport.tcp,

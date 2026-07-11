@@ -36,6 +36,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'tcp_probe_classifier.dart';
+
 /// What this platform can actually do for neighbor discovery.
 enum ArpCapability {
   /// Active sweep + a real MAC per responder from the OS neighbor table.
@@ -292,10 +294,17 @@ class ArpNdpService {
     return parseProcNetArp(text);
   }
 
-  /// Probe [host] for reachability: a successful connect OR an actively-refused
-  /// connection both prove the host is up (a live host that refuses still
-  /// answered at the IP layer). Only a timeout / unreachable counts as "down".
+  /// Probe [host] for reachability: a completed connect (OPEN) OR an
+  /// actively-refused one (REFUSED) both prove the host is up — a live host that
+  /// refuses still answered at the IP layer. Only a DEAD probe (timeout,
+  /// unreachable, host-down, lookup failure) counts as "not there".
   /// Returns the RTT in ms when up, else null.
+  ///
+  /// This used to run its own reachability test: `e.osError != null &&
+  /// !_isUnreachable(e)`, where `_isUnreachable` looked for "unreachable" and
+  /// "no route" but NOT "timed out". That was the hole — Dart's own
+  /// connect-timeout carries a non-null osError, so every dead neighbour was
+  /// discovered as present. The shared classifier now makes the call.
   Future<double?> _probe(String host, Duration timeout) async {
     final Stopwatch sw = Stopwatch()..start();
     for (final int port in probePorts) {
@@ -304,26 +313,18 @@ class ArpNdpService {
         sw.stop();
         s.destroy();
         return sw.elapsedMicroseconds / 1000.0;
-      } on SocketException catch (e) {
-        // A refusal/reset (OS error present) means the host is UP but the port
-        // is closed — that is a positive reachability signal, return now.
-        if (e.osError != null && !_isUnreachable(e)) {
+      } on Object catch (e) {
+        if (classifyTcpError(e) == TcpProbeOutcome.refused) {
+          // Host answered with a RST: it is there, this port is just closed.
           sw.stop();
           return sw.elapsedMicroseconds / 1000.0;
         }
-        // No OS error → our timeout fired, or host unreachable → try next port.
-        continue;
-      } on Object {
+        // DEAD on this port → try the next one.
         continue;
       }
     }
     sw.stop();
     return null;
-  }
-
-  static bool _isUnreachable(SocketException e) {
-    final String m = (e.osError?.message ?? '').toLowerCase();
-    return m.contains('unreachable') || m.contains('no route');
   }
 
   static bool _validIp(String ip) {

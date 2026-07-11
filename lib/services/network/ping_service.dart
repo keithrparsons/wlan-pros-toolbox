@@ -31,6 +31,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'tcp_probe_classifier.dart';
+
 /// One probe attempt (one "ping").
 class PingReply {
   const PingReply({
@@ -43,14 +45,19 @@ class PingReply {
   /// 1-based sequence number of this probe.
   final int sequence;
 
-  /// True when the TCP handshake completed within the timeout.
+  /// True when the host ANSWERED within the timeout — either the handshake
+  /// completed, or the host actively refused it with a RST. Both are real round
+  /// trips (tcping semantics). A timeout, an unreachable host, or a failed name
+  /// lookup is a LOST packet, not a success.
   final bool success;
 
-  /// Round-trip time of the handshake, or null on timeout/failure.
+  /// Round-trip time of the handshake, or null when the packet was lost. Never
+  /// a synthetic value: a lost probe has no RTT.
   final Duration? rtt;
 
-  /// Short reason this probe failed (e.g. "timeout", "refused"), or null on
-  /// success. Drives a precise per-reply line instead of a bare miss.
+  /// Short reason this probe failed ("timeout", "unreachable", "lookup failed",
+  /// "error"), or null on success. Drives a precise per-reply line instead of a
+  /// bare miss.
   final String? errorLabel;
 }
 
@@ -211,6 +218,16 @@ class PingService {
     return controller.stream;
   }
 
+  /// One probe. OPEN or REFUSED is a successful round trip (a RST proves the
+  /// host answered the SYN — exactly how tcping treats it, and the RTT is
+  /// real). DEAD — timeout, unreachable, host-down, lookup failure — is a LOST
+  /// packet: no RTT, and it feeds packet loss.
+  ///
+  /// The old code asked `e.osError != null` and called that "refused". Dart
+  /// stamps a synthetic errno on its OWN connect-timeout, so a DEAD host came
+  /// back `success: true` with a fake RTT equal to the timeout — which meant
+  /// Ping could never report packet loss at all. The classifier owns this call
+  /// now; the elapsed-time guess is gone (the errno is authoritative).
   Future<PingReply> _probe(
     String host,
     int port,
@@ -223,26 +240,29 @@ class PingService {
       sw.stop();
       socket.destroy();
       return PingReply(sequence: seq, success: true, rtt: sw.elapsed);
-    } on SocketException catch (e) {
+    } on Object catch (e) {
       sw.stop();
-      // A refused/reset still proves the host is *reachable* and answered the
-      // SYN with a RST — that is a successful round trip for latency purposes,
-      // exactly how tcping treats it. Only a genuine timeout (no OS error,
-      // elapsed ~ deadline) or a lookup failure counts as a loss.
-      final bool refused = e.osError != null;
-      if (refused) {
+      final TcpProbeFailure failure = classifyTcpFailure(e);
+      if (failure.hostAnswered) {
+        // REFUSED: a real round trip. Keep the RTT.
         return PingReply(sequence: seq, success: true, rtt: sw.elapsed);
       }
-      final bool timedOut =
-          sw.elapsed >= timeout - const Duration(milliseconds: 50);
       return PingReply(
         sequence: seq,
         success: false,
-        errorLabel: timedOut ? 'timeout' : 'unreachable',
+        errorLabel: _labelFor(failure.reason),
       );
-    } on Object {
-      sw.stop();
-      return PingReply(sequence: seq, success: false, errorLabel: 'error');
     }
   }
+
+  /// Short, precise reason for the per-reply line. Never "refused" — a refusal
+  /// is a success here, not a failure.
+  static String _labelFor(TcpFailureReason reason) => switch (reason) {
+        TcpFailureReason.timedOut => 'timeout',
+        TcpFailureReason.unreachable => 'unreachable',
+        TcpFailureReason.lookupFailure => 'lookup failed',
+        TcpFailureReason.unknown => 'error',
+        // Unreachable in practice: a refusal never reaches this method.
+        TcpFailureReason.refused => 'refused',
+      };
 }

@@ -125,7 +125,7 @@ void main() {
       expect(last.lastResponsive!.rtt, isNotNull);
     });
 
-    test('a refused host (RST / osError) still counts as responsive', () async {
+    test('a refused host (RST, errno 61) still counts as responsive', () async {
       final PingSweepService svc = PingSweepService(
         connector: (host, port, {required timeout}) async {
           throw const SocketException(
@@ -145,7 +145,8 @@ void main() {
       final PingSweepService svc = PingSweepService(
         connector: (host, port, {required timeout}) async {
           await Future<void>.delayed(timeout);
-          throw const SocketException('timed out'); // osError == null
+          throw const SocketException('Connection timed out',
+              osError: OSError('Connection timed out', 110));
         },
       );
       final SweepSpec spec = PingSweepService.parseSpec('10.0.0.1');
@@ -170,7 +171,8 @@ void main() {
           final int lastOctet = int.parse(host.split('.').last);
           if (lastOctet.isOdd) return _FakeSocket();
           await Future<void>.delayed(timeout);
-          throw const SocketException('timed out');
+          throw const SocketException('Connection timed out',
+              osError: OSError('Connection timed out', 110));
         },
       );
       final SweepSpec spec = PingSweepService.parseSpec('192.168.1.1-6');
@@ -226,7 +228,8 @@ void main() {
         connector: (host, port, {required timeout}) async {
           if (port == 80) return _FakeSocket();
           await Future<void>.delayed(timeout);
-          throw const SocketException('timed out');
+          throw const SocketException('Connection timed out',
+              osError: OSError('Connection timed out', 110));
         },
       );
       final SweepSpec spec = PingSweepService.parseSpec('10.0.0.9');

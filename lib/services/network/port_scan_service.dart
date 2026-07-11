@@ -16,9 +16,15 @@
 //
 // Web safety: imports `dart:io` (Socket). Gated behind
 // `NetworkSupport.portScanSupported` at the UI layer; never reached on web.
+//
+// The open/closed/filtered call itself is NOT made here — it is delegated to the
+// shared classifier in `tcp_probe_classifier.dart`, the single source of truth
+// for "did this host answer?" across every probe in the app.
 
 import 'dart:async';
 import 'dart:io';
+
+import 'tcp_probe_classifier.dart';
 
 /// Per-port scan outcome.
 enum PortStatus {
@@ -269,6 +275,19 @@ class PortScanService {
     return controller.stream;
   }
 
+  /// Probe one port and map the three honest outcomes onto the three port
+  /// states — they line up exactly:
+  ///
+  ///   OPEN    → [PortStatus.open]     handshake completed, something listening
+  ///   REFUSED → [PortStatus.closed]   host answered with a RST: UP, not listening
+  ///   DEAD    → [PortStatus.filtered] no answer at all (dropped, or host down)
+  ///
+  /// The DEAD → filtered mapping is the fix. The old code asked
+  /// `e.osError == null && elapsed >= timeout - 50ms` to detect a timeout, but
+  /// Dart's own connect-timeout carries a NON-null osError — so every port on a
+  /// dead host was reported "closed", which tells a network pro the host is UP
+  /// and actively refusing. The exact opposite of the truth. The errno is
+  /// authoritative; the elapsed-time guess is gone.
   Future<PortResult> _probe(String host, int port, Duration timeout) async {
     final Stopwatch sw = Stopwatch()..start();
     try {
@@ -283,26 +302,14 @@ class PortScanService {
         serviceName: serviceFor(port),
         elapsed: sw.elapsed,
       );
-    } on SocketException catch (e) {
+    } on Object catch (e) {
       sw.stop();
-      // A timeout (no OS-level error code, just our deadline) means the SYN
-      // went unanswered → filtered. An actual refusal/reset → closed.
-      final bool timedOut = e.osError == null &&
-          sw.elapsed >= timeout - const Duration(milliseconds: 50);
+      final TcpProbeOutcome outcome = classifyTcpError(e);
       return PortResult(
         port: port,
-        status: timedOut ? PortStatus.filtered : PortStatus.closed,
-        serviceName: serviceFor(port),
-        elapsed: sw.elapsed,
-      );
-    } on Object {
-      sw.stop();
-      // Any other error (e.g. host lookup failure) — treat as filtered so the
-      // scan never throws into the UI; the host-level failure is visible in
-      // the aggregate (everything filtered = host unreachable).
-      return PortResult(
-        port: port,
-        status: PortStatus.filtered,
+        status: outcome == TcpProbeOutcome.refused
+            ? PortStatus.closed
+            : PortStatus.filtered,
         serviceName: serviceFor(port),
         elapsed: sw.elapsed,
       );

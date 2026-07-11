@@ -110,19 +110,21 @@ IP address       HW type     Flags       HW address            Mask     Device
 
   group('discover', () {
     // A connector that "connects" (host up) for an allow-listed set, and
-    // throws a timeout-style SocketException (no osError) otherwise (host down).
+    // throws the REAL dead-host SocketException (Connection timed out, errno
+    // 110 — note it DOES carry an osError) otherwise (host down).
     Future<Socket> Function(String, int, {required Duration timeout})
         connectorFor(Set<String> upHosts) {
       return (String host, int port, {required Duration timeout}) async {
         if (upHosts.contains(host)) {
           // We can't easily fabricate a real Socket; throw a refusal instead,
-          // which the probe treats as "host up" (osError present).
+          // which the probe treats as "host up" (ECONNREFUSED = it answered).
           throw SocketException(
             'Connection refused',
             osError: const OSError('Connection refused', 61),
           );
         }
-        throw const SocketException('timed out'); // no osError → down
+        throw const SocketException('Connection timed out',
+              osError: OSError('Connection timed out', 110));
       };
     }
 
@@ -186,7 +188,8 @@ IP address  HW type  Flags  HW address         Mask  Device
         connector: (String host, int port, {required Duration timeout}) async {
           // Slow "down" responses so cancel can fire mid-sweep.
           await Future<void>.delayed(const Duration(milliseconds: 20));
-          throw const SocketException('timed out');
+          throw const SocketException('Connection timed out',
+              osError: OSError('Connection timed out', 110));
         },
         arpTableReader: () async => null,
       );

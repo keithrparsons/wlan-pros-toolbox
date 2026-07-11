@@ -40,6 +40,8 @@ import 'dart:io';
 
 import 'package:basic_utils/basic_utils.dart';
 
+import 'tcp_probe_classifier.dart';
+
 /// Computed validity verdict for a certificate, derived from notBefore /
 /// notAfter against "now". Kept separate from the raw dates so the UI can show
 /// a non-color-only status (icon + text) per GL-003 §8.4 / WCAG 1.4.1.
@@ -326,7 +328,7 @@ class SslInspectService {
       return SslInspectResult.failure(
         host: host,
         port: port,
-        message: _socketMessage(e, timeout, sw.elapsed),
+        message: _socketMessage(e, timeout),
       );
     } on HandshakeException catch (e) {
       sw.stop();
@@ -607,20 +609,29 @@ class SslInspectService {
   static String? _blankToNull(String? s) =>
       (s == null || s.trim().isEmpty) ? null : s.trim();
 
-  static String _socketMessage(
-    SocketException e,
-    Duration timeout,
-    Duration elapsed,
-  ) {
-    if (e.osError == null &&
-        elapsed >= timeout - const Duration(milliseconds: 100)) {
-      return 'Connection timed out after ${timeout.inSeconds}s. The host may '
-          'be unreachable or not listening on this port.';
-    }
-    if (e.osError != null) {
-      return 'Could not connect: ${_short(e.osError!.message)}.';
-    }
-    return 'Could not connect: ${_short(e.message)}.';
+  /// Turn a failed connect into precise user-facing copy.
+  ///
+  /// The reason comes from the shared classifier — this service never inspects
+  /// `osError` itself. It used to guess a timeout from `osError == null &&
+  /// elapsed >= timeout - 100ms`, which never fired (Dart's connect-timeout DOES
+  /// carry an osError), so a genuine timeout showed the generic "Could not
+  /// connect" line instead of the timeout guidance. The errno is authoritative.
+  static String _socketMessage(SocketException e, Duration timeout) {
+    final TcpProbeFailure failure = classifyTcpFailure(e);
+    return switch (failure.reason) {
+      TcpFailureReason.timedOut =>
+        'Connection timed out after ${timeout.inSeconds}s. The host may be '
+            'unreachable or not listening on this port.',
+      TcpFailureReason.refused =>
+        'Connection refused — the host answered, but nothing is listening on '
+            'this port.',
+      TcpFailureReason.unreachable =>
+        'Host unreachable — no route to this host.',
+      TcpFailureReason.lookupFailure =>
+        'Could not resolve that host name — check the spelling.',
+      TcpFailureReason.unknown =>
+        'Could not connect: ${_short(failure.message)}.',
+    };
   }
 
   static String _short(String s) {

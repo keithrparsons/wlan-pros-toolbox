@@ -313,9 +313,12 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.xs),
             child: Text(
-              'TCP-probe sweep: a host is listed when it answers a TCP '
-              'handshake on port $_port. This is reachability on that port — '
-              'not ICMP liveness. A host silent on TCP $_port may still be up.',
+              'TCP-probe sweep: a host is listed when it ANSWERS on port '
+              '$_port, either by completing the TCP handshake or by actively '
+              'refusing it. Both prove the host replied. Silence does not, so '
+              'a host that never answers is not listed. This is reachability '
+              'on that port, not ICMP liveness: a host silent on TCP $_port '
+              'may still be up.',
               style: text.labelSmall?.copyWith(color: colors.textTertiary),
             ),
           ),
