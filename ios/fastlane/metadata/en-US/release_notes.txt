@@ -1,9 +1,31 @@
-This release adds a Field and Trade Reference library for Wi-Fi professionals working on real job sites.
+This release corrects errors we found in an audit of our own tools and reference tables. Several were wrong. A full write-up of what happened and how we found it is coming.
 
-New reference sections cover the built environment you rarely find in one place: enclosure ratings (IP and NEMA), hazardous-location rules, the electrical-code details that affect a wireless install, safety and site-access basics, and the credentials a project needs.
+CORRECTED
 
-New interactive decoders read vendor status LEDs and model numbers, with honest markers wherever a meaning is not publicly documented.
+Cable Loss: the attenuation table was understating loss by about 40 percent. It now uses Times Microwave's published equation, and offers only cables with published data at your frequency.
 
-Every reference sheet now downloads as a PDF to save or share from the field.
+Rain Fade: the ITU-R P.838-3 coefficients were wrong. Replaced from the ITU document.
 
-Also new: a short, plain explainer of the difference between Wi-Fi, cellular, and internet, and why a strong signal is not the same as a working connection.
+PoE Budget: the PSE column was never shown, so switch budgets came out low. Both PSE and PD power now appear, and Class 8 is corrected to 90 W per IEEE 802.3-2022.
+
+Ping Sweep, Ping, Port Scan, ARP/NDP: a host that never answered was being counted as alive. A sweep of an empty subnet could report every address as live. Only hosts that actually answer are now listed, and a refused connection is labeled as what it is.
+
+Traceroute: tracing a hostname never stopped. It ran the full 30 hops and reported "target not reached" on a trace that had already succeeded. Fixed on both engines.
+
+802.11 reason and status codes: several were wrong, including the 802.11r codes. Re-sourced from IEEE 802.11-2020 and now pinned to their clause.
+
+Wi-Fi 7 maximum data rate: we showed 46 Gbps. That figure needs a 16 stream mode the ratified standard does not define. The correct ratified maximum is 23.1 Gbps at 8 streams.
+
+MCS Index: rounding errors and spatial stream errors corrected against the published tables. Cells with no published value now say so, rather than showing a computed guess.
+
+Modulation: the SNR and EVM figures were not reaching screen readers, while the help text said they were. They are now.
+
+Signal thresholds: these are labeled as recommended design targets, because that is what they are. IEEE 802.11 does not define good or poor signal levels, and the right thresholds vary by site and by customer.
+
+WHY
+
+Our tests passed. All 3,391 of them. They were written by running the code and recording what it produced, so they proved the app faithfully reproduced its source. They could not tell us the source was wrong.
+
+We built a different check: read the standard, then compare. That is what found these.
+
+The app now ships 4,061 tests, and the values are pinned to IEEE, ITU, IANA and manufacturer documents rather than to itself.
