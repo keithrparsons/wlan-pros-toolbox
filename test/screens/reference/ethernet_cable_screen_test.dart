@@ -37,10 +37,15 @@ void main() {
       expect(e.dist10g, 'N/A');
     });
 
-    test('Cat6 carries 10G only to 55m at 250 MHz', () {
+    test('Cat6 carries 10G to 37-55m at 250 MHz', () {
+      // RE-SOURCED 2026-07-11. Was a flat '55m'. Both numbers are real: 55 m is
+      // the favorable-alien-crosstalk case, 37 m is the dense-bundle planning
+      // distance — and the structured-cabling screen had been saying so all
+      // along, so the app contradicted itself across two screens. In a real
+      // ceiling that gap is the install failing, so the planning number leads.
       final EthCable e = rowFor('Cat6');
       expect(e.maxMhz, 250);
-      expect(e.dist10g, '55m');
+      expect(e.dist10g, '37-55m');
     });
 
     test('Cat8 is 25/40 Gbps, runs 1G/10G to 100m, 2000 MHz', () {

@@ -2,10 +2,34 @@
 // disassoc reason codes (RC) and association status codes (SC) that show up in
 // PCAP analysis. Read-only; no input beyond a free-text filter.
 //
-// Data is reproduced verbatim from the RF Tools PWA `reason` tool view
-// (RC_DATA / RC_GROUPS / SC_DATA in www/app.js). Codes are not invented; the
-// groupings mirror the PWA exactly. Source: IEEE 802.11-2020 §9.4.1.7 (reason
-// codes) and §9.4.1.9 (status codes).
+// ─── PROVENANCE (read this before touching a value) ─────────────────────────
+//
+// Every code and meaning below is transcribed from the standard itself:
+//   Reason codes — IEEE Std 802.11-2020, Table 9-49 (§9.4.1.7), printed p870-873
+//   Status codes — IEEE Std 802.11-2020, Table 9-50 (§9.4.1.9), printed p874-879
+//
+// This screen previously inherited its dataset from the RF Tools PWA
+// (RC_DATA / RC_GROUPS / SC_DATA in www/app.js) and rendered an IEEE citation
+// on top of it. The PWA data was WRONG in about fourteen rows, and the citation
+// lent IEEE authority to those rows. Specifically:
+//
+//   - Reason codes 34-39 were systematically shifted +2. The app's 34 carried
+//     the standard's code-32 meaning, its 35 carried 33, and so on. Its 39
+//     ("peer using unsupported cipher suite") is not a reason code at all.
+//   - All four "Fast Roaming (802.11r)" codes were wrong, and the app's 45 sits
+//     inside the standard's RESERVED range (40-45). Anyone debugging an 802.11r
+//     roam with this screen chased the wrong root cause every single time.
+//   - Ten status rows were wrong, including a clean swap: the app said
+//     76 = "VHT not supported". The standard has 104 as VHT, and 76 is
+//     ANTI_CLOGGING_TOKEN_REQUIRED (SAE).
+//
+// The STRUCTURE was right — the groupings, the ranges and the green code-0 row
+// all verified cell-for-cell. Only the values were wrong. So the groups are
+// preserved and the values re-sourced.
+//
+// STANDING RULE (2026-07-11): do not add, move, or reword a row here without a
+// test in test/audit/audit_wave_2_test.dart pinning it to its clause. A source
+// line that is not gated against its source is worse than no source line.
 //
 // States (SOP-007 §5):
 //  - success → the grouped reason/status tables render (the default; the
@@ -86,47 +110,86 @@ class ReasonCodesScreen extends StatefulWidget {
       CodeEntry(16, 'Group Key Handshake timeout'),
       CodeEntry(23, '802.1X authentication failed'),
     ]),
+    // Table 9-49, the QoS block (32-39). The app previously started this group
+    // at 34 and shifted every meaning up by two codes. 32 and 33 are the codes
+    // that actually carry "QoS-related reason" and "insufficient bandwidth".
     CodeGroup('QoS / load management', <CodeEntry>[
-      CodeEntry(34, 'Disassoc — QoS-related reason'),
-      CodeEntry(35, 'Disassoc — insufficient bandwidth for QoS AP'),
-      CodeEntry(36, 'Disassoc — excessive frames not acked (poor link)'),
-      CodeEntry(37, 'Disassoc — STA transmitting outside TXOP'),
-      CodeEntry(38, 'STA leaving BSS or resetting'),
-      CodeEntry(39, 'Peer using unsupported cipher suite'),
+      CodeEntry(32, 'Disassoc — unspecified QoS-related reason'),
+      CodeEntry(33, 'Disassoc — QoS AP lacks sufficient bandwidth for this STA'),
+      CodeEntry(34, 'Disassoc — excessive frames not acked (poor link / AP tx)'),
+      CodeEntry(35, 'Disassoc — STA transmitting outside the limits of its TXOPs'),
+      CodeEntry(36, 'Requesting STA is leaving the BSS (or resetting)'),
+      CodeEntry(37, 'Requesting STA no longer using the stream or session'),
+      CodeEntry(38, 'Requesting STA received frames using a mechanism with no '
+          'completed setup'),
+      CodeEntry(39, 'Requested from peer STA due to timeout'),
     ]),
+    // Table 9-49, the FT block. 40-45 are RESERVED — the app used to put
+    // "Invalid FTIE" on 45, inside the reserved range. The real 802.11r reason
+    // codes are 48-51.
     CodeGroup('Fast Roaming (802.11r)', <CodeEntry>[
-      CodeEntry(45, 'Invalid FTIE (Fast BSS Transition)'),
-      CodeEntry(46, 'Requested PMKID not found'),
-      CodeEntry(47, 'Invalid MDE (Mobility Domain Element)'),
-      CodeEntry(48, 'Invalid FTE (Fast Transition Element)'),
+      CodeEntry(48, 'Invalid FT Action frame count'),
+      CodeEntry(49, 'Invalid PMKID (pairwise master key identifier)'),
+      CodeEntry(50, 'Invalid MDE (Mobility Domain Element)'),
+      CodeEntry(51, 'Invalid FTE (Fast Transition Element)'),
     ]),
   ];
 
-  /// Association status codes (most common subset), verbatim from PWA SC_DATA.
+  /// The clause this reason-code table is transcribed from. Rendered on screen
+  /// AND pinned in test — a citation that is not gated against its source is
+  /// worse than no citation (see the provenance block at the top of this file).
+  static const String reasonCodeCitation =
+      'IEEE 802.11-2020, Table 9-49 (§9.4.1.7)';
+
+  /// The clause the status-code table is transcribed from. Same rule.
+  static const String statusCodeCitation =
+      'IEEE 802.11-2020, Table 9-50 (§9.4.1.9)';
+
+  /// Association status codes (most common subset), transcribed from
+  /// IEEE Std 802.11-2020, Table 9-50 (§9.4.1.9).
+  ///
   /// Code 0 is the success value and is highlighted in the UI.
+  ///
+  /// The subset (which codes to show) is editorial. Every code/meaning PAIR is
+  /// the standard's. Ten of these rows used to be wrong; the corrections are
+  /// noted inline so the error cannot be reintroduced by "restoring" the old
+  /// value. There is NO HE-specific status code in 802.11-2020 — the app used
+  /// to invent one at 104, which is in fact the VHT code.
   static const CodeGroup
   statusGroup = CodeGroup('Association Status Codes (most common)', <CodeEntry>[
     CodeEntry(0, 'Successful'),
     CodeEntry(1, 'Unspecified failure'),
     CodeEntry(10, 'Cannot support all requested capabilities'),
-    CodeEntry(11, 'Reassociation denied — previous association not found'),
-    CodeEntry(12, 'Association denied — reason outside scope of 802.11'),
-    CodeEntry(13, 'Responding STA does not support specified auth algorithm'),
-    CodeEntry(14, 'Auth sequence out of expected sequence'),
+    CodeEntry(11, 'Reassociation denied — cannot confirm association exists'),
+    CodeEntry(12, 'Association denied — reason outside the scope of 802.11'),
+    CodeEntry(13, 'Responding STA does not support the specified auth algorithm'),
+    CodeEntry(14, 'Auth transaction sequence number out of expected sequence'),
     CodeEntry(15, 'Auth rejected — challenge failure'),
-    CodeEntry(16, 'Auth rejected — timeout waiting for next frame'),
+    CodeEntry(16, 'Auth rejected — timeout waiting for next frame in sequence'),
     CodeEntry(17, 'Assoc denied — AP cannot handle additional associated STAs'),
-    CodeEntry(18, 'Association denied — basic rates not supported'),
+    CodeEntry(18, 'Association denied — basic rates (BSSBasicRateSet) not '
+        'supported'),
     CodeEntry(19, 'Association denied — short preamble not supported'),
-    CodeEntry(23, 'Unspecified QoS failure'),
-    CodeEntry(24, 'Association denied — QoS capacity insufficient'),
-    CodeEntry(25, 'Association denied — poor link conditions'),
-    CodeEntry(37, 'Association denied — requesting STA not supporting MFP'),
-    CodeEntry(38, 'Association denied — AP requires MFP'),
-    CodeEntry(72, 'Requesting STA does not support HT features'),
-    CodeEntry(73, 'PCCO transition time not OK'),
-    CodeEntry(76, 'Requesting STA does not support VHT features'),
-    CodeEntry(104, 'Requesting STA does not support HE features'),
+    // 23/24/25 previously carried the QoS meanings that belong to 32/33/34.
+    CodeEntry(23, 'Assoc rejected — Power Capability element unacceptable'),
+    CodeEntry(24, 'Assoc rejected — Supported Channels element unacceptable'),
+    CodeEntry(25, 'Association denied — short slot time not supported'),
+    // The real HT code. The app used to put this meaning on 72 (= INVALID_RSNE).
+    CodeEntry(27, 'Association denied — requesting STA does not support HT'),
+    // The real MFP code. The app used to invent MFP rows at 37 and 38.
+    CodeEntry(31, 'Robust management frame policy violation (MFP)'),
+    CodeEntry(32, 'Unspecified, QoS-related failure'),
+    CodeEntry(33, 'Assoc denied — QoS AP or PCP has insufficient bandwidth'),
+    CodeEntry(34, 'Assoc denied — excessive frame loss or poor channel '
+        'conditions'),
+    CodeEntry(37, 'The request has been declined'),
+    CodeEntry(38, 'Request unsuccessful — one or more parameters have invalid '
+        'values'),
+    CodeEntry(72, 'Invalid contents of RSNE'),
+    CodeEntry(73, 'U-APSD coexistence is not supported'),
+    // 76 and 104 used to be swapped in meaning. 76 is SAE; 104 is VHT.
+    CodeEntry(76, 'Auth rejected — an anti-clogging token is required (SAE)'),
+    CodeEntry(104, 'Association denied — requesting STA does not support VHT'),
   ]);
 
   @override
@@ -355,11 +418,17 @@ class _ReasonCodesScreenState extends State<ReasonCodesScreen> {
   Widget _footnote(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
+    // The citation strings are the SAME consts the tests pin to the values they
+    // justify. Rendering them from the const (rather than retyping the clause
+    // here) means the on-screen source line cannot drift away from the gated
+    // one — which is exactly how this screen shipped an IEEE citation over
+    // fourteen non-IEEE rows.
     return Text(
       'Reason codes (RC) appear in Deauthentication and Disassociation frames. '
       'Status codes (SC) appear in Authentication, Association, and '
-      'Reassociation Response frames. Source: IEEE 802.11-2020 §9.4.1.7 and '
-      '§9.4.1.9.',
+      'Reassociation Response frames. '
+      'Sources: ${ReasonCodesScreen.reasonCodeCitation}; '
+      '${ReasonCodesScreen.statusCodeCitation}.',
       style: text.labelSmall?.copyWith(color: colors.textTertiary),
     );
   }

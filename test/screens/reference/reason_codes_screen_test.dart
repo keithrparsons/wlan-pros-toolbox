@@ -74,11 +74,21 @@ void main() {
       expect(zero.meaning, 'Successful');
     });
 
-    test('SC 104 is the HE-features code', () {
-      final CodeEntry he = ReasonCodesScreen.statusGroup.entries.firstWhere(
+    // RE-SOURCED 2026-07-11 from IEEE Std 802.11-2020, Table 9-50.
+    //
+    // This test asserted "SC 104 is the HE-features code". There is NO
+    // HE-specific status code in 802.11-2020 at all — the app invented one, and
+    // it invented it at 104, which is the code that genuinely means VHT. The
+    // test was written from the code, so it locked the fabrication in place
+    // while the screen rendered an IEEE citation above it.
+    test('SC 104 is the VHT-features code (Table 9-50), not an invented HE one',
+        () {
+      final CodeEntry vht = ReasonCodesScreen.statusGroup.entries.firstWhere(
         (CodeEntry e) => e.code == 104,
       );
-      expect(he.meaning, 'Requesting STA does not support HE features');
+      expect(vht.meaning, contains('VHT'));
+      expect(vht.meaning, isNot(contains('HE')),
+          reason: '802.11-2020 defines no HE-specific status code.');
     });
   });
 

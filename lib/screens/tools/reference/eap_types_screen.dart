@@ -7,13 +7,21 @@
 // credential type, server-cert requirement, client-cert requirement, mutual
 // auth, plus the typical-use note.
 //
-// Data ported verbatim from the Pax reference dataset
-// (Deliverables/2026-06-08-reference-batch/wifi-models-data.md, Page 1).
-// Confidence: High — each method's credential model and certificate requirement
-// is defined in its own RFC (5216 EAP-TLS, 5281 EAP-TTLS, 4851 EAP-FAST,
-// 5931 EAP-PWD, 4186 EAP-SIM, 4187 EAP-AKA, 5448 EAP-AKA') and is not contested.
-// Note: EAP-FAST is RFC 4851; RFC 7170 defines TEAP, its standards-track
-// successor (not the same method).
+// Data ported from the Pax reference dataset
+// (Deliverables/2026-06-08-reference-batch/wifi-models-data.md, Page 1), with
+// the RFC citations re-checked against the IANA EAP Method Types registry
+// (2026-07-11). Confidence: High — each method's credential model and
+// certificate requirement is defined in its own RFC (5216 EAP-TLS, 5281
+// EAP-TTLS, 4851 EAP-FAST, 5931 EAP-PWD, 4186 EAP-SIM, 4187 EAP-AKA,
+// 9048 EAP-AKA') and is not contested.
+//
+// CITATION DRIFT CORRECTED 2026-07-11 — both were pointing at superseded RFCs:
+//   TEAP      is RFC 9930, not RFC 7170 (registry value 55).
+//   EAP-AKA'  is RFC 9048, not RFC 5448 (registry value 50).
+// EAP-FAST remains RFC 4851; TEAP is its standards-track successor, a different
+// method. Also note: PEAP (25), EAP-MSCHAPv2 (29) and EAP-FAST (43) have no RFC
+// of their own in the registry — they are vendor/individual registrations, so
+// any RFC shown against PEAP would be invented.
 //
 // A persistent §8.20.4 warning callout calls out the single dominant real-world
 // EAP misconfiguration: clients that skip server-certificate validation on a
@@ -137,9 +145,11 @@ class EapTypesScreen extends StatelessWidget {
       serverCert: 'Optional',
       clientCert: 'No (optional)',
       mutual: 'Yes',
+      // TEAP is RFC 9930 in the current IANA EAP Method Types registry (value
+      // 55). RFC 7170 is superseded — citing it cites a dead document.
       use: 'Cisco-originated alternative to PEAP that avoids mandatory PKI by '
           'using a PAC. PAC provisioning (anonymous in-band Phase 0) is the '
-          'weak point. Largely superseded by TEAP (RFC 7170).',
+          'weak point. Largely superseded by TEAP (RFC 9930).',
     ),
     EapMethod(
       method: 'EAP-PWD',
@@ -166,7 +176,9 @@ class EapTypesScreen extends StatelessWidget {
       serverCert: 'No',
       clientCert: 'No (USIM is the credential)',
       mutual: 'Yes',
-      use: "Carrier Wi-Fi offload using the USIM. AKA' (RFC 5448) hardens AKA "
+      // EAP-AKA' is RFC 9048 in the IANA registry (value 50). RFC 9048
+      // obsoletes RFC 5448.
+      use: "Carrier Wi-Fi offload using the USIM. AKA' (RFC 9048) hardens AKA "
           'with SHA-256 key derivation and network-name binding for 3GPP to '
           'non-3GPP interworking (Wi-Fi calling, Passpoint). Current '
           'carrier-offload method.',

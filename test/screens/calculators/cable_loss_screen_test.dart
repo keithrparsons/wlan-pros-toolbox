@@ -92,16 +92,22 @@ void main() {
         2400: 2.920,
         5800: 4.871,
       },
-      'LMR-1200': <int, double>{
-        100: 0.3897,
-        450: 0.8647,
-        900: 1.265,
-        1500: 1.687,
-        2400: 2.215,
-        // Brief §8.1: equation-derived, NOT tabulated by Times (the LMR-1200
-        // datasheet table stops at 2500 MHz). Flagged, not invented.
-        5800: 3.774,
-      },
+      // LMR-1200 REMOVED 2026-07-11 (Keith's call). It used to be pinned here,
+      // including an equation-derived 3.774 dB/100 ft at 5800 MHz that this very
+      // file flagged as "NOT tabulated by Times". The flag was right and the
+      // number was wrong: the real figure is ~4.7-5.5, so the equation
+      // under-predicts by 25-45% — and in the flattering direction, the same
+      // failure mode as the column-shifted table this whole rewrite replaced.
+      //
+      // Times tabulates every other LMR to 5800 MHz and stops LMR-1200 at 2500.
+      // That is not an oversight: the two-term model extrapolates badly for a
+      // cable that large as the cross-section approaches mode cutoff. And nobody
+      // runs LMR-1200 at 6 GHz anyway (outdoor 6 GHz standard-power needs AFC;
+      // low-power is indoor-only), so the disputed value served no real use case.
+      //
+      // Shipping it would have introduced a brand-new wrong number on the same
+      // day we fixed the old ones. The cable is gone; see audit_wave_2_test.dart
+      // for the guards that keep it gone.
     };
 
     for (final MapEntry<String, Map<int, double>> cable in vectors.entries) {
@@ -205,7 +211,8 @@ void main() {
         'LMR-400': (0.122290, 0.000260),
         'LMR-600': (0.075550, 0.000260),
         'LMR-900': (0.051770, 0.000160),
-        'LMR-1200': (0.037370, 0.000160),
+        // No LMR-1200: the coefficients are removed along with the cable, so a
+        // dead value cannot be resurrected by re-adding one line to the picker.
       };
       expect(CableLossScreen.cableCoefficients.length, expected.length);
       expected.forEach((String cable, (double, double) kv) {
@@ -241,14 +248,16 @@ void main() {
       }
     });
 
-    test('the picker holds exactly the six LMR cables, LMR-400 default', () {
+    test('the picker holds exactly the five LMR cables, LMR-400 default', () {
+      // FIVE, not six. Every one is tabulated by Times out to 5800 MHz, so the
+      // equation is only ever evaluated inside its validated range. LMR-1200 was
+      // the sole exception and is removed — see the vectors block above.
       expect(CableLossScreen.cableTypes, <String>[
         'LMR-100A',
         'LMR-200',
         'LMR-400',
         'LMR-600',
         'LMR-900',
-        'LMR-1200',
       ]);
       expect(CableLossScreen.defaultCable, 'LMR-400');
     });

@@ -419,7 +419,8 @@
         "These are manufacturer figures at the datasheet's stated conditions (VSWR 1.0, 25 C). Real loss rises with heat and age, and connectors add loss this tool doesn't count.",
         "The equation is Times Microwave's own, so it reproduces their published tables wherever the two overlap, and it stays exact at frequencies they never tabulated (2400 MHz among them).",
         "There is no RG-58, RG-8, RG-213 or RG-214 here, on purpose. \"RG\" is not one cable: Belden 8259 and Belden 9201 are both stamped RG-58 and differ by 54 percent at 900 MHz, and no manufacturer publishes RG attenuation at Wi-Fi frequencies at all. For an RG run, read dB/100 ft off your actual cable's datasheet by part number.",
-        "LMR-1200 above 2500 MHz is equation-derived: Times publishes the equation but chose not to tabulate that cable at 5800 MHz."
+        "Five cables are offered (LMR-100A, LMR-200, LMR-400, LMR-600, LMR-900). Times Microwave tabulates all five to 5800 MHz, so the published attenuation equation is only ever used inside its validated range. LMR-1200 is deliberately omitted: Times stops tabulating it at 2500 MHz and the equation under-predicts its loss at Wi-Fi frequencies.",
+        "Above 5800 MHz the tool says plainly that it is extrapolating rather than quietly showing a confident number. Treat a 6 GHz result as a lower bound and confirm against your cable's datasheet."
       ],
       "source": "Times Microwave LMR datasheet attenuation equations (k1, k2 per cable), evaluated on your device."
     },
@@ -1357,24 +1358,27 @@
     "mcs-index": {
       "name": "MCS Index",
       "category": "Quick Reference",
-      "purpose": "Look up the modulation, coding rate, and PHY data rate for any 802.11 MCS index across channel widths, for 802.11n (HT), 802.11ac (VHT), and 802.11ax (HE), scaled by the number of spatial streams.",
+      "purpose": "Look up the modulation, coding rate, and PHY data rate for any 802.11 MCS index across channel widths, for 802.11n (HT), 802.11ac (VHT), 802.11ax (HE), and 802.11be (EHT / Wi-Fi 7), scaled by the number of spatial streams.",
       "whyHere": "For when you see an MCS index in a capture or client stats and want to know the modulation and coding behind it and the rate it should deliver at a given width and stream count.",
       "howToUse": [
-        "Choose the standard (n, ac, or ax) and the stream count (1 to 8); the rates update (rate = per-stream value multiplied by the number of streams).",
-        "MCS 0 (BPSK 1/2) is the most robust and slowest; higher MCS indices use denser modulation (up to 1024-QAM for ax) for higher rates but need a better signal.",
-        "Cells shown as \"N/A\" are genuinely invalid combinations, not zero and not made up."
+        "Choose the standard (n, ac, ax, or be) and the stream count; the rates update. 802.11n offers 1 to 4 streams (MCS 0-31 is eight indices across four streams - the standard defines no more); ac, ax, and be offer 1 to 8.",
+        "MCS 0 (BPSK 1/2) is the most robust and slowest; higher MCS indices use denser modulation (up to 1024-QAM for ax and 4096-QAM for be) for higher rates but need a better signal.",
+        "Cells shown as \"N/A\" are genuinely invalid combinations, not zero and not made up. Some are invalid only at certain stream counts.",
+        "Above 4 spatial streams no rate is shown at all. That is not an \"N/A\" - it is a gap in the published source. The screen says so explicitly rather than computing a number it cannot source."
       ],
       "inputs": [],
       "algorithm": null,
       "example": null,
       "fieldNotes": [
-        "What it shows: two selectors, the 802.11 standard (n, ac, or ax) and the number of spatial streams (1 to 8). Columns per standard: 802.11n = 20 LGI, 20 SGI, 40 LGI, 40 SGI; 802.11ac = 20/40/80/160 SGI; 802.11ax = 20/40/80/160 MHz (800 ns guard interval).",
-        "802.11ac MCS 9 is invalid at 20 and 40 MHz for a single stream (shown as \"N/A\").",
-        "Guard-interval definitions: 802.11n LGI = 800 ns and SGI = 400 ns; 802.11ac uses SGI; 802.11ax uses an 800 ns guard interval.",
+        "What it shows: two selectors, the 802.11 standard (n, ac, ax, or be) and the number of spatial streams (1 to 8). Columns per standard: 802.11n = 20 LGI, 20 SGI, 40 LGI, 40 SGI; 802.11ac = 20/40/80/160 SGI; 802.11ax = 20/40/80/160 MHz; 802.11be = 20/40/80/160/320 MHz (both at an 800 ns guard interval).",
+        "802.11ac MCS 9 at 20 MHz is valid ONLY at 3 spatial streams - it is N/A at 1, 2 and 4. MCS 9 at 40 MHz is valid at every stream count. Two further stream-dependent exclusions: MCS 6 at 80 MHz and MCS 9 at 160 MHz are both invalid at 3 streams.",
+        "The source tables publish 1 to 4 spatial streams. Above 4 the app shows no rate, because the per-stream exclusions up there are unpublished and are not derivable from the ones below - a rule that reproduces MCS 9 at 20 MHz exactly still gets MCS 6 at 80 MHz and MCS 9 at 160 MHz wrong. A known gap beats an invented number.",
+        "Guard-interval definitions: 802.11n LGI = 800 ns and SGI = 400 ns; 802.11ac uses SGI. 802.11ax and 802.11be define 0.8, 1.6, and 3.2 microsecond guard intervals only - there is no 400 ns short GI above 802.11ac.",
         "The notes card points out that real throughput is typically 50 to 65% of the PHY rate. These rates are PHY-layer maximums, not delivered throughput.",
-        "Data source: the IEEE 802.11n/ac/ax PHY rate tables."
+        "Rates are rounded from the exact PHY value at the chosen stream count, not by multiplying a rounded single-stream figure - so 802.11ac MCS 9 at 160 MHz with 2 streams reads 1733.3, matching the source, not 1733.4.",
+        "Data source: Keith Parsons' MCS Index Chart and mcsindex.net (by @VergesFrancois, SemFio Networks), cross-checked against the IEEE 802.11n/ac/ax/be PHY rate tables."
       ],
-      "source": "Values come from the IEEE 802.11n/ac/ax PHY rate tables."
+      "source": "Values come from Keith Parsons' MCS Index Chart and mcsindex.net, cross-checked against the IEEE 802.11n/ac/ax/be PHY rate tables."
     },
     "modulation": {
       "name": "Modulation",
@@ -1393,8 +1397,8 @@
       "fieldNotes": [
         "The SNR and EVM figures on the cards are representative, order-of-magnitude demands, not exact 802.11 MCS thresholds. The relationship, not the precise number, is the point. Use the MCS Index tool for the spec rate and modulation table.",
         "EVM (Error Vector Magnitude) is how far the received symbol lands from the ideal point, expressed as a percentage (or in dB) of the reference amplitude. As the order rises, the decision boundaries shrink, so higher-order QAM needs a lower EVM and a higher SNR.",
-        "The diagrams are shown on an always-dark card in both light and dark app themes so they never look inverted. They are marked decorative for screen readers, since every fact is also in the screen's text and copy output.",
-        "The Copy action exports the order, bits, and SNR/EVM summary as a tab-separated table plus the note that the numbers are representative."
+        "The diagrams are shown on an always-dark card in both light and dark app themes so they never look inverted. They are marked decorative for screen readers, and the summary card below them carries the same order, bits, SNR and EVM figures as real on-screen text - so nothing in the diagrams is available only to sighted users.",
+        "The Copy action exports the same summary table as the screen shows, plus the note that the numbers are representative."
       ],
       "source": "Educational reference content."
     },
@@ -1436,7 +1440,7 @@
         "What it shows: one card per amendment with the IEEE designation, a Wi-Fi generation badge, year, and rows for Bands (GHz), Max PHY rate, MIMO, Channel width (MHz), and Modulation. An optional band filter (All / 2.4 / 5 / 6 GHz) narrows the list.",
         "Two footnotes: (1) \"Official Wi-Fi Alliance generation naming begins at Wi-Fi 4 (802.11n); earlier amendments are shown by their 802.11 names only\"; (2) \"Wi-Fi 7 certification began 2024; IEEE 802.11be was published 2025.\"",
         "The max PHY rate is the theoretical aggregate ceiling; real-world throughput is typically 50 to 60% of it.",
-        "Data source: the IEEE 802.11 amendments. Key rows: 802.11ac = Wi-Fi 5 (2013, 6.9 Gbps); 802.11ax = Wi-Fi 6 (2019) and Wi-Fi 6E (2021, adds 6 GHz); 802.11be = Wi-Fi 7 (2024, 46 Gbps with MLO, 4K-QAM, up to 320 MHz)."
+        "Data source: the IEEE 802.11 amendments. Key rows: 802.11ac = Wi-Fi 5 (2013, 6.9 Gbps); 802.11ax = Wi-Fi 6 (2019) and Wi-Fi 6E (2021, adds 6 GHz); 802.11be = Wi-Fi 7 (2024, 23.1 Gbps with MLO, 4K-QAM, up to 320 MHz)."
       ],
       "source": "Values come from the IEEE 802.11 amendments."
     },
@@ -3400,9 +3404,10 @@
       "algorithm": null,
       "example": null,
       "fieldNotes": [
-        "What it shows: the four WMM Access Categories (Voice, Video, Best Effort, Background), their 802.11 User Priority values, and the DSCP code points (name, decimal, binary) RFC 8325 recommends.",
+        "What it shows: the four WMM Access Categories (Voice, Video, Best Effort, Background), their 802.11 User Priority values, and the DSCP code points (name, binary, decimal) RFC 8325 recommends.",
+        "Two different levels of authority sit on one screen, and the screen labels which is which. The User Priority to Access Category mapping is NORMATIVE - IEEE 802.11 Table 10-1 defines it. The DSCP to Access Category mapping is a CONVENTION: IEEE 802.11 defines no normative DSCP mapping, its own tables are examples in an informative annex, and RFC 8325 says so verbatim. Do not quote the DSCP mapping to a customer as \"the standard\".",
         "The voice-into-video trap is called out prominently rather than buried, because it is the exact misconfiguration this page exists to catch.",
-        "Built from RFC 8325 (Mapping Diffserv to IEEE 802.11), IEEE 802.11e / 802.11-2020, IEEE 802.1Q, and Wi-Fi Alliance WMM, with DSCP values per RFC 2474 / 2597 / 3246 / 5865. Works fully offline."
+        "Built from RFC 8325 (Mapping Diffserv to IEEE 802.11), IEEE 802.11 Table 10-1, IEEE 802.1Q, and Wi-Fi Alliance WMM, with DSCP code points from the IANA DSCP registry (RFC 2474 / 2597 / 3246 / 5865). Works fully offline."
       ],
       "source": "A fixed reference table drawn from the QoS standards, built in and available offline."
     },
@@ -3438,10 +3443,11 @@
       "example": null,
       "fieldNotes": [
         "What it shows: which features are present or absent, the stream, width, and QAM ceilings for each generation, and a top theoretical PHY-rate row.",
-        "The max PHY rate is a theoretical ceiling, not a real-world client speed. It is marked as a ceiling with a note showing the math (for example, Wi-Fi 7 at about 46 Gbps = 16 streams x 320 MHz x 4096-QAM, while no shipping client goes above 2-4 streams). Never treat it as an achievable speed.",
-        "Built from IEEE 802.11ac/ax/be. The 802.11be (Wi-Fi 7) values come from the draft approaching final ratification and may shift, which is flagged on the page. Works fully offline."
+        "The max PHY rate is a theoretical ceiling, not a real-world client speed. It is marked as a ceiling with a note showing the math (Wi-Fi 7 at about 23.1 Gbps = 8 streams x 320 MHz x 4096-QAM, while no shipping client goes above 2-4 streams). Never treat it as an achievable speed.",
+        "The widely-quoted \"Wi-Fi 7 = 46 Gbps\" figure assumes 16 spatial streams. IEEE 802.11be-2024 (Table 9-417t) caps EHT at 8 streams - max-NSS values 9 to 15 are Reserved - so that figure is not reachable under the ratified amendment. MLO aggregates traffic across links; it does not raise a single link's PHY ceiling.",
+        "Built from IEEE 802.11ac/ax and the ratified IEEE 802.11be-2024."
       ],
-      "source": "A fixed comparison table drawn from the 802.11 standards, built in and available offline."
+      "source": "A fixed comparison table built from IEEE 802.11ac, 802.11ax, and the ratified 802.11be-2024. Works offline."
     },
     "regulatory-domains": {
       "name": "Regulatory Domains",

@@ -183,7 +183,12 @@ class StandardsScreen extends StatefulWidget {
       generation: 'Wi-Fi 7',
       year: 2024,
       bands: '2.4 / 5 / 6',
-      maxRate: '46 Gbps (MLO)',
+      // 23.1 Gbps, NOT the widely-quoted 46 Gbps. IEEE Std 802.11be-2024,
+      // Table 9-417t caps EHT at 8 spatial streams (max-NSS 9-15 are Reserved).
+      // 8 x 2882.4 Mbps (320 MHz, EHT-MCS 13, 0.8 us GI) = 23,059 Mbps. The
+      // 46 Gbps figure assumes 16 streams, a mode the amendment never defines,
+      // and no amount of MLO raises a single link's PHY ceiling.
+      maxRate: '23.1 Gbps',
       mimo: '8×8 + MLO',
       channelWidth: '20–320',
       modulation: '4K-QAM OFDMA',

@@ -44,9 +44,29 @@
 // declined to fill. Two defensible fits to Belden's own published points
 // disagree by 14% at 2.4 GHz, so there is no honest number to pick.
 //
-// We therefore offer only the six LMR cables, where the physics is clean and
-// the manufacturer publishes an equation, and we tell the user plainly to read
-// their actual cable's datasheet. See [rgOmissionNote].
+// We therefore offer only LMR cables, where the physics is clean and the
+// manufacturer publishes an equation, and we tell the user plainly to read their
+// actual cable's datasheet. See [rgOmissionNote].
+//
+// ─── WHY LMR-1200 IS GONE TOO (Keith's call, 2026-07-11) ───────────────────
+//
+// The shipped set is FIVE cables: LMR-100A, LMR-200, LMR-400, LMR-600, LMR-900.
+// Times tabulates all five out to 5800 MHz, so the equation is only ever
+// evaluated inside its validated range. LMR-1200 is the exception: Times stops
+// tabulating it at 2500 MHz, and the two-term model under-predicts a cable that
+// large as it approaches mode cutoff. The equation gives 3.774 dB/100 ft at
+// 5800 MHz; the real figure is ~4.7-5.5. Shipping 3.774 would have introduced a
+// brand-new wrong number on the very day we fixed the old ones — and in the same
+// flattering direction as the original bug. And nobody runs LMR-1200 at 6 GHz
+// anyway (FCC rules make outdoor 6 GHz standard-power a non-starter without AFC;
+// low-power is indoor-only), so the only frequency where the disputed value
+// mattered is a deployment that does not exist. See [lmr1200OmissionNote].
+//
+// THE GENERAL RULE THIS ESTABLISHES: a model is trustworthy only inside the range
+// its source validated it in. Above 5800 MHz the calculator does not silently
+// extrapolate — it labels the result (see [aboveValidatedRangeNote]), the same
+// discipline as returning null for Noise on Windows rather than inventing a
+// figure. An honest "outside validated range" beats a confident wrong number.
 //
 // Reference: Deliverables/2026-07-11-calculator-verification/CABLE-AND-RAIN-DATA.md
 //
@@ -94,18 +114,26 @@ class CableLossScreen extends StatefulWidget {
 
   /// Selectable cable types, thinnest → thickest.
   ///
-  /// Six LMR cables. No RG types — see the file header and [rgOmissionNote].
+  /// FIVE LMR cables. No RG types (see [rgOmissionNote]) and no LMR-1200 (see
+  /// [lmr1200OmissionNote]). Every cable here is tabulated by Times Microwave
+  /// out to 5800 MHz, so the equation below is only ever evaluated inside the
+  /// range the manufacturer validated it in.
   static const List<String> cableTypes = <String>[
     'LMR-100A',
     'LMR-200',
     'LMR-400',
     'LMR-600',
     'LMR-900',
-    'LMR-1200',
   ];
 
   /// Default cable type.
   static const String defaultCable = 'LMR-400';
+
+  /// The frequency, in MHz, to which Times Microwave tabulates every cable this
+  /// tool offers. The attenuation equation is validated against their own
+  /// published values up to here — above it we are extrapolating, and we say so
+  /// rather than quietly returning a number. See [aboveValidatedRangeNote].
+  static const double validatedMaxFreqMHz = 5800.0;
 
   /// Times Microwave attenuation coefficients, read from the datasheets.
   ///
@@ -116,7 +144,7 @@ class CableLossScreen extends StatefulWidget {
   /// real second-order effect this calculator does not model.
   ///
   /// Sources: Times Microwave LMR-100A p.9, LMR-200, LMR-400 p.23, LMR-600
-  /// p.29, LMR-900 p.33, LMR-1200 p.37.
+  /// p.29, LMR-900 p.33. Each is tabulated by Times out to 5800 MHz.
   static const Map<String, (double k1, double k2)> cableCoefficients =
       <String, (double, double)>{
     'LMR-100A': (0.709140, 0.001740),
@@ -124,7 +152,6 @@ class CableLossScreen extends StatefulWidget {
     'LMR-400': (0.122290, 0.000260),
     'LMR-600': (0.075550, 0.000260),
     'LMR-900': (0.051770, 0.000160),
-    'LMR-1200': (0.037370, 0.000160),
   };
 
   /// The honest note shown on-screen explaining why no RG type is offered.
@@ -135,6 +162,43 @@ class CableLossScreen extends StatefulWidget {
       '1000 MHz. Rather than invent a number, this tool omits RG types. For an '
       'RG run, read the dB/100 ft figure off your actual cable\'s datasheet by '
       'part number.';
+
+  /// Why LMR-1200 is not offered (Keith's call, 2026-07-11).
+  ///
+  /// THE TRAP THIS AVOIDS, in full, because it nearly cost us a fresh wrong
+  /// number on the same day we fixed the old ones:
+  ///
+  /// Times tabulates every other LMR out to 5800 MHz. They stop LMR-1200 at
+  /// 2500 MHz. That is not an oversight — the two-term model (k1·√f + k2·f)
+  /// extrapolates badly for a cable that large, because loss climbs faster than
+  /// the model predicts as the cross-section approaches mode cutoff. Evaluating
+  /// the equation at 5800 MHz yields 3.774 dB/100 ft; Keith puts the real figure
+  /// at ~4.7-5.5. That is a 25-45% error, and it is in the dangerous direction
+  /// (it flatters the link budget) — the exact failure mode of the original
+  /// column-shifted table.
+  ///
+  /// And the use case does not exist: nobody runs LMR-1200 at 6 GHz. FCC rules
+  /// make outdoor 6 GHz standard-power a non-starter without AFC, and low-power
+  /// is indoor-only. The only frequency where the disputed value mattered is a
+  /// deployment nobody does. So the cable is removed rather than shipped with a
+  /// number we cannot stand behind.
+  static const String lmr1200OmissionNote =
+      'LMR-1200 is not offered. Times Microwave tabulates it only to 2500 MHz '
+      '(every other LMR runs to 5800 MHz), and the published equation '
+      'under-predicts its loss when extrapolated to Wi-Fi frequencies. Rather '
+      'than show a number we cannot stand behind, it is omitted - and in '
+      'practice nobody runs LMR-1200 at 6 GHz anyway.';
+
+  /// Shown when the user asks for a frequency past the validated range.
+  ///
+  /// Same discipline as returning null for Noise on Windows rather than
+  /// inventing a figure: the equation is trustworthy where Times tabulates it,
+  /// and past that we say so instead of silently extrapolating.
+  static const String aboveValidatedRangeNote =
+      'Above 5800 MHz this is an extrapolation, not a manufacturer-validated '
+      'figure. Times Microwave tabulates these cables to 5800 MHz; past that '
+      'the equation tends to under-predict loss. Treat the result as a lower '
+      'bound and confirm against your cable\'s datasheet.';
 
   // ─── Math (pure) ────────────────────────────────────────────────────────
 
@@ -173,6 +237,13 @@ class CableLossScreen extends StatefulWidget {
     return k1 * math.sqrt(freqMHz) + k2 * freqMHz;
   }
 
+  /// True when [freqMHz] is past the range Times Microwave tabulates, so the
+  /// equation is being extrapolated rather than evaluated inside its validated
+  /// band. The result is still shown — but it is labelled, never presented as a
+  /// manufacturer-backed figure.
+  static bool isAboveValidatedRange(double freqMHz) =>
+      freqMHz > validatedMaxFreqMHz;
+
   /// Total cable loss in dB given per-100ft loss and run length in feet:
   /// lossPer100 × len_ft / 100.
   static double totalLossDb(double lossPer100, double lengthFt) {
@@ -199,6 +270,12 @@ class _CableLossScreenState extends State<CableLossScreen> {
   double? _totalLossDb;
   double? _lossPer100;
 
+  // True when the requested frequency sits above the range Times Microwave
+  // tabulates (5800 MHz). The result still renders — but it renders LABELLED as
+  // an extrapolation, because a confident number outside a model's validated
+  // range is exactly the class of defect this whole audit wave exists to fix.
+  bool _aboveValidatedRange = false;
+
   // Unsigned-decimal only. Frequency and length are always positive values a
   // human types by hand, so no sign and no scientific notation here.
   static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
@@ -221,6 +298,7 @@ class _CableLossScreenState extends State<CableLossScreen> {
       setState(() {
         _totalLossDb = null;
         _lossPer100 = null;
+        _aboveValidatedRange = false;
       });
       return;
     }
@@ -231,6 +309,7 @@ class _CableLossScreenState extends State<CableLossScreen> {
       setState(() {
         _totalLossDb = null;
         _lossPer100 = null;
+        _aboveValidatedRange = false;
       });
       return;
     }
@@ -239,6 +318,7 @@ class _CableLossScreenState extends State<CableLossScreen> {
       setState(() {
         _totalLossDb = null;
         _lossPer100 = null;
+        _aboveValidatedRange = false;
       });
       return;
     }
@@ -246,6 +326,7 @@ class _CableLossScreenState extends State<CableLossScreen> {
     setState(() {
       _lossPer100 = per100;
       _totalLossDb = CableLossScreen.totalLossDb(per100, lenFt);
+      _aboveValidatedRange = CableLossScreen.isAboveValidatedRange(fMHz);
     });
   }
 
@@ -388,6 +469,17 @@ class _CableLossScreenState extends State<CableLossScreen> {
           ),
           const SizedBox(height: AppSpacing.md),
           _resultRow(text, mono),
+          // Honest-extrapolation banner. The equation is validated only where
+          // Times tabulates (to 5800 MHz). Past that we do NOT silently
+          // extrapolate a confident-looking figure — we label it, the same way
+          // the app returns null for Noise on Windows rather than inventing one.
+          if (_aboveValidatedRange) ...<Widget>[
+            const SizedBox(height: AppSpacing.sm),
+            _ExtrapolationNotice(
+              text: text,
+              message: CableLossScreen.aboveValidatedRangeNote,
+            ),
+          ],
         ],
       ),
     );
@@ -618,7 +710,7 @@ class _CableLossScreenState extends State<CableLossScreen> {
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(
-                  'Why there is no RG-58, RG-8, RG-213 or RG-214 here',
+                  'Why there is no RG-58, RG-8, RG-213, RG-214 or LMR-1200 here',
                   style: text.labelMedium?.copyWith(
                     color: colors.textSecondary,
                     letterSpacing: 0.4,
@@ -630,6 +722,11 @@ class _CableLossScreenState extends State<CableLossScreen> {
           const SizedBox(height: AppSpacing.xs),
           Text(
             CableLossScreen.rgOmissionNote,
+            style: text.labelMedium?.copyWith(color: colors.textTertiary),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            CableLossScreen.lmr1200OmissionNote,
             style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
@@ -706,6 +803,72 @@ class _CableLossScreenState extends State<CableLossScreen> {
             );
           }),
         ],
+      ),
+    );
+  }
+}
+
+/// The out-of-validated-range notice, shown under the result when the requested
+/// frequency exceeds 5800 MHz.
+///
+/// This is a warning about the MODEL, not about the user's input — the number
+/// above it is still the best available estimate, it simply is not
+/// manufacturer-validated at that frequency. Rendered as a warning-tinted card
+/// with the verdict word in text (§8.13: color is never the only signal), and
+/// announced to assistive tech as one node.
+class _ExtrapolationNotice extends StatelessWidget {
+  const _ExtrapolationNotice({required this.text, required this.message});
+
+  final TextTheme text;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    return Semantics(
+      container: true,
+      label: 'Outside validated range. $message',
+      excludeSemantics: true,
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.surface2,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(color: colors.statusWarning, width: 1),
+        ),
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Icon(
+              Icons.warning_amber_outlined,
+              size: 18,
+              color: colors.statusWarning,
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    'Outside validated range',
+                    style: text.labelMedium?.copyWith(
+                      color: colors.statusWarning,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xxs),
+                  Text(
+                    message,
+                    style: text.labelMedium?.copyWith(
+                      color: colors.textTertiary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
