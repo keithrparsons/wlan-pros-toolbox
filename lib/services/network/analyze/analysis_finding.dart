@@ -171,10 +171,12 @@ class AnalysisFinding {
   final String explanation;
 
   /// True for a "no problem here" reassurance (the engine's `contextOnly`
-  /// rules: R-12 excellent signal, R-18 strong-signal note, R-22 Wi-Fi 5). The
-  /// screen renders these with the §2 "Good" chip (success), not an advisory,
-  /// so a genuine all-clear never wears a warning hue. A non-reassurance P3
-  /// note (slow DNS, an overlapping channel) stays a "Worth a look".
+  /// rules: R-12 excellent signal, R-22 Wi-Fi 5). The screen renders these with
+  /// the §2 "Good" chip (success), not an advisory, so a genuine all-clear
+  /// never wears a warning hue. A non-reassurance P3 note (slow DNS, an
+  /// overlapping channel, R-18's strong-signal-but-low-rate advisory) stays a
+  /// "Worth a look" — R-18 flags that SOMETHING is in the way, so it is
+  /// deliberately NOT `contextOnly` and must not be listed as a reassurance.
   final bool isReassurance;
 
   /// True when the source rule's copy is not yet ratified / voiced. Surfaced

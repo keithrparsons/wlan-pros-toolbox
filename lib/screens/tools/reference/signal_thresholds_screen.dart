@@ -12,12 +12,17 @@
 // Three blocks: the RSSI quality scale, the per-application RSSI/SNR threshold
 // table, and the SNR→MCS table.
 //
-// The RSSI quality scale uses KEITH PARSONS' OWN authoritative thresholds
-// (Excellent > -55, Good -55..-65, Fair -65..-75, Weak -75..-80, Poor < -80) —
-// his domain expertise over the internet/vendor-appropriated values that
-// previously shipped (GL-005, domain-proof-over-consensus). The per-application
-// and SNR→MCS tables are ported from the rf-tools-pwa `rssi` tool; thresholds
-// are reproduced, not invented.
+// The RSSI quality scale uses KEITH PARSONS' OWN canonical thresholds
+// (Excellent > -60, Good -60..-67, Fair -67..-72, Poor -73 or weaker), confirmed
+// 2026-07-12 — his domain expertise over the internet/vendor-appropriated values
+// that previously shipped (GL-005, domain-proof-over-consensus). These are read
+// from the SINGLE SOURCE, [WifiGradingBands.kRssiBands], the very same list the
+// grading engine ([WifiGrading.gradeRssi], Live mode + the Analyze verdict
+// engine) grades on — so this screen and the verdict a user gets can never
+// disagree about a dBm reading again (1.7.1 shipped three divergent scales;
+// audit findings F1/F2). Do NOT hand-copy the numbers here; edit the bands in
+// wifi_grading.dart. The per-application and SNR→MCS tables are ported from the
+// rf-tools-pwa `rssi` tool; thresholds are reproduced, not invented.
 //
 // Signal quality and MCS bands carry a GL-003 §8.13 status verdict color
 // (statusSuccess / statusWarning / statusDanger) ALWAYS paired with the quality
@@ -25,7 +30,10 @@
 
 import 'package:flutter/material.dart';
 
+import 'package:net_quality/net_quality.dart' show QualityGrade;
+
 import '../../../data/tool_assets.dart';
+import '../../../services/network/wifi_grading.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
@@ -45,10 +53,12 @@ class SignalBand {
     required this.grade,
   });
 
-  /// Quality word — "Excellent", "Good", "Fair", "Weak", "Poor".
+  /// Quality word — "Excellent", "Good", "Fair", "Poor" (from the canonical
+  /// [WifiGradingBands.kRssiBands]).
   final String label;
 
-  /// RSSI range as the PWA states it, e.g. "> -50 dBm", "-50 to -67".
+  /// RSSI range exactly as the canonical band prints it, e.g. "> -60 dBm",
+  /// "-60 to -67". Sourced from [RssiBand.displayRange].
   final String range;
 
   final SignalGrade grade;
@@ -91,17 +101,40 @@ class SignalThresholdsScreen extends StatelessWidget {
   // the PWA source are rendered as hyphens here per the no-em-dash rule; the
   // numeric thresholds are unchanged.
 
-  /// RSSI quality scale — Keith Parsons' authoritative field thresholds
-  /// (domain-proof over internet/vendor consensus, GL-005). Excellent/Good read
-  /// as a passing verdict, Fair as marginal, Weak/Poor as failing — paired with
-  /// the word, never color-only.
-  static const List<SignalBand> kSignalBands = <SignalBand>[
-    SignalBand(label: 'Excellent', range: '> -55 dBm', grade: SignalGrade.good),
-    SignalBand(label: 'Good', range: '-55 to -65', grade: SignalGrade.good),
-    SignalBand(label: 'Fair', range: '-65 to -75', grade: SignalGrade.marginal),
-    SignalBand(label: 'Weak', range: '-75 to -80', grade: SignalGrade.bad),
-    SignalBand(label: 'Poor', range: '< -80 dBm', grade: SignalGrade.bad),
+  /// RSSI quality scale — Keith Parsons' canonical field thresholds (confirmed
+  /// 2026-07-12; domain-proof over internet/vendor consensus, GL-005). BUILT
+  /// FROM the single source [WifiGradingBands.kRssiBands], never hand-typed
+  /// here, so this table and the app's verdict engine grade every dBm reading
+  /// identically. Excellent/Good read as a passing verdict, Fair as marginal,
+  /// Poor as failing — paired with the word, never color-only.
+  static final List<SignalBand> kSignalBands = <SignalBand>[
+    for (final RssiBand b in WifiGradingBands.kRssiBands)
+      SignalBand(
+        label: b.label,
+        range: b.displayRange,
+        grade: signalGradeForQuality(b.grade),
+      ),
   ];
+
+  /// Maps a canonical [QualityGrade] to the reference table's §8.13 status
+  /// tier. Excellent and Good both read as a passing verdict (success), Fair is
+  /// marginal (warning), Poor is failing (danger). Presentation only — the
+  /// grading itself lives in [WifiGradingBands.kRssiBands].
+  static SignalGrade signalGradeForQuality(QualityGrade grade) {
+    switch (grade) {
+      case QualityGrade.excellent:
+      case QualityGrade.good:
+        return SignalGrade.good;
+      case QualityGrade.fair:
+        return SignalGrade.marginal;
+      case QualityGrade.poor:
+        return SignalGrade.bad;
+      case QualityGrade.unavailable:
+        // No canonical band grades Unavailable; this arm is unreachable for
+        // kRssiBands. Fail safe to the failing tier rather than a false pass.
+        return SignalGrade.bad;
+    }
+  }
 
   /// Per-application minimum RSSI / SNR targets.
   static const List<AppThreshold> kAppThresholds = <AppThreshold>[
