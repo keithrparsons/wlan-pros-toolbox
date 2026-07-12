@@ -77,12 +77,22 @@ class QosMapping {
 class DscpClass {
   const DscpClass({
     required this.name,
+    required this.binary,
     required this.decimal,
     required this.notes,
   });
 
   /// DSCP name, e.g. `EF`, `AF41 / AF42 / AF43`.
   final String name;
+
+  /// The 6-bit codepoint, e.g. `101110` or `100010 / 100100 / 100110`.
+  /// Verbatim from the IANA DSCP registry.
+  ///
+  /// This column used to be missing while the help and the field manual both
+  /// told the reader the table showed "name, decimal, binary". The binary form
+  /// is the one you actually match on in a capture filter or an ACL, so the
+  /// promise was worth keeping rather than deleting.
+  final String binary;
 
   /// Decimal value(s), e.g. `46` or `34 / 36 / 38`.
   final String decimal;
@@ -141,52 +151,128 @@ class DscpQosScreen extends StatelessWidget {
     ),
   ];
 
-  /// DSCP class reference (names and decimal values). Verbatim from the
-  /// verified dataset.
+  /// DSCP class reference — name, 6-bit codepoint, decimal value.
+  ///
+  /// SOURCE: the IANA DSCP registry (Differentiated Services Field Codepoints),
+  /// per RFC 2474 (CS / DF), RFC 2597 (AF), RFC 3246 (EF), RFC 5865 (VOICE-ADMIT).
+  /// The codepoints themselves are STANDARD. What is *not* standard is the
+  /// mapping from them onto Wi-Fi access categories — see [conventionNote].
   static const List<DscpClass> dscpClasses = <DscpClass>[
     DscpClass(
       name: 'DF (Default / CS0)',
+      binary: '000000',
       decimal: '0',
       notes: 'Best-effort, no preference.',
     ),
     DscpClass(
       name: 'CS1',
+      binary: '001000',
       decimal: '8',
       notes: 'Class Selector 1 (lowest priority / scavenger).',
     ),
-    DscpClass(name: 'CS2', decimal: '16', notes: 'Class Selector 2.'),
-    DscpClass(name: 'CS3', decimal: '24', notes: 'Class Selector 3.'),
-    DscpClass(name: 'CS4', decimal: '32', notes: 'Class Selector 4.'),
-    DscpClass(name: 'CS5', decimal: '40', notes: 'Class Selector 5.'),
-    DscpClass(name: 'CS6', decimal: '48', notes: 'Class Selector 6.'),
+    DscpClass(
+      name: 'CS2',
+      binary: '010000',
+      decimal: '16',
+      notes: 'Class Selector 2.',
+    ),
+    DscpClass(
+      name: 'CS3',
+      binary: '011000',
+      decimal: '24',
+      notes: 'Class Selector 3.',
+    ),
+    DscpClass(
+      name: 'CS4',
+      binary: '100000',
+      decimal: '32',
+      notes: 'Class Selector 4.',
+    ),
+    DscpClass(
+      name: 'CS5',
+      binary: '101000',
+      decimal: '40',
+      notes: 'Class Selector 5.',
+    ),
+    DscpClass(
+      name: 'CS6',
+      binary: '110000',
+      decimal: '48',
+      notes: 'Class Selector 6.',
+    ),
     DscpClass(
       name: 'CS7',
+      binary: '111000',
       decimal: '56',
       notes: 'Class Selector 7 (network control).',
     ),
     DscpClass(
       name: 'AF11 / AF12 / AF13',
+      binary: '001010 / 001100 / 001110',
       decimal: '10 / 12 / 14',
       notes: 'Assured Forwarding class 1, drop precedence low/med/high.',
     ),
     DscpClass(
       name: 'AF21 / AF22 / AF23',
+      binary: '010010 / 010100 / 010110',
       decimal: '18 / 20 / 22',
       notes: 'Assured Forwarding class 2.',
     ),
     DscpClass(
       name: 'AF31 / AF32 / AF33',
+      binary: '011010 / 011100 / 011110',
       decimal: '26 / 28 / 30',
       notes: 'Assured Forwarding class 3.',
     ),
     DscpClass(
       name: 'AF41 / AF42 / AF43',
+      binary: '100010 / 100100 / 100110',
       decimal: '34 / 36 / 38',
       notes: 'Assured Forwarding class 4.',
     ),
-    DscpClass(name: 'EF', decimal: '46', notes: 'Expedited Forwarding (voice).'),
-    DscpClass(name: 'VA', decimal: '44', notes: 'Voice-Admit.'),
+    DscpClass(
+      name: 'EF',
+      binary: '101110',
+      decimal: '46',
+      notes: 'Expedited Forwarding (voice).',
+    ),
+    DscpClass(
+      name: 'VA',
+      binary: '101100',
+      decimal: '44',
+      notes: 'Voice-Admit.',
+    ),
   ];
+
+  /// What IS normative here. The UP-to-AC half of this screen is defined by the
+  /// standard: IEEE 802.11 Table 10-1 (§10.2.4.2) fixes which User Priority maps
+  /// to which Access Category, and it is not a matter of taste.
+  ///
+  /// Note the ordering trap the table encodes: UP 0 maps to AC_BE while UP 1 and
+  /// UP 2 map to AC_BK — so UP 1 and 2 are *lower* priority than UP 0.
+  static const String normativeNote =
+      'STANDARD: the User Priority to Access Category mapping is normative - '
+      'IEEE 802.11 Table 10-1 (10.2.4.2) defines it. UP 1 and 2 form AC_BK; '
+      'UP 0 and 3 form AC_BE; UP 4 and 5 form AC_VI; UP 6 and 7 form AC_VO. '
+      'Note that UP 1 and 2 sit BELOW UP 0 in priority.';
+
+  /// What is NOT normative. There is no normative DSCP-to-AC mapping in IEEE
+  /// 802.11 at all. RFC 8325 says so of the IEEE's own tables, verbatim: the
+  /// mappings in Annex V "are provided as examples (as opposed to explicit
+  /// recommendations)" — an informative annex, not a requirement. RFC 4594,
+  /// which supplies the service classes, is Informational by its own front
+  /// matter: "It does not specify an Internet standard of any kind."
+  ///
+  /// So the DSCP column is a recommended CONVENTION. Labelling it "the standard"
+  /// would be borrowing authority that no standards body has granted it.
+  static const String conventionNote =
+      'CONVENTION, not a standard: no normative DSCP-to-AC mapping exists in '
+      'IEEE 802.11. The IEEE\'s own DSCP tables sit in an informative annex and '
+      'are, in RFC 8325\'s words, "provided as examples (as opposed to explicit '
+      'recommendations)". The mapping below is the RFC 8325 recommendation '
+      'layered on the RFC 4594 service classes (itself an Informational RFC). '
+      'It is the right default and it is widely deployed - but it is a '
+      'convention your gear may not share, so verify rather than assume.';
 
   /// The UP-to-AC grouping note (802.11e / WMM).
   static const String mappingNote =
@@ -272,12 +358,18 @@ class DscpQosScreen extends StatelessWidget {
     }
     buf
       ..writeln()
+      // The authority labels travel with the table. Pasted into a design doc,
+      // the DSCP mapping must not read as normative when it is a convention.
+      ..writeln(normativeNote)
+      ..writeln()
+      ..writeln(conventionNote)
+      ..writeln()
       ..writeln(mappingNote)
       ..writeln()
       ..writeln('DSCP class reference')
-      ..writeln(<String>['DSCP name', 'Decimal', 'Notes'].join(tab));
+      ..writeln(<String>['DSCP name', 'Binary', 'Decimal', 'Notes'].join(tab));
     for (final DscpClass c in dscpClasses) {
-      buf.writeln(<String>[c.name, c.decimal, c.notes].join(tab));
+      buf.writeln(<String>[c.name, c.binary, c.decimal, c.notes].join(tab));
     }
     buf
       ..writeln()
@@ -340,7 +432,12 @@ class DscpQosScreen extends StatelessWidget {
   Widget _mappingCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
     return _TableCard(
       title: 'WMM AC ↔ 802.11 UP ↔ DSCP (per RFC 8325)',
-      footnote: mappingNote,
+      // The two halves of this table have DIFFERENT authority, and the screen
+      // now says which is which. AC <-> UP is normative (IEEE 802.11 Table
+      // 10-1). DSCP -> AC is a recommended convention (RFC 8325), because IEEE
+      // 802.11 defines no normative DSCP mapping at all. Presenting the whole
+      // table as "the standard" would borrow authority nobody granted it.
+      footnote: '$normativeNote\n\n$conventionNote\n\n$mappingNote',
       header: const Row(
         children: <Widget>[
           _HeaderCell('WMM AC', width: 132),
@@ -427,11 +524,16 @@ class DscpQosScreen extends StatelessWidget {
     AppMonoText mono,
   ) {
     return _TableCard(
+      // The Binary column is new (2026-07-11). The help and the field manual
+      // both told the reader this table showed "name, decimal, binary" — and it
+      // did not. The codepoint is the form you match on in a capture filter or
+      // an ACL, so the honest fix was to keep the promise, not delete it.
       title: 'DSCP class reference',
       footnote: footnote,
       header: const Row(
         children: <Widget>[
           _HeaderCell('DSCP name', width: 160),
+          _HeaderCell('Binary', width: 190),
           _HeaderCell('Decimal', width: 110),
           _HeaderCell('Notes', width: 280),
         ],
@@ -439,6 +541,7 @@ class DscpQosScreen extends StatelessWidget {
       rows: dscpClasses.map((DscpClass c) {
         return ReferenceRowSemantics(
           label: rowLabel(c.name, <String?>[
+            'binary ${c.binary}',
             'decimal ${c.decimal}',
             c.notes,
           ]),
@@ -454,6 +557,15 @@ class DscpQosScreen extends StatelessWidget {
                     style: mono.inlineCode.copyWith(
                       color: colors.textPrimary,
                       fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 190,
+                  child: Text(
+                    c.binary,
+                    style: mono.inlineCode.copyWith(
+                      color: colors.textSecondary,
                     ),
                   ),
                 ),

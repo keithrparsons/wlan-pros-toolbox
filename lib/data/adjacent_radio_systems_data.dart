@@ -195,15 +195,23 @@ const String kTwoFourCoordinate =
 
 /// Lead-in to the coexistence-clean table, verbatim.
 const String kSubGhzIntro =
-    'Everything sub-GHz or licensed is coexistence-clean with Wi-Fi. That is '
-    'the design lever: when 2.4 GHz is congested, the right move is often to '
-    'push the IoT onto one of these rather than fight for airtime.';
+    'Read the "Shares 2.4 GHz" line first. Zigbee, Thread and BLE sit in the '
+    'same 2.4 GHz air as your Wi-Fi and do compete for it. Everything sub-GHz '
+    'or licensed is coexistence-clean. That is the design lever: when 2.4 GHz '
+    'is congested, the right move is often to push the IoT onto one of the '
+    'clean ones rather than fight for airtime.';
 
-/// The envelope caution under the table (rendered as a warning band), verbatim.
+/// The envelope caution under the table (rendered as a warning band).
+///
+/// This used to say "every range, rate, and battery figure". There is no
+/// battery figure: [RadioSystemRow] has no battery field and the table renders
+/// no battery column. Pointing the reader at a column that does not exist is
+/// the same phantom-promise class as a caveat describing a parser the screen
+/// does not have. It now names only the columns actually on screen.
 const String kEnvelopeWarning =
-    'Read every range, rate, and battery figure as a real-world envelope, not '
-    'a hard spec. They move with power, antenna, spreading factor, channel '
-    'width, and environment.';
+    'Read every range and rate figure as a real-world envelope, not a hard '
+    'spec. They move with power, antenna, spreading factor, channel width, and '
+    'environment.';
 
 /// Lead-in to the "which radio when" picker, verbatim.
 const String kWhichRadioIntro =

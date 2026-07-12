@@ -98,7 +98,18 @@ void main() {
       expect(b.voltageClass, '120V');
       for (final PlugType p in InternationalPlugsScreen.plugTypes) {
         if (p.type != 'A' && p.type != 'B') {
-          expect(p.voltageClass, '230V', reason: '${p.standard} should be 230V');
+          // `contains`, not equality, since Type N was added 2026-07-11 and
+          // carries a real qualifier: "230V (BR: 127/220V)". Brazil genuinely
+          // runs two residential voltages depending on the state — that is not
+          // a transcription error, and flattening it to a bare "230V" to satisfy
+          // a string match would hand a traveler the wrong number. The test's
+          // intent (A and B are the 120V family, everything else is the 230V
+          // family) is preserved exactly.
+          expect(
+            p.voltageClass,
+            contains('230V'),
+            reason: '${p.standard} should be in the 230V family',
+          );
         }
       }
     });

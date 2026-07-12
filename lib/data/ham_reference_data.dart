@@ -149,7 +149,10 @@ const List<HamBand> kHamBandPlan = <HamBand>[
   ),
   HamBand(
     band: '60 m',
-    freqRange: '5 channels area, ~5.332-5.405 MHz',
+    // Was "5 channels area" — which contradicted this same record's `general`
+    // field one line below ("4 channels ... plus the ... segment"). The manual
+    // is clear that the 5-channel description is the wrong one.
+    freqRange: '4 channels + segment, ~5.332-5.405 MHz',
     region: HamRegion.hf,
     tech: null,
     general: '4 channels (USB/CW/digital) plus the 5351.5-5366.5 kHz segment '

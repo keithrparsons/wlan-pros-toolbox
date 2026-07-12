@@ -316,13 +316,24 @@ class SignalThresholdsScreen extends StatelessWidget {
     );
   }
 
-  /// Honest framing — the PWA's own caveat, verbatim in intent.
+  /// The honest framing, confirmed by Keith.
+  ///
+  /// These bands are his RECOMMENDATIONS. No standard blesses them: IEEE 802.11
+  /// defines no "good" or "poor" signal level at all. Saying so plainly matters
+  /// more here than on most screens, because a numeric threshold table reads as
+  /// though it were normative unless it says otherwise, and a reader who quotes
+  /// these back to a customer as "the standard" would be repeating a
+  /// fabricated authority the app handed them.
+  static const String kThresholdFraming =
+      'These are recommended design targets, not an industry standard. '
+      'IEEE 802.11 does not define "good" or "poor" signal levels, and '
+      'appropriate thresholds vary by site and by customer requirement.';
+
   Widget _intro(AppColorScheme colors, BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
     return Text(
-      'Reference thresholds for RSSI and SNR. Values vary by client hardware, '
-      'environment, and AP vendor. Treat as field-planning guidelines, not '
-      'guarantees.',
+      '$kThresholdFraming Values also vary by client hardware, environment, and '
+      'AP vendor. Treat as field-planning guidelines, not guarantees.',
       style: text.labelMedium?.copyWith(color: colors.textTertiary),
     );
   }
@@ -474,13 +485,17 @@ class _ThresholdHeader extends StatelessWidget {
     return ExcludeSemantics(
       child: Padding(
         padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+        // Flex + gutters must MATCH _ThresholdRow exactly or the header stops
+        // sitting over its column. See the collision note there.
         child: Row(
           children: [
-            Expanded(flex: 5, child: Text('Application', style: style)),
+            Expanded(flex: 4, child: Text('Application', style: style)),
+            const SizedBox(width: AppSpacing.xs),
             Expanded(
               flex: 3,
               child: Text('RSSI', style: style, textAlign: TextAlign.right),
             ),
+            const SizedBox(width: AppSpacing.xs),
             Expanded(
               flex: 2,
               child: Text('SNR', style: style, textAlign: TextAlign.right),
@@ -516,12 +531,23 @@ class _ThresholdRow extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // COLLISION FIX (2026-07-11). The RSSI and SNR columns were adjacent
+            // Expanded cells with NO gutter, both right-aligned. At 320 px the
+            // SNR value filled its box, so its first glyph landed flush against
+            // the last glyph of the right-aligned RSSI value and the VoIP row
+            // rendered as "-67 dBm25 dB" — one unreadable token.
+            //
+            // Two changes, and they must stay paired with _ThresholdHeader:
+            //   - an explicit AppSpacing.xs gutter between each column, so two
+            //     numeric columns can never touch however narrow the viewport;
+            //   - Application 5 -> 4 flex, funding those gutters out of the one
+            //     column that can wrap instead of out of the two that cannot.
             Row(
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Expanded(
-                  flex: 5,
+                  flex: 4,
                   child: Text(
                     row.application,
                     style: (text.bodyLarge ?? const TextStyle()).copyWith(
@@ -529,6 +555,7 @@ class _ThresholdRow extends StatelessWidget {
                     ),
                   ),
                 ),
+                const SizedBox(width: AppSpacing.xs),
                 Expanded(
                   flex: 3,
                   child: Text(
@@ -539,6 +566,7 @@ class _ThresholdRow extends StatelessWidget {
                     ),
                   ),
                 ),
+                const SizedBox(width: AppSpacing.xs),
                 Expanded(
                   flex: 2,
                   child: Text(
@@ -578,10 +606,14 @@ class _SnrMcsHeader extends StatelessWidget {
     return ExcludeSemantics(
       child: Padding(
         padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+        // Flex + gutters must MATCH _SnrMcsRowTile exactly. Same collision class
+        // as the threshold table above: see the note there.
         child: Row(
           children: [
-            Expanded(flex: 2, child: Text('SNR', style: style)),
+            Expanded(flex: 3, child: Text('SNR', style: style)),
+            const SizedBox(width: AppSpacing.xs),
             Expanded(flex: 5, child: Text('Typical MCS', style: style)),
+            const SizedBox(width: AppSpacing.xs),
             Expanded(
               flex: 3,
               child: Text('Rate', style: style, textAlign: TextAlign.right),
@@ -612,17 +644,26 @@ class _SnrMcsRowTile extends StatelessWidget {
       excludeSemantics: true,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
+        // SECOND COLLISION, same screen, same class — caught by actually LOOKING
+        // at the regenerated 320px golden rather than trusting a green test.
+        // The SNR and MCS columns had no gutter, so every two-digit SNR filled
+        // its cell and ran straight into the MCS name: "10 dBMCS 2 - QPSK 3/4",
+        // "13 dBMCS 3", "35 dBMCS 11". Nine of twelve rows were affected.
+        // Gutters here too, and they stay paired with _SnrMcsHeader.
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
           children: [
             Expanded(
-              flex: 2,
+              // flex 3, not 2: the gutters above cost the SNR cell just enough
+              // width that a two-digit value wrapped ("10" / "dB") at 320px.
+              flex: 3,
               child: Text(
                 row.minSnr,
                 style: mono.inlineCode.copyWith(color: colors.textPrimary),
               ),
             ),
+            const SizedBox(width: AppSpacing.xs),
             Expanded(
               flex: 5,
               child: Text(
@@ -632,6 +673,7 @@ class _SnrMcsRowTile extends StatelessWidget {
                 ),
               ),
             ),
+            const SizedBox(width: AppSpacing.xs),
             Expanded(
               flex: 3,
               child: Text(

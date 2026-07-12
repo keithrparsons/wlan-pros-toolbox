@@ -6,20 +6,31 @@
 // OFDMA, MU-MIMO, BSS Coloring, TWT, MLO, preamble puncturing, spatial streams,
 // and the theoretical PHY-max rate.
 //
-// Data ported verbatim from the Pax reference dataset
-// (Deliverables/2026-06-08-reference-batch/wifi-models-data.md, Page 2).
-// Confidence: High on feature presence/absence and on the stream/width/QAM
-// ceilings (defined in the standards); High on the theoretical PHY-max figures
-// AS standard-derived ceilings, with the explicit caveat that they are
-// theoretical. 802.11be (Wi-Fi 7) values are from the draft approaching final
-// ratification and may shift — flagged in the footnote.
+// Feature presence/absence and the width/QAM ceilings come from the Pax
+// reference dataset (Deliverables/2026-06-08-reference-batch/wifi-models-data.md,
+// Page 2). Confidence: High — they are defined in the standards.
+//
+// ─── THE WI-FI 7 CEILING (corrected 2026-07-11) ─────────────────────────────
+//
+// This screen shipped "Wi-Fi 7 = 16 spatial streams, ~46 Gbps" in three rows
+// and a footnote that explained the 16-stream derivation as arithmetic. It is
+// wrong, and the ratified standard says so:
+//
+//   IEEE Std 802.11be-2024, Table 9-417t — "Encoding of the maximum number of
+//   spatial streams (NSS) for a specified MCS value" — encodes max NSS 1 to 8.
+//   Values 9-15 are RESERVED. EHT capability signalling cannot express a
+//   16-stream mode, because the amendment never defines one.
+//
+// Ratified ceiling: 8 x 2882.4 Mbps (320 MHz, EHT-MCS 13 / 4096-QAM R=5/6,
+// 0.8 us GI) = 23,059 Mbps ~= 23.1 Gbps. The 46 Gbps figure is 16 x 2882.4 —
+// a draft-era number. 802.11be was approved 26 September 2024, so the old
+// "values are from the draft and may shift" hedge no longer covers it.
 //
 // DOMAIN-FRAMING RULE (Keith): the "Max PHY rate" row is a theoretical CEILING,
 // not a real-world client rate. The row is rendered with a trailing "ceiling"
 // chip and a dedicated footnote spelling out the stream/width/QAM math behind
-// each figure (e.g. Wi-Fi 7 ~46 Gbps = 16 SS x 320 MHz x 4096-QAM, with no
-// shipping client above 2-4 streams). It exists to size the standard, not the
-// deployment. Never presented as an achievable speed.
+// each figure. It exists to size the standard, not the deployment. Never
+// presented as an achievable speed.
 //
 // Pure read-only reference — no inputs, no computation, no network. Works on
 // every platform. The only state is "success": the compile-time const dataset
@@ -125,7 +136,9 @@ class WifiFeatureMatrixScreen extends StatelessWidget {
       wifi5: 'DL only, up to 8',
       wifi6: 'DL + UL, up to 8',
       wifi6e: 'DL + UL, up to 8',
-      wifi7: 'DL + UL, up to 16',
+      // 8, not 16. Same root cause as the spatial-stream row below: EHT
+      // capability signalling cannot express more than 8 streams.
+      wifi7: 'DL + UL, up to 8',
     ),
     WifiFeatureRow(
       feature: 'BSS Coloring',
@@ -160,31 +173,47 @@ class WifiFeatureMatrixScreen extends StatelessWidget {
       wifi5: '8',
       wifi6: '8',
       wifi6e: '8',
-      wifi7: '16',
+      // 8, NOT 16. IEEE Std 802.11be-2024, Table 9-417t ("Encoding of the
+      // maximum number of spatial streams (NSS) for a specified MCS value")
+      // encodes Max NSS 1 through 8; values 9-15 are RESERVED. The ratified
+      // amendment cannot express a 16-stream mode, so 16 is a draft-era number.
+      wifi7: '8',
     ),
     WifiFeatureRow(
       feature: 'Max PHY rate',
       wifi5: '~6.9 Gbps',
       wifi6: '~9.6 Gbps',
       wifi6e: '~9.6 Gbps',
-      wifi7: '~46 Gbps',
+      // 8 x 2882.4 Mbps = 23,059 Mbps. The old ~46 Gbps was 16 x 2882.4 — it
+      // needed the 16-stream mode 802.11be never defines.
+      wifi7: '~23.1 Gbps',
       isCeiling: true,
     ),
   ];
 
   /// Footnote — the theoretical-ceiling caveat for the Max PHY rate row, spelled
   /// out per the domain-framing rule.
+  ///
+  /// The old text did not just carry the wrong Wi-Fi 7 number, it TAUGHT the
+  /// wrong derivation ("be ~46 Gbps = 16 x 320 x 4096-QAM") as arithmetic — so
+  /// the error was stated twice and looked checkable. The "values are from the
+  /// draft and may shift at final ratification" hedge that covered it has
+  /// expired: 802.11be was approved 26 September 2024, and the ratified
+  /// amendment refutes the figure rather than confirming it.
   static const String footnote =
       'Max PHY rate is a theoretical ceiling, NOT a real-world client rate. '
       'Each figure is the standard-derived maximum at the top stream count, '
       'widest channel, highest modulation, and shortest guard interval: '
       'ac ~6.9 Gbps = 8 streams x 160 MHz x 256-QAM; ax ~9.6 Gbps = 8 x 160 x '
-      '1024-QAM; be ~46 Gbps = 16 x 320 x 4096-QAM. No shipping client radio '
-      'has 16 streams (real devices are 2-4), so these size the standard, not '
-      'the deployment. OFDMA and MU-MIMO are efficiency/concurrency mechanisms '
-      '(more devices, more efficiently), not single-client speed features. '
-      '802.11be (Wi-Fi 7) values are from the draft and may shift at final '
-      'ratification.';
+      '1024-QAM; be ~23.1 Gbps = 8 x 320 MHz x 4096-QAM (EHT-MCS 13, 0.8 us '
+      'GI, 8 x 2882.4 Mbps). 802.11be-2024 caps EHT at 8 spatial streams '
+      '(Table 9-417t: max-NSS values 9-15 are Reserved), so the widely-quoted '
+      '46 Gbps figure - which assumes 16 streams - is not reachable under the '
+      'ratified amendment. MLO aggregates traffic across links; it does not '
+      'raise a single link\'s PHY ceiling. Real client radios run 2-4 streams, '
+      'so these size the standard, not the deployment. OFDMA and MU-MIMO are '
+      'efficiency/concurrency mechanisms (more devices, more efficiently), not '
+      'single-client speed features.';
 
   @override
   Widget build(BuildContext context) {

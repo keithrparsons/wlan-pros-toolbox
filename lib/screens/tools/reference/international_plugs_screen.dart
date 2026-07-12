@@ -181,6 +181,18 @@ class InternationalPlugsScreen extends StatefulWidget {
       countries: 'UK, Ireland, around 50 countries',
       assetName: InternationalPlugsDiagrams.g,
     ),
+    // Type H — added 2026-07-11. country_plug_data returns 'H' for Israel and
+    // Palestine, and there was no card to open: the search dead-ended. Values
+    // from Pax's brief (2026-06-08-power-cooling-references, Topic 5 table),
+    // the SAME source the eleven original cards cite. No SVG face is produced
+    // for H yet; assetName is null and the card degrades gracefully.
+    PlugType(
+      type: 'H',
+      standard: 'SI 32 (Israel)',
+      voltageClass: '230V',
+      current: '16A',
+      countries: 'Israel, Palestine',
+    ),
     PlugType(
       type: 'I',
       standard: 'AS/NZS 3112',
@@ -213,6 +225,15 @@ class InternationalPlugsScreen extends StatefulWidget {
       countries: 'Switzerland, Liechtenstein',
       assetName: InternationalPlugsDiagrams.j,
     ),
+    // Type K — added 2026-07-11. The headline dead-end from the audit: search
+    // "Denmark" returned "Type C, E, F, K" and Type K had no card.
+    PlugType(
+      type: 'K',
+      standard: 'DS 107 (Danish)',
+      voltageClass: '230V',
+      current: '16A',
+      countries: 'Denmark, Greenland, Faroe Islands',
+    ),
     PlugType(
       type: 'L',
       standard: 'CEI 23-50',
@@ -228,6 +249,24 @@ class InternationalPlugsScreen extends StatefulWidget {
       current: '15A',
       countries: 'South Africa',
       assetName: InternationalPlugsDiagrams.m,
+    ),
+    // Type N — added 2026-07-11. Returned for Brazil, Paraguay and South Africa.
+    // Brazil genuinely runs two residential voltages (127 V and 220 V); that is
+    // not a transcription error, it is real, and the country rows already say so.
+    PlugType(
+      type: 'N',
+      standard: 'IEC 60906-1 / NBR 14136 (Brazil)',
+      voltageClass: '230V (BR: 127/220V)',
+      current: '10 / 16-20A',
+      countries: 'Brazil, South Africa (SANS 164-2, new installations)',
+    ),
+    // Type O — added 2026-07-11. Returned for Thailand.
+    PlugType(
+      type: 'O',
+      standard: 'TIS 166 (Thailand)',
+      voltageClass: '230V',
+      current: '16A',
+      countries: 'Thailand',
     ),
   ];
 

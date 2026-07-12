@@ -4,6 +4,7 @@
 // parse helpers are exercised through a tiny test seam.
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -177,6 +178,214 @@ void main() {
       expect(h.bestRttMs, closeTo(8.5, 0.001));
     });
   });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // TARGET MATCHING — the hostname bug.
+  //
+  // The old fakes emitted NO output at all, and every parse test fed an IP
+  // literal, so nothing ever exercised the reached-target comparison against a
+  // hostname. It was comparing the hop IP to the UN-RESOLVED user string, so a
+  // trace to `google.com` never matched, never stopped early, and reported
+  // "target not reached" on a trace that plainly succeeded.
+  //
+  // These fakes stream REAL traceroute transcripts, hostname targets included.
+  // ───────────────────────────────────────────────────────────────────────────
+  group('reached-target detection — hostname targets (Unix)', () {
+    test('a hostname target IS reached when a hop matches the resolved IP',
+        () async {
+      final TracerouteService svc = TracerouteService(
+        platformOverride: 'macos',
+        processStarter: (String exe, List<String> args) async =>
+            _ScriptedProcess(<String>[
+          // The binary itself tells us what it resolved the name to.
+          'traceroute to google.com (142.250.72.14), 30 hops max, 60 byte packets',
+          ' 1  router.local (192.168.1.1)  1.234 ms  1.111 ms  1.050 ms',
+          ' 2  10.0.0.1 (10.0.0.1)  9.9 ms  10.1 ms  9.8 ms',
+          ' 3  lax17s34-in-f14.1e100.net (142.250.72.14)  12.0 ms  11.8 ms  12.2 ms',
+        ]),
+      );
+
+      final List<TracerouteEvent> events =
+          await svc.trace(host: 'google.com').toList();
+
+      final List<TracerouteHop> hops = events
+          .map((TracerouteEvent e) => e.hop)
+          .whereType<TracerouteHop>()
+          .toList();
+      final TracerouteResult result =
+          events.last.result!; // terminal event
+
+      expect(hops.length, 3);
+      expect(result, isA<TracerouteComplete>());
+      expect(
+        (result as TracerouteComplete).reachedTarget,
+        isTrue,
+        reason: 'Hop 3 IS google.com (142.250.72.14). Reporting "target not '
+            'reached" here is the shipped bug.',
+      );
+    });
+
+    test('a hostname target is NOT reported reached when the path dies', () async {
+      final TracerouteService svc = TracerouteService(
+        platformOverride: 'macos',
+        processStarter: (String exe, List<String> args) async =>
+            _ScriptedProcess(<String>[
+          'traceroute to google.com (142.250.72.14), 30 hops max, 60 byte packets',
+          ' 1  router.local (192.168.1.1)  1.234 ms',
+          ' 2  * * *',
+          ' 3  * * *',
+        ]),
+      );
+
+      final List<TracerouteEvent> events =
+          await svc.trace(host: 'google.com').toList();
+      final TracerouteResult result = events.last.result!;
+      expect(result, isA<TracerouteComplete>());
+      expect((result as TracerouteComplete).reachedTarget, isFalse);
+    });
+
+    test('the rDNS name of the final hop also counts as reaching the target',
+        () async {
+      // Some traceroutes print the target's own name on the last hop. If the
+      // header is missing/unparseable, a name match is still a match.
+      final TracerouteService svc = TracerouteService(
+        platformOverride: 'macos',
+        processStarter: (String exe, List<String> args) async =>
+            _ScriptedProcess(<String>[
+          ' 1  router.local (192.168.1.1)  1.2 ms',
+          ' 2  example.com (93.184.216.34)  12.0 ms',
+        ]),
+      );
+
+      final List<TracerouteEvent> events =
+          await svc.trace(host: 'example.com').toList();
+      final TracerouteResult result = events.last.result!;
+      expect((result as TracerouteComplete).reachedTarget, isTrue);
+    });
+
+    test('an IP-literal target still works (no regression)', () async {
+      final TracerouteService svc = TracerouteService(
+        platformOverride: 'macos',
+        processStarter: (String exe, List<String> args) async =>
+            _ScriptedProcess(<String>[
+          'traceroute to 9.9.9.9 (9.9.9.9), 30 hops max, 60 byte packets',
+          ' 1  router.local (192.168.1.1)  1.2 ms',
+          ' 2  9.9.9.9 (9.9.9.9)  12.0 ms',
+        ]),
+      );
+
+      final List<TracerouteEvent> events =
+          await svc.trace(host: '9.9.9.9').toList();
+      final TracerouteResult result = events.last.result!;
+      expect((result as TracerouteComplete).reachedTarget, isTrue);
+    });
+  });
+
+  group('reached-target detection — hostname targets (Windows)', () {
+    test('tracert hostname target IS reached via the bracketed header IP',
+        () async {
+      final TracerouteService svc = TracerouteService(
+        platformOverride: 'windows',
+        processStarter: (String exe, List<String> args) async =>
+            _ScriptedProcess(<String>[
+          '',
+          'Tracing route to google.com [142.250.72.14]',
+          'over a maximum of 30 hops:',
+          '',
+          '  1     1 ms     1 ms     1 ms  192.168.1.1',
+          '  2     9 ms     9 ms     9 ms  10.0.0.1',
+          '  3    12 ms    11 ms    12 ms  142.250.72.14',
+          '',
+          'Trace complete.',
+        ]),
+      );
+
+      final List<TracerouteEvent> events =
+          await svc.trace(host: 'google.com').toList();
+      final TracerouteResult result = events.last.result!;
+      expect(result, isA<TracerouteComplete>());
+      expect((result as TracerouteComplete).reachedTarget, isTrue);
+    });
+  });
+
+  group('header parsing — the resolved target IP', () {
+    test('Unix header yields the resolved IP', () {
+      expect(
+        TracerouteServiceTestHook.parseResolvedTargetIp(
+          'traceroute to google.com (142.250.72.14), 30 hops max, 60 byte packets',
+          windows: false,
+        ),
+        '142.250.72.14',
+      );
+    });
+
+    test('traceroute6 header yields the resolved IPv6', () {
+      expect(
+        TracerouteServiceTestHook.parseResolvedTargetIp(
+          'traceroute6 to example.com (2606:2800:220:1:248:1893:25c8:1946), 30 hops max',
+          windows: false,
+        ),
+        '2606:2800:220:1:248:1893:25c8:1946',
+      );
+    });
+
+    test('Windows header yields the resolved IP', () {
+      expect(
+        TracerouteServiceTestHook.parseResolvedTargetIp(
+          'Tracing route to google.com [142.250.72.14]',
+          windows: true,
+        ),
+        '142.250.72.14',
+      );
+    });
+
+    test('a hop line is not a header', () {
+      expect(
+        TracerouteServiceTestHook.parseResolvedTargetIp(
+          ' 1  router.local (192.168.1.1)  1.2 ms',
+          windows: false,
+        ),
+        isNull,
+      );
+      expect(
+        TracerouteServiceTestHook.parseResolvedTargetIp(
+          '  1     1 ms     1 ms     1 ms  192.168.1.1',
+          windows: true,
+        ),
+        isNull,
+      );
+    });
+  });
+}
+
+/// A [Process] fake that streams a scripted transcript on stdout, so the
+/// reached-target logic is exercised against real traceroute output — hostname
+/// header line included. The previous `_FakeProcess` emitted nothing, which is
+/// exactly why the hostname bug survived the suite.
+class _ScriptedProcess implements Process {
+  _ScriptedProcess(this.lines);
+
+  final List<String> lines;
+
+  @override
+  Stream<List<int>> get stdout => Stream<List<int>>.fromIterable(
+        lines.map((String l) => utf8.encode('$l\n')),
+      );
+
+  @override
+  Stream<List<int>> get stderr => const Stream<List<int>>.empty();
+
+  @override
+  Future<int> get exitCode => Future<int>.value(0);
+
+  @override
+  bool kill([ProcessSignal signal = ProcessSignal.sigterm]) => true;
+
+  @override
+  int get pid => 0;
+
+  @override
+  IOSink get stdin => throw UnimplementedError();
 }
 
 /// Minimal [Process] fake for the spawn-path test: empty stdout/stderr and an

@@ -46,7 +46,13 @@ void main() {
       expect(wifi7.std, '802.11be');
       expect(wifi7.year, 2024);
       expect(wifi7.bands, '2.4 / 5 / 6');
-      expect(wifi7.maxRate, '46 Gbps (MLO)');
+      // RE-SOURCED 2026-07-11. Was '46 Gbps (MLO)'. IEEE Std 802.11be-2024,
+      // Table 9-417t caps EHT at 8 spatial streams (max-NSS 9-15 = Reserved), so
+      // the ratified ceiling is 8 x 2882.4 Mbps = 23.1 Gbps. 46 Gbps assumed 16
+      // streams — a mode the amendment never defines. MLO aggregates across
+      // links; it does not raise a single link's PHY ceiling, so the "(MLO)"
+      // qualifier was not rescuing the number either.
+      expect(wifi7.maxRate, '23.1 Gbps');
       expect(wifi7.mimo, '8×8 + MLO');
       expect(wifi7.channelWidth, '20–320');
       expect(wifi7.modulation, '4K-QAM OFDMA');
@@ -125,8 +131,11 @@ void main() {
         expect(find.text('Wi-Fi 6E'), findsOneWidget);
         // 802.11ax appears twice (Wi-Fi 6 and Wi-Fi 6E share the std string).
         expect(find.text('802.11ax'), findsNWidgets(2));
-        // Spec values render.
-        expect(find.text('46 Gbps (MLO)'), findsOneWidget);
+        // Spec values render. RE-SOURCED 2026-07-11: was '46 Gbps (MLO)'.
+        expect(find.text('23.1 Gbps'), findsOneWidget);
+        expect(find.text('46 Gbps (MLO)'), findsNothing,
+            reason: 'The ratified 802.11be-2024 cap is 8 streams (Table '
+                '9-417t), so 23.1 Gbps. 46 Gbps needed 16 streams.');
       });
     });
   });

@@ -35,7 +35,9 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/dark_raster_diagram_card.dart';
+import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../widgets/tool_help_footer.dart';
+import 'reference_row_semantics.dart';
 
 class ModulationScreen extends StatelessWidget {
   const ModulationScreen({super.key});
@@ -72,14 +74,13 @@ class ModulationScreen extends StatelessWidget {
     final StringBuffer buf = StringBuffer()
       ..writeln('Modulation')
       ..writeln()
-      ..writeln(
-          'Modulation\tPoints\tBits/symbol\tTypical SNR\tEVM ceiling');
-    for (final List<String> row in _summaryRows) {
+      ..writeln(summaryColumns.join('\t'));
+    for (final List<String> row in summaryRows) {
       buf.writeln(row.join('\t'));
     }
     buf
       ..writeln()
-      ..writeln(_representativeCaveat);
+      ..writeln(representativeCaveat);
     return buf.toString().trimRight();
   }
 
@@ -119,10 +120,16 @@ class ModulationScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    _representativeCaveat,
+                    representativeCaveat,
                     style:
                         text.labelMedium?.copyWith(color: colors.textTertiary),
                   ),
+                  // The SNR/EVM facts, ON SCREEN. They used to exist only in the
+                  // clipboard and inside the raster diagrams, while the help
+                  // told screen-reader users the diagrams were decorative
+                  // "since every fact is also in the screen's text". Now true.
+                  const SizedBox(height: AppSpacing.md),
+                  _summaryCard(context),
                   for (final ModulationDiagram d in ModulationDiagrams.all)
                     if (ModulationDiagrams.isBundled(d.slug)) ...<Widget>[
                       const SizedBox(height: AppSpacing.md),
@@ -142,10 +149,22 @@ class ModulationScreen extends StatelessWidget {
     );
   }
 
-  /// The order -> bits -> SNR/EVM summary, mirroring the summary diagram's table
-  /// so the §8.16 copy payload carries the same facts the raster shows.
-  /// Representative figures, not exact MCS thresholds (see [_representativeCaveat]).
-  static const List<List<String>> _summaryRows = <List<String>>[
+  /// The order -> bits -> SNR/EVM summary. Representative figures, not exact MCS
+  /// thresholds (see [representativeCaveat]). Values unchanged — they are
+  /// Keith-confirmed (2026-06-11) and mirror the summary diagram's own table.
+  ///
+  /// ACCESSIBILITY DEFECT THIS FIXES (2026-07-11): this list used to be private
+  /// and referenced ONLY by [_buildCopyText]. Meanwhile the help told
+  /// assistive-technology users the diagrams were safe to skip as decorative
+  /// "since every fact is also in the screen's text". It was not: the SNR and
+  /// EVM numbers appeared nowhere on screen — they lived in the clipboard and
+  /// inside a raster image. A screen-reader user was told they were not missing
+  /// anything, and they were.
+  ///
+  /// It is now rendered by [_summaryCard], so the promise is true, and the copy
+  /// payload and the screen read from one list. Public so the guard test can
+  /// assert every row actually reaches the screen.
+  static const List<List<String>> summaryRows = <List<String>>[
     <String>['BPSK', '2', '1', '6 dB', '-10 dB'],
     <String>['QPSK', '4', '2', '9 dB', '-13 dB'],
     <String>['16-QAM', '16', '4', '16 dB', '-19 dB'],
@@ -154,8 +173,104 @@ class ModulationScreen extends StatelessWidget {
     <String>['1024-QAM', '1024', '10', '34 dB', '-35 dB'],
   ];
 
-  static const String _representativeCaveat =
+  /// Column headings for [summaryRows] — shared by the on-screen table and the
+  /// §8.16 copy payload so the two can never drift apart.
+  static const List<String> summaryColumns = <String>[
+    'Modulation',
+    'Points',
+    'Bits/symbol',
+    'Typical SNR',
+    'EVM ceiling',
+  ];
+
+  static const String representativeCaveat =
       'SNR and EVM figures are representative order-of-magnitude demands, not '
       'exact 802.11 MCS thresholds. The relationship, not the precise number, '
       'is the point. See the MCS Index tool for the spec rate table.';
+
+  /// The summary table — on screen, and reachable by assistive technology.
+  ///
+  /// Each row merges into ONE semantic node ("1024-QAM, 1024 points, 10 bits per
+  /// symbol, typical SNR 34 dB, EVM ceiling -35 dB") rather than five orphan
+  /// cells, matching the reference-row idiom the other tables use.
+  Widget _summaryCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'Order, bits, and what the link must deliver',
+            style: text.labelMedium?.copyWith(
+              color: colors.textSecondary,
+              letterSpacing: 0.4,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          HorizontalScrollTable(
+            child: DataTable(
+              headingRowHeight: 44,
+              dataRowMinHeight: 40,
+              dataRowMaxHeight: 48,
+              columnSpacing: AppSpacing.md,
+              horizontalMargin: 0,
+              dividerThickness: 1,
+              headingTextStyle: (text.labelMedium ?? const TextStyle())
+                  .copyWith(color: colors.textTertiary, letterSpacing: 0.4),
+              columns: <DataColumn>[
+                for (final String c in summaryColumns)
+                  DataColumn(label: Text(c)),
+              ],
+              rows: summaryRows.map((List<String> row) {
+                final String summary = rowLabel(row[0], <String?>[
+                  '${row[1]} points',
+                  '${row[2]} bits per symbol',
+                  'typical SNR ${row[3]}',
+                  'EVM ceiling ${row[4]}',
+                ]);
+                return DataRow(
+                  cells: <DataCell>[
+                    DataCell(
+                      Semantics(
+                        label: summary,
+                        container: true,
+                        child: ExcludeSemantics(
+                          child: Text(
+                            row[0],
+                            style: text.bodyMedium?.copyWith(
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    for (int i = 1; i < row.length; i++)
+                      DataCell(
+                        ExcludeSemantics(
+                          child: Text(
+                            row[i],
+                            style: text.bodyMedium?.copyWith(
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

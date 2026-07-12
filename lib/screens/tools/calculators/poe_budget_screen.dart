@@ -72,6 +72,40 @@ class PoeBudgetResult {
 class PoeBudgetScreen extends StatefulWidget {
   const PoeBudgetScreen({super.key});
 
+  // ─── 802.3bt Type 4 PSE — settled from the standard ───────────────────────
+  //
+  // 90 W. Per IEEE Std 802.3-2022, Table 145-11, the Class 8 P_Class value —
+  // the PSE's minimum output power for that class — is 90 W.
+  //
+  // ⚠️ WHERE THE WRONG NUMBER CAME FROM, SO IT DOES NOT COME BACK ⚠️
+  //
+  // This screen used to hold 100.0 W (hidden — the PSE column was never
+  // rendered, see [_standardsCard], which is why the contradiction with
+  // poe_reference_screen.dart's 90.0 W went unnoticed for so long).
+  //
+  // 100 is Table 145-16 item 13 — P_Type for a Type 4 PSE, given as
+  // min 75 W / MAX 99.9 W — rounded up. That is the PSE's power-RATING BAND.
+  // It is NOT the per-class output power. Two different quantities in two
+  // different tables, and reading across from one to the other is exactly the
+  // mistake that shipped.
+  //
+  // If you are here because 90 "looks low" next to a 99.9 W figure you found:
+  // you have found P_Type. You want P_Class. Table 145-11.
+  //
+  // These two constants are asserted TOGETHER in test/audit/audit_wave_1_test
+  // ("the on-screen IEEE citation is pinned to the value it cites"). A citation
+  // that is not checked against the source is worse than no citation — this app
+  // has already shipped a screen that rendered a real IEEE reference above a
+  // table of wrong rows. Do not separate the number from its proof.
+
+  /// PSE output power for an 802.3bt Type 4 (Class 8) port, in watts.
+  static const double typeFourPseWatts = 90.0;
+
+  /// The exact clause this figure is read from. Pinned by test alongside
+  /// [typeFourPseWatts]; never change one without the other.
+  static const String typeFourPseCitation =
+      'IEEE 802.3-2022, Table 145-11 (P_Class)';
+
   /// Number of device rows, matching the PWA's poe-w1..6 / poe-q1..6 grid.
   static const int deviceRowCount = 6;
 
@@ -622,14 +656,31 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
     );
   }
 
+  /// Width of each watt column in the standards card. 72px fits "12.95 W" in
+  /// the mono face without clipping, and snaps to the 8px base unit (GL-003 §4).
+  static const double _poeColW = 72;
+
   Widget _standardsCard(TextTheme text, AppMonoText mono) {
     final AppColorScheme colors = context.colors;
-    // POE_STDS mirror: [standard, name, PSE W, PD W].
-    final List<List<String>> rows = const [
-      ['802.3af', 'PoE', '15.4 W', '12.95 W'],
-      ['802.3at', 'PoE+', '30.0 W', '25.5 W'],
-      ['802.3bt Type 3', 'PoE++ / 4PPoE', '60.0 W', '51.0 W'],
-      ['802.3bt Type 4', 'PoE++ Hi', '100.0 W', '71.3 W'],
+    // [standard, name, PSE W, PD W].
+    //
+    // THE BUG THIS FIXES: this list has always held four columns, but the render
+    // below emitted row[0], row[1], row[3] — silently dropping row[2], the PSE
+    // watts. That is the number that matters most: a switch budget is spent in
+    // PSE watts, not PD watts. Twelve Class-4 APs read 306 W of PD against a
+    // 370 W switch and look comfortable; the switch actually delivers 360 W and
+    // is nearly exhausted. Both columns now render, labeled.
+    //
+    final List<List<String>> rows = <List<String>>[
+      const <String>['802.3af', 'PoE', '15.4 W', '12.95 W'],
+      const <String>['802.3at', 'PoE+', '30.0 W', '25.5 W'],
+      const <String>['802.3bt Type 3', 'PoE++ / 4PPoE', '60.0 W', '51.0 W'],
+      <String>[
+        '802.3bt Type 4',
+        'PoE++ Hi',
+        '${PoeBudgetScreen.typeFourPseWatts.toStringAsFixed(1)} W',
+        '71.3 W',
+      ],
     ];
 
     return Container(
@@ -650,37 +701,96 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
+          // Column header — without it, two bare watt figures per row are
+          // ambiguous, and PSE-vs-PD is exactly the distinction that matters.
+          //
+          // LAYOUT: the standard and its friendly name are STACKED in one
+          // flexible cell, so the two watt columns keep their full width even at
+          // 375px. Laying standard / name / PSE / PD out as four side-by-side
+          // columns squeezed the name cell to ~55px on a phone, wrapping
+          // "802.3bt Type 3" across three lines and butting the two watt values
+          // together ("15.4 W12.95 W").
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.xxs),
+            child: Row(
+              children: [
+                const Expanded(child: SizedBox.shrink()),
+                SizedBox(
+                  width: _poeColW,
+                  child: Text(
+                    'PSE',
+                    textAlign: TextAlign.right,
+                    style: text.labelSmall?.copyWith(
+                      color: colors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                SizedBox(
+                  width: _poeColW,
+                  child: Text(
+                    'PD',
+                    textAlign: TextAlign.right,
+                    style: text.labelSmall?.copyWith(
+                      color: colors.textTertiary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           ...rows.map((row) {
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  SizedBox(
-                    width: 120,
-                    child: Text(
-                      row[0],
-                      style: mono.inlineCode.copyWith(
-                        color: colors.textSecondary,
-                      ),
-                    ),
-                  ),
+                  // Standard + friendly name, stacked.
                   Expanded(
-                    child: Text(
-                      row[1],
-                      style: text.labelMedium?.copyWith(
-                        color: colors.textTertiary,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          row[0],
+                          style: mono.inlineCode.copyWith(
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                        Text(
+                          row[1],
+                          style: text.labelSmall?.copyWith(
+                            color: colors.textTertiary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                  const SizedBox(width: AppSpacing.xs),
+                  // PSE — accented, because this is the number a switch budget
+                  // is actually spent in.
                   SizedBox(
-                    width: 72,
+                    width: _poeColW,
                     child: Text(
-                      row[3],
+                      row[2],
                       textAlign: TextAlign.right,
                       style: mono.inlineCode.copyWith(
                         color: colors.textAccent,
                         fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  // PD — secondary: what actually lands at the device.
+                  SizedBox(
+                    width: _poeColW,
+                    child: Text(
+                      row[3],
+                      textAlign: TextAlign.right,
+                      style: mono.inlineCode.copyWith(
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
@@ -690,7 +800,19 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
           }),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'PD W is the power available at the device (after cable loss).',
+            'PSE W is what the switch port must supply. This is the number a '
+            'switch budget is spent in. PD W is what reaches the device after '
+            'cable loss. Budget in PSE watts: a rack of Class-4 APs draws '
+            '30.0 W each from the switch, not 25.5 W.',
+            style: text.labelSmall?.copyWith(color: colors.textTertiary),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          // The citation, rendered. It is pinned to the value by test, so this
+          // line cannot drift away from the number it justifies.
+          Text(
+            'PSE figures per ${PoeBudgetScreen.typeFourPseCitation}. Type 4 '
+            'supplies 90 W: the 99.9 W figure sometimes quoted is the PSE '
+            'power rating band (P_Type), not the per-class output power.',
             style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
         ],

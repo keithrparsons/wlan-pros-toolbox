@@ -193,7 +193,13 @@ class EthernetCableScreen extends StatefulWidget {
       maxMhz: 250,
       maxSpeed: '10 Gbps',
       dist1g: '100m',
-      dist10g: '55m',
+      // 37-55 m, not a flat 55 m. The two numbers are BOTH real: 55 m is the
+      // favorable-alien-crosstalk case, 37 m is the dense-bundle planning
+      // distance. The structured-cabling screen has carried both all along;
+      // this one said "55m" and stopped, so the app contradicted itself. In a
+      // real ceiling that gap is the install failing, so the number a designer
+      // must plan to (37 m) leads.
+      dist10g: '37-55m',
       poe: '802.3af / at',
       shielding: 'UTP or STP',
       use: 'Modern LAN, some 10G',
@@ -274,13 +280,22 @@ class EthernetCableScreen extends StatefulWidget {
     ),
   ];
 
-  /// Footnote for the speed-grade table — why the multi-gig rates exist.
+  /// Footnote for the speed-grade table — why the multi-gig rates exist, and
+  /// which Cat6 10G distance to actually design to.
+  ///
+  /// The 10G-over-Cat6 reach is a RANGE, and the two ends are far apart enough
+  /// to decide an install: 55 m only holds when alien crosstalk is favorable,
+  /// and the planning distance in a dense bundle drops to 37 m. Quoting the
+  /// 55 m figure alone (as this screen used to) hands a designer the best case
+  /// as if it were the spec.
   static const String speedGradesFootnote =
       '2.5GBASE-T and 5GBASE-T (both 802.3bz) light up speeds above 1G on '
       'already-installed twisted pair without a Cat6A re-pull. 2.5G runs on '
-      'Cat5e to 100 m; 5G is specified for Cat6 to 100 m (heavy alien-crosstalk '
-      'bundling may shorten Cat6 runs; Cat6A removes that concern). 10GBASE-T '
-      'reaches the full 100 m channel only on Cat6A.';
+      'Cat5e to 100 m; 5G is specified for Cat6 to 100 m. 10GBASE-T on Cat6 is '
+      'reach-limited by alien crosstalk: about 55 m in the favorable case, but '
+      'the dense-bundle planning distance is 37 m - design to 37 m unless the '
+      'bundle is known to be loose. 10GBASE-T reaches the full 100 m channel '
+      'only on Cat6A, which removes the concern entirely.';
 
   /// ISO/IEC 11801 shielding codes — the `[overall]/[per-pair]TP` notation.
   static const List<ShieldingCode> shieldingCodes = <ShieldingCode>[

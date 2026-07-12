@@ -92,11 +92,16 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
   void _onWattsChanged(String raw) {
     final double? w = tryParseFlexibleDouble(raw);
     if (w == null || w <= 0) {
-      // Vera F-06 — write the zero case as a fixed 4-decimal "0.0000" so the
-      // mirror field reads consistently with normal mW formatting, instead of
-      // a literal "0" that mismatches every other rendered value.
+      // Honest-null on BOTH mirrors.
+      //
+      // THE BUG THIS FIXES: the dBm field correctly showed "—" for non-positive
+      // input, but the mW mirror wrote _formatFixed(0, 4) → "0.0000". The guard
+      // is `w <= 0` and this field accepts a sign, so typing -5 made the app
+      // assert that -5 W is 0.0000 mW. It is not. -5 W has no dBm value and no
+      // mW value; it is not a power. Fabricating "0.0000" to keep the field
+      // looking tidy is exactly the honesty break this app does not permit.
       _dbmCtrl.text = w == null ? '' : '—';
-      _mwCtrl.text = w == null ? '' : _formatFixed(0, 4);
+      _mwCtrl.text = w == null ? '' : '—';
       setState(() {});
       return;
     }
@@ -108,11 +113,9 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
   void _onMwChanged(String raw) {
     final double? mw = tryParseFlexibleDouble(raw);
     if (mw == null || mw <= 0) {
-      // Vera F-06 (mirror) — same fix on the mW→Watts side. Watts uses
-      // scientific format normally; show "0.0000" in the zero case so the
-      // field reads as "a real result" rather than a parsing artifact.
+      // Same honest-null on the mW→Watts side, for the same reason.
       _dbmCtrl.text = mw == null ? '' : '—';
-      _wattsCtrl.text = mw == null ? '' : _formatFixed(0, 4);
+      _wattsCtrl.text = mw == null ? '' : '—';
       setState(() {});
       return;
     }

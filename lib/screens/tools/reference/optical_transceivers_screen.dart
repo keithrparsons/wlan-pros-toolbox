@@ -207,7 +207,6 @@ class _OpticalTransceiversScreenState extends State<OpticalTransceiversScreen> {
     }
 
     final List<OpticalTier> tiers = svc.search(_query);
-    final bool filtering = _query.trim().isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -227,12 +226,17 @@ class _OpticalTransceiversScreenState extends State<OpticalTransceiversScreen> {
         // The form-factor ladder is a fixed companion table — always shown in
         // full (it is not part of the variant search), so a search that hides
         // tiers still leaves the form-factor reference available.
-        if (!filtering || tiers.isNotEmpty) ...<Widget>[
-          const SizedBox(height: AppSpacing.lg),
-          _SectionHeading(label: 'Form factors · SFP → OSFP'),
-          const SizedBox(height: AppSpacing.xs),
-          _FormFactorTable(rows: svc.formFactors),
-        ],
+        //
+        // THE BUG THIS FIXES: the guard used to read
+        //   `if (!filtering || tiers.isNotEmpty)`
+        // which HID this table on exactly the case the comment promises it
+        // survives — a filtering search with no tier match. The comment above
+        // said "always shown in full"; the code beneath it did the opposite.
+        // It is now unconditional, which is what the comment always claimed.
+        const SizedBox(height: AppSpacing.lg),
+        _SectionHeading(label: 'Form factors · SFP → OSFP'),
+        const SizedBox(height: AppSpacing.xs),
+        _FormFactorTable(rows: svc.formFactors),
       ],
     );
   }

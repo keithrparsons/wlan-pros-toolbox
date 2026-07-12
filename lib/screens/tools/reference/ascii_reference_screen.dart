@@ -1765,9 +1765,14 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
                   const SizedBox(height: AppSpacing.sm),
                   _searchCard(),
                   const SizedBox(height: AppSpacing.sm),
-                  if (noMatch)
-                    _noMatchCard(text)
-                  else ...<Widget>[
+                  if (noMatch) ...<Widget>[
+                    _noMatchCard(text),
+                    // Keep the 8px rhythm (GL-003 §4) between the no-match card
+                    // and the always-on reference cards below it. Without this
+                    // the two would butt together, since the spacer used to live
+                    // inside the else-branch that the no-match state skips.
+                    const SizedBox(height: AppSpacing.sm),
+                  ] else ...<Widget>[
                     if (control.isNotEmpty) ...<Widget>[
                       _AsciiTableCard(
                         heading: 'Control codes (0–31, plus 127)',
@@ -1793,8 +1798,17 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
                       ),
                       const SizedBox(height: AppSpacing.sm),
                     ],
-                    _crlfNoteCard(text, mono),
                   ],
+                  // The CR/LF note is a fixed quick-reference card, not a search
+                  // result — it belongs with the reference cards below, and the
+                  // no-match card explicitly promises "the quick-reference tables
+                  // below are unaffected."
+                  //
+                  // THE BUG THIS FIXES: it used to live INSIDE the `else` branch,
+                  // so a no-match search hid it — while the no-match card sitting
+                  // directly above promised it was unaffected. Moved out; the
+                  // promise is now true.
+                  _crlfNoteCard(text, mono),
                   const SizedBox(height: AppSpacing.sm),
                   _rangeBoundariesCard(text, mono),
                   const SizedBox(height: AppSpacing.sm),

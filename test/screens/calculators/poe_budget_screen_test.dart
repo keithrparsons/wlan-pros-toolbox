@@ -157,7 +157,18 @@ void main() {
 
         // 30 W of a 370 W budget → OK verdict.
         expect(find.text('Budget OK'), findsOneWidget);
-        expect(find.text('30.0 W'), findsOneWidget); // total draw
+
+        // Total draw. Scoped to the readout (a SelectableText) rather than the
+        // whole screen: the standards card now also renders "30.0 W" as the
+        // 802.3at PSE figure, which is correct and is the point of the PoE fix
+        // (the PSE column used to be silently dropped). Both are supposed to be
+        // on screen; only one of them is the total-draw readout.
+        expect(
+          find.byWidgetPredicate(
+            (Widget w) => w is SelectableText && w.data == '30.0 W',
+          ),
+          findsOneWidget,
+        );
       });
     });
 

@@ -259,9 +259,33 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
     ];
   }
 
-  /// Honest desktop state: real ICMP needs a subprocess the macOS App Sandbox
-  /// blocks (GL-008). Point the user at the TCP Ping tool, which IS the desktop
-  /// reachability/latency path.
+  /// Why real ICMP echo is unavailable on THIS desktop, in the terms of the
+  /// platform the user is actually running.
+  ///
+  /// THE BUG THIS FIXES: this card hard-coded the macOS App Sandbox explanation
+  /// and showed it to everyone — so a WINDOWS user was told that "the macOS App
+  /// Sandbox" was blocking them. There is no macOS App Sandbox on Windows. The
+  /// verdict (use TCP Ping on desktop) was right; the reason given was false.
+  String _desktopUnavailableReason() {
+    switch (_service.osName) {
+      case 'macos':
+        return 'A real ICMP echo on this desktop build needs the system ping '
+            'binary, which the macOS App Sandbox blocks for distributed apps.';
+      case 'windows':
+        return 'This desktop build does not open the raw ICMP socket a real '
+            'echo request needs, so ICMP ping is not available here.';
+      case 'linux':
+        return 'A real ICMP echo needs a raw socket, which requires elevated '
+            'privileges this desktop build does not hold, so ICMP ping is not '
+            'available here.';
+      default:
+        return 'A real ICMP echo is not available in this desktop build.';
+    }
+  }
+
+  /// Honest desktop state: real ICMP is unavailable on desktop (for a
+  /// platform-specific reason — see [_desktopUnavailableReason]). Point the user
+  /// at the TCP Ping tool, which IS the desktop reachability/latency path.
   Widget _sandboxedDesktopCard(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
@@ -295,8 +319,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'A real ICMP echo on this desktop build needs the system ping '
-            'binary, which the macOS App Sandbox blocks for distributed apps. '
+            '${_desktopUnavailableReason()} '
             'Use the TCP Ping tool here — it measures reachability and '
             'round-trip latency over a TCP round trip, counting a reply when '
             'the host answers, whether it completes the connection or actively '

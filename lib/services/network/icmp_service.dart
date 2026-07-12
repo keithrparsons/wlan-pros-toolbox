@@ -52,7 +52,7 @@
 // thin adapter with no logic of its own.
 
 import 'dart:async';
-import 'dart:io' show Platform;
+import 'dart:io' show InternetAddress, Platform;
 
 import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 
@@ -264,6 +264,11 @@ abstract class IcmpBackend {
   });
 }
 
+/// Resolves a hostname to a single IP address string, or null when it cannot be
+/// resolved. Injected so the TTL-walk's target matching is testable with zero
+/// DNS — the seam whose absence let the hostname bug ship.
+typedef IcmpHostResolver = Future<String?> Function(String host);
+
 /// The shared ICMP foundation. Both Real-ICMP-Ping and Mobile-Traceroute call
 /// into this one service.
 class IcmpService {
@@ -271,11 +276,28 @@ class IcmpService {
     IcmpBackend? backend,
     String? platformOverride,
     bool? isWebOverride,
+    IcmpHostResolver? resolver,
   })  : _backend = backend, // ignore: prefer_initializing_formals
         _platform = platformOverride,
-        _isWeb = isWebOverride ?? kIsWeb;
+        _isWeb = isWebOverride ?? kIsWeb,
+        _resolver = resolver ?? _defaultResolver;
 
   final IcmpBackend? _backend;
+
+  /// How a hostname becomes an IP for target matching. Overridden in tests.
+  final IcmpHostResolver _resolver;
+
+  /// Real DNS resolution. Returns the first address, or null on any failure —
+  /// an unresolvable host is a normal outcome here, not an exception.
+  static Future<String?> _defaultResolver(String host) async {
+    try {
+      final List<InternetAddress> addrs = await InternetAddress.lookup(host);
+      if (addrs.isEmpty) return null;
+      return addrs.first.address;
+    } on Object {
+      return null;
+    }
+  }
 
   /// Operating system string ('ios','android','macos','windows','linux'), or
   /// null to defer to the real platform. Injected in tests.
@@ -288,6 +310,12 @@ class IcmpService {
   /// this service is constructed, and [echoCapability]/[tracerouteCapability]
   /// short-circuit on [_isWeb] first regardless.
   String get _os => _platform ?? (_isWeb ? 'web' : Platform.operatingSystem);
+
+  /// The OS this service is gating for ('macos', 'windows', 'linux', 'ios',
+  /// 'android', 'web'). Exposed so the UI can explain an unavailable state in
+  /// the terms of the platform the user is ACTUALLY on — a Windows user must
+  /// never be told the macOS App Sandbox is blocking them.
+  String get osName => _os;
 
   bool get _isMobile => _os == 'ios' || _os == 'android';
 
@@ -414,10 +442,25 @@ class IcmpService {
 
     Future<void> run() async {
       bool reached = false;
+
+      // Resolve the target ONCE, up front.
+      //
+      // THE BUG THIS FIXES: the stop condition used to be `hop.fromIp == host`,
+      // comparing the hop's IP against the UN-RESOLVED user string. Trace
+      // `example.com` and no hop ever equalled "example.com", so the walk never
+      // stopped: it ran all 30 TTLs and re-emitted the target's IP as hops
+      // 2…30 — twenty-nine phantom hops — while reporting "target not reached"
+      // on a trace that had plainly arrived. Only IP literals worked.
+      //
+      // An IP literal is its own resolution, so it flows through the same path
+      // with no DNS round trip and no behavior change.
+      final String targetIp = await _resolveTarget(host);
+
       for (int ttl = 1; ttl <= maxHops && !cancelled; ttl++) {
         // One echo "session" capped at probesPerHop, with this TTL. The backend
         // emits a reply per probe; a TimeExceeded from a router shows up as a
-        // success with a fromIp != host, the target shows up as fromIp == host.
+        // success with a fromIp != targetIp, the target answers with
+        // fromIp == targetIp.
         final List<IcmpReply> replies = await backend
             .echo(
               host: host,
@@ -434,7 +477,9 @@ class IcmpService {
         if (controller.isClosed) return;
         controller.add(IcmpTraceEvent.hop(hop));
 
-        if (hop.fromIp == host && !hop.timedOut) {
+        if (!hop.timedOut &&
+            hop.fromIp != null &&
+            hop.fromIp!.toLowerCase() == targetIp.toLowerCase()) {
           reached = true;
           break;
         }
@@ -447,6 +492,32 @@ class IcmpService {
 
     controller.onListen = run;
     return controller.stream;
+  }
+
+  /// The address the TTL-walk should recognize as "we have arrived".
+  ///
+  /// An IP literal is its own resolution (no DNS). A hostname is resolved via
+  /// the injected resolver; if resolution fails we fall back to the literal
+  /// string, which simply means the walk will not stop early — the honest
+  /// degradation, and never a phantom hop.
+  Future<String> _resolveTarget(String host) async {
+    final String h = host.trim();
+    if (_isIpLiteral(h)) return h;
+    final String? resolved = await _resolver(h);
+    return resolved ?? h;
+  }
+
+  /// Cheap IP-literal check: an IPv6 literal contains ':', an IPv4 literal is
+  /// four dot-separated numeric octets.
+  static bool _isIpLiteral(String s) {
+    if (s.contains(':')) return true;
+    final List<String> parts = s.split('.');
+    if (parts.length != 4) return false;
+    for (final String p in parts) {
+      final int? n = int.tryParse(p);
+      if (n == null || n < 0 || n > 255) return false;
+    }
+    return true;
   }
 
   /// Pure fold: collapse the replies seen at one TTL into a single [IcmpHop].
