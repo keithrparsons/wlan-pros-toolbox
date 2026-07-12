@@ -1,11 +1,14 @@
 // Tests for the Signal Thresholds reference screen.
 //
 // Dataset tests assert the load-bearing thresholds: the RSSI quality-scale
-// bands use KEITH PARSONS' OWN authoritative values (Excellent > -55, Good
-// -55..-65, Fair -65..-75, Weak -75..-80, Poor < -80 — domain-proof over
-// consensus, GL-005). The per-application RSSI/SNR targets and the SNR/MCS
-// floor are ported from the rf-tools-pwa `rssi` tool. If a value here drifts,
-// these break — that is the point.
+// bands use KEITH PARSONS' OWN canonical values (Excellent > -60, Good
+// -60..-67, Fair -67..-72, Poor -73 or weaker — confirmed 2026-07-12,
+// domain-proof over consensus, GL-005). The screen builds these from the single
+// source WifiGradingBands.kRssiBands; the values below are hand-typed from
+// Keith's confirmed bands (NOT read back from the constant under test), so a
+// drift on either side breaks this — that is the point. The per-application
+// RSSI/SNR targets and the SNR/MCS floor are ported from the rf-tools-pwa
+// `rssi` tool.
 //
 // The widget-viewport smoke test lives in test/widget_test.dart (uses the
 // shared private `_withViewport` phone-viewport helper there). A multi-width
@@ -55,19 +58,25 @@ void main() {
       expect(SignalThresholdsScreen.kAppThresholds.length, 6);
     });
 
-    test("Keith's RSSI bands carry his authoritative ranges", () {
+    test("Keith's RSSI bands carry his confirmed canonical ranges", () {
+      // Hand-typed from Keith's confirmed bands (2026-07-12), NOT derived from
+      // WifiGradingBands — so this test would catch the screen drifting off the
+      // canonical scale in either direction.
       String range(String label) => SignalThresholdsScreen.kSignalBands
           .firstWhere((SignalBand b) => b.label == label)
           .range;
-      expect(range('Excellent'), '> -55 dBm');
-      expect(range('Good'), '-55 to -65');
-      expect(range('Fair'), '-65 to -75');
-      expect(range('Weak'), '-75 to -80');
-      expect(range('Poor'), '< -80 dBm');
+      expect(range('Excellent'), '> -60 dBm');
+      expect(range('Good'), '-60 to -67');
+      expect(range('Fair'), '-67 to -72');
+      expect(range('Poor'), '-73 or weaker');
     });
 
-    test('all five RSSI quality bands are present', () {
-      expect(SignalThresholdsScreen.kSignalBands.length, 5);
+    test('four RSSI quality bands are present, no orphaned "Weak"', () {
+      expect(SignalThresholdsScreen.kSignalBands.length, 4);
+      expect(
+        SignalThresholdsScreen.kSignalBands.map((SignalBand b) => b.label),
+        <String>['Excellent', 'Good', 'Fair', 'Poor'],
+      );
     });
 
     test('"Excellent" grades good, "Fair" marginal, "Poor" bad', () {

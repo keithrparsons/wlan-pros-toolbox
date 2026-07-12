@@ -138,15 +138,15 @@ void main() {
   });
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Signal thresholds — the help shipped the thresholds Keith OVERRULED.
+  // Signal thresholds — the help must match the screen's CANONICAL scale.
   //
-  // Help said:   Excellent > -50 / Good -50..-67 / Fair -67..-70
-  // Screen says: Excellent > -55 / Good -55..-65 / Fair -65..-75
-  //
-  // The app told the user one scale and showed them another, one tap apart.
+  // Canonical (Keith, confirmed 2026-07-12): Excellent > -60 / Good -60..-67 /
+  // Fair -67..-72 / Poor -73 or weaker. Earlier the help and the screen carried
+  // different numbers (the app told the user one scale and showed another); this
+  // pins the help to the single canonical scale the screen renders.
   // ─────────────────────────────────────────────────────────────────────────
   group('signal thresholds — help matches the screen', () {
-    test('the help carries Keith\'s bands, not the overruled vendor bands',
+    test('the help carries Keith\'s canonical bands, not a superseded scale',
         () async {
       final String help =
           await rootBundle.loadString('assets/help/tool_help.json');
@@ -156,20 +156,29 @@ void main() {
       final String notes =
           jsonEncode(tools['signal-thresholds'] as Map<String, dynamic>);
 
-      // The overruled vendor/internet numbers must be gone.
-      for (final String stale in <String>['-50', '-67', '-70']) {
+      // Numbers from superseded scales (old reference -55/-65/-75/-80 and the
+      // older vendor -50/-70) must be gone, along with the folded-away "Weak".
+      for (final String stale in <String>[
+        '-50',
+        '-55',
+        '-65',
+        '-70',
+        '-75',
+        '-80',
+      ]) {
         expect(
           notes,
-          isNot(contains('($stale')),
-          reason: 'Overruled threshold $stale still in the help.',
+          isNot(contains(stale)),
+          reason: 'Superseded threshold $stale still in the help.',
         );
       }
-      expect(notes, isNot(contains('better than -50')));
+      expect(notes, isNot(contains('Weak')));
 
-      // Keith's bands, as rendered by the screen.
-      expect(notes, contains('-55'));
-      expect(notes, contains('-65'));
-      expect(notes, contains('-75'));
+      // Keith's canonical bands, as rendered by the screen.
+      expect(notes, contains('-60'));
+      expect(notes, contains('-67'));
+      expect(notes, contains('-72'));
+      expect(notes, contains('-73'));
     });
 
     test('every band the screen renders is named in the help', () async {

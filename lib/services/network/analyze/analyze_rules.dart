@@ -209,16 +209,25 @@ const List<AnalyzeRule> kAnalyzeRules = <AnalyzeRule>[
     category: FindingCategory.signal,
     severity: FindingSeverity.important,
     condition: _rssiPoor,
+    // HEDGE (Keith, 2026-07-12): the RSSI bands are a useful convention, not
+    // physics — Keith has held great connections at -75 dBm. So this copy
+    // reports a weak READING and points at coverage without promising a hard
+    // verdict. The old wording ("right at the edge of coverage… no faster plan
+    // will touch it") stated a threshold convention as certainty; softened.
     responseDraft:
-        "Your signal is weak. You are sitting right at the edge of coverage. "
-        "When the signal gets this faint, your device slows itself down on "
-        "purpose just to hold the connection together, and that caps your "
-        "speed and causes those annoying stalls. Two things help, in order: "
-        "move closer to your router/access point, or move the router/access "
-        "point closer to the area where you need better coverage. If you still "
-        "need range in a far corner, adding a second access point or a mesh "
-        "node out there is the real fix. A weak signal is a coverage problem, "
-        "not a plan problem. No faster internet plan will touch it.",
+        "Your signal is weak, which usually means you are near the edge of "
+        "solid coverage. When the signal gets this faint, your device often "
+        "slows itself down on purpose just to hold the connection together, "
+        "and that can cap your speed and cause those annoying stalls. Keep in "
+        "mind a signal reading is a guideline: some connections still run fine "
+        "at this level, and others struggle a little above it. If speed or "
+        "stalls are the problem here, coverage is the first place to look. Two "
+        "things help, in order: move closer to your router/access point, or "
+        "move the router/access point closer to the area where you need better "
+        "coverage. If you still need range in a far corner, adding a second "
+        "access point or a mesh node out there is the real fix. A weak signal "
+        "is usually a coverage problem rather than a plan problem, so a faster "
+        "internet plan generally will not change this reading.",
   ),
   AnalyzeRule(
     id: 'R-11',

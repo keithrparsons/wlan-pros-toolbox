@@ -137,25 +137,32 @@ void main() {
     });
   });
 
-  group('RSSI rules use the ratified WifiGradingBands', () {
-    test('poor RSSI fires R-10', () {
-      // Below the Fair floor (-72) → Poor.
-      final rssi = WifiGradingBands.rssiFairDbm - 1; // -73
+  group('RSSI rules grade on Keith\'s canonical bands', () {
+    // Expected grades are HAND-DERIVED from Keith's confirmed bands, never read
+    // back from WifiGradingBands — the 1.7.1 failure mode (F2) was tests that
+    // derived their expected values from the very constant under test, so a
+    // wrong constant stayed green. Literals below fail if the bands ever drift.
+    test('poor RSSI (-73, Keith\'s Poor floor) fires R-10', () {
+      const int rssi = -73; // Poor: -73 or weaker.
       expect(WifiGrading.gradeRssi(rssi), QualityGrade.poor);
-      expect(_firedIds(AnalyzeInput(rssiDbm: rssi)), contains('R-10'));
+      expect(_firedIds(const AnalyzeInput(rssiDbm: rssi)), contains('R-10'));
     });
 
-    test('excellent RSSI alone is suppressed (context-only)', () {
+    test('excellent RSSI (-59, i.e. > -60) alone is suppressed (context-only)',
+        () {
       // R-12 is context-only: with no other finding it must NOT render.
-      final rssi = WifiGradingBands.rssiExcellentDbm; // -59
+      const int rssi = -59; // Excellent: rssi > -60.
       expect(WifiGrading.gradeRssi(rssi), QualityGrade.excellent);
-      expect(_firedIds(AnalyzeInput(rssiDbm: rssi)), isNot(contains('R-12')));
+      expect(
+        _firedIds(const AnalyzeInput(rssiDbm: rssi)),
+        isNot(contains('R-12')),
+      );
     });
 
     test('excellent RSSI renders when a real finding also fired', () {
-      final rssi = WifiGradingBands.rssiExcellentDbm; // -59 excellent
+      const int rssi = -59; // Excellent: rssi > -60.
       final report = AnalyzeEngine.analyze(
-        AnalyzeInput(rssiDbm: rssi, lossPct: 5), // loss poor → R-25
+        const AnalyzeInput(rssiDbm: rssi, lossPct: 5), // loss poor → R-25
       );
       final ids = report.findings.map((f) => f.ruleId).toSet();
       expect(ids, containsAll(<String>['R-25', 'R-12']));
@@ -163,9 +170,9 @@ void main() {
   });
 
   group('SNR + rate context rules', () {
-    test('poor SNR fires R-15', () {
-      final snr = WifiGradingBands.snrFairDb - 1; // 14 → poor
-      expect(_firedIds(AnalyzeInput(snrDb: snr)), contains('R-15'));
+    test('poor SNR (14, below the 15 dB Fair floor) fires R-15', () {
+      const int snr = 14; // Poor: snr < 15.
+      expect(_firedIds(const AnalyzeInput(snrDb: snr)), contains('R-15'));
     });
 
     test('weak SNR + low link rate fires R-17 (app 200 Mbps constant)', () {
