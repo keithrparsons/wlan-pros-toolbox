@@ -55,6 +55,37 @@ class WlanCommandGroup {
 class LinuxWlanCommandsScreen extends StatefulWidget {
   const LinuxWlanCommandsScreen({super.key});
 
+  // ─── Search (pure, static, unit-testable) ─────────────────────────────────
+
+  /// Whether a single command matches the lower-cased query [q].
+  static bool matchesCommand(WlanCommand c, String q) {
+    if (q.isEmpty) return true;
+    return c.command.toLowerCase().contains(q) ||
+        c.description.toLowerCase().contains(q);
+  }
+
+  /// Filter one group against the lower-cased query [q]. Returns null when the
+  /// group has nothing to show.
+  ///
+  /// A group-LABEL match keeps the WHOLE group, so "wireless" surfaces every
+  /// command in the Wireless group even though no command text contains the
+  /// word.
+  ///
+  /// THE BUG THIS FIXES: the label check used to sit BELOW an
+  /// `if (kept.isEmpty) return null;` early-return, so it could only ever run
+  /// when some command had already matched — making it dead code in exactly the
+  /// case it exists for. Searching `monitor-mode` returned "No match" on a
+  /// screen that HAS a group named Monitor-mode. The label check comes first.
+  static WlanCommandGroup? filterGroup(WlanCommandGroup g, String q) {
+    if (q.isEmpty) return g;
+    if (g.label.toLowerCase().contains(q)) return g;
+
+    final List<WlanCommand> kept =
+        g.commands.where((WlanCommand c) => matchesCommand(c, q)).toList();
+    if (kept.isEmpty) return null;
+    return WlanCommandGroup(g.label, kept);
+  }
+
   static const String intro =
       'Linux command line for WLAN work: file and process basics, the '
       'wireless-specific tools (iw, iwconfig, airmon-ng, rfkill), and tested '
@@ -165,22 +196,8 @@ class _LinuxWlanCommandsScreenState extends State<LinuxWlanCommandsScreen> {
     super.dispose();
   }
 
-  bool _matches(WlanCommand c, String q) {
-    if (q.isEmpty) return true;
-    return c.command.toLowerCase().contains(q) ||
-        c.description.toLowerCase().contains(q);
-  }
-
-  WlanCommandGroup? _filterGroup(WlanCommandGroup g, String q) {
-    if (q.isEmpty) return g;
-    final List<WlanCommand> kept =
-        g.commands.where((WlanCommand c) => _matches(c, q)).toList();
-    if (kept.isEmpty) return null;
-    // A group label match keeps the whole group, so "wireless" surfaces every
-    // command in the Wireless group even though no command text contains it.
-    if (g.label.toLowerCase().contains(q)) return g;
-    return WlanCommandGroup(g.label, kept);
-  }
+  WlanCommandGroup? _filterGroup(WlanCommandGroup g, String q) =>
+      LinuxWlanCommandsScreen.filterGroup(g, q);
 
   void _onQueryChanged(String value) {
     setState(() => _query = value);

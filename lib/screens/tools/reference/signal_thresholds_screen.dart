@@ -316,13 +316,24 @@ class SignalThresholdsScreen extends StatelessWidget {
     );
   }
 
-  /// Honest framing — the PWA's own caveat, verbatim in intent.
+  /// The honest framing, confirmed by Keith.
+  ///
+  /// These bands are his RECOMMENDATIONS. No standard blesses them: IEEE 802.11
+  /// defines no "good" or "poor" signal level at all. Saying so plainly matters
+  /// more here than on most screens, because a numeric threshold table reads as
+  /// though it were normative unless it says otherwise, and a reader who quotes
+  /// these back to a customer as "the standard" would be repeating a
+  /// fabricated authority the app handed them.
+  static const String kThresholdFraming =
+      'These are recommended design targets, not an industry standard. '
+      'IEEE 802.11 does not define "good" or "poor" signal levels, and '
+      'appropriate thresholds vary by site and by customer requirement.';
+
   Widget _intro(AppColorScheme colors, BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
     return Text(
-      'Reference thresholds for RSSI and SNR. Values vary by client hardware, '
-      'environment, and AP vendor. Treat as field-planning guidelines, not '
-      'guarantees.',
+      '$kThresholdFraming Values also vary by client hardware, environment, and '
+      'AP vendor. Treat as field-planning guidelines, not guarantees.',
       style: text.labelMedium?.copyWith(color: colors.textTertiary),
     );
   }

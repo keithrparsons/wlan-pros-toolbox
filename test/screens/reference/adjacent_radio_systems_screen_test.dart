@@ -147,7 +147,14 @@ void main() {
           );
           await tester.pump();
           expect(find.text('Adjacent Radio Systems'), findsWidgets);
-          expect(find.text('What does not touch your air'), findsOneWidget);
+          // WAS: 'What does not touch your air'. That heading sat directly above
+          // Zigbee, Thread and BLE, each rendering "Shares 2.4 GHz: Yes" — the
+          // card contradicted every one of its own rows. Retitled to point at
+          // the per-row answer instead of pre-empting it with a false claim.
+          expect(
+            find.text('The other radios, and which share your air'),
+            findsOneWidget,
+          );
           expect(find.text('Why a WLAN pro cares'), findsOneWidget);
           expect(find.byIcon(Icons.warning_amber_rounded), findsOneWidget);
           expect(find.byType(TextField), findsNothing);

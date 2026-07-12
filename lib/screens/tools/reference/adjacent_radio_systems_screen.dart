@@ -108,7 +108,14 @@ class AdjacentRadioSystemsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.md),
                   ReferenceCard(
-                    title: 'What does not touch your air',
+                    // WAS: "What does not touch your air" — which was flatly
+                    // contradicted by three of the ten rows inside it. Zigbee,
+                    // Thread and BLE each render "Shares 2.4 GHz: Yes" directly
+                    // beneath that heading. The rows are right (they DO share
+                    // 2.4 GHz); the heading was wrong. The per-row "Shares
+                    // 2.4 GHz" field is the answer, so the heading now points at
+                    // it instead of pre-empting it with a false blanket claim.
+                    title: 'The other radios, and which share your air',
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
@@ -186,7 +193,9 @@ class AdjacentRadioSystemsScreen extends StatelessWidget {
     b
       ..writeln(kTwoFourCoordinate)
       ..writeln()
-      ..writeln('What does not touch your air')
+      // Same heading as the card (§8.16 — the clipboard must not disagree with
+      // the screen it was copied from).
+      ..writeln('The other radios, and which share your air')
       ..writeln(kSubGhzIntro)
       ..writeln(
         <String>['System', 'Band', 'Range', 'Data rate', 'Shares 2.4 GHz?']

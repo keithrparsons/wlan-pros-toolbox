@@ -291,12 +291,37 @@ class TracerouteService {
         proc.stderr.transform(utf8.decoder).transform(const LineSplitter()),
       ]);
 
+      // The target's RESOLVED address, learned from the binary's own header
+      // line ("traceroute to google.com (142.250.72.14)"). Until we see it, an
+      // IP-literal target is its own resolution.
+      //
+      // THE BUG THIS FIXES: this used to compare `hop.ip == validatedHost`, i.e.
+      // the hop's IP against the UN-RESOLVED user string. Trace `google.com` and
+      // no hop ever matched "google.com", so reachedTarget stayed false and the
+      // tool reported "target not reached" on a trace that plainly succeeded.
+      // Only IP literals worked.
+      String? resolvedTargetIp =
+          NetworkTarget.isIpv4(validatedHost) || NetworkTarget.isIpv6(validatedHost)
+              ? validatedHost
+              : null;
+
       await for (final String line in lines) {
         if (cancelled) break;
+
+        // Header lines are not hops, but they carry the resolution we need.
+        final String? headerIp =
+            _parseResolvedTargetIp(line, windows: _isWindows);
+        if (headerIp != null) {
+          resolvedTargetIp = headerIp;
+          continue;
+        }
+
         final TracerouteHop? hop =
             _isWindows ? _parseWindowsLine(line) : _parseUnixLine(line);
         if (hop != null) {
-          if (hop.ip == validatedHost) reachedTarget = true;
+          if (_isTarget(hop, validatedHost, resolvedTargetIp)) {
+            reachedTarget = true;
+          }
           if (!controller.isClosed) {
             controller.add(TracerouteEvent.hop(hop));
           }
@@ -342,6 +367,86 @@ class TracerouteService {
       'traceroute',
       <String>['-m', '$maxHops', '-q', '3', '-w', '2', '--', host],
     );
+  }
+
+  /// Whether [hop] IS the target we were asked to trace to.
+  ///
+  /// Three ways a hop can be the target, in order of reliability:
+  ///  1. Its IP equals the address the traceroute binary resolved the target to
+  ///     (from the header line) — the authoritative answer, since it is the same
+  ///     resolution the binary actually probed.
+  ///  2. Its IP equals the requested host, when the user gave an IP literal.
+  ///  3. Its rDNS name equals the requested hostname — a fallback for the case
+  ///     where the header was absent or unparseable but the final hop resolves
+  ///     back to the name the user typed.
+  ///
+  /// A timed-out hop is never the target: `* * *` names nobody.
+  static bool _isTarget(
+    TracerouteHop hop,
+    String requestedHost,
+    String? resolvedTargetIp,
+  ) {
+    if (hop.timedOut) return false;
+
+    final String? ip = hop.ip;
+    if (ip != null) {
+      if (resolvedTargetIp != null && _sameAddress(ip, resolvedTargetIp)) {
+        return true;
+      }
+      if (_sameAddress(ip, requestedHost)) return true;
+    }
+
+    final String? host = hop.host;
+    if (host != null && _sameHostname(host, requestedHost)) return true;
+
+    return false;
+  }
+
+  /// Case-insensitive address compare (IPv6 hex is case-insensitive).
+  static bool _sameAddress(String a, String b) =>
+      a.toLowerCase() == b.toLowerCase();
+
+  /// Case-insensitive hostname compare, tolerating a trailing FQDN root dot.
+  static bool _sameHostname(String a, String b) {
+    String norm(String s) {
+      final String t = s.trim().toLowerCase();
+      return t.endsWith('.') ? t.substring(0, t.length - 1) : t;
+    }
+
+    return norm(a) == norm(b);
+  }
+
+  /// Pull the RESOLVED target address out of the traceroute/tracert header.
+  ///
+  ///   Unix:    `traceroute to google.com (142.250.72.14), 30 hops max, ...`
+  ///   Unix v6: `traceroute6 to example.com (2606:2800:220:1::1946), 30 hops max`
+  ///   Windows: `Tracing route to google.com [142.250.72.14]`
+  ///
+  /// This is the binary telling us exactly which address it is probing, which
+  /// is precisely what a hostname trace needs in order to know when it arrived.
+  /// Returns null for any line that is not such a header.
+  static String? _parseResolvedTargetIp(String raw, {required bool windows}) {
+    final String line = raw.trim();
+    if (line.isEmpty) return null;
+
+    // A hop line starts with its TTL number. Never treat one as a header.
+    if (RegExp(r'^\d').hasMatch(line)) return null;
+
+    final RegExp re = windows
+        ? RegExp(r'^Tracing route to\s+\S+\s+\[([0-9a-fA-F:.]+)\]',
+            caseSensitive: false)
+        : RegExp(r'^traceroute6?\s+to\s+\S+\s+\(([0-9a-fA-F:.]+)\)',
+            caseSensitive: false);
+
+    final RegExpMatch? m = re.firstMatch(line);
+    final String? candidate = m?.group(1);
+    if (candidate == null) return null;
+
+    // Only accept something that really is an address.
+    if (NetworkTarget.isIpv4(candidate) || NetworkTarget.isIpv6(candidate)) {
+      return candidate;
+    }
+    return null;
   }
 
   /// Parse a Unix `traceroute` hop line, e.g.:
@@ -441,6 +546,20 @@ class TracerouteServiceTestHook {
 
   static TracerouteHop? parseWindows(String line) =>
       TracerouteService._parseWindowsLine(line);
+
+  /// The resolved target address from a traceroute/tracert header line.
+  static String? parseResolvedTargetIp(String line, {required bool windows}) =>
+      TracerouteService._parseResolvedTargetIp(line, windows: windows);
+
+  /// Whether a hop IS the traced target. Exposed so the hostname-matching
+  /// logic — the thing the old IP-literal-only fakes could not see — is
+  /// directly unit-testable.
+  static bool isTarget(
+    TracerouteHop hop,
+    String requestedHost,
+    String? resolvedTargetIp,
+  ) =>
+      TracerouteService._isTarget(hop, requestedHost, resolvedTargetIp);
 }
 
 /// Minimal stream merge so we can read stdout+stderr as one ordered line

@@ -313,6 +313,121 @@ void main() {
       expect(() => svc.traceroute(host: '9.9.9.9'), throwsStateError);
     });
   });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // HOSTNAME TARGETS — the bug the old fakes could not see.
+  //
+  // Every fake above feeds an IP LITERAL as the host, so `hop.fromIp == host`
+  // happened to work. Trace a NAME and the comparison is against the
+  // un-resolved user string: it never matches, the walk never stops, and the
+  // target IP is emitted over and over as hops n…maxHops.
+  //
+  // A resolver seam makes this testable with zero DNS.
+  // ───────────────────────────────────────────────────────────────────────────
+  group('traceroute() with a HOSTNAME target', () {
+    test('stops at the target when the hop matches the RESOLVED IP', () async {
+      final IcmpService svc = IcmpService(
+        platformOverride: 'android',
+        isWebOverride: false,
+        resolver: (String h) async =>
+            h == 'google.com' ? '142.250.72.14' : null,
+        backend: _FakeBackend.perTtl(<int, List<IcmpReply>>{
+          1: <IcmpReply>[
+            const IcmpReply(
+                sequence: 1, success: true, fromIp: '10.0.0.1', rttMs: 1)
+          ],
+          2: <IcmpReply>[
+            const IcmpReply(
+                sequence: 1, success: true, fromIp: '172.16.0.1', rttMs: 5)
+          ],
+          3: <IcmpReply>[
+            const IcmpReply(
+                sequence: 1, success: true, fromIp: '142.250.72.14', rttMs: 9)
+          ],
+        }, host: 'google.com'),
+      );
+
+      final List<IcmpTraceEvent> events =
+          await svc.traceroute(host: 'google.com', maxHops: 30).toList();
+
+      final List<IcmpHop> hops =
+          events.where((e) => e.hop != null).map((e) => e.hop!).toList();
+
+      expect(
+        hops.length,
+        3,
+        reason: 'On the bug this runs all 30 TTLs and emits 142.250.72.14 as '
+            'hops 3…30.',
+      );
+      expect(hops[2].fromIp, '142.250.72.14');
+      expect(events.last.done, isTrue);
+      expect(
+        events.last.reachedTarget,
+        isTrue,
+        reason: 'The trace plainly reached google.com.',
+      );
+    });
+
+    test('does not emit the target IP as a run of duplicate hops', () async {
+      // The precise shipped symptom, pinned.
+      final IcmpService svc = IcmpService(
+        platformOverride: 'android',
+        isWebOverride: false,
+        resolver: (String h) async => '93.184.216.34',
+        backend: _FakeBackend.perTtl(<int, List<IcmpReply>>{
+          1: <IcmpReply>[
+            const IcmpReply(
+                sequence: 1, success: true, fromIp: '10.0.0.1', rttMs: 1)
+          ],
+          2: <IcmpReply>[
+            const IcmpReply(
+                sequence: 1, success: true, fromIp: '93.184.216.34', rttMs: 9)
+          ],
+        }, host: 'example.com'),
+      );
+
+      final List<IcmpTraceEvent> events =
+          await svc.traceroute(host: 'example.com', maxHops: 30).toList();
+      final List<IcmpHop> hops =
+          events.where((e) => e.hop != null).map((e) => e.hop!).toList();
+
+      final int targetHops =
+          hops.where((IcmpHop h) => h.fromIp == '93.184.216.34').length;
+      expect(
+        targetHops,
+        1,
+        reason: 'The target must appear exactly once, as the final hop.',
+      );
+      expect(hops.length, 2);
+    });
+
+    test('an IP-literal target still works when DNS is unavailable', () async {
+      // Resolver returns null (no DNS). An IP literal is its own resolution,
+      // so the walk must still stop at the target — no regression.
+      final IcmpService svc = IcmpService(
+        platformOverride: 'android',
+        isWebOverride: false,
+        resolver: (String h) async => null,
+        backend: _FakeBackend.perTtl(<int, List<IcmpReply>>{
+          1: <IcmpReply>[
+            const IcmpReply(
+                sequence: 1, success: true, fromIp: '10.0.0.1', rttMs: 1)
+          ],
+          2: <IcmpReply>[
+            const IcmpReply(
+                sequence: 1, success: true, fromIp: '9.9.9.9', rttMs: 9)
+          ],
+        }, host: '9.9.9.9'),
+      );
+
+      final List<IcmpTraceEvent> events =
+          await svc.traceroute(host: '9.9.9.9', maxHops: 30).toList();
+      final List<IcmpHop> hops =
+          events.where((e) => e.hop != null).map((e) => e.hop!).toList();
+      expect(hops.length, 2);
+      expect(events.last.reachedTarget, isTrue);
+    });
+  });
 }
 
 // ── Test helpers ────────────────────────────────────────────────────────────

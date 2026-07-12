@@ -131,11 +131,17 @@ const String kDecodeHonestRule =
     'rules.';
 
 /// The standing caveat shown on every lookup (info band).
+///
+/// This used to promise: "If a segment does not match a known token it reads as
+/// 'unrecognized segment', never a guess." That was a PHANTOM PROMISE — this
+/// screen has zero text inputs and no parser. There is no segment to read and
+/// nothing to report as unrecognized. The sentence described behavior that does
+/// not exist anywhere in the app, which is worse than saying nothing: it invited
+/// the user to trust a safety net that was never built. Removed.
 const String kDecodeStandingCaveat =
-    'A decode is a heuristic. If a segment does not match a known token it reads '
-    'as "unrecognized segment", never a guess. Confirm against the exact '
-    'model\'s datasheet or ordering guide. Rules are stable within a generation; '
-    'only the per-model lookup grows over time.';
+    'A decode is a heuristic. Confirm against the exact model\'s datasheet or '
+    'ordering guide. Rules are stable within a generation; only the per-model '
+    'lookup grows over time.';
 
 /// The reference-only defer footer (info band).
 const String kDecodeDeferNote =

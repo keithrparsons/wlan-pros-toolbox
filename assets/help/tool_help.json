@@ -391,7 +391,7 @@
       "purpose": "Estimates the total signal loss for a run of coax of a known type, length, and frequency, plus the loss per 100 feet at that frequency.",
       "whyHere": "Cable loss comes straight off both your transmit and receive signal. Pick a cable type and length, and the tool tells you how much signal the feedline will eat.",
       "howToUse": [
-        "Pick the cable type from the list.",
+        "Pick the cable type from the list (six LMR types).",
         "Enter the frequency and pick its unit (GHz or MHz).",
         "Enter the run length and pick its unit (feet or meters).",
         "Read the total loss in dB plus the per-100-foot figure."
@@ -399,7 +399,7 @@
       "inputs": [
         {
           "name": "Cable type",
-          "unit": "One of: LMR-100A, LMR-200, LMR-400 (default), LMR-600, LMR-900, LMR-1200, RG-58, RG-8/U, RG-213, RG-214",
+          "unit": "One of: LMR-100A, LMR-200, LMR-400 (default), LMR-600, LMR-900, LMR-1200",
           "range": ""
         },
         {
@@ -413,14 +413,15 @@
           "range": "Must be greater than 0"
         }
       ],
-      "algorithm": "Each cable type has published loss figures at a handful of frequencies. The tool smoothly fills in the gaps between those published points to find the loss per 100 feet at your exact frequency, then scales it by your run length (loss per 100 feet times length in feet, divided by 100). For example, LMR-400 at 2400 MHz is 3.9 dB per 100 feet. Below the lowest published frequency it uses the lowest value; above the highest, it extends the trend.",
-      "example": "LMR-400 at 2.4 GHz over 50 feet: 3.9 dB per 100 feet times 50, divided by 100, is 1.95 dB total.",
+      "algorithm": "Times Microwave publishes an attenuation equation on every LMR datasheet: loss per 100 feet equals k1 times the square root of the frequency in MHz, plus k2 times the frequency in MHz, where k1 and k2 are constants for that specific cable. The tool evaluates that equation at your exact frequency, then scales it by your run length (loss per 100 feet times length in feet, divided by 100). Nothing is interpolated between table rows, so there is no frequency at which the tool has to guess. For example, LMR-400 at 2400 MHz is 6.6 dB per 100 feet.",
+      "example": "LMR-400 at 2.4 GHz over 50 feet: 6.6 dB per 100 feet times 50, divided by 100, is 3.31 dB total.",
       "fieldNotes": [
-        "These are manufacturer-typical figures at room temperature. Real loss rises with heat and age, and connectors add loss this tool doesn't count.",
-        "The fill-between is a smooth fit through published spec points, not a measurement.",
-        "Above the highest published frequency (for example, above 5800 MHz for LMR cables) the figure is an extension of the trend, so treat 6 GHz results with caution."
+        "These are manufacturer figures at the datasheet's stated conditions (VSWR 1.0, 25 C). Real loss rises with heat and age, and connectors add loss this tool doesn't count.",
+        "The equation is Times Microwave's own, so it reproduces their published tables wherever the two overlap, and it stays exact at frequencies they never tabulated (2400 MHz among them).",
+        "There is no RG-58, RG-8, RG-213 or RG-214 here, on purpose. \"RG\" is not one cable: Belden 8259 and Belden 9201 are both stamped RG-58 and differ by 54 percent at 900 MHz, and no manufacturer publishes RG attenuation at Wi-Fi frequencies at all. For an RG run, read dB/100 ft off your actual cable's datasheet by part number.",
+        "LMR-1200 above 2500 MHz is equation-derived: Times publishes the equation but chose not to tabulate that cable at 5800 MHz."
       ],
-      "source": "Manufacturer loss specs for each cable type, interpolated to your frequency and length on your device."
+      "source": "Times Microwave LMR datasheet attenuation equations (k1, k2 per cable), evaluated on your device."
     },
     "architectural-scale": {
       "name": "Architectural Scale",
@@ -791,14 +792,14 @@
           "range": ""
         }
       ],
-      "algorithm": "The tool uses the ITU-R P.838-3 rain model, which sets how strongly rain attenuates the signal based on frequency and polarization (across 18 frequency points from 1 to 100 GHz, filling in the gaps between them). From those it gets the specific attenuation in dB per km at your rain rate. Heavy rain rarely falls evenly along a long path, so the model also shrinks the path to an effective length before multiplying the two together for the total attenuation.",
-      "example": "At 23 GHz, 42 mm/hr, 5 km, horizontal polarization: specific attenuation works out to about 5.72 dB per km, the effective path length shrinks to about 3.94 km, and the total rain attenuation is about 22.55 dB.",
+      "algorithm": "The tool uses the ITU-R P.838-3 rain model, which sets how strongly rain attenuates the signal based on frequency and polarization. It carries all 116 published rows of the recommendation's Table 5, covering 1 GHz to 1000 GHz, and fills in between them where needed. From those it gets the specific attenuation in dB per km at your rain rate. Heavy rain rarely falls evenly along a long path, so the model also shrinks the path to an effective length before multiplying the two together for the total attenuation.",
+      "example": "At 23 GHz, 42 mm/hr, 5 km, horizontal polarization: specific attenuation works out to about 5.85 dB per km, the effective path length shrinks to about 3.94 km, and the total rain attenuation is about 23.07 dB.",
       "fieldNotes": [
         "The model assumes the rain rate is uniform along the whole path; real storm cells are smaller, which the effective-length reduction partly accounts for.",
         "Choose a rain rate that matches the availability you're targeting (for example, the rate exceeded only 0.01% of the time in your region). The tool doesn't supply regional rain statistics.",
         "Below roughly 10 GHz, rain fade is usually negligible."
       ],
-      "source": "The ITU-R rain-fade models, computed from the values you enter, on your device."
+      "source": "ITU-R P.838-3 Table 5 (all 116 rows) plus the ITU-R P.530 path reduction, computed from the values you enter, on your device."
     },
     "ptp-link": {
       "name": "PtP Link Check",
@@ -1075,6 +1076,8 @@
       "example": "A 370 W budget with six access points at 25.5 W each comes to 153 W drawn, 217 W remaining, 41 percent used, so OK.",
       "fieldNotes": [
         "Use each device's worst-case (maximum) draw, not idle, and mind the PoE class.",
+        "Budget in PSE watts, not PD watts. PSE is what the switch port must supply; PD is what survives the cable and reaches the device. Twelve Class-4 APs are 306 W of PD but 360 W of PSE: against a 370 W switch that is the difference between comfortable and nearly exhausted. The standards card on this screen shows both columns.",
+        "802.3bt Type 4 supplies 90 W (IEEE 802.3-2022, Table 145-11, Class 8 P_Class). The 99.9 W figure sometimes quoted is the PSE power rating band (P_Type, Table 145-16), which is a different quantity.",
         "The percent shown stops at 100 for display, but the OVER verdict triggers on the real negative remaining, so an over-budget case is never hidden.",
         "This checks the switch's total budget only. It does not model per-port limits or power lost over long cable runs."
       ],
@@ -1398,7 +1401,7 @@
     "signal-thresholds": {
       "name": "Signal Thresholds",
       "category": "Quick Reference",
-      "purpose": "RSSI and SNR targets: a quality scale for RSSI, minimum RSSI and SNR by application, and the SNR needed to reach each typical MCS index.",
+      "purpose": "RSSI and SNR design targets: a recommended quality scale for RSSI, minimum RSSI and SNR by application, and the SNR needed to reach each typical MCS index.",
       "whyHere": "For validating a survey or troubleshooting a complaint: \"is -68 dBm good enough for VoIP?\" or \"what SNR do I need to hold MCS 7?\"",
       "howToUse": [
         "RSSI bands carry a colored verdict dot plus the quality word (green = good, amber = marginal/Fair, red = bad/Weak/Poor); the word always carries the meaning, never the color alone.",
@@ -1409,12 +1412,12 @@
       "algorithm": null,
       "example": null,
       "fieldNotes": [
-        "What it shows: three blocks. RSSI quality scale: Excellent (better than -50 dBm) / Good (-50 to -67) / Fair (-67 to -70) / Weak (-70 to -80) / Poor (worse than -80). Minimum signal by application: VoIP/real-time, HD video, general browsing, email/basic data, IoT/low-rate, and location/RTLS, each with a minimum RSSI, minimum SNR, and a note. SNR to MCS (80 MHz, 1 spatial stream): the SNR floor for each MCS index (MCS 0 at 5 dB up to MCS 11 at 35 dB) with an indicative rate.",
-        "The intro says plainly: values vary by client hardware, environment, and AP vendor; treat them as field-planning guidelines, not guarantees.",
-        "The SNR-to-MCS rates are indicative (80 MHz, single stream); the MCS 10 and 11 rates are noted as 802.11ax.",
-        "Data source: field-planning reference thresholds, not derived from a single named standard."
+        "What it shows: three blocks. RSSI quality scale: Excellent (> -55 dBm) / Good (-55 to -65) / Fair (-65 to -75) / Weak (-75 to -80) / Poor (< -80 dBm). Minimum signal by application: VoIP/real-time, HD video, general browsing, email/basic data, IoT/low-rate, and location/RTLS, each with a minimum RSSI, minimum SNR, and a note. SNR to MCS (80 MHz, 1 spatial stream): the SNR floor for each MCS index (MCS 0 at 5 dB up to MCS 11 at 35 dB) with an indicative rate.",
+        "These are recommended design targets, not an industry standard. IEEE 802.11 does not define \"good\" or \"poor\" signal levels, and appropriate thresholds vary by site and by customer requirement.",
+        "Values vary by client hardware, environment, and AP vendor; treat them as field-planning guidelines, not guarantees.",
+        "The SNR-to-MCS rates are indicative (80 MHz, single stream); the MCS 10 and 11 rates are noted as 802.11ax."
       ],
-      "source": "Field-planning reference thresholds."
+      "source": "Recommended design targets. Not an industry standard: IEEE 802.11 does not define signal-quality levels."
     },
     "80211-standards": {
       "name": "802.11 Standards",
@@ -2843,7 +2846,7 @@
       "whyHere": "At a packet capture or writing a firewall rule, you ask two questions: what runs on port N, and what port does service X use. This answers both without leaving the app or going online.",
       "howToUse": [
         "Type a port number (for example, 443) for an exact-port lookup, or a service name or keyword (for example, radius, dns, vpn) to match against both the service name and the description, ignoring case.",
-        "Leave the search box empty to list all 86 ports, sorted from lowest number to highest.",
+        "Leave the search box empty to list all 89 ports, sorted from lowest number to highest.",
         "Each result shows the service name, the port number with its protocol label (TCP, UDP, or both), and a one-line description.",
         "A search that matches nothing shows an honest 'No match' note; it never makes up a port."
       ],
@@ -3945,7 +3948,7 @@
       "algorithm": null,
       "example": null,
       "fieldNotes": [
-        "Read every range, rate, and battery figure as a real-world envelope, not a hard spec; they move with power, antenna, spreading factor, channel width, and environment.",
+        "Read every range and rate figure as a real-world envelope, not a hard spec; they move with power, antenna, spreading factor, channel width, and environment.",
         "CBRS lives at 3.55 to 3.70 GHz and does not overlap any Wi-Fi band; private cellular competes for the job and the budget, never for your air.",
         "A Zigbee mesh and a wall of BLE beacons show up in a 2.4 GHz sweep as non-Wi-Fi energy; naming what you see is the difference between a diagnosis and a guess.",
         "Reference only. Confirm current standards editions and regional band allocations for the specific deployment."
