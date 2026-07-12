@@ -15,7 +15,16 @@
 //
 //   - Reason codes 34-39 were systematically shifted +2. The app's 34 carried
 //     the standard's code-32 meaning, its 35 carried 33, and so on. Its 39
-//     ("peer using unsupported cipher suite") is not a reason code at all.
+//     ("peer using unsupported cipher suite") is not code 39's meaning in any
+//     edition: code 39 is TIMEOUT. That string is the RETIRED code 45 --
+//     PEERKEY_MISMATCH, "Peer STA does not support the requested cipher suite"
+//     -- which 802.11-2012 (Table 8-36) and 802.11-2016 (Table 9-45) defined and
+//     802.11-2020 RETIRED to Reserved along with the PeerKey handshake. It is
+//     deleted here rather than relocated, because in the edition this screen
+//     cites there is no code that carries that meaning. (hostapd still ships
+//     WLAN_REASON_PEERKEY_MISMATCH 45 and Wireshark still decodes it, which is
+//     why the memory of it keeps resurfacing. Verified against the printed
+//     tables 2026-07-11; see the edition-history test in audit_wave_2_test.dart.)
 //   - All four "Fast Roaming (802.11r)" codes were wrong, and the app's 45 sits
 //     inside the standard's RESERVED range (40-45). Anyone debugging an 802.11r
 //     roam with this screen chased the wrong root cause every single time.
@@ -124,9 +133,13 @@ class ReasonCodesScreen extends StatefulWidget {
           'completed setup'),
       CodeEntry(39, 'Requested from peer STA due to timeout'),
     ]),
-    // Table 9-49, the FT block. 40-45 are RESERVED — the app used to put
-    // "Invalid FTIE" on 45, inside the reserved range. The real 802.11r reason
-    // codes are 48-51.
+    // Table 9-49, the FT block. 802.11-2020 prints "40–45  Reserved" as a single
+    // merged row — the app used to put "Invalid FTIE" on 45, inside that range.
+    // The real 802.11r reason codes are 48-51.
+    //
+    // 45 looks defined in a lot of places (hostapd, Wireshark, pre-2016 editions)
+    // because it WAS: PEERKEY_MISMATCH, retired to Reserved in the 2020 revision.
+    // Do not "restore" it against this edition. See audit_wave_2_test.dart.
     CodeGroup('Fast Roaming (802.11r)', <CodeEntry>[
       CodeEntry(48, 'Invalid FT Action frame count'),
       CodeEntry(49, 'Invalid PMKID (pairwise master key identifier)'),

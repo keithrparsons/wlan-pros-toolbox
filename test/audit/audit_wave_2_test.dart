@@ -59,7 +59,9 @@ void main() {
   //
   // Reason codes 34-39 were systematically shifted +2: the app's 34 carried the
   // standard's 32 meaning, its 35 carried 33, and so on. The app's 39 ("peer
-  // using unsupported cipher suite") is not a reason code at all.
+  // using unsupported cipher suite") is not code 39 in any edition -- 39 is
+  // TIMEOUT. That string is the RETIRED code 45 (PEERKEY_MISMATCH), defined in
+  // 802.11-2012/-2016 and Reserved in 802.11-2020. See the edition-history test.
   //
   // All four 802.11r codes were wrong, and the app's 45 sits inside the
   // standard's RESERVED range (40-45). An engineer debugging an 802.11r roam
@@ -110,8 +112,10 @@ void main() {
       expect(rc[38], isNot(contains('leaving BSS or resetting')),
           reason: 'That is code 36.');
       expect(rc[39], isNot(contains('cipher')),
-          reason: 'No reason code means "peer using unsupported cipher '
-              'suite". The app invented it.');
+          reason: 'Code 39 is TIMEOUT. "Peer using unsupported cipher suite" is '
+              'the RETIRED code 45 (PEERKEY_MISMATCH) -- Reserved since '
+              '802.11-2020 -- stranded here by the PWA. Not invented, but not '
+              'code 39, and not a code the cited edition defines at all.');
     });
 
     test('802.11r reason codes are 48-51, and 40-45 stay RESERVED', () {
@@ -125,6 +129,8 @@ void main() {
       expect(rc[51], contains('FTE'));
 
       // 40-45 are Reserved in Table 9-49. The app put "Invalid FTIE" on 45.
+      // Code 45 in particular: READ THE EDITION-HISTORY TEST BELOW before you
+      // "correctly add" it. It is Reserved in the edition this screen cites.
       for (final int reserved in <int>[40, 41, 42, 43, 44, 45]) {
         expect(
           rc.containsKey(reserved),
@@ -139,6 +145,66 @@ void main() {
           reason: '46 = PEER_INITIATED, not "requested PMKID not found".');
       expect(rc[47], isNot(contains('MDE')),
           reason: '47 = AP_INITIATED, not "invalid MDE".');
+    });
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Code 45 is EDITION-DEPENDENT. This test exists to settle that permanently,
+    // because it has already been re-litigated once at a QA gate.
+    //
+    // Verified 2026-07-11 by reading the printed tables off the PDFs on disk:
+    //
+    //   802.11-2012, Table 8-36 : 45 = PEERKEY_MISMATCH,
+    //                             "Peer STA does not support the requested
+    //                              cipher suite"                      DEFINED
+    //   802.11-2016, Table 9-45 : 45 = PEERKEY_MISMATCH               DEFINED
+    //   802.11-2020, Table 9-49 : "40-45   Reserved"   (single merged row)
+    //   802.11-2024             : "40-45   Reserved"   (still)
+    //
+    // The PeerKey / STSL security association was removed from the standard, and
+    // reason code 45 was RETIRED to Reserved with it. hostapd
+    // (WLAN_REASON_PEERKEY_MISMATCH 45), Wireshark and assorted vendor tables all
+    // still carry the legacy row, which is why the memory of it is so sticky --
+    // and why the PWA had the string at all.
+    //
+    // CONSEQUENCE, and the reason this file deleted that string rather than
+    // relocating it: in IEEE 802.11-2020 -- the edition this screen cites on
+    // screen -- there is no code for "peer using unsupported cipher suite". The
+    // PWA had stranded it on code 39 (which is TIMEOUT). Moving it to 45 would
+    // not have been a fix; it would have resurrected a code the cited edition
+    // does not define, in the wave whose entire purpose is removing values that
+    // no primary source supports.
+    //
+    // If the screen is ever re-cited to 802.11-2012 or -2016, this test is the
+    // thing to change, and the reserved range narrows to 40-44. Until then, 45
+    // stays reserved and the guard above is correct.
+    // ─────────────────────────────────────────────────────────────────────────
+    test('code 45 is Reserved in the cited edition (802.11-2020), not defined',
+        () {
+      final Map<int, String> rc = renderedReasons();
+
+      // The screen cites 2020. Under 2020, 45 has no meaning.
+      expect(ReasonCodesScreen.reasonCodeCitation, contains('802.11-2020'),
+          reason: 'If the cited edition changes, revisit code 45 -- it was '
+              'PEERKEY_MISMATCH in 802.11-2012 and -2016.');
+      expect(rc.containsKey(45), isFalse,
+          reason: '802.11-2020 Table 9-49 prints "40-45 Reserved" as one row. '
+              'Code 45 (PEERKEY_MISMATCH) was retired with the PeerKey '
+              'handshake. hostapd and Wireshark still list it; the 2020 '
+              'standard does not.');
+
+      // And the retired MEANING must not reappear anywhere in the table -- not
+      // on 45, and above all not stranded on 39, where the PWA had put it.
+      //
+      // Narrow on purpose: code 24 ("Cipher suite rejected per security policy")
+      // is a real, correct row and must survive this check. What must not exist
+      // is a PEER-scoped unsupported-cipher-suite meaning -- that is retired 45.
+      final RegExp retired45 = RegExp(r'peer.*cipher suite');
+      for (final MapEntry<int, String> e in rc.entries) {
+        expect(retired45.hasMatch(e.value.toLowerCase()), isFalse,
+            reason: 'Code ${e.key} carries the RETIRED code-45 meaning ("peer '
+                'STA does not support the requested cipher suite"). That is not '
+                'a reason code in 802.11-2020, and it was never code 39.');
+      }
     });
 
     test('reason codes 1-24 were already right and stay right', () {
