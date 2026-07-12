@@ -22,21 +22,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../services/network/current_network.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/traceroute_service.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/gateway_target_chip.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
 
 class TracerouteScreen extends StatefulWidget {
-  const TracerouteScreen({super.key, this.service});
+  const TracerouteScreen({super.key, this.service, this.network});
 
   final TracerouteService? service;
+
+  /// Injectable current-network helper (Wave 2). Null in production → the real
+  /// CurrentNetwork(); tests pass a stub reader.
+  final CurrentNetwork? network;
 
   @override
   State<TracerouteScreen> createState() => _TracerouteScreenState();
@@ -44,8 +50,15 @@ class TracerouteScreen extends StatefulWidget {
 
 class _TracerouteScreenState extends State<TracerouteScreen> {
   late final TracerouteService _service;
+  late final CurrentNetwork _network;
   final TextEditingController _hostCtrl = TextEditingController();
   final FocusNode _hostFocus = FocusNode();
+
+  /// The device gateway offered as a one-tap target, or null when unknown.
+  String? _gatewayIp;
+
+  /// True once the user edits the field — stop offering the gateway chip.
+  bool _userTouched = false;
 
   bool _running = false;
   String? _error;
@@ -65,7 +78,30 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
   void initState() {
     super.initState();
     _service = widget.service ?? TracerouteService();
+    _network = widget.network ?? CurrentNetwork();
+    _hostCtrl.addListener(_onHostChanged);
+    _loadGateway();
     _probeLaunchable();
+  }
+
+  void _onHostChanged() {
+    if (_userTouched) return;
+    setState(() => _userTouched = true);
+  }
+
+  /// Look up the device gateway to offer as a one-tap target on the desktop
+  /// form. A suggestion, not a prefill. Only rendered when the form is shown
+  /// (supported, launchable build).
+  Future<void> _loadGateway() async {
+    final NetworkSuggestion s = await _network.suggest();
+    if (!mounted) return;
+    setState(() => _gatewayIp = s.gatewayIp);
+  }
+
+  /// Fill the target from the gateway chip (a user action; the chip then hides).
+  void _useTarget(String value) {
+    _hostCtrl.text = value;
+    _hostCtrl.selection = TextSelection.collapsed(offset: value.length);
   }
 
   /// Probes whether this build can actually spawn the system traceroute, so the
@@ -82,6 +118,7 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
   @override
   void dispose() {
     _sub?.cancel();
+    _hostCtrl.removeListener(_onHostChanged);
     _hostCtrl.dispose();
     _hostFocus.dispose();
     super.dispose();
@@ -396,6 +433,14 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
               decoration: const InputDecoration(hintText: 'example.com'),
             ),
           ),
+          // Wave 2 — offer the device gateway as a one-tap target, only while
+          // the field is still empty and untouched. A suggestion, not a lock.
+          if (_gatewayIp != null && !_userTouched && _hostCtrl.text.isEmpty)
+            GatewayTargetChip(
+              gatewayIp: _gatewayIp!,
+              enabled: !_running,
+              onSelected: _useTarget,
+            ),
           if (_error != null) ...[
             const SizedBox(height: AppSpacing.sm),
             Text(

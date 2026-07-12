@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../services/network/current_network.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/port_scan_service.dart';
 import '../../../theme/app_theme.dart';
@@ -32,9 +33,13 @@ import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
 
 class PortScanScreen extends StatefulWidget {
-  const PortScanScreen({super.key, this.service});
+  const PortScanScreen({super.key, this.service, this.network});
 
   final PortScanService? service;
+
+  /// Injectable current-network helper (Wave 2 prefill). Null in production →
+  /// the real CurrentNetwork(); tests pass a stub reader.
+  final CurrentNetwork? network;
 
   @override
   State<PortScanScreen> createState() => _PortScanScreenState();
@@ -44,7 +49,15 @@ enum _Mode { common, custom }
 
 class _PortScanScreenState extends State<PortScanScreen> {
   late final PortScanService _service;
+  late final CurrentNetwork _network;
   final TextEditingController _hostCtrl = TextEditingController();
+
+  /// True once the user edits the host field — the prefill must never clobber a
+  /// user-typed target.
+  bool _userTouched = false;
+
+  /// Guards our own programmatic prefill from being read as a user edit.
+  bool _applyingPrefill = false;
   final TextEditingController _portsCtrl = TextEditingController(
     text: '22, 80, 443, 8080',
   );
@@ -65,15 +78,41 @@ class _PortScanScreenState extends State<PortScanScreen> {
   void initState() {
     super.initState();
     _service = widget.service ?? PortScanService();
+    _network = widget.network ?? CurrentNetwork();
+    _hostCtrl.addListener(_onHostChanged);
+    _prefillFromCurrentNetwork();
   }
 
   @override
   void dispose() {
     _sub?.cancel();
+    _hostCtrl.removeListener(_onHostChanged);
     _hostCtrl.dispose();
     _portsCtrl.dispose();
     _hostFocus.dispose();
     super.dispose();
+  }
+
+  void _onHostChanged() {
+    if (_applyingPrefill || _userTouched) return;
+    _userTouched = true;
+  }
+
+  /// Prefill the target with the device's gateway — the most common first scan
+  /// target — falling back to the device's own IP. Honest-null: if neither is
+  /// known (NONE), leave the field empty and let the placeholder guide. Never
+  /// overwrites a user-typed host.
+  Future<void> _prefillFromCurrentNetwork() async {
+    final NetworkSuggestion s = await _network.suggest();
+    if (!mounted || _userTouched || _hostCtrl.text.isNotEmpty) return;
+
+    final String? target = s.gatewayIp ?? s.deviceIp;
+    if (target == null) return; // NONE — nothing measured, fabricate nothing.
+
+    _applyingPrefill = true;
+    _hostCtrl.text = target;
+    _hostCtrl.selection = TextSelection.collapsed(offset: target.length);
+    _applyingPrefill = false;
   }
 
   List<int> _selectedPorts() {

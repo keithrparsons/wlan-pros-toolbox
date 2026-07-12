@@ -37,6 +37,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../services/network/current_network.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/ping_plot_controller.dart';
 import '../../../services/network/ping_service.dart';
@@ -45,18 +46,23 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/gateway_target_chip.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
 
 class PingPlotterScreen extends StatefulWidget {
-  const PingPlotterScreen({super.key, this.controller});
+  const PingPlotterScreen({super.key, this.controller, this.network});
 
   /// Injected in tests with a stubbed ping stream so the screen renders, runs,
   /// and tears down without opening a socket. In production this is null and the
   /// screen builds a controller over the real PingService.
   final PingPlotController? controller;
+
+  /// Injectable current-network helper (Wave 2). Null in production → the real
+  /// CurrentNetwork(); tests pass a stub reader.
+  final CurrentNetwork? network;
 
   @override
   State<PingPlotterScreen> createState() => _PingPlotterScreenState();
@@ -64,8 +70,15 @@ class PingPlotterScreen extends StatefulWidget {
 
 class _PingPlotterScreenState extends State<PingPlotterScreen> {
   late final PingPlotController _controller;
+  late final CurrentNetwork _network;
   final TextEditingController _hostCtrl = TextEditingController();
   final FocusNode _hostFocus = FocusNode();
+
+  /// The device gateway offered as a one-tap target, or null when unknown.
+  String? _gatewayIp;
+
+  /// True once the user edits the field — stop offering the gateway chip.
+  bool _userTouched = false;
 
   int _port = PingService.defaultPort;
 
@@ -87,6 +100,9 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
   void initState() {
     super.initState();
     _controller = widget.controller ?? PingPlotController();
+    _network = widget.network ?? CurrentNetwork();
+    _hostCtrl.addListener(_onHostChanged);
+    _loadGateway();
     _sub = _controller.states.listen(
       (PingPlotState s) {
         if (!mounted) return;
@@ -110,9 +126,29 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
     // and no setState after unmount (brief §27, the main correctness risk).
     _sub?.cancel();
     _controller.dispose();
+    _hostCtrl.removeListener(_onHostChanged);
     _hostCtrl.dispose();
     _hostFocus.dispose();
     super.dispose();
+  }
+
+  void _onHostChanged() {
+    if (_userTouched) return;
+    setState(() => _userTouched = true);
+  }
+
+  /// Look up the device gateway to offer as a one-tap target. A suggestion, not
+  /// a prefill — the plotter usually targets an internet host.
+  Future<void> _loadGateway() async {
+    final NetworkSuggestion s = await _network.suggest();
+    if (!mounted) return;
+    setState(() => _gatewayIp = s.gatewayIp);
+  }
+
+  /// Fill the target from the gateway chip (a user action; the chip then hides).
+  void _useTarget(String value) {
+    _hostCtrl.text = value;
+    _hostCtrl.selection = TextSelection.collapsed(offset: value.length);
   }
 
   void _start() {
@@ -270,6 +306,14 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
               decoration: const InputDecoration(hintText: '1.1.1.1'),
             ),
           ),
+          // Wave 2 — offer the device gateway as a one-tap target, only while
+          // the field is still empty and untouched. A suggestion, not a lock.
+          if (_gatewayIp != null && !_userTouched && _hostCtrl.text.isEmpty)
+            GatewayTargetChip(
+              gatewayIp: _gatewayIp!,
+              enabled: !_running,
+              onSelected: _useTarget,
+            ),
           const SizedBox(height: AppSpacing.sm),
           _chipGroupLabel(context, 'TCP port'),
           const SizedBox(height: AppSpacing.xs),
