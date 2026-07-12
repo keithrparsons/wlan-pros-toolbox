@@ -27,6 +27,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../services/network/current_network.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/ping_sweep_service.dart';
 import '../../../theme/app_theme.dart';
@@ -40,9 +41,14 @@ import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
 
 class PingSweepScreen extends StatefulWidget {
-  const PingSweepScreen({super.key, this.service});
+  const PingSweepScreen({super.key, this.service, this.network});
 
   final PingSweepService? service;
+
+  /// Injectable current-network helper (Wave 2 prefill). Null in production →
+  /// the real CurrentNetwork(); tests pass a stub reader so the prefill is
+  /// exercised with no device.
+  final CurrentNetwork? network;
 
   @override
   State<PingSweepScreen> createState() => _PingSweepScreenState();
@@ -50,10 +56,28 @@ class PingSweepScreen extends StatefulWidget {
 
 class _PingSweepScreenState extends State<PingSweepScreen> {
   late final PingSweepService _service;
+  late final CurrentNetwork _network;
+
+  /// The generic fallback default, kept when the device network is unknown
+  /// (the honest NONE case). A real subnet replaces it once measured.
+  static const String _defaultSubnet = '192.168.1.0/24';
+
   final TextEditingController _subnetCtrl = TextEditingController(
-    text: '192.168.1.0/24',
+    text: _defaultSubnet,
   );
   final FocusNode _subnetFocus = FocusNode();
+
+  /// True once the user edits the field — the prefill must never clobber a
+  /// user-typed value (spec: suggestion, not a lock).
+  bool _userTouched = false;
+
+  /// Guards our own programmatic prefill from being mistaken for a user edit.
+  bool _applyingPrefill = false;
+
+  /// True only when the field was prefilled with an ASSUMED /24 (PARTIAL case:
+  /// IP known, real mask not). Drives the visible "assumed /24" honesty hint.
+  /// Never true for a measured CIDR (BEST) — that would fabricate authority.
+  bool _maskAssumed = false;
 
   int _port = PingSweepService.defaultPort;
 
@@ -72,14 +96,49 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
   void initState() {
     super.initState();
     _service = widget.service ?? PingSweepService();
+    _network = widget.network ?? CurrentNetwork();
+    _subnetCtrl.addListener(_onSubnetChanged);
+    _prefillFromCurrentNetwork();
   }
 
   @override
   void dispose() {
     _sub?.cancel();
+    _subnetCtrl.removeListener(_onSubnetChanged);
     _subnetCtrl.dispose();
     _subnetFocus.dispose();
     super.dispose();
+  }
+
+  /// Any change to the field that did NOT come from our own prefill means the
+  /// user has taken over — stop suggesting and drop the assumption hint (it
+  /// described the prefilled value, which no longer stands).
+  void _onSubnetChanged() {
+    if (_applyingPrefill) return;
+    if (!_userTouched || _maskAssumed) {
+      setState(() {
+        _userTouched = true;
+        _maskAssumed = false;
+      });
+    }
+  }
+
+  /// Prefill the subnet field with the device's REAL network when we can
+  /// measure it. Honest-null: BEST → the true CIDR (no hint); PARTIAL → an
+  /// assumed /24 (with the hint); NONE → leave the generic default untouched.
+  /// Never overwrites a value the user already typed.
+  Future<void> _prefillFromCurrentNetwork() async {
+    final NetworkSuggestion s = await _network.suggest();
+    if (!mounted || _userTouched) return;
+    if (s.cidr == null) return; // NONE — keep the generic default, no fabrication.
+
+    _applyingPrefill = true;
+    _subnetCtrl.text = s.cidr!;
+    _subnetCtrl.selection =
+        TextSelection.collapsed(offset: s.cidr!.length);
+    _applyingPrefill = false;
+
+    setState(() => _maskAssumed = s.isAssumedPrefix);
   }
 
   void _start() {
@@ -318,6 +377,33 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
             'Capped at ${PingSweepService.maxHosts} hosts (a /24).',
             style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
+          // Honest-null hint (GL-005): only shown when the field was prefilled
+          // with an ASSUMED /24 — we had the device IP but not a real mask, so
+          // the prefix is a guess, not a measurement. Never shown for a measured
+          // CIDR. Presenting an assumed /24 as measured is the exact small lie
+          // the 1.7.1 audit removed.
+          if (_maskAssumed) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 14,
+                  color: colors.textTertiary,
+                ),
+                const SizedBox(width: AppSpacing.xxs),
+                Expanded(
+                  child: Text(
+                    'Assumed /24 — edit if your network is wider.',
+                    style: text.labelSmall?.copyWith(
+                      color: colors.textTertiary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: AppSpacing.sm),
           Text(
             'TCP port',

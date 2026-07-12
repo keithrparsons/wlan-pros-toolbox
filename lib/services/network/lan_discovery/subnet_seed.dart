@@ -93,7 +93,7 @@ class SubnetSeedDeriver {
     required String? mask,
     String? gateway,
   }) {
-    final int? ipInt = _ipToInt(ip);
+    final int? ipInt = ipToInt(ip);
     if (ipInt == null) {
       return SubnetSeed(
         hosts: const <String>[],
@@ -106,7 +106,7 @@ class SubnetSeedDeriver {
 
     // Prefix from the mask; default to /24 when absent or unparseable, and
     // never scan wider than a /24 (clamp the prefix up to 24).
-    int prefix = _maskToPrefix(mask) ?? 24;
+    int prefix = maskToPrefix(mask) ?? 24;
     if (prefix < 24) prefix = 24;
     if (prefix > 30) prefix = 30; // keep at least a couple of host bits
 
@@ -119,21 +119,25 @@ class SubnetSeedDeriver {
     final List<String> hosts = <String>[
       for (int a = firstHost; a <= lastHost && (a - firstHost) < kMaxScanHosts;
           a++)
-        _intToIp(a),
+        intToIp(a),
     ];
 
     return SubnetSeed(
       hosts: hosts,
       label: hosts.isEmpty
           ? ''
-          : '${_intToIp(firstHost)}–${_intToIp(lastHost)}',
+          : '${intToIp(firstHost)}–${intToIp(lastHost)}',
       selfIp: ip,
       gateway: gateway,
     );
   }
 
   /// IPv4 dotted-quad → 32-bit int, or null if malformed / null.
-  static int? _ipToInt(String? ip) {
+  ///
+  /// Public so the shared [CurrentNetwork] prefill helper computes CIDRs from
+  /// the SAME parser this deriver uses — one source of truth for the ip↔int
+  /// math (see current_network.dart).
+  static int? ipToInt(String? ip) {
     if (ip == null) return null;
     final List<String> octets = ip.trim().split('.');
     if (octets.length != 4) return null;
@@ -147,17 +151,19 @@ class SubnetSeedDeriver {
     return value & 0xFFFFFFFF;
   }
 
-  /// 32-bit int → IPv4 dotted-quad.
-  static String _intToIp(int value) {
+  /// 32-bit int → IPv4 dotted-quad. Public: shared with [CurrentNetwork].
+  static String intToIp(int value) {
     final int v = value & 0xFFFFFFFF;
     return '${(v >> 24) & 0xFF}.${(v >> 16) & 0xFF}.'
         '${(v >> 8) & 0xFF}.${v & 0xFF}';
   }
 
   /// Dotted-quad mask (e.g. 255.255.255.0) → prefix length, or null if the
-  /// mask is null/blank/not a contiguous mask.
-  static int? _maskToPrefix(String? mask) {
-    final int? m = _ipToInt(mask);
+  /// mask is null/blank/not a contiguous mask. Public: shared with
+  /// [CurrentNetwork] so a null return (unparseable / non-contiguous mask) is
+  /// the SAME signal both call sites act on — the honest "no real mask" case.
+  static int? maskToPrefix(String? mask) {
+    final int? m = ipToInt(mask);
     if (m == null || m == 0) return null;
     // Must be a contiguous run of 1s from the MSB.
     final int inverted = (~m) & 0xFFFFFFFF;
