@@ -516,7 +516,7 @@ Real ICMP echo round-trip on mobile: live RTT, min/avg/max, loss.
 **Formula or method.** Real ICMP echo request/reply via the native backend (dart_ping_ios SimplePing/GBPing on iOS; dart_ping spawning system ping on Android). The method label is "ICMP echo", never relabeled from a TCP probe.
 
 **Field notes**
-- Platform matrix (honest): iOS, real ICMP echo available. Android, real ICMP echo via system ping, available. macOS / Windows / Linux desktop: the only ICMP path is spawning /sbin/ping, which the macOS App Sandbox blocks, so it gives an honest "not available in the sandboxed desktop build", and the UI points the user at TCP Ping instead. Web: no sockets → download fallback.
+- Platform matrix (honest): iOS, real ICMP echo available. Android, real ICMP echo via system ping, available. macOS App Store build: the ICMP path spawns the OS ping binary, which the macOS App Sandbox blocks, so it gives an honest "not available in the sandboxed build" and points the user at TCP Ping instead. Non-sandboxed desktop builds (Developer-ID macOS, Windows, Linux) spawn it directly. Web: no sockets → download fallback.
 - Where available, this is genuine ICMP RTT/loss, the real thing, not a TCP proxy.
 - DEVICE-PENDING: the code itself flags that the iOS real-ICMP backend "cannot be verified without a real device". The logic and gating are unit-tested with a fake backend; the live round-trip is the device-pending piece. On desktop, use TCP Ping.
 
@@ -2890,7 +2890,7 @@ Reference for the IEC 60320 appliance couplers (C1/C2 through C19/C20, including
 **Example.** A C13 connector (female, on the cord) mates with a C14 inlet (male, on the back of a PC or PDU). A C15 cord fits a C14 inlet, but a C13 cord will not fit a C16 inlet because the C15/C16 keying notch blocks it.
 
 **Field notes**
-- What it shows: the IEC 60320 appliance-coupler table (pair, current, max temp, nickname, use) and the IEC 60309 industrial-connector table (color, voltage band, use), with keying notes. A connector-face diagram slot is reserved for a later graphics pass; the tables ship fully working without it.
+- What it shows: the IEC 60320 appliance-coupler table (pair, current, max temp, nickname, use) and the IEC 60309 industrial-connector table (color, voltage band, use), with keying notes. The connector faces render as labeled face cards above the tables.
 - The "kettle cord" nickname properly belongs to C15/C16 (120 degC hot-condition, keyed by a notch), NOT C13/C14 (70 degC cold-condition "PC cord").
 - IEC 60309 red spans 380-480V (not a single "415V"): it covers 400V European and 480V US three-phase. Both color AND earth-pin clock hour must match to mate.
 - Data source: IEC 60320 and IEC 60309-2.
@@ -2910,7 +2910,7 @@ Reference for North American NEMA straight-blade and locking plug/receptacle con
 **Example.** L21-30P decodes to L (twist-lock) + 21 (three-phase wye 120/208V, 4-pole 5-wire) + 30 (30A) + P (plug). L21-30R is its receptacle. The leading number is a configuration code, so do no arithmetic on it.
 
 **Field notes**
-- What it shows: the designation decoder with a worked example, plus device groups (125V straight-blade and locking, and 208/240/250V) listing type, voltage, phase, wiring, and amps. A face-diagram plate slot is reserved for a later graphics pass; the tables ship fully working without it.
+- What it shows: the designation decoder with a worked example, plus device groups (125V straight-blade and locking, and 208/240/250V) listing type, voltage, phase, wiring, and amps. The plug and receptacle faces render as labeled face cards above the tables.
 - The leading number is a voltage/pole/phase CLASS code, not a literal voltage: 21 = three-phase wye 120/208V, 4-pole 5-wire. Never read it as a voltage.
 - The 14-series is single-phase SPLIT (the 4th pin is neutral), NOT three-phase; only the L21-series is three-phase wye. P = plug (male), R = receptacle (female).
 - Data source: the NEMA configuration and nomenclature references.
@@ -2931,7 +2931,7 @@ Reference for the IEC World Plugs letter system (Types A through M) by region, w
 **Example.** A laptop charger rated 100-240V works on both a US Type A/B 120V outlet and a UK Type G 230V outlet with only a mechanical plug adapter; a 120V-only appliance needs a voltage converter, not just an adapter, on a 230V supply.
 
 **Field notes**
-- What it shows: the IEC World Plugs Type A through M table (type, standard, voltage class, current, countries) and the CEE 7 European family breakout. A face-diagram slot is reserved for a later graphics pass; the tables ship fully working without it.
+- What it shows: the IEC World Plugs Type A through M table (type, standard, voltage class, current, countries) and the CEE 7 European family breakout. The plug-type faces render as labeled face cards above the tables.
 - Voltage classes are nominal: 120V in North America and Japan, 230V across most of the rest of the world. Confirm frequency (50 vs 60 Hz) for motor-driven and timing-sensitive gear.
 - Argentine Type I (IRAM 2073) has line and neutral reversed relative to the Australian Type I; the CEE 7/7 plug is a hybrid designed to fit both French (E) and Schuko (F) sockets.
 - Data source: the IEC World Plugs letter system and national standards.
@@ -3012,13 +3012,13 @@ Where the amateur 13 cm and 5 cm bands overlap 2.4 and 5 GHz Wi-Fi, and how the 
 2. Read the rule-delta table for how license, power, station ID, encryption, business use, and content differ between Part 15 and Part 97.
 
 **What it shows**
-- The overlapping allocations mapped to the Wi-Fi grid: 13 cm (2390–2450 MHz) covers the lower ~60 MHz of 2.4 GHz (channels 1–6 fully inside, 7 partially); 5 cm (5650–5925 MHz) covers upper U-NII-2C through U-NII-4; 33 cm (902–928 MHz) is full co-channel with the 900 MHz ISM band.
+- The overlapping allocations mapped to the Wi-Fi grid: 13 cm (2390–2450 MHz) overlaps the lower ~50 MHz of the 2.4 GHz ISM band (2400–2450; the 2390–2400 MHz slice sits just below ISM), covering channels 1–6 fully and 7 partially; 5 cm (5650–5925 MHz) covers upper U-NII-2C through U-NII-4; 33 cm (902–928 MHz) is full co-channel with the 900 MHz ISM band.
 - The rule deltas: Part 97 requires a licensed control operator and a callsign every 10 minutes (including digital/mesh links), prohibits encryption (mesh traffic must be in the clear), and bars business use and broadcast content; Part 15 needs no license, allows WPA2/WPA3 and commercial use. Part 15 2.4 GHz power is 1 W (30 dBm) conducted / 4 W (36 dBm) EIRP at up to 6 dBi; Part 97 runs to the 1500 W PEP ceiling.
 - The AREDN example: AREDN and Broadband-Hamnet run commodity 802.11 a/b/g/n hardware on the overlapping ham channels under Part 97 instead of Part 15.
 
 **Field notes**
 - The 3.3–3.5 GHz amateur band (9 cm) is being sunset and does NOT overlap Wi-Fi 5 GHz; do not confuse it with the 5 cm band (5650–5925 MHz), which does.
-- Both Part 15 and Part 97 are secondary on these bands and carry the same "do not cause harmful interference" ethic. Offline, read-only.
+- Part 97 (amateur) is secondary on these bands; Part 15 is unlicensed and carries no allocation status. Both carry the same "do not cause harmful interference" ethic. Offline, read-only.
 
 
 ### General License Frequency Chart
