@@ -19,7 +19,7 @@ The pattern anchors on the word "app" ON PURPOSE. Shipped prose is full of
 dotted triples that are NOT the app's version — IPv4 addresses (10.20.0.0,
 192.168.1.255, 255.255.252.0), IEEE clauses (802.15.4, 9.4.1.7), DNS
 (9.9.9.9), and third-party version strings (PCI DSS v4.0.1, a Debian package
-wlanpi-dual-orb_1.1.3). None of those are preceded by "app", so none are
+like foo-sensor_1.1.3). None of those are preceded by "app", so none are
 matched. The runtime placeholder `{{app_version}}` carries no digits, so a
 correctly-dynamic guide is clean.
 

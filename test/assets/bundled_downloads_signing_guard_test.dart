@@ -24,7 +24,6 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wlan_pros_toolbox/screens/tools/guides/dual_orb_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/freeradius_wlanpi_screen.dart';
 
 void main() {
@@ -96,18 +95,12 @@ void main() {
         isTrue,
         reason: 'freeradius scriptAsset must be a .b64 payload',
       );
-      expect(
-        kDualOrbAssetPath.endsWith('.b64'),
-        isTrue,
-        reason: 'dual-orb asset path must be a .b64 payload',
-      );
     });
 
     test('the user-facing download filenames are unchanged (real .sh / .deb)',
         () {
       // The base64 encoding must NOT change what the user downloads.
       expect(FreeradiusWlanpiScreen.scriptFilename, 'install_freeradius.sh');
-      expect(kDualOrbDebFilename, 'wlanpi-dual-orb_1.1.3_all.deb');
     });
   });
 }

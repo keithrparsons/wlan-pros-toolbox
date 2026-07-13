@@ -126,7 +126,8 @@ void main() {
       // + 2 backfilled v1.1 help entries (PLMN ID Reference and the Wi-Fi
       // Authentication Glossary).
       // 101 = + the full v1.1 consolidation, all added 2026-06-05: 2 Guides
-      // how-tos (Dual Orbs on WLAN Pi, FreeRADIUS on WLAN Pi), 1 teaching
+      // how-tos (FreeRADIUS on WLAN Pi + the WLAN Pi Orb-sensor how-to since
+      // removed), 1 teaching
       // reference (Antenna Fundamentals), and the Wi-Fi Tools Comparison.
       // 102 = + the Wi-Fi Glossary help entry, backfilled 2026-06-05. It was the
       // one live catalog tile (id wifi-glossary) shipping with no help footer.
@@ -273,7 +274,9 @@ void main() {
       // (vendor-model-decode), the per-vendor model-number scheme reader. Unlike
       // the static reference screens these carry selection state. 173 + 2 = 175.
       // AP Placement retired 2026-07-07 (Keith's call): 175 − 1 = 174.
-      expect(store.count, 174);
+      // The WLAN Pi Orb-sensor how-to removed 2026-07-12 (Orb redistribution
+      // declined by the vendor; SDK integration deferred): 174 − 1 = 173.
+      expect(store.count, 173);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

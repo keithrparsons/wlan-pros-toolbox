@@ -3054,31 +3054,6 @@
       ],
       "source": "A read-along reference built from verified, stated numbers; no inputs and no live calculation."
     },
-    "dual-orb-wlanpi": {
-      "name": "Dual Orbs on WLAN Pi",
-      "category": "Quick Reference",
-      "purpose": "A step-by-step how-to that turns a WLAN Pi R4 or M4+ into two Orb sensors (one testing the wired connection over Ethernet, one testing Wi-Fi) by installing a bundled software package. The screen walks through the copy, install, and reboot flow, covers the cloned-image identity reset, shows how to reconfigure the Wi-Fi credentials, and lists the commands for managing the sensors. A Download button hands you the bundled package (wlanpi-dual-orb_1.1.3_all.deb) via the share sheet.",
-      "whyHere": "When you want continuous, two-path connection monitoring (wired and wireless) from one small device you already carry, this gets a WLAN Pi running two free Orb sensors in a few commands. The results show up in your own Orb account; the Toolbox just gives you the guide and the package.",
-      "howToUse": [
-        "Tap Download wlanpi-dual-orb.deb and save it (Files / AirDrop / Mail). Keep the filename; the install command refers to it by name.",
-        "Copy the package to your WLAN Pi: scp wlanpi-dual-orb_1.1.3_all.deb wlanpi@<your-Pi-IP>:~",
-        "SSH to the Pi and install it: sudo apt install ./wlanpi-dual-orb_1.1.3_all.deb (it prompts for the Wi-Fi SSID, password, and encryption).",
-        "Reboot: sudo reboot. On boot the Pi installs Orb and starts both sensors on its own.",
-        "If you cloned the image onto more than one Pi, run sudo orb-reset-identity on each so the Orb dashboard sees a distinct new sensor.",
-        "To change the Wi-Fi credentials later, run sudo orb-wifi-configure."
-      ],
-      "inputs": [],
-      "algorithm": null,
-      "example": null,
-      "fieldNotes": [
-        "What it installs: the free, open-source Orb sensor on the Pi, with its background services running as root. You view results in your own Orb account, free for up to 5 devices. Nothing of Orb's is redistributed by the Toolbox; the bundled package only sets the sensor up.",
-        "Tested on the WLAN Pi R4 and the M4+.",
-        "On cloned images the Orb IDs and hostnames carry over from the original; sudo orb-reset-identity deletes the old ones and derives fresh IDs and names from the WLAN Pi hostname. Use sudo orb-reset-identity --dry-run to preview without changing anything.",
-        "The Wi-Fi sensor runs in its own isolated network space named orb-wifi; you can inspect it with sudo ip netns exec orb-wifi iw dev or sudo ip netns exec orb-wifi ip link show.",
-        "Guide and package by Ferney Munoz. Orb: orb.net. WLAN Pi project: wlanpi.com."
-      ],
-      "source": "A step-by-step guide plus a downloadable package you install on your own WLAN Pi; the Toolbox runs nothing on the Pi."
-    },
     "freeradius-wlanpi": {
       "name": "FreeRADIUS on WLAN Pi",
       "category": "Quick Reference",

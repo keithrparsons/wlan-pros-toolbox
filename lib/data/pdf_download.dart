@@ -64,15 +64,13 @@ Future<void> sharePdf({
 
 /// Shares (native) or downloads (web) ANY bundled asset at [assetPath] under the
 /// explicit [filename], typed [mimeType]. The non-PDF sibling of [sharePdf] for
-/// bundled downloads such as the dual-Orb `.deb` package or the FreeRADIUS
-/// `install_freeradius.sh` script: same temp-file-then-share-sheet path on
-/// native, same anchor download on web. The caller owns the exact [filename]
-/// (e.g. `wlanpi-dual-orb_1.1.3_all.deb`) because the package or script filename
-/// is meaningful to the install command (`sudo apt install ./<filename>`) and
-/// must not be slugified.
+/// bundled downloads such as the FreeRADIUS `install_freeradius.sh` script: same
+/// temp-file-then-share-sheet path on native, same anchor download on web. The
+/// caller owns the exact [filename] because the script filename is meaningful to
+/// the install command (`sudo ./<filename>`) and must not be slugified.
 ///
-/// [title] is accepted so this matches each screen's injected share-fn typedef
-/// (the Dual Orb screen passes one, the FreeRADIUS screen does not); the share
+/// [title] is accepted so this matches each screen's injected share-fn typedef;
+/// the share
 /// sheet uses [filename], so [title] is otherwise unused. On iPad/macOS pass
 /// [shareOrigin] (the button rect) so the popover anchors; pass `null` for a
 /// platform default. Returns normally on success; throws on a load/share failure
@@ -102,12 +100,12 @@ Future<void> shareAsset({
 /// base64-encoded so nothing in the app bundle looks like a script or Mach-O
 /// (iOS distribution signing error 90035): the screen loads the `.b64` asset,
 /// `base64.decode`s it, and hands the decoded bytes here under the real
-/// filename (`install_freeradius.sh` / `wlanpi-dual-orb_1.1.3_all.deb`). The
+/// filename (`install_freeradius.sh`). The
 /// inline-view-and-download-same-bytes invariant holds because the screen
 /// derives both from the same decoded bytes.
 ///
-/// [title] is accepted so this matches the screens' injected share-fn typedef
-/// (the Dual Orb screen passes one, the FreeRADIUS screen does not); the share
+/// [title] is accepted so this matches the screens' injected share-fn typedef;
+/// the share
 /// sheet uses [filename], so [title] is otherwise unused. On iPad/macOS pass
 /// [shareOrigin] (the button rect) so the popover anchors; pass `null` for a
 /// platform default. Returns normally on success; throws on a share failure so

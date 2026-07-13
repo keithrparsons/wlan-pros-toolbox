@@ -55,7 +55,7 @@ const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
     'CLI & Capture',
     'Checklists',
     // Step-by-step how-tos that bundle a downloadable companion file
-    // (Dual Orbs on WLAN Pi, FreeRADIUS on WLAN Pi). Added 2026-06-05.
+    // (FreeRADIUS on WLAN Pi). Added 2026-06-05.
     'Guides',
     // Codes & Safety (2026-07-05): the field/trade-reference cluster — the
     // codes, ratings, and standards a Wi-Fi pro reads on spec sheets and job

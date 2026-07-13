@@ -19,14 +19,14 @@ await fs.mkdir(OUT, { recursive: true });
 
 // The three v1.1.1 polish icons under re-gate.
 const NEW = new Set([
-  'antenna-fundamentals','wifi-exposure-perspective','dual-orb-wlanpi',
+  'antenna-fundamentals','wifi-exposure-perspective',
 ]);
 
 // Each v1.1.1 icon shown beside the neighbors that share its visual vocabulary,
 // so Vera can judge silhouette differentiation at the legibility floor.
 const FOCUS = [
   'antenna-fundamentals','eirp','downtilt-coverage','antenna-connectors',
-  'wifi-exposure-perspective','dual-orb-wlanpi','freeradius-wlanpi',
+  'wifi-exposure-perspective','freeradius-wlanpi',
 ];
 
 const files = (await fs.readdir(DIR)).filter(f => f.endsWith('.svg')).sort();
@@ -100,7 +100,7 @@ const css = `<style>
 
 const html = `<!doctype html><html><head><meta charset="utf-8">${css}</head><body>
   ${focusSheet('v1.1.1 polish — three icons beside neighbors · 20px + 72px · DARK',
-    'antenna-fundamentals, wifi-exposure-perspective, dual-orb-wlanpi (●) beside their visual-vocabulary neighbors · lime #A2CC3A on app surface #222222 · each cell: 20px floor (left) + 72px (right)',
+    'antenna-fundamentals, wifi-exposure-perspective (●) beside their visual-vocabulary neighbors · lime #A2CC3A on app surface #222222 · each cell: 20px floor (left) + 72px (right)',
     dark)}
   ${focusSheet('v1.1.1 polish — three icons beside neighbors · 20px + 72px · LIGHT',
     'darkened-lime #5A7A1C on white (§8.20.7) · each cell: 20px floor (left) + 72px (right)',

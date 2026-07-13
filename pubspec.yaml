@@ -619,12 +619,10 @@ flutter:
     # pdf_reference_screen.dart) via pdfx → Apple PDFKit on iOS + macOS.
     - assets/reference-cards/
     # Bundled downloadable companion files exported via the share/download seam
-    # (lib/data/pdf_download.dart shareAsset): the dual-Orb Debian package
-    # (wlanpi-dual-orb_1.1.3_all.deb) for the "Dual Orbs on WLAN Pi" how-to, and
-    # install_freeradius.sh for the "FreeRADIUS on WLAN Pi" how-to. Both keep
-    # their REAL filenames (meaningful to the install command), are bundled
-    # VERBATIM, shown inline, and offered as a download; never executed in-app
-    # (the Toolbox runs no shell, GL-008).
+    # (lib/data/pdf_download.dart): install_freeradius.sh for the "FreeRADIUS on
+    # WLAN Pi" how-to. It keeps its REAL filename (meaningful to the install
+    # command), is bundled VERBATIM, shown inline, and offered as a download;
+    # never executed in-app (the Toolbox runs no shell, GL-008).
     - assets/downloads/
     # WLAN Pros brand lockup (GL-003 §8.21). The transparent-background
     # "wirelessLAN PROFESSIONALS" wordmark + lime #A1CC3A Wi-Fi arc, trimmed to
