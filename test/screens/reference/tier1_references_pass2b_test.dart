@@ -67,25 +67,27 @@ void main() {
     );
 
     test(
-      'Ethernet Cable & Connector: Cat 7 carries the ISO/IEC-Class-F not-TIA '
-      'caveat (merged from cable-connector)',
+      'Ethernet Cable & Connector: Cat7/Cat7A demoted, non-TIA caveat carried',
       () {
-        // The Cat 7 row exists in the survivor's category chart.
-        final EthCable cat7 = EthernetCableScreen.ethData.firstWhere(
-          (EthCable c) => c.category == 'Cat7',
-        );
-        expect(cat7.poe, 'Limited');
-        // The non-TIA caveat is surfaced as a warning verdict on the screen.
+        // Wave-2 finding B / Keith's decision: Cat7 and Cat7A are removed from
+        // the peer-category chart (ISO/IEC classes, not TIA categories). They
+        // must NOT appear as peer rows.
+        final Iterable<String> cats =
+            EthernetCableScreen.ethData.map((EthCable c) => c.category);
+        expect(cats.contains('Cat7'), isFalse);
+        expect(cats.contains('Cat7A'), isFalse);
+        // The non-TIA caveat is surfaced as a warning verdict on the screen and
+        // steers installers to Cat6A (10G) / Cat8 (25/40G).
         expect(
-          EthernetCableScreen.cat7Caveat.toLowerCase().contains(
-            'never ratified category 7',
-          ),
+          EthernetCableScreen.cat7Caveat.toLowerCase().contains('tia'),
           isTrue,
         );
         expect(
-          EthernetCableScreen.cat7Caveat.contains('ISO/IEC Class F'),
+          EthernetCableScreen.cat7Caveat.contains('Class F'),
           isTrue,
         );
+        expect(EthernetCableScreen.cat7Caveat.contains('Cat6A'), isTrue);
+        expect(EthernetCableScreen.cat7Caveat.contains('Cat8'), isTrue);
         // Pinout: T568A and T568B differ only on pairs 2 & 3 (orange/green) at
         // pins 1,2,3,6 (the pair-swap fidelity, folded in from the pinout tile).
         final List<PinoutPin> b =

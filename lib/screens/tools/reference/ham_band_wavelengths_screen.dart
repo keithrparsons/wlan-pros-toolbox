@@ -284,8 +284,13 @@ class HamBandWavelengthsScreen extends StatelessWidget {
           ),
           example(
             'Wi-Fi crossover',
+            // Reworded (Wave-2 finding G): the old example used 5500 MHz (ch
+            // 100), which sits ~150 MHz BELOW the amateur 5 cm allocation
+            // (5650-5925), so it implied an overlap that does not exist. 5825
+            // MHz (ch 165) really is inside the 5 cm band.
             '2442 MHz (Wi-Fi ch 7) -> 12.28 cm -> sits in the "13 cm" amateur '
-                'band. 5500 MHz (Wi-Fi ch 100) -> 5.45 cm -> the "5 cm" band.',
+                'band. 5825 MHz (Wi-Fi ch 165) -> 5.15 cm -> sits in the "5 cm" '
+                'amateur band (5650-5925 MHz).',
           ),
         ],
       ),

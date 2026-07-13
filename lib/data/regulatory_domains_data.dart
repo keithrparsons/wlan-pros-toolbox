@@ -42,6 +42,13 @@
 /// the dataset is re-verified against the regulators.
 const String kRegulatorySnapshotDate = '2026-06-08';
 
+/// RE-VERIFY TRIGGER (Wave-2 finding D): regulatory data does not need to be
+/// live, but it must be honestly dated. Re-verify roughly every 6 months from
+/// [kRegulatorySnapshotDate] (or sooner on a known event: a UK final 6 GHz
+/// statement, an EU upper-6 decision). When re-verified, bump BOTH consts.
+/// Next re-verify due on or before this date.
+const String kRegulatoryReverifyBy = '2026-12-08';
+
 /// One jurisdiction's Wi-Fi regulatory record. Every field is typed and
 /// non-null; an absent governing-doc or note would be an empty string, never
 /// `null`, so the row renders consistently.

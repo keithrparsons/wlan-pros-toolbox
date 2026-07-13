@@ -19,10 +19,12 @@
 //   2. Size order, largest → smallest (+ its caveat note)
 //   3. The top-6 connectors a Wi-Fi engineer actually meets (teaching list)
 //
-// DART: the dataset names DART exactly as Cisco's descriptive "Cisco Smart
-// Antenna Connector (DART)" and deliberately does NOT spell out the acronym
-// (unverified, GL-005). This screen renders that copy verbatim and never
-// synthesizes an expansion.
+// DART: the dataset names DART as Cisco's descriptive "Cisco Smart Antenna
+// Connector (DART)". Cisco does not publish an official expansion; the JSON
+// `notes` field surfaces the commonly-cited "Digital Analog Radio Termination"
+// but flags it "unverified by Cisco" (GL-005). This screen renders that copy
+// verbatim and never asserts an expansion as fact. (Comment reconciled to the
+// data in Wave-2 finding H: the dataset DOES cite the hedged expansion.)
 //
 // PER-CONNECTOR DIAGRAM SLOT: each connector renders an optional SVG line
 // diagram (assets/connector-diagrams/<id>.svg) when one is bundled, resolved by

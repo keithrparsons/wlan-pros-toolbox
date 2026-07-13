@@ -54,7 +54,15 @@ class CoaxCable {
   /// Outer diameter in millimeters.
   final double diameterMm;
 
-  /// Maximum usable frequency in GHz.
+  /// Maximum usable frequency in GHz — the TE11 higher-order-mode cutoff
+  /// (the physics ceiling above which the coax stops being single-mode).
+  /// This is NOT the distributor "max operating frequency" catalog cap
+  /// (which the PWA copied and which errs dangerously for LMR-1200).
+  /// Cutoff = c / (pi * (D+d)/2 * sqrt(er)); scales inversely with diameter.
+  /// Per Wave-2 finding E (Pax, 2026-07-12): values below are L-com
+  /// published cutoff-frequency spec rows where available, else computed
+  /// with the method validated 3x against L-com's published LMR-200/600/1200
+  /// cutoffs.
   final double maxGhz;
 
   /// Typical-use note.
@@ -104,50 +112,71 @@ class CoaxCableScreen extends StatelessWidget {
     ),
     CoaxCable(
       name: 'LMR-100A',
+      // VF 66% per Times Microwave / Pasternack LMR-100A-FR datasheet
+      // (was 80%; wrong). maxGhz = TE11 cutoff ~62 GHz, computed via the
+      // validated method (dielectric dims estimated). Wave-2 finding E §2.3/§2.5.
       impedance: '50Ω',
-      vf: 80,
+      vf: 66,
       diameterMm: 3.5,
-      maxGhz: 6.0,
+      maxGhz: 62.0,
       use: 'Pigtails, jumpers, tight bends',
     ),
     CoaxCable(
       name: 'LMR-200',
+      // maxGhz = 39 GHz TE11 cutoff (L-com LMR-200 datasheet, published
+      // "Cutoff Frequency = 39 GHz"). Wave-2 finding E §2.3.
       impedance: '50Ω',
       vf: 83,
       diameterMm: 6.1,
-      maxGhz: 6.0,
+      maxGhz: 39.0,
       use: 'Short outdoor runs (< 3 m)',
     ),
     CoaxCable(
       name: 'LMR-400',
+      // maxGhz = 16.2 GHz TE11 cutoff (L-com LMR-400 datasheet, published
+      // "Cutoff Frequency = 16.2 GHz"; validated method computes 16.3).
+      // Wave-2 finding E §2.2/§2.3. (NB: the fix-list item #12's "13.6"
+      // does not match finding E's published 16.2 — deferring to finding E,
+      // the primary-sourced authority, per the task's "confirm against
+      // finding E" instruction.)
       impedance: '50Ω',
       vf: 85,
       diameterMm: 10.8,
-      maxGhz: 6.0,
+      maxGhz: 16.2,
       use: 'Standard Wi-Fi / cellular run',
     ),
     CoaxCable(
       name: 'LMR-600',
+      // maxGhz = 10.3 GHz TE11 cutoff (L-com LMR-600 datasheet, published
+      // "Cutoff Frequency = 10.3 GHz"; validated method computes 10.4).
+      // Wave-2 finding E §2.2/§2.3.
       impedance: '50Ω',
       vf: 87,
       diameterMm: 15.2,
-      maxGhz: 6.0,
+      maxGhz: 10.3,
       use: 'Long runs, rooftop / tower',
     ),
     CoaxCable(
       name: 'LMR-900',
+      // maxGhz = ~7.0 GHz TE11 cutoff (computed via the validated method
+      // from datasheet dimensions; L-com does not publish LMR-900 cutoff).
+      // Wave-2 finding E §2.3, High confidence.
       impedance: '50Ω',
       vf: 87,
       diameterMm: 22.9,
-      maxGhz: 6.0,
+      maxGhz: 7.0,
       use: 'Very long runs (> 30 m)',
     ),
     CoaxCable(
       name: 'LMR-1200',
+      // maxGhz = 5.2 GHz TE11 cutoff (distributor-published + validated
+      // method computes 5.21). THE safety fix: the PWA's 6.0 GHz overstated
+      // this — LMR-1200 goes multimode at 5.2 GHz (below 6 GHz Wi-Fi), and
+      // Times' own attenuation table stops at 2.5 GHz. Wave-2 finding E §2.3/§2.4.
       impedance: '50Ω',
       vf: 88,
       diameterMm: 30.0,
-      maxGhz: 6.0,
+      maxGhz: 5.2,
       use: 'Tower base, high-power',
     ),
     CoaxCable(
@@ -160,12 +189,16 @@ class CoaxCableScreen extends StatelessWidget {
     ),
   ];
 
-  /// Footnote, ported verbatim from the PWA coax view.
+  /// Footnote. VF text ported from the PWA; the Max GHz clarification is
+  /// added in Wave-2 (the column now carries the TE11 mode cutoff, not the
+  /// distributor application cap the PWA had copied).
   static const String footnote =
       'VF = velocity factor. Higher VF = slightly lower propagation delay and '
-      'loss. 75Ω cables (RG-6) are impedance-mismatched for 50Ω Wi-Fi systems '
-      '- shown for reference only. Use the Cable Loss tool for exact '
-      'attenuation calculations.';
+      'loss. Max GHz is the single-mode (TE11) cutoff - above it the cable '
+      'goes multimode and loss becomes undefined; note LMR-1200 tops out at '
+      '5.2 GHz, below the 6 GHz Wi-Fi band. 75Ω cables (RG-6) are '
+      'impedance-mismatched for 50Ω Wi-Fi systems - shown for reference '
+      'only. Use the Cable Loss tool for exact attenuation calculations.';
 
   @override
   Widget build(BuildContext context) {

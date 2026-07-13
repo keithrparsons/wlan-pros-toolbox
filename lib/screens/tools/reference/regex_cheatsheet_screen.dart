@@ -319,10 +319,23 @@ class RegexCheatsheetScreen extends StatelessWidget {
       universal: true,
     ),
     RegexToken(
-      token: r'\f \v \0',
-      matches: 'Form feed, vertical tab, null',
+      // \v split out below (Wave-2 finding C): it is NOT universal and NOT the
+      // vertical-tab literal in this page's declared PCRE2 dialect. \f and \0
+      // are genuinely universal, so they stay here.
+      token: r'\f \0',
+      matches: 'Form feed, null',
       dialect: 'Universal',
       universal: true,
+    ),
+    RegexToken(
+      // In PCRE2 (this page's dialect) \v is the vertical-WHITESPACE character
+      // class (matches LF, VT, FF, CR, NEL, U+2028, U+2029), NOT vertical-tab
+      // only. It is vertical-tab only in JS, Python, .NET, Ruby, Tcl, RE2. One
+      // of the most dialect-divergent tokens on the sheet, so it must NOT be
+      // marked Universal. Source: PCRE2 pcre2pattern. Wave-2 finding C.
+      token: r'\v',
+      matches: 'Vertical whitespace class (LF, VT, FF, CR, NEL, U+2028/2029)',
+      dialect: 'PCRE2 (here) / vertical tab only in JS, Python, .NET, Ruby, RE2',
     ),
     RegexToken(
       token: r'\xHH',

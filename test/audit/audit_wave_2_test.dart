@@ -35,7 +35,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/data/adjacent_radio_systems_data.dart';
 import 'package:wlan_pros_toolbox/data/country_plug_data.dart';
+import 'package:wlan_pros_toolbox/data/ham_reference_data.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/cable_loss_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/reference/channel_map_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/reference/data_units_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/reference/db_reference_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/reference/fiber_optic_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/reference/frame_exchange_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/reference/iec_connectors_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/reference/regex_cheatsheet_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/throughput_calc_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/dscp_qos_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/eap_types_screen.dart';
@@ -1064,6 +1072,112 @@ void main() {
             reason: 'A warning that fires inside the validated range trains '
                 'the user to ignore it.');
       });
+    });
+  });
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // WAVE-2 TABLE CORRECTIONS (2026-07-12). Each expected value comes from the
+  // primary-sourced finding brief in
+  // Deliverables/2026-07-12-toolbox-wave-2/table-findings/, never from the app.
+  // Coax, ethernet-cable, and standards-year guards live in their own test
+  // files; the reference-data corrections without a natural home are pinned here.
+  // ═════════════════════════════════════════════════════════════════════════
+  group('wave-2 reference-data corrections', () {
+    test('channel map: no phantom 5 GHz 160 MHz channel (center 130)', () {
+      // Finding E: US 5 GHz 160 MHz centers are 50, 114, 163 ONLY. Center 130
+      // (ch 116-144) is not a real 802.11 channel; it was absent from the app's
+      // own engine. Count is 3, not 4.
+      final List<int> centers = ChannelMapScreen.map5_160
+          .map((BondedBlock b) => b.centerChannel)
+          .toList();
+      expect(centers, <int>[50, 114, 163]);
+      expect(centers.contains(130), isFalse,
+          reason: 'phantom center-130 block must not return');
+    });
+
+    test('IEC 60309 black band is 500-690V, not 500-1000V', () {
+      // Finding H: black = 500-690V (IEC 60309-2). 1000V is the standard's
+      // overall ceiling across all colors, not the black band.
+      final IecIndustrial black = IecConnectorsScreen.industrial
+          .firstWhere((IecIndustrial i) => i.color == 'Black');
+      expect(black.voltage, '500-690V');
+    });
+
+    test('data_units drive-capacity footnote is labelled GB/GiB, not TB/TiB', () {
+      // Finding C: the 1000->931 illusion is the GB/GiB step (7.37%); the label
+      // said TB/TiB (which is actually 9.95% on this screen's own ladder).
+      expect(DataUnitsScreen.bitByteFootnote, contains('7.37% GB/GiB gap'));
+      expect(DataUnitsScreen.bitByteFootnote, isNot(contains('TB/TiB gap')));
+    });
+
+    test('regex \\v is a PCRE2-dialect row, not "Universal"', () {
+      // Finding C: in PCRE2 (this page's dialect) \\v is the vertical-whitespace
+      // CLASS, not the vertical-tab literal, and it is one of the most
+      // dialect-divergent tokens - so it must not be marked universal.
+      final RegexToken v = RegexCheatsheetScreen.escapes
+          .firstWhere((RegexToken t) => t.token == r'\v');
+      expect(v.universal, isFalse, reason: '\\v is not universal');
+      expect(v.matches.toLowerCase(), contains('vertical whitespace'));
+      // The remaining combined literal keeps only the genuinely-universal ones.
+      final RegexToken fnull = RegexCheatsheetScreen.escapes
+          .firstWhere((RegexToken t) => t.token == r'\f \0');
+      expect(fnull.universal, isTrue);
+      expect(fnull.matches.contains('vertical tab'), isFalse,
+          reason: '\\v was split out of this row');
+    });
+
+    test('db_reference +17 dBm is the U-NII-1 PSD limit, not conducted max', () {
+      // Finding C: the pre-2014 "UNII-1 conducted max" label was wrong; current
+      // U-NII-1 conducted max is 30 dBm/1 W. 17 dBm is the PSD limit (dBm/MHz).
+      final DbmRef r17 = DbReferenceScreen.dbmRefs
+          .firstWhere((DbmRef r) => r.dbm == '+17 dBm');
+      expect(r17.context, contains('power spectral density'));
+      expect(r17.context, isNot(contains('conducted max')));
+    });
+
+    test('fiber 100G OM3/OM4/OM5 carry modern SR4 reaches, not legacy SR10', () {
+      // Finding B: 100GBASE-SR4 (802.3bm) = OM3 70 m / OM4 100 m. The old
+      // 100/150 m were legacy SR10 numbers. OM5 matches OM4 (same EMB).
+      FiberType t(String type) => FiberOpticScreen.FIBER_DATA
+          .firstWhere((FiberType f) => f.type == type);
+      expect(t('OM3').dist100G, '70 m');
+      expect(t('OM4').dist100G, '100 m');
+      expect(t('OM5').dist100G, '100 m');
+    });
+
+    test('Part 15 status is "unlicensed", not "Secondary"', () {
+      // Finding F: Part 15 is unlicensed (no allocation status). "Secondary" is
+      // an allocation term and is wrong for Part 15; Part 97's stays correct.
+      final RuleDelta status =
+          kRuleDeltas.firstWhere((RuleDelta d) => d.dimension == 'Status');
+      expect(status.part15.toLowerCase(), contains('unlicensed'));
+      expect(status.part15.contains('Secondary'), isFalse);
+      expect(status.part97, contains('Secondary'),
+          reason: 'Part 97 secondary allocation is correct and stays');
+    });
+
+    test('Part 15/97 2.4 GHz overlap is ~50 MHz in-band, not ~60', () {
+      // Finding F: 60 MHz is the amateur segment width (2390-2450); the part
+      // inside the Wi-Fi band (2400-2483.5) is 2400-2450 = ~50 MHz.
+      final WifiHamOverlap band24 = kWifiHamOverlaps.firstWhere(
+          (WifiHamOverlap o) => o.hamBand.contains('13 cm'));
+      expect(band24.overlap, contains('~50 MHz'));
+      expect(band24.overlap.contains('~60 MHz'), isFalse);
+    });
+
+    test('802.11r roam-latency figures are hedged as design guidance', () {
+      // Finding A: <50 / >150 ms is a practitioner convention, not a standards
+      // target (802.11 defines no roaming-time requirement).
+      final String allNotes = FrameExchangeScreen.scenarios
+          .expand((FxScenario s) => s.phases)
+          .expand((FxPhase p) => p.frames)
+          .map((FxFrame f) => f.note)
+          .join(' ');
+      // The figure now appears only as hedged design guidance.
+      expect(allNotes, contains('design guide'));
+      expect(allNotes.contains('roam latency < 50 ms with 802.11r vs > 150 ms'),
+          isFalse,
+          reason: 'the old unhedged assertion must not survive');
     });
   });
 

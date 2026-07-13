@@ -620,7 +620,10 @@ const List<WifiHamOverlap> kWifiHamOverlaps = <WifiHamOverlap>[
   WifiHamOverlap(
     wifiBand: '2.4 GHz ISM (2400-2483.5 MHz)',
     hamBand: '13 cm: 2390-2450 MHz',
-    overlap: 'Amateur covers the lower ~60 MHz of the Wi-Fi band.',
+    // ~50 MHz in-band (2400-2450), not ~60. The 60 MHz figure is the amateur
+    // SEGMENT width (2390-2450); the part that overlaps the Wi-Fi band
+    // (2400-2483.5) is 2400-2450 = 50 MHz. Wave-2 finding F.
+    overlap: 'Amateur covers the lower ~50 MHz of the Wi-Fi band (2400-2450).',
     channelsInside: 'Channels 1-6 fully inside; ch 7 partially (center 2442 '
         'OK, upper skirt past 2450).',
   ),
@@ -671,8 +674,12 @@ const List<RuleDelta> kRuleDeltas = <RuleDelta>[
   ),
   RuleDelta(
     dimension: 'Status',
-    part15: 'Secondary; must accept interference and must not cause harmful '
-        'interference.',
+    // Part 15 devices are UNLICENSED - they hold no allocation status and get
+    // no interference protection. "Secondary" is a specific allocation term and
+    // is wrong for Part 15 (Wave-2 finding F). Part 97's "Secondary" IS correct
+    // (amateur is secondary on 13cm / 5cm / 33cm) and stays.
+    part15: 'Unlicensed (no allocation status, no protection); must accept '
+        'interference and must not cause harmful interference.',
     part97: 'Secondary on these bands; coordinate; the same "do not interfere" '
         'ethic.',
   ),

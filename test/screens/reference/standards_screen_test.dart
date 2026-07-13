@@ -36,9 +36,26 @@ void main() {
     test('802.11ax also covers Wi-Fi 6E adding the 6 GHz band', () {
       final StandardEntry wifi6e = byGen('Wi-Fi 6E');
       expect(wifi6e.std, '802.11ax');
-      expect(wifi6e.year, 2021);
+      // WFA cert-year convention (Keith's Wave-2 decision): Wi-Fi 6E = 2020,
+      // not the IEEE 802.11ax ratification year (2021). See ieeeRatFootnote.
+      expect(wifi6e.year, 2020);
       expect(wifi6e.bands, '2.4 / 5 / 6');
       expect(wifi6e.hasBand6, isTrue);
+    });
+
+    test('Wi-Fi generation years use the WFA certification year consistently',
+        () {
+      // Keith's Wave-2 decision (findings A+F). Wi-Fi 6 stays 2019, Wi-Fi 7
+      // stays 2024, and the IEEE ratification dates live in the footnote.
+      expect(byGen('Wi-Fi 4').year, 2009); // WFA cert = IEEE ratification
+      expect(byGen('Wi-Fi 5').year, 2014); // WFA cert (IEEE ratified 2013)
+      expect(byGen('Wi-Fi 6').year, 2019);
+      expect(byGen('Wi-Fi 6E').year, 2020);
+      expect(byGen('Wi-Fi 7').year, 2024);
+      // The convention is disclosed, and the IEEE dates are footnoted (cite+pin).
+      expect(StandardsScreen.ieeeRatFootnote, contains('Wi-Fi Alliance'));
+      expect(StandardsScreen.ieeeRatFootnote, contains('ratified 2013'));
+      expect(StandardsScreen.ieeeRatFootnote, contains('ratified 2021'));
     });
 
     test('802.11be is Wi-Fi 7 on three bands with MLO', () {

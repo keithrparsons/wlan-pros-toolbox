@@ -45,7 +45,9 @@ void main() {
       expect(f.dist1G, '1 km');
       expect(f.dist10G, '300 m');
       expect(f.dist40G, '100 m');
-      expect(f.dist100G, '100 m');
+      // 100G = 70 m: modern 100GBASE-SR4 (802.3bm), not the legacy SR10 100 m.
+      // Wave-2 finding B.
+      expect(f.dist100G, '70 m');
       expect(f.legacy, isFalse);
     });
 
@@ -54,6 +56,8 @@ void main() {
       expect(f.bandwidth, '4,700');
       expect(f.jacketName, 'Aqua');
       expect(f.dist10G, '550 m');
+      // 100G = 100 m: modern 100GBASE-SR4, not the legacy SR10 150 m. Finding B.
+      expect(f.dist100G, '100 m');
     });
 
     test('OM5 — wideband multimode, 4,700 MHz·km at 850 nm, Lime Green', () {
@@ -61,6 +65,8 @@ void main() {
       expect(f.bandwidth, '4,700');
       expect(f.jacketName, 'Lime Green');
       expect(f.dist40G, '150 m');
+      // OM5 shares OM4's EMB, so 100G-SR4 reach matches OM4 (100 m). Finding B.
+      expect(f.dist100G, '100 m');
     });
 
     test('OS1 — singlemode 9/125 µm, Yellow, no modal bandwidth', () {

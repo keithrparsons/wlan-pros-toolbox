@@ -143,7 +143,17 @@ class DbReferenceScreen extends StatelessWidget {
       power: '100 mW',
       context: 'Common default AP Tx power',
     ),
-    DbmRef(dbm: '+17 dBm', power: '50 mW', context: 'FCC UNII-1 conducted max'),
+    // Was "FCC UNII-1 conducted max" — WRONG (that is the pre-2014 figure).
+    // Post-2014 (47 CFR 15.407) U-NII-1 conducted max is 30 dBm / 1 W with a
+    // <=6 dBi antenna. 17 dBm is the U-NII-1 PSD limit (17 dBm/MHz), which is
+    // what this anchor is relabeled to — keeping the unique-dBm ladder rather
+    // than adding a second +30 dBm row. +17 dBm = 50 mW is a correct
+    // dBm->mW conversion. Wave-2 finding C (db_reference #3).
+    DbmRef(
+      dbm: '+17 dBm',
+      power: '50 mW',
+      context: 'FCC U-NII-1 max power spectral density (17 dBm/MHz)',
+    ),
     DbmRef(dbm: '+15 dBm', power: '32 mW', context: 'Typical laptop Tx power'),
     DbmRef(
       dbm: '0 dBm',

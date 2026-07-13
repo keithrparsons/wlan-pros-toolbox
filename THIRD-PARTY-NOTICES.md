@@ -4,7 +4,6 @@ The WLAN Pros Toolbox bundles third-party components that remain governed by the
 
 ## Bundled components
 
-- **iperf3** — BSD 3-Clause License. See `third_party/iperf3/`.
 - **PDF.js** (Mozilla) — Apache License 2.0. See `web/pdfjs/`.
 - **Speed-test service logos** — used under the terms noted in `assets/speedtest-logos/` (see that directory's README for attribution).
 - **IEEE OUI registry data** — the offline MAC vendor lookup data is derived from the public IEEE OUI registry.

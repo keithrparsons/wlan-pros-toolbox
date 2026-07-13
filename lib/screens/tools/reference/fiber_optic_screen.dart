@@ -192,7 +192,10 @@ class FiberOpticScreen extends StatelessWidget {
       dist1G: '1 km',
       dist10G: '300 m',
       dist40G: '100 m',
-      dist100G: '100 m',
+      // 100G = 70 m: modern 100GBASE-SR4 (IEEE 802.3bm) on OM3. Was 100 m,
+      // which is the legacy 100GBASE-SR10 (802.3ba, 10-lane) reach. Wave-2
+      // finding B; confirmed by optical_transceivers.json (100G-SR4 70/100 m).
+      dist100G: '70 m',
       notes:
           'Laser-optimized. Current 10G enterprise standard. '
           'Most common new install.',
@@ -207,7 +210,10 @@ class FiberOpticScreen extends StatelessWidget {
       dist1G: '1 km',
       dist10G: '550 m',
       dist40G: '150 m',
-      dist100G: '150 m',
+      // 100G = 100 m: modern 100GBASE-SR4 (IEEE 802.3bm) on OM4. Was 150 m,
+      // which is the legacy 100GBASE-SR10 reach (identical to 40G-SR4's OM4
+      // number). Wave-2 finding B; confirmed by optical_transceivers.json.
+      dist100G: '100 m',
       notes:
           'High-bandwidth. Data centers and dense campus runs. TIA-598-D '
           'assigns OM4 aqua, the same color as OM3; violet (Erika Violet) is a '
@@ -224,7 +230,11 @@ class FiberOpticScreen extends StatelessWidget {
       dist1G: '1 km',
       dist10G: '550 m',
       dist40G: '150 m',
-      dist100G: '150 m',
+      // 100G = 100 m: modern 100GBASE-SR4 on OM5. OM5 shares OM4's 4,700
+      // MHz·km EMB at 850 nm, so its SR4 reach matches OM4 (100 m); the old
+      // 150 m was the legacy SR10 number. Wave-2 finding B (OM5 100G caveat =
+      // same as OM4). Kept consistent with the OM4 row above.
+      dist100G: '100 m',
       notes:
           'Wideband multimode (SWDM), 400G over 2 fibers. EMB 4,700 MHz·km '
           'at 850 nm (same as OM4); wideband window adds ~1,850-2,470 MHz·km '
