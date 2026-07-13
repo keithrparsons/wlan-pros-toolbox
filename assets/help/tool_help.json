@@ -1359,7 +1359,7 @@
       "name": "Capacity Planner",
       "category": "Calculators & Tools",
       "purpose": "An informational statement, not a calculator: it explains why Wi-Fi capacity planning cannot honestly be reduced to a few input boxes and a confident AP count.",
-      "whyHere": "The tool that used to live here returned an AP-count from a single formula. Keith retired that math because one formula cannot honor the variables that actually drive capacity. This screen replaces the false precision with an honest explanation and points you to a real plan.",
+      "whyHere": "The tool that used to live here returned an AP-count from a single formula. That math was removed because one formula cannot honor the variables that actually drive capacity. This screen replaces the false precision with an honest explanation and points you to a real plan.",
       "howToUse": [
         "There is nothing to enter. Read the statement: capacity planning is a design problem, not a calculation.",
         "For a plan you can trust, bring in a Wi-Fi professional experienced in your kind of environment; a real plan comes from measuring and modeling your specific space and usage."
@@ -1370,7 +1370,7 @@
       "fieldNotes": [
         "This is a read-only disclaimer screen: no inputs, no math, no copyable result. The tile, the /tools/capacity-planner route, and the \"Capacity Planner\" title are kept so the tile still resolves where users expect.",
         "Real Wi-Fi capacity depends on the applications in use and their airtime cost, client device capabilities and roaming, AP and antenna selection, channel reuse and co-channel interference, band steering, airtime fairness, QoS, and how people move through the space. Change any one and the answer changes.",
-        "A confidently-wrong number is worse than no number (GL-005 / the truthfulness-audit doctrine), which is why the calculator was removed rather than kept with a caveat."
+        "A confidently wrong number is worse than no number, which is why the calculator was removed rather than kept with a caveat."
       ],
       "source": "Verbatim from Keith's approved disclaimer copy; no external data source (the screen performs no calculation)."
     },

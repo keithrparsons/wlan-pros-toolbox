@@ -1073,7 +1073,7 @@ Converts a frequency to its wavelength in meters, centimeters, feet, and inches.
 
 An informational disclaimer, not a calculator. The screen is a single read-only statement: "Capacity planning is a design problem, not a calculation." There are no inputs, no formula, and no computed AP count.
 
-**Why it's here.** An earlier version squeezed capacity planning into a few input boxes and returned a confident AP count. Keith retired that math: no single formula can honor the variables that actually drive capacity, and a confidently-wrong number is worse than no number (GL-005 / the truthfulness-audit doctrine). The tile, the `/tools/capacity-planner` route, and the "Capacity Planner" title are kept so it still resolves where users expect — but it now tells the truth instead of computing false precision.
+**Why it's here.** An earlier version squeezed capacity planning into a few input boxes and returned a confident AP count. That math was removed: no single formula can honor the variables that actually drive capacity, and a confidently wrong number is worse than no number. The tile, the `/tools/capacity-planner` route, and the "Capacity Planner" title are kept so it still resolves where users expect — but it now tells the truth instead of computing false precision.
 
 **How to use**
 1. There is nothing to enter. Read the statement.
