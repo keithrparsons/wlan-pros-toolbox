@@ -1,0 +1,5 @@
+Ping Sweep, Port Scan and the ping tools now prefill your subnet or gateway. When it can only see your address it assumes a /24 and says so.
+
+Signal grading is now consistent app-wide: Excellent above -60 dBm, Good -60 to -67, Fair -67 to -72, Poor -73 and weaker.
+
+A self-audit found errors in our reference data. All corrected, each now citing its source: LMR-1200 max frequency, a phantom 160 MHz channel, Part 15 status, 2.4 GHz overlap. Help and the field manual now match the app.

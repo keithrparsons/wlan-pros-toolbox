@@ -1,11 +1,31 @@
-This release adds a convenience and fixes a consistency issue in signal grading.
+We audited our own reference data and found real errors. This release corrects them. It also fixes a signal-grading inconsistency and makes the network tools start from the network you are actually on.
 
 NEW
 
 The network tools now suggest the network you are actually on. Ping Sweep, Port Scan, and the ping tools start with your current subnet or gateway instead of a generic default. When the app can read your subnet mask, it fills in your true network. When it can only see your address, it assumes a /24 and says so, so you know to widen it if your network is larger. It never presents a guess as a measurement.
 
-FIXED
+FIXED: SIGNAL GRADING
 
 Signal quality grading is now consistent across the app. The analyzer and the Signal Thresholds reference screen were grading on different dBm thresholds, so the same reading could be called "poor" on one screen and "fair" on another. Both now read from a single source, and a built-in check keeps them from ever drifting apart again. The thresholds are Excellent above -60 dBm, Good -60 to -67, Fair -67 to -72, Poor -73 and weaker.
 
 The signal verdicts are also worded more honestly. A weak reading is guidance, not a verdict. Plenty of connections run fine at -75 dBm, and the app now says so instead of implying the number alone decides.
+
+FIXED: REFERENCE DATA
+
+We checked our reference screens against primary sources and found errors. This release corrects them, and every corrected value now carries a citation to the source it came from.
+
+- LMR-1200 coax maximum frequency: 6.0 GHz corrected to 5.2 GHz. We had it rated well above its real limit, and that is the kind of number that ends up in a bill of materials.
+- 5 GHz 160 MHz channels: removed a channel that does not exist (center 130).
+- IEC 60309 black band: 500-1000 V corrected to 500-690 V.
+- Part 15 status: "Secondary" corrected to "Unlicensed."
+- 2.4 GHz channel overlap: about 60 MHz corrected to about 50 MHz.
+- 100G fiber reach over OM3, OM4, and OM5: updated to the SR4 figures.
+- LMR velocity of propagation and frequency cutoff figures: corrected.
+
+REMOVED
+
+The "Dual Orbs on WLAN Pi" tool is gone. A bundled iperf3 binary that the app did not use is gone too.
+
+DOCUMENTATION
+
+The field manual and the in-app help were rewritten to describe what the app actually does. Some pages described behavior the app did not have.
