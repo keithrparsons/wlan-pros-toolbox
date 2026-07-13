@@ -22,11 +22,9 @@ Generated from `dart pub deps` on 2026-07-11. **Regenerate on every dependency c
 
 ## Bundled components (not pub.dev packages)
 
-- **iperf3** — BSD-3-Clause. See `third_party/iperf3/`.
 - **PDF.js** (Mozilla) — Apache-2.0. See `web/pdfjs/`.
 - **IEEE OUI registry data** — derived from the public IEEE OUI registry.
 - **Fonts** — see `assets/fonts/` and `THIRD-PARTY-NOTICES.md`.
-- **⚠️ `assets/downloads/wlanpi-dual-orb_1.1.3_all.deb.b64`** — Orb Debian package. **Redistribution rights UNCONFIRMED. Resolve with Orb before this repository is made public.**
 
 ## All dependencies
 
