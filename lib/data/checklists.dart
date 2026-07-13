@@ -7,8 +7,9 @@
 //
 // Keith's decisions applied (2026-05-30):
 //   - "How to NOT Have a Wireless Problem" — the "After Installing" list is
-//     renumbered a clean 1-12 (the original card was gap-numbered, with no
-//     item 2). ChecklistScreen numbers items by render order, so the model
+//     renumbered a clean 1-11 (the original card was gap-numbered, with no
+//     item 2, so the eleven items now read 1 through 11). ChecklistScreen
+//     numbers items by render order, so the model
 //     just lists them in order; no explicit `order` field is needed.
 //   - "Install Access Point" is kept as its own one-item phase, as on the card.
 //
