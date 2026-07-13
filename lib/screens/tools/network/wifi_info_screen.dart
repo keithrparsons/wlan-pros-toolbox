@@ -16,7 +16,11 @@
 //             run-shortcut trigger once; Stop clears the flag and FREEZES the last
 //             values on screen (the snapshot). There is no separate one-tap "Get
 //             Reading" snapshot on iOS, Live is the only iOS mode.
-//   * Android / Windows -> honest "coming in a later update" state (clean seam).
+//   * Android -> snapshot via WifiManager (AndroidWifiInfoAdapter); pull to
+//             refresh. No noise floor / SNR on this platform, so those render
+//             the honest "Unavailable" row rather than a derived value.
+//   * Windows -> snapshot via Native Wifi (WindowsWifiInfoAdapter); pull to
+//             refresh. Same no-noise/SNR ceiling as Android.
 //   * web -> download-the-app fallback.
 //
 // Both native bridges are retained (macOS WifiInfoChannel.swift + iOS

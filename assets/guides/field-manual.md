@@ -19,7 +19,7 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Learn / RF intuition (1)
 - **Quick Reference** (89 tools)
   - Wi-Fi & RF (23)
-  - Cabling & Connectors (10)
+  - Cabling & Connectors (9)
   - Protocols (19)
   - Encoding (5)
   - Power & Cooling (6)
@@ -48,7 +48,7 @@ Live Wi-Fi and internet diagnostics. These tools read the device's real connecti
 
 Answer the everyday question "is the slowdown my Wi-Fi or my internet?" in plain English, and tell the user what to say to support.
 
-**Why it's here.** The consumer-facing front door. Same backends and verdict engine as the pro Wi-Fi vs Internet tool, re-skinned for a non-technical user. Reach for it when you want a one-tap answer plus vetted self-help steps, not engineer numbers.
+**Why it's here.** The consumer-facing front door. The pro "Wi-Fi vs Internet" tool was folded into this one screen (Keith 2026-06-04); the old `/tools/wifi-vs-internet` deep link now redirects here. Same backends and verdict engine, re-skinned for a non-technical user. Reach for it when you want a one-tap answer plus vetted self-help steps, not engineer numbers.
 
 **How to use**
 1. Open the tool and tap Run.
@@ -56,14 +56,14 @@ Answer the everyday question "is the slowdown my Wi-Fi or my internet?" in plain
 3. On macOS, granting Location is optional; it only affects whether the SSID name shows. The verdict never needs Location (it is rate-based). On macOS the app can proactively surface the native "Allow Location" prompt so the name resolves without a settings trip.
 4. Read the two status chips (Wi-Fi / Internet) and the headline.
 
-**Formula or method.** It runs two things in one pass and feeds both into the shared verdict engine: a connected-link read via WifiInfoSourceResolver → MacWifiInfoAdapter (macOS CoreWLAN) or WiFiDetailsBridge → ConnectedAp.fromWifiDetails (iOS Shortcut); a full net_quality run via OwnEngineQualityClient.forHost('one.one.one.one'). It translates the net_quality grades into the engine's internet-health flag via the shared ConnectionCheck.internetHealth: GOOD only when download AND upload AND latency AND loss all grade good or excellent; otherwise marginal. The engine's five engineer verdicts are collapsed into four consumer outcomes plus a two-axis chip status (Wi-Fi / Internet each "Fine", "Slow", or "Couldn't check") by ConsumerVerdictMapper. Outcomes: A "Looks like your Wi-Fi"; A-lead "Mostly your Wi-Fi"; B "Looks like your Internet"; C "Both look fine"; D1 "Couldn't check everything" (internet measured, Wi-Fi not); D2 "Couldn't complete the check" (neither measured).
+**Formula or method.** It runs two things in one pass and feeds both into the shared verdict engine: a connected-link read via WifiInfoSourceResolver → MacWifiInfoAdapter (macOS CoreWLAN) or WiFiDetailsBridge → ConnectedAp.fromWifiDetails (iOS Shortcut); a full net_quality run via OwnEngineQualityClient.forHost('one.one.one.one'). It translates the net_quality grades into the engine's internet-health flag via the shared ConnectionCheck.internetHealth: GOOD only when download AND upload AND latency AND loss all grade good or excellent; otherwise marginal. The engine's six engineer verdicts (WifiVsInternetVerdict: wifiLimiter, upstream, bothContributing, bothHealthy, wifiUnknown, onlineUnmeasured) are re-skinned by ConsumerVerdictMapper into seven consumer outcomes plus a two-axis chip status. Each chip (Wi-Fi / Internet) reads on an absolute 3-tier data-rate scale — "Strong" (> 250 Mbps), "Moderate" (100 to 250 Mbps inclusive), "Weak" (< 100 Mbps) — or "Couldn't check" when that side was not measured (a neutral token, never a fault color). The seven outcomes and their headlines: A "Your Wi-Fi is the slow part"; A-lead "Your Wi-Fi is mostly the slow part"; B "Your internet is the slow part"; C "Your Wi-Fi and internet both look fine"; D1 "We checked your internet, but not your Wi-Fi" (internet measured, Wi-Fi not); D2 "We could not finish the check" (neither measured); E "You are online" (the speed test stalled, but DNS resolved, a public IP was obtained, and cloud apps were reachable — so the honest read is reachable-but-unmeasured, not offline).
 
 **Field notes**
 - Platform differences: macOS reads the link via CoreWLAN (Tx rate, RSSI/SNR, no Rx). iOS reads it via the Shortcut (Tx and Rx). If the link can't be read (wired, or iOS without the Shortcut), it falls to the D1/D2 honest path; it does not guess a side. D1 keeps the real internet figure it did measure; D2 admits neither side was read.
 - The headline is a hedge by design ("Looks like…", not "your Wi-Fi is broken"). The two chips teach the model that Wi-Fi and internet are two separate things. "Both look fine" is the most useful real-world answer; it points the user at the specific app/site instead of the connection.
 - Cloud Apps reachability panel: the result column also mounts a Cloud Apps panel that TCP-connects (port 443) to the recurated kCloudApps named-service list and reports each as reachable or "unreachable" (a word + glyph, never color alone). It proves the service edge/CDN is reachable and times that hop; it is NOT a measure of in-app call or stream quality, and the caption says so. It reuses the same shared ReachabilityProbe the Network Quality tool runs.
 - Analyze Results sits beside Copy on the result screen: Copy saves the raw report, Analyze explains the verdict and recommends next steps, entirely on-device (see Analyze Results).
-- The verdict copy is deliberately non-diagnostic for a layperson. The underlying numbers and bands are the same as Wi-Fi vs Internet; if you want the numbers, use that tool.
+- The verdict copy is deliberately non-diagnostic for a layperson. The underlying numbers and bands come from the same Wi-Fi-vs-Internet engine, which now lives inside this screen — there is no longer a separate tool to switch to for the numbers.
 - How it picks a side: it compares how much internet speed you're actually getting against how much your Wi-Fi link could realistically carry. When the internet measures fine on its own, it says both look fine; otherwise it leans toward Wi-Fi or internet depending on which one has the headroom to spare.
 - D2 ("Make sure you're on Wi-Fi and try again") is the honest answer when nothing measured, never a fake zero.
 
@@ -101,7 +101,7 @@ A one-shot transport-quality measurement covering latency, jitter, loss, downloa
 **Field notes**
 - Platform differences: runs on macOS, Windows, Linux, Android, iOS over dart:io sockets/HTTP. On web it routes to the download-the-app fallback (no sockets).
 - Read each grade word on its own; a connection can be Excellent on latency and Poor on upload at the same time, which is the point. The download/upload Mbps grades are "good enough for a household" heuristics, not standards. RPM is directional only.
-- Latency uses TCP round-trip time, so it includes the full SYN/SYN-ACK round trip to a real host (a faithful proxy, slightly higher than ICMP). The host counts as having answered whether it completes the handshake or actively refuses with a RST; only silence is a loss.
+- Latency uses TCP round-trip time, so it includes the full SYN/SYN-ACK round trip to a real host (a faithful proxy, slightly higher than ICMP). Only a completed handshake counts as an answered sample; any failure — a timeout, an unreachable, or an actively-refused RST — is caught as a lost sample (LatencyProbe swallows every connect exception as loss). In practice the target is hardcoded to one.one.one.one:443, which completes normally and never refuses, so the RST case does not arise here; with zero successful samples latency and jitter report "Unavailable" while loss is a real 100%.
 - The on-screen footnote states plainly: "these are this app's own measurements, not a third-party score." Download is summed-parallel (so it reflects aggregate link capacity, not a single flow). A failed measurement is "Unavailable" with a note, never 0.
 
 ### Wi-Fi Information
@@ -119,7 +119,7 @@ Show the live connected-AP link details: SSID, BSSID, RSSI, noise, SNR, Tx/Rx ra
 **Field notes**
 - macOS (CoreWLAN): exposes SSID/BSSID (Location-gated), RSSI, noise, SNR (reported directly), Tx rate, PHY mode → standard label, channel, channel width, band (reported), country code, interface name, hardware MAC. It does NOT expose the Rx rate or Tx power (public CoreWLAN limitation); those render "Not exposed by macOS CoreWLAN", never estimated.
 - iOS (Shortcut): exposes SSID, BSSID, channel, RSSI, noise, standard, Rx rate AND Tx rate. SNR is derived app-side (rssi − noise) and band is derived from the channel number (both labeled "derived"). The harvest does NOT return channel width, so width renders "Not reported by iOS", never fabricated. Channel→band derivation: 1 to 14 → 2.4 GHz, 36 to 177 → 5 GHz, 181 to 233 → 6 GHz; the ambiguous low 6 GHz range (1 to 93) is read as 2.4/5 GHz and never silently claimed as 6 GHz.
-- Android / Windows: honest "coming in a later update" state (clean seam, not built). Web: download-the-app fallback.
+- Android and Windows are both built and live: Android reads the link via WifiManager (AndroidWifiInfoAdapter), Windows via Native Wifi (WindowsWifiInfoAdapter), each as a snapshot (pull-to-refresh) source like macOS. Neither platform exposes a noise floor or SNR, so those fields render their honest "Unavailable" row rather than a derived value. Web: download-the-app fallback.
 - RSSI and SNR carry hard grades; read the rate as a trend, not a pass/fail. The standard label combines the 802.11 designation and Wi-Fi generation (e.g. "802.11be (Wi-Fi 7)"; 802.11ax on 6 GHz shows Wi-Fi 6E). Anything marked "derived" was computed, not read from the radio.
 - macOS Tx-only and iOS no-width are real platform ceilings, not bugs. On macOS, if the SSID is blank, it's almost always a missing Location grant, not a hidden network. The macOS read has a 5s hang-safety: a stalled CoreWLAN read surfaces an honest "No Wi-Fi reading" rather than freezing.
 
@@ -168,7 +168,7 @@ Keep them straight from the start.
 #### Two numbers, two questions
 
 - **Internet throughput** is shown by *Test My Connection* and *Network Quality*. The headline figure is your download, what people mean by internet speed, measured against the wider internet right now. Upload is measured too and shown as its own separate number.
-- **Usable Wi-Fi capacity** is shown by *Wi-Fi vs Internet*. This is roughly how much throughput the Wi-Fi hop itself can carry, based on the rate your radios negotiated.
+- **Usable Wi-Fi capacity** comes from the Wi-Fi-vs-Internet engine (now part of *Test My Connection*). This is roughly how much throughput the Wi-Fi hop itself can carry, based on the rate your radios negotiated.
 
 Same app, two measurements, two purposes. Everything below explains what each one actually does and why a number you see somewhere else may not match.
 
@@ -203,7 +203,7 @@ Put those together and the pattern is easy to see. A one-number tool that satura
 
 #### What the Wi-Fi number is, and what it is not
 
-The *Wi-Fi vs Internet* tool shows a different figure entirely: usable Wi-Fi capacity, which the app estimates at about 55% of the negotiated Wi-Fi link rate.
+The Wi-Fi-vs-Internet engine (folded into *Test My Connection*) produces a different figure entirely: usable Wi-Fi capacity, which the app estimates at about 55% of the negotiated Wi-Fi link rate.
 
 Two things to understand about that 55%.
 
@@ -280,7 +280,7 @@ Connect to host:port over TLS and report the server certificate as inspectable d
 
 ### Interface Information
 
-Show the device's own network state: per-interface IPv4/IPv6 addresses, interface name and inferred type, plus gateway, DNS, Wi-Fi SSID/BSSID, and the device's primary IP where the platform exposes them.
+Show the device's own network state: per-interface IPv4/IPv6 addresses, interface name and inferred type, plus gateway, subnet mask, Wi-Fi SSID/BSSID, and the device's primary IP where the platform exposes them. (It does not read the device's configured DNS servers — no screen in the app does.)
 
 **Why it's here.** The "what's my IP, gateway, and link" foundation. Reach for it first when you need the device's own address (e.g. before a ping/sweep) or to confirm which interface is active.
 
@@ -292,7 +292,7 @@ Show the device's own network state: per-interface IPv4/IPv6 addresses, interfac
 **Field notes**
 - Platform differences: SSID/BSSID/gateway depend on network_info_plus and OS permission state. iOS needs the wifi-info entitlement + Location for SSID/BSSID; macOS/Android vary. Web is gated off. SSID is cleaned of wrapping quotes and the <unknown ssid> placeholder.
 - The interface "type" is a name-based guess; on macOS the en0/en1 split is heuristic, so trust the addresses over the label on unusual hardware.
-- Nulls are honest "not available", never 0 or "". Gateway/DNS exposure is platform-and-permission dependent.
+- Nulls are honest "not available", never 0 or "". Gateway and SSID/BSSID exposure is platform-and-permission dependent. The device's configured DNS resolvers are not among the fields this tool reads.
 
 ### IP Geolocation
 
@@ -303,10 +303,10 @@ Country, region, city, coordinates, timezone, ISP/org, and ASN for an IP (or you
 **How to use**
 1. Enter an IP or hostname, or leave blank to locate your own public IP, look up. A copyable "lat,long" and an OpenStreetMap URL are offered.
 
-**Formula or method.** Queries ipwho.is (free, no key, HTTPS, chosen because it's keyless AND returns ASN + timezone in one response; ip-api.com is HTTP-only and would trip iOS ATS, so it's explicitly not used). An empty query hits https://ipwho.is/ (your IP); otherwise https://ipwho.is/{ip}. A cheap client-side sanity check rejects obvious junk before spending a round-trip; ipwho.is's in-band {"success": false} is mapped to a precise "check your input" or rate-limited state, not read as OK.
+**Formula or method.** Queries ipinfo.io first (free, no key, HTTPS), with get.geojs.io as an automatic fallback (also free, keyless, HTTPS). Both clear iOS App Transport Security and the app's keyless-HTTPS rule. ipwho.is was dropped: it resolves to the ISP's registry/datacenter location (it placed a Utah egress in Virginia), while both ipinfo.io and geojs.io locate the real physical egress and agree on coordinates; ip-api.com is HTTP-only and non-commercial-tier, so it is explicitly not used. Endpoints: an empty query hits each provider's "self" endpoint — https://ipinfo.io/json, else https://get.geojs.io/v1/ip/geo.json — geolocating your public egress IP; a specific IP hits https://ipinfo.io/{ip}/json, else https://get.geojs.io/v1/ip/geo/{ip}.json. Logic: try ipinfo first; if it throws (timeout, rate-limit, transport, bad JSON) OR returns no usable lat/lon, fall back to geojs. If both fail, it returns an honest failure carrying geojs's error (the last word), never a fabricated coordinate. There is no ipwho.is-style {"success": false} in-band flag; each provider is read on its own JSON shape and every field is nullable.
 
 **Field notes**
-- Platform differences: JsonHttpClient → dart:io, native-only; web gated to the download fallback (ipwho.is CORS unverified).
+- Platform differences: JsonHttpClient → dart:io, native-only; web gated to the download fallback (ipinfo.io/geojs.io CORS unverified).
 - Coordinates are shown as selectable mono data plus a copyable pair and an external maps link (no embedded interactive map; that's future). Every field is nullable → missing data renders "Not available".
 - Geolocation accuracy is the provider's, especially for mobile/CGNAT IPs. A rate-limit response is surfaced explicitly ("wait a minute and try again").
 
@@ -435,7 +435,7 @@ A portable dig/nslookup for the field. Resolve a name as a dig-style all-records
 **Formula or method.** Resolves over DNS-over-HTTPS (DoH) via basic_utils DnsUtils.lookupRecord, an HTTPS GET to a JSON resolver, not raw UDP/53. DoH is chosen because raw UDP/53 sits behind iOS local-network gating and is often blocked, while DoH rides HTTPS:443 cleanly and needs no extra socket capability. All records mode fans out one DoH query per type (SOA, NS, A, AAAA, MX, TXT, SRV, CAA) concurrently with Future.wait, then groups the answers in dig order; a per-type failure becomes a per-section note, so the records that did resolve still show. Reverse PTR rewrites the input IP to its in-addr.arpa or ip6.arpa name before querying (with a minimal IPv6 literal parser). SPF is not a separate query: it reads TXT and filters for the v=spf1 policy line (RFC 7208). Three result states per query: success, empty (resolved, no records of this type), and failure, kept distinct so the UI shows the right state.
 
 **Field notes**
-- Records resolve against a public resolver (Cloudflare or Google), not the device configured resolver, which is usually what a pro wants (authoritative, uncached). The device configured DNS servers are shown by Interface Information instead.
+- Records resolve against a public resolver (Cloudflare or Google), not the device configured resolver, which is usually what a pro wants (authoritative, uncached). The app does not read the device's own configured DNS servers on any screen — that value is platform-and-permission gated and is deliberately out of scope.
 - SRV and CAA are parsed into readable fields; an unparseable form is shown raw. Empty is not an error: a name with no MX simply returns the empty state.
 - Platform differences: identical on iOS, Android, macOS, and Windows (HTTPS only). Gated off on web per the native-only product decision.
 - dig +trace (the root to TLD to authoritative delegation walk) is not built. DoH only reaches recursive resolvers that return the final answer, so a true iterative trace would need raw UDP/53 to named authoritative servers plus a hand-rolled DNS wire codec, which is heavier and less reliable in the field than this tool is meant to be.
@@ -469,7 +469,7 @@ Find live hosts on the local network and enrich each with name, services, inferr
 
 **Field notes**
 - Platform differences (the heart of it): MAC + vendor: macOS only (the sysctl ARP read). On iOS/Android a sandboxed app cannot read the ARP table, so MAC/vendor stay null. mDNS: iOS + macOS via the native NetServiceBrowser channel. It deliberately does NOT use pure-Dart multicast (iOS 14+ silently drops it without Apple's multicast entitlement) and does NOT use bonsoir (GPL-3.0, incompatible with the closed-source App Store app). Android/other platforms get a clean empty mDNS pass (NsdManager deferred). Service types must be declared in Info.plist NSBonjourServices. The connect-scan core is pure-Dart and cross-platform; only mDNS/ARP enrichment are native.
-- Device type is a heuristic from ports + mDNS, not a MAC-anchored database; Unknown is a first-class, non-apologetic outcome. The code deliberately does NOT fake an "access point" rule, because the only reliable AP signal is the OUI vendor (MAC), which mobile can't read.
+- Device type is a heuristic from ports + mDNS plus, on desktop, the OUI vendor read from the MAC; Unknown is a first-class, non-apologetic outcome. Because APs broadcast no "I am an access point" mDNS service, the only reliable infrastructure signal is the OUI vendor. On desktop (macOS, where the sysctl ARP read supplies a MAC) the heuristic classifies networking gear honestly: a recognized networking vendor (Ubiquiti, MikroTik, Aruba, Ruckus, Cisco, Meraki, etc.) is promoted to "Access point / Wi-Fi" ONLY when a Wi-Fi/AP keyword (access point, wifi, wi-fi, wlan, unifi, meraki) also appears; a networking vendor with no such keyword is the generic "Network gear" (a switch, router, or gateway — the category it can prove, not a guessed model). On mobile there is no readable MAC, so `vendorOrHostHas(...)` is always false and an AP falls through to the weak port rules (SSH/Web/Unknown) — the documented ceiling.
 - Any single pass can fail without aborting the run (a failed mDNS browse just means no mDNS enrichment; nothing is faked). On mobile, expect no MAC/vendor and APs to fall through to SSH/Web/Unknown, a documented ceiling.
 
 ### Nearby AP Scan (runs on Android today)
@@ -1071,34 +1071,18 @@ Converts a frequency to its wavelength in meters, centimeters, feet, and inches.
 
 ### Capacity Planner
 
-Recommends the number of access points needed for a space, based on user count, concurrency, per-user demand, AP capacity, target utilization, and an optional clients-per-AP density cap.
+An informational disclaimer, not a calculator. The screen is a single read-only statement: "Capacity planning is a design problem, not a calculation." There are no inputs, no formula, and no computed AP count.
 
-**Why it's here.** High-density design. Size AP count by both throughput demand and client-density limits, taking the larger of the two.
+**Why it's here.** An earlier version squeezed capacity planning into a few input boxes and returned a confident AP count. Keith retired that math: no single formula can honor the variables that actually drive capacity, and a confidently-wrong number is worse than no number (GL-005 / the truthfulness-audit doctrine). The tile, the `/tools/capacity-planner` route, and the "Capacity Planner" title are kept so it still resolves where users expect — but it now tells the truth instead of computing false precision.
 
 **How to use**
-1. Enter total users, concurrent usage %, per-user throughput (Mbps), AP max throughput (Mbps), and target channel utilization %.
-2. Optionally enter max clients per AP for a density check.
-3. Read concurrent users, total bandwidth demand, APs by throughput, APs by density, and the recommended AP count.
-
-**Inputs**
-
-| Input | Unit | Range |
-|---|---|---|
-| Total users | count | must be > 0 (default hint 200) |
-| Concurrent usage | % | must be > 0 (default hint 70) |
-| Per-user throughput | Mbps | must be > 0 (default hint 5) |
-| AP max throughput | Mbps | must be > 0 (default hint 600) |
-| Target channel utilization | % | must be > 0 (default hint 50) |
-| Max clients per AP | count | optional (default hint 50); ≤ 0 or blank disables the density check |
-
-**How it works.** First it finds concurrent users: total users times the concurrency percentage, rounded up. Total bandwidth demand is concurrent users times per-user throughput. Each AP's usable capacity is its max throughput times the target utilization percentage. APs-by-throughput is the total demand divided by that usable per-AP capacity, rounded up. APs-by-density is concurrent users divided by the max-clients-per-AP cap, rounded up (skipped when no cap is set). The recommended count is the larger of the two, and never less than one.
-
-**Example.** 200 users, 70% concurrent, 5 Mbps/user, 600 Mbps/AP, 50% util, 50 clients/AP → concurrent = 140; total demand = 700 Mbps; usable per AP = 300 Mbps; APs by throughput = ceil(700/300) = 3; APs by density = ceil(140/50) = 3; recommended = 3.
+1. There is nothing to enter. Read the statement.
+2. For a plan you can trust, bring in a Wi-Fi professional experienced in your kind of environment; a real plan comes from measuring and modeling your specific space and usage, not a one-size-fits-all estimate.
 
 **Field notes**
-- A planning model, not a survey. It ignores RF coverage, building layout, and co-channel interference, which often drive AP count higher than capacity math alone.
-- "AP max throughput" should be a realistic per-AP usable rate, not a marketing PHY peak.
-- Concurrency and per-user demand are the biggest assumptions; size them from the actual application mix.
+- Read-only disclaimer screen: no inputs, no math, no copyable result. It is deliberately a placeholder, not a stub awaiting a calculator.
+- Real Wi-Fi capacity depends on the applications in use and their airtime cost, client device capabilities and roaming, AP and antenna selection, channel reuse and co-channel interference, band steering, airtime fairness, QoS, and how people move through the space. Change any one and the answer changes — which is exactly why the calculator was removed rather than kept with a caveat.
+- The copy on screen is verbatim from Keith's approved draft.
 
 
 ### PoE Budget
@@ -1603,7 +1587,7 @@ A PHY-layer comparison of every major 802.11 amendment from the original 802.11 
 - What it shows: one card per amendment with the IEEE designation, a Wi-Fi generation badge, year, and rows for Bands (GHz), Max PHY rate, MIMO, Channel width (MHz), and Modulation. An optional band filter (All / 2.4 / 5 / 6 GHz) narrows the list.
 - Two footnotes: (1) "Wi-Fi 1/2/3 are informal/retroactive labels; official Wi-Fi Alliance naming begins at Wi-Fi 4"; (2) "Wi-Fi 7 certification began 2024; IEEE 802.11be was published 2025."
 - Max PHY rate is the theoretical aggregate ceiling; real-world throughput is typically 50 to 60% of it.
-- Data source: IEEE 802.11 amendments. Key rows: 802.11ac = Wi-Fi 5 (2013, 6.9 Gbps); 802.11ax = Wi-Fi 6 (2019) and Wi-Fi 6E (2021, adds 6 GHz); 802.11be = Wi-Fi 7 (2024, 46 Gbps MLO, 4K-QAM, up to 320 MHz).
+- Provenance: the amendment facts (bands, MIMO, channel widths, modulation, max PHY rate) are ported from the IEEE 802.11 amendments; the Year column is the Wi-Fi Alliance certification year, footnoted separately against the IEEE ratification year. Key rows: 802.11ac = Wi-Fi 5 (2014, 6.9 Gbps); 802.11ax = Wi-Fi 6 (2019) and Wi-Fi 6E (2020, adds 6 GHz); 802.11be = Wi-Fi 7 (2024, 23.1 Gbps with MLO, 4K-QAM, up to 320 MHz).
 
 
 ### Channel Map
@@ -1618,9 +1602,9 @@ A visual channel-bonding map showing, per band, how 20/40/80/160/320 MHz channel
 3. The 6 GHz 320 MHz row shows ch 31 as the primary block and ch 63 as a dashed alternative (they overlap, so only one is used at a time).
 
 **Field notes**
-- What it shows: a three-option band toggle. 2.4 GHz: the 11 US channels as 20 MHz blocks, with 1/6/11 emphasized (non-overlapping) and the rest faint. 5 GHz: rows for 20/40/80/160 MHz bonded widths, each block labelled with its primary/center channel and tinted by DFS class. 6 GHz: rows for 20/40/80/160/320 MHz across UNII-5 (ch 1 to 93), with PSC channels marked.
-- US-default. The full US 6 GHz band extends to ch 233 (UNII-6/7/8 follow the same bonding pattern); the map shows UNII-5 only. 6 GHz UNII-5 needs no DFS and no AFC indoors (LPI).
-- Data source: US (FCC). 5 GHz DFS: No DFS = UNII-1 (36 to 48) and UNII-3 (149 to 165); DFS = UNII-2A/2C. Colors are for readability; the meaning (DFS/PSC/mixed) is what matters.
+- What it shows: a three-option band toggle. 2.4 GHz: the 11 US channels as 20 MHz blocks, with 1/6/11 emphasized (non-overlapping) and the rest faint. 5 GHz: rows for 20/40/80/160 MHz bonded widths, each block labelled with its primary/center channel and tinted by DFS class. 6 GHz: rows for 20/40/80/160/320 MHz across the full US band, UNII-5 through UNII-8 (the 59 20 MHz primaries ch 1,5,9,…,233), with the PSC channels (5,21,37,…,229) marked.
+- US-default. The full US 6 GHz plan (5925 to 7125 MHz) is drawn end to end — an earlier build truncated the map at ch 93, restored to the complete band per a beta report. 6 GHz needs no DFS; indoors it runs low-power (LPI) with no AFC, while standard-power use is AFC-coordinated.
+- Reference basis: the US (FCC) channel plan. 5 GHz DFS: No DFS = UNII-1 (36 to 48) and UNII-3 (149 to 165); DFS = UNII-2A/2C. Colors are for readability; the meaning (DFS/PSC/mixed) is what matters.
 
 
 ### dB Reference
@@ -1637,26 +1621,26 @@ A decibel reference card: dB change → power/voltage ratio with rules of thumb,
 - What it shows: dB Power Ratios: dB change (+3 to +30, −3 to −20) → power ratio, voltage ratio, and a rule-of-thumb note. Common dBm Reference Points: dBm anchors (+36 down to −100 dBm) → power (watts/mW/nW/pW) and context (regulatory limits, typical Tx powers, sensitivity floors).
 - Footnote: "0 dBd is about 2.15 dBi (dipole reference). dBW = dBm − 30. Regulatory limits shown are US FCC; verify before compliance decisions."
 - Mixed US (FCC) and one ETSI anchor; read the context cell for the jurisdiction of each limit.
-- Data source: the dBm context column cites specific regulatory limits: FCC 6 GHz standard-power EIRP (+36 dBm, AFC required), FCC 2.4 GHz max conducted (Part 15.247, +30 dBm), FCC UNII-2A/2C and UNII-1 conducted maxes, and ETSI 5 GHz EIRP (EN 301 893, +23 dBm).
+- The dBm context column names specific regulatory limits: FCC 6 GHz standard-power EIRP (+36 dBm, AFC required), FCC 2.4 GHz max conducted (Part 15.247, +30 dBm), FCC UNII-2A/2C and UNII-1 conducted maxes, and ETSI 5 GHz EIRP (EN 301 893, +23 dBm). These specific limits are verifiable against the cited rules; verify before any compliance decision.
 
 
 ### MCS Index
 
-Look up the modulation, coding rate, and PHY data rate for any 802.11 MCS index across channel widths, for 802.11n (HT), 802.11ac (VHT), and 802.11ax (HE), scaled by spatial-stream count.
+Look up the modulation, coding rate, and PHY data rate for any 802.11 MCS index across channel widths, for 802.11n (HT), 802.11ac (VHT), 802.11ax (HE), and 802.11be (EHT / Wi-Fi 7), scaled by spatial-stream count.
 
 **Why it's here.** When you see an MCS index in a capture or client stats and want to know the modulation/coding behind it and the rate it should deliver at a given width and stream count.
 
 **How to use**
-1. Choose the standard (n / ac / ax) and stream count (1 to 8); rates update (rate = per-stream value × streams).
-2. MCS 0 (BPSK 1/2) is the most resilient/slowest; higher MCS indices use denser modulation (up to 1024-QAM for ax) for higher rates needing better signal.
+1. Choose the standard (n / ac / ax / be) and stream count (1 to 8); rates update (rate = per-stream value × streams).
+2. MCS 0 (BPSK 1/2) is the most resilient/slowest; higher MCS indices use denser modulation (up to 1024-QAM for ax and 4096-QAM for be, MCS 12-13) for higher rates needing better signal.
 3. Cells shown as "N/A" are genuinely invalid combinations, not zero or fabricated.
 
 **Field notes**
-- What it shows: two selectors, 802.11 standard (n / ac / ax) and spatial streams (1 to 8). Columns per standard: 802.11n = 20 LGI, 20 SGI, 40 LGI, 40 SGI; 802.11ac = 20/40/80/160 SGI; 802.11ax = 20/40/80/160 MHz (800 ns GI).
-- 802.11ac MCS 9 is invalid at 20 and 40 MHz for a single stream (shown "N/A").
-- Guard-interval definitions: 802.11n LGI = 800 ns / SGI = 400 ns; 802.11ac uses SGI; 802.11ax uses 800 ns GI.
+- What it shows: two selectors, 802.11 standard (n / ac / ax / be) and spatial streams (1 to 8; 802.11n is 1 to 4). Columns per standard: 802.11n = 20 LGI, 20 SGI, 40 LGI, 40 SGI; 802.11ac = 20/40/80/160 SGI; 802.11ax = 20/40/80/160 MHz; 802.11be = 20/40/80/160/320 MHz (ax and be both at an 800 ns guard interval).
+- 802.11ac MCS 9 is invalid at 20 and 40 MHz for a single stream (shown "N/A"); some cells are invalid only at certain stream counts. Above 4 spatial streams no rate is shown at all — a documented gap in the published source, stated plainly rather than computed.
+- Guard-interval definitions: 802.11n LGI = 800 ns / SGI = 400 ns; 802.11ac uses SGI; 802.11ax and 802.11be define 0.8 / 1.6 / 3.2 microsecond guard intervals (no 400 ns short GI above 802.11ac).
 - The notes card states actual throughput is typically 50 to 65% of the PHY rate. Rates are PHY-layer maximums, not delivered throughput.
-- Data source: the IEEE 802.11n/ac/ax PHY rate tables.
+- Provenance: values come from Keith Parsons' MCS Index Chart and mcsindex.net (by @VergesFrancois, SemFio Networks), cross-checked against the IEEE 802.11n/ac/ax/be PHY rate tables.
 
 
 ### Modulation
@@ -1783,15 +1767,15 @@ RSSI and SNR targets: a quality scale for RSSI, minimum RSSI/SNR by application,
 **Why it's here.** When validating a survey or troubleshooting a complaint: "is −68 dBm good enough for VoIP?" or "what SNR do I need to hold MCS 7?"
 
 **How to use**
-1. RSSI bands carry a colored verdict dot plus the quality word (green = good, amber = marginal/Fair, red = bad/Weak/Poor); the word always carries the meaning, never color alone.
+1. RSSI bands carry a colored verdict dot plus the quality word (green = Excellent/Good, amber = Fair, red = Poor); the word always carries the meaning, never color alone.
 2. For the application table, read across to the min RSSI and min SNR your target use case needs.
 3. The SNR→MCS table tells you the SNR floor to sustain a given rate.
 
 **Field notes**
-- What it shows: three blocks. RSSI quality scale: Excellent (> −50 dBm) / Good (−50 to −67) / Fair (−67 to −70) / Weak (−70 to −80) / Poor (< −80). Minimum signal by application: VoIP/real-time, HD video, general browsing, email/basic data, IoT/low-rate, and location/RTLS, each with min RSSI, min SNR, and a note. SNR to MCS (80 MHz, 1 SS): the SNR floor for each MCS index (MCS 0 at 5 dB up to MCS 11 at 35 dB) with an indicative rate.
-- The intro explicitly states: values vary by client hardware, environment, and AP vendor; treat as field-planning guidelines, not guarantees.
+- What it shows: three blocks. RSSI quality scale (four bands): Excellent (> −60 dBm) / Good (−60 to −67) / Fair (−67 to −72) / Poor (−73 or weaker). These are Keith Parsons' canonical field thresholds (confirmed 2026-07-12), rendered from the app's single source of truth, `WifiGradingBands.kRssiBands` in `lib/services/network/wifi_grading.dart` — the very same list the Live-mode and Analyze verdict engines grade on, so the number the app shows can never drift from the number it grades. Minimum signal by application: VoIP/real-time, HD video, general browsing, email/basic data, IoT/low-rate, and location/RTLS, each with min RSSI, min SNR, and a note. SNR to MCS (80 MHz, 1 SS): the SNR floor for each MCS index (MCS 0 at 5 dB up to MCS 11 at 35 dB) with an indicative rate.
+- The RSSI scale is a convention, not physics (Keith: great connectivity happens at −75 dBm too); treat every value here as a field-planning guideline, not a guarantee. The application and SNR→MCS thresholds vary by client hardware, environment, and AP vendor.
 - The SNR→MCS rates are indicative (80 MHz, single stream); MCS 10/11 rates are noted as 802.11ax.
-- Data source: field-planning reference thresholds, not derived from a single named standard.
+- Provenance: the RSSI quality scale is Keith's reviewed canonical scale (source: `kRssiBands`). The application-minimum and SNR→MCS tables are field-planning reference values ported from the RF Tools PWA; they are widely-used working numbers, not reproduced from a single named standard.
 
 
 ### Spectrum Reference
@@ -1974,9 +1958,9 @@ The radio regulator that governs Wi-Fi in each market: name, official website, g
 3. Tap a regulator's website to confirm any value against the current rule text before relying on it.
 
 **Field notes**
-- What it shows: region-level (not per-country) FCC and ETSI rules for the Wi-Fi bands plus the ITU three-region note. Structural rules (band edges, DFS/TPC, power-class availability) are high confidence; the exact dBm figures are a snapshot.
+- What it shows: a per-jurisdiction directory of 43 jurisdictions, each with its regulator (name, abbreviation, logo), the governing regulation, official website, and a 2.4/5/6 GHz bands note. The structural rules (band edges, DFS/TPC, which power classes exist) are high confidence; the exact dBm figures are a dated snapshot to verify against the regulator.
 - Regulatory-volatility caveat: the 6 GHz dBm values are being amended (VLP extended band-wide, new geofenced classes). Never a settled constant: verify before deploying or certifying.
-- Data source / standard: cross-checked across FCC/ETSI documents and vendor regulatory white papers, as of 2026. Offline, read-only.
+- Provenance: the entries are compiled and cross-checked from official regulator documents and vendor regulatory white papers, current as of the on-screen snapshot date. Offline, read-only.
 
 
 ### Wi-Fi Standards Bodies
@@ -1995,12 +1979,12 @@ Who defines, certifies, and coordinates Wi-Fi and adjacent wireless: IEEE, the W
 - ETSI appears here as a standards body and also as the EU's referenced harmonizer on the Regulatory Domains page.
 - Data source: each body's official site (IEEE, Wi-Fi Alliance, WBA, ITU, IETF, 3GPP, Bluetooth SIG, CWNP, ETSI, Ecma, Wi-SUN, CSA, LoRa Alliance).
 
-## Cabling & Connectors (10)
+## Cabling & Connectors (9)
 
 
 ### Antenna Connectors
 
-An 18-connector practical reference for Wi-Fi antenna systems: each connector's full name, reverse-polarity variant, typical Wi-Fi use, indoor/outdoor fit, coupling mechanism, body size, RF signal path, impedance, frequency rating, mating compatibility, and field notes. Plus a polarity-explained diagram, an at-a-glance comparison table, enterprise vendor trends, a to-scale size comparison, and the top 6 a Wi-Fi engineer actually meets.
+A 19-connector practical reference for Wi-Fi antenna systems: each connector's full name, reverse-polarity variant, typical Wi-Fi use, indoor/outdoor fit, coupling mechanism, body size, RF signal path, impedance, frequency rating, mating compatibility, and field notes. Plus a polarity-explained diagram, an at-a-glance comparison table, enterprise vendor trends, a to-scale size comparison, and the top 6 a Wi-Fi engineer actually meets.
 
 **Why it's here.** When you are identifying or mating an antenna lead in the field. It answers the questions a tech actually asks: is this RP-SMA or SMA, will these two mate, does it cover 6 GHz, and which connector does this vendor ship.
 
@@ -2011,7 +1995,7 @@ An 18-connector practical reference for Wi-Fi antenna systems: each connector's 
 4. Below the table: a polarity-explained diagram, a Compare-at-a-glance table (connector, size, RF path, typical use) that scrolls sideways on a phone, enterprise vendor trends, the size order largest to smallest with a to-scale diagram, and the top 6 connectors most engineers meet.
 
 **Field notes**
-- The key field gotcha: every connector here is 50 ohm, and an RP connector will thread onto its standard counterpart but the center contacts will not connect.
+- The key field gotcha: nearly every connector here is 50 ohm — the one exception is F-Type, which is 75 ohm (a CATV connector folded in from the former RF Connectors reference and not used for Wi-Fi). An RP connector will thread onto its standard counterpart but the center contacts will not connect.
 - U.FL intermates with I-PEX MHF I (same footprint); the smaller MHF 4 does NOT mate with either.
 - DART is Cisco's Smart Antenna Connector, a proprietary multi-port interface that breaks out to RP-TNC, N-type or RP-N via Cisco adapter cables.
 - Size is the connector body width (across-flats for threaded parts, outer diameter for board-level parts): an approximate field-recognition aid, not a precision mechanical spec.
@@ -2034,7 +2018,7 @@ A coaxial cable reference: impedance, velocity factor, outer diameter, maximum u
 **Field notes**
 - What it shows: per cable (RG-58, RG-8/U, RG-213, RG-214, LMR-100A through LMR-1200, RG-6): impedance, velocity factor (%), diameter (mm), max frequency (GHz), and a typical-use note.
 - A footnote points to the Cable Loss tool for exact attenuation. Wi-Fi is a 50 Ω system, so the dimmed 75 Ω RG-6 is a mismatch. Max frequencies are typical maximums. Standard reference, not region-specific.
-- Data source: manufacturer and industry specification values for the named cable series.
+- Provenance: the figures are compiled from manufacturer datasheets and common industry specification values for the named cable series; they are widely-used working values, not reproduced from a single named standard.
 
 
 ### Ethernet Cable & Connector
@@ -2048,10 +2032,10 @@ The consolidated twisted-pair reference in one tool: the Cat5e-through-Cat8 capa
 2. T568 pinout: pick the standard (T568B is the default and most common). View is "plug face, clip down, pin 1 on the left." Striped wires show a split swatch (color over white), and the swatch colors are real copper-pair colors. T568A and T568B differ only in swapping the green and orange pairs.
 
 **Field notes**
-- Cat chart: per category (Cat5e, Cat6, Cat6A, Cat7, Cat7A, Cat8) it shows max bandwidth (MHz), max speed, distance at 1 Gbps, distance at 10 Gbps, PoE support, shielding, and a typical-use note. Cat7/Cat7A use non-standard plugs (the ISO/IEC Class-F caveat), so they are flagged "Specialty." Cells with no applicable value show "N/A".
+- Cat chart: per peer category (Cat5e, Cat6, Cat6A, Cat8) it shows max bandwidth (MHz), max speed, distance at 1 Gbps, distance at 10 Gbps, PoE support, shielding, and a typical-use note. Cat7 and Cat7A are deliberately NOT shown as peer rows — they are ISO/IEC Class F/FA (never ratified by TIA) and use GG45/TERA rather than RJ-45, so they live in a separate warning callout, not the chart. For 10G structured cabling, Cat6A is the TIA-recognized choice. Cells with no applicable value show "N/A".
 - PoE++ tip: bundled Cat6 running PoE++ generates significant heat; Cat6A dissipates it better, so TIA-568 recommends Cat6A for PoE++ in bundles.
 - Pinout: each standard's eight pin rows show the pin number, a wire-color swatch and name (e.g. "Orange / White"), the twisted-pair number (1 to 4), and the 100/1000 Base-T function (TX+, RX-, BI-D A+, etc.). A crossover cable uses T568A on one end and T568B on the other, rarely needed today since most switches/NICs auto-MDI-X.
-- Standard reference (TIA-568 / ISO 11801), not region-specific.
+- Reference basis: the TIA-568 / ISO 11801 category and pinout conventions (compiled to reflect those standards, not reproduced verbatim from them); not region-specific.
 
 
 ### Fiber Optic
@@ -2066,14 +2050,14 @@ Fiber types (OM1 to OM5, OS1/OS2) with core/cladding, modal bandwidth, jacket co
 3. Multimode (OM) lists modal bandwidth; singlemode (OS) shows "N/A" bandwidth but reaches 10+ to 80+ km.
 
 **Field notes**
-- What it shows: two sub-tables. Distance by data rate, per fiber type: core/cladding, modal bandwidth (MHz·km), and supported distance at 1G/10G/40G/100G. Jacket color code & notes, per fiber type: a jacket color swatch and name, and a deployment note.
+- What it shows: four headed blocks on one screen. Distance by data rate, per fiber type: core/cladding, modal bandwidth (MHz·km), and supported distance at 1G/10G/40G/100G. Jacket color code & notes, per fiber type: a jacket color swatch and name, and a deployment note. Then the Connectors block and the Polish & endface block (documented below as "Fiber Connectors & Polish" — the same screen, not a separate tool), plus a "Two color systems" explainer.
 - Footnote: distances are per TIA-568/ISO 11801; actual limits depend on transceiver, splice count, and connector loss. OM3/OM4 are the current deployment standards; OM1/OM2 are legacy (dimmed). OM5's wideband window note (~1,850 to 2,470 MHz·km near 953 nm) is preserved verbatim. Standard reference, not region-specific.
 - Standard: TIA-568 / ISO 11801 (cited in the footnote).
 
 
-### Fiber Connectors & Polish
+### Fiber Connectors & Polish (a section within the Fiber Optic tool)
 
-The fiber connector form factors (LC, SC, ST, FC, MPO/MTP) with ferrule size, coupling, and use, plus the three endface polishes (PC, UPC, APC) and the two separate color systems: cable jacket color and connector body color.
+This is not a separate catalog tile — it is the Connectors and Polish/endface portion of the Fiber Optic screen, documented on its own for clarity. The fiber connector form factors (LC, SC, ST, FC, MPO/MTP) with ferrule size, coupling, and use, plus the three endface polishes (PC, UPC, APC) and the two separate color systems: cable jacket color and connector body color.
 
 **Why it's here.** When you are identifying, specifying, or mating a fiber connector and need to answer the questions that actually cost time in the field: is this LC or SC, will an APC mate a UPC, why is one connector green and another blue, and is that aqua jacket OM3 or OM4. The two single biggest field errors live here: mating APC to UPC, and reading the OM4 jacket color wrong.
 
@@ -2212,7 +2196,7 @@ The 19-inch rack standard in field terms: the U-to-inches-to-millimeters convers
 **Why it's here.** When you are mounting an Access Point controller, switch, or patch panel and need to confirm a height in U, lay out the irregular hole pattern, or carry the right screws. Two things trip installers: the vertical holes are not evenly spaced, and not every rack is tapped. The "19-inch" label describes only the front panel; nothing inside the rack is 19 inches.
 
 **How to use**
-1. Use the U conversion table to translate a device's height in U to inches or millimeters. The page computes any U live: inches = U x 1.75, mm = U x 44.45. These are exact; do not round a per-U millimeter constant.
+1. Use the U conversion table to translate a device's height in U to inches or millimeters. The table is a fixed reference of common U heights (it does not compute an arbitrary U live); the exact formula (inches = U x 1.75, mm = U x 44.45) is printed as a caption. The values are exact by definition; do not round a per-U millimeter constant.
 2. Read the EIA-310 hole-pattern note before laying out a multi-U faceplate, because the holes repeat in groups of three at uneven spacing.
 3. Check the thread-type table and confirm the rack's hole type (tapped, square-hole for cage nuts, or unthreaded) before install day, then pack the matching screws or cage nuts.
 
@@ -2222,14 +2206,17 @@ The 19-inch rack standard in field terms: the U-to-inches-to-millimeters convers
 |---|---|---|---|
 | 1U | 1.75 | 44.45 | base unit |
 | 2U | 3.50 | 88.90 | |
+| 3U | 5.25 | 133.35 | |
 | 4U | 7.00 | 177.80 | |
+| 6U | 10.50 | 266.70 | small wall-mount |
+| 8U | 14.00 | 355.60 | |
 | 12U | 21.00 | 533.40 | common wall / half-height |
 | 24U | 42.00 | 1066.80 | half-rack |
-| 42U | 73.50 | 1866.90 | standard full rack (about 6 ft of rail) |
+| 42U | 73.50 | 1866.90 | standard full rack |
 | 45U | 78.75 | 2000.25 | taller data-center cabinet |
 | 48U | 84.00 | 2133.60 | extra-tall cabinet |
 
-1U = 1.75 in = 44.45 mm by definition (EIA-310-D / IEC 60297), a fixed value, not a measured one. 42U is the de-facto full rack; 45U is a real but less universal tall variant.
+1U = 1.75 in = 44.45 mm by definition (EIA-310-D / IEC 60297), a fixed value, not a measured one. 42U is the standard full rack (about 6 ft of rail); 45U and 48U are taller data-center variants. This is the exact set of eleven rows the screen shows.
 
 **EIA-310 vertical hole pattern.** The mounting holes are NOT evenly spaced. Within each 1.75 in U, three holes repeat at 0.5 in, then 0.625 in, then 0.625 in (which sums to 1.75 in), then repeat. The U boundary falls in the middle of the 0.5 in gap. A correctly designed 1U faceplate uses the outer two holes of its group of three. Count holes wrong by one and the panel binds; multi-U gear with evenly spaced holes will not line up. In millimeters, 0.5 in = 12.70 mm and 0.625 in = 15.88 mm.
 
@@ -2251,7 +2238,7 @@ Rails come in three types. Tapped (threaded round holes) take a screw straight i
 - The #1 first-install mistake is assuming the rack is tapped. Many modern racks ship as bare square holes with no cage nuts included. Show up without cage nuts and you cannot mount anything; confirm the hole type before install day.
 - "19-inch" describes only the front panel width. The opening is about 17.72 in and the hole spacing is 18.312 in.
 - The 10-32 versus 12-24 mix-up is the most damaging hardware error: the two are visually near-identical and cross-thread and strip if forced. When in doubt, use a square-hole rack plus the right cage nut.
-- U is height only. A 1U switch and a 1U server can have very different depths, so depth is a separate, independent check. Most network gear is shallow, so a 600 mm cabinet usually fits, but usable rail-to-rail depth runs roughly 100 to 150 mm less than the cabinet's external depth (lost to doors, hinges, rear panel, and cable bend radius). Check usable depth against your deepest device with cables attached.
+- U is height only. A 1U switch and a 1U server can have very different depths, so depth is a separate, independent check. Most network gear is shallow, so a 600 mm cabinet usually fits, but usable rail-to-rail depth is always less than the cabinet's external depth (lost to doors, hinges, rear panel, and cable bend radius). Check usable rail-to-rail depth against your deepest device with cables attached.
 - Dimensional claims are triangulated across multiple independent sources that agree; the defined values (1.75 in, 44.45 mm, the hole pattern) are uncontested. The paywalled EIA-310-D and IEC 60297 standard texts were not read clause by clause.
 
 _Sources: EIA-310-D, IEC 60297 (NavePoint, AudioRax, RackSolutions corroboration)._
@@ -2275,7 +2262,6 @@ The drive faces a network or Access Point installer actually meets on enclosures
 | Slotted | blade matched to slot width | terminal blocks, grounding lugs, legacy brackets |
 | Phillips (PH) | PH1, PH2 | indoor AP covers, bracket screws, rack cage nuts |
 | Pozidriv (PZ) | PZ1, PZ2 | EU enclosures, DIN-rail gear, PDUs, EU mount kits |
-| Combo (slotted/Pozi) | PZ2 or flat | electrical enclosures, "electrician's screws" |
 | Hex (metric) | 2.5 to 6 mm | antenna/pole mount set screws, bracket joints |
 | Hex (imperial) | 3/32 in to 1/4 in | US-sourced mounts, rack hardware |
 | Torx | T10, T15, T20, T25 | enclosures, rack ears, outdoor AP housings |
@@ -2295,9 +2281,8 @@ The drive faces a network or Access Point installer actually meets on enclosures
 - Phillips versus Pozidriv, the distinction that saves heads: a Pozidriv head has four shallow radial tick marks set at 45 degrees between the cross arms (a faint starburst); a Phillips head is a clean cross with no tick marks. Extra 45 degree tick lines means Pozidriv, use a PZ bit; clean cross means Phillips, use a PH bit. They are not interchangeable, and the wrong bit cams out and strips the head. Pozidriv is the European "electrician's screw" standard, common on enclosures and EU-sourced mounting kits.
 - MYTH: "Phillips was designed to cam out to prevent over-torquing." False. The original 1933 patent explicitly sought a recess with no tendency to cam out. Cam-out is a byproduct of the angled, tapered walls, not a design goal.
 - Say T-numbers, not "star." "Star bit" is a lay term that spans 6-point Torx, 5-point pentalobe, and security variants, which are different drives. Specify the T-number (for example T20) to avoid the mismatch.
-- Torx Plus (the IP series) has squarer lobes for higher torque. A standard Torx driver fits a Torx Plus screw loosely and degraded, but a Torx Plus driver will not fit a standard Torx screw. It is rare on network gear; the note exists to prevent a forced mismatch.
-- Hex keys come in metric (mm) and imperial (inch/fractional) series, and they are not cross-compatible; a 5 mm key is loose in a 3/16 in socket. Carry both.
-- Robertson color-coding (yellow #0, green #1, red #2, black #3) is a genuine trade and manufacturer convention, not an ISO standard. The square socket's slight taper grips the bit so the screw hangs on the tip one-handed, a real advantage on overhead ceiling work.
+- Hex keys come in metric (mm) and imperial (inch/fractional) series, and they are not cross-compatible; carry both.
+- Robertson color coding (the screen shows #1 green and #2 red, the two you meet most) is a genuine Robertson / trade-supplier convention, not an ISO standard. The square socket's slight taper grips the bit so the screw hangs on the tip one-handed, a real advantage on overhead ceiling work.
 - Pack tamper bits before the job, not at the site. Security drives exist specifically so a standard bit will not work; if you did not pack the matching bit, you do not open the enclosure. A consolidated set (security Torx T10H to T40H plus pin-hex, tri-wing, and spanner) covers the vast majority of what an installer meets.
 - The governing standards are confirmed by number (ISO 8764 for cross-recess/Pozidriv, ISO 10664 for Torx/hexalobular, ISO 4762 for hex socket cap screws, ISO 2380 for slotted), but the clause-level tip dimensions behind the paid ISO documents were not quoted.
 
@@ -2313,14 +2298,14 @@ The frame-by-frame 802.11 association and roaming sequences, showing the order a
 **Why it's here.** When analyzing a capture or explaining an association/roam, confirm what frame should come next and which entities exchange it.
 
 **How to use**
-1. Pick a scenario (Open / WPA2-PSK, WPA3-SAE, WPA2-Enterprise (802.1X/EAP), 802.11r Roam); read the phases top to bottom.
+1. Pick a scenario (Open / WPA2-PSK, WPA3-SAE, OWE / Enhanced Open, Passpoint / Hotspot 2.0, WPA2-Enterprise (802.1X/EAP), 802.11r Roam); read the phases top to bottom.
 2. Each frame carries a neutral type code: MGMT (management frame), EAP (EAP / EAPOL key), WIRED (RADIUS/DHCP over the wire), DHCP.
 3. The legend at the bottom expands each code. Type is carried by the text code, not by color.
 
 **Field notes**
-- What it shows: a scenario selector with four scenarios. Each scenario is broken into named phases (e.g. Probe & Auth, Association, 4-Way Handshake, EAP Authentication, DHCP); each frame shows a step number, direction, frame name, a frame-type code, and an explanatory note.
+- What it shows: a scenario selector with six scenarios (Open / WPA2-PSK, WPA3-SAE, OWE / Enhanced Open, Passpoint / Hotspot 2.0, WPA2-Enterprise 802.1X/EAP, and 802.11r FT roam). Each scenario is broken into named phases (e.g. Probe & Auth, Association, 4-Way Handshake, EAP Authentication, DHCP); each frame shows a step number, direction, frame name, a frame-type code, and an explanatory note.
 - These are representative sequences, not exhaustive; optional/passive-scan paths and EAP-method round-trips are summarized (e.g. the WPA3 DHCP phase is shown as one combined Discover/Offer/Request/Ack line "identical to WPA2 flow").
-- Data source: IEEE 802.11 association/handshake behavior. Reflects the real frame exchanges (e.g. SAE Dragonfly commit/confirm for WPA3, the 4-way handshake, 802.1X/EAP over RADIUS, 802.11r FT over-the-air). Standard reference, not region-specific.
+- Provenance: the frame sequences are ported from the RF Tools PWA (FX_SCENARIOS) and represent the real 802.11 exchanges (SAE Dragonfly commit/confirm for WPA3, the 4-way handshake, 802.1X/EAP over RADIUS, 802.11r FT over-the-air). They are representative teaching sequences, not reproduced clause-by-clause from the standard. Not region-specific.
 
 
 ### 802.11 Reason Codes
@@ -2337,7 +2322,7 @@ The 802.11 deauthentication/disassociation reason codes (RC) and association sta
 **Field notes**
 - What it shows: reason codes grouped by theme: Common (1 to 9), Capability/Channel mismatch (10 to 11), Security frame/element errors (13 to 14, 17 to 22, 24), Security handshake failures (15, 16, 23), QoS/load management (34 to 39), Fast Roaming/802.11r (45 to 48). Plus a separate Association Status Codes group (the most-common subset, 0 to 104), where code 0 ("Successful") is highlighted in green.
 - The status-code list is the "most common" subset, not the full table.
-- Codes and meanings are reproduced verbatim from the standard; nothing invented.
+- The code numbers and their meanings follow the IEEE 802.11 reason/status code definitions; nothing is invented.
 - Data source / standard: IEEE 802.11-2020 §9.4.1.7 (reason codes) and §9.4.1.9 (status codes), cited in the footnote.
 
 
@@ -2425,25 +2410,25 @@ A curated reference to the DNS top-level domains a network or IT pro actually me
 
 **Field notes**
 - Curated, not exhaustive: the live root zone has roughly 1,500 generic TLDs and about 250 country-code TLDs. This lists the meaningful, field-relevant set.
-- Accuracy: .io (British Indian Ocean Territory), .ai (Anguilla), .co (Colombia), .tv and .me are technically country-code TLDs commonly used generically. They are NOT true generic TLDs, and the notes say so.
+- Accuracy: .io (British Indian Ocean Territory), .ai (Anguilla), and .co (Colombia) are technically country-code TLDs commonly used generically. They are NOT true generic TLDs, and the per-entry notes say so.
 - Data source / standard: the IANA Root Zone Database for registry classification and sponsoring organizations; ICANN for new-gTLD program facts.
 
 
 ### Well-Known Ports
 
-Searchable, offline reference of 86 curated TCP/UDP ports a network or Wi-Fi pro meets in the field. Search by port number or by service-name / description substring.
+Searchable, offline reference of 89 curated TCP/UDP ports a network or Wi-Fi pro meets in the field. Search by port number or by service-name / description substring.
 
 **Why it's here.** At a packet capture or writing a firewall rule, you ask two questions: "what runs on port N?" and "what port does service X use?" This answers both without leaving the app or going online.
 
 **How to use**
 1. Type a port number (e.g. 443) for an exact-port lookup, or a service name / keyword (e.g. radius, dns, vpn) for a case-insensitive substring match against both the service name and the description.
-2. An empty search box lists all 86 curated ports, sorted ascending by port number.
+2. An empty search box lists all 89 curated ports, sorted ascending by port number.
 3. Each result shows the service name, the port number with its protocol label (TCP, UDP, or both), and a one-line description.
 4. A query that matches nothing shows an honest "No match" card; it never fabricates a port.
 
 **Field notes**
-- What it contains: 86 curated entries spanning ports 1 to 27017 (e.g. 53 dns TCP/UDP, 67 dhcp UDP, 123 ntp UDP, 443 https TCP/UDP where UDP/443 carries HTTP/3 QUIC, 1812 radius UDP and 1813 radius-acct UDP for 802.1X / WPA2-Enterprise, 3389 rdp). Each entry: port number, protocol(s), short service name, one-line description.
-- Protocols in the table are TCP and/or UDP only (no SCTP entries present, though the schema supports it). Combinations: 38 TCP-only, 26 UDP-only, 22 TCP+UDP.
+- What it contains: 89 curated entries spanning ports 1 to 27017 (e.g. 53 dns TCP/UDP, 67 dhcp UDP, 123 ntp UDP, 443 https TCP/UDP where UDP/443 carries HTTP/3 QUIC, 1812 radius UDP and 1813 radius-acct UDP for 802.1X / WPA2-Enterprise, 3389 rdp). Each entry: port number, protocol(s), short service name, one-line description.
+- Protocols in the table are TCP and/or UDP only (no SCTP entries present, though the schema supports it). Combinations: 38 TCP-only, 28 UDP-only, 23 TCP+UDP.
 - This is a curated subset of the IANA Service Name and Transport Protocol Port Number Registry, trimmed to field-relevant ports, not the full ~49,000-entry registry. Absence means "not in our curated set," which the screen states plainly rather than inventing a row.
 - Fully offline: the table is a bundled asset loaded and indexed once at startup; numeric lookups are instant via a port index. Works on every platform.
 

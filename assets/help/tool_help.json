@@ -1355,6 +1355,25 @@
       ],
       "source": "Values come from the US (FCC) regulatory domain."
     },
+    "capacity-planner": {
+      "name": "Capacity Planner",
+      "category": "Calculators & Tools",
+      "purpose": "An informational statement, not a calculator: it explains why Wi-Fi capacity planning cannot honestly be reduced to a few input boxes and a confident AP count.",
+      "whyHere": "The tool that used to live here returned an AP-count from a single formula. Keith retired that math because one formula cannot honor the variables that actually drive capacity. This screen replaces the false precision with an honest explanation and points you to a real plan.",
+      "howToUse": [
+        "There is nothing to enter. Read the statement: capacity planning is a design problem, not a calculation.",
+        "For a plan you can trust, bring in a Wi-Fi professional experienced in your kind of environment; a real plan comes from measuring and modeling your specific space and usage."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "This is a read-only disclaimer screen: no inputs, no math, no copyable result. The tile, the /tools/capacity-planner route, and the \"Capacity Planner\" title are kept so the tile still resolves where users expect.",
+        "Real Wi-Fi capacity depends on the applications in use and their airtime cost, client device capabilities and roaming, AP and antenna selection, channel reuse and co-channel interference, band steering, airtime fairness, QoS, and how people move through the space. Change any one and the answer changes.",
+        "A confidently-wrong number is worse than no number (GL-005 / the truthfulness-audit doctrine), which is why the calculator was removed rather than kept with a caveat."
+      ],
+      "source": "Verbatim from Keith's approved disclaimer copy; no external data source (the screen performs no calculation)."
+    },
     "mcs-index": {
       "name": "MCS Index",
       "category": "Quick Reference",
@@ -1440,7 +1459,7 @@
         "What it shows: one card per amendment with the IEEE designation, a Wi-Fi generation badge, year, and rows for Bands (GHz), Max PHY rate, MIMO, Channel width (MHz), and Modulation. An optional band filter (All / 2.4 / 5 / 6 GHz) narrows the list.",
         "Two footnotes: (1) \"Official Wi-Fi Alliance generation naming begins at Wi-Fi 4 (802.11n); earlier amendments are shown by their 802.11 names only\"; (2) \"Wi-Fi 7 certification began 2024; IEEE 802.11be was published 2025.\"",
         "The max PHY rate is the theoretical aggregate ceiling; real-world throughput is typically 50 to 60% of it.",
-        "Data source: the IEEE 802.11 amendments. Key rows: 802.11ac = Wi-Fi 5 (2013, 6.9 Gbps); 802.11ax = Wi-Fi 6 (2019) and Wi-Fi 6E (2021, adds 6 GHz); 802.11be = Wi-Fi 7 (2024, 23.1 Gbps with MLO, 4K-QAM, up to 320 MHz)."
+        "Data source: the IEEE 802.11 amendments. Key rows: 802.11ac = Wi-Fi 5 (2014, 6.9 Gbps); 802.11ax = Wi-Fi 6 (2019) and Wi-Fi 6E (2020, adds 6 GHz); 802.11be = Wi-Fi 7 (2024, 23.1 Gbps with MLO, 4K-QAM, up to 320 MHz)."
       ],
       "source": "Values come from the IEEE 802.11 amendments."
     },
@@ -1625,7 +1644,7 @@
       "example": null,
       "fieldNotes": [
         "Consolidated 2026-06-12 from the former Ethernet Cable, Ethernet Pinout, and Cable & Connector tiles into this single tool.",
-        "Cable chart: for each category (Cat5e, Cat6, Cat6A, Cat7, Cat7A, Cat8): maximum bandwidth (MHz), top speed, distance at 1 Gbps and 10 Gbps, PoE support, shielding, and a typical-use note. Plus a BASE-T speed-grade table (1G/2.5G/5G/10G) and an ISO/IEC 11801 shielding-code key.",
+        "Cable chart: for each peer category (Cat5e, Cat6, Cat6A, Cat8): maximum bandwidth (MHz), top speed, distance at 1 Gbps and 10 Gbps, PoE support, shielding, and a typical-use note. Plus a BASE-T speed-grade table (1G/2.5G/5G/10G) and an ISO/IEC 11801 shielding-code key.",
         "Cat 7 is not a TIA standard. TIA never ratified Category 7; it exists only as ISO/IEC Class F (Cat 7A as Class FA) and uses GG45 / TERA connectors rather than the usual RJ-45. For 10G structured cabling, Cat 6A is the TIA-recognized choice. A warning callout flags this.",
         "PoE++ tip: bundled Cat6 running PoE++ builds up significant heat; Cat6A sheds it better, and TIA-568 recommends Cat6A for PoE++ in bundles.",
         "Pinout: each standard's eight pin rows show the pin number, a wire-color swatch and its name (for example \"Orange / White\"), the twisted-pair number (1 to 4), and the 100/1000 Base-T function. Only pairs 2 and 3 (orange and green) differ between T568A and T568B; a crossover cable uses A on one end and B on the other, rarely needed today since most switches and network cards auto-adjust.",
@@ -2846,7 +2865,7 @@
     "port-reference": {
       "name": "Well-Known Ports",
       "category": "Quick Reference",
-      "purpose": "A searchable, offline reference of 86 hand-picked TCP/UDP ports a network or Wi-Fi pro runs into in the field. Search by port number or by part of a service name or description.",
+      "purpose": "A searchable, offline reference of 89 hand-picked TCP/UDP ports a network or Wi-Fi pro runs into in the field. Search by port number or by part of a service name or description.",
       "whyHere": "At a packet capture or writing a firewall rule, you ask two questions: what runs on port N, and what port does service X use. This answers both without leaving the app or going online.",
       "howToUse": [
         "Type a port number (for example, 443) for an exact-port lookup, or a service name or keyword (for example, radius, dns, vpn) to match against both the service name and the description, ignoring case.",
@@ -2858,8 +2877,8 @@
       "algorithm": null,
       "example": null,
       "fieldNotes": [
-        "What's inside: 86 hand-picked entries spanning ports 1 to 27017 (for example, 53 dns TCP/UDP, 67 dhcp UDP, 123 ntp UDP, 443 https TCP/UDP where UDP 443 carries HTTP/3 QUIC, 1812 radius UDP and 1813 radius-acct UDP for 802.1X / WPA2-Enterprise, and 3389 rdp). Each entry has the port number, its protocol(s), a short service name, and a one-line description.",
-        "The table lists TCP and UDP only: 38 are TCP-only, 26 UDP-only, and 22 both.",
+        "What's inside: 89 hand-picked entries spanning ports 1 to 27017 (for example, 53 dns TCP/UDP, 67 dhcp UDP, 123 ntp UDP, 443 https TCP/UDP where UDP 443 carries HTTP/3 QUIC, 1812 radius UDP and 1813 radius-acct UDP for 802.1X / WPA2-Enterprise, and 3389 rdp). Each entry has the port number, its protocol(s), a short service name, and a one-line description.",
+        "The table lists TCP and UDP only: 38 are TCP-only, 28 UDP-only, and 23 both.",
         "This is a curated subset of the official IANA port registry, trimmed to the ports you actually meet in the field, not the full list of roughly 49,000 entries. If a port isn't here, it just means it's not in our set, and the screen says so plainly rather than inventing a row.",
         "Fully offline: the list is carried inside the app and works on every platform.",
         "Bad or incomplete entries are simply left out rather than shown as blanks."
@@ -3427,7 +3446,7 @@
     "regulatory-domains": {
       "name": "Regulatory Domains",
       "category": "Quick Reference",
-      "purpose": "The radio regulator that governs Wi-Fi in each market: its name, official website, governing documents, and 2.4, 5, and 6 GHz band and power notes for 43 jurisdictions, as a dated snapshot.",
+      "purpose": "The radio regulator that governs Wi-Fi in each market: its name, official website, governing documents, and 2.4, 5, and 6 GHz bands (a dated snapshot to verify against the regulator) for 43 jurisdictions.",
       "whyHere": "Working a market you do not know? Find its regulator, the governing rule, and a starting band and power note, then confirm against the official site.",
       "howToUse": [
         "Search by jurisdiction or regulator abbreviation. Shared abbreviations (NCC, TRA, CRA) include the jurisdiction so they stay clear.",
@@ -3438,7 +3457,7 @@
       "algorithm": null,
       "example": null,
       "fieldNotes": [
-        "What it shows: region-level (not per-country) FCC and ETSI rules for the Wi-Fi bands, plus the ITU three-region note. The structural rules (band edges, DFS/TPC, which power classes exist) are high confidence; the exact dBm figures are a snapshot.",
+        "What it shows: a per-jurisdiction directory of 43 jurisdictions, each with its regulator (name, abbreviation, logo), the governing regulation, official website, and a 2.4/5/6 GHz bands note. The structural rules (band edges, DFS/TPC, which power classes exist) are high confidence; the exact dBm figures are a snapshot to verify against the regulator.",
         "Regulations change: the 6 GHz dBm values are being amended (VLP extended band-wide, new geofenced classes). Never treat these as settled constants. Verify before deploying or certifying.",
         "Cross-checked across FCC and ETSI documents and vendor regulatory white papers, current as of 2026. Works fully offline."
       ],

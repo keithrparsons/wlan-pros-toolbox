@@ -276,7 +276,14 @@ void main() {
       // AP Placement retired 2026-07-07 (Keith's call): 175 − 1 = 174.
       // The WLAN Pi Orb-sensor how-to removed 2026-07-12 (Orb redistribution
       // declined by the vendor; SDK integration deferred): 174 − 1 = 173.
-      expect(store.count, 173);
+      // 174 = + the capacity-planner help entry, RE-ADDED 2026-07-12 (Field
+      // Manual remediation, FIELD-MANUAL-REMEDIATION-SPEC). It had been removed
+      // at BF5-13 when the tool became a read-only disclaimer, but the placeholder
+      // screen still renders ToolHelpFooter(toolId: 'capacity-planner'), so
+      // tapping help opened a silently-empty sheet. The re-added entry is a
+      // minimal HONEST disclaimer (not a calculator), matching the screen.
+      // 173 + 1 = 174.
+      expect(store.count, 174);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help
