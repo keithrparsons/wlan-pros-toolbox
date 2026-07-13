@@ -184,9 +184,9 @@
       "size": "~2.0 mm outer diameter",
       "rf_path": "Single coax (1 RF path)",
       "impedance": "50 ohm",
-      "frequency": "0 to 6 GHz (typical)",
+      "frequency": "0 to ~6 GHz (Hirose typical)",
       "mating": "Intermateable with I-PEX MHF I (MHF1), AMC and UMCC (same 3.0x3.1 mm footprint, 2.0 mm OD). NOT compatible with the smaller MHF 4.",
-      "notes": "Extremely common inside laptops and APs. Rated for limited mating cycles; intended as a near-permanent internal connection."
+      "notes": "Extremely common inside laptops and APs. Rated for limited mating cycles; intended as a near-permanent internal connection. Hirose rates U.FL to ~6 GHz; the intermateable I-PEX MHF I is rated higher (12 GHz), so a mixed U.FL / MHF-I mated pair is bounded by the lower ~6 GHz ceiling."
     },
     {
       "id": "ipex-mhf1",
@@ -200,9 +200,9 @@
       "size": "~2.0 mm outer diameter",
       "rf_path": "Single coax (1 RF path)",
       "impedance": "50 ohm",
-      "frequency": "Up to 12 GHz",
+      "frequency": "Up to 12 GHz (I-PEX rating)",
       "mating": "Intermateable with U.FL / AMC / UMCC (same footprint). NOT compatible with MHF 4.",
-      "notes": "I-PEX's U.FL-equivalent. MHF stands for 'micro high frequency' (I-PEX trademark). Footprint 3.0x3.1 mm, 2.0 mm male OD."
+      "notes": "I-PEX's U.FL-equivalent. MHF stands for 'micro high frequency' (I-PEX trademark). Footprint 3.0x3.1 mm, 2.0 mm male OD. I-PEX rates MHF I to 12 GHz on its own; mated with a ~6 GHz-rated U.FL, the pair is bounded by the U.FL ceiling (~6 GHz)."
     },
     {
       "id": "ipex-mhf4",

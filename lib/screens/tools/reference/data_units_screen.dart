@@ -189,7 +189,11 @@ class DataUnitsScreen extends StatelessWidget {
       'a bit-rate by 8 for theoretical byte throughput - 100 Mbps / 8 = '
       '12.5 MB/s (before overhead). Reading "Mbps" as "MB/s" produces an 8x '
       'error. A drive sold as "1 TB" = 1,000,000,000,000 bytes (SI), but an OS '
-      'reporting in binary shows ~931 GiB - the 7.37% TB/TiB gap is why a '
+      // Label fix (Wave-2 finding C): the 1000->931 illusion is the GB/GiB
+      // division step (7.37%), not TB/TiB (which is 9.95% per this screen's own
+      // ladder). The OS divides bytes by 2^30 = GiB, so the gap that shows is
+      // the GB/GiB one. Value 7.37% was correct; only the label was wrong.
+      'reporting in binary shows ~931 GiB - the 7.37% GB/GiB gap is why a '
       '"1 TB" drive appears to lose capacity on screen.';
 
   static const String _intro =

@@ -60,7 +60,10 @@ class StandardEntry {
   /// Wi-Fi Alliance generation name.
   final String generation;
 
-  /// Ratification year.
+  /// Year shown in the table. Keith's decision (Wave-2, findings A+F): for the
+  /// generation rows (Wi-Fi 4+) this is the Wi-Fi Alliance CERTIFICATION year,
+  /// applied consistently, with IEEE ratification given in [ieeeRatFootnote].
+  /// The pre-generation amendments (802.11 / b / a / g) carry their IEEE year.
   final int year;
 
   /// Operating bands in GHz, e.g. `2.4 / 5 / 6`.
@@ -151,7 +154,10 @@ class StandardsScreen extends StatefulWidget {
     StandardEntry(
       std: '802.11ac',
       generation: 'Wi-Fi 5',
-      year: 2013,
+      // 2014 = Wi-Fi Alliance Wi-Fi CERTIFIED ac launch. IEEE 802.11ac ratified
+      // 2013 (see ieeeRatFootnote). WFA cert year applied consistently per
+      // Keith's Wave-2 decision.
+      year: 2014,
       bands: '5',
       maxRate: '6.9 Gbps',
       mimo: '8×8 (DL MU-MIMO)',
@@ -161,6 +167,8 @@ class StandardsScreen extends StatefulWidget {
     StandardEntry(
       std: '802.11ax',
       generation: 'Wi-Fi 6',
+      // 2019 = Wi-Fi Alliance Wi-Fi 6 cert launch. IEEE 802.11ax ratified 2021
+      // (see ieeeRatFootnote). Same amendment as the Wi-Fi 6E row below.
       year: 2019,
       bands: '2.4 / 5',
       maxRate: '9.6 Gbps',
@@ -171,7 +179,10 @@ class StandardsScreen extends StatefulWidget {
     StandardEntry(
       std: '802.11ax',
       generation: 'Wi-Fi 6E',
-      year: 2021,
+      // 2020 = Wi-Fi Alliance Wi-Fi 6E announcement / FCC 6 GHz opening (Keith's
+      // Wave-2 decision: Wi-Fi 6E = 2020). Same 802.11ax amendment (IEEE
+      // ratified 2021) as the Wi-Fi 6 row, extended to the 6 GHz band.
+      year: 2020,
       bands: '2.4 / 5 / 6',
       maxRate: '9.6 Gbps',
       mimo: '8×8 MU-MIMO',
@@ -195,6 +206,22 @@ class StandardsScreen extends StatefulWidget {
     ),
   ];
 
+  /// Footnote — the early amendments predate official WFA generation branding.
+  static const String namingFootnote =
+      'Official Wi-Fi Alliance generation naming begins at Wi-Fi 4 (802.11n); '
+      'earlier amendments are shown by their 802.11 names only.';
+
+  /// Footnote — the Year column is the Wi-Fi Alliance certification year; the
+  /// IEEE amendment ratification year differs for several generations. Keith's
+  /// Wave-2 decision (findings A+F): use WFA cert years consistently, footnote
+  /// the IEEE dates. Public so a test can pin the on-screen citation to the
+  /// values it justifies (audit-wave-2 rule 2: cite and pin together).
+  static const String ieeeRatFootnote =
+      'Year = Wi-Fi Alliance certification launch. IEEE ratification differs: '
+      '802.11ac ratified 2013 (Wi-Fi 5 certified 2014); 802.11ax ratified 2021 '
+      '(Wi-Fi 6 certified 2019, Wi-Fi 6E 2020); 802.11be approved 2024, '
+      'published 2025 (Wi-Fi 7 certified 2024).';
+
   @override
   State<StandardsScreen> createState() => _StandardsScreenState();
 }
@@ -204,15 +231,6 @@ enum _BandFilter { all, band24, band5, band6 }
 
 class _StandardsScreenState extends State<StandardsScreen> {
   _BandFilter _filter = _BandFilter.all;
-
-  /// Footnote — the early amendments predate official WFA generation branding.
-  static const String namingFootnote =
-      'Official Wi-Fi Alliance generation naming begins at Wi-Fi 4 (802.11n); '
-      'earlier amendments are shown by their 802.11 names only.';
-
-  /// Footnote — the Wi-Fi 7 cert year and the IEEE publication year differ.
-  static const String wifi7Footnote =
-      'Wi-Fi 7 certification began 2024; IEEE 802.11be was published 2025.';
 
   static const List<AppSelectItem<_BandFilter>> _filterItems =
       <AppSelectItem<_BandFilter>>[
@@ -292,8 +310,8 @@ class _StandardsScreenState extends State<StandardsScreen> {
     }
     buf
       ..writeln()
-      ..writeln(namingFootnote)
-      ..writeln(wifi7Footnote);
+      ..writeln(StandardsScreen.namingFootnote)
+      ..writeln(StandardsScreen.ieeeRatFootnote);
     return buf.toString().trimRight();
   }
 
@@ -378,12 +396,12 @@ class _StandardsScreenState extends State<StandardsScreen> {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            namingFootnote,
+            StandardsScreen.namingFootnote,
             style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: 2),
           Text(
-            wifi7Footnote,
+            StandardsScreen.ieeeRatFootnote,
             style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
         ],

@@ -470,7 +470,10 @@ class _RegulatorRowState extends State<_RegulatorRow> {
             ),
             const SizedBox(height: AppSpacing.xs),
             _LabeledBlock(
-              label: 'Bands and power (verify)',
+              // "Bands" not "Bands and power" (Wave-2 finding D / Keith's
+              // decision): only 2 of 43 rows carry numeric power, so the "and
+              // power" label wrote a check the rows did not cash.
+              label: 'Bands (verify)',
               value: d.bandNotes,
             ),
             const SizedBox(height: AppSpacing.sm),

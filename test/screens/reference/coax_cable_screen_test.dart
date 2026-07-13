@@ -1,10 +1,14 @@
 // Tests for the Coax Cable reference screen.
 //
-// The dataset is ported verbatim from the RF Tools PWA (app.js COAX_DATA,
-// view data-tool="coax"). These tests assert the load-bearing anchor rows so a
-// future edit cannot silently drift a value away from the PWA, plus one phone-
-// viewport widget test (see test/widget_test.dart _withViewport) confirming the
-// read-only screen renders without a RenderFlex overflow.
+// The dataset originated as a verbatim port of the RF Tools PWA (app.js
+// COAX_DATA). Wave-2 (2026-07-12, finding E) replaced the PWA's placeholder
+// maxGhz column — a distributor "max operating frequency" catalog cap the PWA
+// had copied and rounded to a uniform 6.0 GHz — with the true TE11 mode-cutoff
+// (physics maximum) per L-com published datasheet cutoff rows / the validated
+// computation. The LMR-100A velocity factor was also corrected 80 -> 66% per
+// the Times/Pasternack datasheet. These tests pin the corrected values so a
+// future edit cannot silently drift them, plus one phone-viewport widget test
+// confirming the read-only screen renders without a RenderFlex overflow.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,7 +16,7 @@ import 'package:wlan_pros_toolbox/screens/tools/reference/coax_cable_screen.dart
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
 void main() {
-  group('coax data — match PWA app.js COAX_DATA', () {
+  group('coax data — physics-cutoff maxGhz (Wave-2 finding E)', () {
     CoaxCable cableFor(String name) =>
         CoaxCableScreen.coaxData.firstWhere((CoaxCable c) => c.name == name);
 
@@ -20,12 +24,14 @@ void main() {
       expect(CoaxCableScreen.coaxData.length, 11);
     });
 
-    test('LMR-400 is the standard Wi-Fi run: 50Ω, VF 85, 10.8 mm, 6 GHz', () {
+    test('LMR-400 is the standard Wi-Fi run: 50Ω, VF 85, 10.8 mm, 16.2 GHz', () {
+      // maxGhz = 16.2 GHz TE11 cutoff (L-com LMR-400 datasheet published cutoff;
+      // was a placeholder 6.0). Finding E §2.2/§2.3.
       final CoaxCable c = cableFor('LMR-400');
       expect(c.impedance, '50Ω');
       expect(c.vf, 85);
       expect(c.diameterMm, 10.8);
-      expect(c.maxGhz, 6.0);
+      expect(c.maxGhz, 16.2);
       expect(c.use, 'Standard Wi-Fi / cellular run');
     });
 
@@ -37,10 +43,43 @@ void main() {
       expect(c.maxGhz, 1.0);
     });
 
-    test('LMR-1200 is the widest Wi-Fi cable: VF 88, 30 mm', () {
+    test('LMR-1200 safety fix: cutoff 5.2 GHz (below 6 GHz Wi-Fi), VF 88', () {
+      // THE danger cell: the PWA showed 6.0 GHz, overstating a cable whose TE11
+      // mode cutoff is 5.2 GHz. Finding E §2.3/§2.4.
       final CoaxCable c = cableFor('LMR-1200');
       expect(c.vf, 88);
       expect(c.diameterMm, 30.0);
+      expect(c.maxGhz, 5.2);
+    });
+
+    test('LMR-100A velocity factor is 66% (datasheet), not 80%', () {
+      // Times/Pasternack LMR-100A-FR datasheet VoP = 66%. Finding E §2.5.
+      final CoaxCable c = cableFor('LMR-100A');
+      expect(c.vf, 66);
+      expect(c.maxGhz, 62.0);
+    });
+
+    test('the physics-cutoff set matches finding E for all six LMR cables', () {
+      // L-com published cutoffs (200/400/600/1200) + validated computation
+      // (100A/900). Finding E §2.3. No LMR cable still carries the 6.0 placeholder.
+      final Map<String, double> expected = <String, double>{
+        'LMR-100A': 62.0,
+        'LMR-200': 39.0,
+        'LMR-400': 16.2,
+        'LMR-600': 10.3,
+        'LMR-900': 7.0,
+        'LMR-1200': 5.2,
+      };
+      expected.forEach((String name, double ghz) {
+        expect(cableFor(name).maxGhz, ghz, reason: '$name cutoff');
+      });
+      expect(
+        CoaxCableScreen.coaxData
+            .where((CoaxCable c) => c.name.startsWith('LMR'))
+            .every((CoaxCable c) => c.maxGhz != 6.0),
+        isTrue,
+        reason: 'no LMR cable keeps the placeholder 6.0 GHz',
+      );
     });
 
     test('RG-6 is the only 75Ω entry and is flagged mismatched', () {

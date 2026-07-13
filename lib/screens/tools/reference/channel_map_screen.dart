@@ -496,9 +496,18 @@ class ChannelMapScreen extends StatefulWidget {
     ),
   ];
 
-  /// 5 GHz 160 MHz bonds — verbatim from PWA `CM5_160`. Center = round((c1+c2)/2).
+  /// 5 GHz 160 MHz bonds. Center = round((c1+c2)/2).
   /// ch 50 (36–64) spans UNII-1 + UNII-2A → mixed: a non-DFS + DFS span, so the
   /// whole bond is subject to DFS (the PWA's purple block).
+  ///
+  /// Wave-2 finding E (Pax, 2026-07-12): the PWA `CM5_160` carried a fourth,
+  /// PHANTOM block (center 130, ch 116–144) that is NOT a standard 802.11
+  /// 160 MHz channel — the US 5 GHz 160 MHz centers are 50, 114, 163 only
+  /// (VHT/HE operating classes). It overlapped center 114 (shared 116–128)
+  /// and had no valid upper partner. It was absent from this app's own
+  /// verified engine (`k5Bond160`) and from the primary-verified
+  /// channel-plan.md, so it is removed here to match the engine and the
+  /// standard. Correct count is 3, not 4.
   static const List<BondedBlock> map5_160 = [
     BondedBlock(
       widthMhz: 160,
@@ -512,13 +521,6 @@ class ChannelMapScreen extends StatefulWidget {
       centerChannel: 114,
       lowChannel: 100,
       highChannel: 128,
-      dfs: DfsClass.dfs,
-    ),
-    BondedBlock(
-      widthMhz: 160,
-      centerChannel: 130,
-      lowChannel: 116,
-      highChannel: 144,
       dfs: DfsClass.dfs,
     ),
     // UNII-3/UNII-4 160 MHz bond (163 spans 149→177), all non-DFS.

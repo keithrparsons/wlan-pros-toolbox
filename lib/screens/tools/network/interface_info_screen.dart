@@ -2,9 +2,8 @@
 //
 // Mirrors HE.NET "Interface Information" (brief §4): IP address(es), subnet
 // mask, gateway, DNS-relevant link details, interface type, MAC where the
-// platform exposes it. Foundational: `primaryIPv4` here is the value the
-// future iperf-server screen reads to tell the user "give this IP to the
-// client".
+// platform exposes it. `primaryIPv4` here is the device's own IP that other
+// network tools surface (e.g. "give this IP to the peer").
 //
 // States (SOP-007 §5):
 //  - loading  → spinner while the snapshot reads.

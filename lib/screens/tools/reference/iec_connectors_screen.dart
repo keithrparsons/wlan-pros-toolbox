@@ -211,8 +211,11 @@ class IecConnectorsScreen extends StatelessWidget {
       use: 'Three-phase power (covers 400V European and 480V US)',
     ),
     IecIndustrial(
+      // Black band = 500-690V per IEC 60309-2 (was 500-1000V). 1000V is the
+      // overall MAXIMUM rating of the whole IEC 60309 standard across all
+      // colors, not the black band's window. Wave-2 finding H §3.
       color: 'Black',
-      voltage: '500-1000V',
+      voltage: '500-690V',
       use: 'Marine and high-voltage',
     ),
   ];
@@ -249,7 +252,8 @@ class IecConnectorsScreen extends StatelessWidget {
   /// Provenance footnote for the IEC 60309 table.
   static const String industrialFootnote =
       'IEC 60309 industrial connectors. Red spans 380-480V (it is not a single '
-      '"415V"): it covers 400V European and 480V US three-phase.';
+      '"415V"): it covers 400V European and 480V US three-phase. The black band '
+      'covers 500-690V; the standard as a whole tops out at 1000V.';
 
   @override
   Widget build(BuildContext context) {

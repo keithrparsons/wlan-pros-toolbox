@@ -388,7 +388,7 @@ const List<SpeedtestService> kSpeedtestServices = <SpeedtestService>[
     how: 'Not a website. Professionals run Ookla\'s CLI for scripted '
         'speedtests and iperf3 for point-to-point throughput between two hosts '
         'you control, which removes server choice and CDN proximity from the '
-        'result entirely. Ties back to the Toolbox\'s own iperf3 work.',
+        'result entirely.',
     streamModel: StreamModel.multi,
     proximity: ServerProximity.selfHosted,
     dataPerTest: 'You set it (duration / parallel streams); iperf3 traffic is '

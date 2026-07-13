@@ -149,12 +149,12 @@
       "term": "Wi-Fi 5",
       "abbr": "802.11ac",
       "category": "Standards & Wi-Fi Generations",
-      "definition": "The 2013 generation, 5 GHz only, that added wider channels, more streams, and the first multi-user MIMO. It pushed Wi-Fi into gigabit territory.",
+      "definition": "The 2014 generation (the Wi-Fi Alliance certification year; IEEE 802.11ac was ratified in 2013), 5 GHz only, that added wider channels, more streams, and the first multi-user MIMO. It pushed Wi-Fi into gigabit territory.",
       "definitions": {
-        "es": "La generación de 2013, solo en 5 GHz, que añadió canales más anchos, más flujos y el primer MIMO multiusuario. Llevó el Wi-Fi al terreno del gigabit.",
-        "fr": "La génération de 2013, en 5 GHz uniquement, qui a ajouté des canaux plus larges, davantage de flux et le premier MIMO multi-utilisateur. Elle a fait entrer le Wi-Fi dans le domaine du gigabit.",
-        "it": "La generazione del 2013, solo a 5 GHz, che aggiunse canali più larghi, più flussi e il primo MIMO multiutente. Portò il Wi-Fi nel territorio del gigabit.",
-        "de": "Die Generation von 2013, ausschließlich bei 5 GHz, die breitere Kanäle, mehr Datenströme und das erste Multi-User-MIMO hinzufügte. Sie brachte WLAN in den Gigabit-Bereich."
+        "es": "La generación de 2014 (año de certificación de la Wi-Fi Alliance; IEEE 802.11ac se ratificó en 2013), solo en 5 GHz, que añadió canales más anchos, más flujos y el primer MIMO multiusuario. Llevó el Wi-Fi al terreno del gigabit.",
+        "fr": "La génération de 2014 (année de certification de la Wi-Fi Alliance ; la norme IEEE 802.11ac a été ratifiée en 2013), en 5 GHz uniquement, qui a ajouté des canaux plus larges, davantage de flux et le premier MIMO multi-utilisateur. Elle a fait entrer le Wi-Fi dans le domaine du gigabit.",
+        "it": "La generazione del 2014 (anno di certificazione della Wi-Fi Alliance; lo standard IEEE 802.11ac fu ratificato nel 2013), solo a 5 GHz, che aggiunse canali più larghi, più flussi e il primo MIMO multiutente. Portò il Wi-Fi nel territorio del gigabit.",
+        "de": "Die Generation von 2014 (das Zertifizierungsjahr der Wi-Fi Alliance; IEEE 802.11ac wurde 2013 ratifiziert), ausschließlich bei 5 GHz, die breitere Kanäle, mehr Datenströme und das erste Multi-User-MIMO hinzufügte. Sie brachte WLAN in den Gigabit-Bereich."
       },
       "translation_status": "draft-needs-review"
     },
@@ -163,12 +163,12 @@
       "term": "Wi-Fi 6",
       "abbr": "802.11ax",
       "category": "Standards & Wi-Fi Generations",
-      "definition": "The 2021 generation focused on efficiency in crowded places rather than just peak speed. It introduced OFDMA, Target Wake Time, and better performance when many devices share an access point.",
+      "definition": "The 2019 generation (the Wi-Fi Alliance certification year; IEEE 802.11ax was ratified in 2021) focused on efficiency in crowded places rather than just peak speed. It introduced OFDMA, Target Wake Time, and better performance when many devices share an access point.",
       "definitions": {
-        "es": "La generación de 2021 centrada en la eficiencia en lugares concurridos más que en la velocidad máxima. Introdujo OFDMA, Target Wake Time y un mejor rendimiento cuando muchos dispositivos comparten un punto de acceso.",
-        "fr": "La génération de 2021 axée sur l'efficacité dans les lieux très fréquentés plutôt que sur le débit de pointe. Elle a introduit l'OFDMA, le Target Wake Time et de meilleures performances lorsque de nombreux appareils partagent un point d'accès.",
-        "it": "La generazione del 2021 incentrata sull'efficienza nei luoghi affollati più che sulla velocità di picco. Introdusse OFDMA, Target Wake Time e prestazioni migliori quando molti dispositivi condividono un access point.",
-        "de": "Die Generation von 2021, die auf Effizienz an überfüllten Orten statt auf Spitzengeschwindigkeit ausgerichtet ist. Sie führte OFDMA, Target Wake Time und bessere Leistung ein, wenn sich viele Geräte einen Access Point teilen."
+        "es": "La generación de 2019 (año de certificación de la Wi-Fi Alliance; IEEE 802.11ax se ratificó en 2021) centrada en la eficiencia en lugares concurridos más que en la velocidad máxima. Introdujo OFDMA, Target Wake Time y un mejor rendimiento cuando muchos dispositivos comparten un punto de acceso.",
+        "fr": "La génération de 2019 (année de certification de la Wi-Fi Alliance ; la norme IEEE 802.11ax a été ratifiée en 2021) axée sur l'efficacité dans les lieux très fréquentés plutôt que sur le débit de pointe. Elle a introduit l'OFDMA, le Target Wake Time et de meilleures performances lorsque de nombreux appareils partagent un point d'accès.",
+        "it": "La generazione del 2019 (anno di certificazione della Wi-Fi Alliance; lo standard IEEE 802.11ax fu ratificato nel 2021) incentrata sull'efficienza nei luoghi affollati più che sulla velocità di picco. Introdusse OFDMA, Target Wake Time e prestazioni migliori quando molti dispositivi condividono un access point.",
+        "de": "Die Generation von 2019 (das Zertifizierungsjahr der Wi-Fi Alliance; IEEE 802.11ax wurde 2021 ratifiziert), die auf Effizienz an überfüllten Orten statt auf Spitzengeschwindigkeit ausgerichtet ist. Sie führte OFDMA, Target Wake Time und bessere Leistung ein, wenn sich viele Geräte einen Access Point teilen."
       },
       "translation_status": "draft-needs-review"
     },

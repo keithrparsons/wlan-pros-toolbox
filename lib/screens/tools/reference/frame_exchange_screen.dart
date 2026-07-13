@@ -2,10 +2,11 @@
 // common association and roaming scenarios. Shows the order of frames
 // exchanged between the STA, AP, RADIUS server, and DHCP server.
 //
-// Data is ported verbatim from the rf-tools-pwa `frames` tool
-// (FX_SCENARIOS / FX_COLORS in www/app.js). The PWA presented the four
-// scenarios as tabs; App Mode uses the shared AppSelect<String> (GL-003 §8.14)
-// since the labels are long and there are 4 options.
+// Data is ported from the rf-tools-pwa `frames` tool (FX_SCENARIOS / FX_COLORS
+// in www/app.js). The PWA presented four scenarios as tabs; this screen now
+// ships SIX (open/WPA2-PSK, WPA3-SAE, OWE, Passpoint, WPA2-Enterprise 802.1X,
+// 802.11r FT) and uses the shared AppSelect<String> (GL-003 §8.14) since the
+// labels are long. (Doc-comment reconciled in Wave-2 finding A: it said "four".)
 //
 // States (SOP-007 §5): this is a static, fully-offline reference with no I/O,
 // so there is no loading / error / empty state to model. The success state is
@@ -1223,8 +1224,15 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             label: 'FT Reassociation Response',
             type: FxType.mgmt,
             note:
-                'Status = 0. STA is now associated to AP2. Total roam latency '
-                '< 50 ms with 802.11r vs > 150 ms without. '
+                // Hedged (Wave-2 finding A): the <50 / >150 ms figures are a
+                // practitioner design convention, not a standards requirement -
+                // 802.11 defines no roaming-time target. Framed as guidance the
+                // way the roaming-thresholds table already does.
+                'Status = 0. STA is now associated to AP2. As a rough design '
+                'guide (not a standards guarantee - 802.11 sets no roaming-time '
+                'target), 802.11r roams typically finish in well under ~50 ms '
+                'versus ~150 ms or more without it; actual times vary by client, '
+                'controller, and RF. '
                 'Over-the-DS variant: instead of the FT Auth frames above going '
                 'over the air to AP2, the STA sends an FT Action Request to its '
                 'CURRENT AP, which relays it to the target AP through the '

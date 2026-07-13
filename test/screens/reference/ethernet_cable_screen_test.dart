@@ -16,8 +16,15 @@ void main() {
     EthCable rowFor(String cat) =>
         EthernetCableScreen.ethData.firstWhere((EthCable e) => e.category == cat);
 
-    test('six cable categories', () {
-      expect(EthernetCableScreen.ethData.length, 6);
+    test('four peer cable categories (Cat7/Cat7A demoted out of the table)', () {
+      // Wave-2 finding B / Keith's decision: Cat7 and Cat7A are ISO/IEC classes,
+      // not TIA categories, so they no longer appear as peer rows. The table is
+      // Cat5e / Cat6 / Cat6A / Cat8.
+      expect(EthernetCableScreen.ethData.length, 4);
+      expect(
+        EthernetCableScreen.ethData.map((EthCable e) => e.category).toList(),
+        <String>['Cat5e', 'Cat6', 'Cat6A', 'Cat8'],
+      );
     });
 
     test('Cat6A is 10 Gbps to 100m at 500 MHz with full 802.3bt PoE', () {
@@ -59,10 +66,23 @@ void main() {
       expect(e.use, contains('30 m'));
     });
 
-    test('Cat7A is 40 Gbps at 1000 MHz', () {
-      final EthCable e = rowFor('Cat7A');
-      expect(e.maxSpeed, '40 Gbps');
-      expect(e.maxMhz, 1000);
+    test('Cat7 and Cat7A are demoted — not peer rows, and never 40 Gbps', () {
+      // The old row claimed Cat7A = 40 Gbps, which no ratified standard delivers
+      // (IEEE put 40GBASE-T on Cat8). Both are now removed from the peer table
+      // and covered by the warning caveat instead. Wave-2 finding B.
+      final Iterable<String> cats =
+          EthernetCableScreen.ethData.map((EthCable e) => e.category);
+      expect(cats.contains('Cat7'), isFalse);
+      expect(cats.contains('Cat7A'), isFalse);
+      for (final EthCable e in EthernetCableScreen.ethData) {
+        expect(e.maxSpeed == '40 Gbps', isFalse,
+            reason: 'no standalone 40 Gbps peer row survives (Cat8 is '
+                '"25/40 Gbps", which is correct)');
+      }
+      // The demotion note steers installers to the right cable.
+      expect(EthernetCableScreen.cat7Caveat, contains('Cat6A'));
+      expect(EthernetCableScreen.cat7Caveat, contains('Cat8'));
+      expect(EthernetCableScreen.cat7Caveat, contains('not'));
     });
 
     test('no em dash or Unicode minus ships in any cell', () {
@@ -103,7 +123,7 @@ void main() {
         // Two clear sections.
         expect(find.text('Cable categories'), findsWidgets);
         expect(find.text('RJ-45 pinout'), findsWidgets);
-        expect(find.text('6 cable categories'), findsOneWidget);
+        expect(find.text('4 cable categories'), findsOneWidget);
         // Cat6A anchor cells render verbatim from the PWA. 'Cat6A' now appears
         // in both the cable-categories table and the multigig minimum-cabling
         // table added in the 2026-06-08 improvement, so it renders more than

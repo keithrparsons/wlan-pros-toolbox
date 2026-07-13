@@ -214,26 +214,12 @@ class EthernetCableScreen extends StatefulWidget {
       shielding: 'F/UTP, S/FTP',
       use: 'Preferred for PoE++ APs',
     ),
-    EthCable(
-      category: 'Cat7',
-      maxMhz: 600,
-      maxSpeed: '10 Gbps',
-      dist1g: '100m',
-      dist10g: '100m',
-      poe: 'Limited',
-      shielding: 'S/FTP, PIMF',
-      use: 'Specialty, non-std plugs',
-    ),
-    EthCable(
-      category: 'Cat7A',
-      maxMhz: 1000,
-      maxSpeed: '40 Gbps',
-      dist1g: '100m',
-      dist10g: '100m',
-      poe: 'Limited',
-      shielding: 'S/FTP, PIMF',
-      use: 'Specialty',
-    ),
+    // Cat7 / Cat7A DEMOTED out of the peer-category rows (Keith's decision,
+    // Wave-2 finding B): they are ISO/IEC Class F / FA, never TIA-recognized,
+    // and use non-RJ45 connectors (GG45/TERA). The old Cat7A "40 Gbps" cell was
+    // also flat wrong (no ratified standard put 40G on Cat7A; IEEE put 40G on
+    // Cat8). They now live in the warning card (cat7Caveat) only, not as peer
+    // rows beside real TIA categories. See cat7Caveat below.
     EthCable(
       category: 'Cat8',
       maxMhz: 2000,
@@ -338,19 +324,29 @@ class EthernetCableScreen extends StatefulWidget {
       'the cable-level (overall) screen; the character(s) after describe the '
       'pair-level screen.';
 
-  /// Cat 7 caveat — ISO/IEC Class F, NOT a TIA standard. Surfaced as a warning
-  /// verdict (glyph + word, §8.13), salvaged from the merged cable-connector
-  /// tile so the non-TIA reality stays prominent.
+  /// Cat 7 / Cat 7A caveat — ISO/IEC Class F/FA, NOT TIA categories. Surfaced
+  /// as a warning verdict (glyph + word, §8.13). These were demoted out of the
+  /// peer-category table (Wave-2 finding B) so they no longer read as TIA
+  /// categories beside Cat6A/Cat8; this note is where they now live.
   static const String cat7Caveat =
-      'TIA never ratified Category 7. It exists only as ISO/IEC Class F (Cat 7A '
-      'as Class FA) and uses GG45 / TERA connectors, not native RJ-45. For 10G '
-      'structured cabling, Cat 6A is the TIA-recognized choice.';
+      'Cat7 and Cat7A are ISO/IEC classes (Class F / FA) that TIA never '
+      'recognized, and they use GG45 / TERA connectors, not native RJ-45. They '
+      'are not shown as peer categories above. For 10G use Cat6A (the '
+      'TIA-recognized 10G choice); for 25/40G short runs use Cat8. (There was '
+      'never a ratified 40G standard on Cat7A - IEEE put 40GBASE-T on Cat8.)';
 
-  /// PoE++ footnote, ported verbatim from the PWA ethernet view.
+  /// PoE++ footnote. The "PoE (recommended)" column is guidance, not a
+  /// capability limit: 802.3bt (up to 90 W) runs over Cat5e and up, so no
+  /// category "cannot do" PoE++. The driver is bundle heat, which is why Cat6A
+  /// is recommended. (Wave-2 finding B: the real constraint is heat, not
+  /// category.)
   static const String footnote =
-      'PoE++ tip: Use Cat6A for 802.3bt deployments. Bundled Cat6 cables '
-      'running PoE++ generate significant heat. Cat6A\'s larger conductor and '
-      'diameter dissipate heat better. TIA-568 recommends Cat6A for PoE++ in '
+      'The "PoE (recommended)" column is guidance, not a capability limit: '
+      '802.3bt (PoE++, up to 90 W) runs over Cat5e and every category above it, '
+      'so no category is barred from PoE++. The real constraint is bundle heat. '
+      'PoE++ tip: use Cat6A for 802.3bt deployments - bundled Cat6 cables '
+      'running PoE++ generate significant heat, and Cat6A\'s larger conductor '
+      'and diameter dissipate it better. TIA-568 recommends Cat6A for PoE++ in '
       'cable bundles. Cat8 carries 1G/10G to the full 100 m channel; its '
       '25G/40G design rate is limited to ~30 m (data-center top-of-rack).';
 
@@ -552,7 +548,7 @@ class _EthernetCableScreenState extends State<EthernetCableScreen> {
           'Max speed',
           '@1G',
           '@10G',
-          'PoE',
+          'PoE (recommended)',
           'Shielding',
           'Typical use',
         ].join(tab),
@@ -606,7 +602,7 @@ class _EthernetCableScreenState extends State<EthernetCableScreen> {
     buf
       ..writeln()
       ..writeln('Notes')
-      ..writeln('Cat 7: ISO/IEC Class F, not a TIA standard.')
+      ..writeln('Cat7 / Cat7A: ISO/IEC Class F/FA, not TIA categories.')
       ..writeln(EthernetCableScreen.cat7Caveat)
       ..writeln(EthernetCableScreen.footnote);
     // The selected RJ-45 pinout standard.
@@ -738,7 +734,10 @@ class _EthernetCableScreenState extends State<EthernetCableScreen> {
         DataColumn(label: Text('Max Speed')),
         DataColumn(label: Text('@1G')),
         DataColumn(label: Text('@10G')),
-        DataColumn(label: Text('PoE')),
+        // "PoE (recommended)" not "PoE" (Wave-2 finding B): the column is
+        // guidance, not capability. 802.3bt is not category-gated; the real
+        // constraint is bundle heat (see footnote).
+        DataColumn(label: Text('PoE (rec.)')),
         DataColumn(label: Text('Shielding')),
       ],
       rows: EthernetCableScreen.ethData.map((EthCable e) {
@@ -1056,7 +1055,7 @@ class _EthernetCableScreenState extends State<EthernetCableScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  'Cat 7: ISO/IEC Class F, not a TIA standard',
+                  'Cat7 / Cat7A: ISO/IEC Class F/FA, not TIA categories',
                   style: (text.bodyMedium ?? const TextStyle()).copyWith(
                     color: colors.textPrimary,
                     fontWeight: FontWeight.w700,

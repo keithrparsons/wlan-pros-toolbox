@@ -19,10 +19,8 @@
 //     subsystem is RF/identity-only.
 //   * The per-interface address table stays on `dart:io NetworkInterface`.
 //
-// This service is the foundation the brief calls out (§ "Interface
-// Information ... also displays the device's own IP, which future iperf-server
-// work needs"). Ping/Traceroute and the iperf server screen will read
-// `primaryIPv4` from here rather than re-deriving it.
+// This service also exposes the device's own IP: other network tools (e.g.
+// Ping/Traceroute) read `primaryIPv4` from here rather than re-deriving it.
 //
 // Web safety: this file imports `dart:io`, which does not exist on web. It is
 // only ever imported behind a `NetworkSupport.interfaceInfoSupported` guard at
@@ -154,8 +152,8 @@ class InterfaceInfoSnapshot {
   final String? hostname;
 
   /// The device's primary routable IPv4 — first non-loopback IPv4 across all
-  /// interfaces, preferring the Wi-Fi link IP when known. This is the value
-  /// the future iperf-server screen displays as "give this IP to the client".
+  /// interfaces, preferring the Wi-Fi link IP when known. This is the device's
+  /// own IP that other network tools surface to the user.
   String? get primaryIPv4 {
     if (wifi.wifiIPv4 != null && wifi.wifiIPv4!.isNotEmpty) {
       return wifi.wifiIPv4;
