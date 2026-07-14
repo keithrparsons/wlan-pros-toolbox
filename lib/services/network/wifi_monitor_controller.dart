@@ -91,6 +91,36 @@ class WifiMonitorController extends ChangeNotifier {
   bool _disposed = false;
   bool _shortcutMissing = false;
   bool _notOnWifi = false;
+
+  /// The settled MONEY answer for this link (round 5, 2026-07-14). Orthogonal to
+  /// [_notOnWifi], and it FAILS CLOSED: an ambiguous link is [MeteredRisk.unknown],
+  /// which makes the consent gate ASK rather than spend.
+  ///
+  /// It starts at `unknown` and NOT at `none`, deliberately — before the first
+  /// [load] resolves we have measured nothing, and "we have not asked yet" must
+  /// never read as "proven safe to spend". Test My Connection AWAITS this settling
+  /// before it decides.
+  ///
+  /// It is NOT cleared by the missing-Shortcut branch below, unlike [_notOnWifi].
+  /// Whether a Shortcut is installed has nothing whatsoever to do with whether the
+  /// link costs money, and conflating them would reopen the leak through a door
+  /// marked "recovery".
+  MeteredRisk _meteredRisk = MeteredRisk.unknown;
+
+  /// Whether [_meteredRisk] has actually been PROBED yet, as opposed to sitting on
+  /// its fail-closed default.
+  ///
+  /// THE DIFFERENCE BETWEEN A GATE AND A RENDER. `unknown` must FAIL CLOSED for the
+  /// SPEND — that is the whole round-5 fix. But it must NOT drive the pre-run CARD,
+  /// because before the first probe returns EVERY device reads `unknown`, and the
+  /// card would flash a cellular-data warning at every user on their home Wi-Fi for
+  /// the few hundred ms it takes the probe to settle.
+  ///
+  /// A warning that cries wolf on every launch is not a safety feature; it is
+  /// training people to dismiss the one that matters. So the UI waits until we KNOW,
+  /// and the CHOKEPOINT protects anyone who taps during the window (the tap is
+  /// re-settled and downgraded — see the `spendData` chokepoint).
+  bool _meteredRiskResolved = false;
   bool _setupInitiated = false;
   int _deliveryCount = 0;
 
@@ -134,6 +164,19 @@ class WifiMonitorController extends ChangeNotifier {
   /// not-on-Wi-Fi signal, never from missing/ambiguous data. The screen ORs this
   /// nowhere — it is surfaced via the [WifiMonitorPhase.notOnWifi] phase.
   bool get notOnWifi => _notOnWifi;
+
+  /// The settled MONEY answer: could a throughput run cost this user real data?
+  ///
+  /// Read by Test My Connection's consent gate (via [WifiSignalSampler]). Separate
+  /// from [notOnWifi] on purpose and fails the OTHER WAY: [notOnWifi] refuses to
+  /// claim a link it cannot prove, and this refuses to SPEND on a link it cannot
+  /// prove. See the round-5 note in [WifiConnectionService].
+  MeteredRisk get meteredRisk => _meteredRisk;
+
+  /// Whether [meteredRisk] has been PROBED, or is still the fail-closed default.
+  /// The consent GATE reads `meteredRisk` (and fails closed); the pre-run CARD reads
+  /// this first, so it never flashes a cellular warning at a user on Wi-Fi.
+  bool get meteredRiskResolved => _meteredRiskResolved;
 
   /// Most recent parsed details, or null when none has arrived yet — AND null
   /// whenever the probe positively reports the device is NOT on Wi-Fi.
@@ -203,11 +246,28 @@ class WifiMonitorController extends ChangeNotifier {
       _safeNotify();
     }
 
+    // ========================================================================
+    // THE MONEY QUESTION IS ANSWERED FIRST, AND IT DOES NOT DEPEND ON THE BRIDGE.
+    //
+    // This read used to sit BELOW the three App Group calls. If any of them threw —
+    // and the App Group is a platform channel, so it can — `load()` unwound before
+    // the link was ever probed, `_meteredRiskResolved` stayed false FOREVER, and the
+    // consent gate's fail-closed default became PERMANENT: the user's speed test was
+    // silently withheld on every run, while the pre-run card (which waits for
+    // resolution) stayed hidden, so they were never offered a way to opt in. A dead
+    // end, produced by a failure in a subsystem that has nothing to do with money.
+    //
+    // Whether a Shortcut has ever delivered a payload has NO bearing on whether the
+    // link costs money. Answer the money question first, unconditionally.
+    // ========================================================================
+    final LinkVerdict link = await _connection.read(nativeSsid: nativeSsid);
+    final WifiConnectionStatus connStatus = link.status;
+    _meteredRisk = link.meteredRisk;
+    _meteredRiskResolved = true;
+
     final bool received = await _bridge.hasEverReceivedPayload();
     final WiFiDetails? latest = await _bridge.readLatest();
     final bool wasMonitoring = await _bridge.isMonitoringActive();
-    final WifiConnectionStatus connStatus =
-        await _connection.status(nativeSsid: nativeSsid);
     // x-error recovery (2026-06-25, Keith — build 41 strand). The one-shot
     // trigger now carries an `x-error` return URL, so a renamed/deleted "WLAN
     // Pros Live" Shortcut bounces the app back via `wlanprostoolbox://live-error`
@@ -696,9 +756,14 @@ class WifiMonitorController extends ChangeNotifier {
   Future<bool> _confirmedNotOnWifi({String? nativeSsid}) async {
     await Future<void>.delayed(_notOnWifiConfirmSettle);
     if (_disposed) return false;
-    final WifiConnectionStatus again =
-        await _connection.status(nativeSsid: nativeSsid);
-    return again == WifiConnectionStatus.notOnWifi;
+    // The CONFIRMING read is the settled one, so it owns BOTH answers. Taking the
+    // Wi-Fi verdict from the second read while leaving the money risk on the first
+    // would let the two disagree about the same instant — the precise class of
+    // split-brain that produced "it spent the data AND THEN TOLD YOU IT KNEW".
+    final LinkVerdict again = await _connection.read(nativeSsid: nativeSsid);
+    _meteredRisk = again.meteredRisk;
+    _meteredRiskResolved = true;
+    return again.status == WifiConnectionStatus.notOnWifi;
   }
 
   /// Polls the persisted App Group payload after a one-shot fire settles, in case

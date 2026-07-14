@@ -364,12 +364,20 @@ void _expectText(String exact) {
 class _SilentPathNQ implements WifiPathProbe {
   const _SilentPathNQ();
   @override
-  Future<WifiPathFacts?> read() async => null;
+  Future<WifiPathFacts?> read() async => const WifiPathFacts(
+        usesWifi: true,
+        wifiSatisfied: true,
+        wifiInterfacePresent: true,
+      );
 }
 
 class _UnknownNetNQ implements NetworkInfo {
+  // ROUND 5: a render/screenshot test models a normal device ON WI-FI (a link the
+  // app can PROVE is free), so the fail-closed gate stays silent and the run behaves
+  // as it always has. An `unknown` service now raises the cost UI and withholds
+  // throughput, which is exactly what a screenshot must not capture.
   @override
-  Future<String?> getWifiIP() async => throw Exception('no plugin in test');
+  Future<String?> getWifiIP() async => '192.168.1.10';
   @override
   Future<String?> getWifiIPv6() async => throw Exception('no plugin in test');
   @override

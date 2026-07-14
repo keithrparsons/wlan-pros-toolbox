@@ -271,7 +271,7 @@ void main() {
       // from the probe constants (kCellularDataWarning), not a hedged range.
       expect(find.textContaining("You're on cellular"), findsOneWidget);
       expect(find.textContaining(kCellularDataWarning), findsOneWidget);
-      expect(find.textContaining('30 MB at 10 Mbps'), findsOneWidget);
+      expect(find.textContaining('29 MB at 10 Mbps'), findsOneWidget);
 
       // And BOTH paths are offered — consent is a choice, not a dead end.
       expect(find.text('Check My Connection (uses data)'), findsOneWidget);

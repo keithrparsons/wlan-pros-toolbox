@@ -37,6 +37,7 @@ import 'package:net_quality/net_quality.dart';
 import '../../../router/app_router.dart';
 import '../../guides/guide_reader_screen.dart';
 import '../../../services/network/cellular_data_cost.dart';
+import '../../../services/network/wifi_connection_service.dart';
 import '../../../services/network/analyze/analyze_engine.dart';
 import '../../../services/network/analyze/analyze_input.dart';
 import '../../../services/network/analyze/analyze_report_text.dart';
@@ -132,6 +133,7 @@ class TestMyConnectionScreen extends StatefulWidget {
     this.autoStart = false,
     this.startExpanded = false,
     this.sampler,
+    this.connectionService,
     this.enableLiveSampling = true,
     this.onboardingService,
     this.cloudAppsProbe,
@@ -181,6 +183,13 @@ class TestMyConnectionScreen extends StatefulWidget {
   /// Injectable live sampler (tests). Defaults to a real [WifiSignalSampler] on
   /// the resolved platform.
   final WifiSignalSampler? sampler;
+
+  /// Injectable Wi-Fi connection probe for the MONEY question, used ONLY when no
+  /// live sampler exists (live sampling off) so a render/copy test can honestly
+  /// declare the link it is modelling. When a sampler is present it owns the probe
+  /// (it also updates live as the user walks in/out of range). Production always
+  /// has a sampler, so this seam is never consulted there.
+  final WifiConnectionService? connectionService;
 
   /// When false, the live sampler is never started (tests that do not exercise
   /// the live card disable it so no poll timer ticks). Production leaves it on.
@@ -292,6 +301,22 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// .indeterminate].
   bool _indeterminate = false;
 
+  /// The measurement stream has CLOSED, and we are waiting on the Wi-Fi link read
+  /// before the result can render (MEDIUM-2, round 5, 2026-07-14).
+  ///
+  /// `onDone` does `await linkFuture.timeout(8s)` BEFORE it flips [_running] false,
+  /// and the progress card is gated on [_running] — so for up to EIGHT SECONDS after
+  /// the run has actually finished, the user watched a bar frozen at 100%. The work
+  /// is real (the link read has not landed), so the honest fix is to SAY so, not to
+  /// tear the card down early and flash the idle screen at them.
+  ///
+  /// This is the most likely explanation for Keith's "still working" sighting, and I
+  /// am NOT claiming it as the confirmed cause — Vera could not reproduce that, her
+  /// hypothesis died to her own test, and inventing a culprit for an unreproduced
+  /// report is how a fake fix gets shipped. This is a real defect I can see in the
+  /// code and reproduce in a test; whether it is HIS defect is unproven.
+  bool _finishing = false;
+
   // Results, populated when the run completes.
 
   /// The raw one-shot link read taken at test completion ([_readLink]). Off Wi-Fi
@@ -379,6 +404,106 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// This tracks the device RIGHT NOW, so it moves when the user joins or leaves
   /// Wi-Fi. The RESULT body must not read it directly — see [_resultNotOnWifi].
   bool get _notOnWifi => _sampler?.notOnWifi ?? false;
+
+  /// THE MONEY ANSWER, AND THE ONLY THING THE CONSENT GATE READS (round 5).
+  ///
+  /// Separate from [_notOnWifi] and it FAILS THE OTHER WAY. [_notOnWifi] refuses to
+  /// CLAIM a link it cannot prove (so it defaults false); this refuses to SPEND on a
+  /// link it cannot prove (so it defaults [MeteredRisk.unknown], which ASKS).
+  ///
+  /// THE NO-SAMPLER FALLBACK IS PLATFORM-AWARE, AND IT HAS TO BE.
+  ///
+  /// A null sampler (live sampling off, `web`, `unsupported`) means we have measured
+  /// NOTHING — and the round-4 gate's fatal habit was to read "nothing measured" as
+  /// "safe to spend". So the fallback must NOT be `MeteredRisk.none`.
+  ///
+  /// But it must not be a blanket `unknown` either: that would prompt a WEB user, and
+  /// a desktop with sampling disabled, about cellular data they have no radio to
+  /// spend. "Fail closed" is a rule about PHONES; on a machine with no cellular
+  /// modem there is no meter to trip, and a warning there is noise that teaches
+  /// people to dismiss the one that matters.
+  ///
+  /// So it falls back to the PLATFORM fact — the same rule [WifiSignalSampler
+  /// .meteredRisk] and [WifiConnectionService.isMeteredCapable] use. Every source is
+  /// listed rather than defaulted, so a new one cannot silently inherit "free to
+  /// spend" from a `default:` clause.
+  /// The money answer, or NULL when the probe has not reported yet.
+  ///
+  /// THE GATE AND THE RENDER READ THIS DIFFERENTLY, AND THEY MUST.
+  ///   * [_meteredRisk] collapses null to `unknown` — FAIL CLOSED. Nothing spends.
+  ///   * [_showCostUi] collapses null to "say nothing" — because before the first
+  ///     probe returns, EVERY device reads `unknown`, and a card driven off that
+  ///     would flash a cellular-data warning at every user on their home Wi-Fi.
+  ///
+  /// A tap made during that window is still safe: [_run] AWAITS the probe and the
+  /// `spendData` chokepoint downgrades it. That is exactly the "walked out of Wi-Fi
+  /// range" case, and it is proven in `spend_chokepoint_test.dart`.
+  /// The money answer resolved by the SCREEN'S OWN probe, used when there is no live
+  /// sampler to own it (live sampling off). Null until [_resolveScreenRisk] returns.
+  MeteredRisk? _screenRisk;
+
+  MeteredRisk? get _resolvedRisk {
+    final WifiSignalSampler? s = _sampler;
+    if (s != null) return s.meteredRiskResolved ? s.meteredRisk : null;
+    // NO LIVE SAMPLER. The money question does not belong to the live-RF feed, so
+    // the screen resolves it itself (see [_resolveScreenRisk], kicked off in
+    // initState). Null until that probe returns — the gate reads that as `unknown`
+    // (fail closed) and the card stays hidden until we actually know. On a desktop /
+    // web source the probe is skipped and this is `none` from frame one.
+    switch (_source) {
+      case WifiInfoSource.iosShortcuts:
+      case WifiInfoSource.androidWifiManager:
+        return _screenRisk;
+      case WifiInfoSource.macosCoreWlan:
+      case WifiInfoSource.windowsNativeWifi:
+      case WifiInfoSource.web:
+      case WifiInfoSource.unsupported:
+        // No cellular radio this app can detect. `none` is the final answer and it
+        // needs no probe, so it is RESOLVED from frame one.
+        return MeteredRisk.none;
+    }
+  }
+
+  /// Probes the money question ONCE from the screen's own connection service, for
+  /// the no-sampler configuration. Never runs in production (a sampler always
+  /// exists there); a render/copy test injects a [connectionService] to declare the
+  /// link it models. A failed read resolves to `unknown` (fail closed), never free.
+  Future<void> _resolveScreenRisk() async {
+    if (_sampler != null) return;
+    final bool phone = _source == WifiInfoSource.iosShortcuts ||
+        _source == WifiInfoSource.androidWifiManager;
+    if (!phone) return;
+    final WifiConnectionService svc =
+        widget.connectionService ?? WifiConnectionService();
+    final LinkVerdict v = await svc.read();
+    if (!mounted) return;
+    setState(() => _screenRisk = v.meteredRisk);
+  }
+
+  /// THE GATE'S view: an unprobed link is [MeteredRisk.unknown], which ASKS.
+  MeteredRisk get _meteredRisk => _resolvedRisk ?? MeteredRisk.unknown;
+
+  /// Whether the app must ASK before it spends a byte. FAIL CLOSED: true unless the
+  /// link is PROVEN free (confirmed Wi-Fi, a confirmed wired link, or a platform
+  /// with no cellular radio to bill).
+  ///
+  /// Read by [_run]'s chokepoint and by [_autoStart] — BOTH of which await the probe
+  /// first, so neither ever evaluates this in the unresolved window.
+  bool get _needsConsent => _meteredRisk.requiresConsent;
+
+  /// THE RENDER'S view: show the cost UI only once we actually KNOW.
+  ///
+  /// An unresolved link shows NOTHING — no warning, no decline path, no "(may use
+  /// data)" label — and the consent tap is not recorded either, because the user has
+  /// not been shown a cost to consent to. A warning that fires on every launch is not
+  /// a safety feature; it teaches people to dismiss the one that matters.
+  bool get _showCostUi => (_resolvedRisk ?? MeteredRisk.none).requiresConsent;
+
+  /// The risk the pre-run card was last BUILT with — including the null that means
+  /// "not probed yet". Lets [_onSamplerChanged] rebuild whenever the answer moves,
+  /// in EITHER direction: null → none (stand down), null → unknown (raise the card),
+  /// unknown → none (a user walking back into Wi-Fi range).
+  MeteredRisk? _renderedRisk;
 
   /// The not-on-Wi-Fi state AS OF THE COMPLETED CHECK — the flag every part of
   /// the RESULT body reads (the verdict, the technical section, the help-desk
@@ -471,7 +596,11 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// not an iOS-only inference. macOS and Windows remain deliberately unreachable
   /// — there, an absent Wi-Fi address is genuinely ambiguous (a wired desktop),
   /// so no honest negative exists to assert.
-  static const String _kCellularDataWarning = kCellularDataWarning;
+  ///
+  /// ROUND 5: the `_kCellularDataWarning` alias that used to sit here is GONE. There
+  /// is no longer ONE warning to alias — the screen must choose between the
+  /// confirmed-cellular sentence and the honest "we can't tell" sentence, and that
+  /// choice belongs to [dataCostWarningFor] so neither screen can pick wrong.
 
   /// Whether offering the iOS companion-Shortcut capture path is HONEST for the
   /// result on screen.
@@ -653,6 +782,10 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     // [_openShortcutSheet]), so the recovery path and the 1.5.5 double-prompt fix
     // continue to work — only the AUTO-FIRE is removed.
 
+    // Resolve the MONEY question when no live sampler owns it (live sampling off).
+    // No-op in production and on desktop sources; see [_resolveScreenRisk].
+    unawaited(_resolveScreenRisk());
+
     if (widget.autoStart) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _autoStart();
@@ -757,14 +890,28 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// downgrading the run would withhold a feature and give them no way to ask for
   /// it. On Wi-Fi nothing changes: the full check fires immediately, as always.
   ///
-  /// RESIDUAL, STATED: only a POSITIVE not-on-Wi-Fi verdict stops the run. An
-  /// `unknown` probe (a wired Mac, an ambiguous read) auto-runs exactly as before
-  /// — the alternative would stop and interrogate every desktop user about
-  /// cellular data they are not spending.
+  /// THE RESIDUAL NAMED HERE WAS THE EXPLOIT (round 5, 2026-07-14). This doc used
+  /// to end: "only a POSITIVE not-on-Wi-Fi verdict stops the run. An `unknown` probe
+  /// (a wired Mac, an ambiguous read) auto-runs exactly as before — the alternative
+  /// would stop and interrogate every desktop user about cellular data they are not
+  /// spending."
+  ///
+  /// The stated worry was RIGHT, and the conclusion drawn from it was WRONG. A wired
+  /// desktop must indeed never be interrogated — but "an ambiguous read" is not a
+  /// desktop. It is also a cellular iPhone whose `en0` holds a link-local, and a
+  /// cellular Android phone behind a VPN, and this is the app's PRIMARY ENTRY POINT
+  /// running with `autoStart: true`. Opening the app spent their money, with zero
+  /// taps and nothing to consent to.
+  ///
+  /// The desktop is protected WHERE THAT FACT IS ACTUALLY KNOWN — in
+  /// [WifiConnectionService.isMeteredCapable], which resolves every desktop to
+  /// [MeteredRisk.none] BY PLATFORM, not by hoping an ambiguous probe means "safe".
+  /// So the run now stops on anything not PROVEN free, and the desktop still never
+  /// sees a prompt.
   Future<void> _autoStart() async {
     await _retryConnection();
     if (!mounted) return;
-    if (_notOnWifi) {
+    if (_needsConsent) {
       // Zero bytes move. Rebuild so the pre-run screen shows the data-cost
       // warning and both choices; the user decides.
       setState(() {});
@@ -832,8 +979,28 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     // and never rebuild — and the warning would silently never appear, which is
     // exactly the failure the warning exists to prevent. Caught by pumping the
     // real screen and reading the pre-run text, not by reasoning about it.
-    final bool notOnWifi = s?.notOnWifi ?? false;
-    if (_verdict == null && !recovery && !notOnWifi) return;
+    // ...AND WHENEVER THE MONEY ANSWER CHANGES AT ALL — IN EITHER DIRECTION.
+    //
+    // THIS LINE IS A BUG I INTRODUCED AND MY OWN CONTROL TEST CAUGHT (round 5).
+    //
+    // The first cut read `if (_verdict == null && !recovery && !needsConsent) return;`
+    // — a straight port of the old `!notOnWifi` version. It rebuilt when the card
+    // needed to APPEAR and never when it needed to DISAPPEAR, which was harmless
+    // while the flag started at `false` (nothing shown) and only ever rose.
+    //
+    // [_meteredRisk] starts at `unknown`, WHICH MEANS THE CARD IS SHOWN FROM FRAME
+    // ONE. When the probe settles a few hundred ms later and says "Wi-Fi, free", the
+    // early-return fired — `needsConsent` was now false — and the screen NEVER
+    // REBUILT. So a Wi-Fi user who opened Test My Connection from the tool list
+    // (no `autoStart`, so no other rebuild) sat looking at a cellular-data warning
+    // and a "may use data" button, forever, on their home Wi-Fi.
+    //
+    // A fail-closed default is only honest if the screen can also STAND DOWN. Track
+    // the risk we actually RENDERED and rebuild on any change, both ways.
+    final MeteredRisk? risk = _resolvedRisk;
+    final bool riskChanged = risk != _renderedRisk;
+    _renderedRisk = risk;
+    if (_verdict == null && !recovery && !riskChanged) return;
 
     // ENRICH THE RESULT SNAPSHOT, NEVER BLANK IT (cold-eyes F4).
     //
@@ -1082,7 +1249,14 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// out of the not-on-Wi-Fi state once Wi-Fi is back. Never fires the Shortcut.
   Future<void> _retryConnection() async {
     await _fetchIosSecurity();
-    await _sampler?.load(nativeSsid: _nativeSsid);
+    if (_sampler != null) {
+      await _sampler!.load(nativeSsid: _nativeSsid);
+    } else {
+      // No live sampler: settle the SCREEN'S own money probe before any caller
+      // reads the gate, exactly as the sampler path settles its own. A run that
+      // decided `spendData` from an unresolved risk is the F-2 bypass.
+      await _resolveScreenRisk();
+    }
   }
 
   /// The native NEHotspotNetwork SSID when a real network has resolved — a
@@ -1387,12 +1561,30 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     // On Wi-Fi (`!_notOnWifi`) this is a no-op and the check behaves as it always
     // has.
     // ========================================================================
+    //
+    // ROUND 5: IT NOW FAILS CLOSED. The line above used to read
+    //     includeThroughput && (!_notOnWifi || _throughputConsented)
+    // which closed ONLY on a definitive `notOnWifi`. Every ambiguous / errored /
+    // timed-out / unsupported read resolves to `unknown` — and `unknown` SPENT. The
+    // consent card only rendered on `notOnWifi`, so `_throughputConsented` was still
+    // false: THE USER WAS NEVER ASKED AND COULD NOT HAVE BEEN. Vera got five
+    // exploits through it (Android VPN over cellular; the OS merging both transport
+    // bits; an Android channel that threw or timed out; an iPhone on cellular whose
+    // `en0` holds a link-local `fe80::`, twice over).
+    //
+    // The two shapes that HELD were the two Keith happened to have tested on his own
+    // phone. Every shape he did not test, spent.
+    //
+    // ASSERTING A FACT and AUTHORIZING A SPEND are different acts. GL-005 forbids the
+    // first from ambiguity; it never required the second. We ask WITHOUT claiming —
+    // see [kUnknownLinkDataWarning].
     final bool spendData =
-        includeThroughput && (!_notOnWifi || _throughputConsented);
+        includeThroughput && (!_needsConsent || _throughputConsented);
 
     setState(() {
       _error = null;
       _running = true;
+      _finishing = false;
       _phase = QualityPhase.idle;
       _fraction = 0;
       _indeterminate = false;
@@ -1493,13 +1685,23 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     // adjunct here; declining to measure an adjunct is the honest answer, and it
     // is the fast one.
     //
-    // This is NOT a consent decision and it does not touch one: `spendData` above
-    // remains the sole chokepoint for whether ANY bytes move. This only decides
-    // how many of the already-consented bytes are worth spending.
+    // ROUND 5 — IT FAILED OPEN ON THE SAME FLAG, AND THAT DOUBLED THE DAMAGE. This
+    // rode `!_notOnWifi`, the very flag the broken chokepoint rode, so on all five
+    // exploited shapes it ALSO evaluated true: the user got the download PLUS the
+    // RPM load generator (a SECOND full-rate download) PLUS the upload — roughly
+    // DOUBLE the cost the consent sentence describes, having never seen the sentence.
+    // Fixing `spendData` and leaving this line alone would have closed the front door
+    // and left the side door open, which is exactly how the round-4 fix failed.
+    //
+    // It now fails closed on the SAME rule: RPM runs only when the link is PROVEN
+    // free. Never on a confirmed metered link (Keith's decision, unchanged), and
+    // never on a link we could not identify — because the consent sentence quotes the
+    // download+upload cost, and adding RPM on top would make that sentence false even
+    // for a user who DID tap.
     _sub = _quality
         .measure(
       includeThroughput: spendData,
-      includeResponsiveness: !_notOnWifi,
+      includeResponsiveness: !_needsConsent,
     )
         .listen(
       (QualityProgress p) {
@@ -1512,6 +1714,12 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       },
       onDone: () async {
         final QualityResult? internet = _quality.lastResult;
+        // MEDIUM-2: the measurement is DONE and the link read may not be. Say that,
+        // rather than holding a dead 100% bar for up to 8 seconds. The card is gated
+        // on `_running`, which does not drop until after the await below — so
+        // WITHOUT this the last thing the user sees is a full bar and a stale phase
+        // caption, for longer than the upload stage took.
+        if (mounted) setState(() => _finishing = true);
         final ConnectedAp? ap = await linkFuture.timeout(
           const Duration(seconds: 8),
           onTimeout: () => null,
@@ -1571,6 +1779,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
           );
           _testedAt = (widget.nowOverride ?? DateTime.now)();
           _running = false;
+          _finishing = false;
         });
         // THE RUN IS DONE — DISARM IT. The user has their result on screen; there is
         // nothing left to restore. Leaving the arm standing would let a scene rebuild
@@ -1586,6 +1795,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         if (!mounted) return;
         setState(() {
           _running = false;
+          _finishing = false;
           _error =
               "Something went wrong and we couldn't finish the check. "
               'Please try again.';
@@ -1604,12 +1814,38 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// panel), so they stay valid even when the speed test stalls. When all three
   /// are present the engine produces [WifiVsInternetVerdict.onlineUnmeasured]
   /// instead of the bleak "could not read" verdict (Keith 2026-06-17).
+  /// ROUND 5: EVERY SIGNAL IS NOW TRI-STATE, AND THAT IS THE WHOLE FIX.
+  ///
+  /// Each of these used to collapse to `false` when the probe HAD NOT COME BACK YET
+  /// — `_dnsResult?.isAvailable ?? false`, an empty `_cloudResults` list, a null
+  /// `_ispInfo`. All three probes land ASYNCHRONOUSLY, and this getter is read in
+  /// `onDone` (which is exactly why [_recomputeVerdict] exists to re-run it as they
+  /// arrive). So at first read a PENDING probe and a FAILED probe were the same
+  /// value, and "all three false" was the NORMAL mid-flight state of a perfectly
+  /// healthy connection.
+  ///
+  /// Reading the negative off THAT would have told half the app's users their
+  /// internet was down, every single run. `null` now means UNANSWERED, `false` means
+  /// ANSWERED NO, and [OnlineEvidence.isOffline] requires all three to be an actual
+  /// `false`. The verdict simply does not fire until the evidence is in — and when a
+  /// late probe lands, [_recomputeVerdict] re-derives it, which is the machinery
+  /// that makes waiting free.
   OnlineEvidence get _onlineEvidence => OnlineEvidence(
-        dnsResolved: _dnsResult?.isAvailable ?? false,
+        // null until the DNS probe reports. `isAvailable` is its settled answer.
+        // (`?.` is doing the tri-state work here: null result → null evidence.)
+        dnsResolved: _dnsResult?.isAvailable,
+        // null until the ISP lookup reports. `isError` is a REPORTED failure (the
+        // service never throws), which is a definitive "no public IP", not a pending
+        // one — so it maps to `false`, not `null`.
         publicIpObtained:
-            _ispInfo != null && !_ispInfo!.isError && _ispInfo!.ip != null,
-        cloudReachable:
-            _cloudResults.any((SiteReachability s) => s.reachable),
+            _ispInfo == null ? null : (!_ispInfo!.isError && _ispInfo!.ip != null),
+        // null until the cloud panel returns ANY row. An empty list is "the probe has
+        // not answered"; a full list where nothing is reachable is a definitive NO.
+        // The screen's own AnalyzeInput already drew exactly this line
+        // (`cloud.isEmpty ? null : …`) — the information was always here.
+        cloudReachable: _cloudResults.isEmpty
+            ? null
+            : _cloudResults.any((SiteReachability s) => s.reachable),
       );
 
   /// Re-derives the engine verdict and the consumer verdict from the stored
@@ -2014,14 +2250,16 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                       onRunAgain: _running ? null : _rerun,
                       // THE BUTTON MUST TELL THE TRUTH ABOUT WHAT IT SPENDS.
                       // "Run again" calls _run(includeThroughput: true), and the
-                      // chokepoint spends iff `!_notOnWifi || _throughputConsented`.
-                      // So it costs CELLULAR data in exactly one shape: off Wi-Fi,
-                      // with consent already latched for this mount. That is the
-                      // shape that used to spend 50-500 MB per tap under a button
-                      // labelled only "Run again". Reads the LIVE probe, not the
-                      // frozen result flag: the label must describe what the NEXT
-                      // tap will do, and _run re-settles the probe before spending.
-                      runAgainUsesData: _notOnWifi && _throughputConsented,
+                      // chokepoint now spends iff `!_needsConsent ||
+                      // _throughputConsented`. So it costs data in exactly one
+                      // shape: a link that is NOT proven free, with consent already
+                      // latched for this mount. Tracks the chokepoint's own rule
+                      // rather than restating it in terms of `_notOnWifi` — which is
+                      // how this label came to promise "free" on the five shapes
+                      // that spent. Reads the LIVE probe, not the frozen result
+                      // flag: the label must describe what the NEXT tap will do, and
+                      // _run re-settles the probe before spending.
+                      runAgainUsesData: _needsConsent && _throughputConsented,
                     ),
                     const SizedBox(height: AppSpacing.md),
                     // THE OPT-IN THE RESULT SCREEN NEVER HAD (round-4b, 2026-07-14).
@@ -2297,14 +2535,24 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
           ),
           const SizedBox(height: AppSpacing.sm),
         ],
-        // THE CELLULAR DATA WARNING (Keith, 2026-07-13).
+        // THE DATA-COST WARNING (Keith, 2026-07-13; fail-closed round 5, 2026-07-14).
         //
-        // Gated on the POSITIVE not-on-Wi-Fi probe ONLY. `unknown` (an ambiguous
-        // read, a wired Mac, any non-iOS platform) must NEVER reach here: warning
-        // a user on Wi-Fi that we are about to eat their cellular data is its own
-        // false claim, and it would nag every desktop user forever. On Wi-Fi this
-        // whole block is absent and the flow is byte-for-byte what it was.
-        if (_notOnWifi && !_running) ...<Widget>[
+        // IT USED TO BE GATED ON THE POSITIVE not-on-Wi-Fi PROBE ONLY, and the
+        // comment here defended that: "`unknown` (an ambiguous read, a wired Mac,
+        // any non-iOS platform) must NEVER reach here". Half of that was right and
+        // the other half was the bug. A wired Mac must never be nagged — and it is
+        // not, because [MeteredRisk.none] is decided BY PLATFORM. But an "ambiguous
+        // read" is ALSO a cellular iPhone whose `en0` carries only a link-local, and
+        // that user saw no warning, was never asked, and was charged for up to
+        // 573 MB. The card that exists to prevent the spend was hidden on precisely
+        // the shapes that spent.
+        //
+        // [dataCostWarningFor] now picks the sentence that is TRUE for this link:
+        // "You're on cellular" only when the OS MEASURED cellular, and "We can't tell
+        // whether this device is on Wi-Fi or cellular" when we could not read it.
+        // Asserting cellular to a user whose link we never identified would be the
+        // same false claim, told from the other side.
+        if (_showCostUi && !_running) ...<Widget>[
           Container(
             decoration: BoxDecoration(
               color: colors.surface1,
@@ -2316,7 +2564,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
             ),
             padding: const EdgeInsets.all(AppSpacing.sm),
             child: Text(
-              _kCellularDataWarning,
+              dataCostWarningFor(_resolvedRisk ?? MeteredRisk.none)!,
               style: text.bodyMedium?.copyWith(color: colors.textSecondary),
             ),
           ),
@@ -2327,29 +2575,49 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
           enabled: !_running,
           label: _running
               ? 'Checking your connection'
-              : (_notOnWifi
-                  // The label IS the consent: a user who taps this has read the
-                  // data cost directly above it. One tap, no dialog.
-                  ? 'Run the full check including the speed test, which uses '
-                      'cellular data'
-                  : 'Check my connection'),
+              // The label IS the consent: a user who taps this has read the data
+              // cost directly above it. One tap, no dialog.
+              : switch (_resolvedRisk ?? MeteredRisk.none) {
+                  MeteredRisk.metered =>
+                    'Run the full check including the speed test, which uses '
+                        'cellular data',
+                  MeteredRisk.unknown =>
+                    'Run the full check including the speed test, which may use '
+                        'cellular data',
+                  MeteredRisk.none => 'Check my connection',
+                },
           child: FilledButton(
             onPressed: _running
                 ? null
                 : () {
-                    // THE TAP IS THE CONSENT. Off Wi-Fi this button's own label
-                    // states the data cost, directly under the warning that
-                    // explains it, so tapping it IS the informed decision. Record
-                    // it before the run so the chokepoint in [_run] can honor it.
-                    if (_notOnWifi) _throughputConsented = true;
+                    // THE TAP IS THE CONSENT. When the link is not proven free this
+                    // button's own label states the data cost, directly under the
+                    // warning that explains it, so tapping it IS the informed
+                    // decision. Record it before the run so the chokepoint in [_run]
+                    // can honor it.
+                    // CONSENT IS ONLY RECORDED IF THE COST WAS ACTUALLY SHOWN.
+                    // Keying this off `_needsConsent` would latch consent during the
+                    // unresolved window — when the card is deliberately hidden — and
+                    // "consent" the user gave to a warning they never saw is not
+                    // consent. If the link turns out to be metered, the chokepoint
+                    // declines the spend and the card then appears so they can opt in
+                    // for real.
+                    if (_showCostUi) _throughputConsented = true;
                     _run(includeThroughput: true);
                   },
             child: Text(
               _running
                   ? 'Checking…'
-                  : (_notOnWifi
-                      ? 'Check My Connection (uses data)'
-                      : 'Check My Connection'),
+                  : switch (_resolvedRisk ?? MeteredRisk.none) {
+                      // "uses" ASSERTS the cellular link and is earned only by a
+                      // MEASURED one. "may use" is the honest word when we cannot
+                      // tell — hedging a fact we genuinely lack is the opposite sin
+                      // from hedging a number we could have derived.
+                      MeteredRisk.metered => 'Check My Connection (uses data)',
+                      MeteredRisk.unknown =>
+                        'Check My Connection (may use data)',
+                      MeteredRisk.none => 'Check My Connection',
+                    },
             ),
           ),
         ),
@@ -2358,7 +2626,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         // honest not-on-Wi-Fi state). Only the two data-hungry stages are withheld,
         // and the result says "Not measured" for them rather than "Couldn't check"
         // — nothing failed.
-        if (_notOnWifi && !_running) ...<Widget>[
+        if (_showCostUi && !_running) ...<Widget>[
           const SizedBox(height: AppSpacing.xs),
           Semantics(
             button: true,
@@ -2379,7 +2647,14 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     final TextTheme text = Theme.of(context).textTheme;
     final AppColorScheme colors = context.colors;
     final int pct = (_fraction * 100).round();
-    final String caption = _friendlyPhase(_phase);
+    // MEDIUM-2: once the measurement stream closes we are waiting on the Wi-Fi link
+    // read, and the bar has nothing left to fill. Name the work instead of freezing
+    // a full bar and a stale phase caption on screen for up to 8 seconds. It is
+    // INDETERMINATE, because it genuinely is: we are waiting on a read that may take
+    // a moment or may time out.
+    final bool stillWorking = _indeterminate || _finishing;
+    final String caption =
+        _finishing ? 'Reading your Wi-Fi link' : _friendlyPhase(_phase);
     // PACKET-FLOW LOADING (2026-06-13, Keith-picked concept): the percentage bar
     // is replaced by an animated [You] → [AP] → [Internet] path whose nodes light
     // lime as each phase of the SAME live test completes (Wi-Fi link → gateway →
@@ -2404,8 +2679,8 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
             caption: caption,
             fraction: _fraction,
             stage: _packetFlowStage(_phase),
-            indeterminate: _indeterminate,
-            semanticsLabelBuilder: () => _indeterminate
+            indeterminate: stillWorking,
+            semanticsLabelBuilder: () => stillWorking
                 ? '$caption, still working'
                 : '$caption, $pct percent complete',
           ),
@@ -2430,10 +2705,15 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
           //
           // (The previous comment here pinned `throughput_probe.maxDuration` at
           // 10 s. It is 15 s — throughput_probe.dart:490. Fixed 2026-07-14.)
+          // Tracks the SAME rule the RPM stage is gated on (`!_needsConsent`), not
+          // `_notOnWifi` — otherwise the caption promises a responsiveness test the
+          // run will not perform on an ambiguous link. And it must not ASSERT
+          // cellular on a link we could not read: the reason is the skip, not the
+          // radio.
           Text(
-            _notOnWifi
+            _showCostUi
                 ? 'This usually takes about 20 seconds. The responsiveness '
-                    'test is skipped on cellular.'
+                    'test is skipped to save data.'
                 : 'This usually takes about half a minute.',
             style: text.bodyMedium?.copyWith(color: colors.textTertiary),
           ),
@@ -2531,6 +2811,15 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
             : 'We could not finish the check.';
       case ConsumerOutcome.online:
         return 'You are online.';
+      // ROUND 5. THIS IS THE SENTENCE KEITH'S PHONE COULD NOT PRINT. On a conference
+      // SSID with a healthy 97/77 Mbps link and a dead internet, the hero said "We
+      // could not finish the check." — the `couldntComplete` row above — because no
+      // other row existed. It had checked the internet three ways and got a
+      // definitive NO.
+      case ConsumerOutcome.internetDown:
+        return 'Your Wi-Fi is fine. The internet is not reachable.';
+      case ConsumerOutcome.signInRequired:
+        return 'This network wants you to sign in.';
     }
   }
 
@@ -2586,6 +2875,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       case AxisStatus.notApplicable:
       case AxisStatus.notMeasured:
       case AxisStatus.reachableUnmeasured:
+      case AxisStatus.unreachable:
         return _TwoAxisChips.word(tier);
     }
   }
@@ -2640,6 +2930,19 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         return 'You are online. Your internet is reachable, but the speed test '
             'did not complete, so its speed could not be measured. Try again '
             'in a moment.';
+      // ROUND 5. The `couldntComplete` row above used to catch this and say: "We
+      // could not read your Wi-Fi or your internet. Make sure you are on Wi-Fi, then
+      // try again." — printed on a phone that was ASSOCIATED TO A NAMED AP, in the
+      // same frame as its own 48 Mbps Wi-Fi capacity bar. Four contradictions in one
+      // card, and every one of them came from having no way to name a dead internet.
+      case ConsumerOutcome.internetDown:
+        return 'Your Wi-Fi link is working. Nothing beyond it is answering, so '
+            'the problem is past your Wi-Fi, not in it. Check your router’s '
+            'internet connection, or your provider.';
+      case ConsumerOutcome.signInRequired:
+        return 'Your Wi-Fi is working, but this network has not let you onto '
+            'the internet yet. Open your browser and a sign-in page should '
+            'appear.';
     }
   }
 
@@ -3320,7 +3623,15 @@ class _HeroVerdict extends StatelessWidget {
       // tone, not success (no speed was verified) and not warning (nothing is
       // wrong with the link).
       case ConsumerOutcome.online:
+      // A captive portal is not a FAULT — the Wi-Fi works and the fix is one tap in
+      // a browser. Info, not warning: nothing is broken, something is asked of you.
+      case ConsumerOutcome.signInRequired:
         return StatusTone.info;
+      // A DEAD INTERNET IS A REAL FAULT AND IT GETS THE WARNING TONE. Every other
+      // "no number" row above is neutral because nothing is wrong; here something is
+      // very wrong, and it is the one thing on the card the user must act on.
+      case ConsumerOutcome.internetDown:
+        return StatusTone.warning;
     }
   }
 
@@ -3581,6 +3892,14 @@ class _TwoAxisChips extends StatelessWidget {
         // that succeeded, one line above the body text saying "Your internet is
         // reachable". Name what we actually do not know: the speed.
         return 'Speed unknown';
+      case AxisStatus.unreachable:
+        // AND ALSO NOT "Couldn't check" — from the OTHER direction (Keith, conference
+        // SSID, 2026-07-14). We checked the internet THREE WAYS and every one came
+        // back NO. "Couldn't check" claims a failed read about a read that SUCCEEDED
+        // and returned a definitive negative. That word, on this state, is what put
+        // "Internet: Couldn't check" next to a red "Wi-Fi: Weak" and sent a man to
+        // fix a Wi-Fi link that was doing 97/77 Mbps. Say what we measured.
+        return 'Not reachable';
     }
   }
 
@@ -3653,6 +3972,15 @@ class _StatusChip extends StatelessWidget {
         return colors.statusWarning;
       case AxisStatus.weak:
         return colors.statusDanger;
+      // THE ONE "NO NUMBER" STATE THAT IS GENUINELY A FAULT, AND THE ONLY ONE THAT
+      // MAY WEAR RED. Every neutral state below it means "there is no number here,
+      // and that is fine". This one means the user's internet is DOWN. §8.13 rule 2
+      // forbids forcing a fault color onto an ABSENT value — it does not forbid
+      // naming an actual fault, and dressing a dead internet in the same calm gray as
+      // "we chose not to measure" would be its own small lie. The WORD ("Not
+      // reachable") still carries it without the color (WCAG 2.2 SC 1.4.1).
+      case AxisStatus.unreachable:
+        return colors.statusDanger;
       case AxisStatus.unknown:
       case AxisStatus.notApplicable:
       case AxisStatus.notMeasured:
@@ -3717,6 +4045,13 @@ class _StatusChip extends StatelessWidget {
         // (§1.1 rules out error / cancel / block / remove), and keeps all four
         // neutral states separable WITHOUT color (WCAG 2.2 SC 1.4.1).
         return light ? Icons.speed : Icons.speed_outlined;
+      case AxisStatus.unreachable:
+        // A FIFTH distinct glyph, and the ONLY one of the five allowed to read as a
+        // fault — because it IS one. `cloud_off` says exactly what happened: the
+        // internet is not there. It is the mirror of `reachableUnmeasured`'s `speed`
+        // (we got there, could not time it) and the opposite of `unknown`'s
+        // `help_outline` (we do not know) — here we know, and the answer is no.
+        return light ? Icons.cloud_off : Icons.cloud_off_outlined;
     }
   }
 
@@ -3883,7 +4218,37 @@ class _ComparisonCard extends StatelessWidget {
         return 'Your internet is reachable, but the speed test did not '
             'complete, so there is no speed to compare yet. Try again in a '
             'moment.';
+      // ROUND 5. THERE IS NOTHING TO COMPARE, AND SAYING SO IS THE POINT. Note what
+      // this row does NOT do: it does not reach for "Boost the Wi-Fi signal", which
+      // is what the two rows at the top of this switch say and what this shape used
+      // to fall through toward. The Wi-Fi is not the story. There is no internet bar
+      // to draw because there is no internet.
+      case WifiVsInternetVerdict.internetUnreachable:
+        return result.usableWifiMbps == null
+            ? 'The internet is not reachable, so there is no internet speed to '
+                  'compare against.'
+            : 'Your Wi-Fi link is carrying '
+                  '${_fmtMbps(result.usableWifiMbps)} of usable capacity. There '
+                  'is no internet speed to compare it against, because the '
+                  'internet is not reachable.';
+      case WifiVsInternetVerdict.captivePortal:
+        return result.usableWifiMbps == null
+            ? 'This network has not let you onto the internet yet, so there is '
+                  'no internet speed to compare against.'
+            : 'Your Wi-Fi link is carrying '
+                  '${_fmtMbps(result.usableWifiMbps)} of usable capacity. There '
+                  'is no internet speed to compare it against until you sign in '
+                  'to this network.';
     }
+  }
+
+  /// Formats a Mbps figure for the reading lines. Whole numbers drop the decimal.
+  static String _fmtMbps(double? v) {
+    if (v == null) return 'n/a';
+    final double r = (v * 10).round() / 10;
+    return r == r.roundToDouble()
+        ? '${r.toStringAsFixed(0)} Mbps'
+        : '${r.toStringAsFixed(1)} Mbps';
   }
 
   /// The same-tier reading line, or null when the two rates are NOT on the same
@@ -4858,7 +5223,13 @@ class _ProVerdictCard extends StatelessWidget {
         return colors.statusWarning;
       case WifiVsInternetVerdict.wifiUnknown:
       case WifiVsInternetVerdict.onlineUnmeasured:
+      // A sign-in page is not a fault: informational, and one tap from fixed.
+      case WifiVsInternetVerdict.captivePortal:
         return colors.statusInfo;
+      // A dead internet IS a fault. It is the one thing on this card that is
+      // genuinely broken, and it is not the Wi-Fi.
+      case WifiVsInternetVerdict.internetUnreachable:
+        return colors.statusDanger;
     }
   }
 
@@ -4878,6 +5249,16 @@ class _ProVerdictCard extends StatelessWidget {
         // Reachable-but-unmeasured: the "you're online" cloud-done glyph, not a
         // question mark (that side is not unknown, just unmeasured for speed).
         return Icons.cloud_done_outlined;
+      case WifiVsInternetVerdict.internetUnreachable:
+        // The mirror of `cloud_done`. NOT `help_outline` — we are not confused, the
+        // internet is not there. (`upstream` also uses `cloud_off`, and that is
+        // right: both are "the problem is past your Wi-Fi". One is slow, one is
+        // absent, and the WORD distinguishes them.)
+        return Icons.cloud_off_outlined;
+      case WifiVsInternetVerdict.captivePortal:
+        // Not a cloud glyph at all: nothing is broken and nothing is missing. You
+        // are being asked for a key.
+        return Icons.login_outlined;
     }
   }
 

@@ -481,6 +481,14 @@ void main() {
       // it, so it is not a real tier — the internet is up, we just cannot say
       // how fast. (2026-07-14.)
       AxisStatus.reachableUnmeasured,
+      // NOT REACHABLE AT ALL. A definitive negative, and the only "no number"
+      // state that is a genuine FAULT (it is the one wearing the danger hue). It
+      // is still NOT a real tier: there is no rate behind it, so it must never be
+      // able to produce a "both sides are X" sentence. (Round 5, 2026-07-14.)
+      //
+      // THIS GUARD IS WHY THAT DECISION GOT MADE DELIBERATELY INSTEAD OF BY
+      // ACCIDENT. Adding the member broke this test, which forced the question.
+      AxisStatus.unreachable,
     ];
 
     test('equal REAL tiers return that tier', () {

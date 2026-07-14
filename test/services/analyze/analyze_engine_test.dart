@@ -79,7 +79,13 @@ void main() {
       ];
       // Sanity: if a verdict is ever added to the enum, this matrix picks it up
       // automatically — but assert the count so a SHRINKING enum is also caught.
-      expect(WifiVsInternetVerdict.values.length, 6);
+      // ROUND 5: 6 -> 8. `internetUnreachable` and `captivePortal` were added so the
+      // app could finally say "your Wi-Fi is up and the internet is not". The matrix
+      // below picks them up automatically (it spreads `.values`), and the guard's
+      // real assertions PASSED for both on the first run — no analyze rule sends a
+      // dead-internet or captive-portal user to install a Wi-Fi Shortcut. This line
+      // is the tripwire that made me check rather than assume.
+      expect(WifiVsInternetVerdict.values.length, 8);
 
       int shapesChecked = 0;
       for (final WifiVsInternetVerdict? verdict in verdicts) {
@@ -125,7 +131,11 @@ void main() {
       // The guard is only worth its name if it actually swept the matrix: 7
       // verdicts (6 + null) x 2 x 2. A refactor that collapses the loops must not
       // silently reduce this to the single shape it used to be.
-      expect(shapesChecked, 28,
+      // ROUND 5: 28 -> 36. Two new verdicts (`internetUnreachable`, `captivePortal`)
+      // × the 2×2 measured/skipped grid = 8 more shapes. The guard's real assertions
+      // passed for all of them; this count is the tripwire that made me confirm the
+      // matrix actually grew rather than a shape silently dropping out.
+      expect(shapesChecked, 36,
           reason: 'the library-wide guard must sweep every verdict shape, not '
               'one — that was the round-3 finding');
     });

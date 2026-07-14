@@ -19,6 +19,9 @@ import 'package:wlan_pros_toolbox/router/app_router.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/network_unavailable_view.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/test_my_connection_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
+import 'package:network_info_plus/network_info_plus.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_connection_service.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_path_probe.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
@@ -160,6 +163,33 @@ QualityResult _marginalInternet() => QualityResult(
   ],
 );
 
+
+/// A connection probe that reports the modelled device is ON WI-FI (a link the app
+/// can PROVE is free), so the fail-closed consent gate stays silent and these
+/// verdict/render tests behave as they always have. The Wi-Fi RATE can still be
+/// unknown (no Shortcut payload) — that is a separate axis from the money question.
+class _OnWifiPath implements WifiPathProbe {
+  const _OnWifiPath();
+  @override
+  Future<WifiPathFacts?> read() async => const WifiPathFacts(
+        usesWifi: true, wifiSatisfied: true, wifiInterfacePresent: true);
+}
+
+class _OnWifiNet implements NetworkInfo {
+  @override
+  Future<String?> getWifiIP() async => '192.168.1.10';
+  @override
+  Future<String?> getWifiIPv6() async => null;
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}
+
+WifiConnectionService _onWifiConnection() => WifiConnectionService(
+      networkInfo: _OnWifiNet(),
+      platformOverride: TargetPlatform.iOS,
+      pathProbe: const _OnWifiPath(),
+    );
+
 void main() {
   Widget host(Widget child, {Size? size}) => MaterialApp(
     theme: AppTheme.dark(),
@@ -190,6 +220,7 @@ void main() {
           TestMyConnectionScreen(
             startExpanded: true,
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: _FakeMacAdapter(),
             qualityClient: MockQualityClient(
@@ -228,6 +259,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: _FakeMacAdapter(),
             qualityClient: MockQualityClient(
@@ -254,6 +286,7 @@ void main() {
           TestMyConnectionScreen(
             startExpanded: true,
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _NoPayloadBridge(),
             qualityClient: MockQualityClient(
@@ -275,6 +308,8 @@ void main() {
     await tester.pumpWidget(
       host(
         const TestMyConnectionScreen(
+          // web resolves to MeteredRisk.none with no probe (no cellular radio), so
+          // no connection service is needed and the const construction stands.
           enableLiveSampling: false,
           sourceOverride: WifiInfoSource.web,
         ),
@@ -292,6 +327,7 @@ void main() {
         TestMyConnectionScreen(
           startExpanded: true,
           enableLiveSampling: false,
+          connectionService: _onWifiConnection(),
           sourceOverride: WifiInfoSource.macosCoreWlan,
           macAdapter: _FakeMacAdapter(),
           qualityClient: MockQualityClient(scriptedResult: _marginalInternet()),

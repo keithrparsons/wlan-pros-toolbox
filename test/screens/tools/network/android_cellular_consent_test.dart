@@ -452,8 +452,11 @@ void main() {
       );
       expect(
         screen,
-        contains('570 MB at 300 Mbps'),
-        reason: 'the top-end figure must still be stated plainly',
+        contains('573 MB at 300 Mbps'),
+        reason: 'the top-end figure must still be stated plainly — and it is now the '
+            'DERIVED one. "570" understated the true 572.5 MB, on the one screen '
+            'whose entire job is to say what a tap will cost, and it erred in the '
+            'direction that spends the user\'s money under false pretenses.',
       );
       expect(
         find.text('Run without the speed test'),
@@ -559,8 +562,35 @@ void main() {
     });
 
     testWidgets(
-      'AN UNREADABLE transport must NOT nag — ambiguity is preserved',
+      'AN UNREADABLE transport must ASK — WITHOUT claiming cellular',
       (WidgetTester tester) async {
+        // ====================================================================
+        // THE SEVENTH ENSHRINED TEST OF THE WEEK. THIS IS WHAT IT USED TO SAY:
+        //
+        //   testWidgets('AN UNREADABLE transport must NOT nag — ambiguity is
+        //                preserved', ...
+        //     expect(screen, isNot(contains("You're on cellular.")));
+        //     expect(find.text('Run test'), findsOneWidget);
+        //     await tester.tap(find.text('Run test'));
+        //     expect(quality.lastIncludeThroughput, isTrue);   // <- 573 MB, no tap
+        //
+        // GREEN. And it was ASSERTING, as correct behavior, that the app spends up
+        // to 573 MB of a cellular user's data on an unreadable transport — the exact
+        // shape Vera exploited (an Android channel that is absent, threw, or blew its
+        // 3 s deadline). It was written in the same commit that closed the Android
+        // hole, by an author who had just quoted [[feedback_tests_that_enshrine_the_bug]]
+        // in this file's own header.
+        //
+        // THE TEST'S FIRST ASSERTION WAS ALWAYS RIGHT, AND STILL IS: a read we could
+        // not make is NOT proof of cellular, and we must never claim it is. What was
+        // wrong was the inference drawn from that — "therefore spend". GL-005 forbids
+        // FABRICATING A CLAIM. It never required spending a stranger's money to avoid
+        // a prompt.
+        //
+        // SO BOTH THINGS ARE NOW TRUE AT ONCE, and that is the whole design:
+        //   * we do NOT say "You're on cellular"  (we don't know that)
+        //   * we DO ask before we spend            (we don't know it's free either)
+        // ====================================================================
         final MockQualityClient quality = await _pumpNetQuality(
           tester,
           const _TransportSilent(),
@@ -570,13 +600,28 @@ void main() {
         expect(
           screen,
           isNot(contains("You're on cellular.")),
-          reason: 'a read we could not make is not proof of cellular (GL-005)',
+          reason: 'a read we could not make is not proof of cellular (GL-005). This '
+              'assertion was always correct and is UNCHANGED.',
         );
-        expect(find.text('Run test'), findsOneWidget);
+        expect(
+          screen,
+          contains("We can't tell whether this device is on Wi-Fi or cellular."),
+          reason: 'say the true thing, and ask',
+        );
+        expect(
+          find.text('Run test'),
+          findsNothing,
+          reason: 'the free-to-spend label must NOT appear on a link we could not read',
+        );
+        expect(find.text('Run without the speed test'), findsOneWidget);
 
-        await tester.tap(find.text('Run test'));
+        await tester.tap(find.text('Run test (may use data)'));
         await tester.pumpAndSettle();
-        expect(quality.lastIncludeThroughput, isTrue);
+        expect(
+          quality.lastIncludeThroughput,
+          isTrue,
+          reason: 'an explicit, cost-labelled tap is consent and must be honored',
+        );
       },
     );
   });
@@ -680,15 +725,53 @@ void main() {
     });
 
     testWidgets(
-      'AN UNREADABLE transport: the auto-start still runs (ambiguity)',
+      'AN UNREADABLE transport: THE ZERO-TAP PATH IS CLOSED HERE TOO',
       (WidgetTester tester) async {
-        // Only a POSITIVE not-on-Wi-Fi verdict stops the run. Stopping on `unknown`
-        // would interrogate every user whose channel hiccuped.
+        // ====================================================================
+        // THE EIGHTH ENSHRINED TEST. THIS IS WHAT IT USED TO SAY:
+        //
+        //   testWidgets('AN UNREADABLE transport: the auto-start still runs
+        //                (ambiguity)', ...
+        //     // Only a POSITIVE not-on-Wi-Fi verdict stops the run. Stopping on
+        //     // `unknown` would interrogate every user whose channel hiccuped.
+        //     expect(r.quality.measureCalls, 1);
+        //     expect(r.quality.lastIncludeThroughput, isTrue);
+        //
+        // GREEN — and it was asserting that the app's PRIMARY ENTRY POINT (the home
+        // hero pushes this screen with `autoStart: true`) spends up to 573 MB of a
+        // cellular user's data with ZERO TAPS, on an Android transport channel that
+        // failed to answer. That is Vera's exploit #3, written down as a requirement.
+        //
+        // THE COMMENT'S WORRY WAS REAL AND IS ADDRESSED PROPERLY. "Stopping on
+        // `unknown` would interrogate every user whose channel hiccuped" — and, more
+        // importantly, every wired desktop. So the fix does not stop on `unknown`
+        // BLINDLY: it stops when the link is not PROVEN FREE, and "proven free"
+        // includes a MEASURED Ethernet transport and every platform with no cellular
+        // radio (see the ETHERNET and macOS/Windows tests above and below, which are
+        // unchanged and still green). A phone whose channel hiccuped is asked. A
+        // wired Android TV is not.
+        // ====================================================================
         final ({MockQualityClient quality, WifiSignalSampler sampler}) r =
             await _pumpTmc(tester, const _TransportSilent());
 
-        expect(r.quality.measureCalls, 1);
-        expect(r.quality.lastIncludeThroughput, isTrue);
+        expect(
+          r.quality.measureCalls,
+          0,
+          reason: 'ZERO BYTES. An unreadable channel is not permission to spend.',
+        );
+
+        // ...and the user is offered the choice, honestly worded.
+        final String screen = _visibleText(tester);
+        expect(
+          screen,
+          contains("We can't tell whether this device is on Wi-Fi or cellular."),
+        );
+        expect(
+          screen,
+          isNot(contains("You're on cellular.")),
+          reason: 'we still do not claim a link we could not read',
+        );
+        expect(find.text('Check without the speed test'), findsOneWidget);
 
         await _teardown(tester, r.sampler);
       },

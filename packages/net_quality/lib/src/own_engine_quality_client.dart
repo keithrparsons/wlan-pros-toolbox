@@ -267,10 +267,18 @@ class OwnEngineQualityClient implements QualityClient {
   /// The note stamped on every metric the caller declined to measure. It names
   /// the REASON, so the UI never has to guess whether a null is "we failed" or
   /// "we did not try" (GL-005, the two kinds of null).
+  ///
+  /// IT NAMES THE PURPOSE, NOT THE LINK (round 5, 2026-07-14). Since the consent
+  /// gate began failing CLOSED, this note also renders for a link the app could not
+  /// IDENTIFY — not just a measured cellular one. "…was skipped to save cellular
+  /// data" states our REASON for skipping (which is true in both cases) and stops
+  /// short of claiming the device IS on cellular (which we may not know). Wording it
+  /// as "you are on cellular" would import the exact false certainty the round-5 fix
+  /// exists to remove, through the back door of a result string.
   static const String kSkippedNote = 'Not measured: the speed test was skipped '
-      'to save cellular data';
+      'to avoid spending cellular data';
 
-  /// The note stamped on Responsiveness when the run is on CELLULAR.
+  /// The note stamped on Responsiveness when the RPM stage is withheld.
   ///
   /// THE THIRD KIND OF NULL (Keith, 2026-07-14). [kSkippedNote] documents two —
   /// "we failed" versus "we did not try" — and this is a distinct third: WE
@@ -289,10 +297,17 @@ class OwnEngineQualityClient implements QualityClient {
   /// never saturates the link, so loaded latency is understated and
   /// `rpm = 60000 / loadedAvg` comes out too HIGH. A number that is silently
   /// optimistic is worse than no number.
+  ///
+  /// IT NO LONGER ASSERTS "ON CELLULAR" (round 5, 2026-07-14). The consent gate now
+  /// fails closed, so this note also renders on a link the app could not IDENTIFY.
+  /// "Not measured on cellular" would then be a fabricated fact about the user's
+  /// radio — printed in a result, which is where this codebase has already been
+  /// burned four times. It states the CHOICE and the CONDITION under which the
+  /// number becomes available, and asserts nothing about a link it cannot read.
   static const String kResponsivenessCellularNote =
-      'Not measured on cellular, on purpose: it needs another full-speed '
-      'download, and responsiveness is a side metric here. Run this on Wi-Fi '
-      'to see it.';
+      'Not measured, on purpose: it needs a second full-speed download, and '
+      'responsiveness is a side metric here. It runs once we can confirm you '
+      'are on Wi-Fi.';
 
   @override
   Stream<QualityProgress> measure({

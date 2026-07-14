@@ -272,7 +272,7 @@ void main() {
       // net_quality_cellular_consent_test.dart.
       expect(screen, contains(kCellularDataWarning));
       expect(screen, contains('15 seconds'));
-      expect(screen, contains('30 MB at 10 Mbps'));
+      expect(screen, contains('29 MB at 10 Mbps'));
       expect(screen, isNot(contains('roughly')));
       expect(screen, isNot(contains('or more')));
 
@@ -407,12 +407,33 @@ void main() {
     });
 
     testWidgets(
-      'an AMBIGUOUS probe (unknown) must NOT nag — it is not proof of cellular',
+      'an AMBIGUOUS probe (unknown) must ASK — WITHOUT claiming cellular',
       (WidgetTester tester) async {
-        // The read THROWS -> WifiConnectionStatus.unknown. The user may well be on
-        // Wi-Fi. Warning them about cellular data on an ambiguous read would be a
-        // false claim, and would nag every wired desktop forever. `unknown` means
-        // "assert nothing" — including this.
+        // ====================================================================
+        // THE ENSHRINED TEST THE SERVICE'S OWN HEADER NAMED, AND THEN SHIPPED.
+        //
+        // `wifi_connection_service.dart` says, verbatim, in the round-4b block:
+        //
+        //     "one test — 'an AMBIGUOUS probe must NOT nag' — was actively
+        //      ASSERTING that the app spends the data on exactly the probe shape
+        //      Android always produces. Read the test NAMES before you trust them"
+        //
+        // THIS IS THAT TEST. It was quoted as a cautionary tale and LEFT GREEN, on
+        // iOS, where it went on asserting `lastIncludeThroughput == true` for an
+        // ambiguous probe — Vera's exploits #4 and #5, an iPhone on cellular whose
+        // `en0` carries a link-local `fe80::` and nothing else. Naming a bug is not
+        // fixing it.
+        //
+        // THE FIRST ASSERTION WAS ALWAYS RIGHT AND IS UNCHANGED: an ambiguous read
+        // is NOT a positive cellular signal and we must never claim it is. The error
+        // was the step after it — "therefore spend". Those are different acts.
+        // GL-005 forbids fabricating a CLAIM; it never required spending a
+        // stranger's money to avoid a prompt.
+        //
+        // The wired-desktop worry in the old comment is answered by the PLATFORM, not
+        // by the probe: see 'a wired MAC (non-iOS -> unknown) is untouched' directly
+        // below, which is unchanged and still green.
+        // ====================================================================
         final MockQualityClient quality = await _pumpPreRun(
           tester,
           _AmbiguousNetworkInfo(),
@@ -422,12 +443,22 @@ void main() {
         expect(
           screen,
           isNot(contains("You're on cellular.")),
-          reason: 'an ambiguous probe is not a positive cellular signal',
+          reason: 'an ambiguous probe is not a positive cellular signal. UNCHANGED.',
         );
-        expect(find.text('Check without the speed test'), findsNothing);
-        expect(find.text('Check My Connection'), findsOneWidget);
+        expect(
+          screen,
+          contains("We can't tell whether this device is on Wi-Fi or cellular."),
+          reason: 'say the true thing, and ask',
+        );
+        expect(find.text('Check without the speed test'), findsOneWidget);
+        expect(
+          find.text('Check My Connection'),
+          findsNothing,
+          reason: 'the free-to-spend label may not appear on an unproven link',
+        );
 
-        await tester.tap(find.text('Check My Connection'));
+        // The cost-labelled tap IS the consent, and it is honored.
+        await tester.tap(find.text('Check My Connection (may use data)'));
         await tester.pumpAndSettle();
         await tester.pump(const Duration(seconds: 5));
         await tester.pumpAndSettle();

@@ -146,6 +146,23 @@ class WifiSignalSampler extends ChangeNotifier {
   /// so a wired Android TV and a tablet on Wi-Fi are never nagged (GL-005).
   bool _snapshotNotOnWifi = false;
 
+  /// The settled MONEY answer for the ANDROID snapshot source (round 5, 2026-07-14).
+  ///
+  /// FAILS CLOSED, and it starts at [MeteredRisk.unknown] rather than `none`: before
+  /// [load] resolves we have measured nothing, and "not yet asked" must never read
+  /// as "proven free". Test My Connection AWAITS [load] before it reads this.
+  ///
+  /// On macOS / Windows / web this is overridden to [MeteredRisk.none] by
+  /// [meteredRisk] below — those platforms have no meter to trip, and prompting a
+  /// wired desktop about cellular data it cannot spend is its own kind of lie.
+  MeteredRisk _snapshotMeteredRisk = MeteredRisk.unknown;
+
+  /// Whether [_snapshotMeteredRisk] has been PROBED, or is still its fail-closed
+  /// default. The consent GATE reads the risk (and fails closed); the pre-run CARD
+  /// reads this first, so it never flashes a cellular warning at a Wi-Fi user during
+  /// the few hundred ms before the probe settles.
+  bool _snapshotRiskResolved = false;
+
   // ---- iOS (companion-Shortcut stream) ----
   WiFiDetailsBridge? _iosBridge;
   WifiMonitorController? _controller;
@@ -300,6 +317,60 @@ class WifiSignalSampler extends ChangeNotifier {
   /// Wi-Fi reading permanently satisfied `hasEverReceived`, so the honest card
   /// never fired for anyone real. There is no Wi-Fi link; there is no reading.
   bool get notOnWifi => _controller?.notOnWifi ?? _snapshotNotOnWifi;
+
+  /// The settled MONEY answer: could a throughput run cost this user real data?
+  /// Test My Connection's consent gate reads EXACTLY this (round 5, 2026-07-14).
+  ///
+  /// THIS GETTER IS THE ONE THE OLD BUG WOULD HAVE COME BACK THROUGH, so it is
+  /// written to make that impossible rather than merely unlikely:
+  ///
+  ///   * iOS      — the controller's settled risk.
+  ///   * Android  — the snapshot probe's settled risk.
+  ///   * macOS / Windows / web / unsupported — [MeteredRisk.none], BY CONSTRUCTION.
+  ///     `_connectionService` is null there and no probe ever runs, so the raw field
+  ///     would sit forever at its fail-closed `unknown` and NAG EVERY DESKTOP USER
+  ///     ON EVERY RUN. Fail-closed is right for a phone and wrong for a machine with
+  ///     no cellular radio; this is where that distinction is enforced.
+  ///
+  /// Note the difference from [notOnWifi], which returns `false` for the desktop
+  /// sources: there, `false` means "we make no claim". Here, `none` means "there is
+  /// no meter to trip". Both are honest; they are not the same statement.
+  MeteredRisk get meteredRisk {
+    final WifiMonitorController? c = _controller;
+    if (c != null) return c.meteredRisk;
+    switch (source) {
+      case WifiInfoSource.androidWifiManager:
+        return _snapshotMeteredRisk;
+      case WifiInfoSource.macosCoreWlan:
+      case WifiInfoSource.windowsNativeWifi:
+      case WifiInfoSource.web:
+      case WifiInfoSource.unsupported:
+      case WifiInfoSource.iosShortcuts:
+        // iosShortcuts is unreachable here (its controller is non-null above) but is
+        // listed rather than defaulted, so a new source cannot silently inherit
+        // "free to spend" from a `default:` clause.
+        return MeteredRisk.none;
+    }
+  }
+
+  /// Whether [meteredRisk] has been PROBED yet, or is still the fail-closed default.
+  ///
+  /// The desktop / web sources are trivially RESOLVED: there is nothing to probe and
+  /// [MeteredRisk.none] is their final answer, so their pre-run card must never wait.
+  bool get meteredRiskResolved {
+    final WifiMonitorController? c = _controller;
+    if (c != null) return c.meteredRiskResolved;
+    switch (source) {
+      case WifiInfoSource.androidWifiManager:
+        return _snapshotRiskResolved;
+      case WifiInfoSource.macosCoreWlan:
+      case WifiInfoSource.windowsNativeWifi:
+      case WifiInfoSource.web:
+      case WifiInfoSource.unsupported:
+      case WifiInfoSource.iosShortcuts:
+        return true;
+    }
+  }
 
   /// Set when the last iOS [start] could not open the companion Shortcut
   /// (Shortcuts missing / not installed). Surfaced as the honest live error.
@@ -466,17 +537,28 @@ class WifiSignalSampler extends ChangeNotifier {
         // is still the no-op it has always been there.
         final WifiConnectionService? svc = _connectionService;
         if (svc == null) return;
-        final WifiConnectionStatus status =
-            await svc.status(nativeSsid: nativeSsid);
+        // ONE probe pass, BOTH answers (round 5). They come from the same evidence
+        // and fail in opposite directions — see [WifiConnectionService.read].
+        final LinkVerdict link = await svc.read(nativeSsid: nativeSsid);
         if (_disposed) return;
         // ONLY a POSITIVE verdict raises the flag. `unknown` (a wired Android TV, a
         // VPN that hides its underlying transport, a read that failed) LOWERS it —
         // it does not latch — because the device genuinely may have moved back onto
         // Wi-Fi and a stale `true` would nag a user who is no longer paying per
         // byte. Never inferred, never defaulted, in either direction (GL-005).
-        final bool next = status == WifiConnectionStatus.notOnWifi;
-        if (next != _snapshotNotOnWifi) {
+        final bool next = link.status == WifiConnectionStatus.notOnWifi;
+        final MeteredRisk nextRisk = link.meteredRisk;
+        // NOTIFY WHEN THE *RESOLUTION* CHANGES TOO, not only the value. A probe that
+        // settles on `unknown` leaves the risk byte-identical to its fail-closed
+        // default — so a value-only check would never fire, and the pre-run card
+        // (which waits for resolution) would never appear for the exact user who
+        // most needs it.
+        if (next != _snapshotNotOnWifi ||
+            nextRisk != _snapshotMeteredRisk ||
+            !_snapshotRiskResolved) {
           _snapshotNotOnWifi = next;
+          _snapshotMeteredRisk = nextRisk;
+          _snapshotRiskResolved = true;
           _safeNotify();
         }
       case WifiInfoSource.unsupported:

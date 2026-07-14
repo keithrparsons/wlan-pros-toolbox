@@ -924,6 +924,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _PayloadBridge(),
             qualityClient: MockQualityClient(
@@ -955,6 +956,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _PayloadBridge(),
             qualityClient: MockQualityClient(
@@ -995,6 +997,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _PayloadBridge(),
             qualityClient: MockQualityClient(
@@ -1022,6 +1025,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: _SlowLinkMacAdapter(),
             // usable Wi-Fi = 16.5 (< 100 → Weak); internet download 200
@@ -1052,6 +1056,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             // Tx 360 → usable 198 (Moderate). internet download 150
             // (Moderate). Same tier; usable is +32% → Wi-Fi has more headroom.
@@ -1110,6 +1115,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             // Tx 360 → usable 198 (Moderate). internet download 200
             // (Moderate). |delta| = 1% → within the +/-10% band.
@@ -1159,6 +1165,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _PayloadBridge(),
             qualityClient: MockQualityClient(
@@ -1191,6 +1198,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: _SlowLinkMacAdapter(),
             qualityClient: MockQualityClient(
@@ -1219,6 +1227,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _PayloadBridge(),
             qualityClient: MockQualityClient(
@@ -1251,6 +1260,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: _HangingMacAdapter(),
             qualityClient: MockQualityClient(scriptedResult: _emptyInternet()),
@@ -1284,6 +1294,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _PayloadBridge(),
             qualityClient: MockQualityClient(
@@ -1314,6 +1325,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _PayloadBridge(),
             qualityClient: MockQualityClient(
@@ -1340,6 +1352,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: _HangingMacAdapter(),
             qualityClient: MockQualityClient(
@@ -1372,6 +1385,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _PayloadBridge(),
             qualityClient: MockQualityClient(
@@ -1404,6 +1418,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _PayloadBridge(),
             qualityClient: MockQualityClient(
@@ -1448,6 +1463,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: _FakeMacAdapter(),
             qualityClient: MockQualityClient(
@@ -1489,6 +1505,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: adapter,
             qualityClient: MockQualityClient(
@@ -1518,6 +1535,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: adapter,
             qualityClient: MockQualityClient(
@@ -1548,6 +1566,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: adapter,
             qualityClient: MockQualityClient(
@@ -1581,6 +1600,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.androidWifiManager,
             macAdapter: adapter,
             qualityClient: MockQualityClient(
@@ -1612,6 +1632,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.androidWifiManager,
             macAdapter: adapter,
             qualityClient: MockQualityClient(
@@ -1639,6 +1660,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: adapter,
             qualityClient: MockQualityClient(
@@ -1684,6 +1706,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: adapter,
             qualityClient: MockQualityClient(
@@ -1723,6 +1746,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _PayloadBridge(),
             qualityClient: quality,
@@ -1772,6 +1796,7 @@ void main() {
           size: const Size(375, 812),
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             enableCloudApps: false,
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _PayloadBridge(),
@@ -1808,6 +1833,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: _HangingMacAdapter(),
             qualityClient: MockQualityClient(
@@ -1854,6 +1880,7 @@ void main() {
             hostTheme(
               TestMyConnectionScreen(
                 enableLiveSampling: false,
+                connectionService: _onWifiConnection(),
                 sourceOverride: WifiInfoSource.iosShortcuts,
                 iosBridge: _PayloadBridge(),
                 qualityClient: MockQualityClient(
@@ -1899,6 +1926,7 @@ void main() {
           hostTheme(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.iosShortcuts,
               iosBridge: _PayloadBridge(),
               qualityClient: MockQualityClient(
@@ -2211,6 +2239,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.iosShortcuts,
               iosBridge: bridge,
               onboardingService: onboardingSvc(),
@@ -2238,6 +2267,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.iosShortcuts,
               iosBridge: _PayloadBridge(), // hasEverReceivedPayload == true
               onboardingService: onboardingSvc(),
@@ -2263,6 +2293,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.iosShortcuts,
               iosBridge: _FreshBridge(),
               onboardingService: onboardingSvc(seen: true),
@@ -2288,6 +2319,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.macosCoreWlan,
               macAdapter: _FakeMacAdapter(),
               onboardingService: onboardingSvc(),
@@ -2319,6 +2351,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.macosCoreWlan,
               // Tx 720 → usable Wi-Fi 396 (Strong). Internet download 400
               // (Strong). margin = round(100*(396-400)/400) = -1% → about same.
@@ -2351,6 +2384,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.macosCoreWlan,
               // Tx 360 → usable Wi-Fi 198 (Moderate). Internet download 150
               // (Moderate). margin = round(100*(198-150)/150) = 32% → Wi-Fi ahead.
@@ -2379,6 +2413,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.macosCoreWlan,
               // Tx 240 → usable Wi-Fi 132 (Moderate). Internet download 220
               // (Moderate). margin = round(100*(132-220)/220) = -40% → internet
@@ -2409,6 +2444,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.macosCoreWlan,
               // Tx 360 → usable Wi-Fi 198 (Moderate). Internet download 200
               // (Moderate). margin = round(100*(198-200)/200) = -1% → about same.
@@ -2437,6 +2473,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.macosCoreWlan,
               // Tx 120 → usable Wi-Fi 66 (Weak). Internet download 63 (Weak).
               // margin = round(100*(66-63)/63) = 5% → within band → about same.
@@ -2467,6 +2504,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.macosCoreWlan,
               // Tx 120 → usable Wi-Fi 66 (Weak). Internet download 40 (Weak).
               // margin = round(100*(66-40)/40) = 65% → Wi-Fi ahead.
@@ -2495,6 +2533,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.macosCoreWlan,
               // Tx 720 → usable Wi-Fi 396 (Strong). Internet download 60
               // (Weak). Different tiers → existing "slow part" wording stands.
@@ -2544,6 +2583,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               enableCloudApps: false,
               sourceOverride: WifiInfoSource.iosShortcuts,
               iosBridge: _PayloadBridge(),
@@ -2635,6 +2675,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               enableCloudApps: false,
               sourceOverride: WifiInfoSource.iosShortcuts,
               iosBridge: _PayloadBridge(),
@@ -2676,6 +2717,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               enableCloudApps: false,
               sourceOverride: WifiInfoSource.macosCoreWlan,
               macAdapter: _FakeMacAdapter(),
@@ -2723,6 +2765,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               enableCloudApps: false,
               sourceOverride: WifiInfoSource.iosShortcuts,
               iosBridge: _PayloadBridge(),
@@ -2758,6 +2801,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               enableCloudApps: false,
               sourceOverride: WifiInfoSource.iosShortcuts,
               iosBridge: _PayloadBridge(),
@@ -2815,6 +2859,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.macosCoreWlan,
               macAdapter: _StaticMacAdapter(macSampleChannelZero()),
               qualityClient: MockQualityClient(
@@ -2848,6 +2893,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.macosCoreWlan,
               // _NoNameMacAdapter: snapshot has SSID/BSSID null and
               // currentNameAuthorization() == false (Location not granted).
@@ -2895,6 +2941,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               enableCloudApps: false,
               sourceOverride: WifiInfoSource.iosShortcuts,
               // _FreshBridge.readLatest() == null → no RF captured.

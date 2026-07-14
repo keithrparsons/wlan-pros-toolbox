@@ -18,31 +18,39 @@ import 'package:wlan_pros_toolbox/theme/app_tokens.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 import 'package:wlan_pros_toolbox/widgets/tool_help_footer.dart';
 
-/// The connection probe seam (F-1). The screen now gates the data-hungry stages
-/// on an honest not-on-Wi-Fi read, so the tests must supply that read instead of
-/// letting it reach an unmocked platform channel. `unknown` is the neutral answer
-/// — it changes nothing about this screen's behaviour, which is the point: these
-/// tests are about rendering, not about the consent gate (that has its own file,
-/// net_quality_cellular_consent_test.dart).
-class _SilentPath implements WifiPathProbe {
-  const _SilentPath();
+/// The connection probe seam. These are RENDER tests — the consent gate has its
+/// own file, net_quality_cellular_consent_test.dart — so they model a normal device
+/// ON WI-FI, where the gate is silent and the run behaves exactly as it always has.
+///
+/// ROUND 5: this used to inject an `unknown` service and a comment claimed "unknown
+/// is the neutral answer — it changes nothing about this screen's behaviour". That
+/// stopped being true the moment the gate began failing CLOSED: `unknown` now raises
+/// the cost UI and withholds throughput, which is precisely what a render test must
+/// NOT have happen to it. An on-Wi-Fi service is the honest neutral for a render
+/// test — a link the app can PROVE is free, so nothing is gated.
+class _OnWifiPath implements WifiPathProbe {
+  const _OnWifiPath();
   @override
-  Future<WifiPathFacts?> read() async => null;
+  Future<WifiPathFacts?> read() async => const WifiPathFacts(
+        usesWifi: true,
+        wifiSatisfied: true,
+        wifiInterfacePresent: true,
+      );
 }
 
-class _UnknownNet implements NetworkInfo {
+class _OnWifiNet implements NetworkInfo {
   @override
-  Future<String?> getWifiIP() async => throw Exception('no plugin in test');
+  Future<String?> getWifiIP() async => '192.168.1.10';
   @override
-  Future<String?> getWifiIPv6() async => throw Exception('no plugin in test');
+  Future<String?> getWifiIPv6() async => null;
   @override
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
 }
 
 WifiConnectionService _unknownConnection() => WifiConnectionService(
-      networkInfo: _UnknownNet(),
+      networkInfo: _OnWifiNet(),
       platformOverride: TargetPlatform.iOS,
-      pathProbe: const _SilentPath(),
+      pathProbe: const _OnWifiPath(),
     );
 
 void main() {

@@ -186,14 +186,24 @@
 //     underlying network's transports into the VPN network's capabilities, so a VPN
 //     over cellular usually still reports `cellular: true`. When a VPN app does not
 //     call `setUnderlyingNetworks`, the active network reports ONLY `TRANSPORT_VPN`
-//     and the transport block falls through to `unknown` — which SPENDS THE DATA
-//     without a warning, exactly as it did before this change. This is the ONE
-//     residual cellular-spend path on Android and it is stated, not hidden. It is
-//     not closed by guessing: `unknown` is the honest answer, and asserting
-//     "cellular" from a bare VPN transport would nag every VPN-on-Wi-Fi user.
-//   * ANDROID + BOTH TRANSPORTS is ambiguous and also spends. If the OS reports
-//     Wi-Fi AND cellular on the same active network, we cannot know which link
-//     pays, so we assert neither and the run proceeds. Same class as the VPN row.
+//     and the transport block cannot decide the WI-FI question — so it stays
+//     `unknown`, which is the honest answer (asserting "cellular" from a bare VPN
+//     transport would nag every VPN-on-Wi-Fi user with a false claim).
+//
+//     THIS NO LONGER SPENDS. Until round 5 the sentence above ended "...which
+//     SPENDS THE DATA without a warning... This is the ONE residual cellular-spend
+//     path on Android and it is stated, not hidden." STATING A LEAK IS NOT CLOSING
+//     IT, and Vera walked straight through it. The Wi-Fi answer is unchanged and
+//     still `unknown`; the MONEY answer is now [MeteredRisk.unknown], which ASKS.
+//     We never had to claim the user was on cellular in order to ask them.
+//   * ANDROID + BOTH TRANSPORTS is ambiguous for the Wi-Fi question in the same way
+//     and ALSO no longer spends. If the OS reports Wi-Fi AND cellular on one active
+//     network we cannot know which link pays, so we assert neither and ASK.
+//   * WIRED ANDROID (`TRANSPORT_ETHERNET`) IS AMBIGUOUS FOR THE WI-FI QUESTION AND
+//     PROVEN SAFE FOR THE MONEY QUESTION. It stays `unknown` on the Wi-Fi axis (it
+//     genuinely is not on Wi-Fi) and [MeteredRisk.none] on the spend axis (a cable
+//     has no meter), so a wired Android TV is never prompted. That row is why the
+//     money question needed its own enum instead of being folded into this one.
 //
 // Web safety: no `dart:io`. Both probes are method-channel calls whose channels are
 // absent off the supported native platforms; the calls are guarded and resolve to
@@ -205,7 +215,128 @@ import 'package:network_info_plus/network_info_plus.dart';
 import 'network_transport_probe.dart';
 import 'wifi_path_probe.dart';
 
+// ============================================================================
+// ROUND 5 (2026-07-14): `unknown` SPENT THE USER'S MONEY. TWO QUESTIONS, NOT ONE.
+// ============================================================================
+//
+// Vera drove this service with the real decision table and got FIVE separate
+// exploits through the consent gate. Every one of them had the same shape: an
+// ambiguous read resolved to [WifiConnectionStatus.unknown], and BOTH consent
+// gates closed only on a definitive `notOnWifi` —
+//
+//     spendData = includeThroughput && (!_notOnWifi || _throughputConsented)
+//
+// so `unknown` SPENT. And because the consent dialog only rendered on `notOnWifi`,
+// `_throughputConsented` was still false: THE USER WAS NEVER ASKED AND COULD NOT
+// HAVE BEEN. Android VPN-over-cellular, an Android transport channel that threw,
+// an iPhone on cellular whose `en0` holds a link-local `fe80::` — all of them
+// spent up to 573 MB, silently.
+//
+// THE HEADER OF THIS FILE DOCUMENTED THE LEAK AND CALLED THAT A DEFENSE:
+// "the transport block falls through to `unknown` — which SPENDS THE DATA without
+// a warning... This is the ONE residual cellular-spend path on Android and it is
+// stated, not hidden." STATING A LEAK IS NOT CLOSING IT.
+//
+// THE DESIGN ERROR, PRECISELY. The old code defended `unknown → spend` with GL-005
+// ("an ambiguous read is never proof of cellular"). That CONFLATES TWO DIFFERENT
+// ACTS:
+//
+//   * ASSERTING A FACT ("You are not on Wi-Fi") — GL-005 is right: never assert
+//     from ambiguity. [WifiConnectionStatus] answers this question and STILL fails
+//     to `unknown`. Not one of its answers has changed.
+//
+//   * AUTHORIZING A SPEND — a completely different act, with a completely
+//     different safe default. Under uncertainty the safe move is to ASK, not to
+//     spend. YOU NEVER HAVE TO CLAIM SOMEONE IS ON CELLULAR IN ORDER TO ASK THEM.
+//     GL-005 forbids fabricating a claim; it does not require spending a
+//     stranger's money to avoid a prompt.
+//
+// A spurious prompt to a Wi-Fi user costs ONE TAP. A silent 573 MB spend costs
+// REAL MONEY. The old code treated those as symmetric. They are not.
+//
+// So the service now answers BOTH questions, in one probe pass, and they fail in
+// OPPOSITE directions:
+//
+//   | question                    | type                  | fails to    |
+//   |-----------------------------|-----------------------|-------------|
+//   | "are you on Wi-Fi?"         | [WifiConnectionStatus]| `unknown`   |
+//   | "could this cost money?"    | [MeteredRisk]         | `unknown`   |
+//   |                             |                       | → WHICH ASKS|
+//
+// The Wi-Fi question is UNCHANGED — every honest-Wi-Fi surface Keith verified on
+// his phone (the "Not connected" chip, the suppressed stale rate) reads exactly
+// what it read before. [MeteredRisk] is a NEW, ORTHOGONAL answer that only the
+// consent gates read.
+//
+// WHY A SECOND ENUM AND NOT "TREAT unknown AS CELLULAR": because the 3-state Wi-Fi
+// enum is LOSSY FOR THE MONEY QUESTION, and collapsing them would nag people who
+// are provably not paying. A wired Android TV reports `TRANSPORT_ETHERNET` — a
+// MEASUREMENT that it is not metered — and still resolves to `unknown` on the Wi-Fi
+// axis, because it is genuinely not on Wi-Fi and we refuse to claim it is. Same for
+// every macOS and Windows desktop. Those users must not be interrogated about
+// cellular data they cannot possibly be spending. `MeteredRisk.none` is what lets
+// the gate stay silent for them while still failing closed for a phone.
+
+/// Whether running the data-hungry stages could cost the user real money.
+///
+/// THE MONEY QUESTION, KEPT SEPARATE FROM THE WI-FI QUESTION ON PURPOSE, AND IT
+/// FAILS CLOSED. [WifiConnectionStatus] exists to state a FACT and so it fails to
+/// `unknown`; this exists to authorize a SPEND and so its ambiguous case ASKS.
+///
+/// The asymmetry is the whole point: an unnecessary prompt costs one tap, and an
+/// unasked-for 573 MB download costs money. See the round-5 note above.
+enum MeteredRisk {
+  /// PROVEN SAFE — spend without asking. Reached ONLY from a positive measurement:
+  /// a confirmed Wi-Fi association, a confirmed WIRED (`TRANSPORT_ETHERNET`) link,
+  /// or a platform that cannot be billed per byte at all (macOS / Windows / Linux /
+  /// web — see [WifiConnectionService.isMeteredCapable]).
+  none,
+
+  /// PROVEN COSTLY — ask, and say plainly that the link is cellular. The OS named
+  /// the mobile radio as the active link (`TRANSPORT_CELLULAR` on Android; a Wi-Fi
+  /// interface carrying no address of either family on iOS).
+  metered,
+
+  /// WE CANNOT TELL — ask, and SAY SO. This is the state that used to spend.
+  ///
+  /// THE PROMPT MUST NOT LIE ABOUT CERTAINTY HERE. Do not tell this user "You're on
+  /// cellular" — we do not know that, and asserting it would be the same disease
+  /// from the other side. Say what is true: we cannot tell what link you are on,
+  /// here is what it may cost, continue? See [kUnknownLinkDataWarning].
+  unknown,
+}
+
+/// The service's full answer: the Wi-Fi fact AND the money risk, from ONE probe
+/// pass. They are deliberately independent — see the round-5 note above.
+@immutable
+class LinkVerdict {
+  const LinkVerdict({required this.status, required this.meteredRisk});
+
+  /// "Are you on Wi-Fi?" — fails to [WifiConnectionStatus.unknown] (GL-005).
+  final WifiConnectionStatus status;
+
+  /// "Could this cost money?" — fails to [MeteredRisk.unknown], WHICH ASKS.
+  final MeteredRisk meteredRisk;
+
+  @override
+  String toString() => 'LinkVerdict(status: $status, meteredRisk: $meteredRisk)';
+}
+
+/// The one-line consent rule, so no caller can spell it wrong.
+///
+/// FAIL CLOSED: anything that is not PROVEN safe requires an explicit tap. This is
+/// the inversion of the round-4 gate, which required proof of DANGER before it
+/// would ask — and therefore never asked on any of the five shapes Vera exploited.
+extension MeteredRiskConsent on MeteredRisk {
+  /// True when the app must ASK before it spends a byte.
+  bool get requiresConsent => this != MeteredRisk.none;
+}
+
 /// The honest three-way Wi-Fi connection verdict. See [WifiConnectionService].
+///
+/// UNCHANGED BY ROUND 5. This answers "are you on Wi-Fi?" and it still fails to
+/// [unknown] on any ambiguity, exactly as GL-005 requires. The consent gate no
+/// longer reads it — it reads [MeteredRisk], which fails the other way.
 enum WifiConnectionStatus {
   /// The device is connected to a Wi-Fi network. The live read should proceed.
   onWifi,
@@ -255,7 +386,24 @@ class WifiConnectionService {
   final WifiPathProbe _pathProbe;
   final NetworkTransportProbe _transportProbe;
 
-  /// Reads the current Wi-Fi connection status.
+  /// Whether THIS PLATFORM can bill the user per byte at all.
+  ///
+  /// The phones, and only the phones. A macOS / Windows / Linux desktop or laptop
+  /// has no cellular plan this app can detect, so an ambiguous link there is not a
+  /// money question and must never raise a prompt: "never nag a wired desktop" is
+  /// still right, and it is enforced HERE rather than by hoping the probe stays
+  /// silent.
+  ///
+  /// STATED RESIDUAL: a Windows laptop on a built-in WWAN modem, and any desktop
+  /// tethered to a phone's hotspot, ARE metered and are NOT caught by this. The
+  /// hotspot case is unfixable in principle from the client's side (the hotspot IS
+  /// a Wi-Fi link from the laptop's point of view — see KNOWN LIMITS), and the WWAN
+  /// case has no probe. Both spend, both spent before, and neither is claimed fixed.
+  bool get isMeteredCapable =>
+      _platform == TargetPlatform.iOS || _platform == TargetPlatform.android;
+
+  /// Reads the current Wi-Fi connection status. A thin wrapper over [read] for the
+  /// callers that only care about the Wi-Fi fact (the live-RF surfaces).
   ///
   /// [nativeSsid] is an optional caller-supplied SSID from a native read
   /// (NEHotspotNetwork on iOS, CoreWLAN on macOS). A non-empty value is a
@@ -263,10 +411,34 @@ class WifiConnectionService {
   /// from an active Wi-Fi association. Its ABSENCE is NOT used to assert
   /// `notOnWifi` (it can be null because Location is ungranted, not because Wi-Fi
   /// is off).
-  Future<WifiConnectionStatus> status({String? nativeSsid}) async {
+  Future<WifiConnectionStatus> status({String? nativeSsid}) async =>
+      (await read(nativeSsid: nativeSsid)).status;
+
+  /// Reads BOTH answers in ONE probe pass: the Wi-Fi fact and the money risk.
+  ///
+  /// Every `return` below carries both. They are decided by the SAME evidence and
+  /// they fail in OPPOSITE directions — the Wi-Fi fact to [WifiConnectionStatus
+  /// .unknown] (never assert from ambiguity), the money risk to [MeteredRisk
+  /// .unknown] (which ASKS). See the round-5 note at the top of this file.
+  Future<LinkVerdict> read({String? nativeSsid}) async {
+    // ========================================================================
+    // THE FAIL-CLOSED DEFAULT. On a phone, we assume the run COULD cost money
+    // until something PROVES otherwise. Every ambiguous fall-through below leaves
+    // this untouched, so a new branch added tomorrow cannot silently spend: it has
+    // to positively earn `MeteredRisk.none`.
+    //
+    // On a desktop the default is `none` and nothing can raise it — see
+    // [isMeteredCapable].
+    // ========================================================================
+    MeteredRisk risk =
+        isMeteredCapable ? MeteredRisk.unknown : MeteredRisk.none;
+
     // A resolved native SSID proves an active Wi-Fi join — strongest positive.
     if (nativeSsid != null && nativeSsid.trim().isNotEmpty) {
-      return WifiConnectionStatus.onWifi;
+      return const LinkVerdict(
+        status: WifiConnectionStatus.onWifi,
+        meteredRisk: MeteredRisk.none,
+      );
     }
 
     // ========================================================================
@@ -286,8 +458,17 @@ class WifiConnectionService {
       // Wi-Fi interface it is not joined to. This is where an IPv6-only SSID is
       // caught, so it NEVER reaches the address probe below (which is blind to it).
       if (path.usesWifi || path.wifiSatisfied) {
-        return WifiConnectionStatus.onWifi;
+        return const LinkVerdict(
+          status: WifiConnectionStatus.onWifi,
+          meteredRisk: MeteredRisk.none,
+        );
       }
+      // AND EVERYTHING ELSE THE PATH REPORTS LEAVES `risk` AT ITS FAIL-CLOSED
+      // DEFAULT. A Wi-Fi interface that is present but carries no usable route —
+      // the ordinary state of an iPhone sitting on cellular with Wi-Fi left
+      // switched on — is exactly Vera's exploit #5, and it now ASKS instead of
+      // spending. The Wi-Fi verdict for it is still an honest `unknown`.
+      //
       // ====================================================================
       // "NO WI-FI INTERFACE AT ALL" IS AMBIGUOUS TOO, AND IT ALSO FALLS THROUGH.
       // (Round-4 cold review, F-4, 2026-07-14.)
@@ -431,34 +612,59 @@ class WifiConnectionService {
         // billing us per byte. A device cannot route over a Wi-Fi interface it is
         // not joined to.
         if (t.wifi && !t.cellular) {
-          return WifiConnectionStatus.onWifi;
+          return const LinkVerdict(
+            status: WifiConnectionStatus.onWifi,
+            meteredRisk: MeteredRisk.none,
+          );
         }
         // DEFINITIVE NEGATIVE — AND THE ONLY ONE ANDROID MAY ASSERT. The OS says
         // the active network is the mobile radio, and says no Wi-Fi is carrying it.
         // The user is paying per byte, and we know it. This is the line that makes
         // the consent gate reachable on Android at all.
         if (t.cellular && !t.wifi) {
-          return WifiConnectionStatus.notOnWifi;
+          return const LinkVerdict(
+            status: WifiConnectionStatus.notOnWifi,
+            meteredRisk: MeteredRisk.metered,
+          );
         }
-        // EVERYTHING ELSE FALLS THROUGH, DELIBERATELY:
+        // ====================================================================
+        // AMBIGUOUS FOR THE WI-FI QUESTION. NOT ALWAYS AMBIGUOUS FOR THE MONEY
+        // QUESTION — AND THAT DISTINCTION IS THE REASON [MeteredRisk] EXISTS.
+        //
+        // WIRED IS A MEASUREMENT, NOT AN ABSENCE. `TRANSPORT_ETHERNET` with no
+        // cellular alongside it is the OS telling us the bytes run over a CABLE.
+        // That is not "we could not tell" — it is proof there is no meter. The
+        // Wi-Fi verdict stays an honest `unknown` (a wired Android TV is genuinely
+        // not on Wi-Fi and we will not claim it is), but the SPEND is provably free,
+        // so the gate stays silent. Collapsing these two questions into one enum is
+        // exactly what would have nagged every wired Android box in the field.
+        if (!t.cellular && t.ethernet) {
+          risk = MeteredRisk.none;
+        }
+        // EVERYTHING ELSE LEAVES `risk` AT `unknown` — WHICH NOW ASKS:
         //
         //   * BOTH wifi AND cellular — a VPN whose underlying networks include
-        //     both. We cannot tell which one the bytes will actually cost on, so we
-        //     assert NEITHER. Not `notOnWifi` (we would nag, and possibly lie);
-        //     not `onWifi` (we might then spend cellular data silently — but the
-        //     fall-through lands on `unknown`, which ALSO spends, so this row is
-        //     honest about its limit rather than safe: see KNOWN LIMITS).
-        //   * ETHERNET — a wired Android TV, a docked tablet. NOT cellular. It must
-        //     never see a cellular warning, and it is not Wi-Fi either, so we claim
-        //     nothing. `unknown` = the pre-existing behavior, exactly.
-        //   * NO ACTIVE NETWORK (airplane mode) or an exotic transport (Bluetooth
-        //     tether, USB, LoWPAN) — a successful read of a state that is neither
-        //     cellular nor Wi-Fi. Claiming "you're on cellular" here would be a
-        //     fabrication of precisely the kind this service exists to prevent.
+        //     both. We cannot tell which link pays, so we assert NEITHER on the
+        //     Wi-Fi axis. WAS VERA'S EXPLOIT #2: the old code let this SPEND,
+        //     because it only closed on a definitive `notOnWifi`. It now ASKS.
+        //   * VPN WITH NO UNDERLYING TRANSPORT — the VPN app never called
+        //     `setUnderlyingNetworks`, so the OS reports only `TRANSPORT_VPN`.
+        //     WAS VERA'S EXPLOIT #1. The old header called this "the ONE residual
+        //     cellular-spend path on Android" and shipped it. It now ASKS. Note we
+        //     still do not CLAIM cellular — asserting that would nag every
+        //     VPN-on-Wi-Fi user with a false statement. We ask WITHOUT claiming.
+        //   * NO ACTIVE NETWORK (airplane mode) or an EXOTIC transport (Bluetooth
+        //     tether, USB, LoWPAN) — all four bits false. This shape is genuinely
+        //     ambiguous between "nothing is connected" (spending is impossible) and
+        //     "a Bluetooth/USB tether to a phone" (spending is METERED, and it is
+        //     the phone's plan paying). So it asks. A pointless prompt in airplane
+        //     mode costs one tap; a silent tethered spend costs money.
       }
-      // A null read (the channel is absent, the call threw, the deadline fired)
-      // falls through too. It is NOT a verdict in either direction, and the address
-      // probe below will resolve Android to `unknown`.
+      // A NULL READ LEAVES `risk` AT `unknown` — WHICH NOW ASKS. The channel is
+      // absent, the call threw, or the 3 s deadline fired. WAS VERA'S EXPLOIT #3.
+      // It is NOT a verdict in either direction for the Wi-Fi question, and the
+      // address probe below still resolves Android's STATUS to `unknown` — but a
+      // read we could not make is not permission to spend a stranger's money.
     }
 
     // ========================================================================
@@ -470,12 +676,27 @@ class WifiConnectionService {
     final ({String? ip, bool threw}) v4 = await _readWifiIp();
     if (v4.threw) {
       // The read FAILED (denied permission / unsupported platform). Ambiguous,
-      // never a positive not-on-Wi-Fi signal (GL-005).
-      return WifiConnectionStatus.unknown;
+      // never a positive not-on-Wi-Fi signal (GL-005) — and, on a phone, never
+      // permission to spend either: `risk` is still `unknown`, so the gate asks.
+      return LinkVerdict(
+        status: WifiConnectionStatus.unknown,
+        meteredRisk: risk,
+      );
     }
     if (v4.ip != null) {
       // An active Wi-Fi interface has an IPv4 address: on Wi-Fi.
-      return WifiConnectionStatus.onWifi;
+      //
+      // STATED RESIDUAL, NOT A CLAIMED FIX. On iOS this is reached only when the
+      // native path probe did not answer, and an ASSOCIATED Wi-Fi interface can
+      // hold an IPv4 while iOS routes over cellular anyway (Wi-Fi Assist). That
+      // shape reads `onWifi` and spends. It did before this change too, it is not
+      // one of the five Vera broke, and closing it would mean refusing to trust a
+      // Wi-Fi address at all — which would nag every phone with both radios up.
+      // Named here rather than left to be re-discovered.
+      return const LinkVerdict(
+        status: WifiConnectionStatus.onWifi,
+        meteredRisk: MeteredRisk.none,
+      );
     }
 
     // No Wi-Fi IPv4 from a SUCCESSFUL read. Whether that can EVER prove "not on
@@ -497,7 +718,15 @@ class WifiConnectionService {
     // reintroduce, on a platform that genuinely has wired Ethernet, the exact false
     // negative this guard was written to prevent.
     if (_platform != TargetPlatform.iOS) {
-      return WifiConnectionStatus.unknown;
+      // ANDROID lands here carrying whatever `risk` the transport block settled:
+      // `none` for a MEASURED wired link, `unknown` for a VPN / both-transports /
+      // airplane / unreadable channel. macOS and Windows land here with `none`,
+      // because [isMeteredCapable] is false and no branch can raise it — so a wired
+      // desktop is still never nagged, which was the whole reason this guard exists.
+      return LinkVerdict(
+        status: WifiConnectionStatus.unknown,
+        meteredRisk: risk,
+      );
     }
 
     // iOS, no Wi-Fi IPv4, and the native path did not answer. The IPv6 read
@@ -508,18 +737,45 @@ class WifiConnectionService {
     //           radio-off device, and the ONLY shape that may assert `notOnWifi`.
     //   * YES → SOMETHING is on the interface, but an IPv6-only association cannot
     //           be told from an idle interface holding a link-local. Refuse to
-    //           guess: `unknown` keeps the caller's prior behavior.
+    //           guess: `unknown` keeps the caller's prior Wi-Fi behavior — but it
+    //           NO LONGER keeps the prior SPENDING behavior. See below.
     final ({bool present, bool threw}) v6 = await _readWifiIpv6();
     if (v6.threw) {
       // The IPv6 read failed, so "no Wi-Fi address at all" is unproven.
-      return WifiConnectionStatus.unknown;
+      return LinkVerdict(
+        status: WifiConnectionStatus.unknown,
+        meteredRisk: risk,
+      );
     }
     if (v6.present) {
-      return WifiConnectionStatus.unknown;
+      // VERA'S EXPLOITS #4 AND #5 LIVED HERE, AND THEY WERE THE WHOLE POINT.
+      //
+      // `network_info_plus` filters interfaces with `strncmp(name, "en", 2)` and
+      // returns the FIRST match's IPv6 — which is the LINK-LOCAL `fe80::`. An
+      // iPhone on CELLULAR, with Wi-Fi switched on but unassociated, carries a
+      // `fe80::` on `en0` and NOTHING ELSE. So this branch fired, resolved to
+      // `unknown`, and the old gate SPENT — up to 573 MB, with no prompt, on a
+      // phone that was demonstrably not using its Wi-Fi.
+      //
+      // The Wi-Fi verdict is STILL `unknown`, and it must be: a link-local cannot
+      // tell an IPv6-only association from an idle radio, and claiming "not on
+      // Wi-Fi" here would blank a genuinely-connected user's link (the R2 bug this
+      // project has already shipped twice). We refuse to CLAIM. We do not refuse
+      // to ASK. `risk` is still `unknown`, so the gate asks — without asserting a
+      // single thing we cannot prove.
+      return LinkVerdict(
+        status: WifiConnectionStatus.unknown,
+        meteredRisk: risk,
+      );
     }
 
     // No IPv4 and NO IPv6 anywhere on the Wi-Fi interface: it has no active link.
-    return WifiConnectionStatus.notOnWifi;
+    // On an iPhone that means the bytes are going over the mobile radio, and the
+    // user is paying for them. Both answers are definitive, and they agree.
+    return const LinkVerdict(
+      status: WifiConnectionStatus.notOnWifi,
+      meteredRisk: MeteredRisk.metered,
+    );
   }
 
   /// Reads the Wi-Fi IPv4 address, normalizing the "no address" placeholders to

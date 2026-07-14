@@ -123,8 +123,18 @@ void main() {
       expect(note.toLowerCase(), isNot(contains("couldn't")));
       expect(note.toLowerCase(), isNot(contains('error')));
 
-      // It must name the REASON in plain words: a choice, and why.
-      expect(note.toLowerCase(), contains('cellular'));
+      // It must name the REASON in plain words: a choice, and where to get the
+      // number.
+      //
+      // ROUND 5: it no longer ASSERTS "cellular". The consent gate now fails closed,
+      // so this note also renders on a link the app could NOT IDENTIFY — printing
+      // "Not measured on cellular" there would be a fabricated fact about the user's
+      // radio, in a result. So the note names the CHOICE and the CONDITION under
+      // which the number becomes available ("once we can confirm you are on Wi-Fi"),
+      // and asserts nothing about a link it cannot read. That confirm-Wi-Fi phrasing
+      // is now the thing the test pins.
+      expect(note.toLowerCase(), contains('on purpose'),
+          reason: 'it is a deliberate choice, not a failure');
       expect(note.toLowerCase(), contains('wi-fi'),
           reason: 'tell the user where they CAN get the number');
     });

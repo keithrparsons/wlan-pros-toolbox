@@ -60,6 +60,19 @@ enum ConsumerOutcome {
   /// and cloud apps were reachable (engine `onlineUnmeasured`). Leads with the
   /// reachable truth, not "make sure you're on Wi-Fi". (Keith 2026-06-17.)
   online,
+
+  /// F — THE WI-FI IS UP AND THE INTERNET IS DOWN (engine `internetUnreachable`).
+  /// The one thing the app could not say, and therefore the one thing it never said.
+  ///
+  /// Its self-help topic is [SelfHelpTopic.internet], NOT `wifi` and NOT `reconnect`.
+  /// That single line is the difference between sending a man to "boost his Wi-Fi
+  /// signal" on a 97/77 Mbps link and telling him his provider is down.
+  internetDown,
+
+  /// G — the network wants a sign-in (engine `captivePortal`). The Wi-Fi works, the
+  /// internet is one browser tap away, and the app used to tell these users to
+  /// "make sure you're connected to Wi-Fi" — which they demonstrably were.
+  signInRequired,
 }
 
 /// The status of ONE axis — Wi-Fi or Internet — on the two-chip result header
@@ -163,6 +176,28 @@ enum AxisStatus {
   /// incapacity about a test the app chose not to run on the user's instruction —
   /// the same lie as the Wi-Fi chip, arrived at from the opposite direction.
   notMeasured,
+
+  /// "Not reachable" — WE MEASURED THE INTERNET AND THERE IS NOTHING THERE.
+  ///
+  /// THE FIFTH OCCURRENCE OF THE SAME MISSING STATE, AND THE ONE THIS FILE'S OWN
+  /// COMMENTS PREDICTED (round 5, 2026-07-14). The four notes above document four
+  /// prior instances of "the model could say 'measured' or 'couldn't read', and had
+  /// no way to say what was actually true" — and then this enum committed the fifth
+  /// one line later. A definitively-offline internet had no member, so it rendered
+  /// as [unknown] / "Couldn't check": a claim of a FAILED READ about a read that
+  /// SUCCEEDED and returned NO.
+  ///
+  /// THIS IS THE ONE NEUTRAL-ADJACENT STATE THAT IS GENUINELY A FAULT, AND IT WEARS
+  /// THE DANGER HUE ON PURPOSE. [unknown], [notApplicable], [notMeasured] and
+  /// [reachableUnmeasured] are all "no number here, and that is not a problem" —
+  /// they must never wear red (§8.13 rule 2). This one is different: the user's
+  /// internet is DOWN. That is the fault, it is the thing they need to act on, and
+  /// colouring it neutral to match its neighbours would be its own small lie. The
+  /// WORD still carries it (WCAG 2.2 SC 1.4.1).
+  ///
+  /// It is NOT a real tier ([AxisStatusTier.isRealTier] is false): there is no rate
+  /// behind it, so it can never produce a "both sides are X" sentence.
+  unreachable,
 }
 
 /// The absolute data-rate thresholds (Mbps) that bucket a measured rate into an
@@ -215,6 +250,11 @@ enum SelfHelpTopic {
 
   /// "Make sure you're on Wi-Fi and try again." Outcomes D1 and D2.
   reconnect,
+
+  /// "Open your browser and sign in." Outcome G ([ConsumerOutcome.signInRequired]).
+  /// A captive portal is not fixed by reconnecting, and telling a user who IS on
+  /// Wi-Fi to get on Wi-Fi is the advice that made this bug famous.
+  signIn,
 }
 
 /// The immutable plain-English translation of one engine verdict: the outcome
@@ -323,6 +363,12 @@ extension AxisStatusTier on AxisStatus {
       case AxisStatus.notApplicable:
       case AxisStatus.notMeasured:
       case AxisStatus.reachableUnmeasured:
+      // `unreachable` is a FAULT, not a tier. There is no rate behind it, so it can
+      // never produce a "both sides are X" sentence — and the WHITELIST is what
+      // guarantees that without anyone having to remember: a new member is excluded
+      // BY CONSTRUCTION. This is the member that would have been forgotten by the
+      // blacklist form, exactly as `notMeasured` was.
+      case AxisStatus.unreachable:
         return false;
     }
   }
@@ -389,11 +435,28 @@ class ConsumerVerdictMapper {
     //   * anything else  — a rate we genuinely could not obtain → the rate tiers,
     //                      with null honestly bucketing to `unknown`.
     // The rate is null in all three, so the rate ALONE cannot tell them apart.
+    //   * unreachable    — WE MEASURED IT AND THERE IS NOTHING THERE (round 5).
+    //                      The FIFTH null, and the one the comment block above
+    //                      predicted and then failed to add. DNS did not resolve, no
+    //                      public IP came back, and no cloud endpoint answered. The
+    //                      rate is null here exactly as it is for "we tried and
+    //                      failed" — which is why the rate ALONE cannot tell them
+    //                      apart, and why the VERDICT has to reach this decision.
+    //                      Printing "Couldn't check" here is a claim of a failed read
+    //                      about a read that SUCCEEDED and returned NO.
     final AxisStatus internetTier = engineResult.speedTestSkipped
         ? AxisStatus.notMeasured
-        : engineResult.verdict == WifiVsInternetVerdict.onlineUnmeasured
-            ? AxisStatus.reachableUnmeasured
-            : AxisStatusThresholds.tierFor(engineResult.internetMbps);
+        : switch (engineResult.verdict) {
+            WifiVsInternetVerdict.onlineUnmeasured =>
+              AxisStatus.reachableUnmeasured,
+            // A captive portal is a REACHABILITY failure, not a speed failure: we
+            // are not on the internet. Same chip as a dead internet; the HEADLINE is
+            // what tells them the fix is a browser tap rather than a call to the ISP.
+            WifiVsInternetVerdict.internetUnreachable ||
+            WifiVsInternetVerdict.captivePortal =>
+              AxisStatus.unreachable,
+            _ => AxisStatusThresholds.tierFor(engineResult.internetMbps),
+          };
 
     switch (engineResult.verdict) {
       // A — Wi-Fi link is the limiter.
@@ -509,6 +572,41 @@ class ConsumerVerdictMapper {
               'complete, so its speed could not be measured. Try again in a '
               'moment.',
           selfHelp: SelfHelpTopic.reconnect,
+        );
+
+      // F — WI-FI UP, INTERNET DOWN (round 5, 2026-07-14). The sentence the app
+      // existed to say and could not.
+      //
+      // `wifiTier` is UNTOUCHED here: whatever the Wi-Fi actually measured is what
+      // the Wi-Fi chip reports. A dead internet is not a reason to downgrade a
+      // reading we took. And `selfHelp` is `internet` — the whole bug was that every
+      // unmeasurable thing routed to the Wi-Fi advice.
+      case WifiVsInternetVerdict.internetUnreachable:
+        return ConsumerVerdict(
+          outcome: ConsumerOutcome.internetDown,
+          wifiStatus: wifiTier,
+          internetStatus: internetTier,
+          headline: 'No internet',
+          body:
+              "You're connected to Wi-Fi and your Wi-Fi is working. The "
+              'internet is not reachable: nothing past your Wi-Fi is '
+              'answering. The problem is your router’s internet '
+              'connection or your provider.',
+          selfHelp: SelfHelpTopic.internet,
+        );
+
+      // G — the network is asking you to sign in.
+      case WifiVsInternetVerdict.captivePortal:
+        return ConsumerVerdict(
+          outcome: ConsumerOutcome.signInRequired,
+          wifiStatus: wifiTier,
+          internetStatus: internetTier,
+          headline: 'Sign in to this network',
+          body:
+              'Your Wi-Fi is working, but this network has not let you onto '
+              'the internet yet. Open your browser and a sign-in page should '
+              'appear.',
+          selfHelp: SelfHelpTopic.signIn,
         );
     }
   }

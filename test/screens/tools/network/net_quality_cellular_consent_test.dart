@@ -153,7 +153,7 @@ void main() {
       // cellular, and the test happily confirmed the stale sentence.
       expect(screen, contains(kCellularDataWarning));
       expect(screen, contains('15 seconds'));
-      expect(screen, contains('30 MB at 10 Mbps'));
+      expect(screen, contains('29 MB at 10 Mbps'));
       // The hedged range is GONE — a consent dialog states a sourced number.
       expect(screen, isNot(contains('roughly')));
       expect(screen, isNot(contains('or more')));
@@ -259,9 +259,22 @@ void main() {
     // every platform it never ran on.
     // ========================================================================
     testWidgets(
-      'ON iOS an AMBIGUOUS (failed) probe must NOT nag — it is not proof of '
-      'cellular, and Android is NOT covered by this rule',
+      'ON iOS an AMBIGUOUS (failed) probe must ASK — WITHOUT claiming cellular',
       (WidgetTester tester) async {
+        // ====================================================================
+        // ENSHRINED TEST. It used to end:
+        //
+        //     expect(find.text('Run test'), findsOneWidget);
+        //     await tester.tap(find.text('Run test'));
+        //     expect(quality.lastIncludeThroughput, isTrue,
+        //       reason: 'on iOS a FAILED read must not withhold the feature.');
+        //
+        // "Must not withhold the feature" quietly became "must spend the money".
+        // Those are not the same thing, and the difference is ONE TAP. The feature is
+        // not withheld — it is OFFERED, with its price on the label, which is what a
+        // consent gate IS. What the old test actually protected was the app's right
+        // to bill a user it could not identify, on a read it admits it could not make.
+        // ====================================================================
         final MockQualityClient quality = await _pump(
           tester,
           _Ambiguous(),
@@ -274,19 +287,24 @@ void main() {
         expect(
           screen,
           isNot(contains("You're on cellular.")),
-          reason: 'a failed read is not a positive cellular signal (GL-005)',
+          reason: 'a failed read is not a positive cellular signal (GL-005). '
+              'UNCHANGED — and it is still the reason we never SAY it.',
         );
-        expect(find.text('Run test'), findsOneWidget);
+        expect(
+          screen,
+          contains("We can't tell whether this device is on Wi-Fi or cellular."),
+        );
+        expect(find.text('Run test'), findsNothing);
+        expect(find.text('Run without the speed test'), findsOneWidget);
 
-        await tester.tap(find.text('Run test'));
+        // THE FEATURE IS NOT WITHHELD. It is offered, with the price on the label.
+        await tester.tap(find.text('Run test (may use data)'));
         await tester.pumpAndSettle();
         expect(
           quality.lastIncludeThroughput,
           isTrue,
           reason:
-              'on iOS a FAILED read must not withhold the feature. This is '
-              'NOT a licence to spend on Android, where the transport is '
-              'MEASURED — see android_cellular_consent_test.dart',
+              'an explicit, cost-labelled tap is consent and must be honored',
         );
       },
     );
