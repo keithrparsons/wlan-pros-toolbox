@@ -126,6 +126,23 @@ enum AxisStatus {
   /// [unknown] stays reserved for a GENUINE failure to read or measure (a Wi-Fi
   /// link the platform will not expose; a speed test that stalled).
   notApplicable,
+
+  /// "Not measured" — this side COULD have been measured, and we deliberately did
+  /// not. The user declined the cellular-data cost of the speed test (Keith,
+  /// 2026-07-13). Neutral/muted token; not a fault, and not a failure.
+  ///
+  /// The third distinct answer behind a null rate, and it exists for exactly the
+  /// same reason [notApplicable] does. Once the speed test became skippable, an
+  /// unmeasured internet axis could mean three different things:
+  ///
+  ///   * [weak]/[moderate]/[strong] — measured.
+  ///   * [unknown]      — we ran the speed test and it FAILED. "Couldn't check".
+  ///   * [notMeasured]  — we never ran it. Nothing failed.
+  ///
+  /// Rendering a skipped measurement as "Couldn't check" would be a false claim of
+  /// incapacity about a test the app chose not to run on the user's instruction —
+  /// the same lie as the Wi-Fi chip, arrived at from the opposite direction.
+  notMeasured,
 }
 
 /// The absolute data-rate thresholds (Mbps) that bucket a measured rate into an
@@ -272,8 +289,11 @@ class ConsumerVerdictMapper {
     final AxisStatus wifiTier = engineResult.notOnWifi
         ? AxisStatus.notApplicable
         : AxisStatusThresholds.tierFor(engineResult.usableWifiMbps);
-    final AxisStatus internetTier =
-        AxisStatusThresholds.tierFor(engineResult.internetMbps);
+    // Same reasoning on the internet axis: a rate we never took is not a rate we
+    // failed to take. See [AxisStatus.notMeasured].
+    final AxisStatus internetTier = engineResult.speedTestSkipped
+        ? AxisStatus.notMeasured
+        : AxisStatusThresholds.tierFor(engineResult.internetMbps);
 
     switch (engineResult.verdict) {
       // A — Wi-Fi link is the limiter.

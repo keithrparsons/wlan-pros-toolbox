@@ -33,8 +33,10 @@ void main() {
       // in analyze_rules.dart). Every other table rule is ported → 32 rules,
       // plus R-06 (the honest "you are online" verdict added 2026-06-17 for the
       // stalled-speed-test-but-reachable case) → 33, plus R-05N (the not-on-Wi-Fi
-      // half of the `wifiUnknown` verdict, split out 2026-07-13 — see below) → 34.
-      expect(kAnalyzeRules.length, 34);
+      // half of the `wifiUnknown` verdict, split out 2026-07-13) → 34, plus R-06S
+      // (the speed-test-SKIPPED half of `onlineUnmeasured`, split out the same day
+      // when the cellular-data consent gate landed — see below) → 35.
+      expect(kAnalyzeRules.length, 35);
       final Set<FindingCategory> cats =
           kAnalyzeRules.map((r) => r.category).toSet();
       expect(cats.length, FindingCategory.values.length); // all 9

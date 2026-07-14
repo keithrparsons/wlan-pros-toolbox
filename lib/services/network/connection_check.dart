@@ -44,6 +44,7 @@ class ConnectionCheck {
     QualityResult? internet, {
     OnlineEvidence onlineEvidence = const OnlineEvidence(),
     bool notOnWifi = false,
+    bool speedTestSkipped = false,
   }) {
     final double? down = metricValue(internet, MetricIds.download);
     final double? up = metricValue(internet, MetricIds.upload);
@@ -59,6 +60,7 @@ class ConnectionCheck {
       internetHealth: internetHealth(internet),
       onlineEvidence: onlineEvidence,
       notOnWifi: notOnWifi,
+      speedTestSkipped: speedTestSkipped,
     );
   }
 

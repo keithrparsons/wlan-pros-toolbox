@@ -160,7 +160,22 @@ class WifiVsInternetResult {
     required this.linkRateMbps,
     required this.ratio,
     this.notOnWifi = false,
+    this.speedTestSkipped = false,
   });
+
+  /// True when the internet throughput was NOT MEASURED BY CHOICE — the user
+  /// declined the cellular-data cost of the speed test (Keith, 2026-07-13).
+  ///
+  /// This is a THIRD kind of null behind a missing internet rate, and it needs its
+  /// own word for the same reason `notOnWifi` did:
+  ///
+  ///   * failed   — we ran the speed test and it could not complete.
+  ///   * SKIPPED  — we never ran it. Nothing failed. "The speed test did not
+  ///                complete" is a false statement about a test that was never
+  ///                started, and "Couldn't check" is a false claim of incapacity.
+  ///
+  /// Defaults to false, so every existing caller keeps its exact prior behavior.
+  final bool speedTestSkipped;
 
   /// True when the caller's connection probe POSITIVELY reported the device is
   /// not on Wi-Fi (cellular-only). Distinguishes the TWO KINDS OF NULL behind a
@@ -240,6 +255,7 @@ class WifiVsInternetEngine {
     required InternetHealth internetHealth,
     OnlineEvidence onlineEvidence = const OnlineEvidence(),
     bool notOnWifi = false,
+    bool speedTestSkipped = false,
   }) {
     // --- Link rate: avg(Tx, Rx) with single-rate fallback. ---
     final bool hasTx = txRateMbps != null && txRateMbps > 0;
@@ -295,9 +311,17 @@ class WifiVsInternetEngine {
       return WifiVsInternetResult(
         verdict: WifiVsInternetVerdict.onlineUnmeasured,
         headline: 'You are online',
-        explanation:
-            'Your internet is reachable, but the speed test did not complete, '
-            'so its speed could not be measured. Try again in a moment.',
+        // THREE KINDS OF NULL BEHIND A MISSING SPEED (GL-005). "The speed test
+        // did not complete" is a statement about a test that RAN and FAILED. When
+        // the user declined the cellular-data cost, no test ran, nothing failed,
+        // and telling them to "try again in a moment" invites them to burn the
+        // data they just chose not to spend.
+        explanation: speedTestSkipped
+            ? 'Your internet is reachable. The speed test was skipped to save '
+                  'cellular data, so its speed was not measured. Connect to '
+                  'Wi-Fi, or run the speed test, to measure it.'
+            : 'Your internet is reachable, but the speed test did not complete, '
+                  'so its speed could not be measured. Try again in a moment.',
         snrContext: basis == WifiRateBasis.none ? '' : snrContext,
         rateBasis: basis,
         usableWifiMbps: usableWifi,
@@ -305,6 +329,7 @@ class WifiVsInternetEngine {
         linkRateMbps: linkRate,
         ratio: null,
         notOnWifi: notOnWifi,
+        speedTestSkipped: speedTestSkipped,
       );
     }
 
@@ -347,6 +372,7 @@ class WifiVsInternetEngine {
         linkRateMbps: null,
         ratio: null,
         notOnWifi: notOnWifi,
+        speedTestSkipped: speedTestSkipped,
       );
     }
 
@@ -370,6 +396,7 @@ class WifiVsInternetEngine {
         linkRateMbps: linkRate,
         ratio: ratio,
         notOnWifi: notOnWifi,
+        speedTestSkipped: speedTestSkipped,
       );
     }
 
@@ -391,6 +418,7 @@ class WifiVsInternetEngine {
         linkRateMbps: linkRate,
         ratio: null,
         notOnWifi: notOnWifi,
+        speedTestSkipped: speedTestSkipped,
       );
     }
 
@@ -415,6 +443,7 @@ class WifiVsInternetEngine {
         linkRateMbps: linkRate,
         ratio: ratio,
         notOnWifi: notOnWifi,
+        speedTestSkipped: speedTestSkipped,
       );
     }
 
@@ -433,6 +462,7 @@ class WifiVsInternetEngine {
         linkRateMbps: linkRate,
         ratio: ratio,
         notOnWifi: notOnWifi,
+        speedTestSkipped: speedTestSkipped,
       );
     }
 

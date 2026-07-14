@@ -344,6 +344,37 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// False until the first check completes.
   bool _resultNotOnWifi = false;
 
+  /// Whether THIS result's run skipped the data-hungry speed test because the
+  /// user declined the cellular-data cost. Stamped once in the run's `onDone`,
+  /// exactly like [_resultNotOnWifi] and for the same reason (cold-eyes F4): the
+  /// report is dated to its own run, and no later recompute may re-derive it.
+  bool _resultSpeedTestSkipped = false;
+
+  /// The estimated cellular data the speed test would consume, stated as a RANGE
+  /// because it genuinely is one.
+  ///
+  /// DERIVED FROM THE CODE, NOT GUESSED (2026-07-13). Neither data-hungry stage is
+  /// byte-bounded:
+  ///   * `ThroughputProbe.maxDuration` = 15 s. Five concurrent download streams
+  ///     LOOP sized requests back-to-back until that window closes
+  ///     (`_downloadOnce`'s do/while), so the stage transfers `rate x 15 s`.
+  ///   * The responsiveness (RPM) probe's load generator is ANOTHER full-window
+  ///     single-flow download (`runResilientRpmLoad`) — a second ~15 s at rate.
+  ///   * Upload is the only capped one: `uploadBytes` = 10 MB.
+  ///
+  /// So the app downloads at full speed for about 30 seconds, and the bytes scale
+  /// with the link:
+  ///   10 Mbps  -> ~(10 x 30 / 8) + 10  =  ~48 MB
+  ///   100 Mbps -> ~(100 x 30 / 8) + 10 =  ~385 MB
+  ///   300 Mbps -> ~(300 x 30 / 8) + 10 =  ~1.1 GB
+  ///
+  /// The copy therefore states the MECHANISM and a range, and does not invent a
+  /// single figure it cannot know before the test runs (GL-005).
+  static const String _kCellularDataWarning =
+      "You're on cellular. The speed test downloads at full speed for about 30 "
+      'seconds, so it uses roughly 50 MB on a slow connection and 500 MB or more '
+      'on fast 5G.';
+
   /// Whether offering the iOS companion-Shortcut capture path is HONEST for the
   /// result on screen.
   ///
@@ -1010,7 +1041,15 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// Runs the internet measurement and the link read from one tap, then computes
   /// the engine verdict (shared [ConnectionCheck]) and translates it for the
   /// consumer ([ConsumerVerdictMapper]).
-  void _run() {
+  ///
+  /// [includeThroughput] carries the user's CELLULAR-DATA CONSENT (Keith,
+  /// 2026-07-13). The speed test is not byte-bounded — it downloads at full rate
+  /// for a fixed window, so it costs roughly 50 MB on a slow cellular link and
+  /// 500 MB or more on fast 5G. On Wi-Fi this is always true and nothing changes.
+  /// Off Wi-Fi the user chooses, and choosing "no" still runs the whole rest of
+  /// the check (latency, loss, DNS, reachability, ISP, the honest not-on-Wi-Fi
+  /// state) — only the data-hungry stages are withheld.
+  void _run({bool includeThroughput = true}) {
     setState(() {
       _error = null;
       _running = true;
@@ -1021,6 +1060,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       // snapshot and its probe verdict so nothing from it can bleed into this one.
       _resultAp = null;
       _resultNotOnWifi = false;
+      _resultSpeedTestSkipped = false;
       _macLocationAuthorized = null;
       // NB: _macNameAuth resets with the result but _macLocationPromptFired does
       // NOT — the one-shot prompt guard must survive a re-run so the native
@@ -1088,7 +1128,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       _fetchNetworkDetails();
     }
 
-    _sub = _quality.measure().listen(
+    _sub = _quality.measure(includeThroughput: includeThroughput).listen(
       (QualityProgress p) {
         if (!mounted) return;
         setState(() {
@@ -1121,6 +1161,10 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         // there to catch.
         // ==================================================================
         final bool notOnWifi = _notOnWifi;
+        // Stamp the consent decision onto the RESULT for the same reason the probe
+        // verdict is stamped: the report must be dated to its own run, and a later
+        // recompute must not re-derive it from whatever the screen looks like now.
+        final bool skipped = !includeThroughput;
         final ConnectedAp? linkAp = notOnWifi ? null : ap;
         final WifiVsInternetResult engine = ConnectionCheck.compute(
           linkAp,
@@ -1131,10 +1175,14 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
           // The honest not-on-Wi-Fi probe, so the engine says "there is no Wi-Fi
           // link" rather than "the Wi-Fi link could not be read" (GL-005).
           notOnWifi: notOnWifi,
+          // ...and the honest "we never ran it" so the engine never says the speed
+          // test "did not complete" about a test that was never started.
+          speedTestSkipped: skipped,
         );
         setState(() {
           _ap = ap;
           _resultNotOnWifi = notOnWifi;
+          _resultSpeedTestSkipped = skipped;
           // The RF snapshot for THIS result: the gated one-shot read folded with
           // whatever the live stream has already delivered. Off Wi-Fi there is no
           // link, so there is no reading (GL-005 — the second kind of null).
@@ -1204,6 +1252,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       // rewrite a completed on-Wi-Fi result into "you're not on Wi-Fi" just
       // because the phone has since left the network (cold-eyes F4).
       notOnWifi: _resultNotOnWifi,
+      // The RUN's consent decision, for the same reason as notOnWifi above: late
+      // evidence re-derives the verdict for the check that was TAKEN.
+      speedTestSkipped: _resultSpeedTestSkipped,
     );
     setState(() {
       _engine = engine;
@@ -1740,17 +1791,69 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
           ),
           const SizedBox(height: AppSpacing.sm),
         ],
+        // THE CELLULAR DATA WARNING (Keith, 2026-07-13).
+        //
+        // Gated on the POSITIVE not-on-Wi-Fi probe ONLY. `unknown` (an ambiguous
+        // read, a wired Mac, any non-iOS platform) must NEVER reach here: warning
+        // a user on Wi-Fi that we are about to eat their cellular data is its own
+        // false claim, and it would nag every desktop user forever. On Wi-Fi this
+        // whole block is absent and the flow is byte-for-byte what it was.
+        if (_notOnWifi && !_running) ...<Widget>[
+          Container(
+            decoration: BoxDecoration(
+              color: colors.surface1,
+              borderRadius: BorderRadius.circular(AppRadius.card),
+              border: Border.all(
+                color: colors.border,
+                width: colors.isLight ? 1.5 : 1,
+              ),
+            ),
+            padding: const EdgeInsets.all(AppSpacing.sm),
+            child: Text(
+              _kCellularDataWarning,
+              style: text.bodyMedium?.copyWith(color: colors.textSecondary),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+        ],
         Semantics(
           button: true,
           enabled: !_running,
           label: _running
               ? 'Checking your connection'
-              : 'Check my connection',
+              : (_notOnWifi
+                  // The label IS the consent: a user who taps this has read the
+                  // data cost directly above it. One tap, no dialog.
+                  ? 'Run the full check including the speed test, which uses '
+                      'cellular data'
+                  : 'Check my connection'),
           child: FilledButton(
-            onPressed: _running ? null : _run,
-            child: Text(_running ? 'Checking…' : 'Check My Connection'),
+            onPressed: _running ? null : () => _run(),
+            child: Text(
+              _running
+                  ? 'Checking…'
+                  : (_notOnWifi
+                      ? 'Check My Connection (uses data)'
+                      : 'Check My Connection'),
+            ),
           ),
         ),
+        // THE DECLINE PATH. It is not a dead end: everything that does not cost
+        // cellular data still runs (latency, loss, DNS, reachability, ISP, and the
+        // honest not-on-Wi-Fi state). Only the two data-hungry stages are withheld,
+        // and the result says "Not measured" for them rather than "Couldn't check"
+        // — nothing failed.
+        if (_notOnWifi && !_running) ...<Widget>[
+          const SizedBox(height: AppSpacing.xs),
+          Semantics(
+            button: true,
+            label: 'Check without the speed test, using no cellular data',
+            child: TextButton(
+              onPressed: () => _run(includeThroughput: false),
+              child: const Text('Check without the speed test'),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -1956,6 +2059,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         return 'weak';
       case AxisStatus.unknown:
       case AxisStatus.notApplicable:
+      case AxisStatus.notMeasured:
         return _TwoAxisChips.word(tier);
     }
   }
@@ -2462,6 +2566,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         // from "there was no Wi-Fi link at all" (R-31 must stay silent — cold-eyes
         // F2). Both arrive here as `wifiSignalCaptured: false`.
         notOnWifi: _resultNotOnWifi,
+        speedTestSkipped: _resultSpeedTestSkipped,
       ),
     );
   }
@@ -2870,6 +2975,10 @@ class _TwoAxisChips extends StatelessWidget {
         // did not happen and sends the user hunting for it. See
         // [AxisStatus.notApplicable].
         return 'Not connected';
+      case AxisStatus.notMeasured:
+        // Also NOT "Couldn't check": the user declined the cellular-data cost, so
+        // the speed test never ran. Nothing failed. See [AxisStatus.notMeasured].
+        return 'Not measured';
     }
   }
 
@@ -2944,6 +3053,7 @@ class _StatusChip extends StatelessWidget {
         return colors.statusDanger;
       case AxisStatus.unknown:
       case AxisStatus.notApplicable:
+      case AxisStatus.notMeasured:
         // Light: neutral textSecondary #4A4A4A fill, matching the _GradeChip
         // no-hue fills across TMC / wifi_info / net_quality. Dark stays on
         // textTertiary so the dark render is byte-identical.
@@ -2987,6 +3097,13 @@ class _StatusChip extends StatelessWidget {
         // §1.1 rules out for error / cancel / block / remove. Axis-agnostic, so it
         // stays correct if a future axis is ever legitimately absent.
         return light ? Icons.link_off : Icons.link_off_outlined;
+      case AxisStatus.notMeasured:
+        // A THIRD distinct glyph. `help_outline` ("we don't know") and `link_off`
+        // ("there is nothing there") are both wrong: the internet is there, and we
+        // know we did not measure it. `pending` reads "not done", carries no fault
+        // (§1.1 rules out error / cancel / block / remove), and keeps the three
+        // neutral states separable without color (WCAG 2.2 SC 1.4.1).
+        return light ? Icons.pending : Icons.pending_outlined;
     }
   }
 

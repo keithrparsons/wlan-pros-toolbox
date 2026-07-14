@@ -324,6 +324,10 @@ class _CountingQualityClient implements QualityClient {
 
   int measureCount = 0;
 
+  /// What the screen asked for on the last run. The cellular-data consent gate is
+  /// only real if the data-hungry stages are never even REQUESTED without consent.
+  bool lastIncludeThroughput = true;
+
   @override
   bool get isAvailable => true;
 
@@ -331,8 +335,9 @@ class _CountingQualityClient implements QualityClient {
   QualityResult? get lastResult => _lastResult;
 
   @override
-  Stream<QualityProgress> measure() async* {
+  Stream<QualityProgress> measure({bool includeThroughput = true}) async* {
     measureCount++;
+    lastIncludeThroughput = includeThroughput;
     await Future<void>.delayed(const Duration(milliseconds: 100));
     yield const QualityProgress(QualityPhase.latency, 0.25);
     yield const QualityProgress(QualityPhase.download, 0.5);

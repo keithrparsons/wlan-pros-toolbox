@@ -60,6 +60,7 @@ class AnalyzeInput {
     this.wifiSignalCaptured = true,
     this.platformIsIos = false,
     this.notOnWifi = false,
+    this.speedTestSkipped = false,
   });
 
   /// The Wi-Fi-vs-Internet verdict, when one was produced. Drives R-01..R-05.
@@ -133,6 +134,13 @@ class AnalyzeInput {
   /// separates the two, and suppresses R-31 in the second.
   final bool notOnWifi;
 
+  /// True when the internet speed test was NOT RUN because the user declined its
+  /// cellular-data cost (Keith, 2026-07-13). Distinct from "the speed test failed":
+  /// nothing failed, so no rule may tell this user the test "did not complete" or
+  /// invite them to "try again in a moment" — that is an invitation to spend the
+  /// data they just chose not to spend (GL-005).
+  final bool speedTestSkipped;
+
   /// Builds the input from the live Test My Connection state. Pure: a total
   /// function of its arguments, so the assembly is unit-testable without any
   /// real radio or socket.
@@ -152,6 +160,7 @@ class AnalyzeInput {
     bool platformIsIos = false,
     bool wifiSignalCaptured = true,
     bool notOnWifi = false,
+    bool speedTestSkipped = false,
   }) {
     final double? down =
         ConnectionCheck.metricValue(internet, MetricIds.download);
@@ -195,6 +204,7 @@ class AnalyzeInput {
       wifiSignalCaptured: wifiSignalCaptured,
       platformIsIos: platformIsIos,
       notOnWifi: notOnWifi,
+      speedTestSkipped: speedTestSkipped,
     );
   }
 

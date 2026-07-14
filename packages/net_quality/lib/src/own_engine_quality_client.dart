@@ -170,8 +170,14 @@ class OwnEngineQualityClient implements QualityClient {
   @override
   QualityResult? get lastResult => _lastResult;
 
+  /// The note stamped on every metric the caller declined to measure. It names
+  /// the REASON, so the UI never has to guess whether a null is "we failed" or
+  /// "we did not try" (GL-005, the two kinds of null).
+  static const String kSkippedNote = 'Not measured: the speed test was skipped '
+      'to save cellular data';
+
   @override
-  Stream<QualityProgress> measure() async* {
+  Stream<QualityProgress> measure({bool includeThroughput = true}) async* {
     final metrics = <QualityMetric>[];
     _maxFraction = 0;
 
@@ -248,16 +254,54 @@ class OwnEngineQualityClient implements QualityClient {
     // stalled endpoint aborts the stage inside the probe (and
     // `_throughputStageBudget` is the outer backstop), after which the bar
     // advances to the stage's end as before.
-    yield _emit(QualityPhase.download, _downloadBand.start);
-    yield* _runThroughputStage(metrics);
+    // THE TWO DATA-HUNGRY STAGES, BOTH GATED TOGETHER (Keith, 2026-07-13).
+    //
+    // NEITHER IS BYTE-BOUNDED. The throughput stage opens a fixed ~15 s window
+    // and keeps re-requesting until it closes, so it transfers `rate x window` —
+    // the faster the link, the more data it burns. The responsiveness stage is
+    // just as expensive and far less obvious: its LOAD GENERATOR is another
+    // full-window single-flow download ([runResilientRpmLoad]). Skipping the
+    // "speed test" while leaving RPM running would still burn ~15 s of data at
+    // full rate, so the two are gated as one unit.
+    //
+    // What survives when they are skipped: latency, jitter and loss, which are
+    // small TCP-connect samples. That is a genuinely useful result, and it is
+    // what a user who declines the data cost still gets.
+    if (includeThroughput) {
+      yield _emit(QualityPhase.download, _downloadBand.start);
+      yield* _runThroughputStage(metrics);
 
-    // --- Responsiveness ---
-    // The loaded-responsiveness stage runs a full ~10 s load window, so it gets
-    // its own ~1/3 band and the SAME elapsed-time ticker as the throughput
-    // stages — it climbs smoothly across the back third rather than jumping to
-    // 0.90 and sitting frozen while the load runs (the old behavior).
-    yield _emit(QualityPhase.responsiveness, _responsivenessBand.start);
-    yield* _runResponsivenessStage(metrics);
+      // --- Responsiveness ---
+      // The loaded-responsiveness stage runs a full ~10 s load window, so it gets
+      // its own ~1/3 band and the SAME elapsed-time ticker as the throughput
+      // stages — it climbs smoothly across the back third rather than jumping to
+      // 0.90 and sitting frozen while the load runs (the old behavior).
+      yield _emit(QualityPhase.responsiveness, _responsivenessBand.start);
+      yield* _runResponsivenessStage(metrics);
+    } else {
+      // HONESTLY UNAVAILABLE, WITH THE REASON. Not zero, not omitted: a metric
+      // we chose not to take is a different null from one we tried and failed to
+      // take, and the note is what lets the UI say which (GL-005).
+      metrics
+        ..add(const QualityMetric.unavailable(
+          id: MetricIds.download,
+          label: 'Download',
+          unit: 'Mbps',
+          note: kSkippedNote,
+        ))
+        ..add(const QualityMetric.unavailable(
+          id: MetricIds.upload,
+          label: 'Upload',
+          unit: 'Mbps',
+          note: kSkippedNote,
+        ))
+        ..add(const QualityMetric.unavailable(
+          id: MetricIds.responsiveness,
+          label: 'Responsiveness',
+          unit: 'RPM',
+          note: kSkippedNote,
+        ));
+    }
 
     _lastResult = QualityResult(
       metrics: metrics,

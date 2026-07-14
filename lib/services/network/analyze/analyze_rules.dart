@@ -219,12 +219,29 @@ const List<AnalyzeRule> kAnalyzeRules = <AnalyzeRule>[
     id: 'R-06',
     category: FindingCategory.verdict,
     severity: FindingSeverity.important,
-    condition: _isVerdictOnlineUnmeasured,
+    condition: _isVerdictOnlineUnmeasuredMeasureFailed,
     responseDraft:
         "You are online. Your internet is reachable, but the speed test did "
         "not complete, so its speed could not be measured. Names are "
         "resolving, you have a public IP, and the test services answered, so "
         "the connection itself is up. Try the check again in a moment.",
+  ),
+  // R-06S — the SAME verdict, the OTHER reason there is no speed figure.
+  //
+  // R-06 says the speed test "did not complete" and invites the user to "try again
+  // in a moment". Both are false when the user DECLINED the test to save cellular
+  // data: nothing failed, and "try again" is an invitation to spend the data they
+  // just chose not to spend. Same split, same reason, as R-05 / R-05N.
+  AnalyzeRule(
+    id: 'R-06S',
+    category: FindingCategory.verdict,
+    severity: FindingSeverity.important,
+    condition: _isVerdictOnlineUnmeasuredSkipped,
+    responseDraft:
+        "Your internet is reachable and working. The speed test was skipped to "
+        "save cellular data, so its speed was not measured. Nothing failed here. "
+        "Connect to Wi-Fi and run the check again, or run it on cellular and "
+        "accept the data cost, to measure the speed.",
   ),
 
   // B. Signal, RSSI (coverage / distance).
@@ -634,6 +651,15 @@ bool _isVerdictUnknownNotOnWifi(AnalyzeInput i) =>
     _isVerdictUnknown(i) && i.notOnWifi;
 bool _isVerdictOnlineUnmeasured(AnalyzeInput i) =>
     i.verdict == WifiVsInternetVerdict.onlineUnmeasured;
+
+/// R-06 — online, and the speed test RAN and failed. "Did not complete" is true.
+bool _isVerdictOnlineUnmeasuredMeasureFailed(AnalyzeInput i) =>
+    _isVerdictOnlineUnmeasured(i) && !i.speedTestSkipped;
+
+/// R-06S — online, and the speed test was never run (the user declined the
+/// cellular-data cost). Mutually exclusive with the above, so exactly one fires.
+bool _isVerdictOnlineUnmeasuredSkipped(AnalyzeInput i) =>
+    _isVerdictOnlineUnmeasured(i) && i.speedTestSkipped;
 
 // B. RSSI, graded with WifiGradingBands (the ratified app bands).
 bool _rssiPoor(AnalyzeInput i) => _rssiIs(i, QualityGrade.poor);

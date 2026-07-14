@@ -58,7 +58,22 @@ abstract interface class QualityClient {
   /// On success the stream ends after a [QualityPhase.complete] event and
   /// [lastResult] holds the graded result. On failure the stream ends after a
   /// [QualityPhase.failed] event.
-  Stream<QualityProgress> measure();
+  ///
+  /// [includeThroughput] gates the two DATA-HUNGRY stages: the throughput
+  /// measurement (download + upload) and the responsiveness (RPM) probe, whose
+  /// load generator is itself a full-window download. When false, ONLY the cheap
+  /// latency / jitter / loss samples run, and the four gated metrics come back
+  /// as honestly UNAVAILABLE with a "not measured" note — never as a fabricated
+  /// zero, and never as a silent omission.
+  ///
+  /// WHY THIS EXISTS (Keith, 2026-07-13). Neither stage is byte-bounded: each
+  /// downloads for a fixed WINDOW at whatever rate the link achieves, so the data
+  /// transferred scales with connection speed (see [ThroughputProbe.maxDuration]).
+  /// On cellular that is roughly 50 MB on a slow link and 500 MB or more on fast
+  /// 5G. A Wi-Fi professional on an expensive roaming plan must never have an app
+  /// silently burn that. Test My Connection warns, then passes `false` here unless
+  /// the user explicitly consents.
+  Stream<QualityProgress> measure({bool includeThroughput = true});
 
   /// The most recent successful result, or null if no measurement has
   /// completed yet.
