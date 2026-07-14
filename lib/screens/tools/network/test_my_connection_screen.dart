@@ -233,7 +233,19 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   double _fraction = 0;
 
   // Results, populated when the run completes.
+
+  /// The raw one-shot link read taken at test completion ([_readLink]). Off Wi-Fi
+  /// this is the App Group's LAST STORED payload, which survives the phone leaving
+  /// Wi-Fi — so it is NEVER rendered directly. The result body reads
+  /// [_effectiveAp] / [_resultAp], which is gated on the run's own probe verdict.
   ConnectedAp? _ap;
+
+  /// The RF snapshot THIS RESULT was computed from: [_ap] folded with the live
+  /// sampler's reading, stamped in the run's `onDone` and enriched (never blanked)
+  /// by late-arriving live RF. The SINGLE source the verdict, the technical
+  /// section, the help-desk facts, the copy report, and Analyze all read, via
+  /// [_effectiveAp]. Null when the check ran with no Wi-Fi link.
+  ConnectedAp? _resultAp;
 
   /// macOS only: whether Location Services is authorized for this app. Since
   /// macOS 14, CoreWLAN withholds the SSID and BSSID unless the app holds
@@ -297,14 +309,59 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// iOS / before the sampler resolves.
   bool get _iosHasEverReceived => _sampler?.hasEverReceived ?? false;
 
-  /// The honest "this device is demonstrably NOT on Wi-Fi" probe result, read
-  /// from the live sampler. Only ever true on a POSITIVE not-on-Wi-Fi signal
-  /// (cellular-only on iOS); an ambiguous or failed read leaves it false, so a
-  /// wired desktop and a Location-gated read are never falsely told they have no
-  /// Wi-Fi (GL-005). Drives the engine's "there is no Wi-Fi link" wording instead
-  /// of the wrong "the Wi-Fi link could not be read". False before the sampler
-  /// resolves, and on every non-iOS source.
+  /// The LIVE "this device is demonstrably NOT on Wi-Fi" probe result, read from
+  /// the live sampler. True only on a POSITIVE not-on-Wi-Fi verdict from
+  /// [WifiConnectionService] (read its KNOWN LIMITS before relying on it); an
+  /// ambiguous or failed read leaves it false, so a wired desktop and a
+  /// Location-gated read are never falsely told they have no Wi-Fi (GL-005).
+  /// False before the sampler resolves, and on every non-iOS source.
+  ///
+  /// This tracks the device RIGHT NOW, so it moves when the user joins or leaves
+  /// Wi-Fi. The RESULT body must not read it directly — see [_resultNotOnWifi].
   bool get _notOnWifi => _sampler?.notOnWifi ?? false;
+
+  /// The not-on-Wi-Fi state AS OF THE COMPLETED CHECK — the flag every part of
+  /// the RESULT body reads (the verdict, the technical section, the help-desk
+  /// facts, the copy report, the capture affordances).
+  ///
+  /// WHY THE RESULT NEEDS ITS OWN FLAG (cold-eyes F4, 2026-07-13). [_notOnWifi] is
+  /// live. Run a check at home on Wi-Fi, walk to the car, let the app resume: the
+  /// resume re-probes, the live flag flips true, and a body wired to it would blank
+  /// every Wi-Fi row of a reading that was LEGITIMATELY TAKEN on Wi-Fi — while the
+  /// verdict card, which is not recomputed on resume, still read "It's your Wi-Fi".
+  /// The screen contradicted itself and threw away a true measurement.
+  ///
+  /// A completed check is a TIMESTAMPED REPORT ("Tested: <time>"), not a live
+  /// readout. So the report is FROZEN against the probe state of its own run:
+  /// stamped once in the run's `onDone` and never moved by a later resume.
+  /// Recomputing it instead would replace a true finding ("your Wi-Fi link was the
+  /// limiter at 14:32") with a false one ("there was no Wi-Fi to check"), which is
+  /// the same class of lie this whole fix exists to remove. The LIVE Wi-Fi-signal
+  /// card keeps reading [_notOnWifi] and honestly says "You're not connected to
+  /// Wi-Fi" right now, so the two coexist without contradicting each other: one is
+  /// dated, one is live. "Run again" re-stamps the report.
+  ///
+  /// False until the first check completes.
+  bool _resultNotOnWifi = false;
+
+  /// Whether offering the iOS companion-Shortcut capture path is HONEST for the
+  /// result on screen.
+  ///
+  /// THE SECOND WRONG NULL (cold-eyes F2, 2026-07-13). Gating the RF DATA at
+  /// [_effectiveAp] was not enough: [_iosRfCaptured] is DERIVED from it, so a null
+  /// [_effectiveAp] made "RF captured" false — and false there does not mean
+  /// "there is no Wi-Fi", it means "tap Capture Wi-Fi details and we'll read it
+  /// through the companion Shortcut". A cellular-only iPhone was shown that button
+  /// (:_WifiLinkSection), that note in the copy report, that offer card, and that
+  /// Analyze finding (R-31). No Shortcut can read a Wi-Fi link that does not
+  /// exist — it is the SAME wrong-kind-of-null failure in a new costume.
+  ///
+  /// So the data has one chokepoint ([_effectiveAp]) and the ADVICE has this one.
+  /// Every capture/Shortcut affordance in the result body reads THIS getter, so a
+  /// new one cannot be added without passing the gate. Off Wi-Fi there is nothing
+  /// to capture, and the honest "You're not connected to Wi-Fi" verdict already
+  /// tells the user what to do instead: join a network.
+  bool get _canOfferWifiCapture => _isIos && !_resultNotOnWifi;
 
   /// Whether to run the REAL DNS-probe + local-addressing reads on a check.
   /// Production always does (live sampling on). Tests that disable live sampling
@@ -518,6 +575,22 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     final WifiSignalSampler? s = _sampler;
     final bool recovery = (s?.shortcutMissing ?? false) || (s?.triggerError ?? false);
     if (_verdict == null && !recovery) return;
+
+    // ENRICH THE RESULT SNAPSHOT, NEVER BLANK IT (cold-eyes F4).
+    //
+    // The sampler's first sample can land AFTER the run completes, and the copy
+    // report must serialize exactly the RF the sparklines show — so late live RF
+    // is folded into the result snapshot here. But the fold is one-way: when the
+    // sampler's reading goes NULL (the phone left Wi-Fi after the check, so the
+    // controller stops handing out its stored payload), we KEEP the snapshot the
+    // completed check produced. A reading taken on Wi-Fi stays a true, timestamped
+    // reading; it is not retroactively deleted because the user walked to the car.
+    //
+    // A check that ran with NO Wi-Fi ([_resultNotOnWifi]) is never enriched: there
+    // was no link, so there is nothing a late sample could be a sample OF.
+    if (_verdict != null && !_resultNotOnWifi && s?.latest != null) {
+      _resultAp = _mergeWithLive(_ap);
+    }
     setState(() {});
   }
 
@@ -799,17 +872,26 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// user with NO Wi-Fi to "Boost the Wi-Fi signal to raise the ceiling." The
   /// advice was derived from a Wi-Fi link that does not exist.
   ///
-  /// Gating HERE — the single chokepoint the verdict, the technical section, the
-  /// help-desk facts, and the copy report ALL read — makes every one of them
-  /// honest from one line, and keeps the gate off the timeout-bounded link-read
-  /// path (a fresh probe there is a platform-channel await, which stalls the run).
-  /// [_notOnWifi] is refreshed by the probe on screen entry, on app resume, and on
-  /// "Check again"; a POSITIVE result is the only thing that suppresses (GL-005),
-  /// so a wired desktop, a Location-gated read, and every non-iOS source are
-  /// untouched.
-  ConnectedAp? get _effectiveAp {
-    if (_notOnWifi) return null;
-    final ConnectedAp? oneShot = _ap;
+  /// THE READING IS STAMPED WITH THE RUN, NOT RECOMPUTED LIVE (cold-eyes F4).
+  /// [_resultAp] is assembled ONCE in the run's `onDone` — gated there by the
+  /// run's own [_resultNotOnWifi] — and thereafter only ENRICHED by late-arriving
+  /// live RF ([_onSamplerChanged]), never blanked by a probe that moved after the
+  /// check finished. That keeps a legitimately-taken on-Wi-Fi reading intact when
+  /// the phone later drops to cellular, and keeps the whole result body (verdict,
+  /// technical section, help-desk facts, copy report, Analyze) reading ONE
+  /// consistent snapshot instead of a mix of dated and live state.
+  ///
+  /// Null until the first check completes, and null for a check that ran with no
+  /// Wi-Fi link at all.
+  ConnectedAp? get _effectiveAp => _resultAp;
+
+  /// The one-shot link read folded with whatever the live sampler has RIGHT NOW.
+  /// Non-destructive (see [ConnectedAp.mergedWith]): [oneShot]'s own values win,
+  /// so the native NEHotspotNetwork security/BSSID enrichment already folded onto
+  /// it is preserved and the live sampler only FILLS RF gaps the one-shot read
+  /// lacked. When [oneShot] is null but the sampler has a reading, the live
+  /// reading stands on its own.
+  ConnectedAp? _mergeWithLive(ConnectedAp? oneShot) {
     final ConnectedAp? live = _sampler?.latest;
     if (oneShot == null) return live;
     return oneShot.mergedWith(live);
@@ -912,6 +994,13 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       setState(() {
         final ConnectedAp? prior = _ap;
         _ap = prior == null ? fresh : fresh.mergedWith(prior);
+        // Keep the RESULT snapshot in step: [_effectiveAp] reads [_resultAp], not
+        // [_ap], so a refresh that only touched [_ap] would never reach the screen.
+        // macOS is never `notOnWifi` (the probe only asserts it on iOS), but the
+        // guard keeps this from resurrecting a suppressed reading if that changes.
+        if (!_resultNotOnWifi && _verdict != null) {
+          _resultAp = _mergeWithLive(_ap);
+        }
       });
     } catch (_) {
       // A failed re-read leaves the prior result intact; the user can re-run.
@@ -928,6 +1017,10 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       _phase = QualityPhase.idle;
       _fraction = 0;
       _ap = null;
+      // A new run re-stamps the report from scratch: drop the previous run's RF
+      // snapshot and its probe verdict so nothing from it can bleed into this one.
+      _resultAp = null;
+      _resultNotOnWifi = false;
       _macLocationAuthorized = null;
       // NB: _macNameAuth resets with the result but _macLocationPromptFired does
       // NOT — the one-shot prompt guard must survive a re-run so the native
@@ -945,11 +1038,16 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     // REFRESH THE HONEST NOT-ON-WI-FI PROBE (2026-07-13). Fire-and-forget, exactly
     // like the initState / resume loads: a user can drop off Wi-Fi while sitting on
     // this screen, and the verdict must not be computed from a link that vanished.
-    // Never awaited — it is a platform-channel round trip, and awaiting it inside
-    // the timeout-bounded link read stalls the run. It resolves in milliseconds,
-    // far inside the ~25-35s internet measurement, so [_notOnWifi] is settled long
-    // before `onDone` reads it.
-    _sampler?.load(nativeSsid: _nativeSsid);
+    // Never awaited HERE — it is a platform-channel round trip, and awaiting it
+    // inside the timeout-bounded link read stalls the run. It resolves in
+    // milliseconds, far inside the ~25-35s internet measurement, so [_notOnWifi] is
+    // settled long before `onDone` reads it.
+    //
+    // The FUTURE is handed to [_autoCaptureIosRf] so its not-on-Wi-Fi gate decides
+    // on THIS run's probe rather than the last one's (a phone that dropped Wi-Fi
+    // while sitting on the screen would otherwise still bounce to Shortcuts once).
+    final Future<void> probe =
+        _sampler?.load(nativeSsid: _nativeSsid) ?? Future<void>.value();
 
     final Future<ConnectedAp?> linkFuture = _readLink();
 
@@ -967,7 +1065,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     // or blocks the verdict, and a failure falls back to the manual capture tap
     // (the Start button + "Capture Wi-Fi details" affordance stay as the
     // fallback). See [_autoCaptureIosRf] for the auto-fire-bounce handling.
-    if (_isIos) _autoCaptureIosRf();
+    if (_isIos) _autoCaptureIosRf(probe);
 
     // ISP / public-IP lookup for the copy payload (Keith ISP-ask + #6). Runs in
     // parallel with the measurement and is purely additive — it never gates the
@@ -1010,11 +1108,25 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
           onTimeout: () => null,
         );
         if (!mounted) return;
-        // NOT ON WI-FI -> hand the engine NO link (2026-07-13). `ap` here is the
-        // App Group's last stored payload, which persists after the phone leaves
-        // Wi-Fi. Feeding it in is what produced "boost the Wi-Fi signal" on a
-        // cellular-only iPhone. Positive-probe-only, so nothing else changes.
-        final ConnectedAp? linkAp = _notOnWifi ? null : ap;
+        // ==================================================================
+        // THE GATE. Everything the result body says about Wi-Fi hangs off this
+        // one line (2026-07-13).
+        //
+        // `ap` above is the App Group's LAST STORED payload, which survives the
+        // phone leaving Wi-Fi. Feeding it in is what produced "It's your Wi-Fi" /
+        // "your Wi-Fi link 29 Mbps" / "boost the Wi-Fi signal" on a cellular-only
+        // iPhone. The probe was refreshed at run start and settles in ms, far
+        // inside the ~25-35s measurement, so it is authoritative by now.
+        //
+        // Read the probe ONCE, here, and STAMP it onto the result
+        // ([_resultNotOnWifi]) so the whole report is dated to its own run and a
+        // later resume cannot half-rewrite it (cold-eyes F4). Deleting this line
+        // renders the original bug in full — which is what
+        // test/screens/tools/network/test_my_connection_offwifi_e2e_test.dart is
+        // there to catch.
+        // ==================================================================
+        final bool notOnWifi = _notOnWifi;
+        final ConnectedAp? linkAp = notOnWifi ? null : ap;
         final WifiVsInternetResult engine = ConnectionCheck.compute(
           linkAp,
           internet,
@@ -1023,10 +1135,15 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
           onlineEvidence: _onlineEvidence,
           // The honest not-on-Wi-Fi probe, so the engine says "there is no Wi-Fi
           // link" rather than "the Wi-Fi link could not be read" (GL-005).
-          notOnWifi: _notOnWifi,
+          notOnWifi: notOnWifi,
         );
         setState(() {
           _ap = ap;
+          _resultNotOnWifi = notOnWifi;
+          // The RF snapshot for THIS result: the gated one-shot read folded with
+          // whatever the live stream has already delivered. Off Wi-Fi there is no
+          // link, so there is no reading (GL-005 — the second kind of null).
+          _resultAp = notOnWifi ? null : _mergeWithLive(ap);
           _internet = internet;
           _engine = engine;
           _verdict = ConsumerVerdictMapper.map(
@@ -1087,7 +1204,11 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       _effectiveAp,
       _internet,
       onlineEvidence: _onlineEvidence,
-      notOnWifi: _notOnWifi,
+      // The RUN's probe verdict, not the live one: a late DNS/ISP/cloud signal
+      // must re-derive the verdict for the check that was TAKEN, and must never
+      // rewrite a completed on-Wi-Fi result into "you're not on Wi-Fi" just
+      // because the phone has since left the network (cold-eyes F4).
+      notOnWifi: _resultNotOnWifi,
     );
     setState(() {
       _engine = engine;
@@ -1189,9 +1310,28 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// The internet measurement (~25–35 s) overlaps the settle, so in the normal
   /// case the stream is delivering well before the run completes and the RF is
   /// already on screen and in the copy with zero taps.
-  Future<void> _autoCaptureIosRf() async {
+  Future<void> _autoCaptureIosRf(Future<void> probe) async {
     final WifiSignalSampler? sampler = _sampler;
     if (sampler == null || !sampler.isIos) return;
+
+    // Let THIS run's connection probe land before deciding whether to fire. It is
+    // a few-ms platform-channel round trip and this whole method is off the
+    // critical path (the internet measurement is already running), so the wait
+    // costs the run nothing and makes the gate below read a current answer.
+    await probe;
+    if (!mounted) return;
+
+    // NOT ON WI-FI → DO NOT FIRE THE SHORTCUT (cold-eyes F5, 2026-07-13).
+    //
+    // The consumer of the one-shot ([WifiMonitorController.pollLatestAfterOneShot])
+    // was gated but the PRODUCER was not, so a cellular-only check still fired the
+    // companion Shortcut — measured at TWO fires per check (the initial fire plus
+    // the no-reading retry below). Each fire is an app-switch to Shortcuts for a
+    // read that CANNOT succeed (there is no Wi-Fi link to harvest), and each
+    // app-switch starves the concurrent throughput measurement — the same
+    // regression documented in the install gate below (118/94 vs a real 712/462
+    // Mbps). Two bounces, zero data, and a slower internet number for the trouble.
+    if (_notOnWifi) return;
 
     // Already live this session → the stream is feeding both the sparklines and
     // [_effectiveAp]; do not re-fire (avoids a redundant Shortcuts-app bounce).
@@ -1437,9 +1577,13 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                           // the RF metrics, the Wi-Fi link sub-card shows a "Tap to
                           // capture Wi-Fi details" affordance instead of a grid of
                           // "Unavailable", so the user knows it is a capture step,
-                          // not a broken tool (GL-005 / GL-008).
-                          needsWifiCapture: _isIos && !_iosRfCaptured,
-                          onCaptureWifi: _isIos ? _openShortcutSheet : null,
+                          // not a broken tool (GL-005 / GL-008). [_canOfferWifiCapture]
+                          // keeps that offer away from a phone with no Wi-Fi link —
+                          // no Shortcut can capture a link that does not exist (F2).
+                          needsWifiCapture: _canOfferWifiCapture && !_iosRfCaptured,
+                          onCaptureWifi: _canOfferWifiCapture
+                              ? _openShortcutSheet
+                              : null,
                           // macOS-only: when Location is not granted, the SSID and
                           // BSSID are withheld by the OS, so the Wi-Fi link card
                           // shows an inline "network name hidden" hint with an
@@ -1458,7 +1602,15 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                     // unmissable. When the Shortcut IS set up but this particular
                     // run just could not read the link, keep the soft optional
                     // offer. Off the couldn't-check path the card is not shown.
-                    if (_isIos &&
+                    //
+                    // OFF WI-FI THE OFFER IS SUPPRESSED ENTIRELY (F2). The
+                    // couldnt-check-Wi-Fi outcome ALSO fires for a cellular-only
+                    // phone (there was no link to read), and there the card's
+                    // "Add the companion Shortcut to let this app read your Wi-Fi
+                    // details" is false advice: the Shortcut is not the missing
+                    // piece, a Wi-Fi network is. [_canOfferWifiCapture] is the one
+                    // gate every Shortcut affordance on this screen passes through.
+                    if (_canOfferWifiCapture &&
                         verdict.outcome ==
                             ConsumerOutcome.couldntCheckWifi) ...[
                       const SizedBox(height: AppSpacing.sm),
@@ -2090,10 +2242,22 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       _CopyRow('Band', _orUnavailable(ap?.band)),
       _CopyRow('Standard (PHY)', _orUnavailable(ap?.standard)),
       _CopyRow('Security', _security(ap)),
-      // iOS, no RF captured: the empty RF rows above are a CAPTURE step, not a
-      // failure. Name that explicitly so a help-desk reader (and Keith) knows the
-      // difference (GL-005).
-      if (_isIos && !_iosRfCaptured)
+      // THE TWO KINDS OF NULL, NAMED (GL-005). The empty rows above mean one of
+      // two completely different things, and the help-desk reader must not have to
+      // guess which:
+      //   * NOT ON WI-FI — there was no Wi-Fi link to read. Nothing to capture, no
+      //     Shortcut to install. Telling this reader to tap "Capture Wi-Fi details"
+      //     sends them chasing a read that cannot exist (cold-eyes F2).
+      //   * ON WI-FI, RF NOT CAPTURED — a real link, but the companion Shortcut has
+      //     not harvested its RF yet. That IS a capture step, and the note says so.
+      if (_resultNotOnWifi)
+        const _CopyRow(
+          'Note',
+          'This device was not connected to Wi-Fi when the check ran, so there '
+              'was no Wi-Fi link to measure. The internet figures below came over '
+              'cellular or a wired connection.',
+        )
+      else if (_canOfferWifiCapture && !_iosRfCaptured)
         const _CopyRow(
           'Note',
           'Wi-Fi signal details not captured. Tap "Capture Wi-Fi details" in '
@@ -2288,6 +2452,10 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         cloudTotal: cloud.isEmpty ? null : cloud.length,
         platformIsIos: _isIos,
         wifiSignalCaptured: _iosRfCaptured,
+        // Separates "the Shortcut has not captured the RF yet" (R-31: tap Capture)
+        // from "there was no Wi-Fi link at all" (R-31 must stay silent — cold-eyes
+        // F2). Both arrive here as `wifiSignalCaptured: false`.
+        notOnWifi: _resultNotOnWifi,
       ),
     );
   }

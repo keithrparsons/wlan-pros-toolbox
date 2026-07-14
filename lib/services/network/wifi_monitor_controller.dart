@@ -138,10 +138,16 @@ class WifiMonitorController extends ChangeNotifier {
   /// [_notOnWifi] rather than clearing [_details], so a rejoin restores the last
   /// known reading without a re-fetch.
   ///
-  /// This can never over-suppress: [_notOnWifi] is set ONLY from a POSITIVE
-  /// not-on-Wi-Fi probe. An ambiguous read (a wired desktop, a Location-gated
-  /// SSID, a failed/denied read) resolves to [WifiConnectionStatus.unknown] and
-  /// leaves it false — see [WifiConnectionService].
+  /// SUPPRESSION IS LOAD-BEARING, SO ITS INPUT MUST BE RIGHT. [_notOnWifi] is set
+  /// only when [WifiConnectionService] returns a POSITIVE not-on-Wi-Fi verdict;
+  /// an ambiguous read (a wired desktop, a Location-gated SSID, a failed/denied
+  /// read) resolves to [WifiConnectionStatus.unknown] and leaves it false. That
+  /// structure is necessary but NOT sufficient: an earlier round called it
+  /// "can never over-suppress" and shipped a probe that asserted not-on-Wi-Fi for
+  /// an iPhone on an IPv6-only SSID (`getWifiIP()` is IPv4-only), which blanked a
+  /// LIVE link. The exact conditions under which the probe may assert the
+  /// negative — and the limits of that assertion — are documented in
+  /// [WifiConnectionService]; read them before widening what this gate hides.
   WiFiDetails? get details => _notOnWifi ? null : _details;
 
   /// Whether any payload has ever arrived (honest install-state signal).

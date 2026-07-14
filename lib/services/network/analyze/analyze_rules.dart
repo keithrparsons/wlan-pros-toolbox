@@ -692,8 +692,13 @@ bool _cloudMixed(AnalyzeInput i) =>
 bool _widthNotCaptured(AnalyzeInput i) =>
     !i.channelWidthAvailable &&
     (i.band != null || i.standard != null);
+/// R-31 fires ONLY when a capture is actually possible: on iOS, with no RF block,
+/// AND with a Wi-Fi link that exists to be captured. A cellular-only phone has no
+/// link, so "tap Capture Wi-Fi details" is advice the user cannot act on and would
+/// not benefit from if they could — the same wrong-kind-of-null (GL-005) as the
+/// stale-reading bug (cold-eyes F2, 2026-07-13).
 bool _wifiNotCaptured(AnalyzeInput i) =>
-    i.platformIsIos && !i.wifiSignalCaptured;
+    i.platformIsIos && !i.wifiSignalCaptured && !i.notOnWifi;
 
 /// R-42 fires off per-service cloud latency, which the in-app engine does not
 /// currently surface as a tally; held false until that datum is threaded

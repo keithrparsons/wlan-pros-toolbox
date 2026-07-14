@@ -59,6 +59,7 @@ class AnalyzeInput {
     this.internetMeasured = false,
     this.wifiSignalCaptured = true,
     this.platformIsIos = false,
+    this.notOnWifi = false,
   });
 
   /// The Wi-Fi-vs-Internet verdict, when one was produced. Drives R-01..R-05.
@@ -115,11 +116,22 @@ class AnalyzeInput {
   final bool internetMeasured;
 
   /// iOS-only: whether the companion Shortcut captured the live RF block. False
-  /// fires the honesty rule R-31 (signal details not captured).
+  /// fires the honesty rule R-31 (signal details not captured) — but ONLY when
+  /// there was a Wi-Fi link to capture; see [notOnWifi].
   final bool wifiSignalCaptured;
 
   /// True only on the iOS source. Drives the iOS-specific honesty wording.
   final bool platformIsIos;
+
+  /// True when the check ran with the device demonstrably NOT on Wi-Fi.
+  ///
+  /// [wifiSignalCaptured] is false in TWO different situations and R-31's advice
+  /// ("tap Capture Wi-Fi details, which uses the companion Shortcut") is only
+  /// right in one of them. On a cellular-only phone there is no link to capture,
+  /// so the Shortcut cannot help and the finding is false advice — the same
+  /// wrong-kind-of-null the not-on-Wi-Fi work exists to remove (GL-005). This flag
+  /// separates the two, and suppresses R-31 in the second.
+  final bool notOnWifi;
 
   /// Builds the input from the live Test My Connection state. Pure: a total
   /// function of its arguments, so the assembly is unit-testable without any
@@ -139,6 +151,7 @@ class AnalyzeInput {
     int? cloudTotal,
     bool platformIsIos = false,
     bool wifiSignalCaptured = true,
+    bool notOnWifi = false,
   }) {
     final double? down =
         ConnectionCheck.metricValue(internet, MetricIds.download);
@@ -181,6 +194,7 @@ class AnalyzeInput {
       internetMeasured: internetMeasured,
       wifiSignalCaptured: wifiSignalCaptured,
       platformIsIos: platformIsIos,
+      notOnWifi: notOnWifi,
     );
   }
 
