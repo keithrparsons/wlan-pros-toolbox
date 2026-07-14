@@ -196,9 +196,27 @@ void main() {
 
   group('RSSI rules grade on Keith\'s canonical bands', () {
     // Expected grades are HAND-DERIVED from Keith's confirmed bands, never read
-    // back from WifiGradingBands — the 1.7.1 failure mode (F2) was tests that
-    // derived their expected values from the very constant under test, so a
-    // wrong constant stayed green. Literals below fail if the bands ever drift.
+    // back from WifiGradingBands. If a band constant drifts, these literals
+    // fail. That discipline closes audit finding F2, and F2 is worth stating
+    // accurately, because this file is public under AGPL and anyone can read it.
+    //
+    // What F2 WAS: THIS file used to compute its own expectations from the
+    // constants it was testing (`WifiGradingBands.rssiFairDbm - 1`,
+    // `WifiGradingBands.rssiExcellentDbm`; see `git show 9402df8^ -- ` this
+    // path, lines 140-167). Such a test can only confirm the code against
+    // itself, so it would have stayed green through any drift. A real latent
+    // hazard, and now removed.
+    //
+    // What F2 WAS NOT: the cause of the 1.7.1 signal-grading bug, and not "a
+    // wrong constant that stayed green". The 1.7.1 constants were RIGHT, and
+    // the canonical band test hand-typed `gradeRssi(-73) == poor` and PASSED
+    // (`git show c443298:test/services/network/wifi_grading_test.dart`, L35-38).
+    // The shipped bug (F1) was that the Signal Thresholds SCREEN printed a
+    // separate, hand-maintained five-band table (Fair -65..-75, plus a "Weak"
+    // band) calling -73 dBm "Fair" while the engine graded it "Poor", and NO
+    // test compared the two surfaces. A MISSING test, not a circular one. The
+    // guard for that is signal_grading_cross_check_test.dart, which also now
+    // checks the third surface, assets/tool-graphics/signal-thresholds.svg.
     test('poor RSSI (-73, Keith\'s Poor floor) fires R-10', () {
       const int rssi = -73; // Poor: -73 or weaker.
       expect(WifiGrading.gradeRssi(rssi), QualityGrade.poor);

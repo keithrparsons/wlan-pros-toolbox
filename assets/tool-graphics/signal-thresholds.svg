@@ -1,55 +1,82 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
-  <!-- Signal thresholds: an RSSI (dBm) axis with five quality bands matching the
-       screen data (Excellent > -55, Good -55..-65, Fair -65..-75, Weak -75..-80,
-       Poor < -80). Status palette (GL-003 §8.13) grouped Poor/Weak = danger,
-       Fair = warning, Good/Excellent = success; each band labeled (never color-only).
-       Lime = the target threshold for the application. No hatching. -->
+  <!-- Signal thresholds: an RSSI (dBm) axis with FOUR quality bands.
+       SOURCE OF TRUTH: WifiGradingBands.kRssiBands (lib/services/network/wifi_grading.dart).
+       Every band label and every range string below is copied VERBATIM from that
+       list's `label` / `displayRange` fields; the lime marker is copied from
+       SignalThresholdsScreen.kAppThresholds ('VoIP / Real-time' minRssi).
+       DO NOT hand-edit a number here. Edit kRssiBands and re-derive.
+       test/assets/signal_thresholds_svg_guard_test.dart parses this file and fails
+       the build if any band, range, or number in it disagrees with the canonical Dart.
+
+       Bands (kRssiBands, strongest-first):
+         Excellent  > -60 dBm
+         Good       -60 to -67
+         Fair       -67 to -72
+         Poor       -73 or weaker
+       There is NO "Weak" band. The five-band scale this graphic used to draw
+       (Weak -75..-80, Fair reaching -75, Poor only below -80) was the 1.7.1 scale
+       the audit deleted: it called -73 dBm "Fair" while the app graded it "Poor".
+
+       Status palette (GL-003 8.13): Poor = danger, Fair = warning,
+       Good/Excellent = success. Every band carries a text label - never
+       color-only. All glyphs ASCII (no non-ASCII <text>, per the glyph-tofu
+       sweep); the direction arrow is a vector path.
+
+       Geometry: axis spans x=14..306 (292px) over -90..-45 dBm (45 dB).
+       px/dB = 292/45 = 6.4889. Band edges sit on the true half-integer
+       boundaries so every integer reading falls inside exactly one box:
+       -72.5 (x=127.56), -67.5 (x=160.00), -59.5 (x=211.91). -->
 
   <!-- Header -->
-  <text x="160" y="18" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">RSSI quality thresholds (dBm)</text>
+  <text x="160" y="16" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">RSSI quality thresholds (dBm)</text>
 
-  <!-- Five quality bands above the axis. Axis spans x=14..306 (292px) over -90..-45 (45 dB).
-       px/dB = 292/45 = 6.49. Boundaries: -90,-80,-75,-65,-55,-45. -->
-  <!-- Poor  (< -80)  danger -->
-  <rect x="14" y="40" width="59" height="40" rx="2" stroke="#F26E6E" stroke-width="1.75" fill="#F26E6E" fill-opacity="0.08"/>
-  <text x="43" y="64" fill="#F26E6E" font-size="12" font-weight="500" text-anchor="middle">Poor</text>
-  <!-- Weak  (-80..-75) danger -->
-  <rect x="73" y="40" width="32" height="40" rx="2" stroke="#F26E6E" stroke-width="1.75" fill="#F26E6E" fill-opacity="0.08"/>
-  <text x="89" y="64" fill="#F26E6E" font-size="11" font-weight="500" text-anchor="middle">Weak</text>
-  <!-- Fair  (-75..-65) warning -->
-  <rect x="105" y="40" width="65" height="40" rx="2" stroke="#E0A23A" stroke-width="1.75" fill="#E0A23A" fill-opacity="0.08"/>
-  <text x="137" y="64" fill="#E0A23A" font-size="12" font-weight="500" text-anchor="middle">Fair</text>
-  <!-- Good  (-65..-55) success -->
-  <rect x="170" y="40" width="65" height="40" rx="2" stroke="#5BD68A" stroke-width="1.75" fill="#5BD68A" fill-opacity="0.08"/>
-  <text x="202" y="64" fill="#5BD68A" font-size="12" font-weight="500" text-anchor="middle">Good</text>
-  <!-- Excellent (> -55) success -->
-  <rect x="235" y="40" width="71" height="40" rx="2" stroke="#5BD68A" stroke-width="1.75" fill="#5BD68A" fill-opacity="0.08"/>
-  <text x="270" y="64" fill="#5BD68A" font-size="11" font-weight="500" text-anchor="middle">Excellent</text>
+  <!-- Four quality bands, weakest (left) to strongest (right), drawn to scale. -->
+  <!-- Poor: -73 or weaker (danger) -->
+  <rect x="14" y="38" width="113.56" height="40" rx="2" stroke="#F26E6E" stroke-width="1.75" fill="#F26E6E" fill-opacity="0.08"/>
+  <text x="70.78" y="62" fill="#F26E6E" font-size="11" font-weight="500" text-anchor="middle">Poor</text>
+  <!-- Fair: -67 to -72 (warning) -->
+  <rect x="127.56" y="38" width="32.44" height="40" rx="2" stroke="#E0A23A" stroke-width="1.75" fill="#E0A23A" fill-opacity="0.08"/>
+  <text x="143.78" y="62" fill="#E0A23A" font-size="11" font-weight="500" text-anchor="middle">Fair</text>
+  <!-- Good: -60 to -67 (success) -->
+  <rect x="160" y="38" width="51.91" height="40" rx="2" stroke="#5BD68A" stroke-width="1.75" fill="#5BD68A" fill-opacity="0.08"/>
+  <text x="185.96" y="62" fill="#5BD68A" font-size="11" font-weight="500" text-anchor="middle">Good</text>
+  <!-- Excellent: > -60 dBm (success) -->
+  <rect x="211.91" y="38" width="94.09" height="40" rx="2" stroke="#5BD68A" stroke-width="1.75" fill="#5BD68A" fill-opacity="0.08"/>
+  <text x="258.96" y="62" fill="#5BD68A" font-size="11" font-weight="500" text-anchor="middle">Excellent</text>
+
+  <!-- VoIP minimum marker: kAppThresholds 'VoIP / Real-time' minRssi = -67 dBm.
+       x(-67) = 14 + 23 * 6.4889 = 163.24. It lands at the weak edge of Good,
+       which is exactly what the table says: -67 is the weakest Good reading. -->
+  <line x1="163.24" y1="34" x2="163.24" y2="90" stroke="#A1CC3A" stroke-width="2" stroke-dasharray="3 3"/>
+  <text x="163.24" y="30" fill="#A1CC3A" font-size="10" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">VoIP min -67</text>
 
   <!-- RSSI axis -->
-  <line x1="14" y1="100" x2="306" y2="100" stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round"/>
+  <line x1="14" y1="90" x2="306" y2="90" stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round"/>
 
-  <!-- axis ticks at band boundaries -->
-  <g stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round">
-    <line x1="73"  y1="96" x2="73"  y2="104"/>
-    <line x1="105" y1="96" x2="105" y2="104"/>
-    <line x1="170" y1="96" x2="170" y2="104"/>
-    <line x1="235" y1="96" x2="235" y2="104"/>
+  <!-- Axis endpoints (the drawn domain) and the direction cue -->
+  <g fill="#9C9C9C" font-size="10" font-weight="500" font-family="DM Mono, monospace">
+    <text x="14" y="104" text-anchor="start">-90</text>
+    <text x="306" y="104" text-anchor="end">-45</text>
   </g>
+  <text x="156" y="104" fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="middle">stronger signal</text>
+  <path d="M203 100.5 H211 M207.5 97 L211 100.5 L207.5 104" fill="none" stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
 
-  <!-- dBm boundary labels (below axis, DM Mono) -->
-  <g fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">
-    <text x="73"  y="118">-80</text>
-    <text x="105" y="118">-75</text>
-    <text x="170" y="118">-65</text>
-    <text x="235" y="118">-55</text>
+  <!-- Legend: the exact kRssiBands displayRange strings, two columns. -->
+  <g font-size="10" font-weight="500">
+    <rect x="16" y="118" width="9" height="9" rx="1.5" stroke="#5BD68A" stroke-width="1.25" fill="#5BD68A" fill-opacity="0.08"/>
+    <text x="30" y="126" fill="#E5E5E5">Excellent</text>
+    <text x="84" y="126" fill="#9C9C9C" font-family="DM Mono, monospace">&gt; -60 dBm</text>
+
+    <rect x="16" y="137" width="9" height="9" rx="1.5" stroke="#5BD68A" stroke-width="1.25" fill="#5BD68A" fill-opacity="0.08"/>
+    <text x="30" y="145" fill="#E5E5E5">Good</text>
+    <text x="84" y="145" fill="#9C9C9C" font-family="DM Mono, monospace">-60 to -67</text>
+
+    <rect x="166" y="118" width="9" height="9" rx="1.5" stroke="#E0A23A" stroke-width="1.25" fill="#E0A23A" fill-opacity="0.08"/>
+    <text x="180" y="126" fill="#E5E5E5">Fair</text>
+    <text x="214" y="126" fill="#9C9C9C" font-family="DM Mono, monospace">-67 to -72</text>
+
+    <rect x="166" y="137" width="9" height="9" rx="1.5" stroke="#F26E6E" stroke-width="1.25" fill="#F26E6E" fill-opacity="0.08"/>
+    <text x="180" y="145" fill="#E5E5E5">Poor</text>
+    <text x="214" y="145" fill="#9C9C9C" font-family="DM Mono, monospace">-73 or weaker</text>
   </g>
-
-  <!-- Target threshold (lime = the application target, e.g. VoIP needs >= -65) -->
-  <line x1="170" y1="34" x2="170" y2="100" stroke="#A2CC3A" stroke-width="2" stroke-dasharray="3 3"/>
-  <text x="170" y="30" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">VoIP &#8805; -65</text>
-
-  <!-- Footer -->
-  <text fill="#9C9C9C" font-size="11" font-weight="500" x="83.0" y="138.0" text-anchor="start">stronger signal (higher dBm)</text>
-  <path d="M226.0 134.5 H234.0 M230.5 131.0 L234.0 134.5 L230.5 138.0" fill="none" stroke="#9C9C9C" stroke-width="1.2650000000000001" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
