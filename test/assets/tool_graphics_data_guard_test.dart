@@ -137,6 +137,104 @@ String _flat(String slug) => _texts(slug).join(' | ');
 int _firstInt(String s) =>
     int.parse(RegExp(r'-?\d+').firstMatch(s)!.group(0)!);
 
+// ══ POSITIONAL PARSING ═════════════════════════════════════════════════════
+//
+// Vera HIGH-1. The first version of the rf-attenuation guard claimed in its own
+// docstring to "read the wall's LABEL, resolve THAT row, compare THAT row's
+// value" -- and then collected every `-(\d+) dB` in the file and asserted SET
+// MEMBERSHIP. Vera swapped the two values, leaving both labels and both numbers
+// present, and the suite stayed green: drywall -10 (truth 3), concrete block -3
+// (truth 10). Both wrong for their labels; guard green.
+//
+// That is the SAME disease as the bug it was built to close, moved one level up:
+// from "is this number in the FILE?" to "is this number in the DRAWING?". Both
+// are set membership. A permutation within the set is invisible to both.
+//
+// A drawing has no rows. Its only binding between a label and its value is
+// GEOMETRY: they share a column. So the guard must join by POSITION. These
+// helpers do that, exactly as the branch-1 legend parser does.
+
+/// A `<text>` with its position.
+class _T {
+  const _T(this.x, this.y, this.s);
+  final double x;
+  final double y;
+  final String s;
+}
+
+/// A `<rect>` with its position.
+class _R {
+  const _R(this.x, this.y, this.w, this.h);
+  final double x;
+  final double y;
+  final double w;
+  final double h;
+  double get cx => x + w / 2;
+}
+
+String _body(String slug) => File('$_kGraphicsDir/$slug.svg')
+    .readAsStringSync()
+    .replaceAll(RegExp(r'<!--.*?-->', dotAll: true), '');
+
+double? _attr(String tag, String name) {
+  final RegExpMatch? m =
+      RegExp('(?:^|\\s)$name\\s*=\\s*"([\\d.-]+)"').firstMatch(tag);
+  return m == null ? null : double.tryParse(m.group(1)!);
+}
+
+/// Every positioned `<text>` in [slug].
+List<_T> _positionedTexts(String slug) =>
+    RegExp(r'<text\b([^>]*)>(.*?)</text>', dotAll: true)
+        .allMatches(_body(slug))
+        .map((RegExpMatch m) {
+          final double? x = _attr(m.group(1)!, 'x');
+          final double? y = _attr(m.group(1)!, 'y');
+          final String s = m
+              .group(2)!
+              .replaceAll(RegExp(r'<[^>]+>'), '')
+              .replaceAll('&#8722;', '-')
+              .replaceAll('&#183;', '·')
+              .replaceAll('&gt;', '>')
+              .trim();
+          return (x == null || y == null || s.isEmpty) ? null : _T(x, y, s);
+        })
+        .whereType<_T>()
+        .toList();
+
+/// Every positioned `<rect>` in [slug].
+List<_R> _positionedRects(String slug) => RegExp(r'<rect\b([^>]*?)/?>')
+    .allMatches(_body(slug))
+    .map((RegExpMatch m) {
+      final String a = m.group(1)!;
+      // NOTE the leading (?:^|\s) in _attr: without it, `width` also matches
+      // STROKE-width, which once made every rect look 1.5px wide.
+      final double? x = _attr(a, 'x');
+      final double? y = _attr(a, 'y');
+      final double? w = _attr(a, 'width');
+      final double? h = _attr(a, 'height');
+      return (x == null || y == null || w == null || h == null)
+          ? null
+          : _R(x, y, w, h);
+    })
+    .whereType<_R>()
+    .toList();
+
+/// The single text sharing [cx]'s column (within [tol]) and satisfying [where].
+/// Throws if zero or more than one matches, which is itself the finding: a label
+/// with no value, or a column so crowded the binding is ambiguous.
+_T _inColumn(List<_T> texts, double cx, bool Function(_T) where,
+    {double tol = 6}) {
+  final List<_T> hits = texts
+      .where((_T t) => (t.x - cx).abs() <= tol && where(t))
+      .toList();
+  if (hits.length != 1) {
+    fail('Expected exactly ONE text in the column at x=$cx, found '
+        '${hits.length}: ${hits.map((_T t) => t.s).toList()}. A drawing binds a '
+        'label to its value by POSITION; an ambiguous column has no binding.');
+  }
+  return hits.single;
+}
+
 void main() {
   // ══ 1. REACHABILITY ══════════════════════════════════════════════════════
   group('every shipped graphic is reachable from Dart', () {

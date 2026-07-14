@@ -1,6 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
   <!-- 120/240V Split-Phase: two hot legs 180 deg out of phase, shared neutral.
-       Hot-to-neutral = 120V; hot-to-hot = 240V (the measured span, lime). Original WLAN Pros schematic. -->
+       Hot-to-neutral = 120 V RMS; hot-to-hot = 240 V RMS (the measured span, lime).
+
+       AXIS IS PEAK (instantaneous) VOLTS. 120 V RMS peaks at 120 x sqrt(2) = 169.7,
+       so the crests sit on +/-170, which is where they are actually drawn.
+
+       WHAT THIS FIXES (2026-07-14, Vera HIGH-2): the ticks used to read +/-120 and
+       BOTH CRESTS LAND EXACTLY ON THEM. An axis tick at the crest IS a peak claim,
+       whether or not the word "peak" appears: it says this 120 V RMS leg peaks at
+       120 V. It peaks at 169.7. Felix originally exempted this file because it
+       "never says peak" -- that mistook the absence of the WORD for the absence of
+       the CLAIM. Removing the word would have removed the evidence, not the error.
+
+       ONLY THE TICK LABELS CHANGED. No geometry moved, because the drawing was
+       already right in pixels: the lime hot-to-hot arrow spans the full 76px
+       peak-to-peak, which on a +/-170 axis is 339.4 V -- exactly the peak of a
+       240 V RMS hot-to-hot supply (240 x sqrt(2) = 339.4). The construction was
+       scale-invariant all along; only the numbers on the axis were wrong. -->
 
   <!-- neutral / zero axis (shared neutral, 0 VAC) -->
   <line x1="40" y1="80" x2="300" y2="80" stroke="#9C9C9C" stroke-width="1.25" stroke-dasharray="2 4"/>
@@ -18,9 +34,9 @@
     <line x1="46" y1="118" x2="54" y2="118"/>
   </g>
   <g fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="end" font-family="DM Mono, monospace">
-    <text x="42" y="45">+120</text>
+    <text x="42" y="45">+170</text>
     <text x="42" y="83">0</text>
-    <text x="42" y="121">-120</text>
+    <text x="42" y="121">-170</text>
   </g>
 
   <!-- leg labels at first peaks -->
@@ -38,14 +54,17 @@
   <!-- callout moved out of the curve-crossing region entirely into the clear lower-right margin: below the
        waveform troughs (y=114), right of the centered footer text (which ends near x=260), and clear of the
        dashed zero axis. This gives generous clearance on all sides. The green double-arrow at x=209 stays put. -->
-  <text x="286" y="130" fill="#A1CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">240V</text>
+  <text x="286" y="130" fill="#A1CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">240 V RMS</text>
   <text x="286" y="142" fill="#A1CC3A" font-size="9" font-weight="500" text-anchor="middle">hot-to-hot</text>
 
-  <!-- (Line-to-neutral = 120V is read directly off the +120/-120 axis ticks; the lime 240V
-       hot-to-hot is the single hero callout, per the §8.6.2 one-measured-quantity rule.) -->
+  <!-- The lime arrow spans the full peak-to-peak (76px = 339.4 V on this axis),
+       which IS the peak of the 240 V RMS hot-to-hot supply. Labelled with the RMS,
+       because that is the number on the nameplate. Line-to-neutral is 120 V RMS,
+       stated in the footer rather than read off the axis: the axis is PEAK, and
+       reading an RMS value off a peak tick is the error this file used to make. -->
 
   <!-- Header -->
   <text x="160" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">120/240V Split-Phase</text>
   <!-- Footer -->
-  <text x="160" y="150" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">two hot legs 180&#176; apart &#183; shared neutral</text>
+  <text x="160" y="150" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">two hot legs 180&#176; apart &#183; 120/240 VAC is RMS &#183; peaks at 170/340 V</text>
 </svg>

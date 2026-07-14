@@ -1,10 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
-  <!-- 208V Three-Phase (Wye): three hots 120 deg apart. Line-to-neutral = 120V;
-       line-to-line = sqrt(3) x 120 ~ 208V (the measured span, lime). Original WLAN Pros schematic.
-       Lime bracket is anchored at x=100, the instant L2 crosses zero while L1 sits at +103.9V (y=50.56)
-       and L3 at -103.9V (y=109.44). The line-to-line difference there is +103.9 - (-103.9) = 207.8V = 120 x sqrt(3),
-       the true sqrt(3) line-to-line value. (At an L1 peak the L-L difference would only be 1.5x amplitude = 180V,
-       not 208 — so the bracket is placed where physics puts the sqrt(3) instant, the exact point the page teaches.) -->
+  <!-- 208V Three-Phase (Wye): three hots 120 deg apart. Line-to-neutral = 120 V RMS;
+       line-to-line = sqrt(3) x 120 = 207.8 V RMS (the measured span, lime).
+
+       AXIS IS PEAK (instantaneous) VOLTS. 120 V RMS peaks at 120 x sqrt(2) = 169.7,
+       so the three crests sit on +/-170, which is where they are actually drawn.
+
+       WHAT THIS FIXES (2026-07-14, Vera HIGH-2): the ticks used to read +/-120 and
+       ALL THREE CRESTS LAND EXACTLY ON THEM. An axis tick at the crest IS a peak
+       claim, whether or not the word "peak" appears. A 120 V RMS leg peaks at
+       169.7 V, not 120.
+
+       ONLY THE TICK LABELS CHANGED. No geometry moved. The old header comment
+       described the lime bracket in RMS-scaled volts (+103.9 / -103.9), which was
+       the same peak/RMS conflation written down: those pixels are instantaneous
+       values, and on the correct +/-170 axis they are +147.0 and -147.0. The
+       BRACKET ITSELF WAS ALWAYS RIGHT -- it spans 58.88px = 293.9 V, which is
+       exactly the peak of a 207.8 V RMS line-to-line (207.8 x sqrt(2) = 293.9).
+       The construction is scale-invariant; only the axis numbers were wrong.
+       Anchored at x=100, the instant L2 crosses zero and the L-L difference is at
+       its maximum, which is the sqrt(3) moment the page teaches. -->
 
 
   <!-- neutral / zero axis (wye neutral, 0 VAC) -->
@@ -23,9 +37,9 @@
     <line x1="46" y1="114" x2="54" y2="114"/>
   </g>
   <g fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="end" font-family="DM Mono, monospace">
-    <text x="42" y="49">+120</text>
+    <text x="42" y="49">+170</text>
     <text x="42" y="83">0</text>
-    <text x="42" y="117">-120</text>
+    <text x="42" y="117">-170</text>
   </g>
 
   <!-- phase labels seated just past each waveform's first peak (120 deg spacing made visible) -->
@@ -35,10 +49,15 @@
 
   <!-- line-to-neutral reference, tied to the axis in guaranteed-clear space (left margin):
        each phase peaks at 120V above neutral. Kept off the dense waveform area to avoid collisions. -->
-  <text x="64" y="135" fill="#9C9C9C" font-size="9" font-weight="500" text-anchor="start" font-family="DM Mono, monospace">120V L-N</text>
+  <text x="64" y="135" fill="#9C9C9C" font-size="9" font-weight="500" text-anchor="start" font-family="DM Mono, monospace">120 V RMS L-N</text>
 
-  <!-- line-to-line span ~208V (measured quantity, lime): at x=100, L1 at +103.9V (y=50.56) to L3 at -103.9V
-       (y=109.44) while L2 crosses zero; endpoints sit ON the two non-zero curves, spanning 58.9px = 207.8V = sqrt(3) x 120 -->
+  <!-- Line-to-line span (measured quantity, lime): at x=100, L2 crosses zero while
+       L1 sits at +147.0 V and L3 at -147.0 V INSTANTANEOUS (y=50.56 and y=109.44 on
+       the +/-170 peak axis). Their difference there is 293.9 V, the PEAK of the
+       line-to-line voltage, whose RMS is 293.9 / sqrt(2) = 207.8 V = sqrt(3) x 120.
+       That RMS is the number on the nameplate, so that is what the callout says.
+       (The old comment read these same pixels as "+103.9 / -103.9 V", which was the
+       peak/RMS conflation written down. The pixels never moved; the axis was wrong.) -->
   <g stroke="#A1CC3A" stroke-width="1.5" stroke-linecap="round">
     <line x1="100" y1="50.56" x2="100" y2="109.44"/>
     <path d="M97 54.56 L100 50.56 L103 54.56"/>
@@ -47,11 +66,11 @@
   <!-- callout moved out of the dense curve sweep into the clear lower margin (below the troughs at y=114,
        right of the L2 and 120V L-N labels). The green double-arrow at x=100 stays put and still marks the
        measured line-to-line span. -->
-  <text x="168" y="126" fill="#A1CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">208V</text>
+  <text x="168" y="126" fill="#A1CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">208 V RMS</text>
   <text x="168" y="138" fill="#A1CC3A" font-size="9" font-weight="500" text-anchor="middle">line-to-line</text>
 
   <!-- Header -->
   <text x="160" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">208V Three-Phase (Wye)</text>
   <!-- Footer: the sqrt(3) relationship -->
-  <text x="160" y="150" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">three hots 120&#176; apart &#183; 120 &#215; &#8730;3 &#8776; 208</text>
+  <text x="160" y="150" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">three hots 120&#176; apart &#183; 120 &#215; &#8730;3 &#8776; 208 V RMS</text>
 </svg>
