@@ -159,7 +159,22 @@ class WifiVsInternetResult {
     required this.internetMbps,
     required this.linkRateMbps,
     required this.ratio,
+    this.notOnWifi = false,
   });
+
+  /// True when the caller's connection probe POSITIVELY reported the device is
+  /// not on Wi-Fi (cellular-only). Distinguishes the TWO KINDS OF NULL behind a
+  /// missing link rate (GL-005):
+  ///
+  ///   * `notOnWifi == false` — "we could not READ the Wi-Fi link" (a wired
+  ///     desktop, iOS without the companion Shortcut, a Location-gated read).
+  ///     Something might be readable; setup or permission could fix it.
+  ///   * `notOnWifi == true`  — "there IS no Wi-Fi link." Nothing to read, and no
+  ///     Shortcut, permission, or retry will conjure one. Telling this user to
+  ///     install a Shortcut, or to "boost the Wi-Fi signal", is false advice.
+  ///
+  /// Defaults to false, so every existing caller keeps its exact prior behavior.
+  final bool notOnWifi;
 
   /// The localized verdict enum. The screen maps it to a §8.13 status color.
   final WifiVsInternetVerdict verdict;
@@ -224,6 +239,7 @@ class WifiVsInternetEngine {
     double? internetUpMbps,
     required InternetHealth internetHealth,
     OnlineEvidence onlineEvidence = const OnlineEvidence(),
+    bool notOnWifi = false,
   }) {
     // --- Link rate: avg(Tx, Rx) with single-rate fallback. ---
     final bool hasTx = txRateMbps != null && txRateMbps > 0;
@@ -288,28 +304,49 @@ class WifiVsInternetEngine {
         internetMbps: null,
         linkRateMbps: linkRate,
         ratio: null,
+        notOnWifi: notOnWifi,
       );
     }
 
     // --- Unknown-rate path: internet-only read with a caveat. ---
     if (basis == WifiRateBasis.none) {
-      return WifiVsInternetResult(
-        verdict: WifiVsInternetVerdict.wifiUnknown,
-        headline: 'Wi-Fi link not measured',
-        explanation: internet == null
+      // TWO KINDS OF NULL (GL-005). A POSITIVE not-on-Wi-Fi probe means there IS
+      // no Wi-Fi link — so "the rate could not be read... install the companion
+      // Shortcut" is the wrong null and the wrong advice: no Shortcut can read a
+      // link that does not exist. Name the real state instead. When the probe is
+      // silent/ambiguous ([notOnWifi] false — a wired desktop, a Location-gated
+      // read, iOS without the Shortcut) the original could-not-read copy stands,
+      // unchanged.
+      final String explanation;
+      if (notOnWifi) {
+        explanation = internet == null
+            ? 'This device is not on Wi-Fi, so there is no Wi-Fi link to '
+                  'measure. Join a Wi-Fi network and run the check again.'
+            : 'This device is not on Wi-Fi, so there is no Wi-Fi link to '
+                  'compare against. The measured internet throughput of '
+                  '${_mbps(internet)} came over your cellular or wired '
+                  'connection.';
+      } else {
+        explanation = internet == null
             ? 'The Wi-Fi link rate could not be read, so the verdict cannot '
                   'localize the bottleneck. Connect over Wi-Fi (on iOS, install '
                   'the companion Shortcut) for the full read.'
             : 'The Wi-Fi link rate could not be read, so this is an '
                   'internet-only result. Measured internet throughput is '
                   '${_mbps(internet)}. Connect over Wi-Fi (on iOS, install '
-                  'the companion Shortcut) to compare it against the link.',
+                  'the companion Shortcut) to compare it against the link.';
+      }
+      return WifiVsInternetResult(
+        verdict: WifiVsInternetVerdict.wifiUnknown,
+        headline: notOnWifi ? 'Not connected to Wi-Fi' : 'Wi-Fi link not measured',
+        explanation: explanation,
         snrContext: '',
         rateBasis: basis,
         usableWifiMbps: null,
         internetMbps: internet,
         linkRateMbps: null,
         ratio: null,
+        notOnWifi: notOnWifi,
       );
     }
 
@@ -332,6 +369,7 @@ class WifiVsInternetEngine {
         internetMbps: internet,
         linkRateMbps: linkRate,
         ratio: ratio,
+        notOnWifi: notOnWifi,
       );
     }
 
@@ -352,6 +390,7 @@ class WifiVsInternetEngine {
         internetMbps: null,
         linkRateMbps: linkRate,
         ratio: null,
+        notOnWifi: notOnWifi,
       );
     }
 
@@ -375,6 +414,7 @@ class WifiVsInternetEngine {
         internetMbps: internet,
         linkRateMbps: linkRate,
         ratio: ratio,
+        notOnWifi: notOnWifi,
       );
     }
 
@@ -392,6 +432,7 @@ class WifiVsInternetEngine {
         internetMbps: internet,
         linkRateMbps: linkRate,
         ratio: ratio,
+        notOnWifi: notOnWifi,
       );
     }
 

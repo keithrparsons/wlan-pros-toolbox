@@ -29,6 +29,17 @@ class _FakeNetworkInfo implements NetworkInfo {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+/// A [NetworkInfo] fake whose read THROWS — the denied-permission / unsupported-
+/// platform case. It must resolve to [WifiConnectionStatus.unknown], never to a
+/// false `notOnWifi` (GL-005), so a Location-gated read never blanks real data.
+class _ThrowingNetworkInfo implements NetworkInfo {
+  @override
+  Future<String?> getWifiIP() async => throw Exception('permission denied');
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 /// Builds a [WifiConnectionService] pinned to iOS with a canned Wi-Fi IP — a
 /// non-null IP => onWifi, a null IP => notOnWifi (the controller's not-on-Wi-Fi
 /// branch under test).
@@ -964,24 +975,207 @@ void main() {
       await bridge.close();
     });
 
-    test('not-on-Wi-Fi NEVER blanks data the user already has', () async {
-      // A transient drop to cellular while a reading is already on screen must
-      // keep showing the last reading — the not-on-Wi-Fi phase is gated on
-      // !hasEverReceived, so existing data is preserved.
+    // ─────────────────────────────────────────────────────────────────────────
+    // THE STALE-READING REGRESSION (2026-07-13, Keith on-device, iOS v1.7.2).
+    //
+    // This block REPLACES a prior test titled "not-on-Wi-Fi NEVER blanks data
+    // the user already has", which asserted phase == idleWithData and
+    // details!.ssid == 'LastKnown' while the probe reported off-Wi-Fi. That test
+    // PASSED, and it was WRONG: it codified the bug as the spec. On a cellular-
+    // only iPhone the app showed Tx 29 / Rx 13 Mbps as current/min/avg/max under
+    // a LIVE badge, and Test My Connection told Keith to "boost the Wi-Fi signal"
+    // — from a link that did not exist. The suite was green the whole time.
+    //
+    // The honest rule: a POSITIVE not-on-Wi-Fi probe outranks any stored reading.
+    // There is no Wi-Fi link, so there is no Wi-Fi reading (GL-005 — the
+    // "this does not exist" null, not the "we could not read it" null).
+    // ─────────────────────────────────────────────────────────────────────────
+    test(
+        'REGRESSION: a stale stored reading NEVER outranks a positive '
+        'not-on-Wi-Fi probe', () async {
+      // The exact device shape: the user HAS captured Wi-Fi readings before
+      // (everReceived), the App Group still holds the last one, and the phone is
+      // now on cellular only. Pre-fix this landed on idleWithData and rendered
+      // the stale 29/13 Mbps rates as current.
       final bridge = _FakeBridge()
         ..everReceived = true
         ..latest = _details(ssid: 'LastKnown');
       final c = WifiMonitorController(
         bridge: bridge,
-        connectionService: _conn(wifiIp: null), // dropped to cellular
+        connectionService: _conn(wifiIp: null), // cellular-only iPhone
       );
 
       await c.load();
 
+      expect(c.notOnWifi, isTrue, reason: 'the probe positively reports off-Wi-Fi');
+      expect(c.phase, WifiMonitorPhase.notOnWifi,
+          reason: 'the honest not-on-Wi-Fi state must win over a stale reading, '
+              'no matter how many payloads have arrived in the past');
+      expect(c.details, isNull,
+          reason: 'THE BUG: there is no Wi-Fi link, so there is no Wi-Fi '
+              'reading. A stored rate must never render as a current one.');
+      c.dispose();
+      await bridge.close();
+    });
+
+    test(
+        'REGRESSION: dropping to cellular WHILE STREAMING tears the stream down '
+        '(no LIVE badge over a stale rate)', () async {
+      // Keith saw a green LIVE badge on a phone with no Wi-Fi. A stream whose
+      // producer is gone must not keep the screen in the streaming phase: there
+      // is no companion Shortcut delivering anything over a link that does not
+      // exist.
+      final fakeNet = _FakeNetworkInfo(wifiIp: '192.168.0.10');
+      final bridge = _FakeBridge()..everReceived = true;
+      final c = WifiMonitorController(
+        bridge: bridge,
+        connectionService: WifiConnectionService(
+          networkInfo: fakeNet,
+          platformOverride: TargetPlatform.iOS,
+        ),
+      );
+
+      await c.load();
+      await c.startMonitoring();
+      bridge.push(_details(ssid: 'RealLive', rssi: -50));
+      await Future<void>.delayed(Duration.zero);
+      expect(c.isStreaming, isTrue);
+      expect(c.details!.ssid, 'RealLive');
+
+      // Wi-Fi drops. The app resumes / re-probes.
+      fakeNet.wifiIp = null;
+      await c.load();
+
+      expect(c.phase, WifiMonitorPhase.notOnWifi);
+      expect(c.isStreaming, isFalse,
+          reason: 'no producer, no link — the LIVE state must not survive');
+      expect(c.details, isNull,
+          reason: 'the last live reading is not a current reading once the '
+              'link is gone');
+      expect(bridge.lastMonitoringValue, isFalse,
+          reason: 'the App Group loop flag is cleared so the looping Shortcut '
+              'halts');
+      c.dispose();
+      await bridge.close();
+    });
+
+    test(
+        'REGRESSION: pollLatestAfterOneShot does NOT re-deliver the stored '
+        'reading as a live payload while off Wi-Fi', () async {
+      // The settle-poll exists for a race (the Shortcut delivered while we were
+      // backgrounded). Off Wi-Fi the Shortcut delivered NOTHING, and the App
+      // Group still holds the last on-Wi-Fi payload. Feeding that through the
+      // live-payload path stamps `lastUpdated = now`, advances deliveryCount, and
+      // charts a months-old rate as a fresh sample — which is how the sparkline
+      // and its min/avg/max got populated on a cellular-only phone.
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _details(ssid: 'Stale');
+      final c = WifiMonitorController(
+        bridge: bridge,
+        connectionService: _conn(wifiIp: null),
+      );
+      await c.load();
+      expect(c.deliveryCount, 0);
+
+      await c.pollLatestAfterOneShot();
+
+      expect(c.deliveryCount, 0,
+          reason: 'a STORED reading is not a LIVE delivery — never chart it as '
+              'one while the device has no Wi-Fi link');
+      expect(c.details, isNull);
+      expect(c.phase, WifiMonitorPhase.notOnWifi);
+      c.dispose();
+      await bridge.close();
+    });
+
+    // ── ANTI-OVER-SUPPRESSION ────────────────────────────────────────────────
+    // The fix must not suppress MORE than is true. There is prior art of an
+    // over-suppressing "honest null" fix on this codebase that was rejected. An
+    // AMBIGUOUS probe (a wired desktop, a Location-gated read, a failed read) is
+    // NOT a not-on-Wi-Fi signal and must leave the existing behavior untouched.
+    test(
+        'ANTI-OVER-SUPPRESSION: an AMBIGUOUS probe (wired desktop) never blanks '
+        'data and never claims "not on Wi-Fi"', () async {
+      // A wired Mac has no Wi-Fi IP — but that is UNKNOWN, not "not on Wi-Fi"
+      // (WifiConnectionService only asserts notOnWifi on iOS). The stored reading
+      // must still render, exactly as before the fix.
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _details(ssid: 'WiredMacLastKnown');
+      final c = WifiMonitorController(
+        bridge: bridge,
+        connectionService: WifiConnectionService(
+          networkInfo: _FakeNetworkInfo(wifiIp: null), // no Wi-Fi IP
+          platformOverride: TargetPlatform.macOS, // …but ambiguous, not iOS
+        ),
+      );
+
+      await c.load();
+
+      expect(c.notOnWifi, isFalse,
+          reason: 'an ambiguous read is never a positive not-on-Wi-Fi verdict');
+      expect(c.phase, WifiMonitorPhase.idleWithData,
+          reason: 'a wired desktop must NOT be told to connect to Wi-Fi');
+      expect(c.details!.ssid, 'WiredMacLastKnown',
+          reason: 'ambiguity must not blank data the user already has');
+      c.dispose();
+      await bridge.close();
+    });
+
+    test(
+        'ANTI-OVER-SUPPRESSION: a FAILED/denied probe read never claims "not on '
+        'Wi-Fi"', () async {
+      // A throwing getWifiIP (permission denied / unsupported) resolves to
+      // `unknown`, never `notOnWifi` — so a Location-gated read keeps its data.
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _details(ssid: 'GatedButReal');
+      final c = WifiMonitorController(
+        bridge: bridge,
+        connectionService: WifiConnectionService(
+          networkInfo: _ThrowingNetworkInfo(),
+          platformOverride: TargetPlatform.iOS, // even on iOS
+        ),
+      );
+
+      await c.load();
+
+      expect(c.notOnWifi, isFalse);
       expect(c.phase, WifiMonitorPhase.idleWithData);
-      expect(c.notOnWifi, isTrue, reason: 'the probe still reports off-Wi-Fi');
+      expect(c.details!.ssid, 'GatedButReal');
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('rejoining Wi-Fi restores the last known reading (nothing destroyed)',
+        () async {
+      // Suppression is a VIEW decision, not a deletion: once the probe clears,
+      // the stored reading is available again with no re-fetch.
+      final fakeNet = _FakeNetworkInfo(wifiIp: null);
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _details(ssid: 'LastKnown');
+      final c = WifiMonitorController(
+        bridge: bridge,
+        connectionService: WifiConnectionService(
+          networkInfo: fakeNet,
+          platformOverride: TargetPlatform.iOS,
+        ),
+      );
+
+      await c.load();
+      expect(c.phase, WifiMonitorPhase.notOnWifi);
+      expect(c.details, isNull);
+
+      // The user joins Wi-Fi and taps "Check again".
+      fakeNet.wifiIp = '192.168.5.20';
+      await c.load();
+
+      expect(c.notOnWifi, isFalse);
+      expect(c.phase, WifiMonitorPhase.idleWithData);
       expect(c.details!.ssid, 'LastKnown',
-          reason: 'the last reading is retained, never blanked');
+          reason: 'the reading was hidden, not deleted');
       c.dispose();
       await bridge.close();
     });

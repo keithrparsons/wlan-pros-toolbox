@@ -299,15 +299,25 @@ class ConsumerVerdictMapper {
           // D1 — internet measured, Wi-Fi not. Wi-Fi chip is `unknown` (no
           // rate); the Internet chip is its absolute tier. The screen
           // substitutes the live [X]/[fine|slow] via [bodyForCouldntCheckWifi].
+          //
+          // TWO KINDS OF NULL (GL-005, 2026-07-13). "We couldn't read your Wi-Fi
+          // details on this device" is the wrong null for a cellular-only phone —
+          // there is nothing to read. Name the real state so the user is not sent
+          // chasing a Wi-Fi read that cannot exist.
           return ConsumerVerdict(
             outcome: ConsumerOutcome.couldntCheckWifi,
             wifiStatus: wifiTier,
             internetStatus: internetTier,
-            headline: 'Couldn’t check everything',
-            body:
-                'Your internet measured about [X] Mbps, which looks '
-                '[fine/slow]. We couldn’t read your Wi-Fi details on this '
-                'device.',
+            headline: engineResult.notOnWifi
+                ? 'Not on Wi-Fi'
+                : 'Couldn’t check everything',
+            body: engineResult.notOnWifi
+                ? 'Your internet measured about [X] Mbps, which looks '
+                      '[fine/slow]. You’re not connected to Wi-Fi, so there was '
+                      'no Wi-Fi to check.'
+                : 'Your internet measured about [X] Mbps, which looks '
+                      '[fine/slow]. We couldn’t read your Wi-Fi details on this '
+                      'device.',
             selfHelp: SelfHelpTopic.reconnect,
           );
         }
@@ -316,8 +326,13 @@ class ConsumerVerdictMapper {
           outcome: ConsumerOutcome.couldntComplete,
           wifiStatus: wifiTier,
           internetStatus: internetTier,
-          headline: 'Couldn’t complete the check',
-          body: "Make sure you're connected to Wi-Fi and try again.",
+          headline: engineResult.notOnWifi
+              ? 'Not on Wi-Fi'
+              : 'Couldn’t complete the check',
+          body: engineResult.notOnWifi
+              ? "You're not connected to Wi-Fi. Join a Wi-Fi network and try "
+                    'again.'
+              : "Make sure you're connected to Wi-Fi and try again.",
           selfHelp: SelfHelpTopic.reconnect,
         );
 

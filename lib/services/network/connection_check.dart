@@ -33,10 +33,17 @@ class ConnectionCheck {
   /// honest [WifiVsInternetVerdict.onlineUnmeasured] verdict when the speed test
   /// stalled but the device is clearly online. It defaults to no evidence, so a
   /// caller that has not gathered it yet gets the prior behavior unchanged.
+  ///
+  /// [notOnWifi] is the caller's POSITIVE not-on-Wi-Fi probe result. It lets the
+  /// engine tell "we could not read the Wi-Fi link" apart from "there IS no
+  /// Wi-Fi link" (GL-005, two kinds of null) — the distinction that stopped Test
+  /// My Connection telling a cellular-only user to "boost the Wi-Fi signal".
+  /// Defaults to false, so a caller that has not probed gets the prior behavior.
   static WifiVsInternetResult compute(
     ConnectedAp? ap,
     QualityResult? internet, {
     OnlineEvidence onlineEvidence = const OnlineEvidence(),
+    bool notOnWifi = false,
   }) {
     final double? down = metricValue(internet, MetricIds.download);
     final double? up = metricValue(internet, MetricIds.upload);
@@ -51,6 +58,7 @@ class ConnectionCheck {
       internetUpMbps: up,
       internetHealth: internetHealth(internet),
       onlineEvidence: onlineEvidence,
+      notOnWifi: notOnWifi,
     );
   }
 

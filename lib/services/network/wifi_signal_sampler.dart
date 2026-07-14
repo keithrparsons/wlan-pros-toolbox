@@ -36,6 +36,7 @@ import 'package:flutter/foundation.dart';
 
 import 'connected_ap.dart';
 import 'roam_detector.dart';
+import 'wifi_connection_service.dart';
 import 'wifi_details.dart';
 import 'wifi_details_bridge.dart';
 import 'wifi_info_adapter.dart';
@@ -51,6 +52,7 @@ class WifiSignalSampler extends ChangeNotifier {
     required this.source,
     WifiInfoAdapter? macAdapter,
     WiFiDetailsBridge? iosBridge,
+    WifiConnectionService? connectionService,
     Duration macPollInterval = const Duration(seconds: 2),
     Duration window = const Duration(seconds: 30),
   })  // The public params are named without the underscore (clean API); the
@@ -75,7 +77,14 @@ class WifiSignalSampler extends ChangeNotifier {
         _series = WifiTimeSeries(capacity: _capacityFor(_macPollInterval));
       case WifiInfoSource.iosShortcuts:
         _iosBridge = iosBridge ?? WiFiDetailsBridge();
-        _controller = WifiMonitorController(bridge: _iosBridge!);
+        // [connectionService] is the honest "is this device on Wi-Fi?" probe
+        // seam. Null in production (the controller builds the real one); a test
+        // injects a fake so the not-on-Wi-Fi gate is exercised without a live
+        // radio — mirroring [WifiMonitorController]'s own seam.
+        _controller = WifiMonitorController(
+          bridge: _iosBridge!,
+          connectionService: connectionService,
+        );
         // 30s window at the ~1s companion-Shortcut cadence → ~30 samples.
         _series =
             WifiTimeSeries(capacity: _capacityFor(const Duration(seconds: 1)));
@@ -224,12 +233,21 @@ class WifiSignalSampler extends ChangeNotifier {
   bool get setupInitiated => _controller?.setupInitiated ?? false;
 
   /// True when the last connection probe found the device is demonstrably NOT on
-  /// Wi-Fi (e.g. cellular-only on iOS) and no live reading has arrived — drives
-  /// the honest "connect to Wi-Fi" surface in the Wi-Fi-signal section instead of
-  /// a dead waiting state. Honest: only ever set on a positive not-on-Wi-Fi
-  /// signal, never from missing/ambiguous data. False off iOS (the snapshot
-  /// platforms read Wi-Fi natively and surface their own state).
-  bool get notOnWifi => (_controller?.notOnWifi ?? false) && !hasEverReceived;
+  /// Wi-Fi (e.g. cellular-only on iOS) — drives the honest "connect to Wi-Fi"
+  /// surface in the Wi-Fi-signal section instead of a stale reading under a LIVE
+  /// badge. Honest: only ever set on a positive not-on-Wi-Fi signal, never from
+  /// missing/ambiguous data. False off iOS (the snapshot platforms read Wi-Fi
+  /// natively and surface their own state).
+  ///
+  /// THE `&& !hasEverReceived` GATE IS GONE (2026-07-13, Keith on-device, v1.7.2).
+  /// It was a SECOND copy of the same suppression that hid the honest state in
+  /// [WifiMonitorController] — and it was NOT downstream of it: this getter reads
+  /// the controller's RAW probe flag, so fixing the controller alone would have
+  /// left Test My Connection still showing "Wi-Fi data rate 29 Mbps" under a
+  /// green LIVE badge on a cellular-only phone. Any user who had EVER captured a
+  /// Wi-Fi reading permanently satisfied `hasEverReceived`, so the honest card
+  /// never fired for anyone real. There is no Wi-Fi link; there is no reading.
+  bool get notOnWifi => _controller?.notOnWifi ?? false;
 
   /// Set when the last iOS [start] could not open the companion Shortcut
   /// (Shortcuts missing / not installed). Surfaced as the honest live error.
