@@ -344,6 +344,15 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// False until the first check completes.
   bool _resultNotOnWifi = false;
 
+  /// EXPLICIT consent to spend cellular data on the speed test, for this screen.
+  ///
+  /// Set ONLY by the user tapping the primary button while off Wi-Fi — the button
+  /// whose own label carries the cost ("Check My Connection (uses data)"), directly
+  /// beneath the warning that states it. Never inferred, never defaulted, never set
+  /// by a caller. [_run]'s chokepoint reads it, so a run that was never consented to
+  /// cannot include the data-hungry stages no matter who started it.
+  bool _throughputConsented = false;
+
   /// Whether THIS result's run skipped the data-hungry speed test because the
   /// user declined the cellular-data cost. Stamped once in the run's `onDone`,
   /// exactly like [_resultNotOnWifi] and for the same reason (cold-eyes F4): the
@@ -353,23 +362,37 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// The estimated cellular data the speed test would consume, stated as a RANGE
   /// because it genuinely is one.
   ///
-  /// DERIVED FROM THE CODE, NOT GUESSED (2026-07-13). Neither data-hungry stage is
-  /// byte-bounded:
-  ///   * `ThroughputProbe.maxDuration` = 15 s. Five concurrent download streams
-  ///     LOOP sized requests back-to-back until that window closes
-  ///     (`_downloadOnce`'s do/while), so the stage transfers `rate x 15 s`.
+  /// DERIVED FROM THE CODE, NOT GUESSED (2026-07-13; CORRECTED round 4,
+  /// 2026-07-14). Neither data-hungry stage is byte-bounded:
+  ///   * `ThroughputProbe.maxDuration` = 15 s. `downloadStreamCount` (default 5)
+  ///     concurrent download streams LOOP sized requests back-to-back until that
+  ///     window closes (`_downloadOnce`'s do/while), so this stage can transfer
+  ///     roughly `link rate x 15 s` — several summed flows are what fill a fast
+  ///     link.
   ///   * The responsiveness (RPM) probe's load generator is ANOTHER full-window
-  ///     single-flow download (`runResilientRpmLoad`) — a second ~15 s at rate.
+  ///     download (`runResilientRpmLoad`) — a second ~15 s window. It is
+  ///     SINGLE-FLOW ("one healthy single-flow load for the whole RPM window").
   ///   * Upload is the only capped one: `uploadBytes` = 10 MB.
   ///
-  /// So the app downloads at full speed for about 30 seconds, and the bytes scale
-  /// with the link:
-  ///   10 Mbps  -> ~(10 x 30 / 8) + 10  =  ~48 MB
-  ///   100 Mbps -> ~(100 x 30 / 8) + 10 =  ~385 MB
-  ///   300 Mbps -> ~(300 x 30 / 8) + 10 =  ~1.1 GB
+  /// SO THE APP DOWNLOADS FOR ABOUT 30 SECONDS, BUT ONLY THE FIRST ~15 s CAN RUN AT
+  /// THE FULL LINK RATE. A previous revision of this comment multiplied the WHOLE
+  /// 30 s by the link rate and printed `300 Mbps -> ~1.1 GB`. That figure is
+  /// UNREACHABLE, and this codebase says why in its own words: a single TCP stream
+  /// "is bandwidth-delay-product limited and cannot fill a fast link, so several
+  /// summed concurrent flows are required to measure true capacity"
+  /// (`throughput_probe.dart`, `downloadStreamCount`). The RPM stage is exactly
+  /// that single stream, so it transfers materially LESS than the parallel stage on
+  /// a fast link — and by an amount this code cannot know in advance.
   ///
-  /// The copy therefore states the MECHANISM and a range, and does not invent a
-  /// single figure it cannot know before the test runs (GL-005).
+  /// The honest bound is therefore: at least `rate x 15 s / 8` from the parallel
+  /// stage, plus an unknown-but-smaller single-flow contribution, plus 10 MB up.
+  ///   10 Mbps  -> at least ~19 MB, and comfortably under 50 MB
+  ///   300 Mbps -> at least ~560 MB
+  ///
+  /// The shipped copy states the MECHANISM and a range and invents no single
+  /// figure, which is what keeps it true under this correction (GL-005). Do not
+  /// "tighten" it into a precise number: the exact byte count is not knowable
+  /// before the test runs.
   static const String _kCellularDataWarning =
       "You're on cellular. The speed test downloads at full speed for about 30 "
       'seconds, so it uses roughly 50 MB on a slow connection and 500 MB or more '
@@ -557,10 +580,55 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
 
     if (widget.autoStart) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _run();
+        if (mounted) _autoStart();
       });
     }
   }
+
+  /// The AUTO-START entry: the home screen's "Check My Connection" hero
+  /// (home_screen.dart → app_router.dart:716 → `autoStart: true`).
+  ///
+  /// IT CANNOT JUST CALL [_run] (round-4 P0, 2026-07-14). It used to, and that
+  /// made the app's single most-travelled path spend a cellular user's data on a
+  /// ~30-second full-rate download with no warning, no decline path, and no
+  /// consent — the same screen and the same tap that produced Keith's original
+  /// bug report.
+  ///
+  /// AND FRAME ONE IS TOO EARLY TO KNOW. [_notOnWifi] reads the sampler, which
+  /// settles a few hundred ms after `initState`, while this post-frame callback
+  /// fires on FRAME ONE. So on frame one [_notOnWifi] is still `false`, and a
+  /// consent check merely PLACED inside [_run] would read "on Wi-Fi" and wave the
+  /// run through. The probe has to be AWAITED, not read.
+  ///
+  /// OFF WI-FI WE DO NOT RUN AT ALL, rather than running without throughput. Both
+  /// spend zero data, but stopping renders the pre-run screen with the cost and
+  /// BOTH choices, so the user can still opt INTO the speed test. Silently
+  /// downgrading the run would withhold a feature and give them no way to ask for
+  /// it. On Wi-Fi nothing changes: the full check fires immediately, as always.
+  ///
+  /// RESIDUAL, STATED: only a POSITIVE not-on-Wi-Fi verdict stops the run. An
+  /// `unknown` probe (a wired Mac, an ambiguous read) auto-runs exactly as before
+  /// — the alternative would stop and interrogate every desktop user about
+  /// cellular data they are not spending.
+  Future<void> _autoStart() async {
+    await _retryConnection();
+    if (!mounted) return;
+    if (_notOnWifi) {
+      // Zero bytes move. Rebuild so the pre-run screen shows the data-cost
+      // warning and both choices; the user decides.
+      setState(() {});
+      return;
+    }
+    _run(includeThroughput: true);
+  }
+
+  /// Re-runs the whole check from the RESULT screen's "Run again" control.
+  ///
+  /// This was `onRunAgain: _run` — a tear-off that rode the old default-true
+  /// parameter, so "Run again" on a cellular result re-spent the user's data
+  /// without consent too. It now states its request explicitly, and [_run]'s
+  /// chokepoint downgrades it when the user has not consented on this screen.
+  void _rerun() => _run(includeThroughput: true);
 
   /// iOS first-run: fires the unmissable one-time "enable live Wi-Fi" sheet on
   /// the first open of the front door, gated by the SAME honest composite signal
@@ -1058,7 +1126,32 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// Off Wi-Fi the user chooses, and choosing "no" still runs the whole rest of
   /// the check (latency, loss, DNS, reachability, ISP, the honest not-on-Wi-Fi
   /// state) — only the data-hungry stages are withheld.
-  void _run({bool includeThroughput = true}) {
+  void _run({required bool includeThroughput}) {
+    // ========================================================================
+    // THE CONSENT CHOKEPOINT (round-4 P0, 2026-07-14).
+    //
+    // Consent must live where the BYTES ARE SPENT, not where the button is. This
+    // parameter used to default to `true`, and FOUR callers reached _run() on that
+    // default — the auto-start post-frame callback (the home hero), the result
+    // screen's "Run again" tear-off, the post-Shortcut-install callback, and the
+    // pre-run button. Only the button had seen the user's consent. The other three
+    // spent cellular data without asking.
+    //
+    // Two changes make that impossible rather than merely fixed:
+    //   1. `includeThroughput` is now REQUIRED. A caller cannot spend the user's
+    //      data by simply not knowing the parameter exists; the compiler makes
+    //      every caller state a decision.
+    //   2. This line. `includeThroughput` is what the CALLER ASKED FOR;
+    //      `spendData` is what the USER HAS AGREED TO PAY FOR. On a metered link
+    //      the two are the same only after an explicit consent tap. A future
+    //      caller that passes `true` still cannot spend a cellular user's data.
+    //
+    // On Wi-Fi (`!_notOnWifi`) this is a no-op and the check behaves as it always
+    // has.
+    // ========================================================================
+    final bool spendData =
+        includeThroughput && (!_notOnWifi || _throughputConsented);
+
     setState(() {
       _error = null;
       _running = true;
@@ -1137,7 +1230,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       _fetchNetworkDetails();
     }
 
-    _sub = _quality.measure(includeThroughput: includeThroughput).listen(
+    _sub = _quality.measure(includeThroughput: spendData).listen(
       (QualityProgress p) {
         if (!mounted) return;
         setState(() {
@@ -1173,7 +1266,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         // Stamp the consent decision onto the RESULT for the same reason the probe
         // verdict is stamped: the report must be dated to its own run, and a later
         // recompute must not re-derive it from whatever the screen looks like now.
-        final bool skipped = !includeThroughput;
+        final bool skipped = !spendData;
         final ConnectedAp? linkAp = notOnWifi ? null : ap;
         final WifiVsInternetResult engine = ConnectionCheck.compute(
           linkAp,
@@ -1570,7 +1663,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                       // hero-sentence row (Keith: same line as something else,
                       // no new vertical space). Disabled while a run is in
                       // flight so a double-tap can't queue a second check.
-                      onRunAgain: _running ? null : _run,
+                      onRunAgain: _running ? null : _rerun,
                     ),
                     const SizedBox(height: AppSpacing.md),
                     // VERDICT LINE — a plain, state-driven sentence that names the
@@ -1837,7 +1930,16 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                       'cellular data'
                   : 'Check my connection'),
           child: FilledButton(
-            onPressed: _running ? null : () => _run(),
+            onPressed: _running
+                ? null
+                : () {
+                    // THE TAP IS THE CONSENT. Off Wi-Fi this button's own label
+                    // states the data cost, directly under the warning that
+                    // explains it, so tapping it IS the informed decision. Record
+                    // it before the run so the chokepoint in [_run] can honor it.
+                    if (_notOnWifi) _throughputConsented = true;
+                    _run(includeThroughput: true);
+                  },
             child: Text(
               _running
                   ? 'Checking…'
@@ -2655,7 +2757,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         // before the first Live payload lands (null-safe; never throws).
         await _onboardingService?.markOnboardingSeen();
         // _run() auto-captures iOS RF (the priming one-shot) as part of the check.
-        if (mounted) _run();
+        // It asks for throughput; the chokepoint withholds it on an unconsented
+        // metered link, so finishing Shortcut setup can never spend cellular data.
+        if (mounted) _run(includeThroughput: true);
       },
     );
   }

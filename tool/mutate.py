@@ -114,6 +114,51 @@ MUTATIONS = [
         "    if (false) { // MUTANT\n      final AppColorScheme colors = context.colors;",
         "test/screens/tools/network/interface_info_notonwifi_test.dart",
     ),
+    # ---- Round-4 P0/P2: the cellular-data consent gate ----
+    (
+        "P0-a test_my_connection: auto-start AWAITS the probe (not _run)",
+        "lib/screens/tools/network/test_my_connection_screen.dart",
+        "        if (mounted) _autoStart();",
+        "        if (mounted) _run(includeThroughput: true); // MUTANT",
+        "test/screens/tools/network/test_my_connection_autostart_consent_test.dart",
+    ),
+    (
+        "P0-b test_my_connection: auto-start STOPS off Wi-Fi",
+        "lib/screens/tools/network/test_my_connection_screen.dart",
+        "    if (_notOnWifi) {\n      // Zero bytes move. Rebuild so the pre-run screen shows the data-cost\n"
+        "      // warning and both choices; the user decides.\n      setState(() {});\n      return;\n    }",
+        "    if (false) { // MUTANT\n      setState(() {});\n      return;\n    }",
+        "test/screens/tools/network/test_my_connection_autostart_consent_test.dart",
+    ),
+    (
+        "P0-c test_my_connection: the _run consent CHOKEPOINT",
+        "lib/screens/tools/network/test_my_connection_screen.dart",
+        "    final bool spendData =\n"
+        "        includeThroughput && (!_notOnWifi || _throughputConsented);",
+        "    final bool spendData = includeThroughput; // MUTANT",
+        "test/screens/tools/network/test_my_connection_autostart_consent_test.dart",
+    ),
+    (
+        "P0-d test_my_connection: the consent TAP is recorded",
+        "lib/screens/tools/network/test_my_connection_screen.dart",
+        "                    if (_notOnWifi) _throughputConsented = true;",
+        "                    // MUTANT: consent never recorded",
+        "test/screens/tools/network/test_my_connection_autostart_consent_test.dart",
+    ),
+    (
+        "P0-e test_my_connection: measure() spends only what was consented",
+        "lib/screens/tools/network/test_my_connection_screen.dart",
+        "    _sub = _quality.measure(includeThroughput: spendData).listen(",
+        "    _sub = _quality.measure(includeThroughput: includeThroughput).listen( // MUTANT",
+        "test/screens/tools/network/test_my_connection_autostart_consent_test.dart",
+    ),
+    (
+        "P2  net_quality engine: the includeThroughput gate (ROOT-certified now)",
+        "packages/net_quality/lib/src/own_engine_quality_client.dart",
+        "    if (includeThroughput) {",
+        "    if (true) { // MUTANT",
+        "test/services/network/engine_cellular_consent_gate_test.dart",
+    ),
     (
         "M14 interface_info_service: the connectivity gate itself",
         "lib/services/network/interface_info_service.dart",

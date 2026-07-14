@@ -295,9 +295,13 @@ class ThroughputProbe {
   final List<Uri> uploadEndpoints;
 
   /// Number of concurrent download streams to run in the shared window.
-  /// Defaults to 6 (the Ookla / Fast.com aggregate-capacity model): a single
+  /// Defaults to 5 (the Ookla / Fast.com aggregate-capacity model): a single
   /// TCP stream is bandwidth-delay-product limited and cannot fill a fast link,
   /// so several summed concurrent flows are required to measure true capacity.
+  ///
+  /// (This doc said "Defaults to 6" until 2026-07-14. The constructor default has
+  /// been 5 the whole time — see `this.downloadStreamCount = 5` below. Corrected
+  /// while auditing the cellular-data cost estimate, which reads this number.)
   final int downloadStreamCount;
 
   /// Hard cap on each transfer (per attempt). For the parallel download this is

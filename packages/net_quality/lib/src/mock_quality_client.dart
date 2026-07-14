@@ -30,8 +30,18 @@ class MockQualityClient implements QualityClient {
   /// without consent — the consent gate is only real if the bytes never move.
   bool lastIncludeThroughput = true;
 
+  /// How many times [measure] has been called.
+  ///
+  /// [lastIncludeThroughput] alone CANNOT express "the run never started": it
+  /// initializes to `true`, so a test asserting `isFalse` on it would also fail
+  /// when measure was never called at all, and a test asserting `isTrue` would
+  /// PASS against a screen that never ran. A consent test has to distinguish
+  /// "did not spend the data" from "did not run", and that needs a counter.
+  int measureCalls = 0;
+
   @override
   Stream<QualityProgress> measure({bool includeThroughput = true}) async* {
+    measureCalls++;
     lastIncludeThroughput = includeThroughput;
     yield const QualityProgress(QualityPhase.latency, 0.25);
     if (includeThroughput) {
