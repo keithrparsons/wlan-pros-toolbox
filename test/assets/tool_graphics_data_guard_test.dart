@@ -43,12 +43,14 @@ import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/rf_attenuation_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/reference/cable_bend_radius_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/channel_map_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/iec_connectors_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/international_plugs_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/nema_connectors_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/poe_reference_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/power_phasing_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/reference/rack_units_screen.dart';
 
 const String _kGraphicsDir = 'assets/tool-graphics';
 
@@ -70,25 +72,105 @@ const String _kGraphicsDir = 'assets/tool-graphics';
 // them. If a graphic states a number that a SCREEN ALSO TABULATES, it does not
 // belong here -- it belongs in _dataBearing (guarded) or, until someone writes
 // that guard, in _dataBearingUnguarded (declared, below).
-const Set<String> _illustrative = <String>{
-  // Pure formula / mechanism diagrams.
-  'cable-loss', 'rain-fade', 'poe-budget', 'throughput-calc', 'capacity-planner',
-  'noise-floor', 'fspl', 'eirp', 'link-budget', 'fresnel', 'ptp-link',
-  'rf-attenuation-legacy',
-  'wavelength', 'earth-curvature', 'downtilt', 'downtilt-coverage', 'dist-bearing',
-  'midpoint', 'final-point', 'lat-long', 'metric-conversion', 'ohms-law-wheel',
-  'db-reference', 'dbm-watt-converter', 'coax-cable',
-  // Protocol / flow / sequence diagrams. Numbers here are worked EXAMPLES
-  // (an RTT, a sample IP), not values any screen tabulates.
-  'roaming', 'frame-exchange', 'eap-8021x-flow', 'arp-ndp', 'dns-lookup', 'whois',
-  'ping', 'icmp-ping', 'ping-sweep', 'traceroute', 'mobile-traceroute', 'port-scan',
-  'packet-sender', 'http-headers', 'ssl-inspect', 'wake-on-lan', 'bgp-asn',
-  'mac-oui-lookup', 'mac-bit-field', 'ip-geo', 'interface-info', 'ipv4-subnet',
-  'ipv6-subnet', 'spectrum', 'wpa-security',
-  'freeradius-wlanpi', 'markdown-render-example', 'wifi-exposure-perspective',
-  // Physical / mechanical practice (geometry and technique, not a tabulated datum).
-  'bend-radius-arc-vs-kink', 'rack-cage-nut', 'screw-drives-faces',
-  'screw-phillips-vs-pozidriv', 'screw-security-drives', 'fiber-optic',
+
+/// The GROUND on which a graphic is exempt. An exemption may no longer be
+/// ASSERTED ("trust me, it's illustrative"); it must be CLAIMED UNDER A RULE,
+/// and the rule must be one of the four the criterion above actually allows.
+///
+/// VERA MEDIUM-2 (2026-07-14). `_dataBearingUnguarded` -- the HONEST list, the
+/// one that says "nobody is checking these" -- was size-pinned. `_illustrative`
+/// -- the list that had been FALSE FOR 19 OF ITS 78 ENTRIES -- had no pin at
+/// all. So the maker could still mint an exemption for free, AND could relieve
+/// pressure on the debt list by MOVING an entry into the unpinned one.
+/// The confession was pinned and the alibi was left unbounded. Both are pinned
+/// now, and an exemption must name its ground.
+enum _Exempt {
+  /// Depicts HOW something works. A mechanism is not a datum; no screen
+  /// tabulates it, so nothing can contradict it.
+  mechanism,
+
+  /// Depicts a FORMULA or its derivation. The formula IS the claim; the numbers
+  /// in it are worked substitutions, not tabulated values.
+  formula,
+
+  /// Depicts a SEQUENCE / protocol exchange. Numbers are worked examples
+  /// (an RTT, a sample IP) that no screen tabulates.
+  sequence,
+
+  /// A universal constant that cannot drift (3 dB = 2x; 0 dBm = 1 mW; coax is
+  /// 50/75 ohm). There is no dataset for it to diverge FROM.
+  constant,
+}
+
+const Map<String, _Exempt> _illustrative = <String, _Exempt>{
+  // ── Formula / mechanism diagrams ──
+  'cable-loss': _Exempt.formula,
+  'rain-fade': _Exempt.formula,
+  'poe-budget': _Exempt.formula,
+  'throughput-calc': _Exempt.formula,
+  'capacity-planner': _Exempt.formula,
+  'noise-floor': _Exempt.formula,
+  'fspl': _Exempt.formula,
+  'eirp': _Exempt.formula,
+  'link-budget': _Exempt.formula,
+  'fresnel': _Exempt.formula,
+  'ptp-link': _Exempt.mechanism,
+  // Deliberate tripwire: the file does not exist. If it ever reappears, the
+  // stale-entry test below stops removing it and someone must explain why the
+  // old lying drawing came back.
+  'rf-attenuation-legacy': _Exempt.mechanism,
+  'wavelength': _Exempt.formula,
+  'earth-curvature': _Exempt.formula,
+  'downtilt': _Exempt.formula,
+  'downtilt-coverage': _Exempt.formula,
+  'dist-bearing': _Exempt.formula,
+  'midpoint': _Exempt.formula,
+  'final-point': _Exempt.formula,
+  'lat-long': _Exempt.mechanism,
+  'metric-conversion': _Exempt.constant,
+  'ohms-law-wheel': _Exempt.formula,
+  'db-reference': _Exempt.constant,
+  'dbm-watt-converter': _Exempt.formula,
+  'coax-cable': _Exempt.constant,
+  // ── Protocol / flow / sequence diagrams ──
+  'roaming': _Exempt.sequence,
+  'frame-exchange': _Exempt.sequence,
+  'eap-8021x-flow': _Exempt.sequence,
+  'arp-ndp': _Exempt.sequence,
+  'dns-lookup': _Exempt.sequence,
+  'whois': _Exempt.sequence,
+  'ping': _Exempt.sequence,
+  'icmp-ping': _Exempt.sequence,
+  'ping-sweep': _Exempt.sequence,
+  'traceroute': _Exempt.sequence,
+  'mobile-traceroute': _Exempt.sequence,
+  'port-scan': _Exempt.sequence,
+  'packet-sender': _Exempt.sequence,
+  'http-headers': _Exempt.sequence,
+  'ssl-inspect': _Exempt.sequence,
+  'wake-on-lan': _Exempt.sequence,
+  'bgp-asn': _Exempt.sequence,
+  'mac-oui-lookup': _Exempt.sequence,
+  'ip-geo': _Exempt.sequence,
+  'interface-info': _Exempt.sequence,
+  'freeradius-wlanpi': _Exempt.sequence,
+  'mac-bit-field': _Exempt.mechanism,
+  'ipv4-subnet': _Exempt.mechanism,
+  'ipv6-subnet': _Exempt.mechanism,
+  'spectrum': _Exempt.mechanism,
+  'wpa-security': _Exempt.mechanism,
+  'markdown-render-example': _Exempt.mechanism,
+  'wifi-exposure-perspective': _Exempt.mechanism,
+  // ── Physical / mechanical practice (technique, not a tabulated datum) ──
+  // NOTE what is NO LONGER here: 'bend-radius-arc-vs-kink' (it draws
+  // "R >= 4x OD", which cable_bend_radius_screen.dart:142 tabulates) and
+  // 'rack-cage-nut' (it draws "10-32, 12-24, or M6", which
+  // rack_units_screen.dart:236/242/248 tabulates). Both were exempt; both are
+  // now guarded. See §3i and §3j.
+  'screw-drives-faces': _Exempt.mechanism,
+  'screw-phillips-vs-pozidriv': _Exempt.mechanism,
+  'screw-security-drives': _Exempt.mechanism,
+  'fiber-optic': _Exempt.mechanism,
 };
 
 // ══ DECLARED DEBT: data-bearing, NOT YET GUARDED ═══════════════════════════
@@ -144,6 +226,14 @@ const Map<String, String> _dataBearing = <String, String>{
   'nema-connectors': 'NemaConnectorsScreen (overview)',
   'iec-connectors': 'IecConnectorsScreen (overview)',
   'international-plugs': 'InternationalPlugsScreen (overview)',
+  // VERA MEDIUM-1 (2026-07-14). Both of these were on the ILLUSTRATIVE list --
+  // i.e. someone had asserted they state no tabulated datum. Both do, and both
+  // have a SIBLING (declared in the same lib/data/*_diagrams.dart, drawn on the
+  // same screen, sourced from the same standard) that was correctly declared as
+  // debt. One file, two graphics, two different verdicts: that split IS the
+  // finding, and §2 now makes it a build failure.
+  'bend-radius-arc-vs-kink': 'CableBendRadiusScreen.copperBend (guarded below)',
+  'rack-cage-nut': 'RackUnitsScreen.threads (guarded below)',
   // The per-connector faces join their dataset row via `assetName`.
   ...<String, String>{},
 };
@@ -219,22 +309,69 @@ int _firstInt(String s) =>
 // GEOMETRY: they share a column. So the guard must join by POSITION. These
 // helpers do that, exactly as the branch-1 legend parser does.
 
-/// A `<text>` with its position.
+// ══ THE `transform` HOLE ═══════════════════════════════════════════════════
+//
+// FOUND BY ATTACKING THIS FIX, 2026-07-14, after the three above were closed.
+//
+// Every geometry check in this file reads raw x / y / width / height attributes.
+// SVG's `transform` moves the RENDERED artwork WITHOUT touching any of them. So
+// the brand-new baseline pin below -- the one written to close Vera's HIGH-3 --
+// could be walked straight past by re-floating the same bar with
+// `transform="translate(0,-25)"`: y+h still reads 120, the pin is satisfied, and
+// the bar hangs in mid-air on screen. HIGH-3, reopened, through the door its own
+// fix left open. A transform on a rating <text> does the same to the cell join:
+// the number renders under a DIFFERENT coupler while x,y still say otherwise.
+//
+// This is the same sin as the entity bug _decodeEntities was fixed for, in
+// geometry instead of text: A GUARD THAT READS THE DOCUMENT DIFFERENTLY THAN THE
+// RENDERER DOES IS READING A DIFFERENT DOCUMENT THAN THE USER.
+//
+// The fix is NOT to ban transforms -- 69 of them are load-bearing and legitimate
+// (every connector face is composed inside a translated <g>; the "Watts" axis
+// title is a rotated <text>). The fix is to REFUSE TO MEASURE a transformed
+// element. Each parser records whether an element -- or ANY ancestor <g> --
+// carries a transform, and every join and every geometry assertion below rejects
+// a transformed element loudly. An element nobody measures may be transformed
+// freely; an element the guard's verdict depends on may not.
+
+/// A `<text>` with its position. [tf] is true when this element, or any ancestor
+/// `<g>`, carries a `transform` -- i.e. when its drawn position is NOT the x,y
+/// parsed here, and no assertion may be built on it.
 class _T {
-  const _T(this.x, this.y, this.s);
+  const _T(this.x, this.y, this.s, {this.tf = false});
   final double x;
   final double y;
   final String s;
+  final bool tf;
 }
 
-/// A `<rect>` with its position.
+/// A `<rect>` with its position. [tf] as above.
 class _R {
-  const _R(this.x, this.y, this.w, this.h);
+  const _R(this.x, this.y, this.w, this.h, {this.tf = false});
   final double x;
   final double y;
   final double w;
   final double h;
+  final bool tf;
   double get cx => x + w / 2;
+}
+
+/// Refuse to measure a transformed element. Called at every point of USE, which
+/// is what lets the 69 legitimate transforms stand: the composed connector faces
+/// and the rotated axis titles are never selected by a join, so they are never
+/// refused. Only an element the verdict RESTS on has to be honest about where it
+/// is drawn.
+void _refuseTransformed(bool tf, String what, String slug) {
+  if (tf) {
+    fail('$slug: the guard was about to measure $what, but that element (or an '
+        'ancestor <g>) carries a `transform`. Its RENDERED position is not the '
+        'x/y/width/height written on it, so every assertion built on those '
+        'numbers would be about a drawing nobody sees. This is how the poe '
+        'baseline pin was defeated the day it was written: '
+        'transform="translate(0,-25)" floats the bar off the baseline while '
+        'y+height still reads exactly 120. Draw it where it goes, or the guard '
+        'cannot vouch for it.');
+  }
 }
 
 String _body(String slug) => File('$_kGraphicsDir/$slug.svg')
@@ -247,42 +384,70 @@ double? _attr(String tag, String name) {
   return m == null ? null : double.tryParse(m.group(1)!);
 }
 
-/// Every positioned `<text>` in [slug].
-List<_T> _positionedTexts(String slug) =>
-    RegExp(r'<text\b([^>]*)>(.*?)</text>', dotAll: true)
-        .allMatches(_body(slug))
-        .map((RegExpMatch m) {
-          final double? x = _attr(m.group(1)!, 'x');
-          final double? y = _attr(m.group(1)!, 'y');
-          final String s = _decodeEntities(m.group(2)!);
-          return (x == null || y == null || s.isEmpty) ? null : _T(x, y, s);
-        })
-        .whereType<_T>()
-        .toList();
+/// Every positioned `<text>` in [slug], each tagged with whether it -- or any
+/// ancestor `<g>` -- carries a `transform`.
+List<_T> _positionedTexts(String slug) {
+  final List<_T> out = <_T>[];
+  final List<bool> gtf = <bool>[]; // the <g> transform stack
+  final RegExp tok =
+      RegExp(r'<g\b([^>]*)>|</g>|<text\b([^>]*)>(.*?)</text>', dotAll: true);
+  for (final RegExpMatch m in tok.allMatches(_body(slug))) {
+    final String tag = m.group(0)!;
+    if (tag.startsWith('</g')) {
+      if (gtf.isNotEmpty) gtf.removeLast();
+      continue;
+    }
+    if (tag.startsWith('<g')) {
+      gtf.add(_attrStr(m.group(1)!, 'transform').isNotEmpty);
+      continue;
+    }
+    final String a = m.group(2)!;
+    final double? x = _attr(a, 'x');
+    final double? y = _attr(a, 'y');
+    final String s = _decodeEntities(m.group(3)!);
+    if (x == null || y == null || s.isEmpty) continue;
+    final bool tf =
+        _attrStr(a, 'transform').isNotEmpty || gtf.any((bool b) => b);
+    out.add(_T(x, y, s, tf: tf));
+  }
+  return out;
+}
 
-/// Every positioned `<rect>` in [slug].
-List<_R> _positionedRects(String slug) => RegExp(r'<rect\b([^>]*?)/?>')
-    .allMatches(_body(slug))
-    .map((RegExpMatch m) {
-      final String a = m.group(1)!;
-      // NOTE the leading (?:^|\s) in _attr: without it, `width` also matches
-      // STROKE-width, which once made every rect look 1.5px wide.
-      final double? x = _attr(a, 'x');
-      final double? y = _attr(a, 'y');
-      final double? w = _attr(a, 'width');
-      final double? h = _attr(a, 'height');
-      return (x == null || y == null || w == null || h == null)
-          ? null
-          : _R(x, y, w, h);
-    })
-    .whereType<_R>()
-    .toList();
+/// Every positioned `<rect>` in [slug], tagged as above.
+List<_R> _positionedRects(String slug) {
+  final List<_R> out = <_R>[];
+  final List<bool> gtf = <bool>[];
+  final RegExp tok = RegExp(r'<g\b([^>]*)>|</g>|<rect\b([^>]*?)/?>');
+  for (final RegExpMatch m in tok.allMatches(_body(slug))) {
+    final String tag = m.group(0)!;
+    if (tag.startsWith('</g')) {
+      if (gtf.isNotEmpty) gtf.removeLast();
+      continue;
+    }
+    if (tag.startsWith('<g')) {
+      gtf.add(_attrStr(m.group(1)!, 'transform').isNotEmpty);
+      continue;
+    }
+    final String a = m.group(2)!;
+    // NOTE the leading (?:^|\s) in _attr: without it, `width` also matches
+    // STROKE-width, which once made every rect look 1.5px wide.
+    final double? x = _attr(a, 'x');
+    final double? y = _attr(a, 'y');
+    final double? w = _attr(a, 'width');
+    final double? h = _attr(a, 'height');
+    if (x == null || y == null || w == null || h == null) continue;
+    final bool tf =
+        _attrStr(a, 'transform').isNotEmpty || gtf.any((bool b) => b);
+    out.add(_R(x, y, w, h, tf: tf));
+  }
+  return out;
+}
 
 /// The single text sharing [cx]'s column (within [tol]) and satisfying [where].
 /// Throws if zero or more than one matches, which is itself the finding: a label
 /// with no value, or a column so crowded the binding is ambiguous.
 _T _inColumn(List<_T> texts, double cx, bool Function(_T) where,
-    {double tol = 6}) {
+    {double tol = 6, String slug = 'graphic'}) {
   final List<_T> hits = texts
       .where((_T t) => (t.x - cx).abs() <= tol && where(t))
       .toList();
@@ -291,6 +456,8 @@ _T _inColumn(List<_T> texts, double cx, bool Function(_T) where,
         '${hits.length}: ${hits.map((_T t) => t.s).toList()}. A drawing binds a '
         'label to its value by POSITION; an ambiguous column has no binding.');
   }
+  // The column join is only a binding if x is where the text is actually DRAWN.
+  _refuseTransformed(hits.single.tf, 'the text "${hits.single.s}" at x=$cx', slug);
   return hits.single;
 }
 
@@ -306,12 +473,13 @@ _T _inColumn(List<_T> texts, double cx, bool Function(_T) where,
 
 /// A `<line>` with its endpoints and stroke.
 class _L {
-  const _L(this.x1, this.y1, this.x2, this.y2, this.stroke);
+  const _L(this.x1, this.y1, this.x2, this.y2, this.stroke, {this.tf = false});
   final double x1;
   final double y1;
   final double x2;
   final double y2;
   final String stroke;
+  final bool tf;
   bool get isHorizontal => (y1 - y2).abs() < 0.01;
   bool get isVertical => (x1 - x2).abs() < 0.01;
   bool get isLime => stroke.toUpperCase().contains('A1CC3A') ||
@@ -335,15 +503,18 @@ String _attrStr(String tag, String name) =>
 List<_L> _positionedLines(String slug) {
   final List<_L> out = <_L>[];
   final List<String> groupStroke = <String>[];
+  final List<bool> groupTf = <bool>[];
   final RegExp tok = RegExp(r'<g\b([^>]*)>|</g>|<line\b([^>]*?)/?>');
   for (final RegExpMatch m in tok.allMatches(_body(slug))) {
     final String tag = m.group(0)!;
     if (tag.startsWith('</g')) {
       if (groupStroke.isNotEmpty) groupStroke.removeLast();
+      if (groupTf.isNotEmpty) groupTf.removeLast();
       continue;
     }
     if (tag.startsWith('<g')) {
       groupStroke.add(_attrStr(m.group(1)!, 'stroke'));
+      groupTf.add(_attrStr(m.group(1)!, 'transform').isNotEmpty);
       continue;
     }
     final String a = m.group(2)!;
@@ -361,7 +532,9 @@ List<_L> _positionedLines(String slug) {
         }
       }
     }
-    out.add(_L(x1, y1, x2, y2, stroke));
+    final bool tf =
+        _attrStr(a, 'transform').isNotEmpty || groupTf.any((bool b) => b);
+    out.add(_L(x1, y1, x2, y2, stroke, tf: tf));
   }
   return out;
 }
@@ -374,7 +547,7 @@ List<_L> _positionedLines(String slug) {
 /// (y=588). Joining on x alone would happily read C15/C16's 10 A as C5/C6's
 /// rating -- set membership's cousin, one axis short. The cell is the unit.
 _T? _cellRating(List<_T> texts, _T id, RegExp rating,
-    {double xTol = 3, double yBelow = 90}) {
+    {double xTol = 3, double yBelow = 90, String slug = 'graphic'}) {
   final List<_T> hits = texts
       .where((_T t) =>
           (t.x - id.x).abs() <= xTol &&
@@ -382,7 +555,14 @@ _T? _cellRating(List<_T> texts, _T id, RegExp rating,
           (t.y - id.y) <= yBelow &&
           rating.hasMatch(t.s))
       .toList();
-  return hits.length == 1 ? hits.single : null;
+  if (hits.length != 1) return null;
+  // The CELL is the binding. A transform on either half of it -- the identifier
+  // or the rating -- renders them into different cells than the ones the guard
+  // just joined, and the guard would be certifying a drawing nobody sees.
+  _refuseTransformed(id.tf, 'the identifier "${id.s}"', slug);
+  _refuseTransformed(
+      hits.single.tf, 'the rating "${hits.single.s}" under "${id.s}"', slug);
+  return hits.single;
 }
 
 /// The rating belonging to dataset identifier [id] in [slug], or null when [id]
@@ -396,14 +576,116 @@ _T? _cellRating(List<_T> texts, _T id, RegExp rating,
 _T? _entryRating(List<_T> texts, String id, RegExp rating, String slug) {
   final List<_T> found = <_T>[
     for (final _T t in texts.where((_T t) => t.s == id))
-      if (_cellRating(texts, t, rating) != null) t,
+      if (_cellRating(texts, t, rating, slug: slug) != null) t,
   ];
   if (found.isEmpty) return null; // not an entry on this graphic
   if (found.length > 1) {
     fail('$slug draws "$id" as ${found.length} separate rated entries. One '
         'dataset row cannot have two ratings in one drawing.');
   }
-  return _cellRating(texts, found.single, rating);
+  return _cellRating(texts, found.single, rating, slug: slug);
+}
+
+// ══ THE TWO RULES THIS FILE FAILED, NOW MECHANICAL ═════════════════════════
+//
+// Vera attacked this guard on 2026-07-14 by trying to BUILD THE ARTIFACT IT
+// FORBIDS -- a lying drawing -- and got three lies past it, on a full suite that
+// read 4,178/4,178. Not one of the three was a bug in a check. All three were
+// bugs in the SHAPE of the checks. Two rules came out of it, and they are
+// written here as CODE rather than as advice, because a rule expressed as a
+// comment is a rule the next maker may sincerely believe they have followed.
+// The docstring that used to sit on _expectNoOrphanRatings said exactly the
+// right thing (line 415: "[loose] MUST be broader than the pattern the join
+// uses") and the code under it did exactly the wrong thing: the two patterns
+// were BYTE-FOR-BYTE IDENTICAL. A warning that cannot fail is a comment.
+
+/// RULE 1 (GL-013, 2026-07-14): **EVERY GUARD THAT ITERATES MUST FIRST ASSERT IT
+/// FOUND SOMETHING TO ITERATE.**
+///
+/// Vera set "Rated 99 A" on all five IEC couplers the overview draws. Every row
+/// then failed to parse, every row was skipped by `continue`, `bad` stayed
+/// empty, and the orphan audit compared 0 to 0. The test literally named
+/// "draws each coupler's REAL current rating" PASSED -- while checking ZERO
+/// couplers. A loop over an empty list proves nothing, and reports that nothing
+/// in green.
+///
+/// [atLeast] is the count observed on the known-good drawing, so this also fires
+/// when a row is silently DROPPED, not only when all of them are. Adding rows is
+/// free; losing one is a reviewed act.
+void _expectChecked(int checked, int atLeast, String what, String where) {
+  expect(checked, greaterThanOrEqualTo(atLeast),
+      reason: 'VACUOUS GUARD in $where: it checked $checked $what, but the '
+          'known-good drawing has $atLeast. This test was about to PASS while '
+          'verifying less than it claims -- possibly nothing at all. Either a '
+          'row lost its rating, or a rating is drawn in a format the join no '
+          'longer parses (and was therefore skipped in silence). Both are '
+          'findings. A guard that iterates must first prove it has something to '
+          'iterate.');
+}
+
+/// RULE 2 (GL-013, 2026-07-14): **AN AUDIT MUST USE A STRICTLY LOOSER PATTERN
+/// THAN THE CHECK IT AUDITS -- LOOSER IN EVERY DIMENSION, INCLUDING THE ANCHOR.**
+/// If the audit can be defeated by the same input as the check, it is not an
+/// audit. It is a second copy of the check, and it is blind in exactly the
+/// places the check is blind.
+///
+/// This is the defect that let Vera fabricate an electrical rating. The IEC join
+/// and its orphan audit were the same pattern, `^[\d.]+\s*A\s*·`, to the byte.
+/// She drew C13/C14 -- a 10 A coupler -- as "Rated 16 A". The leading word
+/// defeats the `^` anchor, so the join SKIPPED the row; and because the audit
+/// was the same pattern, the audit did not COUNT the row either. Skipped by the
+/// check, uncounted by the audit, `expect(0, 0)`, green. A fabricated electrical
+/// rating shipped through a guard built to stop fabricated electrical ratings.
+///
+/// The previous round "fixed" the sibling bug (`10&#8211;16 A`) by loosening the
+/// audit's TAIL and never touching its ANCHOR -- which is why the anchor check
+/// below is explicit and separate. Loosening one dimension is not loosening.
+///
+/// HONEST LIMIT: regex containment is not decidable in general, so [corpus] is
+/// an empirical witness, not a proof. It is seeded with every format that has
+/// ever beaten this guard, plus the ones Vera used. It shrinks the hole; it does
+/// not prove there is none. Add to it every time a new format gets past.
+void _expectAuditStrictlyLooser(
+    RegExp join, RegExp audit, List<String> corpus, String label) {
+  // (a) MECHANICAL: the audit may not be anchored. The anchor is a dimension of
+  //     strictness, and it is the dimension the last fix forgot.
+  expect(audit.pattern.contains('^'), isFalse,
+      reason: '$label: the ORPHAN AUDIT pattern `${audit.pattern}` is '
+          '`^`-ANCHORED. An anchored audit cannot see a rating that is drawn '
+          'with anything in front of it -- which is exactly how "Rated 16 A" '
+          'passed as a 10 A coupler. The audit must be anchor-free.');
+  expect(audit.pattern.contains(r'$'), isFalse,
+      reason: '$label: the ORPHAN AUDIT pattern `${audit.pattern}` is '
+          '`\$`-ANCHORED. Same defect, other end.');
+
+  // (b) The audit is not literally the check wearing a different name.
+  expect(audit.pattern == join.pattern, isFalse,
+      reason: '$label: the join pattern and the orphan-audit pattern are '
+          'IDENTICAL (`${join.pattern}`). This is not an audit. It is a second '
+          'copy of the check, blind in precisely the places the check is blind, '
+          'and it will report `expect(0, 0)` over every rating it cannot read.');
+
+  // (c) CONTAINMENT: everything the join accepts, the audit must also accept.
+  //     Otherwise a row could be joined-and-compared but never counted, and the
+  //     orphan arithmetic would be nonsense.
+  for (final String s in corpus) {
+    if (join.hasMatch(s)) {
+      expect(audit.hasMatch(s), isTrue,
+          reason: '$label: the join ACCEPTS "$s" but the audit is BLIND to it. '
+              'The audit must be a superset of the check, or the counts it '
+              'compares are counting different things.');
+    }
+  }
+
+  // (d) STRICTNESS: the audit must catch at least one thing the join does not.
+  //     A "looser" pattern that accepts exactly the same language is the same
+  //     net with a new label.
+  expect(
+      corpus.any((String s) => audit.hasMatch(s) && !join.hasMatch(s)), isTrue,
+      reason: '$label: no string in the corpus is caught by the audit but '
+          'missed by the join. The audit is not STRICTLY looser -- it is the '
+          'same net. Every format that has ever beaten this guard is in that '
+          'corpus; if the audit catches none of them, it audits nothing.');
 }
 
 /// Every rating text in [slug] must be consumed by exactly one dataset row.
@@ -412,14 +694,15 @@ _T? _entryRating(List<_T> texts, String id, RegExp rating, String slug) {
 /// loop finds nothing, and the test passes over it in silence) or carry an
 /// ORPHAN rating belonging to no row at all. Counting both ends closes the
 /// "guard that checks nothing" hole from the other side.
-/// [loose] MUST be broader than the pattern the join uses. If the two share a
-/// pattern, a rating drawn in an unexpected FORMAT fails both -- it is skipped
-/// by the join AND uncounted by the audit -- and the guard goes green over a
-/// number it never read. That is precisely how "10&#8211;16 A" hid.
+///
+/// [audit] MUST be strictly looser than the pattern the join uses -- and that is
+/// no longer a request in a docstring, which is what it was when it failed. It
+/// is checked, mechanically, by [_expectAuditStrictlyLooser], which every caller
+/// invokes before it trusts this arithmetic.
 void _expectNoOrphanRatings(
-    List<_T> texts, RegExp loose, int joined, String slug) {
+    List<_T> texts, RegExp audit, int joined, String slug) {
   final List<String> drawn =
-      texts.where((_T t) => loose.hasMatch(t.s)).map((_T t) => t.s).toList();
+      texts.where((_T t) => audit.hasMatch(t.s)).map((_T t) => t.s).toList();
   expect(joined, drawn.length,
       reason: '$slug draws ${drawn.length} rating texts but only $joined were '
           'matched to a dataset row. Either an entry is missing its rating, a '
@@ -428,18 +711,98 @@ void _expectNoOrphanRatings(
           'unconsumed number is a number nobody is checking.\nDrawn: $drawn');
 }
 
+// ══ THE RATING PATTERNS, PAIRED AND PROVEN ═════════════════════════════════
+//
+// Each graphic gets TWO patterns and they are declared TOGETHER, so that the
+// asymmetry between them is visible in one screenful instead of 16 lines apart
+// (which is how they drifted into being identical).
+//
+//   join  -- strict. It must PARSE, so it may demand a canonical format.
+//   audit -- loose. It only has to RECOGNIZE "this text states a rating", so it
+//            demands as little as possible. Anchor-free, whitespace-tolerant.
+//
+// The join is deliberately whitespace-tolerant now too: Vera's NEMA attack drew
+// a 15 A receptacle as "125 V · 50A" -- one extra space before the V -- and the
+// old join `^\d+(?:/\d+)?V` could not read it, so the wrong number was never
+// compared to anything. A format the join cannot read is a number nobody checks.
+
+/// IEC: "10 A · 70 °C · 3-pin".
+final RegExp _iecJoin = RegExp(r'^\s*([\d.]+)\s*A\s*·');
+
+/// IEC audit: any text stating an ampere figure, ANYWHERE in it, in any spacing.
+/// Catches "Rated 16 A", "16A", "10-16 A" -- all of which the join misses.
+final RegExp _iecAudit = RegExp(r'\d\s*A\b');
+
+/// NEMA: "125V · 15A · 1Ø" (and "125/250V · 30A").
+final RegExp _nemaJoin = RegExp(r'^\s*(\d+(?:/\d+)?)\s*V\s*·\s*(\d+)\s*A');
+
+/// NEMA audit: any text stating a volt figure followed by the rating separator.
+/// The separator is what distinguishes a RATING CELL from the prose footnote,
+/// which says "...(4P/5W, 120/208V)." in passing and is not a claim about any
+/// one device. Anchor-free, so "Rated 125V · 50A" is still counted.
+final RegExp _nemaAudit = RegExp(r'\d\s*V\s*·');
+
+/// International plugs: "230 V · 13 A fused", "230 V · 10 / 16 A".
+final RegExp _plugJoin =
+    RegExp(r'^\s*(\d+)\s*V\s*·\s*([\d.\s/-]*[\d.])\s*A(?:\s+fused)?\s*$');
+
+/// Plug audit: same shape as NEMA's, and for the same reason.
+final RegExp _plugAudit = RegExp(r'\d\s*V\s*·');
+
+/// The formats that have ever beaten this guard, plus the ones Vera used, plus
+/// the canonical ones. Any audit pattern must see ALL of the rating-shaped
+/// strings here; the join is allowed to read only the canonical ones.
+const List<String> _ampCorpus = <String>[
+  '10 A · 70 °C · 3-pin', // canonical -- join reads it
+  '2.5 A · 70 °C · 2-pin', // canonical, decimal
+  '16 A · 70 °C · 3-pin', // canonical
+  'Rated 16 A · 70 °C · 3-pin', // VERA: fabricated C13/C14 rating. Join is blind.
+  'Rated 99 A · 70 °C · 3-pin', // VERA: the vacuous-assertion attack.
+  '10-16 A', // the 2026-07-13 entity bug, decoded.
+  '16A', // no space at all.
+];
+
+const List<String> _voltCorpus = <String>[
+  '125V · 15A · 1Ø', // canonical NEMA -- join reads it
+  '125/250V · 30A', // canonical NEMA, dual voltage
+  '230 V · 13 A fused', // canonical plug -- join reads it
+  '230 V · 10 / 16 A', // canonical plug, dual rating
+  '125 V · 50A · 1Ø', // VERA: the space before the V. Old join was blind.
+  'Rated 125V · 50A', // leading word defeats any `^` anchor.
+];
+
 /// The vertices of every `<path>` polyline in [slug] with at least [minPoints]
 /// points -- i.e. the WAVEFORMS, not the 3-point arrowheads or the sigma glyph.
 List<List<double>> _waveformYs(String slug, {int minPoints = 50}) {
   final List<List<double>> waves = <List<double>>[];
-  for (final RegExpMatch p
-      in RegExp(r'<path\b[^>]*\sd="([^"]*)"[^>]*>').allMatches(_body(slug))) {
+  final List<bool> groupTf = <bool>[];
+  final RegExp tok = RegExp(r'<g\b([^>]*)>|</g>|<path\b([^>]*?)/?>');
+  for (final RegExpMatch m in tok.allMatches(_body(slug))) {
+    final String tag = m.group(0)!;
+    if (tag.startsWith('</g')) {
+      if (groupTf.isNotEmpty) groupTf.removeLast();
+      continue;
+    }
+    if (tag.startsWith('<g')) {
+      groupTf.add(_attrStr(m.group(1)!, 'transform').isNotEmpty);
+      continue;
+    }
+    final String a = m.group(2)!;
+    final String d = _attrStr(a, 'd');
+    if (d.isEmpty) continue;
     // Every coordinate pair after an M/L command.
     final List<double> ys = RegExp(r'[ML]\s*(-?[\d.]+)[\s,]+(-?[\d.]+)')
-        .allMatches(p.group(1)!)
+        .allMatches(d)
         .map((RegExpMatch m) => double.parse(m.group(2)!))
         .toList();
-    if (ys.length >= minPoints) waves.add(ys);
+    if (ys.length < minPoints) continue;
+    // The waveform's crest IS the peak claim. A transformed sine crests
+    // somewhere other than where its `d` says, and every volt derived from it
+    // would be fiction.
+    _refuseTransformed(
+        _attrStr(a, 'transform').isNotEmpty || groupTf.any((bool b) => b),
+        'a waveform <path>', slug);
+    waves.add(ys);
   }
   return waves;
 }
@@ -483,13 +846,24 @@ void main() {
 
   // ══ 2. CLASSIFICATION COMPLETENESS ═══════════════════════════════════════
   group('every graphic is classified (no self-minted exemptions)', () {
+    test('the guard can SEE the graphics directory at all', () {
+      // RULE 1. Every test in this group iterates _allGraphicSlugs(). If that
+      // glob ever returns empty -- a moved directory, a renamed extension, a
+      // test run from the wrong cwd -- then EVERY list comprehension below
+      // yields [], every `expect(..., isEmpty)` passes, and this entire file
+      // reports green while reading nothing. The classification guard would be
+      // the first thing to go quietly blind, and nothing downstream would know.
+      _expectChecked(_allGraphicSlugs().length, 110, 'SVG files',
+          'the graphics directory glob');
+    });
+
     test('each SVG is either data-bearing or on the documented illustrative list',
         () {
       final List<String> unclassified = <String>[
         for (final String slug in _allGraphicSlugs())
           if (!_dataBearing.containsKey(slug) &&
               !_dataBearingUnguarded.containsKey(slug) &&
-              !_illustrative.contains(slug) &&
+              !_illustrative.containsKey(slug) &&
               !_hasDatasetRow(slug))
             slug,
       ];
@@ -511,7 +885,7 @@ void main() {
           if (<bool>[
                 _dataBearing.containsKey(s),
                 _dataBearingUnguarded.containsKey(s),
-                _illustrative.contains(s),
+                _illustrative.containsKey(s),
               ].where((bool b) => b).length >
               1)
             s,
@@ -531,10 +905,119 @@ void main() {
               'the new graphic, or take it to Keith (GL-003 §0).');
     });
 
+    test('the EXEMPTION list does not silently grow either', () {
+      // VERA MEDIUM-2. The debt list -- the one that CONFESSES ("nobody is
+      // checking these") -- was pinned. The exemption list -- the one that
+      // ALIBIS ("there is nothing here to check"), and which had been FALSE for
+      // 19 of its 78 entries -- was not pinned at all.
+      //
+      // So the cheapest path for a maker under pressure was: mint a fresh
+      // exemption (free, unbounded), or relieve the pinned debt list by MOVING
+      // an entry into the unpinned one. The confession was pinned and the alibi
+      // was left open. That is backwards: the list that ASSERTS A CLAIM needs
+      // the tighter bound, because it is the one that can be WRONG.
+      //
+      // 57 is the post-audit count: 59, minus bend-radius-arc-vs-kink and
+      // rack-cage-nut, both of which turned out to state tabulated data.
+      expect(_illustrative.length, lessThanOrEqualTo(57),
+          reason: 'A graphic was added to the ILLUSTRATIVE exemption list. That '
+              'list asserts "this graphic states no number any screen '
+              'tabulates" -- a CLAIM, and one that has been wrong 19 times '
+              'before. The maker may not mint its own exemption (GL-003 §0). '
+              'Guard the graphic, declare it as debt, or take the exemption to '
+              'Keith. Moving the pin is a reviewed act.');
+    });
+
+    test('every exemption states a ground the criterion actually allows', () {
+      // An exemption must be CLAIMED UNDER A RULE, not asserted. The _Exempt
+      // enum makes the ground un-omittable (the map will not compile without
+      // one) and un-inventable (only the four grounds the criterion allows
+      // exist). This test is what keeps that true as the enum evolves: a fifth,
+      // vaguer ground cannot be quietly added and then used.
+      const Set<_Exempt> allowed = <_Exempt>{
+        _Exempt.mechanism,
+        _Exempt.formula,
+        _Exempt.sequence,
+        _Exempt.constant,
+      };
+      expect(_Exempt.values.toSet(), allowed,
+          reason: 'A new exemption GROUND was added to the _Exempt enum. The '
+              'four grounds are the criterion, and the criterion is reviewed '
+              '(GL-003 §0). Widening the grounds is how "illustrative" became '
+              'false for 19 of 78 entries the last time.');
+      final List<String> groundless = <String>[
+        for (final MapEntry<String, _Exempt> e in _illustrative.entries)
+          if (!allowed.contains(e.value)) e.key,
+      ];
+      expect(groundless, isEmpty, reason: 'Exempt on no stated ground: $groundless');
+      _expectChecked(_illustrative.length, 50, 'exemptions',
+          'the exemption-ground check');
+    });
+
+    test('an exempt graphic may not have a GUARDED sibling in the same data file',
+        () {
+      // VERA MEDIUM-1, generalized -- and this is the part of her finding with
+      // teeth. bend-radius-arc-vs-kink was EXEMPT while pull-tension-gauge was
+      // declared DEBT. Same declaring file (lib/data/bend_diagrams.dart:47
+      // and :51), same screen, same TIA-568 table. One file, two graphics, two
+      // opposite verdicts about whether the screen tabulates their numbers. Both
+      // cannot be right, and the split is mechanically visible -- so check it,
+      // instead of relying on whoever adds the next graphic to notice.
+      //
+      // Running this at the time of her report found TWO, not one:
+      //   bend_diagrams.dart : bend-radius-arc-vs-kink (exempt) / pull-tension-gauge (debt)
+      //   rack_diagrams.dart : rack-cage-nut (exempt)          / rack-1u-dimension (debt)
+      // Both exempt siblings did state tabulated data. Both are now guarded.
+      //
+      // This is not a claim that siblings must ALWAYS share a class. It is a
+      // claim that a split is a REVIEWED act, not a silent one: if a genuine
+      // split ever arises, it goes to Keith (GL-003 §0), like every other
+      // exemption. The maker does not get to settle it alone -- which is the
+      // whole point.
+      final RegExp decl = RegExp(r"=\s*'([a-z0-9][a-z0-9-]+)'\s*;");
+      final Set<String> present = _allGraphicSlugs().toSet();
+      final List<String> splits = <String>[];
+      int filesScanned = 0;
+
+      for (final FileSystemEntity e in Directory('lib/data').listSync()) {
+        if (e is! File || !e.path.endsWith('_diagrams.dart')) continue;
+        final List<String> slugs = decl
+            .allMatches(e.readAsStringSync())
+            .map((RegExpMatch m) => m.group(1)!)
+            .where(present.contains)
+            .toSet()
+            .toList()
+          ..sort();
+        if (slugs.isEmpty) continue;
+        filesScanned++;
+
+        final List<String> exempt =
+            slugs.where(_illustrative.containsKey).toList();
+        final List<String> checked = slugs
+            .where((String s) =>
+                _dataBearing.containsKey(s) ||
+                _dataBearingUnguarded.containsKey(s))
+            .toList();
+        if (exempt.isNotEmpty && checked.isNotEmpty) {
+          splits.add('${e.uri.pathSegments.last}: EXEMPT $exempt vs '
+              'DATA-BEARING/DEBT $checked');
+        }
+      }
+
+      _expectChecked(filesScanned, 10, 'diagram-declaration files',
+          'the sibling-classification check');
+      expect(splits, isEmpty,
+          reason: 'A graphic is EXEMPT while a sibling declared in the SAME '
+              'lib/data file -- same screen, same source table -- is treated as '
+              'data-bearing. One of the two verdicts is wrong, and the exempt '
+              'one is the one that gets no checking. Resolve it, or take the '
+              'split to Keith:\n${splits.join('\n')}');
+    });
+
     test('neither exemption list has stale entries', () {
       final Set<String> present = _allGraphicSlugs().toSet();
       final List<String> stale = <String>[
-        ..._illustrative,
+        ..._illustrative.keys,
         ..._dataBearingUnguarded.keys,
       ].where((String s) => !present.contains(s)).toList()
         ..sort();
@@ -558,6 +1041,7 @@ void main() {
 
     test('every NEMA face draws its dataset row\'s voltage and amps', () {
       final List<String> bad = <String>[];
+      int checked = 0;
       for (final NemaDevice d in devices) {
         final String? slug = d.assetName;
         if (slug == null || !File('$_kGraphicsDir/$slug.svg').existsSync()) {
@@ -570,6 +1054,7 @@ void main() {
           bad.add('$slug: no "<volts> V · <amps> A" rating drawn');
           continue;
         }
+        checked++;
         final String v = '${m.group(1)}V';
         final int a = int.parse(m.group(2)!);
         if (v != d.voltage || a != d.amps) {
@@ -578,6 +1063,10 @@ void main() {
         }
       }
       expect(bad, isEmpty, reason: bad.join('\n'));
+      // RULE 1: this loop `continue`s past any row whose asset is missing or
+      // whose rating will not parse. Without the pin, deleting every face SVG
+      // would make it iterate nothing and pass.
+      _expectChecked(checked, 21, 'NEMA faces', 'the NEMA face guard');
     });
   });
 
@@ -585,6 +1074,7 @@ void main() {
   group('IEC coupler faces agree with IecConnectorsScreen', () {
     test('every IEC face draws its dataset row\'s current rating', () {
       final List<String> bad = <String>[];
+      int checked = 0;
       for (final IecCoupler c in IecConnectorsScreen.couplers) {
         final String? slug = c.assetName;
         if (slug == null || !File('$_kGraphicsDir/$slug.svg').existsSync()) {
@@ -593,6 +1083,7 @@ void main() {
         final RegExpMatch? m =
             RegExp(r'([\d.]+)\s*A').firstMatch(_flat(slug));
         expect(m, isNotNull, reason: '$slug draws no current rating.');
+        checked++;
         final String drawn = '${m!.group(1)} A';
         if (drawn != c.current) {
           bad.add('$slug (${c.pair}): graphic says $drawn, dataset says '
@@ -600,6 +1091,7 @@ void main() {
         }
       }
       expect(bad, isEmpty, reason: bad.join('\n'));
+      _expectChecked(checked, 6, 'IEC faces', 'the IEC face guard');
     });
   });
 
@@ -611,6 +1103,7 @@ void main() {
       // genuine dual rating when one exists (Type L = "10 / 16A", Italy), which is
       // what proves the single 10A on I and J is deliberate, not an omission.
       final List<String> bad = <String>[];
+      int checked = 0;
       for (final PlugType p in InternationalPlugsScreen.plugTypes) {
         final String? slug = p.assetName;
         if (slug == null || !File('$_kGraphicsDir/$slug.svg').existsSync()) {
@@ -624,6 +1117,7 @@ void main() {
           bad.add('$slug (Type ${p.type}): no "<volts> V · <amps> A" drawn');
           continue;
         }
+        checked++;
         final String v = '${m.group(1)}V';
         final String a = '${m.group(2)!.replaceAll(RegExp(r'\s+'), ' ').trim()}A';
         final String expectA = p.current.replaceAll(' (fused)', '');
@@ -633,6 +1127,7 @@ void main() {
         }
       }
       expect(bad, isEmpty, reason: bad.join('\n'));
+      _expectChecked(checked, 13, 'plug faces', 'the plug face guard');
     });
   });
 
@@ -669,13 +1164,16 @@ void main() {
 
       final List<String> bad = <String>[];
       for (final _R wall in walls) {
+        _refuseTransformed(wall.tf, 'the wall at x=${wall.x}', 'rf-attenuation');
         // The value above the wall (e.g. "-3 dB") and the material label below
         // it. Exactly one of each in this column, or the binding is ambiguous
         // and _inColumn fails loudly -- which is itself the finding.
         final _T value = _inColumn(texts, wall.cx,
-            (_T t) => RegExp(r'^-\d+\s*dB$').hasMatch(t.s));
+            (_T t) => RegExp(r'^-\d+\s*dB$').hasMatch(t.s),
+            slug: 'rf-attenuation');
         final _T label = _inColumn(
-            texts, wall.cx, (_T t) => !RegExp(r'\d').hasMatch(t.s));
+            texts, wall.cx, (_T t) => !RegExp(r'\d').hasMatch(t.s),
+            slug: 'rf-attenuation');
 
         // Resolve the DRAWN label against the real dataset. It must match
         // EXACTLY ONE row. This is what makes a vague label a build failure:
@@ -709,10 +1207,36 @@ void main() {
 
   // ══ 3e. channel-map: the bonding arithmetic, and the geometry ════════════
   group('channel-map.svg agrees with ChannelMapScreen', () {
-    test('every channel number drawn is a real 20 MHz channel in a bonded block',
-        () {
-      final String flat = _flat('channel-map');
-      // The 160 MHz block the drawing depicts: ch 36-64.
+    test('each 20 MHz CELL carries ITS OWN channel number, in order', () {
+      // SET MEMBERSHIP, THE LAST HOLDOUT. Until 2026-07-14 this test asked, for
+      // each expected channel, "does this number appear SOMEWHERE in the flat
+      // text?" -- and nothing else. That is the exact disease the rest of this
+      // file was written to kill: it is "is the number in the FILE?", the check
+      // that PASSED the -12 dB concrete bug and PASSED Vera's drywall/concrete
+      // swap. It survived here because the numbers looked like an innocent list.
+      //
+      // I found it by attacking my own fix: SWAP the labels on channels 44 and
+      // 48. Both numbers are still present, so every `hasMatch` still passed --
+      // and the drawing now puts channel 44 on 48's frequency. A channel map
+      // whose channels are on the wrong cells is worse than no channel map.
+      // GREEN, on the fixed guard, until this test was rewritten.
+      //
+      // A drawing has no rows. Join by POSITION: each 20 MHz cell owns the
+      // number printed in ITS column, and the cells read left to right in
+      // frequency order. A permutation now changes the SEQUENCE, and a sequence
+      // is something a guard can actually compare.
+      final List<_T> texts = _positionedTexts('channel-map');
+      final List<_R> rects = _positionedRects('channel-map');
+      expect(rects, isNotEmpty, reason: 'channel-map.svg draws no <rect> cells.');
+
+      // The 20 MHz cells are the narrowest rects (the 40/80/160 blocks are
+      // multiples of them).
+      final double cellW = rects.map((_R r) => r.w).reduce(math.min);
+      final List<_R> cells = rects
+          .where((_R r) => (r.w - cellW).abs() < 0.5)
+          .toList()
+        ..sort((_R a, _R b) => a.cx.compareTo(b.cx));
+
       final BondedBlock b160 = ChannelMapScreen.map5_160
           .firstWhere((BondedBlock b) => b.lowChannel == 36);
       final List<int> expected = <int>[
@@ -721,26 +1245,40 @@ void main() {
       expect(expected.length, 8,
           reason: 'A 160 MHz bond spans EIGHT 20 MHz channels '
               '(channel_map_screen.dart:103 -- "160->8").');
-      for (final int c in expected) {
-        expect(RegExp(r'\b' + c.toString() + r'\b').hasMatch(flat), isTrue,
-            reason: 'The drawing omits channel $c, which is inside the '
-                '160 MHz bond ch ${b160.lowChannel}-${b160.highChannel}.');
+      _expectChecked(cells.length, 8, '20 MHz cells', 'the channel-map guard');
+
+      final List<int> drawn = <int>[];
+      for (final _R cell in cells) {
+        _refuseTransformed(
+            cell.tf, 'the 20 MHz cell at x=${cell.x}', 'channel-map');
+        final _T label = _inColumn(
+            texts, cell.cx, (_T t) => RegExp(r'^\d+$').hasMatch(t.s),
+            slug: 'channel-map');
+        drawn.add(int.parse(label.s));
       }
+
+      expect(drawn, expected,
+          reason: 'The 20 MHz cells, read left to right, carry channels $drawn. '
+              'The 160 MHz bond at ch ${b160.lowChannel}-${b160.highChannel} is '
+              '$expected. Every number may well be PRESENT -- that is what the '
+              'old set-membership check tested, and a swapped pair walked '
+              'straight through it. A channel drawn on the wrong cell is on the '
+              'wrong FREQUENCY, and the reader plans a network around it.');
     });
 
     test('160 MHz is drawn over EIGHT 20 MHz cells, not four', () {
       // THE BUG: the old drawing put a "160 MHz" span across the SAME pixel
       // extent as its own 80 MHz block. Read the boxes, not the words.
-      final String body = File('$_kGraphicsDir/channel-map.svg')
-          .readAsStringSync()
-          .replaceAll(RegExp(r'<!--.*?-->', dotAll: true), '');
-      // NOTE the leading \s: without it this also matches STROKE-width, which
-      // made every rect look 1.5px wide and the ratio a perfect 1.00. A guard
-      // that measures the wrong thing reports a tidy number and proves nothing.
-      final List<double> widths = RegExp(r'<rect[^>]*\swidth="([\d.]+)"')
-          .allMatches(body)
-          .map((RegExpMatch m) => double.parse(m.group(1)!))
-          .toList();
+      final List<_R> rects = _positionedRects('channel-map');
+      expect(rects, isNotEmpty, reason: 'channel-map.svg draws no <rect> cells.');
+      for (final _R r in rects) {
+        _refuseTransformed(r.tf, 'the block at x=${r.x}', 'channel-map');
+      }
+      // NOTE _positionedRects' _attr uses a leading (?:^|\s): without it,
+      // `width` also matches STROKE-width, which made every rect look 1.5px wide
+      // and the ratio a perfect 1.00. A guard that measures the wrong thing
+      // reports a tidy number and proves nothing.
+      final List<double> widths = rects.map((_R r) => r.w).toList();
       final double cell = widths.reduce(math.min); // the 20 MHz cell
       final double widest = widths.reduce(math.max); // the 160 MHz block
       // Eight cells plus seven inter-cell gaps == the full 160 MHz span.
@@ -771,6 +1309,20 @@ void main() {
   // iterates the DATASET, not a hand-listed slug. A fourth topology cannot be
   // added without a drawing that satisfies this.
   group('power-phasing: every topology drawing gets RMS vs peak right', () {
+    // RULE 1, in its nastiest form. This group does not LOOP over the dataset
+    // inside a test -- it GENERATES a test per dataset row. So if topologies
+    // were ever empty, this group would emit ZERO TESTS, and zero tests do not
+    // fail. They do not even appear. The suite total would drop from 18 to 15
+    // and read "All tests passed", and no assertion anywhere would have run
+    // against any waveform. A vacuous loop at least reports green; a vacuous
+    // GENERATOR reports nothing at all, which is worse -- there is no test to
+    // point at and ask what it checked.
+    test('the topology dataset is not empty (or the tests below do not exist)',
+        () {
+      _expectChecked(PowerPhasingScreen.topologies.length, 3, 'topologies',
+          'the power-phasing test GENERATOR');
+    });
+
     for (final PowerTopology t in PowerPhasingScreen.topologies) {
       final String slug = t.assetName;
       final int rms = _firstInt(t.lineToNeutral); // 120, from the screen
@@ -802,6 +1354,9 @@ void main() {
             .toList();
         expect(ticks.length, greaterThanOrEqualTo(3),
             reason: '$slug: expected +peak / 0 / -peak axis ticks.');
+        for (final _L tick in ticks) {
+          _refuseTransformed(tick.tf, 'the axis tick at y=${tick.y1}', slug);
+        }
 
         _T labelFor(_L tick) {
           final List<_T> near = texts
@@ -817,6 +1372,8 @@ void main() {
                 'A tick with no label makes no claim; a tick with two is '
                 'ambiguous.');
           }
+          _refuseTransformed(
+              near.single.tf, 'the axis label "${near.single.s}"', slug);
           return near.single;
         }
 
@@ -866,6 +1423,9 @@ void main() {
             _positionedLines(slug).where((_L l) => l.isLime).toList();
         expect(lime, isNotEmpty,
             reason: '$slug draws no lime measurand line.');
+        for (final _L l in lime) {
+          _refuseTransformed(l.tf, 'the lime measurand line', slug);
+        }
 
         for (final _L l in lime.where((_L l) => l.isHorizontal)) {
           expect(voltsAt(l.y1), closeTo(rms.toDouble(), 1.0),
@@ -906,9 +1466,22 @@ void main() {
   // identifier to its rating by GEOMETRY (they share a grid cell), so read the
   // identifier, resolve THAT dataset row, and compare THAT row's rating.
   group('connector overview graphics agree with their datasets', () {
+    test('the orphan audits are STRICTLY LOOSER than the joins they audit', () {
+      // RULE 2, made mechanical. This test is the one that would have stopped
+      // Vera's fabricated 16 A rating -- not by reading any SVG, but by refusing
+      // to let the audit be a copy of the check. It runs first, and everything
+      // below depends on it: the orphan arithmetic in the three tests that
+      // follow is only meaningful if the audit can see strictly more than the
+      // join can read.
+      _expectAuditStrictlyLooser(_iecJoin, _iecAudit, _ampCorpus, 'iec-connectors');
+      _expectAuditStrictlyLooser(
+          _nemaJoin, _nemaAudit, _voltCorpus, 'nema-connectors');
+      _expectAuditStrictlyLooser(
+          _plugJoin, _plugAudit, _voltCorpus, 'international-plugs');
+    });
+
     test('nema-connectors.svg draws each device\'s real voltage and amps', () {
       final List<_T> texts = _positionedTexts('nema-connectors');
-      final RegExp re = RegExp(r'^\d+(?:/\d+)?V\s*·\s*\d+\s*A');
       final List<String> bad = <String>[];
       final Set<String> consumed = <String>{};
       for (final NemaDevice d in <NemaDevice>[
@@ -916,40 +1489,64 @@ void main() {
         ...NemaConnectorsScreen.group208v,
         ...NemaConnectorsScreen.groupCalifornia,
       ]) {
-        final _T? rating = _entryRating(texts, d.type, re, 'nema-connectors');
+        final _T? rating =
+            _entryRating(texts, d.type, _nemaJoin, 'nema-connectors');
         if (rating == null) continue; // not drawn on the overview
         consumed.add('${rating.x},${rating.y}');
-        final RegExpMatch m =
-            RegExp(r'^(\d+(?:/\d+)?)V\s*·\s*(\d+)\s*A').firstMatch(rating.s)!;
+        final RegExpMatch m = _nemaJoin.firstMatch(rating.s)!;
         if ('${m.group(1)}V' != d.voltage || int.parse(m.group(2)!) != d.amps) {
           bad.add('NEMA ${d.type}: overview draws "${rating.s}", dataset says '
               '${d.voltage} / ${d.amps}A');
         }
       }
       expect(bad.toSet().toList(), isEmpty, reason: bad.toSet().join('\n'));
+      // RULE 1: the overview draws 11 rated devices. If a rating is retyped into
+      // a format the join cannot read, this row is `continue`d past -- and the
+      // pin, not the orphan count, is what makes that silence audible.
+      _expectChecked(consumed.length, 11, 'NEMA devices',
+          'the nema-connectors overview guard');
       _expectNoOrphanRatings(
-          texts, RegExp(r'^\d+(?:/\d+)?V\s*·'), consumed.length, 'nema-connectors');
+          texts, _nemaAudit, consumed.length, 'nema-connectors');
     });
 
     test('iec-connectors.svg draws each coupler\'s real current rating', () {
+      // THE TEST VERA BROKE. Its name is a promise -- "draws each coupler's REAL
+      // current rating" -- and on 2026-07-14 it kept that promise for ZERO
+      // couplers, in green, twice over:
+      //
+      //   HIGH-1: C13/C14 (a 10 A coupler) drawn "Rated 16 A". The `^` anchor in
+      //     the join could not read it, so the row was skipped -- and the orphan
+      //     audit used the BYTE-IDENTICAL pattern, so it could not count the row
+      //     either. Invisible at both ends. 18/18. 4,178/4,178.
+      //   HIGH-2: all five drawn couplers set to "Rated 99 A". Every row skipped,
+      //     `bad` empty, expect(0, 0). A fabricated rating on every single
+      //     coupler, and the guard's verdict was PASS.
+      //
+      // Three things now stand between that and green, and they fail
+      // independently: the audit is anchor-free (so it COUNTS what it cannot
+      // parse), the join is whitespace-tolerant (so it PARSES more), and the
+      // consumed count is PINNED (so a skipped row is a failure whatever the
+      // reason).
       final List<_T> texts = _positionedTexts('iec-connectors');
-      final RegExp re = RegExp(r'^[\d.]+\s*A\s*·');
       final List<String> bad = <String>[];
       final Set<String> consumed = <String>{};
       for (final IecCoupler c in IecConnectorsScreen.couplers) {
-        final _T? rating = _entryRating(texts, c.pair, re, 'iec-connectors');
+        final _T? rating =
+            _entryRating(texts, c.pair, _iecJoin, 'iec-connectors');
         if (rating == null) continue;
         consumed.add('${rating.x},${rating.y}');
-        final String drawn =
-            '${RegExp(r'^([\d.]+)\s*A').firstMatch(rating.s)!.group(1)} A';
+        final String drawn = '${_iecJoin.firstMatch(rating.s)!.group(1)} A';
         if (drawn != c.current) {
           bad.add('IEC ${c.pair}: overview draws "$drawn", dataset says '
               '"${c.current}"');
         }
       }
       expect(bad.toSet().toList(), isEmpty, reason: bad.toSet().join('\n'));
+      // The overview draws FIVE of the six couplers (C1/C2 is not on it).
+      _expectChecked(consumed.length, 5, 'IEC couplers',
+          'the iec-connectors overview guard');
       _expectNoOrphanRatings(
-          texts, RegExp(r'^[\d.]+\s*A\s*·'), consumed.length, 'iec-connectors');
+          texts, _iecAudit, consumed.length, 'iec-connectors');
     });
 
     test('international-plugs.svg draws each plug\'s real voltage and current',
@@ -958,8 +1555,6 @@ void main() {
       // Type G is drawn "230 V · 13 A fused" -- the dataset says "13A (fused)".
       // The qualifier is part of the rating, so the pattern must admit it rather
       // than silently failing to find the cell (which would skip the row).
-      final RegExp re =
-          RegExp(r'^\d+\s*V\s*·\s*[\d.\s/-]*[\d.]\s*A(?:\s+fused)?$');
 
       // Iterate the DRAWN TILES, not the dataset rows. The drawing combines
       // North America into ONE tile, "Type A / B", which matches neither
@@ -973,13 +1568,12 @@ void main() {
         final RegExpMatch? id =
             RegExp(r'^Type ([A-Z](?:\s*/\s*[A-Z])*)$').firstMatch(tile.s);
         if (id == null) continue; // e.g. the "Type I caution:" footnote
-        final _T? rating = _cellRating(texts, tile, re);
+        final _T? rating =
+            _cellRating(texts, tile, _plugJoin, slug: 'international-plugs');
         if (rating == null) continue;
         consumed.add('${rating.x},${rating.y}');
 
-        final RegExpMatch m =
-            RegExp(r'^(\d+)\s*V\s*·\s*([\d.\s/-]*[\d.])\s*A(?:\s+fused)?$')
-                .firstMatch(rating.s)!;
+        final RegExpMatch m = _plugJoin.firstMatch(rating.s)!;
         final String v = '${m.group(1)}V';
         final String a =
             '${m.group(2)!.replaceAll(RegExp(r'\s+'), ' ').trim()}A';
@@ -1008,8 +1602,10 @@ void main() {
         }
       }
       expect(bad.toSet().toList(), isEmpty, reason: bad.toSet().join('\n'));
+      _expectChecked(consumed.length, 10, 'plug tiles',
+          'the international-plugs overview guard');
       _expectNoOrphanRatings(
-          texts, RegExp(r'^\d+\s*V\s*·'), consumed.length, 'international-plugs');
+          texts, _plugAudit, consumed.length, 'international-plugs');
     });
   });
 
@@ -1044,10 +1640,15 @@ void main() {
       final List<String> bad = <String>[];
       final List<double> pxPerWatt = <double>[];
       for (final _R bar in bars) {
+        // The bar's HEIGHT and its BASELINE are both claims. Neither means
+        // anything if the rect is moved by a transform the parser cannot see.
+        _refuseTransformed(bar.tf, 'the bar at x=${bar.x}', 'poe-reference');
         final _T std = _inColumn(
-            texts, bar.cx, (_T t) => t.s.startsWith('802.3'));
-        final _T watts =
-            _inColumn(texts, bar.cx, (_T t) => RegExp(r'^[\d.]+ W$').hasMatch(t.s));
+            texts, bar.cx, (_T t) => t.s.startsWith('802.3'),
+            slug: 'poe-reference');
+        final _T watts = _inColumn(
+            texts, bar.cx, (_T t) => RegExp(r'^[\d.]+ W$').hasMatch(t.s),
+            slug: 'poe-reference');
 
         // Resolve the DRAWN label to exactly one dataset row. "802.3bt" alone
         // matches two and must fail.
@@ -1070,10 +1671,40 @@ void main() {
         pxPerWatt.add(bar.h / row.pseWatts);
       }
       expect(bad, isEmpty, reason: bad.join('\n'));
+      _expectChecked(pxPerWatt.length, 3, 'PoE bars', 'the poe-reference guard');
 
-      // GEOMETRY: one scale for every bar. This is the check that reads the
-      // ARTWORK -- the labels were all individually true while the picture
-      // understated 802.3bt by 40%.
+      // ── GEOMETRY 1: ONE COMMON BASELINE ───────────────────────────────────
+      //
+      // VERA HIGH-3 (2026-07-14). The check below this one -- px/W uniformity --
+      // was the only geometry this guard had, and it is not enough. Vera kept
+      // EVERY bar height correct and EVERY label correct, and simply floated the
+      // three bars to three different baselines. Green.
+      //
+      // Uniform px/W says the bars are mutually consistent in SCALE. It says
+      // nothing about where they START. A bar's height only encodes a quantity
+      // if the bar is measured from a shared origin; three bars hanging from
+      // three different origins is not a bar chart, it is three unrelated
+      // rectangles that happen to be the right size. The reader compares TOPS.
+      //
+      // Same principle as Vera's own rule about the sine crest: an axis makes
+      // the geometry a claim. Here the axis is labelled "Watts" and runs
+      // vertically, so the BASELINE is the zero of that axis -- and a zero that
+      // moves per bar is not a zero.
+      final List<double> bottoms =
+          bars.map((_R b) => b.y + b.h).toList()..sort();
+      expect(bottoms.last - bottoms.first, lessThan(0.01),
+          reason: 'The bars do not share a baseline: their bottom edges are at '
+              'y=${bottoms.map((double b) => b.toStringAsFixed(2)).toList()}. '
+              'A bar chart encodes quantity as height ABOVE A COMMON ZERO. With '
+              'the bars floated to different origins the heights encode nothing, '
+              'and the reader -- who compares the TOPS of the bars -- is misled '
+              'even though every printed number and every bar height is '
+              'individually correct. (Vera kept all three labels and all three '
+              'heights right, moved the baselines, and this guard stayed green.)');
+
+      // ── GEOMETRY 2: ONE SCALE ─────────────────────────────────────────────
+      // The check that reads the ARTWORK -- the labels were all individually
+      // true while the picture understated 802.3bt by 40%.
       final double lo = pxPerWatt.reduce(math.min);
       final double hi = pxPerWatt.reduce(math.max);
       expect(hi - lo, lessThan(0.01),
@@ -1082,6 +1713,130 @@ void main() {
               'labelled "Watts", so bar HEIGHT is a claim. A bar drawn short '
               'because its true height would not fit is a lying drawing, even '
               'though its printed number is correct.');
+    });
+  });
+
+  // ══ 3i. bend-radius-arc-vs-kink: the 14th data-bearing graphic ═══════════
+  //
+  // VERA MEDIUM-1. This graphic was on the ILLUSTRATIVE EXEMPTION LIST -- the
+  // list that asserts "this states no number a screen tabulates". It draws
+  // "R >= 4x OD". cable_bend_radius_screen.dart:142 tabulates
+  // `limit: '>= 4x OD'`. Its SIBLING, pull-tension-gauge, is declared in the
+  // same file (bend_diagrams.dart:47 and :51), drawn on the same screen, sourced
+  // from the same TIA-568 table -- and was correctly declared as DEBT. One file,
+  // two graphics, two opposite verdicts. That split is now a build failure (§2).
+  group('bend-radius-arc-vs-kink.svg agrees with CableBendRadiusScreen', () {
+    /// "R ≥ 4× OD" -> "R >= 4x OD". The typographic forms are what the reader
+    /// sees; the ASCII forms are what the dataset stores. Compare like with like.
+    String norm(String s) => s
+        .replaceAll('≥', '>=')
+        .replaceAll('≤', '<=')
+        .replaceAll('×', 'x')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+
+    final RegExp limitRe =
+        RegExp(r'(>=|<=|>|<)\s*(\d+)\s*x\s*OD', caseSensitive: false);
+
+    test('the drawn bend limit is the limit of the dataset row it NAMES', () {
+      final List<_T> texts = _positionedTexts('bend-radius-arc-vs-kink');
+      _expectChecked(texts.length, 5, 'texts', 'the bend-radius guard');
+
+      // The drawing names its own row: "installed, 4-pair UTP". Resolve THAT row
+      // in the dataset and compare THAT row's limit -- the same label->value
+      // discipline the rest of this file uses, not set membership over the file.
+      final _T caption = texts.singleWhere(
+          (_T t) => t.s.toLowerCase().contains('4-pair utp'),
+          orElse: () => fail('The graphic no longer names which bend condition '
+              'it depicts. An unlabelled "R >= 4x OD" is the "concrete" bug: it '
+              'could be the installed limit (4x), the under-tension limit (8x), '
+              'or the backbone limit (10x), and it answers no question.'));
+
+      // The limit claim sits in the caption's own column. Geometry binds them.
+      _refuseTransformed(caption.tf, 'the condition caption "${caption.s}"',
+          'bend-radius-arc-vs-kink');
+      final _T limit = _inColumn(
+          texts, caption.x, (_T t) => limitRe.hasMatch(norm(t.s)),
+          slug: 'bend-radius-arc-vs-kink');
+
+      final List<BendLimit> rows = CableBendRadiusScreen.copperBend
+          .where((BendLimit b) =>
+              b.condition.toLowerCase().contains('installed') &&
+              b.condition.toLowerCase().contains('4-pair'))
+          .toList();
+      expect(rows.length, 1,
+          reason: 'The drawn caption "${caption.s}" must resolve to exactly ONE '
+              'dataset row; it resolved to ${rows.length} '
+              '(${rows.map((BendLimit b) => b.condition).toList()}).');
+
+      final RegExpMatch drawn = limitRe.firstMatch(norm(limit.s))!;
+      final RegExpMatch truth = limitRe.firstMatch(norm(rows.single.limit))!;
+      expect('${drawn.group(1)} ${drawn.group(2)}x OD',
+          '${truth.group(1)} ${truth.group(2)}x OD',
+          reason: 'The graphic draws "${limit.s}" for the condition it names '
+              '("${caption.s}"), but cable_bend_radius_screen.dart tabulates '
+              '"${rows.single.limit}" for "${rows.single.condition}" '
+              '(${rows.single.source}). The drawing and the table under it must '
+              'state the same limit.');
+    });
+
+    test('the kink half uses the SAME multiplier it just declared the limit', () {
+      // The drawing's two halves are one claim: "R >= 4x OD" is OK, "< 4x OD"
+      // is a kink. If the halves ever disagree -- limit 4x, kink "< 8x OD" --
+      // the graphic contradicts itself, and every number in it is still
+      // individually findable in the dataset. Set membership cannot see that.
+      final List<String> lims = _texts('bend-radius-arc-vs-kink')
+          .map(norm)
+          .where(limitRe.hasMatch)
+          .toList();
+      _expectChecked(lims.length, 2, 'limit claims', 'the bend-radius kink check');
+
+      final Set<String> multipliers = lims
+          .map((String s) => limitRe.firstMatch(s)!.group(2)!)
+          .toSet();
+      expect(multipliers.length, 1,
+          reason: 'The graphic states its bend limit with more than one '
+              'multiplier ($multipliers): $lims. The "OK" arc and the "kink" '
+              'are the two sides of ONE threshold. Two multipliers means the '
+              'drawing disagrees with itself about where the threshold is.');
+    });
+  });
+
+  // ══ 3j. rack-cage-nut: the 15th, which the brief did not name ════════════
+  //
+  // Found by generalizing Vera MEDIUM-1 into the sibling check in §2 and running
+  // it. rack-cage-nut was EXEMPT; its sibling rack-1u-dimension (same file,
+  // rack_diagrams.dart; same screen) was declared DEBT. The exemption was false
+  // by the same test as bend-radius: the graphic draws "10-32, 12-24, or M6",
+  // and rack_units_screen.dart:236/242/248 tabulates exactly those three as the
+  // `thread` column of RackUnitsScreen.threads.
+  //
+  // Cross-threading a rack rail destroys the rail. A drawing that named the
+  // wrong thread set would be a real-world error, and nothing was checking it.
+  group('rack-cage-nut.svg agrees with RackUnitsScreen.threads', () {
+    test('the thread designations drawn are EXACTLY the dataset\'s, both ways',
+        () {
+      final String flat = _flat('rack-cage-nut');
+      final Set<String> truth =
+          RackUnitsScreen.threads.map((RackThread t) => t.thread).toSet();
+      _expectChecked(truth.length, 3, 'dataset threads', 'the rack-cage-nut guard');
+
+      // Both directions, and BOTH matter:
+      //   drawn-but-not-tabulated -> the graphic invented a thread type;
+      //   tabulated-but-not-drawn -> the graphic silently dropped one, and the
+      //     tech packs two of the three cage nuts they need.
+      final Set<String> drawn = RegExp(r'\b(\d+-\d+|M\d+)\b')
+          .allMatches(flat)
+          .map((RegExpMatch m) => m.group(1)!)
+          .toSet();
+
+      expect(drawn, truth,
+          reason: 'rack-cage-nut.svg names thread designations $drawn; '
+              'RackUnitsScreen.threads tabulates $truth. These must be the same '
+              'set. A thread type drawn but not tabulated is invented; one '
+              'tabulated but not drawn is silently dropped from the graphic a '
+              'tech reads before buying cage nuts. 10-32, 12-24 and M6 are NOT '
+              'interchangeable -- forcing the wrong one strips the rail.');
     });
   });
 }
