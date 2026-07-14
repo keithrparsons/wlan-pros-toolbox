@@ -334,7 +334,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         id: 'device-info',
         title: 'Device Info',
         description:
-            'Device model, total memory, uptime, and cellular IP — the '
+            'Device model, total memory, uptime, and cellular IP, the '
             "device's own system facts",
         routeName: '/tools/device-info',
         isLive: true,
@@ -351,7 +351,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       ToolEntry(
         id: 'port-scan',
         title: 'Port Scan',
-        description: 'TCP connect scan — common ports preset or custom range',
+        description: 'TCP connect scan, common ports preset or custom range',
         routeName: '/tools/port-scan',
         isLive: true,
       ),
@@ -359,7 +359,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         id: 'ping',
         title: 'Ping (TCP)',
         description:
-            'TCP-handshake round-trip probe (not ICMP) — works on every '
+            'TCP-handshake round-trip probe (not ICMP), works on every '
             'platform incl. sandboxed desktop',
         routeName: '/tools/ping',
         isLive: true,
@@ -368,7 +368,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         id: 'icmp-ping',
         title: 'Ping (ICMP)',
         description:
-            'Real ICMP echo round-trip (mobile) — live RTT, min/avg/max, loss',
+            'Real ICMP echo round-trip (mobile): live RTT, min/avg/max, loss',
         routeName: '/tools/icmp-ping',
         isLive: true,
       ),
@@ -376,7 +376,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         id: 'ping-plotter',
         title: 'Ping Plotter',
         description:
-            'Sustained ping charted over time — live latency trend with '
+            'Sustained ping charted over time: live latency trend with '
             'min/avg/max, jitter, and visible dropped probes',
         routeName: '/tools/ping-plotter',
         isLive: true,
@@ -385,7 +385,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         id: 'ping-sweep',
         title: 'Ping Sweep',
         description:
-            'Discover responsive hosts on a subnet — TCP-probe sweep, no ICMP',
+            'Discover responsive hosts on a subnet by TCP-probe sweep, no ICMP',
         routeName: '/tools/ping-sweep',
         isLive: true,
       ),
@@ -393,7 +393,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         id: 'network-discovery',
         title: 'Network Discovery',
         description:
-            'Find live hosts on your network — name, services, device type, '
+            'Find live hosts on your network: name, services, device type, '
             'and vendor (desktop)',
         routeName: '/tools/network-discovery',
         isLive: true,
@@ -412,7 +412,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         id: 'nearby-ap-scan',
         title: 'Nearby AP Scan',
         description:
-            'List nearby Wi-Fi access points — SSID, BSSID, channel, band, '
+            'List nearby Wi-Fi access points: SSID, BSSID, channel, band, '
             'and signal (Android)',
         routeName: '/tools/nearby-ap-scan',
         isLive: true,
@@ -421,7 +421,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       ToolEntry(
         id: 'traceroute',
         title: 'Traceroute (System)',
-        description: 'Hop-by-hop path via the OS traceroute — desktop',
+        description: 'Hop-by-hop path via the OS traceroute (desktop)',
         routeName: '/tools/traceroute',
         isLive: true,
       ),
@@ -429,7 +429,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         id: 'mobile-traceroute',
         title: 'Traceroute (Mobile)',
         description:
-            'Hop-by-hop path via an ICMP TTL-walk — Android (iOS unsupported)',
+            'Hop-by-hop path via an ICMP TTL-walk, Android only (iOS unsupported)',
         routeName: '/tools/mobile-traceroute',
         isLive: true,
       ),
@@ -464,7 +464,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       ToolEntry(
         id: 'arp-ndp',
         title: 'Lookup (ARP/NDP)',
-        description: 'Discover local neighbors — IP and MAC where exposed',
+        description: 'Discover local neighbors: IP and MAC where exposed',
         routeName: '/tools/arp-ndp',
         isLive: true,
       ),
@@ -490,7 +490,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         id: 'my-current-location',
         title: 'Current Location',
         description:
-            'Your GPS latitude, longitude, altitude, and accuracy — read on '
+            'Your GPS latitude, longitude, altitude, and accuracy, read on '
             'open',
         routeName: '/tools/my-current-location',
         isLive: true,
@@ -514,7 +514,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         id: 'ntp-time',
         title: 'Time Server (NTP)',
         description:
-            'Query an NTP server over SNTP — server time, your clock offset, '
+            'Query an NTP server over SNTP: server time, your clock offset, '
             'and round-trip delay',
         routeName: '/tools/ntp-time',
         isLive: true,
@@ -543,7 +543,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
   ToolCategory(
     id: 'rf-calculators',
     title: 'Calculators & Tools',
-    summary: 'RF, GPS, signal, and planning math — FSPL, EIRP, PoE, capacity',
+    summary: 'RF, GPS, signal, and planning math: FSPL, EIRP, PoE, capacity',
     icon: Icons.calculate_outlined,
     exampleToolTitles: <String>[
       'Free Space Path Loss',
@@ -1308,7 +1308,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         id: 'port-reference',
         title: 'Well-Known Ports',
         description:
-            'Search common TCP/UDP ports by number or service name — offline',
+            'Search common TCP/UDP ports by number or service name, offline',
         routeName: '/tools/port-reference',
         isLive: true,
         subgroup: 'Protocols',
@@ -1317,7 +1317,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         id: 'plmn-id-reference',
         title: 'PLMN ID Reference',
         description:
-            'US mobile carrier codes — MCC, MNC, PLMN ID — offline',
+            'US mobile carrier codes: MCC, MNC, and PLMN ID, offline',
         routeName: '/tools/plmn-id-reference',
         isLive: true,
         subgroup: 'Protocols',
@@ -1342,7 +1342,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         id: 'http-status-codes',
         title: 'HTTP Status Codes',
         description:
-            'HTTP response status codes by class — 1xx to 5xx, offline',
+            'HTTP response status codes by class, 1xx to 5xx, offline',
         routeName: '/tools/http-status-codes',
         isLive: true,
         subgroup: 'Protocols',
@@ -1463,7 +1463,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         id: 'optical-transceivers',
         title: 'Optical Transceivers',
         description:
-            'SFP to OSFP optics by speed tier: reach, fiber, wavelength — offline',
+            'SFP to OSFP optics by speed tier: reach, fiber, wavelength, offline',
         routeName: '/tools/optical-transceivers',
         isLive: true,
         subgroup: 'Cabling & Connectors',
@@ -1572,7 +1572,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         id: 'wifi-tools-comparison',
         title: 'Wi-Fi Tools Comparison',
         description:
-            'Survey, design, spectrum and troubleshooting toolkits compared by capability and cost — offline',
+            'Survey, design, spectrum and troubleshooting toolkits compared by capability and cost, offline',
         routeName: '/tools/wifi-tools-comparison',
         subgroup: 'Wi-Fi & RF',
         isLive: true,
@@ -1625,7 +1625,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         id: 'dns-record-types',
         title: 'DNS Record Types',
         description:
-            'A, AAAA, CNAME, MX, TXT, SRV, and more — purpose and format',
+            'A, AAAA, CNAME, MX, TXT, SRV, and more, with purpose and format',
         routeName: '/tools/dns-record-types',
         isLive: true,
         subgroup: 'Protocols',
@@ -1868,7 +1868,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         title: 'Power Phasing',
         description:
             'Single-phase 120V, split-phase 120/240V, and three-phase wye '
-            '208V — and the 208-vs-240 distinction installers confuse',
+            '208V, plus the 208-vs-240 distinction installers confuse',
         routeName: '/tools/power-phasing',
         isLive: true,
         subgroup: 'Power & Cooling',
@@ -1936,7 +1936,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         title: 'Emergency Phrases',
         description:
             'Travel and emergency phrases in English, Spanish, French, '
-            'Italian, and German — searchable and offline',
+            'Italian, and German, searchable and offline',
         routeName: '/tools/emergency-phrases',
         isLive: true,
         subgroup: 'Travel & Field',
@@ -2080,7 +2080,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         title: 'Antenna Fundamentals',
         description:
             'Gain, beamwidth, polarization, downtilt, and reading a radiation '
-            'pattern — with diagrams',
+            'pattern, with diagrams',
         routeName: '/tools/antenna-fundamentals',
         isLive: true,
       ),
@@ -2111,7 +2111,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description:
             'What a spectrum analyzer sees that a Wi-Fi adapter cannot, how to '
             'read the three views, nine interferer signatures, and how to fix '
-            'interference — teaching content, not a live tool',
+            'interference. Teaching content, not a live tool',
         routeName: '/tools/spectrum-analysis',
         isLive: true,
       ),
