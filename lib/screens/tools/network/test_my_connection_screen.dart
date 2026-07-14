@@ -645,30 +645,6 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
           // enrichment below has it. Never blocks the verdict — a failed read
           // just leaves the enrichment empty.
           await _fetchIosSecurity();
-
-          // NOT ON WI-FI -> THERE IS NO LINK TO READ (2026-07-13, Keith on-device).
-          //
-          // `readLatest()` below returns the App Group's LAST STORED payload —
-          // which persists from the last time the phone WAS on Wi-Fi. On a
-          // cellular-only iPhone that stale reading (Tx 29 / Rx 13 Mbps) flowed
-          // into [_ap] -> [_effectiveAp] -> ConnectionCheck.compute -> a
-          // `wifiLimiter` verdict, and the screen told a user with NO Wi-Fi to
-          // "Boost the Wi-Fi signal to raise the ceiling." The advice was derived
-          // from a Wi-Fi link that does not exist.
-          //
-          // Refresh the honest probe (the same load the resume path and "Check
-          // again" fire), and when it POSITIVELY reports not-on-Wi-Fi, return null:
-          // no Wi-Fi link, no link reading. The engine then takes its honest
-          // no-Wi-Fi path instead of inventing a ceiling to blame. A null/ambiguous
-          // probe leaves `notOnWifi` false (GL-005), so a wired desktop, a
-          // Location-gated read, and every non-iOS source are untouched.
-          final WifiSignalSampler? sampler = _sampler;
-          if (sampler != null) {
-            await sampler.load(nativeSsid: _nativeSsid);
-            if (!mounted) return null;
-            if (sampler.notOnWifi) return null;
-          }
-
           // The RF metrics (RSSI / noise / SNR / channel / width / band / PHY /
           // rate) come ONLY from the companion Shortcut's last harvest, read here
           // from the App Group. readLatest() returns null when the Shortcut has
@@ -813,7 +789,26 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// macOS/Android poll and the one-shot read draw from the same CoreWLAN/
   /// WifiManager snapshot, so this still resolves to a complete reading without
   /// changing established behavior.
+  /// NOT ON WI-FI -> THERE IS NO LINK READING (2026-07-13, Keith on-device, v1.7.2).
+  ///
+  /// [_readLink]'s iOS branch calls `WiFiDetailsBridge.readLatest()`, which returns
+  /// the App Group's LAST STORED payload — and that payload survives the phone
+  /// leaving Wi-Fi. On a cellular-only iPhone the stale reading (Tx 29 / Rx 13
+  /// Mbps, captured the last time it WAS on Wi-Fi) flowed into [_ap] -> here ->
+  /// `ConnectionCheck.compute` -> a `wifiLimiter` verdict, and the screen told a
+  /// user with NO Wi-Fi to "Boost the Wi-Fi signal to raise the ceiling." The
+  /// advice was derived from a Wi-Fi link that does not exist.
+  ///
+  /// Gating HERE — the single chokepoint the verdict, the technical section, the
+  /// help-desk facts, and the copy report ALL read — makes every one of them
+  /// honest from one line, and keeps the gate off the timeout-bounded link-read
+  /// path (a fresh probe there is a platform-channel await, which stalls the run).
+  /// [_notOnWifi] is refreshed by the probe on screen entry, on app resume, and on
+  /// "Check again"; a POSITIVE result is the only thing that suppresses (GL-005),
+  /// so a wired desktop, a Location-gated read, and every non-iOS source are
+  /// untouched.
   ConnectedAp? get _effectiveAp {
+    if (_notOnWifi) return null;
     final ConnectedAp? oneShot = _ap;
     final ConnectedAp? live = _sampler?.latest;
     if (oneShot == null) return live;
@@ -947,6 +942,15 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       _networkDetails = null;
     });
 
+    // REFRESH THE HONEST NOT-ON-WI-FI PROBE (2026-07-13). Fire-and-forget, exactly
+    // like the initState / resume loads: a user can drop off Wi-Fi while sitting on
+    // this screen, and the verdict must not be computed from a link that vanished.
+    // Never awaited — it is a platform-channel round trip, and awaiting it inside
+    // the timeout-bounded link read stalls the run. It resolves in milliseconds,
+    // far inside the ~25-35s internet measurement, so [_notOnWifi] is settled long
+    // before `onDone` reads it.
+    _sampler?.load(nativeSsid: _nativeSsid);
+
     final Future<ConnectedAp?> linkFuture = _readLink();
 
     // AUTO-CAPTURE iOS Wi-Fi RF (item #8 — Keith's explicit "no tap" request).
@@ -1006,8 +1010,13 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
           onTimeout: () => null,
         );
         if (!mounted) return;
+        // NOT ON WI-FI -> hand the engine NO link (2026-07-13). `ap` here is the
+        // App Group's last stored payload, which persists after the phone leaves
+        // Wi-Fi. Feeding it in is what produced "boost the Wi-Fi signal" on a
+        // cellular-only iPhone. Positive-probe-only, so nothing else changes.
+        final ConnectedAp? linkAp = _notOnWifi ? null : ap;
         final WifiVsInternetResult engine = ConnectionCheck.compute(
-          ap,
+          linkAp,
           internet,
           // Fold in whatever evidence already landed; late-arriving evidence
           // re-derives the verdict via [_recomputeVerdict] as it lands.
