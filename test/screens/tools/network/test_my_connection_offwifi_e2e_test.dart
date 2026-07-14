@@ -222,7 +222,13 @@ Future<_StaleBridge> _runOffWifiCheck(WidgetTester tester) async {
     ),
   );
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Check My Connection'));
+  // CONSENT TO THE CELLULAR DATA COST (Keith, 2026-07-13). On cellular the primary
+  // button carries its price ("uses data") and a decline path sits beneath it, so
+  // this harness now taps the CONSENTING affordance — these tests are about the
+  // FULL check on cellular (they assert the measured 60 Mbps is reported), which
+  // is exactly the run that requires consent. The declining run has its own file:
+  // test_my_connection_cellular_consent_test.dart.
+  await tester.tap(find.text('Check My Connection (uses data)'));
   await tester.pumpAndSettle();
   await tester.pump(const Duration(seconds: 5));
   await tester.pumpAndSettle();

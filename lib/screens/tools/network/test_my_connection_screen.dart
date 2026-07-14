@@ -605,7 +605,16 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     // which had only lived in the verdict-gated live-signal card, never showed).
     final WifiSignalSampler? s = _sampler;
     final bool recovery = (s?.shortcutMissing ?? false) || (s?.triggerError ?? false);
-    if (_verdict == null && !recovery) return;
+    // ...AND whenever the connection probe says we are off Wi-Fi, even with no
+    // verdict yet (Keith, 2026-07-13). The PRE-RUN action card now depends on
+    // [_notOnWifi]: it carries the cellular-data warning and the "check without
+    // the speed test" decline path. The probe settles a few hundred ms AFTER
+    // initState, so without this the card would build once with `notOnWifi: false`
+    // and never rebuild — and the warning would silently never appear, which is
+    // exactly the failure the warning exists to prevent. Caught by pumping the
+    // real screen and reading the pre-run text, not by reasoning about it.
+    final bool notOnWifi = s?.notOnWifi ?? false;
+    if (_verdict == null && !recovery && !notOnWifi) return;
 
     // ENRICH THE RESULT SNAPSHOT, NEVER BLANK IT (cold-eyes F4).
     //
