@@ -229,12 +229,12 @@ void main() {
 
         // Title + default 2.4 GHz map.
         expect(find.text('Channel Map'), findsOneWidget);
-        expect(find.text('2.4 GHz — 20 MHz channels (US)'), findsOneWidget);
+        expect(find.text('2.4 GHz: 20 MHz channels (US)'), findsOneWidget);
 
         // Switch to 5 GHz — the 80 MHz bond center ch 42 is a known PWA cell.
         await tester.tap(find.text('5 GHz'));
         await tester.pumpAndSettle();
-        expect(find.text('5 GHz — bonded widths (US, FCC)'), findsOneWidget);
+        expect(find.text('5 GHz: bonded widths (US, FCC)'), findsOneWidget);
         expect(find.text('42'), findsWidgets);
         // 3-digit 5 GHz channel renders fully (no ellipsis) — the clipping fix.
         expect(find.text('100'), findsWidgets);
@@ -245,7 +245,7 @@ void main() {
         await tester.tap(find.text('6 GHz'));
         await tester.pumpAndSettle();
         expect(
-          find.text('6 GHz — full US band, ch 1–233 (UNII-5 to UNII-8)'),
+          find.text('6 GHz: full US band, ch 1–233 (UNII-5 to UNII-8)'),
           findsOneWidget,
         );
         expect(find.text('233'), findsWidgets);

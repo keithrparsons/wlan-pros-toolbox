@@ -86,12 +86,12 @@ void main() {
     await tester.pumpWidget(harness());
     await tester.pumpAndSettle();
 
-    expect(find.text('LAB / LEARNING SETUP — NOT PRODUCTION'), findsOneWidget);
+    expect(find.text('LAB / LEARNING SETUP, NOT PRODUCTION'), findsOneWidget);
     // The caveat carries its meaning in words, including the shared-secret name
     // and the "change before anything real" instruction.
     expect(find.textContaining('secretwlanpros'), findsWidgets);
     expect(
-      find.textContaining('change the secret', findRichText: true),
+      find.textContaining('Change the secret', findRichText: true),
       findsWidgets,
     );
     // A warning glyph accompanies the text (icon + text, never color alone).

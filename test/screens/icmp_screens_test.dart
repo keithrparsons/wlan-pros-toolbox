@@ -50,7 +50,7 @@ void main() {
       expect(find.text('Ping (ICMP)'), findsOneWidget); // app bar (renamed)
       expect(find.text('Ping'), findsOneWidget); // action button
       expect(
-        find.textContaining('true ICMP, not a TCP probe'),
+        find.textContaining('True ICMP, not a TCP probe'),
         findsOneWidget,
       );
     });

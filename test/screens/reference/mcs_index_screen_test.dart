@@ -220,7 +220,7 @@ void main() {
     await tester.pump();
 
     // 802.11ac, so 5-8 SS are offered at all.
-    await pickStd(tester, '802.11ac — Wi-Fi 5 (VHT)');
+    await pickStd(tester, '802.11ac: Wi-Fi 5 (VHT)');
 
     // 4 SS: the table renders.
     await pickSs(tester, '4 SS');
@@ -258,11 +258,11 @@ void main() {
     // 5 SS, not 8: the dropdown overlay is virtualized and only builds the
     // first few items, so 6-8 are not tappable in a widget test. 5 is above 4,
     // which is all this test needs — the clamp logic is a single comparison.
-    await pickStd(tester, '802.11ac — Wi-Fi 5 (VHT)');
+    await pickStd(tester, '802.11ac: Wi-Fi 5 (VHT)');
     await pickSs(tester, '5 SS');
 
     // Back to 802.11n, which defines only 4 streams.
-    await pickStd(tester, '802.11n — Wi-Fi 4 (HT)');
+    await pickStd(tester, '802.11n: Wi-Fi 4 (HT)');
 
     // The stale 8 SS is clamped to 4 — 802.11n has no 8-stream mode — so the
     // table is back (4 SS is sourced) rather than the unsourced notice.

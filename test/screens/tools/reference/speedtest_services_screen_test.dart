@@ -105,7 +105,7 @@ void main() {
 
       expect(find.text('Speed Test Services'), findsWidgets);
       // Hero + honesty caveats are on-screen, not just in data.
-      expect(find.textContaining('not your'), findsWidgets);
+      expect(find.textContaining('does not measure your Wi-Fi'), findsWidgets);
       expect(find.textContaining('community-measured estimates'), findsOneWidget);
       expect(find.textContaining('Not all of these are independent'),
           findsOneWidget);
