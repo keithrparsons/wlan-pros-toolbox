@@ -202,10 +202,16 @@ void main() {
     //
     // What F2 WAS: THIS file used to compute its own expectations from the
     // constants it was testing (`WifiGradingBands.rssiFairDbm - 1`,
-    // `WifiGradingBands.rssiExcellentDbm`; see `git show 9402df8^ -- ` this
-    // path, lines 140-167). Such a test can only confirm the code against
-    // itself, so it would have stayed green through any drift. A real latent
-    // hazard, and now removed.
+    // `WifiGradingBands.rssiExcellentDbm`), at lines 140-167 of:
+    //   git show 9402df8^:test/services/analyze/analyze_engine_test.dart
+    // Such a test can only confirm the code against itself, so it would have
+    // stayed green through any drift. A real latent hazard, and now removed.
+    //
+    // (That pin was written `git show 9402df8^ -- <path>` and printed NOTHING:
+    // `--` renders a DIFF for the path in that commit, and the parent never
+    // touched this file. The claim was true; the citation did not resolve. Same
+    // class as Vera M-1, in the very comment written to state F2 accurately. A
+    // pin is verified by RUNNING it, not by typing it.)
     //
     // What F2 WAS NOT: the cause of the 1.7.1 signal-grading bug, and not "a
     // wrong constant that stayed green". The 1.7.1 constants were RIGHT, and
