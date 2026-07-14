@@ -1,6 +1,34 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
-  <!-- PoE reference: the 802.3 standards/classes as rising power steps (af -> at -> bt).
-       Lime = the class power level at the top of the ladder. -->
+  <!-- PoE reference: the 802.3 standards as rising power steps (af -> at -> bt).
+       Lime = the top of the ladder.
+
+       SOURCE OF TRUTH: PoeReferenceScreen.standards
+       (lib/screens/tools/reference/poe_reference_screen.dart:147). Each bar is
+       labelled with a row's `standard` VERBATIM and prints that row's `pseWatts`.
+       DO NOT hand-edit a number here. Edit the screen and re-derive.
+
+       WHAT THIS FIXES (2026-07-14) -- three defects, all found by MEASURING the
+       drawing rather than reading its labels:
+
+       1. THE BARS BROKE THEIR OWN SCALE. The axis is labelled "Watts", so the
+          bar HEIGHT is a claim. af (15.4 W -> 22px) and at (30 W -> 42px) were
+          both drawn at ~1.4 px/W -- but bt (90 W) was drawn 74px, i.e. 0.82 px/W.
+          At the scale its own two neighbours established, 90 W needs 126px, which
+          runs off the canvas; instead of rescaling, the drawing quietly squashed
+          the bar. It rendered 90 W at the height of ~53 W. Every bar now shares
+          ONE scale (0.9111 px/W = 82px / 90 W) and the guard recomputes it.
+
+       2. "802.3bt" IS NOT A ROW. It matches TWO: Type 3 (60 W PSE) and Type 4
+          (90 W PSE). The drawing printed 90 W against the ambiguous label -- the
+          same disease as the -12 dB "concrete" wall, which matched three rows.
+          The bar now names 802.3bt Type 4 exactly.
+
+       3. "Watts" DID NOT SAY WHICH END. The dataset carries pseWatts AND pdWatts,
+          and they are different numbers: 802.3bt Type 4 sources 90 W at the
+          switch but the AP receives 71.3 W after cable loss. A reader took "90 W"
+          as what their AP gets. These are PSE (switch-output) watts, and the
+          drawing now says so -- the same fix as stating "2.4 GHz" on the
+          attenuation graphic. -->
 
   <!-- Power axis (Watts), vertical (neutral) -->
   <g stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round">
@@ -10,21 +38,23 @@
   <text x="28" y="30" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" transform="rotate(-90 28 30)">Watts</text>
   <line x1="40" y1="120" x2="252" y2="120" stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round"/>
 
-  <!-- Power steps (rising staircase, neutral) -->
-  <!-- 802.3af step -->
-  <rect x="52" y="98" width="50" height="22" stroke="#E5E5E5" stroke-width="1.75"/>
-  <text x="77" y="134" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">802.3af</text>
-  <text x="77" y="148" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">15.4 W</text>
+  <!-- Power steps. ONE scale for all three: 0.9111 px/W (82px = 90 W), baseline y=120.
+       15.4 W -> 14.03px  |  30 W -> 27.33px  |  90 W -> 82.00px -->
 
-  <!-- 802.3at step -->
-  <rect x="112" y="78" width="50" height="42" stroke="#E5E5E5" stroke-width="1.75"/>
-  <text x="137" y="134" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">802.3at</text>
-  <text x="137" y="148" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">30 W</text>
+  <!-- 802.3af: 15.4 W PSE -->
+  <rect x="48" y="105.97" width="50" height="14.03" stroke="#E5E5E5" stroke-width="1.75"/>
+  <text x="73" y="132" fill="#9C9C9C" font-size="9" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">802.3af</text>
+  <text x="73" y="145" fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">15.4 W</text>
 
-  <!-- 802.3bt step (top class, lime = the measured/key quantity) -->
-  <rect x="172" y="46" width="50" height="74" stroke="#A2CC3A" stroke-width="2" fill="#A2CC3A" fill-opacity="0.08"/>
-  <text x="197" y="134" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">802.3bt</text>
-  <text x="197" y="148" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">90 W</text>
+  <!-- 802.3at: 30 W PSE -->
+  <rect x="116" y="92.67" width="50" height="27.33" stroke="#E5E5E5" stroke-width="1.75"/>
+  <text x="141" y="132" fill="#9C9C9C" font-size="9" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">802.3at</text>
+  <text x="141" y="145" fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">30 W</text>
+
+  <!-- 802.3bt Type 4: 90 W PSE (top of the ladder, lime = the key quantity) -->
+  <rect x="184" y="38" width="50" height="82" stroke="#A2CC3A" stroke-width="2" fill="#A2CC3A" fill-opacity="0.08"/>
+  <text x="209" y="132" fill="#A2CC3A" font-size="9" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">802.3bt Type 4</text>
+  <text x="209" y="145" fill="#A2CC3A" font-size="10" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">90 W</text>
 
   <!-- RJ45 plug with a power bolt (right, neutral jack + lime bolt = power) -->
   <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
@@ -36,4 +66,7 @@
 
   <!-- Header -->
   <text x="160" y="20" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">PoE power by 802.3 class</text>
+  <!-- The end of the link these watts describe. Without this the numbers are
+       ambiguous between two real columns of the same dataset. -->
+  <text x="160" y="157" fill="#9C9C9C" font-size="9" font-weight="500" text-anchor="middle">PSE output at the switch &#183; the device receives less after cable loss</text>
 </svg>
