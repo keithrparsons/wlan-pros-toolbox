@@ -297,6 +297,15 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// iOS / before the sampler resolves.
   bool get _iosHasEverReceived => _sampler?.hasEverReceived ?? false;
 
+  /// The honest "this device is demonstrably NOT on Wi-Fi" probe result, read
+  /// from the live sampler. Only ever true on a POSITIVE not-on-Wi-Fi signal
+  /// (cellular-only on iOS); an ambiguous or failed read leaves it false, so a
+  /// wired desktop and a Location-gated read are never falsely told they have no
+  /// Wi-Fi (GL-005). Drives the engine's "there is no Wi-Fi link" wording instead
+  /// of the wrong "the Wi-Fi link could not be read". False before the sampler
+  /// resolves, and on every non-iOS source.
+  bool get _notOnWifi => _sampler?.notOnWifi ?? false;
+
   /// Whether to run the REAL DNS-probe + local-addressing reads on a check.
   /// Production always does (live sampling on). Tests that disable live sampling
   /// and inject no fake skip them, so no real resolver / interface call leaks a
@@ -780,7 +789,26 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// macOS/Android poll and the one-shot read draw from the same CoreWLAN/
   /// WifiManager snapshot, so this still resolves to a complete reading without
   /// changing established behavior.
+  /// NOT ON WI-FI -> THERE IS NO LINK READING (2026-07-13, Keith on-device, v1.7.2).
+  ///
+  /// [_readLink]'s iOS branch calls `WiFiDetailsBridge.readLatest()`, which returns
+  /// the App Group's LAST STORED payload — and that payload survives the phone
+  /// leaving Wi-Fi. On a cellular-only iPhone the stale reading (Tx 29 / Rx 13
+  /// Mbps, captured the last time it WAS on Wi-Fi) flowed into [_ap] -> here ->
+  /// `ConnectionCheck.compute` -> a `wifiLimiter` verdict, and the screen told a
+  /// user with NO Wi-Fi to "Boost the Wi-Fi signal to raise the ceiling." The
+  /// advice was derived from a Wi-Fi link that does not exist.
+  ///
+  /// Gating HERE — the single chokepoint the verdict, the technical section, the
+  /// help-desk facts, and the copy report ALL read — makes every one of them
+  /// honest from one line, and keeps the gate off the timeout-bounded link-read
+  /// path (a fresh probe there is a platform-channel await, which stalls the run).
+  /// [_notOnWifi] is refreshed by the probe on screen entry, on app resume, and on
+  /// "Check again"; a POSITIVE result is the only thing that suppresses (GL-005),
+  /// so a wired desktop, a Location-gated read, and every non-iOS source are
+  /// untouched.
   ConnectedAp? get _effectiveAp {
+    if (_notOnWifi) return null;
     final ConnectedAp? oneShot = _ap;
     final ConnectedAp? live = _sampler?.latest;
     if (oneShot == null) return live;
@@ -914,6 +942,15 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       _networkDetails = null;
     });
 
+    // REFRESH THE HONEST NOT-ON-WI-FI PROBE (2026-07-13). Fire-and-forget, exactly
+    // like the initState / resume loads: a user can drop off Wi-Fi while sitting on
+    // this screen, and the verdict must not be computed from a link that vanished.
+    // Never awaited — it is a platform-channel round trip, and awaiting it inside
+    // the timeout-bounded link read stalls the run. It resolves in milliseconds,
+    // far inside the ~25-35s internet measurement, so [_notOnWifi] is settled long
+    // before `onDone` reads it.
+    _sampler?.load(nativeSsid: _nativeSsid);
+
     final Future<ConnectedAp?> linkFuture = _readLink();
 
     // AUTO-CAPTURE iOS Wi-Fi RF (item #8 — Keith's explicit "no tap" request).
@@ -973,12 +1010,20 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
           onTimeout: () => null,
         );
         if (!mounted) return;
+        // NOT ON WI-FI -> hand the engine NO link (2026-07-13). `ap` here is the
+        // App Group's last stored payload, which persists after the phone leaves
+        // Wi-Fi. Feeding it in is what produced "boost the Wi-Fi signal" on a
+        // cellular-only iPhone. Positive-probe-only, so nothing else changes.
+        final ConnectedAp? linkAp = _notOnWifi ? null : ap;
         final WifiVsInternetResult engine = ConnectionCheck.compute(
-          ap,
+          linkAp,
           internet,
           // Fold in whatever evidence already landed; late-arriving evidence
           // re-derives the verdict via [_recomputeVerdict] as it lands.
           onlineEvidence: _onlineEvidence,
+          // The honest not-on-Wi-Fi probe, so the engine says "there is no Wi-Fi
+          // link" rather than "the Wi-Fi link could not be read" (GL-005).
+          notOnWifi: _notOnWifi,
         );
         setState(() {
           _ap = ap;
@@ -1042,6 +1087,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       _effectiveAp,
       _internet,
       onlineEvidence: _onlineEvidence,
+      notOnWifi: _notOnWifi,
     );
     setState(() {
       _engine = engine;
@@ -1693,9 +1739,15 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       case ConsumerOutcome.bothFine:
         return 'Your Wi-Fi and internet both look fine.';
       case ConsumerOutcome.couldntCheckWifi:
-        return 'We checked your internet, but not your Wi-Fi.';
+        // TWO KINDS OF NULL (GL-005). "We could not check it" implies a read that
+        // might work next time. Off Wi-Fi there is nothing to check.
+        return (_engine?.notOnWifi ?? false)
+            ? 'You are not on Wi-Fi right now.'
+            : 'We checked your internet, but not your Wi-Fi.';
       case ConsumerOutcome.couldntComplete:
-        return 'We could not finish the check.';
+        return (_engine?.notOnWifi ?? false)
+            ? 'You are not on Wi-Fi right now.'
+            : 'We could not finish the check.';
       case ConsumerOutcome.online:
         return 'You are online.';
     }
@@ -1779,12 +1831,20 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         return 'Both your Wi-Fi and your internet are keeping up.';
       case ConsumerOutcome.couldntCheckWifi:
         // Internet measured, Wi-Fi not — honest, no verdict on the missing side.
-        return 'We measured your internet, but could not read your Wi-Fi on '
-            'this device.';
+        // Off Wi-Fi, say WHY there is no Wi-Fi side rather than implying a failed
+        // read the user could retry into success (GL-005, two kinds of null).
+        return (_engine?.notOnWifi ?? false)
+            ? 'We measured your internet. You are not connected to Wi-Fi, so '
+                'there was no Wi-Fi link to measure.'
+            : 'We measured your internet, but could not read your Wi-Fi on '
+                'this device.';
       case ConsumerOutcome.couldntComplete:
         // Neither side read — honest neutral line.
-        return 'We could not read your Wi-Fi or your internet. Make sure you '
-            'are on Wi-Fi, then try again.';
+        return (_engine?.notOnWifi ?? false)
+            ? 'You are not connected to Wi-Fi, and your internet could not be '
+                'measured. Join a Wi-Fi network, then try again.'
+            : 'We could not read your Wi-Fi or your internet. Make sure you '
+                'are on Wi-Fi, then try again.';
       case ConsumerOutcome.online:
         // The speed test stalled but the device is clearly online (DNS + public
         // IP + cloud reachability) — lead with the reachable truth (Keith's
@@ -2874,6 +2934,18 @@ class _ComparisonCard extends StatelessWidget {
         return 'Both your Wi-Fi and your internet are keeping up. Neither side '
             'is holding you back right now.';
       case WifiVsInternetVerdict.wifiUnknown:
+        // TWO KINDS OF NULL (GL-005, 2026-07-13). "We could not read your Wi-Fi"
+        // implies a read that might succeed on a retry. Off Wi-Fi there is
+        // nothing to read at all — say that, and never imply a fix that cannot
+        // work. The could-not-read wording stands for every ambiguous case
+        // (wired, Location-gated, iOS without the companion Shortcut).
+        if (result.notOnWifi) {
+          return result.internetMbps == null
+              ? 'You are not connected to Wi-Fi, so there is no Wi-Fi link to '
+                  'measure. Join a Wi-Fi network and check again.'
+              : 'You are not connected to Wi-Fi, so there is no Wi-Fi link to '
+                  'compare against. Only the internet side is shown.';
+        }
         return result.internetMbps == null
             ? 'We could not read your Wi-Fi link, so there is nothing to '
                 'compare the internet against yet.'

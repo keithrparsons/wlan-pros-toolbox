@@ -122,8 +122,27 @@ class WifiMonitorController extends ChangeNotifier {
   /// nowhere — it is surfaced via the [WifiMonitorPhase.notOnWifi] phase.
   bool get notOnWifi => _notOnWifi;
 
-  /// Most recent parsed details, or null when none has arrived yet.
-  WiFiDetails? get details => _details;
+  /// Most recent parsed details, or null when none has arrived yet — AND null
+  /// whenever the probe positively reports the device is NOT on Wi-Fi.
+  ///
+  /// THE STALE-READING BUG (2026-07-13, Keith on-device, v1.7.2). A cellular-only
+  /// iPhone showed Tx 29 / Rx 13 Mbps as current/min/avg/max under a LIVE badge,
+  /// and Test My Connection told him to "boost the Wi-Fi signal" — from a reading
+  /// captured the last time the phone was actually on Wi-Fi. The stored payload
+  /// outranked a positive not-on-Wi-Fi probe, so a value the device did not have
+  /// was rendered as if it were current, and fed into advice.
+  ///
+  /// GL-005: there are two kinds of null. "We could not read this" is one; "this
+  /// does not exist" is the other. Off Wi-Fi is the SECOND — there is no Wi-Fi
+  /// link, so there is no Wi-Fi reading, stale or otherwise. We return null while
+  /// [_notOnWifi] rather than clearing [_details], so a rejoin restores the last
+  /// known reading without a re-fetch.
+  ///
+  /// This can never over-suppress: [_notOnWifi] is set ONLY from a POSITIVE
+  /// not-on-Wi-Fi probe. An ambiguous read (a wired desktop, a Location-gated
+  /// SSID, a failed/denied read) resolves to [WifiConnectionStatus.unknown] and
+  /// leaves it false — see [WifiConnectionService].
+  WiFiDetails? get details => _notOnWifi ? null : _details;
 
   /// Whether any payload has ever arrived (honest install-state signal).
   bool get hasEverReceived => _hasEverReceived;
@@ -207,25 +226,45 @@ class WifiMonitorController extends ChangeNotifier {
       _notOnWifi = false;
     }
 
+    // NOT-ON-WIFI WINS — unconditionally, and BEFORE the mid-stream early-return.
+    //
+    // THE FIX (2026-07-13). This branch used to read `_notOnWifi && !_hasEverReceived`,
+    // so the honest state only ever showed to a user who had NEVER captured a
+    // Wi-Fi reading. For everyone else — i.e. every real user — a stale stored
+    // payload outranked a positive not-on-Wi-Fi probe and kept rendering as if it
+    // were current. The old comment called that "never blanks data the user
+    // already has." What it actually did was present a Wi-Fi rate for a Wi-Fi
+    // link that does not exist, and feed it into the Wi-Fi-vs-internet advice.
+    //
+    // There is no Wi-Fi link, so there is no Wi-Fi reading. The probe is the
+    // authority, and it is a POSITIVE-only signal ([WifiConnectionStatus.unknown]
+    // on any ambiguous/failed read), so a wired desktop or a Location-gated read
+    // can never land here.
+    //
+    // Checked before the streaming early-return because a device that dropped to
+    // cellular WHILE streaming has no producer behind the stream: leaving it in
+    // `streaming` is what painted the LIVE badge over the stale rate. Tear the
+    // stream down and clear the App Group loop flag — a looping Shortcut has
+    // nothing to read either.
+    if (_notOnWifi) {
+      await stopMonitoring(); // resolves _phase via _idlePhase -> notOnWifi
+      _safeNotify();
+      return;
+    }
+
     if (_phase == WifiMonitorPhase.streaming) {
       // A resume arrived mid-stream; keep streaming, data already refreshed.
       _safeNotify();
       return;
     }
 
-    // NOT-ON-WIFI takes precedence over the install gate ONLY when there is no
-    // real data to show: a user on cellular with no payload yet sees the honest
-    // "connect to Wi-Fi" message rather than the setup CTA (the Shortcut cannot
-    // read Wi-Fi RF that does not exist). If a payload has arrived this session
-    // we keep showing it (it is the last known reading), so a transient drop to
-    // cellular never blanks data the user already has.
     if (shortcutMissing) {
       // Missing-Shortcut recovery takes priority: the live tools return to the
       // setup CTA, and the screen ORs [shortcutMissing] into its `triggerError`
       // presentation to show the honest "not found — re-run setup" note.
+      // (The shortcutMissing block above already forced _notOnWifi false, so the
+      // not-on-Wi-Fi branch cannot steal this case.)
       _phase = WifiMonitorPhase.needsInstall;
-    } else if (_notOnWifi && !_hasEverReceived) {
-      _phase = WifiMonitorPhase.notOnWifi;
     } else if (!_hasEverReceived) {
       _phase = WifiMonitorPhase.needsInstall;
     } else if (wasMonitoring) {
@@ -235,6 +274,20 @@ class WifiMonitorController extends ChangeNotifier {
       _phase = WifiMonitorPhase.idleWithData;
     }
     _safeNotify();
+  }
+
+  /// The phase to rest in when no live stream is running.
+  ///
+  /// The honest not-on-Wi-Fi state outranks BOTH `idleWithData` (there is no
+  /// reading to be idle with) and `needsInstall` (installing a Shortcut cannot
+  /// conjure a Wi-Fi link). Positive-probe-only, so it never fires on an
+  /// ambiguous read. Shared by [load] and [stopMonitoring] so the two can never
+  /// disagree about where the machine rests.
+  WifiMonitorPhase get _idlePhase {
+    if (_notOnWifi) return WifiMonitorPhase.notOnWifi;
+    return _hasEverReceived
+        ? WifiMonitorPhase.idleWithData
+        : WifiMonitorPhase.needsInstall;
   }
 
   /// Begins live monitoring. The app never loops itself: the continuous stream
@@ -437,6 +490,14 @@ class WifiMonitorController extends ChangeNotifier {
   /// already landed (the read just refreshes to the same/newer value). Never
   /// throws; off-iOS [readLatest] returns null and this is a no-op.
   Future<void> pollLatestAfterOneShot() async {
+    // OFF WI-FI: never re-deliver the STORED reading as if it were a fresh live
+    // sample (2026-07-13). This poll exists for a race — the Shortcut delivered
+    // while we were backgrounded — but off Wi-Fi the Shortcut delivered NOTHING,
+    // and the App Group still holds the last on-Wi-Fi reading. Feeding that
+    // through [_onPayload] would stamp `lastUpdated = now`, advance
+    // [deliveryCount], and chart a months-old rate as a live sample. There is no
+    // Wi-Fi link, so a one-shot read has no result to settle for.
+    if (_notOnWifi) return;
     final WiFiDetails? latest = await _bridge.readLatest();
     if (latest != null && latest.hasAnyData) _onPayload(latest);
   }
@@ -449,9 +510,7 @@ class WifiMonitorController extends ChangeNotifier {
     final Future<void> write = _bridge.setMonitoringActive(false);
     final StreamSubscription<WiFiDetails>? sub = _sub;
     _sub = null;
-    _phase = _hasEverReceived
-        ? WifiMonitorPhase.idleWithData
-        : WifiMonitorPhase.needsInstall;
+    _phase = _idlePhase;
     _safeNotify();
     await sub?.cancel();
     await write;

@@ -1436,19 +1436,32 @@ void main() {
       expect(find.text('Set up live Wi-Fi'), findsNothing);
     });
 
-    // The OFF-WIFI gate is honest: a device that already has a reading this
-    // session keeps showing it (the last known values) even if the probe drops
-    // to cellular — a transient drop never blanks data the user already has.
+    // ─────────────────────────────────────────────────────────────────────────
+    // THE STALE-READING REGRESSION (2026-07-13, Keith on-device, iOS v1.7.2).
+    //
+    // This REPLACES a prior test titled "OFF-WIFI is suppressed once a reading
+    // exists: a prior payload keeps the live data on screen even when the probe
+    // reports off-Wi-Fi", which asserted findsNothing for NotOnWifiCard and that
+    // the live controls rendered — on a device the probe said was NOT on Wi-Fi.
+    // It passed, and it was WRONG. It is the same wrong spec the controller test
+    // carried, restated at the screen: "hasEverReceived suppresses the
+    // not-on-Wi-Fi phase". Every real user has hasEverReceived == true, so the
+    // honest card never rendered for anyone, and Keith's cellular-only iPhone
+    // showed a "Live" badge with Tx 29 / Rx 13 Mbps from the last time it had
+    // been on Wi-Fi.
+    //
+    // A stale reading is not a current reading. No Wi-Fi link, no Wi-Fi data.
+    // ─────────────────────────────────────────────────────────────────────────
     testWidgets(
-        'OFF-WIFI is suppressed once a reading exists: a prior payload keeps the '
-        'live data on screen even when the probe reports off-Wi-Fi',
+        'REGRESSION: a prior payload does NOT keep stale Wi-Fi data on screen '
+        'when the probe reports off-Wi-Fi',
         (tester) async {
       await tester.pumpWidget(host(
         WifiInfoScreen(
           sourceOverride: WifiInfoSource.iosShortcuts,
           connectionService: _offWifiProbe(),
-          // hasEverReceived == true: the Shortcut has delivered before, so the
-          // last reading stays visible rather than the off-Wi-Fi card.
+          // hasEverReceived == true — the state EVERY real user is in, and the
+          // precondition that used to suppress the honest card.
           iosBridge: _FakeBridge(
             everReceived: true,
             latest:
@@ -1458,10 +1471,14 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      // No off-Wi-Fi dead-end: the screen shows the live controls, not the
-      // off-Wi-Fi card (hasEverReceived suppresses the not-on-Wi-Fi phase).
-      expect(find.byType(NotOnWifiCard), findsNothing);
-      expect(find.text('Start live monitoring'), findsOneWidget);
+      expect(find.byType(NotOnWifiCard), findsOneWidget,
+          reason: 'the honest "you are not connected to Wi-Fi" card must win '
+              'over a stale stored reading');
+      expect(find.text('Start live monitoring'), findsNothing,
+          reason: 'there is no Wi-Fi link to monitor');
+      expect(find.text('KeithNet'), findsNothing,
+          reason: 'THE BUG: the last-known SSID/RF must not render as current '
+              'data on a device with no Wi-Fi link');
     });
   });
 
