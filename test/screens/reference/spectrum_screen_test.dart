@@ -62,9 +62,21 @@ void main() {
       expect(b.total, '1200 MHz');
     });
 
-    test('6 GHz lists 14 PSC channels and AFC (no DFS)', () {
+    test('6 GHz lists 15 PSC channels and AFC (no DFS)', () {
+      // Was '14 PSC', and the test PINNED THE BUG: it hand-typed the same wrong
+      // number the screen printed, so it passed for as long as both were wrong.
+      // PSC = (ch - 5) % 16 == 0 across 6 GHz ch 5..233 => {5,21,37,...,229},
+      // which is FIFTEEN channels. Derived below rather than typed, so it cannot
+      // agree with a wrong constant again ([[feedback_tests_that_cannot_fail]]).
+      const int psc = 15;
+      final int derived = <int>[
+        for (int c = 5; c <= 233; c += 4)
+          if ((c - 5) % 16 == 0) c,
+      ].length;
+      expect(derived, psc, reason: 'The PSC arithmetic itself changed.');
+
       final SpectrumBandInfo b = bandOf(SpectrumBand.ghz6);
-      expect(b.nonOverlap, contains('14 PSC'));
+      expect(b.nonOverlap, contains('$psc PSC'));
       expect(b.dfs, contains('No DFS'));
       expect(b.dfs, contains('AFC'));
     });

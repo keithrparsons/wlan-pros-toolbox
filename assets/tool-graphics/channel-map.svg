@@ -1,39 +1,70 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
-  <!-- Channel bonding map: 20/40/80/160 MHz blocks nested across channels; lime = a bonded channel. Archetype D. -->
+  <!-- Channel bonding: how 20 MHz channels nest into 40 / 80 / 160 MHz bonds.
+       SOURCE OF TRUTH: ChannelMapScreen.map5_40 / map5_80 / map5_160
+       (lib/screens/tools/reference/channel_map_screen.dart). Every channel number
+       and every width below is copied from those BondedBlock lists:
+         160 MHz : ch 36-64          (map5_160, center 50)
+          80 MHz : ch 36-48, 52-64   (map5_80,  centers 42, 58)
+          40 MHz : ch 36-40, 44-48, 52-56, 60-64 (map5_40, centers 38,46,54,62)
+          20 MHz : ch 36,40,44,48,52,56,60,64
+       DO NOT hand-edit a number here. Edit the screen and re-derive.
+       tool_graphics_data_guard_test.dart fails the build on any number in this
+       file that does not trace to a Dart constant.
 
-  <!-- baseline of 20 MHz channels -->
-  <g stroke="#E5E5E5" stroke-width="1.5">
-    <rect x="22" y="98" width="62" height="18" rx="2"/>
-    <rect x="86" y="98" width="62" height="18" rx="2"/>
-    <rect x="150" y="98" width="62" height="18" rx="2"/>
-    <rect x="214" y="98" width="62" height="18" rx="2"/>
-  </g>
-  <g fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">
-    <text x="53"  y="111">36</text>
-    <text x="117" y="111">40</text>
-    <text x="181" y="111">44</text>
-    <text x="245" y="111">48</text>
-  </g>
+       WHAT THIS FIXES (2026-07-14): the previous drawing showed only FOUR 20 MHz
+       channels (36-48) and drew a "160 MHz" span across the SAME pixel extent as
+       its own 80 MHz block. It labelled one horizontal span both 80 and 160. A
+       160 MHz bond spans EIGHT 20 MHz channels, not four
+       (channel_map_screen.dart:103 -- "20->1, 40->2, 80->4, 160->8").
 
-  <!-- 40 MHz blocks (one bond pair lime = the bonded channel) -->
-  <rect x="22"  y="74" width="126" height="18" rx="2" fill="#A2CC3A" fill-opacity="0.08" stroke="#A2CC3A" stroke-width="1.5"/>
-  <rect x="150" y="74" width="126" height="18" rx="2" stroke="#E5E5E5" stroke-width="1.5"/>
-  <text x="85"  y="87" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="middle">40 MHz</text>
-  <text x="213" y="87" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">40</text>
-
-  <!-- 80 MHz block -->
-  <rect x="22" y="50" width="254" height="18" rx="2" stroke="#E5E5E5" stroke-width="1.5"/>
-  <text x="149" y="63" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">80 MHz</text>
-
-  <!-- 160 MHz span indicator -->
-  <g stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round">
-    <line x1="22" y1="128" x2="276" y2="128"/>
-    <path d="M28 125 L22 128 L28 131 M270 125 L276 128 L270 131"/>
-  </g>
-  <text x="149" y="142" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">160 MHz</text>
+       Geometry: 8 cells across x=14..306 (292px), cell = 36.5px. Each level
+       bonds exactly two of the level beneath it, so the nesting is to scale.
+       Lime traces the bond chain that contains primary channel 36. -->
 
   <!-- Header -->
-  <text x="160" y="24" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">channel bonding: 20 / 40 / 80 / 160</text>
-  <!-- right-edge channel-grows cue -->
-  <text x="296" y="40" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="end">bonded</text>
+  <text x="160" y="16" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">channel bonding: 20 / 40 / 80 / 160 MHz</text>
+
+  <!-- 160 MHz: ONE block over all eight 20 MHz channels (ch 36-64) -->
+  <rect x="14" y="28" width="292" height="16" rx="2" stroke="#A1CC3A" stroke-width="1.5" fill="#A1CC3A" fill-opacity="0.08"/>
+  <text x="160" y="40" fill="#A1CC3A" font-size="10" font-weight="500" text-anchor="middle">160 MHz</text>
+
+  <!-- 80 MHz: two blocks, each bonding two 40 MHz blocks -->
+  <rect x="14" y="50" width="144.5" height="16" rx="2" stroke="#A1CC3A" stroke-width="1.5" fill="#A1CC3A" fill-opacity="0.08"/>
+  <text x="86" y="62" fill="#A1CC3A" font-size="10" font-weight="500" text-anchor="middle">80 MHz</text>
+  <rect x="161.5" y="50" width="144.5" height="16" rx="2" stroke="#E5E5E5" stroke-width="1.5"/>
+  <text x="233" y="62" fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="middle">80 MHz</text>
+
+  <!-- 40 MHz: four blocks, each bonding two 20 MHz channels -->
+  <rect x="14" y="72" width="71.5" height="16" rx="2" stroke="#A1CC3A" stroke-width="1.5" fill="#A1CC3A" fill-opacity="0.08"/>
+  <text x="49.75" y="84" fill="#A1CC3A" font-size="10" font-weight="500" text-anchor="middle">40 MHz</text>
+  <rect x="87" y="72" width="71.5" height="16" rx="2" stroke="#E5E5E5" stroke-width="1.5"/>
+  <text x="122.75" y="84" fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="middle">40 MHz</text>
+  <rect x="160" y="72" width="71.5" height="16" rx="2" stroke="#E5E5E5" stroke-width="1.5"/>
+  <text x="195.75" y="84" fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="middle">40 MHz</text>
+  <rect x="233" y="72" width="71.5" height="16" rx="2" stroke="#E5E5E5" stroke-width="1.5"/>
+  <text x="268.75" y="84" fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="middle">40 MHz</text>
+
+  <!-- 20 MHz: the eight channels a 160 MHz bond is built from -->
+  <g font-family="DM Mono, monospace" font-size="10" font-weight="500" text-anchor="middle">
+    <rect x="14" y="94" width="35" height="18" rx="2" stroke="#A1CC3A" stroke-width="1.5" fill="#A1CC3A" fill-opacity="0.08"/>
+    <text x="31.5" y="107" fill="#A1CC3A">36</text>
+    <rect x="50.5" y="94" width="35" height="18" rx="2" stroke="#E5E5E5" stroke-width="1.5"/>
+    <text x="68" y="107" fill="#9C9C9C">40</text>
+    <rect x="87" y="94" width="35" height="18" rx="2" stroke="#E5E5E5" stroke-width="1.5"/>
+    <text x="104.5" y="107" fill="#9C9C9C">44</text>
+    <rect x="123.5" y="94" width="35" height="18" rx="2" stroke="#E5E5E5" stroke-width="1.5"/>
+    <text x="141" y="107" fill="#9C9C9C">48</text>
+    <rect x="160" y="94" width="35" height="18" rx="2" stroke="#E5E5E5" stroke-width="1.5"/>
+    <text x="177.5" y="107" fill="#9C9C9C">52</text>
+    <rect x="196.5" y="94" width="35" height="18" rx="2" stroke="#E5E5E5" stroke-width="1.5"/>
+    <text x="214" y="107" fill="#9C9C9C">56</text>
+    <rect x="233" y="94" width="35" height="18" rx="2" stroke="#E5E5E5" stroke-width="1.5"/>
+    <text x="250.5" y="107" fill="#9C9C9C">60</text>
+    <rect x="269.5" y="94" width="35" height="18" rx="2" stroke="#E5E5E5" stroke-width="1.5"/>
+    <text x="287" y="107" fill="#9C9C9C">64</text>
+  </g>
+
+  <!-- Footer: the rule the old drawing broke -->
+  <text x="160" y="128" fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="middle">each level bonds two of the level below it</text>
+  <text x="160" y="144" fill="#A1CC3A" font-size="10" font-weight="500" text-anchor="middle">lime = the bonds containing primary channel 36</text>
 </svg>

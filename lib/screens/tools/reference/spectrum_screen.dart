@@ -179,8 +179,13 @@ class SpectrumScreen extends StatefulWidget {
       channels:
           '59 × 20 MHz · 29 × 40 MHz · 14 × 80 MHz · 7 × 160 MHz · '
           '3 × 320 MHz (Wi-Fi 7)',
+      // 15 PSC, not 14. PSC = (ch - 5) % 16 == 0 across 6 GHz ch 5..233, i.e.
+      // {5, 21, 37, ..., 229} = 15 channels. This agrees with the app's own
+      // predicate (wifi_info_screen.dart `_isPscChannel`) and with
+      // channel_map_screen.dart:544 ("{5,21,37,…,229} (15 channels)"). The old
+      // 14 was the 80 MHz count on the line above, copied one row down.
       nonOverlap:
-          '59 non-overlapping at 20 MHz · 14 PSC (Preferred Scanning '
+          '59 non-overlapping at 20 MHz · 15 PSC (Preferred Scanning '
           'Channels) for APs',
       widths: '20 / 40 / 80 / 160 MHz (Wi-Fi 6E) · + 320 MHz (Wi-Fi 7)',
       dfs:

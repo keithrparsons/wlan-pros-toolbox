@@ -1,5 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
-  <!-- 120V Single Phase: one sine wave between +120 / 0 / -120 VAC. Original WLAN Pros schematic. -->
+  <!-- 120V Single Phase: one sine wave, one hot leg to neutral.
+       SOURCE OF TRUTH: PowerPhasingScreen -- 'One hot plus a neutral, nominal 120V'
+       (power_phasing_screen.dart:126). The 170 V peak is DERIVED, not asserted:
+       120 x sqrt(2) = 169.7, rounded to 170. The guard recomputes it.
+
+       WHAT THIS FIXES (2026-07-14): the previous drawing labelled the sine's peak
+       "120V peak" while its own footer said "nominal 120 VAC". Both cannot be
+       true. Nominal 120 VAC is an RMS quantity; its PEAK is 169.7 V. The old
+       drawing put the peak and the RMS at the same place on the axis, which is
+       the single most common way to get AC wrong.
+
+       Now: the vertical axis is PEAK (instantaneous) volts, so the waveform
+       genuinely touches +/-170. The lime line marks where 120 V RMS actually
+       sits: 0.707 of full scale (y = 84 - 42 x 0.7071 = 54.3). The drawing now
+       teaches the distinction it used to blur. Pixel geometry is unchanged;
+       only what the axis CLAIMS has changed. -->
 
   <!-- zero axis (0 VAC) -->
   <line x1="34" y1="84" x2="300" y2="84" stroke="#9C9C9C" stroke-width="1.25" stroke-dasharray="2 4"/>
@@ -15,24 +30,21 @@
     <line x1="40" y1="84" x2="48" y2="84"/>
     <line x1="40" y1="126" x2="48" y2="126"/>
   </g>
+  <!-- Axis is PEAK (instantaneous) volts: the waveform really does reach +/-170. -->
   <g fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="end" font-family="DM Mono, monospace">
-    <text x="36" y="46">+120</text>
+    <text x="36" y="46">+170</text>
     <text x="36" y="88">0</text>
-    <text x="36" y="130">-120</text>
+    <text x="36" y="130">-170</text>
   </g>
   <text x="20" y="88" fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" transform="rotate(-90 20 84)">VAC</text>
 
-  <!-- amplitude callout: peak-to-neutral = 120V (the measured quantity, lime) -->
-  <g stroke="#A1CC3A" stroke-width="1.5" stroke-linecap="round">
-    <line x1="81" y1="44" x2="81" y2="82"/>
-    <path d="M78 48 L81 44 L84 48"/>
-    <path d="M78 78 L81 82 L84 78"/>
-  </g>
-  <!-- label moved into the open band above the first trough (clear of the descending sine, which at this height sits near x=98) -->
-  <text x="120" y="56" fill="#A1CC3A" font-size="11" font-weight="500" text-anchor="start" font-family="DM Mono, monospace">120V peak</text>
+  <!-- Where 120 V RMS ACTUALLY sits: 0.707 of the peak, not at the peak.
+       y = 84 - 42 * (120 / 169.7) = 54.3 -->
+  <line x1="50" y1="54.3" x2="300" y2="54.3" stroke="#A1CC3A" stroke-width="1.5" stroke-dasharray="3 3"/>
+  <text x="300" y="50" fill="#A1CC3A" font-size="11" font-weight="500" text-anchor="end" font-family="DM Mono, monospace">120 V RMS</text>
 
   <!-- Header -->
   <text x="160" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">120V Single Phase</text>
-  <!-- Footer: one hot + neutral -->
-  <text x="172" y="150" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">one hot leg + neutral &#183; nominal 120 VAC</text>
+  <!-- Footer: the distinction the old drawing collapsed -->
+  <text x="160" y="150" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">one hot leg + neutral &#183; nominal 120 VAC is RMS &#183; peak is 170 V</text>
 </svg>
