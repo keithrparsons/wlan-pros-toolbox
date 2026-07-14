@@ -1432,7 +1432,7 @@ class ChannelMapScreen extends StatefulWidget {
     HalowRegion(
         region: 'China',
         rangeMhz: 'varies (reported 755-787)',
-        note: 'UNCERTAIN — confirm with CMIIT'),
+        note: 'UNCERTAIN: confirm with CMIIT'),
   ];
 
   @override
@@ -1524,7 +1524,7 @@ class _ChannelMapScreenState extends State<ChannelMapScreen> {
 
     // ── 2.4 GHz ──
     buf
-      ..writeln('2.4 GHz — 20 MHz channels (US)')
+      ..writeln('2.4 GHz: 20 MHz channels (US)')
       ..writeln(<String>['Channel', 'Frequency (MHz)', 'Overlap'].join(tab));
     for (final ChanMap24 c in ChannelMapScreen.map24) {
       buf.writeln(
@@ -1539,7 +1539,7 @@ class _ChannelMapScreenState extends State<ChannelMapScreen> {
     // ── 5 GHz bonded widths ──
     buf
       ..writeln()
-      ..writeln('5 GHz — bonded widths (US, FCC)');
+      ..writeln('5 GHz: bonded widths (US, FCC)');
     _writeBonded(buf, tab, '20 MHz', ChannelMapScreen.map5_20);
     _writeBonded(buf, tab, '40 MHz', ChannelMapScreen.map5_40);
     _writeBonded(buf, tab, '80 MHz', ChannelMapScreen.map5_80);
@@ -1548,7 +1548,7 @@ class _ChannelMapScreenState extends State<ChannelMapScreen> {
     // ── 6 GHz bonded widths ──
     buf
       ..writeln()
-      ..writeln('6 GHz — full US band, ch 1–233 (UNII-5 to UNII-8)');
+      ..writeln('6 GHz: full US band, ch 1–233 (UNII-5 to UNII-8)');
     _writeBonded(buf, tab, '20 MHz', ChannelMapScreen.map6_20);
     _writeBonded(buf, tab, '40 MHz', ChannelMapScreen.map6_40);
     _writeBonded(buf, tab, '80 MHz', ChannelMapScreen.map6_80);
@@ -1558,7 +1558,7 @@ class _ChannelMapScreenState extends State<ChannelMapScreen> {
     // ── Wi-Fi HaLow (802.11ah), sub-1 GHz (BF6-13 fold-in) ──
     buf
       ..writeln()
-      ..writeln('Wi-Fi HaLow (802.11ah) — sub-1 GHz')
+      ..writeln('Wi-Fi HaLow (802.11ah): sub-1 GHz')
       ..writeln('US channel widths (902-928 MHz)')
       ..writeln(
         <String>['Width (MHz)', 'Channels', 'Numbering'].join(tab),
@@ -1851,7 +1851,7 @@ class _HalowCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            'Wi-Fi HaLow (802.11ah) — sub-1 GHz',
+            'Wi-Fi HaLow (802.11ah): sub-1 GHz',
             style: text.labelMedium?.copyWith(
               color: colors.textSecondary,
               letterSpacing: 0.4,
@@ -1878,7 +1878,7 @@ class _HalowCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             'US is the fully verified scheme; other regions are range-dependent. '
-            'China is uncertain — confirm with CMIIT.',
+            'China is uncertain. Confirm with CMIIT.',
             style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
@@ -2237,14 +2237,14 @@ class _Map24 extends StatelessWidget {
     }).toList();
 
     return _MapCard(
-      title: '2.4 GHz — 20 MHz channels (US)',
+      title: '2.4 GHz: 20 MHz channels (US)',
       grid: Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
         child: Row(children: blocks),
       ),
       legend: const [DfsClass.noDfs],
       footnote:
-          'Solid lime: channels 1, 6, 11 — the only non-overlapping 20 MHz '
+          'Solid lime: channels 1, 6, 11, the only non-overlapping 20 MHz '
           'channels. Faint: channels 2–5, 7–10 all overlap with at least one '
           'preferred channel. Never use them as primary channels.',
     );
@@ -2261,7 +2261,7 @@ class _Map5 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _MapCard(
-      title: '5 GHz — bonded widths (US, FCC)',
+      title: '5 GHz: bonded widths (US, FCC)',
       grid: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2290,7 +2290,7 @@ class _Map5 extends StatelessWidget {
       legend: const [DfsClass.noDfs, DfsClass.dfs, DfsClass.mixed],
       footnote:
           'No DFS = UNII-1 (36–48) and UNII-3 (149–165). DFS required = '
-          'UNII-2A/2C. Ch 50 (160 MHz) spans UNII-1 + UNII-2A — any DFS '
+          'UNII-2A/2C. Ch 50 (160 MHz) spans UNII-1 + UNII-2A. Any DFS '
           'sub-channel makes the whole bond subject to DFS. Numbers are the '
           'primary (center) channel for each bonded width.',
     );
@@ -2307,7 +2307,7 @@ class _Map6 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _MapCard(
-      title: '6 GHz — full US band, ch 1–233 (UNII-5 to UNII-8)',
+      title: '6 GHz: full US band, ch 1–233 (UNII-5 to UNII-8)',
       grid: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2346,15 +2346,15 @@ class _Map6 extends StatelessWidget {
       legend: const [DfsClass.noDfs, DfsClass.psc],
       footnote:
           'Full US 6 GHz band, 5.925–7.125 GHz: 59 × 20 MHz channels (ch '
-          '1–233) across UNII-5/6/7/8 — no DFS, no AFC required indoors (LPI). '
-          'PSC = Preferred Scanning Channel — Wi-Fi 6E/7 clients scan these '
-          'first. 320 MHz has a primary set (centers 31, 95, 159) and an '
-          'overlapping alternative set (centers 63, 127, 191, marked "alt") — a '
+          '1–233) across UNII-5/6/7/8. No DFS, and no AFC required indoors '
+          '(LPI). PSC = Preferred Scanning Channel. Wi-Fi 6E/7 clients scan '
+          'these first. 320 MHz has a primary set (centers 31, 95, 159) and an '
+          'overlapping alternative set (centers 63, 127, 191, marked "alt"). A '
           'primary and its alternate are not used at the same time. Numbers are '
           'the primary (center) channel for each bonded width. Each width row '
-          'carries a progressively stronger neutral band and left stripe — '
-          'wider bond, heavier band — to keep the 20/40/80/160/320 MHz tiers '
-          'distinct (the block colors still carry No DFS / PSC only).',
+          'carries a progressively stronger neutral band and left stripe, so a '
+          'wider bond gets a heavier band. That keeps the 20/40/80/160/320 MHz '
+          'tiers distinct (the block colors still carry No DFS / PSC only).',
     );
   }
 }

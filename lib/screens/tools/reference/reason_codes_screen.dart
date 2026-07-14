@@ -88,22 +88,22 @@ class ReasonCodesScreen extends StatefulWidget {
     CodeGroup('Common (seen in most captures)', <CodeEntry>[
       CodeEntry(1, 'Unspecified reason'),
       CodeEntry(2, 'Previous auth no longer valid (expired)'),
-      CodeEntry(3, 'Deauth — STA leaving BSS (or IBSS)'),
-      CodeEntry(4, 'Disassoc — inactivity timer expired'),
+      CodeEntry(3, 'Deauth: STA leaving BSS (or IBSS)'),
+      CodeEntry(4, 'Disassoc: inactivity timer expired'),
       CodeEntry(
         5,
-        'Disassoc — AP cannot handle all associated STAs (capacity)',
+        'Disassoc: AP cannot handle all associated STAs (capacity)',
       ),
       CodeEntry(6, 'Class 2 frame received from non-auth STA'),
       CodeEntry(7, 'Class 3 frame received from non-assoc STA'),
-      CodeEntry(8, 'Disassoc — STA leaving BSS'),
+      CodeEntry(8, 'Disassoc: STA leaving BSS'),
       CodeEntry(9, 'STA requesting (re)assoc not auth with responding STA'),
     ]),
     CodeGroup('Capability / Channel mismatch', <CodeEntry>[
-      CodeEntry(10, 'Disassoc — power capability element unacceptable'),
-      CodeEntry(11, 'Disassoc — supported channels element unacceptable'),
+      CodeEntry(10, 'Disassoc: power capability element unacceptable'),
+      CodeEntry(11, 'Disassoc: supported channels element unacceptable'),
     ]),
-    CodeGroup('Security — frame / element errors', <CodeEntry>[
+    CodeGroup('Security (frame and element errors)', <CodeEntry>[
       CodeEntry(13, 'Invalid information element'),
       CodeEntry(14, 'MIC failure (TKIP or CCMP MIC check failed)'),
       CodeEntry(17, '4-Way Handshake Information Element mismatch'),
@@ -114,7 +114,7 @@ class ReasonCodesScreen extends StatefulWidget {
       CodeEntry(22, 'Invalid RSNE capabilities'),
       CodeEntry(24, 'Cipher suite rejected per security policy'),
     ]),
-    CodeGroup('Security — handshake failures', <CodeEntry>[
+    CodeGroup('Security (handshake failures)', <CodeEntry>[
       CodeEntry(15, '4-Way Handshake timeout'),
       CodeEntry(16, 'Group Key Handshake timeout'),
       CodeEntry(23, '802.1X authentication failed'),
@@ -123,10 +123,10 @@ class ReasonCodesScreen extends StatefulWidget {
     // at 34 and shifted every meaning up by two codes. 32 and 33 are the codes
     // that actually carry "QoS-related reason" and "insufficient bandwidth".
     CodeGroup('QoS / load management', <CodeEntry>[
-      CodeEntry(32, 'Disassoc — unspecified QoS-related reason'),
-      CodeEntry(33, 'Disassoc — QoS AP lacks sufficient bandwidth for this STA'),
-      CodeEntry(34, 'Disassoc — excessive frames not acked (poor link / AP tx)'),
-      CodeEntry(35, 'Disassoc — STA transmitting outside the limits of its TXOPs'),
+      CodeEntry(32, 'Disassoc: unspecified QoS-related reason'),
+      CodeEntry(33, 'Disassoc: QoS AP lacks sufficient bandwidth for this STA'),
+      CodeEntry(34, 'Disassoc: excessive frames not acked (poor link or AP tx)'),
+      CodeEntry(35, 'Disassoc: STA transmitting outside the limits of its TXOPs'),
       CodeEntry(36, 'Requesting STA is leaving the BSS (or resetting)'),
       CodeEntry(37, 'Requesting STA no longer using the stream or session'),
       CodeEntry(38, 'Requesting STA received frames using a mechanism with no '
@@ -173,36 +173,36 @@ class ReasonCodesScreen extends StatefulWidget {
     CodeEntry(0, 'Successful'),
     CodeEntry(1, 'Unspecified failure'),
     CodeEntry(10, 'Cannot support all requested capabilities'),
-    CodeEntry(11, 'Reassociation denied — cannot confirm association exists'),
-    CodeEntry(12, 'Association denied — reason outside the scope of 802.11'),
+    CodeEntry(11, 'Reassociation denied: cannot confirm association exists'),
+    CodeEntry(12, 'Association denied: reason outside the scope of 802.11'),
     CodeEntry(13, 'Responding STA does not support the specified auth algorithm'),
     CodeEntry(14, 'Auth transaction sequence number out of expected sequence'),
-    CodeEntry(15, 'Auth rejected — challenge failure'),
-    CodeEntry(16, 'Auth rejected — timeout waiting for next frame in sequence'),
-    CodeEntry(17, 'Assoc denied — AP cannot handle additional associated STAs'),
-    CodeEntry(18, 'Association denied — basic rates (BSSBasicRateSet) not '
+    CodeEntry(15, 'Auth rejected: challenge failure'),
+    CodeEntry(16, 'Auth rejected: timeout waiting for next frame in sequence'),
+    CodeEntry(17, 'Assoc denied: AP cannot handle additional associated STAs'),
+    CodeEntry(18, 'Association denied: basic rates (BSSBasicRateSet) not '
         'supported'),
-    CodeEntry(19, 'Association denied — short preamble not supported'),
+    CodeEntry(19, 'Association denied: short preamble not supported'),
     // 23/24/25 previously carried the QoS meanings that belong to 32/33/34.
-    CodeEntry(23, 'Assoc rejected — Power Capability element unacceptable'),
-    CodeEntry(24, 'Assoc rejected — Supported Channels element unacceptable'),
-    CodeEntry(25, 'Association denied — short slot time not supported'),
+    CodeEntry(23, 'Assoc rejected: Power Capability element unacceptable'),
+    CodeEntry(24, 'Assoc rejected: Supported Channels element unacceptable'),
+    CodeEntry(25, 'Association denied: short slot time not supported'),
     // The real HT code. The app used to put this meaning on 72 (= INVALID_RSNE).
-    CodeEntry(27, 'Association denied — requesting STA does not support HT'),
+    CodeEntry(27, 'Association denied: requesting STA does not support HT'),
     // The real MFP code. The app used to invent MFP rows at 37 and 38.
     CodeEntry(31, 'Robust management frame policy violation (MFP)'),
     CodeEntry(32, 'Unspecified, QoS-related failure'),
-    CodeEntry(33, 'Assoc denied — QoS AP or PCP has insufficient bandwidth'),
-    CodeEntry(34, 'Assoc denied — excessive frame loss or poor channel '
+    CodeEntry(33, 'Assoc denied: QoS AP or PCP has insufficient bandwidth'),
+    CodeEntry(34, 'Assoc denied: excessive frame loss or poor channel '
         'conditions'),
     CodeEntry(37, 'The request has been declined'),
-    CodeEntry(38, 'Request unsuccessful — one or more parameters have invalid '
+    CodeEntry(38, 'Request unsuccessful: one or more parameters have invalid '
         'values'),
     CodeEntry(72, 'Invalid contents of RSNE'),
     CodeEntry(73, 'U-APSD coexistence is not supported'),
     // 76 and 104 used to be swapped in meaning. 76 is SAE; 104 is VHT.
-    CodeEntry(76, 'Auth rejected — an anti-clogging token is required (SAE)'),
-    CodeEntry(104, 'Association denied — requesting STA does not support VHT'),
+    CodeEntry(76, 'Auth rejected: an anti-clogging token is required (SAE)'),
+    CodeEntry(104, 'Association denied: requesting STA does not support VHT'),
   ]);
 
   @override
@@ -358,9 +358,9 @@ class _ReasonCodesScreenState extends State<ReasonCodesScreen> {
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Text(
-        '802.11 deauthentication reason codes and association status codes — '
-        'referenced in Deauth, Disassoc, Auth, and Association Response frames '
-        'during PCAP analysis.',
+        '802.11 deauthentication reason codes and association status codes. '
+        'These appear in Deauth, Disassoc, Auth, and Association Response '
+        'frames during PCAP analysis.',
         style: text.labelMedium?.copyWith(color: colors.textTertiary),
       ),
     );
