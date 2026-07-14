@@ -8,12 +8,42 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:net_quality/net_quality.dart';
+import 'package:network_info_plus/network_info_plus.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_connection_service.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_path_probe.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/live_quality_monitor.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/metric_sparkline.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/net_quality_screen.dart';
 import 'package:wlan_pros_toolbox/theme/app_tokens.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 import 'package:wlan_pros_toolbox/widgets/tool_help_footer.dart';
+
+/// The connection probe seam (F-1). The screen now gates the data-hungry stages
+/// on an honest not-on-Wi-Fi read, so the tests must supply that read instead of
+/// letting it reach an unmocked platform channel. `unknown` is the neutral answer
+/// — it changes nothing about this screen's behaviour, which is the point: these
+/// tests are about rendering, not about the consent gate (that has its own file,
+/// net_quality_cellular_consent_test.dart).
+class _SilentPath implements WifiPathProbe {
+  const _SilentPath();
+  @override
+  Future<WifiPathFacts?> read() async => null;
+}
+
+class _UnknownNet implements NetworkInfo {
+  @override
+  Future<String?> getWifiIP() async => throw Exception('no plugin in test');
+  @override
+  Future<String?> getWifiIPv6() async => throw Exception('no plugin in test');
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}
+
+WifiConnectionService _unknownConnection() => WifiConnectionService(
+      networkInfo: _UnknownNet(),
+      platformOverride: TargetPlatform.iOS,
+      pathProbe: const _SilentPath(),
+    );
 
 void main() {
   // A fake reachability prober: 'one.one.one.one' and 'www.google.com' answer
@@ -54,6 +84,7 @@ void main() {
             sites: sites,
           ),
           monitor: monitor ?? fakeMonitor(),
+          connectionService: _unknownConnection(),
         ),
       );
 
@@ -349,6 +380,7 @@ void main() {
           theme: AppTheme.dark(),
           home: NetQualityScreen(
             client: MockQualityClient(scriptedResult: scriptedResult()),
+            connectionService: _unknownConnection(),
             reachabilityProbe: ReachabilityProbe(
               prober: fakeProber,
               sites: sites,

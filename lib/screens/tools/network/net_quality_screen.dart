@@ -35,6 +35,7 @@ import 'package:net_quality/net_quality.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/wifi_connection_service.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
@@ -55,6 +56,7 @@ class NetQualityScreen extends StatefulWidget {
     this.client,
     this.reachabilityProbe,
     this.monitor,
+    this.connectionService,
   });
 
   /// Measurement backend. Injected in tests (a [MockQualityClient] with no
@@ -74,6 +76,11 @@ class NetQualityScreen extends StatefulWidget {
   /// it in `dispose()`, which is the "clears on leave" behavior (spec §2).
   final LiveQualityMonitor? monitor;
 
+  /// The honest "is this device on Wi-Fi?" probe, injected in tests. Null in
+  /// production, where the screen builds the real one. Drives the cellular-data
+  /// consent gate (F-1).
+  final WifiConnectionService? connectionService;
+
   @override
   State<NetQualityScreen> createState() => _NetQualityScreenState();
 }
@@ -85,6 +92,20 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
 
   bool _running = false;
   String? _error;
+
+  /// The honest "is this device on Wi-Fi?" probe (F-1). A POSITIVE not-on-Wi-Fi
+  /// verdict is the ONLY thing that raises the cellular-data gate; an ambiguous
+  /// read resolves to `unknown` and changes nothing, so a wired desktop is never
+  /// nagged about cellular data it is not spending.
+  late final WifiConnectionService _connection;
+
+  /// True only on a POSITIVE not-on-Wi-Fi probe. Never set from a failed or
+  /// ambiguous read (GL-005).
+  bool _notOnWifi = false;
+
+  /// Set when the user taps the cost-labelled Run button. The tap IS the consent:
+  /// the button states the data cost, directly under the warning that explains it.
+  bool _throughputConsented = false;
 
   // Transport progress.
   QualityPhase _phase = QualityPhase.idle;
@@ -109,9 +130,24 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     // one-shot client); injected with a fake sampler in tests. Only started on
     // a platform that can actually run the sockets — never on web.
     _monitor = widget.monitor ?? LiveQualityMonitor(host: 'one.one.one.one');
+    _connection = widget.connectionService ?? WifiConnectionService();
     if (NetworkSupport.activeNetworkSupported) {
       _monitor.start();
     }
+    // Resolve the connection state on open so the pre-run screen can state the
+    // data cost BEFORE the user reaches for Run. Never fires a measurement.
+    unawaited(_refreshConnection());
+  }
+
+  /// Re-reads the honest Wi-Fi connection state. Only a POSITIVE not-on-Wi-Fi
+  /// verdict sets [_notOnWifi]; `unknown` leaves it false (GL-005 — an ambiguous
+  /// read must never be presented as proof of cellular).
+  Future<void> _refreshConnection() async {
+    final WifiConnectionStatus status = await _connection.status();
+    if (!mounted) return;
+    setState(() {
+      _notOnWifi = status == WifiConnectionStatus.notOnWifi;
+    });
   }
 
   @override
@@ -127,7 +163,36 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
   /// Kicks off both the transport measurement and the reachability pass from a
   /// single Run action. The reachability future resolves independently and
   /// updates its own section when done.
-  void _run() {
+  ///
+  /// [includeThroughput] CARRIES THE USER'S CELLULAR-DATA CONSENT (round-4 cold
+  /// review, F-1, 2026-07-14).
+  ///
+  /// THIS TOOL HAD NO GATE AT ALL. It called `_client.measure()` bare, riding a
+  /// `includeThroughput = true` default on the QualityClient interface. Network
+  /// Quality is shipped, routed and iOS-live, so on a cellular iPhone: open it,
+  /// tap Run, and it began a full-rate ~30 s download plus the RPM load
+  /// generator — 50 to 500 MB of the user's data — with no warning, no decline
+  /// path, and nothing to consent to. Test My Connection's gate was never the
+  /// whole gate; it was one caller being careful while the door stood open.
+  ///
+  /// The default is now GONE from the interface, so the compiler forces every
+  /// caller to state a decision. This method is where that decision is honored.
+  Future<void> _run({required bool includeThroughput}) async {
+    // SETTLE THE PROBE BEFORE THE CONSENT DECISION READS IT. Same rule as Test My
+    // Connection (F-2): a user can walk out of Wi-Fi range with this screen open,
+    // and a decision made from a stale flag spends data they never agreed to.
+    await _refreshConnection();
+    if (!mounted) return;
+
+    // THE CHOKEPOINT. `includeThroughput` is what the CALLER ASKED FOR;
+    // `spendData` is what the USER HAS AGREED TO PAY FOR. Off Wi-Fi the two are
+    // the same only after an explicit, cost-labelled tap. On Wi-Fi (or on an
+    // AMBIGUOUS probe — a wired desktop, a read we could not make) this is a
+    // no-op and the tool behaves exactly as it always has: an ambiguous read is
+    // never treated as proof of cellular (GL-005).
+    final bool spendData =
+        includeThroughput && (!_notOnWifi || _throughputConsented);
+
     setState(() {
       _error = null;
       _running = true;
@@ -154,7 +219,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
           }),
     );
 
-    _sub = _client.measure().listen(
+    _sub = _client.measure(includeThroughput: spendData).listen(
       (QualityProgress p) {
         if (!mounted) return;
         setState(() {
@@ -389,6 +454,22 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
               style: text.labelMedium?.copyWith(color: colors.statusDanger),
             ),
           ],
+          // THE CELLULAR-DATA COST, STATED BEFORE THE USER SPENDS IT (F-1).
+          // Only on a POSITIVE not-on-Wi-Fi probe — an ambiguous read never nags.
+          // The cost is a RANGE and a MECHANISM, not an invented figure: it
+          // genuinely depends on link speed and cannot be known before the run
+          // (GL-005). Identical wording to Test My Connection, deliberately —
+          // the same cost, told the same way, wherever the bytes are spent.
+          if (_notOnWifi && !_running) ...<Widget>[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              "You're on cellular. The speed test is not capped by size: it "
+              'downloads at full speed for about 30 seconds, so it uses roughly '
+              '50 MB on a slow link and 500 MB or more on fast 5G. Everything '
+              'else on this screen is cheap.',
+              style: text.bodyMedium?.copyWith(color: colors.textSecondary),
+            ),
+          ],
           const SizedBox(height: AppSpacing.md),
           // Full-width primary action, matching the other network screens.
           Semantics(
@@ -396,15 +477,48 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
             enabled: !_running,
             // MINOR 6 (WCAG): the SR button label tracks state — it announces
             // "Running network quality test" while the test runs, and flips
-            // back to the actionable label when idle.
+            // back to the actionable label when idle. Off Wi-Fi the label states
+            // the data cost, so the tap is an INFORMED one for a screen-reader
+            // user exactly as it is for a sighted one.
             label: _running
                 ? 'Running network quality test'
-                : 'Run the network quality test',
+                : (_notOnWifi
+                    ? 'Run the full test including the speed test, which uses '
+                        'cellular data'
+                    : 'Run the network quality test'),
             child: FilledButton(
-              onPressed: _running ? null : _run,
-              child: Text(_running ? 'Running…' : 'Run test'),
+              onPressed: _running
+                  ? null
+                  : () {
+                      // THE TAP IS THE CONSENT. Off Wi-Fi this button's own label
+                      // states the cost, directly under the warning that explains
+                      // it, so tapping it IS the informed decision. Record it
+                      // before the run so the chokepoint in [_run] honors it.
+                      if (_notOnWifi) _throughputConsented = true;
+                      unawaited(_run(includeThroughput: true));
+                    },
+              child: Text(
+                _running
+                    ? 'Running…'
+                    : (_notOnWifi ? 'Run test (uses data)' : 'Run test'),
+              ),
             ),
           ),
+          // THE DECLINE PATH. Not a dead end: latency, jitter, loss and the
+          // reachability table all still run and are all cheap. Only the two
+          // data-hungry stages are withheld, and they report their honest
+          // unavailable note — never a fabricated zero.
+          if (_notOnWifi && !_running) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            Semantics(
+              button: true,
+              label: 'Run without the speed test, using no cellular data',
+              child: TextButton(
+                onPressed: () => unawaited(_run(includeThroughput: false)),
+                child: const Text('Run without the speed test'),
+              ),
+            ),
+          ],
         ],
       ),
     );

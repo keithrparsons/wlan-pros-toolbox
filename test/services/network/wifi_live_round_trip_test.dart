@@ -37,6 +37,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:network_info_plus/network_info_plus.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_connection_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
@@ -87,7 +88,44 @@ const WifiPathFacts _offWifi = WifiPathFacts(
   wifiInterfacePresent: false,
 );
 
-WifiConnectionService _conn(_FakePathProbe probe) => WifiConnectionService(
+/// The ADDRESS probe, which is now the ONLY route to a negative verdict anywhere
+/// in the service (F-4, 2026-07-14: the native path no longer asserts "no Wi-Fi"
+/// from a signal no iPhone has ever run). An off-Wi-Fi fixture must therefore be
+/// expressed HERE — a native "no Wi-Fi interface" is only an ambiguity now, and
+/// falls through to this.
+class _AddrNet implements NetworkInfo {
+  _AddrNet({this.onWifi = true, this.scripted});
+
+  /// Mirrors the path probe: when the fixture says off Wi-Fi, the interface
+  /// carries no address of either family (the radio-off / cellular-only shape).
+  bool onWifi;
+
+  /// Per-read answers, so a fixture can model a TRANSIENT — a read taken across
+  /// the Shortcuts app-switch that disagrees with the one taken a moment later.
+  final List<bool>? scripted;
+
+  int reads = 0;
+
+  bool get _next {
+    final List<bool>? s = scripted;
+    final bool v = (s != null && reads < s.length) ? s[reads] : onWifi;
+    reads++;
+    return v;
+  }
+
+  @override
+  Future<String?> getWifiIP() async => _next ? '192.168.1.20' : null;
+
+  @override
+  Future<String?> getWifiIPv6() async => null;
+
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}
+
+WifiConnectionService _conn(_FakePathProbe probe, {_AddrNet? net}) =>
+    WifiConnectionService(
+      networkInfo: net ?? _AddrNet(),
       platformOverride: TargetPlatform.iOS,
       pathProbe: probe,
     );
@@ -309,19 +347,20 @@ void main() {
     test(
       'a TRANSIENT not-on-Wi-Fi probe on resume does NOT tear down a live session',
       () async {
-        // startMonitoring() does not probe, so load() on resume is read #0. It
-        // answers "no Wi-Fi interface" — the shape a just-resumed app can report
-        // across the Shortcuts app-switch — and the confirmation re-probe (#1)
-        // answers "on Wi-Fi". The link was fine the whole time.
-        final probe = _FakePathProbe(_onWifi)
-          ..scripted = <WifiPathFacts?>[_offWifi, _onWifi];
+        // The native path reports "no Wi-Fi interface" — which, since F-4, is only
+        // an AMBIGUITY and falls through to the address probe. So the TRANSIENT is
+        // modelled where the verdict is actually decided: the address read taken
+        // across the Shortcuts app-switch (#0) comes back empty, and the
+        // confirmation re-probe (#1) finds the link that was there all along.
+        final probe = _FakePathProbe(_offWifi);
+        final _AddrNet net = _AddrNet(scripted: <bool>[false, true]);
         final bridge = _FakeBridge()
           ..everReceived = true
           ..latest = _details()
           ..receivedAt = DateTime.now();
         final c = WifiMonitorController(
           bridge: bridge,
-          connectionService: _conn(probe),
+          connectionService: _conn(probe, net: net),
           missingShortcutSettle: _settle,
           notOnWifiConfirmSettle: _confirm,
         );
@@ -348,7 +387,7 @@ void main() {
           reason: 'A transient probe must never tear down a live session.',
         );
         expect(bridge.monitoringFlag, isTrue);
-        expect(probe.reads, greaterThanOrEqualTo(2),
+        expect(net.reads, greaterThanOrEqualTo(2),
             reason: 'The not-on-Wi-Fi verdict must be CONFIRMED by a re-probe.');
 
         c.dispose();
@@ -360,15 +399,17 @@ void main() {
       'a CONFIRMED not-on-Wi-Fi (a real drop to cellular mid-stream) STILL tears '
       'the session down — the honest state is not weakened',
       () async {
-        // Off Wi-Fi on every read: the device genuinely dropped to cellular.
+        // Off Wi-Fi on every read, in BOTH probes: the device genuinely dropped to
+        // cellular. Since F-4 the negative can only come from the address probe.
         final probe = _FakePathProbe(_offWifi);
+        final _AddrNet net = _AddrNet(onWifi: false);
         final bridge = _FakeBridge()
           ..everReceived = true
           ..latest = _details()
           ..receivedAt = DateTime.now();
         final c = WifiMonitorController(
           bridge: bridge,
-          connectionService: _conn(probe),
+          connectionService: _conn(probe, net: net),
           missingShortcutSettle: _settle,
           notOnWifiConfirmSettle: _confirm,
         );
@@ -396,13 +437,14 @@ void main() {
       'not-connected state IMMEDIATELY (no confirmation delay on the idle path)',
       () async {
         final probe = _FakePathProbe(_offWifi);
+        final _AddrNet net = _AddrNet(onWifi: false);
         final bridge = _FakeBridge()
           ..everReceived = true
           ..latest = _details()
           ..receivedAt = DateTime.now();
         final c = WifiMonitorController(
           bridge: bridge,
-          connectionService: _conn(probe),
+          connectionService: _conn(probe, net: net),
           missingShortcutSettle: _settle,
           notOnWifiConfirmSettle: _confirm,
         );

@@ -20,7 +20,7 @@ Future<void> main() async {
 
   // ignore: avoid_print
   print('Measuring (latency -> throughput -> responsiveness)...');
-  await for (final p in client.measure()) {
+  await for (final p in client.measure(includeThroughput: true)) {
     // ignore: avoid_print
     print('  ${p.phase.name.padRight(14)} ${(p.fraction * 100).toStringAsFixed(0)}%');
   }

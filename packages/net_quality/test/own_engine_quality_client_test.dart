@@ -45,7 +45,7 @@ void main() {
 
       expect(client.isAvailable, isTrue);
 
-      final progress = await client.measure().toList();
+      final progress = await client.measure(includeThroughput: true).toList();
       // Monotonic non-decreasing, ending at complete = 1.0.
       for (var i = 1; i < progress.length; i++) {
         expect(progress[i].fraction,
@@ -108,7 +108,7 @@ void main() {
         clock: () => DateTime.utc(2026, 1, 1),
       );
 
-      await client.measure().drain<void>();
+      await client.measure(includeThroughput: true).drain<void>();
       final result = client.lastResult!;
 
       final lat = result.metric(MetricIds.latency)!;
@@ -149,7 +149,7 @@ void main() {
         responsivenessProbe: responsiveness,
       );
 
-      await client.measure().drain<void>();
+      await client.measure(includeThroughput: true).drain<void>();
       final result = client.lastResult!;
 
       expect(result.metric(MetricIds.download)!.grade,
@@ -188,7 +188,7 @@ void main() {
         responsivenessProbe: responsiveness,
       );
 
-      await client.measure().drain<void>();
+      await client.measure(includeThroughput: true).drain<void>();
       final result = client.lastResult!;
 
       final dl = result.metric(MetricIds.download)!;
@@ -238,7 +238,7 @@ void main() {
         responsivenessProbe: responsiveness,
       );
 
-      final progress = await client.measure().toList();
+      final progress = await client.measure(includeThroughput: true).toList();
 
       // Monotonic, never decreasing, ends at complete = 1.0.
       for (var i = 1; i < progress.length; i++) {
@@ -332,7 +332,7 @@ void main() {
         responsivenessProbe: responsiveness,
       );
 
-      await client.measure().drain<void>();
+      await client.measure(includeThroughput: true).drain<void>();
       final result = client.lastResult!;
 
       expect(calls, 2);

@@ -70,6 +70,9 @@ import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 import 'package:wlan_pros_toolbox/theme/app_typography.dart';
+import 'package:network_info_plus/network_info_plus.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_connection_service.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_path_probe.dart';
 
 // ── Capture constants ───────────────────────────────────────────────────────
 
@@ -354,6 +357,30 @@ void _expectText(String exact) {
   expect(find.text(exact), findsWidgets,
       reason: 'expected on-screen value "$exact" not found');
 }
+
+/// The connection-probe seam (F-1). Network Quality now gates its data-hungry
+/// stages on an honest not-on-Wi-Fi read; screenshot fixtures must supply it
+/// rather than reach an unmocked platform channel. `unknown` changes nothing.
+class _SilentPathNQ implements WifiPathProbe {
+  const _SilentPathNQ();
+  @override
+  Future<WifiPathFacts?> read() async => null;
+}
+
+class _UnknownNetNQ implements NetworkInfo {
+  @override
+  Future<String?> getWifiIP() async => throw Exception('no plugin in test');
+  @override
+  Future<String?> getWifiIPv6() async => throw Exception('no plugin in test');
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}
+
+WifiConnectionService _unknownConnectionNQ() => WifiConnectionService(
+      networkInfo: _UnknownNetNQ(),
+      platformOverride: TargetPlatform.iOS,
+      pathProbe: const _SilentPathNQ(),
+    );
 
 void main() {
   // ════════════════════════════════════════════════════════════════════════
@@ -835,6 +862,7 @@ void main() {
       figId: 'fig-3-1',
       height: 1900,
       build: () => NetQualityScreen(
+        connectionService: _unknownConnectionNQ(),
         client: MockQualityClient(
           scriptedResult: _internetResult(
             down: 180, up: 12, latencyMs: 24, jitterMs: 6, lossPct: 0,
@@ -864,6 +892,7 @@ void main() {
       figId: 'fig-8-3',
       height: 1900,
       build: () => NetQualityScreen(
+        connectionService: _unknownConnectionNQ(),
         client: MockQualityClient(
           scriptedResult: _internetResult(
             down: 480, up: 360, latencyMs: 12, jitterMs: 2, lossPct: 0,

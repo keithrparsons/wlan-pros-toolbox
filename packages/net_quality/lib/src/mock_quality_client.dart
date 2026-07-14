@@ -40,7 +40,7 @@ class MockQualityClient implements QualityClient {
   int measureCalls = 0;
 
   @override
-  Stream<QualityProgress> measure({bool includeThroughput = true}) async* {
+  Stream<QualityProgress> measure({required bool includeThroughput}) async* {
     measureCalls++;
     lastIncludeThroughput = includeThroughput;
     yield const QualityProgress(QualityPhase.latency, 0.25);

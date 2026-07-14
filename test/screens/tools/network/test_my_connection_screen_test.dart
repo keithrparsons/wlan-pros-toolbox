@@ -51,6 +51,9 @@ import 'package:wlan_pros_toolbox/services/network/wifi_security_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_signal_sampler.dart';
 import 'package:wlan_pros_toolbox/theme/app_color_scheme.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+import 'package:network_info_plus/network_info_plus.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_connection_service.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_path_probe.dart';
 
 /// macOS sample: Tx 866 present, Rx NOT exposed by public CoreWLAN, SNR 45.
 ConnectedAp _macSample() => ConnectedAp.fromWifiInfo(
@@ -699,8 +702,16 @@ class _FreshBridge implements WiFiDetailsBridge {
 /// auto-fire tests use — and only intercepts the trigger surface to count it
 /// without touching a real method channel.
 class _CountingSampler extends WifiSignalSampler {
+  /// The connection probe is DECLARED, not left to an unmocked platform channel
+  /// (2026-07-14, F-2). These fixtures model a phone ON WI-FI running a check;
+  /// an un-injected service resolves to `notOnWifi` in the test VM, and now that
+  /// `_run` AWAITS the probe before deciding, that would gate the auto-capture
+  /// off and the test would be asserting about a device it never meant to model.
   _CountingSampler({required super.iosBridge})
-      : super(source: WifiInfoSource.iosShortcuts);
+      : super(
+          source: WifiInfoSource.iosShortcuts,
+          connectionService: _onWifiConnection(),
+        );
 
   int getReadingOnceCalls = 0;
   int pollLatestCalls = 0;
@@ -785,6 +796,40 @@ LiveOnboardingService _seenOnboarding() {
   });
   return LiveOnboardingService(getStore: SharedPreferences.getInstance);
 }
+
+/// THE PROBE THESE TESTS ALWAYS DEPENDED ON, NOW STATED (2026-07-14, F-2).
+///
+/// These fixtures model a phone ON WI-FI running a check. They never said so: the
+/// sampler built a REAL WifiConnectionService over an unmocked platform channel,
+/// which resolves to `notOnWifi` in the test VM. That did not matter while `_run`
+/// read the connection flag STALE — the in-run refresh was fire-and-forget, so
+/// `_autoCaptureIosRf` saw the initState value (false) and fired the Shortcut.
+///
+/// F-2 made the run AWAIT that probe, because a consent decision may not be made
+/// from a stale flag. The settled value is now what the auto-capture reads — so a
+/// fixture that means "on Wi-Fi" has to SAY "on Wi-Fi" instead of relying on the
+/// answer arriving too late to be used. The world the test asserts about is now
+/// the world it declares.
+class _SilentPathTmc implements WifiPathProbe {
+  const _SilentPathTmc();
+  @override
+  Future<WifiPathFacts?> read() async => null;
+}
+
+class _OnWifiNetTmc implements NetworkInfo {
+  @override
+  Future<String?> getWifiIP() async => '192.168.1.20';
+  @override
+  Future<String?> getWifiIPv6() async => null;
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}
+
+WifiConnectionService _onWifiConnection() => WifiConnectionService(
+      networkInfo: _OnWifiNetTmc(),
+      platformOverride: TargetPlatform.iOS,
+      pathProbe: const _SilentPathTmc(),
+    );
 
 void main() {
   Widget hostTheme(Widget child, ThemeData theme, {Size? size}) => MaterialApp(
@@ -1869,6 +1914,7 @@ void main() {
         final sampler = WifiSignalSampler(
           source: WifiInfoSource.iosShortcuts,
           iosBridge: bridge,
+          connectionService: _onWifiConnection(),
         );
         addTearDown(sampler.dispose);
         await tester.pumpWidget(
@@ -1907,6 +1953,7 @@ void main() {
         final sampler = WifiSignalSampler(
           source: WifiInfoSource.iosShortcuts,
           iosBridge: bridge,
+          connectionService: _onWifiConnection(),
         );
         addTearDown(sampler.dispose);
         await tester.pumpWidget(
@@ -2906,6 +2953,7 @@ void main() {
         final WifiSignalSampler sampler = WifiSignalSampler(
           source: WifiInfoSource.iosShortcuts,
           iosBridge: bridge,
+          connectionService: _onWifiConnection(),
         );
         addTearDown(sampler.dispose);
 
@@ -3004,6 +3052,7 @@ void main() {
         final WifiSignalSampler sampler = WifiSignalSampler(
           source: WifiInfoSource.iosShortcuts,
           iosBridge: bridge,
+          connectionService: _onWifiConnection(),
         );
         addTearDown(sampler.dispose);
 

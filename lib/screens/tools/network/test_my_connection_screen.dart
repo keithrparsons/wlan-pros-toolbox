@@ -1140,7 +1140,40 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// Off Wi-Fi the user chooses, and choosing "no" still runs the whole rest of
   /// the check (latency, loss, DNS, reachability, ISP, the honest not-on-Wi-Fi
   /// state) — only the data-hungry stages are withheld.
-  void _run({required bool includeThroughput}) {
+  Future<void> _run({required bool includeThroughput}) async {
+    // ========================================================================
+    // SETTLE THE PROBE BEFORE THE CONSENT DECISION READS IT (round-4 F-2 fix,
+    // 2026-07-14). THIS AWAIT IS THE FIX. Do not turn it back into a
+    // fire-and-forget.
+    //
+    // The consent decision below reads [_notOnWifi]. Until now the only thing
+    // that refreshed [_notOnWifi] inside a run was a FIRE-AND-FORGET
+    // `_sampler?.load()` fired AFTER this decision had already been made. That
+    // was defended in a comment as safe because the probe "resolves in
+    // milliseconds, far inside the ~25-35s measurement, so [_notOnWifi] is
+    // settled long before `onDone` reads it." True — and irrelevant. `onDone`
+    // is not the only reader. `spendData` is, and it runs FIRST.
+    //
+    // THE BYPASS THAT LET THROUGH (REPRODUCED): mount the screen on Wi-Fi, then
+    // walk out of Wi-Fi range with it open — an entirely ordinary thing to do.
+    // Nothing re-probes while mounted, so [_notOnWifi] is still false: the
+    // cellular warning never renders, the button keeps its on-Wi-Fi label, the
+    // consent tap at [_throughputConsented] never fires — and `spendData`
+    // reads that same stale false and evaluates TRUE. The app spent up to
+    // 500 MB of the user's cellular data, and then rendered "you're not
+    // connected to Wi-Fi" in the result, because the fire-and-forget probe had
+    // landed by the time `onDone` ran. It spent the data AND THEN TOLD YOU IT
+    // KNEW.
+    //
+    // [_autoStart] already awaited the probe (that is why the auto-run path was
+    // safe and only the auto-run path was tested). The BUTTON and "Run again"
+    // did not. The fix belongs HERE, at the one chokepoint every caller passes
+    // through, not bolted onto each caller — a fourth caller added tomorrow
+    // must not be able to reintroduce this by forgetting a line.
+    // ========================================================================
+    await _retryConnection();
+    if (!mounted) return;
+
     // ========================================================================
     // THE CONSENT CHOKEPOINT (round-4 P0, 2026-07-14).
     //
@@ -1191,14 +1224,10 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       _networkDetails = null;
     });
 
-    // REFRESH THE HONEST NOT-ON-WI-FI PROBE (2026-07-13). Fire-and-forget, exactly
-    // like the initState / resume loads: a user can drop off Wi-Fi while sitting on
-    // this screen, and the verdict must not be computed from a link that vanished.
-    // Never awaited — it is a platform-channel round trip, and awaiting it inside
-    // the timeout-bounded link read stalls the run. It resolves in milliseconds,
-    // far inside the ~25-35s internet measurement, so [_notOnWifi] is settled long
-    // before `onDone` reads it — and `onDone` is where the result is gated.
-    _sampler?.load(nativeSsid: _nativeSsid);
+    // (The not-on-Wi-Fi probe used to be fired here, unawaited, AFTER the consent
+    // decision above had already read its stale result. It is now AWAITED at the
+    // top of this method — see the F-2 note there. Firing it again here would be a
+    // redundant platform-channel round trip.)
 
     final Future<ConnectedAp?> linkFuture = _readLink();
 

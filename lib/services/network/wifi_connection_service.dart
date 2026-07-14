@@ -70,9 +70,18 @@
 //   |-------------------------------------------------------|-------------|
 //   | default route runs over Wi-Fi (`usesWifi`)             | `onWifi`    |
 //   | a Wi-Fi-required path is satisfied (`wifiSatisfied`)   | `onWifi`    |
-//   | no Wi-Fi interface, no Wi-Fi route                     | `notOnWifi` |
+//   | no Wi-Fi interface, no Wi-Fi route                     | ↓ ADDRESSES |
 //   | a Wi-Fi interface is present but carries no route      | ↓ ADDRESSES |
 //   | the platform did not answer (null)                     | ↓ ADDRESSES |
+//
+// THE NATIVE PATH NEVER ASSERTS A NEGATIVE (round-4 cold review F-4, 2026-07-14).
+// It keeps only the two answers it can PROVE — both POSITIVE — and hands every
+// other shape to the address probe. The `no Wi-Fi interface` row used to return
+// `notOnWifi` outright, and was the ONLY definitive negative in the codebase drawn
+// from a signal no iPhone has ever run. It is now a fall-through like the rest.
+// Radio-off is still detected (the address probe resolves it: no IPv4 AND no IPv6
+// ⇒ `notOnWifi`); the only capability given up is USB-tether discrimination. See
+// the long note at the branch itself for why that trade is not close.
 //
 // THE AMBIGUOUS ROW IS THE ONE THAT MATTERS, AND IT COST A REGRESSION. The first
 // cut of round 4 answered it `unknown` and stopped. `unknown` means "keep the
@@ -95,9 +104,10 @@
 //   THREE HONEST STATES — never fake a value:
 //     * onWifi    — a positive association signal: the native path runs over Wi-Fi,
 //                   a caller-supplied native SSID, or a Wi-Fi IPv4 address.
-//     * notOnWifi — the native path reports NO Wi-Fi interface at all; or (fallback,
-//                   iOS only) the Wi-Fi interface carries NO ADDRESS OF EITHER
-//                   FAMILY.
+//     * notOnWifi — (iOS only, address probe) the Wi-Fi interface carries NO
+//                   ADDRESS OF EITHER FAMILY. This is now the ONLY route to a
+//                   negative verdict anywhere in this service: the native path no
+//                   longer asserts one (F-4).
 //     * unknown   — the state could not be determined: a read threw, the platform
 //                   cannot answer, or the evidence is AMBIGUOUS. The caller treats
 //                   `unknown` as "carry on as before", NEVER as "not on Wi-Fi".
@@ -201,16 +211,48 @@ class WifiConnectionService {
       if (path.usesWifi || path.wifiSatisfied) {
         return WifiConnectionStatus.onWifi;
       }
-      // No Wi-Fi interface on the path AT ALL. Definitive: an absent interface
-      // cannot carry a path (MEASURED — see the header). This is also what keeps a
-      // USB-tethered `en*` from being read as Wi-Fi, which the address probe below
-      // cannot do on its own.
-      if (!path.wifiInterfacePresent) {
-        return WifiConnectionStatus.notOnWifi;
-      }
       // ====================================================================
-      // AMBIGUOUS — AND WE FALL THROUGH TO THE ADDRESS PROBE. WE DO NOT GUESS,
-      // AND WE DO NOT SHORT-CIRCUIT TO `unknown`. (Round-4 F1 regression fix.)
+      // "NO WI-FI INTERFACE AT ALL" IS AMBIGUOUS TOO, AND IT ALSO FALLS THROUGH.
+      // (Round-4 cold review, F-4, 2026-07-14.)
+      //
+      // This used to be the ONE branch in the codebase that asserted a DEFINITIVE
+      // NEGATIVE — "you have no Wi-Fi" — from native data alone:
+      //
+      //     if (!path.wifiInterfacePresent) return WifiConnectionStatus.notOnWifi;
+      //
+      // The header called that shape MEASURED. What was measured was macOS:
+      // `NWPathMonitor(requiredInterfaceType: .wiredEthernet)` on a machine with no
+      // wired NIC. That establishes exactly nothing about an iPhone mid-roam, mid
+      // network-transition, or backgrounded — and NO iPHONE HAS EVER RUN THIS CODE.
+      //
+      // If iOS ever reports empty `availableInterfaces` on both paths while the
+      // device is genuinely associated, that branch told a user who IS on Wi-Fi
+      // that they had none and BLANKED THEIR LIVE LINK. That is the R2 bug class,
+      // which this project has now shipped and fixed twice. Round 3 was
+      // structurally incapable of it, because it consulted addresses. So round 4
+      // was not "strictly better in every shape": in this one shape — the shape
+      // nobody has ever run — it was strictly worse, and it was the only shape
+      // where a single unverified native answer could silence a real link.
+      //
+      // WHAT THE FALL-THROUGH COSTS: only USB-tether discrimination (a tethered
+      // `en*` carries an address, so the probe below reads it as Wi-Fi — which is
+      // exactly what shipped before round 4). WHAT IT KEEPS: radio-off detection,
+      // in full — no IPv4 AND no IPv6 on the interface resolves to `notOnWifi`
+      // below, on its own, without help from this branch. So the honest
+      // not-on-Wi-Fi state Keith verified on his own phone is untouched.
+      //
+      // Blanking a genuinely-connected user's Wi-Fi is a vastly worse failure than
+      // failing to tell a tether from a link. We do not buy a small capability with
+      // a large silent lie. The invariant round 4 was supposed to establish, and
+      // did not, now holds everywhere: NO DEFINITIVE NEGATIVE FROM AN UNVERIFIED
+      // SIGNAL. The native path keeps every answer it can PROVE (both POSITIVES,
+      // above) and hands everything else to the signal that has actually been
+      // verified in the field.
+      //
+      // The remaining shapes that land here — a captive portal mid-join, a phone
+      // HOSTING a hotspot, a radio that is on but unassociated — were already
+      // falling through, and are resolved by the address probe exactly as before.
+      // ====================================================================
       //
       // A Wi-Fi interface is present but carries no usable route. That covers a
       // captive portal mid-join, a phone HOSTING a hotspot, and — the one that

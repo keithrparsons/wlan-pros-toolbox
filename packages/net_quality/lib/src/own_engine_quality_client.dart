@@ -177,7 +177,7 @@ class OwnEngineQualityClient implements QualityClient {
       'to save cellular data';
 
   @override
-  Stream<QualityProgress> measure({bool includeThroughput = true}) async* {
+  Stream<QualityProgress> measure({required bool includeThroughput}) async* {
     final metrics = <QualityMetric>[];
     _maxFraction = 0;
 

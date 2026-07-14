@@ -73,7 +73,20 @@ abstract interface class QualityClient {
   /// 5G. A Wi-Fi professional on an expensive roaming plan must never have an app
   /// silently burn that. Test My Connection warns, then passes `false` here unless
   /// the user explicitly consents.
-  Stream<QualityProgress> measure({bool includeThroughput = true});
+  /// [includeThroughput] IS REQUIRED, AND HAS NO DEFAULT. THIS IS LOAD-BEARING.
+  ///
+  /// It used to default to `true`. A default on THIS declaration is a default on
+  /// the only interface through which the bytes are ever spent, so any caller
+  /// could burn 50-500 MB of a user's cellular data by simply not knowing the
+  /// parameter existed — which is exactly what `NetworkQualityScreen` did
+  /// (`_client.measure()`, bare, no warning, no decline path, on a shipped and
+  /// iOS-live tool). Test My Connection's gate was never the whole gate; it was
+  /// one caller being careful while the door stood open.
+  ///
+  /// Required means the COMPILER asks the question at every call site. Do not add
+  /// a default back to silence the analyzer: the analyzer complaining IS the
+  /// control working.
+  Stream<QualityProgress> measure({required bool includeThroughput});
 
   /// The most recent successful result, or null if no measurement has
   /// completed yet.
