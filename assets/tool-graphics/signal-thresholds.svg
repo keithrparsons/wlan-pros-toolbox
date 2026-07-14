@@ -5,8 +5,12 @@
        list's `label` / `displayRange` fields; the lime marker is copied from
        SignalThresholdsScreen.kAppThresholds ('VoIP / Real-time' minRssi).
        DO NOT hand-edit a number here. Edit kRssiBands and re-derive.
-       test/assets/signal_thresholds_svg_guard_test.dart parses this file and fails
-       the build if any band, range, or number in it disagrees with the canonical Dart.
+       test/services/network/signal_grading_cross_check_test.dart parses this file
+       and fails the build if any band, range, or number in it disagrees with the
+       canonical Dart. (That pin was wrong in the first draft of this file: it named
+       a test/assets/... path that has never existed. A non-resolving citation, in
+       the very file redrawn to remove false claims, in source that ships under
+       AGPL. Caught by Vera. Verify a pin by opening it, not by typing it.)
 
        Bands (kRssiBands, strongest-first):
          Excellent  > -60 dBm

@@ -271,6 +271,31 @@ void main() {
       }
     });
 
+    test('the bands are CONTIGUOUS: no gap, no overlap (Vera LOW-1)', () {
+      // The boundary test below checks each band's RIGHT EDGE against kRssiBands,
+      // which says nothing about whether the NEXT band starts there. Vera opened
+      // a 10px hole between Poor and Fair, left every label untouched, and the
+      // suite stayed green: a drawn scale with a gap in it, where some readings
+      // fall into no band at all. Checking edges one at a time is not the same as
+      // checking that they MEET.
+      final List<_SvgBand> bands = svg.bandsLeftToRight;
+      for (int i = 0; i < bands.length - 1; i++) {
+        expect(
+          bands[i + 1].x0,
+          closeTo(bands[i].x1, 0.5),
+          reason: 'Band "${bands[i].label}" ends at x=${bands[i].x1} but '
+              '"${bands[i + 1].label}" starts at x=${bands[i + 1].x0}. The '
+              'drawn scale has a ${bands[i + 1].x0 > bands[i].x1 ? "GAP" : "OVERLAP"} '
+              'in it. Every dBm must fall in exactly one band.',
+        );
+      }
+      // And the scale must span the whole drawn axis, edge to edge.
+      expect(bands.first.x0, closeTo(svg.axisX1, 0.5),
+          reason: 'The weakest band does not start at the axis origin.');
+      expect(bands.last.x1, closeTo(svg.axisX2, 0.5),
+          reason: 'The strongest band does not reach the axis end.');
+    });
+
     test('NO ORPHAN NUMBERS: every number drawn traces to a Dart constant', () {
       // The catch-all. A stale "-80" or "-55" left behind anywhere in the
       // drawing fails here even if the bands themselves were fixed. The only
@@ -485,6 +510,11 @@ class _SignalSvg {
   /// The horizontal axis line (the only scaffold-coloured horizontal line).
   _El get _axis => _lines.singleWhere((_El l) =>
       l.s('stroke')?.toUpperCase() == '#E5E5E5' && l.d('y1') == l.d('y2'));
+
+  /// The drawn axis's start and end x, so the band boxes can be proved to span
+  /// the whole scale with no gap at either end (Vera LOW-1).
+  double get axisX1 => _axis.d('x1');
+  double get axisX2 => _axis.d('x2');
 
   /// The dBm the axis endpoints are LABELLED with, read off the drawing: the
   /// bare-integer texts sitting at the axis's x1 and x2.
