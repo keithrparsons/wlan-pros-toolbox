@@ -29,6 +29,69 @@ import 'package:flutter/services.dart';
 
 import 'wifi_details.dart';
 
+/// A live run that was IN FLIGHT when the app last lost its scene.
+///
+/// Firing the companion Shortcut backgrounds the app into the Shortcuts app, and
+/// iOS may tear down and rebuild the UIScene while we are away. Flutter then
+/// restarts at its initial (home) route, and the ENTIRE Dart heap goes with it —
+/// the tool screen, its state, and the in-flight measurement. The user tapped
+/// "Check My Connection" and landed on Home with nothing to show for it.
+///
+/// This is the record that survives that, because it is written to the App Group
+/// (below the app's lifecycle) at the instant the trigger fires. [route] says which
+/// tool to put the user back on; [armedAt] says when the run started, which both
+/// BOUNDS the restore (a stale arm is ignored, never obeyed) and DATES the evidence
+/// (a payload stamped after [armedAt] belongs to THIS run — a stale reading from
+/// the last time the phone was on Wi-Fi does not).
+@immutable
+class PendingLiveRun {
+  const PendingLiveRun({required this.route, required this.armedAt});
+
+  /// The named route of the tool that fired the trigger (e.g. `/tools/test-my-connection`).
+  final String route;
+
+  /// When the run armed — i.e. when it fired the Shortcut.
+  final DateTime armedAt;
+
+  /// How long an armed run stays restorable.
+  ///
+  /// SIZED TO THE ROUND-TRIP IT PROTECTS, not by feel. The one-shot trigger uses
+  /// the `x-callback-url` form, so iOS re-foregrounds the app the moment the single
+  /// Shortcut run FINISHES — a few seconds. The window has to cover that, plus a
+  /// full app relaunch if iOS killed the process outright, plus a user who glanced
+  /// at a notification on the way back.
+  ///
+  /// TWO MINUTES. Long enough that no realistic return path expires mid-walk; short
+  /// enough that an app iOS killed and the user reopened NEXT MORNING is never
+  /// dragged into a tool they did not ask for. The failure it must not have is
+  /// "restores something the user has forgotten about" — and 2 minutes cannot reach
+  /// that, while 30 seconds could plausibly cut off a slow cold relaunch.
+  static const Duration restoreWindow = Duration(minutes: 2);
+
+  /// Whether this armed run is still young enough to restore. An arm older than
+  /// [restoreWindow] is dead: the user has moved on, and yanking them back into a
+  /// tool would be the app hijacking their navigation, not recovering their run.
+  bool isFresh({DateTime? now}) {
+    final DateTime t = now ?? DateTime.now();
+    final Duration age = t.difference(armedAt);
+    // A negative age (clock moved backwards, or a stamp from the future) is not
+    // evidence of freshness — it is evidence we cannot trust the clock. Fail safe.
+    return !age.isNegative && age <= restoreWindow;
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is PendingLiveRun &&
+      other.route == route &&
+      other.armedAt == armedAt;
+
+  @override
+  int get hashCode => Object.hash(route, armedAt);
+
+  @override
+  String toString() => 'PendingLiveRun($route, armed $armedAt)';
+}
+
 /// Bridges the native iOS Shortcuts Wi-Fi handoff to Dart, typed to
 /// [WiFiDetails].
 class WiFiDetailsBridge {
@@ -198,6 +261,62 @@ class WiFiDetailsBridge {
     } on PlatformException catch (e) {
       debugPrint('WiFiDetailsBridge.consumeLiveErrorNav failed: $e');
       return null;
+    }
+  }
+
+  /// ARMS the "a live run is in flight on [route]" marker in the App Group, at the
+  /// moment the run fires its trigger. Until [clearLiveRun], a UIScene teardown is a
+  /// RECOVERABLE event: the nav gate can route the user back and the tool can resume
+  /// the run. No-op off-iOS (no scene teardown to survive).
+  Future<void> armLiveRun(String route) async {
+    try {
+      await _method.invokeMethod<void>('armLiveRun', route);
+    } on MissingPluginException {
+      // Non-iOS: firing a tool never backgrounds the app, so no run is ever lost.
+    } on PlatformException catch (e) {
+      debugPrint('WiFiDetailsBridge.armLiveRun failed: $e');
+    }
+  }
+
+  /// Reads the in-flight live run, or null when none is armed. NON-DESTRUCTIVE —
+  /// the nav gate and then the tool each need it, in that order, so the read cannot
+  /// consume it. The tool calls [clearLiveRun] once it has taken the run over.
+  ///
+  /// Null off-iOS (no handler), and null when the native side cannot DATE the arm —
+  /// an arm we cannot bound is one we refuse to act on rather than one we trust.
+  Future<PendingLiveRun?> pendingLiveRun() async {
+    try {
+      final Map<Object?, Object?>? raw =
+          await _method.invokeMethod<Map<Object?, Object?>>('pendingLiveRun');
+      if (raw == null) return null;
+      final Object? route = raw['route'];
+      final Object? atMs = raw['atMs'];
+      if (route is! String || route.isEmpty) return null;
+      if (atMs is! int || atMs <= 0) return null;
+      return PendingLiveRun(
+        route: route,
+        armedAt: DateTime.fromMillisecondsSinceEpoch(atMs),
+      );
+    } on MissingPluginException {
+      return null;
+    } on PlatformException catch (e) {
+      debugPrint('WiFiDetailsBridge.pendingLiveRun failed: $e');
+      return null;
+    }
+  }
+
+  /// DISARMS the in-flight-run marker. Called on every CLEAN ending: the run
+  /// completed, the run errored, or the user deliberately left the tool. After this,
+  /// nothing drags the user back — which is exactly right, because there is no run
+  /// to come back to. This is the call that makes "the marker is still set" MEAN
+  /// "we did not exit cleanly". No-op off-iOS.
+  Future<void> clearLiveRun() async {
+    try {
+      await _method.invokeMethod<void>('clearLiveRun');
+    } on MissingPluginException {
+      // Non-iOS: nothing was ever armed.
+    } on PlatformException catch (e) {
+      debugPrint('WiFiDetailsBridge.clearLiveRun failed: $e');
     }
   }
 

@@ -106,6 +106,15 @@ class _Bridge implements WiFiDetailsBridge {
   Future<void> setLiveOriginRoute(String route) async {}
   @override
   Future<String?> consumeLiveErrorNav() async => null;
+
+  // Scene-teardown restore seam. Default = NO pending run, so this fake keeps
+  // asserting the app does NOT drag the user into a tool.
+  @override
+  Future<void> armLiveRun(String route) async {}
+  @override
+  Future<PendingLiveRun?> pendingLiveRun() async => null;
+  @override
+  Future<void> clearLiveRun() async {}
   @override
   Stream<WiFiDetails> get updates => const Stream<WiFiDetails>.empty();
   @override

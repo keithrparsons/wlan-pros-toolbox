@@ -105,6 +105,16 @@ class _Bridge implements WiFiDetailsBridge {
   Future<void> setLiveOriginRoute(String route) async {}
   @override
   Future<String?> consumeLiveErrorNav() async => null;
+
+  // Scene-teardown restore seam. Default = NO pending run, so every pre-existing
+  // test keeps asserting the app does NOT drag the user into a tool. They are the
+  // counterweight net for the restore.
+  @override
+  Future<void> armLiveRun(String route) async {}
+  @override
+  Future<PendingLiveRun?> pendingLiveRun() async => null;
+  @override
+  Future<void> clearLiveRun() async {}
   @override
   Future<bool> hasEverReceivedPayload() async => true;
   @override

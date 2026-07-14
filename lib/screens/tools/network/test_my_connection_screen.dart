@@ -87,6 +87,38 @@ const String kWifiVsInternetFootnote =
     'supporting context; the negotiated data rate drives the verdict.';
 
 /// The merged "is it my Wi-Fi or my internet?" screen.
+/// THE DISARM DECISION, AS A PURE FUNCTION — because it cannot be driven any other
+/// way, and an undriveable rule is an unguarded one.
+///
+/// A widget test CANNOT reproduce "dispose() while backgrounded". A paused app does
+/// not pump frames, so the unmount a real scene teardown performs never runs inside a
+/// test body; dispose() fires later, at teardown, with the binding back at `resumed`.
+/// Two successive widget-level attempts at this LOOKED right, passed, and were both
+/// proven vacuous by hand-injected mutation — they passed identically against a rule
+/// that disarmed unconditionally, i.e. against the exact defect they existed to catch.
+///
+/// So the rule is lifted out of the widget and pinned here, where it can be stated
+/// exactly and tested exhaustively over every lifecycle state.
+///
+/// THE RULE. Disarm ONLY when we are demonstrably FOREGROUNDED, because only a
+/// foregrounded user can choose to leave. Every other state — inactive, hidden,
+/// paused, detached, or UNKNOWN — is a screen going away for reasons that are not the
+/// user's choice, and in those cases the arm is the only surviving evidence that a run
+/// was ever in flight.
+///
+/// A NULL STATE DELIBERATELY DOES NOT DISARM. Null means "we do not know", and the two
+/// errors are not symmetric:
+///   * disarm when we should not have → the user's destroyed run is NOT restored. That
+///     is Keith's bug, unfixed.
+///   * fail to disarm when we should have → the user is pulled back into a tool once,
+///     inside the few seconds a run is armed. Annoying, self-correcting (the arm is
+///     consumed on the way through), and bounded by the restore window.
+/// The second is the error we can afford. On a real device the state is `resumed` from
+/// the first frame, so this guards the unknown rather than a routine path.
+@visibleForTesting
+bool shouldDisarmOnDispose(AppLifecycleState? state) =>
+    state == AppLifecycleState.resumed;
+
 class TestMyConnectionScreen extends StatefulWidget {
   const TestMyConnectionScreen({
     super.key,
@@ -227,6 +259,26 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
 
   bool _running = false;
   String? _error;
+
+  /// SET WHEN THIS SCREEN WAS MOUNTED TO TAKE OVER A RUN iOS DESTROYED.
+  ///
+  /// Holds the instant that run ARMED (fired its Shortcut). Two jobs, and both are
+  /// load-bearing:
+  ///
+  ///   1. It tells [_run] this is a RESUME, so it must NOT fire the Shortcut again.
+  ///      Firing is what backgrounds the app into Shortcuts, which is what let iOS
+  ///      destroy the run in the first place. A resume that re-fires would be
+  ///      destroyed again, resume again, fire again — AN INFINITE BOUNCE LOOP that
+  ///      takes the phone away from the user entirely. This is the single most
+  ///      dangerous thing in this change and [_adoptDeliveredIosRf] is its guard.
+  ///
+  ///   2. It DATES the evidence. The Shortcut's reading is sitting in the App Group,
+  ///      but so is the stale one from the last time the phone was on Wi-Fi. Only a
+  ///      payload stamped at or after this instant is a reading OF this run.
+  ///
+  /// Null on every ordinary open, which is why an ordinary open behaves exactly as
+  /// it always has: it waits for the tap.
+  DateTime? _resumedRunArmedAt;
 
   // Internet progress.
   QualityPhase _phase = QualityPhase.idle;
@@ -597,6 +649,82 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         if (mounted) _autoStart();
       });
     }
+
+    // THE SCENE-TEARDOWN RESUME (2026-07-14, Keith device round 6).
+    //
+    // This screen may have been mounted NOT by a user tap, but by the navigation
+    // gate putting the user back after iOS destroyed the scene out from under a run
+    // that was already going. The user tapped "Check My Connection" one scene ago;
+    // they are owed a RESULT, not a reset screen. See [_maybeResumeInterruptedRun].
+    //
+    // Post-frame so the sampler's construction above has completed and the resume can
+    // drive a fully-built screen.
+    if (_isIos) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _maybeResumeInterruptedRun();
+      });
+    }
+  }
+
+  /// TAKES OVER A RUN THAT iOS DESTROYED MID-FLIGHT.
+  ///
+  /// Keith: "Click on Check My Connection, and it opens the Shortcut for a second,
+  /// then RETURNS TO THE HOME SCREEN. Doesn't finish Test My Connection at all."
+  ///
+  /// Firing the companion Shortcut backgrounds the app into the Shortcuts app, and
+  /// iOS may tear down and rebuild the UIScene while we are gone. Flutter restarts at
+  /// its initial (home) route and the whole Dart heap dies with it — this screen, its
+  /// state, and the in-flight measurement. The navigation gate
+  /// ([LiveErrorNavGate._restoreInterruptedRun]) puts the user back HERE; this method
+  /// gives them back their RUN.
+  ///
+  /// WHAT "RESUME" CAN AND CANNOT MEAN, STATED HONESTLY. The throughput measurement's
+  /// TCP streams died with the heap. They cannot be continued, and this does not
+  /// pretend to: it RE-RUNS the measurement. What genuinely survives is the thing the
+  /// run had gone to Shortcuts FOR — the RF reading, written to the App Group before
+  /// the scene died. So the resumed run adopts that reading (never re-firing to get
+  /// it) and re-measures the internet, and the user ends up holding the result they
+  /// asked for.
+  ///
+  /// If the reading did NOT land, the run still completes — with no RF, no fabricated
+  /// value, and no hang (GL-005). An honest partial result beats a spinner.
+  Future<void> _maybeResumeInterruptedRun() async {
+    final WiFiDetailsBridge? bridge = _iosBridge;
+    // A run already in flight on this fresh screen (autoStart) needs no resuming.
+    if (bridge == null || _running) return;
+
+    final PendingLiveRun? pending = await bridge.pendingLiveRun();
+    if (pending == null || !mounted) return;
+    // Someone else's run (Wi-Fi Information, Cellular). Not ours to take over.
+    if (pending.route != AppRouter.testMyConnection) return;
+
+    // An arm older than the restore window is not a run any more — iOS killed the
+    // app and the user reopened it later. Reap it and behave like a normal open.
+    if (!pending.isFresh()) {
+      await bridge.clearLiveRun();
+      return;
+    }
+
+    // ONE ARM, ONE RESUME — AND THE ARM IS CONSUMED *BEFORE* THE RUN STARTS.
+    //
+    // This ordering is the second half of the anti-bounce-loop guard. Even if the
+    // resumed run were somehow interrupted again, there is no arm left to restore
+    // from, so the app cannot ping-pong. It degrades to the honest old behavior (the
+    // user lands on Home and taps again) rather than to an infinite loop. A resume
+    // that re-armed itself would be a machine for taking someone's phone away.
+    await bridge.clearLiveRun();
+    if (!mounted) return;
+
+    _resumedRunArmedAt = pending.armedAt;
+    // The SAME chokepoint every other caller passes through — it awaits the
+    // connection probe and then decides `spendData` for itself. A resumed run gets
+    // NO special dispensation to spend cellular data: `_throughputConsented` died
+    // with the scene, so on a metered link this re-asks rather than assuming a
+    // consent it cannot prove was given. Consent is a fact about a session, never a
+    // durable grant. (In practice an armed run implies we were ON WI-FI when it
+    // fired — off Wi-Fi the Shortcut is never fired at all — so this is a belt on
+    // top of braces, which is exactly where a consent check belongs.)
+    await _run(includeThroughput: true);
   }
 
   /// The AUTO-START entry: the home screen's "Check My Connection" hero
@@ -731,8 +859,62 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     }
   }
 
+  /// THE DISARM DECISION, AS A PURE FUNCTION — because it cannot be driven any other
+  /// way, and an undriveable rule is an unguarded one.
+  ///
+  /// A widget test CANNOT reproduce "dispose() while backgrounded". A paused app does
+  /// not pump frames, so the unmount that a real scene teardown performs never runs
+  /// inside the test body; `dispose()` fires later, at teardown, with the binding back
+  /// at `resumed`. Two successive attempts at a widget-level test for this LOOKED
+  /// right, passed, and were both proven vacuous by hand-injected mutation — they
+  /// passed identically against a version of this rule that disarmed unconditionally,
+  /// i.e. against the exact defect they existed to catch.
+  ///
+  /// So the rule is lifted out of the widget and pinned here, where it can be stated
+  /// exactly and tested exhaustively over every lifecycle state (see
+  /// test/screens/tools/network/test_my_connection_scene_rebuild_resume_test.dart).
+  ///
+  /// THE RULE. Disarm ONLY when we are demonstrably FOREGROUNDED, because only a
+  /// foregrounded user can choose to leave. Every other state — paused, inactive,
+  /// hidden, detached, or UNKNOWN — is a screen going away for reasons that are not
+  /// the user's choice, and in those cases the arm is the only evidence that a run was
+  /// in flight.
+  ///
+  /// A NULL STATE DELIBERATELY DOES NOT DISARM. Null means "we do not know", and the
+  /// two errors are not symmetric:
+  ///   * disarm when we should not have → the user's destroyed run is NOT restored.
+  ///     That is Keith's bug, unfixed.
+  ///   * fail to disarm when we should have → the user is pulled back into a tool once,
+  ///     during the few seconds a run is armed. Mildly annoying, self-correcting (the
+  ///     arm is consumed on the way through), and bounded by the restore window.
+  /// The second is the error we can afford. On a real device the state is `resumed`
+  /// from the first frame, so this is a guard against the unknown, not a routine path.
   @override
   void dispose() {
+    // ========================================================================
+    // THE DISCRIMINATOR: DID THE USER LEAVE, OR DID iOS TAKE THE SCENE?
+    //
+    // Both look identical from inside dispose(). The screen is going away either
+    // way. But the correct response is opposite:
+    //   * user tapped Back / switched tools → DISARM. Dragging someone back into a
+    //     screen they deliberately left is the app hijacking their navigation.
+    //   * iOS tore down the UIScene mid-run → LEAVE IT ARMED. That arm is the only
+    //     surviving evidence that Keith is owed a result.
+    //
+    // The APP'S LIFECYCLE STATE separates them cleanly. A user can only tap Back
+    // while looking at the app, so a deliberate exit disposes with the app RESUMED.
+    // A scene teardown happens while we are backgrounded in the Shortcuts app, so it
+    // disposes (if it disposes at all) with the app paused / inactive / hidden /
+    // detached — never resumed.
+    //
+    // It also fails in the SAFE direction on the ambiguous case. If iOS kills the
+    // isolate outright, dispose never runs at all, and the arm survives — which is
+    // exactly what we want. The only way to lose a real run here is for iOS to
+    // destroy a foregrounded scene, which is not a thing it does.
+    // ========================================================================
+    if (shouldDisarmOnDispose(WidgetsBinding.instance.lifecycleState)) {
+      _iosBridge?.clearLiveRun();
+    }
     _sub?.cancel();
     if (_sampler != null) {
       WidgetsBinding.instance.removeObserver(this);
@@ -1245,7 +1427,27 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     // or blocks the verdict, and a failure falls back to the manual capture tap
     // (the Start button + "Capture Wi-Fi details" affordance stay as the
     // fallback). See [_autoCaptureIosRf] for the auto-fire-bounce handling.
-    if (_isIos) _autoCaptureIosRf();
+    //
+    // ...UNLESS THIS RUN IS A RESUME, IN WHICH CASE FIRING WOULD BE CATASTROPHIC.
+    //
+    // A resumed run is one iOS already destroyed once, BY BACKGROUNDING US INTO
+    // SHORTCUTS — which is exactly what firing does. Fire again and the scene is
+    // destroyed again, the gate restores again, the resume fires again: an infinite
+    // bounce loop the user cannot escape without force-quitting. There is also
+    // nothing to fire FOR — the Shortcut already ran, and its reading is sitting in
+    // the App Group waiting to be picked up.
+    //
+    // The flag is CONSUMED here, so a subsequent "Run again" on this same screen
+    // fires normally. One resume per arm.
+    if (_isIos) {
+      final DateTime? resumedFrom = _resumedRunArmedAt;
+      _resumedRunArmedAt = null;
+      if (resumedFrom != null) {
+        _adoptDeliveredIosRf(resumedFrom);
+      } else {
+        _autoCaptureIosRf();
+      }
+    }
 
     // ISP / public-IP lookup for the copy payload (Keith ISP-ask + #6). Runs in
     // parallel with the measurement and is purely additive — it never gates the
@@ -1343,6 +1545,10 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
           _testedAt = (widget.nowOverride ?? DateTime.now)();
           _running = false;
         });
+        // THE RUN IS DONE — DISARM IT. The user has their result on screen; there is
+        // nothing left to restore. Leaving the arm standing would let a scene rebuild
+        // minutes later drag them back into a run that already finished.
+        _iosBridge?.clearLiveRun();
         SemanticsService.sendAnnouncement(
           View.of(context),
           'Connection check complete',
@@ -1357,6 +1563,10 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
               "Something went wrong and we couldn't finish the check. "
               'Please try again.';
         });
+        // A FAILED run is still a FINISHED run. The screen is showing the honest
+        // error and the actionable retry; restoring this later would replay a
+        // failure the user has already seen and dismissed.
+        _iosBridge?.clearLiveRun();
       },
     );
   }
@@ -1501,6 +1711,47 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// The internet measurement (~25–35 s) overlaps the settle, so in the normal
   /// case the stream is delivering well before the run completes and the RF is
   /// already on screen and in the copy with zero taps.
+  /// The RESUME counterpart of [_autoCaptureIosRf]: take the reading the Shortcut
+  /// ALREADY delivered, and do not fire anything.
+  ///
+  /// THE READING IS NOT LOST. That is the whole reason the App Group exists. The
+  /// companion Shortcut ran, wrote its payload, and posted its Darwin notification —
+  /// all while we were backgrounded and, moments later, destroyed. The payload
+  /// outlived us, because it lives below our lifecycle. So a resumed run does not
+  /// need to bounce the user into Shortcuts a second time to learn something it
+  /// already knows.
+  ///
+  /// [armedAt] is when the destroyed run fired. Only a payload stamped AT OR AFTER
+  /// that instant can be a reading OF that run; anything earlier is the stale
+  /// reading from the last time the phone was on Wi-Fi, and adopting it would chart
+  /// a months-old café as the current link. That is the exact stale-reading failure
+  /// this codebase has now been burned by twice, so the check is on the STAMP, not
+  /// on the payload's mere existence.
+  ///
+  /// A null stamp is NOT a yes (GL-005). If the platform cannot date the payload we
+  /// decline to adopt it, and the run completes honestly with no RF rather than with
+  /// RF we cannot prove is ours.
+  Future<void> _adoptDeliveredIosRf(DateTime armedAt) async {
+    final WifiSignalSampler? sampler = _sampler;
+    final WiFiDetailsBridge? bridge = _iosBridge;
+    if (sampler == null || bridge == null || !sampler.isIos) return;
+    // Off Wi-Fi there is no link, so there is no reading of it (the second kind of
+    // null). An armed run implies we were on Wi-Fi when it fired, but the phone can
+    // have walked out of range during the bounce.
+    if (_notOnWifi) return;
+
+    final DateTime? deliveredAt = await bridge.payloadReceivedAt();
+    if (!mounted) return;
+    if (deliveredAt == null || deliveredAt.isBefore(armedAt)) return;
+
+    // Land the payload through the same path a live sample takes, so the reading,
+    // the sparkline and the copy report all see it exactly as they would have if the
+    // scene had never died.
+    await sampler.pollLatestAfterOneShot();
+    if (!mounted) return;
+    setState(() {});
+  }
+
   Future<void> _autoCaptureIosRf() async {
     final WifiSignalSampler? sampler = _sampler;
     if (sampler == null || !sampler.isIos) return;
@@ -1561,8 +1812,35 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     // user starts from the technical Wi-Fi sub-card, not something a check
     // silently turns on. On a missing Shortcut getReadingOnce() sets triggerError
     // and the manual "Capture Wi-Fi details" affordance remains the fallback.
+    // ========================================================================
+    // ARM THE RUN — THE LAST LINE BEFORE WE HAND CONTROL TO iOS.
+    //
+    // The very next statement fires the Shortcut, which foregrounds the Shortcuts
+    // app and backgrounds us. From that instant iOS may tear down and rebuild our
+    // UIScene at any moment, and if it does, EVERYTHING BELOW THIS LINE CEASES TO
+    // EXIST — this method, this screen, the measurement running concurrently, the
+    // whole Dart heap. There is no `finally` that can save it and no exception to
+    // catch; the process simply comes back as a different one, on the home route.
+    //
+    // So the fact that a run is in flight has to be written somewhere that is not
+    // us. This is that write. It is the only thing that will survive to tell the
+    // rebuilt app that Keith is owed a result.
+    //
+    // It is disarmed on every clean ending — the run completes (`onDone`), the run
+    // errors (`onError`), the trigger never opened (just below), or the user
+    // deliberately leaves the screen (`dispose`). Which is what makes an arm that is
+    // STILL STANDING mean "iOS took this from us", and not "the user walked away".
+    // ========================================================================
+    await bridge.armLiveRun(AppRouter.testMyConnection);
+
     final bool opened = await sampler.getReadingOnce();
-    if (!opened) return;
+    if (!opened) {
+      // iOS could not even open the trigger, so we were never backgrounded and the
+      // scene was never at risk. There is no interrupted run to come back to —
+      // disarm, or a later launch would restore a run that never started.
+      await bridge.clearLiveRun();
+      return;
+    }
 
     // Settle, then poll the App Group payload in case the single streamed sample
     // raced the app's foreground return. The long internet measurement runs

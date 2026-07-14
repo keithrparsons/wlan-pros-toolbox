@@ -99,6 +99,26 @@ import UIKit
         // One-shot consume of the pending x-error navigation; returns the origin
         // tool route (or "" when none), or nil when no nav is pending.
         result(ShortcutsBridge.consumeLiveErrorNav())
+      case "armLiveRun":
+        // A live run is IN FLIGHT and has just fired the Shortcut. From here until
+        // clearLiveRun, iOS destroying our UIScene is a RECOVERABLE event rather
+        // than a silently lost run. Survives the teardown because it lives in the
+        // App Group, below the app's lifecycle.
+        if let route = call.arguments as? String {
+          ShortcutsBridge.armLiveRun(route)
+        }
+        result(nil)
+      case "pendingLiveRun":
+        // NON-DESTRUCTIVE peek. The nav gate reads it to route the user back, and
+        // then the tool reads it to resume the run — two readers, in that order, so
+        // a consume-once here would starve the second and land the user on a reset
+        // screen with the run gone.
+        result(ShortcutsBridge.pendingLiveRun())
+      case "clearLiveRun":
+        // The run reached a CLEAN ending (completed, errored, or the user left on
+        // purpose). Nothing to restore.
+        ShortcutsBridge.clearLiveRun()
+        result(nil)
       case "isShortcutsAppInstalled":
         // Best-effort presence check (Tom Hollingsworth): many users do not have
         // Apple's Shortcuts app installed, so they fail before step one. `shortcuts`

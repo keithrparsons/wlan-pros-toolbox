@@ -289,6 +289,16 @@ class _PayloadBridge implements WiFiDetailsBridge {
   Future<void> setLiveOriginRoute(String route) async {}
   @override
   Future<String?> consumeLiveErrorNav() async => null;
+
+  // Scene-teardown restore seam. Default = NO pending run, so every pre-existing
+  // test keeps asserting the app does NOT drag the user into a tool. They are the
+  // counterweight net for the restore.
+  @override
+  Future<void> armLiveRun(String route) async {}
+  @override
+  Future<PendingLiveRun?> pendingLiveRun() async => null;
+  @override
+  Future<void> clearLiveRun() async {}
   @override
   Future<bool> hasEverReceivedPayload() async => true;
   @override
@@ -595,6 +605,16 @@ class _StaleFlagBridge implements WiFiDetailsBridge {
   @override
   Future<String?> consumeLiveErrorNav() async => null;
 
+  // Scene-teardown restore seam. Default = NO pending run, so every pre-existing
+  // test keeps asserting the app does NOT drag the user into a tool. They are the
+  // counterweight net for the restore.
+  @override
+  Future<void> armLiveRun(String route) async {}
+  @override
+  Future<PendingLiveRun?> pendingLiveRun() async => null;
+  @override
+  Future<void> clearLiveRun() async {}
+
   bool monitoringFlag = true;
   int runShortcutCalls = 0;
   String? lastRunShortcutName;
@@ -663,6 +683,16 @@ class _FreshBridge implements WiFiDetailsBridge {
   Future<void> setLiveOriginRoute(String route) async {}
   @override
   Future<String?> consumeLiveErrorNav() async => null;
+
+  // Scene-teardown restore seam. Default = NO pending run, so every pre-existing
+  // test keeps asserting the app does NOT drag the user into a tool. They are the
+  // counterweight net for the restore.
+  @override
+  Future<void> armLiveRun(String route) async {}
+  @override
+  Future<PendingLiveRun?> pendingLiveRun() async => null;
+  @override
+  Future<void> clearLiveRun() async {}
 
   int openUrlCalls = 0;
   String? lastOpenedUrl;
@@ -3131,6 +3161,16 @@ class _StreamingBridge implements WiFiDetailsBridge {
   Future<void> setLiveOriginRoute(String route) async {}
   @override
   Future<String?> consumeLiveErrorNav() async => null;
+
+  // Scene-teardown restore seam. Default = NO pending run, so every pre-existing
+  // test keeps asserting the app does NOT drag the user into a tool. They are the
+  // counterweight net for the restore.
+  @override
+  Future<void> armLiveRun(String route) async {}
+  @override
+  Future<PendingLiveRun?> pendingLiveRun() async => null;
+  @override
+  Future<void> clearLiveRun() async {}
 
   final StreamController<WiFiDetails> _events =
       StreamController<WiFiDetails>.broadcast();
