@@ -73,6 +73,30 @@ class WifiSignalSampler extends ChangeNotifier {
               WifiInfoSource.windowsNativeWifi => WindowsWifiInfoAdapter(),
               _ => MacWifiInfoAdapter(),
             };
+        // ANDROID ONLY: the honest "is this device on Wi-Fi?" probe for a SNAPSHOT
+        // source. (Round-4 cold review, THE ANDROID GATE, 2026-07-14.)
+        //
+        // This is THE SECOND, INDEPENDENT COPY of the consent hole, and it had to
+        // be closed separately from the one in [WifiConnectionService]. Test My
+        // Connection's gate does NOT read the service — it reads
+        // [WifiSignalSampler.notOnWifi], which read `_controller?.notOnWifi`, and
+        // `_controller` is built ONLY under `case WifiInfoSource.iosShortcuts`
+        // below. So on Android `notOnWifi` was hard-wired to `false` no matter what
+        // the service learned, and [load] was a NO-OP. Fixing the service alone
+        // would have left the app's PRIMARY ENTRY POINT (the home hero pushes this
+        // screen with `autoStart: true`) still auto-spending 50-500 MB of a
+        // cellular user's data on frame one.
+        //
+        // macOS AND WINDOWS GET NO PROBE, DELIBERATELY — and that is enforced HERE,
+        // by construction, not by a runtime check that could drift. On those
+        // platforms [WifiConnectionService] can only ever answer `unknown` (an
+        // absent Wi-Fi IPv4 on a desktop is ambiguous, and "never nag a wired
+        // desktop" genuinely applies), so building a probe for them would buy a
+        // per-load platform-channel round-trip that CANNOT change any answer. They
+        // keep the no-op [load] they have always had, byte for byte.
+        _connectionService = source == WifiInfoSource.androidWifiManager
+            ? (connectionService ?? WifiConnectionService())
+            : null;
         // 30s window at a 2s poll → ~15 samples (ceil so the full window fits).
         _series = WifiTimeSeries(capacity: _capacityFor(_macPollInterval));
       case WifiInfoSource.iosShortcuts:
@@ -108,6 +132,19 @@ class WifiSignalSampler extends ChangeNotifier {
   Timer? _macPollTimer;
   ConnectedAp? _macLastCharted;
   ConnectedAp? _macInfo;
+
+  // ---- Android (snapshot source) connection probe ----
+
+  /// The honest Wi-Fi connection probe for the ANDROID snapshot source. Null on
+  /// macOS / Windows (they have no honest negative to report — see the constructor)
+  /// and on iOS (the [WifiMonitorController] owns the probe there).
+  WifiConnectionService? _connectionService;
+
+  /// The last SETTLED not-on-Wi-Fi verdict for the Android snapshot source, set by
+  /// [load]. False until [load] resolves, and set ONLY on a POSITIVE `notOnWifi`
+  /// (a MEASURED `TRANSPORT_CELLULAR`); an `unknown` or failed read leaves it false
+  /// so a wired Android TV and a tablet on Wi-Fi are never nagged (GL-005).
+  bool _snapshotNotOnWifi = false;
 
   // ---- iOS (companion-Shortcut stream) ----
   WiFiDetailsBridge? _iosBridge;
@@ -233,11 +270,26 @@ class WifiSignalSampler extends ChangeNotifier {
   bool get setupInitiated => _controller?.setupInitiated ?? false;
 
   /// True when the last connection probe found the device is demonstrably NOT on
-  /// Wi-Fi (e.g. cellular-only on iOS) — drives the honest "connect to Wi-Fi"
-  /// surface in the Wi-Fi-signal section instead of a stale reading under a LIVE
-  /// badge. Honest: only ever set on a positive not-on-Wi-Fi signal, never from
-  /// missing/ambiguous data. False off iOS (the snapshot platforms read Wi-Fi
-  /// natively and surface their own state).
+  /// Wi-Fi — drives the honest "connect to Wi-Fi" surface in the Wi-Fi-signal
+  /// section instead of a stale reading under a LIVE badge, AND the cellular-data
+  /// consent gate in Test My Connection. Honest: only ever set on a POSITIVE
+  /// not-on-Wi-Fi signal, never from missing/ambiguous data.
+  ///
+  /// TWO SOURCES, ONE ANSWER:
+  ///   * iOS     — [WifiMonitorController]'s probe flag (`_controller`).
+  ///   * Android — [_snapshotNotOnWifi], settled by [load] from
+  ///               [WifiConnectionService]'s MEASURED `TRANSPORT_CELLULAR` read.
+  /// Always false on macOS / Windows / web / unsupported, where no honest negative
+  /// exists to report.
+  ///
+  /// THE `?? false` USED TO BE THE WHOLE ANDROID BUG (round-4 cold review,
+  /// 2026-07-14). `_controller` is constructed ONLY for
+  /// `WifiInfoSource.iosShortcuts`, so on Android this getter was hard-wired to
+  /// `false` — and Test My Connection's consent gate reads EXACTLY this. `notOnWifi`
+  /// was therefore unreachable, `spendData` was unconditionally true, and the home
+  /// hero's `autoStart: true` push auto-ran a full throughput measurement plus the
+  /// RPM load generator (50-500 MB) on a cellular Android phone with ZERO TAPS. The
+  /// fallback is no longer a constant: it is the Android probe's settled verdict.
   ///
   /// THE `&& !hasEverReceived` GATE IS GONE (2026-07-13, Keith on-device, v1.7.2).
   /// It was a SECOND copy of the same suppression that hid the honest state in
@@ -247,7 +299,7 @@ class WifiSignalSampler extends ChangeNotifier {
   /// green LIVE badge on a cellular-only phone. Any user who had EVER captured a
   /// Wi-Fi reading permanently satisfied `hasEverReceived`, so the honest card
   /// never fired for anyone real. There is no Wi-Fi link; there is no reading.
-  bool get notOnWifi => _controller?.notOnWifi ?? false;
+  bool get notOnWifi => _controller?.notOnWifi ?? _snapshotNotOnWifi;
 
   /// Set when the last iOS [start] could not open the companion Shortcut
   /// (Shortcuts missing / not installed). Surfaced as the honest live error.
@@ -341,29 +393,64 @@ class WifiSignalSampler extends ChangeNotifier {
 
   /// Resolves the iOS install-state + any persisted monitoring flag (so a
   /// payload delivered while backgrounded lands and an active loop resumes), and
-  /// the honest Wi-Fi connection state (so a cellular-only user gets the "connect
-  /// to Wi-Fi" surface instead of a dead waiting state). No-op on macOS. Call on
-  /// first build and on app resume.
+  /// the honest Wi-Fi connection state (so a cellular user gets the "connect to
+  /// Wi-Fi" surface instead of a dead waiting state, and the cellular-data consent
+  /// gate fires BEFORE any data is spent). Call on first build and on app resume.
   ///
-  /// [nativeSsid] is the optional native NEHotspotNetwork SSID the screen reads;
-  /// a non-empty value is a definitive "on Wi-Fi" signal (its absence is never
-  /// used to assert "not on Wi-Fi"). See [WifiConnectionService].
+  /// AWAITING THIS IS LOAD-BEARING ON ANDROID, NOT HOUSEKEEPING. Test My
+  /// Connection's `_autoStart` awaits `_retryConnection()` → this method → and only
+  /// THEN reads [notOnWifi] to decide whether to run. Before round 4b this was a
+  /// NO-OP off iOS, so the await returned instantly, [notOnWifi] was still the
+  /// hard-wired `false`, and the app's primary entry point auto-spent a cellular
+  /// Android user's data on frame one. The probe must SETTLE inside this await.
+  ///
+  /// macOS / Windows: STILL A NO-OP, deliberately. `_connectionService` is null
+  /// there by construction (see the constructor), so this returns without a
+  /// platform-channel round-trip that could not change any answer.
+  ///
+  /// [nativeSsid] is the optional native SSID the screen reads (NEHotspotNetwork on
+  /// iOS); a non-empty value is a definitive "on Wi-Fi" signal (its absence is
+  /// never used to assert "not on Wi-Fi"). See [WifiConnectionService].
   Future<void> load({String? nativeSsid}) async {
-    if (source == WifiInfoSource.iosShortcuts) {
-      final WifiMonitorController? c = _controller;
-      if (c == null) return;
-      await c.load(nativeSsid: nativeSsid);
-      // If load() resumed the controller to `streaming` purely from a stale
-      // persisted monitoring flag (no deliberate in-session start, so no live
-      // producer), tear that phantom stream down and clear the flag. This is
-      // the iOS first-run fix: without it the card would read `isStreaming` and
-      // render a dead "LIVE" header with no data behind it. We do NOT auto-fire
-      // the Shortcut here — we drop back to the honest idle state so the card
-      // shows the actionable Start control, which the user taps to begin.
-      if (!_startedThisSession && c.isStreaming) {
-        await c.stopMonitoring();
-        _safeNotify();
-      }
+    switch (source) {
+      case WifiInfoSource.iosShortcuts:
+        final WifiMonitorController? c = _controller;
+        if (c == null) return;
+        await c.load(nativeSsid: nativeSsid);
+        // If load() resumed the controller to `streaming` purely from a stale
+        // persisted monitoring flag (no deliberate in-session start, so no live
+        // producer), tear that phantom stream down and clear the flag. This is
+        // the iOS first-run fix: without it the card would read `isStreaming` and
+        // render a dead "LIVE" header with no data behind it. We do NOT auto-fire
+        // the Shortcut here — we drop back to the honest idle state so the card
+        // shows the actionable Start control, which the user taps to begin.
+        if (!_startedThisSession && c.isStreaming) {
+          await c.stopMonitoring();
+          _safeNotify();
+        }
+      case WifiInfoSource.macosCoreWlan:
+      case WifiInfoSource.androidWifiManager:
+      case WifiInfoSource.windowsNativeWifi:
+        // Android only — `_connectionService` is null on macOS / Windows, so this
+        // is still the no-op it has always been there.
+        final WifiConnectionService? svc = _connectionService;
+        if (svc == null) return;
+        final WifiConnectionStatus status =
+            await svc.status(nativeSsid: nativeSsid);
+        if (_disposed) return;
+        // ONLY a POSITIVE verdict raises the flag. `unknown` (a wired Android TV, a
+        // VPN that hides its underlying transport, a read that failed) LOWERS it —
+        // it does not latch — because the device genuinely may have moved back onto
+        // Wi-Fi and a stale `true` would nag a user who is no longer paying per
+        // byte. Never inferred, never defaulted, in either direction (GL-005).
+        final bool next = status == WifiConnectionStatus.notOnWifi;
+        if (next != _snapshotNotOnWifi) {
+          _snapshotNotOnWifi = next;
+          _safeNotify();
+        }
+      case WifiInfoSource.unsupported:
+      case WifiInfoSource.web:
+        break;
     }
   }
 

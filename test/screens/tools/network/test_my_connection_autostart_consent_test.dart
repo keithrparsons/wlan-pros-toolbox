@@ -359,7 +359,27 @@ void main() {
       await tester.pump(const Duration(seconds: 5));
       await tester.pumpAndSettle();
 
-      final Finder runAgain = find.text('Run again');
+      // THE BUTTON'S LABEL CHANGED, AND THAT IS THE POINT (round-4b, 2026-07-14).
+      //
+      // This finder was `find.text('Run again')`. It passed — while the button it
+      // tapped spent ANOTHER 50-500 MB of cellular data behind a label that said
+      // nothing about cost, on a result screen where the warning and the
+      // cost-labelled button had both been replaced by the result. Consent latches
+      // for the MOUNT, so this test proved the SPEND was honored; nothing proved
+      // the user could still SEE what it cost. Warned once, charged N times.
+      //
+      // Consent is still per-mount (no re-interrogation — that is what this test
+      // defends, and it still does). But every button that can spend cellular data
+      // now carries the cost in its own label, so every spend remains a
+      // cost-labelled tap. The DECLINED path above still finds a bare "Run again",
+      // correctly: with no consent on file the chokepoint downgrades that run and
+      // it spends nothing, so it must not claim a cost it will not incur.
+      final Finder runAgain = find.text('Run again (uses data)');
+      expect(runAgain, findsOneWidget,
+          reason: 'after consenting, the re-run button SPENDS cellular data and '
+              'must say so');
+      expect(find.text('Run again'), findsNothing,
+          reason: 'the bare, cost-silent label must not survive a consent');
       await tester.ensureVisible(runAgain);
       await tester.pumpAndSettle();
       await tester.tap(runAgain);

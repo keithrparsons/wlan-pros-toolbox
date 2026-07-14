@@ -1707,8 +1707,64 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                       // no new vertical space). Disabled while a run is in
                       // flight so a double-tap can't queue a second check.
                       onRunAgain: _running ? null : _rerun,
+                      // THE BUTTON MUST TELL THE TRUTH ABOUT WHAT IT SPENDS.
+                      // "Run again" calls _run(includeThroughput: true), and the
+                      // chokepoint spends iff `!_notOnWifi || _throughputConsented`.
+                      // So it costs CELLULAR data in exactly one shape: off Wi-Fi,
+                      // with consent already latched for this mount. That is the
+                      // shape that used to spend 50-500 MB per tap under a button
+                      // labelled only "Run again". Reads the LIVE probe, not the
+                      // frozen result flag: the label must describe what the NEXT
+                      // tap will do, and _run re-settles the probe before spending.
+                      runAgainUsesData: _notOnWifi && _throughputConsented,
                     ),
                     const SizedBox(height: AppSpacing.md),
+                    // THE OPT-IN THE RESULT SCREEN NEVER HAD (round-4b, 2026-07-14).
+                    //
+                    // A declined cellular run renders "Not measured: the speed test
+                    // was skipped to save cellular data" — a sentence that invites
+                    // "but I want it" and offered NO BUTTON. The pre-run card is
+                    // gone by now (`if (verdict == null) _actionCard(...)`), so the
+                    // user was PERMANENTLY DENIED the headline feature for this
+                    // mount with no way back short of leaving and re-entering.
+                    //
+                    // It bites hardest on 5G fixed-wireless home users, who read as
+                    // "cellular" and are UNLIMITED.
+                    //
+                    // This is not a new consent surface: it is the SAME cost-labelled
+                    // tap the pre-run screen already treats as sufficient consent.
+                    // There is no principled reason that tap is safe BEFORE a run and
+                    // unsafe AFTER one. Same words, same cost, same one tap.
+                    // BOTH flags, not just the first. `_resultSpeedTestSkipped`
+                    // alone would render the words "(uses data)" to a user who is
+                    // NOT on cellular if any future caller ever passes
+                    // `includeThroughput: false` on Wi-Fi. Today no such caller
+                    // exists (the decline path is itself gated on `_notOnWifi`), so
+                    // this is belt-and-braces — but the offer's own copy makes a
+                    // COST CLAIM, and a cost claim must never outrun the probe that
+                    // licenses it. Both flags are frozen to the same completed run,
+                    // so they cannot disagree.
+                    if (_resultSpeedTestSkipped &&
+                        _resultNotOnWifi &&
+                        !_running) ...<Widget>[
+                      Semantics(
+                        button: true,
+                        label: 'Run the speed test anyway, which uses cellular '
+                            'data',
+                        child: TextButton(
+                          onPressed: () {
+                            // THE TAP IS THE CONSENT — identical to the pre-run
+                            // button, whose label carries the identical cost.
+                            _throughputConsented = true;
+                            _run(includeThroughput: true);
+                          },
+                          child: const Text(
+                            'Run the speed test anyway (uses data)',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                    ],
                     // VERDICT LINE — a plain, state-driven sentence that names the
                     // limiter, plus the direct % comparison answer. Both ALWAYS
                     // shown, prominent (no disclosure). The v1.1 "show more" pass
@@ -2883,6 +2939,7 @@ class _HeroVerdict extends StatelessWidget {
     required this.verdict,
     required this.heroSentence,
     this.onRunAgain,
+    this.runAgainUsesData = false,
   });
 
   final ConsumerVerdict verdict;
@@ -2893,6 +2950,10 @@ class _HeroVerdict extends StatelessWidget {
   /// icon-only refresh so the title never truncates — Vera 2026-06-14). Null
   /// while a run is in flight; the control is then omitted.
   final VoidCallback? onRunAgain;
+
+  /// Whether that re-run will spend CELLULAR data, so the button's own label can
+  /// say so. See [_HeroRunAgainButton.usesData] for the consent-scope decision.
+  final bool runAgainUsesData;
 
   /// §8.20.3-C #2 — the status tone that colors the result card's accent bar.
   /// "Both fine" reads as success; any slow side is a warning; an unreadable
@@ -2971,7 +3032,10 @@ class _HeroVerdict extends StatelessWidget {
             const SizedBox(height: AppSpacing.xs),
             Align(
               alignment: Alignment.centerRight,
-              child: _HeroRunAgainButton(onRunAgain: onRunAgain!),
+              child: _HeroRunAgainButton(
+                onRunAgain: onRunAgain!,
+                usesData: runAgainUsesData,
+              ),
             ),
           ],
           const SizedBox(height: AppSpacing.md),
@@ -3022,9 +3086,32 @@ class _HeroVerdict extends StatelessWidget {
 /// target. Lime accent (theme-aware: brand lime in dark, darkened-lime via
 /// textAccent in light so it stays legible on the white card).
 class _HeroRunAgainButton extends StatelessWidget {
-  const _HeroRunAgainButton({required this.onRunAgain});
+  const _HeroRunAgainButton({
+    required this.onRunAgain,
+    this.usesData = false,
+  });
 
   final VoidCallback onRunAgain;
+
+  /// Whether tapping this button will spend CELLULAR data (round-4b, 2026-07-14).
+  ///
+  /// THE CONSENT LATCH, AND WHY THE LABEL IS THE FIX. `_throughputConsented` is
+  /// scoped to the MOUNT: it is set once, by the cost-labelled tap on the pre-run
+  /// screen, and never reset. That is deliberate — re-interrogating a user who has
+  /// already said yes, on every single re-run, is nagging — but it left this button
+  /// LYING. Once the result screen replaced the pre-run card (`if (verdict == null)
+  /// _actionCard(...)`), the ONLY re-run control was a bare "Run again" with NO cost
+  /// label, sitting above a warning the user could no longer see. Consent once on
+  /// cellular, and every subsequent tap silently spent ANOTHER 50-500 MB. Warned
+  /// once, charged N times.
+  ///
+  /// THE SCOPE OF CONSENT, DECIDED AND DOCUMENTED: consent is PER-MOUNT for the
+  /// FLAG, but EVERY BUTTON THAT CAN SPEND CELLULAR DATA CARRIES THE COST IN ITS
+  /// OWN LABEL. So every spend is still preceded by a cost-labelled tap — which is
+  /// per-run consent in substance, and is exactly the standard the pre-run button
+  /// already meets ("the tap IS the consent... the button's own label carries the
+  /// cost"). The user is never re-interrogated, and never uninformed.
+  final bool usesData;
 
   @override
   Widget build(BuildContext context) {
@@ -3036,15 +3123,21 @@ class _HeroRunAgainButton extends StatelessWidget {
     // _RetryButton: ExcludeSemantics drops the inner button's own label so the
     // parent Semantics owns the single labelled button node, while the
     // TextButton remains the real focusable, activatable control.
+    //
+    // Off Wi-Fi WITH consent already given, the SR label states the cost too — a
+    // screen-reader user must not be the only one who cannot see what the tap
+    // spends.
     return Semantics(
       button: true,
-      label: 'Run the test again',
+      label: usesData
+          ? 'Run the test again, which uses cellular data'
+          : 'Run the test again',
       child: ExcludeSemantics(
         child: TextButton.icon(
           onPressed: onRunAgain,
           icon: Icon(Icons.refresh, size: 20, color: accent),
           label: Text(
-            'Run again',
+            usesData ? 'Run again (uses data)' : 'Run again',
             style: TextStyle(color: accent, fontWeight: FontWeight.w600),
           ),
           style: TextButton.styleFrom(

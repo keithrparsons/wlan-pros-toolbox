@@ -201,9 +201,51 @@ void main() {
           reason: 'on Wi-Fi the full test runs exactly as before, one tap');
     });
 
-    testWidgets('an AMBIGUOUS probe must NOT nag — it is not proof of cellular',
+    // ========================================================================
+    // READ THIS TEST'S NAME, AND THEN READ ITS SCOPE. (Round-4b, 2026-07-14.)
+    //
+    // THIS TEST IS CORRECT, AND IT WAS ALSO THE COVER FOR A LIVE DATA LEAK. Both
+    // things are true, and the second one is not the first one's fault.
+    //
+    // What it asserts is right, ON iOS, and must not be "fixed": a read that
+    // THREW (`_Ambiguous` = getWifiIP() throws) is a FAILED read, not a cellular
+    // one. Nagging there would nag a wired desktop and a Location-denied user, and
+    // withholding the speed test would silently delete the headline feature for
+    // everyone whose read failed. `unknown` means CARRY ON. That is GL-005, and it
+    // still holds.
+    //
+    // THE DEFECT WAS ITS SCOPE, NOT ITS ASSERTION. Every test in this file drives
+    // `TargetPlatform.iOS` (the `_pump` default) — the `platform:` parameter existed
+    // and NOT ONE caller ever passed it. So "ambiguous ⇒ spend" was the only rule
+    // in force on ANDROID... where, before round 4b, EVERY probe was ambiguous BY
+    // CONSTRUCTION (`notOnWifi` was structurally unreachable off iOS). A rule
+    // written for "we genuinely cannot tell" silently came to govern a platform
+    // that CAN tell and was simply never asked. 4,238 tests passed over a zero-tap,
+    // 50-500 MB cellular data leak on a store-live platform.
+    //
+    // THE CORRECTION IS NOT TO INVERT THIS ASSERTION — that would ship a real bug.
+    // It is to (a) NAME THE PLATFORM this invariant is scoped to, so its silence
+    // about the others is visible, and (b) DECOMPOSE "ambiguous" on Android, where
+    // it is no longer one thing: an unreadable transport is still ambiguous and
+    // still must not nag, but a MEASURED `TRANSPORT_CELLULAR` is not ambiguous at
+    // all. Both axes now live in android_cellular_consent_test.dart.
+    //
+    // [[feedback_tests_that_enshrine_the_bug]] — third occurrence. The lesson is
+    // sharper than "read the test names": a green test can be RIGHT and still be
+    // the reason nobody looked, because a passing invariant reads as coverage of
+    // every platform it never ran on.
+    // ========================================================================
+    testWidgets(
+        'ON iOS an AMBIGUOUS (failed) probe must NOT nag — it is not proof of '
+        'cellular, and Android is NOT covered by this rule',
         (WidgetTester tester) async {
-      final MockQualityClient quality = await _pump(tester, _Ambiguous());
+      final MockQualityClient quality = await _pump(
+        tester,
+        _Ambiguous(),
+        // Stated, not defaulted. This invariant is iOS-scoped and the platform is
+        // now part of the test's claim rather than an invisible default.
+        platform: TargetPlatform.iOS,
+      );
       final String screen = _visibleText(tester);
 
       expect(screen, isNot(contains("You're on cellular.")),
@@ -212,7 +254,10 @@ void main() {
 
       await tester.tap(find.text('Run test'));
       await tester.pumpAndSettle();
-      expect(quality.lastIncludeThroughput, isTrue);
+      expect(quality.lastIncludeThroughput, isTrue,
+          reason: 'on iOS a FAILED read must not withhold the feature. This is '
+              'NOT a licence to spend on Android, where the transport is '
+              'MEASURED — see android_cellular_consent_test.dart');
     });
   });
 

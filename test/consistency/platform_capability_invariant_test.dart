@@ -81,6 +81,7 @@
 // ----------------------------------------------------------------------------
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/cellular_info_screen.dart';
@@ -533,10 +534,42 @@ class _OnWifiPath implements WifiPathProbe {
       );
 }
 
+/// The ANDROID TRANSPORT channel (round-4b, 2026-07-14).
+///
+/// WHY A CONSISTENCY TEST HAS TO STUB THIS. `RoamingLogScreen.initState` builds a
+/// `WifiSignalSampler` and calls `load()`, which — for the `androidWifiManager`
+/// source — now settles the honest Wi-Fi verdict through `WifiConnectionService`,
+/// whose Android branch invokes this channel. A Flutter widget test runs as
+/// `TargetPlatform.android` by DEFAULT, so this fires here even though these cases
+/// are about capability honesty, not cellular consent.
+///
+/// Unstubbed, the probe's 3-second `.timeout()` deadline is left as a PENDING TIMER
+/// when the test tears down, and the pending-timer invariant fails the case. (The
+/// sibling iOS `WifiPathProbe` has the identical deadline and never tripped this —
+/// only because it is gated on `_platform == iOS`, which a widget test never is.)
+///
+/// `available: false` is the honest "could not read the transport" payload → the
+/// verdict resolves to `unknown`, which is exactly what these screens saw on Android
+/// before the probe existed. Behavior is preserved; the device model is now stated.
+const MethodChannel _networkTransportChannel =
+    MethodChannel('com.wlanpros.toolbox/network_transport');
+
 void main() {
   setUpAll(() async {
     // Roaming Log / Cellular screens mount a ToolHelpFooter.
     await ToolHelpLoader.ensureLoaded();
+  });
+
+  setUp(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      _networkTransportChannel,
+      (MethodCall call) async => <String, Object?>{'available': false},
+    );
+  });
+  tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(_networkTransportChannel, null);
   });
 
   // =======================================================================

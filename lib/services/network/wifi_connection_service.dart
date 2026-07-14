@@ -93,6 +93,45 @@
 // native monitor always answers. It now FALLS THROUGH instead. See the long note at
 // the branch itself.
 //
+// ============================================================================
+// ROUND 4b (2026-07-14): ANDROID. ASK ConnectivityManager. IT KNOWS.
+// ============================================================================
+//
+// Everything above is about iOS. For four rounds this service could not return
+// `notOnWifi` OFF iOS AT ALL — the `_platform != TargetPlatform.iOS => unknown`
+// guard in the address probe made the negative STRUCTURALLY UNREACHABLE. Both
+// consent gates (`net_quality_screen`, `test_my_connection_screen`) read
+// `status == notOnWifi` EXACTLY, so on ANDROID — LIVE on Google Play, the platform
+// where "on cellular" is the DEFAULT assumption — the gate did not exist. The home
+// hero's `autoStart: true` push meant OPENING THE APP on a cellular Android phone
+// auto-ran a full-rate ~30 s download plus the RPM load generator, 50 to 500 MB,
+// with zero taps, no warning, and nothing to consent to.
+//
+// A GREEN SUITE SAID OTHERWISE. Every consent test drove `TargetPlatform.iOS`; not
+// one drove Android. 4,238 tests passed over a live zero-tap data leak, and one
+// test — "an AMBIGUOUS probe must NOT nag" — was actively ASSERTING that the app
+// spends the data on exactly the probe shape Android always produces. Read the test
+// NAMES before you trust them ([[feedback_tests_that_enshrine_the_bug]]).
+//
+// THE FIX IS NOT A WIDER INFERENCE. IT IS A MEASUREMENT WE NEVER TOOK.
+// `ConnectivityManager.getNetworkCapabilities(activeNetwork).hasTransport(...)`
+// reports `TRANSPORT_CELLULAR` / `_WIFI` / `_ETHERNET` definitively, needs only the
+// `normal` (install-time, never-prompting) `ACCESS_NETWORK_STATE` permission this
+// app already declares, and is NOT Location-gated. See [NetworkTransportProbe] and
+// the decision table at the Android block in [status].
+//
+// THE ASYMMETRY IS DELIBERATE AND IT IS NOT TIMIDITY:
+//   * iOS      — negative via the ADDRESS probe (an inference, sound because an
+//                iPhone has no wired NIC).
+//   * Android  — negative via the TRANSPORT probe (a MEASUREMENT).
+//   * macOS /  — NO NEGATIVE, EVER. Not an oversight. A desktop with no Wi-Fi IPv4
+//     Windows    is usually a WIRED desktop, and "never nag a wired desktop"
+//                genuinely applies there. A laptop on a phone's hotspot ALSO reads
+//                as Wi-Fi (a known, documented limitation — the hotspot IS a Wi-Fi
+//                link from the laptop's point of view), so the one shape a desktop
+//                gate would want to catch is the one shape it cannot. They are out
+//                of scope, and they stay `unknown`.
+//
 // THE DECISION TABLE (fallback — the address probe; iOS-only for the negative):
 //
 //   | Device state              | IPv4    | IPv6 on en*   | Verdict      |
@@ -136,6 +175,25 @@
 //     That limit is now MOOT on iOS (the native path catches the association before
 //     the fallback is reached) but still holds on any platform where the native path
 //     is unavailable.
+//   * NO ANDROID PHONE WAS IN THIS LOOP EITHER. The transport block is compiled and
+//     unit-tested against the four capability bits, but it has NOT been executed on
+//     a physical Android device. The API contract it rests on
+//     (`NetworkCapabilities.TRANSPORT_CELLULAR` on the ACTIVE network) is far
+//     narrower and far better specified than the NWPathMonitor reasoning above —
+//     it is a single documented boolean, not an inference from interface lists —
+//     but it is READ, not RUN. Say so; do not claim a device run nobody took.
+//   * A VPN ON ANDROID CAN HIDE THE TRANSPORT. Android normally merges the
+//     underlying network's transports into the VPN network's capabilities, so a VPN
+//     over cellular usually still reports `cellular: true`. When a VPN app does not
+//     call `setUnderlyingNetworks`, the active network reports ONLY `TRANSPORT_VPN`
+//     and the transport block falls through to `unknown` — which SPENDS THE DATA
+//     without a warning, exactly as it did before this change. This is the ONE
+//     residual cellular-spend path on Android and it is stated, not hidden. It is
+//     not closed by guessing: `unknown` is the honest answer, and asserting
+//     "cellular" from a bare VPN transport would nag every VPN-on-Wi-Fi user.
+//   * ANDROID + BOTH TRANSPORTS is ambiguous and also spends. If the OS reports
+//     Wi-Fi AND cellular on the same active network, we cannot know which link
+//     pays, so we assert neither and the run proceeds. Same class as the VPN row.
 //
 // Web safety: no `dart:io`. Both probes are method-channel calls whose channels are
 // absent off the supported native platforms; the calls are guarded and resolve to
@@ -144,6 +202,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 
+import 'network_transport_probe.dart';
 import 'wifi_path_probe.dart';
 
 /// The honest three-way Wi-Fi connection verdict. See [WifiConnectionService].
@@ -151,8 +210,22 @@ enum WifiConnectionStatus {
   /// The device is connected to a Wi-Fi network. The live read should proceed.
   onWifi,
 
-  /// The device is demonstrably NOT on Wi-Fi (e.g. cellular-only on iOS). Drives
-  /// the "Connect to a Wi-Fi network to see live Wi-Fi data" state.
+  /// The device is demonstrably NOT on Wi-Fi. Drives the "Connect to a Wi-Fi
+  /// network to see live Wi-Fi data" state AND the cellular-data consent gate.
+  ///
+  /// REACHED ON EXACTLY TWO PLATFORMS, BY TWO DIFFERENT SIGNALS, AND ON NEITHER IS
+  /// IT A GUESS:
+  ///   * iOS — the address probe found NO address of EITHER family on the Wi-Fi
+  ///     interface (an inference, but a sound one: an iPhone has no wired NIC to
+  ///     confuse the read).
+  ///   * Android — `ConnectivityManager` reports the ACTIVE network's transport is
+  ///     `TRANSPORT_CELLULAR` and NOT `TRANSPORT_WIFI` (a MEASUREMENT: the OS
+  ///     naming the radio it is routing over).
+  ///
+  /// It is UNREACHABLE on macOS and Windows, deliberately. There, an absent Wi-Fi
+  /// address is genuinely ambiguous (a wired desktop), and a laptop tethered to a
+  /// phone hotspot presents as Wi-Fi — so no honest negative exists to assert. Do
+  /// not "fix" that by inferring one; see KNOWN LIMITS in [WifiConnectionService].
   notOnWifi,
 
   /// The probe could not determine the state. Treated by callers as "carry on as
@@ -170,13 +243,17 @@ class WifiConnectionService {
     NetworkInfo? networkInfo,
     TargetPlatform? platformOverride,
     WifiPathProbe? pathProbe,
+    NetworkTransportProbe? transportProbe,
   })  : _networkInfo = networkInfo ?? NetworkInfo(),
         _platform = platformOverride ?? defaultTargetPlatform,
-        _pathProbe = pathProbe ?? const MethodChannelWifiPathProbe();
+        _pathProbe = pathProbe ?? const MethodChannelWifiPathProbe(),
+        _transportProbe =
+            transportProbe ?? const MethodChannelNetworkTransportProbe();
 
   final NetworkInfo _networkInfo;
   final TargetPlatform _platform;
   final WifiPathProbe _pathProbe;
+  final NetworkTransportProbe _transportProbe;
 
   /// Reads the current Wi-Fi connection status.
   ///
@@ -286,6 +363,105 @@ class WifiConnectionService {
     }
 
     // ========================================================================
+    // PRIMARY (ANDROID): ASK ConnectivityManager WHAT TRANSPORT THE ACTIVE
+    // NETWORK RUNS OVER. (Round-4 cold review, THE ANDROID GATE, 2026-07-14.)
+    //
+    // WHY THIS BLOCK EXISTS. Everything below this point is the ADDRESS PROBE, and
+    // the address probe REFUSES to assert a negative off iOS (see the
+    // `_platform != TargetPlatform.iOS => unknown` guard). That refusal is correct
+    // FOR THE ADDRESS PROBE — an absent Wi-Fi IPv4 on a desktop means nothing —
+    // but it had one catastrophic consequence: `notOnWifi` was STRUCTURALLY
+    // UNREACHABLE ON ANDROID. Both consent gates read `status == notOnWifi`
+    // exactly, so on Android — LIVE on Google Play, and the one platform where
+    // "on cellular" is the DEFAULT assumption — `spendData` was UNCONDITIONALLY
+    // TRUE. No warning. No cost sentence. No decline path. Nothing to consent to.
+    // And the home hero pushes Test My Connection with `autoStart: true`, so the
+    // app's PRIMARY ENTRY POINT ran a full ~30 s throughput measurement plus the
+    // RPM load generator — 50 to 500 MB of a metered plan — with ZERO TAPS.
+    //
+    // THAT WAS "WE NEVER ASKED", NOT "WE CANNOT KNOW", AND THE DIFFERENCE IS THE
+    // WHOLE DESIGN. The GL-005 rationale this service is built on — an ambiguous
+    // read is never proof of cellular; never nag a wired desktop — was written for
+    // platforms where the transport GENUINELY CANNOT BE TOLD from an IP address.
+    // IT DOES NOT COVER ANDROID. Android answers the actual question directly:
+    // `NetworkCapabilities.hasTransport(TRANSPORT_CELLULAR)` on the ACTIVE network
+    // is a MEASURED fact from the OS about the link that is carrying the bytes.
+    // Declining to read a knowable fact and then citing the resulting silence as
+    // ambiguity is the two-kinds-of-null error pointed the wrong way
+    // ([[feedback_unsourced_is_not_invalid]]) — "unsourced" is not "invalid", and
+    // "we never asked" is not "we cannot know".
+    //
+    // IT COSTS NO PERMISSION AND NO PROMPT. `ACCESS_NETWORK_STATE` is a `normal`
+    // (install-time) permission, already declared in AndroidManifest.xml, and the
+    // transport TYPE is not Location-gated the way SSID/BSSID are — so this
+    // answers even on a device that has denied Location outright.
+    //
+    // THE DECISION TABLE (Android, the transport probe):
+    //
+    //   | Transport bits on the ACTIVE network      | Verdict     | Why          |
+    //   |-------------------------------------------|-------------|--------------|
+    //   | wifi, and NOT cellular                    | `onWifi`    | definitive + |
+    //   | cellular, and NOT wifi                    | `notOnWifi` | MEASURED —   |
+    //   |                                           |             | the user IS  |
+    //   |                                           |             | paying/byte  |
+    //   | wifi AND cellular (a VPN over both)       | ↓ AMBIGUOUS | cannot tell  |
+    //   |                                           |             | which pays   |
+    //   | ethernet (wired TV / dock), no cellular   | ↓ AMBIGUOUS | NOT cellular |
+    //   | nothing (airplane mode), or exotic (BT/USB)| ↓ AMBIGUOUS | NOT cellular |
+    //   | the probe did not answer (null)           | ↓ ADDRESSES | no verdict   |
+    //
+    // "↓ AMBIGUOUS" falls through to the address probe, which returns `unknown` on
+    // Android (the `!= iOS` guard below). `unknown` means "carry on as before": NO
+    // NAG, and NO false claim of Wi-Fi. That is exactly what a wired Android TV and
+    // a tablet on Wi-Fi require, and it is why over-suppression is impossible here:
+    // the ONLY row that can raise the gate is a MEASURED cellular transport with no
+    // Wi-Fi alongside it.
+    //
+    // THE SAME INVARIANT THE NATIVE iOS PATH JUST LEARNED (F-4) HOLDS HERE: NO
+    // DEFINITIVE NEGATIVE FROM AN UNVERIFIED SIGNAL. The difference — the ONLY
+    // difference, and it is the one that licenses the negative — is that on Android
+    // the signal IS verified. `TRANSPORT_CELLULAR` is not an inference from a
+    // missing address; it is the OS naming the radio it is routing over. That is
+    // the one place in this codebase where a negative is earned.
+    // ========================================================================
+    if (_platform == TargetPlatform.android) {
+      final NetworkTransportFacts? t = await _transportProbe.read();
+      if (t != null) {
+        // DEFINITIVE POSITIVE: the active network runs over Wi-Fi and nothing is
+        // billing us per byte. A device cannot route over a Wi-Fi interface it is
+        // not joined to.
+        if (t.wifi && !t.cellular) {
+          return WifiConnectionStatus.onWifi;
+        }
+        // DEFINITIVE NEGATIVE — AND THE ONLY ONE ANDROID MAY ASSERT. The OS says
+        // the active network is the mobile radio, and says no Wi-Fi is carrying it.
+        // The user is paying per byte, and we know it. This is the line that makes
+        // the consent gate reachable on Android at all.
+        if (t.cellular && !t.wifi) {
+          return WifiConnectionStatus.notOnWifi;
+        }
+        // EVERYTHING ELSE FALLS THROUGH, DELIBERATELY:
+        //
+        //   * BOTH wifi AND cellular — a VPN whose underlying networks include
+        //     both. We cannot tell which one the bytes will actually cost on, so we
+        //     assert NEITHER. Not `notOnWifi` (we would nag, and possibly lie);
+        //     not `onWifi` (we might then spend cellular data silently — but the
+        //     fall-through lands on `unknown`, which ALSO spends, so this row is
+        //     honest about its limit rather than safe: see KNOWN LIMITS).
+        //   * ETHERNET — a wired Android TV, a docked tablet. NOT cellular. It must
+        //     never see a cellular warning, and it is not Wi-Fi either, so we claim
+        //     nothing. `unknown` = the pre-existing behavior, exactly.
+        //   * NO ACTIVE NETWORK (airplane mode) or an exotic transport (Bluetooth
+        //     tether, USB, LoWPAN) — a successful read of a state that is neither
+        //     cellular nor Wi-Fi. Claiming "you're on cellular" here would be a
+        //     fabrication of precisely the kind this service exists to prevent.
+      }
+      // A null read (the channel is absent, the call threw, the deadline fired)
+      // falls through too. It is NOT a verdict in either direction, and the address
+      // probe below will resolve Android to `unknown`.
+    }
+
+    // ========================================================================
     // THE ADDRESS PROBE. Reached when the native path did not answer (every
     // non-iOS platform, and an iOS read that timed out or failed) OR when it
     // answered AMBIGUOUSLY (above). Its limits are real and documented in KNOWN
@@ -311,6 +487,15 @@ class WifiConnectionService {
     //     desktop with Wi-Fi off, a platform that does not report the Wi-Fi IP),
     //     so we resolve to `unknown` rather than falsely tell a wired user to
     //     "connect to Wi-Fi" (GL-005).
+    //
+    // ANDROID REACHES THIS LINE ONLY WHEN THE TRANSPORT PROBE COULD NOT DECIDE (it
+    // did not answer, or it answered ambiguously — a VPN over both radios, a wired
+    // TV, airplane mode). `unknown` is the RIGHT answer for every one of those, so
+    // this guard stays exactly as it is. The Android gate does NOT live here; it
+    // lives in the transport block ABOVE, where the signal is MEASURED. Widening
+    // this guard to let the ADDRESS probe assert a negative on Android would
+    // reintroduce, on a platform that genuinely has wired Ethernet, the exact false
+    // negative this guard was written to prevent.
     if (_platform != TargetPlatform.iOS) {
       return WifiConnectionStatus.unknown;
     }

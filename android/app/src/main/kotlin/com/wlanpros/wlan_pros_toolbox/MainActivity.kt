@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.LinkProperties
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.net.wifi.ScanResult
 import android.net.wifi.WifiInfo
@@ -47,6 +48,23 @@ import java.net.InetAddress
 //      normal, already declared) — NO location permission. A 0 / 0.0.0.0 read
 //      is returned as null (never a fabricated address, GL-005).
 //
+//   3b. com.wlanpros.toolbox/network_transport — WHICH TRANSPORT the ACTIVE
+//      network runs over (cellular / Wi-Fi / Ethernet / VPN), read from
+//      ConnectivityManager.getNetworkCapabilities(activeNetwork).hasTransport().
+//      This is the ANDROID CELLULAR-DATA CONSENT GATE's input: it is the MEASURED
+//      answer to "is the user paying per byte right now?", and it is what makes
+//      WifiConnectionStatus.notOnWifi reachable on Android at all.
+//
+//      Requires ACCESS_NETWORK_STATE ONLY — a `normal` (install-time) permission
+//      that is ALREADY declared in AndroidManifest.xml and NEVER prompts. NO
+//      Location grant: the transport TYPE is not identifying information, unlike
+//      the SSID/BSSID reads above, so this answers on a device that has denied
+//      Location outright.
+//
+//      IT DECIDES NOTHING. It returns the four capability bits verbatim and the
+//      Dart decision table (WifiConnectionService) resolves them, because a
+//      decision made here is a decision the Dart test suite cannot reach.
+//
 //   3. com.wlanpros.toolbox/ap_scan — the Android-ONLY nearby-AP scan (H3).
 //      Calls WifiManager.getScanResults() and returns every visible BSS with the
 //      CLEAN fields the public API exposes reliably: SSID, BSSID, channel, band,
@@ -69,6 +87,7 @@ class MainActivity : FlutterActivity() {
     private val wifiInfoChannelName = "com.wlanpros.toolbox/wifi_info"
     private val apScanChannelName = "com.wlanpros.toolbox/ap_scan"
     private val networkAddressingChannelName = "com.wlanpros.toolbox/network_addressing"
+    private val networkTransportChannelName = "com.wlanpros.toolbox/network_transport"
     private var multicastLock: WifiManager.MulticastLock? = null
 
     // The pending Flutter result for an in-flight runtime permission request, so
@@ -138,7 +157,96 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, networkTransportChannelName)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "getTransport" -> result.success(readTransport())
+                    else -> result.notImplemented()
+                }
+            }
     }
+
+    // ---- Active-network transport (the Android cellular-data consent gate) ----
+
+    /// Reads WHICH TRANSPORT the device's ACTIVE (default) network runs over, as
+    /// the four raw `NetworkCapabilities.hasTransport(...)` bits. This is the
+    /// MEASURED input to the cellular-data consent gate: it is how the app knows,
+    /// definitively, that the user is paying per byte before it spends 50-500 MB
+    /// of their data on the speed test.
+    ///
+    /// PERMISSION: ACCESS_NETWORK_STATE only — `normal` protection level, declared
+    /// in the manifest, granted at install, never prompts. NOT Location-gated: we
+    /// ask what KIND of link this is, never WHICH network it is, so this answers
+    /// correctly on a device that has denied Location.
+    ///
+    /// HONESTY (GL-005 / GL-008). This method DECIDES NOTHING — it reports. Every
+    /// judgement (what counts as Wi-Fi, what licenses a "you're on cellular"
+    /// warning, what is too ambiguous to call) lives in the Dart decision table in
+    /// `WifiConnectionService`, where it is unit-tested and mutation-proven.
+    ///
+    /// TWO KINDS OF NULL, KEPT APART, because conflating them is the bug this whole
+    /// change exists to remove:
+    ///   * `available = false` — WE COULD NOT READ IT (no ConnectivityManager, the
+    ///     read threw, pre-API-23 device). The Dart side falls back and resolves to
+    ///     `unknown`. It must never be read as "not on cellular".
+    ///   * `available = true` with EVERY BIT FALSE — WE READ IT, AND THERE IS NO
+    ///     ACTIVE NETWORK (airplane mode), or the transport is one we do not
+    ///     enumerate (Bluetooth tether, USB, LoWPAN). That is a real, successful
+    ///     read of a state that is NEITHER cellular NOR Wi-Fi. The Dart side
+    ///     resolves it to `unknown` too — no nag, and no false claim of Wi-Fi.
+    ///
+    /// Both land on `unknown`, but they are not the same fact and the payload does
+    /// not pretend they are.
+    private fun readTransport(): Map<String, Any?> = try {
+        val cm = applicationContext
+            .getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+        when {
+            cm == null -> unavailableTransport()
+            // getActiveNetwork / getNetworkCapabilities are API 23+. Below that we
+            // cannot read the transport honestly, so we say so rather than falling
+            // back to the deprecated activeNetworkInfo guesswork.
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.M -> unavailableTransport()
+            else -> {
+                val network = cm.activeNetwork
+                if (network == null) {
+                    // A SUCCESSFUL read of "there is no active network" (airplane
+                    // mode / fully offline). Not a failure, and not cellular.
+                    mapOf(
+                        "available" to true,
+                        "cellular" to false,
+                        "wifi" to false,
+                        "ethernet" to false,
+                        "vpn" to false,
+                    )
+                } else {
+                    val caps = cm.getNetworkCapabilities(network)
+                    if (caps == null) {
+                        unavailableTransport()
+                    } else {
+                        mapOf(
+                            "available" to true,
+                            "cellular" to
+                                caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR),
+                            "wifi" to
+                                caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI),
+                            "ethernet" to
+                                caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET),
+                            "vpn" to
+                                caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN),
+                        )
+                    }
+                }
+            }
+        }
+    } catch (e: Throwable) {
+        // SecurityException / anything else — honest unavailable, never a verdict.
+        unavailableTransport()
+    }
+
+    /// The honest "we could not read the transport" payload. The Dart side maps it
+    /// to null → `unknown`, never to a verdict either way.
+    private fun unavailableTransport(): Map<String, Any?> = mapOf("available" to false)
 
     // ---- Local network addressing (DHCP server + DNS, Android) ----------
 
