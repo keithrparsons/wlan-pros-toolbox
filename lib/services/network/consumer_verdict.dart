@@ -272,15 +272,37 @@ class ConsumerVerdict {
   /// instead of sitting unreachable and unexercised in two screen methods.
   AxisStatus? sameRealTier() {
     if (wifiStatus != internetStatus) return null;
-    switch (wifiStatus) {
+    return wifiStatus.isRealTier ? wifiStatus : null;
+  }
+}
+
+/// The WHITELIST at the bottom of every "both sides are X" sentence.
+///
+/// THERE ARE THREE SUCH GUARDS, NOT TWO. Round 4 replaced two hand-rolled copies
+/// with [ConsumerVerdict.sameRealTier] and claimed "one guard replaces two". That
+/// was wrong: `_sameTierReadingLine` in test_my_connection_screen.dart is a THIRD,
+/// and it could not use `sameRealTier` because it derives its tiers from the RATES
+/// (via [AxisStatusThresholds.tierFor]) rather than from a [ConsumerVerdict]'s axis
+/// statuses. So it kept the blacklist form and kept drifting.
+///
+/// This predicate is what all three can share. A WHITELIST, not a blacklist: only
+/// the three tiers that come from a REAL measured rate pass. A future [AxisStatus]
+/// member is excluded BY CONSTRUCTION rather than by remembering to add it to an
+/// exclusion list — which is exactly what nobody did for [AxisStatus.notMeasured].
+extension AxisStatusTier on AxisStatus {
+  /// True only for [AxisStatus.strong] / [AxisStatus.moderate] / [AxisStatus.weak]
+  /// — the tiers backed by a real measured rate. False for every "there is no
+  /// number here" state, whatever the reason for the absence.
+  bool get isRealTier {
+    switch (this) {
       case AxisStatus.strong:
       case AxisStatus.moderate:
       case AxisStatus.weak:
-        return wifiStatus;
+        return true;
       case AxisStatus.unknown:
       case AxisStatus.notApplicable:
       case AxisStatus.notMeasured:
-        return null;
+        return false;
     }
   }
 }

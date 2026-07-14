@@ -70,9 +70,19 @@
 //   |-------------------------------------------------------|-------------|
 //   | default route runs over Wi-Fi (`usesWifi`)             | `onWifi`    |
 //   | a Wi-Fi-required path is satisfied (`wifiSatisfied`)   | `onWifi`    |
-//   | a Wi-Fi interface is present but carries no route      | `unknown`   |
 //   | no Wi-Fi interface, no Wi-Fi route                     | `notOnWifi` |
-//   | the platform did not answer (null)                     | ↓ fallback  |
+//   | a Wi-Fi interface is present but carries no route      | ↓ ADDRESSES |
+//   | the platform did not answer (null)                     | ↓ ADDRESSES |
+//
+// THE AMBIGUOUS ROW IS THE ONE THAT MATTERS, AND IT COST A REGRESSION. The first
+// cut of round 4 answered it `unknown` and stopped. `unknown` means "keep the
+// caller's prior behavior", and the prior behavior is the STALE App Group reading —
+// so on a radio that is ON but UNASSOCIATED (the ordinary state of an iPhone on
+// cellular with Wi-Fi left switched on) the screen went straight back to
+// "It's your Wi-Fi" / "KeithHome" / "29 Mbps". The original bug, reproduced by the
+// code written to delete it, because the address probe sits BELOW this block and the
+// native monitor always answers. It now FALLS THROUGH instead. See the long note at
+// the branch itself.
 //
 // THE DECISION TABLE (fallback — the address probe; iOS-only for the negative):
 //
@@ -101,20 +111,21 @@
 //     executed on an iOS device. The three shapes it is expected to fix — IPv6-only
 //     SSID, USB tether, Personal Hotspot — are REASONED from the SDK's interface-type
 //     contract, not observed on a phone. Treat them as fixed only after a device run.
-//   * A POWERED-BUT-UNASSOCIATED Wi-Fi radio is expected to present no usable Wi-Fi
-//     path and therefore read `notOnWifi`. If instead iOS lists the interface as
-//     available, this service returns `unknown` and the caller keeps its prior
-//     behavior — a possible stale reading, not a false negative. Fails safe either
-//     way, by construction, which is why the unmeasured case is tolerable.
+//   * A POWERED-BUT-UNASSOCIATED Wi-Fi radio was NOT measured, and it is the shape
+//     that broke the first cut of this round. It is handled by NOT DECIDING IT
+//     NATIVELY AT ALL: whatever iOS reports for it, an interface with no usable
+//     route falls through to the address probe, which resolves it correctly
+//     (no IPv4, no IPv6 → `notOnWifi`) exactly as it did before the native path
+//     existed. The fix therefore does not depend on a measurement nobody has taken.
 //   * HOSTING A PERSONAL HOTSPOT may present a satisfied Wi-Fi path (the phone's own
-//     AP interface). If it does, this reads `onWifi`. That is the SAME answer the old
-//     address probe gave (the hotspot interface carries 172.20.10.1), so it is not a
-//     regression — but it is not a proven fix either, and it is not claimed as one.
-//   * WHERE THE NATIVE PATH IS UNAVAILABLE the fallback's older limits still apply in
-//     full: on an IPv6-only SSID the address probe returns `unknown`, not `onWifi`,
-//     so a live surface may still show a STALE reading there. This is the cost of the
-//     fallback, and it is strictly better than telling a connected user they have no
-//     Wi-Fi.
+//     AP interface). If it does, this reads `onWifi`; if it does not, it falls
+//     through and the hotspot interface's 172.20.10.1 also reads `onWifi`. Either
+//     way it matches the pre-existing behavior, so it is not a regression — but it
+//     is not a proven fix either, and it is not claimed as one.
+//   * ON AN IPv6-ONLY SSID the address probe alone returns `unknown`, not `onWifi`.
+//     That limit is now MOOT on iOS (the native path catches the association before
+//     the fallback is reached) but still holds on any platform where the native path
+//     is unavailable.
 //
 // Web safety: no `dart:io`. Both probes are method-channel calls whose channels are
 // absent off the supported native platforms; the calls are guarded and resolve to
@@ -185,27 +196,58 @@ class WifiConnectionService {
     if (path != null) {
       // The default route runs over Wi-Fi, or a Wi-Fi-required path has a usable
       // route. Either is a definitive association — a device cannot route over a
-      // Wi-Fi interface it is not joined to.
+      // Wi-Fi interface it is not joined to. This is where an IPv6-only SSID is
+      // caught, so it NEVER reaches the address probe below (which is blind to it).
       if (path.usesWifi || path.wifiSatisfied) {
         return WifiConnectionStatus.onWifi;
       }
-      // A Wi-Fi interface exists on the path but carries no usable route. Could be
-      // a captive portal mid-join, a radio powered but unassociated, or a hotspot
-      // the phone is hosting rather than joined to. AMBIGUOUS — refuse to guess.
-      if (path.wifiInterfacePresent) {
-        return WifiConnectionStatus.unknown;
+      // No Wi-Fi interface on the path AT ALL. Definitive: an absent interface
+      // cannot carry a path (MEASURED — see the header). This is also what keeps a
+      // USB-tethered `en*` from being read as Wi-Fi, which the address probe below
+      // cannot do on its own.
+      if (!path.wifiInterfacePresent) {
+        return WifiConnectionStatus.notOnWifi;
       }
-      // No Wi-Fi interface on the path at all, and no satisfiable Wi-Fi route.
-      // This is the cellular-only / radio-off device the probe exists for, and
-      // it is the one Keith hit. Note this needs NO platform gate: the native
-      // channel only answers where it is registered.
-      return WifiConnectionStatus.notOnWifi;
+      // ====================================================================
+      // AMBIGUOUS — AND WE FALL THROUGH TO THE ADDRESS PROBE. WE DO NOT GUESS,
+      // AND WE DO NOT SHORT-CIRCUIT TO `unknown`. (Round-4 F1 regression fix.)
+      //
+      // A Wi-Fi interface is present but carries no usable route. That covers a
+      // captive portal mid-join, a phone HOSTING a hotspot, and — the one that
+      // matters — A RADIO THAT IS ON BUT NOT ASSOCIATED, which is the ordinary
+      // state of an iPhone sitting on cellular with Wi-Fi left switched on.
+      //
+      // The first cut of round 4 returned `unknown` here and stopped. That made
+      // `notOnWifi` UNREACHABLE for that state, because the address probe below
+      // sits outside this block and the native monitor always answers (it starts
+      // at app launch). `unknown` means "keep prior behavior", and the prior
+      // behavior is the stale App Group reading — so the screen went back to
+      // "It's your Wi-Fi", "KeithHome", "29 Mbps". THAT IS THE ORIGINAL BUG,
+      // rendered by the code written to remove it. I dismissed the cost in a
+      // comment as "a stale reading". The stale reading IS the bug.
+      //
+      // Falling through is strictly better than BOTH earlier designs in every
+      // shape we can enumerate:
+      //   * IPv6-only Wi-Fi   — never gets here (caught above). Round 2's blocker
+      //                         stays fixed.
+      //   * Radio on, idle    — no IPv4 and no IPv6 on the interface → the probe
+      //                         below returns `notOnWifi`. The bug stays fixed,
+      //                         exactly as it was before the native path existed.
+      //   * Captive portal    — DHCP has handed out an IPv4 → `onWifi`. Better
+      //                         than the `unknown` this used to return.
+      //   * Anything definite — already answered above; never reaches here.
+      //
+      // The native path keeps every answer it can PROVE, and hands the rest to the
+      // signal that has actually been verified in the field, instead of discarding
+      // it. Nothing is guessed in either layer.
+      // ====================================================================
     }
 
     // ========================================================================
-    // FALLBACK: the address probe. Reached only where the native path did not
-    // answer — every non-iOS platform, and an iOS read that timed out or failed.
-    // Its limits are real and are documented in KNOWN LIMITS above.
+    // THE ADDRESS PROBE. Reached when the native path did not answer (every
+    // non-iOS platform, and an iOS read that timed out or failed) OR when it
+    // answered AMBIGUOUSLY (above). Its limits are real and documented in KNOWN
+    // LIMITS — but on the shapes that reach it, it is the better signal.
     // ========================================================================
     final ({String? ip, bool threw}) v4 = await _readWifiIp();
     if (v4.threw) {

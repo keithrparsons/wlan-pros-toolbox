@@ -66,6 +66,7 @@ class _CellularOnlyNetworkInfo implements NetworkInfo {
 /// This is the primary signal `WifiConnectionService` now reads, and the only
 /// native shape permitted to assert `notOnWifi`.
 class _NoWifiPath implements WifiPathProbe {
+  const _NoWifiPath();
   @override
   Future<WifiPathFacts?> read() async => const WifiPathFacts(
         usesWifi: false,
@@ -73,6 +74,51 @@ class _NoWifiPath implements WifiPathProbe {
         wifiInterfacePresent: false,
       );
 }
+
+/// THE SHAPE THAT REGRESSED THE ORIGINAL BUG (round-4 F1, 2026-07-14).
+///
+/// Wi-Fi radio ON, but NOT ASSOCIATED — the ordinary state of an iPhone sitting on
+/// cellular with Wi-Fi simply left switched on. It is almost certainly the state
+/// Keith's phone was in when he filed the bug.
+///
+/// iOS lists the interface, but it carries no usable route. Round 4's first cut
+/// short-circuited this to `unknown`, which means "keep the caller's prior
+/// behavior" — and the prior behavior is the STALE App Group reading. So the screen
+/// rendered "It's your Wi-Fi" / "KeithHome" / "29 Mbps" again: the original bug,
+/// reproduced by the code written to remove it. Flipping this ONE BIT in the harness
+/// failed every test in this file.
+///
+/// The service now FALLS THROUGH to the address probe on this shape, which resolves
+/// it correctly (no IPv4, no IPv6 → notOnWifi) exactly as it did before the native
+/// path existed.
+class _RadioOnUnassociatedPath implements WifiPathProbe {
+  const _RadioOnUnassociatedPath();
+  @override
+  Future<WifiPathFacts?> read() async => const WifiPathFacts(
+        usesWifi: false,
+        wifiSatisfied: false,
+        wifiInterfacePresent: true,
+      );
+}
+
+/// One off-Wi-Fi device, described two ways by iOS. EVERY test in this file runs
+/// against BOTH. The user is off Wi-Fi in both, so the screen must say so in both —
+/// which native shape iOS happens to report is not the user's problem.
+class _OffWifiShape {
+  const _OffWifiShape(this.label, this.probe);
+  final String label;
+  final WifiPathProbe probe;
+}
+
+// ignore: library_private_types_in_public_api — a test-local shape table; the
+// type is private on purpose and never crosses a library boundary.
+const List<_OffWifiShape> _kOffWifiShapes = <_OffWifiShape>[
+  _OffWifiShape('radio OFF / no Wi-Fi interface', _NoWifiPath()),
+  _OffWifiShape('radio ON but UNASSOCIATED', _RadioOnUnassociatedPath()),
+];
+
+/// The shape the current suite run is driving. Set per-group in [_offWifiSuite].
+late WifiPathProbe _activePath;
 
 /// The App Group's LAST STORED payload — Keith's real stale reading, captured the
 /// last time the phone WAS on Wi-Fi, and still sitting there on cellular.
@@ -231,7 +277,7 @@ Future<_StaleBridge> _runOffWifiCheck(
     connectionService: WifiConnectionService(
       networkInfo: _CellularOnlyNetworkInfo(),
       platformOverride: TargetPlatform.iOS,
-      pathProbe: _NoWifiPath(),
+      pathProbe: _activePath,
     ),
   );
   addTearDown(sampler.dispose);
@@ -280,9 +326,20 @@ String _visibleText(WidgetTester tester) {
 }
 
 void main() {
-  group('Test My Connection, cellular-only iPhone with a stale App Group payload',
+  // EVERY test below runs against BOTH native shapes. The reviewer's point, and it
+  // is the right one: a shape that is never driven through a SCREEN is a shape
+  // nobody has asked "what does the user actually see?".
+  for (final _OffWifiShape shape in _kOffWifiShapes) {
+    _offWifiSuite(shape);
+  }
+}
+
+void _offWifiSuite(_OffWifiShape shape) {
+  group('Test My Connection, off Wi-Fi with a stale payload [${shape.label}]',
       () {
     late List<String> clipboardWrites;
+
+    setUp(() => _activePath = shape.probe);
 
     setUp(() {
       clipboardWrites = <String>[];

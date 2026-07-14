@@ -470,26 +470,92 @@ void main() {
       );
     });
 
-    test('a Wi-Fi interface present but carrying NO usable route -> unknown',
+    // ======================================================================
+    // THE AMBIGUOUS SHAPE — AND THE REGRESSION IT CAUSED (round-4 F1).
+    //
+    // A Wi-Fi interface is present but carries no usable route. THIS TEST USED TO
+    // ASSERT `unknown`, AND THAT ASSERTION WAS THE BUG WRITTEN DOWN AS THE SPEC.
+    //
+    // `unknown` means "caller keeps its prior behavior", and the prior behavior is
+    // the STALE App Group reading. The address probe sits BELOW the native block and
+    // the native monitor ALWAYS answers (it starts at app launch), so `unknown` here
+    // made `notOnWifi` unreachable for this shape — and this shape is a radio that is
+    // ON but UNASSOCIATED, which is the ordinary state of an iPhone on cellular with
+    // Wi-Fi left switched on. Almost certainly Keith's phone when he filed the bug.
+    //
+    // The service now FALLS THROUGH to the address probe here. The native layer keeps
+    // every answer it can PROVE and hands the rest to the signal that has actually
+    // been verified in the field, instead of discarding it.
+    // ======================================================================
+    test('AMBIGUOUS + no addresses -> notOnWifi (the radio-on-idle iPhone)',
         () async {
-      // AMBIGUOUS, AND DELIBERATELY UNRESOLVED. A radio powered but unassociated, a
-      // captive portal mid-join, or a phone HOSTING a Personal Hotspot could all
-      // present this shape — none was measured on a real device, so the service
-      // refuses to guess. `unknown` = the caller keeps its prior behavior.
-      //
-      // This is the fail-safe that makes the unmeasured shapes tolerable: being
-      // wrong here costs a stale reading, never a false "you have no Wi-Fi".
+      // THE REGRESSION GUARD. `_nativeService` pairs the facts with an address probe
+      // that reports no address in either family — the radio is on, but nothing is
+      // associated, so nothing is addressed.
       final s = _nativeService(const WifiPathFacts(
         usesWifi: false,
         wifiSatisfied: false,
         wifiInterfacePresent: true,
       ));
-      expect(await s.status(), WifiConnectionStatus.unknown);
       expect(
         await s.status(),
-        isNot(WifiConnectionStatus.notOnWifi),
-        reason: 'stated separately: an ambiguous native shape must NEVER become a '
-            'false "not on Wi-Fi"',
+        WifiConnectionStatus.notOnWifi,
+        reason: 'an unassociated radio must resolve to notOnWifi, exactly as it did '
+            'before the native path existed. Returning `unknown` here hands the user '
+            'back the stale reading — which IS the original bug.',
+      );
+    });
+
+    test('AMBIGUOUS + a Wi-Fi IPv4 -> onWifi (the captive portal mid-join)',
+        () async {
+      // The other side of the fall-through, and it is BETTER than the old `unknown`:
+      // a captive portal has already handed out a DHCP lease, so the device really is
+      // associated and the address proves it.
+      final s = WifiConnectionService(
+        networkInfo: _FakeNetworkInfo(wifiIp: '192.168.1.42'),
+        platformOverride: TargetPlatform.iOS,
+        pathProbe: const _FakePathProbe(WifiPathFacts(
+          usesWifi: false,
+          wifiSatisfied: false,
+          wifiInterfacePresent: true,
+        )),
+      );
+      expect(await s.status(), WifiConnectionStatus.onWifi);
+    });
+
+    test('AMBIGUOUS + only a link-local IPv6 -> unknown, never a false negative',
+        () async {
+      // The genuinely undecidable case still resolves to `unknown` — but now it is
+      // the ADDRESS PROBE that says so, on evidence, rather than the native layer
+      // short-circuiting before the evidence was ever consulted.
+      final s = WifiConnectionService(
+        networkInfo: _FakeNetworkInfo(wifiIpv6: kMeasuredLinkLocal),
+        platformOverride: TargetPlatform.iOS,
+        pathProbe: const _FakePathProbe(WifiPathFacts(
+          usesWifi: false,
+          wifiSatisfied: false,
+          wifiInterfacePresent: true,
+        )),
+      );
+      expect(await s.status(), WifiConnectionStatus.unknown);
+    });
+
+    test('an IPv6-only SSID NEVER reaches the address probe (it is caught above)',
+        () async {
+      // THE PROOF THAT FALLING THROUGH DID NOT REOPEN ROUND 2'S BLOCKER. An
+      // associated IPv6-only device has a Wi-Fi PATH, so `usesWifi`/`wifiSatisfied`
+      // catch it before the fallback — even though the address probe behind this fake
+      // reports NOTHING and would therefore have said `notOnWifi`.
+      final s = _nativeService(const WifiPathFacts(
+        usesWifi: true,
+        wifiSatisfied: true,
+        wifiInterfacePresent: true,
+      ));
+      expect(
+        await s.status(),
+        WifiConnectionStatus.onWifi,
+        reason: 'if this ever reads notOnWifi, the fall-through has swallowed the '
+            'IPv6-only association and round 2 is back',
       );
     });
 

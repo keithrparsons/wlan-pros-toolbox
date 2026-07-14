@@ -1,217 +1,266 @@
 #!/usr/bin/env python3
-"""Mutation harness: break one fixing line, run its guard tests, restore.
+"""Diff-derived mutation gate.
 
-A test that stays GREEN when the line it guards is broken is not coverage.
-Round 3 shipped two such lines. Every fixing line in round 4 goes through here.
+WHY THIS WAS REWRITTEN (2026-07-14). The first version carried a HAND-AUTHORED list
+of lines to mutate, and it reported "15/15 fixing lines mutation-proven". That claim
+was FALSE. The 15 were the lines *I chose*. The list silently omitted
+`own_engine_quality_client.dart`'s `if (includeThroughput)` — the single line that
+stops a gigabyte of a user's cellular data from moving.
 
-Usage: python3 tool/mutate.py
+A mutation tool that only mutates the lines you picked is a tool that confirms your
+own judgment. An unaudited exclusion list is an exemption the maker wrote for itself
+(GL-005: the maker may not author its own exemption).
+
+So the target set is now DERIVED FROM THE DIFF. Every production line this branch
+changes is either mutated, or reported as SKIPPED with a reason. Nothing is silently
+exempt.
+
+  BASE   the branch point (default: merge-base with `main`).
+  SCOPE  added/modified lines under lib/ and packages/*/lib/.
+         Test files are NOT mutated: mutating a test proves nothing about the code.
+  ORACLE the ROOT `flutter test` run — the suite we actually certify releases with.
+         (That is deliberate. The P2 finding was a line covered only by a suite the
+         root run does not execute. Coverage by a test that never runs is not
+         coverage.)
+
+  KILLED   the suite went red. The line is observed.
+  SURVIVED the suite stayed green with the line broken. NOT COVERAGE. Fix the test.
+  SKIPPED  no mutation operator applies (declaration, import, comment, bare string).
+           Listed explicitly so the exemption is auditable.
+
+Usage:
+  python3 tool/mutate.py --list      # what would be mutated, and what is skipped
+  python3 tool/mutate.py             # run the gate
+  python3 tool/mutate.py --base <sha>
 """
+from __future__ import annotations
+
+import argparse
+import re
 import shutil
 import subprocess
 import sys
 
-# (label, file, old, new, test target)
-MUTATIONS = [
-    (
-        "M1  wifi_connection_service: native onWifi (usesWifi disjunct)",
-        "lib/services/network/wifi_connection_service.dart",
-        "      if (path.usesWifi || path.wifiSatisfied) {",
-        "      if (false || path.wifiSatisfied) { // MUTANT",
-        "test/services/network/wifi_connection_service_test.dart",
-    ),
-    (
-        "M2  wifi_connection_service: native onWifi (wifiSatisfied disjunct)",
-        "lib/services/network/wifi_connection_service.dart",
-        "      if (path.usesWifi || path.wifiSatisfied) {",
-        "      if (path.usesWifi || false) { // MUTANT",
-        "test/services/network/wifi_connection_service_test.dart",
-    ),
-    (
-        "M3  wifi_connection_service: ambiguous-shape guard -> unknown",
-        "lib/services/network/wifi_connection_service.dart",
-        "      if (path.wifiInterfacePresent) {",
-        "      if (false) { // MUTANT",
-        "test/services/network/wifi_connection_service_test.dart",
-    ),
-    (
-        "M4  wifi_connection_service: native notOnWifi verdict",
-        "lib/services/network/wifi_connection_service.dart",
-        "      return WifiConnectionStatus.notOnWifi;\n    }\n\n    // ====",
-        "      return WifiConnectionStatus.unknown; // MUTANT\n    }\n\n    // ====",
-        "test/services/network/wifi_connection_service_test.dart",
-    ),
-    (
-        "M5  wifi_connection_service: the native path is consulted AT ALL",
-        "lib/services/network/wifi_connection_service.dart",
-        "    final WifiPathFacts? path =\n"
-        "        _platform == TargetPlatform.iOS ? await _pathProbe.read() : null;",
-        "    final WifiPathFacts? path = null; // MUTANT",
-        "test/services/network/wifi_connection_service_test.dart",
-    ),
-    (
-        "M15 wifi_connection_service: the iOS gate on the native read",
-        "lib/services/network/wifi_connection_service.dart",
-        "        _platform == TargetPlatform.iOS ? await _pathProbe.read() : null;",
-        "        _platform == TargetPlatform.macOS ? await _pathProbe.read() : null;",
-        "test/services/network/wifi_connection_service_test.dart",
-    ),
-    (
-        "M6  wifi_connection_service: `::` all-zeros IPv6 normalization",
-        "lib/services/network/wifi_connection_service.dart",
-        "      if (t.isEmpty || _isUnspecifiedIpv6(t)) {",
-        "      if (t.isEmpty) { // MUTANT",
-        "test/services/network/wifi_connection_service_test.dart",
-    ),
-    (
-        "M7  test_my_connection: _recomputeVerdict notOnWifi (ROUND-3 BLOCKER)",
-        "lib/screens/tools/network/test_my_connection_screen.dart",
-        "      notOnWifi: _resultNotOnWifi,\n      // The RUN's consent decision",
-        "      notOnWifi: false, // MUTANT\n      // The RUN's consent decision",
-        "test/screens/tools/network/test_my_connection_offwifi_e2e_test.dart",
-    ),
-    (
-        "M8  test_my_connection: _buildAnalysisReport notOnWifi wiring",
-        "lib/screens/tools/network/test_my_connection_screen.dart",
-        "        notOnWifi: _resultNotOnWifi,\n        speedTestSkipped:",
-        "        notOnWifi: false, // MUTANT\n        speedTestSkipped:",
-        "test/screens/tools/network/test_my_connection_offwifi_e2e_test.dart",
-    ),
-    (
-        "M9  test_my_connection: the run's notOnWifi GATE (linkAp suppression)",
-        "lib/screens/tools/network/test_my_connection_screen.dart",
-        "        final ConnectedAp? linkAp = notOnWifi ? null : ap;",
-        "        final ConnectedAp? linkAp = ap; // MUTANT",
-        "test/screens/tools/network/test_my_connection_offwifi_e2e_test.dart",
-    ),
-    (
-        "M10 consumer_verdict: sameRealTier whitelist (notApplicable)",
-        "lib/services/network/consumer_verdict.dart",
-        "      case AxisStatus.unknown:\n      case AxisStatus.notApplicable:\n"
-        "      case AxisStatus.notMeasured:\n        return null;",
-        "      case AxisStatus.unknown:\n        return null;\n"
-        "      case AxisStatus.notApplicable:\n      case AxisStatus.notMeasured:\n"
-        "        return wifiStatus; // MUTANT",
-        "test/services/consumer_verdict_test.dart",
-    ),
-    (
-        "M11 interface_info_screen: the copy report's notOnWifi status line",
-        "lib/screens/tools/network/interface_info_screen.dart",
-        "    if (w.notOnWifi) {\n      // The copy report must say what the screen says",
-        "    if (false) { // MUTANT\n      // The copy report must say what the screen says",
-        "test/screens/tools/network/interface_info_notonwifi_test.dart",
-    ),
-    (
-        "M12 interface_info_screen: the copy report's MAC-type block skip",
-        "lib/screens/tools/network/interface_info_screen.dart",
-        "    if (!w.notOnWifi) {\n      line('IPv4', w.wifiIPv4);",
-        "    if (true) { // MUTANT\n      line('IPv4', w.wifiIPv4);",
-        "test/screens/tools/network/interface_info_notonwifi_test.dart",
-    ),
-    (
-        "M13 interface_info_screen: the Wi-Fi CARD's notOnWifi branch",
-        "lib/screens/tools/network/interface_info_screen.dart",
-        "    if (w.notOnWifi) {\n      final AppColorScheme colors = context.colors;",
-        "    if (false) { // MUTANT\n      final AppColorScheme colors = context.colors;",
-        "test/screens/tools/network/interface_info_notonwifi_test.dart",
-    ),
-    # ---- Round-4 P0/P2: the cellular-data consent gate ----
-    (
-        "P0-a test_my_connection: auto-start AWAITS the probe (not _run)",
-        "lib/screens/tools/network/test_my_connection_screen.dart",
-        "        if (mounted) _autoStart();",
-        "        if (mounted) _run(includeThroughput: true); // MUTANT",
-        "test/screens/tools/network/test_my_connection_autostart_consent_test.dart",
-    ),
-    (
-        "P0-b test_my_connection: auto-start STOPS off Wi-Fi",
-        "lib/screens/tools/network/test_my_connection_screen.dart",
-        "    if (_notOnWifi) {\n      // Zero bytes move. Rebuild so the pre-run screen shows the data-cost\n"
-        "      // warning and both choices; the user decides.\n      setState(() {});\n      return;\n    }",
-        "    if (false) { // MUTANT\n      setState(() {});\n      return;\n    }",
-        "test/screens/tools/network/test_my_connection_autostart_consent_test.dart",
-    ),
-    (
-        "P0-c test_my_connection: the _run consent CHOKEPOINT",
-        "lib/screens/tools/network/test_my_connection_screen.dart",
-        "    final bool spendData =\n"
-        "        includeThroughput && (!_notOnWifi || _throughputConsented);",
-        "    final bool spendData = includeThroughput; // MUTANT",
-        "test/screens/tools/network/test_my_connection_autostart_consent_test.dart",
-    ),
-    (
-        "P0-d test_my_connection: the consent TAP is recorded",
-        "lib/screens/tools/network/test_my_connection_screen.dart",
-        "                    if (_notOnWifi) _throughputConsented = true;",
-        "                    // MUTANT: consent never recorded",
-        "test/screens/tools/network/test_my_connection_autostart_consent_test.dart",
-    ),
-    (
-        "P0-e test_my_connection: measure() spends only what was consented",
-        "lib/screens/tools/network/test_my_connection_screen.dart",
-        "    _sub = _quality.measure(includeThroughput: spendData).listen(",
-        "    _sub = _quality.measure(includeThroughput: includeThroughput).listen( // MUTANT",
-        "test/screens/tools/network/test_my_connection_autostart_consent_test.dart",
-    ),
-    (
-        "P2  net_quality engine: the includeThroughput gate (ROOT-certified now)",
-        "packages/net_quality/lib/src/own_engine_quality_client.dart",
-        "    if (includeThroughput) {",
-        "    if (true) { // MUTANT",
-        "test/services/network/engine_cellular_consent_gate_test.dart",
-    ),
-    (
-        "M14 interface_info_service: the connectivity gate itself",
-        "lib/services/network/interface_info_service.dart",
-        "    if (await _isNotOnWifi()) {",
-        "    if (false) { // MUTANT",
-        "test/screens/tools/network/interface_info_notonwifi_test.dart",
-    ),
+TEST_CMD = ["flutter", "test"]
+
+
+def sh(args):
+    return subprocess.run(args, capture_output=True, text=True, check=True).stdout
+
+
+def changed_production_lines(base):
+    """(path, lineno, text) for every added/modified line in production code."""
+    files = [
+        f
+        for f in sh(["git", "diff", "--name-only", f"{base}...HEAD"]).splitlines()
+        if (f.startswith("lib/") or re.match(r"packages/[^/]+/lib/", f))
+        and f.endswith(".dart")
+    ]
+    out = []
+    for f in files:
+        diff = sh(["git", "diff", "-U0", f"{base}...HEAD", "--", f])
+        lineno = 0
+        for line in diff.splitlines():
+            m = re.match(r"@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@", line)
+            if m:
+                lineno = int(m.group(1))
+                continue
+            if line.startswith("+") and not line.startswith("+++"):
+                out.append((f, lineno, line[1:]))
+                lineno += 1
+    return out
+
+
+IF_RE = re.compile(r"\bif \((?!true\b)(?!false\b).+?\) \{")
+GUARD_RE = re.compile(r"\bif \((?!true\b)(?!false\b).+?\) return")
+
+
+def _if_true(t):
+    return IF_RE.sub("if (true) {", t, count=1) if IF_RE.search(t) else None
+
+
+def _guard_false(t):
+    return GUARD_RE.sub("if (false) return", t, count=1) if GUARD_RE.search(t) else None
+
+
+def _and_or(t):
+    return t.replace("&&", "||", 1) if "&&" in t else None
+
+
+def _or_and(t):
+    return t.replace("||", "&&", 1) if "||" in t else None
+
+
+def _true_false(t):
+    if "if (" in t:
+        return None
+    return (
+        re.sub(r"(?<![\w.])true(?![\w])", "false", t, count=1)
+        if re.search(r"(?<![\w.])true(?![\w])", t)
+        else None
+    )
+
+
+def _false_true(t):
+    if "if (" in t:
+        return None
+    return (
+        re.sub(r"(?<![\w.])false(?![\w])", "true", t, count=1)
+        if re.search(r"(?<![\w.])false(?![\w])", t)
+        else None
+    )
+
+
+def _drop_not(t):
+    return re.sub(r"!(?=[\w(])", "", t, count=1) if re.search(r"!(?=[\w(])", t) else None
+
+
+# Each operator INVERTS A DECISION. None merely reformats.
+OPERATORS = [
+    ("if->true", _if_true),
+    ("guard->false", _guard_false),
+    ("&&->||", _and_or),
+    ("||->&&", _or_and),
+    ("true->false", _true_false),
+    ("false->true", _false_true),
+    ("drop !", _drop_not),
 ]
 
+SKIP_PAT = re.compile(r"^\s*($|//|///|\*|/\*|import |export |part |@|\}|\)|\];|\)\;)")
 
-def run(target):
-    r = subprocess.run(
-        ["flutter", "test", target],
-        capture_output=True, text=True, timeout=900,
-    )
+
+def mutants_for(text):
+    if SKIP_PAT.match(text):
+        return []
+    s = text.strip()
+    if s.startswith(("'", '"')) or s == "return;":
+        return []
+    out = []
+    for name, op in OPERATORS:
+        try:
+            m = op(text)
+        except Exception:
+            m = None
+        if m and m != text:
+            out.append((name, m))
+    return out
+
+
+def run_suite(paths=None):
+    """Green? `paths=None` runs the FULL root suite (the certifying oracle)."""
+    cmd = TEST_CMD + (paths if paths else [])
+    r = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
     return r.returncode == 0
 
 
+def candidate_tests(prod_path):
+    """Test files that plausibly cover `prod_path`, by import.
+
+    TWO-PHASE ORACLE, and the logic matters:
+      * KILLED by a SUBSET  =>  KILLED by the full suite (the full suite contains it).
+        So a fast targeted run gives a SOUND `KILLED` verdict.
+      * SURVIVED on a subset does NOT imply survived on the full suite.
+        So every phase-1 survivor is RE-RUN against the full root suite before it is
+        reported as uncovered.
+    The heuristic can therefore cost time, never correctness. 83 full-suite runs is
+    3+ hours; this is minutes, with the same verdicts.
+    """
+    base = prod_path.split("/")[-1]
+    hits = subprocess.run(
+        ["grep", "-rl", base, "test"], capture_output=True, text=True
+    ).stdout.split()
+    return [h for h in hits if h.endswith("_test.dart")]
+
+
 def main():
-    only = sys.argv[1] if len(sys.argv) > 1 else None
-    results = []
-    for label, path, old, new, target in MUTATIONS:
-        if only and not label.startswith(only):
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--base", default=None)
+    ap.add_argument("--list", action="store_true")
+    args = ap.parse_args()
+
+    base = args.base or sh(["git", "merge-base", "HEAD", "main"]).strip()
+
+    lines = changed_production_lines(base)
+    targets, skipped = [], []
+    for path, lineno, text in lines:
+        ms = mutants_for(text)
+        if not ms:
+            skipped.append((path, lineno, text.strip()[:70]))
             continue
-        src = open(path).read()
-        if src.count(old) != 1:
-            results.append((label, "ANCHOR-MISS", f"found {src.count(old)}x"))
-            print(f"!! {label}: ANCHOR NOT UNIQUE ({src.count(old)}x)")
+        # ONE mutant per line: the first operator that applies. A line whose decision
+        # can be inverted with no test noticing is uncovered regardless of which
+        # inversion you pick.
+        name, mutated = ms[0]
+        targets.append((path, lineno, text, mutated, name))
+
+    print(f"base = {base}")
+    print(f"changed production lines: {len(lines)}")
+    print(f"  mutable: {len(targets)}    skipped: {len(skipped)}")
+    print()
+
+    if args.list:
+        print("=== WOULD MUTATE ===")
+        for p, n, t, m, op in targets:
+            print(f"  {p}:{n}  [{op}]  {t.strip()[:66]}")
+        print("\n=== SKIPPED (no decision to invert; auditable, not hidden) ===")
+        for p, n, t in skipped:
+            print(f"  {p}:{n}  {t}")
+        return 0
+
+    # Stream results to disk as they land. A buffered run that gets killed at 50
+    # minutes loses everything; this one loses nothing.
+    ledger = open("tool/mutation-results.tsv", "w", buffering=1)
+    ledger.write("verdict\tfile\tline\top\tsource\n")
+
+    results = []
+    for i, (path, lineno, text, mutated, op) in enumerate(targets, 1):
+        src_lines = open(path).read().split("\n")
+        if lineno - 1 >= len(src_lines) or src_lines[lineno - 1] != text:
+            results.append((path, lineno, op, "STALE-ANCHOR", text.strip()[:60]))
+            print(f"!! [{i}/{len(targets)}] STALE-ANCHOR {path}:{lineno}")
             continue
         backup = path + ".mutbak"
         shutil.copy2(path, backup)
         try:
-            open(path, "w").write(src.replace(old, new))
-            green = run(target)
-            verdict = "SURVIVED (NO COVERAGE)" if green else "KILLED"
-            results.append((label, verdict, target))
-            mark = "!!" if green else "OK"
-            print(f"{mark} {label}\n     -> mutant {verdict}")
+            src_lines[lineno - 1] = mutated
+            open(path, "w").write("\n".join(src_lines))
+
+            # Phase 1: targeted. A red here is a SOUND kill (the full suite is a
+            # superset). A green here is only a HINT, and is escalated.
+            cands = candidate_tests(path)
+            green = run_suite(cands) if cands else True
+            escalated = False
+            if green:
+                # Phase 2: the full root suite. Only a survivor of THIS is uncovered.
+                escalated = True
+                green = run_suite()
+
+            verdict = "SURVIVED" if green else "KILLED"
+            results.append((path, lineno, op, verdict, text.strip()[:60]))
+            mark = "!!" if green else "ok"
+            tag = " (full-suite)" if escalated else ""
+            print(
+                f"{mark} [{i}/{len(targets)}] {verdict:8}{tag} "
+                f"{path.split('/')[-1]}:{lineno} [{op}] {text.strip()[:44]}"
+            )
         finally:
             shutil.move(backup, path)
 
     print("\n" + "=" * 78)
-    print("MUTATION REPORT")
+    print("DIFF-DERIVED MUTATION REPORT")
     print("=" * 78)
-    bad = 0
-    for label, verdict, _ in results:
-        flag = " <-- FIX THE TEST" if verdict != "KILLED" else ""
-        if verdict != "KILLED":
-            bad += 1
-        print(f"  [{verdict:22}] {label}{flag}")
+    survivors = [r for r in results if r[3] != "KILLED"]
+    if survivors:
+        print("  NOT KILLED — these lines are NOT covered:")
+        for p, n, op, v, t in survivors:
+            print(f"    [{v:12}] {p}:{n} [{op}]  {t}")
+    else:
+        print("  every mutable changed line was killed by the ROOT suite")
+    print(f"\n  {len(results) - len(survivors)}/{len(results)} mutants killed")
+    if skipped:
+        print(f"  {len(skipped)} lines skipped (no decision to invert) — `--list` to audit")
     print("=" * 78)
-    print(f"{len(results) - bad}/{len(results)} mutants killed")
-    return 1 if bad else 0
+    return 1 if survivors else 0
 
 
 if __name__ == "__main__":

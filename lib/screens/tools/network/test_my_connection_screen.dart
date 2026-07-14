@@ -393,6 +393,20 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// figure, which is what keeps it true under this correction (GL-005). Do not
   /// "tighten" it into a precise number: the exact byte count is not knowable
   /// before the test runs.
+  ///
+  /// SCOPE, STATED HONESTLY (round-4 review): THIS GATE IS iOS-ONLY, AND NOT BY
+  /// DESIGN — BY STRUCTURE. It hangs off [_notOnWifi] → `WifiSignalSampler.notOnWifi`
+  /// → `WifiMonitorController`, and the controller is only constructed under
+  /// `case WifiInfoSource.iosShortcuts` (wifi_signal_sampler.dart). On Android,
+  /// macOS and Windows `notOnWifi` is therefore ALWAYS false, so a cellular Android
+  /// phone gets NO warning, NO decline path, and runs the full speed test.
+  ///
+  /// That is not a regression — it was never covered — but it must not be described
+  /// as "the app warns before spending cellular data". It warns on iOS. Closing it
+  /// means giving the other platforms a real not-on-Wi-Fi signal (Android has
+  /// `NetworkCapabilities.TRANSPORT_WIFI`, the direct analogue of the NWPathMonitor
+  /// check this round added on iOS), which is a separate piece of work and is not
+  /// claimed here.
   static const String _kCellularDataWarning =
       "You're on cellular. The speed test downloads at full speed for about 30 "
       'seconds, so it uses roughly 50 MB on a slow connection and 500 MB or more '
@@ -3402,7 +3416,14 @@ class _ComparisonCard extends StatelessWidget {
 
     final AxisStatus wifiTier = AxisStatusThresholds.tierFor(usable);
     final AxisStatus internetTier = AxisStatusThresholds.tierFor(internet);
-    if (wifiTier != internetTier || wifiTier == AxisStatus.unknown) return null;
+    // THE THIRD SAME-TIER GUARD (round-4 F1 review). It cannot call
+    // [ConsumerVerdict.sameRealTier] — it derives its tiers from the RATES, not from
+    // a verdict's axis statuses — but it must not keep its own blacklist either.
+    // `isRealTier` is the shared WHITELIST all three guards now agree on, so a new
+    // AxisStatus cannot start producing "both sides are <new state>" through the one
+    // guard someone forgot to update. (That is precisely how `notMeasured` slipped
+    // past the other two.)
+    if (wifiTier != internetTier || !wifiTier.isRealTier) return null;
 
     final double deltaPct = 100 * (usable - internet) / internet;
     if (deltaPct.abs() <= 10) {
