@@ -378,17 +378,17 @@ class PacketSenderService {
     switch (failure.reason) {
       case TcpFailureReason.timedOut:
         kind = PacketErrorKind.timeout;
-        message = 'Timed out connecting to $host:$port — no response before '
+        message = 'Timed out connecting to $host:$port. No response before '
             'the deadline (a firewall may be dropping the connection).';
       case TcpFailureReason.refused:
         kind = PacketErrorKind.refused;
-        message = 'Connection refused — nothing is listening on $host:$port.';
+        message = 'Connection refused. Nothing is listening on $host:$port.';
       case TcpFailureReason.unreachable:
         kind = PacketErrorKind.unreachable;
-        message = 'Host unreachable — no route to $host.';
+        message = 'Host unreachable. No route to $host.';
       case TcpFailureReason.lookupFailure:
         kind = PacketErrorKind.dnsFailure;
-        message = 'Could not resolve "$host" — check the host name.';
+        message = 'Could not resolve "$host". Check the host name.';
       case TcpFailureReason.unknown:
         kind = PacketErrorKind.other;
         message = 'Could not connect: ${_short(failure.message)}.';
@@ -425,7 +425,7 @@ class PacketSenderService {
             host: host,
             port: port,
             kind: PacketErrorKind.dnsFailure,
-            message: 'Could not resolve "$host" — check the host name.',
+            message: 'Could not resolve "$host". Check the host name.',
             elapsed: sw.elapsed,
           );
         }
@@ -438,7 +438,7 @@ class PacketSenderService {
         host: host,
         port: port,
         kind: PacketErrorKind.dnsFailure,
-        message: 'Could not resolve "$host" — check the host name.',
+        message: 'Could not resolve "$host". Check the host name.',
         elapsed: sw.elapsed,
       );
     }

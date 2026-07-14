@@ -123,7 +123,7 @@ class WakeOnLanService {
     final String? mac = normalizeMac(rawMac);
     if (mac == null) {
       return WakeOnLanResult.failure(
-        message: 'Enter a valid MAC address — 6 bytes, e.g. '
+        message: 'Enter a valid MAC address: 6 bytes, e.g. '
             'AA:BB:CC:DD:EE:FF (colons, hyphens, or no separators all work).',
       );
     }
@@ -158,7 +158,7 @@ class WakeOnLanService {
           normalizedMac: mac,
           broadcast: broadcast,
           port: port,
-          message: 'The socket reported 0 bytes sent — the broadcast may be '
+          message: 'The socket reported 0 bytes sent. The broadcast may be '
               'blocked by the OS or interface. Try a subnet-directed '
               'broadcast (e.g. 192.168.1.255).',
         );

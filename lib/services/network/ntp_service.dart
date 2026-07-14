@@ -205,7 +205,7 @@ class NtpService {
         return NtpResult.failure(
           server: host,
           resolvedIp: ex.resolvedIp,
-          message: 'The server replied with ${ex.reply.length} bytes — an SNTP '
+          message: 'The server replied with ${ex.reply.length} bytes. An SNTP '
               'reply is 48 bytes. The endpoint may not be an NTP server.',
         );
       }
@@ -220,8 +220,8 @@ class NtpService {
           server: host,
           resolvedIp: ex.resolvedIp,
           message: 'The server returned stratum 0 (a "kiss-o\'-death" / '
-              'unspecified response). It is not offering a usable time sync — '
-              'try $kFallbackNtpServer.',
+              'unspecified response). It is not offering a usable time sync. '
+              'Try $kFallbackNtpServer.',
         );
       }
 
@@ -234,7 +234,7 @@ class NtpService {
       return NtpResult.failure(
         server: host,
         message: 'No reply within ${timeout.inSeconds}s. The server may be '
-            'unreachable or UDP/123 may be blocked — try $kFallbackNtpServer.',
+            'unreachable or UDP/123 may be blocked. Try $kFallbackNtpServer.',
       );
     } on SocketException catch (e) {
       // A DNS failure surfaces here as a SocketException with no address.

@@ -352,7 +352,7 @@ class HttpHeaderService {
   static String _socketMessage(Uri url, SocketException e) {
     if (url.scheme == 'http') {
       return 'Could not connect over http://. On iOS, cleartext HTTP is '
-          'blocked by App Transport Security — try the https:// URL. '
+          'blocked by App Transport Security. Try the https:// URL. '
           '(${_short(e.message)})';
     }
     return 'Could not connect: ${_short(e.message)}.';

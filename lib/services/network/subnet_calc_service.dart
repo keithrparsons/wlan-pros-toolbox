@@ -98,7 +98,8 @@ class SubnetCalcService {
     final int? addr = _parseIpv4(address);
     if (addr == null) {
       return const SubnetResult.invalid(
-        'Enter a valid IPv4 address, e.g. 10.20.0.0 — four octets, each 0–255.',
+        'Enter a valid IPv4 address with four octets, each 0–255. '
+        'For example, 10.20.0.0.',
       );
     }
 
