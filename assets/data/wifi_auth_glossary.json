@@ -373,7 +373,7 @@
       "term": "Quality of Experience",
       "abbr": "QoE",
       "category": "Network Fundamentals",
-      "definition": "The user's actual perception of network performance, as opposed to raw metrics. QoE is the goal behind seamless roaming and automatic authentication like Passpoint: connect and stay connected without friction."
+      "definition": "The user's actual perception of network performance, as opposed to raw metrics. QoE is the goal behind fast roaming and automatic authentication like Passpoint: connect and stay connected without friction."
     },
     {
       "id": "ieee",

@@ -17,7 +17,7 @@
   "resources": [
     {
       "id": "mike-albano-clients",
-      "title": "Wi-Fi Clients List — Device Capabilities Database",
+      "title": "Wi-Fi Clients List: Device Capabilities Database",
       "summary": "Look up what a client device can actually do on Wi-Fi before you design around it.",
       "description": "Before you assume a client can use that 160 MHz channel or a third spatial stream, check what it actually supports. Mike Albano's Wi-Fi Clients List is a community-contributed database of client device capabilities: spatial streams, supported bands, and channel support, device by device. When you are sizing capacity or chasing down why one device performs differently from the rest, this is where you confirm what the client is really capable of instead of guessing. Browsing is free. You only need an account if you want to contribute new devices and grow the database.",
       "url": "https://clients.mikealbano.com/",
@@ -83,7 +83,7 @@
     },
     {
       "id": "wavelify",
-      "title": "Wavelify — Network Planning Platform",
+      "title": "Wavelify: Network Planning Platform",
       "summary": "A web-based Wi-Fi design platform with a companion Android survey app.",
       "description": "Wavelify is a web-based network planning platform for Wi-Fi and broader low-voltage design. You import a floor plan, place Access Points, and model coverage in 2D and 3D across 2.4, 5, and 6 GHz, with wall and material attenuation and AI-assisted automatic AP placement, then export PDF design reports. A companion Android survey app turns a phone into a capture tool that syncs measurements back into the design project. It is a newer entrant, so give it a look on its own merits. You can get in and try it for free, with the full design capability behind paid tiers.",
       "url": "https://wavelify.com/",
@@ -477,7 +477,7 @@
       "id": "train-wifitraining",
       "title": "WiFi Training",
       "summary": "A paid commercial Wi-Fi and security training provider, with instructor-led courses and printed workbooks. Paid.",
-      "description": "WiFi Training (WiFiTraining.com, trading as WiFi Training™) is a commercial training company offering instructor-led courses and printed workbooks on enterprise Wi-Fi and wireless security. The catalog covers design, analysis, troubleshooting, and 802.1X security, aimed at network engineers who want structured, hands-on instruction rather than self-study.\n\nThis is a paid, for-profit provider, not a free community resource. Course fees and workbook prices are set on their site and change over time, so check the current detail there before you commit. It is listed here because the instruction is solid and the workbooks are well-regarded, but go in knowing it is a paid commercial site — weigh the cost against the free certification material and community resources elsewhere in this list. Useful if you learn best from a structured paid course.",
+      "description": "WiFi Training (WiFiTraining.com, trading as WiFi Training™) is a commercial training company offering instructor-led courses and printed workbooks on enterprise Wi-Fi and wireless security. The catalog covers design, analysis, troubleshooting, and 802.1X security, aimed at network engineers who want structured, hands-on instruction rather than self-study.\n\nThis is a paid, for-profit provider, not a free community resource. Course fees and workbook prices are set on their site and change over time, so check the current detail there before you commit. It is listed here because the instruction is solid and the workbooks are well-regarded, but go in knowing it is a paid commercial site. Weigh the cost against the free certification material and community resources elsewhere in this list. Useful if you learn best from a structured paid course.",
       "url": "https://wifitraining.com/",
       "topic": "Training Providers",
       "cost": "paid",
